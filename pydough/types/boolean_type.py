@@ -16,5 +16,8 @@ class BooleanType(PyDoughType):
     def __repr__(self):
         return "BooleanType()"
 
-    def as_json_string(self):
+    def as_json_string(self) -> str:
         return "bool"
+
+    def parse_from_string(type_string: str) -> PyDoughType:
+        return BooleanType() if type_string == "bool" else None

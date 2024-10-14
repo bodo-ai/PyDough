@@ -12,21 +12,12 @@ class PyDoughType(ABC):
 
     def __init__(self):
         raise NotImplementedError(
-            f"PyDough type class {type(self).__name__} does not have an __init__ defined"
+            f"PyDough type class {self.__class__.__name__} does not have an __init__ defined"
         )
 
     def __repr__(self):
         raise NotImplementedError(
-            f"PyDough type class {type(self).__name__} does not have a __repr__ defined"
-        )
-
-    @abstractmethod
-    def as_json_string(self):
-        """
-        TODO: add function docstring
-        """
-        raise NotImplementedError(
-            f"PyDough type class {type(self).__name__} does not have a as_json_string method"
+            f"PyDough type class {self.__class__.__name__} does not have a __repr__ defined"
         )
 
     def __eq__(self, other):
@@ -34,3 +25,15 @@ class PyDoughType(ABC):
 
     def __hash__(self):
         raise hash(repr(self))
+
+    @abstractmethod
+    def as_json_string(self) -> str:
+        """
+        TODO: add function docstring
+        """
+
+    @abstractmethod
+    def parse_from_string(type_string: str) -> "PyDoughType":
+        """
+        TODO: add function docstring
+        """

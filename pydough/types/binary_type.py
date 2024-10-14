@@ -16,5 +16,8 @@ class BinaryType(PyDoughType):
     def __repr__(self):
         return "BinaryType()"
 
-    def as_json_string(self):
+    def as_json_string(self) -> str:
         return "binary"
+
+    def parse_from_string(type_string: str) -> PyDoughType:
+        return BinaryType() if type_string == "binary" else None
