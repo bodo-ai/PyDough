@@ -2,8 +2,10 @@
 TODO: add file-level docstring
 """
 
+from abc import ABC, abstractmethod
 
-class PyDoughType(object):
+
+class PyDoughType(ABC):
     """
     TODO: add class docstring
     """
@@ -18,6 +20,7 @@ class PyDoughType(object):
             f"PyDough type class {type(self).__name__} does not have a __repr__ defined"
         )
 
+    @abstractmethod
     def as_json_string(self):
         """
         TODO: add function docstring
