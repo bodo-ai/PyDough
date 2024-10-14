@@ -13,10 +13,47 @@
 
         },
         "Parts": {
-
+            "type": "simple_table",
+            "table_path": "tpch.PART",
+            "properties": {
+                "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "p_name", "data_type": "string"},
+                "manufacturer": {"type": "table_column", "column_name": "p_mfgr", "data_type": "string"},
+                "brand": {"type": "table_column", "column_name": "p_brand", "data_type": "string"},
+                "type": {"type": "table_column", "column_name": "p_brand", "data_type": "string"},
+                "size": {"type": "table_column", "column_name": "p_brand", "data_type": "int64"},
+                "container": {"type": "table_column", "column_name": "p_container", "data_type": "string"},
+                "retailprice": {"type": "table_column", "column_name": "p_brand", "data_type": "float32"},
+                "comment": {"type": "table_column", "column_name": "p_comment", "data_type": "string"},
+                "supply_records": {
+                    "type": "simple_join",
+                    "other_collection_name": "PartSupp",
+                    "singular": false,
+                    "no_collisions": true,
+                    "keys": {"key": "partkey"},
+                    "reverse_relationship_name": "part"
+                },
+                "suppliers_of_part": {
+                    "type": "compound",
+                    "primary_subcollection": "supply_records",
+                    "secondary_subcollection": "supplier",
+                    "singular": false,
+                    "no_collisions": false,
+                    "inherited_properties": {"lines": "lines", "availqty": "availqty", "supplycost": "supplycost", "comment": "ps_comment"},
+                    "reverse_relationship_name": "parts_supplied"
+                }
+            }
         },
         "PartSupp": {
-
+            "type": "simple_table",
+            "table_path": "tpch.PARTSUPP",
+            "properties": {
+                "partkey": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
+                "suppkey": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+                "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "float64"},
+                "supplycost": {"type": "table_column", "column_name": "ps_supplycost", "data_type": "float64"},
+                "comment": {"type": "table_column", "column_name": "ps_comment", "data_type": "string"}
+            }
         },
         "Lineitems": {
 
@@ -28,7 +65,5 @@
 
         }
     },
-    "empty": {
-
-    }
+    "empty": {}
 }
