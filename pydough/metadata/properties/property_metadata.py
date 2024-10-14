@@ -70,4 +70,6 @@ class PropertyMetadata(object):
         """
         TODO: add function doscstring.
         """
-        pass
+        raise NotImplementedError(
+            f"Collection metadata class {type(self).__name__} does not have a parse_from_json method implemented"
+        )
