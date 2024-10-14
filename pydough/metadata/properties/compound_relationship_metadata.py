@@ -5,8 +5,7 @@ TODO: add file-level docstring
 from typing import Dict, Tuple
 from .property_metadata import PropertyMetadata
 from pydough.metadata.errors import (
-    verify_string_in_json,
-    verify_boolean_in_json,
+    verify_typ_in_json,
     verify_json_string_mapping_in_json,
 )
 
@@ -41,14 +40,18 @@ class CompoundRelationshipMetadata(PropertyMetadata):
         TODO: add function doscstring.
         """
         error_name = f"compound relationship property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
-        verify_string_in_json(property_json, "primary_subcollection", error_name)
-        verify_string_in_json(property_json, "secondary_subcollection", error_name)
-        verify_string_in_json(property_json, "reverse_relationship_name", error_name)
-        verify_boolean_in_json(property_json, "singular", error_name)
-        verify_boolean_in_json(property_json, "no_collisions", error_name)
+        verify_typ_in_json(property_json, "primary_subcollection", str, error_name)
+        verify_typ_in_json(property_json, "secondary_subcollection", str, error_name)
+        verify_typ_in_json(property_json, "reverse_relationship_name", str, error_name)
+        verify_typ_in_json(property_json, "singular", bool, error_name)
+        verify_typ_in_json(property_json, "no_collisions", bool, error_name)
         verify_json_string_mapping_in_json(
             property_json, "inherited_properties", error_name
         )
 
-    def parse_from_json(self, graph_json: dict) -> None:
+    def verify_ready_to_add(self, collection) -> None:
+        super().verify_ready_to_add(collection)
+        raise NotImplementedError
+
+    def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         raise NotImplementedError

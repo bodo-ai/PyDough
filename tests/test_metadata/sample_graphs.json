@@ -46,7 +46,7 @@
                     "other_collection_name": "PartSupp",
                     "singular": false,
                     "no_collisions": true,
-                    "keys": {"key": "partkey"},
+                    "keys": {"key": ["partkey"]},
                     "reverse_relationship_name": "part"
                 },
                 "suppliers_of_part": {

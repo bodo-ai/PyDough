@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 from typing import Dict, Tuple
 from .property_metadata import PropertyMetadata
-from pydough.metadata.errors import verify_string_in_json
+from pydough.metadata.errors import verify_typ_in_json
 
 
 class CartesianProductMetadata(PropertyMetadata):
@@ -31,7 +31,11 @@ class CartesianProductMetadata(PropertyMetadata):
         TODO: add function doscstring.
         """
         error_name = f"cartesian product property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
-        verify_string_in_json(property_json, "other_collection_name", error_name)
+        verify_typ_in_json(property_json, "other_collection_name", str, error_name)
 
-    def parse_from_json(self, graph_json: dict) -> None:
+    def verify_ready_to_add(self, collection) -> None:
+        super().verify_ready_to_add(collection)
+        raise NotImplementedError
+
+    def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         raise NotImplementedError

@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Tuple
 from pydough.metadata.errors import (
     PyDoughMetadataException,
-    verify_string_in_json,
+    verify_typ_in_json,
     verify_valid_name,
 )
 
@@ -50,7 +50,7 @@ class PropertyMetadata(ABC):
 
         verify_valid_name(collection_name)
         error_name = f"property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
-        verify_string_in_json(property_json, "type", error_name)
+        verify_typ_in_json(property_json, "type", str, error_name)
         match property_json["type"]:
             case "table_column":
                 TableColumnMetadata.verify_json_metadata(
@@ -70,7 +70,19 @@ class PropertyMetadata(ABC):
                 )
 
     @abstractmethod
-    def parse_from_json(self, graph_json: dict) -> None:
+    def verify_ready_to_add(self, collection) -> None:
+        """
+        TODO: add function doscstring.
+        """
+        from pydough.metadata.collections import CollectionMetadata
+
+        if not isinstance(collection, CollectionMetadata):
+            raise PyDoughMetadataException(
+                f"Expected the collection of verify_ready_to_add to be a CollectionMetadata, received: {collection.__class__.__name__}"
+            )
+
+    @abstractmethod
+    def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         """
         TODO: add function doscstring.
         """

@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import Tuple
+from typing import Tuple, Dict
 from .property_metadata import PropertyMetadata
 from pydough.metadata.errors import PyDoughMetadataException
 
@@ -31,7 +31,11 @@ class InheritedPropertyMetadata(PropertyMetadata):
             self.parent_property_name,
         )
 
-    def parse_from_json(self, graph_json: dict) -> None:
+    def verify_ready_to_add(self, collection) -> None:
+        super().verify_ready_to_add(collection)
+        raise NotImplementedError
+
+    def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         raise PyDoughMetadataException(
             "Cannot directly construct an instance of InheritedPropertyMetadata from JSON"
         )

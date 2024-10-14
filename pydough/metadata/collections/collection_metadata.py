@@ -7,9 +7,8 @@ from abc import ABC, abstractmethod
 from typing import List, Union, Dict, Tuple
 from pydough.metadata.errors import (
     PyDoughMetadataException,
-    verify_string_in_json,
-    verify_json_in_json,
     verify_valid_name,
+    verify_typ_in_json,
 )
 from pydough.metadata.properties import PropertyMetadata, InheritedPropertyMetadata
 
@@ -56,8 +55,8 @@ class CollectionMetadata(ABC):
                 f"Cannot have collection named {repr(collection_name)} share the same name as the graph containing it."
             )
 
-        verify_string_in_json(collection_json, "type", error_name)
-        verify_json_in_json(collection_json, "properties", error_name)
+        verify_typ_in_json(collection_json, "type", str, error_name)
+        verify_typ_in_json(collection_json, "properties", dict, error_name)
 
         match collection_json["type"]:
             case "simple_table":
@@ -71,7 +70,7 @@ class CollectionMetadata(ABC):
 
         properties_json = collection_json["properties"]
         for property_name in collection_json["properties"]:
-            verify_json_in_json(properties_json, property_name, error_name)
+            verify_typ_in_json(properties_json, property_name, dict, error_name)
             PropertyMetadata.verify_json_metadata(
                 graph_name,
                 collection_name,
@@ -86,7 +85,9 @@ class CollectionMetadata(ABC):
         """
 
     @abstractmethod
-    def verify_is_property_valid_for_collection(property) -> None:
+    def verify_is_property_valid_for_collection(
+        self, property: PropertyMetadata
+    ) -> None:
         """
         TODO: add function doscstring.
         """

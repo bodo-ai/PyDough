@@ -6,7 +6,7 @@ from typing import List, Union, Dict
 from collections import defaultdict
 from pydough.metadata.errors import (
     PyDoughMetadataException,
-    verify_is_json,
+    verify_has_type,
     verify_valid_name,
 )
 from pydough.metadata.collections import CollectionMetadata
@@ -66,7 +66,7 @@ class GraphMetadata(object):
         """
         error_name = f"PyDough metadata for graph {repr(graph_name)}"
         verify_valid_name(graph_name)
-        verify_is_json(graph_json, error_name)
+        verify_has_type(graph_json, dict, error_name, "JSON object")
         for collection_name in graph_json:
             CollectionMetadata.verify_json_metadata(
                 graph_name, collection_name, graph_json

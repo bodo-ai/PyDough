@@ -90,7 +90,8 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
     ordered_properties = topologically_sort_properties(raw_properties)
     for property in ordered_properties:
         collection = collections[property.collection_name]
-        collection.add_property(property.parse_from_json(graph_json))
+        property.parse_from_json(collections, graph_json)
+        collection.add_property(property)
 
     return GraphMetadata(graph_name, collections)
 
