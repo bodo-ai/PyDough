@@ -7,7 +7,7 @@ from .property_metadata import PropertyMetadata
 from pydough.metadata.errors import verify_string_in_json
 
 
-class TableColumnMetadata(PropertyMetadata):
+class CartesianProductMetadata(PropertyMetadata):
     """
     TODO: add class docstring
     """
@@ -19,14 +19,13 @@ class TableColumnMetadata(PropertyMetadata):
         name: str,
     ):
         super().__init__(graph_name, collection_name, name)
-        self.column_name = None
-        self.data_type = None
+        self.other_collection_name = None
 
     def components(self) -> Tuple:
         """
         TODO: add function doscstring.
         """
-        return super().components() + (self.column_name, self.data_type)
+        return super().components() + (self.other_collection_name,)
 
     def verify_json_metadata(
         graph_name: str, collection_name: str, property_name: str, property_json: Dict
@@ -34,9 +33,8 @@ class TableColumnMetadata(PropertyMetadata):
         """
         TODO: add function doscstring.
         """
-        error_name = f"table column property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
-        verify_string_in_json(property_json, "column_name", error_name)
-        verify_string_in_json(property_json, "data_type", error_name)
+        error_name = f"cartesian product property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
+        verify_string_in_json(property_json, "other_collection_name", error_name)
 
     def parse_from_json(self, graph_json: dict) -> None:
         """

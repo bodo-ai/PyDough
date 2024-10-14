@@ -1,8 +1,16 @@
+"""
+TODO: add file-level docstring
+"""
+
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
 
 
 class ArrayType(PyDoughType):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, elem_type: PyDoughType):
         if not isinstance(elem_type, PyDoughType):
             raise PyDoughTypeException(

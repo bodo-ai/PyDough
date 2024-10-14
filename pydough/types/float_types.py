@@ -1,7 +1,15 @@
+"""
+TODO: add file-level docstring
+"""
+
 from .pydough_type import PyDoughType
 
 
 class FloatType(PyDoughType):
+    """
+    TODO: add class docstring
+    """
+
     def __repr__(self):
         return f"Float{self.bit_width}Type()"
 

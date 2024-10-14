@@ -1,3 +1,7 @@
+"""
+TODO: add file-level docstring
+"""
+
 from typing import List, Union, Dict
 from collections import defaultdict
 from pydough.metadata.errors import (

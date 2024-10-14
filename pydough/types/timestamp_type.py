@@ -1,9 +1,17 @@
+"""
+TODO: add file-level docstring
+"""
+
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
 import pytz
 
 
 class TimestampType(PyDoughType):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, precision, tz=None):
         if not isinstance(precision, int) or precision not in range(10):
             raise PyDoughTypeException(

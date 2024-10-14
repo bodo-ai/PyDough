@@ -1,3 +1,7 @@
+"""
+TODO: add file-level docstring
+"""
+
 from typing import Dict, Tuple, List, Union
 from pydough.metadata.errors import (
     verify_string_in_json,

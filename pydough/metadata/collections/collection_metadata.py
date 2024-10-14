@@ -1,3 +1,7 @@
+"""
+TODO: add file-level docstring
+"""
+
 from typing import List, Union, Dict, Tuple
 from pydough.metadata.errors import (
     PyDoughMetadataException,
@@ -77,7 +81,7 @@ class CollectionMetadata(object):
         TODO: add function doscstring.
         """
         raise NotImplementedError(
-            f"Collection metadata class {type(PyDoughMetadataException).__name__} does not have a parse_from_json method implemented"
+            f"Collection metadata class {type(self).__name__} does not have a parse_from_json method implemented"
         )
 
     def get_nouns(

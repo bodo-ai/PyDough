@@ -1,8 +1,16 @@
+"""
+TODO: add file-level docstring
+"""
+
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
 
 
 class DecimalType(PyDoughType):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, precision, scale):
         if not isinstance(precision, int) or precision not in range(39):
             raise PyDoughTypeException(

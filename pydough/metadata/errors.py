@@ -1,3 +1,7 @@
+"""
+TODO: add file-level docstring
+"""
+
 from typing import Dict, List
 
 
@@ -62,6 +66,25 @@ def verify_is_list_of_string_or_strings(
         )
 
 
+def verify_is_boolean(json_obj, error_name: str) -> None:
+    if not isinstance(json_obj, bool):
+        raise PyDoughMetadataException(f"{error_name} must be a boolean.")
+
+
+def verify_is_json_string_mapping(
+    json_obj, error_name: str, allow_empty: bool = False
+) -> None:
+    verify_is_json(json_obj, error_name)
+    if not (
+        (allow_empty and len(json_obj) == 0)
+        or (len(json_obj) > 0 and all(isinstance(elem, str) for elem in json_obj))
+    ):
+        collection_error_name = "mapping" if allow_empty else "non-empty mapping"
+        raise PyDoughMetadataException(
+            f"{error_name} must be a {collection_error_name} of strings to strings."
+        )
+
+
 def verify_property_in_json(
     json_obj: Dict, property_name: str, error_name: str
 ) -> None:
@@ -101,7 +124,29 @@ def verify_list_of_string_or_strings_in_json(
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
     verify_is_list_of_string_or_strings(
-        property, f"Property {repr(property_name)} of {error_name}"
+        property, f"Property {repr(property_name)} of {error_name}", allow_empty
+    )
+
+
+def verify_boolean_in_json(json_obj, property_name: str, error_name: str) -> None:
+    """
+    TODO: add function doscstring.
+    """
+    verify_property_in_json(json_obj, property_name, error_name)
+    property = json_obj[property_name]
+    verify_is_boolean(property, f"Property {repr(property_name)} of {error_name}")
+
+
+def verify_json_string_mapping_in_json(
+    json_obj, property_name: str, error_name: str, allow_empty: bool = False
+) -> None:
+    """
+    TODO: add function doscstring.
+    """
+    verify_property_in_json(json_obj, property_name, error_name)
+    property = json_obj[property_name]
+    verify_is_json_string_mapping(
+        property, f"Property {repr(property_name)} of {error_name}", allow_empty
     )
 
 

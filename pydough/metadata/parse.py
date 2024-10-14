@@ -1,7 +1,17 @@
-from typing import Dict
+"""
+TODO: add file-level docstring
+"""
+
+from typing import Dict, List
 from .graphs import GraphMetadata
 from .errors import PyDoughMetadataException
-from .collections import SimpleTableMetadata
+from .collections import CollectionMetadata, SimpleTableMetadata
+from .properties import (
+    PropertyMetadata,
+    TableColumnMetadata,
+    SimpleJoinMetadata,
+    CompoundRelationshipMetadata,
+)
 import json
 
 
@@ -31,29 +41,19 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
 
     # A dictionary that will be used to map each collection name to the
     # collection metadata object it corresponds to.
-    collections = {}
+    collections: Dict[str, CollectionMetadata] = {}
 
-    # A list that will store tuples corresponding to each collection property
-    # in the metadata before it is added to the collection, so all of the
-    # properties can be sorted based on their dependencies. The tuples
-    # are in the form (collection_name, property_name, property_json)
-    # raw_properties = []
+    # A list that will store each collection property in the metadata
+    # before it is added to the collection, so all of the properties can
+    # be sorted based on their dependencies.
+    raw_properties: List[PropertyMetadata] = []
 
     # Iterate through all the key-value pairs in the graph to set up the
     # corresponding collections as empty metadata that will later be filled
-    # with properties.
+    # with properties, and also obtain each of the properties.
     for collection_name in graph_json:
-        if collection_name == graph_name:
-            raise Exception(
-                f"Cannot have collection named '{collection_name}' share the same name as the graph containing it."
-            )
+        # Add the raw collection metadata to the collections dictionary
         collection_json = graph_json[collection_name]
-        if "type" not in collection_json:
-            raise Exception("Collection metadata missing required property 'type'.")
-        if "properties" not in collection_json:
-            raise Exception(
-                "Collection metadata missing required property 'properties'."
-            )
         match collection_json["type"]:
             case "simple_table":
                 collections[collection_name] = SimpleTableMetadata(
@@ -62,7 +62,39 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
             case collection_type:
                 raise Exception(f"Unrecognized collection type: '{collection_type}'")
 
+        # Add the properties collection metadata to the properties list
+        properties_json = collection_json["properties"]
+        for property_name in properties_json:
+            property_json = properties_json[property_name]
+            match property_json["type"]:
+                case "table_column":
+                    collections[collection_name] = TableColumnMetadata(
+                        graph_name, collection_name, property_name
+                    )
+                case "simple_join":
+                    collections[collection_name] = SimpleJoinMetadata(
+                        graph_name, collection_name, property_name
+                    )
+                case "compound":
+                    collections[collection_name] = CompoundRelationshipMetadata(
+                        graph_name, collection_name, property_name
+                    )
+                case collection_type:
+                    raise Exception(f"Unrecognized property type: '{collection_type}'")
+
     for collection_name in graph_json:
         collection = collections[collection_name]
         collection.parse_from_json(collections)
+
+    ordered_properties = topologically_sort_properties(raw_properties)
+    for property in ordered_properties:
+        collection = graph_json[property.collection_name]
+        collection.add_property(property.parse_from_json(graph_json))
+
     return GraphMetadata(graph_name, collections)
+
+
+def topologically_sort_properties(
+    raw_properties: List[PropertyMetadata],
+) -> List[PropertyMetadata]:
+    return raw_properties
