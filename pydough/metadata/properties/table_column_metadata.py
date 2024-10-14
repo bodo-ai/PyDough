@@ -23,9 +23,6 @@ class TableColumnMetadata(PropertyMetadata):
         self.data_type = None
 
     def components(self) -> Tuple:
-        """
-        TODO: add function doscstring.
-        """
         return super().components() + (self.column_name, self.data_type)
 
     def verify_json_metadata(
@@ -39,7 +36,4 @@ class TableColumnMetadata(PropertyMetadata):
         verify_string_in_json(property_json, "data_type", error_name)
 
     def parse_from_json(self, graph_json: dict) -> None:
-        """
-        TODO: add function doscstring.
-        """
         pass

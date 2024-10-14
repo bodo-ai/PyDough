@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+from abc import ABC, abstractmethod
+
 from typing import Dict, Tuple
 from pydough.metadata.errors import (
     PyDoughMetadataException,
@@ -10,7 +12,7 @@ from pydough.metadata.errors import (
 )
 
 
-class PropertyMetadata(object):
+class PropertyMetadata(ABC):
     """
     TODO: add class docstring
     """
@@ -21,6 +23,7 @@ class PropertyMetadata(object):
         self.name = name
         self.dependencies = []
 
+    @abstractmethod
     def components(self) -> Tuple:
         """
         TODO: add function doscstring.
@@ -66,10 +69,8 @@ class PropertyMetadata(object):
                     f"Unrecognized property type for {error_name}: {repr(property_type)}"
                 )
 
+    @abstractmethod
     def parse_from_json(self, graph_json: dict) -> None:
         """
         TODO: add function doscstring.
         """
-        raise NotImplementedError(
-            f"Collection metadata class {type(self).__name__} does not have a parse_from_json method implemented"
-        )

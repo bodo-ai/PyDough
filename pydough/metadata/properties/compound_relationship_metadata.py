@@ -28,9 +28,6 @@ class CompoundRelationshipMetadata(PropertyMetadata):
         self.inherited_properties = None
 
     def components(self) -> Tuple:
-        """
-        TODO: add function doscstring.
-        """
         return super().components() + (self.column_name, self.data_type)
 
     def verify_json_metadata(
@@ -50,7 +47,4 @@ class CompoundRelationshipMetadata(PropertyMetadata):
         )
 
     def parse_from_json(self, graph_json: dict) -> None:
-        """
-        TODO: add function doscstring.
-        """
         pass

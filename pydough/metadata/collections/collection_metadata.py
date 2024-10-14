@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+from abc import ABC, abstractmethod
+
 from typing import List, Union, Dict, Tuple
 from pydough.metadata.errors import (
     PyDoughMetadataException,
@@ -12,7 +14,7 @@ from pydough.metadata.errors import (
 from pydough.metadata.properties import PropertyMetadata, InheritedPropertyMetadata
 
 
-class CollectionMetadata(object):
+class CollectionMetadata(ABC):
     """
     TODO: add class docstring
     """
@@ -25,6 +27,7 @@ class CollectionMetadata(object):
         self.properties: Dict[str, PropertyMetadata] = {}
         self.inherited_properties: Dict[str, Tuple[InheritedPropertyMetadata]] = {}
 
+    @abstractmethod
     def components(self) -> Tuple:
         """
         TODO: add function doscstring.
@@ -76,6 +79,7 @@ class CollectionMetadata(object):
                 properties_json[property_name],
             )
 
+    @abstractmethod
     def parse_from_json(self, graph_json: dict) -> None:
         """
         TODO: add function doscstring.

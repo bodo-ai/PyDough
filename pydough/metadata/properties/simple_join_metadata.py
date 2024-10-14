@@ -30,9 +30,6 @@ class SimpleJoinMetadata(PropertyMetadata):
         self.reverse_relationship_name = None
 
     def components(self) -> Tuple:
-        """
-        TODO: add function doscstring.
-        """
         return super().components() + (
             self.other_collection_name,
             self.singular,
@@ -55,7 +52,4 @@ class SimpleJoinMetadata(PropertyMetadata):
         verify_string_in_json(property_json, "reverse_relationship_name", error_name)
 
     def parse_from_json(self, graph_json: dict) -> None:
-        """
-        TODO: add function doscstring.
-        """
         pass
