@@ -1,1 +1,1 @@
-from pydough.metadata.parse import parse_metadata
+from .metadata import parse_json_metadata  # noqa

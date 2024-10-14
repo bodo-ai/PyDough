@@ -1,11 +1,10 @@
-from typing import Dict
+from typing import Dict, Tuple, List, Union
 from pydough.metadata.errors import (
     verify_string_in_json,
     verify_list_of_string_or_strings_in_json,
     verify_no_extra_keys_in_json,
 )
 from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.properties import PropertyMetadata
 
 
 class SimpleTableMetadata(CollectionMetadata):
@@ -17,6 +16,14 @@ class SimpleTableMetadata(CollectionMetadata):
         "table_path",
         "unique_properties",
     ]
+
+    def __init__(self, graph_name: str, name: str):
+        super().__init__(graph_name, name)
+        self.table_path: str = None
+        self.unique_properties: List[Union[str, List[str]]] = None
+
+    def components(self) -> Tuple:
+        return super().components() + (self.table_path, self.unique_properties)
 
     def verify_json_metadata(
         graph_name: str, collection_name: str, collection_json: Dict
@@ -34,7 +41,7 @@ class SimpleTableMetadata(CollectionMetadata):
             collection_json, SimpleTableMetadata.allowed_properties, error_name
         )
 
-        for property_name in collection_json["properties"]:
-            PropertyMetadata.verify_json_metadata(
-                graph_name, collection_name, property_name
-            )
+    def parse_from_json(self, graph_json: dict) -> None:
+        """
+        TODO: add function doscstring.
+        """

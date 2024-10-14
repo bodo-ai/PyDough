@@ -7,6 +7,16 @@ class PyDoughMetadataException(Exception):
     """
 
 
+def verify_valid_name(name: str) -> None:
+    """
+    TODO: add function doscstring.
+    """
+    if not name.isidentifier():
+        raise PyDoughMetadataException(
+            f"Invalid name {repr(name)}: all PyDough graph/collection/property names must be valid Python identifiers."
+        )
+
+
 def verify_is_json(json_obj, error_name: str) -> None:
     """
     TODO: add function doscstring.
@@ -30,18 +40,18 @@ def verify_is_list_of_string_or_strings(
     TODO: add function doscstring.
     """
     if not (
-        isinstance(property, list)
+        isinstance(json_obj, list)
         and (
-            (allow_empty and len(property) == 0)
+            (allow_empty and len(json_obj) == 0)
             or (
-                len(property) > 0
+                len(json_obj) > 0
                 and all(
                     isinstance(elem, str)
                     or (
                         isinstance(elem, list)
                         and all(isinstance(sub_elem, str) for sub_elem in elem)
                     )
-                    for elem in property
+                    for elem in json_obj
                 )
             )
         )

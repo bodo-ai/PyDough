@@ -1,6 +1,10 @@
 from typing import List, Union, Dict
 from collections import defaultdict
-from pydough.metadata.errors import verify_is_json
+from pydough.metadata.errors import (
+    PyDoughMetadataException,
+    verify_is_json,
+    verify_valid_name,
+)
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.properties import PropertyMetadata
 
@@ -13,13 +17,15 @@ class GraphMetadata(object):
     def __init__(self, name: str, collections: Dict[str, CollectionMetadata]):
         self.name: str = name
         self.collections: Dict[str, CollectionMetadata] = collections
-        self.nouns: Dict[str, List[Union[CollectionMetadata, PropertyMetadata]]] = (
-            defaultdict(list)
+
+    def __repr__(self):
+        raise f"GraphMetadata({self.name})"
+
+    def __eq__(self, other):
+        return isinstance(other, GraphMetadata) and (self.name, self.collections) == (
+            other.name,
+            other.collections,
         )
-        self.nouns[self.name].append(self)
-        for collection in self.collections.values():
-            for noun, value in collection.get_nouns():
-                self.nouns[noun].append(value)
 
     def get_collection_names(self) -> List[str]:
         """
@@ -32,22 +38,30 @@ class GraphMetadata(object):
         Fetches a specific collection's metadata from within the graph by name.
         """
         if collection_name not in self.collections:
-            raise Exception(
+            raise PyDoughMetadataException(
                 f"Graph {self.name} does not have a collection named {collection_name}"
             )
         return self.collections[collection_name]
 
-    def get_nouns(self) -> Dict[str, List[Union[CollectionMetadata, PropertyMetadata]]]:
+    def get_nouns(
+        self,
+    ) -> Dict[str, List[Union["GraphMetadata", CollectionMetadata, PropertyMetadata]]]:
         """
         Fetches all of the names of collections/properties in the graph.
         """
-        return self.nouns
+        nouns = defaultdict[list]
+        nouns[self.name].append(self)
+        for collection in self.collections.values():
+            for name, value in collection.get_nouns():
+                nouns[name].append(value)
+        return nouns
 
     def verify_json_metadata(graph_name, graph_json) -> None:
         """
         TODO: add function doscstring.
         """
         error_name = f"PyDough metadata for graph {repr(graph_name)}"
+        verify_valid_name(graph_name)
         verify_is_json(graph_json, error_name)
         for collection_name in graph_json:
             CollectionMetadata.verify_json_metadata(

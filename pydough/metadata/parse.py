@@ -56,11 +56,13 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
             )
         match collection_json["type"]:
             case "simple_table":
-                collections[collection_name] = SimpleTableMetadata(collection_name)
+                collections[collection_name] = SimpleTableMetadata(
+                    graph_name, collection_name
+                )
             case collection_type:
                 raise Exception(f"Unrecognized collection type: '{collection_type}'")
 
     for collection_name in graph_json:
         collection = collections[collection_name]
-        collection.parse_from_json(graph_json[collection_name], collections)
+        collection.parse_from_json(collections)
     return GraphMetadata(graph_name, collections)

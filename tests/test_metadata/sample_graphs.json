@@ -4,17 +4,33 @@
     },
     "TPCH": {
         "Regions": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key"],
+            "properties": {
 
+            }
         },
         "Nations": {
+            "type": "simple_table",
+            "table_path": "tpch.NATION",
+            "unique_properties": ["key"],
+            "properties": {
 
+            }
         },
         "Suppliers": {
+            "type": "simple_table",
+            "table_path": "tpch.SUPPLIER",
+            "unique_properties": ["key"],
+            "properties": {
 
+            }
         },
         "Parts": {
             "type": "simple_table",
             "table_path": "tpch.PART",
+            "unique_properties": ["key"],
             "properties": {
                 "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
                 "name": {"type": "table_column", "column_name": "p_name", "data_type": "string"},
@@ -47,6 +63,7 @@
         "PartSupp": {
             "type": "simple_table",
             "table_path": "tpch.PARTSUPP",
+            "unique_properties": [["partkey", "suppkey"]],
             "properties": {
                 "partkey": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
                 "suppkey": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
@@ -56,13 +73,28 @@
             }
         },
         "Lineitems": {
+            "type": "simple_table",
+            "table_path": "tpch.LINEITEM",
+            "unique_properties": [["partkey", "suppkey", "orderkey"]],
+            "properties": {
 
+            }
         },
         "Orders": {
+            "type": "simple_table",
+            "table_path": "tpch.ORDER",
+            "unique_properties": ["key"],
+            "properties": {
 
+            }
         },
         "Customers": {
+            "type": "simple_table",
+            "table_path": "tpch.CUSTOMER",
+            "unique_properties": ["key"],
+            "properties": {
 
+            }
         }
     },
     "empty": {}
