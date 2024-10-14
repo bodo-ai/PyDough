@@ -30,7 +30,7 @@ class TableColumnMetadata(PropertyMetadata):
         graph_name: str, collection_name: str, property_name: str, property_json: Dict
     ) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         error_name = f"table column property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
         verify_typ_in_json(property_json, "column_name", str, error_name)

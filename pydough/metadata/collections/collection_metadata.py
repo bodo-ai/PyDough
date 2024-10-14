@@ -10,7 +10,11 @@ from pydough.metadata.errors import (
     verify_valid_name,
     verify_typ_in_json,
 )
-from pydough.metadata.properties import PropertyMetadata, InheritedPropertyMetadata
+from pydough.metadata.properties import (
+    PropertyMetadata,
+    InheritedPropertyMetadata,
+    ReversiblePropertyMetadata,
+)
 
 
 class CollectionMetadata(ABC):
@@ -29,7 +33,7 @@ class CollectionMetadata(ABC):
     @abstractmethod
     def components(self) -> Tuple:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         return (self.graph_name, self.name)
 
@@ -43,7 +47,7 @@ class CollectionMetadata(ABC):
         graph_name: str, collection_name: str, graph_json: Dict
     ) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         from pydough.metadata.collections import SimpleTableMetadata
 
@@ -81,7 +85,7 @@ class CollectionMetadata(ABC):
     @abstractmethod
     def parse_from_json(self, graph_json: dict) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
 
     @abstractmethod
@@ -89,12 +93,14 @@ class CollectionMetadata(ABC):
         self, property: PropertyMetadata
     ) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
 
-    def add_property(self, property: PropertyMetadata) -> None:
+    def add_property(
+        self, property: PropertyMetadata, adding_reverse: bool = False
+    ) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         if not isinstance(property, PropertyMetadata):
             raise PyDoughMetadataException(
@@ -116,22 +122,26 @@ class CollectionMetadata(ABC):
             inherited_property: InheritedPropertyMetadata = self.inherited_properties[
                 property.name
             ]
-            ancestry = f"{inherited_property.original_collection_name}.{inherited_property.primary_subcollection_collection_name}.{inherited_property.secondary_subcollection_name}"
+            ancestry = f"{inherited_property.original_collection_name}.{inherited_property.primary_property_name}.{inherited_property.secondary_property_name}"
             raise PyDoughMetadataException(
                 f"Inherited property {repr(property)} (from {ancestry}) in {error_name} is a duplicate property name of an existing property."
             )
 
         self.properties[property.name] = property
 
+        if not adding_reverse and isinstance(property, ReversiblePropertyMetadata):
+            reverse_property = property.reverse_property
+            reverse_property.reverse_collection.add_property(reverse_property, True)
+
     def add_inherited_property(self, property: InheritedPropertyMetadata) -> None:
-        if not isinstance(property, PropertyMetadata):
+        if not isinstance(property, InheritedPropertyMetadata):
             raise PyDoughMetadataException(
                 f"Property argument to add_inherited_property must be an InheritedPropertyMetadata. Received a {property.__class__.__name__}"
             )
 
         self.verify_is_property_valid_for_collection(property)
         error_name = f"collection {repr(self.name)} of graph {self.graph_name}"
-        ancestry = f"{property.original_collection_name}.{property.primary_subcollection_collection_name}.{property.secondary_subcollection_name}"
+        ancestry = f"{property.original_collection_name}.{property.primary_property_name}.{property.secondary_property_name}"
         if property.name in self.properties:
             raise PyDoughMetadataException(
                 f"Inherited property {repr(property)} (from {ancestry}) in {error_name} is a duplicate property name of an existing property."
@@ -140,7 +150,7 @@ class CollectionMetadata(ABC):
             inherited_property: InheritedPropertyMetadata = self.inherited_properties[
                 property.name
             ]
-            secondary_ancestry = f"{inherited_property.original_collection_name}.{inherited_property.primary_subcollection_collection_name}.{inherited_property.secondary_subcollection_name}"
+            secondary_ancestry = f"{inherited_property.original_collection_name}.{inherited_property.primary_property_name}.{inherited_property.secondary_property_name}"
             raise PyDoughMetadataException(
                 f"Inherited property {repr(property)} (from {ancestry}) in {error_name} is a duplicate property name of another inherited property (from {secondary_ancestry})."
             )
@@ -151,7 +161,7 @@ class CollectionMetadata(ABC):
         self,
     ) -> List[Tuple[str, Union["CollectionMetadata", PropertyMetadata]]]:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         nouns = [(self.name, self)]
         for property in self.properties.values():
@@ -162,13 +172,13 @@ class CollectionMetadata(ABC):
 
     def get_property_names(self) -> List[str]:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         return list(self.properties)
 
     def get_property(self, property_name: str) -> PropertyMetadata:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         if property_name not in self.properties:
             raise PyDoughMetadataException(

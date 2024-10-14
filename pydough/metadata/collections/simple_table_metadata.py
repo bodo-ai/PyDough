@@ -59,7 +59,7 @@ class SimpleTableMetadata(CollectionMetadata):
         graph_name: str, collection_name: str, collection_json: Dict
     ) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         error_name = f"simple table collection {repr(collection_name)} in graph {repr(graph_name)}"
 
@@ -73,6 +73,6 @@ class SimpleTableMetadata(CollectionMetadata):
 
     def parse_from_json(self, graph_json: dict) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         print(f"PARSING {self}")

@@ -13,7 +13,7 @@ class PyDoughMetadataException(Exception):
 
 def verify_valid_name(name: str) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     if not name.isidentifier():
         raise PyDoughMetadataException(
@@ -25,7 +25,7 @@ def verify_has_type(
     obj: object, typ: type, error_name: str, type_name: str = None
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     if not isinstance(obj, typ):
         type_name = typ.__name__ if type_name is None else type_name
@@ -38,7 +38,7 @@ def verify_is_list_of_string_or_strings(
     json_obj, error_name: str, allow_empty: bool = False
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     if not (
         isinstance(json_obj, list)
@@ -114,11 +114,11 @@ def verify_property_in_json(
     json_obj: Dict, property_name: str, error_name: str
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     if property_name not in json_obj:
         raise PyDoughMetadataException(
-            f"Metadata for {error_name} missing required property {repr(property_name)}."
+            f"Metadata for {error_name} missing property {repr(property_name)}."
         )
 
 
@@ -130,7 +130,7 @@ def verify_typ_in_json(
     type_name: str = None,
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
@@ -143,7 +143,7 @@ def verify_list_of_string_or_strings_in_json(
     json_obj, property_name: str, error_name: str, allow_empty: bool = False
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
@@ -156,7 +156,7 @@ def verify_json_string_list_mapping_in_json(
     json_obj, property_name: str, error_name: str, allow_empty: bool = False
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
@@ -169,7 +169,7 @@ def verify_json_string_mapping_in_json(
     json_obj, property_name: str, error_name: str, allow_empty: bool = False
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
@@ -182,7 +182,7 @@ def verify_no_extra_keys_in_json(
     json_obj: Dict, allowed_properties: List[str], error_name: str
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     extra_keys = {key for key in json_obj if key not in allowed_properties}
     if len(extra_keys) > 0:
@@ -193,7 +193,7 @@ def verify_no_extra_keys_in_json(
 
 def verify_property_in_object(obj: object, property_name: str, error_name: str) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     if not hasattr(obj, property_name):
         raise PyDoughMetadataException(
@@ -209,7 +209,7 @@ def verify_typ_in_object(
     type_name: str = None,
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     verify_property_in_object(obj, property_name, error_name)
     property = getattr(obj, property_name)
@@ -221,14 +221,27 @@ def verify_typ_in_object(
     )
 
 
-def verify_json_string_list_in_object(
-    obj, property_name: str, error_name: str, allow_empty: bool = False
+def verify_json_string_list_mapping_in_object(
+    obj: object, property_name: str, error_name: str, allow_empty: bool = False
 ) -> None:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     verify_property_in_object(obj, property_name, error_name)
     property = getattr(obj, property_name)
     verify_is_json_string_list_mapping(
+        property, f"Property {repr(property_name)} of {error_name}", allow_empty
+    )
+
+
+def verify_json_string_mapping_in_object(
+    obj: object, property_name: str, error_name: str, allow_empty: bool = False
+) -> None:
+    """
+    TODO: add function docstring.
+    """
+    verify_property_in_object(obj, property_name, error_name)
+    property = getattr(obj, property_name)
+    verify_is_json_string_mapping(
         property, f"Property {repr(property_name)} of {error_name}", allow_empty
     )

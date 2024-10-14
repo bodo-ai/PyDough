@@ -21,12 +21,11 @@ class PropertyMetadata(ABC):
         self.graph_name = graph_name
         self.collection_name = collection_name
         self.name = name
-        self.dependencies = []
 
     @abstractmethod
     def components(self) -> Tuple:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         return (self.graph_name, self.collection_name, self.name)
 
@@ -40,7 +39,7 @@ class PropertyMetadata(ABC):
         graph_name: str, collection_name: str, property_name: str, property_json: Dict
     ) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         from pydough.metadata.properties import (
             TableColumnMetadata,
@@ -72,7 +71,7 @@ class PropertyMetadata(ABC):
     @abstractmethod
     def verify_ready_to_add(self, collection) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         from pydough.metadata.collections import CollectionMetadata
 
@@ -84,5 +83,5 @@ class PropertyMetadata(ABC):
     @abstractmethod
     def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """

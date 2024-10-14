@@ -17,7 +17,7 @@ import json
 
 def parse_json_metadata(file_path: str, graph_name: str) -> GraphMetadata:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
     with open(file_path, "r") as f:
         as_json = json.load(f)
@@ -36,7 +36,7 @@ def parse_json_metadata(file_path: str, graph_name: str) -> GraphMetadata:
 
 def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
     """
-    TODO: add function doscstring.
+    TODO: add function docstring.
     """
 
     # A dictionary that will be used to map each collection name to the

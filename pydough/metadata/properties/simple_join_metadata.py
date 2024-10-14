@@ -4,15 +4,16 @@ TODO: add file-level docstring
 
 from typing import Dict, Tuple
 from .property_metadata import PropertyMetadata
+from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.errors import (
     verify_typ_in_json,
     verify_json_string_list_mapping_in_json,
     verify_typ_in_object,
-    verify_json_string_list_in_object,
+    verify_json_string_list_mapping_in_object,
 )
 
 
-class SimpleJoinMetadata(PropertyMetadata):
+class SimpleJoinMetadata(ReversiblePropertyMetadata):
     """
     TODO: add class docstring
     """
@@ -30,10 +31,7 @@ class SimpleJoinMetadata(PropertyMetadata):
         self.singular: bool = None
         self.no_collisions: bool = None
         self.keys: Dict[str, str] = None
-        self.reverse_relationship_name: str = None
-        self.parent_collection: CollectionMetadata = None
-        self.sub_collection: CollectionMetadata = None
-        self.reverse_relationship: PropertyMetadata = None
+        self.collection: CollectionMetadata = None
 
     def components(self) -> Tuple:
         return super().components() + (
@@ -48,7 +46,7 @@ class SimpleJoinMetadata(PropertyMetadata):
         graph_name: str, collection_name: str, property_name: str, property_json: Dict
     ) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         error_name = f"simple join property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
         verify_typ_in_json(property_json, "other_collection_name", str, error_name)
@@ -58,13 +56,19 @@ class SimpleJoinMetadata(PropertyMetadata):
         verify_typ_in_json(property_json, "reverse_relationship_name", str, error_name)
 
     def verify_ready_to_add(self, collection) -> None:
+        from pydough.metadata.collections import CollectionMetadata
+
         super().verify_ready_to_add(collection)
         error_name = f"{self.__class__.__name__} instance {self.name}"
         verify_typ_in_object(self, "other_collection_name", str, error_name)
         verify_typ_in_object(self, "singular", bool, error_name)
         verify_typ_in_object(self, "no_collisions", bool, error_name)
-        verify_json_string_list_in_object(self, "keys", error_name)
+        verify_json_string_list_mapping_in_object(self, "keys", error_name)
         verify_typ_in_object(self, "reverse_relationship_name", str, error_name)
+        verify_typ_in_object(self, "other_collection_name", str, error_name)
+        verify_typ_in_object(self, "collection", CollectionMetadata, error_name)
+        verify_typ_in_object(self, "reverse_collection", CollectionMetadata, error_name)
+        verify_typ_in_object(self, "reverse_property", PropertyMetadata, error_name)
 
     def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         property_json = graph_json[self.collection_name]["properties"][self.name]
@@ -77,7 +81,7 @@ class SimpleJoinMetadata(PropertyMetadata):
         verify_typ_in_json(
             graph_json, self.collection_name, dict, f"graph {repr(self.graph_name)}"
         )
-        self.parent_collection = graph_json[self.collection_name]
+        self.collection = collections[self.collection_name]
 
         verify_typ_in_json(
             graph_json,
@@ -85,20 +89,20 @@ class SimpleJoinMetadata(PropertyMetadata):
             dict,
             f"graph {repr(self.graph_name)}",
         )
-        self.sub_collection = graph_json[self.other_collection_name]
+        self.reverse_collection = collections[self.other_collection_name]
 
         self.build_reverse_relationship()
 
-    def build_reverse_relationship(self) -> PropertyMetadata:
-        """
-        TODO: add function doscstring.
-        """
+    def build_reverse_relationship(self) -> ReversiblePropertyMetadata:
         reverse = SimpleJoinMetadata(
             self.graph_name, self.other_collection_name, self.reverse_relationship_name
         )
         reverse.singular = self.no_collisions
         reverse.no_collisions = self.singular
         reverse.reverse_relationship_name = self.name
+        reverse.other_collection_name = self.collection_name
+        reverse.collection = self.reverse_collection
+        reverse.reverse_collection = self.collection
 
         reverse_keys = {}
         for key in self.keys:
@@ -108,5 +112,5 @@ class SimpleJoinMetadata(PropertyMetadata):
                 reverse_keys[other_key].append(key)
         reverse.keys = reverse_keys
 
-        reverse.reverse_relationship = self
-        self.reverse_relationship = reverse
+        reverse.reverse_property = self
+        self.reverse_property = reverse

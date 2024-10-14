@@ -51,8 +51,8 @@
                 },
                 "suppliers_of_part": {
                     "type": "compound",
-                    "primary_subcollection": "supply_records",
-                    "secondary_subcollection": "supplier",
+                    "primary_property": "supply_records",
+                    "secondary_property": "supplier",
                     "singular": false,
                     "no_collisions": false,
                     "inherited_properties": {"lines": "lines", "availqty": "availqty", "supplycost": "supplycost", "comment": "ps_comment"},

@@ -62,7 +62,7 @@ class GraphMetadata(object):
 
     def verify_json_metadata(graph_name, graph_json) -> None:
         """
-        TODO: add function doscstring.
+        TODO: add function docstring.
         """
         error_name = f"PyDough metadata for graph {repr(graph_name)}"
         verify_valid_name(graph_name)
