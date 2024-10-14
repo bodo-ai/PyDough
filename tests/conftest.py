@@ -20,19 +20,19 @@ def empty_graph_path():
 @pytest.fixture
 def amazon_graph(amazon_graph_path):
     file_path, graph_name = amazon_graph_path
-    return pydough.parse_metadata(file_path=file_path, graph_name=graph_name)
+    return pydough.parse_json_metadata(file_path=file_path, graph_name=graph_name)
 
 
 @pytest.fixture
 def tpch_graph(tpch_graph_path):
     file_path, graph_name = tpch_graph_path
-    return pydough.parse_metadata(file_path=file_path, graph_name=graph_name)
+    return pydough.parse_json_metadata(file_path=file_path, graph_name=graph_name)
 
 
 @pytest.fixture
 def empty_graph(empty_graph_path):
     file_path, graph_name = empty_graph_path
-    return pydough.parse_metadata(file_path=file_path, graph_name=graph_name)
+    return pydough.parse_json_metadata(file_path=file_path, graph_name=graph_name)
 
 
 @pytest.fixture

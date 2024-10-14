@@ -1,5 +1,5 @@
 import pytest
-from pydough.metadata.graph import GraphMetadata
+from pydough.metadata.graphs.graph_metadata import GraphMetadata
 
 
 def test_graph_structure(sample_graphs):
