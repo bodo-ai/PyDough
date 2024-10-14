@@ -23,12 +23,16 @@ class CompoundRelationshipMetadata(PropertyMetadata):
         name: str,
     ):
         super().__init__(graph_name, collection_name, name)
-        self.primary_subcollection = None
-        self.secondary_subcollection = None
-        self.inherited_properties = None
+        self.primary_subcollection_name = None
+        self.secondary_subcollection_name = None
+        self.inherited_properties_mapping = None
 
     def components(self) -> Tuple:
-        return super().components() + (self.column_name, self.data_type)
+        return super().components() + (
+            self.primary_subcollection_name,
+            self.secondary_subcollection_name,
+            self.inherited_properties_mapping,
+        )
 
     def verify_json_metadata(
         graph_name: str, collection_name: str, property_name: str, property_json: Dict
@@ -47,4 +51,4 @@ class CompoundRelationshipMetadata(PropertyMetadata):
         )
 
     def parse_from_json(self, graph_json: dict) -> None:
-        pass
+        raise NotImplementedError

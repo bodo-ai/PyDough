@@ -68,19 +68,20 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
             property_json = properties_json[property_name]
             match property_json["type"]:
                 case "table_column":
-                    collections[collection_name] = TableColumnMetadata(
+                    property = TableColumnMetadata(
                         graph_name, collection_name, property_name
                     )
                 case "simple_join":
-                    collections[collection_name] = SimpleJoinMetadata(
+                    property = SimpleJoinMetadata(
                         graph_name, collection_name, property_name
                     )
                 case "compound":
-                    collections[collection_name] = CompoundRelationshipMetadata(
+                    property = CompoundRelationshipMetadata(
                         graph_name, collection_name, property_name
                     )
                 case collection_type:
                     raise Exception(f"Unrecognized property type: '{collection_type}'")
+            raw_properties.append(property)
 
     for collection_name in graph_json:
         collection = collections[collection_name]
@@ -88,7 +89,7 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
 
     ordered_properties = topologically_sort_properties(raw_properties)
     for property in ordered_properties:
-        collection = graph_json[property.collection_name]
+        collection = collections[property.collection_name]
         collection.add_property(property.parse_from_json(graph_json))
 
     return GraphMetadata(graph_name, collections)

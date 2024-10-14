@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
+import re
 
 
 class MapType(PyDoughType):
@@ -26,5 +27,20 @@ class MapType(PyDoughType):
     def __repr__(self):
         return f"MapType({repr(self.key_type)},{repr(self.val_type)})"
 
-    def as_json_string(self):
+    def as_json_string(self) -> str:
         return f"map[{self.key_type.as_json_string()},{self.val_type.as_json_string()}]"
+
+    type_string_pattern: re.Pattern = re.compile("map[(.+),(.+)]")
+
+    def parse_from_string(type_string: str) -> PyDoughType:
+        from pydough.types import parse_type_from_string
+
+        match = MapType.type_string_pattern.fullmatch(type_string)
+        if match is None:
+            return None
+        try:
+            key_type = parse_type_from_string(match.groups[0])
+            val_type = parse_type_from_string(match.groups[1])
+        except PyDoughTypeException:
+            return None
+        return MapType(key_type, val_type)

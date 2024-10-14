@@ -31,7 +31,7 @@ class PropertyMetadata(ABC):
         return (self.graph_name, self.collection_name, self.name)
 
     def __repr__(self):
-        return f"{type(self)}({','.join(repr(component) for component in self.components())})"
+        return f"{self.__class__.__name__}({', '.join(repr(component) for component in self.components())})"
 
     def __eq__(self, other):
         return (type(self) is type(other)) and (self.components() == other.components())

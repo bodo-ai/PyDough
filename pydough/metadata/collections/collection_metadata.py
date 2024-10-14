@@ -35,7 +35,7 @@ class CollectionMetadata(ABC):
         return (self.graph_name, self.name)
 
     def __repr__(self):
-        return f"{type(self)}({','.join(repr(component) for component in self.components())})"
+        return f"{self.__class__.__name__}({', '.join(repr(component) for component in self.components())})"
 
     def __eq__(self, other):
         return (type(self) is type(other)) and (self.components() == other.components())
@@ -84,9 +84,67 @@ class CollectionMetadata(ABC):
         """
         TODO: add function doscstring.
         """
-        raise NotImplementedError(
-            f"Collection metadata class {type(self).__name__} does not have a parse_from_json method implemented"
-        )
+
+    @abstractmethod
+    def verify_is_property_valid_for_collection(property) -> None:
+        """
+        TODO: add function doscstring.
+        """
+
+    def add_property(self, property: PropertyMetadata) -> None:
+        """
+        TODO: add function doscstring.
+        """
+        if not isinstance(property, PropertyMetadata):
+            raise PyDoughMetadataException(
+                f"Property argument to add_property must be a PropertyMetadata. Received a {property.__class__.__name__}"
+            )
+        if isinstance(property, InheritedPropertyMetadata):
+            raise PyDoughMetadataException(
+                "Cannot add an inherited property with add_property. Use add_inherited_property instead."
+            )
+
+        self.verify_is_property_valid_for_collection(property)
+        error_name = f"collection {repr(self.name)} of graph {self.graph_name}"
+
+        if property.name in self.properties:
+            raise PyDoughMetadataException(
+                f"Duplicate property name {repr(property)} in {error_name}."
+            )
+        if property.name in self.inherited_properties:
+            inherited_property: InheritedPropertyMetadata = self.inherited_properties[
+                property.name
+            ]
+            ancestry = f"{inherited_property.original_collection_name}.{inherited_property.primary_subcollection_collection_name}.{inherited_property.secondary_subcollection_name}"
+            raise PyDoughMetadataException(
+                f"Inherited property {repr(property)} (from {ancestry}) in {error_name} is a duplicate property name of an existing property."
+            )
+
+        self.properties[property.name] = property
+
+    def add_inherited_property(self, property: InheritedPropertyMetadata) -> None:
+        if not isinstance(property, PropertyMetadata):
+            raise PyDoughMetadataException(
+                f"Property argument to add_inherited_property must be an InheritedPropertyMetadata. Received a {property.__class__.__name__}"
+            )
+
+        self.verify_is_property_valid_for_collection(property)
+        error_name = f"collection {repr(self.name)} of graph {self.graph_name}"
+        ancestry = f"{property.original_collection_name}.{property.primary_subcollection_collection_name}.{property.secondary_subcollection_name}"
+        if property.name in self.properties:
+            raise PyDoughMetadataException(
+                f"Inherited property {repr(property)} (from {ancestry}) in {error_name} is a duplicate property name of an existing property."
+            )
+        if property.name in self.inherited_properties:
+            inherited_property: InheritedPropertyMetadata = self.inherited_properties[
+                property.name
+            ]
+            secondary_ancestry = f"{inherited_property.original_collection_name}.{inherited_property.primary_subcollection_collection_name}.{inherited_property.secondary_subcollection_name}"
+            raise PyDoughMetadataException(
+                f"Inherited property {repr(property)} (from {ancestry}) in {error_name} is a duplicate property name of another inherited property (from {secondary_ancestry})."
+            )
+
+        self.inherited_properties[property.name] = property
 
     def get_nouns(
         self,

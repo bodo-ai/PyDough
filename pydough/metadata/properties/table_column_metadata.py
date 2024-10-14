@@ -5,6 +5,7 @@ TODO: add file-level docstring
 from typing import Dict, Tuple
 from .property_metadata import PropertyMetadata
 from pydough.metadata.errors import verify_string_in_json
+from pydough.types import parse_type_from_string
 
 
 class TableColumnMetadata(PropertyMetadata):
@@ -36,4 +37,6 @@ class TableColumnMetadata(PropertyMetadata):
         verify_string_in_json(property_json, "data_type", error_name)
 
     def parse_from_json(self, graph_json: dict) -> None:
-        pass
+        property_json = graph_json[self.collection_name]["properties"][self.name]
+        self.column_name = property_json["column_name"]
+        self.data_type = parse_type_from_string(property_json["data_type"])

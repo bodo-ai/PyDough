@@ -13,14 +13,20 @@ class InheritedPropertyMetadata(PropertyMetadata):
     """
 
     def __init__(
-        self, name: str, parent_collection_name: str, parent_property_name: str
+        self,
+        name: str,
+        original_collection_name: str,
+        parent_collection_name: str,
+        parent_property_name: str,
     ):
         super().__init__(name)
+        self.original_collection_name = original_collection_name
         self.parent_collection_name = parent_collection_name
         self.parent_property_name = parent_property_name
 
     def components(self) -> Tuple:
         return super().components() + (
+            self.original_collection_name,
             self.parent_collection_name,
             self.parent_property_name,
         )

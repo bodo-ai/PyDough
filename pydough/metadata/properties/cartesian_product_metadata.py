@@ -34,4 +34,4 @@ class CartesianProductMetadata(PropertyMetadata):
         verify_string_in_json(property_json, "other_collection_name", error_name)
 
     def parse_from_json(self, graph_json: dict) -> None:
-        pass
+        raise NotImplementedError
