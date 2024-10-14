@@ -1,0 +1,8 @@
+[project]
+name = "pydough"
+authors = [{name = "Bodo.ai"}]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = ["pre-commit", "pytest"]
+databases = ["sqlite3"]
