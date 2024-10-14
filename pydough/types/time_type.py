@@ -25,11 +25,11 @@ class TimeType(PyDoughType):
     def as_json_string(self) -> str:
         return f"time[{self.precision}]"
 
-    type_string_pattern: re.Pattern = re.compile("time[(\d)]")
+    type_string_pattern: re.Pattern = re.compile("time\[(\d)\]")
 
     def parse_from_string(type_string: str) -> PyDoughType:
         match = TimeType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None
-        precision = int(match.groups[0])
+        precision = int(match.groups(0)[0])
         return TimeType(precision)

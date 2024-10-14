@@ -25,7 +25,7 @@ class ArrayType(PyDoughType):
     def as_json_string(self) -> str:
         return f"array[{self.elem_type.as_json_string()}]"
 
-    type_string_pattern: re.Pattern = re.compile("array[(.+)]")
+    type_string_pattern: re.Pattern = re.compile("array\[(.+)\]")
 
     def parse_from_string(type_string: str) -> PyDoughType:
         from pydough.types import parse_type_from_string
@@ -34,7 +34,7 @@ class ArrayType(PyDoughType):
         if match is None:
             return None
         try:
-            elem_type = parse_type_from_string(match.groups[0])
+            elem_type = parse_type_from_string(match.groups(0)[0])
         except PyDoughTypeException:
             return None
         return ArrayType(elem_type)

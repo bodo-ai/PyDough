@@ -11,7 +11,7 @@ class IntegerType(PyDoughType):
     """
 
     def __repr__(self):
-        return f"Integer{self.bit_width}Type()"
+        return f"Int{self.bit_width}Type()"
 
     def as_json_string(self) -> str:
         return f"int{self.bit_width}"
@@ -21,11 +21,11 @@ class IntegerType(PyDoughType):
             case "int8":
                 return Int8Type()
             case "int16":
-                return Int8Type()
+                return Int16Type()
             case "int32":
-                return Int8Type()
+                return Int32Type()
             case "int64":
-                return Int8Type()
+                return Int64Type()
             case _:
                 return None
 
