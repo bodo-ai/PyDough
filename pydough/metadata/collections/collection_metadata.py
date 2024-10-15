@@ -6,10 +6,11 @@ from abc import ABC, abstractmethod
 
 from typing import List, Union, Dict, Tuple
 from pydough.metadata.errors import (
+    verify_json_has_property_with_type,
     PyDoughMetadataException,
     verify_valid_name,
-    verify_typ_in_json,
 )
+import itertools
 from pydough.metadata.properties import (
     PropertyMetadata,
     InheritedPropertyMetadata,
@@ -28,7 +29,7 @@ class CollectionMetadata(ABC):
         self.graph_name: str = graph_name
         self.name: str = name
         self.properties: Dict[str, PropertyMetadata] = {}
-        self.inherited_properties: Dict[str, Tuple[InheritedPropertyMetadata]] = {}
+        self.inherited_properties: Dict[str, InheritedPropertyMetadata] = {}
 
     @abstractmethod
     def components(self) -> Tuple:
@@ -59,8 +60,10 @@ class CollectionMetadata(ABC):
                 f"Cannot have collection named {repr(collection_name)} share the same name as the graph containing it."
             )
 
-        verify_typ_in_json(collection_json, "type", str, error_name)
-        verify_typ_in_json(collection_json, "properties", dict, error_name)
+        verify_json_has_property_with_type(collection_json, "type", str, error_name)
+        verify_json_has_property_with_type(
+            collection_json, "properties", dict, error_name
+        )
 
         match collection_json["type"]:
             case "simple_table":
@@ -74,7 +77,9 @@ class CollectionMetadata(ABC):
 
         properties_json = collection_json["properties"]
         for property_name in collection_json["properties"]:
-            verify_typ_in_json(properties_json, property_name, dict, error_name)
+            verify_json_has_property_with_type(
+                properties_json, property_name, dict, error_name
+            )
             PropertyMetadata.verify_json_metadata(
                 graph_name,
                 collection_name,
@@ -83,10 +88,61 @@ class CollectionMetadata(ABC):
             )
 
     @abstractmethod
-    def parse_from_json(self, graph_json: dict) -> None:
+    def parse_from_json(self, graph_json: Dict) -> None:
         """
         TODO: add function docstring.
         """
+
+    @abstractmethod
+    def verify_complete(self, collections: Dict[str, "CollectionMetadata"]) -> None:
+        """
+        TODO: add function docstring.
+        """
+        for property_name, property in itertools.chain(
+            self.properties.items(), self.inherited_properties.items()
+        ):
+            if (
+                (property_name != property.name)
+                or (property.collection_name != self.name)
+                or (property.graph_name != self.graph_name)
+            ):
+                raise PyDoughMetadataException(
+                    "Malformed PyDough property: name mismatch"
+                )
+            if isinstance(property, ReversiblePropertyMetadata):
+                reverse_collection = property.reverse_collection
+                reverse_property = property.reverse_property
+                reverse_name = property.reverse_relationship_name
+                if reverse_property.name != reverse_name:
+                    raise PyDoughMetadataException(
+                        "Malformed PyDough property: name mismatch"
+                    )
+                verify_json_has_property_with_type(
+                    collections,
+                    reverse_collection.name,
+                    CollectionMetadata,
+                    f"graph {self.graph_name}",
+                )
+                verify_json_has_property_with_type(
+                    reverse_collection.properties,
+                    reverse_name,
+                    ReversiblePropertyMetadata,
+                    f"collection {reverse_collection.name} in graph {self.graph_name}",
+                )
+                if (
+                    (reverse_property.name != reverse_name)
+                    or (
+                        reverse_collection.properties[reverse_name]
+                        is not reverse_property
+                    )
+                    or (reverse_property.collection_name != reverse_collection.name)
+                    or (property.singular != reverse_property.no_collisions)
+                    or (property.no_collisions != reverse_property.singular)
+                    or (reverse_property.reverse_property is not property)
+                ):
+                    raise PyDoughMetadataException(
+                        "Malformed PyDough property: forward & reverse relationship mismatch"
+                    )
 
     @abstractmethod
     def verify_is_property_valid_for_collection(
@@ -131,7 +187,7 @@ class CollectionMetadata(ABC):
 
         if not adding_reverse and isinstance(property, ReversiblePropertyMetadata):
             reverse_property = property.reverse_property
-            reverse_property.reverse_collection.add_property(reverse_property, True)
+            property.reverse_collection.add_property(reverse_property, True)
 
     def add_inherited_property(self, property: InheritedPropertyMetadata) -> None:
         if not isinstance(property, InheritedPropertyMetadata):

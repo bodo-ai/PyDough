@@ -4,7 +4,9 @@ TODO: add file-level docstring
 
 from typing import Dict, List
 from .graphs import GraphMetadata
-from .errors import PyDoughMetadataException
+from pydough.metadata.errors import (
+    PyDoughMetadataException,
+)
 from .collections import CollectionMetadata, SimpleTableMetadata
 from .properties import (
     PropertyMetadata,
@@ -85,13 +87,15 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
 
     for collection_name in graph_json:
         collection = collections[collection_name]
-        collection.parse_from_json(collections)
+        collection.parse_from_json(graph_json)
 
     ordered_properties = topologically_sort_properties(raw_properties)
     for property in ordered_properties:
         collection = collections[property.collection_name]
         property.parse_from_json(collections, graph_json)
         collection.add_property(property)
+    for collection in collections.values():
+        collection.verify_complete(collections)
 
     return GraphMetadata(graph_name, collections)
 
@@ -99,4 +103,9 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
 def topologically_sort_properties(
     raw_properties: List[PropertyMetadata],
 ) -> List[PropertyMetadata]:
-    return raw_properties
+    ordered_properties = sorted(
+        raw_properties, key=lambda x: isinstance(x, CompoundRelationshipMetadata)
+    )
+    for i, p in enumerate(ordered_properties):
+        print(i, p)
+    return ordered_properties

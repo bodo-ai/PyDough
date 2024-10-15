@@ -6,8 +6,8 @@ from typing import List, Union, Dict
 from collections import defaultdict
 from pydough.metadata.errors import (
     PyDoughMetadataException,
-    verify_has_type,
     verify_valid_name,
+    verify_has_type,
 )
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.properties import PropertyMetadata

@@ -6,10 +6,11 @@ from typing import Dict, Tuple
 from .property_metadata import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.errors import (
-    verify_typ_in_json,
-    verify_json_string_mapping_in_json,
-    verify_typ_in_object,
-    verify_json_string_mapping_in_object,
+    verify_json_has_property_with_type,
+    verify_json_has_property_matching,
+    verify_object_has_property_with_type,
+    verify_object_has_property_matching,
+    is_string_string_mapping,
 )
 
 
@@ -32,6 +33,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         self.inherited_properties_mapping: str = None
         self.singular: bool = None
         self.no_collisions: bool = None
+        self.inherited_properties: Dict[str, PropertyMetadata] = None
         self.collection: CollectionMetadata = None
         self.primary_property: ReversiblePropertyMetadata = None
         self.secondary_collection: CollectionMetadata = None
@@ -48,13 +50,25 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         graph_name: str, collection_name: str, property_name: str, property_json: Dict
     ) -> None:
         error_name = f"compound relationship property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
-        verify_typ_in_json(property_json, "primary_property", str, error_name)
-        verify_typ_in_json(property_json, "secondary_property", str, error_name)
-        verify_typ_in_json(property_json, "reverse_relationship_name", str, error_name)
-        verify_typ_in_json(property_json, "singular", bool, error_name)
-        verify_typ_in_json(property_json, "no_collisions", bool, error_name)
-        verify_json_string_mapping_in_json(
-            property_json, "inherited_properties", error_name
+        verify_json_has_property_with_type(
+            property_json, "primary_property", str, error_name
+        )
+        verify_json_has_property_with_type(
+            property_json, "secondary_property", str, error_name
+        )
+        verify_json_has_property_with_type(
+            property_json, "reverse_relationship_name", str, error_name
+        )
+        verify_json_has_property_with_type(property_json, "singular", bool, error_name)
+        verify_json_has_property_with_type(
+            property_json, "no_collisions", bool, error_name
+        )
+        verify_json_has_property_matching(
+            property_json,
+            "inherited_properties",
+            lambda x: is_string_string_mapping(x, True),
+            error_name,
+            "JSON object of strings",
         )
 
     def verify_ready_to_add(self, collection) -> None:
@@ -63,27 +77,37 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
 
         super().verify_ready_to_add(collection)
         error_name = f"{self.__class__.__name__} instance {self.name}"
-        verify_typ_in_object(self, "primary_property_name", str, error_name)
-        verify_typ_in_object(self, "secondary_property_name", str, error_name)
-        verify_typ_in_object(self, "singular", bool, bool)
-        verify_typ_in_object(self, "no_collisions", str, error_name)
-        verify_json_string_mapping_in_object(
-            self, "inherited_properties_mapping", error_name
+        verify_object_has_property_with_type(
+            self, "primary_property_name", str, error_name
         )
-        verify_typ_in_object(
+        verify_object_has_property_with_type(
+            self, "secondary_property_name", str, error_name
+        )
+        verify_object_has_property_with_type(self, "singular", bool, error_name)
+        verify_object_has_property_with_type(self, "no_collisions", bool, error_name)
+
+        verify_object_has_property_matching(
+            self,
+            "inherited_properties",
+            lambda x: is_string_string_mapping(x, True),
+            error_name,
+            "JSON object of strings",
+        )
+        verify_object_has_property_with_type(
             self, "primary_property", ReversiblePropertyMetadata, error_name
         )
-        verify_typ_in_object(
+        verify_object_has_property_with_type(
             self, "secondary_collection", CollectionMetadata, error_name
         )
-        verify_typ_in_object(
+        verify_object_has_property_with_type(
             self, "secondary_property", ReversiblePropertyMetadata, error_name
         )
-        verify_typ_in_object(
-            self, "reverse_subcollection", CollectionMetadata, error_name
+        verify_object_has_property_with_type(
+            self, "reverse_relationship_name", str, error_name
         )
-        verify_typ_in_object(self, "reverse_relationship_name", str, error_name)
-        verify_typ_in_object(self, "reverse_property", PropertyMetadata, error_name)
+        verify_object_has_property_with_type(
+            self, "reverse_property", PropertyMetadata, error_name
+        )
 
     def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         from pydough.metadata.collections import CollectionMetadata
@@ -96,25 +120,25 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         self.no_collisions = property_json["no_collisions"]
         self.reverse_relationship_name = property_json["reverse_relationship_name"]
 
-        verify_typ_in_json(
+        verify_json_has_property_with_type(
             graph_json, self.collection_name, dict, f"graph {repr(self.graph_name)}"
         )
         self.collection: CollectionMetadata = collections[self.collection_name]
-        verify_typ_in_json(
+        verify_json_has_property_with_type(
             self.collection.properties,
             self.primary_property_name,
             ReversiblePropertyMetadata,
             f"Collection {repr(self.collection.name)} in graph {repr(self.graph_name)}",
         )
         self.primary_property = self.collection.properties[self.primary_property_name]
-        verify_typ_in_object(
+        verify_object_has_property_with_type(
             self.primary_property,
             "reverse_collection",
             CollectionMetadata,
             f"Property {self.primary_property_name} of collection {repr(self.collection.name)} in graph {repr(self.graph_name)}",
         )
         self.secondary_collection = self.primary_property.reverse_collection
-        verify_typ_in_json(
+        verify_json_has_property_with_type(
             self.secondary_collection.properties,
             self.secondary_property_name,
             ReversiblePropertyMetadata,
@@ -123,15 +147,50 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         self.secondary_property = self.secondary_collection.properties[
             self.secondary_property_name
         ]
-        verify_typ_in_object(
+        verify_object_has_property_with_type(
             self.secondary_property,
             "reverse_collection",
             CollectionMetadata,
             f"Property {self.secondary_property_name} of collection {repr(self.secondary_collection.name)} (accessed from property {self.primary_property_name} of collection {repr(self.collection.name)} in graph {repr(self.graph_name)})",
         )
+
+        self.inherited_properties = {}
+        inherited_json = property_json["inherited_properties"]
+        for alias_name in inherited_json:
+            property_name = inherited_json[alias_name]
+            verify_json_has_property_with_type(
+                self.secondary_collection.properties,
+                property_name,
+                PropertyMetadata,
+                f"collection {self.secondary_collection.name} in graph {self.graph_name}",
+            )
+            self.inherited_properties[alias_name] = property_name
+
         self.reverse_collection = self.secondary_property.reverse_collection
 
         self.build_reverse_relationship()
 
     def build_reverse_relationship(self) -> ReversiblePropertyMetadata:
-        raise NotImplementedError
+        reverse = CompoundRelationshipMetadata(
+            self.graph_name,
+            self.reverse_collection.name,
+            self.reverse_relationship_name,
+        )
+        reverse.singular = self.no_collisions
+        reverse.no_collisions = self.singular
+        reverse.reverse_relationship_name = self.name
+        reverse.inherited_properties_mapping = self.inherited_properties_mapping
+        reverse.inherited_properties = self.inherited_properties
+
+        reverse.primary_property = self.secondary_property.reverse_property
+        reverse.secondary_property = self.primary_property.reverse_property
+
+        reverse.primary_property_name = reverse.primary_property.name
+        reverse.secondary_property_name = reverse.secondary_property.name
+        reverse.secondary_collection = self.secondary_collection
+
+        reverse.collection = self.reverse_collection
+        reverse.reverse_collection = self.collection
+
+        reverse.reverse_property = self
+        self.reverse_property = reverse

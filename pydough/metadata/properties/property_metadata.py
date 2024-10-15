@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 
 from typing import Dict, Tuple
 from pydough.metadata.errors import (
+    verify_json_has_property_with_type,
     PyDoughMetadataException,
-    verify_typ_in_json,
     verify_valid_name,
 )
 
@@ -49,7 +49,7 @@ class PropertyMetadata(ABC):
 
         verify_valid_name(collection_name)
         error_name = f"property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
-        verify_typ_in_json(property_json, "type", str, error_name)
+        verify_json_has_property_with_type(property_json, "type", str, error_name)
         match property_json["type"]:
             case "table_column":
                 TableColumnMetadata.verify_json_metadata(
