@@ -15,12 +15,12 @@ class ArrayType(PyDoughType):
     def __init__(self, elem_type: PyDoughType):
         if not isinstance(elem_type, PyDoughType):
             raise PyDoughTypeException(
-                f"Invalid component type for ArrayType. Expected a PyDoughType, received: {repr(elem_type)}"
+                f"Invalid component type for ArrayType. Expected a PyDoughType, received: {elem_type!r}"
             )
         self.elem_type = elem_type
 
     def __repr__(self):
-        return f"ArrayType({repr(self.elem_type)})"
+        return f"ArrayType({self.elem_type!r})"
 
     def as_json_string(self) -> str:
         return f"array[{self.elem_type.as_json_string()}]"

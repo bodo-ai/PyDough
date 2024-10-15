@@ -15,17 +15,17 @@ class MapType(PyDoughType):
     def __init__(self, key_type: PyDoughType, val_type: PyDoughType):
         if not isinstance(key_type, PyDoughType):
             raise PyDoughTypeException(
-                f"Invalid key type for ArrayType. Expected a PyDoughType, received: {repr(key_type)}"
+                f"Invalid key type for ArrayType. Expected a PyDoughType, received: {key_type!r}"
             )
         if not isinstance(key_type, PyDoughType):
             raise PyDoughTypeException(
-                f"Invalid value type for ArrayType. Expected a PyDoughType, received: {repr(val_type)}"
+                f"Invalid value type for ArrayType. Expected a PyDoughType, received: {val_type!r}"
             )
         self.key_type = key_type
         self.val_type = val_type
 
     def __repr__(self):
-        return f"MapType({repr(self.key_type)},{repr(self.val_type)})"
+        return f"MapType({self.key_type!r},{self.val_type!r})"
 
     def as_json_string(self) -> str:
         return f"map[{self.key_type.as_json_string()},{self.val_type.as_json_string()}]"

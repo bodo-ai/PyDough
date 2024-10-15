@@ -26,12 +26,12 @@ class StructType(PyDoughType):
             )
         ):
             raise PyDoughTypeException(
-                f"Invalid fields type for StructType: {repr(fields)}"
+                f"Invalid fields type for StructType: {fields!r}"
             )
         self.fields = fields
 
     def __repr__(self):
-        return f"StructType({repr(self.fields)})"
+        return f"StructType({self.fields!r})"
 
     def as_json_string(self) -> str:
         field_strings = [f"{name}:{typ.as_json_string()}" for name, typ in self.fields]
