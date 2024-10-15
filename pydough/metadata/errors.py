@@ -22,7 +22,7 @@ def verify_valid_name(name: str) -> None:
     """
     if not name.isidentifier():
         raise PyDoughMetadataException(
-            f"Invalid name {repr(name)}: all PyDough graph/collection/property names must be valid Python identifiers."
+            f"Invalid name {name!r}: all PyDough graph/collection/property names must be valid Python identifiers."
         )
 
 
@@ -47,7 +47,7 @@ def verify_property_in_json(
     """
     if property_name not in json_obj:
         raise PyDoughMetadataException(
-            f"Metadata for {error_name} missing property {repr(property_name)}."
+            f"Metadata for {error_name} missing property {property_name!r}."
         )
 
 
@@ -57,11 +57,13 @@ def verify_property_in_object(obj: object, property_name: str, error_name: str) 
     """
     if not hasattr(obj, property_name):
         raise PyDoughMetadataException(
-            f"Property {repr(property_name)} of {error_name} is missing."
+            f"Property {property_name!r} of {error_name} is missing."
         )
 
 
-def verify_has_type(obj: Any, typ: type, error_name: str, type_name: str) -> None:
+def verify_has_type(
+    obj: Any, typ: type, error_name: str, type_name: str = None
+) -> None:
     """
     TODO: add function docstring.
     """
@@ -97,7 +99,7 @@ def verify_json_has_property_with_type(
     verify_has_type(
         property,
         expected_type,
-        f"Property {repr(property_name)} of {error_name}",
+        f"Property {property_name!r} of {error_name}",
         type_name,
     )
 
@@ -117,7 +119,7 @@ def verify_object_has_property_with_type(
     verify_has_type(
         property,
         expected_type,
-        f"Property {repr(property_name)} of {error_name}",
+        f"Property {property_name!r} of {error_name}",
         type_name,
     )
 
@@ -137,7 +139,7 @@ def verify_json_has_property_matching(
     verify_matches_predicate(
         property,
         predicate,
-        f"Property {repr(property_name)} of {error_name}",
+        f"Property {property_name!r} of {error_name}",
         predicate_str,
     )
 
@@ -157,7 +159,7 @@ def verify_object_has_property_matching(
     verify_matches_predicate(
         property,
         predicate,
-        f"Property {repr(property_name)} of {error_name}",
+        f"Property {property_name!r} of {error_name}",
         predicate_str,
     )
 

@@ -2,16 +2,15 @@
 TODO: add file-level docstring
 """
 
-from typing import Dict, Tuple
-from .property_metadata import PropertyMetadata
+from typing import Dict
+from .scalar_attribute_metadata import ScalarAttributeMetadata
 from pydough.metadata.errors import (
-    verify_json_has_property_with_type,
     verify_object_has_property_with_type,
 )
 from pydough.types import parse_type_from_string, PyDoughType
 
 
-class TableColumnMetadata(PropertyMetadata):
+class TableColumnMetadata(ScalarAttributeMetadata):
     """
     TODO: add class docstring
     """
@@ -26,20 +25,30 @@ class TableColumnMetadata(PropertyMetadata):
         self.column_name = None
         self.data_type = None
 
-    def components(self) -> Tuple:
+    def create_error_name(name: str, collection_error_name: str):
+        return f"table column property {name!r} of {collection_error_name}"
+
+    def components(self) -> tuple:
         return super().components() + (self.column_name, self.data_type)
 
     def verify_json_metadata(
-        graph_name: str, collection_name: str, property_name: str, property_json: Dict
+        graph, collection, property_name: str, property_json: Dict
     ) -> None:
         """
         TODO: add function docstring.
         """
-        error_name = f"table column property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
-        verify_json_has_property_with_type(
-            property_json, "column_name", str, error_name
-        )
-        verify_json_has_property_with_type(property_json, "data_type", str, error_name)
+        # verify_valid_name(property_name)
+        # verify_has_type(graph, GraphMetadata, "graph")
+        # verify_has_type(collection, GraphMetadata, "graph")
+        # error_name = SimpleTableMetadata.create_error_name(
+        #     collection_name, graph.error_name
+        # )
+        # error_name = TableColumnMetadata.create_error_name()
+        # error_name = f"table column property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
+        # verify_json_has_property_with_type(
+        #     property_json, "column_name", str, error_name
+        # )
+        # verify_json_has_property_with_type(property_json, "data_type", str, error_name)
 
     def verify_ready_to_add(self, collection) -> None:
         super().verify_ready_to_add(collection)

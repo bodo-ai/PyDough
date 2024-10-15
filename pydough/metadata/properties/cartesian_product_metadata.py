@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import Dict, Tuple
+from typing import Dict
 from .property_metadata import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.errors import (
@@ -16,17 +16,11 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
     TODO: add class docstring
     """
 
-    def __init__(
-        self,
-        graph_name: str,
-        collection_name: str,
-        name: str,
-    ):
-        super().__init__(graph_name, collection_name, name)
-        self.other_collection_name = None
+    def create_error_name(name: str, collection_error_name: str):
+        return f"cartesian property {name!r} of {collection_error_name}"
 
-    def components(self) -> Tuple:
-        return super().components() + (self.other_collection_name,)
+    def components(self) -> tuple:
+        return super().components()
 
     def verify_json_metadata(
         graph_name: str, collection_name: str, property_name: str, property_json: Dict

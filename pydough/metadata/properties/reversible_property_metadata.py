@@ -4,24 +4,36 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from .property_metadata import PropertyMetadata
+from .subcollection_relationship_metadata import SubcollectionRelationshipMetadata
 
 
-class ReversiblePropertyMetadata(PropertyMetadata):
+class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
     """
     TODO: add class docstring
     """
 
-    def __init__(self, graph_name: str, collection_name: str, name: str):
-        from pydough.metadata.collections import CollectionMetadata
+    def __init__(
+        self,
+        name: str,
+        reverse_name: str,
+        collection,
+        other_collection,
+        singular: bool,
+        no_collisions: bool,
+    ):
+        super().__init__(name, collection, other_collection, singular, no_collisions)
+        self.reverse_name = reverse_name
+        self.reverse_property = None
 
-        super().__init__(graph_name, collection_name, name)
-        self.reverse_relationship_name: str = None
-        self.reverse_property: ReversiblePropertyMetadata = None
-        self.reverse_collection: CollectionMetadata = None
+    @abstractmethod
+    def components(self) -> tuple:
+        return super().components() + (self.reverse_name,)
 
     @abstractmethod
     def build_reverse_relationship(self) -> "ReversiblePropertyMetadata":
         """
         TODO: add function docstring.
         """
+
+    def is_reversible(self) -> bool:
+        return True

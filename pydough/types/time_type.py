@@ -14,9 +14,7 @@ class TimeType(PyDoughType):
 
     def __init__(self, precision):
         if not isinstance(precision, int) or precision not in range(10):
-            raise PyDoughTypeException(
-                f"Invalid precision for TimeType: {repr(precision)}"
-            )
+            raise PyDoughTypeException(f"Invalid precision for TimeType: {precision!r}")
         self.precision = precision
 
     def __repr__(self):

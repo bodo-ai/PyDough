@@ -16,17 +16,15 @@ class TimestampType(PyDoughType):
     def __init__(self, precision, tz=None):
         if not isinstance(precision, int) or precision not in range(10):
             raise PyDoughTypeException(
-                f"Invalid precision for TimestampType: {repr(precision)}"
+                f"Invalid precision for TimestampType: {precision!r}"
             )
         if not (tz is None or (isinstance(tz, str) and tz in pytz.all_timezones_set)):
-            raise PyDoughTypeException(
-                f"Invalid timezone for TimestampType: {repr(tz)}"
-            )
+            raise PyDoughTypeException(f"Invalid timezone for TimestampType: {tz!r}")
         self.precision = precision
         self.tz = tz
 
     def __repr__(self):
-        return f"TimestampType({self.precision},{repr(self.tz)})"
+        return f"TimestampType({self.precision!r},{self.tz!r})"
 
     def as_json_string(self) -> str:
         if self.tz is None:

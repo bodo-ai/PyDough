@@ -2,41 +2,77 @@
 TODO: add file-level docstring
 """
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
-from typing import Dict, Tuple
+from typing import Dict
 from pydough.metadata.errors import (
     verify_json_has_property_with_type,
     PyDoughMetadataException,
     verify_valid_name,
+    verify_has_type,
 )
+from pydough.metadata.abstract_metadata import AbstractMetadata
+from pydough.metadata.collections import CollectionMetadata
 
 
-class PropertyMetadata(ABC):
+class PropertyMetadata(AbstractMetadata):
     """
     TODO: add class docstring
     """
 
-    def __init__(self, graph_name: str, collection_name: str, name: str):
-        self.graph_name = graph_name
-        self.collection_name = collection_name
+    def __init__(self, name: str, collection):
+        from pydough.metadata.collections import CollectionMetadata
+
+        verify_valid_name(name)
+        verify_has_type(collection, CollectionMetadata, "collection")
         self.name = name
+        self.collection = collection
+
+    @property
+    def error_name(self):
+        """
+        TODO: add function docstring
+        """
+        return self.create_error_name(self.name, self.collection.error_name)
 
     @abstractmethod
-    def components(self) -> Tuple:
+    def create_error_name(name: str, collection_error_name: str):
+        """
+        TODO: add function docstring
+        """
+
+    @property
+    @abstractmethod
+    def is_plural(self) -> bool:
         """
         TODO: add function docstring.
         """
-        return (self.graph_name, self.collection_name, self.name)
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}({', '.join(repr(component) for component in self.components())})"
+    @property
+    @abstractmethod
+    def is_subcollection(self) -> bool:
+        """
+        TODO: add function docstring.
+        """
 
-    def __eq__(self, other):
-        return (type(self) is type(other)) and (self.components() == other.components())
+    @property
+    @abstractmethod
+    def is_reversible(self) -> bool:
+        """
+        TODO: add function docstring.
+        """
 
+    @property
+    @abstractmethod
+    def components(self) -> tuple:
+        """
+        TODO: add function docstring.
+        """
+        return self.graph.components + (self.collection.name, self.name)
+
+    @abstractmethod
     def verify_json_metadata(
-        graph_name: str, collection_name: str, property_name: str, property_json: Dict
+        collection: CollectionMetadata, property_name: str, property_json: Dict
     ) -> None:
         """
         TODO: add function docstring.
@@ -45,23 +81,28 @@ class PropertyMetadata(ABC):
             TableColumnMetadata,
             SimpleJoinMetadata,
             CompoundRelationshipMetadata,
+            CartesianProductMetadata,
         )
 
-        verify_valid_name(collection_name)
-        error_name = f"property {repr(property_name)} of collection {repr(collection_name)} in graph {repr(graph_name)}"
+        verify_valid_name(property_name)
+        error_name = f"property {property_name!r} of collection {collection.error_name}"
         verify_json_has_property_with_type(property_json, "type", str, error_name)
         match property_json["type"]:
             case "table_column":
                 TableColumnMetadata.verify_json_metadata(
-                    graph_name, collection_name, property_name, property_json
+                    collection, property_name, property_json
                 )
             case "simple_join":
                 SimpleJoinMetadata.verify_json_metadata(
-                    graph_name, collection_name, property_name, property_json
+                    collection, property_name, property_json
+                )
+            case "cartesian":
+                CartesianProductMetadata.verify_json_metadata(
+                    collection, property_name, property_json
                 )
             case "compound":
                 CompoundRelationshipMetadata.verify_json_metadata(
-                    graph_name, collection_name, property_name, property_json
+                    collection, property_name, property_json
                 )
             case property_type:
                 raise PyDoughMetadataException(
@@ -69,19 +110,38 @@ class PropertyMetadata(ABC):
                 )
 
     @abstractmethod
-    def verify_ready_to_add(self, collection) -> None:
+    def parse_from_json(
+        collection: CollectionMetadata, property_name: str, property_json: dict
+    ) -> None:
         """
         TODO: add function docstring.
         """
-        from pydough.metadata.collections import CollectionMetadata
+        from pydough.metadata.properties import (
+            TableColumnMetadata,
+            SimpleJoinMetadata,
+            CompoundRelationshipMetadata,
+            CartesianProductMetadata,
+        )
 
-        if not isinstance(collection, CollectionMetadata):
-            raise PyDoughMetadataException(
-                f"Expected the collection of verify_ready_to_add to be a CollectionMetadata, received: {collection.__class__.__name__}"
-            )
-
-    @abstractmethod
-    def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
-        """
-        TODO: add function docstring.
-        """
+        PropertyMetadata.verify_json_metadata(collection, property_name, property_json)
+        property: PropertyMetadata = None
+        match property_json["type"]:
+            case "table_column":
+                property = TableColumnMetadata.parse_from_json(
+                    collection, property_name, property_json
+                )
+            case "simple_join":
+                property = SimpleJoinMetadata.parse_from_json(
+                    collection, property_name, property_json
+                )
+            case "cartesian":
+                property = CartesianProductMetadata.parse_from_json(
+                    collection, property_name, property_json
+                )
+            case "compound":
+                property = CompoundRelationshipMetadata.parse_from_json(
+                    collection, property_name, property_json
+                )
+            case property_type:
+                raise Exception(f"Unrecognized property type: {property_type!r}")
+        collection.add_property(property)

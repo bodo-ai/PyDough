@@ -37,4 +37,4 @@ def parse_type_from_string(type_string: str) -> PyDoughType:
         parsed_type = type_class.parse_from_string(type_string)
         if parsed_type is not None:
             return parsed_type
-    raise PyDoughTypeException(f"Unrecognized type string {repr(type_string)}")
+    raise PyDoughTypeException(f"Unrecognized type string {type_string!r}")

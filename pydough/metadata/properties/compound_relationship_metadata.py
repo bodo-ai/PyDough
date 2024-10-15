@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import Dict, Tuple
+from typing import Dict
 from .property_metadata import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.errors import (
@@ -39,7 +39,10 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         self.secondary_collection: CollectionMetadata = None
         self.secondary_property: ReversiblePropertyMetadata = None
 
-    def components(self) -> Tuple:
+    def create_error_name(name: str, collection_error_name: str):
+        return f"compound property {name!r} of {collection_error_name}"
+
+    def components(self) -> tuple:
         return super().components() + (
             self.primary_property_name,
             self.secondary_property_name,

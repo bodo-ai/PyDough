@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import Tuple, Dict
+from typing import Dict
 from .property_metadata import PropertyMetadata
 from pydough.metadata.errors import PyDoughMetadataException
 
@@ -24,7 +24,7 @@ class InheritedPropertyMetadata(PropertyMetadata):
         self.parent_collection_name = parent_collection_name
         self.parent_property_name = parent_property_name
 
-    def components(self) -> Tuple:
+    def components(self) -> tuple:
         return super().components() + (
             self.original_collection_name,
             self.parent_collection_name,
