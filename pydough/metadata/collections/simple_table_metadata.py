@@ -79,8 +79,6 @@ class SimpleTableMetadata(CollectionMetadata):
     def verify_json_metadata(
         graph, collection_name: str, collection_json: dict
     ) -> None:
-        from pydough.metadata.graphs import GraphMetadata
-
         verify_valid_name(collection_name)
         verify_has_type(graph, GraphMetadata, "graph")
         error_name = SimpleTableMetadata.create_error_name(

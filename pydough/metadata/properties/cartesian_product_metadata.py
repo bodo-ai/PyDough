@@ -2,11 +2,11 @@
 TODO: add file-level docstring
 """
 
-from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.errors import (
     verify_json_has_property_with_type,
 )
 from pydough.metadata.collections import CollectionMetadata
+from . import ReversiblePropertyMetadata
 
 
 class CartesianProductMetadata(ReversiblePropertyMetadata):

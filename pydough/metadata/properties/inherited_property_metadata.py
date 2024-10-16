@@ -3,7 +3,7 @@ TODO: add file-level docstring
 """
 
 from typing import Dict
-from .property_metadata import PropertyMetadata
+from . import PropertyMetadata
 from pydough.metadata.errors import PyDoughMetadataException
 
 

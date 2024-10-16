@@ -5,7 +5,7 @@ TODO: add file-level docstring
 from pydough.types import PyDoughType
 from pydough.metadata.errors import verify_has_type
 
-from .property_metadata import PropertyMetadata
+from . import PropertyMetadata
 from pydough.metadata.collections import CollectionMetadata
 from abc import abstractmethod
 

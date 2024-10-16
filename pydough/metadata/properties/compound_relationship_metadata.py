@@ -3,9 +3,7 @@ TODO: add file-level docstring
 """
 
 from typing import Dict
-from .property_metadata import PropertyMetadata
 from pydough.metadata.errors import verify_has_type
-from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.errors import (
     verify_json_has_property_with_type,
     verify_json_has_property_matching,
@@ -13,6 +11,7 @@ from pydough.metadata.errors import (
     verify_matches_predicate,
 )
 from pydough.metadata.collections import CollectionMetadata
+from . import PropertyMetadata, ReversiblePropertyMetadata
 
 
 class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
