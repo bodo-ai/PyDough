@@ -55,8 +55,9 @@ class SimpleTableMetadata(CollectionMetadata):
     def create_error_name(name, graph_error_name):
         return f"simple table collection {name!r} in {graph_error_name}"
 
+    @property
     def components(self) -> tuple:
-        return super().components() + (self.table_path, self.unique_properties)
+        return super().components + (self.table_path, self.unique_properties)
 
     def verify_allows_property(
         self, property: PropertyMetadata, inherited: bool

@@ -11,7 +11,8 @@ from pydough.metadata.errors import (
     verify_valid_name,
     verify_has_type,
 )
-
+import itertools
+from collections import defaultdict
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
 
@@ -41,7 +42,7 @@ class CollectionMetadata(AbstractMetadata):
         """
         TODO: add function docstring
         """
-        return self.create_error_name(self.name, self.graph.error_name)
+        return CollectionMetadata.create_error_name(self.name, self.graph.error_name)
 
     @abstractmethod
     def create_error_name(name: str, graph_error_name: str):
@@ -55,7 +56,7 @@ class CollectionMetadata(AbstractMetadata):
         """
         TODO: add function docstring.
         """
-        return self.graph.components + (self.graph.name, self.name)
+        return self.graph.components + (self.name,)
 
     @abstractmethod
     def verify_allows_property(
@@ -100,9 +101,7 @@ class CollectionMetadata(AbstractMetadata):
                 f"Inherited property {self.properties[property.name].error_name} is a duplicate of an existing property {property.error_name}."
             )
 
-    def add_property(
-        self, property: AbstractMetadata, adding_reverse: bool = False
-    ) -> None:
+    def add_property(self, property: AbstractMetadata) -> None:
         """
         TODO: add function docstring.
         """
@@ -111,23 +110,24 @@ class CollectionMetadata(AbstractMetadata):
         property: PropertyMetadata = property
         self.verify_allows_property(property, False)
         self.properties[property.name] = property
-        if not adding_reverse and property.is_reversible:
-            reverse_property = property.reverse_property
-            property.reverse_collection.add_property(reverse_property, True)
 
     def add_inherited_property(self, property: AbstractMetadata) -> None:
+        """
+        TODO: add function docstring.
+        """
         from pydough.metadata.properties import PropertyMetadata
 
         property: PropertyMetadata = property
         self.verify_allows_property(property, False)
         self.inherited_properties[property.name] = property
 
-    def get_nouns(self) -> List[AbstractMetadata]:
-        nouns = [(self.name, self)]
-        for property in self.properties.values():
-            nouns.append((property.name, property))
-        for property in self.inherited_properties.values():
-            nouns.append((property.name, property))
+    def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
+        nouns: Dict[str, List[AbstractMetadata]] = defaultdict(list)
+        for property in itertools.chain(
+            self.properties.values(), self.inherited_properties.values()
+        ):
+            for noun_name, values in property.get_nouns():
+                nouns[noun_name].extend(values)
         return nouns
 
     def get_property_names(self) -> List[str]:
@@ -146,7 +146,6 @@ class CollectionMetadata(AbstractMetadata):
             )
         return self.properties[property_name]
 
-    @abstractmethod
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -173,17 +172,14 @@ class CollectionMetadata(AbstractMetadata):
         """
         TODO: add function docstring.
         """
-        from pydough.metadata.collections import SimpleTableMetadata
+        from . import SimpleTableMetadata
 
         CollectionMetadata.verify_json_metadata(graph, collection_name, collection_json)
 
-        collection: CollectionMetadata
         match collection_json["type"]:
             case "simple_table":
-                collection = SimpleTableMetadata.parse_from_json(
+                SimpleTableMetadata.parse_from_json(
                     graph, collection_name, collection_json
                 )
             case collection_type:
                 raise Exception(f"Unrecognized collection type: '{collection_type}'")
-
-        graph.add_collection(collection)

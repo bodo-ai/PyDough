@@ -5,9 +5,8 @@ TODO: add file-level docstring
 from abc import abstractmethod
 
 from .property_metadata import PropertyMetadata
-from pydough.metadata.errors import (
-    verify_has_type,
-)
+from pydough.metadata.errors import verify_has_type
+from pydough.metadata.collections import CollectionMetadata
 
 
 class SubcollectionRelationshipMetadata(PropertyMetadata):
@@ -18,8 +17,8 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
     def __init__(
         self,
         name: str,
-        collection,
-        other_collection,
+        collection: CollectionMetadata,
+        other_collection: CollectionMetadata,
         singular: bool,
         no_collisions: bool,
     ):
@@ -36,23 +35,26 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         )
         verify_has_type(
             no_collisions,
-            no_collisions,
+            bool,
             f"Property 'no_collisions' of {self.__class__.__name__}",
         )
         self.other_collection = other_collection
         self.singular = singular
         self.no_collisions = no_collisions
 
+    @property
     @abstractmethod
     def components(self) -> tuple:
-        return super().components() + (
+        return super().components + (
             self.other_collection.name,
             self.singular,
             self.no_collisions,
         )
 
+    @property
     def is_plural(self) -> bool:
         return self.singular
 
+    @property
     def is_subcollection(self) -> bool:
         return True

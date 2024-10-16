@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from typing import Dict
+from typing import Dict, List
 from pydough.metadata.errors import (
     verify_json_has_property_with_type,
     PyDoughMetadataException,
@@ -20,9 +20,7 @@ class PropertyMetadata(AbstractMetadata):
     TODO: add class docstring
     """
 
-    def __init__(self, name: str, collection):
-        from pydough.metadata.collections import CollectionMetadata
-
+    def __init__(self, name: str, collection: CollectionMetadata):
         verify_valid_name(name)
         verify_has_type(collection, CollectionMetadata, "collection")
         self.name = name
@@ -33,7 +31,7 @@ class PropertyMetadata(AbstractMetadata):
         """
         TODO: add function docstring
         """
-        return self.create_error_name(self.name, self.collection.error_name)
+        return PropertyMetadata.create_error_name(self.name, self.collection.error_name)
 
     @abstractmethod
     def create_error_name(name: str, collection_error_name: str):
@@ -68,11 +66,10 @@ class PropertyMetadata(AbstractMetadata):
         """
         TODO: add function docstring.
         """
-        return self.graph.components + (self.collection.name, self.name)
+        return self.collection.components + (self.collection.name, self.name)
 
-    @abstractmethod
     def verify_json_metadata(
-        collection: CollectionMetadata, property_name: str, property_json: Dict
+        collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
         """
         TODO: add function docstring.
@@ -124,24 +121,25 @@ class PropertyMetadata(AbstractMetadata):
         )
 
         PropertyMetadata.verify_json_metadata(collection, property_name, property_json)
-        property: PropertyMetadata = None
         match property_json["type"]:
             case "table_column":
-                property = TableColumnMetadata.parse_from_json(
+                TableColumnMetadata.parse_from_json(
                     collection, property_name, property_json
                 )
             case "simple_join":
-                property = SimpleJoinMetadata.parse_from_json(
+                SimpleJoinMetadata.parse_from_json(
                     collection, property_name, property_json
                 )
             case "cartesian":
-                property = CartesianProductMetadata.parse_from_json(
+                CartesianProductMetadata.parse_from_json(
                     collection, property_name, property_json
                 )
             case "compound":
-                property = CompoundRelationshipMetadata.parse_from_json(
+                CompoundRelationshipMetadata.parse_from_json(
                     collection, property_name, property_json
                 )
             case property_type:
                 raise Exception(f"Unrecognized property type: {property_type!r}")
-        collection.add_property(property)
+
+    def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
+        return {self.name: [self]}

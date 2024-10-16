@@ -38,5 +38,5 @@ class AbstractMetadata(ABC):
     def __eq__(self, other):
         return type(self) is type(other) and self.components == other.components
 
-    def __repr__(self, other):
+    def __repr__(self):
         return f"PyDoughMetadata[{self.error_name}]"

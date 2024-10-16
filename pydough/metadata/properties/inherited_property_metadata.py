@@ -24,16 +24,13 @@ class InheritedPropertyMetadata(PropertyMetadata):
         self.parent_collection_name = parent_collection_name
         self.parent_property_name = parent_property_name
 
+    @property
     def components(self) -> tuple:
-        return super().components() + (
+        return super().components + (
             self.original_collection_name,
             self.parent_collection_name,
             self.parent_property_name,
         )
-
-    def verify_ready_to_add(self, collection) -> None:
-        super().verify_ready_to_add(collection)
-        raise NotImplementedError
 
     def parse_from_json(self, collections: Dict, graph_json: Dict) -> None:
         raise PyDoughMetadataException(

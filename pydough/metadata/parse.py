@@ -50,7 +50,8 @@ def parse_graph(graph_name: str, graph_json: Dict) -> None:
     # with properties, and also obtain each of the properties.
     for collection_name in graph_json:
         # Add the raw collection metadata to the collections dictionary
-        CollectionMetadata.parse_from_json(graph, collection_name, graph_json)
+        collection_json = graph_json[collection_name]
+        CollectionMetadata.parse_from_json(graph, collection_name, collection_json)
 
         # Add the unprocessed properties of each collection to the properties list
         # (the parsing of the collection verified that the 'properties' key exists)
