@@ -28,6 +28,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         verify_has_type(column_name, str, "column_name")
         self.column_name: str = column_name
 
+    @staticmethod
     def create_error_name(name: str, collection_error_name: str):
         return f"table column property {name!r} of {collection_error_name}"
 

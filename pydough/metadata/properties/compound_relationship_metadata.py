@@ -31,6 +31,8 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         secondary_property: ReversiblePropertyMetadata,
         inherited_properties: Dict[str, PropertyMetadata],
     ):
+        from .inherited_property_metadata import InheritedPropertyMetadata
+
         super().__init__(
             name, reverse_name, collection, other_collection, singular, no_collisions
         )
@@ -46,10 +48,15 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             "inherited_properties",
             "mapping of valid Python identifiers to reversible properties",
         )
-        self.primary_property: PropertyMetadata = primary_property
-        self.secondary_property: PropertyMetadata = secondary_property
-        self.inherited_properties: Dict[str, PropertyMetadata] = inherited_properties
+        self.primary_property: ReversiblePropertyMetadata = primary_property
+        self.secondary_property: ReversiblePropertyMetadata = secondary_property
+        self.inherited_properties: Dict[str, PropertyMetadata] = {}
+        for alias, property in inherited_properties.items():
+            self.inherited_properties[alias] = InheritedPropertyMetadata(
+                alias, other_collection, self, property
+            )
 
+    @staticmethod
     def create_error_name(name: str, collection_error_name: str):
         return f"compound property {name!r} of {collection_error_name}"
 
@@ -119,12 +126,12 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             ReversiblePropertyMetadata,
             secondary_collection.error_name,
         )
-        secondary_property: ReversiblePropertyMetadata = collection.properties[
-            primary_property_name
-        ]
+        secondary_property: ReversiblePropertyMetadata = (
+            secondary_collection.properties[secondary_property_name]
+        )
         other_collection: CollectionMetadata = secondary_property.other_collection
 
-        inherited_properties: Dict[str, ReversiblePropertyMetadata] = {}
+        inherited_properties: Dict[str, PropertyMetadata] = {}
         for alias_name, inherited_property_name in inherited_properties_mapping.items():
             verify_json_has_property_with_type(
                 secondary_collection.properties,
@@ -152,28 +159,24 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         collection.add_property(property)
         other_collection.add_property(property.reverse_property)
 
+        for inherited_property in property.inherited_properties.values():
+            other_collection.add_inherited_property(inherited_property)
+        for (
+            inherited_property
+        ) in property.reverse_property.inherited_properties.values():
+            other_collection.add_inherited_property(inherited_property)
+
     def build_reverse_relationship(self) -> None:
-        raise NotImplementedError
-        # reverse = CompoundRelationshipMetadata(
-        #     self.graph_name,
-        #     self.reverse_collection.name,
-        #     self.reverse_relationship_name,
-        # )
-        # reverse.singular = self.no_collisions
-        # reverse.no_collisions = self.singular
-        # reverse.reverse_relationship_name = self.name
-        # reverse.inherited_properties_mapping = self.inherited_properties_mapping
-        # reverse.inherited_properties = self.inherited_properties
-
-        # reverse.primary_property = self.secondary_property.reverse_property
-        # reverse.secondary_property = self.primary_property.reverse_property
-
-        # reverse.primary_property_name = reverse.primary_property.name
-        # reverse.secondary_property_name = reverse.secondary_property.name
-        # reverse.secondary_collection = self.secondary_collection
-
-        # reverse.collection = self.reverse_collection
-        # reverse.reverse_collection = self.collection
-
-        # reverse.reverse_property = self
-        # self.reverse_property = reverse
+        reverse = CompoundRelationshipMetadata(
+            self.reverse_name,
+            self.name,
+            self.other_collection,
+            self.collection,
+            self.no_collisions,
+            self.singular,
+            self.secondary_property.reverse_property,
+            self.primary_property.reverse_property,
+            self.inherited_properties,
+        )
+        reverse.reverse_property = self
+        self.reverse_property = reverse

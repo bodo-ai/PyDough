@@ -11,7 +11,6 @@ from pydough.metadata.errors import (
     verify_valid_name,
     verify_has_type,
 )
-import itertools
 from collections import defaultdict
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
@@ -35,15 +34,18 @@ class CollectionMetadata(AbstractMetadata):
         self.graph: GraphMetadata = graph
         self.name: str = name
         self.properties: Dict[str, PropertyMetadata] = {}
-        self.inherited_properties: Dict[str, InheritedPropertyMetadata] = {}
+        self.inherited_properties: Dict[str, List[InheritedPropertyMetadata]] = (
+            defaultdict(list)
+        )
 
     @property
     def error_name(self):
         """
         TODO: add function docstring
         """
-        return CollectionMetadata.create_error_name(self.name, self.graph.error_name)
+        return self.create_error_name(self.name, self.graph.error_name)
 
+    @staticmethod
     @abstractmethod
     def create_error_name(name: str, graph_error_name: str):
         """
@@ -75,31 +77,36 @@ class CollectionMetadata(AbstractMetadata):
         if inherited:
             if not isinstance(property, InheritedPropertyMetadata):
                 raise PyDoughMetadataException(
-                    f"Property argument to add_inherited_property must be an InheritedPropertyMetadata. Received a {property.__class__.__name__}"
+                    f"Expected an InheritedPropertyMetadata, received: {property.__class__.__name__}"
                 )
         else:
             if isinstance(property, InheritedPropertyMetadata):
                 raise PyDoughMetadataException(
-                    "Cannot add an inherited property with add_property. Use add_inherited_property instead."
+                    "Cannot add an inherited property with add_property, use add_inherited_property instead."
+                )
+
+        if property.name in self.inherited_properties:
+            if inherited:
+                if property in self.inherited_properties[property.name]:
+                    raise PyDoughMetadataException(
+                        f"Already added {property.error_name}"
+                    )
+            else:
+                raise PyDoughMetadataException(
+                    f"{self.inherited_properties[property.name][0].error_name} conflicts with property {property.error_name}."
                 )
 
         if property.name in self.properties:
             if self.properties[property.name] == property:
+                raise PyDoughMetadataException(f"Already added {property.error_name}")
+            if inherited:
                 raise PyDoughMetadataException(
-                    f"Already added {property.error_name} to {self.error_name}"
+                    f"{property.error_name} conflicts with property {self.properties[property.name].error_name}."
                 )
-            raise PyDoughMetadataException(
-                f"Duplicate property name {property.error_name!r} in {self.error_name}: {property.error_name} versus {self.properties[property.name].error_name}."
-            )
-
-        if property.name in self.inherited_properties:
-            if self.inherited_properties[property.name] == property:
+            else:
                 raise PyDoughMetadataException(
-                    f"Already added {property.error_name} to {self.error_name}"
+                    f"Duplicate property: {property.error_name} versus {self.properties[property.name].error_name}."
                 )
-            raise PyDoughMetadataException(
-                f"Inherited property {self.properties[property.name].error_name} is a duplicate of an existing property {property.error_name}."
-            )
 
     def add_property(self, property: AbstractMetadata) -> None:
         """
@@ -115,17 +122,15 @@ class CollectionMetadata(AbstractMetadata):
         """
         TODO: add function docstring.
         """
-        from pydough.metadata.properties import PropertyMetadata
+        from pydough.metadata.properties import InheritedPropertyMetadata
 
-        property: PropertyMetadata = property
-        self.verify_allows_property(property, False)
-        self.inherited_properties[property.name] = property
+        property: InheritedPropertyMetadata = property
+        self.verify_allows_property(property, True)
+        self.inherited_properties[property.name].append(property)
 
     def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
         nouns: Dict[str, List[AbstractMetadata]] = defaultdict(list)
-        for property in itertools.chain(
-            self.properties.values(), self.inherited_properties.values()
-        ):
+        for property in self.properties.values():
             for noun_name, values in property.get_nouns():
                 nouns[noun_name].extend(values)
         return nouns

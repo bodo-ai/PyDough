@@ -21,6 +21,7 @@ from pydough.metadata.properties import (
     SimpleJoinMetadata,
     CompoundRelationshipMetadata,
     CartesianProductMetadata,
+    InheritedPropertyMetadata,
 )
 
 
@@ -52,6 +53,7 @@ class SimpleTableMetadata(CollectionMetadata):
             "non-empty list of strings or non-empty lists of strings",
         )
 
+    @staticmethod
     def create_error_name(name, graph_error_name):
         return f"simple table collection {name!r} in {graph_error_name}"
 
@@ -69,6 +71,7 @@ class SimpleTableMetadata(CollectionMetadata):
                 | CartesianProductMetadata()
                 | SimpleJoinMetadata()
                 | CompoundRelationshipMetadata()
+                | InheritedPropertyMetadata()
             ):
                 pass
             case _:

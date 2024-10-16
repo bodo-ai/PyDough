@@ -31,8 +31,9 @@ class PropertyMetadata(AbstractMetadata):
         """
         TODO: add function docstring
         """
-        return PropertyMetadata.create_error_name(self.name, self.collection.error_name)
+        return self.create_error_name(self.name, self.collection.error_name)
 
+    @staticmethod
     @abstractmethod
     def create_error_name(name: str, collection_error_name: str):
         """
@@ -66,7 +67,7 @@ class PropertyMetadata(AbstractMetadata):
         """
         TODO: add function docstring.
         """
-        return self.collection.components + (self.collection.name, self.name)
+        return self.collection.components + (self.name,)
 
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict

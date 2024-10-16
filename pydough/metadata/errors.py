@@ -104,26 +104,6 @@ def verify_json_has_property_with_type(
     )
 
 
-def verify_object_has_property_with_type(
-    obj: Any,
-    property_name: str,
-    expected_type: type,
-    error_name: str,
-    type_name: str = None,
-) -> None:
-    """
-    TODO: add function docstring.
-    """
-    verify_property_in_object(obj, property_name, error_name)
-    property = getattr(obj, property_name)
-    verify_has_type(
-        property,
-        expected_type,
-        f"Property {property_name!r} of {error_name}",
-        type_name,
-    )
-
-
 def verify_json_has_property_matching(
     json_obj: Dict,
     property_name: str,
@@ -136,26 +116,6 @@ def verify_json_has_property_matching(
     """
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
-    verify_matches_predicate(
-        property,
-        predicate,
-        f"Property {property_name!r} of {error_name}",
-        predicate_str,
-    )
-
-
-def verify_object_has_property_matching(
-    obj: Any,
-    property_name: str,
-    predicate: Callable[[Any], bool],
-    error_name: str,
-    predicate_str: str,
-) -> None:
-    """
-    TODO: add function docstring.
-    """
-    verify_property_in_object(obj, property_name, error_name)
-    property = getattr(obj, property_name)
     verify_matches_predicate(
         property,
         predicate,

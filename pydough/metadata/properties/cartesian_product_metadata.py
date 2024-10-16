@@ -21,8 +21,9 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         collection: CollectionMetadata,
         other_collection: CollectionMetadata,
     ):
-        super().__init__(name, collection, other_collection, False, False)
+        super().__init__(name, reverse_name, collection, other_collection, False, False)
 
+    @staticmethod
     def create_error_name(name: str, collection_error_name: str):
         return f"cartesian property {name!r} of {collection_error_name}"
 
@@ -66,13 +67,11 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         other_collection.add_property(property.reverse_property)
 
     def build_reverse_relationship(self) -> None:
-        raise NotImplementedError
-        # reverse = CartesianProductMetadata(
-        #     self.graph_name, self.other_collection_name, self.reverse_relationship_name
-        # )
-        # reverse.reverse_relationship_name = self.name
-        # reverse.other_collection_name = self.collection_name
-        # reverse.collection = self.reverse_collection
-        # reverse.reverse_collection = self.collection
-        # reverse.reverse_property = self
-        # self.reverse_property = reverse
+        reverse = CartesianProductMetadata(
+            self.reverse_name,
+            self.name,
+            self.other_collection,
+            self.collection,
+        )
+        self.reverse_property = reverse
+        reverse.reverse_property = self

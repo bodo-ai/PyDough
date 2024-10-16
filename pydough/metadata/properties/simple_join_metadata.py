@@ -43,6 +43,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
     def components(self) -> tuple:
         return super().components + (self.keys,)
 
+    @staticmethod
     def create_error_name(name: str, collection_error_name: str):
         return f"simple join property {name!r} of {collection_error_name}"
 
