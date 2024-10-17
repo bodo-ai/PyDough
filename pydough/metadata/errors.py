@@ -6,8 +6,8 @@ from typing import Dict, List, Callable, Any, Iterable
 
 
 class PyDoughMetadataException(Exception):
-    """
-    TODO: add class docstring
+    """Exception raised when there is an error relating to PyDough metadata, such
+    as an error while parsing/validating the JSON or an ill-formed pattern.
     """
 
 
@@ -18,7 +18,14 @@ class PyDoughMetadataException(Exception):
 
 def verify_valid_name(name: str) -> None:
     """
-    TODO: add function docstring.
+    Verifies that a string can be used as a name for a PyDough graph,
+    collection, or property.
+
+    Args:
+        `name`: the string being checked.
+
+    Raises:
+        `PyDoughMetadataException`: if the name is invalid.
     """
     if not name.isidentifier():
         raise PyDoughMetadataException(
@@ -27,10 +34,21 @@ def verify_valid_name(name: str) -> None:
 
 
 def verify_no_extra_keys_in_json(
-    json_obj: Dict, allowed_properties: List[str], error_name: str
+    json_obj: dict, allowed_properties: List[str], error_name: str
 ) -> None:
     """
-    TODO: add function docstring.
+    Verifies that a JSON object (a dictionary) does not have any extra
+    key-value pairs besides the ones listed.
+
+    Args:
+        `json_obj`: the dictionary being checked.
+        `allowed_properties`: the list of permitted keys.
+        `error_name`: a string indicating how `json_obj` should be identified
+        if included in an error message.
+
+    Raises:
+        `PyDoughMetadataException`: if there is an extra key in the JSON
+        object.
     """
     extra_keys = {key for key in json_obj if key not in allowed_properties}
     if len(extra_keys) > 0:
@@ -40,10 +58,19 @@ def verify_no_extra_keys_in_json(
 
 
 def verify_property_in_json(
-    json_obj: Dict, property_name: str, error_name: str
+    json_obj: dict, property_name: str, error_name: str
 ) -> None:
     """
-    TODO: add function docstring.
+    Verifies that a JSON object (a dictionary) contains a specific key.
+
+    Args:
+        `json_obj`: the dictionary being checked.
+        `property_name`: the key being searched for
+        `error_name`: a string indicating how `json_obj` should be identified
+        if included in an error message.
+
+    Raises:
+        `PyDoughMetadataException`: if the property is missing.
     """
     if property_name not in json_obj:
         raise PyDoughMetadataException(
@@ -51,24 +78,27 @@ def verify_property_in_json(
         )
 
 
-def verify_property_in_object(obj: object, property_name: str, error_name: str) -> None:
-    """
-    TODO: add function docstring.
-    """
-    if not hasattr(obj, property_name):
-        raise PyDoughMetadataException(
-            f"Property {property_name!r} of {error_name} is missing."
-        )
-
-
 def verify_has_type(
-    obj: Any, typ: type, error_name: str, type_name: str = None
+    obj: Any, expected_type: type, error_name: str, type_name: str | None = None
 ) -> None:
     """
-    TODO: add function docstring.
+    Verifies that an object has a specific type.
+
+    Args:
+        `obj`: the object being checked.
+        `property_name`: the key being searched for
+        `expected_type`: the type that the property should be.
+        `error_name`: a string indicating how `obj` should be identified
+        if included in an error message.
+        `type_name`: an optional string indicating how `type` should be
+        identified if included in an error message. If omitted, just uses
+        the type's name directly.
+
+    Raises:
+        `PyDoughMetadataException`: if the types do not match.
     """
-    if not isinstance(obj, typ):
-        type_name = typ.__name__ if type_name is None else type_name
+    if not isinstance(obj, expected_type):
+        type_name = expected_type.__name__ if type_name is None else type_name
         raise PyDoughMetadataException(
             f"{error_name} must be a {type_name}, received: {obj.__class__.__name__}."
         )
@@ -78,7 +108,19 @@ def verify_matches_predicate(
     obj: Any, predicate: Callable[[Any], bool], error_name: str, predicate_name: str
 ) -> None:
     """
-    TODO: add function docstring.
+    Verifies that an object matches a specific predicate.
+
+    Args:
+        `obj`: the object being checked.
+        `predicate`: a function that can be called on `obj` that returns
+        a boolean indicating success or failure.
+        `error_name`: a string indicating how `obj` should be identified
+        if included in an error message.
+        `predicate_name`: an string indicating what condition the object
+        failed to meet if as part of an error message.
+
+    Raises:
+        `PyDoughMetadataException`: if the types do not match.
     """
     if not predicate(obj):
         raise PyDoughMetadataException(f"{error_name} must be a {predicate_name}.")
@@ -89,10 +131,24 @@ def verify_json_has_property_with_type(
     property_name: str,
     expected_type: type,
     error_name: str,
-    type_name: str = None,
+    type_name: str | None = None,
 ) -> None:
     """
-    TODO: add function docstring.
+    Verifies that a JSON object (a dictionary) contains a property
+    with a certain type.
+
+    Args:
+        `json_obj`: the JSON object being checked.
+        `property_name`: the key for the property being checked.
+        `expected_type`: the type that the property should be.
+        `error_name`: a string indicating how `obj` should be identified
+        if included in an error message.
+        `type_name`: an optional string indicating how `type` should be
+        identified if included in an error message. If omitted, just uses
+        the type's name directly.
+
+    Raises:
+        `PyDoughMetadataException`: if the types do not match.
     """
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
@@ -112,7 +168,21 @@ def verify_json_has_property_matching(
     predicate_str: str,
 ) -> None:
     """
-    TODO: add function docstring.
+    Verifies that a JSON object (a dictionary) contains a property
+    that passes a certain predicate.
+
+    Args:
+        `json_obj`: the JSON object being checked.
+        `property_name`: the key for the property being checked.
+        `predicate`: a function that can be called on the property that returns
+        a boolean indicating success or failure.
+        `error_name`: a string indicating how `obj` should be identified
+        if included in an error message.
+        `predicate_name`: an string indicating what condition the object
+        failed to meet if as part of an error message.
+
+    Raises:
+        `PyDoughMetadataException`: if the types do not match.
     """
     verify_property_in_json(json_obj, property_name, error_name)
     property = json_obj[property_name]
@@ -131,14 +201,30 @@ def verify_json_has_property_matching(
 
 def size_check(obj: Iterable, allow_empty: bool) -> bool:
     """
-    TODO: add function docstring.
+    Helper utility for other predicates, determining whether an
+    iterable passes a size criteria.
+
+    Args:
+        `obj`: the iterable being checked.
+        `allow_empty`: whether to allow the iterable to be empty.
+
+    Returns:
+        True if the iterable is non-empty. If `allow_empty` is True,
+        then the check is skipped and always returns True.
     """
     return allow_empty or len(obj) > 0
 
 
 def is_list_of_strings(obj: Any, allow_empty: bool = False) -> bool:
     """
-    TODO: add function docstring.
+    Predicate to determine if an object is a list of strings.
+
+    Args:
+        `obj`: the object being checked.
+        `allow_empty`: whether to allow an empty list.
+
+    Returns:
+        True if `obj` meets the criteria.
     """
     return (
         isinstance(obj, list)
@@ -151,7 +237,18 @@ def is_list_of_strings_or_string_lists(
     obj: Any, outer_allow_empty: bool = False, inner_allow_empty: bool = False
 ) -> bool:
     """
-    TODO: add function docstring.
+    Predicate to determine if an object is a list of objects that
+    are either strings or lists of strings.
+
+    Args:
+        `obj`: the object being checked.
+        `outer_allow_empty`: whether to allow the entire object to be an empty
+        list.
+        `inner_allow_empty`: whether to allow any inner of the inner objects to
+        be enpty lists.
+
+    Returns:
+        True if `obj` meets the criteria.
     """
     return (
         isinstance(obj, list)
@@ -165,7 +262,14 @@ def is_list_of_strings_or_string_lists(
 
 def is_string_string_mapping(obj: Any, allow_empty: bool = False) -> bool:
     """
-    TODO: add function docstring.
+    Predicate to determine if an object is a mapping of strings to strings.
+
+    Args:
+        `obj`: the object being checked.
+        `allow_empty`: whether to allow an empty mapping.
+
+    Returns:
+        True if `obj` meets the criteria.
     """
     return (
         isinstance(obj, dict)
@@ -180,7 +284,15 @@ def is_string_string_list_mapping(
     obj: Any, outer_allow_empty: bool = False, inner_allow_empty: bool = False
 ) -> bool:
     """
-    TODO: add function docstring.
+    Predicate to determine if an object is a mapping of strings to lists
+    of strings strings.
+
+    Args:
+        `obj`: the object being checked.
+        `allow_empty`: whether to allow an empty mapping.
+
+    Returns:
+        True if `obj` meets the criteria.
     """
     return (
         isinstance(obj, dict)
