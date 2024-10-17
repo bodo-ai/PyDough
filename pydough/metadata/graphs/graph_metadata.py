@@ -15,35 +15,59 @@ from pydough.metadata.abstract_metadata import AbstractMetadata
 
 class GraphMetadata(AbstractMetadata):
     """
-    TODO: add class docstring
+    Concrete metadata implementation for a PyDough graph that can contain
+    PyDough collections.
     """
 
     def __init__(self, name: str):
         from pydough.metadata.collections import CollectionMetadata
 
         verify_valid_name(name)
-        self.name: str = name
-        self.collections: Dict[str, CollectionMetadata] = {}
+        self._name: str = name
+        self._collections: Dict[str, CollectionMetadata] = {}
 
     @property
-    def error_name(self):
+    def name(self) -> str:
         """
-        TODO: add function docstring
+        The name of the graph.
         """
+        return self._name
+
+    @property
+    def collections(self) -> Dict[str, AbstractMetadata]:
+        """
+        The collections contained within the graph.
+        """
+        return self._collections
+
+    @property
+    def error_name(self) -> str:
         return f"graph {self.name!r}"
 
     @property
     def components(self) -> tuple:
         return (self.name,)
 
-    def add_collection(self, collection):
+    def add_collection(self, collection: AbstractMetadata) -> None:
         """
         Adds a new collection to the graph.
+
+        Args:
+            `collection`: the collection being inserted into the graph.
+
+        Raises:
+            `PyDoughMetadataException`: if `collection` cannot be inserted
+            into the graph because.
         """
         from pydough.metadata.collections import CollectionMetadata
 
+        # Make sure the collection is actually a collection
         verify_has_type(collection, CollectionMetadata, "collection")
         collection: CollectionMetadata = collection
+
+        # Verify sure the collection has not already been added to the graph
+        # and does not have a name collision with any other collections in
+        # the graph.
         if collection.name in self.collections:
             if self.collections[collection.name] == collection:
                 raise PyDoughMetadataException(
@@ -71,18 +95,9 @@ class GraphMetadata(AbstractMetadata):
         return self.collections[collection_name]
 
     def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
-        nouns = defaultdict[list]
+        nouns: Dict[str, List[AbstractMetadata]] = defaultdict[list]
         nouns[self.name].append(self)
         for collection in self.collections.values():
             for name, value in collection.get_nouns():
                 nouns[name].append(value)
         return nouns
-
-    def verify_json_metadata(self, graph_json: dict) -> None:
-        """
-        TODO: add function docstring.
-        """
-        from pydough.metadata.collections import CollectionMetadata
-
-        for collection_name in graph_json:
-            CollectionMetadata.verify_json_metadata(self, collection_name, graph_json)

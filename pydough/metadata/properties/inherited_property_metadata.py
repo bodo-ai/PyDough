@@ -27,9 +27,6 @@ class InheritedPropertyMetadata(PropertyMetadata):
 
     @property
     def error_name(self):
-        """
-        TODO: add function docstring
-        """
         return self.create_error_name(
             self.name,
             self.collection.error_name,

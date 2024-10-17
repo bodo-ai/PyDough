@@ -80,10 +80,6 @@ class CollectionMetadata(AbstractMetadata):
 
     @property
     def error_name(self):
-        """
-        The string that should be displayed to identify this collection in
-        error messages.
-        """
         return self.create_error_name(self.name, self.graph.error_name)
 
     @staticmethod
@@ -103,9 +99,6 @@ class CollectionMetadata(AbstractMetadata):
     @property
     @abstractmethod
     def components(self) -> tuple:
-        """
-        A tuple of objects used to uniquely identify the collection.
-        """
         return self.graph.components + (self.name,)
 
     @abstractmethod
@@ -275,7 +268,7 @@ class CollectionMetadata(AbstractMetadata):
         # Check that the graph argument is indeed a graph metadata, and that the
         # name of the graph does not collide with the name of the collection.
         verify_has_type(graph, GraphMetadata, "graph")
-        error_name = f"collection {collection_name!r} in {graph.error_name}"
+        error_name: str = f"collection {collection_name!r} in {graph.error_name}"
         if collection_name == graph.name:
             raise PyDoughMetadataException(
                 f"Cannot have collection named {collection_name!r} share the same name as the graph containing it."

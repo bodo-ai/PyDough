@@ -138,7 +138,7 @@ class SimpleTableMetadata(CollectionMetadata):
             structure properties.
         """
         # Create the string used to identify the collection in error messages.
-        error_name = SimpleTableMetadata.create_error_name(
+        error_name: str = SimpleTableMetadata.create_error_name(
             collection_name, graph.error_name
         )
 
@@ -184,9 +184,11 @@ class SimpleTableMetadata(CollectionMetadata):
 
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
-        table_path = collection_json["table_path"]
-        unique_properties = collection_json["unique_properties"]
-        new_collection = SimpleTableMetadata(
+        table_path: str = collection_json["table_path"]
+        unique_properties: List[Union[str, List[str]]] = collection_json[
+            "unique_properties"
+        ]
+        new_collection: SimpleTableMetadata = SimpleTableMetadata(
             collection_name, graph, table_path, unique_properties
         )
         graph.add_collection(new_collection)
