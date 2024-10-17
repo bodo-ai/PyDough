@@ -289,7 +289,10 @@ def is_string_string_list_mapping(
 
     Args:
         `obj`: the object being checked.
-        `allow_empty`: whether to allow an empty mapping.
+        `outer_allow_empty`: whether to allow the entire object to be an empty
+        list.
+        `inner_allow_empty`: whether to allow any inner of the inner objects to
+        be enpty lists.
 
     Returns:
         True if `obj` meets the criteria.
