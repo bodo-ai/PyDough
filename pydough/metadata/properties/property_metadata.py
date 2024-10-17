@@ -104,7 +104,7 @@ class PropertyMetadata(AbstractMetadata):
 
         Args:
             `collection`: the metadata for the PyDough collection that the
-            property would be inserted nto.
+            property would be inserted into.
             `property_name`: the name of the property that would be inserted.
             `property_json`: the JSON object that would be parsed to create
             the new property.
@@ -162,7 +162,7 @@ class PropertyMetadata(AbstractMetadata):
 
         Args:
             `collection`: the metadata for the PyDough collection that the
-            property would be inserted nto.
+            property would be inserted into.
             `property_name`: the name of the property that would be inserted.
             `property_json`: the JSON object that would be parsed to create
             the new property.
