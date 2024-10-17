@@ -27,9 +27,9 @@ class CollectionMetadata(AbstractMetadata):
     - `parse_from_json`
     """
 
-    # List of names of of properties that can be included in the JSON
+    # List of names of of fields that can be included in the JSON
     # object describing a collection. Implementations should extend this.
-    allowed_properties: List[str] = ["type", "properties"]
+    allowed_fields: List[str] = ["type", "properties"]
 
     def __init__(self, name: str, graph: GraphMetadata):
         from pydough.metadata.properties import (

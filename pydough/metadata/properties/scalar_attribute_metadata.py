@@ -12,7 +12,8 @@ from abc import abstractmethod
 
 class ScalarAttributeMetadata(PropertyMetadata):
     """
-    TODO: add class docstring
+    Abstract base class for PyDough metadata for properties that are just
+    scalars within each record of a collection, e.g. columns of tables.
     """
 
     def __init__(
@@ -20,7 +21,14 @@ class ScalarAttributeMetadata(PropertyMetadata):
     ):
         super().__init__(name, collection)
         verify_has_type(data_type, PyDoughType, "data_type")
-        self.data_type: PyDoughType = data_type
+        self._data_type: PyDoughType = data_type
+
+    @property
+    def data_type(self) -> PyDoughType:
+        """
+        The PyDough data type of the attribute.
+        """
+        return self._data_type
 
     @property
     @abstractmethod

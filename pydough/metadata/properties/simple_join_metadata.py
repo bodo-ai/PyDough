@@ -2,6 +2,7 @@
 TODO: add file-level docstring
 """
 
+from . import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
 from typing import List, Dict
 from pydough.metadata.collections import CollectionMetadata
@@ -10,6 +11,7 @@ from pydough.metadata.errors import (
     is_string_string_list_mapping,
     verify_json_has_property_with_type,
     verify_json_has_property_matching,
+    verify_no_extra_keys_in_json,
 )
 
 
@@ -17,6 +19,16 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
     """
     TODO: add class docstring
     """
+
+    # List of names of of fields that can be included in the JSON object
+    # describing a simple join property.
+    allowed_fields: List[str] = PropertyMetadata.allowed_fields + [
+        "other_collection_name",
+        "reverse_relationship_name",
+        "singular",
+        "no_collisions",
+        "keys",
+    ]
 
     def __init__(
         self,
@@ -70,6 +82,9 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             is_string_string_list_mapping,
             error_name,
             "non-empty JSON object containing non-empty lists of strings",
+        )
+        verify_no_extra_keys_in_json(
+            property_json, SimpleJoinMetadata.allowed_fields, error_name
         )
 
     def parse_from_json(

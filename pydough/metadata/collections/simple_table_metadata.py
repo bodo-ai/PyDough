@@ -31,9 +31,9 @@ class SimpleTableMetadata(CollectionMetadata):
     of other such tables created from joins.
     """
 
-    # List of names of of properties that can be included in the JSON
+    # List of names of of fields that can be included in the JSON
     # object describing a simple table collection.
-    allowed_properties = CollectionMetadata.allowed_properties + [
+    allowed_fields = CollectionMetadata.allowed_fields + [
         "table_path",
         "unique_properties",
     ]
@@ -155,7 +155,7 @@ class SimpleTableMetadata(CollectionMetadata):
             "list non-empty of strings or non-empty lists of strings",
         )
         verify_no_extra_keys_in_json(
-            collection_json, SimpleTableMetadata.allowed_properties, error_name
+            collection_json, SimpleTableMetadata.allowed_fields, error_name
         )
 
     def parse_from_json(

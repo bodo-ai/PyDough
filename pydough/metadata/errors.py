@@ -34,7 +34,7 @@ def verify_valid_name(name: str) -> None:
 
 
 def verify_no_extra_keys_in_json(
-    json_obj: dict, allowed_properties: List[str], error_name: str
+    json_obj: dict, allowed_fields: List[str], error_name: str
 ) -> None:
     """
     Verifies that a JSON object (a dictionary) does not have any extra
@@ -42,7 +42,7 @@ def verify_no_extra_keys_in_json(
 
     Args:
         `json_obj`: the dictionary being checked.
-        `allowed_properties`: the list of permitted keys.
+        `allowed_fields`: the list of permitted keys.
         `error_name`: a string indicating how `json_obj` should be identified
         if included in an error message.
 
@@ -50,7 +50,7 @@ def verify_no_extra_keys_in_json(
         `PyDoughMetadataException`: if there is an extra key in the JSON
         object.
     """
-    extra_keys = {key for key in json_obj if key not in allowed_properties}
+    extra_keys = {key for key in json_obj if key not in allowed_fields}
     if len(extra_keys) > 0:
         raise PyDoughMetadataException(
             f"There are unexpected extra properties in {error_name}: {extra_keys}."

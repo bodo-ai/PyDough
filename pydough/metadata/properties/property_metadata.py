@@ -27,6 +27,10 @@ class PropertyMetadata(AbstractMetadata):
     - `is_reversible`
     """
 
+    # List of names of of fields that can be included in the JSON object
+    # describing a property. Implementations should extend this.
+    allowed_fields: List[str] = ["type"]
+
     def __init__(self, name: str, collection: CollectionMetadata):
         verify_valid_name(name)
         verify_has_type(collection, CollectionMetadata, "collection")
@@ -151,11 +155,10 @@ class PropertyMetadata(AbstractMetadata):
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
         """
-        Verifies that the JSON describing the metadata for a property within
-        a collection is well-formed before parsing it to create the property
-        and insert into the collection. It is assumed that
-        `PropertyMetadata.verify_json_metadata` has already been invoked on
-        the JSON.
+        Parse the JSON describing the metadata for a property within a
+        collection to create the property and insert into the collection. It
+        is assumed that `PropertyMetadata.verify_json_metadata` has already
+        been invoked on the JSON.
 
         Args:
             `collection`: the metadata for the PyDough collection that the

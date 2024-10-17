@@ -4,15 +4,24 @@ TODO: add file-level docstring
 
 from pydough.metadata.errors import (
     verify_json_has_property_with_type,
+    verify_no_extra_keys_in_json,
 )
+from typing import List
 from pydough.metadata.collections import CollectionMetadata
-from . import ReversiblePropertyMetadata
+from . import ReversiblePropertyMetadata, PropertyMetadata
 
 
 class CartesianProductMetadata(ReversiblePropertyMetadata):
     """
     TODO: add class docstring
     """
+
+    # List of names of of fields that can be included in the JSON object
+    # describing a cartesian product property.
+    allowed_fields: List[str] = PropertyMetadata.allowed_fields + [
+        "other_collection_name",
+        "reverse_relationship_name",
+    ]
 
     def __init__(
         self,
@@ -43,6 +52,9 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         )
         verify_json_has_property_with_type(
             property_json, "reverse_relationship_name", str, error_name
+        )
+        verify_no_extra_keys_in_json(
+            property_json, CartesianProductMetadata.allowed_fields, error_name
         )
 
     def parse_from_json(

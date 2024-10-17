@@ -2,13 +2,14 @@
 TODO: add file-level docstring
 """
 
-from typing import Dict
+from typing import Dict, List
 from pydough.metadata.errors import verify_has_type
 from pydough.metadata.errors import (
     verify_json_has_property_with_type,
     verify_json_has_property_matching,
     is_string_string_mapping,
     verify_matches_predicate,
+    verify_no_extra_keys_in_json,
 )
 from pydough.metadata.collections import CollectionMetadata
 from . import PropertyMetadata, ReversiblePropertyMetadata
@@ -18,6 +19,17 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
     """
     TODO: add class docstring
     """
+
+    # List of names of of fields that can be included in the JSON object
+    # describing a compound relationship property.
+    allowed_fields: List[str] = PropertyMetadata.allowed_fields + [
+        "primary_property",
+        "secondary_property",
+        "reverse_relationship_name",
+        "singular",
+        "no_collisions",
+        "inherited_properties",
+    ]
 
     def __init__(
         self,
@@ -96,6 +108,9 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             lambda x: is_string_string_mapping(x, True),
             error_name,
             "JSON object of strings",
+        )
+        verify_no_extra_keys_in_json(
+            property_json, CompoundRelationshipMetadata.allowed_fields, error_name
         )
 
     def parse_from_json(
