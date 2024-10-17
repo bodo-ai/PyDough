@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 
 class PyDoughTypeException(Exception):
-    """
-    TODO: add class docstring
+    """Exception raised when there is an error relating to PyDough types, such
+    as malformed inputs to a parametrized type or a string that cannot be
+    parsed into a type.
     """

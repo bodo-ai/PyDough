@@ -3,11 +3,12 @@ TODO: add file-level docstring
 """
 
 from .pydough_type import PyDoughType
+from typing import Optional
 
 
 class BooleanType(PyDoughType):
     """
-    TODO: add class docstring
+    The PyDough type representing true/false data.
     """
 
     def __init__(self):
@@ -16,8 +17,10 @@ class BooleanType(PyDoughType):
     def __repr__(self):
         return "BooleanType()"
 
-    def as_json_string(self) -> str:
+    @property
+    def json_string(self) -> str:
         return "bool"
 
-    def parse_from_string(type_string: str) -> PyDoughType:
+    @staticmethod
+    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
         return BooleanType() if type_string == "bool" else None

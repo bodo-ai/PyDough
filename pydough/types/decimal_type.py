@@ -5,11 +5,13 @@ TODO: add file-level docstring
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
 import re
+from typing import Optional
 
 
 class DecimalType(PyDoughType):
     """
-    TODO: add class docstring
+    The PyDough type representing fixed point numbers with a precision and
+    scale.
     """
 
     def __init__(self, precision, scale):
@@ -21,18 +23,39 @@ class DecimalType(PyDoughType):
             raise PyDoughTypeException(
                 f"Invalid scale for DecimalType with precision {precision}: {scale!r}"
             )
-        self.precision = precision
-        self.scale = scale
+        self._precision: int = precision
+        self._scale: int = scale
+
+    @property
+    def precision(self) -> int:
+        """
+        The number of digits that can be stored in the type. Must be an
+        integer between 1 and 38 (inclusive).
+        """
+        return self._precision
+
+    @property
+    def scale(self) -> int:
+        """
+        The number of digits that are to the right hand side of the decimal
+        point. Must be between 0 and precision (exclusive of the precision).
+        """
+        return self._scale
 
     def __repr__(self):
         return f"DecimalType({self.precision},{self.scale})"
 
-    def as_json_string(self) -> str:
+    @property
+    def json_string(self) -> str:
         return f"decimal[{self.precision},{self.scale}]"
 
+    # The string pattern that all decimal types must adhere to.
     type_string_pattern: re.Pattern = re.compile("decimal\[(\d{1,2}),(\d{1,2})\]")
 
-    def parse_from_string(type_string: str) -> PyDoughType:
+    @staticmethod
+    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+        # Verify that the string matches the time type regex pattern, and
+        # extract the precision and scale.
         match = DecimalType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None

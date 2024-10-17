@@ -3,20 +3,35 @@ TODO: add file-level docstring
 """
 
 from .pydough_type import PyDoughType
+from typing import Optional
+from .errors import PyDoughTypeException
 
 
 class IntegerType(PyDoughType):
     """
-    TODO: add class docstring
+    The PyDough type superclass for integers.
     """
+
+    def __init__(self, bit_width: int):
+        if not isinstance(bit_width, int) or bit_width not in (8, 16, 32, 64):
+            raise PyDoughTypeException(
+                f"Invalid bit width for IntegerType: {bit_width!r}"
+            )
+        self._bit_width: int = bit_width
+
+    @property
+    def bit_width(self) -> int:
+        return self._bit_width
 
     def __repr__(self):
         return f"Int{self.bit_width}Type()"
 
-    def as_json_string(self) -> str:
+    @property
+    def json_string(self) -> str:
         return f"int{self.bit_width}"
 
-    def parse_from_string(type_string: str) -> PyDoughType:
+    @staticmethod
+    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
         match type_string:
             case "int8":
                 return Int8Type()
@@ -32,35 +47,35 @@ class IntegerType(PyDoughType):
 
 class Int8Type(IntegerType):
     """
-    TODO: add class docstring
+    The PyDough type for 8-bit integers.
     """
 
     def __init__(self):
-        self.bit_width = 8
+        super().__init__(8)
 
 
 class Int16Type(IntegerType):
     """
-    TODO: add class docstring
+    The PyDough type for 16-bit integers.
     """
 
     def __init__(self):
-        self.bit_width = 16
+        super().__init__(16)
 
 
 class Int32Type(IntegerType):
     """
-    TODO: add class docstring
+    The PyDough type for 32-bit integers.
     """
 
     def __init__(self):
-        self.bit_width = 32
+        super().__init__(32)
 
 
 class Int64Type(IntegerType):
     """
-    TODO: add class docstring
+    The PyDough type for 64-bit integers.
     """
 
     def __init__(self):
-        self.bit_width = 64
+        super().__init__(64)
