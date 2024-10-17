@@ -40,7 +40,7 @@ class DecimalType(PyDoughType):
         The number of digits that are to the right hand side of the decimal
         point. Must be between 0 and precision (exclusive of the precision).
         """
-        return self._precision
+        return self._scale
 
     def __repr__(self):
         return f"DecimalType({self.precision},{self.scale})"

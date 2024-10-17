@@ -11,7 +11,7 @@ from typing import Optional
 
 class TimestampType(PyDoughType):
     """
-    TODO: add class docstring
+    The PyDough type for timestamps with a precision and (optional) time zone.
     """
 
     def __init__(self, precision: int, tz: Optional[str] = None):
@@ -26,10 +26,18 @@ class TimestampType(PyDoughType):
 
     @property
     def precision(self) -> int:
+        """
+        The precision of the timestamp type, which should be an integer between
+        0 and 9. The value indicates how many sub-second decimal places are
+        supported in values of the timestamp type.
+        """
         return self._precision
 
     @property
     def tz(self) -> Optional[str]:
+        """
+        The timezone of the timestamp type, if one exists.
+        """
         return self._tz
 
     def __repr__(self):

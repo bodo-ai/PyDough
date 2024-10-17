@@ -108,6 +108,21 @@ import pytest
             "MapType(StructType([('x', Int8Type()), ('y', Int8Type())]),StructType([('a', Int8Type()), ('b', MapType(StringType(),StructType([('c', Int8Type()), ('d', Int8Type()), ('e', Int8Type())])))]))",
             id="multi_nested",
         ),
+        pytest.param(
+            "unknown",
+            "UnknownType()",
+            id="unknown",
+        ),
+        pytest.param(
+            "array[unknown]",
+            "ArrayType(UnknownType())",
+            id="array-unknown",
+        ),
+        pytest.param(
+            "map[string,unknown]",
+            "MapType(StringType(),UnknownType())",
+            id="map-unknown",
+        ),
     ],
 )
 def test_valid_parsing_and_unparsing(type_string, repr_string):
