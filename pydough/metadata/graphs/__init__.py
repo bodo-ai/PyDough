@@ -1,1 +1,3 @@
-from .graph_metadata import GraphMetadata  # noqa
+__all__ = ["GraphMetadata"]
+
+from .graph_metadata import GraphMetadata

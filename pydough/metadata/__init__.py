@@ -1,1 +1,3 @@
-from .parse import parse_json_metadata_from_file  # noqa
+__all__ = ["parse_json_metadata_from_file"]
+
+from .parse import parse_json_metadata_from_file
