@@ -30,7 +30,7 @@ class AbstractMetadata(ABC):
     @abstractmethod
     def components(self) -> tuple:
         """
-        Returns a tuple of objects used to uniquely identify a metadata object
+        A tuple of objects used to uniquely identify a metadata object
         by equality.
         """
 
@@ -39,6 +39,10 @@ class AbstractMetadata(ABC):
         """
         Fetches all of the names of nouns accessible from the metadata for
         a PyDough graph, collection, or property.
+
+        Returns:
+            A dictionary mapping the name of each noun to a list of all
+            metadata objects with that name.
         """
 
     def __eq__(self, other):

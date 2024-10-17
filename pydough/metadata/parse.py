@@ -78,14 +78,19 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
     # with properties, and also obtain each of the properties.
     for collection_name in graph_json:
         # Add the raw collection metadata to the collections dictionary
-        collection_json = graph_json[collection_name]
+        collection_json: dict = graph_json[collection_name]
         CollectionMetadata.parse_from_json(graph, collection_name, collection_json)
+        collection: CollectionMetadata = graph.get_collection(collection_name)
 
-        # Add the unprocessed properties of each collection to the properties list
-        # (the parsing of the collection verified that the 'properties' key exists)
-        properties_json = graph_json[collection_name]["properties"]
+        # Add the unprocessed properties of each collection to the properties
+        # list (the parsing of the collection verified that the 'properties' key
+        # exists). Also, verify that the JSON is well formed.
+        properties_json: Dict[str, dict] = graph_json[collection_name]["properties"]
         for property_name in properties_json:
-            property_json = properties_json[property_name]
+            property_json: dict = properties_json[property_name]
+            PropertyMetadata.verify_json_metadata(
+                collection, property_name, property_json
+            )
             raw_properties.append((collection_name, property_name, property_json))
 
     ordered_properties = topologically_sort_properties(raw_properties)

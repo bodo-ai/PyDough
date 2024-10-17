@@ -90,7 +90,8 @@ class CollectionMetadata(AbstractMetadata):
 
         Args:
             `name`: the name of the collection.
-            `name`: the name of the collection.
+            `graph_error_name`: the error_name property of the graph containing
+            the collection.
 
         Returns:
             The string to use to identify the collection in exception messages.
