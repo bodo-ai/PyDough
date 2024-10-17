@@ -119,8 +119,8 @@ def test_valid_parsing_and_unparsing(type_string, repr_string):
     """
     pydough_type = parse_type_from_string(type_string)
     assert repr(pydough_type) == repr_string
-    assert pydough_type.as_json_string() == type_string
+    assert pydough_type.json_string == type_string
     eval_type = eval(repr_string)
     assert eval_type == pydough_type
     assert repr(eval_type) == repr_string
-    assert eval_type.as_json_string() == type_string
+    assert eval_type.json_string == type_string

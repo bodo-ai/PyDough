@@ -13,9 +13,11 @@ class FloatType(PyDoughType):
     def __repr__(self):
         return f"Float{self.bit_width}Type()"
 
-    def as_json_string(self) -> str:
+    @property
+    def json_string(self) -> str:
         return f"float{self.bit_width}"
 
+    @staticmethod
     def parse_from_string(type_string: str) -> PyDoughType:
         match type_string:
             case "float32":

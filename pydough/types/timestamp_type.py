@@ -26,7 +26,8 @@ class TimestampType(PyDoughType):
     def __repr__(self):
         return f"TimestampType({self.precision!r},{self.tz!r})"
 
-    def as_json_string(self) -> str:
+    @property
+    def json_string(self) -> str:
         if self.tz is None:
             return f"timestamp[{self.precision}]"
         else:
@@ -35,6 +36,7 @@ class TimestampType(PyDoughType):
     type_string_pattern_no_tz: re.Pattern = re.compile("timestamp\[(\d)\]")
     type_string_pattern_with_tz: re.Pattern = re.compile("timestamp\[(\d),(.*)\]")
 
+    @staticmethod
     def parse_from_string(type_string: str) -> PyDoughType:
         match_no_tz = TimestampType.type_string_pattern_no_tz.fullmatch(type_string)
         match_with_tz = TimestampType.type_string_pattern_with_tz.fullmatch(type_string)

@@ -9,7 +9,7 @@ import re
 
 class ArrayType(PyDoughType):
     """
-    TODO: add class docstring
+    The PyDough type representing
     """
 
     def __init__(self, elem_type: PyDoughType):
@@ -22,11 +22,13 @@ class ArrayType(PyDoughType):
     def __repr__(self):
         return f"ArrayType({self.elem_type!r})"
 
-    def as_json_string(self) -> str:
-        return f"array[{self.elem_type.as_json_string()}]"
+    @property
+    def json_string(self) -> str:
+        return f"array[{self.elem_type.json_string}]"
 
     type_string_pattern: re.Pattern = re.compile("array\[(.+)\]")
 
+    @staticmethod
     def parse_from_string(type_string: str) -> PyDoughType:
         from pydough.types import parse_type_from_string
 

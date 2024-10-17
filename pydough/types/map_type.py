@@ -27,11 +27,13 @@ class MapType(PyDoughType):
     def __repr__(self):
         return f"MapType({self.key_type!r},{self.val_type!r})"
 
-    def as_json_string(self) -> str:
-        return f"map[{self.key_type.as_json_string()},{self.val_type.as_json_string()}]"
+    @property
+    def json_string(self) -> str:
+        return f"map[{self.key_type.json_string},{self.val_type.json_string}]"
 
     type_string_pattern: re.Pattern = re.compile("map\[(.+,.+)\]")
 
+    @staticmethod
     def parse_from_string(type_string: str) -> PyDoughType:
         from pydough.types import parse_type_from_string
 

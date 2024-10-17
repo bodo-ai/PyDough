@@ -3,11 +3,19 @@ TODO: add file-level docstring
 """
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class PyDoughType(ABC):
     """
-    TODO: add class docstring
+    The abstract base class describing all PyDough types. Each implementation
+    class must define the following:
+
+    - A constructor
+    - An eval-friendly `__repr__` such that two PyDough types with the same repr
+      must be the same type.
+    - `json_string` property
+    - `parse_from_string` staticmethod
     """
 
     def __init__(self):
@@ -26,14 +34,19 @@ class PyDoughType(ABC):
     def __hash__(self):
         raise hash(repr(self))
 
+    @property
     @abstractmethod
-    def as_json_string(self) -> str:
+    def json_string(self) -> str:
         """
-        TODO: add function docstring
+        The PyDough type as represented in JSON via a string that can be parsed
+        back into an identical type object with parse_from_string.
         """
 
+    @staticmethod
     @abstractmethod
-    def parse_from_string(type_string: str) -> "PyDoughType":
+    def parse_from_string(type_string: str) -> Optional["PyDoughType"]:
         """
-        TODO: add function docstring
+        Creates a new type object from a string such that its `json_string`
+        property reconstructs the original strings. Returns None if the string
+        cannot be parsed as the type.
         """

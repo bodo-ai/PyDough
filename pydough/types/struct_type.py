@@ -33,12 +33,14 @@ class StructType(PyDoughType):
     def __repr__(self):
         return f"StructType({self.fields!r})"
 
-    def as_json_string(self) -> str:
-        field_strings = [f"{name}:{typ.as_json_string()}" for name, typ in self.fields]
+    @property
+    def json_string(self) -> str:
+        field_strings = [f"{name}:{typ.json_string}" for name, typ in self.fields]
         return f"struct[{','.join(field_strings)}]"
 
     type_string_pattern: re.Pattern = re.compile("struct\[(.*:.*)+\]")
 
+    @staticmethod
     def parse_from_string(type_string: str) -> PyDoughType:
         match = StructType.type_string_pattern.fullmatch(type_string)
         if match is None:
