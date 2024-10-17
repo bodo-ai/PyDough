@@ -1,0 +1,80 @@
+"""
+TODO: add file-level docstring
+"""
+
+from abc import abstractmethod
+
+from .subcollection_relationship_metadata import SubcollectionRelationshipMetadata
+from pydough.metadata.collections import CollectionMetadata
+from pydough.metadata.errors import PyDoughMetadataException
+
+
+class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
+    """
+    Abstract base class for PyDough metadata for properties that map
+    to a subcollection of a collection and also have a corresponding
+    reverse relationship.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        reverse_name: str,
+        collection: CollectionMetadata,
+        other_collection: CollectionMetadata,
+        singular: bool,
+        no_collisions: bool,
+    ):
+        super().__init__(name, collection, other_collection, singular, no_collisions)
+        self._reverse_name: str = reverse_name
+        self._reverse_property: ReversiblePropertyMetadata = None
+
+    @property
+    def reverse_name(self) -> str:
+        """
+        The name of the reverse property.
+        """
+        return self._reverse_name
+
+    @property
+    def reverse_property(self) -> "ReversiblePropertyMetadata":
+        """
+        The reverse version of the property.
+
+        Raises:
+            `PyDoughMetadataException`: if the reverse property has not yet
+            been defined.
+        """
+        if self._reverse_property is None:
+            raise PyDoughMetadataException(
+                f"Reverse property of {self.error_name} has not yet been defined."
+            )
+        return self._reverse_name
+
+    @property
+    @abstractmethod
+    def components(self) -> tuple:
+        return super().components + (
+            self.reverse_name,
+            self.other_collection.name,
+            self.singular,
+            self.no_collisions,
+        )
+
+    @abstractmethod
+    def build_reverse_relationship(self) -> None:
+        """
+        Defines the reverse version of the property, which should obey the
+        following rules:
+        - `self.reverse_property.reverse_property is self`
+        - `self.name == self.reverse_property.reverse_name`
+        - `self.reverse_name == self.reverse_property.name`
+        - `self.singular == self.reverse_property.no_collisions`
+        - `self.no_collisions == self.reverse_property.singular`
+        - `self.collection is self.reverse_property.other_collection`
+        - `self.other_collection is self.reverse_property.collection`
+        """
+
+    @property
+    def is_reversible(self) -> bool:
+        return True
