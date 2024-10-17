@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import Dict, List, Callable, Any, Iterable
+from typing import Dict, List, Callable, Any
 
 
 class PyDoughMetadataException(Exception):
@@ -199,22 +199,6 @@ def verify_json_has_property_matching(
 ###############################################################################
 
 
-def size_check(obj: Iterable, allow_empty: bool) -> bool:
-    """
-    Helper utility for other predicates, determining whether an
-    iterable passes a size criteria.
-
-    Args:
-        `obj`: the iterable being checked.
-        `allow_empty`: whether to allow the iterable to be empty.
-
-    Returns:
-        True if the iterable is non-empty. If `allow_empty` is True,
-        then the check is skipped and always returns True.
-    """
-    return allow_empty or len(obj) > 0
-
-
 def is_list_of_strings(obj: Any, allow_empty: bool = False) -> bool:
     """
     Predicate to determine if an object is a list of strings.
@@ -228,7 +212,7 @@ def is_list_of_strings(obj: Any, allow_empty: bool = False) -> bool:
     """
     return (
         isinstance(obj, list)
-        and size_check(obj, allow_empty)
+        and (allow_empty or len(obj) > 0)
         and all(isinstance(elem, str) for elem in obj)
     )
 
@@ -252,7 +236,7 @@ def is_list_of_strings_or_string_lists(
     """
     return (
         isinstance(obj, list)
-        and size_check(obj, outer_allow_empty)
+        and (outer_allow_empty or len(obj) > 0)
         and all(
             isinstance(elem, str) or is_list_of_strings(elem, inner_allow_empty)
             for elem in obj
@@ -273,7 +257,7 @@ def is_string_string_mapping(obj: Any, allow_empty: bool = False) -> bool:
     """
     return (
         isinstance(obj, dict)
-        and size_check(obj, allow_empty)
+        and (allow_empty or len(obj) > 0)
         and all(
             isinstance(key, str) and isinstance(val, str) for key, val in obj.items()
         )
@@ -299,7 +283,7 @@ def is_string_string_list_mapping(
     """
     return (
         isinstance(obj, dict)
-        and size_check(obj, outer_allow_empty)
+        and (outer_allow_empty or len(obj) > 0)
         and all(
             isinstance(key, str) and is_list_of_strings(val, inner_allow_empty)
             for key, val in obj.items()
