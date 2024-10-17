@@ -9,15 +9,21 @@ from typing import Dict, List
 
 class AbstractMetadata(ABC):
     """
-    TODO: add class docstring
+    The abstract base class used to define all PyDough metadata classes for
+    graphs, collections, and properties. Each class must include the following
+    APIs:
+
+    - `error_name`
+    - `components`
+    - `get_nouns`
     """
 
     @property
     @abstractmethod
     def error_name(self) -> str:
         """
-        Returns a string used to identify a metadata object when displayed
-        in an error message.
+        A string used to identify the metadata object when displayed in an
+        error message.
         """
 
     @property

@@ -15,27 +15,54 @@ from .properties import PropertyMetadata
 import json
 
 
-def parse_json_metadata(file_path: str, graph_name: str) -> GraphMetadata:
+def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetadata:
     """
-    TODO: add function docstring.
+    Reads a JSON file to obtain a specific PyDough metadata graph.
+
+    Args:
+        `file_path`: the path to the file containing the PyDough metadata for
+        the desired graph. This should be a JSON file.
+        `graph_name`: the name of the graph from the metadata file that is
+        being requested. This should be a key in the JSON file.
+
+    Returns:
+        The metadata for the PyDough graph, including all of the collections
+        and properties defined within.
+
+    Raises:
+        `PyDoughMetadataException`: if the file is malformed in any way that
+        prevents parsing it to obtain the desired graph.
     """
     with open(file_path, "r") as f:
         as_json = json.load(f)
     if not isinstance(as_json, dict):
         raise PyDoughMetadataException(
-            "PyDough metadata expected to be a JSON file containing a JSON object."
+            f"PyDough metadata expected to be a JSON file containing a JSON object, received: {as_json.__class__.__name__}."
         )
     if graph_name not in as_json:
         raise PyDoughMetadataException(
-            f"PyDough metadata does not contain a graph named {graph_name!r}"
+            f"PyDough metadata file located at {file_path!r} does not contain a graph named {graph_name!r}"
         )
     graph_json = as_json[graph_name]
     return parse_graph(graph_name, graph_json)
 
 
-def parse_graph(graph_name: str, graph_json: Dict) -> None:
+def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
     """
-    TODO: add function docstring.
+    Parses a JSON object to obtain the metadata for a PyDough graph.
+
+    Args:
+        `graph_name`: the name of the graph being parsed.
+        `graph_json`: the JSON object representing the contents
+        of the graph.
+
+    Returns:
+        The metadata for the PyDough graph, including all of the collections
+        and properties defined within.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON is malformed in any way that
+        prevents parsing it to obtain the desired graph.
     """
     verify_has_type(graph_json, dict, "metadata for PyDough graph")
     graph = GraphMetadata(graph_name)
@@ -72,35 +99,100 @@ def parse_graph(graph_name: str, graph_json: Dict) -> None:
     return graph
 
 
-def topological_ordering(dependencies: List[List[int]]) -> List[int]:
+def topological_ordering(dependencies: List[Set[int]]) -> List[int]:
     """
-    TODO: add function docstring
+    Computes a topological ordering of a list of objects with dependencies,
+    assuming that the dependencies correspond to a directed acyclic graph.
+
+    Args:
+        `dependencies`: a list mapping each object by its position to the
+        indices of all objects that it depends on.
+
+    Returns:
+        The topological ordering of the objects as a list of integers where the
+        value at each index corresponds to the order with which the
+        corresponding item should be visited in order to ensure it is visited
+        after all of its dependencies.
+
+    Raises:
+        `PyDoughMetadataException`: if the inputs are malformed, e.g. because
+        they contain invalid dependency indices or there is a cycle.
     """
-    valid_range = range(len(dependencies))
+    n_vertices = len(dependencies)
+    valid_range = range(n_vertices)
+
+    # The list containing the final output, where `finish_times[i]` is ordinal
+    # position that index `i` should be visited at in order to guarantee that
+    # it is visited after all of its dependencies.
     finish_times = [-1 for _ in valid_range]
+
+    # A set of all indices that have already been visited.
     visited = set()
+
+    # A counter keeping track of the number of indices that have already had
+    # their finish times computed, meaning it is safe to compute the finish
+    # time of vertices that depends on them.
     current_time = 0
 
-    def dfs(idx, parent=-1):
+    # A set of all indices that are in the ancestry tree of the recursive
+    # backtracking's current step. If a neighbor is encountered that is
+    # in this set, it means there is a cycle in the dependencies.
+    ancestry = set()
+
+    # Recursive backtracking function that traverses the dependencies
+    # starting from `idx`.
+    def dfs(idx: int):
         nonlocal current_time
+
+        # Do not visit an index after it has already been visited.
         if idx in visited:
             return
+
+        # Mark this index as visited and also add it to the ancestry so that if
+        # any recursive descendants of this call reach this index again, the
+        # cycle will be detected.
         visited.add(idx)
-        for neighbor in dependencies[idx]:
-            if neighbor not in valid_range:
+        ancestry.add(idx)
+
+        # Iterate across all dependencies of the vertex, making sure they are well
+        # formed and do not indicate a cycle, then recursively visit them.
+        for dependency in dependencies[idx]:
+            if dependency not in valid_range:
                 raise PyDoughMetadataException(
                     "Malformed property dependencies detected."
                 )
-            if neighbor != parent and neighbor in visited:
+            if dependency in ancestry:
                 raise PyDoughMetadataException(
                     "Cyclic dependency detected between properties in PyDough metadata graph."
                 )
-            dfs(neighbor, idx)
+            dfs(dependency)
+
+        # Once all dependencies of the index have been visited, set the finish
+        # time of the current index then increment the timer so subsequently
+        # finished indices are known to come after this index.
         finish_times[idx] = current_time
         current_time += 1
 
+        # Remove the index from the ancestry set so later recursive calls do
+        # not confuse multiple indices being dependant on the same index with
+        # having an actual cycle
+        ancestry.add(idx)
+
+    # Iterate across all indices and invoke the recursive procedure on each
+    # of them, since the indices could be a disconnected forest of DAGs.
     for idx in valid_range:
         dfs(idx)
+
+    # Verify that the final output list is well-formed, meaning that it is a
+    # list of the correct length containing the desired integers where each
+    # index has a finish time that is larger than all of its dependencies.
+    if len(finish_times) != n_vertices or set(finish_times) != set(valid_range):
+        raise PyDoughMetadataException("Malformed topological sorting output")
+    for idx in valid_range:
+        for dependency in dependencies[idx]:
+            if finish_times[idx] <= finish_times[dependency]:
+                raise PyDoughMetadataException("Malformed topological sorting output")
+
     return finish_times
 
 
@@ -109,6 +201,8 @@ def get_property_dependencies(
 ) -> List[Set[int]]:
     """
     TODO: add function docstring
+
+    !!! THIS FUNCTION IS A WORK IN PROGRESS !!!
     """
     n_properties = len(reformatted_properties)
     if n_properties == 0:
@@ -301,16 +395,42 @@ def topologically_sort_properties(
     raw_properties: List[Tuple[str, str, dict]],
 ) -> List[Tuple[str, str, dict]]:
     """
-    TODO: add function docstring
+    Computes the ordered that each property should be defined in so that
+    all dependencies of the property have been defined first.
+
+    Args:
+        `raw_properties`: a list of tuples representing each property in
+        the form `(collection_name, property_name, property_json)`.
+
+    Returns:
+        A list identical to `raw_properties` except that it has been reordered
+        so that each property is defined after all properties it depends on.
+
+    Raises:
+        `PyDoughMetadataException`: if the inputs are malformed, e.g. because
+        the JSON of the properties refers to missing collections/properties,
+        or if there is a cycle in the dependencies of properties.
     """
+    # Reformat the properties list into a dictionary where the keys are the
+    # identifying `(collection_name, property_name)` tuple (hereafter
+    # referred to as the `property`) and the values are a tuple of the
+    # property's JSON and its index in the original raw_properties list.
     reformatted_properties: Dict[Tuple[str, str], Tuple[dict, int]] = {
         property[:2]: (property[2], i) for i, property in enumerate(raw_properties)
     }
+
+    # Compute the dependencies of each property.
     dependencies: List[Set[int]] = get_property_dependencies(reformatted_properties)
+
+    # Use the dependencies to calculate the topological ordering of the
+    # properties.
     finish_times: List[int] = topological_ordering(dependencies)
     ordered_keys: List[Tuple[str, str]] = sorted(
         reformatted_properties, key=lambda k: finish_times[reformatted_properties[k][1]]
     )
+
+    # Use the topological ordering to re-construct the same format as the
+    # `raw_properties`` list, but in the desired order.
     ordered_properties: List[Tuple[str, str, dict]] = [
         (*k, reformatted_properties[k]) for k in ordered_keys
     ]
