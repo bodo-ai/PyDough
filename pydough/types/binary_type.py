@@ -3,11 +3,12 @@ TODO: add file-level docstring
 """
 
 from .pydough_type import PyDoughType
+from typing import Optional
 
 
 class BinaryType(PyDoughType):
     """
-    TODO: add class docstring
+    The PyDough type representing data in a bytes format.
     """
 
     def __init__(self):
@@ -21,5 +22,5 @@ class BinaryType(PyDoughType):
         return "binary"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> PyDoughType:
+    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
         return BinaryType() if type_string == "binary" else None

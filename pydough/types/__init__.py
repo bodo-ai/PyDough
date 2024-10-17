@@ -11,4 +11,5 @@ from .timestamp_type import TimestampType  # noqa
 from .array_type import ArrayType  # noqa
 from .map_type import MapType  # noqa
 from .struct_type import StructType  # noqa
+from .unknown_type import UnknownType  # noqa
 from .parse_types import parse_type_from_string  # noqa

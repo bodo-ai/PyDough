@@ -3,11 +3,12 @@ TODO: add file-level docstring
 """
 
 from .pydough_type import PyDoughType
+from typing import Optional
 
 
 class StringType(PyDoughType):
     """
-    TODO: add class docstring
+    The PyDough type representing strings.
     """
 
     def __init__(self):
@@ -21,5 +22,5 @@ class StringType(PyDoughType):
         return "string"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> PyDoughType:
+    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
         return StringType() if type_string == "string" else None

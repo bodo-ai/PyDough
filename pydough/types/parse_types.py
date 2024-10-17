@@ -1,3 +1,7 @@
+"""
+TODO: add file-level docstring
+"""
+
 from .pydough_type import PyDoughType
 from .integer_types import Int8Type, Int16Type, Int32Type, Int64Type
 from .float_types import Float32Type, Float64Type
@@ -11,12 +15,15 @@ from .timestamp_type import TimestampType
 from .array_type import ArrayType
 from .map_type import MapType
 from .struct_type import StructType
+from .unknown_type import UnknownType
 from .errors import PyDoughTypeException
 
 
 def parse_type_from_string(type_string: str) -> PyDoughType:
+    """
+    TODO: add function docstring
+    """
     type_classes = [
-        ArrayType,
         BinaryType,
         BooleanType,
         DecimalType,
@@ -27,11 +34,13 @@ def parse_type_from_string(type_string: str) -> PyDoughType:
         Int16Type,
         Int32Type,
         Int64Type,
-        MapType,
         StringType,
-        StructType,
         TimeType,
         TimestampType,
+        UnknownType,
+        ArrayType,
+        MapType,
+        StructType,
     ]
     for type_class in type_classes:
         parsed_type = type_class.parse_from_string(type_string)
