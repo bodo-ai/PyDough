@@ -256,8 +256,6 @@ class CollectionMetadata(AbstractMetadata):
     ) -> None:
         """
         Generic verification that the JSON for a collection is well formed.
-        Specific collection types should use this check as a subroutine
-        for their own JSON verification.
 
         Args:
             `graph`: the metadata for the graph that the collection would
@@ -290,17 +288,33 @@ class CollectionMetadata(AbstractMetadata):
             collection_json, "properties", dict, error_name
         )
 
-    @abstractmethod
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
         """
-        TODO: add function docstring.
+        Parses a JSON object into the metadata for a collection and inserts it
+        into the graph.
+
+        Args:
+            `graph`: the metadata for the graph that the collection will be
+            added to.
+            `collection_name`: the name of the collection that will be added
+            to the graph.
+            `collection_json`: the JSON object that is being parsed to create
+            the new collection.
+
+        Raises:
+            `PyDoughMetadataException`: if the JSON does not meet the necessary
+            structure properties.
         """
         from . import SimpleTableMetadata
 
+        # Verify that the JSON is well structured, in terms of generic
+        # properties.
         CollectionMetadata.verify_json_metadata(graph, collection_name, collection_json)
 
+        # Dispatch to a specific parsing procedure based on the type of
+        # collection.
         match collection_json["type"]:
             case "simple_table":
                 SimpleTableMetadata.parse_from_json(

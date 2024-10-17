@@ -75,6 +75,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
+        # Create the string used to identify the property in error messages.
         error_name = f"compound relationship property {property_name!r} of {CollectionMetadata.error_name}"
         verify_json_has_property_with_type(
             property_json, "primary_property", str, error_name

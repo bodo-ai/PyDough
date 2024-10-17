@@ -50,6 +50,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
+        # Create the string used to identify the property in error messages.
         error_name = SimpleJoinMetadata.create_error_name(
             property_name, collection.error_name
         )

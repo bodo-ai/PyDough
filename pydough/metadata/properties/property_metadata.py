@@ -83,6 +83,7 @@ class PropertyMetadata(AbstractMetadata):
         )
 
         verify_valid_name(property_name)
+        # Create the string used to identify the property in error messages.
         error_name = f"property {property_name!r} of collection {collection.error_name}"
         verify_json_has_property_with_type(property_json, "type", str, error_name)
         match property_json["type"]:
@@ -107,7 +108,6 @@ class PropertyMetadata(AbstractMetadata):
                     f"Unrecognized property type for {error_name}: {repr(property_type)}"
                 )
 
-    @abstractmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:

@@ -40,6 +40,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
         verify_valid_name(property_name)
+        # Create the string used to identify the property in error messages.
         error_name = TableColumnMetadata.create_error_name(
             property_name, collection.error_name
         )

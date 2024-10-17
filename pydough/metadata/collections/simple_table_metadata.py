@@ -26,9 +26,13 @@ from pydough.metadata.properties import (
 
 class SimpleTableMetadata(CollectionMetadata):
     """
-    TODO: add class docstring
+    Concrete metadata implementation for a PyDough collection representing a
+    relational table where the properties are columns to the table, or subsets
+    of other such tables created from joins.
     """
 
+    # List of names of of properties that can be included in the JSON
+    # object describing a simple table collection.
     allowed_properties = CollectionMetadata.allowed_properties + [
         "table_path",
         "unique_properties",
@@ -42,8 +46,8 @@ class SimpleTableMetadata(CollectionMetadata):
         unique_properties: List[Union[str, List[str]]],
     ):
         super().__init__(name, graph)
-        self.table_path: str = table_path
-        self.unique_properties: List[Union[str, List[str]]] = unique_properties
+        self._table_path: str = table_path
+        self._unique_properties: List[Union[str, List[str]]] = unique_properties
         verify_has_type(table_path, str, f"Property 'table_path' of {self.error_name}")
         verify_matches_predicate(
             unique_properties,
@@ -51,6 +55,25 @@ class SimpleTableMetadata(CollectionMetadata):
             f"Property 'unique_properties' of {self.error_name}",
             "non-empty list of strings or non-empty lists of strings",
         )
+
+    @property
+    def table_path(self) -> str:
+        """
+        The path used to identify the table within whatever data storage
+        mechanism is being used.
+        """
+        return self._table_path
+
+    @property
+    def unique_properties(self) -> List[Union[str, List[str]]]:
+        """
+        The list of all names of properties of the collection that are
+        guaranteed to be unique within the collection. Entries that are a
+        string represent a single column being completely unique, while entries
+        that are a list of strings indicate that each combination of those
+        properties is unique.
+        """
+        return self._unique_properties
 
     @staticmethod
     def create_error_name(name, graph_error_name):
@@ -63,7 +86,24 @@ class SimpleTableMetadata(CollectionMetadata):
     def verify_allows_property(
         self, property: PropertyMetadata, inherited: bool
     ) -> None:
+        """
+        Verifies that a property is safe to add to the collection.
+
+        Args:
+            `property`: the metadata for a PyDough property that is being
+            added to the collection.
+            `inherited`: True if verifying a property being inserted as an
+            inherited property, False otherwise.
+
+        Raises:
+            `PyDoughMetadataException`: if `property` is not a valid property
+            to insert into the collection.
+        """
+        # Invoke the more generic checks.
         super().verify_allows_property(property, inherited)
+
+        # Ensure taht the property is one of the supported types for this
+        # type of collection.
         match property:
             case (
                 TableColumnMetadata()
@@ -97,8 +137,7 @@ class SimpleTableMetadata(CollectionMetadata):
             `PyDoughMetadataException`: if the JSON does not meet the necessary
             structure properties.
         """
-        # Invoke the more generic checks
-        CollectionMetadata.verify_json_metadata(graph, collection_name, collection_json)
+        # Create the string used to identify the collection in error messages.
         error_name = SimpleTableMetadata.create_error_name(
             collection_name, graph.error_name
         )
@@ -122,9 +161,29 @@ class SimpleTableMetadata(CollectionMetadata):
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
+        """
+        Parses a JSON object into the metadata for a simple table collection
+        and inserts it into the graph.
+
+        Args:
+            `graph`: the metadata for the graph that the collection will be
+            added to.
+            `collection_name`: the name of the collection that will be added
+            to the graph.
+            `collection_json`: the JSON object that is being parsed to create
+            the new collection.
+
+        Raises:
+            `PyDoughMetadataException`: if the JSON does not meet the necessary
+            structure properties.
+        """
+        # Verify that the JSON is well structured.
         SimpleTableMetadata.verify_json_metadata(
             graph, collection_name, collection_json
         )
+
+        # Extract the relevant properties from the JSON to build the new
+        # collection, then add it to the graph.
         table_path = collection_json["table_path"]
         unique_properties = collection_json["unique_properties"]
         new_collection = SimpleTableMetadata(
