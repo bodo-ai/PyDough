@@ -199,8 +199,8 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
                 reverse_keys[other_key].append(key)
 
         # Construct the reverse relationship by flipping the forward & reverse
-        # names, and the source / target collections. Then fill the
-        # `reverse_property` fields with one another.
+        # names, the source / target collections, and the plural properties.
+        # Then fill the `reverse_property` fields with one another.
         reverse = SimpleJoinMetadata(
             self.reverse_name,
             self.name,

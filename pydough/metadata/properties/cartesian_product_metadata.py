@@ -67,7 +67,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
             property_name, collection.error_name
         )
 
-        # Verify that the property has the required `other_collection_name` and
+        # Verify that the JSON has the required `other_collection_name` and
         # `reverse_relationship_name` fields, without anything extra.
         verify_json_has_property_with_type(
             property_json, "other_collection_name", str, error_name
@@ -124,8 +124,8 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
 
     def build_reverse_relationship(self) -> None:
         # Construct the reverse relationship by flipping the forward & reverse
-        # names, and the source / target collections. Then fill the
-        # `reverse_property` fields with one another.
+        # names, the source / target collections, and the plural properties.
+        # Then fill the `reverse_property` fields with one another.
         reverse = CartesianProductMetadata(
             self.reverse_name,
             self.name,
