@@ -3,13 +3,14 @@ TODO: add file-level docstring
 """
 
 from . import PropertyMetadata, CompoundRelationshipMetadata
-from pydough.metadata.errors import PyDoughMetadataException
 from pydough.metadata.collections import CollectionMetadata
 
 
 class InheritedPropertyMetadata(PropertyMetadata):
     """
-    TODO: add class docstring
+    The implementation class for a property that does not exist directly in a
+    collection, but rather is inherited when the collection is accessed via
+    a compound relationship.
     """
 
     def __init__(
@@ -20,10 +21,25 @@ class InheritedPropertyMetadata(PropertyMetadata):
         property_to_inherit: PropertyMetadata,
     ):
         super().__init__(name, collection)
-        self.property_inherited_from: CompoundRelationshipMetadata = (
+        self._property_inherited_from: CompoundRelationshipMetadata = (
             property_inherited_from
         )
-        self.property_to_inherit: PropertyMetadata = property_to_inherit
+        self._property_to_inherit: PropertyMetadata = property_to_inherit
+
+    @property
+    def property_inherited_from(self) -> CompoundRelationshipMetadata:
+        """
+        The property that this inherited property is derived from.
+        """
+        return self._property_inherited_from
+
+    @property
+    def property_to_inherit(self) -> CompoundRelationshipMetadata:
+        """
+        The property that this inherited property allows its collection to
+        access.
+        """
+        return self._property_to_inherit
 
     @property
     def error_name(self):
@@ -63,18 +79,4 @@ class InheritedPropertyMetadata(PropertyMetadata):
             super().components
             + self.property_inherited_from.components
             + self.property_to_inherit.components
-        )
-
-    @property
-    def source_collection(self) -> CollectionMetadata:
-        """
-        TODO: add function docstring
-        """
-        return self.property_inherited_from.primary_property.other_collection
-
-    def parse_from_json(
-        self, collection: CollectionMetadata, property_name: str, property_json: dict
-    ) -> None:
-        raise PyDoughMetadataException(
-            "Cannot directly construct an instance of InheritedPropertyMetadata from JSON"
         )
