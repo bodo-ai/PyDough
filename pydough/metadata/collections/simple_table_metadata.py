@@ -11,7 +11,6 @@ from pydough.metadata.errors import (
     verify_no_extra_keys_in_json,
     verify_has_type,
     verify_matches_predicate,
-    verify_valid_name,
 )
 from pydough.metadata.graphs import GraphMetadata
 from . import CollectionMetadata
@@ -80,14 +79,32 @@ class SimpleTableMetadata(CollectionMetadata):
                 )
 
     def verify_json_metadata(
-        graph, collection_name: str, collection_json: dict
+        graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
-        verify_valid_name(collection_name)
-        verify_has_type(graph, GraphMetadata, "graph")
+        """
+        Verifies that a JSON object contains well formed data to create a new simple
+        table collection.
+
+        Args:
+            `graph`: the metadata for the graph that the collection would
+            be added to.
+            `collection_name`: the name of the collection that would be added
+            to the graph.
+            `collection_json`: the JSON object that is being verified to ensure
+            it represents a valid collection.
+
+        Raises:
+            `PyDoughMetadataException`: if the JSON does not meet the necessary
+            structure properties.
+        """
+        # Invoke the more generic checks
+        CollectionMetadata.verify_json_metadata(graph, collection_name, collection_json)
         error_name = SimpleTableMetadata.create_error_name(
             collection_name, graph.error_name
         )
 
+        # Check that the JSON data contains the required properties
+        # `table_path` and `unique_properties`, without any extra properties.
         verify_json_has_property_with_type(
             collection_json, "table_path", str, error_name
         )

@@ -18,10 +18,18 @@ from pydough.metadata.graphs import GraphMetadata
 
 class CollectionMetadata(AbstractMetadata):
     """
-    TODO: add class docstring
+    Abstract base class for PyDough metadata for collections.
+
+    Each implementation must include the following APIs:
+    - `create_error_name`
+    - `components`
+    - `verify_allows_property`
+    - `parse_from_json`
     """
 
-    allowed_properties = ["type", "properties"]
+    # List of names of of properties that can be included in the JSON
+    # object describing a collection. Implementations should extend this.
+    allowed_properties: List[str] = ["type", "properties"]
 
     def __init__(self, name: str, graph: GraphMetadata):
         from pydough.metadata.properties import (
@@ -31,17 +39,50 @@ class CollectionMetadata(AbstractMetadata):
 
         verify_valid_name(name)
         verify_has_type(graph, GraphMetadata, "Graph of CollectionMetadata")
-        self.graph: GraphMetadata = graph
-        self.name: str = name
-        self.properties: Dict[str, PropertyMetadata] = {}
-        self.inherited_properties: Dict[str, List[InheritedPropertyMetadata]] = (
+        self._graph: GraphMetadata = graph
+        self._name: str = name
+        self._properties: Dict[str, PropertyMetadata] = {}
+        self._inherited_properties: Dict[str, List[InheritedPropertyMetadata]] = (
             defaultdict(list)
         )
 
     @property
+    def graph(self) -> GraphMetadata:
+        """
+        The graph that the collection belongs to.
+        """
+        return self._graph
+
+    @property
+    def name(self) -> str:
+        """
+        The name of the collection.
+        """
+        return self._name
+
+    @property
+    def properties(self):
+        """
+        A dictionary mapping the names of each property of the collection to
+        the property metadata.
+        """
+        return self._properties
+
+    @property
+    def inherited_properties(self):
+        """
+        A dictionary mapping the names of each inherited property of the
+        collection (properties that are only accessible when the collection
+        is accessed via a compound relationship) to the list of all inherited
+        properties sharing that name.
+        """
+        return self._inherited_properties
+
+    @property
     def error_name(self):
         """
-        TODO: add function docstring
+        The string that should be displayed to identify this collection in
+        error messages.
         """
         return self.create_error_name(self.name, self.graph.error_name)
 
@@ -49,14 +90,21 @@ class CollectionMetadata(AbstractMetadata):
     @abstractmethod
     def create_error_name(name: str, graph_error_name: str):
         """
-        TODO: add function docstring
+        Creates a string used for the purposes of the `error_name` property.
+
+        Args:
+            `name`: the name of the collection.
+            `name`: the name of the collection.
+
+        Returns:
+            The string to use to identify the collection in exception messages.
         """
 
     @property
     @abstractmethod
     def components(self) -> tuple:
         """
-        TODO: add function docstring.
+        A tuple of objects used to uniquely identify the collection.
         """
         return self.graph.components + (self.name,)
 
@@ -65,13 +113,26 @@ class CollectionMetadata(AbstractMetadata):
         self, property: AbstractMetadata, inherited: bool
     ) -> None:
         """
-        TODO: add function docstring.
+        Verifies that a property is safe to add to the collection. Each
+        implementation should extend this method with its own checks.
+
+        Args:
+            `property`: the metadata for a PyDough property that is being
+            added to the collection.
+            `inherited`: True if verifying a property being inserted as an
+            inherited property, False otherwise.
+
+        Raises:
+            `PyDoughMetadataException`: if `property` is not a valid property
+            to insert into the collection.
         """
         from pydough.metadata.properties import (
             PropertyMetadata,
             InheritedPropertyMetadata,
         )
 
+        # First, make sure that the candidate property is indeed a property
+        # metadata of the appropriate type.
         verify_has_type(property, PropertyMetadata, "property")
         property: PropertyMetadata = property
         if inherited:
@@ -85,6 +146,10 @@ class CollectionMetadata(AbstractMetadata):
                     "Cannot add an inherited property with add_property, use add_inherited_property instead."
                 )
 
+        # Verify that there is not a name conflict between an inherited
+        # property and the candidate property, which would mean the candidate
+        # property already been inserted or that there is an inherited property
+        # that conflicts with the name of a regular property.
         if property.name in self.inherited_properties:
             if inherited:
                 if property in self.inherited_properties[property.name]:
@@ -96,6 +161,8 @@ class CollectionMetadata(AbstractMetadata):
                     f"{self.inherited_properties[property.name][0].error_name} conflicts with property {property.error_name}."
                 )
 
+        # Verify that there is not a name conflict between a regular property
+        # and the candidate property.
         if property.name in self.properties:
             if self.properties[property.name] == property:
                 raise PyDoughMetadataException(f"Already added {property.error_name}")
@@ -110,7 +177,15 @@ class CollectionMetadata(AbstractMetadata):
 
     def add_property(self, property: AbstractMetadata) -> None:
         """
-        TODO: add function docstring.
+        Inserts a new property into the collection.
+
+        Args:
+            `property`: the metadata for a PyDough property that is being
+            added to the collection.
+
+        Raises:
+            `PyDoughMetadataException`: if `property` is unable to be
+            inserted into the collection.
         """
         from pydough.metadata.properties import PropertyMetadata
 
@@ -120,7 +195,16 @@ class CollectionMetadata(AbstractMetadata):
 
     def add_inherited_property(self, property: AbstractMetadata) -> None:
         """
-        TODO: add function docstring.
+        Inserts a new inherited property into the collection.
+
+        Args:
+            `property`: the metadata for a PyDough property that is being
+            added to the collection as an inherited property through
+            a compound relationship.
+
+        Raises:
+            `PyDoughMetadataException`: if `property` is unable to be
+            inserted into the collection as an inherited property.
         """
         from pydough.metadata.properties import InheritedPropertyMetadata
 
@@ -137,27 +221,61 @@ class CollectionMetadata(AbstractMetadata):
 
     def get_property_names(self) -> List[str]:
         """
-        TODO: add function docstring.
+        Retrieves the names of all properties of the collection, excluding
+        inherited properties.
         """
         return list(self.properties)
 
     def get_property(self, property_name: str) -> AbstractMetadata:
         """
-        TODO: add function docstring.
+        Fetches a property from the collection by name.
+
+        Args:
+            `property_name`: the name of the property being requested.
+
+        Returns:
+            The metadata for the requested property.
+
+        Raises:
+            `PyDoughMetadataException`: if a property with name `name` does not
+            exist in the collection, or it does but as an inherited property.
         """
         if property_name not in self.properties:
-            raise PyDoughMetadataException(
-                f"Collection {self.name} does not have a property {property_name!r}"
-            )
+            if property_name in self.inherited_properties:
+                raise PyDoughMetadataException(
+                    f"Cannot use get_property on inherited property {property_name!r}"
+                )
+            else:
+                raise PyDoughMetadataException(
+                    f"Collection {self.name} does not have a property {property_name!r}"
+                )
         return self.properties[property_name]
 
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
         """
-        TODO: add function docstring.
+        Generic verification that the JSON for a collection is well formed.
+        Specific collection types should use this check as a subroutine
+        for their own JSON verification.
+
+        Args:
+            `graph`: the metadata for the graph that the collection would
+            be added to.
+            `collection_name`: the name of the collection that would be added
+            to the graph.
+            `collection_json`: the JSON object that is being verified to ensure
+            it represents a valid collection.
+
+        Raises:
+            `PyDoughMetadataException`: if the JSON does not meet the necessary
+            structure properties.
         """
+        # Check that the collection name is valid string.
         verify_valid_name(collection_name)
+
+        # Check that the graph argument is indeed a graph metadata, and that the
+        # name of the graph does not collide with the name of the collection.
         verify_has_type(graph, GraphMetadata, "graph")
         error_name = f"collection {collection_name!r} in {graph.error_name}"
         if collection_name == graph.name:
@@ -165,6 +283,8 @@ class CollectionMetadata(AbstractMetadata):
                 f"Cannot have collection named {collection_name!r} share the same name as the graph containing it."
             )
 
+        # Check that the JSON data contains the required properties `type` and
+        # `properties`.
         verify_json_has_property_with_type(collection_json, "type", str, error_name)
         verify_json_has_property_with_type(
             collection_json, "properties", dict, error_name
