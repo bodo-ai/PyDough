@@ -1,57 +1,56 @@
 """
-Defines the abstract interfaces for any database connector.
-These require the ability to connect to a database, execute a query,
-and return the results.
-
-TODO: Add metadata support.
+PyDough implementation of a generic connection to database
+by leveraging PEP 249 (Python Database API Specification v2.0).
+https://peps.python.org/pep-0249/
 """
 # Copyright (C) 2024 Bodo Inc. All rights reserved.
 
-from abc import ABC, abstractmethod
+from builtins import module
 
 
-class DatabaseConnector(ABC):
-    @abstractmethod
-    def connect(self, *args, **kwargs) -> "DatabaseCursor":
-        """Connect to the database by providing the required
-        connection parameters. Each database connector may
-        accept different parameters, including potentially
-        optional configuration parameters, but the most common
-        case will be a single connection string.
+class SupportedDatabase:
+    """Supported Database in PyDough."""
 
-        Returns:
-            DatabaseCursor: _description_
-        """
+    _import_error_msg: str
+    _module: module
 
-    # TODO: Extend the interface.
+    def __init__(self, mod_name: str, import_error_msg: str):
+        self.import_error_msg = import_error_msg
+        try:
+            self._module = __import__(mod_name)
+        except ImportError:
+            self._module = None
+
+    def module(self):
+        if self._module is None:
+            raise ImportError(self.import_error_msg)
+        return self._module
 
 
-class DatabaseCursor(ABC):
+supported_databases = {
+    "sqlite": SupportedDatabase(
+        "sqlite3", "PyDough requires the sqlite3 module for SQLite databases."
+    )
+}
+
+
+def connect(database: str, *args, **kwargs):
+    """Connect to a database and return a connection object
+    that is compliant with PEP 249.
+
+    This function doesn't have much value and may be removed in the future,
+    but it is added here to track which database(s) are supported/tested.
+
+    Args:
+        database (str): The name of the database to connect to.
+        *args: Variable length argument list. These are passed to the
+            underlying database driver.
+        **kwargs: Arbitrary keyword arguments. These are passed to the
+            underlying database driver.
+
+    Returns:
+        Connection: A connection object in the given implementation library.
     """
-    A thin wrapper around a database cursor object
-    that provides a common interface for executing
-    queries on a database.
-    """
-
-    @abstractmethod
-    def execute(self, sql: str, parameters=(), /) -> "DatabaseResult":
-        """Execute a query on the database.
-
-        Args:
-            query (str): The query to execute.
-
-        Returns:
-            DatabaseResult: The result of the query.
-        """
-
-    # TODO: Extend the interface.
-
-
-class DatabaseResult(ABC):
-    """
-    A thin wrapper around a database result object
-    that provides a common interface for fetching
-    results from a database query.
-    """
-
-    # TODO: Determine interface.
+    if database not in supported_databases:
+        raise ValueError(f"Unsupported database: {database}")
+    return supported_databases[database].module().connect(*args, **kwargs)
