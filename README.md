@@ -9,6 +9,10 @@ commands after installing `uv`, run the following command:
 uv run pytest <pytest_arguments>
 ```
 
+## Running CI Tests
+To run our CI tests on your PR, you must include the flag `[run CI]` in latest
+commit message.
+
 ## Runtime Dependencies
 
 PyDough requires having the following Python modules installed to use
