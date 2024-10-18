@@ -235,14 +235,13 @@ def get_property_dependencies(
     def add_dependency(property: Tuple[str, str], dependency: Tuple[str, str]) -> None:
         true_property = get_true_property(property)
         true_dependency = get_true_property(dependency)
-        if (
-            true_property is None
-            or true_dependency is None
-            or true_property not in reformatted_properties
-            or true_dependency not in reformatted_properties
-        ):
+        if true_property is None or true_property not in reformatted_properties:
             raise PyDoughMetadataException(
-                "Unable to extract dependencies of properties in PyDough metadata"
+                f"Unable to extract dependencies of properties in PyDough metadata due to unrecognized property {property}"
+            )
+        if true_dependency is None or true_dependency not in reformatted_properties:
+            raise PyDoughMetadataException(
+                f"Unable to extract dependencies of properties in PyDough metadata due to unrecognized property {dependency}"
             )
         property_idx = reformatted_properties[true_property][1]
         dependency_idx = reformatted_properties[true_dependency][1]
