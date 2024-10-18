@@ -26,6 +26,15 @@
             "no_collisions": true,
             "keys": {"username": ["customer_username"]},
             "reverse_relationship_name": "customer"
+          },
+          "addresses": {
+            "type": "compound",
+            "primary_property": "occupancies",
+            "secondary_property": "address",
+            "singular": false,
+            "no_collisions": false,
+            "inherited_properties": {"date_started_occupying": "date_started_occupying", "date_stopped_occupying": "date_stopped_occupying"},
+            "reverse_relationship_name": "occupants"
           }
         }
       },
@@ -107,7 +116,7 @@
             "singular": false,
             "no_collisions": true,
             "keys": {"product_name": ["name"]},
-            "reverse_relationship_name": "contained_in"
+            "reverse_relationship_name": "containment_records"
           }
         }
       },

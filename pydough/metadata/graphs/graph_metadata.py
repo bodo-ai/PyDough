@@ -48,6 +48,10 @@ class GraphMetadata(AbstractMetadata):
     def components(self) -> tuple:
         return (self.name,)
 
+    @property
+    def path(self) -> str:
+        return self.name
+
     def add_collection(self, collection: AbstractMetadata) -> None:
         """
         Adds a new collection to the graph.
@@ -95,9 +99,9 @@ class GraphMetadata(AbstractMetadata):
         return self.collections[collection_name]
 
     def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
-        nouns: Dict[str, List[AbstractMetadata]] = defaultdict[list]
+        nouns: Dict[str, List[AbstractMetadata]] = defaultdict(list)
         nouns[self.name].append(self)
         for collection in self.collections.values():
-            for name, value in collection.get_nouns():
-                nouns[name].append(value)
+            for name, values in collection.get_nouns().items():
+                nouns[name].extend(values)
         return nouns

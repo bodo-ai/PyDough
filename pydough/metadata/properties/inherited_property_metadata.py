@@ -60,6 +60,10 @@ class InheritedPropertyMetadata(PropertyMetadata):
         return f"inherited property {name!r} of {collection_error_name} (alias of {property_error_name} inherited from {source_error_name})"
 
     @property
+    def path(self) -> str:
+        return f"{self.property_inherited_from.path}.{self.name}"
+
+    @property
     def is_plural(self) -> bool:
         return (
             self.property_inherited_from.is_plural or self.property_to_inherit.is_plural

@@ -79,6 +79,10 @@ class CollectionMetadata(AbstractMetadata):
         return self._inherited_properties
 
     @property
+    def path(self) -> str:
+        return f"{self.graph.path}.{self.name}"
+
+    @property
     def error_name(self):
         return self.create_error_name(self.name, self.graph.error_name)
 
@@ -209,8 +213,12 @@ class CollectionMetadata(AbstractMetadata):
     def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
         nouns: Dict[str, List[AbstractMetadata]] = defaultdict(list)
         for property in self.properties.values():
-            for noun_name, values in property.get_nouns():
+            for noun_name, values in property.get_nouns().items():
                 nouns[noun_name].extend(values)
+        for property_values in self.inherited_properties.values():
+            for property in property_values:
+                for noun_name, values in property.get_nouns().items():
+                    nouns[noun_name].extend(values)
         return nouns
 
     def get_property_names(self) -> List[str]:
