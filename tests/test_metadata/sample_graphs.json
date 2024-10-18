@@ -1,6 +1,141 @@
 {
     "Amazon": {
-        
+      "Customers": {
+        "type": "simple_table",
+        "table_path": "amazon.CUSTOMER",
+        "unique_properties": ["username", "email", "phone_number"],
+        "properties": {
+          "username": {"type": "table_column", "column_name": "username", "data_type": "string"},
+          "first_name": {"type": "table_column", "column_name": "first_name", "data_type": "string"},
+          "last_name": {"type": "table_column", "column_name": "last_name", "data_type": "string"},
+          "phone_number": {"type": "table_column", "column_name": "phone_number", "data_type": "string"},
+          "email": {"type": "table_column", "column_name": "email", "data_type": "string"},
+          "signup_date": {"type": "table_column", "column_name": "signup_date", "data_type": "timestamp[9]"},
+          "occupancies": {
+            "type": "simple_join",
+            "other_collection_name": "Occupancies",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {"username": ["occupant_username"]},
+            "reverse_relationship_name": "customer"
+          },
+          "packages_ordered": {
+            "type": "simple_join",
+            "other_collection_name": "Packages",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {"username": ["customer_username"]},
+            "reverse_relationship_name": "customer"
+          }
+        }
+      },
+      "Occupancies": {
+        "type": "simple_table",
+        "table_path": "amazon.OCCUPANCY",
+        "unique_properties": [["occupant_username", "address_id", "date_started_occupying"]],
+        "properties": {
+          "occupant_username": {"type": "table_column", "column_name": "occupant_username", "data_type": "string"},
+          "address_id": {"type": "table_column", "column_name": "address_id", "data_type": "int64"},
+          "date_started_occupying": {"type": "table_column", "column_name": "date_started_occupying", "data_type": "date"},
+          "date_stopped_occupying": {"type": "table_column", "column_name": "date_stopped_occupying", "data_type": "date"},
+          "address": {
+            "type": "simple_join",
+            "other_collection_name": "Addresses",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {"address_id": ["id"]},
+            "reverse_relationship_name": "occupancies"
+          }
+        }
+      },
+      "Packages": {
+        "type": "simple_table",
+        "table_path": "amazon.PACKAGE",
+        "unique_properties": ["id"],
+        "properties": {
+          "id": {"type": "table_column", "column_name": "id", "data_type": "int64"},
+          "customer_username": {"type": "table_column", "column_name": "customer_username", "data_type": "string"},
+          "order_timestamp": {"type": "table_column", "column_name": "order_timestamp", "data_type": "timestamp[9]"},
+          "shipping_address_id": {"type": "table_column", "column_name": "shipping_address_id", "data_type": "int64"},
+          "billing_address_id": {"type": "table_column", "column_name": "billing_address_id", "data_type": "int64"},
+          "shipping_address": {
+            "type": "simple_join",
+            "other_collection_name": "Addresses",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {"shipping_address_id": ["id"]},
+            "reverse_relationship_name": "packages_shipped_to"
+          },
+          "billing_address": {
+            "type": "simple_join",
+            "other_collection_name": "Addresses",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {"billing_address_id": ["id"]},
+            "reverse_relationship_name": "packages_billed_to"
+          },
+          "inventory": {
+            "type": "simple_join",
+            "other_collection_name": "PackageContents",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {"id": ["package_id"]},
+            "reverse_relationship_name": "package"
+          },
+          "contents": {
+            "type": "compound",
+            "primary_property": "inventory",
+            "secondary_property": "product",
+            "singular": false,
+            "no_collisions": false,
+            "inherited_properties": {"quantity_ordered": "quantity_ordered"},
+            "reverse_relationship_name": "packages_containing"
+          }
+        }
+      },
+      "PackageContents": {
+        "type": "simple_table",
+        "table_path": "amazon.CONTENTS",
+        "unique_properties": [["package_id", "product_name"]],
+        "properties": {
+          "package_id": {"type": "table_column", "column_name": "package_id", "data_type": "int64"},
+          "product_name": {"type": "table_column", "column_name": "product_name", "data_type": "string"},
+          "quantity_ordered": {"type": "table_column", "column_name": "quantity_ordered", "data_type": "int64"},
+          "product": {
+            "type": "simple_join",
+            "other_collection_name": "Products",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {"product_name": ["name"]},
+            "reverse_relationship_name": "contained_in"
+          }
+        }
+      },
+      "Products": {
+        "type": "simple_table",
+        "table_path": "amazon.PRODCCT",
+        "unique_properties": ["name"],
+        "properties": {
+          "name": {"type": "table_column", "column_name": "name", "data_type": "string"},
+          "product_type": {"type": "table_column", "column_name": "product_type", "data_type": "string"},
+          "product_category": {"type": "table_column", "column_name": "product_category", "data_type": "string"},
+          "price_per_unit": {"type": "table_column", "column_name": "price_per_unit", "data_type": "float64"}
+        }
+      },
+      "Addresses": {
+        "type": "simple_table",
+        "table_path": "amazon.ADDRESS",
+        "unique_properties": ["name"],
+        "properties": {
+          "id": {"type": "table_column", "column_name": "id", "data_type": "int64"},
+          "street_number": {"type": "table_column", "column_name": "street_number", "data_type": "int64"},
+          "street_name": {"type": "table_column", "column_name": "street_name", "data_type": "string"},
+          "apartment": {"type": "table_column", "column_name": "apartment", "data_type": "string"},
+          "zip_code": {"type": "table_column", "column_name": "zip_code", "data_type": "int64"},
+          "city": {"type": "table_column", "column_name": "city", "data_type": "string"},
+          "state": {"type": "table_column", "column_name": "state", "data_type": "string"}
+        }
+      }
     },
     "TPCH": {
         "Regions": {

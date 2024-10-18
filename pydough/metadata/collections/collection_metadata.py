@@ -241,7 +241,7 @@ class CollectionMetadata(AbstractMetadata):
                 )
             else:
                 raise PyDoughMetadataException(
-                    f"Collection {self.name} does not have a property {property_name!r}"
+                    f"{self.error_name} does not have a property {property_name!r}"
                 )
         return self.properties[property_name]
 

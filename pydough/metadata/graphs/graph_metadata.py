@@ -90,7 +90,7 @@ class GraphMetadata(AbstractMetadata):
         """
         if collection_name not in self.collections:
             raise PyDoughMetadataException(
-                f"Graph {self.name} does not have a collection named {collection_name}"
+                f"{self.error_name} does not have a collection named {collection_name!r}"
             )
         return self.collections[collection_name]
 

@@ -17,7 +17,18 @@ def test_graph_structure(sample_graphs):
 @pytest.mark.parametrize(
     "graph_name, answer",
     [
-        pytest.param("amazon", [], id="amazon"),
+        pytest.param(
+            "amazon",
+            [
+                "Addresses",
+                "Customers",
+                "Occupancies",
+                "PackageContents",
+                "Packages",
+                "Products",
+            ],
+            id="amazon",
+        ),
         pytest.param(
             "tpch",
             [
