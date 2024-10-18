@@ -49,7 +49,7 @@ class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
             raise PyDoughMetadataException(
                 f"Reverse property of {self.error_name} has not yet been defined."
             )
-        return self._reverse_name
+        return self._reverse_property
 
     @property
     @abstractmethod

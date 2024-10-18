@@ -282,5 +282,5 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         )
 
         # Then fill the `reverse_property` fields with one another.
-        reverse.reverse_property = self
-        self.reverse_property = reverse
+        reverse._reverse_property = self
+        self._reverse_property = reverse

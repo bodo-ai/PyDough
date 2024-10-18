@@ -40,7 +40,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
 
     @property
     def column_name(self) -> str:
-        return self.column_name
+        return self._column_name
 
     @staticmethod
     def create_error_name(name: str, collection_error_name: str):
