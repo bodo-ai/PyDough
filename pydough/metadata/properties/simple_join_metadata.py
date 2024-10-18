@@ -58,7 +58,9 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         for property_name, matching_property_names in keys.items():
             source_property = self.collection.get_property(property_name)
             for matching_property_name in matching_property_names:
-                target_property = self.collection.get_property(matching_property_name)
+                target_property = self.other_collection.get_property(
+                    matching_property_name
+                )
                 self._join_pairs.append((source_property, target_property))
 
     @property
@@ -210,5 +212,5 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             self.singular,
             reverse_keys,
         )
-        self.reverse_property = reverse
-        reverse.reverse_property = self
+        self._reverse_property = reverse
+        reverse._reverse_property = self
