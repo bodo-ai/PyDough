@@ -5,7 +5,11 @@ description = "TODO"
 readme = "README.md"
 authors = [{name = "Bodo.ai"}]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["pytz"]
 
 [project.optional-dependencies]
 dev = ["pre-commit", "pytest"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
