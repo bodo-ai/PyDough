@@ -3,8 +3,29 @@ name: PR Testing
 on:
   pull_request:
 
+# Limit CI to cancel previous runs in the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
+  get-msg:
+    name: Get Commit Message
+    runs-on: ubuntu-latest
+    outputs:
+      commitMsg: ${{ steps.get_msg.outputs.commitMsg }}
+    steps:
+      # Fetch the branch for the history only
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: .
+      - name: Get Commit Message
+        id: get_msg
+        run: |
+          set -xe pipefail
+          echo "commitMsg=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
+
   run-tests:
     strategy:
       matrix:
@@ -12,9 +33,12 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+    needs: [get-msg]
     name: python
     runs-on: ubuntu-latest
-
+    # https://docs.github.com/en/actions/learn-github-actions/expressions#contains
+    # contains is case-insensitive
+    if: contains(needs.get-msg.outputs.commitMsg, '[run ci]')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
