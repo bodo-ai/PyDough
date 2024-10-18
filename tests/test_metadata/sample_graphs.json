@@ -18,6 +18,24 @@
                 "no_collisions": true,
                 "keys": {"key": ["region_key"]},
                 "reverse_relationship_name": "region"
+              },
+              "customers": {
+                "type": "compound",
+                "primary_property": "nations",
+                "secondary_property": "customers",
+                "singular": false,
+                "no_collisions": true,
+                "inherited_properties": {"nation_name": "name"},
+                "reverse_relationship_name": "region"
+              },
+              "suppliers": {
+                "type": "compound",
+                "primary_property": "nations",
+                "secondary_property": "suppliers",
+                "singular": false,
+                "no_collisions": true,
+                "inherited_properties": {"nation_name": "name"},
+                "reverse_relationship_name": "region"
               }
             }
         },
@@ -192,6 +210,24 @@
               "no_collisions": false,
               "keys": {"customer_key": ["key"]},
               "reverse_relationship_name": "orders"
+            },
+            "shipping_nation": {
+              "type": "compound",
+              "primary_property": "customer",
+              "secondary_property": "nation",
+              "singular": true,
+              "no_collisions": false,
+              "inherited_properties": {},
+              "reverse_relationship_name": "orders_shipped_to"
+            },
+            "shipping_region": {
+              "type": "compound",
+              "primary_property": "customer",
+              "secondary_property": "region",
+              "singular": true,
+              "no_collisions": false,
+              "inherited_properties": {},
+              "reverse_relationship_name": "orders_shipped_to"
             }
           }
         },
