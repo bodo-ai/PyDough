@@ -8,7 +8,7 @@ requires-python = ">=3.10"
 dependencies = ["pytz"]
 
 [tool.uv]
-dev-dependencies = ["pre-commit", "pytest"]
+dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7"]
 
 [build-system]
 requires = ["hatchling"]
