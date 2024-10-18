@@ -45,6 +45,14 @@ class AbstractMetadata(ABC):
             metadata objects with that name.
         """
 
+    @property
+    @abstractmethod
+    def path(self) -> str:
+        """
+        A string used as a shorthand to identify the metadata object and its
+        ancestry.
+        """
+
     def __eq__(self, other):
         return type(self) is type(other) and self.components == other.components
 

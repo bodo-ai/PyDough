@@ -102,7 +102,7 @@ class SimpleTableMetadata(CollectionMetadata):
         # Invoke the more generic checks.
         super().verify_allows_property(property, inherited)
 
-        # Ensure taht the property is one of the supported types for this
+        # Ensure that the property is one of the supported types for this
         # type of collection.
         match property:
             case (

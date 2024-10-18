@@ -49,6 +49,10 @@ class PropertyMetadata(AbstractMetadata):
     def error_name(self) -> str:
         return self.create_error_name(self.name, self.collection.error_name)
 
+    @property
+    def path(self) -> str:
+        return f"{self.collection.path}.{self.name}"
+
     @staticmethod
     @abstractmethod
     def create_error_name(name: str, collection_error_name: str):
