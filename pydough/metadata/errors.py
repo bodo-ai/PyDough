@@ -2,7 +2,8 @@
 TODO: add file-level docstring
 """
 
-from typing import Dict, List, Callable, Any
+from typing import List, Set, Optional
+from abc import ABC, abstractmethod
 
 
 class PyDoughMetadataException(Exception):
@@ -12,280 +13,266 @@ class PyDoughMetadataException(Exception):
 
 
 ###############################################################################
-# Generic validation utilities
+# Predicate Classes
 ###############################################################################
 
 
-def verify_valid_name(name: str) -> None:
+class PyDoughPredicate(ABC):
+    """Abstract base class for predicates that can be used to verify that
+    objects in the PyDough metadata meet certain properties. Each
+    implementation must implement the following:
+    - `accept`
+    - `error_message`
     """
-    Verifies that a string can be used as a name for a PyDough graph,
-    collection, or property.
 
-    Args:
-        `name`: the string being checked.
+    @abstractmethod
+    def accept(self, obj: object) -> bool:
+        """
+        Takes in an object and returns true if it satisfies the predicate.
 
-    Raises:
-        `PyDoughMetadataException`: if the name is invalid.
+        Arguments:
+            `obj`: the object to check.
+
+        Returns:
+            A boolean value indicating if `obj` satisfied the predicate.
+        """
+
+    @abstractmethod
+    def error_message(self, error_name: str) -> str:
+        """
+        Produces the error message to indicate that the predicate failed.
+
+        Arguments:
+            `error_name`: the name to refer to the object that failed to
+            meet the predicate.
+
+        Returns:
+            A string to be used in error messages.
+        """
+
+    def verify(self, obj: object, error_name: str) -> None:
+        """
+        Takes in an object and verifies true if it satisfies the predicate,
+        raising an exception otherwise.
+
+        Arguments:
+            `obj`: the object to check.
+            `error_name`: the name to refer to `obj` by in error messages.
+
+        Raises:
+            `PyDoughMetadataException`: if `obj` did not satisfy the predicate.
+        """
+        if not self.accept(obj):
+            raise PyDoughMetadataException(self.error_message(error_name))
+
+
+class ValidName(PyDoughPredicate):
+    """Predicate class to check that an object is a string that can be used
+    as the name of a PyDough graph/collection/property.
     """
-    if not name.isidentifier():
-        raise PyDoughMetadataException(
-            f"Invalid name {name!r}: all PyDough graph/collection/property names must be valid Python identifiers."
+
+    def accept(self, obj: object) -> bool:
+        return isinstance(obj, str) and obj.isidentifier()
+
+    def error_message(self, error_name: str) -> str:
+        return f"{error_name} must be a string that is a Python identifier."
+
+
+class NoExtraKeys(PyDoughPredicate):
+    """Predicate class to check that a JSON object does not have extra fields
+    besides those that have been specified.
+    """
+
+    def __init__(self, valid_keys: Set[str]):
+        self.valid_keys: Set[str] = valid_keys
+
+    def accept(self, obj: object) -> bool:
+        return isinstance(obj, dict) and set(obj) <= self.valid_keys
+
+    def error_message(self, error_name: str) -> str:
+        return f"{error_name} must be a JSON object containing no fields except for {sorted(self.valid_keys)!r}."
+
+
+class ContainsField(PyDoughPredicate):
+    """Predicate class to check that a JSON object contains a field
+    with a certain name.
+    """
+
+    def __init__(self, field_name: str):
+        self.field_name: str = field_name
+
+    def accept(self, obj: object) -> bool:
+        return isinstance(obj, dict) and self.field_name in obj
+
+    def error_message(self, error_name: str) -> str:
+        return f"{error_name} must be a JSON object containing a field {self.field_name!r}."
+
+
+class HasType(PyDoughPredicate):
+    """Predicate class to check that an object has a certain type."""
+
+    def __init__(self, desired_type: type, type_name: Optional[str] = None):
+        self.desired_type: type = desired_type
+        self.type_name: str = str(self.desired_type) if type_name is None else type_name
+
+    def accept(self, obj: object) -> bool:
+        return isinstance(obj, self.desired_type)
+
+    def error_message(self, error_name: str) -> str:
+        return f"{error_name} must be a {self.type_name}."
+
+
+class HasPropertyWithType(PyDoughPredicate):
+    """Predicate class to check that an object has a field with a certain type."""
+
+    def __init__(
+        self, field_name: str, desired_type: type, type_name: Optional[str] = None
+    ):
+        self.field_name = self.field_name
+        self.field_predicate: PyDoughPredicate = ContainsField(field_name)
+        self.type_predicate: PyDoughPredicate = HasType(desired_type, type_name)
+
+    def accept(self, obj: object) -> bool:
+        return self.field_predicate.accept(obj) and self.type_predicate.accept(
+            obj[self.field_name]
         )
 
+    def error_message(self, error_name: str) -> str:
+        lhs = self.field_predicate.error_message(error_name)
+        rhs = self.type_predicate.error_message(
+            f"field {self.field_name!r} of {error_name}"
+        )
+        return f"{lhs} and {rhs}"
 
-def verify_no_extra_keys_in_json(
-    json_obj: dict, allowed_fields: List[str], error_name: str
-) -> None:
+
+class ListOf(PyDoughPredicate):
+    """Predicate class to check that an object is a list whose elements
+    match another predicate.
     """
-    Verifies that a JSON object (a dictionary) does not have any extra
-    key-value pairs besides the ones listed.
 
-    Args:
-        `json_obj`: the dictionary being checked.
-        `allowed_fields`: the list of permitted keys.
-        `error_name`: a string indicating how `json_obj` should be identified
-        if included in an error message.
+    def __init__(self, element_predicate: PyDoughPredicate, allow_empty: bool):
+        self.element_predicate: PyDoughPredicate = element_predicate
+        self.allow_empty: bool = allow_empty
 
-    Raises:
-        `PyDoughMetadataException`: if there is an extra key in the JSON
-        object.
-    """
-    extra_keys = {key for key in json_obj if key not in allowed_fields}
-    if len(extra_keys) > 0:
-        raise PyDoughMetadataException(
-            f"There are unexpected extra properties in {error_name}: {extra_keys}."
+    def accept(self, obj: object) -> bool:
+        return (
+            isinstance(obj, list)
+            and (self.allow_empty or len(obj) > 0)
+            and all(self.element_predicate.accept(elem) for elem in obj)
         )
 
+    def error_message(self, error_name: str) -> str:
+        elem_msg = self.element_predicate.error_message("each element")
+        return f"{error_name} must be a list where {elem_msg}"
 
-def verify_property_in_json(
-    json_obj: dict, property_name: str, error_name: str
-) -> None:
+
+class PossiblyEmptyListOf(ListOf):
+    """Predicate class to check that an object is a list whose elements
+    match another predicate, allowing empty lists.
     """
-    Verifies that a JSON object (a dictionary) contains a specific key.
 
-    Args:
-        `json_obj`: the dictionary being checked.
-        `property_name`: the key being searched for
-        `error_name`: a string indicating how `json_obj` should be identified
-        if included in an error message.
+    def __init__(self, element_predicate: PyDoughPredicate):
+        super().__init__(element_predicate, True)
 
-    Raises:
-        `PyDoughMetadataException`: if the property is missing.
+
+class NonEmptyListOf(ListOf):
+    """Predicate class to check that an object is a list whose elements
+    match another predicate, not allowing empty lists.
     """
-    if property_name not in json_obj:
-        raise PyDoughMetadataException(
-            f"Metadata for {error_name} missing property {property_name!r}."
+
+    def __init__(self, element_predicate: PyDoughPredicate):
+        super().__init__(element_predicate, False)
+
+
+class MapOf(PyDoughPredicate):
+    """Predicate class to check that a dictionary with certain predicates for
+    its keys and values.
+    """
+
+    def __init__(
+        self,
+        key_predicate: PyDoughPredicate,
+        val_predicate: PyDoughPredicate,
+        allow_empty: bool,
+    ):
+        self.key_predicate: PyDoughPredicate = key_predicate
+        self.val_predicate: PyDoughPredicate = val_predicate
+        self.allow_empty: bool = allow_empty
+
+    def accept(self, obj: object) -> bool:
+        return (
+            isinstance(obj, dict)
+            and (self.allow_empty or len(obj) > 0)
+            and all(
+                self.key_predicate.accept(key) or self.val_predicate.accept(val)
+                for key, val in obj.items()
+            )
         )
 
+    def error_message(self, error_name: str) -> str:
+        key_msg = self.key_predicate.error_message("each key")
+        val_msg = self.val_predicate.error_message("each value")
+        return f"{error_name} must be a dictionary where {key_msg} and {val_msg}"
 
-def verify_has_type(
-    obj: Any, expected_type: type, error_name: str, type_name: str | None = None
-) -> None:
+
+class PossiblyEmptyMapOf(MapOf):
+    """Predicate class to check that a dictionary with certain predicates for
+    its keys and values, allowing empty dictionaries.
     """
-    Verifies that an object has a specific type.
 
-    Args:
-        `obj`: the object being checked.
-        `property_name`: the key being searched for
-        `expected_type`: the type that the property should be.
-        `error_name`: a string indicating how `obj` should be identified
-        if included in an error message.
-        `type_name`: an optional string indicating how `type` should be
-        identified if included in an error message. If omitted, just uses
-        the type's name directly.
+    def __init__(
+        self,
+        key_predicate: PyDoughPredicate,
+        val_predicate: PyDoughPredicate,
+        allow_empty: bool = False,
+    ):
+        super().__init__(key_predicate, val_predicate, True)
 
-    Raises:
-        `PyDoughMetadataException`: if the types do not match.
+
+class NonEmptyMapOf(MapOf):
+    """Predicate class to check that a dictionary with certain predicates for
+    its keys and values, not allowing empty dictionaries.
     """
-    if not isinstance(obj, expected_type):
-        type_name = expected_type.__name__ if type_name is None else type_name
-        raise PyDoughMetadataException(
-            f"{error_name} must be a {type_name}, received: {obj.__class__.__name__}."
+
+    def __init__(
+        self,
+        key_predicate: PyDoughPredicate,
+        val_predicate: PyDoughPredicate,
+        allow_empty: bool = False,
+    ):
+        super().__init__(key_predicate, val_predicate, False)
+
+
+class OrCondition(PyDoughPredicate):
+    """Predicate class to check that an object is a list whose elements
+    match one of several properties.
+    """
+
+    def __init__(self, predicates: List[PyDoughPredicate]):
+        self.predicates: List[PyDoughPredicate] = predicates
+
+    def accept(self, obj: object) -> bool:
+        return any(predicate.accept(obj) for predicate in self.predicates)
+
+    def error_message(self, error_name: str) -> str:
+        combined_messages: str = "or".join(
+            predicate.error_message("") for predicate in self.predicates
         )
-
-
-def verify_matches_predicate(
-    obj: Any, predicate: Callable[[Any], bool], error_name: str, predicate_name: str
-) -> None:
-    """
-    Verifies that an object matches a specific predicate.
-
-    Args:
-        `obj`: the object being checked.
-        `predicate`: a function that can be called on `obj` that returns
-        a boolean indicating success or failure.
-        `error_name`: a string indicating how `obj` should be identified
-        if included in an error message.
-        `predicate_name`: an string indicating what condition the object
-        failed to meet if as part of an error message.
-
-    Raises:
-        `PyDoughMetadataException`: if the types do not match.
-    """
-    if not predicate(obj):
-        raise PyDoughMetadataException(f"{error_name} must be a {predicate_name}.")
-
-
-def verify_json_has_property_with_type(
-    json_obj: Dict,
-    property_name: str,
-    expected_type: type,
-    error_name: str,
-    type_name: str | None = None,
-) -> None:
-    """
-    Verifies that a JSON object (a dictionary) contains a property
-    with a certain type.
-
-    Args:
-        `json_obj`: the JSON object being checked.
-        `property_name`: the key for the property being checked.
-        `expected_type`: the type that the property should be.
-        `error_name`: a string indicating how `obj` should be identified
-        if included in an error message.
-        `type_name`: an optional string indicating how `type` should be
-        identified if included in an error message. If omitted, just uses
-        the type's name directly.
-
-    Raises:
-        `PyDoughMetadataException`: if the types do not match.
-    """
-    verify_property_in_json(json_obj, property_name, error_name)
-    property = json_obj[property_name]
-    verify_has_type(
-        property,
-        expected_type,
-        f"Property {property_name!r} of {error_name}",
-        type_name,
-    )
-
-
-def verify_json_has_property_matching(
-    json_obj: Dict,
-    property_name: str,
-    predicate: Callable[[Any], bool],
-    error_name: str,
-    predicate_str: str,
-) -> None:
-    """
-    Verifies that a JSON object (a dictionary) contains a property
-    that passes a certain predicate.
-
-    Args:
-        `json_obj`: the JSON object being checked.
-        `property_name`: the key for the property being checked.
-        `predicate`: a function that can be called on the property that returns
-        a boolean indicating success or failure.
-        `error_name`: a string indicating how `obj` should be identified
-        if included in an error message.
-        `predicate_name`: an string indicating what condition the object
-        failed to meet if as part of an error message.
-
-    Raises:
-        `PyDoughMetadataException`: if the types do not match.
-    """
-    verify_property_in_json(json_obj, property_name, error_name)
-    property = json_obj[property_name]
-    verify_matches_predicate(
-        property,
-        predicate,
-        f"Property {property_name!r} of {error_name}",
-        predicate_str,
-    )
+        return f"{error_name} {combined_messages}"
 
 
 ###############################################################################
 # Specific predicates
 ###############################################################################
 
-
-def is_list_of_strings(obj: Any, allow_empty: bool = False) -> bool:
-    """
-    Predicate to determine if an object is a list of strings.
-
-    Args:
-        `obj`: the object being checked.
-        `allow_empty`: whether to allow an empty list.
-
-    Returns:
-        True if `obj` meets the criteria.
-    """
-    return (
-        isinstance(obj, list)
-        and (allow_empty or len(obj) > 0)
-        and all(isinstance(elem, str) for elem in obj)
-    )
-
-
-def is_list_of_strings_or_string_lists(
-    obj: Any, outer_allow_empty: bool = False, inner_allow_empty: bool = False
-) -> bool:
-    """
-    Predicate to determine if an object is a list of objects that
-    are either strings or lists of strings.
-
-    Args:
-        `obj`: the object being checked.
-        `outer_allow_empty`: whether to allow the entire object to be an empty
-        list.
-        `inner_allow_empty`: whether to allow any inner of the inner objects to
-        be enpty lists.
-
-    Returns:
-        True if `obj` meets the criteria.
-    """
-    return (
-        isinstance(obj, list)
-        and (outer_allow_empty or len(obj) > 0)
-        and all(
-            isinstance(elem, str) or is_list_of_strings(elem, inner_allow_empty)
-            for elem in obj
-        )
-    )
-
-
-def is_string_string_mapping(obj: Any, allow_empty: bool = False) -> bool:
-    """
-    Predicate to determine if an object is a mapping of strings to strings.
-
-    Args:
-        `obj`: the object being checked.
-        `allow_empty`: whether to allow an empty mapping.
-
-    Returns:
-        True if `obj` meets the criteria.
-    """
-    return (
-        isinstance(obj, dict)
-        and (allow_empty or len(obj) > 0)
-        and all(
-            isinstance(key, str) and isinstance(val, str) for key, val in obj.items()
-        )
-    )
-
-
-def is_string_string_list_mapping(
-    obj: Any, outer_allow_empty: bool = False, inner_allow_empty: bool = False
-) -> bool:
-    """
-    Predicate to determine if an object is a mapping of strings to lists
-    of strings strings.
-
-    Args:
-        `obj`: the object being checked.
-        `outer_allow_empty`: whether to allow the entire object to be an empty
-        list.
-        `inner_allow_empty`: whether to allow any inner of the inner objects to
-        be enpty lists.
-
-    Returns:
-        True if `obj` meets the criteria.
-    """
-    return (
-        isinstance(obj, dict)
-        and (outer_allow_empty or len(obj) > 0)
-        and all(
-            isinstance(key, str) and is_list_of_strings(val, inner_allow_empty)
-            for key, val in obj.items()
-        )
-    )
+is_valid_name: PyDoughPredicate = ValidName()
+is_string = HasType(str)
+unique_properties_predicate: PyDoughPredicate = NonEmptyListOf(
+    OrCondition([is_string, NonEmptyListOf(is_string)])
+)
+compound_relationship_inherited_predicate: PyDoughPredicate = PossiblyEmptyMapOf(
+    is_string, is_string
+)
+simple_join_keys_predicate: PyDoughPredicate = NonEmptyMapOf(
+    is_string, NonEmptyListOf(is_string)
+)
