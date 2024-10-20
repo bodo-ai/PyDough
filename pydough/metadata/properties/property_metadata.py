@@ -4,12 +4,13 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from typing import Dict, List
+from typing import Dict, List, Set
 from pydough.metadata.errors import (
-    verify_json_has_property_with_type,
+    HasPropertyWith,
+    is_valid_name,
+    HasType,
+    is_string,
     PyDoughMetadataException,
-    verify_valid_name,
-    verify_has_type,
 )
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata
@@ -27,13 +28,13 @@ class PropertyMetadata(AbstractMetadata):
     - `is_reversible`
     """
 
-    # List of names of of fields that can be included in the JSON object
+    # Set of names of of fields that can be included in the JSON object
     # describing a property. Implementations should extend this.
-    allowed_fields: List[str] = ["type"]
+    allowed_fields: Set[str] = {"type"}
 
     def __init__(self, name: str, collection: CollectionMetadata):
-        verify_valid_name(name)
-        verify_has_type(collection, CollectionMetadata, "collection")
+        is_valid_name.verify(name, "name")
+        HasType(CollectionMetadata).verify(collection, collection)
         self._name: str = name
         self._collection: CollectionMetadata = collection
 
@@ -129,8 +130,8 @@ class PropertyMetadata(AbstractMetadata):
 
         # Ensure that the property's name is valid and that the JSON has the
         # required `type` field.
-        verify_valid_name(property_name)
-        verify_json_has_property_with_type(property_json, "type", str, error_name)
+        is_valid_name.verify(property_name, "property_name")
+        HasPropertyWith("type", is_string).verify(property_json, error_name)
 
         # Dispatch to each implementation's verification method based on the type.
         match property_json["type"]:

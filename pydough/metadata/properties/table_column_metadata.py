@@ -2,16 +2,12 @@
 TODO: add file-level docstring
 """
 
-from typing import List
+from typing import Set
 from . import PropertyMetadata
 from .scalar_attribute_metadata import ScalarAttributeMetadata
-from pydough.metadata.errors import (
-    verify_has_type,
-    verify_json_has_property_with_type,
-    verify_no_extra_keys_in_json,
-)
 from pydough.types import parse_type_from_string, PyDoughType
 from pydough.metadata.collections import CollectionMetadata
+from pydough.metadata.errors import HasPropertyWith, NoExtraKeys, is_string
 
 
 class TableColumnMetadata(ScalarAttributeMetadata):
@@ -20,12 +16,12 @@ class TableColumnMetadata(ScalarAttributeMetadata):
     column of data from a relational table.
     """
 
-    # List of names of of fields that can be included in the JSON object
+    # Set of names of of fields that can be included in the JSON object
     # describing a table column property.
-    allowed_fields: List[str] = PropertyMetadata.allowed_fields + [
+    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
         "data_type",
         "column_name",
-    ]
+    }
 
     def __init__(
         self,
@@ -35,7 +31,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         column_name: str,
     ):
         super().__init__(name, collection, data_type)
-        verify_has_type(column_name, str, "column_name")
+        is_string.verify(column_name, "column_name")
         self._column_name: str = column_name
 
     @property
@@ -76,12 +72,10 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         )
         # Verify that the property has the required `column_name` and
         # `data_type` fields, without anything extra.
-        verify_json_has_property_with_type(
-            property_json, "column_name", str, error_name
-        )
-        verify_json_has_property_with_type(property_json, "data_type", str, error_name)
-        verify_no_extra_keys_in_json(
-            property_json, TableColumnMetadata.allowed_fields, error_name
+        HasPropertyWith("column_name", str).verify(property_json, error_name)
+        HasPropertyWith("data_type", str).verify(property_json, error_name)
+        NoExtraKeys(TableColumnMetadata.allowed_fields).verify(
+            property_json, error_name
         )
 
     def parse_from_json(
