@@ -72,8 +72,8 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         )
         # Verify that the property has the required `column_name` and
         # `data_type` fields, without anything extra.
-        HasPropertyWith("column_name", str).verify(property_json, error_name)
-        HasPropertyWith("data_type", str).verify(property_json, error_name)
+        HasPropertyWith("column_name", is_string).verify(property_json, error_name)
+        HasPropertyWith("data_type", is_string).verify(property_json, error_name)
         NoExtraKeys(TableColumnMetadata.allowed_fields).verify(
             property_json, error_name
         )
