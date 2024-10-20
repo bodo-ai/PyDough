@@ -122,24 +122,22 @@ class HasType(PyDoughPredicate):
         return f"{error_name} must be a {self.type_name}."
 
 
-class HasPropertyWithType(PyDoughPredicate):
-    """Predicate class to check that an object has a field with a certain type."""
+class HasPropertyWith(PyDoughPredicate):
+    """Predicate class to check that an object has a field matching a predicate."""
 
-    def __init__(
-        self, field_name: str, desired_type: type, type_name: Optional[str] = None
-    ):
+    def __init__(self, field_name: str, field_predicate: PyDoughPredicate):
         self.field_name = self.field_name
-        self.field_predicate: PyDoughPredicate = ContainsField(field_name)
-        self.type_predicate: PyDoughPredicate = HasType(desired_type, type_name)
+        self.has_predicate: PyDoughPredicate = ContainsField(field_name)
+        self.field_predicate: PyDoughPredicate = field_predicate
 
     def accept(self, obj: object) -> bool:
-        return self.field_predicate.accept(obj) and self.type_predicate.accept(
+        return self.has_predicate.accept(obj) and self.field_predicate.accept(
             obj[self.field_name]
         )
 
     def error_message(self, error_name: str) -> str:
-        lhs = self.field_predicate.error_message(error_name)
-        rhs = self.type_predicate.error_message(
+        lhs = self.has_predicate.error_message(error_name)
+        rhs = self.field_predicate.error_message(
             f"field {self.field_name!r} of {error_name}"
         )
         return f"{lhs} and {rhs}"
