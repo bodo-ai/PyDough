@@ -64,12 +64,12 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
 
     @property
     @abstractmethod
-    def components(self) -> tuple:
-        return super().components + (
-            self.other_collection.name,
-            self.singular,
-            self.no_collisions,
-        )
+    def components(self) -> list:
+        comp: list = super().comp
+        comp.append(self.other_collection.name)
+        comp.append(self.singular)
+        comp.append(self.no_collisions)
+        return comp
 
     @property
     def is_plural(self) -> bool:

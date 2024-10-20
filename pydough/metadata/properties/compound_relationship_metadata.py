@@ -93,16 +93,16 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         return f"compound property {name!r} of {collection_error_name}"
 
     @property
-    def components(self) -> tuple:
+    def components(self) -> list:
         inherited_properties_dict = {
             alias: property.name
             for alias, property in self.inherited_properties.items()
         }
-        return super().components + (
-            self.primary_property.name,
-            self.secondary_property.name,
-            inherited_properties_dict,
-        )
+        comp: list = super().components
+        comp.append(self.primary_property.name)
+        comp.append(self.secondary_property.name)
+        comp.append(inherited_properties_dict)
+        return comp
 
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict

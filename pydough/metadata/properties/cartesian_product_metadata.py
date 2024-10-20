@@ -35,7 +35,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         return f"cartesian property {name!r} of {collection_error_name}"
 
     @property
-    def components(self) -> tuple:
+    def components(self) -> list:
         return super().components
 
     def verify_json_metadata(

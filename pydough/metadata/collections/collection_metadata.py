@@ -105,8 +105,10 @@ class CollectionMetadata(AbstractMetadata):
 
     @property
     @abstractmethod
-    def components(self) -> tuple:
-        return self.graph.components + (self.name,)
+    def components(self) -> list:
+        comp: list = self.graph.components
+        comp.append(self.name)
+        return comp
 
     @abstractmethod
     def verify_allows_property(

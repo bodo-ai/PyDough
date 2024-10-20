@@ -77,8 +77,10 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         return self._join_pairs
 
     @property
-    def components(self) -> tuple:
-        return super().components + (self.keys,)
+    def components(self) -> list:
+        comp: list = super().components
+        comp.append(self.keys)
+        return comp
 
     @staticmethod
     def create_error_name(name: str, collection_error_name: str):

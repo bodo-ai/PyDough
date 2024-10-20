@@ -75,8 +75,11 @@ class SimpleTableMetadata(CollectionMetadata):
         return f"simple table collection {name!r} in {graph_error_name}"
 
     @property
-    def components(self) -> tuple:
-        return super().components + (self.table_path, self.unique_properties)
+    def components(self) -> list:
+        comp: list = super().components
+        comp.append(self.table_path)
+        comp.append(self.unique_properties)
+        return comp
 
     def verify_allows_property(
         self, property: PropertyMetadata, inherited: bool

@@ -32,8 +32,10 @@ class ScalarAttributeMetadata(PropertyMetadata):
 
     @property
     @abstractmethod
-    def components(self) -> tuple:
-        return super().components + (self.data_type,)
+    def components(self) -> list:
+        comp: list = super().components
+        comp.append(self.data_type)
+        return comp
 
     @property
     def is_plural(self) -> bool:

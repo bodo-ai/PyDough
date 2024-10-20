@@ -43,8 +43,10 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         return f"table column property {name!r} of {collection_error_name}"
 
     @property
-    def components(self) -> tuple:
-        return super().components + (self.column_name,)
+    def components(self) -> list:
+        comp: list = super().components
+        comp.append(self.column_name)
+        return comp
 
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict

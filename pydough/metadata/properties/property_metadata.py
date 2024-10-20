@@ -96,8 +96,10 @@ class PropertyMetadata(AbstractMetadata):
 
     @property
     @abstractmethod
-    def components(self) -> tuple:
-        return self.collection.components + (self.name,)
+    def components(self) -> list:
+        comp: list = super().components
+        comp.append(self.name)
+        return comp
 
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict

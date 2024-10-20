@@ -41,8 +41,8 @@ class GraphMetadata(AbstractMetadata):
         return f"graph {self.name!r}"
 
     @property
-    def components(self) -> tuple:
-        return (self.name,)
+    def components(self) -> list:
+        return [self.name]
 
     @property
     def path(self) -> str:
