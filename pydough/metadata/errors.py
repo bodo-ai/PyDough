@@ -166,7 +166,7 @@ class ListOf(PyDoughPredicate):
         return f"{error_name} must be a list where {elem_msg}"
 
 
-class PossiblyEmptyListOf(PyDoughPredicate):
+class PossiblyEmptyListOf(ListOf):
     """Predicate class to check that an object is a list whose elements
     match another predicate, allowing empty lists.
     """
@@ -175,7 +175,7 @@ class PossiblyEmptyListOf(PyDoughPredicate):
         super().__init__(element_predicate, True)
 
 
-class NonEmptyListOf(PyDoughPredicate):
+class NonEmptyListOf(ListOf):
     """Predicate class to check that an object is a list whose elements
     match another predicate, not allowing empty lists.
     """
@@ -215,7 +215,7 @@ class MapOf(PyDoughPredicate):
         return f"{error_name} must be a dictionary where {key_msg} and {val_msg}"
 
 
-class PossiblyEmptyMapOf(PyDoughPredicate):
+class PossiblyEmptyMapOf(MapOf):
     """Predicate class to check that a dictionary with certain predicates for
     its keys and values, allowing empty dictionaries.
     """
@@ -229,7 +229,7 @@ class PossiblyEmptyMapOf(PyDoughPredicate):
         super().__init__(key_predicate, val_predicate, True)
 
 
-class NonEmptyMapOf(PyDoughPredicate):
+class NonEmptyMapOf(MapOf):
     """Predicate class to check that a dictionary with certain predicates for
     its keys and values, not allowing empty dictionaries.
     """
