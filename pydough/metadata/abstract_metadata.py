@@ -28,9 +28,9 @@ class AbstractMetadata(ABC):
 
     @property
     @abstractmethod
-    def components(self) -> tuple:
+    def components(self) -> list:
         """
-        A tuple of objects used to uniquely identify a metadata object
+        A list of objects used to uniquely identify a metadata object
         by equality.
         """
 

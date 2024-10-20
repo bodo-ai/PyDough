@@ -78,9 +78,8 @@ class InheritedPropertyMetadata(PropertyMetadata):
         return self.property_to_inherit.is_subcollection
 
     @property
-    def components(self) -> tuple:
-        return (
-            super().components
-            + self.property_inherited_from.components
-            + self.property_to_inherit.components
-        )
+    def components(self) -> list:
+        comp: list = super().components
+        comp.append(self.property_inherited_from.components)
+        comp.append(self.property_to_inherit.components)
+        return comp

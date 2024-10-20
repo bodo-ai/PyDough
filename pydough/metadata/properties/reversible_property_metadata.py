@@ -53,13 +53,10 @@ class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
 
     @property
     @abstractmethod
-    def components(self) -> tuple:
-        return super().components + (
-            self.reverse_name,
-            self.other_collection.name,
-            self.singular,
-            self.no_collisions,
-        )
+    def components(self) -> list:
+        comp: list = super().components
+        comp.append(self.reverse_name)
+        return comp
 
     @abstractmethod
     def build_reverse_relationship(self) -> None:
