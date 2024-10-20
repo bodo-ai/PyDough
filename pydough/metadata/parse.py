@@ -206,24 +206,54 @@ def get_property_dependencies(
     reformatted_properties: Dict[Tuple[str, str], Tuple[dict, int]],
 ) -> List[Set[int]]:
     """
-    TODO: add function docstring
+    Infers the set of dependencies for each property.
 
-    !!! THIS FUNCTION IS A WORK IN PROGRESS !!!
+    Args:
+        `reformatted_properties`: a dictionary of all the properties in the
+        graph as a dictionary with keys in the form
+        `(collection_name, property_name)` and values in the form
+        `(property_json, idx)` where `idx` is the index that each property
+        belongs to in the original list, which should be used by the
+        dependencies.
+
+    Returns:
+        A list of the set of dependencies for each property, where the
+        positions in the list are the indices of the properties and the
+        sets contain the indices of the properties they depend on.
+
+    Raises:
+        `PyDoughMetadataException`: if the dependencies cannot be inferred,
+        e.g. because there is a cyclic dependency or a dependency is not
+        defined anywhere in the graph.
     """
     n_properties = len(reformatted_properties)
     if n_properties == 0:
         return []
-
     valid_range = range(n_properties)
-    dependencies: List[Set[int]] = [set() for i in valid_range]
+
+    # The list that will store the final dependencies.
+    dependencies: List[Set[int]] = [set() for _ in valid_range]
+
+    # A set of all properties (as dictionary keys) that have been
+    # fully defined by the dependency-searching algorithm.
     defined = set()
 
-    compound_stack: deque = deque()
+    # A dictionary mapping each property to its known reverse
+    # property, if one exists.
     reverses: Dict[Tuple[str, str], Tuple[str, str]] = {}
+
+    # A dictionary mapping each property to the name of the collection
+    # it maps to, if one exists.
     collections_mapped_to: Dict[Tuple[str, str], str] = {}
+
+    # A dictionary mapping each property to the set of all inherited proeprty
+    # names that are associated with it.
     compound_inherited_aliases: Dict[Tuple[str, str], Set[str]] = {}
 
     def get_true_property(property: Tuple[str, str]) -> Tuple[str, str] | None:
+        """
+        TODO: add function docstring.
+        """
         if property in reformatted_properties:
             return property
         if property in reverses:
@@ -233,6 +263,9 @@ def get_property_dependencies(
         return None
 
     def add_dependency(property: Tuple[str, str], dependency: Tuple[str, str]) -> None:
+        """
+        TODO: add function docstring.
+        """
         true_property = get_true_property(property)
         true_dependency = get_true_property(dependency)
         if true_property is None or true_property not in reformatted_properties:
@@ -247,10 +280,22 @@ def get_property_dependencies(
         dependency_idx = reformatted_properties[true_dependency][1]
         dependencies[property_idx].add(dependency_idx)
 
+    # The set of all properties that are table columns
     table_columns: Set[Tuple[str, str]] = set()
+
+    # The set of all properties that are cartesian products
     cartesian_products: Set[Tuple[str, str]] = set()
+
+    # The set of all properties that are simple joins
     simple_joins: Set[Tuple[str, str]] = set()
+
+    # The set of all properties that are compound relationships
     compounds: Set[Tuple[str, str]] = set()
+
+    # The stack uses to process compound relationship properties.
+    compound_stack: deque = deque()
+
+    # Classify every property and add it to the corresponding stack/set.
     for property in reformatted_properties:
         property_json, _ = reformatted_properties[property]
         match property_json["type"]:
@@ -268,10 +313,14 @@ def get_property_dependencies(
                     f"Unrecognized PyDough collection type: {typ!r}"
                 )
 
+    # Mark every table column as defined.
     for property in table_columns:
         defined.add(property)
 
     def define_cartesian_property(property: Tuple[str, str]) -> None:
+        """
+        TODO: add function docstring
+        """
         property_json, _ = reformatted_properties[property]
         reverse_collection = property_json["other_collection_name"]
         reverse_property = property_json["reverse_relationship_name"]
@@ -283,7 +332,14 @@ def get_property_dependencies(
         defined.add(property)
         defined.add(reverse)
 
+    # Define every cartesian property
+    for property in cartesian_products:
+        define_cartesian_property(property)
+
     def define_simple_join_property(property: Tuple[str, str]) -> None:
+        """
+        TODO: add function docstring
+        """
         define_cartesian_property(property)
         property_json, _ = reformatted_properties[property]
         collection = property[0]
@@ -296,9 +352,7 @@ def get_property_dependencies(
                 match_property = (other_collection, match_property_name)
                 add_dependency(property, match_property)
 
-    for property in cartesian_products:
-        define_cartesian_property(property)
-
+    # Define every simple join property
     for property in simple_joins:
         define_simple_join_property(property)
 
@@ -328,17 +382,15 @@ def get_property_dependencies(
 
     iters_since_change: int = 0
     max_iters_since_change: int = 2 * len(compound_stack)
-    while len(compound_stack) > 0:
-        if (
-            iters_since_change > len(compound_stack)
-            or iters_since_change > max_iters_since_change
-        ):
-            raise PyDoughMetadataException(
-                "Unable to extract dependencies of properties in PyDough metadata"
-            )
-        property: Tuple[str, str] = compound_stack.pop()
+
+    def attempt_to_defined_compound_relationship(property):
+        """
+        TODO: add function docstring
+        """
+        nonlocal iters_since_change
         if property in defined:
-            continue
+            return
+
         iters_since_change += 1
         property_json, _ = reformatted_properties[property]
 
@@ -349,13 +401,13 @@ def get_property_dependencies(
         true_primary = get_true_property(primary_property)
         if true_primary is None:
             compound_stack.appendleft(property)
-            continue
+            return
 
         if true_primary not in defined:
             compound_stack.append(property)
             compound_stack.append(true_primary)
             iters_since_change = 0
-            continue
+            return
 
         add_dependency(property, true_primary)
 
@@ -369,12 +421,12 @@ def get_property_dependencies(
         true_secondary = get_true_property(secondary_property)
         if true_secondary is None:
             compound_stack.appendleft(property)
-            continue
+            return
 
         if true_secondary not in defined:
             compound_stack.append(property)
             compound_stack.append(true_secondary)
-            continue
+            return
 
         add_dependency(property, true_secondary)
 
@@ -391,7 +443,7 @@ def get_property_dependencies(
         new_dependencies = []
         must_restart = False
         done = True
-        for alias, inherited_property_name in inherited_properties.items():
+        for inherited_property_name in inherited_properties.values():
             inherited_property = (middle_collection, inherited_property_name)
             true_inherited = get_true_property(inherited_property)
             if true_inherited is None:
@@ -417,10 +469,9 @@ def get_property_dependencies(
         if must_restart:
             done = False
             compound_stack.appendleft(property)
-            continue
 
         if not done:
-            continue
+            return
 
         compound_inherited_aliases[property] = compound_inherited_aliases[
             reverse_property
@@ -428,6 +479,17 @@ def get_property_dependencies(
         defined.add(property)
         defined.add(reverse_property)
         iters_since_change = 0
+
+    while len(compound_stack) > 0:
+        if (
+            iters_since_change > len(compound_stack)
+            or iters_since_change > max_iters_since_change
+        ):
+            raise PyDoughMetadataException(
+                "Unable to extract dependencies of properties in PyDough metadata"
+            )
+        property: Tuple[str, str] = compound_stack.pop()
+        attempt_to_defined_compound_relationship(property)
 
     return dependencies
 
