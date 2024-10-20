@@ -6,8 +6,8 @@ from typing import Dict, List, Tuple, Set
 from .graphs import GraphMetadata
 from .errors import (
     PyDoughMetadataException,
-    verify_json_has_property_with_type,
-    verify_has_type,
+    HasPropertyWith,
+    HasType,
 )
 from collections import deque
 from .collections import CollectionMetadata
@@ -64,7 +64,7 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
         `PyDoughMetadataException`: if the JSON is malformed in any way that
         prevents parsing it to obtain the desired graph.
     """
-    verify_has_type(graph_json, dict, "metadata for PyDough graph")
+    HasType(dict).verify(graph_json, "metadata for PyDough graph")
     graph = GraphMetadata(graph_name)
 
     # A list that will store each collection property in the metadata
@@ -95,8 +95,8 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
 
     ordered_properties = topologically_sort_properties(raw_properties)
     for collection_name, property_name, property_json in ordered_properties:
-        verify_json_has_property_with_type(
-            graph.collections, collection_name, CollectionMetadata, graph.error_name
+        HasPropertyWith(collection_name, HasType(CollectionMetadata)).verify(
+            graph.collections, graph.error_name
         )
         collection = graph.collections[collection_name]
         PropertyMetadata.parse_from_json(collection, property_name, property_json)

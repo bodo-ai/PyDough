@@ -132,17 +132,19 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         # `secondary_property`, `reverse_relationship_name`, `singular`,
         # `no_collisions` and `inherited_properties` fields, without anything
         # extra.
-        HasPropertyWith("primary_property", is_string)(property_json, error_name)
-        HasPropertyWith("secondary_property", is_string)(property_json, error_name)
-        HasPropertyWith("reverse_relationship_name", is_string)(
+        HasPropertyWith("primary_property", is_string).verify(property_json, error_name)
+        HasPropertyWith("secondary_property", is_string).verify(
             property_json, error_name
         )
-        HasPropertyWith("singular", is_bool)(property_json, error_name)
-        HasPropertyWith("no_collisions", is_bool)(property_json, error_name)
+        HasPropertyWith("reverse_relationship_name", is_string).verify(
+            property_json, error_name
+        )
+        HasPropertyWith("singular", is_bool).verify(property_json, error_name)
+        HasPropertyWith("no_collisions", is_bool).verify(property_json, error_name)
         HasPropertyWith(
             "inherited_properties", compound_relationship_inherited_predicate
-        )(property_json, error_name)
-        NoExtraKeys(CompoundRelationshipMetadata.allowed_fields)(
+        ).verify(property_json, error_name)
+        NoExtraKeys(CompoundRelationshipMetadata.allowed_fields).verify(
             property_json, error_name
         )
 

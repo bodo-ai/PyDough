@@ -152,7 +152,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         no_collisions = property_json["no_collisions"]
         keys = property_json["keys"]
         reverse_name = property_json["reverse_relationship_name"]
-        HasPropertyWith(other_collection_name, HasType("CollectionMetadata")).verify(
+        HasPropertyWith(other_collection_name, HasType(CollectionMetadata)).verify(
             collection.graph.collections, collection.graph.error_name
         )
         other_collection: CollectionMetadata = collection.graph.collections[

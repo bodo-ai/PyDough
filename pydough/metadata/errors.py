@@ -126,7 +126,7 @@ class HasPropertyWith(PyDoughPredicate):
     """Predicate class to check that an object has a field matching a predicate."""
 
     def __init__(self, field_name: str, field_predicate: PyDoughPredicate):
-        self.field_name = self.field_name
+        self.field_name = field_name
         self.has_predicate: PyDoughPredicate = ContainsField(field_name)
         self.field_predicate: PyDoughPredicate = field_predicate
 

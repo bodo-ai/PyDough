@@ -139,11 +139,11 @@ class SimpleTableMetadata(CollectionMetadata):
 
         # Check that the JSON data contains the required properties
         # `table_path` and `unique_properties`, without any extra properties.
-        HasPropertyWith("table_path", is_string).accept(collection_json, error_name)
-        HasPropertyWith("unique_properties", unique_properties_predicate).accept(
+        HasPropertyWith("table_path", is_string).verify(collection_json, error_name)
+        HasPropertyWith("unique_properties", unique_properties_predicate).verify(
             collection_json, error_name
         )
-        NoExtraKeys(SimpleTableMetadata.allowed_field).accept(
+        NoExtraKeys(SimpleTableMetadata.allowed_fields).verify(
             collection_json, error_name
         )
 
