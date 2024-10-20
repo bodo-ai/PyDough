@@ -28,9 +28,9 @@ class AbstractMetadata(ABC):
 
     @property
     @abstractmethod
-    def components(self) -> tuple:
+    def components(self) -> list:
         """
-        A tuple of objects used to uniquely identify a metadata object
+        A list of objects used to uniquely identify a metadata object
         by equality.
         """
 
@@ -43,6 +43,14 @@ class AbstractMetadata(ABC):
         Returns:
             A dictionary mapping the name of each noun to a list of all
             metadata objects with that name.
+        """
+
+    @property
+    @abstractmethod
+    def path(self) -> str:
+        """
+        A string used as a shorthand to identify the metadata object and its
+        ancestry.
         """
 
     def __eq__(self, other):
