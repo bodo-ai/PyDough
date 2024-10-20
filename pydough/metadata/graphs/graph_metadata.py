@@ -4,11 +4,7 @@ TODO: add file-level docstring
 
 from typing import List, Dict
 from collections import defaultdict
-from pydough.metadata.errors import (
-    PyDoughMetadataException,
-    verify_valid_name,
-    verify_has_type,
-)
+from pydough.metadata.errors import PyDoughMetadataException, is_valid_name, HasType
 
 from pydough.metadata.abstract_metadata import AbstractMetadata
 
@@ -22,7 +18,7 @@ class GraphMetadata(AbstractMetadata):
     def __init__(self, name: str):
         from pydough.metadata.collections import CollectionMetadata
 
-        verify_valid_name(name)
+        is_valid_name.verify(name, "name")
         self._name: str = name
         self._collections: Dict[str, CollectionMetadata] = {}
 
@@ -66,7 +62,7 @@ class GraphMetadata(AbstractMetadata):
         from pydough.metadata.collections import CollectionMetadata
 
         # Make sure the collection is actually a collection
-        verify_has_type(collection, CollectionMetadata, "collection")
+        HasType("CollectionMetadata").verify(collection, "collection")
         collection: CollectionMetadata = collection
 
         # Verify sure the collection has not already been added to the graph

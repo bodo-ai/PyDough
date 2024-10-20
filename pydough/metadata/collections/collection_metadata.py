@@ -6,10 +6,11 @@ from abc import abstractmethod
 
 from typing import List, Dict
 from pydough.metadata.errors import (
-    verify_json_has_property_with_type,
     PyDoughMetadataException,
-    verify_valid_name,
-    verify_has_type,
+    is_valid_name,
+    is_string,
+    HasType,
+    HasPropertyWith,
 )
 from collections import defaultdict
 from pydough.metadata.abstract_metadata import AbstractMetadata
@@ -37,8 +38,9 @@ class CollectionMetadata(AbstractMetadata):
             InheritedPropertyMetadata,
         )
 
-        verify_valid_name(name)
-        verify_has_type(graph, GraphMetadata, "Graph of CollectionMetadata")
+        is_valid_name.verify(name, "name")
+        HasType(GraphMetadata).verify(graph, "graph")
+
         self._graph: GraphMetadata = graph
         self._name: str = name
         self._properties: Dict[str, PropertyMetadata] = {}
@@ -131,7 +133,7 @@ class CollectionMetadata(AbstractMetadata):
 
         # First, make sure that the candidate property is indeed a property
         # metadata of the appropriate type.
-        verify_has_type(property, PropertyMetadata, "property")
+        HasType(PropertyMetadata).verify(property, "property")
         property: PropertyMetadata = property
         if inherited:
             if not isinstance(property, InheritedPropertyMetadata):
@@ -272,11 +274,11 @@ class CollectionMetadata(AbstractMetadata):
             structure properties.
         """
         # Check that the collection name is valid string.
-        verify_valid_name(collection_name)
+        is_valid_name.verify(collection_name, "collection name")
 
         # Check that the graph argument is indeed a graph metadata, and that the
         # name of the graph does not collide with the name of the collection.
-        verify_has_type(graph, GraphMetadata, "graph")
+        HasType(GraphMetadata).verify(graph, "graph")
         error_name: str = f"collection {collection_name!r} in {graph.error_name}"
         if collection_name == graph.name:
             raise PyDoughMetadataException(
@@ -285,10 +287,8 @@ class CollectionMetadata(AbstractMetadata):
 
         # Check that the JSON data contains the required properties `type` and
         # `properties`.
-        verify_json_has_property_with_type(collection_json, "type", str, error_name)
-        verify_json_has_property_with_type(
-            collection_json, "properties", dict, error_name
-        )
+        HasPropertyWith("type", is_string).verify(collection_json, error_name)
+        HasPropertyWith("properties", HasType(dict)).verify(collection_json, error_name)
 
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
