@@ -2,11 +2,8 @@
 TODO: add file-level docstring
 """
 
-from pydough.metadata.errors import (
-    verify_json_has_property_with_type,
-    verify_no_extra_keys_in_json,
-)
-from typing import List
+from pydough.metadata.errors import HasPropertyWith, HasType, is_string, NoExtraKeys
+from typing import Set
 from pydough.metadata.collections import CollectionMetadata
 from . import ReversiblePropertyMetadata, PropertyMetadata
 
@@ -17,12 +14,12 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
     cartesian product between a collection and its subcollection.
     """
 
-    # List of names of of fields that can be included in the JSON object
+    # Set of names of of fields that can be included in the JSON object
     # describing a cartesian product property.
-    allowed_fields: List[str] = PropertyMetadata.allowed_fields + [
+    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
         "other_collection_name",
         "reverse_relationship_name",
-    ]
+    }
 
     def __init__(
         self,
@@ -69,15 +66,13 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
 
         # Verify that the JSON has the required `other_collection_name` and
         # `reverse_relationship_name` fields, without anything extra.
-        verify_json_has_property_with_type(
-            property_json, "other_collection_name", str, error_name
+        HasPropertyWith("other_collection_name", is_string).verify(
+            property_json, error_name
         )
-        verify_json_has_property_with_type(
-            property_json, "reverse_relationship_name", str, error_name
+        HasPropertyWith("reverse_relationship_name", is_string).verify(
+            property_json, error_name
         )
-        verify_no_extra_keys_in_json(
-            property_json, CartesianProductMetadata.allowed_fields, error_name
-        )
+        NoExtraKeys(CartesianProductMetadata.allowed_fields)(property_json, error_name)
 
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
@@ -103,11 +98,8 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         # and added to the graph.
         other_collection_name = property_json["other_collection_name"]
         reverse_name = property_json["reverse_relationship_name"]
-        verify_json_has_property_with_type(
-            collection.graph.collections,
-            other_collection_name,
-            CollectionMetadata,
-            collection.graph.error_name,
+        HasPropertyWith(other_collection_name, HasType(CollectionMetadata)).verify(
+            collection.graph.collections, collection.graph.error_name
         )
         other_collection: CollectionMetadata = collection.graph.collections[
             other_collection_name

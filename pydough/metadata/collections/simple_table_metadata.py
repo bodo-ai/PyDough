@@ -2,15 +2,13 @@
 TODO: add file-level docstring
 """
 
-from typing import List, Union
+from typing import List, Union, Set
 from pydough.metadata.errors import (
-    verify_json_has_property_with_type,
-    verify_json_has_property_matching,
-    is_list_of_strings_or_string_lists,
+    HasPropertyWith,
+    unique_properties_predicate,
+    NoExtraKeys,
+    is_string,
     PyDoughMetadataException,
-    verify_no_extra_keys_in_json,
-    verify_has_type,
-    verify_matches_predicate,
 )
 from pydough.metadata.graphs import GraphMetadata
 from . import CollectionMetadata
@@ -31,12 +29,12 @@ class SimpleTableMetadata(CollectionMetadata):
     of other such tables created from joins.
     """
 
-    # List of names of of fields that can be included in the JSON
+    # Set of names of of fields that can be included in the JSON
     # object describing a simple table collection.
-    allowed_fields = CollectionMetadata.allowed_fields + [
+    allowed_fields: Set[str] = CollectionMetadata.allowed_fields | {
         "table_path",
         "unique_properties",
-    ]
+    }
 
     def __init__(
         self,
@@ -46,15 +44,12 @@ class SimpleTableMetadata(CollectionMetadata):
         unique_properties: List[Union[str, List[str]]],
     ):
         super().__init__(name, graph)
+        is_string.verify(table_path, f"Property 'table_path' of {self.error_name}")
+        unique_properties_predicate.verify(
+            unique_properties, f"property 'unique_properties' of {self.error_name}"
+        )
         self._table_path: str = table_path
         self._unique_properties: List[Union[str, List[str]]] = unique_properties
-        verify_has_type(table_path, str, f"Property 'table_path' of {self.error_name}")
-        verify_matches_predicate(
-            unique_properties,
-            is_list_of_strings_or_string_lists,
-            f"Property 'unique_properties' of {self.error_name}",
-            "non-empty list of strings or non-empty lists of strings",
-        )
 
     @property
     def table_path(self) -> str:
@@ -144,18 +139,12 @@ class SimpleTableMetadata(CollectionMetadata):
 
         # Check that the JSON data contains the required properties
         # `table_path` and `unique_properties`, without any extra properties.
-        verify_json_has_property_with_type(
-            collection_json, "table_path", str, error_name
+        HasPropertyWith("table_path", is_string).accept(collection_json, error_name)
+        HasPropertyWith("unique_properties", unique_properties_predicate).accept(
+            collection_json, error_name
         )
-        verify_json_has_property_matching(
-            collection_json,
-            "unique_properties",
-            is_list_of_strings_or_string_lists,
-            error_name,
-            "list non-empty of strings or non-empty lists of strings",
-        )
-        verify_no_extra_keys_in_json(
-            collection_json, SimpleTableMetadata.allowed_fields, error_name
+        NoExtraKeys(SimpleTableMetadata.allowed_field).accept(
+            collection_json, error_name
         )
 
     def parse_from_json(

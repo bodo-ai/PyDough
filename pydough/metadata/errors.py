@@ -265,6 +265,7 @@ class OrCondition(PyDoughPredicate):
 
 is_valid_name: PyDoughPredicate = ValidName()
 is_string = HasType(str)
+is_bool = HasType(bool)
 unique_properties_predicate: PyDoughPredicate = NonEmptyListOf(
     OrCondition([is_string, NonEmptyListOf(is_string)])
 )

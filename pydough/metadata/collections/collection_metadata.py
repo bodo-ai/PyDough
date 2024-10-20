@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from typing import List, Dict
+from typing import List, Dict, Set
 from pydough.metadata.errors import (
     PyDoughMetadataException,
     is_valid_name,
@@ -28,9 +28,9 @@ class CollectionMetadata(AbstractMetadata):
     - `parse_from_json`
     """
 
-    # List of names of of fields that can be included in the JSON
+    # Set of names of of fields that can be included in the JSON
     # object describing a collection. Implementations should extend this.
-    allowed_fields: List[str] = ["type", "properties"]
+    allowed_fields: Set[str] = {"type", "properties"}
 
     def __init__(self, name: str, graph: GraphMetadata):
         from pydough.metadata.properties import (

@@ -3,7 +3,7 @@ TODO: add file-level docstring
 """
 
 from pydough.types import PyDoughType
-from pydough.metadata.errors import verify_has_type
+from pydough.metadata.errors import HasType
 
 from . import PropertyMetadata
 from pydough.metadata.collections import CollectionMetadata
@@ -20,7 +20,7 @@ class ScalarAttributeMetadata(PropertyMetadata):
         self, name: str, collection: CollectionMetadata, data_type: PyDoughType
     ):
         super().__init__(name, collection)
-        verify_has_type(data_type, PyDoughType, "data_type")
+        HasType(PyDoughType).verify(data_type, "data_type")
         self._data_type: PyDoughType = data_type
 
     @property

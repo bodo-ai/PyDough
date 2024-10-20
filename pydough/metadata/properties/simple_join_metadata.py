@@ -4,14 +4,15 @@ TODO: add file-level docstring
 
 from . import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
-    verify_matches_predicate,
-    is_string_string_list_mapping,
-    verify_json_has_property_with_type,
-    verify_json_has_property_matching,
-    verify_no_extra_keys_in_json,
+    simple_join_keys_predicate,
+    HasPropertyWith,
+    HasType,
+    is_string,
+    is_bool,
+    NoExtraKeys,
 )
 
 
@@ -21,15 +22,15 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
     join between a collection and its subcollection based on equi-join keys.
     """
 
-    # List of names of of fields that can be included in the JSON object
+    # Set of names of of fields that can be included in the JSON object
     # describing a simple join property.
-    allowed_fields: List[str] = PropertyMetadata.allowed_fields + [
+    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
         "other_collection_name",
         "reverse_relationship_name",
         "singular",
         "no_collisions",
         "keys",
-    ]
+    }
 
     def __init__(
         self,
@@ -44,12 +45,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         super().__init__(
             name, reverse_name, collection, other_collection, singular, no_collisions
         )
-        verify_matches_predicate(
-            keys,
-            is_string_string_list_mapping,
-            self.error_name,
-            "non-empty JSON object containing non-empty lists of strings",
-        )
+        simple_join_keys_predicate.verify(keys, self.error_name)
         self._keys: Dict[str, List[str]] = keys
         self._join_pairs: List[Tuple[PropertyMetadata, PropertyMetadata]] = []
         # Build the join pairs list by transforming the dictionary of property
@@ -116,26 +112,18 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         # Verify that the JSON has the fields `other_collection_name`,
         # `singular`, `no_collisions`, `reverse_relationship_name`,
         # and `keys`, without any extra fields.
-        verify_json_has_property_with_type(
-            property_json, "other_collection_name", str, error_name
+        HasPropertyWith("other_collection_name", is_string).verify(
+            property_json, error_name
         )
-        verify_json_has_property_with_type(property_json, "singular", bool, error_name)
-        verify_json_has_property_with_type(
-            property_json, "no_collisions", bool, error_name
+        HasPropertyWith("singular", is_bool).verify(property_json, error_name)
+        HasPropertyWith("no_collisions", is_bool).verify(property_json, error_name)
+        HasPropertyWith("reverse_relationship_name", is_string).verify(
+            property_json, error_name
         )
-        verify_json_has_property_with_type(
-            property_json, "reverse_relationship_name", str, error_name
+        HasPropertyWith("keys", simple_join_keys_predicate).verify(
+            property_json, error_name
         )
-        verify_json_has_property_matching(
-            property_json,
-            "keys",
-            is_string_string_list_mapping,
-            error_name,
-            "non-empty JSON object containing non-empty lists of strings",
-        )
-        verify_no_extra_keys_in_json(
-            property_json, SimpleJoinMetadata.allowed_fields, error_name
-        )
+        NoExtraKeys(SimpleJoinMetadata.allowed_fields).verify(property_json, error_name)
 
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
@@ -164,11 +152,8 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         no_collisions = property_json["no_collisions"]
         keys = property_json["keys"]
         reverse_name = property_json["reverse_relationship_name"]
-        verify_json_has_property_with_type(
-            collection.graph.collections,
-            other_collection_name,
-            CollectionMetadata,
-            collection.graph.error_name,
+        HasPropertyWith(other_collection_name, HasType("CollectionMetadata")).verify(
+            collection.graph.collections, collection.graph.error_name
         )
         other_collection: CollectionMetadata = collection.graph.collections[
             other_collection_name
