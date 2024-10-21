@@ -558,7 +558,7 @@ def test_simple_join_info(
 
 
 @pytest.mark.parametrize(
-    "graph_name, collection_name, property_name, primary_property_name, secondary_property_name, other_collection, reverse_name, singular, no_collisions, inherited_properties",
+    "graph_name, collection_name, property_name, primary_property_name, secondary_property_name, other_collection, reverse_name, singular, no_collisions, forward_inherited_properties, reverse_inherited_properties",
     [
         pytest.param(
             "tpch",
@@ -570,6 +570,12 @@ def test_simple_join_info(
             "part",
             False,
             True,
+            {
+                "ps_supplier": "TPCH.PartSupp.supplier",
+                "ps_availqty": "TPCH.PartSupp.availqty",
+                "ps_supplycost": "TPCH.PartSupp.supplycost",
+                "ps_comment": "TPCH.PartSupp.comment",
+            },
             {
                 "ps_supplier": "TPCH.PartSupp.supplier",
                 "ps_availqty": "TPCH.PartSupp.availqty",
@@ -594,6 +600,12 @@ def test_simple_join_info(
                 "ps_supplycost": "TPCH.PartSupp.supplycost",
                 "ps_comment": "TPCH.PartSupp.comment",
             },
+            {
+                "ps_lines": "TPCH.PartSupp.lines",
+                "ps_availqty": "TPCH.PartSupp.availqty",
+                "ps_supplycost": "TPCH.PartSupp.supplycost",
+                "ps_comment": "TPCH.PartSupp.comment",
+            },
             id="tpch-supplier-part",
         ),
         pytest.param(
@@ -607,6 +619,7 @@ def test_simple_join_info(
             False,
             True,
             {"nation_name": "TPCH.Nations.name"},
+            {"nation_name": "TPCH.Nations.name"},
             id="tpch-region-customers",
         ),
         pytest.param(
@@ -619,7 +632,8 @@ def test_simple_join_info(
             "shipping_region",
             False,
             True,
-            {"nation_name": "name"},
+            {},
+            {"nation_name": "TPCH.Nations.name"},
             id="tpch-region-orders",
         ),
     ],
@@ -634,7 +648,8 @@ def test_compound_relationship_info(
     reverse_name,
     singular,
     no_collisions,
-    inherited_properties,
+    forward_inherited_properties,
+    reverse_inherited_properties,
     get_graph,
 ):
     """
@@ -664,7 +679,7 @@ def test_compound_relationship_info(
         alias: inh.property_to_inherit.path
         for alias, inh in property.inherited_properties.items()
     }
-    assert inherited_dict == inherited_properties
+    assert inherited_dict == forward_inherited_properties
 
     # Verify that the properties of its reverse match in a corresponding manner
     reverse: PropertyMetadata = property.reverse_property
@@ -684,6 +699,6 @@ def test_compound_relationship_info(
     assert reverse.is_plural != no_collisions
     reverse_inherited_dict: Dict[str, str] = {
         alias: inh.property_to_inherit.path
-        for alias, inh in property.inherited_properties.items()
+        for alias, inh in reverse.inherited_properties.items()
     }
-    assert reverse_inherited_dict == inherited_properties
+    assert reverse_inherited_dict == reverse_inherited_properties

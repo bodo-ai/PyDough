@@ -9,6 +9,7 @@ from pydough.metadata.errors import (
     is_string,
     NoExtraKeys,
     compound_relationship_inherited_predicate,
+    PyDoughMetadataException,
     is_bool,
 )
 from pydough.metadata.collections import CollectionMetadata
@@ -60,11 +61,35 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         )
         self._primary_property: ReversiblePropertyMetadata = primary_property
         self._secondary_property: ReversiblePropertyMetadata = secondary_property
-        self._inherited_properties: Dict[str, PropertyMetadata] = {}
+
+        # Properties that are passed in as inherited properties via the metadata
+        self._direct_inherited_properties: Dict[str, PropertyMetadata] = {}
         for alias, property in inherited_properties.items():
-            self.inherited_properties[alias] = InheritedPropertyMetadata(
+            self._direct_inherited_properties[alias] = InheritedPropertyMetadata(
                 alias, other_collection, self, property
             )
+
+        # Properties that exist as inherited properties in the forward direction
+        # because they are inherited properties of the forward direction of the
+        # secondary property (if it is a compound relationship).
+        self._forward_inherited_properties: Dict[str, PropertyMetadata] = {}
+        if isinstance(secondary_property, CompoundRelationshipMetadata):
+            for (
+                alias_name,
+                inherited_property,
+            ) in secondary_property.inherited_properties.items():
+                if alias_name in inherited_properties:
+                    raise PyDoughMetadataException(
+                        f"Duplicate inherited property in {self.error_name}: {alias_name}."
+                    )
+                self._forward_inherited_properties[alias_name] = inherited_property
+
+        # Maintain the two dictionaries as separate for the purposes of
+        # constructing the reverse relationship, which has different
+        # forward inherited properties but the same direct ones.
+        self._inherited_properties = (
+            self._direct_inherited_properties | self._forward_inherited_properties
+        )
 
     @property
     def primary_property(self) -> ReversiblePropertyMetadata:
@@ -86,7 +111,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         The properties inherited by using this compound relationship,
         represented as a mapping of an alias name to the actual property.
         """
-        return self._inherited_properties
+        return self._direct_inherited_properties | self._forward_inherited_properties
 
     @staticmethod
     def create_error_name(name: str, collection_error_name: str):
@@ -257,7 +282,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             self.primary_property.reverse_property,
             {
                 alias: property.property_to_inherit
-                for alias, property in self.inherited_properties.items()
+                for alias, property in self._direct_inherited_properties.items()
             },
         )
 
