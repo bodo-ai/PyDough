@@ -1,8 +1,18 @@
 [project]
 name = "pydough"
+version = "0.1.0"
+description = "TODO"
+readme = "README.md"
 authors = [{name = "Bodo.ai"}]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
+dependencies = ["pytz"]
+
+[tool.uv]
+dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7"]
 
 [project.optional-dependencies]
-dev = ["pre-commit", "pytest"]
-databases = ["sqlite3"]
+sqlite = ["sqlite3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
