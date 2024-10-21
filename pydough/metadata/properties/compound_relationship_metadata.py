@@ -232,8 +232,8 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
                 ]
                 inherited_properties[alias_name] = inherited_property
             elif has_inherited_property:
-                # The more complex case where teh property is an inherited property
-                # of teh middle collection, either from the primary or secondary
+                # The more complex case where the property is an inherited property
+                # of the middle collection, either from the primary or secondary
                 # property. In this case, all candidate inherited properties must be
                 # searched to verify that one of them comes from the primary or secondary
                 # property, and there are not multiple successful candidates.
