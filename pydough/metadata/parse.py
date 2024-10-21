@@ -252,7 +252,18 @@ def get_property_dependencies(
 
     def get_true_property(property: Tuple[str, str]) -> Tuple[str, str] | None:
         """
-        TODO: add function docstring.
+        Extracts the true canonical representation of a property.
+
+        Args:
+            `property`: the input property in terms of a tuple
+            `(collection_name, property_name)`.
+
+        Returns:
+            The canonical representative for a property, which could either be
+            the input tuple or the tuple for the reverse property. If the
+            canonical representation is currently unknown (e.g. because the
+            property is the reverse of a property that has not yet been defined)
+            returns None.
         """
         if property in reformatted_properties:
             return property
@@ -264,7 +275,18 @@ def get_property_dependencies(
 
     def add_dependency(property: Tuple[str, str], dependency: Tuple[str, str]) -> None:
         """
-        TODO: add function docstring.
+        Marks a dependency relationship between two properties, implying that
+        one of them cannot be defined until after the other has been defined.
+
+        Args:
+            `property`: the input property in terms of a tuple
+            `(collection_name, property_name)`.
+            `dependency`: the property that `property` is dependant on, in the
+            same tuple format.
+
+        Raises:
+            `PyDoughMetadataException` if the property or the dependency
+            is not a valid cannonical representative property.
         """
         true_property = get_true_property(property)
         true_dependency = get_true_property(dependency)
