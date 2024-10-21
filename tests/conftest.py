@@ -17,6 +17,14 @@ def sample_graph_path():
 
 
 @pytest.fixture(scope="session")
+def invalid_graph_path():
+    """
+    Tuple of the path to the JSON file containing the invalid graphs.
+    """
+    return "tests/test_metadata/invalid_graphs.json"
+
+
+@pytest.fixture(scope="session")
 def sample_graph_nouns_path():
     """
     Tuple of the path to the JSON file containing the nouns for each

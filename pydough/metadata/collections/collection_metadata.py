@@ -320,4 +320,6 @@ class CollectionMetadata(AbstractMetadata):
                     graph, collection_name, collection_json
                 )
             case collection_type:
-                raise Exception(f"Unrecognized collection type: '{collection_type}'")
+                raise PyDoughMetadataException(
+                    f"Unrecognized collection type: '{collection_type}'"
+                )

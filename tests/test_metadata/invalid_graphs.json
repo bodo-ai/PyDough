@@ -1,0 +1,188 @@
+{
+    "#badgraphname": {},
+    "BAD_NAME_1": { "bad collection name": {} },
+    "BAD_NAME_2": { 
+        "Regions": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key"],
+            "properties": {
+                "4fizz": {}
+            }
+        } 
+    },
+    "BAD_NAME_3": { "BAD_NAME_3": {} },
+    "FORMAT_1": 42,
+    "FORMAT_2": {
+        "BAD_COLLECTION": "fizz"
+    },
+    "FORMAT_3": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key"],
+            "properties": {
+                "key": true,
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_4": {
+        "BAD_COLLECTION": {
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_5": {
+        "BAD_COLLECTION": {
+            "type": ["simple_table"],
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_6": {
+        "BAD_COLLECTION": {
+            "type": "¡SIMPLE!",
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_7": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "unique_properties": ["key"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_8": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": {"tpch": "REGION"},
+            "unique_properties": ["key"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_9": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_10": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_11": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": "key",
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_12": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": [],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_13": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": ["A", 2, "3"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_14": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": [[]],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "FORMAT_15": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": [["A", "B"], "C", ["D", true, false]],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+
+
+    "GOOD": {
+        "BAD_COLLECTION": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+
+
+    "FINAL": {}
+}

@@ -132,7 +132,7 @@ class PropertyMetadata(AbstractMetadata):
 
         # Ensure that the property's name is valid and that the JSON has the
         # required `type` field.
-        is_valid_name.verify(property_name, "property_name")
+        is_valid_name.verify(property_name, "property name")
         HasPropertyWith("type", is_string).verify(property_json, error_name)
 
         # Dispatch to each implementation's verification method based on the type.
@@ -204,7 +204,9 @@ class PropertyMetadata(AbstractMetadata):
                     collection, property_name, property_json
                 )
             case property_type:
-                raise Exception(f"Unrecognized property type: {property_type!r}")
+                raise PyDoughMetadataException(
+                    f"Unrecognized property type: {property_type!r}"
+                )
 
     def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
         return {self.name: [self]}

@@ -18,7 +18,7 @@ class GraphMetadata(AbstractMetadata):
     def __init__(self, name: str):
         from pydough.metadata.collections import CollectionMetadata
 
-        is_valid_name.verify(name, "name")
+        is_valid_name.verify(name, "graph name")
         self._name: str = name
         self._collections: Dict[str, CollectionMetadata] = {}
 
