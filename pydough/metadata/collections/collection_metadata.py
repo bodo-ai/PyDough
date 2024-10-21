@@ -149,19 +149,14 @@ class CollectionMetadata(AbstractMetadata):
                 )
 
         # Verify that there is not a name conflict between an inherited
-        # property and the candidate property, which would mean the candidate
-        # property already been inserted or that there is an inherited property
-        # that conflicts with the name of a regular property.
-        if property.name in self.inherited_properties:
-            if inherited:
-                if property in self.inherited_properties[property.name]:
-                    raise PyDoughMetadataException(
-                        f"Already added {property.error_name}"
-                    )
-            else:
-                raise PyDoughMetadataException(
-                    f"{self.inherited_properties[property.name][0].error_name} conflicts with property {property.error_name}."
-                )
+        # property and the candidate property, which would mean there is
+        # an inherited property that conflicts with the name of a regular
+        # property. Skip this check when inserting an inherited property
+        # since collisions will occur when inheriting an inherited property.
+        if not inherited and property.name in self.inherited_properties:
+            raise PyDoughMetadataException(
+                f"{self.inherited_properties[property.name][0].error_name} conflicts with property {property.error_name}."
+            )
 
         # Verify that there is not a name conflict between a regular property
         # and the candidate property.

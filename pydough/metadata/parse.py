@@ -451,6 +451,10 @@ def get_property_dependencies(
                     primary_property in compounds
                     and inherited_property_name
                     in compound_inherited_aliases[primary_property]
+                ) and not (
+                    secondary_property in compounds
+                    and inherited_property_name
+                    in compound_inherited_aliases[secondary_property]
                 ):
                     must_restart = True
                 continue

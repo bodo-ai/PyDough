@@ -101,6 +101,7 @@ def test_get_collection_names(graph_name, answer, get_graph):
                 "price_per_unit",
                 "containment_records",
                 "packages_containing",
+                "purchasers",
             ],
             id="amazon-products",
         ),
@@ -157,6 +158,7 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                     "Amazon.Customers.addresses.date_started_occupying",
                     "Amazon.Occupancies.date_started_occupying",
                 },
+                "purchasers": {"Amazon.Products.purchasers"},
                 "date_stopped_occupying": {
                     "Amazon.Occupancies.date_stopped_occupying",
                     "Amazon.Customers.addresses.date_stopped_occupying",
@@ -166,7 +168,11 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                 "address": {"Amazon.Occupancies.address"},
                 "customer_username": {"Amazon.Packages.customer_username"},
                 "id": {"Amazon.Packages.id", "Amazon.Addresses.id"},
-                "order_timestamp": {"Amazon.Packages.order_timestamp"},
+                "order_timestamp": {
+                    "Amazon.Packages.order_timestamp",
+                    "Amazon.Customers.products_ordered.order_timestamp",
+                    "Amazon.Products.purchasers.order_timestamp",
+                },
                 "shipping_address_id": {"Amazon.Packages.shipping_address_id"},
                 "billing_address_id": {"Amazon.Packages.billing_address_id"},
                 "shipping_address": {"Amazon.Packages.shipping_address"},
@@ -176,9 +182,11 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                 "package_id": {"Amazon.PackageContents.package_id"},
                 "package": {"Amazon.PackageContents.package"},
                 "quantity_ordered": {
+                    "Amazon.Customers.products_ordered.quantity_ordered",
                     "Amazon.Products.packages_containing.quantity_ordered",
                     "Amazon.Packages.contents.quantity_ordered",
                     "Amazon.PackageContents.quantity_ordered",
+                    "Amazon.Products.purchasers.quantity_ordered",
                 },
                 "product_name": {"Amazon.PackageContents.product_name"},
                 "product": {"Amazon.PackageContents.product"},
@@ -186,6 +194,7 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                 "containment_records": {"Amazon.Products.containment_records"},
                 "packages_containing": {"Amazon.Products.packages_containing"},
                 "product_type": {"Amazon.Products.product_type"},
+                "products_ordered": {"Amazon.Customers.products_ordered"},
                 "product_category": {"Amazon.Products.product_category"},
                 "price_per_unit": {"Amazon.Products.price_per_unit"},
                 "occupants": {"Amazon.Addresses.occupants"},
@@ -273,6 +282,8 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                     "TPCH.Customers.region.nation_name",
                     "TPCH.Regions.suppliers.nation_name",
                     "TPCH.Regions.customers.nation_name",
+                    "TPCH.Orders.shipping_region.nation_name",
+                    "TPCH.Regions.orders_shipped_to.nation_name",
                 },
                 "ps_lines": {
                     "TPCH.Parts.suppliers_of_part.ps_lines",
@@ -486,7 +497,16 @@ def test_table_column_info(
 
 
 @pytest.mark.parametrize(
-    "graph_name, collection_name, property_name, other_collection, reverse_name, singular, no_collisions, keys",
+    [
+        "graph_name",
+        "collection_name",
+        "property_name",
+        "other_collection",
+        "reverse_name",
+        "singular",
+        "no_collisions",
+        "keys",
+    ],
     [
         pytest.param(
             "tpch",
@@ -558,7 +578,19 @@ def test_simple_join_info(
 
 
 @pytest.mark.parametrize(
-    "graph_name, collection_name, property_name, primary_property_name, secondary_property_name, other_collection, reverse_name, singular, no_collisions, forward_inherited_properties, reverse_inherited_properties",
+    [
+        "graph_name",
+        "collection_name",
+        "property_name",
+        "primary_property_name",
+        "secondary_property_name",
+        "other_collection",
+        "reverse_name",
+        "singular",
+        "no_collisions",
+        "inherited_properties",
+        "reverse_inherited_properties",
+    ],
     [
         pytest.param(
             "tpch",
@@ -632,8 +664,8 @@ def test_simple_join_info(
             "shipping_region",
             False,
             True,
-            {},
-            {"nation_name": "TPCH.Nations.name"},
+            {"nation_name": "TPCH.Regions.customers.nation_name"},
+            {"nation_name": "TPCH.Customers.region.nation_name"},
             id="tpch-region-orders",
         ),
     ],
@@ -648,7 +680,7 @@ def test_compound_relationship_info(
     reverse_name,
     singular,
     no_collisions,
-    forward_inherited_properties,
+    inherited_properties,
     reverse_inherited_properties,
     get_graph,
 ):
@@ -679,7 +711,7 @@ def test_compound_relationship_info(
         alias: inh.property_to_inherit.path
         for alias, inh in property.inherited_properties.items()
     }
-    assert inherited_dict == forward_inherited_properties
+    assert inherited_dict == inherited_properties
 
     # Verify that the properties of its reverse match in a corresponding manner
     reverse: PropertyMetadata = property.reverse_property

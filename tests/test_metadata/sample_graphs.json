@@ -35,6 +35,15 @@
             "no_collisions": false,
             "inherited_properties": {"date_started_occupying": "date_started_occupying", "date_stopped_occupying": "date_stopped_occupying"},
             "reverse_relationship_name": "occupants"
+          },
+          "products_ordered": {
+            "type": "compound",
+            "primary_property": "packages_ordered",
+            "secondary_property": "contents",
+            "singular": false,
+            "no_collisions": false,
+            "inherited_properties": {"order_timestamp": "order_timestamp", "quantity_ordered": "quantity_ordered"},
+            "reverse_relationship_name": "purchasers"
           }
         }
       },
@@ -122,7 +131,7 @@
       },
       "Products": {
         "type": "simple_table",
-        "table_path": "amazon.PRODCCT",
+        "table_path": "amazon.PRODUCT",
         "unique_properties": ["name"],
         "properties": {
           "name": {"type": "table_column", "column_name": "name", "data_type": "string"},
@@ -370,7 +379,7 @@
               "secondary_property": "region",
               "singular": true,
               "no_collisions": false,
-              "inherited_properties": {},
+              "inherited_properties": {"nation_name": "nation_name"},
               "reverse_relationship_name": "orders_shipped_to"
             }
           }
