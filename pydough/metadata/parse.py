@@ -319,7 +319,17 @@ def get_property_dependencies(
 
     def define_cartesian_property(property: Tuple[str, str]) -> None:
         """
-        TODO: add function docstring
+        Defines a cartesian product property, adding its dependencies
+        to the datastructure and marking the property as defined so
+        subsequent properties can use it as a dependency.
+
+        Args:
+            `property`: the property that the algorithm is attempting to
+            define, in terms of a tuple `(collection_name, property_name)`.
+
+        Raises:
+            `PyDoughMetadataError`: if the properties or relationships are
+            malformed.
         """
         property_json, _ = reformatted_properties[property]
         reverse_collection = property_json["other_collection_name"]
@@ -338,8 +348,20 @@ def get_property_dependencies(
 
     def define_simple_join_property(property: Tuple[str, str]) -> None:
         """
-        TODO: add function docstring
+        Defines a simple join property, adding its dependencies
+        to the datastructure and marking the property as defined so
+        subsequent properties can use it as a dependency.
+
+        Args:
+            `property`: the property that the algorithm is attempting to
+            define, in terms of a tuple `(collection_name, property_name)`.
+
+        Raises:
+            `PyDoughMetadataError`: if the properties or relationships are
+            malformed.
         """
+        # The simple join definition process is a superset of the same process
+        # for cartesian products.
         define_cartesian_property(property)
         property_json, _ = reformatted_properties[property]
         collection = property[0]
@@ -383,9 +405,22 @@ def get_property_dependencies(
     iters_since_change: int = 0
     max_iters_since_change: int = 2 * len(compound_stack)
 
-    def attempt_to_defined_compound_relationship(property):
+    def attempt_to_defined_compound_relationship(property: Tuple[str, str]) -> None:
         """
-        TODO: add function docstring
+        Procedure that attempts to process a compound property and infer its
+        dependencies. If this is not possible because its dependencies are
+        still unknown (e.g. they are the reverse of a property that has not
+        been defined yet), places the property at the bottom of the stack.
+        If a dependency is known but not yet defined, pushes the property back
+        on top of the stack underneath its dependency.
+
+        Args:
+            `property`: the property that the algorithm is attempting to
+            define, in terms of a tuple `(collection_name, property_name)`.
+
+        Raises:
+            `PyDoughMetadataError`: if the properties or relationships are
+            malformed.
         """
         nonlocal iters_since_change
         if property in defined:
@@ -537,7 +572,7 @@ def topologically_sort_properties(
     )
 
     # Use the topological ordering to re-construct the same format as the
-    # `raw_properties`` list, but in the desired order.
+    # `raw_properties` list, but in the desired order.
     ordered_properties: List[Tuple[str, str, dict]] = [
         k + (reformatted_properties[k][0],) for k in ordered_keys
     ]
