@@ -2,8 +2,9 @@
 TODO: add file-level docstring
 """
 
-from . import PropertyMetadata, CompoundRelationshipMetadata
+from . import PropertyMetadata, CompoundRelationshipMetadata, ReversiblePropertyMetadata
 from pydough.metadata.collections import CollectionMetadata
+from pydough.metadata.errors import HasType, PyDoughMetadataException
 
 
 class InheritedPropertyMetadata(PropertyMetadata):
@@ -21,6 +22,10 @@ class InheritedPropertyMetadata(PropertyMetadata):
         property_to_inherit: PropertyMetadata,
     ):
         super().__init__(name, collection)
+        HasType(CompoundRelationshipMetadata).verify(
+            property_inherited_from, "property_inherited_from"
+        )
+        HasType(PropertyMetadata).verify(property_to_inherit, "property_to_inherit")
         self._property_inherited_from: CompoundRelationshipMetadata = (
             property_inherited_from
         )
@@ -83,3 +88,21 @@ class InheritedPropertyMetadata(PropertyMetadata):
         comp.append(self.property_inherited_from.components)
         comp.append(self.property_to_inherit.components)
         return comp
+
+    def flip_source(self) -> "InheritedPropertyMetadata":
+        """
+        Returns a copy of self where the source property's direction is
+        flipped. Only valid when the source property is a compound
+        relationship.
+        """
+        if not isinstance(self.property_inherited_from, CompoundRelationshipMetadata):
+            raise PyDoughMetadataException(f"Cannot flip source of {self.error_name}")
+        reverse_property: ReversiblePropertyMetadata = (
+            self.property_inherited_from.reverse_property
+        )
+        return InheritedPropertyMetadata(
+            self.name,
+            reverse_property.other_collection,
+            reverse_property,
+            self.property_to_inherit,
+        )

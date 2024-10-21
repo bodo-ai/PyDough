@@ -75,7 +75,7 @@ class ValidName(PyDoughPredicate):
         return isinstance(obj, str) and obj.isidentifier()
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a string that is a Python identifier."
+        return f"{error_name} must be a string that is a Python identifier"
 
 
 class NoExtraKeys(PyDoughPredicate):
@@ -90,7 +90,7 @@ class NoExtraKeys(PyDoughPredicate):
         return isinstance(obj, dict) and set(obj) <= self.valid_keys
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a JSON object containing no fields except for {sorted(self.valid_keys)!r}."
+        return f"{error_name} must be a JSON object containing no fields except for {sorted(self.valid_keys)!r}"
 
 
 class ContainsField(PyDoughPredicate):
@@ -105,25 +105,29 @@ class ContainsField(PyDoughPredicate):
         return isinstance(obj, dict) and self.field_name in obj
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a JSON object containing a field {self.field_name!r}."
+        return (
+            f"{error_name} must be a JSON object containing a field {self.field_name!r}"
+        )
 
 
 class HasType(PyDoughPredicate):
-    """Predicate class to check that an object has a certain type."""
+    """Predicate class to check that an object has a certain type"""
 
     def __init__(self, desired_type: type, type_name: Optional[str] = None):
         self.desired_type: type = desired_type
-        self.type_name: str = str(self.desired_type) if type_name is None else type_name
+        self.type_name: str = (
+            self.desired_type.__name__ if type_name is None else type_name
+        )
 
     def accept(self, obj: object) -> bool:
         return isinstance(obj, self.desired_type)
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a {self.type_name}."
+        return f"{error_name} must be a {self.type_name}"
 
 
 class HasPropertyWith(PyDoughPredicate):
-    """Predicate class to check that an object has a field matching a predicate."""
+    """Predicate class to check that an object has a field matching a predicate"""
 
     def __init__(self, field_name: str, field_predicate: PyDoughPredicate):
         self.field_name = field_name
@@ -137,9 +141,7 @@ class HasPropertyWith(PyDoughPredicate):
 
     def error_message(self, error_name: str) -> str:
         lhs = self.has_predicate.error_message(error_name)
-        rhs = self.field_predicate.error_message(
-            f"field {self.field_name!r} of {error_name}"
-        )
+        rhs = self.field_predicate.error_message(f"field {self.field_name!r}")
         return f"{lhs} and {rhs}"
 
 

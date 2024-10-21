@@ -2,13 +2,15 @@
 TODO: add file-level docstring
 """
 
-from typing import Dict, Set
+from typing import Dict, Set, List
 from pydough.metadata.errors import (
     HasPropertyWith,
     HasType,
     is_string,
     NoExtraKeys,
     compound_relationship_inherited_predicate,
+    PyDoughMetadataException,
+    NonEmptyListOf,
     is_bool,
 )
 from pydough.metadata.collections import CollectionMetadata
@@ -60,9 +62,11 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         )
         self._primary_property: ReversiblePropertyMetadata = primary_property
         self._secondary_property: ReversiblePropertyMetadata = secondary_property
+
+        # Properties that are passed in as inherited properties via the metadata
         self._inherited_properties: Dict[str, PropertyMetadata] = {}
         for alias, property in inherited_properties.items():
-            self.inherited_properties[alias] = InheritedPropertyMetadata(
+            self._inherited_properties[alias] = InheritedPropertyMetadata(
                 alias, other_collection, self, property
             )
 
@@ -166,6 +170,8 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             `PyDoughMetadataException`: if the JSON for the property is
             malformed.
         """
+        from .inherited_property_metadata import InheritedPropertyMetadata
+
         # Extract the name of the primary/secondary properties, the inherited
         # properties mapping, the reverse relationship name, and the singular /
         # no_collisions fields from the JSON.
@@ -207,13 +213,70 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         # properties.
         inherited_properties: Dict[str, PropertyMetadata] = {}
         for alias_name, inherited_property_name in inherited_properties_mapping.items():
-            HasPropertyWith(inherited_property_name, HasType(PropertyMetadata)).verify(
-                secondary_collection.properties, secondary_collection.error_name
+            has_property: bool = HasPropertyWith(
+                inherited_property_name, HasType(PropertyMetadata)
+            ).accept(secondary_collection.properties)
+            has_inherited_property: bool = HasPropertyWith(
+                inherited_property_name,
+                NonEmptyListOf(HasType(InheritedPropertyMetadata)),
+            ).accept(secondary_collection.inherited_properties)
+            failure_msg: str = f"Cannot find property to inherit {inherited_property_name!r} in compound relationship {property_name} of {collection.error_name}"
+            ambiguous_message: str = (
+                f"{failure_msg} due to ambiguous inherited properties."
             )
-            inherited_property: PropertyMetadata = secondary_collection.properties[
-                inherited_property_name
-            ]
-            inherited_properties[alias_name] = inherited_property
+            if has_property:
+                # The simple case where the property is a direct property of
+                # the middle collection.
+                inherited_property: PropertyMetadata = secondary_collection.properties[
+                    inherited_property_name
+                ]
+                inherited_properties[alias_name] = inherited_property
+            elif has_inherited_property:
+                # The more complex case where teh property is an inherited property
+                # of teh middle collection, either from the primary or secondary
+                # property. In this case, all candidate inherited properties must be
+                # searched to verify that one of them comes from the primary or secondary
+                # property, and there are not multiple successful candidates.
+                candidates: List[InheritedPropertyMetadata] = (
+                    secondary_collection.inherited_properties[inherited_property_name]
+                )
+                primary_candidate = None
+                secondary_candidate = None
+                for candidate_inherited_property in candidates:
+                    original: ReversiblePropertyMetadata = (
+                        candidate_inherited_property.property_inherited_from
+                    )
+                    reverse: ReversiblePropertyMetadata = original.reverse_property
+                    if primary_property in (original, reverse):
+                        if (
+                            primary_candidate is not None
+                            or secondary_candidate is not None
+                        ):
+                            raise PyDoughMetadataException(ambiguous_message)
+                        if primary_property == reverse:
+                            candidate_inherited_property = (
+                                candidate_inherited_property.flip_source()
+                            )
+                        primary_candidate = candidate_inherited_property
+                    if secondary_property in (original, reverse):
+                        if (
+                            primary_candidate is not None
+                            or secondary_candidate is not None
+                        ):
+                            raise PyDoughMetadataException(ambiguous_message)
+                        if secondary_property == reverse:
+                            candidate_inherited_property = (
+                                candidate_inherited_property.flip_source()
+                            )
+                        secondary_candidate = candidate_inherited_property
+                if primary_candidate is not None:
+                    inherited_properties[alias_name] = primary_candidate
+                elif secondary_candidate is not None:
+                    inherited_properties[alias_name] = secondary_candidate
+                else:
+                    raise PyDoughMetadataException(failure_msg)
+            else:
+                raise PyDoughMetadataException(failure_msg)
 
         # Build the new property, its reverse, then add both
         # to their collection's properties.
@@ -239,9 +302,20 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         for (
             inherited_property
         ) in property.reverse_property.inherited_properties.values():
-            other_collection.add_inherited_property(inherited_property)
+            collection.add_inherited_property(inherited_property)
 
     def build_reverse_relationship(self) -> None:
+        from .inherited_property_metadata import InheritedPropertyMetadata
+
+        # Flip the sources of the inherited properties that are also inherited properties
+        new_properties_to_inherit: Dict[str, PropertyMetadata] = {}
+        for alias, property in self._inherited_properties.items():
+            if isinstance(property.property_to_inherit, InheritedPropertyMetadata):
+                new_properties_to_inherit[alias] = (
+                    property.property_to_inherit.flip_source()
+                )
+            else:
+                new_properties_to_inherit[alias] = property.property_to_inherit
         # Construct the reverse relationship by flipping the forward & reverse
         # names, the source / target collections, and the plural properties.
         # The new primary property is the reverse of the secondary property.
@@ -255,7 +329,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             self.singular,
             self.secondary_property.reverse_property,
             self.primary_property.reverse_property,
-            self.inherited_properties,
+            new_properties_to_inherit,
         )
 
         # Then fill the `reverse_property` fields with one another.

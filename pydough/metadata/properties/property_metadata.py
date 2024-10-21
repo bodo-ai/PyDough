@@ -97,7 +97,7 @@ class PropertyMetadata(AbstractMetadata):
     @property
     @abstractmethod
     def components(self) -> list:
-        comp: list = super().components
+        comp: list = self.collection.components
         comp.append(self.name)
         return comp
 
