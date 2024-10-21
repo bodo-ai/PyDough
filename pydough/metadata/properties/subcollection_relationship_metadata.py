@@ -65,7 +65,7 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
     @property
     @abstractmethod
     def components(self) -> list:
-        comp: list = super().comp
+        comp: list = super().components
         comp.append(self.other_collection.name)
         comp.append(self.singular)
         comp.append(self.no_collisions)
