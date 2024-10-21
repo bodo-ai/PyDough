@@ -342,7 +342,7 @@
             "customer_key": {"type": "table_column", "column_name": "o_custkey", "data_type": "int64"},
             "order_status": {"type": "table_column", "column_name": "o_orderstatus", "data_type": "decimal[12,2]"},
             "total_price": {"type": "table_column", "column_name": "o_totalprice", "data_type": "decimal[12,2]"},
-            "order_date": {"type": "table_column", "column_name": "o_orderdate", "data_type": "int64"},
+            "order_date": {"type": "table_column", "column_name": "o_orderdate", "data_type": "date"},
             "order_priority": {"type": "table_column", "column_name": "o_orderpriority", "data_type": "int64"},
             "clerk": {"type": "table_column", "column_name": "clerk", "data_type": "int64"},
             "ship_priority": {"type": "table_column", "column_name": "o_shipriority", "data_type": "int64"},

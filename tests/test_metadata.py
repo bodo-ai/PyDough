@@ -5,8 +5,10 @@ TODO: add file-level docstring
 import pytest
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
-from pydough.metadata.collections import CollectionMetadata
+from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
+from pydough.metadata.properties import PropertyMetadata, TableColumnMetadata
 from typing import List, Dict, Set
+from pydough.types import StringType, Int8Type, Int64Type, DateType, DecimalType
 
 
 def test_graph_structure(sample_graphs):
@@ -358,3 +360,117 @@ def test_get_graph_nouns(graph_name, answer, get_graph):
             processed_values.add(noun_value.path)
         processed_nouns[noun_name] = processed_values
     assert processed_nouns == answer
+
+
+@pytest.mark.parametrize(
+    "graph_name, collection_name, table_path, unique_properties",
+    [
+        pytest.param(
+            "amazon",
+            "Customers",
+            "amazon.CUSTOMER",
+            ["username", "email", "phone_number"],
+            id="amazon-customer",
+        ),
+        pytest.param(
+            "amazon",
+            "Packages",
+            "amazon.PACKAGE",
+            ["id"],
+            id="amazon-customer",
+        ),
+        pytest.param(
+            "tpch",
+            "Regions",
+            "tpch.REGION",
+            ["key"],
+            id="tpch-region",
+        ),
+        pytest.param(
+            "tpch",
+            "PartSupp",
+            "tpch.PARTSUPP",
+            [["partkey", "suppkey"]],
+            id="tpch-partsupp",
+        ),
+        pytest.param(
+            "tpch",
+            "Lineitems",
+            "tpch.LINEITEM",
+            [["partkey", "suppkey", "orderkey"]],
+            id="tpch-lineitem",
+        ),
+    ],
+)
+def test_simple_table_info(
+    graph_name, collection_name, table_path, unique_properties, get_graph
+):
+    """
+    Testing that the table path and unique properties fields of simple table
+    collections are set correctly.
+    """
+    graph: GraphMetadata = get_graph(graph_name)
+    collection: CollectionMetadata = graph.get_collection(collection_name)
+    assert isinstance(collection, SimpleTableMetadata)
+    assert collection.table_path == table_path
+    assert collection.unique_properties == unique_properties
+
+
+@pytest.mark.parametrize(
+    "graph_name, collection_name, property_name, column_name, data_type",
+    [
+        pytest.param(
+            "tpch",
+            "Regions",
+            "name",
+            "r_name",
+            StringType(),
+            id="tpch-region-name",
+        ),
+        pytest.param(
+            "tpch",
+            "Customers",
+            "acctbal",
+            "c_acctbal",
+            DecimalType(12, 2),
+            id="tpch-customer-acctbal",
+        ),
+        pytest.param(
+            "tpch",
+            "Orders",
+            "order_date",
+            "o_orderdate",
+            DateType(),
+            id="tpch-lineitem-orderdate",
+        ),
+        pytest.param(
+            "tpch",
+            "Lineitems",
+            "line_number",
+            "l_linenumber",
+            Int8Type(),
+            id="tpch-lineitem-linenumber",
+        ),
+        pytest.param(
+            "tpch",
+            "Suppliers",
+            "key",
+            "s_suppkey",
+            Int64Type(),
+            id="tpch-supplier-suppkey",
+        ),
+    ],
+)
+def test_table_column_info(
+    graph_name, collection_name, property_name, column_name, data_type, get_graph
+):
+    """
+    Testing that the type and column name fields of properties are set
+    correctly.
+    """
+    graph: GraphMetadata = get_graph(graph_name)
+    collection: CollectionMetadata = graph.get_collection(collection_name)
+    property: PropertyMetadata = collection.get_property(property_name)
+    assert isinstance(property, TableColumnMetadata)
+    assert property.column_name == column_name
+    assert property.data_type == data_type
