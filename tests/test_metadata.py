@@ -116,6 +116,7 @@ def test_get_collection_names(graph_name, answer, get_graph):
                 "customers",
                 "suppliers",
                 "orders_shipped_to",
+                "lines_sourced_from",
             ],
             id="tpch-regions",
         ),
@@ -245,6 +246,10 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                     "TPCH.Nations.orders_shipped_to",
                     "TPCH.Regions.orders_shipped_to",
                 },
+                "other_parts_supplied": {
+                    "TPCH.Lineitems.supplier_region.other_parts_supplied",
+                    "TPCH.Regions.lines_sourced_from.other_parts_supplied",
+                },
                 "region_key": {"TPCH.Nations.region_key"},
                 "region": {
                     "TPCH.Customers.region",
@@ -284,6 +289,8 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                     "TPCH.Regions.customers.nation_name",
                     "TPCH.Orders.shipping_region.nation_name",
                     "TPCH.Regions.orders_shipped_to.nation_name",
+                    "TPCH.Lineitems.supplier_region.nation_name",
+                    "TPCH.Regions.lines_sourced_from.nation_name",
                 },
                 "ps_lines": {
                     "TPCH.Parts.suppliers_of_part.ps_lines",
@@ -296,6 +303,8 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                     "TPCH.Suppliers.lines.ps_availqty",
                     "TPCH.Lineitems.part.ps_availqty",
                     "TPCH.Lineitems.supplier.ps_availqty",
+                    "TPCH.Lineitems.supplier_region.ps_availqty",
+                    "TPCH.Regions.lines_sourced_from.ps_availqty",
                 },
                 "ps_supplycost": {
                     "TPCH.Suppliers.parts_supplied.ps_supplycost",
@@ -304,6 +313,8 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                     "TPCH.Lineitems.supplier.ps_supplycost",
                     "TPCH.Parts.lines.ps_supplycost",
                     "TPCH.Parts.suppliers_of_part.ps_supplycost",
+                    "TPCH.Lineitems.supplier_region.ps_supplycost",
+                    "TPCH.Regions.lines_sourced_from.ps_supplycost",
                 },
                 "ps_comment": {
                     "TPCH.Suppliers.lines.ps_comment",
@@ -312,15 +323,27 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                     "TPCH.Lineitems.part.ps_comment",
                     "TPCH.Parts.suppliers_of_part.ps_comment",
                     "TPCH.Parts.lines.ps_comment",
+                    "TPCH.Lineitems.supplier_region.ps_comment",
+                    "TPCH.Regions.lines_sourced_from.ps_comment",
                 },
                 "part_key": {"TPCH.PartSupp.part_key", "TPCH.Lineitems.part_key"},
                 "supplier_key": {
                     "TPCH.PartSupp.supplier_key",
                     "TPCH.Lineitems.supplier_key",
                 },
+                "supplier_name": {
+                    "TPCH.Lineitems.supplier_region.supplier_name",
+                    "TPCH.Regions.lines_sourced_from.supplier_name",
+                },
+                "supplier_region": {"TPCH.Lineitems.supplier_region"},
                 "part_and_supplier": {"TPCH.Lineitems.part_and_supplier"},
                 "part": {"TPCH.PartSupp.part", "TPCH.Lineitems.part"},
                 "supplier": {"TPCH.PartSupp.supplier", "TPCH.Lineitems.supplier"},
+                "lines_sourced_from": {"TPCH.Regions.lines_sourced_from"},
+                "supplier_address": {
+                    "TPCH.Lineitems.supplier_region.supplier_address",
+                    "TPCH.Regions.lines_sourced_from.supplier_address",
+                },
                 "order_key": {"TPCH.Lineitems.order_key"},
                 "line_number": {"TPCH.Lineitems.line_number"},
                 "quantity": {"TPCH.Lineitems.quantity"},
@@ -341,6 +364,8 @@ def test_get_property_names(graph_name, collection_name, answer, get_graph):
                 "ps_part": {
                     "TPCH.Lineitems.supplier.ps_part",
                     "TPCH.Suppliers.lines.ps_part",
+                    "TPCH.Lineitems.supplier_region.ps_part",
+                    "TPCH.Regions.lines_sourced_from.ps_part",
                 },
                 "availqty": {"TPCH.PartSupp.availqty"},
                 "supplycost": {"TPCH.PartSupp.supplycost"},

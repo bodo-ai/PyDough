@@ -189,6 +189,15 @@
                 "no_collisions": true,
                 "inherited_properties": {"nation_name": "name"},
                 "reverse_relationship_name": "region"
+              },
+              "lines_sourced_from": {
+                "type": "compound",
+                "primary_property": "suppliers",
+                "secondary_property": "lines",
+                "singular": false,
+                "no_collisions": true,
+                "inherited_properties": {"nation_name": "name", "ps_part": "ps_part", "ps_availqty": "ps_availqty", "ps_supplycost": "ps_supplycost", "ps_comment": "ps_comment", "supplier_name": "name", "supplier_address": "address", "other_parts_supplied": "parts_supplied"},
+                "reverse_relationship_name": "supplier_region"
               }
             }
         },
