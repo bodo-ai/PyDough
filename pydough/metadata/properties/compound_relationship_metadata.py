@@ -255,7 +255,10 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             self.singular,
             self.secondary_property.reverse_property,
             self.primary_property.reverse_property,
-            self.inherited_properties,
+            {
+                alias: property.property_to_inherit
+                for alias, property in self.inherited_properties.items()
+            },
         )
 
         # Then fill the `reverse_property` fields with one another.

@@ -6,8 +6,17 @@ import pytest
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
-from pydough.metadata.properties import PropertyMetadata, TableColumnMetadata
+from pydough.metadata.properties import (
+    PropertyMetadata,
+    TableColumnMetadata,
+    SimpleJoinMetadata,
+    CompoundRelationshipMetadata,
+)
+from pydough.metadata.properties.subcollection_relationship_metadata import (
+    SubcollectionRelationshipMetadata,
+)
 from typing import List, Dict, Set
+from collections import defaultdict
 from pydough.types import StringType, Int8Type, Int64Type, DateType, DecimalType
 
 
@@ -474,3 +483,207 @@ def test_table_column_info(
     assert isinstance(property, TableColumnMetadata)
     assert property.column_name == column_name
     assert property.data_type == data_type
+
+
+@pytest.mark.parametrize(
+    "graph_name, collection_name, property_name, other_collection, reverse_name, singular, no_collisions, keys",
+    [
+        pytest.param(
+            "tpch",
+            "Regions",
+            "nations",
+            "Nations",
+            "region",
+            False,
+            True,
+            {"key": ["region_key"]},
+            id="tpch-region-nations",
+        ),
+        pytest.param(
+            "tpch",
+            "PartSupp",
+            "part",
+            "Parts",
+            "supply_records",
+            True,
+            False,
+            {"part_key": ["key"]},
+            id="tpch-partsupp-part",
+        ),
+    ],
+)
+def test_simple_join_info(
+    graph_name,
+    collection_name,
+    property_name,
+    other_collection,
+    reverse_name,
+    singular,
+    no_collisions,
+    keys,
+    get_graph,
+):
+    """
+    Testing that the fields of simple join properties are set correctly.
+    """
+    graph: GraphMetadata = get_graph(graph_name)
+    collection: CollectionMetadata = graph.get_collection(collection_name)
+    property: PropertyMetadata = collection.get_property(property_name)
+
+    # Verify that the properties of the join property match the passed in values
+    assert isinstance(property, SimpleJoinMetadata)
+    assert property.is_reversible
+    assert property.is_subcollection
+    assert property.other_collection.name == other_collection
+    assert property.reverse_name == reverse_name
+    assert property.is_plural != singular
+    assert property.keys == keys
+
+    # Verify that the properties of its reverse match in a corresponding manner
+    reverse: PropertyMetadata = property.reverse_property
+    assert isinstance(reverse, SimpleJoinMetadata)
+    assert reverse.is_reversible
+    assert reverse.is_subcollection
+    assert reverse.reverse_property is property
+    assert reverse.collection.name == property.other_collection.name
+    assert reverse.name == property.reverse_name
+    assert reverse.other_collection.name == collection.name
+    assert reverse.reverse_name == property_name
+    assert reverse.is_plural != no_collisions
+    reverse_keys: defaultdict[list] = defaultdict(list)
+    for key_name, other_names in property.keys.items():
+        for other_name in other_names:
+            reverse_keys[other_name].append(key_name)
+    assert reverse.keys == reverse_keys
+
+
+@pytest.mark.parametrize(
+    "graph_name, collection_name, property_name, primary_property_name, secondary_property_name, other_collection, reverse_name, singular, no_collisions, inherited_properties",
+    [
+        pytest.param(
+            "tpch",
+            "Parts",
+            "lines",
+            "supply_records",
+            "lines",
+            "Lineitems",
+            "part",
+            False,
+            True,
+            {
+                "ps_supplier": "TPCH.PartSupp.supplier",
+                "ps_availqty": "TPCH.PartSupp.availqty",
+                "ps_supplycost": "TPCH.PartSupp.supplycost",
+                "ps_comment": "TPCH.PartSupp.comment",
+            },
+            id="tpch-part-lines",
+        ),
+        pytest.param(
+            "tpch",
+            "Suppliers",
+            "parts_supplied",
+            "supply_records",
+            "part",
+            "Parts",
+            "suppliers_of_part",
+            False,
+            False,
+            {
+                "ps_lines": "TPCH.PartSupp.lines",
+                "ps_availqty": "TPCH.PartSupp.availqty",
+                "ps_supplycost": "TPCH.PartSupp.supplycost",
+                "ps_comment": "TPCH.PartSupp.comment",
+            },
+            id="tpch-supplier-part",
+        ),
+        pytest.param(
+            "tpch",
+            "Regions",
+            "customers",
+            "nations",
+            "customers",
+            "Customers",
+            "region",
+            False,
+            True,
+            {"nation_name": "TPCH.Nations.name"},
+            id="tpch-region-customers",
+        ),
+        pytest.param(
+            "tpch",
+            "Regions",
+            "orders_shipped_to",
+            "customers",
+            "orders",
+            "Orders",
+            "shipping_region",
+            False,
+            True,
+            {"nation_name": "name"},
+            id="tpch-region-orders",
+        ),
+    ],
+)
+def test_compound_relationship_info(
+    graph_name,
+    collection_name,
+    property_name,
+    primary_property_name,
+    secondary_property_name,
+    other_collection,
+    reverse_name,
+    singular,
+    no_collisions,
+    inherited_properties,
+    get_graph,
+):
+    """
+    Testing that the fields of compound relationships are set correctly.
+    """
+    graph: GraphMetadata = get_graph(graph_name)
+    collection: CollectionMetadata = graph.get_collection(collection_name)
+    property: PropertyMetadata = collection.get_property(property_name)
+
+    # Verify that the properties of the compound property match the passed in values
+    assert isinstance(property, CompoundRelationshipMetadata)
+    for p in [property, property.primary_property, property.secondary_property]:
+        assert isinstance(p, SubcollectionRelationshipMetadata)
+        assert property.is_reversible
+        assert property.is_subcollection
+    assert property.primary_property.name == primary_property_name
+    assert (
+        property.primary_property.other_collection
+        is property.secondary_property.collection
+    )
+    assert property.secondary_property.name == secondary_property_name
+    assert property.other_collection.name == other_collection
+    assert property.other_collection is property.secondary_property.other_collection
+    assert property.reverse_name == reverse_name
+    assert property.is_plural != singular
+    inherited_dict: Dict[str, str] = {
+        alias: inh.property_to_inherit.path
+        for alias, inh in property.inherited_properties.items()
+    }
+    assert inherited_dict == inherited_properties
+
+    # Verify that the properties of its reverse match in a corresponding manner
+    reverse: PropertyMetadata = property.reverse_property
+    assert isinstance(reverse, CompoundRelationshipMetadata)
+    for p in [reverse, reverse.primary_property, reverse.secondary_property]:
+        assert isinstance(p, SubcollectionRelationshipMetadata)
+        assert property.is_reversible
+        assert property.is_subcollection
+    assert reverse.primary_property.name == property.secondary_property.reverse_name
+    assert (
+        reverse.primary_property.other_collection
+        is property.secondary_property.collection
+    )
+    assert reverse.secondary_property.name == property.primary_property.reverse_name
+    assert reverse.other_collection is property.collection
+    assert reverse.reverse_name == property_name
+    assert reverse.is_plural != no_collisions
+    reverse_inherited_dict: Dict[str, str] = {
+        alias: inh.property_to_inherit.path
+        for alias, inh in property.inherited_properties.items()
+    }
+    assert reverse_inherited_dict == inherited_properties

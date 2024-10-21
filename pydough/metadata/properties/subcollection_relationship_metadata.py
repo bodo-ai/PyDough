@@ -73,7 +73,7 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
 
     @property
     def is_plural(self) -> bool:
-        return self.singular
+        return not self.singular
 
     @property
     def is_subcollection(self) -> bool:
