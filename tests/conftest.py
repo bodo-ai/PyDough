@@ -4,38 +4,58 @@ TODO: add file-level docstring.
 
 import pydough
 import pytest
+import json
 from pydough.metadata.graphs import GraphMetadata
 
 
 @pytest.fixture(scope="session")
-def amazon_graph_path():
+def sample_graph_path():
     """
-    Tuple of the path to the JSON file containing the Amazon graph as well as
-    a the name that should be used to fetch the Amazon graph.
+    Tuple of the path to the JSON file containing the sample graphs.
     """
-    return "tests/test_metadata/sample_graphs.json", "Amazon"
+    return "tests/test_metadata/sample_graphs.json"
 
 
 @pytest.fixture(scope="session")
-def tpch_graph_path():
+def sample_graph_nouns_path():
     """
-    Tuple of the path to the JSON file containing the TPCH graph as well as
-    a the name that should be used to fetch the TPCH graph.
+    Tuple of the path to the JSON file containing the nouns for each
+    of the sample graphs.
     """
-    return "tests/test_metadata/sample_graphs.json", "TPCH"
+    return "tests/test_metadata/sample_graphs_nouns.json"
 
 
 @pytest.fixture(scope="session")
-def empty_graph_path():
+def amazon_graph_name():
     """
-    Tuple of the path to the JSON file containing the Empty graph as well as
-    a the name that should be used to fetch the Empty graph.
+    The name of the field in the sample graph JSON file corresponding
+    to the AMAZON graph.
     """
-    return "tests/test_metadata/sample_graphs.json", "empty"
+    return "Amazon"
+
+
+@pytest.fixture(scope="session")
+def tpch_graph_name():
+    """
+    The name of the field in the sample graph JSON file corresponding
+    to the TPCH graph.
+    """
+    return "TPCH"
+
+
+@pytest.fixture(scope="session")
+def empty_graph_name():
+    """
+    The name of the field in the sample graph JSON file corresponding
+    to the empty graph.
+    """
+    return "Empty"
 
 
 @pytest.fixture
-def get_graph(amazon_graph_path, tpch_graph_path, empty_graph_path):
+def get_sample_graph(
+    sample_graph_path, amazon_graph_name, tpch_graph_name, empty_graph_name
+):
     """
     A function that takes in the name of a graph (currently only supports the
     values 'amazon', 'tpch', and 'empty') and returns the metadata for that
@@ -44,24 +64,57 @@ def get_graph(amazon_graph_path, tpch_graph_path, empty_graph_path):
 
     def impl(name: str) -> GraphMetadata:
         if name == "amazon":
-            file_path, graph_name = amazon_graph_path
+            graph_name = amazon_graph_name
         elif name == "tpch":
-            file_path, graph_name = tpch_graph_path
+            graph_name = tpch_graph_name
         elif name == "empty":
-            file_path, graph_name = empty_graph_path
+            graph_name = empty_graph_name
         else:
             raise Exception(f"Unrecognized graph name '{name}'")
         return pydough.parse_json_metadata_from_file(
-            file_path=file_path, graph_name=graph_name
+            file_path=sample_graph_path, graph_name=graph_name
         )
 
     return impl
 
 
 @pytest.fixture(params=["amazon", "tpch", "empty"])
-def sample_graphs(request, get_graph):
+def sample_graph_names(request, get_sample_graph):
+    """
+    Fixture for the names that each of the sample graphs can be accessed by.
+    """
+    return request.param
+
+
+@pytest.fixture
+def get_sample_graph_nouns(
+    sample_graph_nouns_path, amazon_graph_name, tpch_graph_name, empty_graph_name
+):
+    """
+    A function that takes in the name of a graph (currently only supports the
+    values 'amazon', 'tpch', and 'empty') and returns the metadata for that
+    PyDough graph.
+    """
+
+    def impl(name: str) -> GraphMetadata:
+        if name == "amazon":
+            graph_name = amazon_graph_name
+        elif name == "tpch":
+            graph_name = tpch_graph_name
+        elif name == "empty":
+            graph_name = empty_graph_name
+        else:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        with open(sample_graph_nouns_path, "r") as f:
+            return json.load(f)[graph_name]
+
+    return impl
+
+
+@pytest.fixture
+def sample_graphs(sample_graph_names, get_sample_graph):
     """
     Retrieves the PyDough metadata for each graph in the `sample_graphs` JSON
     file.
     """
-    return get_graph(request.param)
+    return get_sample_graph(sample_graph_names)
