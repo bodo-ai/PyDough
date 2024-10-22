@@ -1,0 +1,42 @@
+name: SQLite TPCH DB Download and Verification
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  branches:
+    - main
+    paths:
+      - "tpch_demo/**"
+
+# Limit CI to cancel previous runs in the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  download-tpch-db:
+    name: Download TPCH DB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download TPCH DB
+        run: ./tpch_demo/setup_tpch.sh
+
+  verify-tpch-db:
+    name: Verify TPCH DB
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+    runs-on: ubuntu-latest
+    needs: [download-tpch-db]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify TPCH DB
+        run: uv run pytest tpch_demo/test_tpch_download.py
