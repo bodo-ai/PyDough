@@ -101,6 +101,45 @@ class PropertyMetadata(AbstractMetadata):
         comp.append(self.name)
         return comp
 
+    @staticmethod
+    def get_class_for_property_type(name: str, error_name: str) -> type:
+        """
+        Fetches the PropertyType implementation class for a string
+        representation of the property type.
+
+        Args:
+            `name`: the string representation of a property type.
+            `error_name`: the string used in error messages to describe
+            the object that `name` came from.
+
+        Returns:
+            The class of the property type corresponding to `name`.
+
+        Raises:
+            `PyDoughMetadataException` if the string does not correspond
+            to a known property type.
+        """
+        from pydough.metadata.properties import (
+            TableColumnMetadata,
+            SimpleJoinMetadata,
+            CompoundRelationshipMetadata,
+            CartesianProductMetadata,
+        )
+
+        match name:
+            case "table_column":
+                return TableColumnMetadata
+            case "simple_join":
+                return SimpleJoinMetadata
+            case "cartesian_product":
+                return CartesianProductMetadata
+            case "compound":
+                return CompoundRelationshipMetadata
+            case property_type:
+                raise PyDoughMetadataException(
+                    f"Unrecognized property type for {error_name}: {repr(property_type)}"
+                )
+
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -120,12 +159,6 @@ class PropertyMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if the JSON for the property is
             malformed.
         """
-        from pydough.metadata.properties import (
-            TableColumnMetadata,
-            SimpleJoinMetadata,
-            CompoundRelationshipMetadata,
-            CartesianProductMetadata,
-        )
 
         # Create the string used to identify the property in error messages.
         error_name = f"property {property_name!r} of collection {collection.error_name}"
@@ -136,27 +169,10 @@ class PropertyMetadata(AbstractMetadata):
         HasPropertyWith("type", is_string).verify(property_json, error_name)
 
         # Dispatch to each implementation's verification method based on the type.
-        match property_json["type"]:
-            case "table_column":
-                TableColumnMetadata.verify_json_metadata(
-                    collection, property_name, property_json
-                )
-            case "simple_join":
-                SimpleJoinMetadata.verify_json_metadata(
-                    collection, property_name, property_json
-                )
-            case "cartesian":
-                CartesianProductMetadata.verify_json_metadata(
-                    collection, property_name, property_json
-                )
-            case "compound":
-                CompoundRelationshipMetadata.verify_json_metadata(
-                    collection, property_name, property_json
-                )
-            case property_type:
-                raise PyDoughMetadataException(
-                    f"Unrecognized property type for {error_name}: {repr(property_type)}"
-                )
+        property_class = PropertyMetadata.get_class_for_property_type(
+            property_json["type"], error_name
+        )
+        property_class.verify_json_metadata(collection, property_name, property_json)
 
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
@@ -178,35 +194,14 @@ class PropertyMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if the JSON for the property is
             malformed.
         """
-        from pydough.metadata.properties import (
-            TableColumnMetadata,
-            SimpleJoinMetadata,
-            CompoundRelationshipMetadata,
-            CartesianProductMetadata,
-        )
+        # Create the string used to identify the property in error messages.
+        error_name = f"property {property_name!r} of collection {collection.error_name}"
 
-        # Dispatch to a parsing procedure based on the `type` field.
-        match property_json["type"]:
-            case "table_column":
-                TableColumnMetadata.parse_from_json(
-                    collection, property_name, property_json
-                )
-            case "simple_join":
-                SimpleJoinMetadata.parse_from_json(
-                    collection, property_name, property_json
-                )
-            case "cartesian":
-                CartesianProductMetadata.parse_from_json(
-                    collection, property_name, property_json
-                )
-            case "compound":
-                CompoundRelationshipMetadata.parse_from_json(
-                    collection, property_name, property_json
-                )
-            case property_type:
-                raise PyDoughMetadataException(
-                    f"Unrecognized property type: {property_type!r}"
-                )
+        # Dispatch to each implementation's parseing method based on the type.
+        property_class = PropertyMetadata.get_class_for_property_type(
+            property_json["type"], error_name
+        )
+        property_class.parse_from_json(collection, property_name, property_json)
 
     def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
         return {self.name: [self]}
