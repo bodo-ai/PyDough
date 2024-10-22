@@ -44,6 +44,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          # Install a specific version of uv.
+          version: "0.4.23"
+
       - name: Verify TPCH DB
         run: uv run pytest tpch_demo/test_tpch_download.py
         env:
