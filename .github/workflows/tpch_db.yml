@@ -1,12 +1,14 @@
 name: SQLite TPCH DB Download and Verification
 
 on:
-  schedule:
-    - cron: '0 0 * * 0'
-  branches:
-    - main
+  pull_request:
+    branches:
+      - main
     paths:
       - "tpch_demo/**"
+  # Run once a week to ensure the download link isn't broken.
+  schedule:
+    - cron: '0 0 * * 0'
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
