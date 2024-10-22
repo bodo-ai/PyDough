@@ -163,7 +163,8 @@ class ListOf(PyDoughPredicate):
 
     def error_message(self, error_name: str) -> str:
         elem_msg = self.element_predicate.error_message("each element")
-        return f"{error_name} must be a list where {elem_msg}"
+        collection_name = "list" if self.allow_empty else "non-empty list"
+        return f"{error_name} must be a {collection_name} where {elem_msg}"
 
 
 class PossiblyEmptyListOf(ListOf):
@@ -212,7 +213,8 @@ class MapOf(PyDoughPredicate):
     def error_message(self, error_name: str) -> str:
         key_msg = self.key_predicate.error_message("each key")
         val_msg = self.val_predicate.error_message("each value")
-        return f"{error_name} must be a dictionary where {key_msg} and {val_msg}"
+        collection_name = "dictionary" if self.allow_empty else "non-empty dictionary"
+        return f"{error_name} must be a {collection_name} where {key_msg} and {val_msg}"
 
 
 class PossiblyEmptyMapOf(MapOf):
@@ -255,10 +257,11 @@ class OrCondition(PyDoughPredicate):
         return any(predicate.accept(obj) for predicate in self.predicates)
 
     def error_message(self, error_name: str) -> str:
-        combined_messages: str = "or".join(
-            predicate.error_message("") for predicate in self.predicates
+        combined_messages: str = " or ".join(
+            predicate.error_message("it" if i > 0 else "")
+            for i, predicate in enumerate(self.predicates)
         )
-        return f"{error_name} {combined_messages}"
+        return f"{error_name}{combined_messages}"
 
 
 ###############################################################################
@@ -266,8 +269,8 @@ class OrCondition(PyDoughPredicate):
 ###############################################################################
 
 is_valid_name: PyDoughPredicate = ValidName()
-is_string = HasType(str)
-is_bool = HasType(bool)
+is_string = HasType(str, "string")
+is_bool = HasType(bool, "boolean")
 unique_properties_predicate: PyDoughPredicate = NonEmptyListOf(
     OrCondition([is_string, NonEmptyListOf(is_string)])
 )
