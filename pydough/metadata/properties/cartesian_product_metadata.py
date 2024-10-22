@@ -72,7 +72,9 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         HasPropertyWith("reverse_relationship_name", is_string).verify(
             property_json, error_name
         )
-        NoExtraKeys(CartesianProductMetadata.allowed_fields)(property_json, error_name)
+        NoExtraKeys(CartesianProductMetadata.allowed_fields).verify(
+            property_json, error_name
+        )
 
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict

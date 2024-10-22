@@ -5,6 +5,8 @@ TODO: add file-level docstring
 from typing import Set
 from . import PropertyMetadata
 from .scalar_attribute_metadata import ScalarAttributeMetadata
+from pydough.types.errors import PyDoughTypeException
+from pydough.metadata.errors import PyDoughMetadataException
 from pydough.types import parse_type_from_string, PyDoughType
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import HasPropertyWith, NoExtraKeys, is_string
@@ -99,7 +101,11 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             malformed.
         """
         # Extract the `data_type` and `column_name` fields from the JSON object
-        data_type: PyDoughType = parse_type_from_string(property_json["data_type"])
+        type_string: str = property_json["data_type"]
+        try:
+            data_type: PyDoughType = parse_type_from_string(type_string)
+        except PyDoughTypeException as e:
+            raise PyDoughMetadataException(*e.args)
         column_name: str = property_json["column_name"]
 
         # Build the new property metadata object and add it to the collection.
