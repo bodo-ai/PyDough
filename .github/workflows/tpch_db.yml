@@ -5,7 +5,9 @@ on:
     branches:
       - main
     paths:
+      # Only run on changes to the TPCH demo.
       - "tpch_demo/**"
+
   # Run once a week to ensure the download link isn't broken.
   schedule:
     - cron: '0 0 * * 0'
