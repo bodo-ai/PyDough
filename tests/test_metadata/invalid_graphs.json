@@ -328,26 +328,43 @@
             "properties": {
                 "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"},
-                "nations": {
-                    "type": "simple_join",
-                    "other_collection_name": "Nations",
-                    "singular": false,
-                    "no_collisions": true,
-                    "keys": {"key": ["region_key"]},
-                    "reverse_relationship_name": "region"
-                  }
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
-        },
-        "Nations": {
+        }
+    },
+    "REGION_FORMAT_28": {
+        "Regions": {
             "type": "simple_table",
-            "table_path": "tpch.NATION",
-            "unique_properties": ["key"],
+            "table_path": "tpch.REGION",
+            "unique_properties": ["key", "name", "key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "n_nationkey", "data_type": "int64"},
-              "name": {"type": "table_column", "column_name": "n_name", "data_type": "string"},
-              "region_key": {"type": "table_column", "column_name": "n_regionkey", "data_type": "int64"},
-              "comment": {"type": "table_column", "column_name": "n_comment", "data_type": "string"}
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "REGION_FORMAT_29": {
+        "Regions": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": [["key", "name"], ["name", "key"]],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+            }
+        }
+    },
+    "REGION_FORMAT_30": {
+        "Regions": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": [["key", "name", "key"]],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
         }
     },

@@ -3,6 +3,7 @@ TODO: add file-level docstring
 """
 
 import pytest
+import re
 from pydough.metadata.errors import PyDoughMetadataException
 from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.collections import CollectionMetadata
@@ -211,13 +212,17 @@ def test_missing_property(get_sample_graph):
         pytest.param(
             "REGION_FORMAT_24",
             PyDoughMetadataException,
-            "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_24' must be a JSON object containing no fields except for \\['column_name', 'data_type', 'type'\\]",
+            re.escape(
+                "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_24' must be a JSON object containing no fields except for ['column_name', 'data_type', 'type']"
+            ),
             id="simple_table-table_column-extra_field",
         ),
         pytest.param(
             "REGION_FORMAT_25",
             PyDoughMetadataException,
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_25' must be a JSON object containing no fields except for \\['properties', 'table_path', 'type', 'unique_properties'\\]",
+            re.escape(
+                "simple table collection 'Regions' in graph 'REGION_FORMAT_25' must be a JSON object containing no fields except for ['properties', 'table_path', 'type', 'unique_properties']"
+            ),
             id="simple_table-extra_field",
         ),
         pytest.param(
@@ -231,6 +236,30 @@ def test_missing_property(get_sample_graph):
             PyDoughMetadataException,
             "simple table collection 'Regions' in graph 'REGION_FORMAT_27' does not have a property named 'region_key' to use as a unique property",
             id="simple_table-unique_property-does_not_exist",
+        ),
+        pytest.param(
+            "REGION_FORMAT_28",
+            PyDoughMetadataException,
+            re.escape(
+                "simple table collection 'Regions' in graph 'REGION_FORMAT_28' has malformed unique properties set: ['key', 'name', 'key']"
+            ),
+            id="simple_table-unique_property-duplicates",
+        ),
+        pytest.param(
+            "REGION_FORMAT_29",
+            PyDoughMetadataException,
+            re.escape(
+                "simple table collection 'Regions' in graph 'REGION_FORMAT_29' has malformed unique properties set: [['key', 'name'], ['name', 'key']]"
+            ),
+            id="simple_table-unique_property-duplicates",
+        ),
+        pytest.param(
+            "REGION_FORMAT_30",
+            PyDoughMetadataException,
+            re.escape(
+                "simple table collection 'Regions' in graph 'REGION_FORMAT_30' has malformed unique properties set: [['key', 'name', 'key']]"
+            ),
+            id="simple_table-unique_property-duplicates",
         ),
     ],
 )
