@@ -22,7 +22,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download TPCH DB
-        run: ./tpch_demo/setup_tpch.sh
+        run: ./tpch_demo/setup_tpch.sh ${TPCH_DB_PATH}
+        env:
+          TPCH_DB_PATH: tpch.db
 
   verify-tpch-db:
     name: Verify TPCH DB
@@ -40,3 +42,5 @@ jobs:
 
       - name: Verify TPCH DB
         run: uv run pytest tpch_demo/test_tpch_download.py
+        env:
+          TPCH_DB_PATH: tpch.db
