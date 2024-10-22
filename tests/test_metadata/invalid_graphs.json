@@ -12,12 +12,12 @@
         } 
     },
     "BAD_NAME_3": { "BAD_NAME_3": {} },
-    "FORMAT_1": 42,
-    "FORMAT_2": {
-        "BAD_COLLECTION": "fizz"
+    "REGION_FORMAT_1": 42,
+    "REGION_FORMAT_2": {
+        "Regions": "fizz"
     },
-    "FORMAT_3": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_3": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -28,8 +28,8 @@
             }
         }
     },
-    "FORMAT_4": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_4": {
+        "Regions": {
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
@@ -39,8 +39,8 @@
             }
         }
     },
-    "FORMAT_5": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_5": {
+        "Regions": {
             "type": ["simple_table"],
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -51,8 +51,8 @@
             }
         }
     },
-    "FORMAT_6": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_6": {
+        "Regions": {
             "type": "¡SIMPLE!",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -63,8 +63,8 @@
             }
         }
     },
-    "FORMAT_7": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_7": {
+        "Regions": {
             "type": "simple_table",
             "unique_properties": ["key"],
             "properties": {
@@ -74,8 +74,8 @@
             }
         }
     },
-    "FORMAT_8": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_8": {
+        "Regions": {
             "type": "simple_table",
             "table_path": {"tpch": "REGION"},
             "unique_properties": ["key"],
@@ -86,8 +86,8 @@
             }
         }
     },
-    "FORMAT_9": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_9": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "properties": {
@@ -97,8 +97,8 @@
             }
         }
     },
-    "FORMAT_10": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_10": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "properties": {
@@ -108,8 +108,8 @@
             }
         }
     },
-    "FORMAT_11": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_11": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": "key",
@@ -120,8 +120,8 @@
             }
         }
     },
-    "FORMAT_12": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_12": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": [],
@@ -132,8 +132,8 @@
             }
         }
     },
-    "FORMAT_13": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_13": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["A", 2, "3"],
@@ -144,8 +144,8 @@
             }
         }
     },
-    "FORMAT_14": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_14": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": [[]],
@@ -156,8 +156,8 @@
             }
         }
     },
-    "FORMAT_15": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_15": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": [["A", "B"], "C", ["D", true, false]],
@@ -168,8 +168,8 @@
             }
         }
     },
-    "FORMAT_16": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_16": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -180,8 +180,8 @@
             }
         }
     },
-    "FORMAT_17": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_17": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -192,8 +192,8 @@
             }
         }
     },
-    "FORMAT_18": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_18": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -204,8 +204,8 @@
             }
         }
     },
-    "FORMAT_19": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_19": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -216,8 +216,8 @@
             }
         }
     },
-    "FORMAT_20": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_20": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -228,8 +228,8 @@
             }
         }
     },
-    "FORMAT_21": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_21": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -240,8 +240,8 @@
             }
         }
     },
-    "FORMAT_22": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_22": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -252,8 +252,8 @@
             }
         }
     },
-    "FORMAT_23": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_23": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -264,8 +264,8 @@
             }
         }
     },
-    "FORMAT_24": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_24": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -276,8 +276,8 @@
             }
         }
     },
-    "FORMAT_25": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_25": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
@@ -289,18 +289,281 @@
             "key": "value"
         }
     },
-
-
-    "GOOD": {
-        "BAD_COLLECTION": {
+    "REGION_FORMAT_26": {
+        "Regions": {
             "type": "simple_table",
             "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
+            "unique_properties": ["nations"],
             "properties": {
                 "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"},
+                "nations": {
+                    "type": "simple_join",
+                    "other_collection_name": "Nations",
+                    "singular": false,
+                    "no_collisions": true,
+                    "keys": {"key": ["region_key"]},
+                    "reverse_relationship_name": "region"
+                  }
             }
+        },
+        "Nations": {
+            "type": "simple_table",
+            "table_path": "tpch.NATION",
+            "unique_properties": ["key"],
+            "properties": {
+              "key": {"type": "table_column", "column_name": "n_nationkey", "data_type": "int64"},
+              "name": {"type": "table_column", "column_name": "n_name", "data_type": "string"},
+              "region_key": {"type": "table_column", "column_name": "n_regionkey", "data_type": "int64"},
+              "comment": {"type": "table_column", "column_name": "n_comment", "data_type": "string"}
+            }
+        }
+    },
+    "REGION_FORMAT_27": {
+        "Regions": {
+            "type": "simple_table",
+            "table_path": "tpch.REGION",
+            "unique_properties": ["region_key"],
+            "properties": {
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
+                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"},
+                "nations": {
+                    "type": "simple_join",
+                    "other_collection_name": "Nations",
+                    "singular": false,
+                    "no_collisions": true,
+                    "keys": {"key": ["region_key"]},
+                    "reverse_relationship_name": "region"
+                  }
+            }
+        },
+        "Nations": {
+            "type": "simple_table",
+            "table_path": "tpch.NATION",
+            "unique_properties": ["key"],
+            "properties": {
+              "key": {"type": "table_column", "column_name": "n_nationkey", "data_type": "int64"},
+              "name": {"type": "table_column", "column_name": "n_name", "data_type": "string"},
+              "region_key": {"type": "table_column", "column_name": "n_regionkey", "data_type": "int64"},
+              "comment": {"type": "table_column", "column_name": "n_comment", "data_type": "string"}
+            }
+        }
+    },
+    "PARTSUPP_FORMAT_1": {
+        "Parts": {
+            "type": "simple_table",
+            "table_path": "tpch.PART",
+            "unique_properties": ["key"],
+            "properties": {
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "name": {"type": "table_column", "column_name": "p_name", "data_type": "string"},
+              "type": {"type": "table_column", "column_name": "p_type", "data_type": "string"},
+              "size": {"type": "table_column", "column_name": "p_sie", "data_type": "int64"},
+              "container": {"type": "table_column", "column_name": "p_container", "data_type": "string"},
+              "supply_records": {
+                "type": "simple_join",
+                "other_collection_name": "PartSupp",
+                "singular": false,
+                "no_collisions": true,
+                "keys": {"key": ["part_key"]},
+                "reverse_relationship_name": "part"
+              },
+              "suppliers_of_part": {
+                "type": "compound",
+                "primary_property": "supply_records",
+                "secondary_property": "supplier",
+                "singular": false,
+                "no_collisions": false,
+                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
+                "reverse_relationship_name": "parts_supplied"
+              },
+              "lines": {
+                "type": "compound",
+                "primary_property": "supply_records",
+                "secondary_property": "lines",
+                "singular": false,
+                "no_collisions": true,
+                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
+                "reverse_relationship_name": "part"
+              }
+            }
+          },
+          "Suppliers": {
+            "type": "simple_table",
+            "table_path": "tpch.SUPPLIER",
+            "unique_properties": ["key"],
+            "properties": {
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "name": {"type": "table_column", "column_name": "s_name", "data_type": "string"},
+              "phone": {"type": "table_column", "column_name": "s_phone", "data_type": "string"},
+              "account_balance": {"type": "table_column", "column_name": "s_acctbal", "data_type": "decimal[12,2]"},
+              "supply_records": {
+                "type": "simple_join",
+                "other_collection_name": "PartSupp",
+                "singular": false,
+                "no_collisions": true,
+                "keys": {"key": ["supplier_key"]},
+                "reverse_relationship_name": "supplier"
+              },
+              "lines": {
+                "type": "compound",
+                "primary_property": "supply_records",
+                "secondary_property": "lines",
+                "singular": false,
+                "no_collisions": true,
+                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
+                "reverse_relationship_name": "supplier"
+              }
+            }
+          },
+          "Lineitems": {
+            "type": "simple_table",
+            "table_path": "tpch.LINEITEM",
+            "unique_properties": [["part_key", "supplier_key", "order_key"]],
+            "properties": {
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "quantity": {"type": "table_column", "column_name": "l_quantity", "data_type": "decimal[12,2]"},
+              "status": {"type": "table_column", "column_name": "l_linestatus", "data_type": "string"},
+              "ship_date": {"type": "table_column", "column_name": "l_shipdate", "data_type": "date"},
+              "part_and_supplier": {
+                "type": "simple_join",
+                "other_collection_name": "PartSupp",
+                "singular": true,
+                "no_collisions": false,
+                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
+                "reverse_relationship_name": "lines"
+              },
+              "order": {
+                "type": "simple_join",
+                "other_collection_name": "Orders",
+                "singular": true,
+                "no_collisions": false,
+                "keys": {"order_key": ["key"]},
+                "reverse_relationship_name": "lines"
+              }
+            }
+          },
+        "PartSupp": {
+          "type": "simple_table",
+          "table_path": "tpch.PARTSUPP",
+          "unique_properties": [["part_key", "supplier_key"]],
+          "properties": {
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
+          }
+        }
+    },
+
+    "GOOD": {
+        "Parts": {
+            "type": "simple_table",
+            "table_path": "tpch.PART",
+            "unique_properties": ["key"],
+            "properties": {
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "name": {"type": "table_column", "column_name": "p_name", "data_type": "string"},
+              "type": {"type": "table_column", "column_name": "p_type", "data_type": "string"},
+              "size": {"type": "table_column", "column_name": "p_sie", "data_type": "int64"},
+              "container": {"type": "table_column", "column_name": "p_container", "data_type": "string"},
+              "supply_records": {
+                "type": "simple_join",
+                "other_collection_name": "PartSupp",
+                "singular": false,
+                "no_collisions": true,
+                "keys": {"key": ["part_key"]},
+                "reverse_relationship_name": "part"
+              },
+              "suppliers_of_part": {
+                "type": "compound",
+                "primary_property": "supply_records",
+                "secondary_property": "supplier",
+                "singular": false,
+                "no_collisions": false,
+                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
+                "reverse_relationship_name": "parts_supplied"
+              },
+              "lines": {
+                "type": "compound",
+                "primary_property": "supply_records",
+                "secondary_property": "lines",
+                "singular": false,
+                "no_collisions": true,
+                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
+                "reverse_relationship_name": "part"
+              }
+            }
+          },
+          "Suppliers": {
+            "type": "simple_table",
+            "table_path": "tpch.SUPPLIER",
+            "unique_properties": ["key"],
+            "properties": {
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "name": {"type": "table_column", "column_name": "s_name", "data_type": "string"},
+              "phone": {"type": "table_column", "column_name": "s_phone", "data_type": "string"},
+              "account_balance": {"type": "table_column", "column_name": "s_acctbal", "data_type": "decimal[12,2]"},
+              "supply_records": {
+                "type": "simple_join",
+                "other_collection_name": "PartSupp",
+                "singular": false,
+                "no_collisions": true,
+                "keys": {"key": ["supplier_key"]},
+                "reverse_relationship_name": "supplier"
+              },
+              "lines": {
+                "type": "compound",
+                "primary_property": "supply_records",
+                "secondary_property": "lines",
+                "singular": false,
+                "no_collisions": true,
+                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
+                "reverse_relationship_name": "supplier"
+              }
+            }
+          },
+          "Lineitems": {
+            "type": "simple_table",
+            "table_path": "tpch.LINEITEM",
+            "unique_properties": [["part_key", "supplier_key", "order_key"]],
+            "properties": {
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "quantity": {"type": "table_column", "column_name": "l_quantity", "data_type": "decimal[12,2]"},
+              "status": {"type": "table_column", "column_name": "l_linestatus", "data_type": "string"},
+              "ship_date": {"type": "table_column", "column_name": "l_shipdate", "data_type": "date"},
+              "part_and_supplier": {
+                "type": "simple_join",
+                "other_collection_name": "PartSupp",
+                "singular": true,
+                "no_collisions": false,
+                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
+                "reverse_relationship_name": "lines"
+              },
+              "order": {
+                "type": "simple_join",
+                "other_collection_name": "Orders",
+                "singular": true,
+                "no_collisions": false,
+                "keys": {"order_key": ["key"]},
+                "reverse_relationship_name": "lines"
+              }
+            }
+          },
+        "PartSupp": {
+          "type": "simple_table",
+          "table_path": "tpch.PARTSUPP",
+          "unique_properties": [["part_key", "supplier_key"]],
+          "properties": {
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
+          }
         }
     },
 

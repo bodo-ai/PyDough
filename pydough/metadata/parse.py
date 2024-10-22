@@ -101,6 +101,10 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
         collection = graph.collections[collection_name]
         PropertyMetadata.parse_from_json(collection, property_name, property_json)
 
+    for collection_name in graph.get_collection_names():
+        collection: CollectionMetadata = graph.get_collection(collection_name)
+        collection.verify_complete()
+
     return graph
 
 

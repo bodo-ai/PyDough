@@ -143,7 +143,7 @@
     "Addresses": {
       "type": "simple_table",
       "table_path": "amazon.ADDRESS",
-      "unique_properties": ["name"],
+      "unique_properties": ["id"],
       "properties": {
         "id": {"type": "table_column", "column_name": "id", "data_type": "int64"},
         "street_number": {"type": "table_column", "column_name": "street_number", "data_type": "int64"},
@@ -304,7 +304,7 @@
         "Lineitems": {
           "type": "simple_table",
           "table_path": "tpch.LINEITEM",
-          "unique_properties": [["partkey", "suppkey", "orderkey"]],
+          "unique_properties": [["part_key", "supplier_key", "order_key"]],
           "properties": {
             "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
             "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
@@ -342,7 +342,7 @@
       "PartSupp": {
         "type": "simple_table",
         "table_path": "tpch.PARTSUPP",
-        "unique_properties": [["partkey", "suppkey"]],
+        "unique_properties": [["part_key", "supplier_key"]],
         "properties": {
             "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
             "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},

@@ -24,6 +24,7 @@ class CollectionMetadata(AbstractMetadata):
     Each implementation must include the following APIs:
     - `create_error_name`
     - `components`
+    - `verify_complete`
     - `verify_allows_property`
     - `parse_from_json`
     """
@@ -109,6 +110,59 @@ class CollectionMetadata(AbstractMetadata):
         comp: list = self.graph.components
         comp.append(self.name)
         return comp
+
+    @abstractmethod
+    def verify_complete(self) -> None:
+        """
+        Verifies that a collection is well-formed after the parsing of all of
+        its properties is complete. Subclasses should extend the checks done
+        in the default implementation.
+
+        Raises:
+            `PyDoughMetadataException`: if the collection is malformed in any
+            way after parsing is done.
+        """
+        from pydough.metadata.properties.subcollection_relationship_metadata import (
+            SubcollectionRelationshipMetadata,
+        )
+
+        # Verify that the name relationships are well formed.
+        if self.graph.get_collection(self.name) is not self:
+            raise PyDoughMetadataException(
+                f"{self.error_name} does not match correctly with the collection names in {self.graph.error_name}"
+            )
+        for property_name, property in self.properties.items():
+            if property.name != property_name:
+                raise PyDoughMetadataException(
+                    f"{property.error_name} does not match correctly with the property names in {self.error_name}"
+                )
+
+        # Verify that no inherited properties share the same (aliased) name if
+        # they come from the same source.
+        for alias, inherited_properties in self.inherited_properties.items():
+            sources = {p.property_inherited_from.path for p in inherited_properties}
+            if len(sources) != len(inherited_properties):
+                raise PyDoughMetadataException(
+                    f"{self.error_name} has duplicates of inherited property {alias} that cannot be resolved"
+                )
+
+        # Verify that all properties are well formed with regards to their
+        # cardinality relationships
+        for property in self.properties.values():
+            if isinstance(property, SubcollectionRelationshipMetadata):
+                if not property.is_subcollection:
+                    raise PyDoughMetadataException(
+                        f"{property.error_name} should be a subcollection but is not"
+                    )
+            else:
+                if property.is_subcollection:
+                    raise PyDoughMetadataException(
+                        f"{property.error_name} should not be a subcollection but is"
+                    )
+                if property.is_plural:
+                    raise PyDoughMetadataException(
+                        f"{property.error_name} should not be plural but is"
+                    )
 
     @abstractmethod
     def verify_allows_property(
