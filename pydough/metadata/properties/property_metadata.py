@@ -104,7 +104,9 @@ class PropertyMetadata(AbstractMetadata):
         return comp
 
     @staticmethod
-    def get_class_for_property_type(name: str, error_name: str) -> type:
+    def get_class_for_property_type(
+        name: str, error_name: str
+    ) -> Type["PropertyMetadata"]:
         """
         Fetches the PropertyType implementation class for a string
         representation of the property type.

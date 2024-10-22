@@ -308,7 +308,9 @@ class CollectionMetadata(AbstractMetadata):
         return self.properties[property_name]
 
     @staticmethod
-    def get_class_for_collection_type(name: str, error_name: str) -> type:
+    def get_class_for_collection_type(
+        name: str, error_name: str
+    ) -> Type["CollectionMetadata"]:
         """
         Fetches the PropertyType implementation class for a string
         representation of the collection type.
@@ -400,7 +402,7 @@ class CollectionMetadata(AbstractMetadata):
         # Dispatch to a specific parsing procedure based on the type of
         # collection.
         property_class: Type[CollectionMetadata] = (
-            CollectionMetadata.get_class_for_property_type(
+            CollectionMetadata.get_class_for_collection_type(
                 collection_json["type"], error_name
             )
         )
