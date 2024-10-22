@@ -20,11 +20,12 @@ concurrency:
 jobs:
   download-tpch-db:
     name: Verify TPCH DB
-    matrix:
-      python-version:
-        - "3.10"
-        - "3.11"
-        - "3.12"
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
