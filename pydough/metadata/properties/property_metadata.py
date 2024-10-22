@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Type
 from pydough.metadata.errors import (
     HasPropertyWith,
     is_valid_name,
@@ -26,6 +26,8 @@ class PropertyMetadata(AbstractMetadata):
     - `is_plural`
     - `is_subcollection`
     - `is_reversible`
+    - `verify_json_metadata`
+    - `parse_from_json`
     """
 
     # Set of names of of fields that can be included in the JSON object
@@ -102,7 +104,9 @@ class PropertyMetadata(AbstractMetadata):
         return comp
 
     @staticmethod
-    def get_class_for_property_type(name: str, error_name: str) -> type:
+    def get_class_for_property_type(
+        name: str, error_name: str
+    ) -> Type["PropertyMetadata"]:
         """
         Fetches the PropertyType implementation class for a string
         representation of the property type.
@@ -161,7 +165,7 @@ class PropertyMetadata(AbstractMetadata):
         """
 
         # Create the string used to identify the property in error messages.
-        error_name = f"property {property_name!r} of collection {collection.error_name}"
+        error_name = f"property {property_name!r} of {collection.error_name}"
 
         # Ensure that the property's name is valid and that the JSON has the
         # required `type` field.
@@ -195,11 +199,13 @@ class PropertyMetadata(AbstractMetadata):
             malformed.
         """
         # Create the string used to identify the property in error messages.
-        error_name = f"property {property_name!r} of collection {collection.error_name}"
+        error_name = f"property {property_name!r} of {collection.error_name}"
 
         # Dispatch to each implementation's parseing method based on the type.
-        property_class = PropertyMetadata.get_class_for_property_type(
-            property_json["type"], error_name
+        property_class: Type[PropertyMetadata] = (
+            PropertyMetadata.get_class_for_property_type(
+                property_json["type"], error_name
+            )
         )
         property_class.parse_from_json(collection, property_name, property_json)
 

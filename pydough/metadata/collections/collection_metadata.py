@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Type
 from pydough.metadata.errors import (
     PyDoughMetadataException,
     is_valid_name,
@@ -26,6 +26,7 @@ class CollectionMetadata(AbstractMetadata):
     - `components`
     - `verify_complete`
     - `verify_allows_property`
+    - `verify_json_metadata`
     - `parse_from_json`
     """
 
@@ -306,6 +307,36 @@ class CollectionMetadata(AbstractMetadata):
                 )
         return self.properties[property_name]
 
+    @staticmethod
+    def get_class_for_collection_type(
+        name: str, error_name: str
+    ) -> Type["CollectionMetadata"]:
+        """
+        Fetches the PropertyType implementation class for a string
+        representation of the collection type.
+
+        Args:
+            `name`: the string representation of a collection type.
+            `error_name`: the string used in error messages to describe
+            the object that `name` came from.
+
+        Returns:
+            The class of the property type corresponding to `name`.
+
+        Raises:
+            `PyDoughMetadataException` if the string does not correspond
+            to a known class type.
+        """
+        from . import SimpleTableMetadata
+
+        match name:
+            case "simple_table":
+                return SimpleTableMetadata
+            case property_type:
+                raise PyDoughMetadataException(
+                    f"Unrecognized collection type for {error_name}: {repr(property_type)}"
+                )
+
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -360,7 +391,9 @@ class CollectionMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if the JSON does not meet the necessary
             structure properties.
         """
-        from . import SimpleTableMetadata
+
+        # Create the string used to identify the property in error messages.
+        error_name = f"property {collection_name!r} of {graph.error_name}"
 
         # Verify that the JSON is well structured, in terms of generic
         # properties.
@@ -368,12 +401,9 @@ class CollectionMetadata(AbstractMetadata):
 
         # Dispatch to a specific parsing procedure based on the type of
         # collection.
-        match collection_json["type"]:
-            case "simple_table":
-                SimpleTableMetadata.parse_from_json(
-                    graph, collection_name, collection_json
-                )
-            case collection_type:
-                raise PyDoughMetadataException(
-                    f"Unrecognized collection type: '{collection_type}'"
-                )
+        property_class: Type[CollectionMetadata] = (
+            CollectionMetadata.get_class_for_collection_type(
+                collection_json["type"], error_name
+            )
+        )
+        property_class.parse_from_json(graph, collection_name, collection_json)

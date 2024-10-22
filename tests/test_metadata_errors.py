@@ -77,7 +77,7 @@ def test_missing_property(get_sample_graph):
         ),
         pytest.param(
             "REGION_FORMAT_3",
-            "property 'key' of collection simple table collection 'Regions' in graph 'REGION_FORMAT_3' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            "property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_3' must be a JSON object containing a field 'type' and field 'type' must be a string",
             id="property-not_json",
         ),
         pytest.param(
@@ -92,7 +92,7 @@ def test_missing_property(get_sample_graph):
         ),
         pytest.param(
             "REGION_FORMAT_6",
-            "Unrecognized collection type: '¡SIMPLE!",
+            "nrecognized collection type for property 'Regions' of graph 'REGION_FORMAT_6': '¡SIMPLE!'",
             id="collection-collection_type-bad_name",
         ),
         pytest.param(
@@ -142,17 +142,17 @@ def test_missing_property(get_sample_graph):
         ),
         pytest.param(
             "REGION_FORMAT_16",
-            "property 'key' of collection simple table collection 'Regions' in graph 'REGION_FORMAT_16' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            "property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_16' must be a JSON object containing a field 'type' and field 'type' must be a string",
             id="simple_table-property_type-missing",
         ),
         pytest.param(
             "REGION_FORMAT_17",
-            "property 'key' of collection simple table collection 'Regions' in graph 'REGION_FORMAT_17' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            "property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_17' must be a JSON object containing a field 'type' and field 'type' must be a string",
             id="simple_table-property_type-bad_type",
         ),
         pytest.param(
             "REGION_FORMAT_18",
-            "Unrecognized property type for property 'key' of collection simple table collection 'Regions' in graph 'REGION_FORMAT_18': 'table column'",
+            "Unrecognized property type for property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_18': 'table column'",
             id="simple_table-property_type-bad_name",
         ),
         pytest.param(
