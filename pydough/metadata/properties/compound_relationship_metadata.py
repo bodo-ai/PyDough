@@ -11,6 +11,7 @@ from pydough.metadata.errors import (
     compound_relationship_inherited_predicate,
     PyDoughMetadataException,
     NonEmptyListOf,
+    PossiblyEmptyMapOf,
     is_bool,
 )
 from pydough.metadata.collections import CollectionMetadata
@@ -56,7 +57,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         )
         HasType(ReversiblePropertyMetadata).verify(primary_property, self.error_name)
         HasType(ReversiblePropertyMetadata).verify(secondary_property, self.error_name)
-        compound_relationship_inherited_predicate.verify(
+        PossiblyEmptyMapOf(is_string, HasType(PropertyMetadata)).verify(
             inherited_properties,
             f"property 'inherited_properties' of {self.error_name}",
         )
