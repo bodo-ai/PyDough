@@ -205,7 +205,7 @@ class MapOf(PyDoughPredicate):
             isinstance(obj, dict)
             and (self.allow_empty or len(obj) > 0)
             and all(
-                self.key_predicate.accept(key) or self.val_predicate.accept(val)
+                self.key_predicate.accept(key) and self.val_predicate.accept(val)
                 for key, val in obj.items()
             )
         )
@@ -226,7 +226,6 @@ class PossiblyEmptyMapOf(MapOf):
         self,
         key_predicate: PyDoughPredicate,
         val_predicate: PyDoughPredicate,
-        allow_empty: bool = False,
     ):
         super().__init__(key_predicate, val_predicate, True)
 
@@ -240,7 +239,6 @@ class NonEmptyMapOf(MapOf):
         self,
         key_predicate: PyDoughPredicate,
         val_predicate: PyDoughPredicate,
-        allow_empty: bool = False,
     ):
         super().__init__(key_predicate, val_predicate, False)
 
