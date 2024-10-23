@@ -52,8 +52,8 @@ class TimestampType(PyDoughType):
 
     # The string patterns that timestamp types must adhere to. Each timestamp
     # type string must match one of these patterns.
-    type_string_pattern_no_tz: re.Pattern = re.compile("timestamp\[(\d)\]")
-    type_string_pattern_with_tz: re.Pattern = re.compile("timestamp\[(\d),(.*)\]")
+    type_string_pattern_no_tz: re.Pattern = re.compile(r"timestamp\[(\d)\]")
+    type_string_pattern_with_tz: re.Pattern = re.compile(r"timestamp\[(\d),(.*)\]")
 
     @staticmethod
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:
