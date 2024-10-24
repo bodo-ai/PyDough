@@ -296,11 +296,11 @@ def get_property_dependencies(
         true_dependency = get_true_property(dependency)
         if true_property is None or true_property not in reformatted_properties:
             raise PyDoughMetadataException(
-                f"Unable to extract dependencies of properties in PyDough metadata due to unrecognized property {property}"
+                f"Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property {property}"
             )
         if true_dependency is None or true_dependency not in reformatted_properties:
             raise PyDoughMetadataException(
-                f"Unable to extract dependencies of properties in PyDough metadata due to unrecognized property {dependency}"
+                f"Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property {dependency}"
             )
         property_idx = reformatted_properties[true_property][1]
         dependency_idx = reformatted_properties[true_dependency][1]
@@ -467,7 +467,6 @@ def get_property_dependencies(
         if true_primary not in defined:
             compound_stack.append(property)
             compound_stack.append(true_primary)
-            iters_since_change = 0
             return
 
         add_dependency(property, true_primary)
@@ -551,7 +550,7 @@ def get_property_dependencies(
             or iters_since_change > max_iters_since_change
         ):
             raise PyDoughMetadataException(
-                "Unable to extract dependencies of properties in PyDough metadata"
+                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties"
             )
         property: Tuple[str, str] = compound_stack.pop()
         attempt_to_defined_compound_relationship(property)

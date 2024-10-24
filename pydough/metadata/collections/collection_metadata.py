@@ -210,7 +210,7 @@ class CollectionMetadata(AbstractMetadata):
         # since collisions will occur when inheriting an inherited property.
         if not inherited and property.name in self.inherited_properties:
             raise PyDoughMetadataException(
-                f"{self.inherited_properties[property.name][0].error_name} conflicts with property {property.error_name}."
+                f"{self.inherited_properties[property.name][0].error_name} conflicts with {property.error_name}."
             )
 
         # Verify that there is not a name conflict between a regular property
@@ -220,7 +220,7 @@ class CollectionMetadata(AbstractMetadata):
                 raise PyDoughMetadataException(f"Already added {property.error_name}")
             if inherited:
                 raise PyDoughMetadataException(
-                    f"{property.error_name} conflicts with property {self.properties[property.name].error_name}."
+                    f"{property.error_name} conflicts with {self.properties[property.name].error_name}."
                 )
             else:
                 raise PyDoughMetadataException(

@@ -282,7 +282,7 @@ def test_missing_property(get_sample_graph):
         pytest.param(
             "PARTSUPP_FORMAT_10",
             re.escape(
-                "Unable to extract dependencies of properties in PyDough metadata due to unrecognized property ('PartSupp', 'part_key')"
+                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property ('PartSupp', 'part_key')"
             ),
             id="simple_join-other_collection_name-no_exist",
         ),
@@ -349,14 +349,14 @@ def test_missing_property(get_sample_graph):
         pytest.param(
             "PARTSUPP_FORMAT_23",
             re.escape(
-                "Unable to extract dependencies of properties in PyDough metadata due to unrecognized property ('Parts', 'fizz')"
+                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property ('Parts', 'fizz')"
             ),
             id="simple_join-keys-absent_key",
         ),
         pytest.param(
             "PARTSUPP_FORMAT_24",
             re.escape(
-                "Unable to extract dependencies of properties in PyDough metadata due to unrecognized property ('PartSupp', 'buzz')"
+                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property ('PartSupp', 'buzz')"
             ),
             id="simple_join-keys-absent_other_key",
         ),
@@ -369,6 +369,120 @@ def test_missing_property(get_sample_graph):
             "PARTSUPP_FORMAT_26",
             "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_26' cannot use cartesian property 'cartesian_parts_records' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_26' as a join key",
             id="simple_join-keys-other_key_not_scalar",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_27",
+            re.escape(
+                "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_27' must be a JSON object containing no fields except for ['keys', 'no_collisions', 'other_collection_name', 'reverse_relationship_name', 'singular', 'type']"
+            ),
+            id="simple_join-extra_field",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_28",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_28' must be a JSON object containing a field 'primary_property' and field 'primary_property' must be a string",
+            id="compound-primary_property-missing",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_29",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_29' must be a JSON object containing a field 'primary_property' and field 'primary_property' must be a string",
+            id="compound-primary_property-bad_type",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_30",
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
+            id="compound-primary_property-absent",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_31",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_31' must be a JSON object containing a field 'secondary_property' and field 'secondary_property' must be a string",
+            id="compound-secondary_property-missing",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_32",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_32' must be a JSON object containing a field 'secondary_property' and field 'secondary_property' must be a string",
+            id="compound-secondary_property-bad_type",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_33",
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
+            id="compound-secondary_property-absent",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_34",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_34' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
+            id="compound-singular-missing",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_35",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_35' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
+            id="compound-singular-bad_type",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_36",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_36' must be a JSON object containing a field 'no_collisions' and field 'no_collisions' must be a boolean",
+            id="compound-no_collisions-missing",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_37",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_37' must be a JSON object containing a field 'no_collisions' and field 'no_collisions' must be a boolean",
+            id="compound-no_collisions-bad_type",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_38",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_38' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
+            id="compound-reverse_relationship_name-missing",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_39",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_39' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
+            id="compound-reverse_relationship_name-bad_type",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_40",
+            "Duplicate property: compound property 'supply_records' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_40' versus simple join property 'supply_records' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_40'",
+            id="compound-reverse_relationship_name-overload",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_41",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_41' must be a JSON object containing a field 'inherited_properties' and field 'inherited_properties' must be a dictionary where each key must be a string and each value must be a string",
+            id="compound-inherited_properties-absent",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_42",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_42' must be a JSON object containing a field 'inherited_properties' and field 'inherited_properties' must be a dictionary where each key must be a string and each value must be a string",
+            id="compound-inherited_properties-bad_type",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_43",
+            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_43' must be a JSON object containing a field 'inherited_properties' and field 'inherited_properties' must be a dictionary where each key must be a string and each value must be a string",
+            id="compound-inherited_properties-bad_type",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_44",
+            re.escape(
+                "inherited property 'lines' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44' (alias of simple join property 'lines' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_44' inherited from compound property 'parts_supplied' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_44') conflicts with compound property 'lines' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44'."
+            ),
+            id="compound-inherited_properties-overload",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_45",
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
+            id="compound-inherited_properties-missing",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_46",
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
+            id="compound-inherited_properties-cycle",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_47",
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
+            id="compound-primary_property-cycle",
+        ),
+        pytest.param(
+            "PARTSUPP_FORMAT_48",
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
+            id="compound-secondary_property-cycle",
         ),
     ],
 )
