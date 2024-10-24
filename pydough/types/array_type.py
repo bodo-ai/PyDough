@@ -35,7 +35,7 @@ class ArrayType(PyDoughType):
         return f"array[{self.elem_type.json_string}]"
 
     # The string pattern that array types must adhere to.
-    type_string_pattern: re.Pattern = re.compile("array\[(.+)\]")
+    type_string_pattern: re.Pattern = re.compile(r"array\[(.+)\]")
 
     @staticmethod
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:

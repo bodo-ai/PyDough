@@ -48,7 +48,7 @@ class MapType(PyDoughType):
 
     # The string pattern that map types must adhere to. The delineation
     # between the key and value is handled later.
-    type_string_pattern: re.Pattern = re.compile("map\[(.+,.+)\]")
+    type_string_pattern: re.Pattern = re.compile(r"map\[(.+,.+)\]")
 
     @staticmethod
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:
