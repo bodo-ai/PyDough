@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Type
 from pydough.metadata.errors import (
     PyDoughMetadataException,
     is_valid_name,
@@ -24,7 +24,9 @@ class CollectionMetadata(AbstractMetadata):
     Each implementation must include the following APIs:
     - `create_error_name`
     - `components`
+    - `verify_complete`
     - `verify_allows_property`
+    - `verify_json_metadata`
     - `parse_from_json`
     """
 
@@ -111,6 +113,59 @@ class CollectionMetadata(AbstractMetadata):
         return comp
 
     @abstractmethod
+    def verify_complete(self) -> None:
+        """
+        Verifies that a collection is well-formed after the parsing of all of
+        its properties is complete. Subclasses should extend the checks done
+        in the default implementation.
+
+        Raises:
+            `PyDoughMetadataException`: if the collection is malformed in any
+            way after parsing is done.
+        """
+        from pydough.metadata.properties.subcollection_relationship_metadata import (
+            SubcollectionRelationshipMetadata,
+        )
+
+        # Verify that the name relationships are well formed.
+        if self.graph.get_collection(self.name) is not self:
+            raise PyDoughMetadataException(
+                f"{self.error_name} does not match correctly with the collection names in {self.graph.error_name}"
+            )
+        for property_name, property in self.properties.items():
+            if property.name != property_name:
+                raise PyDoughMetadataException(
+                    f"{property.error_name} does not match correctly with the property names in {self.error_name}"
+                )
+
+        # Verify that no inherited properties share the same (aliased) name if
+        # they come from the same source.
+        for alias, inherited_properties in self.inherited_properties.items():
+            sources = {p.property_inherited_from.path for p in inherited_properties}
+            if len(sources) != len(inherited_properties):
+                raise PyDoughMetadataException(
+                    f"{self.error_name} has duplicates of inherited property {alias} that cannot be resolved"
+                )
+
+        # Verify that all properties are well formed with regards to their
+        # cardinality relationships
+        for property in self.properties.values():
+            if isinstance(property, SubcollectionRelationshipMetadata):
+                if not property.is_subcollection:
+                    raise PyDoughMetadataException(
+                        f"{property.error_name} should be a subcollection but is not"
+                    )
+            else:
+                if property.is_subcollection:
+                    raise PyDoughMetadataException(
+                        f"{property.error_name} should not be a subcollection but is"
+                    )
+                if property.is_plural:
+                    raise PyDoughMetadataException(
+                        f"{property.error_name} should not be plural but is"
+                    )
+
+    @abstractmethod
     def verify_allows_property(
         self, property: AbstractMetadata, inherited: bool
     ) -> None:
@@ -149,19 +204,14 @@ class CollectionMetadata(AbstractMetadata):
                 )
 
         # Verify that there is not a name conflict between an inherited
-        # property and the candidate property, which would mean the candidate
-        # property already been inserted or that there is an inherited property
-        # that conflicts with the name of a regular property.
-        if property.name in self.inherited_properties:
-            if inherited:
-                if property in self.inherited_properties[property.name]:
-                    raise PyDoughMetadataException(
-                        f"Already added {property.error_name}"
-                    )
-            else:
-                raise PyDoughMetadataException(
-                    f"{self.inherited_properties[property.name][0].error_name} conflicts with property {property.error_name}."
-                )
+        # property and the candidate property, which would mean there is
+        # an inherited property that conflicts with the name of a regular
+        # property. Skip this check when inserting an inherited property
+        # since collisions will occur when inheriting an inherited property.
+        if not inherited and property.name in self.inherited_properties:
+            raise PyDoughMetadataException(
+                f"{self.inherited_properties[property.name][0].error_name} conflicts with {property.error_name}."
+            )
 
         # Verify that there is not a name conflict between a regular property
         # and the candidate property.
@@ -170,7 +220,7 @@ class CollectionMetadata(AbstractMetadata):
                 raise PyDoughMetadataException(f"Already added {property.error_name}")
             if inherited:
                 raise PyDoughMetadataException(
-                    f"{property.error_name} conflicts with property {self.properties[property.name].error_name}."
+                    f"{property.error_name} conflicts with {self.properties[property.name].error_name}."
                 )
             else:
                 raise PyDoughMetadataException(
@@ -257,6 +307,36 @@ class CollectionMetadata(AbstractMetadata):
                 )
         return self.properties[property_name]
 
+    @staticmethod
+    def get_class_for_collection_type(
+        name: str, error_name: str
+    ) -> Type["CollectionMetadata"]:
+        """
+        Fetches the PropertyType implementation class for a string
+        representation of the collection type.
+
+        Args:
+            `name`: the string representation of a collection type.
+            `error_name`: the string used in error messages to describe
+            the object that `name` came from.
+
+        Returns:
+            The class of the property type corresponding to `name`.
+
+        Raises:
+            `PyDoughMetadataException` if the string does not correspond
+            to a known class type.
+        """
+        from . import SimpleTableMetadata
+
+        match name:
+            case "simple_table":
+                return SimpleTableMetadata
+            case property_type:
+                raise PyDoughMetadataException(
+                    f"Unrecognized collection type for {error_name}: {repr(property_type)}"
+                )
+
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -311,7 +391,9 @@ class CollectionMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if the JSON does not meet the necessary
             structure properties.
         """
-        from . import SimpleTableMetadata
+
+        # Create the string used to identify the property in error messages.
+        error_name = f"property {collection_name!r} of {graph.error_name}"
 
         # Verify that the JSON is well structured, in terms of generic
         # properties.
@@ -319,10 +401,9 @@ class CollectionMetadata(AbstractMetadata):
 
         # Dispatch to a specific parsing procedure based on the type of
         # collection.
-        match collection_json["type"]:
-            case "simple_table":
-                SimpleTableMetadata.parse_from_json(
-                    graph, collection_name, collection_json
-                )
-            case collection_type:
-                raise Exception(f"Unrecognized collection type: '{collection_type}'")
+        property_class: Type[CollectionMetadata] = (
+            CollectionMetadata.get_class_for_collection_type(
+                collection_json["type"], error_name
+            )
+        )
+        property_class.parse_from_json(graph, collection_name, collection_json)

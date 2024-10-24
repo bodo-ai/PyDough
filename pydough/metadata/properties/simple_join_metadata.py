@@ -13,6 +13,7 @@ from pydough.metadata.errors import (
     is_string,
     is_bool,
     NoExtraKeys,
+    PyDoughMetadataException,
 )
 
 
@@ -53,10 +54,18 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         # collection.
         for property_name, matching_property_names in keys.items():
             source_property = self.collection.get_property(property_name)
+            if source_property.is_subcollection:
+                raise PyDoughMetadataException(
+                    f"{self.error_name} cannot use {source_property.error_name} as a join key"
+                )
             for matching_property_name in matching_property_names:
                 target_property = self.other_collection.get_property(
                     matching_property_name
                 )
+                if target_property.is_subcollection:
+                    raise PyDoughMetadataException(
+                        f"{self.error_name} cannot use {target_property.error_name} as a join key"
+                    )
                 self._join_pairs.append((source_property, target_property))
 
     @property
