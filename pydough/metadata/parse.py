@@ -14,9 +14,13 @@ from .collections import CollectionMetadata
 from .properties import PropertyMetadata
 import json
 
+# A type alias for the way a property is stored until it is parsed, in the
+# tuple form `(collection_name, property_name, property_json)`
+raw_property_type = Tuple[str, str, dict]
+
 # A type alias for the ways properties are referred to in dictionary keys,
 # in the form `(collection_name, property_name)`.
-property_key = Tuple[str, str]
+property_key_type = Tuple[str, str]
 
 
 def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetadata:
@@ -41,11 +45,13 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
         as_json = json.load(f)
     if not isinstance(as_json, dict):
         raise PyDoughMetadataException(
-            f"PyDough metadata expected to be a JSON file containing a JSON object, received: {as_json.__class__.__name__}."
+            f"PyDough metadata expected to be a JSON file containing a JSON \
+            object, received: {as_json.__class__.__name__}."
         )
     if graph_name not in as_json:
         raise PyDoughMetadataException(
-            f"PyDough metadata file located at {file_path!r} does not contain a graph named {graph_name!r}"
+            f"PyDough metadata file located at {file_path!r} does not contain \
+            a graph named {graph_name!r}"
         )
     graph_json = as_json[graph_name]
     return parse_graph(graph_name, graph_json)
@@ -75,7 +81,7 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
     # before it is defined and added to its collection, so all of the properties
     # can be sorted based on their dependencies. The list stores the properties
     # as tuples in the form (collection_name, property_name, property_json)
-    raw_properties: List[Tuple[str, str, dict]] = []
+    raw_properties: List[raw_property_type] = []
 
     # Iterate through all the key-value pairs in the graph to set up the
     # corresponding collections as empty metadata that will later be filled
@@ -95,7 +101,12 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
             PropertyMetadata.verify_json_metadata(
                 collection, property_name, property_json
             )
-            raw_properties.append((collection_name, property_name, property_json))
+            raw_property: raw_property_type = (
+                collection_name,
+                property_name,
+                property_json,
+            )
+            raw_properties.append(raw_property)
 
     # Sort the properties and iterate through them in an order such that when
     # a property is reached in the loop, all the properties it depends on are
@@ -106,7 +117,7 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
         HasPropertyWith(collection_name, HasType(CollectionMetadata)).verify(
             graph.collections, graph.error_name
         )
-        collection = graph.collections[collection_name]
+        collection: CollectionMetadata = graph.collections[collection_name]
         PropertyMetadata.parse_from_json(collection, property_name, property_json)
 
     # Finally, after every property has been parseed, run an additional round
@@ -121,8 +132,8 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
 
 
 def topologically_sort_properties(
-    raw_properties: List[Tuple[str, str, dict]],
-) -> List[Tuple[str, str, dict]]:
+    raw_properties: List[raw_property_type],
+) -> List[raw_property_type]:
     """
     Computes the ordered that each property should be defined in so that
     all dependencies of the property have been defined first.
@@ -144,7 +155,7 @@ def topologically_sort_properties(
     # identifying `(collection_name, property_name)` tuple (hereafter
     # referred to as the `property`) and the values are a tuple of the
     # property's JSON and its index in the original raw_properties list.
-    reformatted_properties: Dict[property_key, Tuple[dict, int]] = {
+    reformatted_properties: Dict[property_key_type, Tuple[dict, int]] = {
         property[:2]: (property[2], i) for i, property in enumerate(raw_properties)
     }
 
@@ -154,20 +165,20 @@ def topologically_sort_properties(
     # Use the dependencies to calculate the topological ordering of the
     # properties.
     finish_times: List[int] = topological_ordering(dependencies)
-    ordered_keys: List[property_key] = sorted(
+    ordered_keys: List[property_key_type] = sorted(
         reformatted_properties, key=lambda k: finish_times[reformatted_properties[k][1]]
     )
 
     # Use the topological ordering to re-construct the same format as the
     # `raw_properties` list, but in the desired order.
-    ordered_properties: List[Tuple[str, str, dict]] = [
+    ordered_properties: List[raw_property_type] = [
         k + (reformatted_properties[k][0],) for k in ordered_keys
     ]
     return ordered_properties
 
 
 def get_property_dependencies(
-    reformatted_properties: Dict[property_key, Tuple[dict, int]],
+    reformatted_properties: Dict[property_key_type, Tuple[dict, int]],
 ) -> List[Set[int]]:
     """
     Infers the set of dependencies for each property.
@@ -190,7 +201,7 @@ def get_property_dependencies(
         e.g. because there is a cyclic dependency or a dependency is not
         defined anywhere in the graph.
     """
-    n_properties = len(reformatted_properties)
+    n_properties: int = len(reformatted_properties)
     if n_properties == 0:
         return []
     valid_range = range(n_properties)
@@ -204,17 +215,17 @@ def get_property_dependencies(
 
     # A dictionary mapping each property to its known reverse
     # property, if one exists.
-    reverses: Dict[property_key, property_key] = {}
+    reverses: Dict[property_key_type, property_key_type] = {}
 
     # A dictionary mapping each property to the name of the collection
     # it maps to, if one exists.
-    collections_mapped_to: Dict[property_key, str] = {}
+    collections_mapped_to: Dict[property_key_type, str] = {}
 
-    # A dictionary mapping each property to the set of all inherited proeprty
+    # A dictionary mapping each property to the set of all inherited property
     # names that are associated with it.
-    compound_inherited_aliases: Dict[property_key, Set[str]] = {}
+    compound_inherited_aliases: Dict[property_key_type, Set[str]] = {}
 
-    def get_true_property(property: property_key) -> property_key | None:
+    def get_true_property(property: property_key_type) -> property_key_type | None:
         """
         Extracts the true canonical representation of a property.
 
@@ -237,7 +248,9 @@ def get_property_dependencies(
                 return reverse
         return None
 
-    def add_dependency(property: property_key, dependency: property_key) -> None:
+    def add_dependency(
+        property: property_key_type, dependency: property_key_type
+    ) -> None:
         """
         Marks a dependency relationship between two properties, implying that
         one of them cannot be defined until after the other has been defined.
@@ -256,27 +269,31 @@ def get_property_dependencies(
         true_dependency = get_true_property(dependency)
         if true_property is None or true_property not in reformatted_properties:
             raise PyDoughMetadataException(
-                f"Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property {property}"
+                f"Unable to extract dependencies of properties in PyDough \
+                metadata due to either a dependency not existing or a cyclic \
+                dependency between properties due to unrecognized property {property}"
             )
         if true_dependency is None or true_dependency not in reformatted_properties:
             raise PyDoughMetadataException(
-                f"Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property {dependency}"
+                f"Unable to extract dependencies of properties in PyDough \
+                metadata due to either a dependency not existing or a cyclic \
+                dependency between properties due to unrecognized property {dependency}"
             )
         property_idx = reformatted_properties[true_property][1]
         dependency_idx = reformatted_properties[true_dependency][1]
         dependencies[property_idx].add(dependency_idx)
 
     # The set of all properties that are table columns
-    table_columns: Set[property_key] = set()
+    table_columns: Set[property_key_type] = set()
 
     # The set of all properties that are cartesian products
-    cartesian_products: Set[property_key] = set()
+    cartesian_products: Set[property_key_type] = set()
 
     # The set of all properties that are simple joins
-    simple_joins: Set[property_key] = set()
+    simple_joins: Set[property_key_type] = set()
 
     # The set of all properties that are compound relationships
-    compounds: Set[property_key] = set()
+    compounds: Set[property_key_type] = set()
 
     # The "stack" uses to process compound relationship properties. A
     # double-ended queue is used because the algorithm for processing compounds
@@ -308,7 +325,7 @@ def get_property_dependencies(
     for property in table_columns:
         defined.add(property)
 
-    def define_cartesian_property(property: property_key) -> None:
+    def define_cartesian_property(property: property_key_type) -> None:
         """
         Defines a cartesian product property, adding its dependencies
         to the datastructure and marking the property as defined so
@@ -323,9 +340,9 @@ def get_property_dependencies(
             malformed.
         """
         property_json, _ = reformatted_properties[property]
-        reverse_collection = property_json["other_collection_name"]
-        reverse_property = property_json["reverse_relationship_name"]
-        reverse = (reverse_collection, reverse_property)
+        reverse_collection: str = property_json["other_collection_name"]
+        reverse_property: str = property_json["reverse_relationship_name"]
+        reverse: property_key_type = (reverse_collection, reverse_property)
         reverses[property] = reverse
         reverses[reverse] = property
         collections_mapped_to[property] = reverse_collection
@@ -337,7 +354,7 @@ def get_property_dependencies(
     for property in cartesian_products:
         define_cartesian_property(property)
 
-    def define_simple_join_property(property: property_key) -> None:
+    def define_simple_join_property(property: property_key_type) -> None:
         """
         Defines a simple join property, adding its dependencies
         to the datastructure and marking the property as defined so
@@ -355,14 +372,17 @@ def get_property_dependencies(
         # for cartesian products.
         define_cartesian_property(property)
         property_json, _ = reformatted_properties[property]
-        collection = property[0]
-        other_collection = property_json["other_collection_name"]
-        keys = property_json["keys"]
+        collection: str = property[0]
+        other_collection: str = property_json["other_collection_name"]
+        keys: Dict[str, List[str]] = property_json["keys"]
         for key_property_name in keys:
-            key_property = (collection, key_property_name)
+            key_property: property_key_type = (collection, key_property_name)
             add_dependency(property, key_property)
             for match_property_name in keys[key_property_name]:
-                match_property = (other_collection, match_property_name)
+                match_property: property_key_type = (
+                    other_collection,
+                    match_property_name,
+                )
                 add_dependency(property, match_property)
 
     # Define every simple join property
@@ -376,7 +396,7 @@ def get_property_dependencies(
     # undefined or are cyclic.
     iters_since_change: int = 0
 
-    def attempt_to_defined_compound_relationship(property: property_key) -> None:
+    def attempt_to_defined_compound_relationship(property: property_key_type) -> None:
         """
         Procedure that attempts to process a compound property and infer its
         dependencies. If this is not possible because its dependencies are
@@ -402,7 +422,10 @@ def get_property_dependencies(
 
         primary_property_name: str = property_json["primary_property"]
         original_collection: str = property[0]
-        primary_property: property_key = (original_collection, primary_property_name)
+        primary_property: property_key_type = (
+            original_collection,
+            primary_property_name,
+        )
 
         # If the primary is defined (including as a reverse), identify the
         # middle collection via collections_mapped_to. If the primary is not
@@ -421,7 +444,7 @@ def get_property_dependencies(
 
         middle_collection: str = collections_mapped_to[primary_property]
         secondary_property_name: str = property_json["secondary_property"]
-        secondary_property: property_key = (
+        secondary_property: property_key_type = (
             middle_collection,
             secondary_property_name,
         )
@@ -447,7 +470,7 @@ def get_property_dependencies(
         # and mark both collection's other-collection.
         target_collection: str = collections_mapped_to[secondary_property]
         reverse_property_name: str = property_json["reverse_relationship_name"]
-        reverse_property: property_key = (target_collection, reverse_property_name)
+        reverse_property: property_key_type = (target_collection, reverse_property_name)
         collections_mapped_to[property] = target_collection
         collections_mapped_to[reverse_property] = original_collection
         reverses[property] = reverse_property
@@ -529,9 +552,11 @@ def get_property_dependencies(
             or iters_since_change > max_iters_since_change
         ):
             raise PyDoughMetadataException(
-                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties"
+                "Unable to extract dependencies of properties in PyDough \
+                metadata due to either a dependency not existing or a cyclic \
+                dependency between properties"
             )
-        property: property_key = compound_stack.pop()
+        property: property_key_type = compound_stack.pop()
         attempt_to_defined_compound_relationship(property)
 
     return dependencies
@@ -611,7 +636,8 @@ def topological_ordering(dependencies: List[Set[int]]) -> List[int]:
                 )
             if dependency in ancestry:
                 raise PyDoughMetadataException(
-                    "Cyclic dependency detected between properties in PyDough metadata graph."
+                    "Cyclic dependency detected between properties in PyDough \
+                    metadata graph."
                 )
             if dependency not in visited:
                 dfs(dependency)
@@ -635,11 +661,12 @@ def topological_ordering(dependencies: List[Set[int]]) -> List[int]:
     # Verify that the final output list is well-formed, meaning that it is a
     # list of the correct length containing the desired integers where each
     # index has a finish time that is larger than all of its dependencies.
+    malformed_msg: str = "Malformed topological sorting output"
     if len(finish_times) != n_vertices or set(finish_times) != set(valid_range):
-        raise PyDoughMetadataException("Malformed topological sorting output")
+        raise PyDoughMetadataException(malformed_msg)
     for idx in valid_range:
         for dependency in dependencies[idx]:
             if finish_times[idx] <= finish_times[dependency]:
-                raise PyDoughMetadataException("Malformed topological sorting output")
+                raise PyDoughMetadataException(malformed_msg)
 
     return finish_times
