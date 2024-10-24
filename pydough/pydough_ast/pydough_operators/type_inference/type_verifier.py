@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 from typing import List
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from pydough.pydough_ast import PyDoughAST
 
 
 class TypeVerifier(ABC):
@@ -15,7 +15,7 @@ class TypeVerifier(ABC):
     """
 
     @abstractmethod
-    def accepts(self, args: List[PyDoughExpressionAST]) -> None:
+    def accepts(self, args: List[PyDoughAST]) -> None:
         """
         Verifies whether the type verifier accepts/rejects a list
         of arguments.
@@ -30,5 +30,5 @@ class AllowAny(TypeVerifier):
     TODO: add class docstring
     """
 
-    def accepts(self, args: List[PyDoughExpressionAST]) -> None:
+    def accepts(self, args: List[PyDoughAST]) -> None:
         pass
