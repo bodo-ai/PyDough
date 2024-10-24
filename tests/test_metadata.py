@@ -17,10 +17,19 @@ from pydough.metadata.properties.subcollection_relationship_metadata import (
 )
 from typing import List, Dict, Set
 from collections import defaultdict
-from pydough.types import StringType, Int8Type, Int64Type, DateType, DecimalType
+from pydough.types import (
+    StringType,
+    Int8Type,
+    Int64Type,
+    DateType,
+    DecimalType,
+    PyDoughType,
+)
+
+from test_utils import graph_fetcher, noun_fetcher
 
 
-def test_graph_structure(sample_graphs):
+def test_graph_structure(sample_graphs: GraphMetadata):
     """
     Testing that the sample graphs, when parsed, each produce correctly formatted
     GraphMetadata objects.
@@ -60,13 +69,13 @@ def test_graph_structure(sample_graphs):
         pytest.param("empty", [], id="empty"),
     ],
 )
-def test_get_collection_names(graph_name, answer, get_sample_graph):
+def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_fetcher):
     """
     Testing that the get_collection_names method of GraphMetadata correctly
     fetches the names of all collections in the metadata for a graph.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection_names = graph.get_collection_names()
+    collection_names: List[str] = graph.get_collection_names()
     assert sorted(collection_names) == sorted(answer)
 
 
@@ -122,7 +131,12 @@ def test_get_collection_names(graph_name, answer, get_sample_graph):
         ),
     ],
 )
-def test_get_property_names(graph_name, collection_name, answer, get_sample_graph):
+def test_get_property_names(
+    graph_name: str,
+    collection_name: str,
+    answer: List[str],
+    get_sample_graph: graph_fetcher,
+):
     """
     Testing that the get_property_names method of CollectionMetadata correctly
     fetches the names of all properties in the metadata for a collection.
@@ -134,7 +148,9 @@ def test_get_property_names(graph_name, collection_name, answer, get_sample_grap
 
 
 def test_get_sample_graph_nouns(
-    sample_graph_names, get_sample_graph, get_sample_graph_nouns
+    sample_graph_names: str,
+    get_sample_graph: graph_fetcher,
+    get_sample_graph_nouns: noun_fetcher,
 ):
     """
     Testing that the get_nouns method of CollectionMetadata correctly
@@ -148,8 +164,8 @@ def test_get_sample_graph_nouns(
         for noun_value in noun_values:
             processed_values.add(noun_value.path)
         processed_nouns[noun_name] = processed_values
-    raw_answer: Dict[str, List[str]] = get_sample_graph_nouns(sample_graph_names)
-    processed_answer: Dict[str, List[AbstractMetadata]] = {
+    raw_answer: Dict[str, Set[str]] = get_sample_graph_nouns(sample_graph_names)
+    processed_answer: Dict[str, Set[str]] = {
         key: set(val) for key, val in raw_answer.items()
     }
     assert processed_nouns == processed_answer
@@ -196,7 +212,11 @@ def test_get_sample_graph_nouns(
     ],
 )
 def test_simple_table_info(
-    graph_name, collection_name, table_path, unique_properties, get_sample_graph
+    graph_name: str,
+    collection_name: str,
+    table_path: str,
+    unique_properties: List[str | List[str]],
+    get_sample_graph: graph_fetcher,
 ):
     """
     Testing that the table path and unique properties fields of simple table
@@ -255,7 +275,12 @@ def test_simple_table_info(
     ],
 )
 def test_table_column_info(
-    graph_name, collection_name, property_name, column_name, data_type, get_sample_graph
+    graph_name: str,
+    collection_name: str,
+    property_name: str,
+    column_name: str,
+    data_type: PyDoughType,
+    get_sample_graph: graph_fetcher,
 ):
     """
     Testing that the type and column name fields of properties are set
@@ -306,15 +331,15 @@ def test_table_column_info(
     ],
 )
 def test_simple_join_info(
-    graph_name,
-    collection_name,
-    property_name,
-    other_collection,
-    reverse_name,
-    singular,
-    no_collisions,
-    keys,
-    get_sample_graph,
+    graph_name: str,
+    collection_name: str,
+    property_name: str,
+    other_collection: str,
+    reverse_name: str,
+    singular: bool,
+    no_collisions: bool,
+    keys: Dict[str, List[str]],
+    get_sample_graph: graph_fetcher,
 ):
     """
     Testing that the fields of simple join properties are set correctly.
@@ -444,18 +469,18 @@ def test_simple_join_info(
     ],
 )
 def test_compound_relationship_info(
-    graph_name,
-    collection_name,
-    property_name,
-    primary_property_name,
-    secondary_property_name,
-    other_collection,
-    reverse_name,
-    singular,
-    no_collisions,
-    inherited_properties,
-    reverse_inherited_properties,
-    get_sample_graph,
+    graph_name: str,
+    collection_name: str,
+    property_name: str,
+    primary_property_name: str,
+    secondary_property_name: str,
+    other_collection: str,
+    reverse_name: str,
+    singular: bool,
+    no_collisions: bool,
+    inherited_properties: Dict[str, str],
+    reverse_inherited_properties: Dict[str, str],
+    get_sample_graph: graph_fetcher,
 ):
     """
     Testing that the fields of compound relationships are set correctly.

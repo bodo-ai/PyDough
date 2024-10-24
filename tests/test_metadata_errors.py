@@ -9,8 +9,10 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.collections import CollectionMetadata
 from pydough import parse_json_metadata_from_file
 
+from test_utils import graph_fetcher
 
-def test_missing_collection(get_sample_graph):
+
+def test_missing_collection(get_sample_graph: graph_fetcher):
     """
     Testing the error handling for trying to fetch a collection that does not
     exist.
@@ -23,7 +25,7 @@ def test_missing_collection(get_sample_graph):
         graph.get_collection("Inventory")
 
 
-def test_missing_property(get_sample_graph):
+def test_missing_property(get_sample_graph: graph_fetcher):
     """
     Testing the error handling for trying to fetch a collection that does not
     exist.
@@ -486,7 +488,7 @@ def test_missing_property(get_sample_graph):
         ),
     ],
 )
-def test_invalid_graphs(invalid_graph_path, graph_name, error_message):
+def test_invalid_graphs(invalid_graph_path: str, graph_name: str, error_message: str):
     with pytest.raises(PyDoughMetadataException, match=error_message):
         parse_json_metadata_from_file(
             file_path=invalid_graph_path, graph_name=graph_name

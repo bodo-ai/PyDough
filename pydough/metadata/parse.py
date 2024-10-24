@@ -45,13 +45,13 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
         as_json = json.load(f)
     if not isinstance(as_json, dict):
         raise PyDoughMetadataException(
-            f"PyDough metadata expected to be a JSON file containing a JSON \
-            object, received: {as_json.__class__.__name__}."
+            "PyDough metadata expected to be a JSON file containing a JSON "
+            + f"object, received: {as_json.__class__.__name__}."
         )
     if graph_name not in as_json:
         raise PyDoughMetadataException(
-            f"PyDough metadata file located at {file_path!r} does not contain \
-            a graph named {graph_name!r}"
+            f"PyDough metadata file located at {file_path!r} does not "
+            + f"contain a graph named {graph_name!r}"
         )
     graph_json = as_json[graph_name]
     return parse_graph(graph_name, graph_json)
@@ -265,22 +265,24 @@ def get_property_dependencies(
             `PyDoughMetadataException` if the property or the dependency
             is not a valid cannonical representative property.
         """
-        true_property = get_true_property(property)
-        true_dependency = get_true_property(dependency)
+        true_property: property_key_type = get_true_property(property)
+        true_dependency: property_key_type = get_true_property(dependency)
         if true_property is None or true_property not in reformatted_properties:
             raise PyDoughMetadataException(
-                f"Unable to extract dependencies of properties in PyDough \
-                metadata due to either a dependency not existing or a cyclic \
-                dependency between properties due to unrecognized property {property}"
+                "Unable to extract dependencies of properties in PyDough "
+                + "metadata due to either a dependency not existing or a "
+                + "cyclic dependency between properties due to unrecognized "
+                + f"property {property}"
             )
         if true_dependency is None or true_dependency not in reformatted_properties:
             raise PyDoughMetadataException(
-                f"Unable to extract dependencies of properties in PyDough \
-                metadata due to either a dependency not existing or a cyclic \
-                dependency between properties due to unrecognized property {dependency}"
+                "Unable to extract dependencies of properties in PyDough "
+                + "metadata due to either a dependency not existing or a "
+                + "cyclic dependency between properties due to unrecognized "
+                + f"property {dependency}"
             )
-        property_idx = reformatted_properties[true_property][1]
-        dependency_idx = reformatted_properties[true_dependency][1]
+        property_idx: int = reformatted_properties[true_property][1]
+        dependency_idx: int = reformatted_properties[true_dependency][1]
         dependencies[property_idx].add(dependency_idx)
 
     # The set of all properties that are table columns
@@ -552,9 +554,9 @@ def get_property_dependencies(
             or iters_since_change > max_iters_since_change
         ):
             raise PyDoughMetadataException(
-                "Unable to extract dependencies of properties in PyDough \
-                metadata due to either a dependency not existing or a cyclic \
-                dependency between properties"
+                "Unable to extract dependencies of properties in PyDough "
+                + "metadata due to either a dependency not existing or a "
+                + "cyclic dependency between properties"
             )
         property: property_key_type = compound_stack.pop()
         attempt_to_defined_compound_relationship(property)
@@ -636,8 +638,8 @@ def topological_ordering(dependencies: List[Set[int]]) -> List[int]:
                 )
             if dependency in ancestry:
                 raise PyDoughMetadataException(
-                    "Cyclic dependency detected between properties in PyDough \
-                    metadata graph."
+                    "Cyclic dependency detected between properties in "
+                    + "PyDough metadata graph."
                 )
             if dependency not in visited:
                 dfs(dependency)
