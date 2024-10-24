@@ -131,7 +131,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             malformed.
         """
         # Create the string used to identify the property in error messages.
-        error_name = f"compound relationship property {property_name!r} of {CollectionMetadata.error_name}"
+        error_name = f"compound relationship property {property_name!r} of {collection.error_name}"
 
         # Verify that the JSON has the required `primary_property`,
         # `secondary_property`, `reverse_relationship_name`, `singular`,
