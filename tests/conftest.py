@@ -8,7 +8,7 @@ import json
 from pydough.metadata.graphs import GraphMetadata
 from typing import Dict, Set
 
-from test_utils import graph_fetcher, noun_fetcher
+from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
 
 
 @pytest.fixture(scope="session")
@@ -17,14 +17,6 @@ def sample_graph_path() -> str:
     Tuple of the path to the JSON file containing the sample graphs.
     """
     return "tests/test_metadata/sample_graphs.json"
-
-
-@pytest.fixture(scope="session")
-def invalid_graph_path() -> str:
-    """
-    Tuple of the path to the JSON file containing the invalid graphs.
-    """
-    return "tests/test_metadata/invalid_graphs.json"
 
 
 @pytest.fixture(scope="session")
@@ -37,72 +29,52 @@ def sample_graph_nouns_path() -> str:
 
 
 @pytest.fixture(scope="session")
-def amazon_graph_name() -> str:
+def invalid_graph_path() -> str:
     """
-    The name of the field in the sample graph JSON file corresponding
-    to the AMAZON graph.
+    Tuple of the path to the JSON file containing the invalid graphs.
     """
-    return "Amazon"
+    return "tests/test_metadata/invalid_graphs.json"
 
 
 @pytest.fixture(scope="session")
-def tpch_graph_name() -> str:
+def valid_sample_graph_names() -> Set[str]:
     """
-    The name of the field in the sample graph JSON file corresponding
-    to the TPCH graph.
+    Set of valid names to use to access a sample graph.
     """
-    return "TPCH"
+    return {"Amazon", "TPCH", "Empty"}
 
 
-@pytest.fixture(scope="session")
-def empty_graph_name() -> str:
-    """
-    The name of the field in the sample graph JSON file corresponding
-    to the empty graph.
-    """
-    return "Empty"
-
-
-@pytest.fixture
-def get_sample_graph(
-    sample_graph_path: str,
-    amazon_graph_name: str,
-    tpch_graph_name: str,
-    empty_graph_name: str,
-) -> graph_fetcher:
-    """
-    A function that takes in the name of a graph (currently only supports the
-    values 'amazon', 'tpch', and 'empty') and returns the metadata for that
-    PyDough graph.
-    """
-
-    def impl(name: str) -> GraphMetadata:
-        if name == "amazon":
-            graph_name = amazon_graph_name
-        elif name == "tpch":
-            graph_name = tpch_graph_name
-        elif name == "empty":
-            graph_name = empty_graph_name
-        else:
-            raise Exception(f"Unrecognized graph name '{name}'")
-        return pydough.parse_json_metadata_from_file(
-            file_path=sample_graph_path, graph_name=graph_name
-        )
-
-    return impl
-
-
-@pytest.fixture(params=["amazon", "tpch", "empty"])
+@pytest.fixture(params=["Amazon", "TPCH", "Empty"])
 def sample_graph_names(request) -> str:
     """
-    Fixture for the names that each of the sample graphs can be accessed by.
+    Fixture for the names that each of the sample graphs can be accessed.
     """
     return request.param
 
 
 @pytest.fixture
+def get_sample_graph(
+    sample_graph_path: str,
+    valid_sample_graph_names: Set[str],
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported sample
+    graph names and returns the metadata for that PyDough graph.
+    """
+
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture
 def get_sample_graph_nouns(
-    sample_graph_nouns_path, amazon_graph_name, tpch_graph_name, empty_graph_name
+    sample_graph_nouns_path: str, valid_sample_graph_names: Set[str]
 ) -> noun_fetcher:
     """
     A function that takes in the name of a graph (currently only supports the
@@ -111,18 +83,13 @@ def get_sample_graph_nouns(
     """
 
     def impl(name: str) -> GraphMetadata:
-        if name == "amazon":
-            graph_name = amazon_graph_name
-        elif name == "tpch":
-            graph_name = tpch_graph_name
-        elif name == "empty":
-            graph_name = empty_graph_name
-        else:
+        if name not in valid_sample_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
         nouns: Dict[str, Set[str]]
         with open(sample_graph_nouns_path, "r") as f:
-            nouns = json.load(f)[graph_name]
-        return nouns
+            nouns = json.load(f)[name]
+        # Convert the noun values for each name from a list to a set
+        return map_over_dict_values(nouns, set)
 
     return impl
 

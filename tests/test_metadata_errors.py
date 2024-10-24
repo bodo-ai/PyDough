@@ -17,7 +17,7 @@ def test_missing_collection(get_sample_graph: graph_fetcher):
     Testing the error handling for trying to fetch a collection that does not
     exist.
     """
-    graph: GraphMetadata = get_sample_graph("tpch")
+    graph: GraphMetadata = get_sample_graph("TPCH")
     with pytest.raises(
         PyDoughMetadataException,
         match="graph 'TPCH' does not have a collection named 'Inventory'",
@@ -30,7 +30,7 @@ def test_missing_property(get_sample_graph: graph_fetcher):
     Testing the error handling for trying to fetch a collection that does not
     exist.
     """
-    graph: GraphMetadata = get_sample_graph("tpch")
+    graph: GraphMetadata = get_sample_graph("TPCH")
     with pytest.raises(
         PyDoughMetadataException,
         match="simple table collection 'Parts' in graph 'TPCH' does not have a property 'color'",

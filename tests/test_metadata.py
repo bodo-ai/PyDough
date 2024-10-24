@@ -26,7 +26,7 @@ from pydough.types import (
     PyDoughType,
 )
 
-from test_utils import graph_fetcher, noun_fetcher
+from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
 
 
 def test_graph_structure(sample_graphs: GraphMetadata):
@@ -41,7 +41,7 @@ def test_graph_structure(sample_graphs: GraphMetadata):
     "graph_name, answer",
     [
         pytest.param(
-            "amazon",
+            "Amazon",
             [
                 "Addresses",
                 "Customers",
@@ -50,10 +50,10 @@ def test_graph_structure(sample_graphs: GraphMetadata):
                 "Packages",
                 "Products",
             ],
-            id="amazon",
+            id="Amazon",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             [
                 "Regions",
                 "Nations",
@@ -64,9 +64,9 @@ def test_graph_structure(sample_graphs: GraphMetadata):
                 "Customers",
                 "Orders",
             ],
-            id="tpch",
+            id="TPCH",
         ),
-        pytest.param("empty", [], id="empty"),
+        pytest.param("Empty", [], id="Empty"),
     ],
 )
 def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_fetcher):
@@ -83,7 +83,7 @@ def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_f
     "graph_name, collection_name, answer",
     [
         pytest.param(
-            "amazon",
+            "Amazon",
             "Addresses",
             [
                 "id",
@@ -101,7 +101,7 @@ def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_f
             id="amazon-addresses",
         ),
         pytest.param(
-            "amazon",
+            "Amazon",
             "Products",
             [
                 "name",
@@ -115,7 +115,7 @@ def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_f
             id="amazon-products",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Regions",
             [
                 "key",
@@ -158,52 +158,47 @@ def test_get_sample_graph_nouns(
     """
     graph: GraphMetadata = get_sample_graph(sample_graph_names)
     nouns: Dict[str, List[AbstractMetadata]] = graph.get_nouns()
-    processed_nouns: Dict[str, Set[str]] = {}
-    for noun_name, noun_values in nouns.items():
-        processed_values: Set[str] = set()
-        for noun_value in noun_values:
-            processed_values.add(noun_value.path)
-        processed_nouns[noun_name] = processed_values
-    raw_answer: Dict[str, Set[str]] = get_sample_graph_nouns(sample_graph_names)
-    processed_answer: Dict[str, Set[str]] = {
-        key: set(val) for key, val in raw_answer.items()
-    }
-    assert processed_nouns == processed_answer
+    # Transform the nouns from metadata objects into path strings
+    processed_nouns: Dict[str, Set[str]] = map_over_dict_values(
+        nouns, lambda noun_values: {noun.path for noun in noun_values}
+    )
+    answer: Dict[str, Set[str]] = get_sample_graph_nouns(sample_graph_names)
+    assert processed_nouns == answer
 
 
 @pytest.mark.parametrize(
     "graph_name, collection_name, table_path, unique_properties",
     [
         pytest.param(
-            "amazon",
+            "Amazon",
             "Customers",
             "amazon.CUSTOMER",
             ["username", "email", "phone_number"],
             id="amazon-customer",
         ),
         pytest.param(
-            "amazon",
+            "Amazon",
             "Packages",
             "amazon.PACKAGE",
             ["id"],
             id="amazon-customer",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Regions",
             "tpch.REGION",
             ["key"],
             id="tpch-region",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "PartSupp",
             "tpch.PARTSUPP",
             [["part_key", "supplier_key"]],
             id="tpch-partsupp",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Lineitems",
             "tpch.LINEITEM",
             [["part_key", "supplier_key", "order_key"]],
@@ -233,7 +228,7 @@ def test_simple_table_info(
     "graph_name, collection_name, property_name, column_name, data_type",
     [
         pytest.param(
-            "tpch",
+            "TPCH",
             "Regions",
             "name",
             "r_name",
@@ -241,7 +236,7 @@ def test_simple_table_info(
             id="tpch-region-name",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Customers",
             "acctbal",
             "c_acctbal",
@@ -249,7 +244,7 @@ def test_simple_table_info(
             id="tpch-customer-acctbal",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Orders",
             "order_date",
             "o_orderdate",
@@ -257,7 +252,7 @@ def test_simple_table_info(
             id="tpch-lineitem-orderdate",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Lineitems",
             "line_number",
             "l_linenumber",
@@ -265,7 +260,7 @@ def test_simple_table_info(
             id="tpch-lineitem-linenumber",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Suppliers",
             "key",
             "s_suppkey",
@@ -307,7 +302,7 @@ def test_table_column_info(
     ],
     [
         pytest.param(
-            "tpch",
+            "TPCH",
             "Regions",
             "nations",
             "Nations",
@@ -318,7 +313,7 @@ def test_table_column_info(
             id="tpch-region-nations",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "PartSupp",
             "part",
             "Parts",
@@ -391,7 +386,7 @@ def test_simple_join_info(
     ],
     [
         pytest.param(
-            "tpch",
+            "TPCH",
             "Parts",
             "lines",
             "supply_records",
@@ -415,7 +410,7 @@ def test_simple_join_info(
             id="tpch-part-lines",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Suppliers",
             "parts_supplied",
             "supply_records",
@@ -439,7 +434,7 @@ def test_simple_join_info(
             id="tpch-supplier-part",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Regions",
             "customers",
             "nations",
@@ -453,7 +448,7 @@ def test_simple_join_info(
             id="tpch-region-customers",
         ),
         pytest.param(
-            "tpch",
+            "TPCH",
             "Regions",
             "orders_shipped_to",
             "customers",
