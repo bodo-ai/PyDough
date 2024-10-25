@@ -14,13 +14,23 @@ from .collections import CollectionMetadata
 from .properties import PropertyMetadata
 import json
 
-# A type alias for the way a property is stored until it is parsed, in the
-# tuple form `(collection_name, property_name, property_json)`
-raw_property_type = Tuple[str, str, dict]
+from dataclasses import dataclass
 
-# A type alias for the ways properties are referred to in dictionary keys,
-# in the form `(collection_name, property_name)`.
-property_key_type = Tuple[str, str]
+
+# The way a property is stored until it is parsed.
+@dataclass
+class RawProperty:
+    collection_name: str
+    property_name: str
+    property_json: dict
+
+
+# The way a property is referenced as a key in dictionaries or identified
+# on stacks.
+@dataclass(frozen=True)
+class PropertyKey:
+    collection_name: str
+    property_name: str
 
 
 def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetadata:
@@ -81,7 +91,7 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
     # before it is defined and added to its collection, so all of the properties
     # can be sorted based on their dependencies. The list stores the properties
     # as tuples in the form (collection_name, property_name, property_json)
-    raw_properties: List[raw_property_type] = []
+    raw_properties: List[RawProperty] = []
 
     # Iterate through all the key-value pairs in the graph to set up the
     # corresponding collections as empty metadata that will later be filled
@@ -101,7 +111,7 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
             PropertyMetadata.verify_json_metadata(
                 collection, property_name, property_json
             )
-            raw_property: raw_property_type = (
+            raw_property: RawProperty = RawProperty(
                 collection_name,
                 property_name,
                 property_json,
@@ -113,12 +123,14 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
     # complete. For each property, complete the process of parsing its JSON to
     # add it to its collection's properties.
     ordered_properties = topologically_sort_properties(raw_properties)
-    for collection_name, property_name, property_json in ordered_properties:
-        HasPropertyWith(collection_name, HasType(CollectionMetadata)).verify(
+    for property in ordered_properties:
+        HasPropertyWith(property.collection_name, HasType(CollectionMetadata)).verify(
             graph.collections, graph.error_name
         )
-        collection: CollectionMetadata = graph.collections[collection_name]
-        PropertyMetadata.parse_from_json(collection, property_name, property_json)
+        collection: CollectionMetadata = graph.collections[property.collection_name]
+        PropertyMetadata.parse_from_json(
+            collection, property.property_name, property.property_json
+        )
 
     # Finally, after every property has been parseed, run an additional round
     # of completeness checks on each collection to verify any predicates about
@@ -132,8 +144,8 @@ def parse_graph(graph_name: str, graph_json: Dict) -> GraphMetadata:
 
 
 def topologically_sort_properties(
-    raw_properties: List[raw_property_type],
-) -> List[raw_property_type]:
+    raw_properties: List[RawProperty],
+) -> List[RawProperty]:
     """
     Computes the ordered that each property should be defined in so that
     all dependencies of the property have been defined first.
@@ -155,8 +167,12 @@ def topologically_sort_properties(
     # identifying `(collection_name, property_name)` tuple (hereafter
     # referred to as the `property`) and the values are a tuple of the
     # property's JSON and its index in the original raw_properties list.
-    reformatted_properties: Dict[property_key_type, Tuple[dict, int]] = {
-        property[:2]: (property[2], i) for i, property in enumerate(raw_properties)
+    reformatted_properties: Dict[PropertyKey, Tuple[dict, int]] = {
+        PropertyKey(property.collection_name, property.property_name): (
+            property.property_json,
+            i,
+        )
+        for i, property in enumerate(raw_properties)
     }
 
     # Compute the dependencies of each property.
@@ -165,20 +181,21 @@ def topologically_sort_properties(
     # Use the dependencies to calculate the topological ordering of the
     # properties.
     finish_times: List[int] = topological_ordering(dependencies)
-    ordered_keys: List[property_key_type] = sorted(
+    ordered_keys: List[PropertyKey] = sorted(
         reformatted_properties, key=lambda k: finish_times[reformatted_properties[k][1]]
     )
 
     # Use the topological ordering to re-construct the same format as the
     # `raw_properties` list, but in the desired order.
-    ordered_properties: List[raw_property_type] = [
-        k + (reformatted_properties[k][0],) for k in ordered_keys
+    ordered_properties: List[RawProperty] = [
+        RawProperty(k.collection_name, k.property_name, reformatted_properties[k][0])
+        for k in ordered_keys
     ]
     return ordered_properties
 
 
 def get_property_dependencies(
-    reformatted_properties: Dict[property_key_type, Tuple[dict, int]],
+    reformatted_properties: Dict[PropertyKey, Tuple[dict, int]],
 ) -> List[Set[int]]:
     """
     Infers the set of dependencies for each property.
@@ -215,17 +232,17 @@ def get_property_dependencies(
 
     # A dictionary mapping each property to its known reverse
     # property, if one exists.
-    reverses: Dict[property_key_type, property_key_type] = {}
+    reverses: Dict[PropertyKey, PropertyKey] = {}
 
     # A dictionary mapping each property to the name of the collection
     # it maps to, if one exists.
-    collections_mapped_to: Dict[property_key_type, str] = {}
+    collections_mapped_to: Dict[PropertyKey, str] = {}
 
     # A dictionary mapping each property to the set of all inherited property
     # names that are associated with it.
-    compound_inherited_aliases: Dict[property_key_type, Set[str]] = {}
+    compound_inherited_aliases: Dict[PropertyKey, Set[str]] = {}
 
-    def get_true_property(property: property_key_type) -> property_key_type | None:
+    def get_true_property(property: PropertyKey) -> PropertyKey | None:
         """
         Extracts the true canonical representation of a property.
 
@@ -248,9 +265,7 @@ def get_property_dependencies(
                 return reverse
         return None
 
-    def add_dependency(
-        property: property_key_type, dependency: property_key_type
-    ) -> None:
+    def add_dependency(property: PropertyKey, dependency: PropertyKey) -> None:
         """
         Marks a dependency relationship between two properties, implying that
         one of them cannot be defined until after the other has been defined.
@@ -265,37 +280,37 @@ def get_property_dependencies(
             `PyDoughMetadataException` if the property or the dependency
             is not a valid cannonical representative property.
         """
-        true_property: property_key_type = get_true_property(property)
-        true_dependency: property_key_type = get_true_property(dependency)
+        true_property: PropertyKey | None = get_true_property(property)
+        true_dependency: PropertyKey | None = get_true_property(dependency)
         if true_property is None or true_property not in reformatted_properties:
             raise PyDoughMetadataException(
                 "Unable to extract dependencies of properties in PyDough "
                 + "metadata due to either a dependency not existing or a "
                 + "cyclic dependency between properties due to unrecognized "
-                + f"property {property}"
+                + f"property '{property.collection_name}.{property.property_name}'"
             )
         if true_dependency is None or true_dependency not in reformatted_properties:
             raise PyDoughMetadataException(
                 "Unable to extract dependencies of properties in PyDough "
                 + "metadata due to either a dependency not existing or a "
                 + "cyclic dependency between properties due to unrecognized "
-                + f"property {dependency}"
+                + f"property '{dependency.collection_name}.{dependency.property_name}'"
             )
         property_idx: int = reformatted_properties[true_property][1]
         dependency_idx: int = reformatted_properties[true_dependency][1]
         dependencies[property_idx].add(dependency_idx)
 
     # The set of all properties that are table columns
-    table_columns: Set[property_key_type] = set()
+    table_columns: Set[PropertyKey] = set()
 
     # The set of all properties that are cartesian products
-    cartesian_products: Set[property_key_type] = set()
+    cartesian_products: Set[PropertyKey] = set()
 
     # The set of all properties that are simple joins
-    simple_joins: Set[property_key_type] = set()
+    simple_joins: Set[PropertyKey] = set()
 
     # The set of all properties that are compound relationships
-    compounds: Set[property_key_type] = set()
+    compounds: Set[PropertyKey] = set()
 
     # The "stack" uses to process compound relationship properties. A
     # double-ended queue is used because the algorithm for processing compounds
@@ -303,7 +318,7 @@ def get_property_dependencies(
     # bottom if it cannot infer what must be defined before the compound can be
     # defined, since that information may not be possible to infer until other
     # items already on the stack have been processed.
-    compound_stack: deque = deque()
+    compound_stack: deque[PropertyKey] = deque()
 
     # Classify every property and add it to the corresponding stack/set.
     for property in reformatted_properties:
@@ -327,7 +342,7 @@ def get_property_dependencies(
     for property in table_columns:
         defined.add(property)
 
-    def define_cartesian_property(property: property_key_type) -> None:
+    def define_cartesian_property(property: PropertyKey) -> None:
         """
         Defines a cartesian product property, adding its dependencies
         to the datastructure and marking the property as defined so
@@ -344,11 +359,11 @@ def get_property_dependencies(
         property_json, _ = reformatted_properties[property]
         reverse_collection: str = property_json["other_collection_name"]
         reverse_property: str = property_json["reverse_relationship_name"]
-        reverse: property_key_type = (reverse_collection, reverse_property)
+        reverse: PropertyKey = PropertyKey(reverse_collection, reverse_property)
         reverses[property] = reverse
         reverses[reverse] = property
         collections_mapped_to[property] = reverse_collection
-        collections_mapped_to[reverse] = property[0]
+        collections_mapped_to[reverse] = property.collection_name
         defined.add(property)
         defined.add(reverse)
 
@@ -356,7 +371,7 @@ def get_property_dependencies(
     for property in cartesian_products:
         define_cartesian_property(property)
 
-    def define_simple_join_property(property: property_key_type) -> None:
+    def define_simple_join_property(property: PropertyKey) -> None:
         """
         Defines a simple join property, adding its dependencies
         to the datastructure and marking the property as defined so
@@ -374,14 +389,14 @@ def get_property_dependencies(
         # for cartesian products.
         define_cartesian_property(property)
         property_json, _ = reformatted_properties[property]
-        collection: str = property[0]
+        collection: str = property.collection_name
         other_collection: str = property_json["other_collection_name"]
         keys: Dict[str, List[str]] = property_json["keys"]
         for key_property_name in keys:
-            key_property: property_key_type = (collection, key_property_name)
+            key_property: PropertyKey = PropertyKey(collection, key_property_name)
             add_dependency(property, key_property)
             for match_property_name in keys[key_property_name]:
-                match_property: property_key_type = (
+                match_property: PropertyKey = PropertyKey(
                     other_collection,
                     match_property_name,
                 )
@@ -391,14 +406,7 @@ def get_property_dependencies(
     for property in simple_joins:
         define_simple_join_property(property)
 
-    # The number of calls to `attempt_to_defined_compound_relationship` since
-    # the last successful attempt (resulted in a compound being defined). Used
-    # to catch cases where a property is infinitely being popped from the top
-    # of the stack then moved to the bottom because its dependencies are truly
-    # undefined or are cyclic.
-    iters_since_change: int = 0
-
-    def attempt_to_defined_compound_relationship(property: property_key_type) -> None:
+    def attempt_to_defined_compound_relationship(property: PropertyKey) -> bool:
         """
         Procedure that attempts to process a compound property and infer its
         dependencies. If this is not possible because its dependencies are
@@ -411,21 +419,23 @@ def get_property_dependencies(
             `property`: the property that the algorithm is attempting to
             define, in terms of a tuple `(collection_name, property_name)`.
 
+        Returns:
+            Whether the attempt succeeded or not. Success is defined as
+            property being added to `defined`, rather than pushed back
+            onto the stack (either at the top or bottom).
+
         Raises:
             `PyDoughMetadataError`: if the properties or relationships are
             malformed.
         """
-        nonlocal iters_since_change
         if property in defined:
-            return
+            return False
 
-        iters_since_change += 1
         property_json, _ = reformatted_properties[property]
 
         primary_property_name: str = property_json["primary_property"]
-        original_collection: str = property[0]
-        primary_property: property_key_type = (
-            original_collection,
+        primary_property: PropertyKey = PropertyKey(
+            property.collection_name,
             primary_property_name,
         )
 
@@ -434,19 +444,19 @@ def get_property_dependencies(
         # defined but is known, push to the stack & move on. If the primary is
         # not defined but is unknown (possibly a reverse), move the compound
         # back to the bottom of the stack.
-        true_primary = get_true_property(primary_property)
+        true_primary: PropertyKey | None = get_true_property(primary_property)
         if true_primary is None:
             compound_stack.appendleft(property)
-            return
+            return False
 
         if true_primary not in defined:
             compound_stack.append(property)
             compound_stack.append(true_primary)
-            return
+            return False
 
         middle_collection: str = collections_mapped_to[primary_property]
         secondary_property_name: str = property_json["secondary_property"]
-        secondary_property: property_key_type = (
+        secondary_property: PropertyKey = PropertyKey(
             middle_collection,
             secondary_property_name,
         )
@@ -456,15 +466,15 @@ def get_property_dependencies(
         # defined but is known, push to the stack & move on. If the secondary
         # is not defined but is unknown (possibly a reverse), move the compound
         # back to the bottom of the stack.
-        true_secondary = get_true_property(secondary_property)
+        true_secondary: PropertyKey | None = get_true_property(secondary_property)
         if true_secondary is None:
             compound_stack.appendleft(property)
-            return
+            return False
 
         if true_secondary not in defined:
             compound_stack.append(property)
             compound_stack.append(true_secondary)
-            return
+            return False
 
         # Now that the secondary property is known, identify the middle
         # collection, construct the reverse property of the compound,
@@ -472,9 +482,11 @@ def get_property_dependencies(
         # and mark both collection's other-collection.
         target_collection: str = collections_mapped_to[secondary_property]
         reverse_property_name: str = property_json["reverse_relationship_name"]
-        reverse_property: property_key_type = (target_collection, reverse_property_name)
+        reverse_property: PropertyKey = PropertyKey(
+            target_collection, reverse_property_name
+        )
         collections_mapped_to[property] = target_collection
-        collections_mapped_to[reverse_property] = original_collection
+        collections_mapped_to[reverse_property] = property.collection_name
         reverses[property] = reverse_property
         reverses[reverse_property] = property
         compounds.add(reverse_property)
@@ -485,13 +497,22 @@ def get_property_dependencies(
         # property of the middle collection or if it is a known inherited
         # property alias of the primary/secondary property.
         inherited_properties: Dict[str, str] = property_json["inherited_properties"]
-        inherited_dependencies: List[str, str] = []
-        undefined_inherited_dependencies: List[str, str] = []
+        inherited_dependencies: List[PropertyKey] = []
+        undefined_inherited_dependencies: List[PropertyKey] = []
         has_unknown_inherited: bool = False
         for inherited_property_name in inherited_properties.values():
-            inherited_property = (middle_collection, inherited_property_name)
-            true_inherited = get_true_property(inherited_property)
+            inherited_property: PropertyKey = PropertyKey(
+                middle_collection, inherited_property_name
+            )
+            true_inherited: PropertyKey | None = get_true_property(inherited_property)
             if true_inherited is None:
+                # If the inherited property is unknown because it is actually
+                # an inherited property of the primary or secondary property,
+                # ignore it since it must have already been defined for the
+                # primary or secondary property to be defined, and it does not
+                # need to be a dependency of the current property since it is
+                # a dependency of the primary or secondary (which this property
+                # will be dependent on).
                 if not (
                     primary_property in compounds
                     and inherited_property_name
@@ -515,7 +536,7 @@ def get_property_dependencies(
         if len(undefined_inherited_dependencies):
             compound_stack.append(property)
             compound_stack.extend(undefined_inherited_dependencies)
-            return
+            return False
 
         # If any of the inherited properties were unknown, place the compound
         # at the bottom of the stack so it can be re-examined after everything
@@ -523,7 +544,7 @@ def get_property_dependencies(
         # dependency is now known.
         if has_unknown_inherited:
             compound_stack.appendleft(property)
-            return
+            return False
 
         # Declare the primary property, secondary property, and the sources of
         # the inherited properties as a dependencies of the compound. Then,
@@ -540,7 +561,14 @@ def get_property_dependencies(
         ] = set(inherited_properties)
         defined.add(property)
         defined.add(reverse_property)
-        iters_since_change = 0
+        return True
+
+    # The number of calls to `attempt_to_defined_compound_relationship` since
+    # the last successful attempt (resulted in a compound being defined). Used
+    # to catch cases where a property is infinitely being popped from the top
+    # of the stack then moved to the bottom because its dependencies are truly
+    # undefined or are cyclic.
+    iters_since_change: int = 0
 
     # Repeatedly iterate until the 'stack' of compounds is empty. Uses
     # `max_iters_since_change` as a heuristic for when to cut off the
@@ -558,8 +586,14 @@ def get_property_dependencies(
                 + "metadata due to either a dependency not existing or a "
                 + "cyclic dependency between properties"
             )
-        property: property_key_type = compound_stack.pop()
-        attempt_to_defined_compound_relationship(property)
+        property: PropertyKey = compound_stack.pop()
+        successfully_defined: bool = attempt_to_defined_compound_relationship(property)
+        # Update `iters_since_change` based on whether the most recent
+        # attempt succeeded in defining `property` or not.
+        if successfully_defined:
+            iters_since_change = 0
+        else:
+            iters_since_change += 1
 
     return dependencies
 

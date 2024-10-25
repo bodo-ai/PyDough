@@ -283,9 +283,7 @@ def test_missing_property(get_sample_graph: graph_fetcher):
         ),
         pytest.param(
             "PARTSUPP_FORMAT_10",
-            re.escape(
-                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property ('PartSupp', 'part_key')"
-            ),
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property 'PartSupp.part_key'",
             id="simple_join-other_collection_name-no_exist",
         ),
         pytest.param(
@@ -350,16 +348,12 @@ def test_missing_property(get_sample_graph: graph_fetcher):
         ),
         pytest.param(
             "PARTSUPP_FORMAT_23",
-            re.escape(
-                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property ('Parts', 'fizz')"
-            ),
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property 'Parts.fizz'",
             id="simple_join-keys-absent_key",
         ),
         pytest.param(
             "PARTSUPP_FORMAT_24",
-            re.escape(
-                "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property ('PartSupp', 'buzz')"
-            ),
+            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property 'PartSupp.buzz'",
             id="simple_join-keys-absent_other_key",
         ),
         pytest.param(
