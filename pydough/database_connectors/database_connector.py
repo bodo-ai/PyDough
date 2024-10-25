@@ -25,9 +25,12 @@ class DatabaseConnection:
         self._connection = connection
 
     def __del__(self) -> None:
-        # The connection should close automatically when __del__ is called
-        # on it, but this enforces our model of transferring ownership
-        # of the connection to the DatabaseConnection object.
+        """
+        Close the connection when the DatabaseConnection object is deleted.
+        The connection should close automatically when __del__ is called
+        on it, but this enforces our model of transferring ownership
+        of the connection to the DatabaseConnection object.
+        """
         self._connection.close()
 
     def execute_query(self, sql: str) -> list[pt.Any]:
