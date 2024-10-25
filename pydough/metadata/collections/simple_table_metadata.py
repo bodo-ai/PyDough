@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import List, Union, Set
+from typing import List, Union, Set, Tuple
 from pydough.metadata.errors import (
     HasPropertyWith,
     unique_properties_predicate,
@@ -80,6 +80,42 @@ class SimpleTableMetadata(CollectionMetadata):
         comp.append(self.table_path)
         comp.append(self.unique_properties)
         return comp
+
+    def verify_complete(self) -> None:
+        # First do the more general checks
+        super().verify_complete()
+
+        # Extract all names properties used in the uniqueness of the table
+        # collection, ensuring there are no invalid duplicates.
+        malformed_unique_msg: str = f"{self.error_name} has malformed unique properties set: {self.unique_properties}"
+        unique_property_combinations: Set[Tuple] = set()
+        unique_property_names: Set[str] = set()
+        for unique_property in self.unique_properties:
+            unique_property_set: Set[str]
+            if isinstance(unique_property, str):
+                unique_property_set = {unique_property}
+            else:
+                unique_property_set = set(unique_property)
+                if len(unique_property_set) < len(unique_property):
+                    raise PyDoughMetadataException(malformed_unique_msg)
+            unique_property_tuple: Tuple = tuple(sorted(unique_property_set))
+            if unique_property_tuple in unique_property_combinations:
+                raise PyDoughMetadataException(malformed_unique_msg)
+            unique_property_combinations.add(unique_property_tuple)
+            unique_property_names.update(unique_property_set)
+
+        # Ensure that each unique property exists as a scalar attribute of
+        # the collection.
+        for unique_property_name in unique_property_names:
+            if unique_property_name not in self.properties:
+                raise PyDoughMetadataException(
+                    f"{self.error_name} does not have a property named {unique_property_name!r} to use as a unique property"
+                )
+            property: PropertyMetadata = self.get_property(unique_property_name)
+            if property.is_subcollection:
+                raise PyDoughMetadataException(
+                    f"{property.error_name} cannot be a unique property since it is a subcollection"
+                )
 
     def verify_allows_property(
         self, property: PropertyMetadata, inherited: bool

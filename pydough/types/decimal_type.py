@@ -50,7 +50,7 @@ class DecimalType(PyDoughType):
         return f"decimal[{self.precision},{self.scale}]"
 
     # The string pattern that all decimal types must adhere to.
-    type_string_pattern: re.Pattern = re.compile("decimal\[(\d{1,2}),(\d{1,2})\]")
+    type_string_pattern: re.Pattern = re.compile(r"decimal\[(\d{1,2}),(\d{1,2})\]")
 
     @staticmethod
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:

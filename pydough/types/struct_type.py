@@ -48,7 +48,7 @@ class StructType(PyDoughType):
 
     # The string pattern that struct types must adhere to. The delineation
     # between the various field names/types is handled later.
-    type_string_pattern: re.Pattern = re.compile("struct\[(.+:.+)\]")
+    type_string_pattern: re.Pattern = re.compile(r"struct\[(.+:.+)\]")
 
     @staticmethod
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:

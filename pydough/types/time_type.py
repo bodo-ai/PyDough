@@ -35,7 +35,7 @@ class TimeType(PyDoughType):
         return f"time[{self.precision}]"
 
     # The string pattern that time types must adhere to.
-    type_string_pattern: re.Pattern = re.compile("time\[(\d)\]")
+    type_string_pattern: re.Pattern = re.compile(r"time\[(\d)\]")
 
     @staticmethod
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:
