@@ -34,7 +34,9 @@ def test_graph_structure(sample_graphs: GraphMetadata):
     Testing that the sample graphs, when parsed, each produce correctly formatted
     GraphMetadata objects.
     """
-    assert isinstance(sample_graphs, GraphMetadata)
+    assert isinstance(
+        sample_graphs, GraphMetadata
+    ), "Expected to be metadata for a PyDough graph"
 
 
 @pytest.mark.parametrize(
@@ -76,7 +78,9 @@ def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_f
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
     collection_names: List[str] = graph.get_collection_names()
-    assert sorted(collection_names) == sorted(answer)
+    assert sorted(collection_names) == sorted(
+        answer
+    ), f"Mismatch between names of collections in {graph!r} versus expected values"
 
 
 @pytest.mark.parametrize(
@@ -144,7 +148,9 @@ def test_get_property_names(
     graph: GraphMetadata = get_sample_graph(graph_name)
     collection: CollectionMetadata = graph.get_collection(collection_name)
     property_names: List[str] = collection.get_property_names()
-    assert sorted(property_names) == sorted(answer)
+    assert sorted(property_names) == sorted(
+        answer
+    ), f"Mismatch between names of properties in {collection!r} versus expected values"
 
 
 def test_get_sample_graph_nouns(
@@ -163,7 +169,9 @@ def test_get_sample_graph_nouns(
         nouns, lambda noun_values: {noun.path for noun in noun_values}
     )
     answer: Dict[str, Set[str]] = get_sample_graph_nouns(sample_graph_names)
-    assert processed_nouns == answer
+    assert (
+        processed_nouns == answer
+    ), f"Mismatch between names of nouns in {graph!r} versus expected values"
 
 
 @pytest.mark.parametrize(
@@ -219,9 +227,15 @@ def test_simple_table_info(
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
     collection: CollectionMetadata = graph.get_collection(collection_name)
-    assert isinstance(collection, SimpleTableMetadata)
-    assert collection.table_path == table_path
-    assert collection.unique_properties == unique_properties
+    assert isinstance(
+        collection, SimpleTableMetadata
+    ), "Expected 'collection' to be metadata for a simple table"
+    assert (
+        collection.table_path == table_path
+    ), f"Mismatch between 'table_path' of {collection!r} and expected value"
+    assert (
+        collection.unique_properties == unique_properties
+    ), f"Mismatch between 'unique_properties' of {collection!r} and expected value"
 
 
 @pytest.mark.parametrize(
@@ -284,9 +298,15 @@ def test_table_column_info(
     graph: GraphMetadata = get_sample_graph(graph_name)
     collection: CollectionMetadata = graph.get_collection(collection_name)
     property: PropertyMetadata = collection.get_property(property_name)
-    assert isinstance(property, TableColumnMetadata)
-    assert property.column_name == column_name
-    assert property.data_type == data_type
+    assert isinstance(
+        property, TableColumnMetadata
+    ), "Expected 'property' to be metadata for a table column"
+    assert (
+        property.column_name == column_name
+    ), f"Mismatch between 'table_path' of {property!r} and expected value"
+    assert (
+        property.data_type == data_type
+    ), f"Mismatch between 'data_type' of {property!r} and expected value"
 
 
 @pytest.mark.parametrize(
@@ -344,30 +364,64 @@ def test_simple_join_info(
     property: PropertyMetadata = collection.get_property(property_name)
 
     # Verify that the properties of the join property match the passed in values
-    assert isinstance(property, SimpleJoinMetadata)
-    assert property.is_reversible
-    assert property.is_subcollection
-    assert property.other_collection.name == other_collection
-    assert property.reverse_name == reverse_name
-    assert property.is_plural != singular
-    assert property.keys == keys
+    assert isinstance(
+        property, SimpleJoinMetadata
+    ), "Expected 'property' to be metadata for a simple join"
+    assert (
+        property.is_reversible
+    ), f"Mismatch between 'is_reversible' of {property!r} and expected value"
+    assert (
+        property.is_subcollection
+    ), f"Mismatch between 'is_subcollection' of {property!r} and expected value"
+    assert (
+        property.other_collection.name == other_collection
+    ), f"Mismatch between 'other_collection_name' of {property!r} and expected value"
+    assert (
+        property.reverse_name == reverse_name
+    ), f"Mismatch between 'reverse_name' of {property!r} and expected value"
+    assert (
+        property.is_plural != singular
+    ), f"Mismatch between 'is_plural' of {property!r} and expected value"
+    assert (
+        property.keys == keys
+    ), f"Mismatch between 'keys' of {property!r} and expected value"
 
     # Verify that the properties of its reverse match in a corresponding manner
     reverse: PropertyMetadata = property.reverse_property
-    assert isinstance(reverse, SimpleJoinMetadata)
-    assert reverse.is_reversible
-    assert reverse.is_subcollection
-    assert reverse.reverse_property is property
-    assert reverse.collection.name == property.other_collection.name
-    assert reverse.name == property.reverse_name
-    assert reverse.other_collection.name == collection.name
-    assert reverse.reverse_name == property_name
-    assert reverse.is_plural != no_collisions
+    assert isinstance(
+        reverse, SimpleJoinMetadata
+    ), "Expected 'reverse' to be metadata for a simple join"
+    assert (
+        reverse.is_reversible
+    ), f"Mismatch between 'is_reversible' of {reverse!r} and expected value"
+    assert (
+        reverse.is_subcollection
+    ), f"Mismatch between 'is_subcollection' of {reverse!r} and expected value"
+    assert (
+        reverse.reverse_property is property
+    ), f"Mismatch between 'reverse_property' of {reverse!r} and expected value"
+    assert (
+        reverse.collection.name == property.other_collection.name
+    ), f"Mismatch between 'collection' of {reverse!r} and expected value"
+    assert (
+        reverse.name == property.reverse_name
+    ), f"Mismatch between 'name' of {reverse!r} and expected value"
+    assert (
+        reverse.other_collection.name == collection.name
+    ), f"Mismatch between 'other_collection' of {reverse!r} and expected value"
+    assert (
+        reverse.reverse_name == property_name
+    ), f"Mismatch between 'reverse_name' of {reverse!r} and expected value"
+    assert (
+        reverse.is_plural != no_collisions
+    ), f"Mismatch between 'is_plural' of {reverse!r} and expected value"
     reverse_keys: defaultdict[list] = defaultdict(list)
     for key_name, other_names in property.keys.items():
         for other_name in other_names:
             reverse_keys[other_name].append(key_name)
-    assert reverse.keys == reverse_keys
+    assert (
+        reverse.keys == reverse_keys
+    ), f"Mismatch between 'keys' of {reverse!r} and expected value"
 
 
 @pytest.mark.parametrize(
@@ -485,45 +539,87 @@ def test_compound_relationship_info(
     property: PropertyMetadata = collection.get_property(property_name)
 
     # Verify that the properties of the compound property match the passed in values
-    assert isinstance(property, CompoundRelationshipMetadata)
+    assert isinstance(
+        property, CompoundRelationshipMetadata
+    ), "Expected 'property' to be metadata for a compound relationship"
     for p in [property, property.primary_property, property.secondary_property]:
-        assert isinstance(p, SubcollectionRelationshipMetadata)
-        assert property.is_reversible
-        assert property.is_subcollection
-    assert property.primary_property.name == primary_property_name
+        assert isinstance(
+            p, SubcollectionRelationshipMetadata
+        ), f"Expected {p!r} to be metadata for a subcollection relationship"
+        assert (
+            property.is_reversible
+        ), f"Mismatch between 'is_reversible' of {p!r} and expected value"
+        assert (
+            property.is_subcollection
+        ), f"Mismatch between 'is_subcollection' of {p!r} and expected value"
+    assert (
+        property.primary_property.name == primary_property_name
+    ), f"Mismatch between name of primary property of {property!r} and expected value"
     assert (
         property.primary_property.other_collection
         is property.secondary_property.collection
-    )
-    assert property.secondary_property.name == secondary_property_name
-    assert property.other_collection.name == other_collection
-    assert property.other_collection is property.secondary_property.other_collection
-    assert property.reverse_name == reverse_name
-    assert property.is_plural != singular
+    ), f"Mismatch between target other collection of {property!r} and expected value"
+    assert (
+        property.secondary_property.name == secondary_property_name
+    ), f"Mismatch between name of secondary property of {property!r} and expected value"
+    assert (
+        property.other_collection.name == other_collection
+    ), f"Mismatch between name of target collection of secondary property of {property!r} and expected value"
+    assert (
+        property.other_collection is property.secondary_property.other_collection
+    ), f"Mismatch between target of {property!r} and target of its secondary property"
+    assert (
+        property.reverse_name == reverse_name
+    ), f"Mismatch between 'reverse_name of {property!r} and expected value"
+    assert (
+        property.is_plural != singular
+    ), f"Mismatch between 'is_plural of {property!r} and expected value"
     inherited_dict: Dict[str, str] = {
         alias: inh.property_to_inherit.path
         for alias, inh in property.inherited_properties.items()
     }
-    assert inherited_dict == inherited_properties
+    assert (
+        inherited_dict == inherited_properties
+    ), f"Mismatch between 'inherited_properties of {property!r} and expected value"
 
     # Verify that the properties of its reverse match in a corresponding manner
     reverse: PropertyMetadata = property.reverse_property
-    assert isinstance(reverse, CompoundRelationshipMetadata)
+    assert isinstance(
+        reverse, CompoundRelationshipMetadata
+    ), "Expected 'property' to be metadata for a compound relationship"
     for p in [reverse, reverse.primary_property, reverse.secondary_property]:
-        assert isinstance(p, SubcollectionRelationshipMetadata)
-        assert property.is_reversible
-        assert property.is_subcollection
-    assert reverse.primary_property.name == property.secondary_property.reverse_name
+        assert isinstance(
+            p, SubcollectionRelationshipMetadata
+        ), f"Expected {p!r} to be metadata for a subcollection relationship"
+        assert (
+            property.is_reversible
+        ), f"Mismatch between 'is_reversible' of {p!r} and expected value"
+        assert (
+            property.is_subcollection
+        ), f"Mismatch between 'is_subcollection' of {p!r} and expected value"
+    assert (
+        reverse.primary_property.name == property.secondary_property.reverse_name
+    ), f"Mismatch between name of primary property of {reverse!r} and expected value"
     assert (
         reverse.primary_property.other_collection
         is property.secondary_property.collection
-    )
-    assert reverse.secondary_property.name == property.primary_property.reverse_name
-    assert reverse.other_collection is property.collection
-    assert reverse.reverse_name == property_name
-    assert reverse.is_plural != no_collisions
+    ), f"Mismatch between name of the target collection of primary property of {reverse!r} and expected value"
+    assert (
+        reverse.secondary_property.name == property.primary_property.reverse_name
+    ), f"Mismatch between name of secondary property of {reverse!r} and expected value"
+    assert (
+        reverse.other_collection is property.collection
+    ), f"Mismatch between the target collection of the secondary property of {reverse!r} and expected value"
+    assert (
+        reverse.reverse_name == property_name
+    ), f"Mismatch between 'reverse_name' of {reverse!r} and expected value"
+    assert (
+        reverse.is_plural != no_collisions
+    ), f"Mismatch between 'is_plural' of {reverse!r} and expected value"
     reverse_inherited_dict: Dict[str, str] = {
         alias: inh.property_to_inherit.path
         for alias, inh in reverse.inherited_properties.items()
     }
-    assert reverse_inherited_dict == reverse_inherited_properties
+    assert (
+        reverse_inherited_dict == reverse_inherited_properties
+    ), f"Mismatch between 'inherited_properties' of {reverse!r} and expected value"
