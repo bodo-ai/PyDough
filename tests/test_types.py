@@ -133,9 +133,17 @@ def test_valid_parsing_and_unparsing(type_string, repr_string):
     on the repr string creates the same type object.
     """
     pydough_type = parse_type_from_string(type_string)
-    assert repr(pydough_type) == repr_string
-    assert pydough_type.json_string == type_string
+    assert (
+        repr(pydough_type) == repr_string
+    ), "parsed type does not match expected repr() string"
+    assert (
+        pydough_type.json_string == type_string
+    ), "parsed type does not unparse back to the same JSON string"
     eval_type = eval(repr_string)
-    assert eval_type == pydough_type
-    assert repr(eval_type) == repr_string
-    assert eval_type.json_string == type_string
+    assert eval_type == pydough_type, "type is not equal to its evaluated repr() string"
+    assert (
+        repr(eval_type) == repr_string
+    ), "mismatch between repr string and the repr() of the type created by evaluating the repr() string"
+    assert (
+        eval_type.json_string == type_string
+    ), "evaluated repr() string does not unparse back to the same JSON string"
