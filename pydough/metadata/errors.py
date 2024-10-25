@@ -75,7 +75,7 @@ class ValidName(PyDoughPredicate):
         return isinstance(obj, str) and obj.isidentifier()
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a string that is a Python identifier."
+        return f"{error_name} must be a string that is a Python identifier"
 
 
 class NoExtraKeys(PyDoughPredicate):
@@ -90,7 +90,7 @@ class NoExtraKeys(PyDoughPredicate):
         return isinstance(obj, dict) and set(obj) <= self.valid_keys
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a JSON object containing no fields except for {sorted(self.valid_keys)!r}."
+        return f"{error_name} must be a JSON object containing no fields except for {sorted(self.valid_keys)!r}"
 
 
 class ContainsField(PyDoughPredicate):
@@ -105,25 +105,29 @@ class ContainsField(PyDoughPredicate):
         return isinstance(obj, dict) and self.field_name in obj
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a JSON object containing a field {self.field_name!r}."
+        return (
+            f"{error_name} must be a JSON object containing a field {self.field_name!r}"
+        )
 
 
 class HasType(PyDoughPredicate):
-    """Predicate class to check that an object has a certain type."""
+    """Predicate class to check that an object has a certain type"""
 
     def __init__(self, desired_type: type, type_name: Optional[str] = None):
         self.desired_type: type = desired_type
-        self.type_name: str = str(self.desired_type) if type_name is None else type_name
+        self.type_name: str = (
+            self.desired_type.__name__ if type_name is None else type_name
+        )
 
     def accept(self, obj: object) -> bool:
         return isinstance(obj, self.desired_type)
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a {self.type_name}."
+        return f"{error_name} must be a {self.type_name}"
 
 
 class HasPropertyWith(PyDoughPredicate):
-    """Predicate class to check that an object has a field matching a predicate."""
+    """Predicate class to check that an object has a field matching a predicate"""
 
     def __init__(self, field_name: str, field_predicate: PyDoughPredicate):
         self.field_name = field_name
@@ -137,9 +141,7 @@ class HasPropertyWith(PyDoughPredicate):
 
     def error_message(self, error_name: str) -> str:
         lhs = self.has_predicate.error_message(error_name)
-        rhs = self.field_predicate.error_message(
-            f"field {self.field_name!r} of {error_name}"
-        )
+        rhs = self.field_predicate.error_message(f"field {self.field_name!r}")
         return f"{lhs} and {rhs}"
 
 
@@ -161,7 +163,8 @@ class ListOf(PyDoughPredicate):
 
     def error_message(self, error_name: str) -> str:
         elem_msg = self.element_predicate.error_message("each element")
-        return f"{error_name} must be a list where {elem_msg}"
+        collection_name = "list" if self.allow_empty else "non-empty list"
+        return f"{error_name} must be a {collection_name} where {elem_msg}"
 
 
 class PossiblyEmptyListOf(ListOf):
@@ -202,7 +205,7 @@ class MapOf(PyDoughPredicate):
             isinstance(obj, dict)
             and (self.allow_empty or len(obj) > 0)
             and all(
-                self.key_predicate.accept(key) or self.val_predicate.accept(val)
+                self.key_predicate.accept(key) and self.val_predicate.accept(val)
                 for key, val in obj.items()
             )
         )
@@ -210,7 +213,8 @@ class MapOf(PyDoughPredicate):
     def error_message(self, error_name: str) -> str:
         key_msg = self.key_predicate.error_message("each key")
         val_msg = self.val_predicate.error_message("each value")
-        return f"{error_name} must be a dictionary where {key_msg} and {val_msg}"
+        collection_name = "dictionary" if self.allow_empty else "non-empty dictionary"
+        return f"{error_name} must be a {collection_name} where {key_msg} and {val_msg}"
 
 
 class PossiblyEmptyMapOf(MapOf):
@@ -222,7 +226,6 @@ class PossiblyEmptyMapOf(MapOf):
         self,
         key_predicate: PyDoughPredicate,
         val_predicate: PyDoughPredicate,
-        allow_empty: bool = False,
     ):
         super().__init__(key_predicate, val_predicate, True)
 
@@ -236,7 +239,6 @@ class NonEmptyMapOf(MapOf):
         self,
         key_predicate: PyDoughPredicate,
         val_predicate: PyDoughPredicate,
-        allow_empty: bool = False,
     ):
         super().__init__(key_predicate, val_predicate, False)
 
@@ -253,10 +255,11 @@ class OrCondition(PyDoughPredicate):
         return any(predicate.accept(obj) for predicate in self.predicates)
 
     def error_message(self, error_name: str) -> str:
-        combined_messages: str = "or".join(
-            predicate.error_message("") for predicate in self.predicates
+        combined_messages: str = " or ".join(
+            predicate.error_message("it" if i > 0 else "")
+            for i, predicate in enumerate(self.predicates)
         )
-        return f"{error_name} {combined_messages}"
+        return f"{error_name}{combined_messages}"
 
 
 ###############################################################################
@@ -264,8 +267,8 @@ class OrCondition(PyDoughPredicate):
 ###############################################################################
 
 is_valid_name: PyDoughPredicate = ValidName()
-is_string = HasType(str)
-is_bool = HasType(bool)
+is_string = HasType(str, "string")
+is_bool = HasType(bool, "boolean")
 unique_properties_predicate: PyDoughPredicate = NonEmptyListOf(
     OrCondition([is_string, NonEmptyListOf(is_string)])
 )
