@@ -11,7 +11,10 @@ from pydough.pydough_ast import PyDoughAST
 
 class TypeVerifier(ABC):
     """
-    TODO: add class docstring
+    Base class for verifiers that take in a list of PyDough AST objects and
+    either silently accepts them or rejects them by raising an exception.
+
+    Each implementation class is expected to implement the `accepts` method.
     """
 
     @abstractmethod
@@ -27,7 +30,8 @@ class TypeVerifier(ABC):
 
 class AllowAny(TypeVerifier):
     """
-    TODO: add class docstring
+    Type verifier implementation class that always accepts, no matter the
+    arguments.
     """
 
     def accepts(self, args: List[PyDoughAST]) -> None:
