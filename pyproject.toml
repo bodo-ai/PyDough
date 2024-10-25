@@ -10,9 +10,6 @@ dependencies = ["pytz"]
 [tool.uv]
 dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7"]
 
-[project.optional-dependencies]
-sqlite = ["sqlite3"]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
