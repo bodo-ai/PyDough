@@ -19,6 +19,7 @@ __all__ = [
     "POW",
     "SUB",
     "PyDoughOperatorAST",
+    "ConstantType",
 ]
 
 from .type_inference import (
@@ -26,6 +27,7 @@ from .type_inference import (
     AllowAny,
     ExpressionTypeDeducer,
     SelectArgumentType,
+    ConstantType,
 )
 from .operator_ast import PyDoughOperatorAST
 from .expression_operators.registered_expression_operators import (
