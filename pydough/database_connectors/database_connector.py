@@ -5,52 +5,55 @@ https://peps.python.org/pep-0249/
 """
 # Copyright (C) 2024 Bodo Inc. All rights reserved.
 
-from builtins import module
+import sqlite3
+import typing as pt
 
 
-class SupportedDatabase:
-    """Supported Database in PyDough."""
-
-    _import_error_msg: str
-    _module: module
-
-    def __init__(self, mod_name: str, import_error_msg: str):
-        self.import_error_msg = import_error_msg
-        try:
-            self._module = __import__(mod_name)
-        except ImportError:
-            self._module = None
-
-    def module(self):
-        if self._module is None:
-            raise ImportError(self.import_error_msg)
-        return self._module
-
-
-supported_databases = {
-    "sqlite": SupportedDatabase(
-        "sqlite3", "PyDough requires the sqlite3 module for SQLite databases."
-    )
-}
-
-
-def connect(database: str, *args, **kwargs):
-    """Connect to a database and return a connection object
-    that is compliant with PEP 249.
-
-    This function doesn't have much value and may be removed in the future,
-    but it is added here to track which database(s) are supported/tested.
-
-    Args:
-        database (str): The name of the database to connect to.
-        *args: Variable length argument list. These are passed to the
-            underlying database driver.
-        **kwargs: Arbitrary keyword arguments. These are passed to the
-            underlying database driver.
-
-    Returns:
-        Connection: A connection object in the given implementation library.
+class DatabaseConnection:
     """
-    if database not in supported_databases:
-        raise ValueError(f"Unsupported database: {database}")
-    return supported_databases[database].module().connect(*args, **kwargs)
+    Class that manages a generic DB API 2.0 connection. This basically
+    dispatches to the DB API 2.0 API on the underlying object and represents
+    storing the state of the active connection.
+    """
+
+    # Database connection that follows DB API 2.0 specification.
+    # sqlite3 contains the connection specification and is packaged
+    # with Python.
+    _connection: sqlite3.Connection
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+
+    def __del__(self) -> None:
+        # The connection should close automatically when __del__ is called
+        # on it, but this enforces our model of transferring ownership
+        # of the connection to the DatabaseConnection object.
+        self._connection.close()
+
+    def execute_query(self, sql: str) -> list[pt.Any]:
+        """Create a cursor object using the connection and execute the query,
+        returning the entire result.
+        TODO: Support parameters.
+
+        Args:
+            sql (str): The SQL query to execute.
+
+        Returns:
+            list[pt.Any]: A list of rows returned by the query.
+        """
+        cursor: sqlite3.Cursor = self._connection.cursor()
+        cursor.execute(sql)
+        # No need to close the cursor, as its closed by del.
+        # TODO: Cache the cursor?
+        return cursor.fetchall()
+
+    @property
+    def connection(self) -> sqlite3.Connection:
+        """
+        Get the database connection. This API may be removed if all
+        the functionality can be encapsulated in the DatabaseConnection.
+
+        Returns:
+            sqlite3.Connection: The connection PyDough is managing.
+        """
+        return self._connection
