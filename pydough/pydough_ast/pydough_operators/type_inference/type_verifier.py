@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from pydough.pydough_ast import PyDoughAST
+from pydough.pydough_ast.errors import PyDoughASTException
 
 
 class TypeVerifier(ABC):
@@ -36,3 +37,27 @@ class AllowAny(TypeVerifier):
 
     def accepts(self, args: List[PyDoughAST]) -> None:
         pass
+
+
+class NumArgs(TypeVerifier):
+    """
+    Type verifier implementation class that requires an exact
+    number of arguments
+    """
+
+    def __init__(self, num_args: int):
+        self._num_args: int = num_args
+
+    @property
+    def num_args(self) -> int:
+        """
+        The number of arguments that the verifier expects to be
+        provided.
+        """
+        return self._num_args
+
+    def accepts(self, args: List[PyDoughAST]) -> None:
+        if len(args) != self.num_args:
+            raise PyDoughASTException(
+                f"Expected {self.num_args} arguments, received {len(args)}"
+            )

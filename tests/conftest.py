@@ -7,6 +7,24 @@ import pytest
 import json
 from pydough.metadata.graphs import GraphMetadata
 from typing import Dict, Set
+from pydough.pydough_ast.pydough_operators import (
+    ADD,
+    BAN,
+    BOR,
+    BXR,
+    DIV,
+    EQU,
+    GEQ,
+    GRT,
+    LEQ,
+    LET,
+    MOD,
+    MUL,
+    NEQ,
+    POW,
+    SUB,
+    PyDoughOperatorAST,
+)
 
 from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
 
@@ -103,3 +121,32 @@ def sample_graphs(
     file.
     """
     return get_sample_graph(sample_graph_names)
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(operator, id=operator.binop.name)
+        for operator in [
+            ADD,
+            BAN,
+            BOR,
+            BXR,
+            DIV,
+            EQU,
+            GEQ,
+            GRT,
+            LEQ,
+            LET,
+            MOD,
+            MUL,
+            NEQ,
+            POW,
+            SUB,
+        ]
+    ]
+)
+def binary_operators(request) -> PyDoughOperatorAST:
+    """
+    Returns every PyDough expression operator for a BinOp.
+    """
+    return request.param
