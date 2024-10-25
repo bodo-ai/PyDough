@@ -10,11 +10,6 @@ class PyDoughAST(ABC):
     TODO: add class docstring
     """
 
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not have a constructor defined"
-        )
-
     def __eq__(self, other):
         return self.equals(other)
 
