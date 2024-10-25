@@ -54,3 +54,23 @@ class SelectArgumentType(ExpressionTypeDeducer):
             return arg.pydough_type
         else:
             raise PyDoughASTException(msg)
+
+
+class ConstantType(ExpressionTypeDeducer):
+    """
+    Type deduction implementation class that always returns a specific
+    PyDough type.
+    """
+
+    def __init__(self, data_type: PyDoughType):
+        self._data_type: PyDoughType = data_type
+
+    @property
+    def data_type(self) -> PyDoughType:
+        """
+        The type always inferred by this deducer.
+        """
+        return self._data_type
+
+    def infer_return_type(self, args: List[PyDoughAST]) -> PyDoughType:
+        return self.data_type
