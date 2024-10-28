@@ -58,6 +58,7 @@ class NumArgs(TypeVerifier):
 
     def accepts(self, args: List[PyDoughAST]) -> None:
         if len(args) != self.num_args:
+            args_string = "argument" if self.num_args == 1 else "arguments"
             raise PyDoughASTException(
-                f"Expected {self.num_args} arguments, received {len(args)}"
+                f"Expected {self.num_args} {args_string}, received {len(args)}"
             )

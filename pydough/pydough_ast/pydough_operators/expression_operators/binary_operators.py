@@ -55,6 +55,10 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
         return self._binop
 
     @property
+    def is_aggregation(self) -> bool:
+        return False
+
+    @property
     def standalone_string(self) -> str:
         return f"BinaryOperator[{self.binop.value}]"
 

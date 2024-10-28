@@ -34,6 +34,14 @@ class PyDoughOperatorAST(PyDoughAST):
 
     @property
     @abstractmethod
+    def is_aggregation(self) -> bool:
+        """
+        Returns whether the operator corresponds to an aggregation that
+        can collapse multiple records into a scalar value.
+        """
+
+    @property
+    @abstractmethod
     def standalone_string(self) -> str:
         """
         The string representation used to identify the operator, devoid
