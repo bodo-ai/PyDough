@@ -37,8 +37,8 @@ class ColumnProperty(PyDoughExpressionAST):
                 f"collection of {self.column_property.error_name} does not have a 'table_path' field"
             )
         table_path: str = self.column_property.collection.table_path
-        column_property: str = self.column_property.column_property
-        return f"Column[{table_path}.{column_property}]"
+        column_name: str = self.column_property.column_name
+        return f"Column[{table_path}.{column_name}]"
 
     def equals(self, other: "ColumnProperty") -> bool:
         return super().equals(other) and (self.column_property == other.column_property)

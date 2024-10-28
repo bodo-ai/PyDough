@@ -2,101 +2,55 @@
 TODO: add file-level docstring.
 """
 
-from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.pydough_operators.expression_operators.registered_expression_operators import (
     LOWER,
-    SUM,
-    IFF,
 )
-from pydough.pydough_ast.pydough_operators.expression_operators.binary_operators import (
-    BinaryOperator,
+from pydough.types import PyDoughType, StringType
+from typing import List, Tuple
+from pydough.pydough_ast import PyDoughExpressionAST
+from pydough.pydough_ast.expressions import ColumnProperty
+from pydough.pydough_ast.pydough_operators import (
+    PyDoughExpressionOperatorAST,
 )
-from pydough.pydough_ast.pydough_operators.expression_operators.expression_function_operators import (
+import pytest
+from pydough.pydough_ast.expressions.expression_function_call import (
     ExpressionFunctionCall,
 )
-import re
-import pytest
-# from pydough.pydough_ast.expressions.expression_function_call import (
-#     ExpressionFunctionCall,
-# )
 
 from pydough.metadata import (
-    GraphMetadata,
-    CollectionMetadata,
-    PropertyMetadata,
     TableColumnMetadata,
-    PyDoughMetadataException,
 )
-from test_utils import graph_fetcher
-
-
-def get_table_column(
-    get_sample_graph: graph_fetcher,
-    graph_name: str,
-    collection_name: str,
-    property_name: str,
-) -> TableColumnMetadata:
-    """
-    Fetches a table column property from one of the sample graphs.
-
-    Args:
-        `get_sample_graph`: the function used to fetch the graph.
-        `graph_name`: the name of the graph to fetch.
-        `collection_name`: the name of the desired collection from the graph.
-        `property_name`: the name of the desired property
-
-    Returns:
-        The desired table column property.
-
-    Raises:
-        `PyDoughMetadataException` if the desired property is not a table
-        column property or does not exist.
-    """
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    collection: CollectionMetadata = graph.get_collection("Regions")
-    property: PropertyMetadata = collection.get_property("name")
-    if not isinstance(property, TableColumnMetadata):
-        raise PyDoughMetadataException(
-            f"Expected {property.error_name} to be a table column property"
-        )
-    return property
-
-
-def test_missing_collection(get_sample_graph: graph_fetcher):
-    """
-    XXX
-    """
-    # property: TableColumnMetadata = get_table_column(get_sample_graph, "TPCH", "Regions", "name")
-
-
-def test_binop_wrong_num_args(binary_operators: BinaryOperator):
-    """
-    Verifies that every binary operator raises an appropriate exception
-    when called with an insufficient number of arguments.
-    """
-    msg: str = f"Invalid operator invocation '? {binary_operators.binop.value} ?': Expected 2 arguments, received 0"
-    with pytest.raises(PyDoughASTException, match=re.escape(msg)):
-        binary_operators.verify_allows_args([])
+from test_utils import graph_fetcher, get_table_column
 
 
 @pytest.mark.parametrize(
-    "function_operator, expected_num_args",
+    "operator, property_args, expected_type",
     [
-        pytest.param(LOWER, 1, id="LOWER"),
-        pytest.param(SUM, 1, id="SUM"),
-        pytest.param(IFF, 3, id="IFF"),
+        pytest.param(
+            LOWER,
+            [("TPCH", "Regions", "name")],
+            StringType(),
+            id="lower-single_string_arg",
+        )
     ],
 )
-def test_function_wrong_num_args(
-    function_operator: ExpressionFunctionCall, expected_num_args: int
+def test_call_return_type(
+    get_sample_graph: graph_fetcher,
+    operator: PyDoughExpressionOperatorAST,
+    property_args: List[Tuple[str, str, str]],
+    expected_type: PyDoughType,
 ):
     """
-    Verifies that every function operator raises an appropriate exception
-    when called with an insufficient number of arguments.
+    Tests that function calls have the correct return type.
     """
-    arg_str = (
-        "1 argument" if expected_num_args == 1 else f"{expected_num_args} arguments"
-    )
-    msg: str = f"Invalid operator invocation '{function_operator.function_name}()': Expected {arg_str}, received 0"
-    with pytest.raises(PyDoughASTException, match=re.escape(msg)):
-        function_operator.verify_allows_args([])
+    properties: List[ColumnProperty] = []
+    for graph_name, collection_name, property_name in property_args:
+        property: TableColumnMetadata = get_table_column(
+            get_sample_graph, graph_name, collection_name, property_name
+        )
+        properties.append(ColumnProperty(property))
+    call: PyDoughExpressionAST = ExpressionFunctionCall(LOWER, properties)
+    return_type: PyDoughType = call.pydough_type
+    assert (
+        return_type == expected_type
+    ), "Mismatch between return type and expected value"
