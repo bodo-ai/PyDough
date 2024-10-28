@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughAST"]
+
 from abc import ABC, abstractmethod
 
 
