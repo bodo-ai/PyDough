@@ -1,3 +1,7 @@
+"""
+TODO: add module-level docstring
+"""
+
 __all__ = ["CollectionMetadata", "SimpleTableMetadata"]
 
 from .collection_metadata import CollectionMetadata

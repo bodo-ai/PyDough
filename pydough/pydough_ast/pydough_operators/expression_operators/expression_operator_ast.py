@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughExpressionOperatorAST"]
+
 from typing import List
 
 from pydough.pydough_ast.pydough_operators import PyDoughOperatorAST

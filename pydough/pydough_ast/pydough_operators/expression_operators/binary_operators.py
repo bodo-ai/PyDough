@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["BinOp", "BinaryOperator"]
+
 from typing import List
 
 from .expression_operator_ast import PyDoughExpressionOperatorAST

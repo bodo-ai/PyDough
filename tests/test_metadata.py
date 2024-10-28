@@ -4,17 +4,16 @@ TODO: add file-level docstring
 
 import pytest
 from pydough.metadata.abstract_metadata import AbstractMetadata
-from pydough.metadata.graphs import GraphMetadata
-from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
-from pydough.metadata.properties import (
+from pydough.metadata import (
+    GraphMetadata,
+    CollectionMetadata,
     PropertyMetadata,
+    SimpleTableMetadata,
     TableColumnMetadata,
     SimpleJoinMetadata,
     CompoundRelationshipMetadata,
 )
-from pydough.metadata.properties.subcollection_relationship_metadata import (
-    SubcollectionRelationshipMetadata,
-)
+from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from typing import List, Dict, Set
 from collections import defaultdict
 from pydough.types import (

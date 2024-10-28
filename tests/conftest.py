@@ -16,13 +16,15 @@ from pydough.pydough_ast.pydough_operators.expression_operators.binary_operators
 
 from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
 
+import os
+
 
 @pytest.fixture(scope="session")
 def sample_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the sample graphs.
     """
-    return "tests/test_metadata/sample_graphs.json"
+    return f"{os.path.dirname(__file__)}/test_metadata/sample_graphs.json"
 
 
 @pytest.fixture(scope="session")
@@ -31,7 +33,7 @@ def sample_graph_nouns_path() -> str:
     Tuple of the path to the JSON file containing the nouns for each
     of the sample graphs.
     """
-    return "tests/test_metadata/sample_graphs_nouns.json"
+    return f"{os.path.dirname(__file__)}/test_metadata/sample_graphs_nouns.json"
 
 
 @pytest.fixture(scope="session")
@@ -39,7 +41,7 @@ def invalid_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the invalid graphs.
     """
-    return "tests/test_metadata/invalid_graphs.json"
+    return f"{os.path.dirname(__file__)}/test_metadata/invalid_graphs.json"
 
 
 @pytest.fixture(scope="session")

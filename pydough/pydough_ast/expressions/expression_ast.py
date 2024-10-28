@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughExpressionAST"]
+
 from abc import abstractmethod
 
 
@@ -11,7 +13,7 @@ from pydough.types import PyDoughType
 
 class PyDoughExpressionAST(PyDoughAST):
     """
-    TODO: add class docstring
+    The base class for AST nodes that represent expressions.
     """
 
     def __repr__(self):

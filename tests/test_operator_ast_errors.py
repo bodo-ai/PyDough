@@ -2,8 +2,8 @@
 TODO: add file-level docstring.
 """
 
-from pydough.pydough_ast.errors import PyDoughASTException
-from pydough.pydough_ast.pydough_operators.expression_operators.registered_expression_operators import (
+from pydough.pydough_ast import PyDoughASTException
+from pydough.pydough_ast.pydough_operators import (
     LOWER,
     SUM,
     IFF,

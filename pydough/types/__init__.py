@@ -1,3 +1,7 @@
+"""
+TODO: add module-level docstring
+"""
+
 __all__ = [
     "PyDoughType",
     "Int8Type",

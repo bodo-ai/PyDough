@@ -2,12 +2,15 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughAST"]
+
 from abc import ABC, abstractmethod
 
 
 class PyDoughAST(ABC):
     """
-    TODO: add class docstring
+    Base class used for PyDough collection, expression, and opertor AST
+    nodes. Mostly exists for isinstance checks & type annotation.
     """
 
     def __eq__(self, other):
