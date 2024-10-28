@@ -19,6 +19,7 @@ __all__ = [
     "POW",
     "SUB",
     "LOWER",
+    "IFF",
     "SUM",
 ]
 
@@ -47,3 +48,4 @@ BOR = BinaryOperator(BinOp.BOR, NumArgs(2), SelectArgumentType(0))
 BXR = BinaryOperator(BinOp.BXR, NumArgs(2), SelectArgumentType(0))
 LOWER = ExpressionFunctionCall("LOWER", False, NumArgs(1), SelectArgumentType(0))
 SUM = ExpressionFunctionCall("SUM", True, NumArgs(1), SelectArgumentType(0))
+IFF = ExpressionFunctionCall("IFF", False, NumArgs(3), SelectArgumentType(1))
