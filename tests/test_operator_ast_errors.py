@@ -12,7 +12,7 @@ from pydough.pydough_ast.pydough_operators.expression_operators.binary_operators
     BinaryOperator,
 )
 from pydough.pydough_ast.pydough_operators.expression_operators.expression_function_operators import (
-    ExpressionFunctionCall,
+    ExpressionFunctionOperator,
 )
 import re
 import pytest
@@ -37,7 +37,7 @@ def test_binop_wrong_num_args(binary_operators: BinaryOperator):
     ],
 )
 def test_function_wrong_num_args(
-    function_operator: ExpressionFunctionCall, expected_num_args: int
+    function_operator: ExpressionFunctionOperator, expected_num_args: int
 ):
     """
     Verifies that every function operator raises an appropriate exception

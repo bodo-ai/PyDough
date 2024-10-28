@@ -11,7 +11,7 @@ from pydough.pydough_ast.pydough_operators.type_inference import (
 )
 
 
-class ExpressionFunctionCall(PyDoughExpressionOperatorAST):
+class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
     """
     Implementation class for PyDough operators that return an expression
     and represent a function call, such as `LOWER` or `SUM`.
@@ -47,7 +47,7 @@ class ExpressionFunctionCall(PyDoughExpressionOperatorAST):
         # Stringify as "function_name(arg0, arg1, ...)
         return f"{self.function_name}({', '.join(arg_strings)})"
 
-    def equals(self, other: "ExpressionFunctionCall") -> bool:
+    def equals(self, other: "ExpressionFunctionOperator") -> bool:
         return (
             super().equals(other)
             and self.function_name == other.function_name
