@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["FloatType"]
+
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
 from typing import Optional

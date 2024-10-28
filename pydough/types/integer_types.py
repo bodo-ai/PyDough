@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["IntegerType", "Int8Type", "Int16Type", "Int32Type", "Int64Type"]
+
 from .pydough_type import PyDoughType
 from typing import Optional
 from .errors import PyDoughTypeException

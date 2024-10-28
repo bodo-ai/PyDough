@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["parse_type_from_string"]
+
 from .pydough_type import PyDoughType
 from .integer_types import Int8Type, Int16Type, Int32Type, Int64Type
 from .float_types import Float32Type, Float64Type

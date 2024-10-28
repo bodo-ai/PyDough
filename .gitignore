@@ -26,6 +26,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 test-output.xml
+tpch_demo/tpch.db
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

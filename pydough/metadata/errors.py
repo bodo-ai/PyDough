@@ -2,6 +2,28 @@
 TODO: add file-level docstring
 """
 
+__all__ = [
+    "PyDoughMetadataException",
+    "PyDoughPredicate",
+    "is_valid_name",
+    "is_string",
+    "is_bool",
+    "unique_properties_predicate",
+    "compound_relationship_inherited_predicate",
+    "simple_join_keys_predicate",
+    "HasType",
+    "OrCondition",
+    "ListOf",
+    "NonEmptyListOf",
+    "PossiblyEmptyListOf",
+    "MapOf",
+    "PossiblyEmptyMapOf",
+    "NonEmptyMapOf",
+    "NoExtraKeys",
+    "ContainsField",
+]
+
+
 from typing import List, Set, Optional
 from abc import ABC, abstractmethod
 

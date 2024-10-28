@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughTypeException"]
+
 
 class PyDoughTypeException(Exception):
     """Exception raised when there is an error relating to PyDough types, such
