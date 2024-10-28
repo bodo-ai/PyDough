@@ -27,7 +27,6 @@ __all__ = [
     "IFF",
     "SUM",
     "builtin_registered_operators",
-    "PyDoughExpressionOperatorAST",
     "ExpressionFunctionOperator",
     "BinOp",
     "BinaryOperator",
@@ -61,5 +60,9 @@ from .expression_operators import (
     LOWER,
     IFF,
     SUM,
+    PyDoughExpressionOperatorAST,
+    ExpressionFunctionOperator,
+    BinOp,
+    BinaryOperator,
 )
 from .operator_registry import builtin_registered_operators
