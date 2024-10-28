@@ -2,15 +2,22 @@
 TODO: add file-level docstring.
 """
 
+from datetime import date
 from pydough.types import (
     PyDoughType,
     StringType,
     Float64Type,
     BooleanType,
     DateType,
+    Int64Type,
     DecimalType,
 )
-from pydough.pydough_ast import AstNodeBuilder, ColumnProperty, ExpressionFunctionCall
+from pydough.pydough_ast import (
+    AstNodeBuilder,
+    ColumnProperty,
+    ExpressionFunctionCall,
+    Literal,
+)
 from test_utils import (
     graph_fetcher,
     AstNodeTestInfo,
@@ -44,7 +51,7 @@ import pytest
         ),
     ],
 )
-def test_column_property_types(
+def test_column_property_type(
     graph_name: str,
     property_info: AstNodeTestInfo,
     expected_type: PyDoughType,
@@ -58,6 +65,40 @@ def test_column_property_types(
     assert (
         property.pydough_type == expected_type
     ), "Mismatch between column property type and expected value"
+
+
+@pytest.mark.parametrize(
+    "literal_info, expected_type",
+    [
+        pytest.param(
+            LiteralInfo("hello", StringType()),
+            StringType(),
+            id="string",
+        ),
+        pytest.param(
+            LiteralInfo(-1, Int64Type()),
+            Int64Type(),
+            id="int64",
+        ),
+        pytest.param(
+            LiteralInfo(date(2024, 10, 28), DateType()),
+            DateType(),
+            id="date",
+        ),
+    ],
+)
+def test_literal_type(
+    literal_info: AstNodeTestInfo,
+    expected_type: PyDoughType,
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    Tests that column properties have the correct return type.
+    """
+    property: Literal = literal_info.build(tpch_node_builder)
+    assert (
+        property.pydough_type == expected_type
+    ), "Mismatch between literal type and expected value"
 
 
 @pytest.mark.parametrize(
@@ -106,7 +147,7 @@ def test_column_property_types(
         ),
     ],
 )
-def test_call_return_type(
+def test_function_call_return(
     graph_name: str,
     call_info: AstNodeTestInfo,
     expected_type: PyDoughType,
