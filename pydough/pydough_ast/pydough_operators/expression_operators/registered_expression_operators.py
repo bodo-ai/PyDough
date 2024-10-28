@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 from .binary_operators import BinaryOperator, BinOp
-from .expression_function_operators import ExpressionFunctionCall
+from .expression_function_operators import ExpressionFunctionOperator
 from pydough.pydough_ast.pydough_operators.type_inference import (
     NumArgs,
     SelectArgumentType,
@@ -46,6 +46,6 @@ GRT = BinaryOperator(BinOp.GRT, NumArgs(2), SelectArgumentType(0))
 BAN = BinaryOperator(BinOp.BAN, NumArgs(2), SelectArgumentType(0))
 BOR = BinaryOperator(BinOp.BOR, NumArgs(2), SelectArgumentType(0))
 BXR = BinaryOperator(BinOp.BXR, NumArgs(2), SelectArgumentType(0))
-LOWER = ExpressionFunctionCall("LOWER", False, NumArgs(1), SelectArgumentType(0))
-SUM = ExpressionFunctionCall("SUM", True, NumArgs(1), SelectArgumentType(0))
-IFF = ExpressionFunctionCall("IFF", False, NumArgs(3), SelectArgumentType(1))
+LOWER = ExpressionFunctionOperator("LOWER", False, NumArgs(1), SelectArgumentType(0))
+SUM = ExpressionFunctionOperator("SUM", True, NumArgs(1), SelectArgumentType(0))
+IFF = ExpressionFunctionOperator("IFF", False, NumArgs(3), SelectArgumentType(1))
