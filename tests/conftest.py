@@ -8,22 +8,11 @@ import json
 from pydough.metadata.graphs import GraphMetadata
 from typing import Dict, Set
 from pydough.pydough_ast.pydough_operators import (
-    ADD,
-    BAN,
-    BOR,
-    BXR,
-    DIV,
-    EQU,
-    GEQ,
-    GRT,
-    LEQ,
-    LET,
-    MOD,
-    MUL,
-    NEQ,
-    POW,
-    SUB,
+    builtin_registered_operators,
     PyDoughOperatorAST,
+)
+from pydough.pydough_ast.pydough_operators.expression_operators.binary_operators import (
+    BinaryOperator,
 )
 
 from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
@@ -126,23 +115,8 @@ def sample_graphs(
 @pytest.fixture(
     params=[
         pytest.param(operator, id=operator.binop.name)
-        for operator in [
-            ADD,
-            BAN,
-            BOR,
-            BXR,
-            DIV,
-            EQU,
-            GEQ,
-            GRT,
-            LEQ,
-            LET,
-            MOD,
-            MUL,
-            NEQ,
-            POW,
-            SUB,
-        ]
+        for operator in builtin_registered_operators().values()
+        if isinstance(operator, BinaryOperator)
     ]
 )
 def binary_operators(request) -> PyDoughOperatorAST:
