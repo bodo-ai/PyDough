@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["ReversiblePropertyMetadata"]
+
 from abc import abstractmethod
 
 from .subcollection_relationship_metadata import SubcollectionRelationshipMetadata

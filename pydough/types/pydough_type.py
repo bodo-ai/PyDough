@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughType"]
+
 from abc import ABC, abstractmethod
 from typing import Optional
 

@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["BinaryType"]
+
 from .pydough_type import PyDoughType
 from typing import Optional
 

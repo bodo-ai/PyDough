@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["SimpleJoinMetadata"]
+
 from . import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
 from typing import List, Dict, Tuple, Set
