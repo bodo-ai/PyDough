@@ -26,28 +26,30 @@ __all__ = [
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
 from pydough.pydough_ast.pydough_operators.type_inference import (
-    NumArgs,
+    RequireNumArgs,
     SelectArgumentType,
     ConstantType,
 )
 from pydough.types import BooleanType
 
 # TODO: replace with full argument verifiers & deducers
-ADD = BinaryOperator(BinOp.ADD, NumArgs(2), SelectArgumentType(0))
-SUB = BinaryOperator(BinOp.SUB, NumArgs(2), SelectArgumentType(0))
-MUL = BinaryOperator(BinOp.MUL, NumArgs(2), SelectArgumentType(0))
-DIV = BinaryOperator(BinOp.DIV, NumArgs(2), SelectArgumentType(0))
-POW = BinaryOperator(BinOp.POW, NumArgs(2), SelectArgumentType(0))
-MOD = BinaryOperator(BinOp.MOD, NumArgs(2), SelectArgumentType(0))
-LET = BinaryOperator(BinOp.LET, NumArgs(2), ConstantType(BooleanType()))
-LEQ = BinaryOperator(BinOp.LEQ, NumArgs(2), ConstantType(BooleanType()))
-EQU = BinaryOperator(BinOp.EQU, NumArgs(2), ConstantType(BooleanType()))
-NEQ = BinaryOperator(BinOp.NEQ, NumArgs(2), ConstantType(BooleanType()))
-GEQ = BinaryOperator(BinOp.GEQ, NumArgs(2), ConstantType(BooleanType()))
-GRT = BinaryOperator(BinOp.GRT, NumArgs(2), ConstantType(BooleanType()))
-BAN = BinaryOperator(BinOp.BAN, NumArgs(2), SelectArgumentType(0))
-BOR = BinaryOperator(BinOp.BOR, NumArgs(2), SelectArgumentType(0))
-BXR = BinaryOperator(BinOp.BXR, NumArgs(2), SelectArgumentType(0))
-LOWER = ExpressionFunctionOperator("LOWER", False, NumArgs(1), SelectArgumentType(0))
-SUM = ExpressionFunctionOperator("SUM", True, NumArgs(1), SelectArgumentType(0))
-IFF = ExpressionFunctionOperator("IFF", False, NumArgs(3), SelectArgumentType(1))
+ADD = BinaryOperator(BinOp.ADD, RequireNumArgs(2), SelectArgumentType(0))
+SUB = BinaryOperator(BinOp.SUB, RequireNumArgs(2), SelectArgumentType(0))
+MUL = BinaryOperator(BinOp.MUL, RequireNumArgs(2), SelectArgumentType(0))
+DIV = BinaryOperator(BinOp.DIV, RequireNumArgs(2), SelectArgumentType(0))
+POW = BinaryOperator(BinOp.POW, RequireNumArgs(2), SelectArgumentType(0))
+MOD = BinaryOperator(BinOp.MOD, RequireNumArgs(2), SelectArgumentType(0))
+LET = BinaryOperator(BinOp.LET, RequireNumArgs(2), ConstantType(BooleanType()))
+LEQ = BinaryOperator(BinOp.LEQ, RequireNumArgs(2), ConstantType(BooleanType()))
+EQU = BinaryOperator(BinOp.EQU, RequireNumArgs(2), ConstantType(BooleanType()))
+NEQ = BinaryOperator(BinOp.NEQ, RequireNumArgs(2), ConstantType(BooleanType()))
+GEQ = BinaryOperator(BinOp.GEQ, RequireNumArgs(2), ConstantType(BooleanType()))
+GRT = BinaryOperator(BinOp.GRT, RequireNumArgs(2), ConstantType(BooleanType()))
+BAN = BinaryOperator(BinOp.BAN, RequireNumArgs(2), SelectArgumentType(0))
+BOR = BinaryOperator(BinOp.BOR, RequireNumArgs(2), SelectArgumentType(0))
+BXR = BinaryOperator(BinOp.BXR, RequireNumArgs(2), SelectArgumentType(0))
+LOWER = ExpressionFunctionOperator(
+    "LOWER", False, RequireNumArgs(1), SelectArgumentType(0)
+)
+SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
+IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))

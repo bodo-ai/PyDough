@@ -2,14 +2,13 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["TypeVerifier", "AllowAny", "NumArgs"]
+__all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny"]
 
 from abc import ABC, abstractmethod
 
 from typing import List
 
-from pydough.pydough_ast import PyDoughAST
-from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.pydough_ast import PyDoughAST, PyDoughASTException
 
 
 class TypeVerifier(ABC):
@@ -21,13 +20,22 @@ class TypeVerifier(ABC):
     """
 
     @abstractmethod
-    def accepts(self, args: List[PyDoughAST]) -> None:
+    def accepts(self, args: List[PyDoughAST], error_on_fail: bool = True) -> bool:
         """
         Verifies whether the type verifier accepts/rejects a list
         of arguments.
 
+        Args:
+            `args`: the list of arguments that are being checked.
+            `error_on_fail`: whether an exception be raised if the verifier
+            rejects the arguments.
+
+        Returns:
+            Whether the verifier accepts or rejects the arguments.
+
         Raises:
-            `PyDoughASTException` if the arguments are rejected.
+            `PyDoughASTException`: if the arguments are rejected and
+            `error_on_fail` is True.
         """
 
 
@@ -37,11 +45,11 @@ class AllowAny(TypeVerifier):
     arguments.
     """
 
-    def accepts(self, args: List[PyDoughAST]) -> None:
-        pass
+    def accepts(self, args: List[PyDoughAST], error_on_fail: bool = True) -> bool:
+        return True
 
 
-class NumArgs(TypeVerifier):
+class RequireNumArgs(TypeVerifier):
     """
     Type verifier implementation class that requires an exact
     number of arguments
@@ -58,9 +66,12 @@ class NumArgs(TypeVerifier):
         """
         return self._num_args
 
-    def accepts(self, args: List[PyDoughAST]) -> None:
+    def accepts(self, args: List[PyDoughAST], error_on_fail: bool = True) -> bool:
         if len(args) != self.num_args:
-            args_string = "argument" if self.num_args == 1 else "arguments"
-            raise PyDoughASTException(
-                f"Expected {self.num_args} {args_string}, received {len(args)}"
-            )
+            if error_on_fail:
+                suffix = "argument" if self._num_args == 1 else "arguments"
+                raise PyDoughASTException(
+                    f"Expected {self.num_args} {suffix}, received {len(args)}"
+                )
+            return False
+        return True

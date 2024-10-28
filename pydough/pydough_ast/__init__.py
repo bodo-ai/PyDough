@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+TODO: add module-level docstring
 """
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
     "PyDoughOperatorAST",
     "ConstantType",
     "PyDoughExpressionOperatorAST",
-    "NumArgs",
+    "RequireNumArgs",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -32,7 +32,7 @@ from .expressions import (
 from .pydough_operators import (
     TypeVerifier,
     AllowAny,
-    NumArgs,
+    RequireNumArgs,
     ExpressionTypeDeducer,
     SelectArgumentType,
     builtin_registered_operators,

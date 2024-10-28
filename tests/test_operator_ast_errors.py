@@ -2,8 +2,10 @@
 TODO: add file-level docstring.
 """
 
-from pydough.pydough_ast.pydough_operators import BinaryOperator
 from pydough.pydough_ast import PyDoughASTException, AstNodeBuilder
+from pydough.pydough_ast.pydough_operators import (
+    BinaryOperator,
+)
 import re
 
 

@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+TODO: add module-level docstring
 """
 
 __all__ = [

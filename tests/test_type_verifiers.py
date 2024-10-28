@@ -8,7 +8,7 @@ from pydough.pydough_ast import (
     AstNodeBuilder,
     TypeVerifier,
     AllowAny,
-    NumArgs,
+    RequireNumArgs,
 )
 import pytest
 from test_utils import graph_fetcher, AstNodeTestInfo, ColumnInfo
@@ -18,13 +18,16 @@ from test_utils import graph_fetcher, AstNodeTestInfo, ColumnInfo
     "graph_name, verifier, args_info",
     [
         pytest.param("TPCH", AllowAny(), [], id="allow_any-empty_args"),
-        pytest.param("TPCH", NumArgs(0), [], id="num_args-empty_args"),
+        pytest.param("TPCH", RequireNumArgs(0), [], id="num_args-empty_args"),
         pytest.param(
-            "TPCH", NumArgs(1), [ColumnInfo("Regions", "name")], id="num_args-one_arg"
+            "TPCH",
+            RequireNumArgs(1),
+            [ColumnInfo("Regions", "name")],
+            id="num_args-one_arg",
         ),
         pytest.param(
             "TPCH",
-            NumArgs(2),
+            RequireNumArgs(2),
             [ColumnInfo("Regions", "key"), ColumnInfo("Regions", "comment")],
             id="num_args-two_args",
         ),

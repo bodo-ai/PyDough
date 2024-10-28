@@ -2,13 +2,13 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["ExpressionTypeDeducer", "SelectArgumentType", "ConstantType"]
+__all__ = ["ExpressionTypeDeducer", "ConstantType", "SelectArgumentType"]
 
 from abc import ABC, abstractmethod
 
 from typing import List
 
-from pydough.pydough_ast import PyDoughAST
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from pydough.types import PyDoughType

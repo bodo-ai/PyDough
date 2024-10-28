@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+TODO: add module-level docstring
 """
 
 __all__ = [
@@ -7,11 +7,11 @@ __all__ = [
     "AllowAny",
     "ExpressionTypeDeducer",
     "SelectArgumentType",
-    "NumArgs",
     "ConstantType",
+    "RequireNumArgs",
 ]
 
-from .type_verifier import TypeVerifier, AllowAny, NumArgs
+from .type_verifier import TypeVerifier, AllowAny, RequireNumArgs
 from .expression_type_deducer import (
     ExpressionTypeDeducer,
     SelectArgumentType,

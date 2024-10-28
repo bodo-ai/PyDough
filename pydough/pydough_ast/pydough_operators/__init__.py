@@ -1,7 +1,11 @@
+"""
+TODO: add module-level docstring
+"""
+
 __all__ = [
     "TypeVerifier",
     "AllowAny",
-    "NumArgs",
+    "RequireNumArgs",
     "ExpressionTypeDeducer",
     "SelectArgumentType",
     "builtin_registered_operators",
@@ -37,7 +41,7 @@ from .type_inference import (
     AllowAny,
     ExpressionTypeDeducer,
     SelectArgumentType,
-    NumArgs,
+    RequireNumArgs,
     ConstantType,
 )
 from .operator_ast import PyDoughOperatorAST

@@ -1,3 +1,7 @@
+"""
+TODO: add module-level docstring
+"""
+
 __all__ = [
     "parse_json_metadata_from_file",
     "GraphMetadata",
@@ -5,10 +9,20 @@ __all__ = [
     "PropertyMetadata",
     "TableColumnMetadata",
     "PyDoughMetadataException",
+    "SimpleJoinMetadata",
+    "CartesianProductMetadata",
+    "CompoundRelationshipMetadata",
+    "SimpleTableMetadata",
 ]
 
 from .parse import parse_json_metadata_from_file
 from .graphs import GraphMetadata
-from .collections import CollectionMetadata
-from .properties import PropertyMetadata, TableColumnMetadata
+from .collections import CollectionMetadata, SimpleTableMetadata
+from .properties import (
+    PropertyMetadata,
+    TableColumnMetadata,
+    SimpleJoinMetadata,
+    CartesianProductMetadata,
+    CompoundRelationshipMetadata,
+)
 from .errors import PyDoughMetadataException
