@@ -7,6 +7,7 @@ __all__ = [
     "CompoundRelationshipMetadata",
     "InheritedPropertyMetadata",
     "SubcollectionRelationshipMetadata",
+    "ScalarAttributeMetadata",
 ]
 
 from .property_metadata import PropertyMetadata
@@ -17,3 +18,4 @@ from .cartesian_product_metadata import CartesianProductMetadata
 from .compound_relationship_metadata import CompoundRelationshipMetadata
 from .inherited_property_metadata import InheritedPropertyMetadata
 from .subcollection_relationship_metadata import SubcollectionRelationshipMetadata
+from .scalar_attribute_metadata import ScalarAttributeMetadata

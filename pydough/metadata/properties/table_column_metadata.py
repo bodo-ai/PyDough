@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["TableColumnMetadata"]
+
 from typing import Set
 from . import PropertyMetadata
 from .scalar_attribute_metadata import ScalarAttributeMetadata

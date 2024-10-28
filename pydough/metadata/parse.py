@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["parse_json_metadata_from_file"]
+
 from typing import Dict, List, Tuple, Set
 from .graphs import GraphMetadata
 from .errors import (
