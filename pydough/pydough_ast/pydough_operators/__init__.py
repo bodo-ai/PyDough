@@ -6,6 +6,7 @@ __all__ = [
     "builtin_registered_operators",
     "PyDoughOperatorAST",
     "ConstantType",
+    "PyDoughExpressionOperatorAST",
 ]
 
 from .type_inference import (
@@ -16,4 +17,5 @@ from .type_inference import (
     ConstantType,
 )
 from .operator_ast import PyDoughOperatorAST
+from .expression_operators import PyDoughExpressionOperatorAST
 from .operator_registry import builtin_registered_operators

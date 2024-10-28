@@ -3,10 +3,12 @@ TODO: add file-level docstring
 """
 
 from typing import List
+from abc import abstractmethod
 
 from pydough.pydough_ast.pydough_operators import PyDoughOperatorAST
 from pydough.types import PyDoughType
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from pydough.pydough_ast.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
@@ -30,6 +32,23 @@ class PyDoughExpressionOperatorAST(PyDoughOperatorAST):
         The return type inferrence function used by the operator
         """
         return self._deducer
+
+    @abstractmethod
+    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+        """
+        Identifies whether an invocation of an operator converted to a string
+        must be wrapped  in parenthesis before being inserted into it's parent's
+        string representation. This depends on what exactly the parent is.
+
+        Args:
+            `parent`: the parent expression AST that contains this expression
+            AST as a child.
+
+        Returns:
+            True if the string representation of `parent` should enclose
+            parenthesis around the string representation of an invocation of
+            `self`.
+        """
 
     def infer_return_type(self, args: List[PyDoughAST]) -> PyDoughType:
         """

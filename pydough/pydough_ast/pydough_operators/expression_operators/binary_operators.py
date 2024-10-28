@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 from typing import List
 
+from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .expression_operator_ast import PyDoughExpressionOperatorAST
 from pydough.pydough_ast.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
@@ -61,6 +62,11 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
     @property
     def standalone_string(self) -> str:
         return f"BinaryOperator[{self.binop.value}]"
+
+    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+        # For now, until proper precedence is handled, always enclose binary
+        # operations in parenthesis
+        return True
 
     def to_string(self, arg_strings: List[str]) -> str:
         # Stringify as "? + ?" for 0 arguments, "a + ?" for 1 argument, and
