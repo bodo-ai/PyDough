@@ -3,8 +3,7 @@ TODO: add file-level docstring.
 """
 
 from typing import List
-from pydough.pydough_ast import PyDoughAST
-from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.pydough_ast import PyDoughAST, PyDoughASTException
 from pydough.pydough_ast.pydough_operators import TypeVerifier, RequireNumArgs
 import pytest
 

@@ -7,9 +7,8 @@ __all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny"]
 from abc import ABC, abstractmethod
 
 from typing import List
-from pydough.pydough_ast.errors import PyDoughASTException
 
-from pydough.pydough_ast import PyDoughAST
+from pydough.pydough_ast import PyDoughAST, PyDoughASTException
 
 
 class TypeVerifier(ABC):
