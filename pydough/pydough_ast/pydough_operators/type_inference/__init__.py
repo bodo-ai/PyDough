@@ -7,7 +7,6 @@ __all__ = [
     "AllowAny",
     "ExpressionTypeDeducer",
     "SelectArgumentType",
-    "RequireNumArgs",
     "ConstantType",
     "RequireNumArgs",
 ]
