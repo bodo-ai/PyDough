@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["CartesianProductMetadata"]
+
 from pydough.metadata.errors import HasPropertyWith, HasType, is_string, NoExtraKeys
 from typing import Set
 from pydough.metadata.collections import CollectionMetadata
