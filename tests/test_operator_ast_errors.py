@@ -2,9 +2,10 @@
 TODO: add file-level docstring.
 """
 
-from pydough.pydough_ast import PyDoughASTException, AstNodeBuilder
-from pydough.pydough_ast.pydough_operators import (
-    BinaryOperator,
+from pydough.pydough_ast import (
+    PyDoughASTException,
+    AstNodeBuilder,
+    pydough_operators as pydop,
 )
 import re
 
@@ -14,7 +15,7 @@ import pytest
 from test_utils import AstNodeTestInfo, FunctionInfo, graph_fetcher
 
 
-def test_binop_wrong_num_args(binary_operators: BinaryOperator):
+def test_binop_wrong_num_args(binary_operators: pydop.BinaryOperator):
     """
     Verifies that every binary operator raises an appropriate exception
     when called with an insufficient number of arguments.

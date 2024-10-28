@@ -4,7 +4,7 @@ TODO: add file-level docstring.
 
 from typing import List
 from pydough.types import StringType, Int64Type, PyDoughType
-from pydough.pydough_ast import ExpressionTypeDeducer, ConstantType, PyDoughAST
+from pydough.pydough_ast import PyDoughAST, pydough_operators as pydop
 import pytest
 
 
@@ -12,13 +12,13 @@ import pytest
     "deducer, args, expected_type",
     [
         pytest.param(
-            ConstantType(StringType()),
+            pydop.ConstantType(StringType()),
             [],
             StringType(),
             id="always_string-empty_args",
         ),
         pytest.param(
-            ConstantType(Int64Type()),
+            pydop.ConstantType(Int64Type()),
             [],
             Int64Type(),
             id="always_int64-empty_args",
@@ -26,7 +26,9 @@ import pytest
     ],
 )
 def test_returned_type(
-    deducer: ExpressionTypeDeducer, args: List[PyDoughAST], expected_type: PyDoughType
+    deducer: pydop.ExpressionTypeDeducer,
+    args: List[PyDoughAST],
+    expected_type: PyDoughType,
 ):
     """
     Checks that expression ttype deducers produce the correct type.

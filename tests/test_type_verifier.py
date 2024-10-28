@@ -3,19 +3,18 @@ TODO: add file-level docstring.
 """
 
 from typing import List
-from pydough.pydough_ast import PyDoughAST
-from pydough.pydough_ast.pydough_operators import TypeVerifier, AllowAny, RequireNumArgs
+from pydough.pydough_ast import PyDoughAST, pydough_operators as pydop
 import pytest
 
 
 @pytest.mark.parametrize(
     "verifier, args",
     [
-        pytest.param(AllowAny(), [], id="allow_any-empty_args"),
-        pytest.param(RequireNumArgs(0), [], id="require_0-empty_args"),
+        pytest.param(pydop.AllowAny(), [], id="allow_any-empty_args"),
+        pytest.param(pydop.RequireNumArgs(0), [], id="require_0-empty_args"),
     ],
 )
-def test_verification(verifier: TypeVerifier, args: List[PyDoughAST]):
+def test_verification(verifier: pydop.TypeVerifier, args: List[PyDoughAST]):
     """
     Checks that verifiers accept certain arguments without raising an exception
     and also returns True.
