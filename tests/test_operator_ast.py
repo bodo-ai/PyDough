@@ -10,13 +10,7 @@ from pydough.types import (
     DateType,
     DecimalType,
 )
-from pydough.pydough_ast.expressions import ColumnProperty
-from pydough.pydough_ast import AstNodeBuilder
-import pytest
-from pydough.pydough_ast import (
-    ExpressionFunctionCall,
-)
-
+from pydough.pydough_ast import AstNodeBuilder, ColumnProperty, ExpressionFunctionCall
 from test_utils import (
     graph_fetcher,
     AstNodeTestInfo,
@@ -24,6 +18,7 @@ from test_utils import (
     ColumnInfo,
     FunctionInfo,
 )
+import pytest
 
 
 @pytest.mark.parametrize(

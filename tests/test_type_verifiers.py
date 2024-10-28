@@ -3,8 +3,13 @@ TODO: add file-level docstring.
 """
 
 from typing import List
-from pydough.pydough_ast import PyDoughAST, AstNodeBuilder
-from pydough.pydough_ast import TypeVerifier, AllowAny, NumArgs
+from pydough.pydough_ast import (
+    PyDoughAST,
+    AstNodeBuilder,
+    TypeVerifier,
+    AllowAny,
+    NumArgs,
+)
 import pytest
 from test_utils import graph_fetcher, AstNodeTestInfo, ColumnInfo
 

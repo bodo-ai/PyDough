@@ -3,11 +3,11 @@ TODO: add file-level docstring.
 """
 
 from typing import List
-from pydough.pydough_ast import PyDoughAST
-from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast import (
     ExpressionTypeDeducer,
     SelectArgumentType,
+    PyDoughASTException,
+    PyDoughAST,
 )
 import re
 import pytest

@@ -12,9 +12,7 @@ __all__ = [
     "FunctionInfo",
 ]
 
-from pydough.metadata import (
-    GraphMetadata,
-)
+from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import AstNodeBuilder, PyDoughAST
 from typing import Dict, Set, Callable, Any, List
 from pydough.types import PyDoughType

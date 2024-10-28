@@ -10,8 +10,6 @@ from pydough.metadata.properties import (
     TableColumnMetadata,
     SimpleJoinMetadata,
     CompoundRelationshipMetadata,
-)
-from pydough.metadata.properties.subcollection_relationship_metadata import (
     SubcollectionRelationshipMetadata,
 )
 from typing import List, Dict, Set
