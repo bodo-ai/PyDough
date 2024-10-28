@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughExpressionAST"]
+
 from abc import abstractmethod
 
 
