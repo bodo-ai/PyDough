@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["ScalarAttributeMetadata"]
+
 from pydough.types import PyDoughType
 from pydough.metadata.errors import HasType
 
