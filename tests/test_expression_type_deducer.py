@@ -5,7 +5,7 @@ TODO: add file-level docstring.
 from typing import List
 from pydough.types import StringType, Int64Type, PyDoughType
 from pydough.pydough_ast import PyDoughAST
-from pydough.pydough_ast.pydough_operators import (
+from pydough.pydough_ast import (
     ExpressionTypeDeducer,
     ConstantType,
 )

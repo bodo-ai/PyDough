@@ -1,3 +1,9 @@
+"""
+TODO: add file-level docstring
+"""
+
+__all__ = ["builtin_registered_operators"]
+
 from .operator_ast import PyDoughOperatorAST
 from typing import Dict
 import pydough.pydough_ast.pydough_operators.expression_operators.registered_expression_operators as REP

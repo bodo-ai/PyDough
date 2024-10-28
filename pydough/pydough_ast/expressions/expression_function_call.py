@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["ExpressionFunctionCall"]
+
 from typing import List
 
 from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
@@ -29,18 +31,22 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         The expression-returning PyDough operator corresponding to the
         function call.
         """
-        return self.operator
+        return self._operator
 
     @property
     def args(self) -> List[PyDoughExpressionAST]:
         """
         The list of arguments to the function call.
         """
-        return self.args
+        return self._args
 
     @property
     def pydough_type(self) -> PyDoughType:
         return self._data_type
+
+    @property
+    def is_aggregation(self) -> bool:
+        return self.operator.is_aggregation
 
     def requires_enclosing_parens(self, parent: "PyDoughExpressionAST") -> bool:
         return self.operator.requires_enclosing_parens(parent)

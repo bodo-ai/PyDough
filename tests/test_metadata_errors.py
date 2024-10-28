@@ -4,9 +4,7 @@ TODO: add file-level docstring
 
 import pytest
 import re
-from pydough.metadata.errors import PyDoughMetadataException
-from pydough.metadata.graphs import GraphMetadata
-from pydough.metadata.collections import CollectionMetadata
+from pydough.metadata import PyDoughMetadataException, GraphMetadata, CollectionMetadata
 from pydough import parse_json_metadata_from_file
 
 from test_utils import graph_fetcher

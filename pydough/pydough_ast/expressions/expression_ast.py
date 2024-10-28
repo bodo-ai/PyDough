@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PyDoughExpressionAST"]
+
 from abc import abstractmethod
 
 
@@ -22,6 +24,14 @@ class PyDoughExpressionAST(PyDoughAST):
     def pydough_type(self) -> PyDoughType:
         """
         The PyDough type of the expression.
+        """
+
+    @property
+    @abstractmethod
+    def is_aggregation(self) -> bool:
+        """
+        Whether the expression corresponds to an aggregation that
+        can collapse multiple records into a scalar value.
         """
 
     @abstractmethod

@@ -28,7 +28,9 @@ from .expression_function_operators import ExpressionFunctionOperator
 from pydough.pydough_ast.pydough_operators.type_inference import (
     NumArgs,
     SelectArgumentType,
+    ConstantType,
 )
+from pydough.types import BooleanType
 
 # TODO: replace with full argument verifiers & deducers
 ADD = BinaryOperator(BinOp.ADD, NumArgs(2), SelectArgumentType(0))
@@ -37,12 +39,12 @@ MUL = BinaryOperator(BinOp.MUL, NumArgs(2), SelectArgumentType(0))
 DIV = BinaryOperator(BinOp.DIV, NumArgs(2), SelectArgumentType(0))
 POW = BinaryOperator(BinOp.POW, NumArgs(2), SelectArgumentType(0))
 MOD = BinaryOperator(BinOp.MOD, NumArgs(2), SelectArgumentType(0))
-LET = BinaryOperator(BinOp.LET, NumArgs(2), SelectArgumentType(0))
-LEQ = BinaryOperator(BinOp.LEQ, NumArgs(2), SelectArgumentType(0))
-EQU = BinaryOperator(BinOp.EQU, NumArgs(2), SelectArgumentType(0))
-NEQ = BinaryOperator(BinOp.NEQ, NumArgs(2), SelectArgumentType(0))
-GEQ = BinaryOperator(BinOp.GEQ, NumArgs(2), SelectArgumentType(0))
-GRT = BinaryOperator(BinOp.GRT, NumArgs(2), SelectArgumentType(0))
+LET = BinaryOperator(BinOp.LET, NumArgs(2), ConstantType(BooleanType()))
+LEQ = BinaryOperator(BinOp.LEQ, NumArgs(2), ConstantType(BooleanType()))
+EQU = BinaryOperator(BinOp.EQU, NumArgs(2), ConstantType(BooleanType()))
+NEQ = BinaryOperator(BinOp.NEQ, NumArgs(2), ConstantType(BooleanType()))
+GEQ = BinaryOperator(BinOp.GEQ, NumArgs(2), ConstantType(BooleanType()))
+GRT = BinaryOperator(BinOp.GRT, NumArgs(2), ConstantType(BooleanType()))
 BAN = BinaryOperator(BinOp.BAN, NumArgs(2), SelectArgumentType(0))
 BOR = BinaryOperator(BinOp.BOR, NumArgs(2), SelectArgumentType(0))
 BXR = BinaryOperator(BinOp.BXR, NumArgs(2), SelectArgumentType(0))

@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["ColumnProperty"]
+
 from pydough.pydough_ast.errors import PyDoughASTException
 from . import PyDoughExpressionAST
 from pydough.types import PyDoughType
@@ -27,6 +29,10 @@ class ColumnProperty(PyDoughExpressionAST):
     @property
     def pydough_type(self) -> PyDoughType:
         return self.column_property.data_type
+
+    @property
+    def is_aggregation(self) -> bool:
+        return False
 
     def requires_enclosing_parens(self, parent: "PyDoughExpressionAST") -> bool:
         return False

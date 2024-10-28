@@ -2,7 +2,9 @@
 TODO: add file-level docstring
 """
 
-from . import PyDoughExpressionAST
+__all__ = ["Literal"]
+
+from .expression_ast import PyDoughExpressionAST
 from pydough.types import PyDoughType
 
 
@@ -28,6 +30,10 @@ class Literal(PyDoughExpressionAST):
     @property
     def pydough_type(self) -> PyDoughType:
         return self._data_type
+
+    @property
+    def is_aggregation(self) -> bool:
+        return False
 
     def requires_enclosing_parens(self, parent: "PyDoughExpressionAST") -> bool:
         return False
