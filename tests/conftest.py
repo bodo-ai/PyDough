@@ -9,8 +9,6 @@ from pydough.metadata.graphs import GraphMetadata
 from typing import Dict, Set
 from pydough.pydough_ast.pydough_operators import (
     builtin_registered_operators,
-)
-from pydough.pydough_ast.pydough_operators.expression_operators.binary_operators import (
     BinaryOperator,
 )
 

@@ -7,11 +7,7 @@ from pydough.pydough_ast.pydough_operators import (
     LOWER,
     SUM,
     IFF,
-)
-from pydough.pydough_ast.pydough_operators.expression_operators.binary_operators import (
     BinaryOperator,
-)
-from pydough.pydough_ast.pydough_operators.expression_operators.expression_function_operators import (
     ExpressionFunctionOperator,
 )
 import re
