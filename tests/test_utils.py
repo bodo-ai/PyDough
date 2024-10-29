@@ -10,21 +10,14 @@ __all__ = [
     "LiteralInfo",
     "ColumnInfo",
     "FunctionInfo",
-    "ReferenceInfo",
-    "TableCollectionInfo",
-    "SubCollectionInfo",
-    "CalcInfo",
-    "pipeline_test_info",
 ]
 
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
     AstNodeBuilder,
     PyDoughAST,
-    PyDoughCollectionAST,
-    PyDoughExpressionAST,
 )
-from typing import Dict, Set, Callable, Any, List, Tuple
+from typing import Dict, Set, Callable, Any, List
 from pydough.types import PyDoughType
 from abc import ABC, abstractmethod
 
@@ -60,17 +53,13 @@ class AstNodeTestInfo(ABC):
     """
 
     @abstractmethod
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
+    def build(self, builder: AstNodeBuilder) -> PyDoughAST:
         """
         Uses a passed-in AST node builder to construct the node.
 
         Args:
             `builder`: the builder that should be used to create the AST
             objects.
-            `context`: an optional collection AST used as the context within
-            which the AST is created.
 
         Returns:
             The new instance of the AST object.
@@ -82,9 +71,7 @@ class LiteralInfo(AstNodeTestInfo):
         self.value: object = value
         self.data_type: PyDoughType = data_type
 
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
+    def build(self, builder: AstNodeBuilder) -> PyDoughAST:
         return builder.build_literal(self.value, self.data_type)
 
 
@@ -93,9 +80,7 @@ class ColumnInfo(AstNodeTestInfo):
         self.collection_name: str = collection_name
         self.property_name: property_name = property_name
 
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
+    def build(self, builder: AstNodeBuilder) -> PyDoughAST:
         return builder.build_column(self.collection_name, self.property_name)
 
 
@@ -104,86 +89,6 @@ class FunctionInfo(AstNodeTestInfo):
         self.function_name: str = function_name
         self.args_info: List[AstNodeTestInfo] = args_info
 
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
-        args: List[PyDoughAST] = [
-            info.build(builder, context) for info in self.args_info
-        ]
+    def build(self, builder: AstNodeBuilder) -> PyDoughAST:
+        args: List[PyDoughAST] = [info.build(builder) for info in self.args_info]
         return builder.build_expression_function_call(self.function_name, args)
-
-
-class ReferenceInfo(AstNodeTestInfo):
-    def __init__(self, name: str):
-        self.name: str = name
-
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return builder.build_reference(context, self.name)
-
-
-class TableCollectionInfo(AstNodeTestInfo):
-    def __init__(self, name: str):
-        self.name: str = name
-
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
-        return builder.build_table_collection(self.name)
-
-
-class SubCollectionInfo(AstNodeTestInfo):
-    def __init__(self, name: str):
-        self.name: str = name
-
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return builder.build_sub_collection(context, self.name)
-
-
-class CalcInfo(AstNodeTestInfo):
-    def __init__(self, **kwargs):
-        self.args: List[Tuple[str, AstNodeTestInfo]] = list(kwargs.items())
-
-    def build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> PyDoughAST:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
-        args: List[Tuple[str, PyDoughExpressionAST]] = [
-            (name, info.build(builder, context)) for name, info in self.args
-        ]
-        return builder.build_calc(context, args)
-
-
-def pipeline_test_info(
-    builder: AstNodeBuilder, infos: List[AstNodeTestInfo]
-) -> PyDoughCollectionAST:
-    """
-    Transforms a list of collection-returning AstNodeTestInfo objects into
-    a single collection info by evaluating them sequentially, piping the output
-    of each as the context of the next one.
-
-    Args:
-        `builder`: the builder that should be used to create the AST
-        objects.
-        `infos`: the list of test info objects each representing a collection
-        derived from the previous collection in the list.
-
-    Returns:
-        The final collection
-    """
-    collection: PyDoughCollectionAST | None = None
-    for info in infos:
-        collection = info.build(builder, collection)
-    assert collection is not None, "Expected to output a collection"
-    return collection

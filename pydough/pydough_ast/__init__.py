@@ -10,10 +10,6 @@ __all__ = [
     "Literal",
     "ExpressionFunctionCall",
     "PyDoughASTException",
-    "PyDoughCollectionAST",
-    "TableCollection",
-    "SubCollection",
-    "Calc",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -24,5 +20,4 @@ from .expressions import (
     Literal,
     ExpressionFunctionCall,
 )
-from .collections import PyDoughCollectionAST, TableCollection, SubCollection, Calc
 from .node_builder import AstNodeBuilder
