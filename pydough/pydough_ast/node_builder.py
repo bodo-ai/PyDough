@@ -11,16 +11,19 @@ from pydough.metadata import (
     TableColumnMetadata,
     PyDoughMetadataException,
 )
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from pydough.types import PyDoughType
 from .abstract_pydough_ast import PyDoughAST
 from .expressions import (
     Literal,
     ExpressionFunctionCall,
     ColumnProperty,
+    Reference,
+    PyDoughExpressionAST,
 )
 from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
 from .errors import PyDoughASTException
+from .collections import PyDoughCollectionAST, TableCollection, Calc
 
 
 class AstNodeBuilder(object):
@@ -112,3 +115,56 @@ class AstNodeBuilder(object):
             raise PyDoughASTException(f"Unrecognized operator name {function_name!r}")
         operator: PyDoughOperatorAST = self.operators[function_name]
         return ExpressionFunctionCall(operator, args)
+
+    def build_reference(self, collection: PyDoughCollectionAST, name: str) -> Reference:
+        """
+        Creates a new reference to an expression from a preceding collection.
+
+        Args:
+            `collection`: the collection that the reference comes from.
+            `name`: the name of the expression being referenced.
+
+        Returns:
+            The newly created PyDough Reference.
+
+        Raises:
+            `PyDoughASTException`: if `name` does not refer to an expression in
+            the collection.
+        """
+        return Reference(collection, name)
+
+    def build_table_collection(self, name: str) -> TableCollection:
+        """
+        Creates a new table collection invocation.
+
+        Args:
+            `name`: the name of the collection being referenced.
+
+        Returns:
+            The newly created PyDough TableCollection.
+
+        Raises:
+            `PyDoughMetadataException`: if `name` does not refer to a
+            collection in the graph.
+        """
+        return TableCollection(self.graph.get_collection(name))
+
+    def build_calc(
+        self,
+        collection: PyDoughCollectionAST,
+        terms: List[Tuple[str, PyDoughExpressionAST]],
+    ) -> Calc:
+        """
+        Creates a CALC term.
+
+        Args:
+            `collection`: the preceding collection.
+            `terms`: the named expressions in the CALC term.
+
+        Returns:
+            The newly created PyDough CALC term.
+
+        Raises:
+            `PyDoughASTException`: if the terms are invalid for the CALC term.
+        """
+        return Calc(collection, terms)
