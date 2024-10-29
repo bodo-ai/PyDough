@@ -27,7 +27,7 @@ import pytest
     [
         pytest.param(
             [TableCollectionInfo("Regions")],
-            {"comment": 0, "key": 1, "name": 2},
+            {"key": 0, "name": 1, "comment": 2},
             {
                 "name",
                 "key",
