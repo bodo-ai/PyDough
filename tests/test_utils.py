@@ -13,7 +13,6 @@ __all__ = [
     "ReferenceInfo",
     "TableCollectionInfo",
     "CalcInfo",
-    "pipeline_test_info",
 ]
 
 from pydough.metadata import GraphMetadata
@@ -77,6 +76,10 @@ class AstNodeTestInfo(ABC):
 
 
 class LiteralInfo(AstNodeTestInfo):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, value: object, data_type: PyDoughType):
         self.value: object = value
         self.data_type: PyDoughType = data_type
@@ -88,6 +91,10 @@ class LiteralInfo(AstNodeTestInfo):
 
 
 class ColumnInfo(AstNodeTestInfo):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, collection_name: str, property_name: str):
         self.collection_name: str = collection_name
         self.property_name: property_name = property_name
@@ -99,6 +106,10 @@ class ColumnInfo(AstNodeTestInfo):
 
 
 class FunctionInfo(AstNodeTestInfo):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, function_name: str, args_info: List[AstNodeTestInfo]):
         self.function_name: str = function_name
         self.args_info: List[AstNodeTestInfo] = args_info
@@ -113,6 +124,10 @@ class FunctionInfo(AstNodeTestInfo):
 
 
 class ReferenceInfo(AstNodeTestInfo):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, name: str):
         self.name: str = name
 
@@ -125,18 +140,58 @@ class ReferenceInfo(AstNodeTestInfo):
         return builder.build_reference(context, self.name)
 
 
-class TableCollectionInfo(AstNodeTestInfo):
+class CollectionTestInfo(AstNodeTestInfo):
+    """
+    TODO: add class docstring
+    """
+
+    def __init__(self):
+        self.successor: CollectionTestInfo | None = None
+
+    def __rshift__(self, other):
+        """
+        TODO: add function docstring
+        """
+        assert isinstance(
+            other, CollectionTestInfo
+        ), f"can only use >> for pipelining collection info when the right hand side is a collection info, not {other.__class__.__name__}"
+        self.successor = other
+        return self
+
+    def succeed(
+        self, builder: AstNodeBuilder, collection: PyDoughCollectionAST
+    ) -> PyDoughAST:
+        """
+        TODO: add function docstring
+        """
+        if self.successor is None:
+            return collection
+        return self.successor.build(builder, collection)
+
+
+class TableCollectionInfo(CollectionTestInfo):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, name: str):
+        super().__init__()
         self.name: str = name
 
     def build(
         self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
     ) -> PyDoughAST:
-        return builder.build_table_collection(self.name)
+        local_result: PyDoughCollectionAST = builder.build_table_collection(self.name)
+        return self.succeed(builder, local_result)
 
 
-class CalcInfo(AstNodeTestInfo):
+class CalcInfo(CollectionTestInfo):
+    """
+    TODO: add class docstring
+    """
+
     def __init__(self, **kwargs):
+        super().__init__()
         self.args: List[Tuple[str, AstNodeTestInfo]] = list(kwargs.items())
 
     def build(
@@ -144,32 +199,9 @@ class CalcInfo(AstNodeTestInfo):
     ) -> PyDoughAST:
         assert (
             context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
+        ), "Cannot call .build() on CalcInfo without providing a context"
         args: List[Tuple[str, PyDoughExpressionAST]] = [
             (name, info.build(builder, context)) for name, info in self.args
         ]
-        return builder.build_calc(context, args)
-
-
-def pipeline_test_info(
-    builder: AstNodeBuilder, infos: List[AstNodeTestInfo]
-) -> PyDoughCollectionAST:
-    """
-    Transforms a list of collection-returning AstNodeTestInfo objects into
-    a single collection info by evaluating them sequentially, piping the output
-    of each as the context of the next one.
-
-    Args:
-        `builder`: the builder that should be used to create the AST
-        objects.
-        `infos`: the list of test info objects each representing a collection
-        derived from the previous collection in the list.
-
-    Returns:
-        The final collection
-    """
-    collection: PyDoughCollectionAST | None = None
-    for info in infos:
-        collection = info.build(builder, collection)
-    assert collection is not None, "Expected to output a collection"
-    return collection
+        local_result: PyDoughCollectionAST = builder.build_calc(context, args)
+        return self.succeed(builder, local_result)

@@ -2,7 +2,7 @@
 TODO: add file-level docstring.
 """
 
-from typing import List, Set, Dict
+from typing import Set, Dict
 from pydough.types import (
     Int64Type,
 )
@@ -13,7 +13,6 @@ from test_utils import (
     ReferenceInfo,
     TableCollectionInfo,
     CalcInfo,
-    pipeline_test_info,
 )
 import pytest
 
@@ -22,7 +21,7 @@ import pytest
     "calc_pipeline, expected_calcs, expected_total_names",
     [
         pytest.param(
-            [TableCollectionInfo("Regions")],
+            TableCollectionInfo("Regions"),
             {"key": 0, "name": 1, "comment": 2},
             {
                 "name",
@@ -32,10 +31,7 @@ import pytest
             id="regions",
         ),
         pytest.param(
-            [
-                TableCollectionInfo("Regions"),
-                CalcInfo(),
-            ],
+            (TableCollectionInfo("Regions") >> CalcInfo()),
             {},
             {
                 "name",
@@ -45,10 +41,10 @@ import pytest
             id="regions_empty_calc",
         ),
         pytest.param(
-            [
-                TableCollectionInfo("Regions"),
-                CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")),
-            ],
+            (
+                TableCollectionInfo("Regions")
+                >> CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+            ),
             {"foo": 0, "bar": 1},
             {
                 "name",
@@ -62,7 +58,7 @@ import pytest
     ],
 )
 def test_collections_calc_terms(
-    calc_pipeline: List[AstNodeTestInfo],
+    calc_pipeline: AstNodeTestInfo,
     expected_calcs: Dict[str, int],
     expected_total_names: Set[str],
     tpch_node_builder: AstNodeBuilder,
@@ -70,9 +66,7 @@ def test_collections_calc_terms(
     """
     Tests that column properties have the correct return type.
     """
-    collection: PyDoughCollectionAST = pipeline_test_info(
-        tpch_node_builder, calc_pipeline
-    )
+    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     assert collection.calc_terms == set(
         expected_calcs
     ), "Mismatch between set of calc terms and expected value"
