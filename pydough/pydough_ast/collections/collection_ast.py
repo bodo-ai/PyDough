@@ -43,15 +43,15 @@ class PyDoughCollectionAST(PyDoughAST):
     def calc_terms(self) -> Set[str]:
         """
         The list of expressions that would be retrieved if the collection
-        were to be printed. This is the equivalent of the most-recent CALC
-        term.
+        were to have its results evaluated. This is the set of names in the
+        most-recent CALC, potentially with extra expressions added since then.
         """
 
     @property
     @abstractmethod
     def all_terms(self) -> Set[str]:
         """
-        The set of each expression name accessible by the context.
+        The set of expression/subcollection names accessible by the context.
         """
 
     @abstractmethod
@@ -101,10 +101,10 @@ class PyDoughCollectionAST(PyDoughAST):
         structured. For example, consider the following PyDough snippet:
 
         ```
-        Regions.WHERE(STARTSWITH(name, 'A')).nations(
+        Regions.WHERE(ENDSWITH(name, 's')).nations(
             a=BACK(1).name,
             b=name,
-            c=MAX(suppliers.supply_records.lines.ship_date),
+            c=MAX(YEAR(suppliers.WHERE(STARTSWITH(phone, '415')).supply_records.lines.ship_date)),
             d=COUNT(customers.WHERE(acctbal > 0))
         ).WHERE(
             c > 1000
@@ -119,15 +119,35 @@ class PyDoughCollectionAST(PyDoughAST):
         ┌─── OrderBy[d.DESC()]
         ├─── Where[c > 1000]
         ├─── Calc[a=[ancestor.name], b=[name], c=[MAX($2.ship_date)], d=[COUNT($1)]]
-        ├─┬─ AccessSubCollections
+        ├─┬─ Combine
         │ ├─┬─ Where[acctbal > 0]
-        │ │ └─── PluralSubCollection[customers]
-        │ └─┬─ PluralSubCollection[lines]
-        │   └─┬─ PluralSubCollection[supply_records]
-        │     └─── PluralSubCollection[suppliers]
-        └─┬─ PluralSubCollection[nations]
-          ├─── Where[STARTSWITH(name, 'A')]
+        │ │ └─── SubCollection[customers]
+        │ ├─── Calc[_expr1=[YEAR(ship_date)]]
+        │ └─┬─ SubCollection[lines]
+        │   └─┬─ SubCollection[supply_records]
+        │     ├─── Where[STARTSWITH(phone, '415')]
+        │     └─── SubCollection[suppliers]
+        └─┬─ SubCollection[nations]
+          ├─── Where[ENDSWITH(name, 's')]
           └─── TableCollection[Regions]
+        ```
+
+        ALTERNATIVE STRUCTURE
+        ```
+        ┌─── TableCollection[Regions]
+        ├─── Where[ENDSWITH(name, 's')]
+        └─┬─ SubCollection[nations]
+          ├─┬─ Combine
+          │ ├─┬─ SubCollection[customers]
+          │ │ └─── Where[acctbal > 0]
+          │ └─┬─ SubCollection[suppliers]
+          │   ├─── Where[STARTSWITH(phone, '415')]
+          │   └─┬─ SubCollection[supply_records]
+          │     └─┬─ SubCollection[lines]
+          │       └─── Calc[_expr1=YEAR(ship_date)]
+          ├─── Calc[a=[ancestor.name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
+          ├─── Where[c > 1000]
+          └─── OrderBy[d.DESC()]
         ```
 
         Returns:
