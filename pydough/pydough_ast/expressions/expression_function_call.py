@@ -48,7 +48,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return self.operator.is_aggregation
 
-    def requires_enclosing_parens(self, parent: "PyDoughExpressionAST") -> bool:
+    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return self.operator.requires_enclosing_parens(parent)
 
     def to_string(self) -> str:

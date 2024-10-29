@@ -35,7 +35,7 @@ class Literal(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return False
 
-    def requires_enclosing_parens(self, parent: "PyDoughExpressionAST") -> bool:
+    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False
 
     def to_string(self) -> str:

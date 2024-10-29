@@ -49,6 +49,7 @@ class CollectionMetadata(AbstractMetadata):
         self._inherited_properties: Dict[str, List[InheritedPropertyMetadata]] = (
             defaultdict(list)
         )
+        self._definition_order: Dict[str, int] = {}
 
     @property
     def graph(self) -> GraphMetadata:
@@ -81,6 +82,15 @@ class CollectionMetadata(AbstractMetadata):
         properties sharing that name.
         """
         return self._inherited_properties
+
+    @property
+    def definition_order(self):
+        """
+        A dictionary mapping each property added to the collection to the time
+        when it was added as an index, so the properties can be re-accessed
+        later in the same order.
+        """
+        return self._definition_order
 
     @property
     def path(self) -> str:
@@ -244,6 +254,7 @@ class CollectionMetadata(AbstractMetadata):
         property: PropertyMetadata = property
         self.verify_allows_property(property, False)
         self.properties[property.name] = property
+        self.definition_order[property.name] = len(self.definition_order)
 
     def add_inherited_property(self, property: AbstractMetadata) -> None:
         """
