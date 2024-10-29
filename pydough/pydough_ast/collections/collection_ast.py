@@ -102,23 +102,23 @@ class PyDoughCollectionAST(PyDoughAST):
 
         ```
         Regions.WHERE(STARTSWITH(name, 'A')).nations(
-            region_name=BACK(1).name,
-            nation_name=name,
-            most_recent_shipment=MAX(suppliers.supply_records.lines.ship_date),
-            n_customers=COUNT(customers.WHERE(acctbal > 0))
+            a=BACK(1).name,
+            b=name,
+            c=MAX(suppliers.supply_records.lines.ship_date),
+            d=COUNT(customers.WHERE(acctbal > 0))
         ).WHERE(
-            n_customers > 1000
+            c > 1000
         ).ORDER_BY(
-            most_recent_shipment.DESC()
+            d.DESC()
         ),
         ```
 
         A valid string representation of this would be:
 
         ```
-        ┌─── OrderBy[most_recent_shipment.DESC()]
-        ├─── Where[n_customers > 1000]
-        └─┬─ Calc[region_name=[name], nation_name=[name], most_recent_shipment=[MAX($2.ship_date)], n_customers=[COUNT($1)]]
+        ┌─── OrderBy[d.DESC()]
+        ├─── Where[c > 1000]
+        └─┬─ Calc[a=[ancestor.name], b=[name], c=[MAX($2.ship_date)], d=[COUNT($1)]]
           ├─┬─ AccessSubCollections
           │ ├─┬─ Where[acctbal > 0]
           │ │ └─── PluralSubCollection[customers]
