@@ -118,16 +118,16 @@ class PyDoughCollectionAST(PyDoughAST):
         ```
         ┌─── OrderBy[d.DESC()]
         ├─── Where[c > 1000]
-        └─┬─ Calc[a=[ancestor.name], b=[name], c=[MAX($2.ship_date)], d=[COUNT($1)]]
-          ├─┬─ AccessSubCollections
-          │ ├─┬─ Where[acctbal > 0]
-          │ │ └─── PluralSubCollection[customers]
-          │ └─┬─ PluralSubCollection[lines]
-          │   └─┬─ PluralSubCollection[supply_records]
-          │     └─── PluralSubCollection[suppliers]
-          └─┬─ PluralSubCollection[nations]
-            ├─── WHERE[STARTSWITH(name, 'A')]
-            └─── TableCollection[Regions]
+        ├─── Calc[a=[ancestor.name], b=[name], c=[MAX($2.ship_date)], d=[COUNT($1)]]
+        ├─┬─ AccessSubCollections
+        │ ├─┬─ Where[acctbal > 0]
+        │ │ └─── PluralSubCollection[customers]
+        │ └─┬─ PluralSubCollection[lines]
+        │   └─┬─ PluralSubCollection[supply_records]
+        │     └─── PluralSubCollection[suppliers]
+        └─┬─ PluralSubCollection[nations]
+          ├─── Where[STARTSWITH(name, 'A')]
+          └─── TableCollection[Regions]
         ```
 
         Returns:
