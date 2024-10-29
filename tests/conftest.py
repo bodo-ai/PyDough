@@ -7,8 +7,14 @@ import pytest
 import json
 from pydough.metadata.graphs import GraphMetadata
 from typing import Dict, Set
+from pydough.pydough_ast.pydough_operators import (
+    builtin_registered_operators,
+    BinaryOperator,
+)
 
 from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
+
+import os
 
 
 @pytest.fixture(scope="session")
@@ -16,7 +22,7 @@ def sample_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the sample graphs.
     """
-    return "tests/test_metadata/sample_graphs.json"
+    return f"{os.path.dirname(__file__)}/test_metadata/sample_graphs.json"
 
 
 @pytest.fixture(scope="session")
@@ -25,7 +31,7 @@ def sample_graph_nouns_path() -> str:
     Tuple of the path to the JSON file containing the nouns for each
     of the sample graphs.
     """
-    return "tests/test_metadata/sample_graphs_nouns.json"
+    return f"{os.path.dirname(__file__)}/test_metadata/sample_graphs_nouns.json"
 
 
 @pytest.fixture(scope="session")
@@ -33,7 +39,7 @@ def invalid_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the invalid graphs.
     """
-    return "tests/test_metadata/invalid_graphs.json"
+    return f"{os.path.dirname(__file__)}/test_metadata/invalid_graphs.json"
 
 
 @pytest.fixture(scope="session")
@@ -103,3 +109,17 @@ def sample_graphs(
     file.
     """
     return get_sample_graph(sample_graph_names)
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(operator, id=operator.binop.name)
+        for operator in builtin_registered_operators().values()
+        if isinstance(operator, BinaryOperator)
+    ]
+)
+def binary_operators(request) -> BinaryOperator:
+    """
+    Returns every PyDough expression operator for a BinOp.
+    """
+    return request.param
