@@ -101,7 +101,7 @@ class PyDoughCollectionAST(PyDoughAST):
         structured. For example, consider the following PyDough snippet:
 
         ```
-        Regions.WHERE(ENDSWITH(name, 's')).nations(
+        Regions.WHERE(ENDSWITH(name, 's')).nations.WHERE(name != 'USA')(
             a=BACK(1).name,
             b=name,
             c=MAX(YEAR(suppliers.WHERE(STARTSWITH(phone, '415')).supply_records.lines.ship_date)),
@@ -127,6 +127,7 @@ class PyDoughCollectionAST(PyDoughAST):
         │   └─┬─ SubCollection[supply_records]
         │     ├─── Where[STARTSWITH(phone, '415')]
         │     └─── SubCollection[suppliers]
+        ├─── Where[name != 'USA']
         └─┬─ SubCollection[nations]
           ├─── Where[ENDSWITH(name, 's')]
           └─── TableCollection[Regions]
@@ -137,6 +138,7 @@ class PyDoughCollectionAST(PyDoughAST):
         ┌─── TableCollection[Regions]
         ├─── Where[ENDSWITH(name, 's')]
         └─┬─ SubCollection[nations]
+          ├─── Where[name != 'USA']
           ├─┬─ Combine
           │ ├─┬─ SubCollection[customers]
           │ │ └─── Where[acctbal > 0]
