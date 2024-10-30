@@ -330,7 +330,8 @@ def test_collections_calc_terms(
     tpch_node_builder: AstNodeBuilder,
 ):
     """
-    Tests that column properties have the correct return type.
+    Tests that a sequence of collection-producing AST nodes results in the
+    correct calc terms & total set of available terms.
     """
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     assert collection.calc_terms == set(
