@@ -116,32 +116,11 @@ class PyDoughCollectionAST(PyDoughAST):
         A valid string representation of this would be:
 
         ```
-        ┌─── OrderBy[d.DESC()]
-        ├─── Where[c > 1000]
-        ├─── Calc[a=[ancestor.name], b=[name], c=[MAX($2.ship_date)], d=[COUNT($1)]]
-        ├─┬─ Combine
-        │ ├─┬─ Where[acctbal > 0]
-        │ │ └─── SubCollection[customers]
-        │ ├─── Calc[_expr1=[YEAR(ship_date)]]
-        │ └─┬─ SubCollection[lines]
-        │   └─┬─ SubCollection[supply_records]
-        │     ├─── Where[STARTSWITH(phone, '415')]
-        │     └─── SubCollection[suppliers]
-        ├─── Where[name != 'USA']
-        └─┬─ SubCollection[nations]
-          ├─── Where[ENDSWITH(name, 's')]
-          └─── TableCollection[Regions]
-        ```
-
-        ALTERNATIVE STRUCTURE
-        ```
         ┌─── TableCollection[Regions]
-        ├─── Where[ENDSWITH(name, 's')]
-        ├─── Calc[foo=..., bar=...]
-        └─┬─ SubCollection[nations]
+        └─┬─ Where[ENDSWITH(name, 's')]
+          ├─── SubCollection[nations]
           ├─── Where[name != 'USA']
-          ├─── Calc[x1=BACK(1).foo, x2=BACK(1).bar]
-          ├─┬─ Combine
+          ├─┬─ Calc[a=[ancestor.name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
           │ ├─┬─ SubCollection[customers]
           │ │ └─── Where[acctbal > 0]
           │ └─┬─ SubCollection[suppliers]
@@ -149,7 +128,6 @@ class PyDoughCollectionAST(PyDoughAST):
           │   └─┬─ SubCollection[supply_records]
           │     └─┬─ SubCollection[lines]
           │       └─── Calc[_expr1=YEAR(ship_date)]
-          ├─── Calc[a=[ancestor.name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
           ├─── Where[c > 1000]
           └─── OrderBy[d.DESC()]
         ```
