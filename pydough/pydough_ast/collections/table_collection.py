@@ -59,7 +59,6 @@ class TableCollection(PyDoughCollectionAST):
                 key=lambda p: self.collection.definition_order[p],
             )
             for property_name in ordered_properties:
-                print("DEFINING PROPERTY", property_name)
                 property: PropertyMetadata = self.collection.get_property(property_name)
                 calc_idx: int | None
                 expression: PyDoughAST

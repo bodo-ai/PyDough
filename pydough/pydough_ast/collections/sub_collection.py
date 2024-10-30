@@ -47,7 +47,7 @@ class SubCollection(TableCollection):
         return self.parent
 
     def to_string(self) -> str:
-        return f"{self.parent.to_string()}.{self.collection.name}"
+        return f"{self.parent.to_string()}.{self.subcollection_property.name}"
 
     def to_tree_string(self) -> str:
         raise NotImplementedError

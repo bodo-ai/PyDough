@@ -597,6 +597,18 @@ def get_property_dependencies(
         else:
             iters_since_change += 1
 
+    # Post-process the dependencies by having each property without any
+    # dependenciesdepend on the previous such property, thus ensuring that
+    # the topological ordering is "stable" with regards to the order that
+    # column properties were defined in the metadata.
+    prev_no_dependency_idx: int = -1
+    for idx in range(len(dependencies)):
+        dependency_set: List[int] = dependencies[idx]
+        if len(dependencies[idx]) == 0:
+            if prev_no_dependency_idx >= 0:
+                dependency_set.add(prev_no_dependency_idx)
+            prev_no_dependency_idx = idx
+
     return dependencies
 
 

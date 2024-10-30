@@ -43,15 +43,15 @@ class PyDoughCollectionAST(PyDoughAST):
     def calc_terms(self) -> Set[str]:
         """
         The list of expressions that would be retrieved if the collection
-        were to be printed. This is the equivalent of the most-recent CALC
-        term.
+        were to have its results evaluated. This is the set of names in the
+        most-recent CALC, potentially with extra expressions added since then.
         """
 
     @property
     @abstractmethod
     def all_terms(self) -> Set[str]:
         """
-        The set of each expression name accessible by the context.
+        The set of expression/subcollection names accessible by the context.
         """
 
     @abstractmethod
@@ -101,33 +101,57 @@ class PyDoughCollectionAST(PyDoughAST):
         structured. For example, consider the following PyDough snippet:
 
         ```
-        Regions.WHERE(STARTSWITH(name, 'A')).nations(
-            region_name=BACK(1).name,
-            nation_name=name,
-            most_recent_shipment=MAX(suppliers.supply_records.lines.ship_date),
-            n_customers=COUNT(customers.WHERE(acctbal > 0))
+        Regions.WHERE(ENDSWITH(name, 's')).nations.WHERE(name != 'USA')(
+            a=BACK(1).name,
+            b=name,
+            c=MAX(YEAR(suppliers.WHERE(STARTSWITH(phone, '415')).supply_records.lines.ship_date)),
+            d=COUNT(customers.WHERE(acctbal > 0))
         ).WHERE(
-            n_customers > 1000
+            c > 1000
         ).ORDER_BY(
-            most_recent_shipment.DESC()
-        ),
+            d.DESC()
+        )
         ```
 
         A valid string representation of this would be:
 
         ```
-        ┌─── OrderBy[most_recent_shipment.DESC()]
-        ├─── Where[n_customers > 1000]
-        └─┬─ Calc[region_name=[name], nation_name=[name], most_recent_shipment=[MAX($2.ship_date)], n_customers=[COUNT($1)]]
-          ├─┬─ AccessSubCollections
-          │ ├─┬─ Where[acctbal > 0]
-          │ │ └─── PluralSubCollection[customers]
-          │ └─┬─ PluralSubCollection[lines]
-          │   └─┬─ PluralSubCollection[supply_records]
-          │     └─── PluralSubCollection[suppliers]
-          └─┬─ PluralSubCollection[nations]
-            ├─── WHERE[STARTSWITH(name, 'A')]
-            └─── TableCollection[Regions]
+        ┌─── OrderBy[d.DESC()]
+        ├─── Where[c > 1000]
+        ├─── Calc[a=[ancestor.name], b=[name], c=[MAX($2.ship_date)], d=[COUNT($1)]]
+        ├─┬─ Combine
+        │ ├─┬─ Where[acctbal > 0]
+        │ │ └─── SubCollection[customers]
+        │ ├─── Calc[_expr1=[YEAR(ship_date)]]
+        │ └─┬─ SubCollection[lines]
+        │   └─┬─ SubCollection[supply_records]
+        │     ├─── Where[STARTSWITH(phone, '415')]
+        │     └─── SubCollection[suppliers]
+        ├─── Where[name != 'USA']
+        └─┬─ SubCollection[nations]
+          ├─── Where[ENDSWITH(name, 's')]
+          └─── TableCollection[Regions]
+        ```
+
+        ALTERNATIVE STRUCTURE
+        ```
+        ┌─── TableCollection[Regions]
+        ├─── Where[ENDSWITH(name, 's')]
+        ├─── Calc[foo=..., bar=...]
+        └─┬─ SubCollection[nations]
+          ├─── Where[name != 'USA']
+          ├─── Calc[x1=BACK(1).foo, x2=BACK(1).bar]
+          ├─┬─ Combine
+          │ ├─┬─ SubCollection[customers]
+          │ │ └─── Where[acctbal > 0]
+          │ └─┬─ SubCollection[suppliers]
+          │   ├─── Where[STARTSWITH(phone, '415')]
+          │   └─┬─ SubCollection[supply_records]
+          │     └─┬─ SubCollection[lines]
+          │       └─── Calc[_expr1=YEAR(ship_date)]
+          ├─── Calc[a=[ancestor.name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
+          ├─── Where[c > 1000]
+          └─── OrderBy[d.DESC()]
         ```
 
         Returns:

@@ -5,9 +5,10 @@ TODO: add file-level docstring
 __all__ = ["CompoundSubCollection"]
 
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
 from pydough.metadata import CompoundRelationshipMetadata
+from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from .collection_ast import PyDoughCollectionAST
 from .sub_collection import SubCollection
@@ -33,19 +34,47 @@ class CompoundSubCollection(SubCollection):
         source: PyDoughCollectionAST,
         compound: CompoundRelationshipMetadata,
         inherited_properties: Dict[str, str],
+        root: bool = False,
     ) -> PyDoughCollectionAST:
-        """ """
-        for property in [compound.primary_property, compound.secondary_property]:
-            # new_inherited_properties: Dict[str, str] = {}
+        """
+        TODO: add function docstring
+        """
+        for idx, property in enumerate(
+            [compound.primary_property, compound.secondary_property]
+        ):
             if isinstance(property, CompoundRelationshipMetadata):
-                source = self.populate_subcollection_chain(source, property)
+                for alias, property_name in inherited_properties.items():
+                    if property_name in property.inherited_properties:
+                        inherited_properties[alias] = property.inherited_properties[
+                            property_name
+                        ].property_to_inherit.name
+                source = self.populate_subcollection_chain(
+                    source, property, inherited_properties
+                )
             else:
-                # source_idx: int = len(self._inheritance_sources)
+                source_idx: int = len(self._subcollection_chain)
                 source = source.get_term(property.name)
+                if idx == 0 or not root:
+                    found_inherited: Set[str] = set()
+                    for alias, property_name in inherited_properties.items():
+                        if property_name in property.other_collection.properties:
+                            found_inherited.add(alias)
+                            self._inheritance_sources[alias] = (
+                                source_idx,
+                                property_name,
+                            )
+                            inh_property: PyDoughAST = source.get_term(property_name)
+                            if isinstance(inh_property, PyDoughCollectionAST):
+                                self._properties[alias] = (None, inh_property)
+                            else:
+                                self._properties[alias] = (
+                                    self._calc_counter,
+                                    inh_property,
+                                )
+                                self._calc_counter += 1
+                    for alias in found_inherited:
+                        inherited_properties.pop(alias)
                 self._subcollection_chain.append(source)
-                # for alias, property_name in inherited_properties:
-                #     pass
-            # inherited_properties = new_inherited_properties
 
         return source
 
@@ -55,6 +84,7 @@ class CompoundSubCollection(SubCollection):
         The list of subcollection accesses used to define the compound
         relationship.
         """
+        self.properties
         return self._subcollection_chain
 
     @property
@@ -65,6 +95,7 @@ class CompoundSubCollection(SubCollection):
         the subcollection chain, as well as the name it had within that
         regular collection.
         """
+        self.properties
         return self._inheritance_sources
 
     @property
@@ -73,34 +104,19 @@ class CompoundSubCollection(SubCollection):
             self._properties = super().properties
             compound: CompoundRelationshipMetadata = self.subcollection_property
             inherited_map: Dict[str, str] = {
-                name: property.name
+                name: property.property_to_inherit.name
                 for name, property in compound.inherited_properties.items()
             }
             self.populate_subcollection_chain(
-                self.parent, self.subcollection_property, inherited_map
+                self.parent, self.subcollection_property, inherited_map, root=True
             )
-            breakpoint()
-            # if isinstance(self.subcollection_property, CompoundRelationshipMetadata):
-
-            #     primary: SubcollectionRelationshipMetadata = self.subcollection_property.primary_property
-            #     middle: CollectionMetadata = primary.other_collection
-            #     secondary: SubcollectionRelationshipMetadata = self.subcollection_property.secondary_property
-            #     middle.inherited_properties
-            #     for property_name, property in sorted(self.subcollection_property.inherited_properties.items()):
-            #         inherited_property: InheritedPropertyMetadata = property
-            #         inherited_property.property_inherited_from
-            #         inherited_property.property_to_inherit
-            #         calc_idx: int | None
-            #         expression: PyDoughAST
-            #         # breakpoint()
-            #         if property.is_subcollection:
-            #             calc_idx = None
-            #             expression = SubCollection(self, property.property_to_inherit)
-            #         else:
-            #             calc_idx = self._calc_counter
-            #             expression = ColumnProperty(property)
-            #             self._calc_counter += 1
-            #         self._properties[property_name] = (calc_idx, expression)
+            undefined_inherited: Set[str] = set(compound.inherited_properties) - set(
+                self.inheritance_sources
+            )
+            if len(undefined_inherited) > 0:
+                raise PyDoughASTException(
+                    f"Undefined inherited properties: {undefined_inherited}"
+                )
         return self._properties
 
     def to_string(self) -> str:
