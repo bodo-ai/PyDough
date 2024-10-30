@@ -31,7 +31,7 @@ import pytest
             id="regions",
         ),
         pytest.param(
-            (TableCollectionInfo("Regions") >> CalcInfo()),
+            (TableCollectionInfo("Regions") ** CalcInfo()),
             {},
             {
                 "name",
@@ -43,7 +43,7 @@ import pytest
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                >> CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
             ),
             {"foo": 0, "bar": 1},
             {
