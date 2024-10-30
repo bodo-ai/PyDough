@@ -8,6 +8,7 @@ __all__ = [
     "Literal",
     "ExpressionFunctionCall",
     "Reference",
+    "BackReferenceExpression",
 ]
 
 from .expression_ast import PyDoughExpressionAST
@@ -15,3 +16,4 @@ from .column_property import ColumnProperty
 from .literal import Literal
 from .expression_function_call import ExpressionFunctionCall
 from .reference import Reference
+from .back_reference_expression import BackReferenceExpression

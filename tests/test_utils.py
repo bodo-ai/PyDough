@@ -14,6 +14,7 @@ __all__ = [
     "TableCollectionInfo",
     "SubCollectionInfo",
     "CalcInfo",
+    "BackReferenceExpressionInfo",
 ]
 
 from pydough.metadata import GraphMetadata
@@ -173,6 +174,30 @@ class ReferenceInfo(AstNodeTestInfo):
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
         return builder.build_reference(context, self.name)
+
+
+class BackReferenceExpressionInfo(AstNodeTestInfo):
+    """
+    TestInfo implementation class to build a back reference expression.
+    Contains the following fields:
+    - `name`: the name of the calc term being referenced.
+    - `levels`: the number of levels upward to reference.
+    """
+
+    def __init__(self, name: str, levels: int):
+        self.name: str = name
+        self.levels: int = levels
+
+    def to_string(self) -> str:
+        return f"BackReferenceExpression[{self.levels}:{self.name}]"
+
+    def build(
+        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
+    ) -> PyDoughAST:
+        assert (
+            context is not None
+        ), "Cannot call .build() on BackReferenceExpressionInfo without providing a context"
+        return builder.build_back_reference_expression(context, self.name, self.levels)
 
 
 class CollectionTestInfo(AstNodeTestInfo):

@@ -14,6 +14,7 @@ from test_utils import (
     LiteralInfo,
     FunctionInfo,
     ReferenceInfo,
+    BackReferenceExpressionInfo,
     TableCollectionInfo,
     SubCollectionInfo,
     CalcInfo,
@@ -320,6 +321,119 @@ import pytest
                 "supplier_region",
             },
             id="regions_lines",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** CalcInfo(
+                    region_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=ReferenceInfo("name"),
+                )
+            ),
+            {"region_name": 0, "nation_name": 1},
+            {
+                "region_name",
+                "nation_name",
+                "name",
+                "key",
+                "region_key",
+                "comment",
+                "customers",
+                "region",
+                "orders_shipped_to",
+                "suppliers",
+            },
+            id="regions_nations_backcalc",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** SubCollectionInfo("suppliers")
+                ** SubCollectionInfo("supply_records")
+                ** SubCollectionInfo("lines")
+                ** CalcInfo(
+                    region_name=BackReferenceExpressionInfo("name", 4),
+                    nation_name=BackReferenceExpressionInfo("name", 3),
+                    supplier_name=BackReferenceExpressionInfo("name", 2),
+                    date=ReferenceInfo("ship_date"),
+                )
+            ),
+            {"region_name": 0, "nation_name": 1, "supplier_name": 2, "date": 3},
+            {
+                "region_name",
+                "nation_name",
+                "supplier_name",
+                "date",
+                "order_key",
+                "part_key",
+                "supplier_key",
+                "line_number",
+                "quantity",
+                "extended_price",
+                "discount",
+                "tax",
+                "status",
+                "ship_date",
+                "commit_date",
+                "receipt_date",
+                "ship_instruct",
+                "ship_mode",
+                "comment",
+                "part_and_supplier",
+                "order",
+                "supplier",
+                "part",
+                "supplier_region",
+            },
+            id="regions_nations_suppliers_ps_lines_backcalc",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("lines_sourced_from")
+                ** CalcInfo(
+                    source_region_name=BackReferenceExpressionInfo("name", 1),
+                    taxation=ReferenceInfo("tax"),
+                    name_of_nation=ReferenceInfo("nation_name"),
+                )
+            ),
+            {"source_region_name": 0, "taxation": 1, "name_of_nation": 2},
+            {
+                "source_region_name",
+                "taxation",
+                "name_of_nation",
+                "order_key",
+                "part_key",
+                "supplier_key",
+                "line_number",
+                "quantity",
+                "extended_price",
+                "discount",
+                "tax",
+                "status",
+                "ship_date",
+                "commit_date",
+                "receipt_date",
+                "ship_instruct",
+                "ship_mode",
+                "comment",
+                "part_and_supplier",
+                "order",
+                "supplier",
+                "part",
+                "nation_name",
+                "ps_part",
+                "ps_availqty",
+                "ps_supplycost",
+                "ps_comment",
+                "supplier_name",
+                "supplier_address",
+                "other_parts_supplied",
+                "supplier_region",
+            },
+            id="regions_lines_backcalc",
         ),
     ],
 )

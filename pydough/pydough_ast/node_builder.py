@@ -19,6 +19,7 @@ from .expressions import (
     ExpressionFunctionCall,
     ColumnProperty,
     Reference,
+    BackReferenceExpression,
     PyDoughExpressionAST,
 )
 from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
@@ -132,6 +133,28 @@ class AstNodeBuilder(object):
             the collection.
         """
         return Reference(collection, name)
+
+    def build_back_reference_expression(
+        self, collection: PyDoughCollectionAST, name: str, levels: int
+    ) -> Reference:
+        """
+        Creates a new reference to an expression from an ancestor collection.
+
+        Args:
+            `collection`: the collection that the back reference comes from.
+            `name`: the name of the expression being referenced.
+            `levels`: the number of levels back from `collection` the reference
+            refers to.
+
+        Returns:
+            The newly created PyDough Back Reference.
+
+        Raises:
+            `PyDoughASTException`: if `name` does not refer to an expression in
+            the ancestor collection, or the collection does not have `levels`
+            many ancestors.
+        """
+        return BackReferenceExpression(collection, name, levels)
 
     def build_table_collection(self, name: str) -> TableCollection:
         """
