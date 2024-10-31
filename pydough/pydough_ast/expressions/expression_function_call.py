@@ -52,7 +52,13 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self.operator.requires_enclosing_parens(parent)
 
     def to_string(self) -> str:
-        return self.operator.to_string(self.args)
+        arg_strings: List[str] = []
+        for arg in self.args:
+            arg_string: str = arg.to_string()
+            if arg.requires_enclosing_parens(self):
+                arg_string = f"({arg_string})"
+            arg_strings.append(arg_string)
+        return self.operator.to_string(arg_strings)
 
     def equals(self, other: "ExpressionFunctionCall") -> bool:
         return (

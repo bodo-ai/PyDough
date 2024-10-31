@@ -33,7 +33,7 @@ from test_utils import AstNodeTestInfo, LiteralInfo
         pytest.param(
             pydop.SelectArgumentType(1),
             [LiteralInfo("fizzbuzz", StringType())],
-            "Cannot select type of argument 1 out of [Literal['fizzbuzz']]",
+            "Cannot select type of argument 1 out of ['fizzbuzz']",
             id="select_one-one_arg",
         ),
     ],
