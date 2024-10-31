@@ -141,11 +141,5 @@ class CompoundSubCollection(SubCollection):
                     )
         return self._properties
 
-    def to_string(self) -> str:
-        component_strings: List[str] = []
-        for subcollection in self.subcollection_chain:
-            component_strings.append(subcollection.subcollection_property.name)
-        return f"{self.parent.to_string()}.({self.subcollection_property.name}={'.'.join(component_strings)})"
-
     def to_tree_string(self) -> str:
         raise NotImplementedError

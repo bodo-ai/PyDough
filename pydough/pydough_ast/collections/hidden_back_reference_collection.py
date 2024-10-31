@@ -31,7 +31,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         )
 
     def to_string(self) -> str:
-        return f"HiddenBackReferenceCollection[{self.back_levels}.{self.collection.to_string()}"
+        return f"HiddenBackReferenceCollection[{self.back_levels}.{self.collection.to_string()}]"
 
     def to_tree_string(self) -> str:
         raise NotImplementedError

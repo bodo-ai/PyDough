@@ -23,14 +23,19 @@ class BackReferenceCollection(TableCollection):
         term_name: str,
         back_levels: int,
     ):
+        if not (isinstance(back_levels, int) and back_levels > 0):
+            raise PyDoughASTException(
+                f"Expected number of levels in BACK to be a positive integer, received {back_levels!r}"
+            )
         self._parent: PyDoughAST = parent
         self._back_levels: int = back_levels
         self._ancestor: PyDoughCollectionAST = parent
         for _ in range(back_levels):
             self._ancestor = self._ancestor.ancestor_context
             if self._ancestor is None:
+                msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
                 raise PyDoughASTException(
-                    f"Cannot reference back {back_levels} levels above {parent!r}"
+                    f"Cannot reference back {msg} above {parent!r}"
                 )
         super.__init__(self._ancestor.get_term(term_name))
 
@@ -60,7 +65,7 @@ class BackReferenceCollection(TableCollection):
         return self.parent
 
     def to_string(self) -> str:
-        return f"BackReference[{self.back_levels}.{self.collection.to_string()}"
+        return f"BACK({self.back_levels}).{self.collection.to_string()}"
 
     def to_tree_string(self) -> str:
         raise NotImplementedError

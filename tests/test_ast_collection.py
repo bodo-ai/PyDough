@@ -460,3 +460,73 @@ def test_collections_calc_terms(
     assert (
         collection.all_terms == expected_total_names
     ), "Mismatch between set of all terms and expected value"
+
+
+@pytest.mark.parametrize(
+    "calc_pipeline, expected_string",
+    [
+        pytest.param(
+            TableCollectionInfo("Regions"),
+            "Regions",
+            id="regions",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
+            "Regions.nations",
+            id="regions_nations",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions") ** CalcInfo(),
+            "Regions()",
+            id="regions_empty_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                region_name=ReferenceInfo("name"),
+                adjusted_key=FunctionInfo(
+                    "MUL",
+                    [
+                        FunctionInfo(
+                            "SUB", [ReferenceInfo("key"), LiteralInfo(1, Int64Type())]
+                        ),
+                        LiteralInfo(2, Int64Type()),
+                    ],
+                ),
+            ),
+            "Regions(region_name=name, adjusted_key=(key - 1) * 2)",
+            id="regions_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** CalcInfo(
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("name"),
+            ),
+            "Regions.nations(region_name=BACK(1).name, nation_name=name)",
+            id="regions_nations_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("suppliers")
+            ** CalcInfo(
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("nation_name"),
+                supplier_name=ReferenceInfo("name"),
+            ),
+            "Regions.suppliers(region_name=BACK(1).name, nation_name=nation_name, supplier_name=name)",
+            id="regions_suppliers_calc",
+        ),
+    ],
+)
+def test_collections_to_string(
+    calc_pipeline: AstNodeTestInfo,
+    expected_string: str,
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    TODO
+    """
+    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    assert collection.to_string() == expected_string

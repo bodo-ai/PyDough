@@ -84,7 +84,7 @@ class Calc(PyDoughCollectionAST):
         for name in self._calc_term_indices:
             expr: PyDoughExpressionAST = self.get_term(name)
             kwarg_strings.append(f"{name}={expr.to_string()}")
-        return f"{self.parent.to_string()}({', '.join(kwarg_strings)})"
+        return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
 
     def to_tree_string(self) -> str:
         raise NotImplementedError

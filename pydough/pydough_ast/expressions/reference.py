@@ -53,7 +53,7 @@ class Reference(PyDoughExpressionAST):
         return False
 
     def to_string(self) -> str:
-        return f"Reference[{self.term_name}]"
+        return self.term_name
 
     def equals(self, other: "Reference") -> bool:
         return super().equals(other) and self.expression.equals(other.expression)

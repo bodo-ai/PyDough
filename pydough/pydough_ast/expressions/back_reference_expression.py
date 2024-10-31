@@ -20,6 +20,10 @@ class BackReferenceExpression(Reference):
     def __init__(
         self, collection: PyDoughCollectionAST, term_name: str, back_levels: int
     ):
+        if not (isinstance(back_levels, int) and back_levels > 0):
+            raise PyDoughASTException(
+                f"Expected number of levels in BACK to be a positive integer, received {back_levels!r}"
+            )
         self._collection: PyDoughCollectionAST = collection
         self._term_name: str = term_name
         self._back_levels: int = back_levels
@@ -27,8 +31,9 @@ class BackReferenceExpression(Reference):
         for _ in range(back_levels):
             self._ancestor = self._ancestor.ancestor_context
             if self._ancestor is None:
+                msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
                 raise PyDoughASTException(
-                    f"Cannot reference back {back_levels} levels above {collection!r}"
+                    f"Cannot reference back {msg} above {collection!r}"
                 )
         self._expression: PyDoughExpressionAST = self._ancestor.get_term(term_name)
 
@@ -65,7 +70,7 @@ class BackReferenceExpression(Reference):
         return False
 
     def to_string(self) -> str:
-        return f"BackReferenceExpression[{self.back_levels}:{self.term_name}]"
+        return f"BACK({self.back_levels}).{self.term_name}"
 
     def equals(self, other: "BackReferenceExpression") -> bool:
         return super().equals(other) and self.ancestor.equals(other.ancestor)
