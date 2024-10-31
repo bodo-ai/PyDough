@@ -134,8 +134,15 @@ class CompoundSubCollection(SubCollection):
 
     @property
     def properties(self) -> Dict[str, Tuple[int | None, PyDoughAST]]:
+        # Lazily define the properties, if not already defined.
         if self._properties is None:
+            # First invoke the TableCollection version to get the regular
+            # properties of the target collection added.
             self._properties = super().properties
+            # Then, use the recursive `populate_subcollection_chain` to flatten
+            # the subcollections used in the compound into a sequence of
+            # regular subcollection AST nodes and identify where each inherited
+            # term came from.
             compound: CompoundRelationshipMetadata = self.subcollection_property
             inherited_map: Dict[str, str] = {
                 name: property.property_to_inherit.name
@@ -144,6 +151,7 @@ class CompoundSubCollection(SubCollection):
             self.populate_subcollection_chain(
                 self.parent, self.subcollection_property, inherited_map
             )
+            # Make sure none of the inherited terms went unaccounted for.
             undefined_inherited: Set[str] = set(compound.inherited_properties) - set(
                 self.inheritance_sources
             )
