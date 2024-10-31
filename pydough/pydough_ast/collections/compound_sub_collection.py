@@ -38,15 +38,38 @@ class CompoundSubCollection(SubCollection):
         source: PyDoughCollectionAST,
         compound: CompoundRelationshipMetadata,
         inherited_properties: Dict[str, str],
-        root: bool = False,
     ) -> PyDoughCollectionAST:
         """
-        TODO: add function docstring
+        Recursive procedure used to define the `subcollection_chain` and
+        `inheritance_sources` fields of a compound subcollection AST node. In
+        the end, results in the compound relationship being fully flattened
+        into a sequence of regular subcollection accesses.
+
+        Args:
+            `source`: the most recent collection before the next subcollection
+            to be defined.
+            `compound`: the compound relationship that is currently being
+            broken up into 2+ pieces to append to the subcollection chain.
+            `inherited_properties`: a mapping of inherited property names (from
+            the original compound property) to the name they currently are
+            assumed to have within the context of the compound property's
+            components.
+
+        Returns:
+            The subcollection AST object corresponding to the last component
+            of `compound`, once flattened.
         """
+        # Repeat the procedure for the primary and secondary product, but
+        # keep track of the index.
         for idx, property in enumerate(
             [compound.primary_property, compound.secondary_property]
         ):
             if isinstance(property, CompoundRelationshipMetadata):
+                # If the component property is also a compound, recursively repeat
+                # the procedure on it, updating the `source` as we go along. First,
+                # update the inherited properties dictionary to change the true
+                # names of the inherited properties to be whatever their true names
+                # are inside the nested compound.
                 for alias, property_name in inherited_properties.items():
                     if property_name in property.inherited_properties:
                         inherited_properties[alias] = property.inherited_properties[
@@ -56,28 +79,39 @@ class CompoundSubCollection(SubCollection):
                     source, property, inherited_properties
                 )
             else:
-                source_idx: int = len(self._subcollection_chain)
+                # Otherwise, we are in a base case where we have found a true
+                # subcollection invocation. We maintain a set to mark which
+                # inherited properties were found.
                 source = source.get_term(property.name)
-                if idx == 0 or not root:
-                    found_inherited: Set[str] = set()
-                    for alias, property_name in inherited_properties.items():
-                        if property_name in property.other_collection.properties:
-                            found_inherited.add(alias)
-                            self._inheritance_sources[alias] = (
-                                source_idx,
-                                property_name,
+                found_inherited: Set[str] = set()
+                # Iterate through all the remaining inherited properties to
+                # find any whose true name matches one of the properties of
+                # the target collection. If so, they belong to the
+                # subcollection at this stage of the chain.
+                for alias, property_name in inherited_properties.items():
+                    if property_name in property.other_collection.properties:
+                        found_inherited.add(alias)
+                        self._inheritance_sources[alias] = (
+                            len(self._subcollection_chain),
+                            property_name,
+                        )
+                        inh_property: PyDoughAST = source.get_term(property_name)
+                        if isinstance(inh_property, PyDoughCollectionAST):
+                            self._properties[alias] = (None, inh_property)
+                        else:
+                            self._properties[alias] = (
+                                self._calc_counter,
+                                inh_property,
                             )
-                            inh_property: PyDoughAST = source.get_term(property_name)
-                            if isinstance(inh_property, PyDoughCollectionAST):
-                                self._properties[alias] = (None, inh_property)
-                            else:
-                                self._properties[alias] = (
-                                    self._calc_counter,
-                                    inh_property,
-                                )
-                                self._calc_counter += 1
-                    for alias in found_inherited:
-                        inherited_properties.pop(alias)
+                            self._calc_counter += 1
+                # Remove any inherited properties found from the dictionary so
+                # subsequent recursive calls do not try to find the same
+                # inherited property (e.g. if the final collection mapped to
+                # has a property with the same name as an inherited property's
+                # true property name).
+                for alias in found_inherited:
+                    inherited_properties.pop(alias)
+                # Finally, add the new subcollection to the end of the chain.
                 self._subcollection_chain.append(source)
 
         return source
@@ -104,16 +138,24 @@ class CompoundSubCollection(SubCollection):
 
     @property
     def properties(self) -> Dict[str, Tuple[int | None, PyDoughAST]]:
+        # Lazily define the properties, if not already defined.
         if self._properties is None:
+            # First invoke the TableCollection version to get the regular
+            # properties of the target collection added.
             self._properties = super().properties
+            # Then, use the recursive `populate_subcollection_chain` to flatten
+            # the subcollections used in the compound into a sequence of
+            # regular subcollection AST nodes and identify where each inherited
+            # term came from.
             compound: CompoundRelationshipMetadata = self.subcollection_property
             inherited_map: Dict[str, str] = {
                 name: property.property_to_inherit.name
                 for name, property in compound.inherited_properties.items()
             }
             self.populate_subcollection_chain(
-                self.parent, self.subcollection_property, inherited_map, root=True
+                self.parent, self.subcollection_property, inherited_map
             )
+            # Make sure none of the inherited terms went unaccounted for.
             undefined_inherited: Set[str] = set(compound.inherited_properties) - set(
                 self.inheritance_sources
             )
