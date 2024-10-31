@@ -39,7 +39,7 @@ class Literal(PyDoughExpressionAST):
         return False
 
     def to_string(self) -> str:
-        return f"Literal[{self.value!r}]"
+        return repr(self.value)
 
     def equals(self, other: "Literal") -> bool:
         return (
