@@ -93,7 +93,7 @@ def test_literal_type(
     tpch_node_builder: AstNodeBuilder,
 ):
     """
-    Tests that column properties have the correct return type.
+    Tests that literal expressions have the correct return type.
     """
     property: Literal = literal_info.build(tpch_node_builder)
     assert (
