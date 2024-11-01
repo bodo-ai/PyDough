@@ -19,6 +19,7 @@ from test_utils import (
     SubCollectionInfo,
     CalcInfo,
     ChildReferenceInfo,
+    BackReferenceCollectionInfo,
 )
 import pytest
 
@@ -545,11 +546,6 @@ def test_collections_calc_terms(
             TableCollectionInfo("Parts")
             ** SubCollectionInfo("suppliers_of_part")
             ** SubCollectionInfo("ps_lines"),
-            # ** CalcInfo([],
-            #     region_name=BackReferenceExpressionInfo("name", 1),
-            #     nation_name=ReferenceInfo("nation_name"),
-            #     supplier_name=ReferenceInfo("name"),
-            # ),
             "Parts.suppliers_of_part.ps_lines",
             id="parts_suppliers_lines",
         ),
@@ -609,6 +605,53 @@ def test_collections_calc_terms(
             ),
             "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied(adj_retail_price=retail_price - 1.0).adj_retail_price))",
             id="suppliers_childcalc_parts_b",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** SubCollectionInfo("parts_supplied")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("ps_lines"),
+                    BackReferenceCollectionInfo("nation", 1)
+                    ** CalcInfo([], name=ReferenceInfo("name")),
+                ],
+                nation_name=ChildReferenceInfo("name", 1),
+                supplier_name=BackReferenceExpressionInfo("name", 1),
+                part_name=ReferenceInfo("name"),
+                ratio=FunctionInfo(
+                    "DIV",
+                    [ChildReferenceInfo("quantity", 0), ReferenceInfo("ps_availqty")],
+                ),
+            ),
+            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=lines.quantity / ps_availqty)",
+            id="suppliers_parts_childcalc_a",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** SubCollectionInfo("parts_supplied")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("ps_lines")
+                    ** CalcInfo(
+                        [],
+                        ratio=FunctionInfo(
+                            "DIV",
+                            [
+                                ReferenceInfo("quantity"),
+                                BackReferenceExpressionInfo("ps_availqty", 1),
+                            ],
+                        ),
+                    ),
+                    BackReferenceCollectionInfo("nation", 1)
+                    ** CalcInfo([], name=ReferenceInfo("name")),
+                ],
+                nation_name=ChildReferenceInfo("name", 1),
+                supplier_name=BackReferenceExpressionInfo("name", 1),
+                part_name=ReferenceInfo("name"),
+                ratio=ChildReferenceInfo("ratio", 0),
+            ),
+            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
+            id="suppliers_parts_childcalc_b",
         ),
     ],
 )

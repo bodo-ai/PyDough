@@ -16,6 +16,7 @@ __all__ = [
     "CalcInfo",
     "BackReferenceExpressionInfo",
     "ChildReferenceInfo",
+    "BackReferenceCollectionInfo",
 ]
 
 from pydough.metadata import GraphMetadata
@@ -85,9 +86,8 @@ class AstNodeTestInfo(ABC):
         """
 
     def __repr__(self):
-        return self.to_string
+        return self.to_string()
 
-    @property
     @abstractmethod
     def to_string(self) -> str:
         """
@@ -267,12 +267,6 @@ class CollectionTestInfo(AstNodeTestInfo):
     def __init__(self):
         self.successor: CollectionTestInfo | None = None
 
-    def __repr__(self):
-        as_str: str = self.to_string
-        if self.successor is not None:
-            as_str = f"{as_str}.{self.successor!r}"
-        return as_str
-
     def __pow__(self, other):
         """
         Specifies that `other` is the successor of `self`, meaning that when
@@ -382,7 +376,7 @@ class CalcSubCollectionInfo(CollectionTestInfo):
         self.successor = child_info.successor
 
     def to_string(self) -> str:
-        return f"ChildSubCollection[{self.name}]"
+        return f"ChildSubCollection[{self.child_info!r}]"
 
     def local_build(
         self,
@@ -435,3 +429,32 @@ class CalcInfo(CollectionTestInfo):
             (name, info.build(builder, context, children)) for name, info in self.args
         ]
         return raw_calc.with_terms(args)
+
+
+class BackReferenceCollectionInfo(CollectionTestInfo):
+    """
+    CollectionTestInfo implementation class to build a reference to an
+    ancestor collection. Contains the following fields:
+    - `name`: the name of the calc term being referenced.
+    - `levels`: the number of levels upward to reference.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(self, name: str, levels: int):
+        self.name: str = name
+        self.levels: int = levels
+
+    def to_string(self) -> str:
+        return f"BackReferenceCollection[{self.levels}:{self.name}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: List[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughAST:
+        assert (
+            context is not None
+        ), "Cannot call .build() on BackReferenceCollectionInfo without providing a context"
+        return builder.build_back_reference_collection(context, self.name, self.levels)

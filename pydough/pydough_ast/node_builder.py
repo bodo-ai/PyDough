@@ -30,6 +30,7 @@ from .collections import (
     SubCollection,
     Calc,
     CalcSubCollection,
+    BackReferenceCollection,
     HiddenBackReferenceCollection,
 )
 
@@ -252,3 +253,25 @@ class AstNodeBuilder(object):
             `PyDoughASTException`: if the terms are invalid for the CALC term.
         """
         return Calc(collection, CalcSubCollection)
+
+    def build_back_reference_collection(
+        self,
+        collection: PyDoughCollectionAST,
+        term_name: str,
+        back_levels: int,
+    ) -> BackReferenceCollection:
+        """
+        Creates a reference to a a subcollection of an ancestor.
+
+        Args:
+            `collection`: the preceding collection.
+            `term_name`: the name of the subcollection being accessed.
+            `back_levels`: the number of levels up in the ancestry tree to go.
+
+        Returns:
+            The newly created PyDough CALC term.
+
+        Raises:
+            `PyDoughASTException`: if the terms are invalid for the CALC term.
+        """
+        return BackReferenceCollection(collection, term_name, back_levels)
