@@ -10,6 +10,7 @@ __all__ = [
     "CalcSubCollection",
     "BackReferenceCollection",
     "HiddenBackReferenceCollection",
+    "GlobalCalc",
 ]
 
 from .collection_ast import PyDoughCollectionAST
@@ -19,3 +20,4 @@ from .calc import Calc
 from .calc_sub_collection import CalcSubCollection
 from .back_reference_collection import BackReferenceCollection
 from .hidden_back_reference_collection import HiddenBackReferenceCollection
+from .global_calc import GlobalCalc

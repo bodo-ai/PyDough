@@ -2,66 +2,67 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["Calc"]
+__all__ = ["GlobalCalc"]
 
 
 from typing import Dict, List, Tuple, Set
 
-from pydough.metadata import CollectionMetadata
+from pydough.metadata import GraphMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .collection_ast import PyDoughCollectionAST
-from .calc_sub_collection import CalcSubCollection
+from .table_collection import TableCollection
 
 
-class Calc(PyDoughCollectionAST):
+class GlobalCalc(PyDoughCollectionAST):
     """
-    The AST node implementation class representing a CALC expression.
+    The AST node implementation class representing a top-level CALC expression
+    without a parent context.
     """
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionAST,
-        children: List[CalcSubCollection],
+        graph: GraphMetadata,
+        children: List[PyDoughCollectionAST],
     ):
-        self._predecessor: PyDoughCollectionAST = predecessor
-        self._children: List[CalcSubCollection] = children
+        self._graph: GraphMetadata = graph
+        self._children: List[PyDoughCollectionAST] = children
         # Not defined until with_terms is called
         self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
             None
         )
         self._all_terms: Dict[str, PyDoughAST] = None
 
-    def with_terms(self, terms: List[Tuple[str, PyDoughExpressionAST]]) -> "Calc":
+    def with_terms(self, terms: List[Tuple[str, PyDoughExpressionAST]]) -> "GlobalCalc":
         """
         TODO: add function docstring
         """
         if self._calc_term_indices is not None:
             raise PyDoughCollectionAST(
-                "Cannot call `with_terms` more than once per Calc node"
+                "Cannot call `with_terms` more than once per GlobalCalc node"
             )
         self._calc_term_indices = {name: idx for idx, (name, _) in enumerate(terms)}
-        # Include terms from the predecessor, with the terms from this CALC
+        # Include terms from the graph itself, with the terms from this CALC
         # added in (overwriting any preceding properties with the same name)
         self._all_terms = {}
-        for name in self.preceding_context.all_terms:
-            self._all_terms[name] = self.preceding_context.get_term(name)
+        for name in self.graph.get_collection_names():
+            self._all_terms[name] = TableCollection(self.graph.get_collection(name))
         for name, property in terms:
             self._all_terms[name] = property
         return self
 
     @property
-    def collection(self) -> CollectionMetadata:
+    def graph(self) -> GraphMetadata:
         """
-        The table that is being referenced by the collection node.
+        The graph that the global calc node is being done within.
         """
-        return self._collection
+        return self._graph
 
     @property
-    def children(self) -> List[CalcSubCollection]:
+    def children(self) -> List[PyDoughCollectionAST]:
         """
-        The child collections accessible from the CALC used to derive
+        The child collections accessible from the global CALC used to derive
         expressions in terms of a subcollection.
         """
         return self._children
@@ -81,11 +82,11 @@ class Calc(PyDoughCollectionAST):
 
     @property
     def ancestor_context(self) -> PyDoughCollectionAST | None:
-        return self._predecessor.ancestor_context
+        return None
 
     @property
     def preceding_context(self) -> PyDoughCollectionAST | None:
-        return self._predecessor
+        return None
 
     @property
     def calc_terms(self) -> Set[str]:
@@ -93,10 +94,6 @@ class Calc(PyDoughCollectionAST):
 
     @property
     def all_terms(self) -> Set[str]:
-        if self._all_terms is None:
-            raise PyDoughCollectionAST(
-                "Cannot invoke `all_terms` before calling `with_terms`"
-            )
         return set(self._all_terms)
 
     def get_expression_position(self, expr_name: str) -> int:
@@ -114,18 +111,17 @@ class Calc(PyDoughCollectionAST):
         for name in self._calc_term_indices:
             expr: PyDoughExpressionAST = self.get_term(name)
             kwarg_strings.append(f"{name}={expr.to_string()}")
-        return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
+        return f"{self.graph.name}({', '.join(kwarg_strings)})"
 
     def to_tree_string(self) -> str:
         raise NotImplementedError
 
-    def equals(self, other: "Calc") -> bool:
+    def equals(self, other: "GlobalCalc") -> bool:
         if self._all_terms is None:
             raise PyDoughCollectionAST(
                 "Cannot invoke `equals` before calling `with_terms`"
             )
         return (
             super().equals(other)
-            and self.preceding_context == other.preceding_context
             and self._calc_term_indices == other._calc_term_indices
         )

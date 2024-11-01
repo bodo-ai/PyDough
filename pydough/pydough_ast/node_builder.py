@@ -31,6 +31,7 @@ from .collections import (
     Calc,
     CalcSubCollection,
     BackReferenceCollection,
+    GlobalCalc,
 )
 
 
@@ -188,6 +189,21 @@ class AstNodeBuilder(object):
         """
         return BackReferenceExpression(collection, name, levels)
 
+    def build_global_calc(
+        self, graph: GraphMetadata, children: List[CalcSubCollection]
+    ) -> GlobalCalc:
+        """
+        Creates a new global CALC instance, but `with_terms` still needs to be
+        called on the output.
+
+        Args:
+            `children`: the child subcollections accessed by the CALC term.
+
+        Returns:
+            The newly created GlobalCalc.
+        """
+        return GlobalCalc(graph, children)
+
     def build_table_collection(self, name: str) -> TableCollection:
         """
         Creates a new table collection invocation.
@@ -234,8 +250,8 @@ class AstNodeBuilder(object):
         children: List[CalcSubCollection],
     ) -> Calc:
         """
-        Creates a CALC term, but `with_terms` still needs to be called on the
-        output.
+        Creates a CALC instance, but `with_terms` still needs to be called on
+        the output.
 
         Args:
             `collection`: the preceding collection.
@@ -244,11 +260,8 @@ class AstNodeBuilder(object):
 
         Returns:
             The newly created PyDough CALC term.
-
-        Raises:
-            `PyDoughASTException`: if the terms are invalid for the CALC term.
         """
-        return Calc(collection, CalcSubCollection)
+        return Calc(collection, children)
 
     def build_back_reference_collection(
         self,

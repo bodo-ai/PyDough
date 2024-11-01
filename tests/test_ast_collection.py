@@ -20,6 +20,7 @@ from test_utils import (
     CalcInfo,
     ChildReferenceInfo,
     BackReferenceCollectionInfo,
+    GlobalCalcInfo,
 )
 import pytest
 
@@ -767,6 +768,45 @@ def test_collections_calc_terms(
             ),
             "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
             id="suppliers_parts_childcalc_b",
+        ),
+        pytest.param(
+            (
+                GlobalCalcInfo(
+                    [TableCollectionInfo("Customers")],
+                    total_balance=FunctionInfo(
+                        "SUM", [ChildReferenceInfo("acctbal", 0)]
+                    ),
+                )
+            ),
+            "TPCH(total_balance=SUM(Customers.acctbal))",
+            id="globalcalc_a",
+        ),
+        pytest.param(
+            (
+                GlobalCalcInfo(
+                    [
+                        TableCollectionInfo("Customers"),
+                        TableCollectionInfo("Suppliers")
+                        ** SubCollectionInfo("parts_supplied")
+                        ** CalcInfo(
+                            [],
+                            value=FunctionInfo(
+                                "MUL",
+                                [
+                                    ReferenceInfo("ps_availqty"),
+                                    ReferenceInfo("retail_price"),
+                                ],
+                            ),
+                        ),
+                    ],
+                    total_demand=FunctionInfo(
+                        "SUM", [ChildReferenceInfo("acctbal", 0)]
+                    ),
+                    total_supply=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
+                )
+            ),
+            "TPCH(total_demand=SUM(Customers.acctbal), total_supply=SUM(Suppliers.parts_supplied(value=ps_availqty * retail_price).value))",
+            id="globalcalc_b",
         ),
     ],
 )

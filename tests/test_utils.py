@@ -17,6 +17,7 @@ __all__ = [
     "BackReferenceExpressionInfo",
     "ChildReferenceInfo",
     "BackReferenceCollectionInfo",
+    "GlobalCalcInfo",
 ]
 
 from pydough.metadata import GraphMetadata
@@ -27,6 +28,7 @@ from pydough.pydough_ast import (
     PyDoughExpressionAST,
     Calc,
     CalcSubCollection,
+    GlobalCalc,
 )
 from typing import Dict, Set, Callable, Any, List, Tuple
 from pydough.types import PyDoughType
@@ -156,7 +158,7 @@ class FunctionInfo(AstNodeTestInfo):
         self.args_info: List[AstNodeTestInfo] = args_info
 
     def to_string(self) -> str:
-        arg_strings: List[str] = [arg.to_string for arg in self.args_info]
+        arg_strings: List[str] = [arg.to_string() for arg in self.args_info]
         return f"Call[{self.function_name} on ({', '.join(arg_strings)})]"
 
     def build(
@@ -245,7 +247,7 @@ class ChildReferenceInfo(AstNodeTestInfo):
         children_contexts: List[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         assert (
-            context is not None
+            children_contexts is not None
         ), "Cannot call .build() on ChildReferenceInfo without providing a list of child contexts"
         return builder.build_child_reference(
             children_contexts, self.child_idx, self.name
@@ -427,6 +429,30 @@ class CalcInfo(CollectionTestInfo):
             for child in self.children_info
         ]
         raw_calc: Calc = builder.build_calc(context, children)
+        args: List[Tuple[str, PyDoughExpressionAST]] = [
+            (name, info.build(builder, context, children)) for name, info in self.args
+        ]
+        return raw_calc.with_terms(args)
+
+
+class GlobalCalcInfo(CalcInfo):
+    """
+    CollectionTestInfo implementation class to build a global CALC.
+    """
+
+    def to_string(self) -> str:
+        return f"Global{super().to_string()}"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: List[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        children: List[PyDoughCollectionAST] = [
+            child.build(builder, context) for child in self.children_info
+        ]
+        raw_calc: GlobalCalc = builder.build_global_calc(builder.graph, children)
         args: List[Tuple[str, PyDoughExpressionAST]] = [
             (name, info.build(builder, context, children)) for name, info in self.args
         ]
