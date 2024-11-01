@@ -173,12 +173,12 @@ def test_literal_type(
     [
         pytest.param(
             FunctionInfo("LOWER", [ColumnInfo("Regions", "name")]),
-            "LOWER(name)",
+            "LOWER(Column[tpch.REGION.r_name])",
             id="regular_func",
         ),
         pytest.param(
             FunctionInfo("SUM", [ColumnInfo("Lineitems", "tax")]),
-            "SUM(tax)",
+            "SUM(Column[tpch.LINEITEM.l_tax])",
             id="agg_func",
         ),
         pytest.param(
@@ -193,11 +193,137 @@ def test_literal_type(
                         ],
                     ),
                     ColumnInfo("Lineitems", "tax"),
-                    ColumnInfo("Lineitems", "discount"),
+                    LiteralInfo(0, Int64Type()),
                 ],
             ),
-            "IFF(ship_date == receipt_date, tax, discount)",
+            "IFF(Column[tpch.LINEITEM.l_shipdate] == Column[tpch.LINEITEM.l_receiptdate], Column[tpch.LINEITEM.l_tax], 0)",
             id="nested_functions",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "ADD",
+                [
+                    LiteralInfo(1, Int64Type()),
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(2, Int64Type()), LiteralInfo(3, Int64Type())],
+                    ),
+                ],
+            ),
+            "1 + (2 + 3)",
+            id="nested_binops_a",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "ADD",
+                [
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(1, Int64Type()), LiteralInfo(2, Int64Type())],
+                    ),
+                    LiteralInfo(3, Int64Type()),
+                ],
+            ),
+            "(1 + 2) + 3",
+            id="nested_binops_b",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "ADD",
+                [
+                    FunctionInfo(
+                        "ADD",
+                        [
+                            FunctionInfo(
+                                "ADD",
+                                [
+                                    LiteralInfo(1, Int64Type()),
+                                    LiteralInfo(2, Int64Type()),
+                                ],
+                            ),
+                            LiteralInfo(3, Int64Type()),
+                        ],
+                    ),
+                    FunctionInfo(
+                        "ADD",
+                        [
+                            LiteralInfo(4, Int64Type()),
+                            FunctionInfo(
+                                "ADD",
+                                [
+                                    LiteralInfo(5, Int64Type()),
+                                    LiteralInfo(6, Int64Type()),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            "((1 + 2) + 3) + (4 + (5 + 6))",
+            id="nested_binops_c",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "DIV",
+                [
+                    LiteralInfo(1, Int64Type()),
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(2, Int64Type()), LiteralInfo(3, Int64Type())],
+                    ),
+                ],
+            ),
+            "1 / (2 + 3)",
+            id="nested_binops_d",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "MUL",
+                [
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(1, Int64Type()), LiteralInfo(2, Int64Type())],
+                    ),
+                    LiteralInfo(3, Int64Type()),
+                ],
+            ),
+            "(1 + 2) * 3",
+            id="nested_binops_e",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "SUB",
+                [
+                    FunctionInfo(
+                        "MUL",
+                        [
+                            FunctionInfo(
+                                "ADD",
+                                [
+                                    LiteralInfo(1, Int64Type()),
+                                    LiteralInfo(2, Int64Type()),
+                                ],
+                            ),
+                            LiteralInfo(3, Int64Type()),
+                        ],
+                    ),
+                    FunctionInfo(
+                        "ADD",
+                        [
+                            LiteralInfo(4, Int64Type()),
+                            FunctionInfo(
+                                "POW",
+                                [
+                                    LiteralInfo(5, Int64Type()),
+                                    LiteralInfo(6, Int64Type()),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            "((1 + 2) * 3) - (4 + (5 ** 6))",
+            id="nested_binops_f",
         ),
     ],
 )
@@ -205,7 +331,9 @@ def test_expression_strings(
     expr_info: AstNodeTestInfo, expected_string: str, tpch_node_builder: AstNodeBuilder
 ):
     """
-    Tests that expressions generate the expected string representation.
+    Tests that expressions generate the expected string representation. Note,
+    the column names seen here will essentially never be seen in actual string
+    representations since they will be replaced with references to the columns.
     """
     expr: PyDoughExpressionAST = expr_info.build(tpch_node_builder)
     assert (
