@@ -17,6 +17,7 @@ from pydough.pydough_ast import (
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
+    PyDoughExpressionAST,
 )
 from test_utils import (
     graph_fetcher,
@@ -65,40 +66,6 @@ def test_column_property_type(
     assert (
         property.pydough_type == expected_type
     ), "Mismatch between column property type and expected value"
-
-
-@pytest.mark.parametrize(
-    "literal_info, expected_type",
-    [
-        pytest.param(
-            LiteralInfo("hello", StringType()),
-            StringType(),
-            id="string",
-        ),
-        pytest.param(
-            LiteralInfo(-1, Int64Type()),
-            Int64Type(),
-            id="int64",
-        ),
-        pytest.param(
-            LiteralInfo(date(2024, 10, 28), DateType()),
-            DateType(),
-            id="date",
-        ),
-    ],
-)
-def test_literal_type(
-    literal_info: AstNodeTestInfo,
-    expected_type: PyDoughType,
-    tpch_node_builder: AstNodeBuilder,
-):
-    """
-    Tests that literal expressions have the correct return type.
-    """
-    property: Literal = literal_info.build(tpch_node_builder)
-    assert (
-        property.pydough_type == expected_type
-    ), "Mismatch between literal type and expected value"
 
 
 @pytest.mark.parametrize(
@@ -165,3 +132,82 @@ def test_function_call_return(
     assert (
         call.is_aggregation == out_aggregated
     ), "Mismatch between aggregation status and expected value"
+
+
+@pytest.mark.parametrize(
+    "literal_info, expected_type",
+    [
+        pytest.param(
+            LiteralInfo("hello", StringType()),
+            StringType(),
+            id="string",
+        ),
+        pytest.param(
+            LiteralInfo(-1, Int64Type()),
+            Int64Type(),
+            id="int64",
+        ),
+        pytest.param(
+            LiteralInfo(date(2024, 10, 28), DateType()),
+            DateType(),
+            id="date",
+        ),
+    ],
+)
+def test_literal_type(
+    literal_info: AstNodeTestInfo,
+    expected_type: PyDoughType,
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    Tests that literal expressions have the correct return type.
+    """
+    property: Literal = literal_info.build(tpch_node_builder)
+    assert (
+        property.pydough_type == expected_type
+    ), "Mismatch between literal type and expected value"
+
+
+@pytest.mark.parametrize(
+    "expr_info, expected_string",
+    [
+        pytest.param(
+            FunctionInfo("LOWER", [ColumnInfo("Regions", "name")]),
+            "LOWER(name)",
+            id="regular_func",
+        ),
+        pytest.param(
+            FunctionInfo("SUM", [ColumnInfo("Lineitems", "tax")]),
+            "SUM(tax)",
+            id="agg_func",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "IFF",
+                [
+                    FunctionInfo(
+                        "EQU",
+                        [
+                            ColumnInfo("Lineitems", "ship_date"),
+                            ColumnInfo("Lineitems", "receipt_date"),
+                        ],
+                    ),
+                    ColumnInfo("Lineitems", "tax"),
+                    ColumnInfo("Lineitems", "discount"),
+                ],
+            ),
+            "IFF(ship_date == receipt_date, tax, discount)",
+            id="nested_functions",
+        ),
+    ],
+)
+def test_expression_strings(
+    expr_info: AstNodeTestInfo, expected_string: str, tpch_node_builder: AstNodeBuilder
+):
+    """
+    Tests that expressions generate the expected string representation.
+    """
+    expr: PyDoughExpressionAST = expr_info.build(tpch_node_builder)
+    assert (
+        expr.to_string() == expected_string
+    ), "Mismatch between string representation and expected value"
