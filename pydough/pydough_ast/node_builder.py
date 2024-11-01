@@ -11,7 +11,7 @@ from pydough.metadata import (
     TableColumnMetadata,
     PyDoughMetadataException,
 )
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from pydough.types import PyDoughType
 from .abstract_pydough_ast import PyDoughAST
 from .expressions import (
@@ -20,11 +20,18 @@ from .expressions import (
     ColumnProperty,
     Reference,
     BackReferenceExpression,
-    PyDoughExpressionAST,
+    ChildReference,
 )
 from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
 from .errors import PyDoughASTException
-from .collections import PyDoughCollectionAST, TableCollection, SubCollection, Calc
+from .collections import (
+    PyDoughCollectionAST,
+    TableCollection,
+    SubCollection,
+    Calc,
+    CalcSubCollection,
+    HiddenBackReferenceCollection,
+)
 
 
 class AstNodeBuilder(object):
@@ -134,6 +141,31 @@ class AstNodeBuilder(object):
         """
         return Reference(collection, name)
 
+    def build_child_reference(
+        self, children: List[PyDoughCollectionAST], child_idx: int, name: str
+    ) -> Reference:
+        """
+        Creates a new reference to an expression from a child collection of a
+        CALC.
+
+        Args:
+            `children`: the child collections that the reference accesses.
+            `child_idx`: the index of the child collection being referenced.
+            `name`: the name of the expression being referenced.
+
+        Returns:
+            The newly created PyDough Child Reference.
+
+        Raises:
+            `PyDoughASTException`: if `name` does not refer to an expression in
+            the collection, or `child_idx` is not a valid index for `children`.
+        """
+        if child_idx not in range(len(children)):
+            raise PyDoughASTException(
+                f"Invalid child reference index {child_idx} with {len(children)} children"
+            )
+        return ChildReference(children[child_idx], child_idx, name)
+
     def build_back_reference_expression(
         self, collection: PyDoughCollectionAST, name: str, levels: int
     ) -> Reference:
@@ -190,7 +222,10 @@ class AstNodeBuilder(object):
             property of the collection.
         """
         term: PyDoughAST = collection.get_term(name)
-        if not isinstance(term, SubCollection):
+        if not (
+            isinstance(term, SubCollection)
+            or isinstance(term, HiddenBackReferenceCollection)
+        ):
             raise PyDoughMetadataException(
                 f"Expected {term!r} to refer to a subcollection"
             )
@@ -199,13 +234,15 @@ class AstNodeBuilder(object):
     def build_calc(
         self,
         collection: PyDoughCollectionAST,
-        terms: List[Tuple[str, PyDoughExpressionAST]],
+        children: List[CalcSubCollection],
     ) -> Calc:
         """
-        Creates a CALC term.
+        Creates a CALC term, but `with_terms` still needs to be called on the
+        output.
 
         Args:
             `collection`: the preceding collection.
+            `children`: the child subcollections accessed by the CALC term.
             `terms`: the named expressions in the CALC term.
 
         Returns:
@@ -214,4 +251,4 @@ class AstNodeBuilder(object):
         Raises:
             `PyDoughASTException`: if the terms are invalid for the CALC term.
         """
-        return Calc(collection, terms)
+        return Calc(collection, CalcSubCollection)

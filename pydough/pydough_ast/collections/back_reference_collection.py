@@ -5,13 +5,14 @@ TODO: add file-level docstring
 __all__ = ["BackReferenceCollection"]
 
 
+from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from .collection_ast import PyDoughCollectionAST
-from .table_collection import TableCollection
+from .sub_collection import SubCollection
 from pydough.pydough_ast.errors import PyDoughASTException
 
 
-class BackReferenceCollection(TableCollection):
+class BackReferenceCollection(SubCollection):
     """
     The AST node implementation class representing a subcollection of an
     ancestor collection.
@@ -27,6 +28,7 @@ class BackReferenceCollection(TableCollection):
             raise PyDoughASTException(
                 f"Expected number of levels in BACK to be a positive integer, received {back_levels!r}"
             )
+        self._term_name: str = term_name
         self._parent: PyDoughAST = parent
         self._back_levels: int = back_levels
         self._ancestor: PyDoughCollectionAST = parent
@@ -37,14 +39,12 @@ class BackReferenceCollection(TableCollection):
                 raise PyDoughASTException(
                     f"Cannot reference back {msg} above {parent!r}"
                 )
-        super.__init__(self._ancestor.get_term(term_name))
-
-    @property
-    def parent(self) -> PyDoughCollectionAST:
-        """
-        The parent node that the collection node is a subcollection of.
-        """
-        return self._parent
+        self._ancestor.get_term(term_name)
+        self._subcollection: SubCollection = self._ancestor.get_term(term_name)
+        super(SubCollection, self).__init__(self._subcollection.collection)
+        self._subcollection_property: SubcollectionRelationshipMetadata = (
+            self._subcollection.subcollection_property
+        )
 
     @property
     def back_levels(self) -> int:
@@ -54,21 +54,21 @@ class BackReferenceCollection(TableCollection):
         return self._back_levels
 
     @property
-    def ancestor(self) -> PyDoughCollectionAST:
+    def term_name(self) -> str:
         """
-        The specific ancestor collection that the ancestor refers to.
+        The name of the subcollection being accessed from the ancestor.
         """
-        return self._ancestor
+        return self._term_name
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
-        return self.parent
+    def subcollection(self) -> SubCollection:
+        """
+        The subcollection property of the ancestor that BACK points to.
+        """
+        return self._subcollection
 
     def to_string(self) -> str:
-        return f"BACK({self.back_levels}).{self.collection.to_string()}"
+        return f"BACK({self.back_levels}).{self._subcollection.to_string()}"
 
     def to_tree_string(self) -> str:
         raise NotImplementedError
-
-    def equals(self, other: "BackReferenceCollection") -> bool:
-        return super().equals(other) and self.ancestor == other.ancestor

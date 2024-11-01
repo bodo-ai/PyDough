@@ -67,8 +67,13 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         # For now, until proper precedence is handled, always enclose binary
-        # operations in parenthesis
-        return True
+        # operations in parenthesis if the parent is also a binary operation.
+
+        from pydough.pydough_ast import ExpressionFunctionCall
+
+        return isinstance(parent, ExpressionFunctionCall) and isinstance(
+            parent.operator, BinaryOperator
+        )
 
     def to_string(self, arg_strings: List[str]) -> str:
         # Stringify as "? + ?" for 0 arguments, "a + ?" for 1 argument, and

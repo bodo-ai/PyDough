@@ -12,6 +12,7 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .collection_ast import PyDoughCollectionAST
+from .calc_sub_collection import CalcSubCollection
 
 
 class Calc(PyDoughCollectionAST):
@@ -22,20 +23,33 @@ class Calc(PyDoughCollectionAST):
     def __init__(
         self,
         predecessor: PyDoughCollectionAST,
-        terms: List[Tuple[str, PyDoughExpressionAST]],
+        children: List[CalcSubCollection],
     ):
         self._predecessor: PyDoughCollectionAST = predecessor
-        self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] = {
-            name: idx for idx, (name, _) in enumerate(terms)
-        }
+        self._children: List[CalcSubCollection] = children
+        # Not defined until with_terms is called
+        self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
+            None
+        )
+        self._all_terms: Dict[str, PyDoughExpressionAST] = None
+
+    def with_terms(self, terms: List[Tuple[str, PyDoughExpressionAST]]) -> "Calc":
+        """
+        TODO: add function docstring
+        """
+        if self._calc_term_indices is not None:
+            raise PyDoughCollectionAST(
+                "Cannot call `with_terms` more than once per Calc node"
+            )
+        self._calc_term_indices = {name: idx for idx, (name, _) in enumerate(terms)}
         # Include terms from the predecessor, with the terms from this CALC
         # added in (overwriting any preceding properties with the same name)
-        self._all_terms: Dict[str, PyDoughExpressionAST] = {}
-
-        for name in predecessor.all_terms:
-            self._all_terms[name] = predecessor.get_term(name)
+        self._all_terms = {}
+        for name in self.preceding_context.all_terms:
+            self._all_terms[name] = self.preceding_context.get_term(name)
         for name, property in terms:
             self._all_terms[name] = property
+        return self
 
     @property
     def collection(self) -> CollectionMetadata:
@@ -45,12 +59,24 @@ class Calc(PyDoughCollectionAST):
         return self._collection
 
     @property
+    def children(self) -> List[CalcSubCollection]:
+        """
+        The child collections accessible from the CALC used to derive
+        expressions in terms of a subcollection.
+        """
+        return self._children
+
+    @property
     def calc_term_indices(self) -> Dict[str, Tuple[int, PyDoughExpressionAST]]:
         """
         Mapping of each named expression of the CALC to a tuple (idx, expr)
         where idx is the ordinal position of the property when included
         in a CALC and property is the AST node representing the property.
         """
+        if self._calc_term_indices is None:
+            raise PyDoughCollectionAST(
+                "Cannot invoke `calc_term_indices` before calling `with_terms`"
+            )
         return self._calc_term_indices
 
     @property
@@ -67,6 +93,10 @@ class Calc(PyDoughCollectionAST):
 
     @property
     def all_terms(self) -> Set[str]:
+        if self._all_terms is None:
+            raise PyDoughCollectionAST(
+                "Cannot invoke `all_terms` before calling `with_terms`"
+            )
         return set(self._all_terms)
 
     def get_expression_position(self, expr_name: str) -> int:
@@ -90,8 +120,12 @@ class Calc(PyDoughCollectionAST):
         raise NotImplementedError
 
     def equals(self, other: "Calc") -> bool:
+        if self._all_terms is None:
+            raise PyDoughCollectionAST(
+                "Cannot invoke `equals` before calling `with_terms`"
+            )
         return (
             super().equals(other)
             and self.preceding_context == other.preceding_context
-            and self.terms == other.terms
+            and self._calc_term_indices == other._calc_term_indices
         )

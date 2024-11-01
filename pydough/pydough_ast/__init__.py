@@ -14,6 +14,7 @@ __all__ = [
     "TableCollection",
     "SubCollection",
     "Calc",
+    "CalcSubCollection",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -24,5 +25,11 @@ from .expressions import (
     Literal,
     ExpressionFunctionCall,
 )
-from .collections import PyDoughCollectionAST, TableCollection, SubCollection, Calc
+from .collections import (
+    PyDoughCollectionAST,
+    TableCollection,
+    SubCollection,
+    Calc,
+    CalcSubCollection,
+)
 from .node_builder import AstNodeBuilder

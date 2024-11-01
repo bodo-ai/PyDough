@@ -20,14 +20,23 @@ class HiddenBackReferenceExpression(BackReferenceExpression):
         self,
         collection: PyDoughCollectionAST,
         ancestor: PyDoughCollectionAST,
+        alias: str,
         term_name: str,
         back_levels: int,
     ):
         self._collection: PyDoughCollectionAST = collection
+        self._alias: str = alias
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._ancestor: PyDoughCollectionAST = ancestor
         self._expression: PyDoughExpressionAST = self._ancestor.get_term(term_name)
+
+    @property
+    def alias(self) -> str:
+        """
+        The alias that the back reference uses.
+        """
+        return self._alias
 
     def to_string(self) -> str:
         return f"HiddenBackReferenceExpression[{self.back_levels}:{self.term_name}]"

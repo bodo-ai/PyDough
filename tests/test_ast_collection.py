@@ -18,6 +18,7 @@ from test_utils import (
     TableCollectionInfo,
     SubCollectionInfo,
     CalcInfo,
+    ChildReferenceInfo,
 )
 import pytest
 
@@ -56,7 +57,10 @@ import pytest
             id="regions_nations",
         ),
         pytest.param(
-            TableCollectionInfo("Regions") ** CalcInfo(),
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [],
+            ),
             {},
             {
                 "name",
@@ -73,7 +77,9 @@ import pytest
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+                ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
             ),
             {"foo": 0, "bar": 1},
             {
@@ -93,7 +99,9 @@ import pytest
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+                ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
                 ** SubCollectionInfo("nations")
             ),
             {"key": 0, "name": 1, "region_key": 2, "comment": 3},
@@ -113,7 +121,9 @@ import pytest
             (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+                ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
             ),
             {"foo": 0, "bar": 1},
             {
@@ -133,8 +143,11 @@ import pytest
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
                 ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
+                ** CalcInfo(
+                    [],
                     fizz=FunctionInfo(
                         "ADD", [ReferenceInfo("foo"), LiteralInfo(1, Int64Type())]
                     ),
@@ -198,6 +211,7 @@ import pytest
                 TableCollectionInfo("Parts")
                 ** SubCollectionInfo("suppliers_of_part")
                 ** CalcInfo(
+                    [],
                     good_comment=FunctionInfo(
                         "EQU",
                         [ReferenceInfo("comment"), LiteralInfo("good", StringType())],
@@ -327,6 +341,7 @@ import pytest
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
                 ** CalcInfo(
+                    [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
                 )
@@ -354,6 +369,7 @@ import pytest
                 ** SubCollectionInfo("supply_records")
                 ** SubCollectionInfo("lines")
                 ** CalcInfo(
+                    [],
                     region_name=BackReferenceExpressionInfo("name", 4),
                     nation_name=BackReferenceExpressionInfo("name", 3),
                     supplier_name=BackReferenceExpressionInfo("name", 2),
@@ -394,6 +410,7 @@ import pytest
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("lines_sourced_from")
                 ** CalcInfo(
+                    [],
                     source_region_name=BackReferenceExpressionInfo("name", 1),
                     taxation=ReferenceInfo("tax"),
                     name_of_nation=ReferenceInfo("nation_name"),
@@ -476,13 +493,17 @@ def test_collections_calc_terms(
             id="regions_nations",
         ),
         pytest.param(
-            TableCollectionInfo("Regions") ** CalcInfo(),
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [],
+            ),
             "Regions()",
             id="regions_empty_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** CalcInfo(
+                [],
                 region_name=ReferenceInfo("name"),
                 adjusted_key=FunctionInfo(
                     "MUL",
@@ -501,6 +522,7 @@ def test_collections_calc_terms(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
             ** CalcInfo(
+                [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
@@ -511,12 +533,82 @@ def test_collections_calc_terms(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("suppliers")
             ** CalcInfo(
+                [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("nation_name"),
                 supplier_name=ReferenceInfo("name"),
             ),
             "Regions.suppliers(region_name=BACK(1).name, nation_name=nation_name, supplier_name=name)",
             id="regions_suppliers_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Parts")
+            ** SubCollectionInfo("suppliers_of_part")
+            ** SubCollectionInfo("ps_lines"),
+            # ** CalcInfo([],
+            #     region_name=BackReferenceExpressionInfo("name", 1),
+            #     nation_name=ReferenceInfo("nation_name"),
+            #     supplier_name=ReferenceInfo("name"),
+            # ),
+            "Parts.suppliers_of_part.ps_lines",
+            id="parts_suppliers_lines",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("suppliers")],
+                nation_name=ReferenceInfo("name"),
+                total_supplier_balances=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+            ),
+            "Nations(nation_name=name, total_supplier_balances=SUM(suppliers.account_balance))",
+            id="nations_childcalc_suppliers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** CalcInfo(
+                [SubCollectionInfo("parts_supplied")],
+                supplier_name=ReferenceInfo("name"),
+                total_retail_price=FunctionInfo(
+                    "SUM",
+                    [
+                        FunctionInfo(
+                            "SUB",
+                            [
+                                ChildReferenceInfo("retail_price", 0),
+                                LiteralInfo(1.0, Float64Type()),
+                            ],
+                        )
+                    ],
+                ),
+            ),
+            "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied.retail_price - 1.0))",
+            id="suppliers_childcalc_parts_a",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("parts_supplied")
+                    ** CalcInfo(
+                        [],
+                        adj_retail_price=FunctionInfo(
+                            "SUB",
+                            [
+                                ReferenceInfo("retail_price"),
+                                LiteralInfo(1.0, Float64Type()),
+                            ],
+                        ),
+                    )
+                ],
+                supplier_name=ReferenceInfo("name"),
+                total_retail_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("adj_retail_price", 0)]
+                ),
+            ),
+            "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied(adj_retail_price=retail_price - 1.0).adj_retail_price))",
+            id="suppliers_childcalc_parts_b",
         ),
     ],
 )
