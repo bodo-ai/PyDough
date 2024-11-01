@@ -2,7 +2,7 @@
 TODO: add file-level docstring.
 """
 
-from typing import Set, Dict
+from typing import Set, Dict, Tuple
 from pydough.types import (
     StringType,
     Float64Type,
@@ -22,6 +22,121 @@ from test_utils import (
     BackReferenceCollectionInfo,
 )
 import pytest
+
+
+@pytest.fixture
+def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
+    """
+    The AST node info for a query that calculates the ratio for each region
+    between the of all part sale values (retail price of the part times the
+    quantity purchased for each time it was purchased) that were sold to a
+    customer in the same region vs all part sale values from that region.
+
+    Equivalent SQL query:
+    ```
+    SELECT
+        R1.name AS region_name
+        SUM(P.p_retailprice * IFF(R1.region_name == R2.region_name, L.quantity, 0)) /
+        SUM(P.p_retailprice * L.quantity) AS intra_ratio
+    FROM
+        REGION R1,
+        NATION N1,
+        SUPPLIER S,
+        PART_SUPP PS,
+        LINEITEM L,
+        ORDER O,
+        CUSTOMER C,
+        NATION N2,
+        REGION R2
+    WHERE R1.r_regionkey = N1.n_regionkey
+        AND N1.n_nationkey = S.s_nationkey
+        AND S.s_suppkey = PS.ps_suppkey
+        AND PS.ps_partkey = P.p_partkey
+        AND PS.ps_partkey = L.l_partkey AND PS.ps_suppkey = L.l_suppkey
+        AND L.l_orderkey = O.o_orderkey
+        AND O.o_custkey = C.c_custkey
+        AND C.c_nationkey = N2.n_nationkey
+        AND N2.n_regionkey = R2.r_regionkey
+    GROUP BY region_name
+    ```
+
+    Equivalent PyDough code:
+    ```
+    is_intra_line = IFF(order.customer.region.name == BACK(3).name, 1, 0)
+    part_sales = suppliers.parts_supplied(
+        intra_value = retail_price * ps_lines(adj_quantity = quantity * is_intra_line).adj_quantity,
+        total_value = retail_price * ps_lines.quantity,
+    )
+    Regions(
+        region_name = name
+        intra_sales = SUM(part_sales.intra_value) / SUM(part_sales.total_value)
+    )
+    ```
+    """
+    test_info: AstNodeTestInfo = TableCollectionInfo("Regions") ** CalcInfo(
+        [
+            SubCollectionInfo("suppliers")
+            ** SubCollectionInfo("parts_supplied")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("ps_lines")
+                    ** CalcInfo(
+                        [
+                            SubCollectionInfo("order")
+                            ** SubCollectionInfo("customer")
+                            ** SubCollectionInfo("region")
+                        ],
+                        adj_quantity=FunctionInfo(
+                            "MUL",
+                            [
+                                ReferenceInfo("quantity"),
+                                FunctionInfo(
+                                    "IFF",
+                                    [
+                                        FunctionInfo(
+                                            "EQU",
+                                            [
+                                                BackReferenceExpressionInfo("name", 3),
+                                                ChildReferenceInfo("name", 0),
+                                            ],
+                                        ),
+                                        LiteralInfo(1, Int64Type()),
+                                        LiteralInfo(0, Int64Type()),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    )
+                ],
+                value=FunctionInfo(
+                    "MUL",
+                    [
+                        ReferenceInfo("retail_price"),
+                        ChildReferenceInfo("adj_quantity", 0),
+                    ],
+                ),
+                adj_value=FunctionInfo(
+                    "MUL",
+                    [
+                        ReferenceInfo("retail_price"),
+                        ChildReferenceInfo("quantity", 0),
+                    ],
+                ),
+            )
+        ],
+        region_name=ReferenceInfo("name"),
+        intra_ratio=FunctionInfo(
+            "DIV",
+            [
+                FunctionInfo("SUM", [ChildReferenceInfo("adj_value", 0)]),
+                FunctionInfo("SUM", [ChildReferenceInfo("value", 0)]),
+            ],
+        ),
+    )
+    adjusted_lines: str = "lines(adj_quantity=quantity * IFF(BACK(3).name == order.customer.region.name, 1, 0))"
+    part_values: str = f"suppliers.parts_supplied(value=retail_price * {adjusted_lines}.adj_quantity, adj_value=retail_price * {adjusted_lines}.quantity)"
+    string_representation: str = f"Regions(region_name=name, intra_ratio=SUM({part_values}.adj_value) / SUM({part_values}.value))"
+    return test_info, string_representation
 
 
 @pytest.mark.parametrize(
@@ -661,7 +776,21 @@ def test_collections_to_string(
     tpch_node_builder: AstNodeBuilder,
 ):
     """
-    TODO
+    Verifies that various AST collection node structures produce the expected
+    non-tree string representation.
     """
+    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    assert collection.to_string() == expected_string
+
+
+def test_regions_intra_ratio_to_string(
+    region_intra_ratio: Tuple[AstNodeTestInfo, str],
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    Same as `test_collections_to_string` but specifically on the structure from
+    the `region_intra_ratio` fixture.
+    """
+    calc_pipeline, expected_string = region_intra_ratio
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     assert collection.to_string() == expected_string
