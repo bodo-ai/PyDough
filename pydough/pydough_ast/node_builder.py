@@ -24,7 +24,12 @@ from .expressions import (
 )
 from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
 from .errors import PyDoughASTException
-from .collections import PyDoughCollectionAST, TableCollection, SubCollection, Calc
+from .collections import (
+    PyDoughCollectionAST,
+    TableCollection,
+    SubCollection,
+    Calc,
+)
 
 
 class AstNodeBuilder(object):

@@ -171,14 +171,14 @@ class CompoundSubCollection(SubCollection):
                     self._properties[alias] = (
                         calc_idx,
                         HiddenBackReferenceCollection(
-                            self, ancestor, original_name, back_levels
+                            self, ancestor, alias, original_name, back_levels
                         ),
                     )
                 else:
                     self._properties[alias] = (
                         calc_idx,
                         HiddenBackReferenceExpression(
-                            self, ancestor, original_name, back_levels
+                            self, ancestor, alias, original_name, back_levels
                         ),
                     )
         return self._properties
