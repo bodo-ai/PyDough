@@ -133,7 +133,7 @@ def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
             ],
         ),
     )
-    adjusted_lines: str = "lines(adj_quantity=quantity * IFF(BACK(3).name == order.customer.region.name, 1, 0))"
+    adjusted_lines: str = "ps_lines(adj_quantity=quantity * IFF(BACK(3).name == order.customer.region.name, 1, 0))"
     part_values: str = f"suppliers.parts_supplied(value=retail_price * {adjusted_lines}.adj_quantity, adj_value=retail_price * {adjusted_lines}.quantity)"
     string_representation: str = f"Regions(region_name=name, intra_ratio=SUM({part_values}.adj_value) / SUM({part_values}.value))"
     return test_info, string_representation
@@ -738,7 +738,7 @@ def test_collections_calc_terms(
                     [ChildReferenceInfo("quantity", 0), ReferenceInfo("ps_availqty")],
                 ),
             ),
-            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=lines.quantity / ps_availqty)",
+            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
             id="suppliers_parts_childcalc_a",
         ),
         pytest.param(
@@ -765,7 +765,7 @@ def test_collections_calc_terms(
                 part_name=ReferenceInfo("name"),
                 ratio=ChildReferenceInfo("ratio", 0),
             ),
-            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
+            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
             id="suppliers_parts_childcalc_b",
         ),
     ],

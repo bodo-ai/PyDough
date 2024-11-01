@@ -2,10 +2,11 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["SubCollection"]
+__all__ = ["CalcSubCollection"]
 
 
 from .sub_collection import SubCollection
+from .hidden_back_reference_collection import HiddenBackReferenceCollection
 
 
 class CalcSubCollection(SubCollection):
@@ -31,7 +32,10 @@ class CalcSubCollection(SubCollection):
     def to_string(self) -> str:
         # Does not include the parent since this exists within the context
         # of a CALC node.
-        return self.subcollection_property.name
+        if isinstance(self.subcollection, HiddenBackReferenceCollection):
+            return self.subcollection.alias
+        else:
+            return self.subcollection_property.name
 
     def to_tree_string(self) -> str:
         raise NotImplementedError

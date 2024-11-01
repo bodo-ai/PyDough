@@ -31,7 +31,6 @@ from .collections import (
     Calc,
     CalcSubCollection,
     BackReferenceCollection,
-    HiddenBackReferenceCollection,
 )
 
 
@@ -223,10 +222,7 @@ class AstNodeBuilder(object):
             property of the collection.
         """
         term: PyDoughAST = collection.get_term(name)
-        if not (
-            isinstance(term, SubCollection)
-            or isinstance(term, HiddenBackReferenceCollection)
-        ):
+        if not isinstance(term, SubCollection):
             raise PyDoughMetadataException(
                 f"Expected {term!r} to refer to a subcollection"
             )

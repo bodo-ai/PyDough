@@ -408,7 +408,9 @@ class CalcInfo(CollectionTestInfo):
         self.args: List[Tuple[str, AstNodeTestInfo]] = list(kwargs.items())
 
     def to_string(self) -> str:
-        args_strings: List[str] = [f"{name}={arg.to_string}" for name, arg in self.args]
+        args_strings: List[str] = [
+            f"{name}={arg.to_string()}" for name, arg in self.args
+        ]
         return f"Calc[{', '.join(args_strings)}]"
 
     def local_build(
