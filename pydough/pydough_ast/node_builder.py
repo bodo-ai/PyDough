@@ -11,7 +11,7 @@ from pydough.metadata import (
     TableColumnMetadata,
     PyDoughMetadataException,
 )
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from pydough.types import PyDoughType
 from .abstract_pydough_ast import PyDoughAST
 from .expressions import (
@@ -19,11 +19,10 @@ from .expressions import (
     ExpressionFunctionCall,
     ColumnProperty,
     Reference,
-    PyDoughExpressionAST,
 )
 from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
 from .errors import PyDoughASTException
-from .collections import PyDoughCollectionAST, TableCollection, Calc
+from .collections import PyDoughCollectionAST, Calc, GlobalContext, CollectionAccess
 
 
 class AstNodeBuilder(object):
@@ -133,33 +132,45 @@ class AstNodeBuilder(object):
         """
         return Reference(collection, name)
 
-    def build_table_collection(self, name: str) -> TableCollection:
+    def build_global_context(self) -> GlobalContext:
         """
-        Creates a new table collection invocation.
+        Creates a new global context for the graph.
+
+        Returns:
+            The newly created PyDough GlobalContext.
+        """
+        return GlobalContext(self.graph)
+
+    def build_collection_access(
+        self, name: str, preceding_context: PyDoughCollectionAST
+    ) -> CollectionAccess:
+        """
+        Creates a new collection access AST node.
 
         Args:
             `name`: the name of the collection being referenced.
+            `preceding_context`: the collection node from which the
+            collection access is being fetched.
 
         Returns:
-            The newly created PyDough TableCollection.
+            The newly created PyDough CollectionAccess.
 
         Raises:
             `PyDoughMetadataException`: if `name` does not refer to a
-            collection in the graph.
+            collection that `preceding_context` has access to.
         """
-        return TableCollection(self.graph.get_collection(name))
+        return preceding_context.get_term(name)
 
     def build_calc(
         self,
-        collection: PyDoughCollectionAST,
-        terms: List[Tuple[str, PyDoughExpressionAST]],
+        preceding_context: PyDoughCollectionAST,
     ) -> Calc:
         """
-        Creates a CALC term.
+        Creates a CALC term, but `with_terms` still needs to be called on the
+        output.
 
         Args:
-            `collection`: the preceding collection.
-            `terms`: the named expressions in the CALC term.
+            `preceding_context`: the preceding collection.
 
         Returns:
             The newly created PyDough CALC term.
@@ -167,4 +178,4 @@ class AstNodeBuilder(object):
         Raises:
             `PyDoughASTException`: if the terms are invalid for the CALC term.
         """
-        return Calc(collection, terms)
+        return Calc(preceding_context)

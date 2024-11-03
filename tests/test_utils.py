@@ -250,7 +250,9 @@ class TableCollectionInfo(CollectionTestInfo):
     def local_build(
         self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
     ) -> PyDoughCollectionAST:
-        return builder.build_table_collection(self.name)
+        if context is None:
+            context = builder.build_global_context()
+        return builder.build_collection_access(self.name, context)
 
 
 class CalcInfo(CollectionTestInfo):
@@ -274,10 +276,9 @@ class CalcInfo(CollectionTestInfo):
     def local_build(
         self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
     ) -> PyDoughCollectionAST:
-        assert (
-            context is not None
-        ), "Cannot call .build() on CalcInfo without providing a context"
+        if context is None:
+            context = builder.build_global_context()
         args: List[Tuple[str, PyDoughExpressionAST]] = [
             (name, info.build(builder, context)) for name, info in self.args
         ]
-        return builder.build_calc(context, args)
+        return builder.build_calc(context).with_terms(args)

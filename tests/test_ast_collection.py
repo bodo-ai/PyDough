@@ -21,6 +21,23 @@ import pytest
     "calc_pipeline, expected_calcs, expected_total_names",
     [
         pytest.param(
+            CalcInfo(x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            {"x": 0, "y": 1},
+            {
+                "x",
+                "y",
+                "Customers",
+                "Lineitems",
+                "Nations",
+                "Orders",
+                "PartSupp",
+                "Parts",
+                "Regions",
+                "Suppliers",
+            },
+            id="global_calc",
+        ),
+        pytest.param(
             TableCollectionInfo("Regions"),
             {"key": 0, "name": 1, "comment": 2},
             {
