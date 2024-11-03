@@ -19,7 +19,7 @@ import pytest
     [
         pytest.param(
             TableCollectionInfo("Rainbows"),
-            "graph 'TPCH' does not have a collection named 'Rainbows'",
+            "Unrecognized term of graph 'TPCH': 'Rainbows'",
             id="table_dne",
         ),
         pytest.param(

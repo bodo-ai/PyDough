@@ -7,7 +7,6 @@ __all__ = ["Calc"]
 
 from typing import Dict, List, Tuple, Set
 
-from pydough.metadata import CollectionMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
@@ -22,27 +21,27 @@ class Calc(PyDoughCollectionAST):
     def __init__(
         self,
         predecessor: PyDoughCollectionAST,
-        terms: List[Tuple[str, PyDoughExpressionAST]],
     ):
         self._predecessor: PyDoughCollectionAST = predecessor
-        self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] = {
-            name: idx for idx, (name, _) in enumerate(terms)
-        }
+        # Not initialized until with_terms is called
+        self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
+            None
+        )
+        self._all_terms: Dict[str, PyDoughExpressionAST] | None = {}
+
+    def with_terms(self, terms: List[Tuple[str, PyDoughExpressionAST]]) -> "Calc":
+        """
+        TODO: add function docstring
+        """
+        self._calc_term_indices = {name: idx for idx, (name, _) in enumerate(terms)}
         # Include terms from the predecessor, with the terms from this CALC
         # added in (overwriting any preceding properties with the same name)
         self._all_terms: Dict[str, PyDoughExpressionAST] = {}
-
-        for name in predecessor.all_terms:
-            self._all_terms[name] = predecessor.get_term(name)
+        for name in self.preceding_context.all_terms:
+            self._all_terms[name] = self.preceding_context.get_term(name)
         for name, property in terms:
             self._all_terms[name] = property
-
-    @property
-    def collection(self) -> CollectionMetadata:
-        """
-        The table that is being referenced by the collection node.
-        """
-        return self._collection
+        return self
 
     @property
     def calc_term_indices(self) -> Dict[str, Tuple[int, PyDoughExpressionAST]]:
@@ -86,7 +85,7 @@ class Calc(PyDoughCollectionAST):
             kwarg_strings.append(f"{name}={expr.to_string()}")
         return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
 
-    def to_tree_string(self) -> str:
+    def to_tree_form(self) -> None:
         raise NotImplementedError
 
     def equals(self, other: "Calc") -> bool:

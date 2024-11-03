@@ -251,10 +251,12 @@ class TableCollectionInfo(CollectionTestInfo):
     def local_build(
         self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
     ) -> PyDoughCollectionAST:
-        return builder.build_table_collection(self.name)
+        if context is None:
+            context = builder.build_global_context()
+        return builder.build_collection_access(self.name, context)
 
 
-class SubCollectionInfo(CollectionTestInfo):
+class SubCollectionInfo(TableCollectionInfo):
     """
     CollectionTestInfo implementation class to create a subcollection access,
     either as a direct subcollection or via a compound relationship. Contains
@@ -263,10 +265,6 @@ class SubCollectionInfo(CollectionTestInfo):
 
     NOTE: must provide a `context` when building.
     """
-
-    def __init__(self, name: str):
-        super().__init__()
-        self.name: str = name
 
     def to_string(self) -> str:
         return f"SubCollection[{self.name}]"
@@ -277,7 +275,7 @@ class SubCollectionInfo(CollectionTestInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return builder.build_sub_collection(context, self.name)
+        return builder.build_collection_access(self.name, context)
 
 
 class CalcInfo(CollectionTestInfo):
@@ -301,10 +299,9 @@ class CalcInfo(CollectionTestInfo):
     def local_build(
         self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
     ) -> PyDoughCollectionAST:
-        assert (
-            context is not None
-        ), "Cannot call .build() on CalcInfo without providing a context"
+        if context is None:
+            context = builder.build_global_context()
         args: List[Tuple[str, PyDoughExpressionAST]] = [
             (name, info.build(builder, context)) for name, info in self.args
         ]
-        return builder.build_calc(context, args)
+        return builder.build_calc(context).with_terms(args)
