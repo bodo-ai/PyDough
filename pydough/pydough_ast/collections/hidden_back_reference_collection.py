@@ -7,8 +7,7 @@ __all__ = ["HiddenBackReferenceCollection"]
 
 from .collection_ast import PyDoughCollectionAST
 from .back_reference_collection import BackReferenceCollection
-from .sub_collection import SubCollection
-from pydough.metadata.properties import SubcollectionRelationshipMetadata
+from .collection_access import CollectionAccess
 
 
 class HiddenBackReferenceCollection(BackReferenceCollection):
@@ -30,10 +29,9 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         self._ancestor: PyDoughCollectionAST = ancestor
         self._subcollection: PyDoughCollectionAST = self._ancestor.get_term(term_name)
         self._alias: str = alias
-        super(SubCollection, self).__init__(self._subcollection.collection)
-        self._parent: PyDoughCollectionAST = compound
-        self._subcollection_property: SubcollectionRelationshipMetadata = (
-            self._subcollection.subcollection_property
+        self._collection_access: CollectionAccess = self._ancestor.get_term(term_name)
+        super(BackReferenceCollection, self).__init__(
+            self._collection_access.collection, ancestor
         )
 
     @property

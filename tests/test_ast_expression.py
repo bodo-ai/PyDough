@@ -17,6 +17,7 @@ from pydough.pydough_ast import (
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
+    PyDoughExpressionAST,
 )
 from test_utils import (
     graph_fetcher,
@@ -65,40 +66,6 @@ def test_column_property_type(
     assert (
         property.pydough_type == expected_type
     ), "Mismatch between column property type and expected value"
-
-
-@pytest.mark.parametrize(
-    "literal_info, expected_type",
-    [
-        pytest.param(
-            LiteralInfo("hello", StringType()),
-            StringType(),
-            id="string",
-        ),
-        pytest.param(
-            LiteralInfo(-1, Int64Type()),
-            Int64Type(),
-            id="int64",
-        ),
-        pytest.param(
-            LiteralInfo(date(2024, 10, 28), DateType()),
-            DateType(),
-            id="date",
-        ),
-    ],
-)
-def test_literal_type(
-    literal_info: AstNodeTestInfo,
-    expected_type: PyDoughType,
-    tpch_node_builder: AstNodeBuilder,
-):
-    """
-    Tests that literal expressions have the correct return type.
-    """
-    property: Literal = literal_info.build(tpch_node_builder)
-    assert (
-        property.pydough_type == expected_type
-    ), "Mismatch between literal type and expected value"
 
 
 @pytest.mark.parametrize(
@@ -165,3 +132,210 @@ def test_function_call_return(
     assert (
         call.is_aggregation == out_aggregated
     ), "Mismatch between aggregation status and expected value"
+
+
+@pytest.mark.parametrize(
+    "literal_info, expected_type",
+    [
+        pytest.param(
+            LiteralInfo("hello", StringType()),
+            StringType(),
+            id="string",
+        ),
+        pytest.param(
+            LiteralInfo(-1, Int64Type()),
+            Int64Type(),
+            id="int64",
+        ),
+        pytest.param(
+            LiteralInfo(date(2024, 10, 28), DateType()),
+            DateType(),
+            id="date",
+        ),
+    ],
+)
+def test_literal_type(
+    literal_info: AstNodeTestInfo,
+    expected_type: PyDoughType,
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    Tests that literal expressions have the correct return type.
+    """
+    property: Literal = literal_info.build(tpch_node_builder)
+    assert (
+        property.pydough_type == expected_type
+    ), "Mismatch between literal type and expected value"
+
+
+@pytest.mark.parametrize(
+    "expr_info, expected_string",
+    [
+        pytest.param(
+            FunctionInfo("LOWER", [ColumnInfo("Regions", "name")]),
+            "LOWER(Column[tpch.REGION.r_name])",
+            id="regular_func",
+        ),
+        pytest.param(
+            FunctionInfo("SUM", [ColumnInfo("Lineitems", "tax")]),
+            "SUM(Column[tpch.LINEITEM.l_tax])",
+            id="agg_func",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "IFF",
+                [
+                    FunctionInfo(
+                        "EQU",
+                        [
+                            ColumnInfo("Lineitems", "ship_date"),
+                            ColumnInfo("Lineitems", "receipt_date"),
+                        ],
+                    ),
+                    ColumnInfo("Lineitems", "tax"),
+                    LiteralInfo(0, Int64Type()),
+                ],
+            ),
+            "IFF(Column[tpch.LINEITEM.l_shipdate] == Column[tpch.LINEITEM.l_receiptdate], Column[tpch.LINEITEM.l_tax], 0)",
+            id="nested_functions",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "ADD",
+                [
+                    LiteralInfo(1, Int64Type()),
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(2, Int64Type()), LiteralInfo(3, Int64Type())],
+                    ),
+                ],
+            ),
+            "1 + (2 + 3)",
+            id="nested_binops_a",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "ADD",
+                [
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(1, Int64Type()), LiteralInfo(2, Int64Type())],
+                    ),
+                    LiteralInfo(3, Int64Type()),
+                ],
+            ),
+            "(1 + 2) + 3",
+            id="nested_binops_b",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "ADD",
+                [
+                    FunctionInfo(
+                        "ADD",
+                        [
+                            FunctionInfo(
+                                "ADD",
+                                [
+                                    LiteralInfo(1, Int64Type()),
+                                    LiteralInfo(2, Int64Type()),
+                                ],
+                            ),
+                            LiteralInfo(3, Int64Type()),
+                        ],
+                    ),
+                    FunctionInfo(
+                        "ADD",
+                        [
+                            LiteralInfo(4, Int64Type()),
+                            FunctionInfo(
+                                "ADD",
+                                [
+                                    LiteralInfo(5, Int64Type()),
+                                    LiteralInfo(6, Int64Type()),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            "((1 + 2) + 3) + (4 + (5 + 6))",
+            id="nested_binops_c",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "DIV",
+                [
+                    LiteralInfo(1, Int64Type()),
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(2, Int64Type()), LiteralInfo(3, Int64Type())],
+                    ),
+                ],
+            ),
+            "1 / (2 + 3)",
+            id="nested_binops_d",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "MUL",
+                [
+                    FunctionInfo(
+                        "ADD",
+                        [LiteralInfo(1, Int64Type()), LiteralInfo(2, Int64Type())],
+                    ),
+                    LiteralInfo(3, Int64Type()),
+                ],
+            ),
+            "(1 + 2) * 3",
+            id="nested_binops_e",
+        ),
+        pytest.param(
+            FunctionInfo(
+                "SUB",
+                [
+                    FunctionInfo(
+                        "MUL",
+                        [
+                            FunctionInfo(
+                                "ADD",
+                                [
+                                    LiteralInfo(1, Int64Type()),
+                                    LiteralInfo(2, Int64Type()),
+                                ],
+                            ),
+                            LiteralInfo(3, Int64Type()),
+                        ],
+                    ),
+                    FunctionInfo(
+                        "ADD",
+                        [
+                            LiteralInfo(4, Int64Type()),
+                            FunctionInfo(
+                                "POW",
+                                [
+                                    LiteralInfo(5, Int64Type()),
+                                    LiteralInfo(6, Int64Type()),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            "((1 + 2) * 3) - (4 + (5 ** 6))",
+            id="nested_binops_f",
+        ),
+    ],
+)
+def test_expression_strings(
+    expr_info: AstNodeTestInfo, expected_string: str, tpch_node_builder: AstNodeBuilder
+):
+    """
+    Tests that expressions generate the expected string representation. Note,
+    the column names seen here will essentially never be seen in actual string
+    representations since they will be replaced with references to the columns.
+    """
+    expr: PyDoughExpressionAST = expr_info.build(tpch_node_builder)
+    assert (
+        expr.to_string() == expected_string
+    ), "Mismatch between string representation and expected value"

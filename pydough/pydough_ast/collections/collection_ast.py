@@ -95,6 +95,12 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @abstractmethod
+    def to_tree_form(self) -> None:
+        """
+        Helper for `to_tree_string` that turns a collection into a
+        CollectionTreeForm object which can be used to create a tree string.
+        """
+
     def to_tree_string(self) -> str:
         """
         Returns a PyDough collection AST converted into a tree-like string,
@@ -135,3 +141,4 @@ class PyDoughCollectionAST(PyDoughAST):
         Returns:
             The tree-like string representation of `self`.
         """
+        raise NotImplementedError
