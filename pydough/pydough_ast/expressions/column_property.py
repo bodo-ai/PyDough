@@ -37,7 +37,7 @@ class ColumnProperty(PyDoughExpressionAST):
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False
 
-    def to_string(self) -> str:
+    def to_string(self, tree_form: bool = False) -> str:
         if not hasattr(self.column_property.collection, "table_path"):
             raise PyDoughASTException(
                 f"collection of {self.column_property.error_name} does not have a 'table_path' field"

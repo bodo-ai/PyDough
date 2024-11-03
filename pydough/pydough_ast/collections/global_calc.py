@@ -13,6 +13,8 @@ from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .collection_ast import PyDoughCollectionAST
 from .table_collection import TableCollection
+from .global_calc_table_collection import GlobalCalcTableCollection
+from .collection_tree_form import CollectionTreeForm
 
 
 class GlobalCalc(PyDoughCollectionAST):
@@ -24,10 +26,10 @@ class GlobalCalc(PyDoughCollectionAST):
     def __init__(
         self,
         graph: GraphMetadata,
-        children: List[PyDoughCollectionAST],
+        children: List[GlobalCalcTableCollection],
     ):
         self._graph: GraphMetadata = graph
-        self._children: List[PyDoughCollectionAST] = children
+        self._children: List[GlobalCalcTableCollection] = children
         # Not defined until with_terms is called
         self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
             None
@@ -60,7 +62,7 @@ class GlobalCalc(PyDoughCollectionAST):
         return self._graph
 
     @property
-    def children(self) -> List[PyDoughCollectionAST]:
+    def children(self) -> List[GlobalCalcTableCollection]:
         """
         The child collections accessible from the global CALC used to derive
         expressions in terms of a subcollection.
@@ -113,8 +115,20 @@ class GlobalCalc(PyDoughCollectionAST):
             kwarg_strings.append(f"{name}={expr.to_string()}")
         return f"{self.graph.name}({', '.join(kwarg_strings)})"
 
-    def to_tree_string(self) -> str:
-        raise NotImplementedError
+    def to_tree_form(self) -> CollectionTreeForm:
+        kwarg_strings: List[str] = []
+        for name in self._calc_term_indices:
+            expr: PyDoughExpressionAST = self.get_term(name)
+            kwarg_strings.append(f"{name}={expr.to_string(tree_form=True)}")
+        tree_form: CollectionTreeForm = CollectionTreeForm(
+            f"Calc[{', '.join(kwarg_strings)}]",
+            0,
+        )
+        for child in self.children:
+            child_tree: CollectionTreeForm = child.to_tree_form()
+            tree_form.has_children = True
+            tree_form.nested_trees.append(child_tree)
+        return tree_form
 
     def equals(self, other: "GlobalCalc") -> bool:
         if self._all_terms is None:

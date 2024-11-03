@@ -10,6 +10,7 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from .collection_ast import PyDoughCollectionAST
 from .sub_collection import SubCollection
 from pydough.pydough_ast.errors import PyDoughASTException
+from .collection_tree_form import CollectionTreeForm
 
 
 class BackReferenceCollection(SubCollection):
@@ -70,5 +71,5 @@ class BackReferenceCollection(SubCollection):
     def to_string(self) -> str:
         return f"BACK({self.back_levels}).{self._subcollection.to_string()}"
 
-    def to_tree_string(self) -> str:
+    def to_tree_form(self) -> CollectionTreeForm:
         raise NotImplementedError

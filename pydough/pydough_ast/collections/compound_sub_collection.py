@@ -182,6 +182,3 @@ class CompoundSubCollection(SubCollection):
                         ),
                     )
         return self._properties
-
-    def to_tree_string(self) -> str:
-        raise NotImplementedError

@@ -69,7 +69,7 @@ class BackReferenceExpression(Reference):
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False
 
-    def to_string(self) -> str:
+    def to_string(self, tree_form: bool = False) -> str:
         return f"BACK({self.back_levels}).{self.term_name}"
 
     def equals(self, other: "BackReferenceExpression") -> bool:

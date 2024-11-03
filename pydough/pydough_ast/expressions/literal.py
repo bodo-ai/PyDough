@@ -38,7 +38,7 @@ class Literal(PyDoughExpressionAST):
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False
 
-    def to_string(self) -> str:
+    def to_string(self, tree_form: bool = False) -> str:
         return repr(self.value)
 
     def equals(self, other: "Literal") -> bool:

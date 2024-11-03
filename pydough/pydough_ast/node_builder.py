@@ -32,6 +32,7 @@ from .collections import (
     CalcSubCollection,
     BackReferenceCollection,
     GlobalCalc,
+    GlobalCalcTableCollection,
 )
 
 
@@ -190,7 +191,7 @@ class AstNodeBuilder(object):
         return BackReferenceExpression(collection, name, levels)
 
     def build_global_calc(
-        self, graph: GraphMetadata, children: List[CalcSubCollection]
+        self, graph: GraphMetadata, children: List[GlobalCalcTableCollection]
     ) -> GlobalCalc:
         """
         Creates a new global CALC instance, but `with_terms` still needs to be

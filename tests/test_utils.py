@@ -29,6 +29,7 @@ from pydough.pydough_ast import (
     Calc,
     CalcSubCollection,
     GlobalCalc,
+    GlobalCalcTableCollection,
 )
 from typing import Dict, Set, Callable, Any, List, Tuple
 from pydough.types import PyDoughType
@@ -369,12 +370,14 @@ class CalcSubCollectionInfo(CollectionTestInfo):
     CollectionTestInfo implementation class that wraps around a subcollection
     info within a Calc context. Contains the following fields:
     - `child_info`: the collection info for the child subcollection.
+    - `is_last`: the this the last child of the parent CALC.
 
     NOTE: must provide a `context` when building.
     """
 
-    def __init__(self, child_info: CollectionTestInfo):
+    def __init__(self, child_info: CollectionTestInfo, is_last: bool):
         self.child_info: CollectionTestInfo = child_info
+        self.is_last: bool = is_last
         self.successor = child_info.successor
 
     def to_string(self) -> str:
@@ -390,7 +393,8 @@ class CalcSubCollectionInfo(CollectionTestInfo):
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
         return CalcSubCollection(
-            self.child_info.local_build(builder, context, children_contexts)
+            self.child_info.local_build(builder, context, children_contexts),
+            self.is_last,
         )
 
 
@@ -425,14 +429,49 @@ class CalcInfo(CollectionTestInfo):
             context is not None
         ), "Cannot call .build() on CalcInfo without providing a context"
         children: List[PyDoughCollectionAST] = [
-            CalcSubCollectionInfo(child).build(builder, context)
-            for child in self.children_info
+            CalcSubCollectionInfo(child, idx == len(self.children_info) - 1).build(
+                builder, context
+            )
+            for idx, child in enumerate(self.children_info)
         ]
         raw_calc: Calc = builder.build_calc(context, children)
         args: List[Tuple[str, PyDoughExpressionAST]] = [
             (name, info.build(builder, context, children)) for name, info in self.args
         ]
         return raw_calc.with_terms(args)
+
+
+class GlobalCalcTableCollectionInfo(CollectionTestInfo):
+    """
+    CollectionTestInfo implementation class that wraps around a table context
+    info within a Calc context. Contains the following fields:
+    - `child_info`: the collection info for the child table collection.
+    - `is_last`: the this the last child of the parent CALC.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(self, child_info: CollectionTestInfo, is_last: bool):
+        self.child_info: CollectionTestInfo = child_info
+        self.is_last: bool = is_last
+        self.successor = child_info.successor
+
+    def to_string(self) -> str:
+        return f"ChildTableCollection[{self.child_info!r}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: List[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        assert (
+            context is not None
+        ), "Cannot call .build() on ReferenceInfo without providing a context"
+        return GlobalCalcTableCollection(
+            self.child_info.local_build(builder, context, children_contexts),
+            self.is_last,
+        )
 
 
 class GlobalCalcInfo(CalcInfo):
@@ -450,7 +489,10 @@ class GlobalCalcInfo(CalcInfo):
         children_contexts: List[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         children: List[PyDoughCollectionAST] = [
-            child.build(builder, context) for child in self.children_info
+            GlobalCalcTableCollectionInfo(
+                child, idx == len(self.children_info) - 1
+            ).build(builder, context)
+            for idx, child in enumerate(self.children_info)
         ]
         raw_calc: GlobalCalc = builder.build_global_calc(builder.graph, children)
         args: List[Tuple[str, PyDoughExpressionAST]] = [
@@ -470,6 +512,7 @@ class BackReferenceCollectionInfo(CollectionTestInfo):
     """
 
     def __init__(self, name: str, levels: int):
+        super().__init__()
         self.name: str = name
         self.levels: int = levels
 

@@ -9,6 +9,7 @@ from .collection_ast import PyDoughCollectionAST
 from .back_reference_collection import BackReferenceCollection
 from .sub_collection import SubCollection
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
+from .collection_tree_form import CollectionTreeForm
 
 
 class HiddenBackReferenceCollection(BackReferenceCollection):
@@ -46,5 +47,11 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
     def to_string(self) -> str:
         return f"{self.parent.to_string()}.{self.alias}"
 
-    def to_tree_string(self) -> str:
-        raise NotImplementedError
+    def to_tree_form(self) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.parent.to_tree_form()
+        predecessor.has_children = True
+        return CollectionTreeForm(
+            f"SubCollection[{self.alias}]",
+            predecessor.depth + 1,
+            predecessor=predecessor,
+        )

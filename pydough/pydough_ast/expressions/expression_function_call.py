@@ -51,10 +51,10 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return self.operator.requires_enclosing_parens(parent)
 
-    def to_string(self) -> str:
+    def to_string(self, tree_form: bool = False) -> str:
         arg_strings: List[str] = []
         for arg in self.args:
-            arg_string: str = arg.to_string()
+            arg_string: str = arg.to_string(tree_form)
             if arg.requires_enclosing_parens(self):
                 arg_string = f"({arg_string})"
             arg_strings.append(arg_string)

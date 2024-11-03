@@ -13,6 +13,7 @@ from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .collection_ast import PyDoughCollectionAST
 from .calc_sub_collection import CalcSubCollection
+from .collection_tree_form import CollectionTreeForm
 
 
 class Calc(PyDoughCollectionAST):
@@ -116,8 +117,23 @@ class Calc(PyDoughCollectionAST):
             kwarg_strings.append(f"{name}={expr.to_string()}")
         return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
 
-    def to_tree_string(self) -> str:
-        raise NotImplementedError
+    def to_tree_form(self) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.preceding_context.to_tree_form()
+        predecessor.has_successor = True
+        kwarg_strings: List[str] = []
+        for name in self._calc_term_indices:
+            expr: PyDoughExpressionAST = self.get_term(name)
+            kwarg_strings.append(f"{name}={expr.to_string(tree_form=True)}")
+        tree_form: CollectionTreeForm = CollectionTreeForm(
+            f"Calc[{', '.join(kwarg_strings)}]",
+            predecessor.depth,
+            predecessor=predecessor,
+        )
+        for child in self.children:
+            child_tree: CollectionTreeForm = child.to_tree_form()
+            tree_form.has_children = True
+            tree_form.nested_trees.append(child_tree)
+        return tree_form
 
     def equals(self, other: "Calc") -> bool:
         if self._all_terms is None:

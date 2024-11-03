@@ -16,6 +16,7 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import ColumnProperty
 from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
 
 
 class TableCollection(PyDoughCollectionAST):
@@ -116,8 +117,8 @@ class TableCollection(PyDoughCollectionAST):
     def to_string(self) -> str:
         return self.collection.name
 
-    def to_tree_string(self) -> str:
-        raise NotImplementedError
+    def to_tree_form(self) -> CollectionTreeForm:
+        return CollectionTreeForm(f"TableCollection[{self.collection.name}]", 0)
 
     def equals(self, other: "TableCollection") -> bool:
         return super().equals(other) and self.collection == other.collection
