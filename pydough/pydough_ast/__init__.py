@@ -24,5 +24,5 @@ from .expressions import (
     Literal,
     ExpressionFunctionCall,
 )
-from .collections import PyDoughCollectionAST, TableCollection, Calc
+from .collections import PyDoughCollectionAST, TableCollection, SubCollection, Calc
 from .node_builder import AstNodeBuilder

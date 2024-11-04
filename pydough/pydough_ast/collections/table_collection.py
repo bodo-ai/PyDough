@@ -5,9 +5,7 @@ TODO: add file-level docstring
 __all__ = ["TableCollection"]
 
 
-from pydough.metadata import (
-    CollectionMetadata,
-)
+from pydough.metadata import CollectionMetadata
 from .collection_ast import PyDoughCollectionAST
 from .collection_access import CollectionAccess
 

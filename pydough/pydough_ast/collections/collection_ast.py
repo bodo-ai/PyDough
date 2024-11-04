@@ -116,7 +116,7 @@ class PyDoughCollectionAST(PyDoughAST):
             c > 1000
         ).ORDER_BY(
             d.DESC()
-        ),
+        )
         ```
 
         A valid string representation of this would be:

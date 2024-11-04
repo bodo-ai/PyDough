@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple, Set
 from pydough.metadata import (
     CollectionMetadata,
     PropertyMetadata,
+    CompoundRelationshipMetadata,
 )
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
@@ -33,6 +34,9 @@ class CollectionAccess(PyDoughCollectionAST):
         self._ancestor: PyDoughCollectionAST = ancestor
         self._predecessor: PyDoughCollectionAST | None = predecessor
         self._properties: Dict[str, Tuple[int | None, PyDoughAST]] | None = None
+
+        # An internal property just used to keep track of how many calc terms
+        # have been added.
         self._calc_counter: int = 0
 
     @property
@@ -54,6 +58,8 @@ class CollectionAccess(PyDoughCollectionAST):
         The properties are evaluated lazily & cached to prevent ping-ponging
         between two tables that consider each other subcollections.
         """
+        from .compound_sub_collection import CompoundSubCollection
+        from .sub_collection import SubCollection
 
         if self._properties is None:
             self._properties = {}
@@ -67,9 +73,12 @@ class CollectionAccess(PyDoughCollectionAST):
                 property: PropertyMetadata = self.collection.get_property(property_name)
                 calc_idx: int | None
                 expression: PyDoughAST
-                if property.is_subcollection:
-                    # TODO: implement subcollections properly
-                    continue
+                if isinstance(property, CompoundRelationshipMetadata):
+                    calc_idx = None
+                    expression = CompoundSubCollection(property, self)
+                elif property.is_subcollection:
+                    calc_idx = None
+                    expression = SubCollection(property, self)
                 else:
                     calc_idx = self._calc_counter
                     expression = ColumnProperty(property)

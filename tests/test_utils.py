@@ -12,6 +12,7 @@ __all__ = [
     "FunctionInfo",
     "ReferenceInfo",
     "TableCollectionInfo",
+    "SubCollectionInfo",
     "CalcInfo",
 ]
 
@@ -252,6 +253,28 @@ class TableCollectionInfo(CollectionTestInfo):
     ) -> PyDoughCollectionAST:
         if context is None:
             context = builder.build_global_context()
+        return builder.build_collection_access(self.name, context)
+
+
+class SubCollectionInfo(TableCollectionInfo):
+    """
+    CollectionTestInfo implementation class to create a subcollection access,
+    either as a direct subcollection or via a compound relationship. Contains
+    the following fields:
+    - `name`: the name of the subcollection property within the collection.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def to_string(self) -> str:
+        return f"SubCollection[{self.name}]"
+
+    def local_build(
+        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
+    ) -> PyDoughCollectionAST:
+        assert (
+            context is not None
+        ), "Cannot call .build() on ReferenceInfo without providing a context"
         return builder.build_collection_access(self.name, context)
 
 
