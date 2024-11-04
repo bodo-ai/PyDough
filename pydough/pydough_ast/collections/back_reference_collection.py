@@ -8,6 +8,7 @@ from typing import Dict, Tuple
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from .collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.errors import PyDoughASTException
+from .collection_tree_form import CollectionTreeForm
 from .collection_access import CollectionAccess
 
 
@@ -68,5 +69,5 @@ class BackReferenceCollection(CollectionAccess):
     def to_string(self) -> str:
         return f"BACK({self.back_levels}).{self.term_name}"
 
-    def to_tree_form(self) -> None:
+    def to_tree_form(self) -> CollectionTreeForm:
         raise NotImplementedError

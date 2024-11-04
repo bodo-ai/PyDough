@@ -183,6 +183,3 @@ class CompoundSubCollection(SubCollection):
                         ),
                     )
         return self._properties
-
-    def to_tree_form(self) -> None:
-        raise NotImplementedError

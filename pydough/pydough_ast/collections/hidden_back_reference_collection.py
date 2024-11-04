@@ -7,6 +7,7 @@ __all__ = ["HiddenBackReferenceCollection"]
 
 from .collection_ast import PyDoughCollectionAST
 from .back_reference_collection import BackReferenceCollection
+from .collection_tree_form import CollectionTreeForm
 from .collection_access import CollectionAccess
 
 
@@ -50,5 +51,11 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
     def to_string(self) -> str:
         return f"{self.compound.to_string()}.{self.alias}"
 
-    def to_tree_form(self) -> None:
-        raise NotImplementedError
+    def to_tree_form(self) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
+        predecessor.has_children = True
+        return CollectionTreeForm(
+            f"SubCollection[{self.alias}]",
+            predecessor.depth + 1,
+            predecessor=predecessor,
+        )

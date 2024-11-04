@@ -52,7 +52,7 @@ class Reference(PyDoughExpressionAST):
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False
 
-    def to_string(self) -> str:
+    def to_string(self, tree_form: bool = False) -> str:
         return self.term_name
 
     def equals(self, other: "Reference") -> bool:

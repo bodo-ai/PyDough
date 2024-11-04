@@ -32,5 +32,8 @@ class ChildReference(Reference):
         """
         return self._child_idx
 
-    def to_string(self) -> str:
-        return f"{self.collection.to_string()}.{self.term_name}"
+    def to_string(self, tree_form: bool = False) -> str:
+        if tree_form:
+            return f"${self.child_idx+1}.{self.term_name}"
+        else:
+            return f"{self.collection.to_string()}.{self.term_name}"

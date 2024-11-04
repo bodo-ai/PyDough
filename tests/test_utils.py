@@ -156,7 +156,7 @@ class FunctionInfo(AstNodeTestInfo):
         self.args_info: List[AstNodeTestInfo] = args_info
 
     def to_string(self) -> str:
-        arg_strings: List[str] = [arg.to_string for arg in self.args_info]
+        arg_strings: List[str] = [arg.to_string() for arg in self.args_info]
         return f"Call[{self.function_name} on ({', '.join(arg_strings)})]"
 
     def build(
@@ -245,7 +245,7 @@ class ChildReferenceInfo(AstNodeTestInfo):
         children_contexts: List[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         assert (
-            context is not None
+            children_contexts is not None
         ), "Cannot call .build() on ChildReferenceInfo without providing a list of child contexts"
         return builder.build_child_reference(
             children_contexts, self.child_idx, self.name
@@ -365,12 +365,14 @@ class CalcChildCollectionInfo(CollectionTestInfo):
     CollectionTestInfo implementation class that wraps around a subcollection
     info within a Calc context. Contains the following fields:
     - `child_info`: the collection info for the child subcollection.
+    - `is_last`: the this the last child of the parent CALC.
 
     NOTE: must provide a `context` when building.
     """
 
-    def __init__(self, child_info: CollectionTestInfo):
+    def __init__(self, child_info: CollectionTestInfo, is_last: bool):
         self.child_info: CollectionTestInfo = child_info
+        self.is_last: bool = is_last
         self.successor = child_info.successor
 
     def to_string(self) -> str:
@@ -386,7 +388,8 @@ class CalcChildCollectionInfo(CollectionTestInfo):
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
         return CalcChildCollection(
-            self.child_info.local_build(builder, context, children_contexts)
+            self.child_info.local_build(builder, context, children_contexts),
+            self.is_last,
         )
 
 
@@ -420,8 +423,10 @@ class CalcInfo(CollectionTestInfo):
         if context is None:
             context = builder.build_global_context()
         children: List[PyDoughCollectionAST] = [
-            CalcChildCollectionInfo(child).build(builder, context)
-            for child in self.children_info
+            CalcChildCollectionInfo(child, idx == len(self.children_info) - 1).build(
+                builder, context
+            )
+            for idx, child in enumerate(self.children_info)
         ]
         raw_calc: Calc = builder.build_calc(context, children)
         args: List[Tuple[str, PyDoughExpressionAST]] = [
@@ -441,6 +446,7 @@ class BackReferenceCollectionInfo(CollectionTestInfo):
     """
 
     def __init__(self, name: str, levels: int):
+        super().__init__()
         self.name: str = name
         self.levels: int = levels
 

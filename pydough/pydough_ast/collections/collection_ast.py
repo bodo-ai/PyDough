@@ -9,6 +9,7 @@ from abc import abstractmethod
 from typing import Set, Union
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from .collection_tree_form import CollectionTreeForm
 
 
 class PyDoughCollectionAST(PyDoughAST):
@@ -95,7 +96,7 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @abstractmethod
-    def to_tree_form(self) -> None:
+    def to_tree_form(self) -> CollectionTreeForm:
         """
         Helper for `to_tree_string` that turns a collection into a
         CollectionTreeForm object which can be used to create a tree string.
@@ -141,4 +142,4 @@ class PyDoughCollectionAST(PyDoughAST):
         Returns:
             The tree-like string representation of `self`.
         """
-        raise NotImplementedError
+        return "\n".join(self.to_tree_form().to_string_rows())

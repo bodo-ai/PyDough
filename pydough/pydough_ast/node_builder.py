@@ -223,8 +223,8 @@ class AstNodeBuilder(object):
         children: List[CalcChildCollection],
     ) -> Calc:
         """
-        Creates a CALC term, but `with_terms` still needs to be called on the
-        output.
+        Creates a CALC instance, but `with_terms` still needs to be called on
+        the output.
 
         Args:
             `preceding_context`: the preceding collection.
@@ -232,9 +232,6 @@ class AstNodeBuilder(object):
 
         Returns:
             The newly created PyDough CALC term.
-
-        Raises:
-            `PyDoughASTException`: if the terms are invalid for the CALC term.
         """
         return Calc(preceding_context, children)
 

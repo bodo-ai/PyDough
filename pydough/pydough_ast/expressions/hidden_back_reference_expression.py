@@ -38,5 +38,5 @@ class HiddenBackReferenceExpression(BackReferenceExpression):
         """
         return self._alias
 
-    def to_string(self) -> str:
+    def to_string(self, tree_form: bool = False) -> str:
         return f"HiddenBackReferenceExpression[{self.back_levels}:{self.term_name}]"

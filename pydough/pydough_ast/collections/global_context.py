@@ -14,6 +14,7 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from .collection_ast import PyDoughCollectionAST
 from .table_collection import TableCollection
+from .collection_tree_form import CollectionTreeForm
 
 
 class GlobalContext(PyDoughCollectionAST):
@@ -74,8 +75,8 @@ class GlobalContext(PyDoughCollectionAST):
     def to_string(self) -> str:
         return self.graph.name
 
-    def to_tree_form(self) -> None:
-        raise NotImplementedError
+    def to_tree_form(self) -> CollectionTreeForm:
+        return CollectionTreeForm(self.to_string(), 0)
 
     def equals(self, other: "GlobalContext") -> bool:
         return super().equals(other) and self.graph == other.graph
