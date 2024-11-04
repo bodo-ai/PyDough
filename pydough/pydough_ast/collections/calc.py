@@ -7,12 +7,11 @@ __all__ = ["Calc"]
 
 from typing import Dict, List, Tuple, Set
 
-from pydough.metadata import CollectionMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .collection_ast import PyDoughCollectionAST
-from .calc_sub_collection import CalcSubCollection
+from .calc_child_collection import CalcChildCollection
 
 
 class Calc(PyDoughCollectionAST):
@@ -23,11 +22,11 @@ class Calc(PyDoughCollectionAST):
     def __init__(
         self,
         predecessor: PyDoughCollectionAST,
-        children: List[CalcSubCollection],
+        children: List[CalcChildCollection],
     ):
         self._predecessor: PyDoughCollectionAST = predecessor
-        self._children: List[CalcSubCollection] = children
-        # Not defined until with_terms is called
+        self._children: List[CalcChildCollection] = children
+        # Not initialized until with_terms is called
         self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
             None
         )
@@ -52,14 +51,7 @@ class Calc(PyDoughCollectionAST):
         return self
 
     @property
-    def collection(self) -> CollectionMetadata:
-        """
-        The table that is being referenced by the collection node.
-        """
-        return self._collection
-
-    @property
-    def children(self) -> List[CalcSubCollection]:
+    def children(self) -> List[CalcChildCollection]:
         """
         The child collections accessible from the CALC used to derive
         expressions in terms of a subcollection.
@@ -116,7 +108,7 @@ class Calc(PyDoughCollectionAST):
             kwarg_strings.append(f"{name}={expr.to_string()}")
         return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
 
-    def to_tree_string(self) -> str:
+    def to_tree_form(self) -> None:
         raise NotImplementedError
 
     def equals(self, other: "Calc") -> bool:

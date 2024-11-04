@@ -11,6 +11,7 @@ from test_utils import (
     SubCollectionInfo,
     CalcInfo,
     BackReferenceExpressionInfo,
+    ChildReferenceInfo,
 )
 import pytest
 
@@ -20,7 +21,7 @@ import pytest
     [
         pytest.param(
             TableCollectionInfo("Rainbows"),
-            "graph 'TPCH' does not have a collection named 'Rainbows'",
+            "Unrecognized term of graph 'TPCH': 'Rainbows'",
             id="table_dne",
         ),
         pytest.param(
@@ -49,14 +50,14 @@ import pytest
         pytest.param(
             TableCollectionInfo("Regions")
             ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
-            "Cannot reference back 1 level above Regions",
+            "Unrecognized term of graph 'TPCH': 'foo'",
             id="back_on_root",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
-            ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 2)),
-            "Cannot reference back 2 levels above Regions.nations",
+            ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 3)),
+            "Cannot reference back 3 levels above Regions.nations",
             id="back_too_far",
         ),
         pytest.param(
@@ -65,6 +66,18 @@ import pytest
             ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
             "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'foo'",
             id="back_dne",
+        ),
+        pytest.param(
+            CalcInfo([], foo=ChildReferenceInfo("foo", 0)),
+            "Invalid child reference index 0 with 0 children",
+            id="child_dne",
+        ),
+        pytest.param(
+            CalcInfo(
+                [TableCollectionInfo("Regions")], foo=ChildReferenceInfo("bar", 0)
+            ),
+            "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'bar'",
+            id="child_expr_dne",
         ),
     ],
 )
