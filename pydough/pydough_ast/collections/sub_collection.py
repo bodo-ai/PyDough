@@ -22,6 +22,7 @@ class SubCollection(CollectionAccess):
         ancestor: PyDoughCollectionAST,
     ):
         super().__init__(subcollection_property.other_collection, ancestor)
+        self._subcollection_property: SubcollectionRelationshipMetadata
         self._subcollection_property = subcollection_property
 
     @property
