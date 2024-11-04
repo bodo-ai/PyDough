@@ -11,6 +11,7 @@ from .collection_access import CollectionAccess
 from .table_collection import TableCollection
 from .collection_tree_form import CollectionTreeForm
 from .sub_collection import SubCollection
+from .collection_ast import PyDoughCollectionAST
 
 
 class CalcChildCollection(CollectionAccess):
@@ -31,6 +32,9 @@ class CalcChildCollection(CollectionAccess):
         )
         self._collection_access: CollectionAccess = collection_access
         self._is_last: bool = is_last
+
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        raise NotImplementedError
 
     @property
     def collection_access(self) -> CollectionAccess:

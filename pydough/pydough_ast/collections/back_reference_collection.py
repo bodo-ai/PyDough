@@ -41,6 +41,9 @@ class BackReferenceCollection(CollectionAccess):
         self._collection_access: CollectionAccess = ancestor.get_term(term_name)
         super().__init__(self._collection_access.collection, ancestor)
 
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        return BackReferenceCollection(new_ancestor, self.term_name, self.back_levels)
+
     @property
     def back_levels(self) -> int:
         """

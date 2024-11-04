@@ -33,6 +33,11 @@ class CompoundSubCollection(SubCollection):
         self._subcollection_chain: List[SubCollection] = []
         self._inheritance_sources: Dict[str, Tuple[int, str]] = {}
 
+    def clone_with_parent(
+        self, new_ancestor: PyDoughCollectionAST
+    ) -> "CompoundSubCollection":
+        return CompoundSubCollection(self.subcollection_property, new_ancestor)
+
     def populate_subcollection_chain(
         self,
         source: PyDoughCollectionAST,
@@ -79,6 +84,7 @@ class CompoundSubCollection(SubCollection):
                 # Otherwise, we are in a base case where we have found a true
                 # subcollection invocation. We maintain a set to mark which
                 # inherited properties were found.
+                print(source, property.name)
                 source = source.get_term(property.name)
                 found_inherited: Set[str] = set()
                 # Iterate through all the remaining inherited properties to

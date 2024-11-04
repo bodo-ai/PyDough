@@ -64,8 +64,8 @@ class Calc(ChildOperator):
         # Include terms from the predecessor, with the terms from this CALC
         # added in (overwriting any preceding properties with the same name)
         self._all_terms = {}
-        for name in self.preceding_context.all_terms:
-            self._all_terms[name] = self.preceding_context.get_term(name)
+        for name in self.propagated_properties:
+            self._all_terms[name] = self.propagated_properties[name]
         for name, property in terms:
             self._all_terms[name] = property
         return self
@@ -102,6 +102,7 @@ class Calc(ChildOperator):
 
     def get_term(self, term_name: str) -> PyDoughAST:
         if term_name not in self.all_terms:
+            # breakpoint()
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
         return self._all_terms[term_name]
 

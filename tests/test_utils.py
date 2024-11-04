@@ -303,11 +303,9 @@ class CollectionTestInfo(AstNodeTestInfo):
         context: PyDoughCollectionAST | None = None,
         children_contexts: List[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
-        print(f"START {self!r}")
         local_result: PyDoughCollectionAST = self.local_build(
             builder, context, children_contexts
         )
-        print(f"FINISH {self!r}")
         if self.successor is None:
             return local_result
         return self.successor.build(builder, local_result, children_contexts)

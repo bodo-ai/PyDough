@@ -12,6 +12,7 @@ from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .collection_ast import PyDoughCollectionAST
 from .calc_child_collection import CalcChildCollection
 from .child_operator import ChildOperator
+from pydough.pydough_ast.errors import PyDoughASTException
 
 
 class Where(ChildOperator):
@@ -52,6 +53,7 @@ class Where(ChildOperator):
                 "Cannot call `with_condition` more than once per Where node"
             )
         self._condition = condition
+        return self
 
     @property
     def condition(self) -> PyDoughExpressionAST:
@@ -72,7 +74,9 @@ class Where(ChildOperator):
         return self.preceding_context.get_expression_position(expr_name)
 
     def get_term(self, term_name: str) -> PyDoughAST:
-        return self.preceding_context.get_term(term_name)
+        if term_name not in self.propagated_properties:
+            raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
+        return self.propagated_properties[term_name]
 
     def to_string(self) -> str:
         return (
@@ -81,11 +85,7 @@ class Where(ChildOperator):
 
     @property
     def tree_item_string(self) -> str:
-        kwarg_strings: List[str] = []
-        for name in self._calc_term_indices:
-            expr: PyDoughExpressionAST = self.get_term(name)
-            kwarg_strings.append(f"{name}={expr.to_string(tree_form=True)}")
-        return f"WHERE[{self.condition.to_string()}]"
+        return f"Where[{self.condition.to_string()}]"
 
     def equals(self, other: "Where") -> bool:
         if self._condition is None:

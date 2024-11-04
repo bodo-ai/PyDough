@@ -34,6 +34,9 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
             self._collection_access.collection, compound
         )
 
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        return self.compound.clone_with_parent(new_ancestor).get_term(self.alias)
+
     @property
     def compound(self) -> PyDoughCollectionAST:
         """
