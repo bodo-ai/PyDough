@@ -27,6 +27,7 @@ from pydough.pydough_ast import (
     PyDoughExpressionAST,
     Calc,
     CalcChildCollection,
+    Where,
 )
 from typing import Dict, Set, Callable, Any, List, Tuple
 from pydough.types import PyDoughType
@@ -302,9 +303,11 @@ class CollectionTestInfo(AstNodeTestInfo):
         context: PyDoughCollectionAST | None = None,
         children_contexts: List[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
+        print(f"START {self!r}")
         local_result: PyDoughCollectionAST = self.local_build(
             builder, context, children_contexts
         )
+        print(f"FINISH {self!r}")
         if self.successor is None:
             return local_result
         return self.successor.build(builder, local_result, children_contexts)
@@ -399,11 +402,9 @@ class CalcInfo(CollectionTestInfo):
     Contains the following fields:
     - `args`: a list tuples containing a field name and a test info
       to derive an expression in the CALC.
-
-    NOTE: must provide a `context` when building.
     """
 
-    def __init__(self, children, **kwargs):
+    def __init__(self, children: List[CollectionTestInfo], **kwargs):
         super().__init__()
         self.children_info: List[CollectionTestInfo] = children
         self.args: List[Tuple[str, AstNodeTestInfo]] = list(kwargs.items())
@@ -433,6 +434,46 @@ class CalcInfo(CollectionTestInfo):
             (name, info.build(builder, context, children)) for name, info in self.args
         ]
         return raw_calc.with_terms(args)
+
+
+class WhereInfo(CollectionTestInfo):
+    """
+    CollectionTestInfo implementation class to build a WHERE instance.
+    Contains the following fields:
+    - `condition`: a TestInfo object to derive the predicate used for
+    filtering.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(self, children: List[CollectionTestInfo], condition: AstNodeTestInfo):
+        super().__init__()
+        self.children_info: List[CollectionTestInfo] = children
+        self.condition: AstNodeTestInfo = condition
+
+    def to_string(self) -> str:
+        return f"Where[{self.condition.to_string()}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: List[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        assert (
+            context is not None
+        ), "Cannot call .build() on WhereInfo without providing a context"
+        children: List[PyDoughCollectionAST] = [
+            CalcChildCollectionInfo(child, idx == len(self.children_info) - 1).build(
+                builder, context
+            )
+            for idx, child in enumerate(self.children_info)
+        ]
+        raw_where: Where = builder.build_where(context, children)
+        condition: PyDoughExpressionAST = self.condition.build(
+            builder, context, children
+        )
+        return raw_where.with_condition(condition)
 
 
 class BackReferenceCollectionInfo(CollectionTestInfo):

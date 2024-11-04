@@ -11,6 +11,7 @@ __all__ = [
     "SubCollection",
     "CalcChildCollection",
     "BackReferenceCollection",
+    "Where",
 ]
 
 from .collection_ast import PyDoughCollectionAST
@@ -21,3 +22,4 @@ from .calc_child_collection import CalcChildCollection
 from .back_reference_collection import BackReferenceCollection
 from .global_context import GlobalContext
 from .collection_access import CollectionAccess
+from .where import Where

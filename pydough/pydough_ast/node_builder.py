@@ -31,6 +31,7 @@ from .collections import (
     CollectionAccess,
     CalcChildCollection,
     BackReferenceCollection,
+    Where,
 )
 
 
@@ -234,6 +235,24 @@ class AstNodeBuilder(object):
             The newly created PyDough CALC term.
         """
         return Calc(preceding_context, children)
+
+    def build_where(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        children: List[CalcChildCollection],
+    ) -> Where:
+        """
+        Creates a WHERE instance, but `with_condition` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the WHERE term.
+
+        Returns:
+            The newly created PyDough WHERE instance.
+        """
+        return Where(preceding_context, children)
 
     def build_back_reference_collection(
         self,
