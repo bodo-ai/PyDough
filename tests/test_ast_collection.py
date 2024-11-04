@@ -163,17 +163,24 @@ def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
             CalcInfo(
                 [
                     TableCollectionInfo("Suppliers"),
-                    TableCollectionInfo("Parts") ** SubCollectionInfo("lines"),
+                    TableCollectionInfo("Parts")
+                    ** SubCollectionInfo("lines")
+                    ** CalcInfo(
+                        [],
+                        value=FunctionInfo(
+                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                        ),
+                    ),
                 ],
                 n_balance=FunctionInfo(
                     "SUM", [ChildReferenceInfo("account_balance", 0)]
                 ),
-                t_tax=FunctionInfo("SUM", [ChildReferenceInfo("tax", 1)]),
+                t_value=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
             ),
-            {"n_balance": 0, "t_tax": 1},
+            {"n_balance": 0, "t_value": 1},
             {
                 "n_balance",
-                "t_tax",
+                "t_value",
                 "Customers",
                 "Lineitems",
                 "Nations",
@@ -645,6 +652,27 @@ def test_collections_calc_terms(
             CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
             "TPCH(x=1, y=3)",
             id="global_calc",
+        ),
+        pytest.param(
+            CalcInfo(
+                [
+                    TableCollectionInfo("Suppliers"),
+                    TableCollectionInfo("Parts")
+                    ** SubCollectionInfo("lines")
+                    ** CalcInfo(
+                        [],
+                        value=FunctionInfo(
+                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                        ),
+                    ),
+                ],
+                n_balance=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+                t_value=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
+            ),
+            "TPCH(n_balance=SUM(Suppliers.account_balance), t_value=SUM(Parts.lines(value=ps_availqty * tax).value))",
+            id="global_nested_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions"),
