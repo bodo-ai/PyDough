@@ -1,0 +1,144 @@
+"""
+TODO: add file-level docstring
+"""
+
+__all__ = ["PyDoughCollectionAST"]
+
+from abc import abstractmethod
+
+from typing import Set, Union
+
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+
+
+class PyDoughCollectionAST(PyDoughAST):
+    """
+    The base class for AST nodes that represent a table collection accessed
+    as a root.
+    """
+
+    def __repr__(self):
+        return self.to_string()
+
+    @property
+    def ancestor_context(self) -> Union["PyDoughCollectionAST", None]:
+        """
+        The ancestor context from which this collection is derived, e.g. what
+        is accessed by `BACK(1)`. Returns None if there is no ancestor context,
+        e.g. because the collection is the top of the hierarchy.
+        """
+
+    @property
+    @abstractmethod
+    def preceding_context(self) -> Union["PyDoughCollectionAST", None]:
+        """
+        The preceding context from which this collection is derived, e.g. an
+        ORDER BY term before a CALC. Returns None if there is no preceding
+        context, e.g. because the collection is the start of a pipeline
+        within a larger ancestor context.
+        """
+
+    @property
+    @abstractmethod
+    def calc_terms(self) -> Set[str]:
+        """
+        The list of expressions that would be retrieved if the collection
+        were to have its results evaluated. This is the set of names in the
+        most-recent CALC, potentially with extra expressions added since then.
+        """
+
+    @property
+    @abstractmethod
+    def all_terms(self) -> Set[str]:
+        """
+        The set of expression/subcollection names accessible by the context.
+        """
+
+    @abstractmethod
+    def get_expression_position(self, expr_name: str) -> int:
+        """
+        Retrieves the ordinal position of an expression within the collection
+        if it were to be printed.
+
+        Args:
+            `expr_name`: the name of the expression that is having its ordinal
+            position derived.
+
+        Returns:
+            The position that the expression would be in, if the collection
+            were printed.
+
+        Raises:
+            `PyDoughASTException` if `expr_name` is not a name of one of the
+            expressions in `calc_terms`.
+        """
+
+    @abstractmethod
+    def get_term(self, term_name: str) -> PyDoughAST:
+        """
+        Obtains an expression accessible from the current context by name.
+
+        Args:
+            `term_name`: the name of the term that is being extracted.
+
+
+        Returns:
+            `PyDoughASTException` if `term_name` is not a name of one of the
+            terms accessible in the context.
+        """
+
+    @abstractmethod
+    def to_string(self) -> str:
+        """
+        Returns a PyDough collection AST converted to a simple string
+        reminiscent of the original PyDough code.
+        """
+
+    @abstractmethod
+    def to_tree_form(self) -> None:
+        """
+        Helper for `to_tree_string` that turns a collection into a
+        CollectionTreeForm object which can be used to create a tree string.
+        """
+
+    def to_tree_string(self) -> str:
+        """
+        Returns a PyDough collection AST converted into a tree-like string,
+        structured. For example, consider the following PyDough snippet:
+
+        ```
+        Regions.WHERE(ENDSWITH(name, 's')).nations.WHERE(name != 'USA')(
+            a=BACK(1).name,
+            b=name,
+            c=MAX(YEAR(suppliers.WHERE(STARTSWITH(phone, '415')).supply_records.lines.ship_date)),
+            d=COUNT(customers.WHERE(acctbal > 0))
+        ).WHERE(
+            c > 1000
+        ).ORDER_BY(
+            d.DESC()
+        ),
+        ```
+
+        A valid string representation of this would be:
+
+        ```
+        ┌─── TableCollection[Regions]
+        └─┬─ Where[ENDSWITH(name, 's')]
+          ├─── SubCollection[nations]
+          ├─── Where[name != 'USA']
+          ├─┬─ Calc[a=[ancestor.name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
+          │ ├─┬─ SubCollection[customers]
+          │ │ └─── Where[acctbal > 0]
+          │ └─┬─ SubCollection[suppliers]
+          │   ├─── Where[STARTSWITH(phone, '415')]
+          │   └─┬─ SubCollection[supply_records]
+          │     └─┬─ SubCollection[lines]
+          │       └─── Calc[_expr1=YEAR(ship_date)]
+          ├─── Where[c > 1000]
+          └─── OrderBy[d.DESC()]
+        ```
+
+        Returns:
+            The tree-like string representation of `self`.
+        """
+        raise NotImplementedError
