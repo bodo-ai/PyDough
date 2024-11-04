@@ -32,15 +32,33 @@ class Calc(ChildOperator):
         self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
             None
         )
-        self._all_terms: Dict[str, PyDoughAST] = None
+        self._all_terms: Dict[str, PyDoughExpressionAST] = {}
 
     def with_terms(self, terms: List[Tuple[str, PyDoughExpressionAST]]) -> "Calc":
         """
-        TODO: add function docstring
+        Specifies the terms that are calculated inside of a CALC node,
+        returning the mutated CALC node afterwards. This is called after the
+        CALC node is created so that the terms can be expressions that
+        reference child nodes of the CALC. However, this must be called
+        on the CALC node before any properties are accessed by `calc_terms`,
+        `all_terms`, `to_string`, etc.
+
+        Args:
+            `terms`: the list of terms calculated in the CALC node as a list of
+            tuples in the form `(name, expression)`. Each `expression` can
+            contain `ChildReference` instances that refer to an property of one
+            of the children of the CALC node.
+
+        Returns:
+            The mutated CALC node (which has also been modified in-place).
+
+        Raises:
+            `PyDoughASTException` if the terms have already been added to the
+            CALC node.
         """
         if self._calc_term_indices is not None:
-            raise PyDoughCollectionAST(
-                "Cannot call `with_terms` more than once per Calc node"
+            raise PyDoughASTException(
+                "Cannot call `with_terms` on a CALC node more than once"
             )
         self._calc_term_indices = {name: idx for idx, (name, _) in enumerate(terms)}
         # Include terms from the predecessor, with the terms from this CALC
@@ -60,8 +78,8 @@ class Calc(ChildOperator):
         in a CALC and property is the AST node representing the property.
         """
         if self._calc_term_indices is None:
-            raise PyDoughCollectionAST(
-                "Cannot invoke `calc_term_indices` before calling `with_terms`"
+            raise PyDoughASTException(
+                "Cannot access `calc_term_indices` of a Calc node before adding calc terms with `with_terms`"
             )
         return self._calc_term_indices
 
@@ -71,9 +89,9 @@ class Calc(ChildOperator):
 
     @property
     def all_terms(self) -> Set[str]:
-        if self._all_terms is None:
-            raise PyDoughCollectionAST(
-                "Cannot invoke `all_terms` before calling `with_terms`"
+        if self._calc_term_indices is None:
+            raise PyDoughASTException(
+                "Cannot access `all_terms` of a Calc node before adding calc terms with `with_terms`"
             )
         return set(self._all_terms)
 
