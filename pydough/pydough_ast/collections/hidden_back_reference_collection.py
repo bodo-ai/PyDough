@@ -24,15 +24,21 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         term_name: str,
         back_levels: int,
     ):
+        self._compound: PyDoughCollectionAST = compound
         self._term_name: str = term_name
         self._back_levels: int = back_levels
-        self._ancestor: PyDoughCollectionAST = ancestor
-        self._subcollection: PyDoughCollectionAST = self._ancestor.get_term(term_name)
         self._alias: str = alias
-        self._collection_access: CollectionAccess = self._ancestor.get_term(term_name)
+        self._collection_access: CollectionAccess = ancestor.get_term(term_name)
         super(BackReferenceCollection, self).__init__(
-            self._collection_access.collection, ancestor
+            self._collection_access.collection, compound
         )
+
+    @property
+    def compound(self) -> PyDoughCollectionAST:
+        """
+        The compound collection containing the hidden backreference.
+        """
+        return self._compound
 
     @property
     def alias(self) -> str:
@@ -42,7 +48,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         return self._alias
 
     def to_string(self) -> str:
-        return f"{self.parent.to_string()}.{self.alias}"
+        return f"{self.compound.to_string()}.{self.alias}"
 
-    def to_tree_string(self) -> str:
+    def to_tree_form(self) -> None:
         raise NotImplementedError

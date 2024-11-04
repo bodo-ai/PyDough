@@ -2,7 +2,7 @@
 TODO: add file-level docstring.
 """
 
-from typing import Set, Dict
+from typing import Set, Dict, Tuple
 from pydough.types import (
     StringType,
     Float64Type,
@@ -18,15 +18,132 @@ from test_utils import (
     TableCollectionInfo,
     SubCollectionInfo,
     CalcInfo,
+    ChildReferenceInfo,
+    BackReferenceCollectionInfo,
 )
 import pytest
+
+
+@pytest.fixture
+def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
+    """
+    The AST node info for a query that calculates the ratio for each region
+    between the of all part sale values (retail price of the part times the
+    quantity purchased for each time it was purchased) that were sold to a
+    customer in the same region vs all part sale values from that region.
+
+    Equivalent SQL query:
+    ```
+    SELECT
+        R1.name AS region_name
+        SUM(P.p_retailprice * IFF(R1.region_name == R2.region_name, L.quantity, 0)) /
+        SUM(P.p_retailprice * L.quantity) AS intra_ratio
+    FROM
+        REGION R1,
+        NATION N1,
+        SUPPLIER S,
+        PART_SUPP PS,
+        LINEITEM L,
+        ORDER O,
+        CUSTOMER C,
+        NATION N2,
+        REGION R2
+    WHERE R1.r_regionkey = N1.n_regionkey
+        AND N1.n_nationkey = S.s_nationkey
+        AND S.s_suppkey = PS.ps_suppkey
+        AND PS.ps_partkey = P.p_partkey
+        AND PS.ps_partkey = L.l_partkey AND PS.ps_suppkey = L.l_suppkey
+        AND L.l_orderkey = O.o_orderkey
+        AND O.o_custkey = C.c_custkey
+        AND C.c_nationkey = N2.n_nationkey
+        AND N2.n_regionkey = R2.r_regionkey
+    GROUP BY region_name
+    ```
+
+    Equivalent PyDough code:
+    ```
+    is_intra_line = IFF(order.customer.region.name == BACK(3).name, 1, 0)
+    part_sales = suppliers.parts_supplied(
+        intra_value = retail_price * ps_lines(adj_quantity = quantity * is_intra_line).adj_quantity,
+        total_value = retail_price * ps_lines.quantity,
+    )
+    Regions(
+        region_name = name
+        intra_sales = SUM(part_sales.intra_value) / SUM(part_sales.total_value)
+    )
+    ```
+    """
+    test_info: AstNodeTestInfo = TableCollectionInfo("Regions") ** CalcInfo(
+        [
+            SubCollectionInfo("suppliers")
+            ** SubCollectionInfo("parts_supplied")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("ps_lines")
+                    ** CalcInfo(
+                        [
+                            SubCollectionInfo("order")
+                            ** SubCollectionInfo("customer")
+                            ** SubCollectionInfo("region")
+                        ],
+                        adj_quantity=FunctionInfo(
+                            "MUL",
+                            [
+                                ReferenceInfo("quantity"),
+                                FunctionInfo(
+                                    "IFF",
+                                    [
+                                        FunctionInfo(
+                                            "EQU",
+                                            [
+                                                BackReferenceExpressionInfo("name", 3),
+                                                ChildReferenceInfo("name", 0),
+                                            ],
+                                        ),
+                                        LiteralInfo(1, Int64Type()),
+                                        LiteralInfo(0, Int64Type()),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    )
+                ],
+                value=FunctionInfo(
+                    "MUL",
+                    [
+                        ReferenceInfo("retail_price"),
+                        ChildReferenceInfo("adj_quantity", 0),
+                    ],
+                ),
+                adj_value=FunctionInfo(
+                    "MUL",
+                    [
+                        ReferenceInfo("retail_price"),
+                        ChildReferenceInfo("quantity", 0),
+                    ],
+                ),
+            )
+        ],
+        region_name=ReferenceInfo("name"),
+        intra_ratio=FunctionInfo(
+            "DIV",
+            [
+                FunctionInfo("SUM", [ChildReferenceInfo("adj_value", 0)]),
+                FunctionInfo("SUM", [ChildReferenceInfo("value", 0)]),
+            ],
+        ),
+    )
+    adjusted_lines: str = "ps_lines(adj_quantity=quantity * IFF(BACK(3).name == order.customer.region.name, 1, 0))"
+    part_values: str = f"suppliers.parts_supplied(value=retail_price * {adjusted_lines}.adj_quantity, adj_value=retail_price * {adjusted_lines}.quantity)"
+    string_representation: str = f"Regions(region_name=name, intra_ratio=SUM({part_values}.adj_value) / SUM({part_values}.value))"
+    return test_info, string_representation
 
 
 @pytest.mark.parametrize(
     "calc_pipeline, expected_calcs, expected_total_names",
     [
         pytest.param(
-            CalcInfo(x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
             {"x": 0, "y": 1},
             {
                 "x",
@@ -41,6 +158,39 @@ import pytest
                 "Suppliers",
             },
             id="global_calc",
+        ),
+        pytest.param(
+            CalcInfo(
+                [
+                    TableCollectionInfo("Suppliers"),
+                    TableCollectionInfo("Parts")
+                    ** SubCollectionInfo("lines")
+                    ** CalcInfo(
+                        [],
+                        value=FunctionInfo(
+                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                        ),
+                    ),
+                ],
+                n_balance=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+                t_value=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
+            ),
+            {"n_balance": 0, "t_value": 1},
+            {
+                "n_balance",
+                "t_value",
+                "Customers",
+                "Lineitems",
+                "Nations",
+                "Orders",
+                "PartSupp",
+                "Parts",
+                "Regions",
+                "Suppliers",
+            },
+            id="global_nested_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions"),
@@ -73,7 +223,10 @@ import pytest
             id="regions_nations",
         ),
         pytest.param(
-            TableCollectionInfo("Regions") ** CalcInfo(),
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [],
+            ),
             {},
             {
                 "name",
@@ -90,7 +243,9 @@ import pytest
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+                ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
             ),
             {"foo": 0, "bar": 1},
             {
@@ -110,7 +265,9 @@ import pytest
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+                ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
                 ** SubCollectionInfo("nations")
             ),
             {"key": 0, "name": 1, "region_key": 2, "comment": 3},
@@ -130,7 +287,9 @@ import pytest
             (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
+                ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
             ),
             {"foo": 0, "bar": 1},
             {
@@ -150,8 +309,11 @@ import pytest
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name"))
                 ** CalcInfo(
+                    [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
+                )
+                ** CalcInfo(
+                    [],
                     fizz=FunctionInfo(
                         "ADD", [ReferenceInfo("foo"), LiteralInfo(1, Int64Type())]
                     ),
@@ -215,6 +377,7 @@ import pytest
                 TableCollectionInfo("Parts")
                 ** SubCollectionInfo("suppliers_of_part")
                 ** CalcInfo(
+                    [],
                     good_comment=FunctionInfo(
                         "EQU",
                         [ReferenceInfo("comment"), LiteralInfo("good", StringType())],
@@ -344,6 +507,7 @@ import pytest
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
                 ** CalcInfo(
+                    [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
                 )
@@ -371,6 +535,7 @@ import pytest
                 ** SubCollectionInfo("supply_records")
                 ** SubCollectionInfo("lines")
                 ** CalcInfo(
+                    [],
                     region_name=BackReferenceExpressionInfo("name", 4),
                     nation_name=BackReferenceExpressionInfo("name", 3),
                     supplier_name=BackReferenceExpressionInfo("name", 2),
@@ -411,6 +576,7 @@ import pytest
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("lines_sourced_from")
                 ** CalcInfo(
+                    [],
                     source_region_name=BackReferenceExpressionInfo("name", 1),
                     taxation=ReferenceInfo("tax"),
                     name_of_nation=ReferenceInfo("nation_name"),
@@ -483,9 +649,30 @@ def test_collections_calc_terms(
     "calc_pipeline, expected_string",
     [
         pytest.param(
-            CalcInfo(x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
             "TPCH(x=1, y=3)",
             id="global_calc",
+        ),
+        pytest.param(
+            CalcInfo(
+                [
+                    TableCollectionInfo("Suppliers"),
+                    TableCollectionInfo("Parts")
+                    ** SubCollectionInfo("lines")
+                    ** CalcInfo(
+                        [],
+                        value=FunctionInfo(
+                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                        ),
+                    ),
+                ],
+                n_balance=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+                t_value=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
+            ),
+            "TPCH(n_balance=SUM(Suppliers.account_balance), t_value=SUM(Parts.lines(value=ps_availqty * tax).value))",
+            id="global_nested_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions"),
@@ -498,13 +685,17 @@ def test_collections_calc_terms(
             id="regions_nations",
         ),
         pytest.param(
-            TableCollectionInfo("Regions") ** CalcInfo(),
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [],
+            ),
             "Regions()",
             id="regions_empty_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** CalcInfo(
+                [],
                 region_name=ReferenceInfo("name"),
                 adjusted_key=FunctionInfo(
                     "MUL",
@@ -523,6 +714,7 @@ def test_collections_calc_terms(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
             ** CalcInfo(
+                [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
@@ -533,12 +725,124 @@ def test_collections_calc_terms(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("suppliers")
             ** CalcInfo(
+                [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("nation_name"),
                 supplier_name=ReferenceInfo("name"),
             ),
             "Regions.suppliers(region_name=BACK(1).name, nation_name=nation_name, supplier_name=name)",
             id="regions_suppliers_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Parts")
+            ** SubCollectionInfo("suppliers_of_part")
+            ** SubCollectionInfo("ps_lines"),
+            "Parts.suppliers_of_part.ps_lines",
+            id="parts_suppliers_lines",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("suppliers")],
+                nation_name=ReferenceInfo("name"),
+                total_supplier_balances=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+            ),
+            "Nations(nation_name=name, total_supplier_balances=SUM(suppliers.account_balance))",
+            id="nations_childcalc_suppliers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** CalcInfo(
+                [SubCollectionInfo("parts_supplied")],
+                supplier_name=ReferenceInfo("name"),
+                total_retail_price=FunctionInfo(
+                    "SUM",
+                    [
+                        FunctionInfo(
+                            "SUB",
+                            [
+                                ChildReferenceInfo("retail_price", 0),
+                                LiteralInfo(1.0, Float64Type()),
+                            ],
+                        )
+                    ],
+                ),
+            ),
+            "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied.retail_price - 1.0))",
+            id="suppliers_childcalc_parts_a",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("parts_supplied")
+                    ** CalcInfo(
+                        [],
+                        adj_retail_price=FunctionInfo(
+                            "SUB",
+                            [
+                                ReferenceInfo("retail_price"),
+                                LiteralInfo(1.0, Float64Type()),
+                            ],
+                        ),
+                    )
+                ],
+                supplier_name=ReferenceInfo("name"),
+                total_retail_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("adj_retail_price", 0)]
+                ),
+            ),
+            "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied(adj_retail_price=retail_price - 1.0).adj_retail_price))",
+            id="suppliers_childcalc_parts_b",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** SubCollectionInfo("parts_supplied")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("ps_lines"),
+                    BackReferenceCollectionInfo("nation", 1)
+                    ** CalcInfo([], name=ReferenceInfo("name")),
+                ],
+                nation_name=ChildReferenceInfo("name", 1),
+                supplier_name=BackReferenceExpressionInfo("name", 1),
+                part_name=ReferenceInfo("name"),
+                ratio=FunctionInfo(
+                    "DIV",
+                    [ChildReferenceInfo("quantity", 0), ReferenceInfo("ps_availqty")],
+                ),
+            ),
+            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
+            id="suppliers_parts_childcalc_a",
+        ),
+        pytest.param(
+            TableCollectionInfo("Suppliers")
+            ** SubCollectionInfo("parts_supplied")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("ps_lines")
+                    ** CalcInfo(
+                        [],
+                        ratio=FunctionInfo(
+                            "DIV",
+                            [
+                                ReferenceInfo("quantity"),
+                                BackReferenceExpressionInfo("ps_availqty", 1),
+                            ],
+                        ),
+                    ),
+                    BackReferenceCollectionInfo("nation", 1)
+                    ** CalcInfo([], name=ReferenceInfo("name")),
+                ],
+                nation_name=ChildReferenceInfo("name", 1),
+                supplier_name=BackReferenceExpressionInfo("name", 1),
+                part_name=ReferenceInfo("name"),
+                ratio=ChildReferenceInfo("ratio", 0),
+            ),
+            "Suppliers.parts_supplied(nation_name=nation(name=name).name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
+            id="suppliers_parts_childcalc_b",
         ),
     ],
 )
@@ -548,7 +852,21 @@ def test_collections_to_string(
     tpch_node_builder: AstNodeBuilder,
 ):
     """
-    TODO
+    Verifies that various AST collection node structures produce the expected
+    non-tree string representation.
     """
+    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    assert collection.to_string() == expected_string
+
+
+def test_regions_intra_ratio_to_string(
+    region_intra_ratio: Tuple[AstNodeTestInfo, str],
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    Same as `test_collections_to_string` but specifically on the structure from
+    the `region_intra_ratio` fixture.
+    """
+    calc_pipeline, expected_string = region_intra_ratio
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     assert collection.to_string() == expected_string

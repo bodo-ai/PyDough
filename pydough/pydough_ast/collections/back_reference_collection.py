@@ -29,15 +29,16 @@ class BackReferenceCollection(CollectionAccess):
             )
         self._term_name: str = term_name
         self._back_levels: int = back_levels
+        ancestor: PyDoughCollectionAST = parent
         for _ in range(back_levels):
-            self._ancestor = self._ancestor.ancestor_context
-            if self._ancestor is None:
+            ancestor = ancestor.ancestor_context
+            if ancestor is None:
                 msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
                 raise PyDoughASTException(
                     f"Cannot reference back {msg} above {parent!r}"
                 )
-        self._collection_access: CollectionAccess = self._ancestor.get_term(term_name)
-        super().__init__(self._collection_access.collection, parent)
+        self._collection_access: CollectionAccess = ancestor.get_term(term_name)
+        super().__init__(self._collection_access.collection, ancestor)
 
     @property
     def back_levels(self) -> int:
@@ -65,7 +66,7 @@ class BackReferenceCollection(CollectionAccess):
         return self.collection_access.properties
 
     def to_string(self) -> str:
-        return f"BACK({self.back_levels}).{self._subcollection.to_string()}"
+        return f"BACK({self.back_levels}).{self.term_name}"
 
     def to_tree_form(self) -> None:
         raise NotImplementedError

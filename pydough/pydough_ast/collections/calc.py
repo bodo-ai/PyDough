@@ -11,6 +11,7 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .collection_ast import PyDoughCollectionAST
+from .calc_child_collection import CalcChildCollection
 
 
 class Calc(PyDoughCollectionAST):
@@ -21,8 +22,10 @@ class Calc(PyDoughCollectionAST):
     def __init__(
         self,
         predecessor: PyDoughCollectionAST,
+        children: List[CalcChildCollection],
     ):
         self._predecessor: PyDoughCollectionAST = predecessor
+        self._children: List[CalcChildCollection] = children
         # Not initialized until with_terms is called
         self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
             None
@@ -58,12 +61,20 @@ class Calc(PyDoughCollectionAST):
         self._calc_term_indices = {name: idx for idx, (name, _) in enumerate(terms)}
         # Include terms from the predecessor, with the terms from this CALC
         # added in (overwriting any preceding properties with the same name)
-        self._all_terms: Dict[str, PyDoughExpressionAST] = {}
+        self._all_terms = {}
         for name in self.preceding_context.all_terms:
             self._all_terms[name] = self.preceding_context.get_term(name)
         for name, property in terms:
             self._all_terms[name] = property
         return self
+
+    @property
+    def children(self) -> List[CalcChildCollection]:
+        """
+        The child collections accessible from the CALC used to derive
+        expressions in terms of a subcollection.
+        """
+        return self._children
 
     @property
     def calc_term_indices(self) -> Dict[str, Tuple[int, PyDoughExpressionAST]]:
@@ -119,8 +130,12 @@ class Calc(PyDoughCollectionAST):
         raise NotImplementedError
 
     def equals(self, other: "Calc") -> bool:
+        if self._all_terms is None:
+            raise PyDoughCollectionAST(
+                "Cannot invoke `equals` before calling `with_terms`"
+            )
         return (
             super().equals(other)
             and self.preceding_context == other.preceding_context
-            and self.terms == other.terms
+            and self._calc_term_indices == other._calc_term_indices
         )

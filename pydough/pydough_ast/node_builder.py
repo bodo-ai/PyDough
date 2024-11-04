@@ -20,10 +20,18 @@ from .expressions import (
     ColumnProperty,
     Reference,
     BackReferenceExpression,
+    ChildReference,
 )
 from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
 from .errors import PyDoughASTException
-from .collections import PyDoughCollectionAST, Calc, GlobalContext, CollectionAccess
+from .collections import (
+    PyDoughCollectionAST,
+    Calc,
+    GlobalContext,
+    CollectionAccess,
+    CalcChildCollection,
+    BackReferenceCollection,
+)
 
 
 class AstNodeBuilder(object):
@@ -133,6 +141,31 @@ class AstNodeBuilder(object):
         """
         return Reference(collection, name)
 
+    def build_child_reference(
+        self, children: List[PyDoughCollectionAST], child_idx: int, name: str
+    ) -> Reference:
+        """
+        Creates a new reference to an expression from a child collection of a
+        CALC.
+
+        Args:
+            `children`: the child collections that the reference accesses.
+            `child_idx`: the index of the child collection being referenced.
+            `name`: the name of the expression being referenced.
+
+        Returns:
+            The newly created PyDough Child Reference.
+
+        Raises:
+            `PyDoughASTException`: if `name` does not refer to an expression in
+            the collection, or `child_idx` is not a valid index for `children`.
+        """
+        if child_idx not in range(len(children)):
+            raise PyDoughASTException(
+                f"Invalid child reference index {child_idx} with {len(children)} children"
+            )
+        return ChildReference(children[child_idx], child_idx, name)
+
     def build_back_reference_expression(
         self, collection: PyDoughCollectionAST, name: str, levels: int
     ) -> Reference:
@@ -187,6 +220,7 @@ class AstNodeBuilder(object):
     def build_calc(
         self,
         preceding_context: PyDoughCollectionAST,
+        children: List[CalcChildCollection],
     ) -> Calc:
         """
         Creates a CALC term, but `with_terms` still needs to be called on the
@@ -194,6 +228,7 @@ class AstNodeBuilder(object):
 
         Args:
             `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the CALC term.
 
         Returns:
             The newly created PyDough CALC term.
@@ -201,4 +236,26 @@ class AstNodeBuilder(object):
         Raises:
             `PyDoughASTException`: if the terms are invalid for the CALC term.
         """
-        return Calc(preceding_context)
+        return Calc(preceding_context, children)
+
+    def build_back_reference_collection(
+        self,
+        collection: PyDoughCollectionAST,
+        term_name: str,
+        back_levels: int,
+    ) -> BackReferenceCollection:
+        """
+        Creates a reference to a a subcollection of an ancestor.
+
+        Args:
+            `collection`: the preceding collection.
+            `term_name`: the name of the subcollection being accessed.
+            `back_levels`: the number of levels up in the ancestry tree to go.
+
+        Returns:
+            The newly created PyDough CALC term.
+
+        Raises:
+            `PyDoughASTException`: if the terms are invalid for the CALC term.
+        """
+        return BackReferenceCollection(collection, term_name, back_levels)
