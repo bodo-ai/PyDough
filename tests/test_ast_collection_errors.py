@@ -10,6 +10,7 @@ from test_utils import (
     TableCollectionInfo,
     SubCollectionInfo,
     CalcInfo,
+    BackReferenceExpressionInfo,
 )
 import pytest
 
@@ -39,6 +40,32 @@ import pytest
             "Unrecognized term of simple table collection 'Suppliers' in graph 'TPCH': 'region_key'",
             id="reference_bad_ancestry",
         ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(foo=BackReferenceExpressionInfo("foo", 0)),
+            "Expected number of levels in BACK to be a positive integer, received 0",
+            id="back_zero",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(foo=BackReferenceExpressionInfo("foo", 1)),
+            "Unrecognized term of graph 'TPCH': 'foo'",
+            id="back_on_root",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** CalcInfo(foo=BackReferenceExpressionInfo("foo", 3)),
+            "Cannot reference back 3 levels above Regions.nations",
+            id="back_too_far",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** CalcInfo(foo=BackReferenceExpressionInfo("foo", 1)),
+            "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'foo'",
+            id="back_dne",
+        ),
     ],
 )
 def test_malformed_collection_sequences(
@@ -47,7 +74,8 @@ def test_malformed_collection_sequences(
     tpch_node_builder: AstNodeBuilder,
 ):
     """
-    Tests that column properties have the correct return type.
+    Tests that building a malformed sequence of collections produces the
+    expected error message.
     """
     with pytest.raises(Exception, match=re.escape(error_message)):
         calc_pipeline.build(tpch_node_builder)

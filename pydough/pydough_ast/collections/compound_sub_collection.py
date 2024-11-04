@@ -12,6 +12,10 @@ from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from .collection_ast import PyDoughCollectionAST
 from .sub_collection import SubCollection
+from .hidden_back_reference_collection import HiddenBackReferenceCollection
+from pydough.pydough_ast.expressions.hidden_back_reference_expression import (
+    HiddenBackReferenceExpression,
+)
 
 
 class CompoundSubCollection(SubCollection):
@@ -160,6 +164,24 @@ class CompoundSubCollection(SubCollection):
                 raise PyDoughASTException(
                     f"Undefined inherited properties: {undefined_inherited}"
                 )
+            for alias, (location, original_name) in self._inheritance_sources.items():
+                calc_idx, expr = self._properties[alias]
+                ancestor: PyDoughCollectionAST = self._subcollection_chain[location]
+                back_levels: int = len(self.subcollection_chain) - location
+                if isinstance(expr, PyDoughCollectionAST):
+                    self._properties[alias] = (
+                        calc_idx,
+                        HiddenBackReferenceCollection(
+                            self, ancestor, alias, original_name, back_levels
+                        ),
+                    )
+                else:
+                    self._properties[alias] = (
+                        calc_idx,
+                        HiddenBackReferenceExpression(
+                            self, ancestor, alias, original_name, back_levels
+                        ),
+                    )
         return self._properties
 
     def to_tree_form(self) -> None:
