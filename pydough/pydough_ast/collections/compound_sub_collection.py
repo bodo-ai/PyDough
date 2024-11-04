@@ -59,7 +59,6 @@ class CompoundSubCollection(SubCollection):
             The subcollection AST object corresponding to the last component
             of `compound`, once flattened.
         """
-        print("$", source, compound)
         # Invoke the procedure for the primary and secondary property.
         for property in [compound.primary_property, compound.secondary_property]:
             if isinstance(property, CompoundRelationshipMetadata):
@@ -120,6 +119,8 @@ class CompoundSubCollection(SubCollection):
         The list of subcollection accesses used to define the compound
         relationship.
         """
+        # Ensure the lazy evaluation of `self.properties` has been completed
+        # so we know that the subcollection chain has been populated.
         self.properties
         return self._subcollection_chain
 
@@ -131,6 +132,8 @@ class CompoundSubCollection(SubCollection):
         the subcollection chain, as well as the name it had within that
         regular collection.
         """
+        # Ensure the lazy evaluation of `self.properties` has been completed
+        # so we know that the inheritance sources have been populated.
         self.properties
         return self._inheritance_sources
 
