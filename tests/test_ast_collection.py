@@ -136,7 +136,23 @@ def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
     adjusted_lines: str = "ps_lines(adj_quantity=quantity * IFF(BACK(3).name == order.customer.region.name, 1, 0))"
     part_values: str = f"suppliers.parts_supplied(value=retail_price * {adjusted_lines}.adj_quantity, adj_value=retail_price * {adjusted_lines}.quantity)"
     string_representation: str = f"Regions(region_name=name, intra_ratio=SUM({part_values}.adj_value) / SUM({part_values}.value))"
-    return test_info, string_representation
+    tree_string_representation: str = """\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calc[region_name=name, intra_ratio=SUM($1.adj_value) / SUM($1.value)]
+    └─┬─ CalcSubCollection
+      └─┬─ SubCollection[suppliers]
+        ├─── SubCollection[parts_supplied]
+        └─┬─ Calc[value=retail_price * $1.adj_quantity, adj_value=retail_price * $1.quantity]
+          └─┬─ CalcSubCollection
+            ├─── SubCollection[ps_lines]
+            └─┬─ Calc[adj_quantity=quantity * IFF(BACK(3).name == $1.name, 1, 0)]
+              └─┬─ CalcSubCollection
+                └─┬─ SubCollection[order]
+                  └─┬─ SubCollection[customer]
+                    └─── SubCollection[region]\
+"""
+    return test_info, string_representation, tree_string_representation
 
 
 @pytest.mark.parametrize(
@@ -1018,6 +1034,7 @@ def test_regions_intra_ratio_to_string(
     Same as `test_collections_to_string` but specifically on the structure from
     the `region_intra_ratio` fixture.
     """
-    calc_pipeline, expected_string = region_intra_ratio
+    calc_pipeline, expected_string, expected_tree_string = region_intra_ratio
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     assert collection.to_string() == expected_string
+    assert collection.to_tree_string() == expected_tree_string
