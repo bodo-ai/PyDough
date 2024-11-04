@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["ArrayType"]
+
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
 import re

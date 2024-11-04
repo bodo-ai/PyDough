@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["PropertyMetadata"]
+
 from abc import abstractmethod
 
 from typing import Dict, List, Set, Type

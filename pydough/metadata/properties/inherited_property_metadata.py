@@ -2,7 +2,11 @@
 TODO: add file-level docstring
 """
 
-from . import PropertyMetadata, CompoundRelationshipMetadata, ReversiblePropertyMetadata
+__all__ = ["InheritedPropertyMetadata"]
+
+from .property_metadata import PropertyMetadata
+from .compound_relationship_metadata import CompoundRelationshipMetadata
+from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import HasType, PyDoughMetadataException
 

@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["CompoundRelationshipMetadata"]
+
 from typing import Dict, Set, List
 from pydough.metadata.errors import (
     HasPropertyWith,

@@ -2,6 +2,8 @@
 TODO: add file-level docstring
 """
 
+__all__ = ["StructType"]
+
 from typing import List, Tuple
 from .pydough_type import PyDoughType
 from .errors import PyDoughTypeException
