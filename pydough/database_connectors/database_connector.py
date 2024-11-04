@@ -6,10 +6,10 @@ https://peps.python.org/pep-0249/
 # Copyright (C) 2024 Bodo Inc. All rights reserved.
 
 import sqlite3
-import typing as pt
+from typing import Any
 
 
-class DatabaseConnection:
+class DatabaseConnection(object):
     """
     Class that manages a generic DB API 2.0 connection. This basically
     dispatches to the DB API 2.0 API on the underlying object and represents
@@ -33,10 +33,12 @@ class DatabaseConnection:
         """
         self._connection.close()
 
-    def execute_query(self, sql: str) -> list[pt.Any]:
+    def execute_query(self, sql: str) -> list[Any]:
         """Create a cursor object using the connection and execute the query,
         returning the entire result.
-        TODO: Support parameters.
+
+        TODO: Support parameters. Dependent on knowing which Python types
+        are in scope and how we need to test them.
 
         Args:
             sql (str): The SQL query to execute.
@@ -49,6 +51,9 @@ class DatabaseConnection:
         # No need to close the cursor, as its closed by del.
         # TODO: Cache the cursor?
         return cursor.fetchall()
+
+    # TODO: Consider adding a streaming API for large queries. It's not yet clear
+    # how this will be available at a user API level.
 
     @property
     def connection(self) -> sqlite3.Connection:
