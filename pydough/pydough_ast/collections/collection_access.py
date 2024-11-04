@@ -34,6 +34,9 @@ class CollectionAccess(PyDoughCollectionAST):
         self._ancestor: PyDoughCollectionAST = ancestor
         self._predecessor: PyDoughCollectionAST | None = predecessor
         self._properties: Dict[str, Tuple[int | None, PyDoughAST]] | None = None
+
+        # An internal property just used to keep track of how many calc terms
+        # have been added.
         self._calc_counter: int = 0
 
     @property
