@@ -3,41 +3,79 @@ TODO: add file-level docstring.
 """
 
 from typing import List
-from pydough.pydough_ast import PyDoughAST, PyDoughASTException
-from pydough.pydough_ast.pydough_operators import TypeVerifier, RequireNumArgs
+from pydough.pydough_ast import (
+    PyDoughAST,
+    AstNodeBuilder,
+    PyDoughASTException,
+    pydough_operators as pydop,
+)
+from pydough.types import Int64Type
+from test_utils import AstNodeTestInfo, LiteralInfo
 import pytest
 
 
 @pytest.mark.parametrize(
-    "verifier, args, error_message",
+    "verifier, args_info, error_message",
     [
         pytest.param(
-            RequireNumArgs(1),
+            pydop.RequireNumArgs(1),
             [],
             "Expected 1 argument, received 0",
-            id="require_1-empty_args",
+            id="require_one-empty_args",
         ),
         pytest.param(
-            RequireNumArgs(2),
+            pydop.RequireNumArgs(2),
             [],
             "Expected 2 arguments, received 0",
-            id="require_2-empty_args",
+            id="require_two-empty_args",
         ),
         pytest.param(
-            RequireNumArgs(3),
+            pydop.RequireNumArgs(3),
             [],
             "Expected 3 arguments, received 0",
-            id="require_3-empty_args",
+            id="require_three-empty_args",
+        ),
+        pytest.param(
+            pydop.RequireNumArgs(0),
+            [LiteralInfo(0, Int64Type())],
+            "Expected 0 arguments, received 1",
+            id="require_zero-one_arg",
+        ),
+        pytest.param(
+            pydop.RequireNumArgs(1),
+            [LiteralInfo(0, Int64Type()), LiteralInfo(16, Int64Type())],
+            "Expected 1 argument, received 2",
+            id="require_one-two_arg",
+        ),
+        pytest.param(
+            pydop.RequireNumArgs(2),
+            [LiteralInfo(3, Int64Type())],
+            "Expected 2 arguments, received 1",
+            id="require_one-two_arg",
+        ),
+        pytest.param(
+            pydop.RequireNumArgs(2),
+            [
+                LiteralInfo(10, Int64Type()),
+                LiteralInfo(-20, Int64Type()),
+                LiteralInfo(35, Int64Type()),
+            ],
+            "Expected 2 arguments, received 3",
+            id="require_one-two_arg",
         ),
     ],
 )
 def test_verification(
-    verifier: TypeVerifier, args: List[PyDoughAST], error_message: str
+    verifier: pydop.TypeVerifier,
+    args_info: List[AstNodeTestInfo],
+    error_message: str,
+    tpch_node_builder: AstNodeBuilder,
 ):
     """
     Checks that verifiers accept reject by raising an exception
-    and also returns True.
+    and also returns False.
     """
+    args: List[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
     assert not verifier.accepts(
         args, error_on_fail=False
     ), "expected verifier to reject argument"

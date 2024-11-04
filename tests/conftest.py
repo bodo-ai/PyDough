@@ -7,10 +7,7 @@ import pytest
 import json
 from pydough.metadata.graphs import GraphMetadata
 from typing import Dict, Set
-from pydough.pydough_ast.pydough_operators import (
-    builtin_registered_operators,
-    BinaryOperator,
-)
+from pydough.pydough_ast import AstNodeBuilder, pydough_operators as pydop
 
 from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
 
@@ -111,14 +108,22 @@ def sample_graphs(
     return get_sample_graph(sample_graph_names)
 
 
+@pytest.fixture
+def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
+    """
+    Builds an AST node builder using the TPCH graoh.
+    """
+    return AstNodeBuilder(get_sample_graph("TPCH"))
+
+
 @pytest.fixture(
     params=[
         pytest.param(operator, id=operator.binop.name)
-        for operator in builtin_registered_operators().values()
-        if isinstance(operator, BinaryOperator)
+        for operator in pydop.builtin_registered_operators().values()
+        if isinstance(operator, pydop.BinaryOperator)
     ]
 )
-def binary_operators(request) -> BinaryOperator:
+def binary_operators(request) -> pydop.BinaryOperator:
     """
     Returns every PyDough expression operator for a BinOp.
     """

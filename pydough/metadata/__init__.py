@@ -1,3 +1,7 @@
+"""
+TODO: add module-level docstring
+"""
+
 __all__ = [
     "parse_json_metadata_from_file",
     "GraphMetadata",

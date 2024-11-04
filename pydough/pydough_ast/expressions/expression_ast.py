@@ -26,6 +26,14 @@ class PyDoughExpressionAST(PyDoughAST):
         The PyDough type of the expression.
         """
 
+    @property
+    @abstractmethod
+    def is_aggregation(self) -> bool:
+        """
+        Whether the expression corresponds to an aggregation that
+        can collapse multiple records into a scalar value.
+        """
+
     @abstractmethod
     def to_string(self) -> str:
         """

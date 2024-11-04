@@ -6,6 +6,7 @@ __all__ = ["BinOp", "BinaryOperator"]
 
 from typing import List
 
+from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .expression_operator_ast import PyDoughExpressionOperatorAST
 from pydough.pydough_ast.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
@@ -63,6 +64,16 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
     @property
     def standalone_string(self) -> str:
         return f"BinaryOperator[{self.binop.value}]"
+
+    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+        # For now, until proper precedence is handled, always enclose binary
+        # operations in parenthesis if the parent is also a binary operation.
+
+        from pydough.pydough_ast import ExpressionFunctionCall
+
+        return isinstance(parent, ExpressionFunctionCall) and isinstance(
+            parent.operator, BinaryOperator
+        )
 
     def to_string(self, arg_strings: List[str]) -> str:
         # Stringify as "? + ?" for 0 arguments, "a + ?" for 1 argument, and
