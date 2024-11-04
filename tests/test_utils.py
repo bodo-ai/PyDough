@@ -17,7 +17,6 @@ __all__ = [
     "BackReferenceExpressionInfo",
     "ChildReferenceInfo",
     "BackReferenceCollectionInfo",
-    "GlobalCalcInfo",
 ]
 
 from pydough.metadata import GraphMetadata
@@ -27,9 +26,7 @@ from pydough.pydough_ast import (
     PyDoughCollectionAST,
     PyDoughExpressionAST,
     Calc,
-    CalcSubCollection,
-    GlobalCalc,
-    GlobalCalcTableCollection,
+    CalcChildCollection,
 )
 from typing import Dict, Set, Callable, Any, List, Tuple
 from pydough.types import PyDoughType
@@ -333,10 +330,12 @@ class TableCollectionInfo(CollectionTestInfo):
         context: PyDoughCollectionAST | None = None,
         children_contexts: List[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
-        return builder.build_table_collection(self.name)
+        if context is None:
+            context = builder.build_global_context()
+        return builder.build_collection_access(self.name, context)
 
 
-class SubCollectionInfo(CollectionTestInfo):
+class SubCollectionInfo(TableCollectionInfo):
     """
     CollectionTestInfo implementation class to create a subcollection access,
     either as a direct subcollection or via a compound relationship. Contains
@@ -345,10 +344,6 @@ class SubCollectionInfo(CollectionTestInfo):
 
     NOTE: must provide a `context` when building.
     """
-
-    def __init__(self, name: str):
-        super().__init__()
-        self.name: str = name
 
     def to_string(self) -> str:
         return f"SubCollection[{self.name}]"
@@ -362,10 +357,10 @@ class SubCollectionInfo(CollectionTestInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return builder.build_sub_collection(context, self.name)
+        return builder.build_collection_access(self.name, context)
 
 
-class CalcSubCollectionInfo(CollectionTestInfo):
+class CalcChildCollectionInfo(CollectionTestInfo):
     """
     CollectionTestInfo implementation class that wraps around a subcollection
     info within a Calc context. Contains the following fields:
@@ -392,7 +387,7 @@ class CalcSubCollectionInfo(CollectionTestInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return CalcSubCollection(
+        return CalcChildCollection(
             self.child_info.local_build(builder, context, children_contexts),
             self.is_last,
         )
@@ -425,76 +420,15 @@ class CalcInfo(CollectionTestInfo):
         context: PyDoughCollectionAST | None = None,
         children_contexts: List[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
-        assert (
-            context is not None
-        ), "Cannot call .build() on CalcInfo without providing a context"
+        if context is None:
+            context = builder.build_global_context()
         children: List[PyDoughCollectionAST] = [
-            CalcSubCollectionInfo(child, idx == len(self.children_info) - 1).build(
+            CalcChildCollectionInfo(child, idx == len(self.children_info) - 1).build(
                 builder, context
             )
             for idx, child in enumerate(self.children_info)
         ]
         raw_calc: Calc = builder.build_calc(context, children)
-        args: List[Tuple[str, PyDoughExpressionAST]] = [
-            (name, info.build(builder, context, children)) for name, info in self.args
-        ]
-        return raw_calc.with_terms(args)
-
-
-class GlobalCalcTableCollectionInfo(CollectionTestInfo):
-    """
-    CollectionTestInfo implementation class that wraps around a table context
-    info within a Calc context. Contains the following fields:
-    - `child_info`: the collection info for the child table collection.
-    - `is_last`: the this the last child of the parent CALC.
-
-    NOTE: must provide a `context` when building.
-    """
-
-    def __init__(self, child_info: CollectionTestInfo, is_last: bool):
-        self.child_info: CollectionTestInfo = child_info
-        self.is_last: bool = is_last
-        self.successor = child_info.successor
-
-    def to_string(self) -> str:
-        return f"ChildTableCollection[{self.child_info!r}]"
-
-    def local_build(
-        self,
-        builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return GlobalCalcTableCollection(
-            self.child_info.local_build(builder, context, children_contexts),
-            self.is_last,
-        )
-
-
-class GlobalCalcInfo(CalcInfo):
-    """
-    CollectionTestInfo implementation class to build a global CALC.
-    """
-
-    def to_string(self) -> str:
-        return f"Global{super().to_string()}"
-
-    def local_build(
-        self,
-        builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
-        children: List[PyDoughCollectionAST] = [
-            GlobalCalcTableCollectionInfo(
-                child, idx == len(self.children_info) - 1
-            ).build(builder, context)
-            for idx, child in enumerate(self.children_info)
-        ]
-        raw_calc: GlobalCalc = builder.build_global_calc(builder.graph, children)
         args: List[Tuple[str, PyDoughExpressionAST]] = [
             (name, info.build(builder, context, children)) for name, info in self.args
         ]

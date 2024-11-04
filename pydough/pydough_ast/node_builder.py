@@ -26,13 +26,11 @@ from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
 from .errors import PyDoughASTException
 from .collections import (
     PyDoughCollectionAST,
-    TableCollection,
-    SubCollection,
     Calc,
-    CalcSubCollection,
+    GlobalContext,
+    CollectionAccess,
+    CalcChildCollection,
     BackReferenceCollection,
-    GlobalCalc,
-    GlobalCalcTableCollection,
 )
 
 
@@ -190,79 +188,52 @@ class AstNodeBuilder(object):
         """
         return BackReferenceExpression(collection, name, levels)
 
-    def build_global_calc(
-        self, graph: GraphMetadata, children: List[GlobalCalcTableCollection]
-    ) -> GlobalCalc:
+    def build_global_context(self) -> GlobalContext:
         """
-        Creates a new global CALC instance, but `with_terms` still needs to be
-        called on the output.
-
-        Args:
-            `children`: the child subcollections accessed by the CALC term.
+        Creates a new global context for the graph.
 
         Returns:
-            The newly created GlobalCalc.
+            The newly created PyDough GlobalContext.
         """
-        return GlobalCalc(graph, children)
+        return GlobalContext(self.graph)
 
-    def build_table_collection(self, name: str) -> TableCollection:
+    def build_collection_access(
+        self, name: str, preceding_context: PyDoughCollectionAST
+    ) -> CollectionAccess:
         """
-        Creates a new table collection invocation.
+        Creates a new collection access AST node.
 
         Args:
             `name`: the name of the collection being referenced.
+            `preceding_context`: the collection node from which the
+            collection access is being fetched.
 
         Returns:
-            The newly created PyDough TableCollection.
+            The newly created PyDough CollectionAccess.
 
         Raises:
             `PyDoughMetadataException`: if `name` does not refer to a
-            collection in the graph.
+            collection that `preceding_context` has access to.
         """
-        return TableCollection(self.graph.get_collection(name))
-
-    def build_sub_collection(
-        self, collection: PyDoughCollectionAST, name: str
-    ) -> SubCollection:
-        """
-        Creates a new sub collection invocation.
-
-        Args:
-            `collection`: the parent collection.
-            `name`: the name of the subcollection being referenced.
-
-        Returns:
-            The newly created PyDough SubCollection.
-
-        Raises:
-            `PyDoughMetadataException`: if `name` does not refer to a
-            property of the collection.
-        """
-        term: PyDoughAST = collection.get_term(name)
-        if not isinstance(term, SubCollection):
-            raise PyDoughMetadataException(
-                f"Expected {term!r} to refer to a subcollection"
-            )
-        return term
+        return preceding_context.get_term(name)
 
     def build_calc(
         self,
-        collection: PyDoughCollectionAST,
-        children: List[CalcSubCollection],
+        preceding_context: PyDoughCollectionAST,
+        children: List[CalcChildCollection],
     ) -> Calc:
         """
         Creates a CALC instance, but `with_terms` still needs to be called on
         the output.
 
         Args:
-            `collection`: the preceding collection.
-            `children`: the child subcollections accessed by the CALC term.
-            `terms`: the named expressions in the CALC term.
+            `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the CALC term.
 
         Returns:
             The newly created PyDough CALC term.
         """
-        return Calc(collection, children)
+        return Calc(preceding_context, children)
 
     def build_back_reference_collection(
         self,

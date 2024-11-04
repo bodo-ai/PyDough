@@ -26,10 +26,10 @@ class CompoundSubCollection(SubCollection):
 
     def __init__(
         self,
-        parent: PyDoughCollectionAST,
         subcollection_property: CompoundRelationshipMetadata,
+        ancestor: PyDoughCollectionAST,
     ):
-        super().__init__(parent, subcollection_property)
+        super().__init__(subcollection_property, ancestor)
         self._subcollection_chain: List[SubCollection] = []
         self._inheritance_sources: Dict[str, Tuple[int, str]] = {}
 
@@ -59,11 +59,9 @@ class CompoundSubCollection(SubCollection):
             The subcollection AST object corresponding to the last component
             of `compound`, once flattened.
         """
-        # Repeat the procedure for the primary and secondary product, but
-        # keep track of the index.
-        for idx, property in enumerate(
-            [compound.primary_property, compound.secondary_property]
-        ):
+        print("$", source, compound)
+        # Invoke the procedure for the primary and secondary property.
+        for property in [compound.primary_property, compound.secondary_property]:
             if isinstance(property, CompoundRelationshipMetadata):
                 # If the component property is also a compound, recursively repeat
                 # the procedure on it, updating the `source` as we go along. First,
@@ -153,7 +151,7 @@ class CompoundSubCollection(SubCollection):
                 for name, property in compound.inherited_properties.items()
             }
             self.populate_subcollection_chain(
-                self.parent, self.subcollection_property, inherited_map
+                self.ancestor_context, self.subcollection_property, inherited_map
             )
             # Make sure none of the inherited terms went unaccounted for.
             undefined_inherited: Set[str] = set(compound.inherited_properties) - set(

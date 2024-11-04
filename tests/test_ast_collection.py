@@ -20,7 +20,6 @@ from test_utils import (
     CalcInfo,
     ChildReferenceInfo,
     BackReferenceCollectionInfo,
-    GlobalCalcInfo,
 )
 import pytest
 
@@ -143,6 +142,56 @@ def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
 @pytest.mark.parametrize(
     "calc_pipeline, expected_calcs, expected_total_names",
     [
+        pytest.param(
+            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            {"x": 0, "y": 1},
+            {
+                "x",
+                "y",
+                "Customers",
+                "Lineitems",
+                "Nations",
+                "Orders",
+                "PartSupp",
+                "Parts",
+                "Regions",
+                "Suppliers",
+            },
+            id="global_calc",
+        ),
+        pytest.param(
+            CalcInfo(
+                [
+                    TableCollectionInfo("Suppliers"),
+                    TableCollectionInfo("Parts")
+                    ** SubCollectionInfo("lines")
+                    ** CalcInfo(
+                        [],
+                        value=FunctionInfo(
+                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                        ),
+                    ),
+                ],
+                n_balance=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+                t_value=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
+            ),
+            {"n_balance": 0, "t_value": 1},
+            {
+                "n_balance",
+                "t_value",
+                "Customers",
+                "Lineitems",
+                "Nations",
+                "Orders",
+                "PartSupp",
+                "Parts",
+                "Regions",
+                "Suppliers",
+            },
+            id="global_nested_calc",
+        ),
         pytest.param(
             TableCollectionInfo("Regions"),
             {"key": 0, "name": 1, "comment": 2},
@@ -600,17 +649,61 @@ def test_collections_calc_terms(
     "calc_pipeline, expected_string, expected_tree_string",
     [
         pytest.param(
+            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            "TPCH(x=1, y=3)",
+            """\
+┌─── TPCH
+└─── Calc[x=1, y=3]\
+""",
+            id="global_calc",
+        ),
+        pytest.param(
+            CalcInfo(
+                [
+                    TableCollectionInfo("Suppliers"),
+                    TableCollectionInfo("Parts")
+                    ** SubCollectionInfo("lines")
+                    ** CalcInfo(
+                        [],
+                        value=FunctionInfo(
+                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                        ),
+                    ),
+                ],
+                n_balance=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+                t_value=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
+            ),
+            "TPCH(n_balance=SUM(Suppliers.account_balance), t_value=SUM(Parts.lines(value=ps_availqty * tax).value))",
+            """\
+┌─── TPCH
+└─┬─ Calc[n_balance=SUM($1.account_balance), t_value=SUM($2.value)]
+  ├─┬─ CalcSubCollection
+  │ └─── TableCollection[Suppliers]
+  └─┬─ CalcSubCollection
+    └─┬─ TableCollection[Parts]
+      ├─── SubCollection[lines]
+      └─── Calc[value=ps_availqty * tax]\
+""",
+            id="global_nested_calc",
+        ),
+        pytest.param(
             TableCollectionInfo("Regions"),
             "Regions",
-            "TableCollection[Regions]",
+            """\
+──┬─ TPCH
+  └─── TableCollection[Regions]\
+""",
             id="regions",
         ),
         pytest.param(
             TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
             "Regions.nations",
             """\
-──┬─ TableCollection[Regions]
-  └─── SubCollection[nations]\
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─── SubCollection[nations]\
 """,
             id="regions_nations",
         ),
@@ -621,8 +714,9 @@ def test_collections_calc_terms(
             ),
             "Regions()",
             """\
-┌─── TableCollection[Regions]
-└─── Calc[]\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─── Calc[]\
 """,
             id="regions_empty_calc",
         ),
@@ -643,8 +737,9 @@ def test_collections_calc_terms(
             ),
             "Regions(region_name=name, adjusted_key=(key - 1) * 2)",
             """\
-┌─── TableCollection[Regions]
-└─── Calc[region_name=name, adjusted_key=(key - 1) * 2]\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─── Calc[region_name=name, adjusted_key=(key - 1) * 2]\
 """,
             id="regions_calc",
         ),
@@ -658,9 +753,10 @@ def test_collections_calc_terms(
             ),
             "Regions.nations(region_name=BACK(1).name, nation_name=name)",
             """\
-──┬─ TableCollection[Regions]
-  ├─── SubCollection[nations]
-  └─── Calc[region_name=BACK(1).name, nation_name=name]\
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    ├─── SubCollection[nations]
+    └─── Calc[region_name=BACK(1).name, nation_name=name]\
 """,
             id="regions_nations_calc",
         ),
@@ -675,9 +771,10 @@ def test_collections_calc_terms(
             ),
             "Regions.suppliers(region_name=BACK(1).name, nation_name=nation_name, supplier_name=name)",
             """\
-──┬─ TableCollection[Regions]
-  ├─── SubCollection[suppliers]
-  └─── Calc[region_name=BACK(1).name, nation_name=nation_name, supplier_name=name]\
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    ├─── SubCollection[suppliers]
+    └─── Calc[region_name=BACK(1).name, nation_name=nation_name, supplier_name=name]\
 """,
             id="regions_suppliers_calc",
         ),
@@ -687,9 +784,10 @@ def test_collections_calc_terms(
             ** SubCollectionInfo("ps_lines"),
             "Parts.suppliers_of_part.ps_lines",
             """\
-──┬─ TableCollection[Parts]
-  └─┬─ SubCollection[suppliers_of_part]
-    └─── SubCollection[ps_lines]\
+──┬─ TPCH
+  └─┬─ TableCollection[Parts]
+    └─┬─ SubCollection[suppliers_of_part]
+      └─── SubCollection[ps_lines]\
 """,
             id="parts_suppliers_lines",
         ),
@@ -704,10 +802,11 @@ def test_collections_calc_terms(
             ),
             "Nations(nation_name=name, total_supplier_balances=SUM(suppliers.account_balance))",
             """\
-┌─── TableCollection[Nations]
-└─┬─ Calc[nation_name=name, total_supplier_balances=SUM($1.account_balance)]
-  └─┬─ CalcSubCollection
-    └─── SubCollection[suppliers]\
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─┬─ Calc[nation_name=name, total_supplier_balances=SUM($1.account_balance)]
+    └─┬─ CalcSubCollection
+      └─── SubCollection[suppliers]\
 """,
             id="nations_childcalc_suppliers",
         ),
@@ -731,10 +830,11 @@ def test_collections_calc_terms(
             ),
             "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied.retail_price - 1.0))",
             """\
-┌─── TableCollection[Suppliers]
-└─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.retail_price - 1.0)]
-  └─┬─ CalcSubCollection
-    └─── SubCollection[parts_supplied]\
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  └─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.retail_price - 1.0)]
+    └─┬─ CalcSubCollection
+      └─── SubCollection[parts_supplied]\
 """,
             id="suppliers_childcalc_parts_a",
         ),
@@ -761,11 +861,12 @@ def test_collections_calc_terms(
             ),
             "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied(adj_retail_price=retail_price - 1.0).adj_retail_price))",
             """\
-┌─── TableCollection[Suppliers]
-└─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.adj_retail_price)]
-  └─┬─ CalcSubCollection
-    ├─── SubCollection[parts_supplied]
-    └─── Calc[adj_retail_price=retail_price - 1.0]\
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  └─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.adj_retail_price)]
+    └─┬─ CalcSubCollection
+      ├─── SubCollection[parts_supplied]
+      └─── Calc[adj_retail_price=retail_price - 1.0]\
 """,
             id="suppliers_childcalc_parts_b",
         ),
@@ -788,14 +889,15 @@ def test_collections_calc_terms(
             ),
             "Suppliers.parts_supplied(nation_name=nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
             """\
-──┬─ TableCollection[Suppliers]
-  ├─── SubCollection[parts_supplied]
-  └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=$1.quantity / ps_availqty]
-    ├─┬─ CalcSubCollection
-    │ └─── SubCollection[ps_lines]
-    └─┬─ CalcSubCollection
-      ├─── SubCollection[nation]
-      └─── Calc[nation_name=name]\
+──┬─ TPCH
+  └─┬─ TableCollection[Suppliers]
+    ├─── SubCollection[parts_supplied]
+    └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=$1.quantity / ps_availqty]
+      ├─┬─ CalcSubCollection
+      │ └─── SubCollection[ps_lines]
+      └─┬─ CalcSubCollection
+        ├─── SubCollection[BACK(1).nation]
+        └─── Calc[nation_name=name]\
 """,
             id="suppliers_parts_childcalc_a",
         ),
@@ -824,20 +926,21 @@ def test_collections_calc_terms(
             ),
             "Suppliers.parts_supplied(nation_name=nation.name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
             """\
-──┬─ TableCollection[Suppliers]
-  ├─── SubCollection[parts_supplied]
-  └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=$1.ratio]
-    ├─┬─ CalcSubCollection
-    │ ├─── SubCollection[ps_lines]
-    │ └─── Calc[ratio=quantity / BACK(1).ps_availqty]
-    └─┬─ CalcSubCollection
-      └─── SubCollection[nation]\
+──┬─ TPCH
+  └─┬─ TableCollection[Suppliers]
+    ├─── SubCollection[parts_supplied]
+    └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=$1.ratio]
+      ├─┬─ CalcSubCollection
+      │ ├─── SubCollection[ps_lines]
+      │ └─── Calc[ratio=quantity / BACK(1).ps_availqty]
+      └─┬─ CalcSubCollection
+        └─── SubCollection[BACK(1).nation]\
 """,
             id="suppliers_parts_childcalc_b",
         ),
         pytest.param(
             (
-                GlobalCalcInfo(
+                CalcInfo(
                     [TableCollectionInfo("Customers")],
                     total_balance=FunctionInfo(
                         "SUM", [ChildReferenceInfo("acctbal", 0)]
@@ -846,39 +949,37 @@ def test_collections_calc_terms(
             ),
             "TPCH(total_balance=SUM(Customers.acctbal))",
             """\
-──┬─ Calc[total_balance=SUM($1.acctbal)]
+┌─── TPCH
+└─┬─ Calc[total_balance=SUM($1.acctbal)]
   └─┬─ CalcSubCollection
     └─── TableCollection[Customers]\
 """,
             id="globalcalc_a",
         ),
         pytest.param(
-            (
-                GlobalCalcInfo(
-                    [
-                        TableCollectionInfo("Customers"),
-                        TableCollectionInfo("Suppliers")
-                        ** SubCollectionInfo("parts_supplied")
-                        ** CalcInfo(
-                            [],
-                            value=FunctionInfo(
-                                "MUL",
-                                [
-                                    ReferenceInfo("ps_availqty"),
-                                    ReferenceInfo("retail_price"),
-                                ],
-                            ),
+            CalcInfo(
+                [
+                    TableCollectionInfo("Customers"),
+                    TableCollectionInfo("Suppliers")
+                    ** SubCollectionInfo("parts_supplied")
+                    ** CalcInfo(
+                        [],
+                        value=FunctionInfo(
+                            "MUL",
+                            [
+                                ReferenceInfo("ps_availqty"),
+                                ReferenceInfo("retail_price"),
+                            ],
                         ),
-                    ],
-                    total_demand=FunctionInfo(
-                        "SUM", [ChildReferenceInfo("acctbal", 0)]
                     ),
-                    total_supply=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
-                )
+                ],
+                total_demand=FunctionInfo("SUM", [ChildReferenceInfo("acctbal", 0)]),
+                total_supply=FunctionInfo("SUM", [ChildReferenceInfo("value", 1)]),
             ),
             "TPCH(total_demand=SUM(Customers.acctbal), total_supply=SUM(Suppliers.parts_supplied(value=ps_availqty * retail_price).value))",
             """\
-──┬─ Calc[total_demand=SUM($1.acctbal), total_supply=SUM($2.value)]
+┌─── TPCH
+└─┬─ Calc[total_demand=SUM($1.acctbal), total_supply=SUM($2.value)]
   ├─┬─ CalcSubCollection
   │ └─── TableCollection[Customers]
   └─┬─ CalcSubCollection

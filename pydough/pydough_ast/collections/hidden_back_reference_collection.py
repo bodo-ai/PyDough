@@ -7,9 +7,8 @@ __all__ = ["HiddenBackReferenceCollection"]
 
 from .collection_ast import PyDoughCollectionAST
 from .back_reference_collection import BackReferenceCollection
-from .sub_collection import SubCollection
-from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from .collection_tree_form import CollectionTreeForm
+from .collection_access import CollectionAccess
 
 
 class HiddenBackReferenceCollection(BackReferenceCollection):
@@ -26,16 +25,21 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         term_name: str,
         back_levels: int,
     ):
+        self._compound = compound
         self._term_name: str = term_name
         self._back_levels: int = back_levels
-        self._ancestor: PyDoughCollectionAST = ancestor
-        self._subcollection: PyDoughCollectionAST = self._ancestor.get_term(term_name)
         self._alias: str = alias
-        super(SubCollection, self).__init__(self._subcollection.collection)
-        self._parent: PyDoughCollectionAST = compound
-        self._subcollection_property: SubcollectionRelationshipMetadata = (
-            self._subcollection.subcollection_property
+        self._collection_access: CollectionAccess = ancestor.get_term(term_name)
+        super(BackReferenceCollection, self).__init__(
+            self._collection_access.collection, compound
         )
+
+    @property
+    def compound(self) -> PyDoughCollectionAST:
+        """
+        The compound collection containing the hidden backreference.
+        """
+        return self._compound
 
     @property
     def alias(self) -> str:
@@ -45,10 +49,10 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         return self._alias
 
     def to_string(self) -> str:
-        return f"{self.parent.to_string()}.{self.alias}"
+        return f"{self.compound.to_string()}.{self.alias}"
 
     def to_tree_form(self) -> CollectionTreeForm:
-        predecessor: CollectionTreeForm = self.parent.to_tree_form()
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
         predecessor.has_children = True
         return CollectionTreeForm(
             f"SubCollection[{self.alias}]",

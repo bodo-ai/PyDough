@@ -6,13 +6,12 @@ __all__ = ["SubCollection"]
 
 
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
-from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from .collection_ast import PyDoughCollectionAST
-from .table_collection import TableCollection
 from .collection_tree_form import CollectionTreeForm
+from .collection_access import CollectionAccess
 
 
-class SubCollection(TableCollection):
+class SubCollection(CollectionAccess):
     """
     The AST node implementation class representing a subcollection accessed
     from its parent collection.
@@ -20,21 +19,11 @@ class SubCollection(TableCollection):
 
     def __init__(
         self,
-        parent: PyDoughCollectionAST,
         subcollection_property: SubcollectionRelationshipMetadata,
+        ancestor: PyDoughCollectionAST,
     ):
-        super().__init__(subcollection_property.other_collection)
-        self._parent: PyDoughAST = parent
-        self._subcollection_property: SubcollectionRelationshipMetadata = (
-            subcollection_property
-        )
-
-    @property
-    def parent(self) -> PyDoughCollectionAST:
-        """
-        The parent node that the collection node is a subcollection of.
-        """
-        return self._parent
+        super().__init__(subcollection_property.other_collection, ancestor)
+        self._subcollection_property = subcollection_property
 
     @property
     def subcollection_property(self) -> SubcollectionRelationshipMetadata:
@@ -43,15 +32,11 @@ class SubCollection(TableCollection):
         """
         return self._subcollection_property
 
-    @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
-        return self.parent
-
     def to_string(self) -> str:
-        return f"{self.parent.to_string()}.{self.subcollection_property.name}"
+        return f"{self.ancestor_context.to_string()}.{self.subcollection_property.name}"
 
     def to_tree_form(self) -> CollectionTreeForm:
-        predecessor: CollectionTreeForm = self.parent.to_tree_form()
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
         predecessor.has_children = True
         return CollectionTreeForm(
             f"SubCollection[{self.subcollection_property.name}]",

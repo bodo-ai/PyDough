@@ -4,16 +4,15 @@ TODO: add file-level docstring
 
 __all__ = ["BackReferenceCollection"]
 
-
-from pydough.metadata.properties import SubcollectionRelationshipMetadata
+from typing import Dict, Tuple
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from .collection_ast import PyDoughCollectionAST
-from .sub_collection import SubCollection
 from pydough.pydough_ast.errors import PyDoughASTException
 from .collection_tree_form import CollectionTreeForm
+from .collection_access import CollectionAccess
 
 
-class BackReferenceCollection(SubCollection):
+class BackReferenceCollection(CollectionAccess):
     """
     The AST node implementation class representing a subcollection of an
     ancestor collection.
@@ -30,22 +29,17 @@ class BackReferenceCollection(SubCollection):
                 f"Expected number of levels in BACK to be a positive integer, received {back_levels!r}"
             )
         self._term_name: str = term_name
-        self._parent: PyDoughAST = parent
         self._back_levels: int = back_levels
-        self._ancestor: PyDoughCollectionAST = parent
+        ancestor: PyDoughCollectionAST = parent
         for _ in range(back_levels):
-            self._ancestor = self._ancestor.ancestor_context
-            if self._ancestor is None:
+            ancestor = ancestor.ancestor_context
+            if ancestor is None:
                 msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
                 raise PyDoughASTException(
                     f"Cannot reference back {msg} above {parent!r}"
                 )
-        self._ancestor.get_term(term_name)
-        self._subcollection: SubCollection = self._ancestor.get_term(term_name)
-        super(SubCollection, self).__init__(self._subcollection.collection)
-        self._subcollection_property: SubcollectionRelationshipMetadata = (
-            self._subcollection.subcollection_property
-        )
+        self._collection_access: CollectionAccess = ancestor.get_term(term_name)
+        super().__init__(self._collection_access.collection, ancestor)
 
     @property
     def back_levels(self) -> int:
@@ -62,14 +56,18 @@ class BackReferenceCollection(SubCollection):
         return self._term_name
 
     @property
-    def subcollection(self) -> SubCollection:
+    def collection_access(self) -> CollectionAccess:
         """
-        The subcollection property of the ancestor that BACK points to.
+        The collection access property of the ancestor that BACK points to.
         """
-        return self._subcollection
+        return self._collection_access
+
+    @property
+    def properties(self) -> Dict[str, Tuple[int | None, PyDoughAST]]:
+        return self.collection_access.properties
 
     def to_string(self) -> str:
-        return f"BACK({self.back_levels}).{self._subcollection.to_string()}"
+        return f"BACK({self.back_levels}).{self.term_name}"
 
     def to_tree_form(self) -> CollectionTreeForm:
         raise NotImplementedError

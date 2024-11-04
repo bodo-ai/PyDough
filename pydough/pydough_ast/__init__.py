@@ -14,9 +14,7 @@ __all__ = [
     "TableCollection",
     "SubCollection",
     "Calc",
-    "CalcSubCollection",
-    "GlobalCalc",
-    "GlobalCalcTableCollection",
+    "CalcChildCollection",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -32,8 +30,6 @@ from .collections import (
     TableCollection,
     SubCollection,
     Calc,
-    CalcSubCollection,
-    GlobalCalc,
-    GlobalCalcTableCollection,
+    CalcChildCollection,
 )
 from .node_builder import AstNodeBuilder
