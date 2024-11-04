@@ -25,7 +25,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         term_name: str,
         back_levels: int,
     ):
-        self._compound = compound
+        self._compound: PyDoughCollectionAST = compound
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._alias: str = alias
