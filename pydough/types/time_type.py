@@ -43,7 +43,7 @@ class TimeType(PyDoughType):
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:
         # Verify that the string matches the time type regex pattern, and
         # extract the precision.
-        match: Optional[re.match] = TimeType.type_string_pattern.fullmatch(type_string)
+        match: Optional[re.Match] = TimeType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None
         precision: int = int(match.groups(0)[0])

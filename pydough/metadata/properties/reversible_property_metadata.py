@@ -29,7 +29,7 @@ class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
     ):
         super().__init__(name, collection, other_collection, singular, no_collisions)
         self._reverse_name: str = reverse_name
-        self._reverse_property: ReversiblePropertyMetadata = None
+        self._reverse_property: ReversiblePropertyMetadata | None = None
 
     @property
     def reverse_name(self) -> str:

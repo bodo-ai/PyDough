@@ -28,7 +28,8 @@ from pydough.pydough_ast import (
     Calc,
     CalcChildCollection,
 )
-from typing import Dict, Set, Callable, Any, List, Tuple
+from pydough.pydough_ast.collections import CollectionAccess
+from typing import MutableMapping, Set, Callable, Any, MutableSequence, Tuple
 from pydough.types import PyDoughType
 from abc import ABC, abstractmethod
 
@@ -38,10 +39,12 @@ graph_fetcher = Callable[[str], GraphMetadata]
 
 # Type alias for a function that takes in a string and generates the
 # representation of all the nouns in a metadata graphs based on it.
-noun_fetcher = Callable[[str], Dict[str, Set[str]]]
+noun_fetcher = Callable[[str], MutableMapping[str, Set[str]]]
 
 
-def map_over_dict_values(dictionary: dict, func: Callable[[Any], Any]) -> dict:
+def map_over_dict_values(
+    dictionary: MutableMapping[Any, Any], func: Callable[[Any], Any]
+) -> MutableMapping[Any, Any]:
     """
     Applies a lambda function to the values of a dictionary, returning a
     new dictionary with the transformation applied.
@@ -68,7 +71,7 @@ class AstNodeTestInfo(ABC):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         """
         Uses a passed-in AST node builder to construct the node.
@@ -114,7 +117,7 @@ class LiteralInfo(AstNodeTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         return builder.build_literal(self.value, self.data_type)
 
@@ -129,7 +132,7 @@ class ColumnInfo(AstNodeTestInfo):
 
     def __init__(self, collection_name: str, property_name: str):
         self.collection_name: str = collection_name
-        self.property_name: property_name = property_name
+        self.property_name: str = property_name
 
     def to_string(self) -> str:
         return f"Column[{self.collection_name}.{self.property_name}]"
@@ -138,7 +141,7 @@ class ColumnInfo(AstNodeTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         return builder.build_column(self.collection_name, self.property_name)
 
@@ -151,21 +154,21 @@ class FunctionInfo(AstNodeTestInfo):
     - `args_info`: a list of TestInfo objects used to build the arguments.
     """
 
-    def __init__(self, function_name: str, args_info: List[AstNodeTestInfo]):
+    def __init__(self, function_name: str, args_info: MutableSequence[AstNodeTestInfo]):
         self.function_name: str = function_name
-        self.args_info: List[AstNodeTestInfo] = args_info
+        self.args_info: MutableSequence[AstNodeTestInfo] = args_info
 
     def to_string(self) -> str:
-        arg_strings: List[str] = [arg.to_string() for arg in self.args_info]
+        arg_strings: MutableSequence[str] = [arg.to_string() for arg in self.args_info]
         return f"Call[{self.function_name} on ({', '.join(arg_strings)})]"
 
     def build(
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
-        args: List[PyDoughAST] = [
+        args: MutableSequence[PyDoughAST] = [
             info.build(builder, context, children_contexts) for info in self.args_info
         ]
         return builder.build_expression_function_call(self.function_name, args)
@@ -188,7 +191,7 @@ class ReferenceInfo(AstNodeTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         assert (
             context is not None
@@ -215,7 +218,7 @@ class BackReferenceExpressionInfo(AstNodeTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         assert (
             context is not None
@@ -242,7 +245,7 @@ class ChildReferenceInfo(AstNodeTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
         assert (
             children_contexts is not None
@@ -281,7 +284,10 @@ class CollectionTestInfo(AstNodeTestInfo):
 
     @abstractmethod
     def local_build(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         """
         Uses a passed-in AST node builder to construct the collection node.
@@ -291,6 +297,8 @@ class CollectionTestInfo(AstNodeTestInfo):
             objects.
             `context`: an optional collection AST used as the context within
             which the AST is created.
+            `children_contexts`: an optional list of collection ASTs of child
+            nodes of a CALC that are accessible for ChildReference usage.
 
         Returns:
             The new instance of the collection AST object.
@@ -300,8 +308,8 @@ class CollectionTestInfo(AstNodeTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
         local_result: PyDoughCollectionAST = self.local_build(
             builder, context, children_contexts
         )
@@ -328,7 +336,7 @@ class TableCollectionInfo(CollectionTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         if context is None:
             context = builder.build_global_context()
@@ -352,7 +360,7 @@ class SubCollectionInfo(TableCollectionInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         assert (
             context is not None
@@ -382,13 +390,15 @@ class CalcChildCollectionInfo(CollectionTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
+        access = self.child_info.local_build(builder, context, children_contexts)
+        assert isinstance(access, CollectionAccess)
         return CalcChildCollection(
-            self.child_info.local_build(builder, context, children_contexts),
+            access,
             self.is_last,
         )
 
@@ -405,11 +415,11 @@ class CalcInfo(CollectionTestInfo):
 
     def __init__(self, children, **kwargs):
         super().__init__()
-        self.children_info: List[CollectionTestInfo] = children
-        self.args: List[Tuple[str, AstNodeTestInfo]] = list(kwargs.items())
+        self.children_info: MutableSequence[CollectionTestInfo] = children
+        self.args: MutableSequence[Tuple[str, AstNodeTestInfo]] = list(kwargs.items())
 
     def to_string(self) -> str:
-        args_strings: List[str] = [
+        args_strings: MutableSequence[str] = [
             f"{name}={arg.to_string()}" for name, arg in self.args
         ]
         return f"Calc[{', '.join(args_strings)}]"
@@ -418,20 +428,24 @@ class CalcInfo(CollectionTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         if context is None:
             context = builder.build_global_context()
-        children: List[PyDoughCollectionAST] = [
-            CalcChildCollectionInfo(child, idx == len(self.children_info) - 1).build(
-                builder, context
-            )
-            for idx, child in enumerate(self.children_info)
-        ]
-        raw_calc: Calc = builder.build_calc(context, children)
-        args: List[Tuple[str, PyDoughExpressionAST]] = [
-            (name, info.build(builder, context, children)) for name, info in self.args
-        ]
+        children: MutableSequence[PyDoughCollectionAST] = []
+        for idx, child_info in enumerate(self.children_info):
+            child = CalcChildCollectionInfo(
+                child_info, idx == len(self.children_info) - 1
+            ).build(builder, context)
+            assert isinstance(child, PyDoughCollectionAST)
+            children.append(child)
+        raw_calc = builder.build_calc(context, children)
+        assert isinstance(raw_calc, Calc)
+        args: MutableSequence[Tuple[str, PyDoughExpressionAST]] = []
+        for name, info in self.args:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, PyDoughExpressionAST)
+            args.append((name, expr))
         return raw_calc.with_terms(args)
 
 
@@ -457,8 +471,8 @@ class BackReferenceCollectionInfo(CollectionTestInfo):
         self,
         builder: AstNodeBuilder,
         context: PyDoughCollectionAST | None = None,
-        children_contexts: List[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
         assert (
             context is not None
         ), "Cannot call .build() on BackReferenceCollectionInfo without providing a context"

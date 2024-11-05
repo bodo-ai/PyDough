@@ -29,13 +29,14 @@ class BackReferenceExpression(Reference):
         self._back_levels: int = back_levels
         self._ancestor: PyDoughCollectionAST = collection
         for _ in range(back_levels):
-            self._ancestor = self._ancestor.ancestor_context
-            if self._ancestor is None:
+            ancestor = self._ancestor.ancestor_context
+            if ancestor is None:
                 msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
                 raise PyDoughASTException(
                     f"Cannot reference back {msg} above {collection!r}"
                 )
-        self._expression: PyDoughExpressionAST = self._ancestor.get_term(term_name)
+            self._ancestor = ancestor
+        self._expression = self._ancestor.get_expr(term_name)
 
     @property
     def back_levels(self) -> int:
@@ -72,5 +73,9 @@ class BackReferenceExpression(Reference):
     def to_string(self, tree_form: bool = False) -> str:
         return f"BACK({self.back_levels}).{self.term_name}"
 
-    def equals(self, other: "BackReferenceExpression") -> bool:
-        return super().equals(other) and self.ancestor.equals(other.ancestor)
+    def equals(self, other: object) -> bool:
+        return (
+            super().equals(other)
+            and isinstance(other, BackReferenceExpression)
+            and self.ancestor.equals(other.ancestor)
+        )

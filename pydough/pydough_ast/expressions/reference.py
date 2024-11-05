@@ -18,7 +18,7 @@ class Reference(PyDoughExpressionAST):
     def __init__(self, collection: PyDoughCollectionAST, term_name: str):
         self._collection: PyDoughCollectionAST = collection
         self._term_name: str = term_name
-        self._expression: PyDoughExpressionAST = collection.get_term(term_name)
+        self._expression: PyDoughExpressionAST = collection.get_expr(term_name)
 
     @property
     def collection(self) -> PyDoughCollectionAST:
@@ -55,5 +55,5 @@ class Reference(PyDoughExpressionAST):
     def to_string(self, tree_form: bool = False) -> str:
         return self.term_name
 
-    def equals(self, other: "Reference") -> bool:
-        return super().equals(other) and self.expression.equals(other.expression)
+    def equals(self, other: object) -> bool:
+        return isinstance(other, Reference) and self.expression.equals(other.expression)

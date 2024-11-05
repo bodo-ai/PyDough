@@ -6,10 +6,9 @@ __all__ = ["PyDoughOperatorAST"]
 
 from abc import abstractmethod
 
-from typing import List
+from typing import List, MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from .type_inference import TypeVerifier
 
@@ -50,7 +49,7 @@ class PyDoughOperatorAST(PyDoughAST):
         of any arguments.
         """
 
-    def verify_allows_args(self, args: List[PyDoughExpressionAST]) -> None:
+    def verify_allows_args(self, args: MutableSequence[PyDoughAST]) -> None:
         """
         Verifies that an operator is allowed to be called with a certain
         set of arguments.
@@ -65,7 +64,8 @@ class PyDoughOperatorAST(PyDoughAST):
             # If the verifier failed, raise the error with the same traceback
             # but prepend it with information about the operator and args
             # that caused the failure.
-            msg = f"Invalid operator invocation {self.to_string(args)!r}: {e}"
+            arg_strings: List[str] = [str(arg) for arg in args]
+            msg = f"Invalid operator invocation {self.to_string(arg_strings)!r}: {e}"
             raise PyDoughASTException(msg).with_traceback(e.__traceback__)
 
     @abstractmethod

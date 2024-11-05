@@ -4,8 +4,9 @@ TODO: add file-level docstring
 
 __all__ = ["ExpressionFunctionCall"]
 
-from typing import List
+from typing import MutableSequence, List
 
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
 from . import PyDoughExpressionAST
 from pydough.types import PyDoughType
@@ -18,11 +19,13 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
     """
 
     def __init__(
-        self, operator: PyDoughExpressionOperatorAST, args: List[PyDoughExpressionAST]
+        self,
+        operator: PyDoughExpressionOperatorAST,
+        args: MutableSequence[PyDoughAST],
     ):
         operator.verify_allows_args(args)
         self._operator: PyDoughExpressionOperatorAST = operator
-        self._args: List[PyDoughExpressionAST] = args
+        self._args: MutableSequence[PyDoughAST] = args
         self._data_type: PyDoughType = operator.infer_return_type(args)
 
     @property
@@ -34,7 +37,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self._operator
 
     @property
-    def args(self) -> List[PyDoughExpressionAST]:
+    def args(self) -> MutableSequence[PyDoughAST]:
         """
         The list of arguments to the function call.
         """
@@ -54,15 +57,19 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
     def to_string(self, tree_form: bool = False) -> str:
         arg_strings: List[str] = []
         for arg in self.args:
-            arg_string: str = arg.to_string(tree_form)
-            if arg.requires_enclosing_parens(self):
-                arg_string = f"({arg_string})"
+            arg_string: str
+            if isinstance(arg, PyDoughExpressionAST):
+                arg_string = arg.to_string(tree_form)
+                if arg.requires_enclosing_parens(self):
+                    arg_string = f"({arg_string})"
+            else:
+                arg_string = str(arg_string)
             arg_strings.append(arg_string)
         return self.operator.to_string(arg_strings)
 
-    def equals(self, other: "ExpressionFunctionCall") -> bool:
+    def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
+            isinstance(other, ExpressionFunctionCall)
             and (self.operator == other.operator)
             and (self.args == other.args)
         )

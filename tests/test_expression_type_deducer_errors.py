@@ -2,7 +2,7 @@
 TODO: add file-level docstring.
 """
 
-from typing import List
+from typing import MutableSequence
 from pydough.pydough_ast import (
     PyDoughAST,
     PyDoughASTException,
@@ -40,7 +40,7 @@ from test_utils import AstNodeTestInfo, LiteralInfo
 )
 def test_invalid_deduction(
     deducer: pydop.ExpressionTypeDeducer,
-    args_info: List[AstNodeTestInfo],
+    args_info: MutableSequence[AstNodeTestInfo],
     error_message: str,
     tpch_node_builder: AstNodeBuilder,
 ):
@@ -48,6 +48,8 @@ def test_invalid_deduction(
     Checks cases where calling an expression type deducer on a list of PyDough
     AST objects should raise an exception
     """
-    args: List[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
+    args: MutableSequence[PyDoughAST] = [
+        info.build(tpch_node_builder) for info in args_info
+    ]
     with pytest.raises(PyDoughASTException, match=re.escape(error_message)):
         deducer.infer_return_type(args)

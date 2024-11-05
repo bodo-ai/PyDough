@@ -4,6 +4,8 @@ TODO: add file-level docstring
 
 __all__ = ["parse_type_from_string"]
 
+from typing import Type, MutableSequence
+
 from .pydough_type import PyDoughType
 from .integer_types import Int8Type, Int16Type, Int32Type, Int64Type
 from .float_types import Float32Type, Float64Type
@@ -25,7 +27,7 @@ def parse_type_from_string(type_string: str) -> PyDoughType:
     """
     TODO: add function docstring
     """
-    type_classes = [
+    type_classes: MutableSequence[Type[PyDoughType]] = [
         BinaryType,
         BooleanType,
         DecimalType,

@@ -33,7 +33,8 @@ def test_missing_property(get_sample_graph: graph_fetcher):
         PyDoughMetadataException,
         match="simple table collection 'Parts' in graph 'TPCH' does not have a property 'color'",
     ):
-        collection: CollectionMetadata = graph.get_collection("Parts")
+        collection = graph.get_collection("Parts")
+        assert isinstance(collection, CollectionMetadata)
         collection.get_property("color")
 
 
@@ -454,7 +455,7 @@ def test_missing_property(get_sample_graph: graph_fetcher):
         pytest.param(
             "PARTSUPP_FORMAT_44",
             re.escape(
-                "inherited property 'lines' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44' (alias of simple join property 'lines' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_44' inherited from compound property 'parts_supplied' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_44') conflicts with compound property 'lines' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44'."
+                "inherited property 'lines' (alias of compound property 'parts_supplied' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_44' inherited from simple join property 'lines' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_44') of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44' conflicts with compound property 'lines' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44'."
             ),
             id="compound-inherited_properties-overload",
         ),

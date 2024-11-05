@@ -40,6 +40,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
     def components(self) -> list:
         return super().components
 
+    @staticmethod
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -78,6 +79,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
             property_json, error_name
         )
 
+    @staticmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -105,9 +107,8 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         HasPropertyWith(other_collection_name, HasType(CollectionMetadata)).verify(
             collection.graph.collections, collection.graph.error_name
         )
-        other_collection: CollectionMetadata = collection.graph.collections[
-            other_collection_name
-        ]
+        other_collection = collection.graph.collections[other_collection_name]
+        assert isinstance(other_collection, CollectionMetadata)
 
         # Build the new property, its reverse, then add both
         # to their collection's properties.

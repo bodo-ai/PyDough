@@ -53,9 +53,9 @@ class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
         # Stringify as "function_name(arg0, arg1, ...)
         return f"{self.function_name}({', '.join(arg_strings)})"
 
-    def equals(self, other: "ExpressionFunctionOperator") -> bool:
+    def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
+            isinstance(other, ExpressionFunctionOperator)
             and self.function_name == other.function_name
             and self.is_aggregation == other.is_aggregation
         )

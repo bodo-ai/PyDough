@@ -52,6 +52,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         comp.append(self.column_name)
         return comp
 
+    @staticmethod
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -84,6 +85,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             property_json, error_name
         )
 
+    @staticmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:

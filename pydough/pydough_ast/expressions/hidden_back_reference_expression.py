@@ -4,7 +4,6 @@ TODO: add file-level docstring
 
 __all__ = ["HiddenBackReferenceExpression"]
 
-from . import PyDoughExpressionAST
 from pydough.pydough_ast.collections import PyDoughCollectionAST
 from .back_reference_expression import BackReferenceExpression
 
@@ -29,7 +28,7 @@ class HiddenBackReferenceExpression(BackReferenceExpression):
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._ancestor: PyDoughCollectionAST = ancestor
-        self._expression: PyDoughExpressionAST = self._ancestor.get_term(term_name)
+        self._expression = self._ancestor.get_expr(term_name)
 
     @property
     def alias(self) -> str:

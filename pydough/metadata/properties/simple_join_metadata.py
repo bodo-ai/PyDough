@@ -6,7 +6,7 @@ __all__ = ["SimpleJoinMetadata"]
 
 from . import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
-from typing import List, Dict, Tuple, Set
+from typing import MutableSequence, MutableMapping, Tuple, Set
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
     simple_join_keys_predicate,
@@ -43,19 +43,22 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         other_collection: CollectionMetadata,
         singular: bool,
         no_collisions: bool,
-        keys: Dict[str, List[str]],
+        keys: MutableMapping[str, MutableSequence[str]],
     ):
         super().__init__(
             name, reverse_name, collection, other_collection, singular, no_collisions
         )
         simple_join_keys_predicate.verify(keys, self.error_name)
-        self._keys: Dict[str, List[str]] = keys
-        self._join_pairs: List[Tuple[PropertyMetadata, PropertyMetadata]] = []
+        self._keys: MutableMapping[str, MutableSequence[str]] = keys
+        self._join_pairs: MutableSequence[
+            Tuple[PropertyMetadata, PropertyMetadata]
+        ] = []
         # Build the join pairs list by transforming the dictionary of property
         # names from keys into the actual properties of the source/target
         # collection.
         for property_name, matching_property_names in keys.items():
             source_property = self.collection.get_property(property_name)
+            assert isinstance(source_property, PropertyMetadata)
             if source_property.is_subcollection:
                 raise PyDoughMetadataException(
                     f"{self.error_name} cannot use {source_property.error_name} as a join key"
@@ -64,6 +67,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
                 target_property = self.other_collection.get_property(
                     matching_property_name
                 )
+                assert isinstance(target_property, PropertyMetadata)
                 if target_property.is_subcollection:
                     raise PyDoughMetadataException(
                         f"{self.error_name} cannot use {target_property.error_name} as a join key"
@@ -71,7 +75,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
                 self._join_pairs.append((source_property, target_property))
 
     @property
-    def keys(self) -> Dict[str, List[str]]:
+    def keys(self) -> MutableMapping[str, MutableSequence[str]]:
         """
         A dictionary mapping the names of properties in the current collection
         to the names of properties in the other collection that they must be
@@ -80,7 +84,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         return self._keys
 
     @property
-    def join_pairs(self) -> List[Tuple[PropertyMetadata, PropertyMetadata]]:
+    def join_pairs(self) -> MutableSequence[Tuple[PropertyMetadata, PropertyMetadata]]:
         """
         A list of pairs of properties from the current collection and other
         collection that must be equal to in order to identify matches.
@@ -97,6 +101,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
     def create_error_name(name: str, collection_error_name: str):
         return f"simple join property {name!r} of {collection_error_name}"
 
+    @staticmethod
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -138,6 +143,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         )
         NoExtraKeys(SimpleJoinMetadata.allowed_fields).verify(property_json, error_name)
 
+    @staticmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -168,9 +174,8 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         HasPropertyWith(other_collection_name, HasType(CollectionMetadata)).verify(
             collection.graph.collections, collection.graph.error_name
         )
-        other_collection: CollectionMetadata = collection.graph.collections[
-            other_collection_name
-        ]
+        other_collection = collection.graph.collections[other_collection_name]
+        assert isinstance(other_collection, CollectionMetadata)
 
         # Build the new property, its reverse, then add both
         # to their collection's properties.
@@ -191,7 +196,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         # Invert the keys dictionary, mapping each string that was in any of
         # the lists of self.keys to all of the keys of self.keys that mapped
         # to those lists.
-        reverse_keys = {}
+        reverse_keys: MutableMapping[str, MutableSequence[str]] = {}
         for key in self.keys:
             for other_key in self.keys[key]:
                 if other_key not in reverse_keys:

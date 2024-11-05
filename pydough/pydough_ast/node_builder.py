@@ -11,7 +11,7 @@ from pydough.metadata import (
     TableColumnMetadata,
     PyDoughMetadataException,
 )
-from typing import Dict, List
+from typing import MutableMapping, MutableSequence
 from pydough.types import PyDoughType
 from .abstract_pydough_ast import PyDoughAST
 from .expressions import (
@@ -22,14 +22,17 @@ from .expressions import (
     BackReferenceExpression,
     ChildReference,
 )
-from .pydough_operators import PyDoughOperatorAST, builtin_registered_operators
+from .pydough_operators import (
+    PyDoughOperatorAST,
+    builtin_registered_operators,
+    PyDoughExpressionOperatorAST,
+)
 from .errors import PyDoughASTException
 from .collections import (
     PyDoughCollectionAST,
     Calc,
     GlobalContext,
     CollectionAccess,
-    CalcChildCollection,
     BackReferenceCollection,
 )
 
@@ -41,7 +44,9 @@ class AstNodeBuilder(object):
 
     def __init__(self, graph: GraphMetadata):
         self._graph: GraphMetadata = graph
-        self._operators: Dict[str, PyDoughOperatorAST] = builtin_registered_operators()
+        self._operators: MutableMapping[str, PyDoughOperatorAST] = (
+            builtin_registered_operators()
+        )
 
     @property
     def graph(self) -> GraphMetadata:
@@ -51,7 +56,7 @@ class AstNodeBuilder(object):
         return self._graph
 
     @property
-    def operators(self) -> Dict[str, PyDoughOperatorAST]:
+    def operators(self) -> MutableMapping[str, PyDoughOperatorAST]:
         """
         The operators that the builder has access to.
         """
@@ -74,9 +79,7 @@ class AstNodeBuilder(object):
         """
         return Literal(value, data_type)
 
-    def build_column(
-        self, collection_name: str, property_name: str
-    ) -> TableColumnMetadata:
+    def build_column(self, collection_name: str, property_name: str) -> ColumnProperty:
         """
         Creates a new column property node by accessing a specific property of
         a collection in the graph by name.
@@ -92,8 +95,10 @@ class AstNodeBuilder(object):
             `PyDoughMetadataException`: if the property does not exist or is
             not a table column.
         """
-        collection: CollectionMetadata = self.graph.get_collection(collection_name)
-        property: PropertyMetadata = collection.get_property(property_name)
+        collection = self.graph.get_collection(collection_name)
+        assert isinstance(collection, CollectionMetadata)
+        property = collection.get_property(property_name)
+        assert isinstance(property, PropertyMetadata)
         if not isinstance(property, TableColumnMetadata):
             raise PyDoughMetadataException(
                 f"Expected {property.error_name} to be a table column property"
@@ -101,7 +106,7 @@ class AstNodeBuilder(object):
         return ColumnProperty(property)
 
     def build_expression_function_call(
-        self, function_name: str, args: List[PyDoughAST]
+        self, function_name: str, args: MutableSequence[PyDoughAST]
     ) -> ExpressionFunctionCall:
         """
         Creates a new expression function call by accessing a builtin
@@ -121,7 +126,8 @@ class AstNodeBuilder(object):
         """
         if function_name not in self.operators:
             raise PyDoughASTException(f"Unrecognized operator name {function_name!r}")
-        operator: PyDoughOperatorAST = self.operators[function_name]
+        operator = self.operators[function_name]
+        assert isinstance(operator, PyDoughExpressionOperatorAST)
         return ExpressionFunctionCall(operator, args)
 
     def build_reference(self, collection: PyDoughCollectionAST, name: str) -> Reference:
@@ -142,7 +148,7 @@ class AstNodeBuilder(object):
         return Reference(collection, name)
 
     def build_child_reference(
-        self, children: List[PyDoughCollectionAST], child_idx: int, name: str
+        self, children: MutableSequence[PyDoughCollectionAST], child_idx: int, name: str
     ) -> Reference:
         """
         Creates a new reference to an expression from a child collection of a
@@ -215,12 +221,14 @@ class AstNodeBuilder(object):
             `PyDoughMetadataException`: if `name` does not refer to a
             collection that `preceding_context` has access to.
         """
-        return preceding_context.get_term(name)
+        term = preceding_context.get_term(name)
+        assert isinstance(term, CollectionAccess)
+        return term
 
     def build_calc(
         self,
         preceding_context: PyDoughCollectionAST,
-        children: List[CalcChildCollection],
+        children: MutableSequence[PyDoughCollectionAST],
     ) -> Calc:
         """
         Creates a CALC instance, but `with_terms` still needs to be called on

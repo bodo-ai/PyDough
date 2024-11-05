@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import List, Union, Set, Tuple
+from typing import MutableSequence, Union, Set, Tuple
 from pydough.metadata.errors import (
     HasPropertyWith,
     unique_properties_predicate,
@@ -10,6 +10,7 @@ from pydough.metadata.errors import (
     is_string,
     PyDoughMetadataException,
 )
+from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
 from . import CollectionMetadata
 from pydough.metadata.properties import (
@@ -41,7 +42,7 @@ class SimpleTableMetadata(CollectionMetadata):
         name: str,
         graph,
         table_path: str,
-        unique_properties: List[Union[str, List[str]]],
+        unique_properties: MutableSequence[Union[str, MutableSequence[str]]],
     ):
         super().__init__(name, graph)
         is_string.verify(table_path, f"Property 'table_path' of {self.error_name}")
@@ -49,7 +50,9 @@ class SimpleTableMetadata(CollectionMetadata):
             unique_properties, f"property 'unique_properties' of {self.error_name}"
         )
         self._table_path: str = table_path
-        self._unique_properties: List[Union[str, List[str]]] = unique_properties
+        self._unique_properties: MutableSequence[Union[str, MutableSequence[str]]] = (
+            unique_properties
+        )
 
     @property
     def table_path(self) -> str:
@@ -60,7 +63,7 @@ class SimpleTableMetadata(CollectionMetadata):
         return self._table_path
 
     @property
-    def unique_properties(self) -> List[Union[str, List[str]]]:
+    def unique_properties(self) -> MutableSequence[Union[str, MutableSequence[str]]]:
         """
         The list of all names of properties of the collection that are
         guaranteed to be unique within the collection. Entries that are a
@@ -111,14 +114,15 @@ class SimpleTableMetadata(CollectionMetadata):
                 raise PyDoughMetadataException(
                     f"{self.error_name} does not have a property named {unique_property_name!r} to use as a unique property"
                 )
-            property: PropertyMetadata = self.get_property(unique_property_name)
+            property = self.get_property(unique_property_name)
+            assert isinstance(property, PropertyMetadata)
             if property.is_subcollection:
                 raise PyDoughMetadataException(
                     f"{property.error_name} cannot be a unique property since it is a subcollection"
                 )
 
     def verify_allows_property(
-        self, property: PropertyMetadata, inherited: bool
+        self, property: AbstractMetadata, inherited: bool
     ) -> None:
         """
         Verifies that a property is safe to add to the collection.
@@ -152,6 +156,7 @@ class SimpleTableMetadata(CollectionMetadata):
                     f"Simple table collections does not allow inserting {property.error_name}"
                 )
 
+    @staticmethod
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -186,6 +191,7 @@ class SimpleTableMetadata(CollectionMetadata):
             collection_json, error_name
         )
 
+    @staticmethod
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -213,9 +219,9 @@ class SimpleTableMetadata(CollectionMetadata):
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
         table_path: str = collection_json["table_path"]
-        unique_properties: List[Union[str, List[str]]] = collection_json[
-            "unique_properties"
-        ]
+        unique_properties: MutableSequence[Union[str, MutableSequence[str]]] = (
+            collection_json["unique_properties"]
+        )
         new_collection: SimpleTableMetadata = SimpleTableMetadata(
             collection_name, graph, table_path, unique_properties
         )
