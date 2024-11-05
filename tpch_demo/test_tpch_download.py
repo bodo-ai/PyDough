@@ -8,7 +8,7 @@ import sqlite3
 import typing as pt
 
 import pytest
-from typing import Generator
+from typing import Iterator
 
 
 @pytest.fixture(scope="module")
@@ -22,7 +22,7 @@ def tpch_db_path() -> str:
 
 
 @pytest.fixture(scope="module")
-def tpch_db(tpch_db_path: str) -> Generator[sqlite3.Connection]:
+def tpch_db(tpch_db_path: str) -> Iterator[sqlite3.Connection]:
     """
     Download the TPCH data and return a connection to the SQLite database.
     """
