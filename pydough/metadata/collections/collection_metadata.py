@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 from abc import abstractmethod
 
-from typing import List, Dict, Set, Type
+from typing import MutableSequence, MutableMapping, Set, Type
 from pydough.metadata.errors import (
     PyDoughMetadataException,
     is_valid_name,
@@ -45,11 +45,11 @@ class CollectionMetadata(AbstractMetadata):
 
         self._graph: GraphMetadata = graph
         self._name: str = name
-        self._properties: Dict[str, PropertyMetadata] = {}
-        self._inherited_properties: Dict[str, List[InheritedPropertyMetadata]] = (
-            defaultdict(list)
-        )
-        self._definition_order: Dict[str, int] = {}
+        self._properties: MutableMapping[str, PropertyMetadata] = {}
+        self._inherited_properties: MutableMapping[
+            str, MutableSequence[InheritedPropertyMetadata]
+        ] = defaultdict(list)
+        self._definition_order: MutableMapping[str, int] = {}
 
     @property
     def graph(self) -> GraphMetadata:
@@ -201,7 +201,7 @@ class CollectionMetadata(AbstractMetadata):
         # First, make sure that the candidate property is indeed a property
         # metadata of the appropriate type.
         HasType(PropertyMetadata).verify(property, "property")
-        property: PropertyMetadata = property
+        assert isinstance(property, PropertyMetadata)
         if inherited:
             if not isinstance(property, InheritedPropertyMetadata):
                 raise PyDoughMetadataException(
@@ -251,7 +251,7 @@ class CollectionMetadata(AbstractMetadata):
         """
         from pydough.metadata.properties import PropertyMetadata
 
-        property: PropertyMetadata = property
+        assert isinstance(property, PropertyMetadata)
         self.verify_allows_property(property, False)
         self.properties[property.name] = property
         self.definition_order[property.name] = len(self.definition_order)
@@ -271,12 +271,14 @@ class CollectionMetadata(AbstractMetadata):
         """
         from pydough.metadata.properties import InheritedPropertyMetadata
 
-        property: InheritedPropertyMetadata = property
+        assert isinstance(property, InheritedPropertyMetadata)
         self.verify_allows_property(property, True)
         self.inherited_properties[property.name].append(property)
 
-    def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
-        nouns: Dict[str, List[AbstractMetadata]] = defaultdict(list)
+    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
+        nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = defaultdict(
+            list
+        )
         for property in self.properties.values():
             for noun_name, values in property.get_nouns().items():
                 nouns[noun_name].extend(values)
@@ -286,7 +288,7 @@ class CollectionMetadata(AbstractMetadata):
                     nouns[noun_name].extend(values)
         return nouns
 
-    def get_property_names(self) -> List[str]:
+    def get_property_names(self) -> MutableSequence[str]:
         """
         Retrieves the names of all properties of the collection, excluding
         inherited properties.
@@ -348,6 +350,7 @@ class CollectionMetadata(AbstractMetadata):
                     f"Unrecognized collection type for {error_name}: {repr(property_type)}"
                 )
 
+    @staticmethod
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -383,6 +386,7 @@ class CollectionMetadata(AbstractMetadata):
         HasPropertyWith("type", is_string).verify(collection_json, error_name)
         HasPropertyWith("properties", HasType(dict)).verify(collection_json, error_name)
 
+    @staticmethod
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:

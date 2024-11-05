@@ -5,7 +5,7 @@ TODO: add file-level docstring
 __all__ = ["CollectionTreeForm"]
 
 
-from typing import Union, List
+from typing import Union, MutableSequence
 
 
 class CollectionTreeForm(object):
@@ -21,7 +21,7 @@ class CollectionTreeForm(object):
         has_successor: bool = False,
         has_children: bool = False,
         predecessor: Union["CollectionTreeForm", None] = None,
-        nested_trees: List["CollectionTreeForm"] | None = None,
+        nested_trees: MutableSequence["CollectionTreeForm"] | None = None,
     ):
         self.item_str: str = item_str
         self.depth: int = depth
@@ -29,7 +29,7 @@ class CollectionTreeForm(object):
         self.has_successor: bool = has_successor
         self.has_children: bool = has_children
         self.predecessor: Union["CollectionTreeForm", None] = predecessor
-        self.nested_trees: List["CollectionTreeForm"] = (
+        self.nested_trees: MutableSequence["CollectionTreeForm"] = (
             [] if nested_trees is None else nested_trees
         )
 
@@ -45,7 +45,7 @@ class CollectionTreeForm(object):
     PREDECESSOR_SPACER: str = "  "
     CHILD_SPACER: str = "│ "
 
-    def to_string_rows(self) -> List[str]:
+    def to_string_rows(self) -> MutableSequence[str]:
         """
         Converts the tree form into the string representation in the format
         specified by `PyDoughCollectionAST.to_string`, but as a list where each
@@ -54,7 +54,7 @@ class CollectionTreeForm(object):
         Returns:
             The tree-like string representation of `self`.
         """
-        answer: List[str]
+        answer: MutableSequence[str]
         prefix: str = self.PREDECESSOR_SPACER * self.depth
         if not self.has_predecessor:
             match (self.has_children, self.has_successor):
@@ -69,7 +69,7 @@ class CollectionTreeForm(object):
                 case _:
                     raise Exception("Malformed collection tree form")
         else:
-            answer: List[str] = (
+            answer = (
                 [] if self.predecessor is None else self.predecessor.to_string_rows()
             )
             match (self.has_children, self.has_successor):

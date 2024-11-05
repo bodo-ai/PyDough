@@ -45,14 +45,14 @@ class ArrayType(PyDoughType):
 
         # Verify that the string matches the array type regex pattern, extracting
         # the element type string.
-        match: Optional[re.match] = ArrayType.type_string_pattern.fullmatch(type_string)
+        match: Optional[re.Match] = ArrayType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None
 
         # Attempt to parse the element type string as a PyDough type. If the attempt
         # fails, then the parsing fails.
         try:
-            elem_type: PyDoughType = parse_type_from_string(match.groups(0)[0])
+            elem_type: PyDoughType = parse_type_from_string(str(match.groups(0)[0]))
         except PyDoughTypeException:
             return None
         return ArrayType(elem_type)

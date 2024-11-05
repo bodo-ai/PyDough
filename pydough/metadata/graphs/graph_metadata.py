@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-from typing import List, Dict
+from typing import MutableSequence, MutableMapping
 from collections import defaultdict
 from pydough.metadata.errors import PyDoughMetadataException, is_valid_name, HasType
 
@@ -16,11 +16,9 @@ class GraphMetadata(AbstractMetadata):
     """
 
     def __init__(self, name: str):
-        from pydough.metadata.collections import CollectionMetadata
-
         is_valid_name.verify(name, "graph name")
         self._name: str = name
-        self._collections: Dict[str, CollectionMetadata] = {}
+        self._collections: MutableMapping[str, AbstractMetadata] = {}
 
     @property
     def name(self) -> str:
@@ -30,7 +28,7 @@ class GraphMetadata(AbstractMetadata):
         return self._name
 
     @property
-    def collections(self) -> Dict[str, AbstractMetadata]:
+    def collections(self) -> MutableMapping[str, AbstractMetadata]:
         """
         The collections contained within the graph.
         """
@@ -63,7 +61,7 @@ class GraphMetadata(AbstractMetadata):
 
         # Make sure the collection is actually a collection
         HasType(CollectionMetadata).verify(collection, "collection")
-        collection: CollectionMetadata = collection
+        assert isinstance(collection, CollectionMetadata)
 
         # Verify sure the collection has not already been added to the graph
         # and does not have a name collision with any other collections in
@@ -78,7 +76,7 @@ class GraphMetadata(AbstractMetadata):
             )
         self.collections[collection.name] = collection
 
-    def get_collection_names(self) -> List[str]:
+    def get_collection_names(self) -> MutableSequence[str]:
         """
         Fetches all of the names of collections in the graph.
         """
@@ -94,8 +92,10 @@ class GraphMetadata(AbstractMetadata):
             )
         return self.collections[collection_name]
 
-    def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
-        nouns: Dict[str, List[AbstractMetadata]] = defaultdict(list)
+    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
+        nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = defaultdict(
+            list
+        )
         nouns[self.name].append(self)
         for collection in self.collections.values():
             for name, values in collection.get_nouns().items():

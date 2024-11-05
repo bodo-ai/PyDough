@@ -6,7 +6,7 @@ import pydough
 import pytest
 import json
 from pydough.metadata.graphs import GraphMetadata
-from typing import Dict, Set
+from typing import MutableMapping, Set
 from pydough.pydough_ast import AstNodeBuilder, pydough_operators as pydop
 
 from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
@@ -85,10 +85,10 @@ def get_sample_graph_nouns(
     PyDough graph.
     """
 
-    def impl(name: str) -> GraphMetadata:
+    def impl(name: str) -> MutableMapping[str, Set[str]]:
         if name not in valid_sample_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
-        nouns: Dict[str, Set[str]]
+        nouns: MutableMapping[str, Set[str]]
         with open(sample_graph_nouns_path, "r") as f:
             nouns = json.load(f)[name]
         # Convert the noun values for each name from a list to a set

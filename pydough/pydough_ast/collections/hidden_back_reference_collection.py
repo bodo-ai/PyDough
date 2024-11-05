@@ -29,7 +29,9 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._alias: str = alias
-        self._collection_access: CollectionAccess = ancestor.get_term(term_name)
+        collection_access = ancestor.get_term(term_name)
+        assert isinstance(collection_access, CollectionAccess)
+        self._collection_access = collection_access
         super(BackReferenceCollection, self).__init__(
             self._collection_access.collection, compound
         )
@@ -52,6 +54,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         return f"{self.compound.to_string()}.{self.alias}"
 
     def to_tree_form(self) -> CollectionTreeForm:
+        assert self.ancestor_context is not None
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
         predecessor.has_children = True
         return CollectionTreeForm(

@@ -82,5 +82,5 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
             arg_strings = arg_strings + ["?"] * (2 - len(arg_strings))
         return f" {self.binop.value} ".join(arg_strings)
 
-    def equals(self, other: "BinaryOperator") -> bool:
-        return super().equals(other) and self.binop == other.binop
+    def equals(self, other: object) -> bool:
+        return isinstance(other, BinaryOperator) and self.binop == other.binop

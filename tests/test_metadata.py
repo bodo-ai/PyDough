@@ -13,8 +13,11 @@ from pydough.metadata import (
     SimpleJoinMetadata,
     CompoundRelationshipMetadata,
 )
-from pydough.metadata.properties import SubcollectionRelationshipMetadata
-from typing import List, Dict, Set
+from pydough.metadata.properties import (
+    SubcollectionRelationshipMetadata,
+    InheritedPropertyMetadata,
+)
+from typing import MutableSequence, MutableMapping, Set
 from collections import defaultdict
 from pydough.types import (
     StringType,
@@ -76,7 +79,7 @@ def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_f
     fetches the names of all collections in the metadata for a graph.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection_names: List[str] = graph.get_collection_names()
+    collection_names: MutableSequence[str] = graph.get_collection_names()
     assert sorted(collection_names) == sorted(
         answer
     ), f"Mismatch between names of collections in {graph!r} versus expected values"
@@ -137,7 +140,7 @@ def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_f
 def test_get_property_names(
     graph_name: str,
     collection_name: str,
-    answer: List[str],
+    answer: MutableSequence[str],
     get_sample_graph: graph_fetcher,
 ):
     """
@@ -145,8 +148,9 @@ def test_get_property_names(
     fetches the names of all properties in the metadata for a collection.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection: CollectionMetadata = graph.get_collection(collection_name)
-    property_names: List[str] = collection.get_property_names()
+    collection = graph.get_collection(collection_name)
+    assert isinstance(collection, CollectionMetadata)
+    property_names: MutableSequence[str] = collection.get_property_names()
     assert sorted(property_names) == sorted(
         answer
     ), f"Mismatch between names of properties in {collection!r} versus expected values"
@@ -162,12 +166,12 @@ def test_get_sample_graph_nouns(
     identifies each noun in the graph and all of its meanings.
     """
     graph: GraphMetadata = get_sample_graph(sample_graph_names)
-    nouns: Dict[str, List[AbstractMetadata]] = graph.get_nouns()
+    nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = graph.get_nouns()
     # Transform the nouns from metadata objects into path strings
-    processed_nouns: Dict[str, Set[str]] = map_over_dict_values(
+    processed_nouns: MutableMapping[str, Set[str]] = map_over_dict_values(
         nouns, lambda noun_values: {noun.path for noun in noun_values}
     )
-    answer: Dict[str, Set[str]] = get_sample_graph_nouns(sample_graph_names)
+    answer: MutableMapping[str, Set[str]] = get_sample_graph_nouns(sample_graph_names)
     assert (
         processed_nouns == answer
     ), f"Mismatch between names of nouns in {graph!r} versus expected values"
@@ -217,7 +221,7 @@ def test_simple_table_info(
     graph_name: str,
     collection_name: str,
     table_path: str,
-    unique_properties: List[str | List[str]],
+    unique_properties: MutableSequence[str | MutableSequence[str]],
     get_sample_graph: graph_fetcher,
 ):
     """
@@ -225,7 +229,8 @@ def test_simple_table_info(
     collections are set correctly.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection: CollectionMetadata = graph.get_collection(collection_name)
+    collection = graph.get_collection(collection_name)
+    assert isinstance(collection, CollectionMetadata)
     assert isinstance(
         collection, SimpleTableMetadata
     ), "Expected 'collection' to be metadata for a simple table"
@@ -295,8 +300,10 @@ def test_table_column_info(
     correctly.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection: CollectionMetadata = graph.get_collection(collection_name)
-    property: PropertyMetadata = collection.get_property(property_name)
+    collection = graph.get_collection(collection_name)
+    assert isinstance(collection, CollectionMetadata)
+    property = collection.get_property(property_name)
+    assert isinstance(property, PropertyMetadata)
     assert isinstance(
         property, TableColumnMetadata
     ), "Expected 'property' to be metadata for a table column"
@@ -352,15 +359,17 @@ def test_simple_join_info(
     reverse_name: str,
     singular: bool,
     no_collisions: bool,
-    keys: Dict[str, List[str]],
+    keys: MutableMapping[str, MutableSequence[str]],
     get_sample_graph: graph_fetcher,
 ):
     """
     Testing that the fields of simple join properties are set correctly.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection: CollectionMetadata = graph.get_collection(collection_name)
-    property: PropertyMetadata = collection.get_property(property_name)
+    collection = graph.get_collection(collection_name)
+    assert isinstance(collection, CollectionMetadata)
+    property = collection.get_property(property_name)
+    assert isinstance(property, PropertyMetadata)
 
     # Verify that the properties of the join property match the passed in values
     assert isinstance(
@@ -414,7 +423,7 @@ def test_simple_join_info(
     assert (
         reverse.is_plural != no_collisions
     ), f"Mismatch between 'is_plural' of {reverse!r} and expected value"
-    reverse_keys: defaultdict[list] = defaultdict(list)
+    reverse_keys: defaultdict[str, list] = defaultdict(list)
     for key_name, other_names in property.keys.items():
         for other_name in other_names:
             reverse_keys[other_name].append(key_name)
@@ -526,16 +535,18 @@ def test_compound_relationship_info(
     reverse_name: str,
     singular: bool,
     no_collisions: bool,
-    inherited_properties: Dict[str, str],
-    reverse_inherited_properties: Dict[str, str],
+    inherited_properties: MutableMapping[str, str],
+    reverse_inherited_properties: MutableMapping[str, str],
     get_sample_graph: graph_fetcher,
 ):
     """
     Testing that the fields of compound relationships are set correctly.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection: CollectionMetadata = graph.get_collection(collection_name)
-    property: PropertyMetadata = collection.get_property(property_name)
+    collection = graph.get_collection(collection_name)
+    assert isinstance(collection, CollectionMetadata)
+    property = collection.get_property(property_name)
+    assert isinstance(property, PropertyMetadata)
 
     # Verify that the properties of the compound property match the passed in values
     assert isinstance(
@@ -573,10 +584,10 @@ def test_compound_relationship_info(
     assert (
         property.is_plural != singular
     ), f"Mismatch between 'is_plural of {property!r} and expected value"
-    inherited_dict: Dict[str, str] = {
-        alias: inh.property_to_inherit.path
-        for alias, inh in property.inherited_properties.items()
-    }
+    inherited_dict: MutableMapping[str, str] = {}
+    for alias, inh in property.inherited_properties.items():
+        assert isinstance(inh, InheritedPropertyMetadata)
+        inherited_dict[alias] = inh.property_to_inherit.path
     assert (
         inherited_dict == inherited_properties
     ), f"Mismatch between 'inherited_properties of {property!r} and expected value"
@@ -615,10 +626,10 @@ def test_compound_relationship_info(
     assert (
         reverse.is_plural != no_collisions
     ), f"Mismatch between 'is_plural' of {reverse!r} and expected value"
-    reverse_inherited_dict: Dict[str, str] = {
-        alias: inh.property_to_inherit.path
-        for alias, inh in reverse.inherited_properties.items()
-    }
+    reverse_inherited_dict: MutableMapping[str, str] = {}
+    for alias, inh in reverse.inherited_properties.items():
+        assert isinstance(inh, InheritedPropertyMetadata)
+        reverse_inherited_dict[alias] = inh.property_to_inherit.path
     assert (
         reverse_inherited_dict == reverse_inherited_properties
     ), f"Mismatch between 'inherited_properties' of {reverse!r} and expected value"

@@ -7,7 +7,6 @@ __all__ = ["ChildReference"]
 from . import PyDoughExpressionAST
 from pydough.pydough_ast.collections import PyDoughCollectionAST
 from .reference import Reference
-from pydough.pydough_ast.collections import Calc
 
 
 class ChildReference(Reference):
@@ -19,10 +18,10 @@ class ChildReference(Reference):
     def __init__(
         self, collection: PyDoughCollectionAST, child_idx: int, term_name: str
     ):
-        self._collection: Calc = collection
+        self._collection: PyDoughCollectionAST = collection
         self._child_idx: int = child_idx
         self._term_name: str = term_name
-        self._expression: PyDoughExpressionAST = self._collection.get_term(term_name)
+        self._expression: PyDoughExpressionAST = self._collection.get_expr(term_name)
 
     @property
     def child_idx(self) -> int:

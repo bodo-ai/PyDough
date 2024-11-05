@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-from typing import List, Set, Optional
+from typing import MutableSequence, Set, Optional
 from abc import ABC, abstractmethod
 
 
@@ -157,9 +157,10 @@ class HasPropertyWith(PyDoughPredicate):
         self.field_predicate: PyDoughPredicate = field_predicate
 
     def accept(self, obj: object) -> bool:
-        return self.has_predicate.accept(obj) and self.field_predicate.accept(
-            obj[self.field_name]
-        )
+        if not self.has_predicate.accept(obj):
+            return False
+        assert isinstance(obj, dict)
+        return self.field_predicate.accept(obj[self.field_name])
 
     def error_message(self, error_name: str) -> str:
         lhs = self.has_predicate.error_message(error_name)
@@ -270,8 +271,8 @@ class OrCondition(PyDoughPredicate):
     match one of several properties.
     """
 
-    def __init__(self, predicates: List[PyDoughPredicate]):
-        self.predicates: List[PyDoughPredicate] = predicates
+    def __init__(self, predicates: MutableSequence[PyDoughPredicate]):
+        self.predicates: MutableSequence[PyDoughPredicate] = predicates
 
     def accept(self, obj: object) -> bool:
         return any(predicate.accept(obj) for predicate in self.predicates)

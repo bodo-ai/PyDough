@@ -6,7 +6,7 @@ __all__ = ["PropertyMetadata"]
 
 from abc import abstractmethod
 
-from typing import Dict, List, Set, Type
+from typing import MutableMapping, MutableSequence, Set, Type
 from pydough.metadata.errors import (
     HasPropertyWith,
     is_valid_name,
@@ -38,7 +38,7 @@ class PropertyMetadata(AbstractMetadata):
 
     def __init__(self, name: str, collection: CollectionMetadata):
         is_valid_name.verify(name, "name")
-        HasType(CollectionMetadata).verify(collection, collection)
+        HasType(CollectionMetadata).verify(collection, "collection")
         self._name: str = name
         self._collection: CollectionMetadata = collection
 
@@ -146,6 +146,7 @@ class PropertyMetadata(AbstractMetadata):
                     f"Unrecognized property type for {error_name}: {repr(property_type)}"
                 )
 
+    @staticmethod
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -180,6 +181,7 @@ class PropertyMetadata(AbstractMetadata):
         )
         property_class.verify_json_metadata(collection, property_name, property_json)
 
+    @staticmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -211,5 +213,5 @@ class PropertyMetadata(AbstractMetadata):
         )
         property_class.parse_from_json(collection, property_name, property_json)
 
-    def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
+    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
         return {self.name: [self]}

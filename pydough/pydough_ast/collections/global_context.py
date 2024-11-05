@@ -5,11 +5,9 @@ TODO: add file-level docstring
 __all__ = ["TableCollection"]
 
 
-from typing import Dict, Set
+from typing import MutableMapping, Set
 
-from pydough.metadata import (
-    GraphMetadata,
-)
+from pydough.metadata import GraphMetadata, CollectionMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from .collection_ast import PyDoughCollectionAST
@@ -25,11 +23,11 @@ class GlobalContext(PyDoughCollectionAST):
 
     def __init__(self, graph: GraphMetadata):
         self._graph = graph
-        self._collections: Dict[str, PyDoughCollectionAST] = {}
+        self._collections: MutableMapping[str, PyDoughCollectionAST] = {}
         for collection_name in graph.get_collection_names():
-            self._collections[collection_name] = TableCollection(
-                graph.get_collection(collection_name), self
-            )
+            meta = graph.get_collection(collection_name)
+            assert isinstance(meta, CollectionMetadata)
+            self._collections[collection_name] = TableCollection(meta, self)
 
     @property
     def graph(self) -> GraphMetadata:
@@ -39,7 +37,7 @@ class GlobalContext(PyDoughCollectionAST):
         return self._graph
 
     @property
-    def collections(self) -> PyDoughCollectionAST:
+    def collections(self) -> MutableMapping[str, PyDoughCollectionAST]:
         """
         The collections that the context has access to.
         """
@@ -78,5 +76,5 @@ class GlobalContext(PyDoughCollectionAST):
     def to_tree_form(self) -> CollectionTreeForm:
         return CollectionTreeForm(self.to_string(), 0)
 
-    def equals(self, other: "GlobalContext") -> bool:
-        return super().equals(other) and self.graph == other.graph
+    def equals(self, other: object) -> bool:
+        return isinstance(other, GlobalContext) and self.graph == other.graph

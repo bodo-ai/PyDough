@@ -2,7 +2,7 @@
 TODO: add file-level docstring.
 """
 
-from typing import Set, Dict, Tuple
+from typing import Set, MutableMapping, Tuple
 from pydough.types import (
     StringType,
     Float64Type,
@@ -10,7 +10,7 @@ from pydough.types import (
 )
 from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
 from test_utils import (
-    AstNodeTestInfo,
+    CollectionTestInfo,
     LiteralInfo,
     FunctionInfo,
     ReferenceInfo,
@@ -25,7 +25,7 @@ import pytest
 
 
 @pytest.fixture
-def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
+def region_intra_ratio() -> Tuple[CollectionTestInfo, str, str]:
     """
     The AST node info for a query that calculates the ratio for each region
     between the of all part sale values (retail price of the part times the
@@ -73,7 +73,7 @@ def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
     )
     ```
     """
-    test_info: AstNodeTestInfo = TableCollectionInfo("Regions") ** CalcInfo(
+    test_info: CollectionTestInfo = TableCollectionInfo("Regions") ** CalcInfo(
         [
             SubCollectionInfo("suppliers")
             ** SubCollectionInfo("parts_supplied")
@@ -637,8 +637,8 @@ def region_intra_ratio() -> Tuple[AstNodeTestInfo, str]:
     ],
 )
 def test_collections_calc_terms(
-    calc_pipeline: AstNodeTestInfo,
-    expected_calcs: Dict[str, int],
+    calc_pipeline: CollectionTestInfo,
+    expected_calcs: MutableMapping[str, int],
     expected_total_names: Set[str],
     tpch_node_builder: AstNodeBuilder,
 ):
@@ -650,7 +650,7 @@ def test_collections_calc_terms(
     assert collection.calc_terms == set(
         expected_calcs
     ), "Mismatch between set of calc terms and expected value"
-    actual_calcs: Dict[str, int] = {
+    actual_calcs: MutableMapping[str, int] = {
         expr: collection.get_expression_position(expr) for expr in collection.calc_terms
     }
     assert (
@@ -1008,7 +1008,7 @@ def test_collections_calc_terms(
     ],
 )
 def test_collections_to_string(
-    calc_pipeline: AstNodeTestInfo,
+    calc_pipeline: CollectionTestInfo,
     expected_string: str,
     expected_tree_string: str,
     tpch_node_builder: AstNodeBuilder,
@@ -1027,7 +1027,7 @@ def test_collections_to_string(
 
 
 def test_regions_intra_ratio_to_string(
-    region_intra_ratio: Tuple[AstNodeTestInfo, str],
+    region_intra_ratio: Tuple[CollectionTestInfo, str, str],
     tpch_node_builder: AstNodeBuilder,
 ):
     """

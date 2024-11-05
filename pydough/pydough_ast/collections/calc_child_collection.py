@@ -24,9 +24,11 @@ class CalcChildCollection(CollectionAccess):
         collection_access: CollectionAccess,
         is_last: bool,
     ):
+        ancestor = collection_access.ancestor_context
+        assert ancestor is not None
         super().__init__(
             collection_access.collection,
-            collection_access.ancestor_context,
+            ancestor,
             collection_access.preceding_context,
         )
         self._collection_access: CollectionAccess = collection_access
@@ -55,8 +57,10 @@ class CalcChildCollection(CollectionAccess):
             return self.collection_access.term_name
         elif isinstance(self.collection_access, TableCollection):
             return self.collection_access.collection.name
-        else:
+        elif isinstance(self.collection_access, SubCollection):
             return self.collection_access.subcollection_property.name
+        else:
+            raise NotImplementedError
 
     def to_tree_form(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = CollectionTreeForm(

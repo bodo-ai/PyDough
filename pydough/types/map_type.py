@@ -58,10 +58,10 @@ class MapType(PyDoughType):
 
         # Verify that the string matches the map type regex pattern, extracting
         # the body string.
-        match: Optional[re.match] = MapType.type_string_pattern.fullmatch(type_string)
+        match: Optional[re.Match] = MapType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None
-        map_body: str = match.groups(0)[0]
+        map_body: str = str(match.groups(0)[0])
 
         # Using each location of a comma as a candidate splitting location for
         # key,value in the body. Identify which one is valid by attempting

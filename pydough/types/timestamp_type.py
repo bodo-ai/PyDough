@@ -61,18 +61,19 @@ class TimestampType(PyDoughType):
     def parse_from_string(type_string: str) -> Optional[PyDoughType]:
         # Verify that the string matches one of the timestamp type regex
         # patterns, extracting the precision and timezone (if present).
-        match_no_tz: Optional[re.match] = (
+        match_no_tz: Optional[re.Match] = (
             TimestampType.type_string_pattern_no_tz.fullmatch(type_string)
         )
-        match_with_tz: Optional[re.match] = (
+        match_with_tz: Optional[re.Match] = (
             TimestampType.type_string_pattern_with_tz.fullmatch(type_string)
         )
+        tz: Optional[str] = None
+        precision: int
         if match_no_tz is not None:
-            precision: int = int(match_no_tz.groups(0)[0])
-            tz: Optional[str] = None
+            precision = int(match_no_tz.groups(0)[0])
         elif match_with_tz is not None:
-            precision: int = int(match_with_tz.groups(0)[0])
-            tz: Optional[str] = match_with_tz.groups(0)[1]
+            precision = int(match_with_tz.groups(0)[0])
+            tz = str(match_with_tz.groups(0)[1])
         else:
             return None
         return TimestampType(precision, tz)

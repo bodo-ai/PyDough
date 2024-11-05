@@ -6,7 +6,7 @@ __all__ = ["AbstractMetadata"]
 
 from abc import ABC, abstractmethod
 
-from typing import Dict, List
+from typing import MutableMapping, MutableSequence
 
 
 class AbstractMetadata(ABC):
@@ -37,7 +37,7 @@ class AbstractMetadata(ABC):
         """
 
     @abstractmethod
-    def get_nouns(self) -> Dict[str, List["AbstractMetadata"]]:
+    def get_nouns(self) -> MutableMapping[str, MutableSequence["AbstractMetadata"]]:
         """
         Fetches all of the names of nouns accessible from the metadata for
         a PyDough graph, collection, or property.

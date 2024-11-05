@@ -48,7 +48,7 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         return self._other_collection
 
     @property
-    def singular(self) -> CollectionMetadata:
+    def singular(self) -> bool:
         """
         True if there is at most 1 record of the subcollection for each record
         of the collection, False if there could be more than 1.
@@ -56,7 +56,7 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         return self._singular
 
     @property
-    def no_collisions(self) -> CollectionMetadata:
+    def no_collisions(self) -> bool:
         """
         True if no two distinct record from the collection have the same record
         of the subcollection referenced by the property, False if such
