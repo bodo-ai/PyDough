@@ -12,6 +12,8 @@ from pydough.pydough_ast import AstNodeBuilder, pydough_operators as pydop
 from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
 
 import os
+import sqlite3
+from pydough.database_connectors.database_connector import DatabaseConnection
 
 
 @pytest.fixture(scope="session")
@@ -128,3 +130,55 @@ def binary_operators(request) -> pydop.BinaryOperator:
     Returns every PyDough expression operator for a BinOp.
     """
     return request.param
+
+
+@pytest.fixture(scope="session")
+def sqlite3_people_jobs() -> DatabaseConnection:
+    """
+    Return a SQLite database connection a new in memory database that
+    is pre-loaded with the PEOPLE and JOBS tables with the following properties:
+     - People:
+        - person_id: BIGINT PRIMARY KEY
+        - name: TEXT
+    - Jobs:
+        - job_id: BIGINT PRIMARY KEY
+        - person_id: BIGINT (Foreign key to PEOPLE.person_id)
+        - title: TEXT
+        - salary: FLOAT
+
+    Returns:
+        sqlite3.Connection: A connection to an in-memory SQLite database.
+    """
+    create_table_1: str = """
+        CREATE TABLE PEOPLE (
+            person_id BIGINT PRIMARY KEY,
+            name TEXT
+        )
+    """
+    create_table_2: str = """
+        CREATE TABLE JOBS (
+            job_id BIGINT PRIMARY KEY,
+            person_id BIGINT,
+            title TEXT,
+            salary FLOAT
+        )
+    """
+    sqlite3_empty_connection: DatabaseConnection = DatabaseConnection(
+        sqlite3.connect(":memory:")
+    )
+    cursor: sqlite3.Cursor = sqlite3_empty_connection.connection.cursor()
+    cursor.execute(create_table_1)
+    cursor.execute(create_table_2)
+    for i in range(10):
+        cursor.execute(f"""
+            INSERT INTO PEOPLE (person_id, name)
+            VALUES ({i}, 'Person {i}')
+        """)
+        for j in range(2):
+            cursor.execute(f"""
+                INSERT INTO JOBS (job_id, person_id, title, salary)
+                VALUES ({(2 * i) + j}, {i}, 'Job {i}', {(i + j + 5.7) * 1000})
+            """)
+    sqlite3_empty_connection.connection.commit()
+    cursor.close()
+    return sqlite3_empty_connection
