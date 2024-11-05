@@ -93,8 +93,7 @@ class Calc(PyDoughCollectionAST):
         return self._calc_term_indices
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST:
-        assert self._predecessor.ancestor_context is not None
+    def ancestor_context(self) -> PyDoughCollectionAST | None:
         return self._predecessor.ancestor_context
 
     @property
@@ -154,7 +153,7 @@ class Calc(PyDoughCollectionAST):
                 "Cannot invoke `equals` before calling `with_terms`"
             )
         return (
-            type(other) is Calc
+            isinstance(other, Calc)
             and self.preceding_context == other.preceding_context
             and self._calc_term_indices == other._calc_term_indices
         )
