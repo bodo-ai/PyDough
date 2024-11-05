@@ -5,18 +5,19 @@ TODO: add file-level docstring
 __all__ = ["CollectionAccess"]
 
 
-from typing import MutableMapping, MutableSequence, Tuple, Set
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata import (
     CollectionMetadata,
-    PropertyMetadata,
     CompoundRelationshipMetadata,
+    PropertyMetadata,
     TableColumnMetadata,
 )
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import ColumnProperty
+
 from .collection_ast import PyDoughCollectionAST
 
 
@@ -35,7 +36,7 @@ class CollectionAccess(PyDoughCollectionAST):
         self._collection: CollectionMetadata = collection
         self._ancestor: PyDoughCollectionAST = ancestor
         self._predecessor: PyDoughCollectionAST | None = predecessor
-        self._properties: MutableMapping[str, Tuple[int | None, PyDoughAST]] | None = (
+        self._properties: MutableMapping[str, tuple[int | None, PyDoughAST]] | None = (
             None
         )
 
@@ -52,7 +53,7 @@ class CollectionAccess(PyDoughCollectionAST):
         return self._collection
 
     @property
-    def properties(self) -> MutableMapping[str, Tuple[int | None, PyDoughAST]]:
+    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
         """
         MutableMapping of each property of the table to a tuple (idx, property)
         where idx is the ordinal position of the property when included
@@ -102,13 +103,13 @@ class CollectionAccess(PyDoughCollectionAST):
         return self._predecessor
 
     @property
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         # The calc terms are just all of the column properties (the ones
         # that have an index)
         return {name for name, (idx, _) in self.properties.items() if idx is not None}
 
     @property
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         return set(self.properties)
 
     def get_expression_position(self, expr_name: str) -> int:

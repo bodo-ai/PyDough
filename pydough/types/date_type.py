@@ -4,8 +4,8 @@ TODO: add file-level docstring
 
 __all__ = ["DateType"]
 
+
 from .pydough_type import PyDoughType
-from typing import Optional
 
 
 class DateType(PyDoughType):
@@ -24,5 +24,5 @@ class DateType(PyDoughType):
         return "date"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         return DateType() if type_string == "date" else None

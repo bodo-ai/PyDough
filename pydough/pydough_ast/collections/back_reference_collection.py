@@ -4,12 +4,14 @@ TODO: add file-level docstring
 
 __all__ = ["BackReferenceCollection"]
 
-from typing import MutableMapping, Tuple
+from collections.abc import MutableMapping
+
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from .collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.errors import PyDoughASTException
-from .collection_tree_form import CollectionTreeForm
+
 from .collection_access import CollectionAccess
+from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
 
 
 class BackReferenceCollection(CollectionAccess):
@@ -65,7 +67,7 @@ class BackReferenceCollection(CollectionAccess):
         return self._collection_access
 
     @property
-    def properties(self) -> MutableMapping[str, Tuple[int | None, PyDoughAST]]:
+    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
         return self.collection_access.properties
 
     def to_string(self) -> str:

@@ -4,9 +4,9 @@ TODO: add file-level docstring
 
 __all__ = ["FloatType"]
 
-from .pydough_type import PyDoughType
+
 from .errors import PyDoughTypeException
-from typing import Optional
+from .pydough_type import PyDoughType
 
 
 class FloatType(PyDoughType):
@@ -33,7 +33,7 @@ class FloatType(PyDoughType):
         return f"float{self.bit_width}"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         match type_string:
             case "float32":
                 return Float32Type()

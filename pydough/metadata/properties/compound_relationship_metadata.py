@@ -4,20 +4,23 @@ TODO: add file-level docstring
 
 __all__ = ["CompoundRelationshipMetadata"]
 
-from typing import MutableMapping, Set, MutableSequence
+from collections.abc import MutableMapping, MutableSequence
+
+from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
     HasPropertyWith,
     HasType,
-    is_string,
     NoExtraKeys,
-    compound_relationship_inherited_predicate,
-    PyDoughMetadataException,
     NonEmptyListOf,
     PossiblyEmptyMapOf,
+    PyDoughMetadataException,
+    compound_relationship_inherited_predicate,
     is_bool,
+    is_string,
 )
-from pydough.metadata.collections import CollectionMetadata
-from . import PropertyMetadata, ReversiblePropertyMetadata
+
+from .property_metadata import PropertyMetadata
+from .reversible_property_metadata import ReversiblePropertyMetadata
 
 
 class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
@@ -31,7 +34,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
 
     # Set of names of of fields that can be included in the JSON object
     # describing a compound relationship property.
-    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
+    allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "primary_property",
         "secondary_property",
         "reverse_relationship_name",

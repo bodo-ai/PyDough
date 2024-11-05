@@ -4,8 +4,9 @@ TODO: add file-level docstring
 
 __all__ = ["ChildReference"]
 
-from . import PyDoughExpressionAST
-from pydough.pydough_ast.collections import PyDoughCollectionAST
+from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
+
+from .expression_ast import PyDoughExpressionAST
 from .reference import Reference
 
 

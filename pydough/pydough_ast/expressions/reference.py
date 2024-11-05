@@ -4,9 +4,10 @@ TODO: add file-level docstring
 
 __all__ = ["Reference"]
 
-from . import PyDoughExpressionAST
+from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.types import PyDoughType
-from pydough.pydough_ast.collections import PyDoughCollectionAST
+
+from .expression_ast import PyDoughExpressionAST
 
 
 class Reference(PyDoughExpressionAST):

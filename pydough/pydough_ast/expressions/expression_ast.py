@@ -6,7 +6,6 @@ __all__ = ["PyDoughExpressionAST"]
 
 from abc import abstractmethod
 
-
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.types import PyDoughType
 

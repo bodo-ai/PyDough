@@ -3,8 +3,10 @@ Tests support for the DatabaseConnection class
 using a SQLite database backend.
 """
 
-import pytest
 import sqlite3
+
+import pytest
+
 from pydough.database_connectors.database_connector import DatabaseConnection
 
 

@@ -4,16 +4,15 @@ TODO: add file-level docstring
 
 __all__ = ["BinOp", "BinaryOperator"]
 
-from typing import List
+from enum import Enum
 
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
-from .expression_operator_ast import PyDoughExpressionOperatorAST
 from pydough.pydough_ast.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
 )
 
-from enum import Enum
+from .expression_operator_ast import PyDoughExpressionOperatorAST
 
 
 class BinOp(Enum):
@@ -75,7 +74,7 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
             parent.operator, BinaryOperator
         )
 
-    def to_string(self, arg_strings: List[str]) -> str:
+    def to_string(self, arg_strings: list[str]) -> str:
         # Stringify as "? + ?" for 0 arguments, "a + ?" for 1 argument, and
         # "a + b + ..." for 2+ arguments
         if len(arg_strings) < 2:

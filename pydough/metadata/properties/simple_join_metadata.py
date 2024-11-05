@@ -4,19 +4,21 @@ TODO: add file-level docstring
 
 __all__ = ["SimpleJoinMetadata"]
 
-from . import PropertyMetadata
-from .reversible_property_metadata import ReversiblePropertyMetadata
-from typing import MutableSequence, MutableMapping, Tuple, Set
+from collections.abc import MutableMapping, MutableSequence
+
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
-    simple_join_keys_predicate,
     HasPropertyWith,
     HasType,
-    is_string,
-    is_bool,
     NoExtraKeys,
     PyDoughMetadataException,
+    is_bool,
+    is_string,
+    simple_join_keys_predicate,
 )
+
+from .property_metadata import PropertyMetadata
+from .reversible_property_metadata import ReversiblePropertyMetadata
 
 
 class SimpleJoinMetadata(ReversiblePropertyMetadata):
@@ -27,7 +29,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
 
     # Set of names of of fields that can be included in the JSON object
     # describing a simple join property.
-    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
+    allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "other_collection_name",
         "reverse_relationship_name",
         "singular",
@@ -51,7 +53,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         simple_join_keys_predicate.verify(keys, self.error_name)
         self._keys: MutableMapping[str, MutableSequence[str]] = keys
         self._join_pairs: MutableSequence[
-            Tuple[PropertyMetadata, PropertyMetadata]
+            tuple[PropertyMetadata, PropertyMetadata]
         ] = []
         # Build the join pairs list by transforming the dictionary of property
         # names from keys into the actual properties of the source/target
@@ -84,7 +86,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         return self._keys
 
     @property
-    def join_pairs(self) -> MutableSequence[Tuple[PropertyMetadata, PropertyMetadata]]:
+    def join_pairs(self) -> MutableSequence[tuple[PropertyMetadata, PropertyMetadata]]:
         """
         A list of pairs of properties from the current collection and other
         collection that must be equal to in order to identify matches.

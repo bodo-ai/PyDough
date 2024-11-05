@@ -2,18 +2,19 @@
 TODO: add file-level docstring.
 """
 
-import pydough
-import pytest
 import json
-from pydough.metadata.graphs import GraphMetadata
-from typing import MutableMapping, Set
-from pydough.pydough_ast import AstNodeBuilder, pydough_operators as pydop
-
-from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
-
 import os
 import sqlite3
+from collections.abc import MutableMapping
+
+import pytest
+from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
+
+import pydough
 from pydough.database_connectors.database_connector import DatabaseConnection
+from pydough.metadata.graphs import GraphMetadata
+from pydough.pydough_ast import AstNodeBuilder
+from pydough.pydough_ast import pydough_operators as pydop
 
 
 @pytest.fixture(scope="session")
@@ -42,7 +43,7 @@ def invalid_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
-def valid_sample_graph_names() -> Set[str]:
+def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.
     """
@@ -60,7 +61,7 @@ def sample_graph_names(request) -> str:
 @pytest.fixture
 def get_sample_graph(
     sample_graph_path: str,
-    valid_sample_graph_names: Set[str],
+    valid_sample_graph_names: set[str],
 ) -> graph_fetcher:
     """
     A function that takes in the name of a graph from the supported sample
@@ -79,7 +80,7 @@ def get_sample_graph(
 
 @pytest.fixture
 def get_sample_graph_nouns(
-    sample_graph_nouns_path: str, valid_sample_graph_names: Set[str]
+    sample_graph_nouns_path: str, valid_sample_graph_names: set[str]
 ) -> noun_fetcher:
     """
     A function that takes in the name of a graph (currently only supports the
@@ -87,11 +88,11 @@ def get_sample_graph_nouns(
     PyDough graph.
     """
 
-    def impl(name: str) -> MutableMapping[str, Set[str]]:
+    def impl(name: str) -> MutableMapping[str, set[str]]:
         if name not in valid_sample_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
-        nouns: MutableMapping[str, Set[str]]
-        with open(sample_graph_nouns_path, "r") as f:
+        nouns: MutableMapping[str, set[str]]
+        with open(sample_graph_nouns_path) as f:
             nouns = json.load(f)[name]
         # Convert the noun values for each name from a list to a set
         return map_over_dict_values(nouns, set)

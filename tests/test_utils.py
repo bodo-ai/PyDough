@@ -19,19 +19,21 @@ __all__ = [
     "BackReferenceCollectionInfo",
 ]
 
+from abc import ABC, abstractmethod
+from collections.abc import Callable, MutableMapping, MutableSequence
+from typing import Any
+
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
     AstNodeBuilder,
+    Calc,
+    CalcChildCollection,
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
-    Calc,
-    CalcChildCollection,
 )
 from pydough.pydough_ast.collections import CollectionAccess
-from typing import MutableMapping, Set, Callable, Any, MutableSequence, Tuple
 from pydough.types import PyDoughType
-from abc import ABC, abstractmethod
 
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
@@ -39,7 +41,7 @@ graph_fetcher = Callable[[str], GraphMetadata]
 
 # Type alias for a function that takes in a string and generates the
 # representation of all the nouns in a metadata graphs based on it.
-noun_fetcher = Callable[[str], MutableMapping[str, Set[str]]]
+noun_fetcher = Callable[[str], MutableMapping[str, set[str]]]
 
 
 def map_over_dict_values(
@@ -416,7 +418,7 @@ class CalcInfo(CollectionTestInfo):
     def __init__(self, children, **kwargs):
         super().__init__()
         self.children_info: MutableSequence[CollectionTestInfo] = children
-        self.args: MutableSequence[Tuple[str, AstNodeTestInfo]] = list(kwargs.items())
+        self.args: MutableSequence[tuple[str, AstNodeTestInfo]] = list(kwargs.items())
 
     def to_string(self) -> str:
         args_strings: MutableSequence[str] = [
@@ -441,7 +443,7 @@ class CalcInfo(CollectionTestInfo):
             children.append(child)
         raw_calc = builder.build_calc(context, children)
         assert isinstance(raw_calc, Calc)
-        args: MutableSequence[Tuple[str, PyDoughExpressionAST]] = []
+        args: MutableSequence[tuple[str, PyDoughExpressionAST]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionAST)

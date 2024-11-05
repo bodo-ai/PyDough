@@ -14,3 +14,12 @@ dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.ruff]
+unsafe-fixes = true
+lint.extend-select = [
+    "I",   # isort
+    "UP",  # pyupgrade
+    "C4",  # flake8-comprehensions
+    "TID", # flake8-tidy-imports
+]

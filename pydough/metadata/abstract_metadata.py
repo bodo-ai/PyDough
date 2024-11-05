@@ -5,8 +5,7 @@ TODO: add file-level docstring
 __all__ = ["AbstractMetadata"]
 
 from abc import ABC, abstractmethod
-
-from typing import MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence
 
 
 class AbstractMetadata(ABC):

@@ -5,11 +5,12 @@ TODO: add file-level docstring
 __all__ = ["Calc"]
 
 
-from typing import MutableMapping, MutableSequence, Tuple, Set
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
+
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
 
@@ -31,7 +32,7 @@ class Calc(PyDoughCollectionAST):
         self._all_terms: MutableMapping[str, PyDoughAST] = {}
 
     def with_terms(
-        self, terms: MutableSequence[Tuple[str, PyDoughExpressionAST]]
+        self, terms: MutableSequence[tuple[str, PyDoughExpressionAST]]
     ) -> "Calc":
         """
         Specifies the terms that are calculated inside of a CALC node,
@@ -101,11 +102,11 @@ class Calc(PyDoughCollectionAST):
         return self._predecessor
 
     @property
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         return set(self.calc_term_indices)
 
     @property
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         if self._calc_term_indices is None:
             raise PyDoughASTException(
                 "Cannot access `all_terms` of a Calc node before adding calc terms with `with_terms`"

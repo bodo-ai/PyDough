@@ -5,18 +5,19 @@ TODO: add file-level docstring
 __all__ = ["CompoundSubCollection"]
 
 
-from typing import MutableMapping, MutableSequence, Tuple, Set
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata import CompoundRelationshipMetadata
 from pydough.metadata.properties import InheritedPropertyMetadata
-from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from .collection_ast import PyDoughCollectionAST
-from .sub_collection import SubCollection
-from .hidden_back_reference_collection import HiddenBackReferenceCollection
+from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions.hidden_back_reference_expression import (
     HiddenBackReferenceExpression,
 )
+
+from .collection_ast import PyDoughCollectionAST
+from .hidden_back_reference_collection import HiddenBackReferenceCollection
+from .sub_collection import SubCollection
 
 
 class CompoundSubCollection(SubCollection):
@@ -32,7 +33,7 @@ class CompoundSubCollection(SubCollection):
     ):
         super().__init__(subcollection_property, ancestor)
         self._subcollection_chain: MutableSequence[SubCollection] = []
-        self._inheritance_sources: MutableMapping[str, Tuple[int, str]] = {}
+        self._inheritance_sources: MutableMapping[str, tuple[int, str]] = {}
 
     def populate_subcollection_chain(
         self,
@@ -84,7 +85,7 @@ class CompoundSubCollection(SubCollection):
                 term = source.get_term(property.name)
                 assert isinstance(term, SubCollection)
                 source = term
-                found_inherited: Set[str] = set()
+                found_inherited: set[str] = set()
                 # Iterate through all the remaining inherited properties to
                 # find any whose true name matches one of the properties of
                 # the target collection. If so, they belong to the
@@ -130,7 +131,7 @@ class CompoundSubCollection(SubCollection):
         return self._subcollection_chain
 
     @property
-    def inheritance_sources(self) -> MutableMapping[str, Tuple[int, str]]:
+    def inheritance_sources(self) -> MutableMapping[str, tuple[int, str]]:
         """
         The mapping between each inherited property name and the integer
         position of the subcollection access it corresponds to from within
@@ -143,7 +144,7 @@ class CompoundSubCollection(SubCollection):
         return self._inheritance_sources
 
     @property
-    def properties(self) -> MutableMapping[str, Tuple[int | None, PyDoughAST]]:
+    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
         # Lazily define the properties, if not already defined.
         if self._properties is None:
             # First invoke the TableCollection version to get the regular
@@ -163,7 +164,7 @@ class CompoundSubCollection(SubCollection):
             assert ancestor_context is not None
             self.populate_subcollection_chain(ancestor_context, compound, inherited_map)
             # Make sure none of the inherited terms went unaccounted for.
-            undefined_inherited: Set[str] = set(compound.inherited_properties) - set(
+            undefined_inherited: set[str] = set(compound.inherited_properties) - set(
                 self.inheritance_sources
             )
             if len(undefined_inherited) > 0:

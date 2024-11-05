@@ -6,9 +6,10 @@ __all__ = ["ReversiblePropertyMetadata"]
 
 from abc import abstractmethod
 
-from .subcollection_relationship_metadata import SubcollectionRelationshipMetadata
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import PyDoughMetadataException
+
+from .subcollection_relationship_metadata import SubcollectionRelationshipMetadata
 
 
 class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):

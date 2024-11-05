@@ -12,10 +12,10 @@ __all__ = [
     "ChildReference",
 ]
 
-from .expression_ast import PyDoughExpressionAST
-from .column_property import ColumnProperty
-from .literal import Literal
-from .expression_function_call import ExpressionFunctionCall
-from .reference import Reference
 from .back_reference_expression import BackReferenceExpression
 from .child_reference import ChildReference
+from .column_property import ColumnProperty
+from .expression_ast import PyDoughExpressionAST
+from .expression_function_call import ExpressionFunctionCall
+from .literal import Literal
+from .reference import Reference

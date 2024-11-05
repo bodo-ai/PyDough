@@ -4,8 +4,8 @@ TODO: add file-level docstring
 
 __all__ = ["BooleanType"]
 
+
 from .pydough_type import PyDoughType
-from typing import Optional
 
 
 class BooleanType(PyDoughType):
@@ -24,5 +24,5 @@ class BooleanType(PyDoughType):
         return "bool"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         return BooleanType() if type_string == "bool" else None

@@ -4,9 +4,9 @@ TODO: add file-level docstring
 
 __all__ = ["IntegerType", "Int8Type", "Int16Type", "Int32Type", "Int64Type"]
 
-from .pydough_type import PyDoughType
-from typing import Optional
+
 from .errors import PyDoughTypeException
+from .pydough_type import PyDoughType
 
 
 class IntegerType(PyDoughType):
@@ -33,7 +33,7 @@ class IntegerType(PyDoughType):
         return f"int{self.bit_width}"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         match type_string:
             case "int8":
                 return Int8Type()

@@ -5,14 +5,15 @@ TODO: add file-level docstring
 __all__ = ["TableCollection"]
 
 
-from typing import MutableMapping, Set
+from collections.abc import MutableMapping
 
-from pydough.metadata import GraphMetadata, CollectionMetadata
+from pydough.metadata import CollectionMetadata, GraphMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
+
 from .collection_ast import PyDoughCollectionAST
-from .table_collection import TableCollection
 from .collection_tree_form import CollectionTreeForm
+from .table_collection import TableCollection
 
 
 class GlobalContext(PyDoughCollectionAST):
@@ -52,12 +53,12 @@ class GlobalContext(PyDoughCollectionAST):
         return None
 
     @property
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         # A global context does not have any calc terms
         return set()
 
     @property
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         return set(self.collections)
 
     def get_expression_position(self, expr_name: str) -> int:

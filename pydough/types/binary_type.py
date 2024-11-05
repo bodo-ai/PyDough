@@ -4,8 +4,8 @@ TODO: add file-level docstring
 
 __all__ = ["BinaryType"]
 
+
 from .pydough_type import PyDoughType
-from typing import Optional
 
 
 class BinaryType(PyDoughType):
@@ -24,5 +24,5 @@ class BinaryType(PyDoughType):
         return "binary"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         return BinaryType() if type_string == "binary" else None

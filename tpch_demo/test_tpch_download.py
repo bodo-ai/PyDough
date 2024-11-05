@@ -6,9 +6,9 @@ running a simple TPCH query on SQLite.
 import os
 import sqlite3
 import typing as pt
+from collections.abc import Iterator
 
 import pytest
-from typing import Iterator
 
 
 @pytest.fixture(scope="module")

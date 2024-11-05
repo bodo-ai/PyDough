@@ -2,30 +2,32 @@
 TODO: add file-level docstring.
 """
 
-from typing import Set, MutableMapping, Tuple
-from pydough.types import (
-    StringType,
-    Float64Type,
-    Int64Type,
-)
-from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
+from collections.abc import MutableMapping
+
+import pytest
 from test_utils import (
-    CollectionTestInfo,
-    LiteralInfo,
-    FunctionInfo,
-    ReferenceInfo,
+    BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
-    TableCollectionInfo,
-    SubCollectionInfo,
     CalcInfo,
     ChildReferenceInfo,
-    BackReferenceCollectionInfo,
+    CollectionTestInfo,
+    FunctionInfo,
+    LiteralInfo,
+    ReferenceInfo,
+    SubCollectionInfo,
+    TableCollectionInfo,
 )
-import pytest
+
+from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
+from pydough.types import (
+    Float64Type,
+    Int64Type,
+    StringType,
+)
 
 
 @pytest.fixture
-def region_intra_ratio() -> Tuple[CollectionTestInfo, str, str]:
+def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
     """
     The AST node info for a query that calculates the ratio for each region
     between the of all part sale values (retail price of the part times the
@@ -639,7 +641,7 @@ def region_intra_ratio() -> Tuple[CollectionTestInfo, str, str]:
 def test_collections_calc_terms(
     calc_pipeline: CollectionTestInfo,
     expected_calcs: MutableMapping[str, int],
-    expected_total_names: Set[str],
+    expected_total_names: set[str],
     tpch_node_builder: AstNodeBuilder,
 ):
     """
@@ -1027,7 +1029,7 @@ def test_collections_to_string(
 
 
 def test_regions_intra_ratio_to_string(
-    region_intra_ratio: Tuple[CollectionTestInfo, str, str],
+    region_intra_ratio: tuple[CollectionTestInfo, str, str],
     tpch_node_builder: AstNodeBuilder,
 ):
     """

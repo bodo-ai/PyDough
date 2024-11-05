@@ -3,17 +3,19 @@ TODO: add file-level docstring.
 """
 
 import re
-from pydough.pydough_ast import AstNodeBuilder
+
+import pytest
 from test_utils import (
     AstNodeTestInfo,
-    ReferenceInfo,
-    TableCollectionInfo,
-    SubCollectionInfo,
-    CalcInfo,
     BackReferenceExpressionInfo,
+    CalcInfo,
     ChildReferenceInfo,
+    ReferenceInfo,
+    SubCollectionInfo,
+    TableCollectionInfo,
 )
-import pytest
+
+from pydough.pydough_ast import AstNodeBuilder
 
 
 @pytest.mark.parametrize(

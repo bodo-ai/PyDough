@@ -5,8 +5,7 @@ TODO: add file-level docstring
 __all__ = ["ExpressionTypeDeducer", "ConstantType", "SelectArgumentType"]
 
 from abc import ABC, abstractmethod
-
-from typing import MutableSequence
+from collections.abc import MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException

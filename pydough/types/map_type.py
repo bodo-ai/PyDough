@@ -4,10 +4,10 @@ TODO: add file-level docstring
 
 __all__ = ["MapType"]
 
-from .pydough_type import PyDoughType
-from .errors import PyDoughTypeException
 import re
-from typing import Optional
+
+from .errors import PyDoughTypeException
+from .pydough_type import PyDoughType
 
 
 class MapType(PyDoughType):
@@ -53,12 +53,12 @@ class MapType(PyDoughType):
     type_string_pattern: re.Pattern = re.compile(r"map\[(.+,.+)\]")
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         from pydough.types import parse_type_from_string
 
         # Verify that the string matches the map type regex pattern, extracting
         # the body string.
-        match: Optional[re.Match] = MapType.type_string_pattern.fullmatch(type_string)
+        match: re.Match | None = MapType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None
         map_body: str = str(match.groups(0)[0])
@@ -67,8 +67,8 @@ class MapType(PyDoughType):
         # key,value in the body. Identify which one is valid by attempting
         # to parse both sides of the comma as a type. Whichever split succeeds
         # is the correct split.
-        key_type: Optional[PyDoughType] = None
-        val_type: Optional[PyDoughType] = None
+        key_type: PyDoughType | None = None
+        val_type: PyDoughType | None = None
         for i in range(len(map_body)):
             if map_body[i] == ",":
                 try:

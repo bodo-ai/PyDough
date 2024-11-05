@@ -9,7 +9,7 @@ import sqlite3
 from typing import Any
 
 
-class DatabaseConnection(object):
+class DatabaseConnection:
     """
     Class that manages a generic DB API 2.0 connection. This basically
     dispatches to the DB API 2.0 API on the underlying object and represents

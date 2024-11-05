@@ -5,12 +5,12 @@ TODO: add file-level docstring
 __all__ = ["CalcChildCollection"]
 
 
-from .hidden_back_reference_collection import HiddenBackReferenceCollection
 from .back_reference_collection import BackReferenceCollection
 from .collection_access import CollectionAccess
-from .table_collection import TableCollection
 from .collection_tree_form import CollectionTreeForm
+from .hidden_back_reference_collection import HiddenBackReferenceCollection
 from .sub_collection import SubCollection
+from .table_collection import TableCollection
 
 
 class CalcChildCollection(CollectionAccess):
@@ -72,7 +72,7 @@ class CalcChildCollection(CollectionAccess):
         )
         item_str: str
         if isinstance(
-            self.collection_access, (SubCollection, HiddenBackReferenceCollection)
+            self.collection_access, SubCollection | HiddenBackReferenceCollection
         ):
             item_str = f"SubCollection[{self.to_string()}]"
         elif isinstance(self.collection_access, BackReferenceCollection):
