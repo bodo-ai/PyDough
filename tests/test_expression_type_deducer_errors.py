@@ -3,38 +3,51 @@ TODO: add file-level docstring.
 """
 
 from typing import List
-from pydough.pydough_ast import PyDoughAST, PyDoughASTException
-from pydough.pydough_ast.pydough_operators import (
-    ExpressionTypeDeducer,
-    SelectArgumentType,
+from pydough.pydough_ast import (
+    PyDoughAST,
+    PyDoughASTException,
+    AstNodeBuilder,
+    pydough_operators as pydop,
 )
 import re
 import pytest
+from pydough.types import StringType
+from test_utils import AstNodeTestInfo, LiteralInfo
 
 
 @pytest.mark.parametrize(
-    "deducer, args, error_message",
+    "deducer, args_info, error_message",
     [
         pytest.param(
-            SelectArgumentType(0),
+            pydop.SelectArgumentType(0),
             [],
-            re.escape("Cannot select type of argument 0 out of []"),
-            id="select_0-empty_args",
+            "Cannot select type of argument 0 out of []",
+            id="select_zero-empty_args",
         ),
         pytest.param(
-            SelectArgumentType(-1),
+            pydop.SelectArgumentType(-1),
             [],
-            re.escape("Cannot select type of argument -1 out of []"),
-            id="select_invalid-empty_args",
+            "Cannot select type of argument -1 out of []",
+            id="select_negative-empty_args",
+        ),
+        pytest.param(
+            pydop.SelectArgumentType(1),
+            [LiteralInfo("fizzbuzz", StringType())],
+            "Cannot select type of argument 1 out of ['fizzbuzz']",
+            id="select_one-one_arg",
         ),
     ],
 )
 def test_invalid_deduction(
-    deducer: ExpressionTypeDeducer, args: List[PyDoughAST], error_message: str
+    deducer: pydop.ExpressionTypeDeducer,
+    args_info: List[AstNodeTestInfo],
+    error_message: str,
+    tpch_node_builder: AstNodeBuilder,
 ):
     """
     Checks cases where calling an expression type deducer on a list of PyDough
     AST objects should raise an exception
     """
-    with pytest.raises(PyDoughASTException, match=error_message):
+    args: List[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
+    with pytest.raises(PyDoughASTException, match=re.escape(error_message)):
         deducer.infer_return_type(args)

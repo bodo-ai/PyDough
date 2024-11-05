@@ -26,12 +26,24 @@ class PyDoughExpressionAST(PyDoughAST):
         The PyDough type of the expression.
         """
 
+    @property
     @abstractmethod
-    def to_string(self) -> str:
+    def is_aggregation(self) -> bool:
+        """
+        Whether the expression corresponds to an aggregation that
+        can collapse multiple records into a scalar value.
+        """
+
+    @abstractmethod
+    def to_string(self, tree_form: bool = False) -> str:
         """
         Returns a PyDough expression AST converted into a single-line string
         structured so it can be placed in the tree-like string representation
         of a collection AST.
+
+        Args:
+            `tree_form`: indicates that the string conversion is happening
+            inside of a tree string (default False).
 
         Returns:
             The single-line string representation of `self`.
