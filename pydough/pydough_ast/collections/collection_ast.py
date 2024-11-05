@@ -147,13 +147,15 @@ class PyDoughCollectionAST(PyDoughAST):
             ├─── SubCollection[nations]
             ├─── Where[name != 'USA']
             ├─┬─ Calc[a=[BACK(1).name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
-            │ ├─┬─ SubCollection[customers]
+            │ ├─┬─ CalcSubCollection
+            │ │ ├─ SubCollection[customers]
             │ │ └─── Where[acctbal > 0]
-            │ └─┬─ SubCollection[suppliers]
-            │   ├─── Where[STARTSWITH(phone, '415')]
-            │   └─┬─ SubCollection[supply_records]
-            │     └─┬─ SubCollection[lines]
-            │       └─── Calc[_expr1=YEAR(ship_date)]
+            │ └─┬─ CalcSubCollection
+            │   └─┬─ SubCollection[suppliers]
+            │     ├─── Where[STARTSWITH(phone, '415')]
+            │     └─┬─ SubCollection[supply_records]
+            │       └─┬─ SubCollection[lines]
+            │         └─── Calc[_expr1=YEAR(ship_date)]
             ├─── Where[c > 1000]
             └─── OrderBy[d.DESC()]
         ```
