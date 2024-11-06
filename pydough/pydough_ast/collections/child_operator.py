@@ -6,8 +6,10 @@ __all__ = ["ChildOperator"]
 
 from abc import abstractmethod
 from collections.abc import MutableSequence
+from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.errors import PyDoughASTException
 
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
@@ -28,9 +30,6 @@ class ChildOperator(PyDoughCollectionAST):
         self._preceding_context: PyDoughCollectionAST = predecessor
         self._children: MutableSequence[PyDoughCollectionAST] = children
 
-        # Evaluated lazy
-        self._propagated_properties: dict[str, PyDoughAST] | None = None
-
     @property
     def children(self) -> MutableSequence[PyDoughCollectionAST]:
         """
@@ -40,28 +39,22 @@ class ChildOperator(PyDoughCollectionAST):
         return self._children
 
     @property
-    def propagated_properties(self) -> dict[str, PyDoughAST]:
-        """
-        A mapping of names of properties properties inherited from the
-        predecessor to the transformed versions of those properties with
-        the current node as their parent.
-        """
-        if self._propagated_properties is None:
-            self._propagated_properties = {}
-            for term_name in self._preceding_context.all_terms:
-                term: PyDoughAST = self._preceding_context.get_collection(term_name)
-                if isinstance(term, CollectionAccess):
-                    term = term.clone_with_parent(self)
-                self._propagated_properties[term_name] = term
-        return self._propagated_properties
-
-    @property
     def ancestor_context(self) -> PyDoughCollectionAST | None:
         return self._preceding_context.ancestor_context
 
     @property
     def preceding_context(self) -> PyDoughCollectionAST:
         return self._preceding_context
+
+    @cache
+    def get_term(self, term_name: str) -> PyDoughAST:
+        if term_name in self.all_terms:
+            term: PyDoughAST = self.preceding_context.get_term(term_name)
+            if isinstance(term, CollectionAccess):
+                term = term.clone_with_parent(self)
+            return term
+        else:
+            raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
 
     @property
     @abstractmethod

@@ -115,10 +115,8 @@ class Calc(ChildOperator):
     def get_term(self, term_name: str) -> PyDoughAST:
         if term_name in self.calc_term_values:
             return self.calc_term_values[term_name]
-        elif term_name in self.all_terms:
-            return self.preceding_context.get_term(term_name)
         else:
-            raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
+            return super().get_term(term_name)
 
     def calc_kwarg_strings(self, tree_form: bool) -> str:
         """
