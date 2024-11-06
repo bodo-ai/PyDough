@@ -49,7 +49,7 @@ class ChildOperator(PyDoughCollectionAST):
         if self._propagated_properties is None:
             self._propagated_properties = {}
             for term_name in self._preceding_context.all_terms:
-                term: PyDoughAST = self._preceding_context.get_term(term_name)
+                term: PyDoughAST = self._preceding_context.get_collection(term_name)
                 if isinstance(term, CollectionAccess):
                     term = term.clone_with_parent(self)
                 self._propagated_properties[term_name] = term

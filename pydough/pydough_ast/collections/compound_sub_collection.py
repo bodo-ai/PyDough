@@ -18,7 +18,6 @@ from pydough.pydough_ast.expressions.hidden_back_reference_expression import (
 
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
-from .hidden_back_reference_collection import HiddenBackReferenceCollection
 from .sub_collection import SubCollection
 
 
@@ -114,7 +113,7 @@ class CompoundSubCollection(SubCollection):
                 # Otherwise, we are in a base case where we have found a true
                 # subcollection invocation. We maintain a set to mark which
                 # inherited properties were found.
-                term = source.get_term(property.name)
+                term = source.get_collection(property.name)
                 assert isinstance(term, SubCollection)
                 source = term
                 found_inherited: set[str] = set()
@@ -179,8 +178,12 @@ class CompoundSubCollection(SubCollection):
             original_name: str = self._inheritance_source_name[term_name]
             expr = ancestor.get_term(original_name)
             if isinstance(expr, PyDoughCollectionAST):
+                from .hidden_back_reference_collection import (
+                    HiddenBackReferenceCollection,
+                )
+
                 return HiddenBackReferenceCollection(
-                    self, ancestor, term_name, original_name, back_levels
+                    self, term_name, original_name, back_levels
                 )
             else:
                 return HiddenBackReferenceExpression(

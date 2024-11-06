@@ -38,7 +38,7 @@ class BackReferenceCollection(CollectionAccess):
                     f"Cannot reference back {msg} above {parent!r}"
                 )
             ancestor = ancestor.ancestor_context
-        access = ancestor.get_term(term_name)
+        access = ancestor.get_collection(term_name)
         assert isinstance(access, CollectionAccess)
         self._collection_access: CollectionAccess = access
         super().__init__(self._collection_access.collection, ancestor)
