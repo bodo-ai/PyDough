@@ -29,16 +29,14 @@ class Where(ChildOperator):
 
     def with_condition(self, condition: PyDoughExpressionAST) -> "Where":
         """
-        Specifies the terms that are calculated inside of a CALC node,
-        returning the mutated CALC node afterwards. This is called after the
-        CALC node is created so that the terms can be expressions that
-        reference child nodes of the CALC. However, this must be called
-        on the CALC node before any properties are accessed by `calc_terms`,
-        `all_terms`, `to_string`, etc.
+        Specifies the condition that should be used by the WHERE node. This is
+        called after the WHERE node is created so that the condition can be an
+        expressions that reference child nodes of the WHERE. However, this must
+        be called on the WHERE node before any properties are accessed by
+        `to_string`, `equals`, etc.
 
         Args:
-            `condition`: the expression node for the condition being
-            calculated.
+            `condition`: the expression used to filter.
 
         Returns:
             The mutated WHERE node (which has also been modified in-place).
@@ -61,7 +59,7 @@ class Where(ChildOperator):
         """
         if self._condition is None:
             raise PyDoughASTException(
-                "Cannot access `calc_term_indices` of a Calc node before adding calc terms with `with_terms`"
+                "Cannot access `condition` of a Calc node before adding calc terms with `with_condition`"
             )
         return self._condition
 
