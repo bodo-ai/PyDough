@@ -43,6 +43,10 @@ class CompoundSubCollection(SubCollection):
         for name, property in compound.inherited_properties.items():
             assert isinstance(property, InheritedPropertyMetadata)
             inherited_map[name] = property.property_to_inherit.name
+            self._all_property_names.add(name)
+            if not property.is_subcollection:
+                self._calc_property_names.add(name)
+                self._calc_property_order[name] = len(self._calc_property_order)
         ancestor_context = self.ancestor_context
         assert ancestor_context is not None
         self.populate_subcollection_chain(ancestor_context, compound, inherited_map)
@@ -50,6 +54,7 @@ class CompoundSubCollection(SubCollection):
             self._inheritance_source_name
         )
         if len(undefined_inherited) > 0:
+            breakpoint()
             raise PyDoughASTException(
                 f"Undefined inherited properties: {undefined_inherited}"
             )
@@ -98,6 +103,8 @@ class CompoundSubCollection(SubCollection):
                         inh = property.inherited_properties[property_name]
                         assert isinstance(inh, InheritedPropertyMetadata)
                         new_inherited_properties[alias] = inh.property_to_inherit.name
+                    if property_name in property.other_collection.properties:
+                        new_inherited_properties[alias] = property_name
                 for alias in new_inherited_properties:
                     inherited_properties.pop(alias)
                 source = self.populate_subcollection_chain(
