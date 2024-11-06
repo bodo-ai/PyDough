@@ -827,6 +827,25 @@ def test_collections_calc_terms(
             id="nations_childcalc_suppliers",
         ),
         pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo([], adj_name=FunctionInfo("LOWER", [ReferenceInfo("name")]))
+            ** SubCollectionInfo("nations")
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("adj_name", 1),
+                nation_name=ReferenceInfo("name"),
+            ),
+            "Regions(adj_name=LOWER(name)).nations(region_name=BACK(1).adj_name, nation_name=name)",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calc[adj_name=LOWER(name)]
+    ├─── SubCollection[nations]
+    └─── Calc[region_name=BACK(1).adj_name, nation_name=name]\
+""",
+            id="regions_calc_nations_calc",
+        ),
+        pytest.param(
             TableCollectionInfo("Suppliers")
             ** CalcInfo(
                 [SubCollectionInfo("parts_supplied")],
