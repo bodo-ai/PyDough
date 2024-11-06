@@ -4,17 +4,17 @@ TODO: add file-level docstring
 
 __all__ = ["PyDoughExpressionOperatorAST"]
 
-from typing import List
 from abc import abstractmethod
+from collections.abc import MutableSequence
 
-from pydough.pydough_ast.pydough_operators import PyDoughOperatorAST
-from pydough.types import PyDoughType
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from pydough.pydough_ast.pydough_operators.operator_ast import PyDoughOperatorAST
 from pydough.pydough_ast.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
 )
+from pydough.types import PyDoughType
 
 
 class PyDoughExpressionOperatorAST(PyDoughOperatorAST):
@@ -52,7 +52,7 @@ class PyDoughExpressionOperatorAST(PyDoughOperatorAST):
             `self`.
         """
 
-    def infer_return_type(self, args: List[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
         """
         Returns the expected PyDough type of the operator when called on
         the provided arguments.

@@ -4,15 +4,14 @@ TODO: add file-level docstring
 
 __all__ = ["ChildOperator"]
 
-
-from typing import List, Set, Dict
 from abc import abstractmethod
+from collections.abc import MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+
+from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
-from .calc_child_collection import CalcChildCollection
-from .collection_access import CollectionAccess
 
 
 class ChildOperator(PyDoughCollectionAST):
@@ -24,16 +23,16 @@ class ChildOperator(PyDoughCollectionAST):
     def __init__(
         self,
         predecessor: PyDoughCollectionAST,
-        children: List[CalcChildCollection],
+        children: MutableSequence[PyDoughCollectionAST],
     ):
         self._preceding_context: PyDoughCollectionAST = predecessor
-        self._children: List[CalcChildCollection] = children
+        self._children: MutableSequence[PyDoughCollectionAST] = children
 
         # Evaluated lazy
-        self._propagated_properties: Dict[str, PyDoughAST] | None = None
+        self._propagated_properties: dict[str, PyDoughAST] | None = None
 
     @property
-    def children(self) -> List[CalcChildCollection]:
+    def children(self) -> MutableSequence[PyDoughCollectionAST]:
         """
         The child collections accessible from the operator used to derive
         expressions in terms of a subcollection.
@@ -41,14 +40,14 @@ class ChildOperator(PyDoughCollectionAST):
         return self._children
 
     @property
-    def propagated_properties(self) -> Dict[str, PyDoughAST]:
+    def propagated_properties(self) -> dict[str, PyDoughAST]:
         """
         A mapping of names of properties properties inherited from the
         predecessor to the transformed versions of those properties with
         the current node as their parent.
         """
         if self._propagated_properties is None:
-            self._propagated_properties: Dict[str, PyDoughAST] = {}
+            self._propagated_properties = {}
             for term_name in self._preceding_context.all_terms:
                 term: PyDoughAST = self._preceding_context.get_term(term_name)
                 if isinstance(term, CollectionAccess):
@@ -61,20 +60,8 @@ class ChildOperator(PyDoughCollectionAST):
         return self._preceding_context.ancestor_context
 
     @property
-    def preceding_context(self) -> PyDoughCollectionAST | None:
+    def preceding_context(self) -> PyDoughCollectionAST:
         return self._preceding_context
-
-    @property
-    def calc_terms(self) -> Set[str]:
-        return set(self.calc_term_indices)
-
-    @property
-    def all_terms(self) -> Set[str]:
-        if self._all_terms is None:
-            raise PyDoughCollectionAST(
-                "Cannot invoke `all_terms` before calling `with_terms`"
-            )
-        return set(self._all_terms)
 
     @property
     @abstractmethod
@@ -98,7 +85,8 @@ class ChildOperator(PyDoughCollectionAST):
             tree_form.nested_trees.append(child_tree)
         return tree_form
 
-    def equals(self, other: "ChildOperator") -> bool:
+    def equals(self, other: object) -> bool:
         return (
-            super().equals(other) and self.preceding_context == other.preceding_context
+            isinstance(other, ChildOperator)
+            and self.preceding_context == other.preceding_context
         )

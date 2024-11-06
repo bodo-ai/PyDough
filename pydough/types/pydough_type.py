@@ -34,7 +34,7 @@ class PyDoughType(ABC):
         return isinstance(other, PyDoughType) and repr(self) == repr(other)
 
     def __hash__(self):
-        raise hash(repr(self))
+        return hash(repr(self))
 
     @property
     @abstractmethod

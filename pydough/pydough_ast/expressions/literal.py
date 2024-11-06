@@ -4,8 +4,9 @@ TODO: add file-level docstring
 
 __all__ = ["Literal"]
 
-from .expression_ast import PyDoughExpressionAST
 from pydough.types import PyDoughType
+
+from .expression_ast import PyDoughExpressionAST
 
 
 class Literal(PyDoughExpressionAST):
@@ -41,9 +42,9 @@ class Literal(PyDoughExpressionAST):
     def to_string(self, tree_form: bool = False) -> str:
         return repr(self.value)
 
-    def equals(self, other: "Literal") -> bool:
+    def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
+            isinstance(other, Literal)
             and (self.pydough_type == other.pydough_type)
-            and (self.literal == other.literal)
+            and (self.value == other.value)
         )

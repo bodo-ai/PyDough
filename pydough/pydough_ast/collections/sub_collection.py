@@ -6,9 +6,10 @@ __all__ = ["SubCollection"]
 
 
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
+
+from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
-from .collection_access import CollectionAccess
 
 
 class SubCollection(CollectionAccess):
@@ -50,9 +51,10 @@ class SubCollection(CollectionAccess):
             predecessor=predecessor,
         )
 
-    def equals(self, other: "SubCollection") -> bool:
+    def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
+            type(other) is type(self)
+            and isinstance(other, SubCollection)
             and self.preceding_context == other.preceding_context
             and self.subcollection_property == other.subcollection_property
         )

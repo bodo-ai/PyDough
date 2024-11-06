@@ -6,6 +6,7 @@ running a simple TPCH query on SQLite.
 import os
 import sqlite3
 import typing as pt
+from collections.abc import Iterator
 
 import pytest
 
@@ -21,7 +22,7 @@ def tpch_db_path() -> str:
 
 
 @pytest.fixture(scope="module")
-def tpch_db(tpch_db_path: str) -> sqlite3.Connection:
+def tpch_db(tpch_db_path: str) -> Iterator[sqlite3.Connection]:
     """
     Download the TPCH data and return a connection to the SQLite database.
     """

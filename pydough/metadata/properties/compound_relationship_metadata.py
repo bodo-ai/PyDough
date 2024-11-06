@@ -4,20 +4,23 @@ TODO: add file-level docstring
 
 __all__ = ["CompoundRelationshipMetadata"]
 
-from typing import Dict, Set, List
+from collections.abc import MutableMapping, MutableSequence
+
+from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
     HasPropertyWith,
     HasType,
-    is_string,
     NoExtraKeys,
-    compound_relationship_inherited_predicate,
-    PyDoughMetadataException,
     NonEmptyListOf,
     PossiblyEmptyMapOf,
+    PyDoughMetadataException,
+    compound_relationship_inherited_predicate,
     is_bool,
+    is_string,
 )
-from pydough.metadata.collections import CollectionMetadata
-from . import PropertyMetadata, ReversiblePropertyMetadata
+
+from .property_metadata import PropertyMetadata
+from .reversible_property_metadata import ReversiblePropertyMetadata
 
 
 class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
@@ -31,7 +34,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
 
     # Set of names of of fields that can be included in the JSON object
     # describing a compound relationship property.
-    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
+    allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "primary_property",
         "secondary_property",
         "reverse_relationship_name",
@@ -50,7 +53,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         no_collisions: bool,
         primary_property: ReversiblePropertyMetadata,
         secondary_property: ReversiblePropertyMetadata,
-        inherited_properties: Dict[str, PropertyMetadata],
+        inherited_properties: MutableMapping[str, PropertyMetadata],
     ):
         from .inherited_property_metadata import InheritedPropertyMetadata
 
@@ -67,7 +70,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         self._secondary_property: ReversiblePropertyMetadata = secondary_property
 
         # Properties that are passed in as inherited properties via the metadata
-        self._inherited_properties: Dict[str, PropertyMetadata] = {}
+        self._inherited_properties: MutableMapping[str, PropertyMetadata] = {}
         for alias, property in inherited_properties.items():
             self._inherited_properties[alias] = InheritedPropertyMetadata(
                 alias, other_collection, self, property
@@ -88,7 +91,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         return self._secondary_property
 
     @property
-    def inherited_properties(self) -> Dict[str, PropertyMetadata]:
+    def inherited_properties(self) -> MutableMapping[str, PropertyMetadata]:
         """
         The properties inherited by using this compound relationship,
         represented as a mapping of an alias name to the actual property.
@@ -111,6 +114,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         comp.append(inherited_properties_dict)
         return comp
 
+    @staticmethod
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -155,6 +159,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
             property_json, error_name
         )
 
+    @staticmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -180,7 +185,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         # no_collisions fields from the JSON.
         primary_property_name: str = property_json["primary_property"]
         secondary_property_name: str = property_json["secondary_property"]
-        inherited_properties_mapping: Dict[str, str] = property_json[
+        inherited_properties_mapping: MutableMapping[str, str] = property_json[
             "inherited_properties"
         ]
         singular: bool = property_json["singular"]
@@ -214,7 +219,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         # property of the middle collection. Assumes that all the inherited
         # properties have already been defined added to the middle collection's
         # properties.
-        inherited_properties: Dict[str, PropertyMetadata] = {}
+        inherited_properties: MutableMapping[str, PropertyMetadata] = {}
         for alias_name, inherited_property_name in inherited_properties_mapping.items():
             has_property: bool = HasPropertyWith(
                 inherited_property_name, HasType(PropertyMetadata)
@@ -240,7 +245,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
                 # property. In this case, all candidate inherited properties must be
                 # searched to verify that one of them comes from the primary or secondary
                 # property, and there are not multiple successful candidates.
-                candidates: List[InheritedPropertyMetadata] = (
+                candidates: MutableSequence[InheritedPropertyMetadata] = (
                     secondary_collection.inherited_properties[inherited_property_name]
                 )
                 primary_candidate = None
@@ -302,6 +307,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         # and its reverse to the collection & subcollection it maps to.
         for inherited_property in property.inherited_properties.values():
             other_collection.add_inherited_property(inherited_property)
+        assert isinstance(property.reverse_property, CompoundRelationshipMetadata)
         for (
             inherited_property
         ) in property.reverse_property.inherited_properties.values():
@@ -311,8 +317,9 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         from .inherited_property_metadata import InheritedPropertyMetadata
 
         # Flip the sources of the inherited properties that are also inherited properties
-        new_properties_to_inherit: Dict[str, PropertyMetadata] = {}
+        new_properties_to_inherit: MutableMapping[str, PropertyMetadata] = {}
         for alias, property in self._inherited_properties.items():
+            assert isinstance(property, InheritedPropertyMetadata)
             if isinstance(property.property_to_inherit, InheritedPropertyMetadata):
                 new_properties_to_inherit[alias] = (
                     property.property_to_inherit.flip_source()

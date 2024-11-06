@@ -4,11 +4,11 @@ TODO: add file-level docstring
 
 __all__ = ["InheritedPropertyMetadata"]
 
-from .property_metadata import PropertyMetadata
-from .compound_relationship_metadata import CompoundRelationshipMetadata
-from .reversible_property_metadata import ReversiblePropertyMetadata
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import HasType, PyDoughMetadataException
+
+from .compound_relationship_metadata import CompoundRelationshipMetadata
+from .property_metadata import PropertyMetadata
 
 
 class InheritedPropertyMetadata(PropertyMetadata):
@@ -43,7 +43,7 @@ class InheritedPropertyMetadata(PropertyMetadata):
         return self._property_inherited_from
 
     @property
-    def property_to_inherit(self) -> CompoundRelationshipMetadata:
+    def property_to_inherit(self) -> PropertyMetadata:
         """
         The property that this inherited property allows its collection to
         access.
@@ -53,20 +53,16 @@ class InheritedPropertyMetadata(PropertyMetadata):
     @property
     def error_name(self):
         return self.create_error_name(
-            self.name,
+            f"{self.name!r} (alias of {self.property_inherited_from.error_name} inherited from {self.property_to_inherit.error_name})",
             self.collection.error_name,
-            self.property_inherited_from.error_name,
-            self.property_to_inherit.error_name,
         )
 
     @staticmethod
     def create_error_name(
         name: str,
         collection_error_name: str,
-        source_error_name: str,
-        property_error_name: str,
     ) -> str:
-        return f"inherited property {name!r} of {collection_error_name} (alias of {property_error_name} inherited from {source_error_name})"
+        return f"inherited property {name} of {collection_error_name}"
 
     @property
     def path(self) -> str:
@@ -101,9 +97,8 @@ class InheritedPropertyMetadata(PropertyMetadata):
         """
         if not isinstance(self.property_inherited_from, CompoundRelationshipMetadata):
             raise PyDoughMetadataException(f"Cannot flip source of {self.error_name}")
-        reverse_property: ReversiblePropertyMetadata = (
-            self.property_inherited_from.reverse_property
-        )
+        reverse_property = self.property_inherited_from.reverse_property
+        assert isinstance(reverse_property, CompoundRelationshipMetadata)
         return InheritedPropertyMetadata(
             self.name,
             reverse_property.other_collection,

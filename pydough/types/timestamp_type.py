@@ -4,11 +4,12 @@ TODO: add file-level docstring
 
 __all__ = ["TimestampType"]
 
-from .pydough_type import PyDoughType
-from .errors import PyDoughTypeException
-import pytz
 import re
-from typing import Optional
+
+import pytz
+
+from .errors import PyDoughTypeException
+from .pydough_type import PyDoughType
 
 
 class TimestampType(PyDoughType):
@@ -16,7 +17,7 @@ class TimestampType(PyDoughType):
     The PyDough type for timestamps with a precision and (optional) time zone.
     """
 
-    def __init__(self, precision: int, tz: Optional[str] = None):
+    def __init__(self, precision: int, tz: str | None = None):
         if not isinstance(precision, int) or precision not in range(10):
             raise PyDoughTypeException(
                 f"Invalid precision for TimestampType: {precision!r}"
@@ -24,7 +25,7 @@ class TimestampType(PyDoughType):
         if not (tz is None or (isinstance(tz, str) and tz in pytz.all_timezones_set)):
             raise PyDoughTypeException(f"Invalid timezone for TimestampType: {tz!r}")
         self._precision: int = precision
-        self._tz: Optional[str] = tz
+        self._tz: str | None = tz
 
     @property
     def precision(self) -> int:
@@ -36,7 +37,7 @@ class TimestampType(PyDoughType):
         return self._precision
 
     @property
-    def tz(self) -> Optional[str]:
+    def tz(self) -> str | None:
         """
         The timezone of the timestamp type, if one exists.
         """
@@ -58,21 +59,22 @@ class TimestampType(PyDoughType):
     type_string_pattern_with_tz: re.Pattern = re.compile(r"timestamp\[(\d),(.*)\]")
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         # Verify that the string matches one of the timestamp type regex
         # patterns, extracting the precision and timezone (if present).
-        match_no_tz: Optional[re.match] = (
+        match_no_tz: re.Match | None = (
             TimestampType.type_string_pattern_no_tz.fullmatch(type_string)
         )
-        match_with_tz: Optional[re.match] = (
+        match_with_tz: re.Match | None = (
             TimestampType.type_string_pattern_with_tz.fullmatch(type_string)
         )
+        tz: str | None = None
+        precision: int
         if match_no_tz is not None:
-            precision: int = int(match_no_tz.groups(0)[0])
-            tz: Optional[str] = None
+            precision = int(match_no_tz.groups(0)[0])
         elif match_with_tz is not None:
-            precision: int = int(match_with_tz.groups(0)[0])
-            tz: Optional[str] = match_with_tz.groups(0)[1]
+            precision = int(match_with_tz.groups(0)[0])
+            tz = str(match_with_tz.groups(0)[1])
         else:
             return None
         return TimestampType(precision, tz)

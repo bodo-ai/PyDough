@@ -5,13 +5,13 @@ TODO: add file-level docstring
 __all__ = ["CalcChildCollection"]
 
 
-from .hidden_back_reference_collection import HiddenBackReferenceCollection
 from .back_reference_collection import BackReferenceCollection
 from .collection_access import CollectionAccess
-from .table_collection import TableCollection
-from .collection_tree_form import CollectionTreeForm
-from .sub_collection import SubCollection
 from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
+from .hidden_back_reference_collection import HiddenBackReferenceCollection
+from .sub_collection import SubCollection
+from .table_collection import TableCollection
 
 
 class CalcChildCollection(CollectionAccess):
@@ -56,11 +56,13 @@ class CalcChildCollection(CollectionAccess):
         if isinstance(self.collection_access, HiddenBackReferenceCollection):
             return self.collection_access.alias
         elif isinstance(self.collection_access, BackReferenceCollection):
-            return self.collection_access.term_name
+            return self.collection_access.to_string()
         elif isinstance(self.collection_access, TableCollection):
             return self.collection_access.collection.name
-        else:
+        elif isinstance(self.collection_access, SubCollection):
             return self.collection_access.subcollection_property.name
+        else:
+            raise NotImplementedError
 
     def to_tree_form(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = CollectionTreeForm(
@@ -71,14 +73,10 @@ class CalcChildCollection(CollectionAccess):
             has_successor=not self.is_last,
         )
         item_str: str
-        if isinstance(
-            self.collection_access, (SubCollection, HiddenBackReferenceCollection)
-        ):
-            item_str = f"SubCollection[{self.to_string()}]"
-        elif isinstance(self.collection_access, BackReferenceCollection):
-            item_str = f"SubCollection[{self.collection_access.to_string()}]"
-        else:
+        if isinstance(self.collection_access, TableCollection):
             item_str = f"TableCollection[{self.to_string()}]"
+        else:
+            item_str = f"SubCollection[{self.to_string()}]"
         return CollectionTreeForm(
             item_str,
             predecessor.depth + 1,

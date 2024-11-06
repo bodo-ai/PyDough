@@ -5,14 +5,14 @@ TODO: add file-level docstring
 __all__ = ["Calc"]
 
 
-from typing import Dict, List, Tuple, Set
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
-from .collection_ast import PyDoughCollectionAST
-from .calc_child_collection import CalcChildCollection
+
 from .child_operator import ChildOperator
+from .collection_ast import PyDoughCollectionAST
 
 
 class Calc(ChildOperator):
@@ -23,18 +23,16 @@ class Calc(ChildOperator):
     def __init__(
         self,
         predecessor: PyDoughCollectionAST,
-        children: List[CalcChildCollection],
+        children: MutableSequence[PyDoughCollectionAST],
     ):
         super().__init__(predecessor, children)
-        self._predecessor: PyDoughCollectionAST = predecessor
-        self._children: List[CalcChildCollection] = children
         # Not initialized until with_terms is called
-        self._calc_term_indices: Dict[str, Tuple[int, PyDoughExpressionAST]] | None = (
-            None
-        )
-        self._all_terms: Dict[str, PyDoughExpressionAST] = {}
+        self._calc_term_indices: MutableMapping[str, int] | None = None
+        self._all_terms: MutableMapping[str, PyDoughAST] = {}
 
-    def with_terms(self, terms: List[Tuple[str, PyDoughExpressionAST]]) -> "Calc":
+    def with_terms(
+        self, terms: MutableSequence[tuple[str, PyDoughExpressionAST]]
+    ) -> "Calc":
         """
         Specifies the terms that are calculated inside of a CALC node,
         returning the mutated CALC node afterwards. This is called after the
@@ -71,11 +69,12 @@ class Calc(ChildOperator):
         return self
 
     @property
-    def calc_term_indices(self) -> Dict[str, Tuple[int, PyDoughExpressionAST]]:
+    def calc_term_indices(
+        self,
+    ) -> MutableMapping[str, int]:
         """
-        Mapping of each named expression of the CALC to a tuple (idx, expr)
-        where idx is the ordinal position of the property when included
-        in a CALC and property is the AST node representing the property.
+        MutableMapping of each named expression of the CALC to the index of the
+        ordinal position of the property when included in a CALC.
         """
         if self._calc_term_indices is None:
             raise PyDoughASTException(
@@ -84,11 +83,11 @@ class Calc(ChildOperator):
         return self._calc_term_indices
 
     @property
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         return set(self.calc_term_indices)
 
     @property
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         if self._calc_term_indices is None:
             raise PyDoughASTException(
                 "Cannot access `all_terms` of a Calc node before adding calc terms with `with_terms`"
@@ -96,38 +95,38 @@ class Calc(ChildOperator):
         return set(self._all_terms)
 
     def get_expression_position(self, expr_name: str) -> int:
-        if expr_name not in self.calc_term_indices:
+        if expr_name not in self.calc_terms:
             raise PyDoughASTException(f"Unrecognized CALC term: {expr_name!r}")
         return self.calc_term_indices[expr_name]
 
     def get_term(self, term_name: str) -> PyDoughAST:
         if term_name not in self.all_terms:
-            # breakpoint()
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
         return self._all_terms[term_name]
 
     def to_string(self) -> str:
-        kwarg_strings: List[str] = []
-        for name in self._calc_term_indices:
-            expr: PyDoughExpressionAST = self.get_term(name)
+        kwarg_strings: list[str] = []
+        for name in self.calc_terms:
+            expr: PyDoughExpressionAST = self.get_expr(name)
             kwarg_strings.append(f"{name}={expr.to_string()}")
         return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
 
     @property
     def tree_item_string(self) -> str:
-        kwarg_strings: List[str] = []
-        for name in self._calc_term_indices:
-            expr: PyDoughExpressionAST = self.get_term(name)
+        assert self._calc_term_indices is not None
+        kwarg_strings: list[str] = []
+        for name in self.calc_terms:
+            expr: PyDoughExpressionAST = self.get_expr(name)
             kwarg_strings.append(f"{name}={expr.to_string(tree_form=True)}")
         return f"Calc[{', '.join(kwarg_strings)}]"
 
-    def equals(self, other: "Calc") -> bool:
+    def equals(self, other: object) -> bool:
         if self._all_terms is None:
             raise PyDoughCollectionAST(
                 "Cannot invoke `equals` before calling `with_terms`"
             )
         return (
             super().equals(other)
-            and self.preceding_context == other.preceding_context
+            and isinstance(other, Calc)
             and self._calc_term_indices == other._calc_term_indices
         )

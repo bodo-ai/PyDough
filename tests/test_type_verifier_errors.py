@@ -2,16 +2,20 @@
 TODO: add file-level docstring.
 """
 
-from typing import List
+from collections.abc import MutableSequence
+
+import pytest
+from test_utils import AstNodeTestInfo, LiteralInfo
+
 from pydough.pydough_ast import (
-    PyDoughAST,
     AstNodeBuilder,
+    PyDoughAST,
     PyDoughASTException,
+)
+from pydough.pydough_ast import (
     pydough_operators as pydop,
 )
 from pydough.types import Int64Type
-from test_utils import AstNodeTestInfo, LiteralInfo
-import pytest
 
 
 @pytest.mark.parametrize(
@@ -67,7 +71,7 @@ import pytest
 )
 def test_verification(
     verifier: pydop.TypeVerifier,
-    args_info: List[AstNodeTestInfo],
+    args_info: MutableSequence[AstNodeTestInfo],
     error_message: str,
     tpch_node_builder: AstNodeBuilder,
 ):
@@ -75,7 +79,9 @@ def test_verification(
     Checks that verifiers accept reject by raising an exception
     and also returns False.
     """
-    args: List[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
+    args: MutableSequence[PyDoughAST] = [
+        info.build(tpch_node_builder) for info in args_info
+    ]
     assert not verifier.accepts(
         args, error_on_fail=False
     ), "expected verifier to reject argument"

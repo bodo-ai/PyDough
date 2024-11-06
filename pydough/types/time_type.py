@@ -4,10 +4,10 @@ TODO: add file-level docstring
 
 __all__ = ["TimeType"]
 
-from .pydough_type import PyDoughType
-from .errors import PyDoughTypeException
 import re
-from typing import Optional
+
+from .errors import PyDoughTypeException
+from .pydough_type import PyDoughType
 
 
 class TimeType(PyDoughType):
@@ -40,10 +40,10 @@ class TimeType(PyDoughType):
     type_string_pattern: re.Pattern = re.compile(r"time\[(\d)\]")
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         # Verify that the string matches the time type regex pattern, and
         # extract the precision.
-        match: Optional[re.match] = TimeType.type_string_pattern.fullmatch(type_string)
+        match: re.Match | None = TimeType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None
         precision: int = int(match.groups(0)[0])

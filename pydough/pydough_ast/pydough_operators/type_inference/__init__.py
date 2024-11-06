@@ -11,9 +11,9 @@ __all__ = [
     "RequireNumArgs",
 ]
 
-from .type_verifier import TypeVerifier, AllowAny, RequireNumArgs
 from .expression_type_deducer import (
+    ConstantType,
     ExpressionTypeDeducer,
     SelectArgumentType,
-    ConstantType,
 )
+from .type_verifier import AllowAny, RequireNumArgs, TypeVerifier

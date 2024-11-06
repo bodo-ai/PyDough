@@ -5,10 +5,11 @@ TODO: add file-level docstring
 __all__ = ["PyDoughCollectionAST"]
 
 from abc import abstractmethod
-
-from typing import Set, Union
+from typing import Union
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.expressions.expression_ast import PyDoughExpressionAST
+
 from .collection_tree_form import CollectionTreeForm
 
 
@@ -41,7 +42,7 @@ class PyDoughCollectionAST(PyDoughAST):
 
     @property
     @abstractmethod
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         """
         The list of expressions that would be retrieved if the collection
         were to have its results evaluated. This is the set of names in the
@@ -50,7 +51,7 @@ class PyDoughCollectionAST(PyDoughAST):
 
     @property
     @abstractmethod
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         """
         The set of expression/subcollection names accessible by the context.
         """
@@ -77,7 +78,8 @@ class PyDoughCollectionAST(PyDoughAST):
     @abstractmethod
     def get_term(self, term_name: str) -> PyDoughAST:
         """
-        Obtains an expression accessible from the current context by name.
+        Obtains an expression or collection accessible from the current context
+        by name.
 
         Args:
             `term_name`: the name of the term that is being extracted.
@@ -87,6 +89,22 @@ class PyDoughCollectionAST(PyDoughAST):
             `PyDoughASTException` if `term_name` is not a name of one of the
             terms accessible in the context.
         """
+
+    def get_expr(self, term_name: str) -> PyDoughExpressionAST:
+        """
+        Obtains an expression accessible from the current context by name.
+
+        Args:
+            `term_name`: the name of the term that is being extracted.
+
+
+        Returns:
+            `PyDoughASTException` if `term_name` is not a name of one of the
+            terms accessible in the context, or is not an expression.
+        """
+        term = self.get_term(term_name)
+        assert isinstance(term, PyDoughExpressionAST)
+        return term
 
     @abstractmethod
     def to_string(self) -> str:
@@ -123,20 +141,23 @@ class PyDoughCollectionAST(PyDoughAST):
         A valid string representation of this would be:
 
         ```
-        ┌─── TableCollection[Regions]
-        └─┬─ Where[ENDSWITH(name, 's')]
-          ├─── SubCollection[nations]
-          ├─── Where[name != 'USA']
-          ├─┬─ Calc[a=[ancestor.name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
-          │ ├─┬─ SubCollection[customers]
-          │ │ └─── Where[acctbal > 0]
-          │ └─┬─ SubCollection[suppliers]
-          │   ├─── Where[STARTSWITH(phone, '415')]
-          │   └─┬─ SubCollection[supply_records]
-          │     └─┬─ SubCollection[lines]
-          │       └─── Calc[_expr1=YEAR(ship_date)]
-          ├─── Where[c > 1000]
-          └─── OrderBy[d.DESC()]
+        ──┬─ TPCH
+          ├─── TableCollection[Regions]
+          └─┬─ Where[ENDSWITH(name, 's')]
+            ├─── SubCollection[nations]
+            ├─── Where[name != 'USA']
+            ├─┬─ Calc[a=[BACK(1).name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
+            │ ├─┬─ CalcSubCollection
+            │ │ ├─ SubCollection[customers]
+            │ │ └─── Where[acctbal > 0]
+            │ └─┬─ CalcSubCollection
+            │   └─┬─ SubCollection[suppliers]
+            │     ├─── Where[STARTSWITH(phone, '415')]
+            │     └─┬─ SubCollection[supply_records]
+            │       └─┬─ SubCollection[lines]
+            │         └─── Calc[_expr1=YEAR(ship_date)]
+            ├─── Where[c > 1000]
+            └─── OrderBy[d.DESC()]
         ```
 
         Returns:

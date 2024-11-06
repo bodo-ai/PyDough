@@ -5,17 +5,19 @@ TODO: add file-level docstring
 __all__ = ["CompoundSubCollection"]
 
 
-from typing import Dict, List, Tuple, Set
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata import CompoundRelationshipMetadata
-from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.metadata.properties import InheritedPropertyMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from .collection_ast import PyDoughCollectionAST
-from .sub_collection import SubCollection
-from .hidden_back_reference_collection import HiddenBackReferenceCollection
+from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions.hidden_back_reference_expression import (
     HiddenBackReferenceExpression,
 )
+
+from .collection_ast import PyDoughCollectionAST
+from .hidden_back_reference_collection import HiddenBackReferenceCollection
+from .sub_collection import SubCollection
 
 
 class CompoundSubCollection(SubCollection):
@@ -30,20 +32,21 @@ class CompoundSubCollection(SubCollection):
         ancestor: PyDoughCollectionAST,
     ):
         super().__init__(subcollection_property, ancestor)
-        self._subcollection_chain: List[SubCollection] = []
-        self._inheritance_sources: Dict[str, Tuple[int, str]] = {}
+        self._subcollection_chain: MutableSequence[SubCollection] = []
+        self._inheritance_sources: MutableMapping[str, tuple[int, str]] = {}
 
     def clone_with_parent(
         self, new_ancestor: PyDoughCollectionAST
     ) -> "CompoundSubCollection":
+        assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
         return CompoundSubCollection(self.subcollection_property, new_ancestor)
 
     def populate_subcollection_chain(
         self,
         source: PyDoughCollectionAST,
         compound: CompoundRelationshipMetadata,
-        inherited_properties: Dict[str, str],
-    ) -> PyDoughCollectionAST:
+        inherited_properties: MutableMapping[str, str],
+    ) -> SubCollection:
         """
         Recursive procedure used to define the `subcollection_chain` and
         `inheritance_sources` fields of a compound subcollection AST node. In
@@ -64,6 +67,7 @@ class CompoundSubCollection(SubCollection):
             The subcollection AST object corresponding to the last component
             of `compound`, once flattened.
         """
+        assert self._properties is not None
         # Invoke the procedure for the primary and secondary property.
         for property in [compound.primary_property, compound.secondary_property]:
             if isinstance(property, CompoundRelationshipMetadata):
@@ -74,9 +78,9 @@ class CompoundSubCollection(SubCollection):
                 # are inside the nested compound.
                 for alias, property_name in inherited_properties.items():
                     if property_name in property.inherited_properties:
-                        inherited_properties[alias] = property.inherited_properties[
-                            property_name
-                        ].property_to_inherit.name
+                        inh = property.inherited_properties[property_name]
+                        assert isinstance(inh, InheritedPropertyMetadata)
+                        inherited_properties[alias] = inh.property_to_inherit.name
                 source = self.populate_subcollection_chain(
                     source, property, inherited_properties
                 )
@@ -84,9 +88,10 @@ class CompoundSubCollection(SubCollection):
                 # Otherwise, we are in a base case where we have found a true
                 # subcollection invocation. We maintain a set to mark which
                 # inherited properties were found.
-                print(source, property.name)
-                source = source.get_term(property.name)
-                found_inherited: Set[str] = set()
+                term = source.get_term(property.name)
+                assert isinstance(term, SubCollection)
+                source = term
+                found_inherited: set[str] = set()
                 # Iterate through all the remaining inherited properties to
                 # find any whose true name matches one of the properties of
                 # the target collection. If so, they belong to the
@@ -117,10 +122,11 @@ class CompoundSubCollection(SubCollection):
                 # Finally, add the new subcollection to the end of the chain.
                 self._subcollection_chain.append(source)
 
+        assert isinstance(source, SubCollection)
         return source
 
     @property
-    def subcollection_chain(self) -> List[SubCollection]:
+    def subcollection_chain(self) -> MutableSequence[SubCollection]:
         """
         The list of subcollection accesses used to define the compound
         relationship.
@@ -131,7 +137,7 @@ class CompoundSubCollection(SubCollection):
         return self._subcollection_chain
 
     @property
-    def inheritance_sources(self) -> Dict[str, Tuple[int, str]]:
+    def inheritance_sources(self) -> MutableMapping[str, tuple[int, str]]:
         """
         The mapping between each inherited property name and the integer
         position of the subcollection access it corresponds to from within
@@ -144,7 +150,7 @@ class CompoundSubCollection(SubCollection):
         return self._inheritance_sources
 
     @property
-    def properties(self) -> Dict[str, Tuple[int | None, PyDoughAST]]:
+    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
         # Lazily define the properties, if not already defined.
         if self._properties is None:
             # First invoke the TableCollection version to get the regular
@@ -154,16 +160,17 @@ class CompoundSubCollection(SubCollection):
             # the subcollections used in the compound into a sequence of
             # regular subcollection AST nodes and identify where each inherited
             # term came from.
-            compound: CompoundRelationshipMetadata = self.subcollection_property
-            inherited_map: Dict[str, str] = {
-                name: property.property_to_inherit.name
-                for name, property in compound.inherited_properties.items()
-            }
-            self.populate_subcollection_chain(
-                self.ancestor_context, self.subcollection_property, inherited_map
-            )
+            compound = self.subcollection_property
+            assert isinstance(compound, CompoundRelationshipMetadata)
+            inherited_map: MutableMapping[str, str] = {}
+            for name, property in compound.inherited_properties.items():
+                assert isinstance(property, InheritedPropertyMetadata)
+                inherited_map[name] = property.property_to_inherit.name
+            ancestor_context = self.ancestor_context
+            assert ancestor_context is not None
+            self.populate_subcollection_chain(ancestor_context, compound, inherited_map)
             # Make sure none of the inherited terms went unaccounted for.
-            undefined_inherited: Set[str] = set(compound.inherited_properties) - set(
+            undefined_inherited: set[str] = set(compound.inherited_properties) - set(
                 self.inheritance_sources
             )
             if len(undefined_inherited) > 0:

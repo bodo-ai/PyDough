@@ -19,8 +19,7 @@ class PyDoughAST(ABC):
     @abstractmethod
     def equals(self, other: object) -> bool:
         """
-        Returns true if two PyDoughAST objects are equal. Implementation
-        classes are expected to extend this base check.
+        Returns true if two PyDoughAST objects are equal.
 
         Args:
             `other`: the candidate object being compared to `self`.
@@ -28,4 +27,3 @@ class PyDoughAST(ABC):
         Returns:
             Whether `other` is equal to `self`.
         """
-        return type(self) is type(other)

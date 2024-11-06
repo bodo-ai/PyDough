@@ -36,15 +36,6 @@ __all__ = [
     "BinaryOperator",
 ]
 
-from .type_inference import (
-    TypeVerifier,
-    AllowAny,
-    ExpressionTypeDeducer,
-    SelectArgumentType,
-    RequireNumArgs,
-    ConstantType,
-)
-from .operator_ast import PyDoughOperatorAST
 from .expression_operators import (
     ADD,
     BAN,
@@ -54,19 +45,28 @@ from .expression_operators import (
     EQU,
     GEQ,
     GRT,
+    IFF,
     LEQ,
     LET,
+    LOWER,
     MOD,
     MUL,
     NEQ,
     POW,
     SUB,
-    LOWER,
-    IFF,
     SUM,
-    PyDoughExpressionOperatorAST,
-    ExpressionFunctionOperator,
-    BinOp,
     BinaryOperator,
+    BinOp,
+    ExpressionFunctionOperator,
+    PyDoughExpressionOperatorAST,
 )
+from .operator_ast import PyDoughOperatorAST
 from .operator_registry import builtin_registered_operators
+from .type_inference import (
+    AllowAny,
+    ConstantType,
+    ExpressionTypeDeducer,
+    RequireNumArgs,
+    SelectArgumentType,
+    TypeVerifier,
+)

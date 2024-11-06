@@ -23,14 +23,15 @@ __all__ = [
     "SUM",
 ]
 
-from .binary_operators import BinaryOperator, BinOp
-from .expression_function_operators import ExpressionFunctionOperator
 from pydough.pydough_ast.pydough_operators.type_inference import (
+    ConstantType,
     RequireNumArgs,
     SelectArgumentType,
-    ConstantType,
 )
 from pydough.types import BooleanType
+
+from .binary_operators import BinaryOperator, BinOp
+from .expression_function_operators import ExpressionFunctionOperator
 
 # TODO: replace with full argument verifiers & deducers
 ADD = BinaryOperator(BinOp.ADD, RequireNumArgs(2), SelectArgumentType(0))

@@ -5,8 +5,7 @@ TODO: add file-level docstring
 __all__ = ["ExpressionTypeDeducer", "ConstantType", "SelectArgumentType"]
 
 from abc import ABC, abstractmethod
-
-from typing import List
+from collections.abc import MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
@@ -22,7 +21,7 @@ class ExpressionTypeDeducer(ABC):
     """
 
     @abstractmethod
-    def infer_return_type(self, args: List[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
         """
         Returns the inferred expression type based on the input arguments.
 
@@ -47,7 +46,7 @@ class SelectArgumentType(ExpressionTypeDeducer):
         """
         return self._index
 
-    def infer_return_type(self, args: List[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
         msg: str = f"Cannot select type of argument {self.index!r} out of {args!r}"
         if self.index not in range(len(args)):
             raise PyDoughASTException(msg)
@@ -74,5 +73,5 @@ class ConstantType(ExpressionTypeDeducer):
         """
         return self._data_type
 
-    def infer_return_type(self, args: List[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
         return self.data_type

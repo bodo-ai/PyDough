@@ -5,10 +5,10 @@ TODO: add file-level docstring
 __all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny"]
 
 from abc import ABC, abstractmethod
+from collections.abc import MutableSequence
 
-from typing import List
-
-from pydough.pydough_ast import PyDoughAST, PyDoughASTException
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.errors import PyDoughASTException
 
 
 class TypeVerifier(ABC):
@@ -20,7 +20,9 @@ class TypeVerifier(ABC):
     """
 
     @abstractmethod
-    def accepts(self, args: List[PyDoughAST], error_on_fail: bool = True) -> bool:
+    def accepts(
+        self, args: MutableSequence[PyDoughAST], error_on_fail: bool = True
+    ) -> bool:
         """
         Verifies whether the type verifier accepts/rejects a list
         of arguments.
@@ -45,7 +47,9 @@ class AllowAny(TypeVerifier):
     arguments.
     """
 
-    def accepts(self, args: List[PyDoughAST], error_on_fail: bool = True) -> bool:
+    def accepts(
+        self, args: MutableSequence[PyDoughAST], error_on_fail: bool = True
+    ) -> bool:
         return True
 
 
@@ -66,7 +70,9 @@ class RequireNumArgs(TypeVerifier):
         """
         return self._num_args
 
-    def accepts(self, args: List[PyDoughAST], error_on_fail: bool = True) -> bool:
+    def accepts(
+        self, args: MutableSequence[PyDoughAST], error_on_fail: bool = True
+    ) -> bool:
         if len(args) != self.num_args:
             if error_on_fail:
                 suffix = "argument" if self._num_args == 1 else "arguments"

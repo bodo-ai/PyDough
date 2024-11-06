@@ -2,16 +2,19 @@
 TODO: add file-level docstring.
 """
 
-import pydough
-import pytest
 import json
-from pydough.metadata.graphs import GraphMetadata
-from typing import Dict, Set
-from pydough.pydough_ast import AstNodeBuilder, pydough_operators as pydop
-
-from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
-
 import os
+import sqlite3
+from collections.abc import MutableMapping
+
+import pytest
+from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
+
+import pydough
+from pydough.database_connectors.database_connector import DatabaseConnection
+from pydough.metadata.graphs import GraphMetadata
+from pydough.pydough_ast import AstNodeBuilder
+from pydough.pydough_ast import pydough_operators as pydop
 
 
 @pytest.fixture(scope="session")
@@ -40,7 +43,7 @@ def invalid_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
-def valid_sample_graph_names() -> Set[str]:
+def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.
     """
@@ -58,7 +61,7 @@ def sample_graph_names(request) -> str:
 @pytest.fixture
 def get_sample_graph(
     sample_graph_path: str,
-    valid_sample_graph_names: Set[str],
+    valid_sample_graph_names: set[str],
 ) -> graph_fetcher:
     """
     A function that takes in the name of a graph from the supported sample
@@ -77,7 +80,7 @@ def get_sample_graph(
 
 @pytest.fixture
 def get_sample_graph_nouns(
-    sample_graph_nouns_path: str, valid_sample_graph_names: Set[str]
+    sample_graph_nouns_path: str, valid_sample_graph_names: set[str]
 ) -> noun_fetcher:
     """
     A function that takes in the name of a graph (currently only supports the
@@ -85,11 +88,11 @@ def get_sample_graph_nouns(
     PyDough graph.
     """
 
-    def impl(name: str) -> GraphMetadata:
+    def impl(name: str) -> MutableMapping[str, set[str]]:
         if name not in valid_sample_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
-        nouns: Dict[str, Set[str]]
-        with open(sample_graph_nouns_path, "r") as f:
+        nouns: MutableMapping[str, set[str]]
+        with open(sample_graph_nouns_path) as f:
             nouns = json.load(f)[name]
         # Convert the noun values for each name from a list to a set
         return map_over_dict_values(nouns, set)
@@ -128,3 +131,55 @@ def binary_operators(request) -> pydop.BinaryOperator:
     Returns every PyDough expression operator for a BinOp.
     """
     return request.param
+
+
+@pytest.fixture(scope="session")
+def sqlite3_people_jobs() -> DatabaseConnection:
+    """
+    Return a SQLite database connection a new in memory database that
+    is pre-loaded with the PEOPLE and JOBS tables with the following properties:
+     - People:
+        - person_id: BIGINT PRIMARY KEY
+        - name: TEXT
+    - Jobs:
+        - job_id: BIGINT PRIMARY KEY
+        - person_id: BIGINT (Foreign key to PEOPLE.person_id)
+        - title: TEXT
+        - salary: FLOAT
+
+    Returns:
+        sqlite3.Connection: A connection to an in-memory SQLite database.
+    """
+    create_table_1: str = """
+        CREATE TABLE PEOPLE (
+            person_id BIGINT PRIMARY KEY,
+            name TEXT
+        )
+    """
+    create_table_2: str = """
+        CREATE TABLE JOBS (
+            job_id BIGINT PRIMARY KEY,
+            person_id BIGINT,
+            title TEXT,
+            salary FLOAT
+        )
+    """
+    sqlite3_empty_connection: DatabaseConnection = DatabaseConnection(
+        sqlite3.connect(":memory:")
+    )
+    cursor: sqlite3.Cursor = sqlite3_empty_connection.connection.cursor()
+    cursor.execute(create_table_1)
+    cursor.execute(create_table_2)
+    for i in range(10):
+        cursor.execute(f"""
+            INSERT INTO PEOPLE (person_id, name)
+            VALUES ({i}, 'Person {i}')
+        """)
+        for j in range(2):
+            cursor.execute(f"""
+                INSERT INTO JOBS (job_id, person_id, title, salary)
+                VALUES ({(2 * i) + j}, {i}, 'Job {i}', {(i + j + 5.7) * 1000})
+            """)
+    sqlite3_empty_connection.connection.commit()
+    cursor.close()
+    return sqlite3_empty_connection

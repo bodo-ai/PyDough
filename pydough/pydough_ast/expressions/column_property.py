@@ -4,10 +4,11 @@ TODO: add file-level docstring
 
 __all__ = ["ColumnProperty"]
 
-from pydough.pydough_ast.errors import PyDoughASTException
-from . import PyDoughExpressionAST
-from pydough.types import PyDoughType
 from pydough.metadata.properties import TableColumnMetadata
+from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.types import PyDoughType
+
+from .expression_ast import PyDoughExpressionAST
 
 
 class ColumnProperty(PyDoughExpressionAST):
@@ -46,5 +47,7 @@ class ColumnProperty(PyDoughExpressionAST):
         column_name: str = self.column_property.column_name
         return f"Column[{table_path}.{column_name}]"
 
-    def equals(self, other: "ColumnProperty") -> bool:
-        return super().equals(other) and (self.column_property == other.column_property)
+    def equals(self, other: object) -> bool:
+        return isinstance(other, ColumnProperty) and (
+            self.column_property == other.column_property
+        )

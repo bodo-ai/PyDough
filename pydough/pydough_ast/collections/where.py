@@ -5,14 +5,14 @@ TODO: add file-level docstring
 __all__ = ["Where"]
 
 
-from typing import List, Set
+from collections.abc import MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-from .collection_ast import PyDoughCollectionAST
-from .calc_child_collection import CalcChildCollection
-from .child_operator import ChildOperator
 from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.pydough_ast.expressions import PyDoughExpressionAST
+
+from .child_operator import ChildOperator
+from .collection_ast import PyDoughCollectionAST
 
 
 class Where(ChildOperator):
@@ -23,7 +23,7 @@ class Where(ChildOperator):
     def __init__(
         self,
         predecessor: PyDoughCollectionAST,
-        children: List[CalcChildCollection],
+        children: MutableSequence[PyDoughCollectionAST],
     ):
         super().__init__(predecessor, children)
         self._condition: PyDoughExpressionAST | None = None
@@ -49,7 +49,7 @@ class Where(ChildOperator):
             the WHERE node.
         """
         if self._condition is not None:
-            raise PyDoughCollectionAST(
+            raise PyDoughASTException(
                 "Cannot call `with_condition` more than once per Where node"
             )
         self._condition = condition
@@ -60,14 +60,19 @@ class Where(ChildOperator):
         """
         The predicate expression for the WHERE clause.
         """
+        if self._condition is None:
+            raise PyDoughASTException(
+                "Cannot access `calc_term_indices` of a Calc node before adding calc terms with `with_terms`"
+            )
+        assert self._condition is not None
         return self._condition
 
     @property
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         return self.preceding_context.calc_terms
 
     @property
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         return self.preceding_context.all_terms
 
     def get_expression_position(self, expr_name: str) -> int:
@@ -79,6 +84,7 @@ class Where(ChildOperator):
         return self.propagated_properties[term_name]
 
     def to_string(self) -> str:
+        assert self.preceding_context is not None
         return (
             f"{self.preceding_context.to_string()}.WHERE({self.condition.to_string()})"
         )
@@ -87,9 +93,13 @@ class Where(ChildOperator):
     def tree_item_string(self) -> str:
         return f"Where[{self.condition.to_string()}]"
 
-    def equals(self, other: "Where") -> bool:
+    def equals(self, other: object) -> bool:
         if self._condition is None:
-            raise PyDoughCollectionAST(
+            raise PyDoughASTException(
                 "Cannot invoke `equals` before calling `with_condition`"
             )
-        return super().equals(other) and self._condition == other._condition
+        return (
+            super().equals(other)
+            and isinstance(other, Where)
+            and self._condition == other._condition
+        )

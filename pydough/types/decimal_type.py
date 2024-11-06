@@ -4,10 +4,10 @@ TODO: add file-level docstring
 
 __all__ = ["DecimalType"]
 
-from .pydough_type import PyDoughType
-from .errors import PyDoughTypeException
 import re
-from typing import Optional
+
+from .errors import PyDoughTypeException
+from .pydough_type import PyDoughType
 
 
 class DecimalType(PyDoughType):
@@ -55,7 +55,7 @@ class DecimalType(PyDoughType):
     type_string_pattern: re.Pattern = re.compile(r"decimal\[(\d{1,2}),(\d{1,2})\]")
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         # Verify that the string matches the time type regex pattern, and
         # extract the precision and scale.
         match = DecimalType.type_string_pattern.fullmatch(type_string)

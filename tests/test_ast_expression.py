@@ -3,30 +3,33 @@ TODO: add file-level docstring.
 """
 
 from datetime import date
-from pydough.types import (
-    PyDoughType,
-    StringType,
-    Float64Type,
-    BooleanType,
-    DateType,
-    Int64Type,
-    DecimalType,
+
+import pytest
+from test_utils import (
+    AstNodeTestInfo,
+    ColumnInfo,
+    FunctionInfo,
+    LiteralInfo,
+    graph_fetcher,
 )
+
 from pydough.pydough_ast import (
     AstNodeBuilder,
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
+    PyDoughAST,
     PyDoughExpressionAST,
 )
-from test_utils import (
-    graph_fetcher,
-    AstNodeTestInfo,
-    LiteralInfo,
-    ColumnInfo,
-    FunctionInfo,
+from pydough.types import (
+    BooleanType,
+    DateType,
+    DecimalType,
+    Float64Type,
+    Int64Type,
+    PyDoughType,
+    StringType,
 )
-import pytest
 
 
 @pytest.mark.parametrize(
@@ -62,7 +65,8 @@ def test_column_property_type(
     Tests that column properties have the correct return type.
     """
     builder: AstNodeBuilder = AstNodeBuilder(get_sample_graph(graph_name))
-    property: ColumnProperty = property_info.build(builder)
+    property: PyDoughAST = property_info.build(builder)
+    assert isinstance(property, ColumnProperty)
     assert (
         property.pydough_type == expected_type
     ), "Mismatch between column property type and expected value"
@@ -125,7 +129,8 @@ def test_function_call_return(
     Tests that function calls have the correct return type.
     """
     builder: AstNodeBuilder = AstNodeBuilder(get_sample_graph(graph_name))
-    call: ExpressionFunctionCall = call_info.build(builder)
+    call = call_info.build(builder)
+    assert isinstance(call, ExpressionFunctionCall)
     assert (
         call.pydough_type == expected_type
     ), "Mismatch between return type and expected value"
@@ -162,9 +167,10 @@ def test_literal_type(
     """
     Tests that literal expressions have the correct return type.
     """
-    property: Literal = literal_info.build(tpch_node_builder)
+    expr = literal_info.build(tpch_node_builder)
+    assert isinstance(expr, Literal)
     assert (
-        property.pydough_type == expected_type
+        expr.pydough_type == expected_type
     ), "Mismatch between literal type and expected value"
 
 
@@ -335,7 +341,8 @@ def test_expression_strings(
     the column names seen here will essentially never be seen in actual string
     representations since they will be replaced with references to the columns.
     """
-    expr: PyDoughExpressionAST = expr_info.build(tpch_node_builder)
+    expr = expr_info.build(tpch_node_builder)
+    assert isinstance(expr, PyDoughExpressionAST)
     assert (
         expr.to_string() == expected_string
     ), "Mismatch between string representation and expected value"

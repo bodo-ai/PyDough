@@ -4,12 +4,14 @@ TODO: add file-level docstring
 
 __all__ = ["BackReferenceCollection"]
 
-from typing import Dict, Tuple
+from collections.abc import MutableMapping
+
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from .collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.errors import PyDoughASTException
-from .collection_tree_form import CollectionTreeForm
+
 from .collection_access import CollectionAccess
+from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
 
 
 class BackReferenceCollection(CollectionAccess):
@@ -32,13 +34,15 @@ class BackReferenceCollection(CollectionAccess):
         self._back_levels: int = back_levels
         ancestor: PyDoughCollectionAST = parent
         for _ in range(back_levels):
-            ancestor = ancestor.ancestor_context
-            if ancestor is None:
+            if ancestor.ancestor_context is None:
                 msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
                 raise PyDoughASTException(
                     f"Cannot reference back {msg} above {parent!r}"
                 )
-        self._collection_access: CollectionAccess = ancestor.get_term(term_name)
+            ancestor = ancestor.ancestor_context
+        access = ancestor.get_term(term_name)
+        assert isinstance(access, CollectionAccess)
+        self._collection_access: CollectionAccess = access
         super().__init__(self._collection_access.collection, ancestor)
 
     def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
@@ -66,7 +70,7 @@ class BackReferenceCollection(CollectionAccess):
         return self._collection_access
 
     @property
-    def properties(self) -> Dict[str, Tuple[int | None, PyDoughAST]]:
+    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
         return self.collection_access.properties
 
     def to_string(self) -> str:

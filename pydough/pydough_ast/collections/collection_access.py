@@ -5,18 +5,21 @@ TODO: add file-level docstring
 __all__ = ["CollectionAccess"]
 
 
-from typing import Dict, List, Tuple, Set
+from abc import abstractmethod
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata import (
     CollectionMetadata,
-    PropertyMetadata,
     CompoundRelationshipMetadata,
+    PropertyMetadata,
+    TableColumnMetadata,
 )
+from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import ColumnProperty
+
 from .collection_ast import PyDoughCollectionAST
-from abc import abstractmethod
 
 
 class CollectionAccess(PyDoughCollectionAST):
@@ -34,7 +37,9 @@ class CollectionAccess(PyDoughCollectionAST):
         self._collection: CollectionMetadata = collection
         self._ancestor: PyDoughCollectionAST = ancestor
         self._predecessor: PyDoughCollectionAST | None = predecessor
-        self._properties: Dict[str, Tuple[int | None, PyDoughAST]] | None = None
+        self._properties: MutableMapping[str, tuple[int | None, PyDoughAST]] | None = (
+            None
+        )
 
         # An internal property just used to keep track of how many calc terms
         # have been added.
@@ -64,9 +69,9 @@ class CollectionAccess(PyDoughCollectionAST):
         return self._collection
 
     @property
-    def properties(self) -> Dict[str, Tuple[int | None, PyDoughAST]]:
+    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
         """
-        Mapping of each property of the table to a tuple (idx, property)
+        MutableMapping of each property of the table to a tuple (idx, property)
         where idx is the ordinal position of the property when included
         in a CALC (None for subcollections), and property is the AST node
         representing the property.
@@ -81,12 +86,13 @@ class CollectionAccess(PyDoughCollectionAST):
             self._properties = {}
             # Ensure the properties are added in the same order they were
             # defined in the metadata in to ensure dependencies are handled.
-            ordered_properties: List[str] = sorted(
+            ordered_properties: MutableSequence[str] = sorted(
                 self.collection.get_property_names(),
                 key=lambda p: self.collection.definition_order[p],
             )
             for property_name in ordered_properties:
-                property: PropertyMetadata = self.collection.get_property(property_name)
+                property = self.collection.get_property(property_name)
+                assert isinstance(property, PropertyMetadata)
                 calc_idx: int | None
                 expression: PyDoughAST
                 if isinstance(property, CompoundRelationshipMetadata):
@@ -94,16 +100,18 @@ class CollectionAccess(PyDoughCollectionAST):
                     expression = CompoundSubCollection(property, self)
                 elif property.is_subcollection:
                     calc_idx = None
+                    assert isinstance(property, SubcollectionRelationshipMetadata)
                     expression = SubCollection(property, self)
                 else:
                     calc_idx = self._calc_counter
+                    assert isinstance(property, TableColumnMetadata)
                     expression = ColumnProperty(property)
                     self._calc_counter += 1
                 self._properties[property_name] = (calc_idx, expression)
         return self._properties
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
+    def ancestor_context(self) -> PyDoughCollectionAST:
         return self._ancestor
 
     @property
@@ -111,13 +119,13 @@ class CollectionAccess(PyDoughCollectionAST):
         return self._predecessor
 
     @property
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         # The calc terms are just all of the column properties (the ones
         # that have an index)
         return {name for name, (idx, _) in self.properties.items() if idx is not None}
 
     @property
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         return set(self.properties)
 
     def get_expression_position(self, expr_name: str) -> int:
@@ -140,5 +148,7 @@ class CollectionAccess(PyDoughCollectionAST):
         _, term = self.properties[term_name]
         return term
 
-    def equals(self, other: "CollectionAccess") -> bool:
-        return super().equals(other) and self.collection == other.collection
+    def equals(self, other: object) -> bool:
+        return (
+            isinstance(other, CollectionAccess) and self.collection == other.collection
+        )

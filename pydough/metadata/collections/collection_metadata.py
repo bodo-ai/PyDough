@@ -3,17 +3,17 @@ TODO: add file-level docstring
 """
 
 from abc import abstractmethod
-
-from typing import List, Dict, Set, Type
-from pydough.metadata.errors import (
-    PyDoughMetadataException,
-    is_valid_name,
-    is_string,
-    HasType,
-    HasPropertyWith,
-)
 from collections import defaultdict
+from collections.abc import MutableMapping, MutableSequence
+
 from pydough.metadata.abstract_metadata import AbstractMetadata
+from pydough.metadata.errors import (
+    HasPropertyWith,
+    HasType,
+    PyDoughMetadataException,
+    is_string,
+    is_valid_name,
+)
 from pydough.metadata.graphs import GraphMetadata
 
 
@@ -32,12 +32,12 @@ class CollectionMetadata(AbstractMetadata):
 
     # Set of names of of fields that can be included in the JSON
     # object describing a collection. Implementations should extend this.
-    allowed_fields: Set[str] = {"type", "properties"}
+    allowed_fields: set[str] = {"type", "properties"}
 
     def __init__(self, name: str, graph: GraphMetadata):
         from pydough.metadata.properties import (
-            PropertyMetadata,
             InheritedPropertyMetadata,
+            PropertyMetadata,
         )
 
         is_valid_name.verify(name, "name")
@@ -45,11 +45,11 @@ class CollectionMetadata(AbstractMetadata):
 
         self._graph: GraphMetadata = graph
         self._name: str = name
-        self._properties: Dict[str, PropertyMetadata] = {}
-        self._inherited_properties: Dict[str, List[InheritedPropertyMetadata]] = (
-            defaultdict(list)
-        )
-        self._definition_order: Dict[str, int] = {}
+        self._properties: MutableMapping[str, PropertyMetadata] = {}
+        self._inherited_properties: MutableMapping[
+            str, MutableSequence[InheritedPropertyMetadata]
+        ] = defaultdict(list)
+        self._definition_order: MutableMapping[str, int] = {}
 
     @property
     def graph(self) -> GraphMetadata:
@@ -194,14 +194,14 @@ class CollectionMetadata(AbstractMetadata):
             to insert into the collection.
         """
         from pydough.metadata.properties import (
-            PropertyMetadata,
             InheritedPropertyMetadata,
+            PropertyMetadata,
         )
 
         # First, make sure that the candidate property is indeed a property
         # metadata of the appropriate type.
         HasType(PropertyMetadata).verify(property, "property")
-        property: PropertyMetadata = property
+        assert isinstance(property, PropertyMetadata)
         if inherited:
             if not isinstance(property, InheritedPropertyMetadata):
                 raise PyDoughMetadataException(
@@ -251,7 +251,7 @@ class CollectionMetadata(AbstractMetadata):
         """
         from pydough.metadata.properties import PropertyMetadata
 
-        property: PropertyMetadata = property
+        assert isinstance(property, PropertyMetadata)
         self.verify_allows_property(property, False)
         self.properties[property.name] = property
         self.definition_order[property.name] = len(self.definition_order)
@@ -271,12 +271,14 @@ class CollectionMetadata(AbstractMetadata):
         """
         from pydough.metadata.properties import InheritedPropertyMetadata
 
-        property: InheritedPropertyMetadata = property
+        assert isinstance(property, InheritedPropertyMetadata)
         self.verify_allows_property(property, True)
         self.inherited_properties[property.name].append(property)
 
-    def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
-        nouns: Dict[str, List[AbstractMetadata]] = defaultdict(list)
+    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
+        nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = defaultdict(
+            list
+        )
         for property in self.properties.values():
             for noun_name, values in property.get_nouns().items():
                 nouns[noun_name].extend(values)
@@ -286,7 +288,7 @@ class CollectionMetadata(AbstractMetadata):
                     nouns[noun_name].extend(values)
         return nouns
 
-    def get_property_names(self) -> List[str]:
+    def get_property_names(self) -> MutableSequence[str]:
         """
         Retrieves the names of all properties of the collection, excluding
         inherited properties.
@@ -321,7 +323,7 @@ class CollectionMetadata(AbstractMetadata):
     @staticmethod
     def get_class_for_collection_type(
         name: str, error_name: str
-    ) -> Type["CollectionMetadata"]:
+    ) -> type["CollectionMetadata"]:
         """
         Fetches the PropertyType implementation class for a string
         representation of the collection type.
@@ -338,7 +340,7 @@ class CollectionMetadata(AbstractMetadata):
             `PyDoughMetadataException` if the string does not correspond
             to a known class type.
         """
-        from . import SimpleTableMetadata
+        from .simple_table_metadata import SimpleTableMetadata
 
         match name:
             case "simple_table":
@@ -348,6 +350,7 @@ class CollectionMetadata(AbstractMetadata):
                     f"Unrecognized collection type for {error_name}: {repr(property_type)}"
                 )
 
+    @staticmethod
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -383,6 +386,7 @@ class CollectionMetadata(AbstractMetadata):
         HasPropertyWith("type", is_string).verify(collection_json, error_name)
         HasPropertyWith("properties", HasType(dict)).verify(collection_json, error_name)
 
+    @staticmethod
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -412,7 +416,7 @@ class CollectionMetadata(AbstractMetadata):
 
         # Dispatch to a specific parsing procedure based on the type of
         # collection.
-        property_class: Type[CollectionMetadata] = (
+        property_class: type[CollectionMetadata] = (
             CollectionMetadata.get_class_for_collection_type(
                 collection_json["type"], error_name
             )

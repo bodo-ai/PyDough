@@ -5,17 +5,17 @@ TODO: add file-level docstring
 __all__ = ["PropertyMetadata"]
 
 from abc import abstractmethod
+from collections.abc import MutableMapping, MutableSequence
 
-from typing import Dict, List, Set, Type
-from pydough.metadata.errors import (
-    HasPropertyWith,
-    is_valid_name,
-    HasType,
-    is_string,
-    PyDoughMetadataException,
-)
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata
+from pydough.metadata.errors import (
+    HasPropertyWith,
+    HasType,
+    PyDoughMetadataException,
+    is_string,
+    is_valid_name,
+)
 
 
 class PropertyMetadata(AbstractMetadata):
@@ -34,11 +34,11 @@ class PropertyMetadata(AbstractMetadata):
 
     # Set of names of of fields that can be included in the JSON object
     # describing a property. Implementations should extend this.
-    allowed_fields: Set[str] = {"type"}
+    allowed_fields: set[str] = {"type"}
 
     def __init__(self, name: str, collection: CollectionMetadata):
         is_valid_name.verify(name, "name")
-        HasType(CollectionMetadata).verify(collection, collection)
+        HasType(CollectionMetadata).verify(collection, "collection")
         self._name: str = name
         self._collection: CollectionMetadata = collection
 
@@ -108,7 +108,7 @@ class PropertyMetadata(AbstractMetadata):
     @staticmethod
     def get_class_for_property_type(
         name: str, error_name: str
-    ) -> Type["PropertyMetadata"]:
+    ) -> type["PropertyMetadata"]:
         """
         Fetches the PropertyType implementation class for a string
         representation of the property type.
@@ -126,10 +126,10 @@ class PropertyMetadata(AbstractMetadata):
             to a known property type.
         """
         from pydough.metadata.properties import (
-            TableColumnMetadata,
-            SimpleJoinMetadata,
-            CompoundRelationshipMetadata,
             CartesianProductMetadata,
+            CompoundRelationshipMetadata,
+            SimpleJoinMetadata,
+            TableColumnMetadata,
         )
 
         match name:
@@ -146,6 +146,7 @@ class PropertyMetadata(AbstractMetadata):
                     f"Unrecognized property type for {error_name}: {repr(property_type)}"
                 )
 
+    @staticmethod
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -180,6 +181,7 @@ class PropertyMetadata(AbstractMetadata):
         )
         property_class.verify_json_metadata(collection, property_name, property_json)
 
+    @staticmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -204,12 +206,12 @@ class PropertyMetadata(AbstractMetadata):
         error_name = f"property {property_name!r} of {collection.error_name}"
 
         # Dispatch to each implementation's parseing method based on the type.
-        property_class: Type[PropertyMetadata] = (
+        property_class: type[PropertyMetadata] = (
             PropertyMetadata.get_class_for_property_type(
                 property_json["type"], error_name
             )
         )
         property_class.parse_from_json(collection, property_name, property_json)
 
-    def get_nouns(self) -> Dict[str, List[AbstractMetadata]]:
+    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
         return {self.name: [self]}

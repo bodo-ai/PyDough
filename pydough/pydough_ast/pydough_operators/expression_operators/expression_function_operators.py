@@ -4,14 +4,14 @@ TODO: add file-level docstring
 
 __all__ = ["ExpressionFunctionOperator"]
 
-from typing import List
 
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
-from .expression_operator_ast import PyDoughExpressionOperatorAST
 from pydough.pydough_ast.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
 )
+
+from .expression_operator_ast import PyDoughExpressionOperatorAST
 
 
 class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
@@ -49,13 +49,13 @@ class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False
 
-    def to_string(self, arg_strings: List[str]) -> str:
+    def to_string(self, arg_strings: list[str]) -> str:
         # Stringify as "function_name(arg0, arg1, ...)
         return f"{self.function_name}({', '.join(arg_strings)})"
 
-    def equals(self, other: "ExpressionFunctionOperator") -> bool:
+    def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
+            isinstance(other, ExpressionFunctionOperator)
             and self.function_name == other.function_name
             and self.is_aggregation == other.is_aggregation
         )

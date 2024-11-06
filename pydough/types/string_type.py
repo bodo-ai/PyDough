@@ -4,8 +4,8 @@ TODO: add file-level docstring
 
 __all__ = ["StringType"]
 
+
 from .pydough_type import PyDoughType
-from typing import Optional
 
 
 class StringType(PyDoughType):
@@ -24,5 +24,5 @@ class StringType(PyDoughType):
         return "string"
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         return StringType() if type_string == "string" else None

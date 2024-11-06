@@ -2,24 +2,27 @@
 TODO: add file-level docstring
 """
 
-from typing import List, Union, Set, Tuple
+from collections.abc import MutableSequence
+
+from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.errors import (
     HasPropertyWith,
-    unique_properties_predicate,
     NoExtraKeys,
-    is_string,
     PyDoughMetadataException,
+    is_string,
+    unique_properties_predicate,
 )
 from pydough.metadata.graphs import GraphMetadata
-from . import CollectionMetadata
 from pydough.metadata.properties import (
-    PropertyMetadata,
-    TableColumnMetadata,
-    SimpleJoinMetadata,
-    CompoundRelationshipMetadata,
     CartesianProductMetadata,
+    CompoundRelationshipMetadata,
     InheritedPropertyMetadata,
+    PropertyMetadata,
+    SimpleJoinMetadata,
+    TableColumnMetadata,
 )
+
+from .collection_metadata import CollectionMetadata
 
 
 class SimpleTableMetadata(CollectionMetadata):
@@ -31,7 +34,7 @@ class SimpleTableMetadata(CollectionMetadata):
 
     # Set of names of of fields that can be included in the JSON
     # object describing a simple table collection.
-    allowed_fields: Set[str] = CollectionMetadata.allowed_fields | {
+    allowed_fields: set[str] = CollectionMetadata.allowed_fields | {
         "table_path",
         "unique_properties",
     }
@@ -41,7 +44,7 @@ class SimpleTableMetadata(CollectionMetadata):
         name: str,
         graph,
         table_path: str,
-        unique_properties: List[Union[str, List[str]]],
+        unique_properties: MutableSequence[str | MutableSequence[str]],
     ):
         super().__init__(name, graph)
         is_string.verify(table_path, f"Property 'table_path' of {self.error_name}")
@@ -49,7 +52,9 @@ class SimpleTableMetadata(CollectionMetadata):
             unique_properties, f"property 'unique_properties' of {self.error_name}"
         )
         self._table_path: str = table_path
-        self._unique_properties: List[Union[str, List[str]]] = unique_properties
+        self._unique_properties: MutableSequence[str | MutableSequence[str]] = (
+            unique_properties
+        )
 
     @property
     def table_path(self) -> str:
@@ -60,7 +65,7 @@ class SimpleTableMetadata(CollectionMetadata):
         return self._table_path
 
     @property
-    def unique_properties(self) -> List[Union[str, List[str]]]:
+    def unique_properties(self) -> MutableSequence[str | MutableSequence[str]]:
         """
         The list of all names of properties of the collection that are
         guaranteed to be unique within the collection. Entries that are a
@@ -88,17 +93,17 @@ class SimpleTableMetadata(CollectionMetadata):
         # Extract all names properties used in the uniqueness of the table
         # collection, ensuring there are no invalid duplicates.
         malformed_unique_msg: str = f"{self.error_name} has malformed unique properties set: {self.unique_properties}"
-        unique_property_combinations: Set[Tuple] = set()
-        unique_property_names: Set[str] = set()
+        unique_property_combinations: set[tuple] = set()
+        unique_property_names: set[str] = set()
         for unique_property in self.unique_properties:
-            unique_property_set: Set[str]
+            unique_property_set: set[str]
             if isinstance(unique_property, str):
                 unique_property_set = {unique_property}
             else:
                 unique_property_set = set(unique_property)
                 if len(unique_property_set) < len(unique_property):
                     raise PyDoughMetadataException(malformed_unique_msg)
-            unique_property_tuple: Tuple = tuple(sorted(unique_property_set))
+            unique_property_tuple: tuple = tuple(sorted(unique_property_set))
             if unique_property_tuple in unique_property_combinations:
                 raise PyDoughMetadataException(malformed_unique_msg)
             unique_property_combinations.add(unique_property_tuple)
@@ -111,14 +116,15 @@ class SimpleTableMetadata(CollectionMetadata):
                 raise PyDoughMetadataException(
                     f"{self.error_name} does not have a property named {unique_property_name!r} to use as a unique property"
                 )
-            property: PropertyMetadata = self.get_property(unique_property_name)
+            property = self.get_property(unique_property_name)
+            assert isinstance(property, PropertyMetadata)
             if property.is_subcollection:
                 raise PyDoughMetadataException(
                     f"{property.error_name} cannot be a unique property since it is a subcollection"
                 )
 
     def verify_allows_property(
-        self, property: PropertyMetadata, inherited: bool
+        self, property: AbstractMetadata, inherited: bool
     ) -> None:
         """
         Verifies that a property is safe to add to the collection.
@@ -152,6 +158,7 @@ class SimpleTableMetadata(CollectionMetadata):
                     f"Simple table collections does not allow inserting {property.error_name}"
                 )
 
+    @staticmethod
     def verify_json_metadata(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -186,6 +193,7 @@ class SimpleTableMetadata(CollectionMetadata):
             collection_json, error_name
         )
 
+    @staticmethod
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
     ) -> None:
@@ -213,9 +221,9 @@ class SimpleTableMetadata(CollectionMetadata):
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
         table_path: str = collection_json["table_path"]
-        unique_properties: List[Union[str, List[str]]] = collection_json[
-            "unique_properties"
-        ]
+        unique_properties: MutableSequence[str | MutableSequence[str]] = (
+            collection_json["unique_properties"]
+        )
         new_collection: SimpleTableMetadata = SimpleTableMetadata(
             collection_name, graph, table_path, unique_properties
         )

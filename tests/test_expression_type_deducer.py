@@ -2,11 +2,14 @@
 TODO: add file-level docstring.
 """
 
-from typing import List
-from pydough.types import StringType, Int64Type, PyDoughType
-from pydough.pydough_ast import PyDoughAST, AstNodeBuilder, pydough_operators as pydop
+from collections.abc import MutableSequence
+
 import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
+
+from pydough.pydough_ast import AstNodeBuilder, PyDoughAST
+from pydough.pydough_ast import pydough_operators as pydop
+from pydough.types import Int64Type, PyDoughType, StringType
 
 
 @pytest.mark.parametrize(
@@ -40,14 +43,16 @@ from test_utils import AstNodeTestInfo, LiteralInfo
 )
 def test_returned_type(
     deducer: pydop.ExpressionTypeDeducer,
-    args_info: List[AstNodeTestInfo],
+    args_info: MutableSequence[AstNodeTestInfo],
     expected_type: PyDoughType,
     tpch_node_builder: AstNodeBuilder,
 ):
     """
     Checks that expression ttype deducers produce the correct type.
     """
-    args: List[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
+    args: MutableSequence[PyDoughAST] = [
+        info.build(tpch_node_builder) for info in args_info
+    ]
     assert (
         deducer.infer_return_type(args) == expected_type
     ), "mismatch between inferred return type and expected type"

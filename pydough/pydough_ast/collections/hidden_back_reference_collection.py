@@ -5,10 +5,10 @@ TODO: add file-level docstring
 __all__ = ["HiddenBackReferenceCollection"]
 
 
-from .collection_ast import PyDoughCollectionAST
 from .back_reference_collection import BackReferenceCollection
-from .collection_tree_form import CollectionTreeForm
 from .collection_access import CollectionAccess
+from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
 
 
 class HiddenBackReferenceCollection(BackReferenceCollection):
@@ -19,26 +19,30 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
 
     def __init__(
         self,
-        compound: PyDoughCollectionAST,
+        compound: CollectionAccess,
         ancestor: PyDoughCollectionAST,
         alias: str,
         term_name: str,
         back_levels: int,
     ):
-        self._compound: PyDoughCollectionAST = compound
+        self._compound: CollectionAccess = compound
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._alias: str = alias
-        self._collection_access: CollectionAccess = ancestor.get_term(term_name)
+        collection_access = ancestor.get_term(term_name)
+        assert isinstance(collection_access, CollectionAccess)
+        self._collection_access = collection_access
         super(BackReferenceCollection, self).__init__(
             self._collection_access.collection, compound
         )
 
     def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
-        return self.compound.clone_with_parent(new_ancestor).get_term(self.alias)
+        result = self.compound.clone_with_parent(new_ancestor).get_term(self.alias)
+        assert isinstance(result, CollectionAccess)
+        return result
 
     @property
-    def compound(self) -> PyDoughCollectionAST:
+    def compound(self) -> CollectionAccess:
         """
         The compound collection containing the hidden backreference.
         """
@@ -55,6 +59,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         return f"{self.compound.to_string()}.{self.alias}"
 
     def to_tree_form(self) -> CollectionTreeForm:
+        assert self.ancestor_context is not None
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
         predecessor.has_children = True
         return CollectionTreeForm(

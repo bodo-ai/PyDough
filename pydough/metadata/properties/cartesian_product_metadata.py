@@ -4,10 +4,12 @@ TODO: add file-level docstring
 
 __all__ = ["CartesianProductMetadata"]
 
-from pydough.metadata.errors import HasPropertyWith, HasType, is_string, NoExtraKeys
-from typing import Set
+
 from pydough.metadata.collections import CollectionMetadata
-from . import ReversiblePropertyMetadata, PropertyMetadata
+from pydough.metadata.errors import HasPropertyWith, HasType, NoExtraKeys, is_string
+
+from .property_metadata import PropertyMetadata
+from .reversible_property_metadata import ReversiblePropertyMetadata
 
 
 class CartesianProductMetadata(ReversiblePropertyMetadata):
@@ -18,7 +20,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
 
     # Set of names of of fields that can be included in the JSON object
     # describing a cartesian product property.
-    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
+    allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "other_collection_name",
         "reverse_relationship_name",
     }
@@ -40,6 +42,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
     def components(self) -> list:
         return super().components
 
+    @staticmethod
     def verify_json_metadata(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -78,6 +81,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
             property_json, error_name
         )
 
+    @staticmethod
     def parse_from_json(
         collection: CollectionMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -105,9 +109,8 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         HasPropertyWith(other_collection_name, HasType(CollectionMetadata)).verify(
             collection.graph.collections, collection.graph.error_name
         )
-        other_collection: CollectionMetadata = collection.graph.collections[
-            other_collection_name
-        ]
+        other_collection = collection.graph.collections[other_collection_name]
+        assert isinstance(other_collection, CollectionMetadata)
 
         # Build the new property, its reverse, then add both
         # to their collection's properties.
