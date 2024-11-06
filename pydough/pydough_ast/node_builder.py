@@ -224,7 +224,7 @@ class AstNodeBuilder:
             `PyDoughMetadataException`: if `name` does not refer to a
             collection that `preceding_context` has access to.
         """
-        term = preceding_context.get_term(name)
+        term = preceding_context.get_collection(name)
         assert isinstance(term, CollectionAccess)
         return term
 

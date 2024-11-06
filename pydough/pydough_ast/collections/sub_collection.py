@@ -27,9 +27,7 @@ class SubCollection(CollectionAccess):
         self._subcollection_property: SubcollectionRelationshipMetadata
         self._subcollection_property = subcollection_property
 
-    def clone_with_parent(
-        self, new_ancestor: PyDoughCollectionAST
-    ) -> "CollectionAccess":
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
         return SubCollection(self.subcollection_property, new_ancestor)
 
     @property

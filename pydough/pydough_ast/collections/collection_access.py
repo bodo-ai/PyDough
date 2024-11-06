@@ -6,7 +6,7 @@ __all__ = ["CollectionAccess"]
 
 
 from abc import abstractmethod
-from collections.abc import MutableMapping, MutableSequence
+from functools import cache
 
 from pydough.metadata import (
     CollectionMetadata,
@@ -37,13 +37,21 @@ class CollectionAccess(PyDoughCollectionAST):
         self._collection: CollectionMetadata = collection
         self._ancestor: PyDoughCollectionAST = ancestor
         self._predecessor: PyDoughCollectionAST | None = predecessor
-        self._properties: MutableMapping[str, tuple[int | None, PyDoughAST]] | None = (
-            None
-        )
-
-        # An internal property just used to keep track of how many calc terms
-        # have been added.
-        self._calc_counter: int = 0
+        self._all_property_names: set[str] = set()
+        self._calc_property_names: set[str] = set()
+        self._calc_property_order: dict[str, int] = {}
+        for property_name in sorted(
+            collection.get_property_names(),
+            key=lambda name: collection.definition_order[name],
+        ):
+            self._all_property_names.add(property_name)
+            property = collection.get_property(property_name)
+            assert isinstance(property, PropertyMetadata)
+            if not property.is_subcollection:
+                self._calc_property_names.add(property_name)
+                self._calc_property_order[property_name] = len(
+                    self._calc_property_order
+                )
 
     @abstractmethod
     def clone_with_parent(
@@ -69,48 +77,6 @@ class CollectionAccess(PyDoughCollectionAST):
         return self._collection
 
     @property
-    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
-        """
-        MutableMapping of each property of the table to a tuple (idx, property)
-        where idx is the ordinal position of the property when included
-        in a CALC (None for subcollections), and property is the AST node
-        representing the property.
-
-        The properties are evaluated lazily & cached to prevent ping-ponging
-        between two tables that consider each other subcollections.
-        """
-        from .compound_sub_collection import CompoundSubCollection
-        from .sub_collection import SubCollection
-
-        if self._properties is None:
-            self._properties = {}
-            # Ensure the properties are added in the same order they were
-            # defined in the metadata in to ensure dependencies are handled.
-            ordered_properties: MutableSequence[str] = sorted(
-                self.collection.get_property_names(),
-                key=lambda p: self.collection.definition_order[p],
-            )
-            for property_name in ordered_properties:
-                property = self.collection.get_property(property_name)
-                assert isinstance(property, PropertyMetadata)
-                calc_idx: int | None
-                expression: PyDoughAST
-                if isinstance(property, CompoundRelationshipMetadata):
-                    calc_idx = None
-                    expression = CompoundSubCollection(property, self)
-                elif property.is_subcollection:
-                    calc_idx = None
-                    assert isinstance(property, SubcollectionRelationshipMetadata)
-                    expression = SubCollection(property, self)
-                else:
-                    calc_idx = self._calc_counter
-                    assert isinstance(property, TableColumnMetadata)
-                    expression = ColumnProperty(property)
-                    self._calc_counter += 1
-                self._properties[property_name] = (calc_idx, expression)
-        return self._properties
-
-    @property
     def ancestor_context(self) -> PyDoughCollectionAST:
         return self._ancestor
 
@@ -120,33 +86,39 @@ class CollectionAccess(PyDoughCollectionAST):
 
     @property
     def calc_terms(self) -> set[str]:
-        # The calc terms are just all of the column properties (the ones
-        # that have an index)
-        return {name for name, (idx, _) in self.properties.items() if idx is not None}
+        return self._calc_property_names
 
     @property
     def all_terms(self) -> set[str]:
-        return set(self.properties)
+        return self._all_property_names
 
     def get_expression_position(self, expr_name: str) -> int:
-        if expr_name not in self.properties:
-            raise PyDoughASTException(
-                f"Unrecognized term of {self.collection.error_name}: {expr_name!r}"
-            )
-        idx, _ = self.properties[expr_name]
-        if idx is None:
-            raise PyDoughASTException(
-                f"Cannot call get_expression_position on non-CALC term: {expr_name!r}"
-            )
-        return idx
+        if expr_name not in self.calc_terms:
+            raise PyDoughASTException(f"Unrecognized term of {self!r}: {expr_name!r}")
+        return self._calc_property_order[expr_name]
 
+    @cache
     def get_term(self, term_name: str) -> PyDoughAST:
-        if term_name not in self.properties:
+        from .compound_sub_collection import CompoundSubCollection
+        from .sub_collection import SubCollection
+
+        if term_name not in self.all_terms:
             raise PyDoughASTException(
                 f"Unrecognized term of {self.collection.error_name}: {term_name!r}"
             )
-        _, term = self.properties[term_name]
-        return term
+
+        property = self.collection.get_property(term_name)
+        assert isinstance(property, PropertyMetadata)
+        if isinstance(property, CompoundRelationshipMetadata):
+            return CompoundSubCollection(property, self)
+        elif isinstance(property, SubcollectionRelationshipMetadata):
+            return SubCollection(property, self)
+        elif isinstance(property, TableColumnMetadata):
+            return ColumnProperty(property)
+        else:
+            raise PyDoughASTException(
+                f"Unsupported property type for collection access: {property.__class__.name}"
+            )
 
     def equals(self, other: object) -> bool:
         return (

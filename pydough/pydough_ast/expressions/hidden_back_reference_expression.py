@@ -4,7 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["HiddenBackReferenceExpression"]
 
-from pydough.pydough_ast.collections import PyDoughCollectionAST
+from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 
 from .back_reference_expression import BackReferenceExpression
 from .expression_ast import PyDoughExpressionAST

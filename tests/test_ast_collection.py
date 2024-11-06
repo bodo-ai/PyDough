@@ -2,8 +2,6 @@
 TODO: add file-level docstring.
 """
 
-from collections.abc import MutableMapping
-
 import pytest
 from test_utils import (
     BackReferenceCollectionInfo,
@@ -490,11 +488,11 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "ship_mode": 13,
                 "comment": 14,
                 "nation_name": 15,
-                "supplier_name": 16,
-                "supplier_address": 17,
-                "ps_availqty": 18,
-                "ps_supplycost": 19,
-                "ps_comment": 20,
+                "ps_availqty": 16,
+                "ps_supplycost": 17,
+                "ps_comment": 18,
+                "supplier_name": 19,
+                "supplier_address": 20,
             },
             {
                 "order_key",
@@ -668,7 +666,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
 )
 def test_collections_calc_terms(
     calc_pipeline: CollectionTestInfo,
-    expected_calcs: MutableMapping[str, int],
+    expected_calcs: dict[str, int],
     expected_total_names: set[str],
     tpch_node_builder: AstNodeBuilder,
 ):
@@ -680,7 +678,7 @@ def test_collections_calc_terms(
     assert collection.calc_terms == set(
         expected_calcs
     ), "Mismatch between set of calc terms and expected value"
-    actual_calcs: MutableMapping[str, int] = {
+    actual_calcs: dict[str, int] = {
         expr: collection.get_expression_position(expr) for expr in collection.calc_terms
     }
     assert (
@@ -879,6 +877,25 @@ def test_collections_calc_terms(
       └─── SubCollection[suppliers]\
 """,
             id="nations_childcalc_suppliers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo([], adj_name=FunctionInfo("LOWER", [ReferenceInfo("name")]))
+            ** SubCollectionInfo("nations")
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("adj_name", 1),
+                nation_name=ReferenceInfo("name"),
+            ),
+            "Regions(adj_name=LOWER(name)).nations(region_name=BACK(1).adj_name, nation_name=name)",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calc[adj_name=LOWER(name)]
+    ├─── SubCollection[nations]
+    └─── Calc[region_name=BACK(1).adj_name, nation_name=name]\
+""",
+            id="regions_calc_nations_calc",
         ),
         pytest.param(
             TableCollectionInfo("Suppliers")

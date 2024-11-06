@@ -474,7 +474,7 @@ class ChildOperatorInfo(CollectionTestInfo):
             child_strings.append(f"${idx}: {child.to_string}")
         if len(self.children_info) == 0:
             return ""
-        return f"\n{'\n'.join(child_strings)}\n"
+        return "\n" + "\n".join(child_strings) + "\n"
 
     def build_children(
         self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None

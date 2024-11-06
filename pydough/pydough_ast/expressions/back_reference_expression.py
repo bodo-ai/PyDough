@@ -36,8 +36,7 @@ class BackReferenceExpression(Reference):
                     f"Cannot reference back {msg} above {collection!r}"
                 )
             self._ancestor = ancestor
-            assert ancestor is not None
-        self._expression: PyDoughExpressionAST = self._ancestor.get_expr(term_name)
+        self._expression = self._ancestor.get_expr(term_name)
 
     @property
     def back_levels(self) -> int:
