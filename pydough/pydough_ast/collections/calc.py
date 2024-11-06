@@ -104,21 +104,32 @@ class Calc(ChildOperator):
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
         return self._all_terms[term_name]
 
-    def to_string(self) -> str:
+    def calc_kwarg_strings(self, tree_form: bool) -> str:
+        """
+        Converts the terms of a CALC into a string in the form
+        `"x=1, y=phone_number, z=STARTSWITH(LOWER(name), 'a')"`
+
+        Args:
+            `tree_form` whether to convert the arguments to strings for a tree
+            form or not.
+
+        Returns:
+            The string representation of the arguments.
+        """
         kwarg_strings: list[str] = []
-        for name in self.calc_terms:
+        for name in sorted(
+            self.calc_terms, key=lambda name: self.get_expression_position(name)
+        ):
             expr: PyDoughExpressionAST = self.get_expr(name)
-            kwarg_strings.append(f"{name}={expr.to_string()}")
-        return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
+            kwarg_strings.append(f"{name}={expr.to_string(tree_form)}")
+        return ", ".join(kwarg_strings)
+
+    def to_string(self) -> str:
+        return f"{self.preceding_context.to_string()}({self.calc_kwarg_strings(False)})"
 
     @property
     def tree_item_string(self) -> str:
-        assert self._calc_term_indices is not None
-        kwarg_strings: list[str] = []
-        for name in self.calc_terms:
-            expr: PyDoughExpressionAST = self.get_expr(name)
-            kwarg_strings.append(f"{name}={expr.to_string(tree_form=True)}")
-        return f"Calc[{', '.join(kwarg_strings)}]"
+        return f"Calc[{self.calc_kwarg_strings(True)}]"
 
     def equals(self, other: object) -> bool:
         if self._all_terms is None:

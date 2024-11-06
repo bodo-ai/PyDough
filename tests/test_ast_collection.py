@@ -957,7 +957,7 @@ def test_collections_calc_terms(
                     [ChildReferenceInfo("quantity", 0), ReferenceInfo("ps_availqty")],
                 ),
             ),
-            "Suppliers.parts_supplied(nation_name=nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
+            "Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
@@ -994,7 +994,7 @@ def test_collections_calc_terms(
                 part_name=ReferenceInfo("name"),
                 ratio=ChildReferenceInfo("ratio", 0),
             ),
-            "Suppliers.parts_supplied(nation_name=nation.name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
+            "Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
