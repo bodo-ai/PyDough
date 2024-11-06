@@ -1149,15 +1149,97 @@ def test_collections_to_string(
     ), "Mismatch between tree string representation and expected value"
 
 
-def test_regions_intra_ratio_to_string(
+@pytest.mark.parametrize(
+    "calc_pipeline, expected_collation_strings",
+    [
+        pytest.param(
+            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            None,
+            id="global_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("suppliers")
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("nation_name"),
+                supplier_name=ReferenceInfo("name"),
+            ),
+            None,
+            id="regions_suppliers_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True)),
+            ["name.ASC(na_pos='last')"],
+            id="nations_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo(
+                [SubCollectionInfo("suppliers")],
+                (
+                    FunctionInfo("SUM", [ChildReferenceInfo("account_balance", 0)]),
+                    False,
+                    True,
+                ),
+                (ReferenceInfo("name"), True, True),
+            ),
+            [
+                "SUM(suppliers.account_balance).DESC(na_pos='last')",
+                "name.ASC(na_pos='last')",
+            ],
+            id="nations_nested_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("acctbal"), True, True)),
+            ["acctbal.ASC(na_pos='last')"],
+            id="regions_nations_customers_order",
+        ),
+    ],
+)
+def test_collections_ordering(
+    calc_pipeline: CollectionTestInfo,
+    expected_collation_strings: list[str] | None,
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    Verifies that various AST collection node structures have the expected
+    collation nodes to order by.
+    """
+    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    if expected_collation_strings is None:
+        assert (
+            collection.ordering is None
+        ), "expected collection to not have an ordering, but it did have one"
+    else:
+        assert (
+            collection.ordering is not None
+        ), "expected collection to have an ordering, but it did not"
+        collation_strings: list[str] = [
+            collation.to_string() for collation in collection.ordering
+        ]
+        assert (
+            collation_strings == expected_collation_strings
+        ), "Mismatch between string representation of collation keys and expected value"
+
+
+def test_regions_intra_ratio_string_order(
     region_intra_ratio: tuple[CollectionTestInfo, str, str],
     tpch_node_builder: AstNodeBuilder,
 ):
     """
-    Same as `test_collections_to_string` but specifically on the structure from
-    the `region_intra_ratio` fixture.
+    Same as `test_collections_to_string` and `test_collections_ordering`, but
+    specifically on the structure from the `region_intra_ratio` fixture.
     """
     calc_pipeline, expected_string, expected_tree_string = region_intra_ratio
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     assert collection.to_string() == expected_string
     assert collection.to_tree_string() == expected_tree_string
+    assert collection.ordering is None
