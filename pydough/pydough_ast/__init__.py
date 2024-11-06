@@ -16,6 +16,7 @@ __all__ = [
     "Calc",
     "CalcChildCollection",
     "Where",
+    "CollationExpression",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -29,6 +30,7 @@ from .collections import (
 )
 from .errors import PyDoughASTException
 from .expressions import (
+    CollationExpression,
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,

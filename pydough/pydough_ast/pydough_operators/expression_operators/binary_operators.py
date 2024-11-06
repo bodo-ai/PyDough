@@ -68,10 +68,12 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
         # For now, until proper precedence is handled, always enclose binary
         # operations in parenthesis if the parent is also a binary operation.
 
-        from pydough.pydough_ast import ExpressionFunctionCall
+        from pydough.pydough_ast import CollationExpression, ExpressionFunctionCall
 
-        return isinstance(parent, ExpressionFunctionCall) and isinstance(
-            parent.operator, BinaryOperator
+        return (
+            isinstance(parent, ExpressionFunctionCall)
+            and isinstance(parent.operator, BinaryOperator)
+            or isinstance(parent, CollationExpression)
         )
 
     def to_string(self, arg_strings: list[str]) -> str:
