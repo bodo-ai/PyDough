@@ -7,7 +7,6 @@ __all__ = ["Where"]
 
 from collections.abc import MutableSequence
 
-from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
@@ -64,7 +63,6 @@ class Where(ChildOperator):
             raise PyDoughASTException(
                 "Cannot access `calc_term_indices` of a Calc node before adding calc terms with `with_terms`"
             )
-        assert self._condition is not None
         return self._condition
 
     @property
@@ -74,14 +72,6 @@ class Where(ChildOperator):
     @property
     def all_terms(self) -> set[str]:
         return self.preceding_context.all_terms
-
-    def get_expression_position(self, expr_name: str) -> int:
-        return self.preceding_context.get_expression_position(expr_name)
-
-    def get_term(self, term_name: str) -> PyDoughAST:
-        if term_name not in self.propagated_properties:
-            raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
-        return self.propagated_properties[term_name]
 
     def to_string(self) -> str:
         assert self.preceding_context is not None
