@@ -536,8 +536,8 @@ def test_compound_relationship_info(
     reverse_name: str,
     singular: bool,
     no_collisions: bool,
-    inherited_properties: MutableMapping[str, str],
-    reverse_inherited_properties: MutableMapping[str, str],
+    inherited_properties: dict[str, str],
+    reverse_inherited_properties: dict[str, str],
     get_sample_graph: graph_fetcher,
 ):
     """
@@ -585,7 +585,7 @@ def test_compound_relationship_info(
     assert (
         property.is_plural != singular
     ), f"Mismatch between 'is_plural of {property!r} and expected value"
-    inherited_dict: MutableMapping[str, str] = {}
+    inherited_dict: dict[str, str] = {}
     for alias, inh in property.inherited_properties.items():
         assert isinstance(inh, InheritedPropertyMetadata)
         inherited_dict[alias] = inh.property_to_inherit.path
@@ -627,7 +627,7 @@ def test_compound_relationship_info(
     assert (
         reverse.is_plural != no_collisions
     ), f"Mismatch between 'is_plural' of {reverse!r} and expected value"
-    reverse_inherited_dict: MutableMapping[str, str] = {}
+    reverse_inherited_dict: dict[str, str] = {}
     for alias, inh in reverse.inherited_properties.items():
         assert isinstance(inh, InheritedPropertyMetadata)
         reverse_inherited_dict[alias] = inh.property_to_inherit.path

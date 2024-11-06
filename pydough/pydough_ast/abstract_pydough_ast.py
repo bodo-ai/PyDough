@@ -16,6 +16,9 @@ class PyDoughAST(ABC):
     def __eq__(self, other):
         return self.equals(other)
 
+    def __hash__(self):
+        return hash(id(self))
+
     @abstractmethod
     def equals(self, other: object) -> bool:
         """

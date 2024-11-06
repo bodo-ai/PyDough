@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["PyDoughCollectionAST"]
 
+
 from abc import abstractmethod
 from typing import Union
 

@@ -4,9 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["BackReferenceCollection"]
 
-from collections.abc import MutableMapping
 
-from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 
 from .collection_access import CollectionAccess
@@ -68,10 +66,6 @@ class BackReferenceCollection(CollectionAccess):
         The collection access property of the ancestor that BACK points to.
         """
         return self._collection_access
-
-    @property
-    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
-        return self.collection_access.properties
 
     def to_string(self) -> str:
         return f"BACK({self.back_levels}).{self.term_name}"
