@@ -554,7 +554,7 @@ class WhereInfo(ChildOperatorInfo):
     """
     CollectionTestInfo implementation class to build a WHERE clause.
     Contains the following fields:
-    - `condition`: a test info describing the predicate for the WHERe clause.
+    - `condition`: a test info describing the predicate for the WHERE clause.
 
     NOTE: must provide a `context` when building.
     """
