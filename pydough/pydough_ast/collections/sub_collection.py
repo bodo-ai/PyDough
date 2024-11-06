@@ -6,9 +6,10 @@ __all__ = ["SubCollection"]
 
 
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
+
+from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
-from .collection_access import CollectionAccess
 
 
 class SubCollection(CollectionAccess):

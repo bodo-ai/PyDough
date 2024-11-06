@@ -3,11 +3,11 @@ TODO: add file-level docstring
 """
 
 __all__ = ["BackReferenceExpression"]
-
-from . import PyDoughExpressionAST
-from pydough.types import PyDoughType
-from pydough.pydough_ast.collections import PyDoughCollectionAST
+from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.types import PyDoughType
+
+from .expression_ast import PyDoughExpressionAST
 from .reference import Reference
 
 

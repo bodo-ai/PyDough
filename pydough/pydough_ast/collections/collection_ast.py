@@ -5,11 +5,11 @@ TODO: add file-level docstring
 __all__ = ["PyDoughCollectionAST"]
 
 from abc import abstractmethod
-
-from typing import Set, Union
+from typing import Union
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from pydough.pydough_ast.expressions.expression_ast import PyDoughExpressionAST
+
 from .collection_tree_form import CollectionTreeForm
 
 
@@ -42,7 +42,7 @@ class PyDoughCollectionAST(PyDoughAST):
 
     @property
     @abstractmethod
-    def calc_terms(self) -> Set[str]:
+    def calc_terms(self) -> set[str]:
         """
         The list of expressions that would be retrieved if the collection
         were to have its results evaluated. This is the set of names in the
@@ -51,7 +51,7 @@ class PyDoughCollectionAST(PyDoughAST):
 
     @property
     @abstractmethod
-    def all_terms(self) -> Set[str]:
+    def all_terms(self) -> set[str]:
         """
         The set of expression/subcollection names accessible by the context.
         """

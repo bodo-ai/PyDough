@@ -4,10 +4,12 @@ TODO: add file-level docstring
 
 __all__ = ["builtin_registered_operators"]
 
-from .operator_ast import PyDoughOperatorAST
-from typing import MutableMapping
-import pydough.pydough_ast.pydough_operators.expression_operators.registered_expression_operators as REP
 import inspect
+from collections.abc import MutableMapping
+
+import pydough.pydough_ast.pydough_operators.expression_operators.registered_expression_operators as REP
+
+from .operator_ast import PyDoughOperatorAST
 
 
 def builtin_registered_operators() -> MutableMapping[str, PyDoughOperatorAST]:

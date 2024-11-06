@@ -4,19 +4,19 @@ TODO: add file-level docstring
 
 __all__ = ["parse_json_metadata_from_file"]
 
-from typing import MutableMapping, MutableSequence, Tuple, Set, MutableSet
-from .graphs import GraphMetadata
+import json
+from collections import deque
+from collections.abc import MutableMapping, MutableSequence, MutableSet
+from dataclasses import dataclass
+
+from .collections import CollectionMetadata
 from .errors import (
-    PyDoughMetadataException,
     HasPropertyWith,
     HasType,
+    PyDoughMetadataException,
 )
-from collections import deque
-from .collections import CollectionMetadata
+from .graphs import GraphMetadata
 from .properties import PropertyMetadata
-import json
-
-from dataclasses import dataclass
 
 
 # The way a property is stored until it is parsed.
@@ -53,7 +53,7 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
         `PyDoughMetadataException`: if the file is malformed in any way that
         prevents parsing it to obtain the desired graph.
     """
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         as_json = json.load(f)
     if not isinstance(as_json, dict):
         raise PyDoughMetadataException(
@@ -174,7 +174,7 @@ def topologically_sort_properties(
     # identifying `(collection_name, property_name)` tuple (hereafter
     # referred to as the `property`) and the values are a tuple of the
     # property's JSON and its index in the original raw_properties list.
-    reformatted_properties: MutableMapping[PropertyKey, Tuple[dict, int]] = {
+    reformatted_properties: MutableMapping[PropertyKey, tuple[dict, int]] = {
         PropertyKey(property.collection_name, property.property_name): (
             property.property_json,
             i,
@@ -204,7 +204,7 @@ def topologically_sort_properties(
 
 
 def get_property_dependencies(
-    reformatted_properties: MutableMapping[PropertyKey, Tuple[dict, int]],
+    reformatted_properties: MutableMapping[PropertyKey, tuple[dict, int]],
 ) -> MutableSequence[MutableSet[int]]:
     """
     Infers the set of dependencies for each property.
@@ -249,7 +249,7 @@ def get_property_dependencies(
 
     # A dictionary mapping each property to the set of all inherited property
     # names that are associated with it.
-    compound_inherited_aliases: MutableMapping[PropertyKey, Set[str]] = {}
+    compound_inherited_aliases: MutableMapping[PropertyKey, set[str]] = {}
 
     def get_true_property(property: PropertyKey) -> PropertyKey | None:
         """

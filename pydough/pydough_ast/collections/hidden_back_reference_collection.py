@@ -5,10 +5,10 @@ TODO: add file-level docstring
 __all__ = ["HiddenBackReferenceCollection"]
 
 
-from .collection_ast import PyDoughCollectionAST
 from .back_reference_collection import BackReferenceCollection
-from .collection_tree_form import CollectionTreeForm
 from .collection_access import CollectionAccess
+from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
 
 
 class HiddenBackReferenceCollection(BackReferenceCollection):

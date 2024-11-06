@@ -4,8 +4,9 @@ TODO: add file-level docstring
 
 __all__ = ["Literal"]
 
-from .expression_ast import PyDoughExpressionAST
 from pydough.types import PyDoughType
+
+from .expression_ast import PyDoughExpressionAST
 
 
 class Literal(PyDoughExpressionAST):

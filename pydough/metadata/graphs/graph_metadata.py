@@ -2,11 +2,11 @@
 TODO: add file-level docstring
 """
 
-from typing import MutableSequence, MutableMapping
 from collections import defaultdict
-from pydough.metadata.errors import PyDoughMetadataException, is_valid_name, HasType
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata.abstract_metadata import AbstractMetadata
+from pydough.metadata.errors import HasType, PyDoughMetadataException, is_valid_name
 
 
 class GraphMetadata(AbstractMetadata):

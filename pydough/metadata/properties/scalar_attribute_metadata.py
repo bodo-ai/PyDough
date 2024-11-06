@@ -4,12 +4,13 @@ TODO: add file-level docstring
 
 __all__ = ["ScalarAttributeMetadata"]
 
-from pydough.types import PyDoughType
-from pydough.metadata.errors import HasType
-
-from . import PropertyMetadata
-from pydough.metadata.collections import CollectionMetadata
 from abc import abstractmethod
+
+from pydough.metadata.collections import CollectionMetadata
+from pydough.metadata.errors import HasType
+from pydough.types import PyDoughType
+
+from .property_metadata import PropertyMetadata
 
 
 class ScalarAttributeMetadata(PropertyMetadata):

@@ -5,10 +5,11 @@ TODO: add file-level docstring
 __all__ = ["CollectionTreeForm"]
 
 
-from typing import Union, MutableSequence
+from collections.abc import MutableSequence
+from typing import Union
 
 
-class CollectionTreeForm(object):
+class CollectionTreeForm:
     """
     A class used for displaying PyDough collections in tree form.
     """
@@ -28,8 +29,8 @@ class CollectionTreeForm(object):
         self.has_predecessor = has_predecessor or (predecessor is not None)
         self.has_successor: bool = has_successor
         self.has_children: bool = has_children
-        self.predecessor: Union["CollectionTreeForm", None] = predecessor
-        self.nested_trees: MutableSequence["CollectionTreeForm"] = (
+        self.predecessor: CollectionTreeForm | None = predecessor
+        self.nested_trees: MutableSequence[CollectionTreeForm] = (
             [] if nested_trees is None else nested_trees
         )
 

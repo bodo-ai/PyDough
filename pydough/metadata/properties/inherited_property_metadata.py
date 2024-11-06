@@ -4,10 +4,11 @@ TODO: add file-level docstring
 
 __all__ = ["InheritedPropertyMetadata"]
 
-from .property_metadata import PropertyMetadata
-from .compound_relationship_metadata import CompoundRelationshipMetadata
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import HasType, PyDoughMetadataException
+
+from .compound_relationship_metadata import CompoundRelationshipMetadata
+from .property_metadata import PropertyMetadata
 
 
 class InheritedPropertyMetadata(PropertyMetadata):

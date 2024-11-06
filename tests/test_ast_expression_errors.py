@@ -2,17 +2,18 @@
 TODO: add file-level docstring.
 """
 
-from pydough.pydough_ast import (
-    PyDoughASTException,
-    AstNodeBuilder,
-    pydough_operators as pydop,
-)
 import re
 
-
 import pytest
-
 from test_utils import AstNodeTestInfo, FunctionInfo, graph_fetcher
+
+from pydough.pydough_ast import (
+    AstNodeBuilder,
+    PyDoughASTException,
+)
+from pydough.pydough_ast import (
+    pydough_operators as pydop,
+)
 
 
 def test_binop_wrong_num_args(binary_operators: pydop.BinaryOperator):

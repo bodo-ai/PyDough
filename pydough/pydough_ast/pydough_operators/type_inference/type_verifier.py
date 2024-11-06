@@ -5,10 +5,10 @@ TODO: add file-level docstring
 __all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny"]
 
 from abc import ABC, abstractmethod
+from collections.abc import MutableSequence
 
-from typing import MutableSequence
-
-from pydough.pydough_ast import PyDoughAST, PyDoughASTException
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.errors import PyDoughASTException
 
 
 class TypeVerifier(ABC):

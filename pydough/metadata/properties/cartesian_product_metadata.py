@@ -4,10 +4,12 @@ TODO: add file-level docstring
 
 __all__ = ["CartesianProductMetadata"]
 
-from pydough.metadata.errors import HasPropertyWith, HasType, is_string, NoExtraKeys
-from typing import Set
+
 from pydough.metadata.collections import CollectionMetadata
-from . import ReversiblePropertyMetadata, PropertyMetadata
+from pydough.metadata.errors import HasPropertyWith, HasType, NoExtraKeys, is_string
+
+from .property_metadata import PropertyMetadata
+from .reversible_property_metadata import ReversiblePropertyMetadata
 
 
 class CartesianProductMetadata(ReversiblePropertyMetadata):
@@ -18,7 +20,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
 
     # Set of names of of fields that can be included in the JSON object
     # describing a cartesian product property.
-    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
+    allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "other_collection_name",
         "reverse_relationship_name",
     }

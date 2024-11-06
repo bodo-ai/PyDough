@@ -2,33 +2,34 @@
 TODO: add file-level docstring
 """
 
+from collections import defaultdict
+from collections.abc import MutableMapping, MutableSequence
+
 import pytest
-from pydough.metadata.abstract_metadata import AbstractMetadata
+from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
+
 from pydough.metadata import (
-    GraphMetadata,
     CollectionMetadata,
+    CompoundRelationshipMetadata,
+    GraphMetadata,
     PropertyMetadata,
+    SimpleJoinMetadata,
     SimpleTableMetadata,
     TableColumnMetadata,
-    SimpleJoinMetadata,
-    CompoundRelationshipMetadata,
 )
+from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.properties import (
-    SubcollectionRelationshipMetadata,
     InheritedPropertyMetadata,
+    SubcollectionRelationshipMetadata,
 )
-from typing import MutableSequence, MutableMapping, Set
-from collections import defaultdict
 from pydough.types import (
-    StringType,
-    Int8Type,
-    Int64Type,
     DateType,
     DecimalType,
+    Int8Type,
+    Int64Type,
     PyDoughType,
+    StringType,
 )
-
-from test_utils import graph_fetcher, noun_fetcher, map_over_dict_values
 
 
 def test_graph_structure(sample_graphs: GraphMetadata):
@@ -168,10 +169,10 @@ def test_get_sample_graph_nouns(
     graph: GraphMetadata = get_sample_graph(sample_graph_names)
     nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = graph.get_nouns()
     # Transform the nouns from metadata objects into path strings
-    processed_nouns: MutableMapping[str, Set[str]] = map_over_dict_values(
+    processed_nouns: MutableMapping[str, set[str]] = map_over_dict_values(
         nouns, lambda noun_values: {noun.path for noun in noun_values}
     )
-    answer: MutableMapping[str, Set[str]] = get_sample_graph_nouns(sample_graph_names)
+    answer: MutableMapping[str, set[str]] = get_sample_graph_nouns(sample_graph_names)
     assert (
         processed_nouns == answer
     ), f"Mismatch between names of nouns in {graph!r} versus expected values"

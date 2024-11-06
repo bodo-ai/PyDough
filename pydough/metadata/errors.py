@@ -24,8 +24,8 @@ __all__ = [
 ]
 
 
-from typing import MutableSequence, Set, Optional
 from abc import ABC, abstractmethod
+from collections.abc import MutableSequence
 
 
 class PyDoughMetadataException(Exception):
@@ -105,8 +105,8 @@ class NoExtraKeys(PyDoughPredicate):
     besides those that have been specified.
     """
 
-    def __init__(self, valid_keys: Set[str]):
-        self.valid_keys: Set[str] = valid_keys
+    def __init__(self, valid_keys: set[str]):
+        self.valid_keys: set[str] = valid_keys
 
     def accept(self, obj: object) -> bool:
         return isinstance(obj, dict) and set(obj) <= self.valid_keys
@@ -135,7 +135,7 @@ class ContainsField(PyDoughPredicate):
 class HasType(PyDoughPredicate):
     """Predicate class to check that an object has a certain type"""
 
-    def __init__(self, desired_type: type, type_name: Optional[str] = None):
+    def __init__(self, desired_type: type, type_name: str | None = None):
         self.desired_type: type = desired_type
         self.type_name: str = (
             self.desired_type.__name__ if type_name is None else type_name

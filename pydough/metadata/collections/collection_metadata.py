@@ -3,17 +3,17 @@ TODO: add file-level docstring
 """
 
 from abc import abstractmethod
-
-from typing import MutableSequence, MutableMapping, Set, Type
-from pydough.metadata.errors import (
-    PyDoughMetadataException,
-    is_valid_name,
-    is_string,
-    HasType,
-    HasPropertyWith,
-)
 from collections import defaultdict
+from collections.abc import MutableMapping, MutableSequence
+
 from pydough.metadata.abstract_metadata import AbstractMetadata
+from pydough.metadata.errors import (
+    HasPropertyWith,
+    HasType,
+    PyDoughMetadataException,
+    is_string,
+    is_valid_name,
+)
 from pydough.metadata.graphs import GraphMetadata
 
 
@@ -32,12 +32,12 @@ class CollectionMetadata(AbstractMetadata):
 
     # Set of names of of fields that can be included in the JSON
     # object describing a collection. Implementations should extend this.
-    allowed_fields: Set[str] = {"type", "properties"}
+    allowed_fields: set[str] = {"type", "properties"}
 
     def __init__(self, name: str, graph: GraphMetadata):
         from pydough.metadata.properties import (
-            PropertyMetadata,
             InheritedPropertyMetadata,
+            PropertyMetadata,
         )
 
         is_valid_name.verify(name, "name")
@@ -194,8 +194,8 @@ class CollectionMetadata(AbstractMetadata):
             to insert into the collection.
         """
         from pydough.metadata.properties import (
-            PropertyMetadata,
             InheritedPropertyMetadata,
+            PropertyMetadata,
         )
 
         # First, make sure that the candidate property is indeed a property
@@ -323,7 +323,7 @@ class CollectionMetadata(AbstractMetadata):
     @staticmethod
     def get_class_for_collection_type(
         name: str, error_name: str
-    ) -> Type["CollectionMetadata"]:
+    ) -> type["CollectionMetadata"]:
         """
         Fetches the PropertyType implementation class for a string
         representation of the collection type.
@@ -340,7 +340,7 @@ class CollectionMetadata(AbstractMetadata):
             `PyDoughMetadataException` if the string does not correspond
             to a known class type.
         """
-        from . import SimpleTableMetadata
+        from .simple_table_metadata import SimpleTableMetadata
 
         match name:
             case "simple_table":
@@ -416,7 +416,7 @@ class CollectionMetadata(AbstractMetadata):
 
         # Dispatch to a specific parsing procedure based on the type of
         # collection.
-        property_class: Type[CollectionMetadata] = (
+        property_class: type[CollectionMetadata] = (
             CollectionMetadata.get_class_for_collection_type(
                 collection_json["type"], error_name
             )

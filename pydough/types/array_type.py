@@ -4,10 +4,10 @@ TODO: add file-level docstring
 
 __all__ = ["ArrayType"]
 
-from .pydough_type import PyDoughType
-from .errors import PyDoughTypeException
 import re
-from typing import Optional
+
+from .errors import PyDoughTypeException
+from .pydough_type import PyDoughType
 
 
 class ArrayType(PyDoughType):
@@ -40,12 +40,12 @@ class ArrayType(PyDoughType):
     type_string_pattern: re.Pattern = re.compile(r"array\[(.+)\]")
 
     @staticmethod
-    def parse_from_string(type_string: str) -> Optional[PyDoughType]:
+    def parse_from_string(type_string: str) -> PyDoughType | None:
         from pydough.types import parse_type_from_string
 
         # Verify that the string matches the array type regex pattern, extracting
         # the element type string.
-        match: Optional[re.Match] = ArrayType.type_string_pattern.fullmatch(type_string)
+        match: re.Match | None = ArrayType.type_string_pattern.fullmatch(type_string)
         if match is None:
             return None
 

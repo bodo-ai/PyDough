@@ -2,11 +2,14 @@
 TODO: add file-level docstring.
 """
 
-from typing import MutableSequence
-from pydough.pydough_ast import PyDoughAST, AstNodeBuilder, pydough_operators as pydop
+from collections.abc import MutableSequence
+
 import pytest
-from pydough.types import Int64Type
 from test_utils import AstNodeTestInfo, LiteralInfo
+
+from pydough.pydough_ast import AstNodeBuilder, PyDoughAST
+from pydough.pydough_ast import pydough_operators as pydop
+from pydough.types import Int64Type
 
 
 @pytest.mark.parametrize(

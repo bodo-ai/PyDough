@@ -4,12 +4,13 @@ TODO: add file-level docstring
 
 __all__ = ["ExpressionFunctionCall"]
 
-from typing import MutableSequence, List
+from collections.abc import MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
-from . import PyDoughExpressionAST
 from pydough.types import PyDoughType
+
+from .expression_ast import PyDoughExpressionAST
 
 
 class ExpressionFunctionCall(PyDoughExpressionAST):
@@ -55,7 +56,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self.operator.requires_enclosing_parens(parent)
 
     def to_string(self, tree_form: bool = False) -> str:
-        arg_strings: List[str] = []
+        arg_strings: list[str] = []
         for arg in self.args:
             arg_string: str
             if isinstance(arg, PyDoughExpressionAST):

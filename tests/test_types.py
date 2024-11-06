@@ -2,11 +2,11 @@
 TODO: add file-level docstring.
 """
 
-from pydough.types import parse_type_from_string
+import pytest
 
 # Used so eval() has access to all the type classes
 from pydough.types import *  # noqa
-import pytest
+from pydough.types import parse_type_from_string
 
 
 @pytest.mark.parametrize(

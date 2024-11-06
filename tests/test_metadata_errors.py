@@ -2,12 +2,13 @@
 TODO: add file-level docstring
 """
 
-import pytest
 import re
-from pydough.metadata import PyDoughMetadataException, GraphMetadata, CollectionMetadata
-from pydough import parse_json_metadata_from_file
 
+import pytest
 from test_utils import graph_fetcher
+
+from pydough import parse_json_metadata_from_file
+from pydough.metadata import CollectionMetadata, GraphMetadata, PyDoughMetadataException
 
 
 def test_missing_collection(get_sample_graph: graph_fetcher):

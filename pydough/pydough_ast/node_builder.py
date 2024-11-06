@@ -4,40 +4,42 @@ TODO: add file-level docstring
 
 __all__ = ["AstNodeBuilder"]
 
+from collections.abc import MutableMapping, MutableSequence
+
 from pydough.metadata import (
-    GraphMetadata,
     CollectionMetadata,
+    GraphMetadata,
     PropertyMetadata,
-    TableColumnMetadata,
     PyDoughMetadataException,
+    TableColumnMetadata,
 )
-from typing import MutableMapping, MutableSequence
 from pydough.types import PyDoughType
+
 from .abstract_pydough_ast import PyDoughAST
-from .expressions import (
-    Literal,
-    ExpressionFunctionCall,
-    ColumnProperty,
-    Reference,
-    BackReferenceExpression,
-    ChildReference,
-)
-from .pydough_operators import (
-    PyDoughOperatorAST,
-    builtin_registered_operators,
-    PyDoughExpressionOperatorAST,
+from .collections import (
+    BackReferenceCollection,
+    Calc,
+    CollectionAccess,
+    GlobalContext,
+    PyDoughCollectionAST,
 )
 from .errors import PyDoughASTException
-from .collections import (
-    PyDoughCollectionAST,
-    Calc,
-    GlobalContext,
-    CollectionAccess,
-    BackReferenceCollection,
+from .expressions import (
+    BackReferenceExpression,
+    ChildReference,
+    ColumnProperty,
+    ExpressionFunctionCall,
+    Literal,
+    Reference,
+)
+from .pydough_operators import (
+    PyDoughExpressionOperatorAST,
+    PyDoughOperatorAST,
+    builtin_registered_operators,
 )
 
 
-class AstNodeBuilder(object):
+class AstNodeBuilder:
     """
     Class used in testing to build AST nodes
     """

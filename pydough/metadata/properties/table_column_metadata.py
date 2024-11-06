@@ -4,14 +4,19 @@ TODO: add file-level docstring
 
 __all__ = ["TableColumnMetadata"]
 
-from typing import Set
-from . import PropertyMetadata
-from .scalar_attribute_metadata import ScalarAttributeMetadata
-from pydough.types.errors import PyDoughTypeException
-from pydough.metadata.errors import PyDoughMetadataException
-from pydough.types import parse_type_from_string, PyDoughType
+
 from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import HasPropertyWith, NoExtraKeys, is_string
+from pydough.metadata.errors import (
+    HasPropertyWith,
+    NoExtraKeys,
+    PyDoughMetadataException,
+    is_string,
+)
+from pydough.types import PyDoughType, parse_type_from_string
+from pydough.types.errors import PyDoughTypeException
+
+from .property_metadata import PropertyMetadata
+from .scalar_attribute_metadata import ScalarAttributeMetadata
 
 
 class TableColumnMetadata(ScalarAttributeMetadata):
@@ -22,7 +27,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
 
     # Set of names of of fields that can be included in the JSON object
     # describing a table column property.
-    allowed_fields: Set[str] = PropertyMetadata.allowed_fields | {
+    allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "data_type",
         "column_name",
     }
