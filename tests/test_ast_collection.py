@@ -1128,6 +1128,40 @@ def test_collections_calc_terms(
 """,
             id="regions_nations_customers_order",
         ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
+                ),
+            )
+            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** OrderInfo([], (ReferenceInfo("region_name"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ",
+                    [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
+                ),
+            ),
+            "Regions.ORDER_BY(name.ASC(na_pos='last')).customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(acctbal > 1000)(region_name=BACK(1).name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ OrderBy[name.ASC(na_pos='last')]
+    ├─── SubCollection[customers]
+    ├─── OrderBy[key.ASC(na_pos='last')]
+    ├─── Where[acctbal > 1000]
+    ├─── Calc[region_name=BACK(1).name]
+    ├─── OrderBy[region_name.ASC(na_pos='last')]
+    └─── Where[region_name != 'ASIA']\
+""",
+            id="regions_customers_order_where_calc_order_where",
+        ),
     ],
 )
 def test_collections_to_string(
@@ -1201,6 +1235,60 @@ def test_collections_to_string(
             ** OrderInfo([], (ReferenceInfo("acctbal"), True, True)),
             ["acctbal.ASC(na_pos='last')"],
             id="regions_nations_customers_order",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** SubCollectionInfo("customers"),
+            None,
+            id="regions_nations_customers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
+                ),
+            )
+            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** OrderInfo([], (ReferenceInfo("region_name"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ",
+                    [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
+                ),
+            ),
+            ["region_name.ASC(na_pos='last')"],
+            id="regions_customers_order_where_calc_order_where",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
+                ),
+            )
+            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ",
+                    [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
+                ),
+            ),
+            ["key.ASC(na_pos='last')"],
+            id="regions_customers_order_where_calc_where",
         ),
     ],
 )
