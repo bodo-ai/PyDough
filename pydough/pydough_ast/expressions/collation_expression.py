@@ -60,3 +60,13 @@ class CollationExpression(PyDoughExpressionAST):
 
     def requires_enclosing_parens(self, parent: "PyDoughExpressionAST") -> bool:
         return False
+
+    def equals(self, other: object) -> bool:
+        if isinstance(other, CollationExpression):
+            return (
+                self.expr.equals(other.expr)
+                and self.asc == other.asc
+                and self.na_last == other.na_last
+            )
+        else:
+            return self.expr.equals(other)

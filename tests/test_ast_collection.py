@@ -11,6 +11,7 @@ from test_utils import (
     CollectionTestInfo,
     FunctionInfo,
     LiteralInfo,
+    OrderInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
@@ -1075,6 +1076,57 @@ def test_collections_calc_terms(
       └─── Calc[value=ps_availqty * retail_price]\
 """,
             id="globalcalc_b",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True)),
+            "Nations.ORDER_BY(name.ASC(na_pos='last'))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─── OrderBy[name.ASC(na_pos='last')]\
+""",
+            id="nations_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo(
+                [SubCollectionInfo("suppliers")],
+                (
+                    FunctionInfo("SUM", [ChildReferenceInfo("account_balance", 0)]),
+                    False,
+                    True,
+                ),
+                (ReferenceInfo("name"), True, True),
+            ),
+            "Nations.ORDER_BY(SUM(suppliers.account_balance).DESC(na_pos='last'), name.ASC(na_pos='last'))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─┬─ OrderBy[SUM($1.account_balance).DESC(na_pos='last'), name.ASC(na_pos='last')]
+    └─┬─ CalcSubCollection
+      └─── SubCollection[suppliers]\
+""",
+            id="nations_nested_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("acctbal"), True, True)),
+            "Regions.ORDER_BY(name.ASC(na_pos='last')).nations.ORDER_BY(key.ASC(na_pos='last')).customers.ORDER_BY(acctbal.ASC(na_pos='last'))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ OrderBy[name.ASC(na_pos='last')]
+    ├─── SubCollection[nations]
+    └─┬─ OrderBy[key.ASC(na_pos='last')]
+      ├─── SubCollection[customers]
+      └─── OrderBy[acctbal.ASC(na_pos='last')]\
+""",
+            id="regions_nations_customers_order",
         ),
     ],
 )

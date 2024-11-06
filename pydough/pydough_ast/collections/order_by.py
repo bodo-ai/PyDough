@@ -72,6 +72,10 @@ class OrderBy(ChildOperator):
     def all_terms(self) -> set[str]:
         return self.preceding_context.all_terms
 
+    @property
+    def ordering(self) -> list[CollationExpression]:
+        return self.collation
+
     def to_string(self) -> str:
         assert self.preceding_context is not None
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
@@ -79,7 +83,9 @@ class OrderBy(ChildOperator):
 
     @property
     def tree_item_string(self) -> str:
-        collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
+        collation_str: str = ", ".join(
+            [expr.to_string(True) for expr in self.collation]
+        )
         return f"OrderBy[{collation_str}]"
 
     def equals(self, other: object) -> bool:

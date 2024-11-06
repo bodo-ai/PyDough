@@ -28,7 +28,6 @@ class CalcChildCollection(CollectionAccess):
         super().__init__(
             collection_access.collection,
             collection_access.ancestor_context,
-            collection_access.preceding_context,
         )
         self._collection_access: CollectionAccess = collection_access
         self._is_last: bool = is_last

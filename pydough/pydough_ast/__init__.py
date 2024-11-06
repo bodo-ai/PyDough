@@ -17,12 +17,14 @@ __all__ = [
     "CalcChildCollection",
     "Where",
     "CollationExpression",
+    "OrderBy",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
 from .collections import (
     Calc,
     CalcChildCollection,
+    OrderBy,
     PyDoughCollectionAST,
     SubCollection,
     TableCollection,
