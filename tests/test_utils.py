@@ -498,7 +498,7 @@ class ChildOperatorInfo(CollectionTestInfo):
             ).build(builder, context)
             assert isinstance(child, PyDoughCollectionAST)
             children.append(child)
-        return []
+        return children
 
 
 class CalcInfo(ChildOperatorInfo):
@@ -534,7 +534,8 @@ class CalcInfo(ChildOperatorInfo):
         if context is None:
             context = builder.build_global_context()
         children: MutableSequence[PyDoughCollectionAST] = self.build_children(
-            builder, context
+            builder,
+            context,
         )
         raw_calc = builder.build_calc(context, children)
         assert isinstance(raw_calc, Calc)

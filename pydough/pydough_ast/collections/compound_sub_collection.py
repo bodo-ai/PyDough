@@ -38,8 +38,10 @@ class CompoundSubCollection(SubCollection):
     def clone_with_parent(
         self, new_ancestor: PyDoughCollectionAST
     ) -> "CompoundSubCollection":
-        assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
-        return CompoundSubCollection(self.subcollection_property, new_ancestor)
+        # TODO: add proper cloning protocol
+        # assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
+        # return CompoundSubCollection(self.subcollection_property, new_ancestor)
+        return self
 
     def populate_subcollection_chain(
         self,
