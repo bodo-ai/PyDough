@@ -11,11 +11,11 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
+from .child_operator import ChildOperator
 from .collection_ast import PyDoughCollectionAST
-from .collection_tree_form import CollectionTreeForm
 
 
-class Calc(PyDoughCollectionAST):
+class Calc(ChildOperator):
     """
     The AST node implementation class representing a CALC expression.
     """
@@ -25,8 +25,7 @@ class Calc(PyDoughCollectionAST):
         predecessor: PyDoughCollectionAST,
         children: MutableSequence[PyDoughCollectionAST],
     ):
-        self._predecessor: PyDoughCollectionAST = predecessor
-        self._children: MutableSequence[PyDoughCollectionAST] = children
+        super().__init__(predecessor, children)
         # Not initialized until with_terms is called
         self._calc_term_indices: MutableMapping[str, int] | None = None
         self._all_terms: MutableMapping[str, PyDoughAST] = {}
@@ -63,21 +62,11 @@ class Calc(PyDoughCollectionAST):
         # Include terms from the predecessor, with the terms from this CALC
         # added in (overwriting any preceding properties with the same name)
         self._all_terms = {}
-        preceding_context = self.preceding_context
-        assert preceding_context is not None
-        for name in preceding_context.all_terms:
-            self._all_terms[name] = preceding_context.get_term(name)
+        for name in self.propagated_properties:
+            self._all_terms[name] = self.propagated_properties[name]
         for name, property in terms:
             self._all_terms[name] = property
         return self
-
-    @property
-    def children(self) -> MutableSequence[PyDoughCollectionAST]:
-        """
-        The child collections accessible from the CALC used to derive
-        expressions in terms of a subcollection.
-        """
-        return self._children
 
     @property
     def calc_term_indices(
@@ -94,14 +83,6 @@ class Calc(PyDoughCollectionAST):
         return self._calc_term_indices
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
-        return self._predecessor.ancestor_context
-
-    @property
-    def preceding_context(self) -> PyDoughCollectionAST:
-        return self._predecessor
-
-    @property
     def calc_terms(self) -> set[str]:
         return set(self.calc_term_indices)
 
@@ -114,7 +95,7 @@ class Calc(PyDoughCollectionAST):
         return set(self._all_terms)
 
     def get_expression_position(self, expr_name: str) -> int:
-        if expr_name not in self.calc_term_indices:
+        if expr_name not in self.calc_terms:
             raise PyDoughASTException(f"Unrecognized CALC term: {expr_name!r}")
         return self.calc_term_indices[expr_name]
 
@@ -123,30 +104,32 @@ class Calc(PyDoughCollectionAST):
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
         return self._all_terms[term_name]
 
-    def to_string(self) -> str:
-        kwarg_strings: MutableSequence[str] = []
-        for name in self.calc_term_indices:
-            expr: PyDoughExpressionAST = self.get_expr(name)
-            kwarg_strings.append(f"{name}={expr.to_string()}")
-        return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
+    def calc_kwarg_strings(self, tree_form: bool) -> str:
+        """
+        Converts the terms of a CALC into a string in the form
+        `"x=1, y=phone_number, z=STARTSWITH(LOWER(name), 'a')"`
 
-    def to_tree_form(self) -> CollectionTreeForm:
-        predecessor: CollectionTreeForm = self.preceding_context.to_tree_form()
-        predecessor.has_successor = True
-        kwarg_strings: MutableSequence[str] = []
-        for name in self.calc_term_indices:
+        Args:
+            `tree_form` whether to convert the arguments to strings for a tree
+            form or not.
+
+        Returns:
+            The string representation of the arguments.
+        """
+        kwarg_strings: list[str] = []
+        for name in sorted(
+            self.calc_terms, key=lambda name: self.get_expression_position(name)
+        ):
             expr: PyDoughExpressionAST = self.get_expr(name)
-            kwarg_strings.append(f"{name}={expr.to_string(tree_form=True)}")
-        tree_form: CollectionTreeForm = CollectionTreeForm(
-            f"Calc[{', '.join(kwarg_strings)}]",
-            predecessor.depth,
-            predecessor=predecessor,
-        )
-        for child in self.children:
-            child_tree: CollectionTreeForm = child.to_tree_form()
-            tree_form.has_children = True
-            tree_form.nested_trees.append(child_tree)
-        return tree_form
+            kwarg_strings.append(f"{name}={expr.to_string(tree_form)}")
+        return ", ".join(kwarg_strings)
+
+    def to_string(self) -> str:
+        return f"{self.preceding_context.to_string()}({self.calc_kwarg_strings(False)})"
+
+    @property
+    def tree_item_string(self) -> str:
+        return f"Calc[{self.calc_kwarg_strings(True)}]"
 
     def equals(self, other: object) -> bool:
         if self._all_terms is None:
@@ -154,7 +137,7 @@ class Calc(PyDoughCollectionAST):
                 "Cannot invoke `equals` before calling `with_terms`"
             )
         return (
-            isinstance(other, Calc)
-            and self.preceding_context == other.preceding_context
+            super().equals(other)
+            and isinstance(other, Calc)
             and self._calc_term_indices == other._calc_term_indices
         )

@@ -35,6 +35,14 @@ class CompoundSubCollection(SubCollection):
         self._subcollection_chain: MutableSequence[SubCollection] = []
         self._inheritance_sources: MutableMapping[str, tuple[int, str]] = {}
 
+    def clone_with_parent(
+        self, new_ancestor: PyDoughCollectionAST
+    ) -> "CompoundSubCollection":
+        # TODO: add proper cloning protocol
+        # assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
+        # return CompoundSubCollection(self.subcollection_property, new_ancestor)
+        return self
+
     def populate_subcollection_chain(
         self,
         source: PyDoughCollectionAST,

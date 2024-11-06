@@ -19,13 +19,13 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
 
     def __init__(
         self,
-        compound: PyDoughCollectionAST,
+        compound: CollectionAccess,
         ancestor: PyDoughCollectionAST,
         alias: str,
         term_name: str,
         back_levels: int,
     ):
-        self._compound: PyDoughCollectionAST = compound
+        self._compound: CollectionAccess = compound
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._alias: str = alias
@@ -36,8 +36,13 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
             self._collection_access.collection, compound
         )
 
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        result = self.compound.clone_with_parent(new_ancestor).get_term(self.alias)
+        assert isinstance(result, CollectionAccess)
+        return result
+
     @property
-    def compound(self) -> PyDoughCollectionAST:
+    def compound(self) -> CollectionAccess:
         """
         The compound collection containing the hidden backreference.
         """

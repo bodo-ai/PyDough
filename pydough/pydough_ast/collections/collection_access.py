@@ -5,6 +5,7 @@ TODO: add file-level docstring
 __all__ = ["CollectionAccess"]
 
 
+from abc import abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata import (
@@ -43,6 +44,21 @@ class CollectionAccess(PyDoughCollectionAST):
         # An internal property just used to keep track of how many calc terms
         # have been added.
         self._calc_counter: int = 0
+
+    @abstractmethod
+    def clone_with_parent(
+        self, new_ancestor: PyDoughCollectionAST
+    ) -> "CollectionAccess":
+        """
+        Copies `self` but with a new ancestor node that presumably has the
+        original ancestor in its predecessor chain.
+
+        Args:
+            `new_ancestor`: the node to use as the new parent of the clone.
+
+        Returns:
+            The cloned version of `self`.
+        """
 
     @property
     def collection(self) -> CollectionMetadata:

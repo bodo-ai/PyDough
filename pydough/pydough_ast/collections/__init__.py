@@ -11,6 +11,7 @@ __all__ = [
     "SubCollection",
     "CalcChildCollection",
     "BackReferenceCollection",
+    "Where",
 ]
 
 from .back_reference_collection import BackReferenceCollection

@@ -40,10 +40,13 @@ class BackReferenceCollection(CollectionAccess):
                     f"Cannot reference back {msg} above {parent!r}"
                 )
             ancestor = ancestor.ancestor_context
-        collection_access = ancestor.get_term(term_name)
-        assert isinstance(collection_access, CollectionAccess)
-        self._collection_access = collection_access
+        access = ancestor.get_term(term_name)
+        assert isinstance(access, CollectionAccess)
+        self._collection_access: CollectionAccess = access
         super().__init__(self._collection_access.collection, ancestor)
+
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        return BackReferenceCollection(new_ancestor, self.term_name, self.back_levels)
 
     @property
     def back_levels(self) -> int:
