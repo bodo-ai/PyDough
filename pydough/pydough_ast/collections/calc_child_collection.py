@@ -54,7 +54,7 @@ class CalcChildCollection(CollectionAccess):
         if isinstance(self.collection_access, HiddenBackReferenceCollection):
             return self.collection_access.alias
         elif isinstance(self.collection_access, BackReferenceCollection):
-            return self.collection_access.term_name
+            return self.collection_access.to_string()
         elif isinstance(self.collection_access, TableCollection):
             return self.collection_access.collection.name
         elif isinstance(self.collection_access, SubCollection):
@@ -71,14 +71,10 @@ class CalcChildCollection(CollectionAccess):
             has_successor=not self.is_last,
         )
         item_str: str
-        if isinstance(
-            self.collection_access, SubCollection | HiddenBackReferenceCollection
-        ):
-            item_str = f"SubCollection[{self.to_string()}]"
-        elif isinstance(self.collection_access, BackReferenceCollection):
-            item_str = f"SubCollection[{self.collection_access.to_string()}]"
-        else:
+        if isinstance(self.collection_access, TableCollection):
             item_str = f"TableCollection[{self.to_string()}]"
+        else:
+            item_str = f"SubCollection[{self.to_string()}]"
         return CollectionTreeForm(
             item_str,
             predecessor.depth + 1,
