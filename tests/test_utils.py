@@ -30,8 +30,10 @@ from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
     CalcChildCollection,
+    ChildReference,
     CollationExpression,
     OrderBy,
+    PartitionBy,
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
@@ -631,3 +633,49 @@ class OrderInfo(ChildOperatorInfo):
             assert isinstance(expr, PyDoughExpressionAST)
             collation.append(CollationExpression(expr, asc, na_last))
         return raw_order.with_collation(collation)
+
+
+class PartitionInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a PARTITION BY clause.
+    Contains the following fields:
+    - `child_name`: the name used to access the child.
+    - `keys`: a list of test info for the keys to partition on.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+        child: CollectionTestInfo,
+        child_name: str,
+        keys: list[AstNodeTestInfo],
+    ):
+        super().__init__([child])
+        self.child_name: str = child_name
+        self.keys: list[AstNodeTestInfo] = keys
+
+    def local_string(self) -> str:
+        key_strings_tup: tuple = tuple([key.to_string() for key in self.keys])
+        return f"PartitionBy[{self.child_strings()}name={self.child_name!r}, by={key_strings_tup}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        assert len(children) == 1
+        raw_partition = builder.build_partition(context, children[0], self.child_name)
+        assert isinstance(raw_partition, PartitionBy)
+        keys: list[ChildReference] = []
+        for info in self.keys:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, ChildReference)
+            keys.append(expr)
+        return raw_partition.with_keys(keys)

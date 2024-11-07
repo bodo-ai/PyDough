@@ -18,6 +18,8 @@ __all__ = [
     "Where",
     "CollationExpression",
     "OrderBy",
+    "PartitionBy",
+    "ChildReference",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -25,6 +27,7 @@ from .collections import (
     Calc,
     CalcChildCollection,
     OrderBy,
+    PartitionBy,
     PyDoughCollectionAST,
     SubCollection,
     TableCollection,
@@ -32,6 +35,7 @@ from .collections import (
 )
 from .errors import PyDoughASTException
 from .expressions import (
+    ChildReference,
     CollationExpression,
     ColumnProperty,
     ExpressionFunctionCall,

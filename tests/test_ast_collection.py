@@ -12,6 +12,7 @@ from test_utils import (
     FunctionInfo,
     LiteralInfo,
     OrderInfo,
+    PartitionInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
@@ -1161,6 +1162,21 @@ def test_collections_calc_terms(
     └─── Where[region_name != 'ASIA']\
 """,
             id="regions_customers_order_where_calc_order_where",
+        ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts"), "parts", [ChildReferenceInfo("type", 0)]
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                type=ReferenceInfo("type"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            ),
+            "",
+            "",
+            id="partition_part",
         ),
     ],
 )

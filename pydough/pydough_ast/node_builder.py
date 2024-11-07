@@ -22,6 +22,7 @@ from .collections import (
     CollectionAccess,
     GlobalContext,
     OrderBy,
+    PartitionBy,
     PyDoughCollectionAST,
     Where,
 )
@@ -282,6 +283,26 @@ class AstNodeBuilder:
             The newly created PyDough ORDERBY instance.
         """
         return OrderBy(preceding_context, children)
+
+    def build_partition(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        child: PyDoughCollectionAST,
+        child_name: str,
+    ) -> PartitionBy:
+        """
+        Creates a PARTITION BY instance, but `with_keys` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `child`: the child that is the input to the PARTITION BY term.
+            `child_name`: the name that is used to access `child`.
+
+        Returns:
+            The newly created PyDough PARTITION BY instance.
+        """
+        return PartitionBy(preceding_context, child, child_name)
 
     def build_back_reference_collection(
         self,

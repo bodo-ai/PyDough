@@ -13,6 +13,7 @@ __all__ = [
     "BackReferenceCollection",
     "Where",
     "OrderBy",
+    "PartitionBy",
 ]
 
 from .back_reference_collection import BackReferenceCollection
@@ -22,6 +23,7 @@ from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .global_context import GlobalContext
 from .order_by import OrderBy
+from .partition_by import PartitionBy
 from .sub_collection import SubCollection
 from .table_collection import TableCollection
 from .where import Where
