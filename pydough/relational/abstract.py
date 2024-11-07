@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 from typing import Any, NamedTuple
 
-from sqlglot.expression import Expression
+from sqlglot.expressions import Expression
 
-from pydough.pydough_ast.pydough_operators.operator_ast import PyDoughOperatorAST
+from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
 
 class Relational(ABC):
@@ -39,7 +39,7 @@ class Relational(ABC):
         but each entry should be strongly defined. Here are
         traits that should always be available:
 
-        - orderings: MutableSequence[PyDoughOperatorAST]
+        - orderings: MutableSequence[PyDoughExpressionAST]
 
         Returns:
             MutableMapping[str, Any]: The traits of the relational expression.
@@ -48,13 +48,13 @@ class Relational(ABC):
 
     @property
     @abstractmethod
-    def orderings(self) -> MutableSequence["PyDoughOperatorAST"]:
+    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
         """
-        Returns the PyDoughOperatorAST that the relational expression is ordered by.
-        Each PyDoughOperatorAST is a result computed relative to the given set of columns.
+        Returns the PyDoughExpressionAST that the relational expression is ordered by.
+        Each PyDoughExpressionAST is a result computed relative to the given set of columns.
 
         Returns:
-            MutableSequence[PyDoughOperatorAST]: The PyDoughOperatorAST that the relational expression is ordered by,
+            MutableSequence[PyDoughExpressionAST]: The PyDoughExpressionAST that the relational expression is ordered by,
             possibly empty.
         """
 
@@ -124,4 +124,4 @@ class Column(NamedTuple):
     """
 
     name: str
-    expr: "PyDoughOperatorAST"
+    expr: "PyDoughExpressionAST"
