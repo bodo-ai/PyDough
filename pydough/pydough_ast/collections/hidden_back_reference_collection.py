@@ -75,8 +75,12 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         """
         return self._alias
 
+    @property
+    def standalone_string(self) -> str:
+        return self.alias
+
     def to_string(self) -> str:
-        return f"{self.context.to_string()}.{self.alias}"
+        return f"{self.context.to_string()}.{self.standalone_string}"
 
     def to_tree_form(self) -> CollectionTreeForm:
         assert self.ancestor_context is not None

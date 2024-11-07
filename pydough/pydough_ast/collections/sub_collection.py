@@ -37,8 +37,12 @@ class SubCollection(CollectionAccess):
         """
         return self._subcollection_property
 
+    @property
+    def standalone_string(self) -> str:
+        return self.subcollection_property.name
+
     def to_string(self) -> str:
-        return f"{self.ancestor_context.to_string()}.{self.subcollection_property.name}"
+        return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 
     def to_tree_form(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
@@ -48,6 +52,10 @@ class SubCollection(CollectionAccess):
             predecessor.depth + 1,
             predecessor=predecessor,
         )
+
+    @property
+    def tree_item_string(self) -> str:
+        return f"SubCollection[{self.standalone_string}]"
 
     def equals(self, other: object) -> bool:
         return (

@@ -24,8 +24,16 @@ class TableCollection(CollectionAccess):
     def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
         return TableCollection(self.collection, new_ancestor)
 
-    def to_string(self) -> str:
+    @property
+    def standalone_string(self) -> str:
         return self.collection.name
+
+    def to_string(self) -> str:
+        return self.standalone_string
+
+    @property
+    def tree_item_string(self) -> str:
+        return f"TableCollection[{self.standalone_string}]"
 
     def to_tree_form(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()

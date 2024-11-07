@@ -16,6 +16,7 @@ from pydough.pydough_ast.expressions import (
 
 from .child_operator import ChildOperator
 from .collection_ast import PyDoughCollectionAST
+from .partition_child import PartitionChild
 
 
 class PartitionBy(ChildOperator):
@@ -109,13 +110,17 @@ class PartitionBy(ChildOperator):
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
-    def to_string(self) -> str:
+    @property
+    def standalone_string(self) -> str:
         keys_str: str
         if len(self.keys) == 1:
             keys_str = self.keys[0].term_name
         else:
             keys_str = str(tuple([expr.term_name for expr in self.keys]))
         return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
+
+    def to_string(self) -> str:
+        return self.standalone_string
 
     @property
     def tree_item_string(self) -> str:
@@ -136,7 +141,7 @@ class PartitionBy(ChildOperator):
             assert isinstance(term, ChildReference)
             return term
         elif term_name == self.child_name:
-            return self.child
+            return PartitionChild(self.child, self.child_name)
         else:
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
 

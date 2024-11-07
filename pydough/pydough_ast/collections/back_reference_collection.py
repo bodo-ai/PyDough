@@ -67,8 +67,16 @@ class BackReferenceCollection(CollectionAccess):
         """
         return self._collection_access
 
-    def to_string(self) -> str:
+    @property
+    def standalone_string(self) -> str:
         return f"BACK({self.back_levels}).{self.term_name}"
+
+    def to_string(self) -> str:
+        return self.standalone_string
+
+    @property
+    def tree_item_string(self) -> str:
+        return f"SubCollection[{self.standalone_string}]"
 
     def to_tree_form(self) -> CollectionTreeForm:
         raise NotImplementedError

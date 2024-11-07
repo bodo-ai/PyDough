@@ -1176,7 +1176,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceInfo("retail_price", 0)]
                 ),
             ),
-            "Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(Parts.retail_price))",
+            "Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price))",
             """\
 ┌─── TPCH
 ├─┬─ Partition[name='parts', by=container]
@@ -1184,13 +1184,12 @@ def test_collections_calc_terms(
 │   └─── TableCollection[Parts]
 └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
   └─┬─ AccessChild
-    └─── SubCollection[parts]\
-  """,
+    └─── PartitionChild[parts]\
+""",
             id="partition_part",
         ),
     ],
 )
-# python -c "print('┌─── TPCH\n├─┬─ Partition[name=\'parts\', by=container]\n  └─┬─ AccessChild\n  │ └─── TableCollection[Parts]\n└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]\n  └─┬─ AccessChild\n    └─── SubCollection[Parts]')"
 def test_collections_to_string(
     calc_pipeline: CollectionTestInfo,
     expected_string: str,
