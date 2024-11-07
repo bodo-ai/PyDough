@@ -110,13 +110,21 @@ class PartitionBy(ChildOperator):
         return None
 
     def to_string(self) -> str:
-        keys_str_tup: tuple = tuple([expr.to_string() for expr in self.keys])
-        return f"PARTITION({self.child.to_string()}, name={self.child_name!r}, by={keys_str_tup})"
+        keys_str: str
+        if len(self.keys) == 1:
+            keys_str = self.keys[0].term_name
+        else:
+            keys_str = str(tuple([expr.term_name for expr in self.keys]))
+        return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
 
     @property
     def tree_item_string(self) -> str:
-        keys_str_tup: tuple = tuple([expr.to_string() for expr in self.keys])
-        return f"PARTITION[name={self.child_name!r}, by={keys_str_tup}]"
+        keys_str: str
+        if len(self.keys) == 1:
+            keys_str = self.keys[0].term_name
+        else:
+            keys_str = str(tuple([expr.term_name for expr in self.keys]))
+        return f"Partition[name={self.child_name!r}, by={keys_str}]"
 
     def get_expression_position(self, expr_name: str) -> int:
         return self.preceding_context.get_expression_position(expr_name)
@@ -128,6 +136,7 @@ class PartitionBy(ChildOperator):
             assert isinstance(term, ChildReference)
             return term
         elif term_name == self.child_name:
+            breakpoint()
             return self.child
         else:
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")

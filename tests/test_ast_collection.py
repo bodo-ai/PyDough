@@ -1165,17 +1165,27 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             PartitionInfo(
-                TableCollectionInfo("Parts"), "parts", [ChildReferenceInfo("type", 0)]
+                TableCollectionInfo("Parts"),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
             )
             ** CalcInfo(
                 [SubCollectionInfo("parts")],
-                type=ReferenceInfo("type"),
+                container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceInfo("retail_price", 0)]
                 ),
             ),
-            "",
-            "",
+            "Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(Parts.retail_price))",
+            """\
+┌─── TPCH
+├─┬─ Partition[name='parts', by=container]
+│ └─┬─ CalcSubCollection
+│   └─── TableCollection[Parts]
+└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+  └─┬─ CalcSubCollection
+    └─── SubCollection[parts]\
+  """,
             id="partition_part",
         ),
     ],

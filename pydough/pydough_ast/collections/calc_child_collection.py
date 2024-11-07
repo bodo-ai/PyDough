@@ -54,7 +54,9 @@ class CalcChildCollection(CollectionAccess):
         # of a CALC node.
         if isinstance(self.collection_access, HiddenBackReferenceCollection):
             return self.collection_access.alias
-        elif isinstance(self.collection_access, BackReferenceCollection):
+        elif isinstance(
+            self.collection_access, (BackReferenceCollection, CalcChildCollection)
+        ):
             return self.collection_access.to_string()
         elif isinstance(self.collection_access, TableCollection):
             return self.collection_access.collection.name

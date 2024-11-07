@@ -499,7 +499,8 @@ class ChildOperatorInfo(CollectionTestInfo):
         children: MutableSequence[PyDoughCollectionAST] = []
         for idx, child_info in enumerate(self.children_info):
             child = CalcChildCollectionInfo(
-                child_info, idx == len(self.children_info) - 1
+                child_info,
+                idx == len(self.children_info) - 1 and self.successor is None,
             ).build(builder, context)
             assert isinstance(child, PyDoughCollectionAST)
             children.append(child)
