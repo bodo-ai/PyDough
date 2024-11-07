@@ -151,13 +151,13 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
 ──┬─ TPCH
   ├─── TableCollection[Regions]
   └─┬─ Calc[region_name=name, intra_ratio=SUM($1.adj_value) / SUM($1.value)]
-    └─┬─ CalcSubCollection
+    └─┬─ AccessChild
       └─┬─ SubCollection[suppliers]
         └─┬─ SubCollection[parts_supplied]
           ├─── SubCollection[ps_lines]
           ├─── Where[ship_mode == 'AIR']
           └─┬─ Calc[value=BACK(1).retail_price * quantity, adj_value=BACK(1).retail_price * (quantity * IFF(BACK(3).name == $1.name, 1, 0))]
-            └─┬─ CalcSubCollection
+            └─┬─ AccessChild
               └─┬─ SubCollection[order]
                 └─┬─ SubCollection[customer]
                   └─── SubCollection[region]\
@@ -725,9 +725,9 @@ def test_collections_calc_terms(
             """\
 ┌─── TPCH
 └─┬─ Calc[n_balance=SUM($1.account_balance), t_value=SUM($2.value)]
-  ├─┬─ CalcSubCollection
+  ├─┬─ AccessChild
   │ └─── TableCollection[Suppliers]
-  └─┬─ CalcSubCollection
+  └─┬─ AccessChild
     └─┬─ TableCollection[Parts]
       ├─── SubCollection[lines]
       └─── Calc[value=ps_availqty * tax]\
@@ -875,7 +875,7 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   ├─── TableCollection[Nations]
   └─┬─ Calc[nation_name=name, total_supplier_balances=SUM($1.account_balance)]
-    └─┬─ CalcSubCollection
+    └─┬─ AccessChild
       └─── SubCollection[suppliers]\
 """,
             id="nations_childcalc_suppliers",
@@ -922,7 +922,7 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
   └─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.retail_price - 1.0)]
-    └─┬─ CalcSubCollection
+    └─┬─ AccessChild
       └─── SubCollection[parts_supplied]\
 """,
             id="suppliers_childcalc_parts_a",
@@ -953,7 +953,7 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
   └─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.adj_retail_price)]
-    └─┬─ CalcSubCollection
+    └─┬─ AccessChild
       ├─── SubCollection[parts_supplied]
       └─── Calc[adj_retail_price=retail_price - 1.0]\
 """,
@@ -982,9 +982,9 @@ def test_collections_calc_terms(
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
     └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=$1.quantity / ps_availqty]
-      ├─┬─ CalcSubCollection
+      ├─┬─ AccessChild
       │ └─── SubCollection[ps_lines]
-      └─┬─ CalcSubCollection
+      └─┬─ AccessChild
         ├─── SubCollection[BACK(1).nation]
         └─── Calc[nation_name=name]\
 """,
@@ -1019,10 +1019,10 @@ def test_collections_calc_terms(
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
     └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=$1.ratio]
-      ├─┬─ CalcSubCollection
+      ├─┬─ AccessChild
       │ ├─── SubCollection[ps_lines]
       │ └─── Calc[ratio=quantity / BACK(1).ps_availqty]
-      └─┬─ CalcSubCollection
+      └─┬─ AccessChild
         └─── SubCollection[BACK(1).nation]\
 """,
             id="suppliers_parts_childcalc_b",
@@ -1040,7 +1040,7 @@ def test_collections_calc_terms(
             """\
 ┌─── TPCH
 └─┬─ Calc[total_balance=SUM($1.acctbal)]
-  └─┬─ CalcSubCollection
+  └─┬─ AccessChild
     └─── TableCollection[Customers]\
 """,
             id="globalcalc_a",
@@ -1069,9 +1069,9 @@ def test_collections_calc_terms(
             """\
 ┌─── TPCH
 └─┬─ Calc[total_demand=SUM($1.acctbal), total_supply=SUM($2.value)]
-  ├─┬─ CalcSubCollection
+  ├─┬─ AccessChild
   │ └─── TableCollection[Customers]
-  └─┬─ CalcSubCollection
+  └─┬─ AccessChild
     └─┬─ TableCollection[Suppliers]
       ├─── SubCollection[parts_supplied]
       └─── Calc[value=ps_availqty * retail_price]\
@@ -1105,7 +1105,7 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   ├─── TableCollection[Nations]
   └─┬─ OrderBy[SUM($1.account_balance).DESC(na_pos='last'), name.ASC(na_pos='last')]
-    └─┬─ CalcSubCollection
+    └─┬─ AccessChild
       └─── SubCollection[suppliers]\
 """,
             id="nations_nested_ordering",
@@ -1180,10 +1180,10 @@ def test_collections_calc_terms(
             """\
 ┌─── TPCH
 ├─┬─ Partition[name='parts', by=container]
-│ └─┬─ CalcSubCollection
+│ └─┬─ AccessChild
 │   └─── TableCollection[Parts]
 └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
-  └─┬─ CalcSubCollection
+  └─┬─ AccessChild
     └─── SubCollection[parts]\
   """,
             id="partition_part",

@@ -14,7 +14,7 @@ __all__ = [
     "TableCollection",
     "SubCollection",
     "Calc",
-    "CalcChildCollection",
+    "ChildOperatorChildAccess",
     "Where",
     "CollationExpression",
     "OrderBy",
@@ -25,7 +25,7 @@ __all__ = [
 from .abstract_pydough_ast import PyDoughAST
 from .collections import (
     Calc,
-    CalcChildCollection,
+    ChildOperatorChildAccess,
     OrderBy,
     PartitionBy,
     PyDoughCollectionAST,

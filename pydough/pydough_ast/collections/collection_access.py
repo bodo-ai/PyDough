@@ -5,7 +5,6 @@ TODO: add file-level docstring
 __all__ = ["CollectionAccess"]
 
 
-from abc import abstractmethod
 from functools import cache
 
 from pydough.metadata import (
@@ -17,12 +16,13 @@ from pydough.metadata import (
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
-from pydough.pydough_ast.expressions import CollationExpression, ColumnProperty
+from pydough.pydough_ast.expressions import ColumnProperty
 
+from .child_access import ChildAccess
 from .collection_ast import PyDoughCollectionAST
 
 
-class CollectionAccess(PyDoughCollectionAST):
+class CollectionAccess(ChildAccess):
     """
     The AST node implementation class representing a table collection accessed
     either directly or as a subcollection of another collection.
@@ -33,8 +33,8 @@ class CollectionAccess(PyDoughCollectionAST):
         collection: CollectionMetadata,
         ancestor: PyDoughCollectionAST,
     ):
+        super().__init__(ancestor)
         self._collection: CollectionMetadata = collection
-        self._ancestor: PyDoughCollectionAST = ancestor
         self._all_property_names: set[str] = set()
         self._calc_property_names: set[str] = set()
         self._calc_property_order: dict[str, int] = {}
@@ -51,21 +51,6 @@ class CollectionAccess(PyDoughCollectionAST):
                     self._calc_property_order
                 )
 
-    @abstractmethod
-    def clone_with_parent(
-        self, new_ancestor: PyDoughCollectionAST
-    ) -> "CollectionAccess":
-        """
-        Copies `self` but with a new ancestor node that presumably has the
-        original ancestor in its predecessor chain.
-
-        Args:
-            `new_ancestor`: the node to use as the new parent of the clone.
-
-        Returns:
-            The cloned version of `self`.
-        """
-
     @property
     def collection(self) -> CollectionMetadata:
         """
@@ -75,24 +60,12 @@ class CollectionAccess(PyDoughCollectionAST):
         return self._collection
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST:
-        return self._ancestor
-
-    @property
-    def preceding_context(self) -> PyDoughCollectionAST | None:
-        return None
-
-    @property
     def calc_terms(self) -> set[str]:
         return self._calc_property_names
 
     @property
     def all_terms(self) -> set[str]:
         return self._all_property_names
-
-    @property
-    def ordering(self) -> list[CollationExpression] | None:
-        return None
 
     def get_expression_position(self, expr_name: str) -> int:
         if expr_name not in self.calc_terms:
@@ -124,5 +97,7 @@ class CollectionAccess(PyDoughCollectionAST):
 
     def equals(self, other: object) -> bool:
         return (
-            isinstance(other, CollectionAccess) and self.collection == other.collection
+            super().equals(other)
+            and isinstance(other, CollectionAccess)
+            and self.collection == other.collection
         )

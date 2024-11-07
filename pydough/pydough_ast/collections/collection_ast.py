@@ -173,10 +173,10 @@ class PyDoughCollectionAST(PyDoughAST):
             ├─── SubCollection[nations]
             ├─── Where[name != 'USA']
             ├─┬─ Calc[a=[BACK(1).name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
-            │ ├─┬─ CalcSubCollection
+            │ ├─┬─ AccessChild
             │ │ ├─ SubCollection[customers]
             │ │ └─── Where[acctbal > 0]
-            │ └─┬─ CalcSubCollection
+            │ └─┬─ AccessChild
             │   └─┬─ SubCollection[suppliers]
             │     ├─── Where[STARTSWITH(phone, '415')]
             │     └─┬─ SubCollection[supply_records]

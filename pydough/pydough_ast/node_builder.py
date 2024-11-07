@@ -19,7 +19,7 @@ from .abstract_pydough_ast import PyDoughAST
 from .collections import (
     BackReferenceCollection,
     Calc,
-    CollectionAccess,
+    ChildAccess,
     GlobalContext,
     OrderBy,
     PartitionBy,
@@ -208,26 +208,26 @@ class AstNodeBuilder:
         """
         return GlobalContext(self.graph)
 
-    def build_collection_access(
+    def build_child_access(
         self, name: str, preceding_context: PyDoughCollectionAST
-    ) -> CollectionAccess:
+    ) -> ChildAccess:
         """
-        Creates a new collection access AST node.
+        Creates a new child access AST node.
 
         Args:
             `name`: the name of the collection being referenced.
             `preceding_context`: the collection node from which the
-            collection access is being fetched.
+            child access is being fetched.
 
         Returns:
-            The newly created PyDough CollectionAccess.
+            The newly created PyDough ChildAccess.
 
         Raises:
             `PyDoughMetadataException`: if `name` does not refer to a
             collection that `preceding_context` has access to.
         """
         term = preceding_context.get_collection(name)
-        assert isinstance(term, CollectionAccess)
+        assert isinstance(term, ChildAccess)
         return term
 
     def build_calc(
