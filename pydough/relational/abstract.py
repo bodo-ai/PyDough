@@ -1,34 +1,69 @@
 """
-TODO: Add file description.
+This module contains the abstract base classes for the relational
+representation. This roughly maps to a Relational Algebra representation
+but is not exact because it needs to maintain PyDough traits that define
+ordering and other properties of the relational expression.
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import MutableMapping, MutableSequence
+from typing import Any, NamedTuple
+
+from pydough.pydough_ast.pydough_operators.operator_ast import PyDoughOperatorAST
 
 
 class Relational(ABC):
     """
-    TODO: Add docstring.
+    The base class for any relational node. This interface defines the basic
+    structure of all relational nodes in the PyDough system.
     """
 
     @property
     @abstractmethod
-    def inputs(self):
+    def inputs(self) -> MutableSequence["Relational"]:
         """
-        TODO: Add docstring + type annotations.
+        Returns any inputs to the current relational expression.
+
+        Returns:
+            MutableSequence["Relational"]: The list of inputs, each of which must
+            be a relational expression.
+        """
+
+    @property
+    def traits(self) -> MutableMapping[str, Any]:
+        """
+        Return the traits of the relational expression.
+        The traits in general may have a variable schema,
+        but each entry should be strongly defined. Here are
+        traits that should always be available:
+
+        - orderings: MutableSequence[PyDoughOperatorAST]
+
+        Returns:
+            MutableMapping[str, Any]: The traits of the relational expression.
+        """
+        return {"orderings": self.orderings}
+
+    @property
+    @abstractmethod
+    def orderings(self) -> MutableSequence["PyDoughOperatorAST"]:
+        """
+        Returns the PyDoughOperatorAST that the relational expression is ordered by.
+        Each PyDoughOperatorAST is a result computed relative to the given set of columns.
+
+        Returns:
+            MutableSequence[PyDoughOperatorAST]: The PyDoughOperatorAST that the relational expression is ordered by,
+            possibly empty.
         """
 
     @property
     @abstractmethod
-    def traits(self):
+    def columns(self) -> MutableSequence["Column"]:
         """
-        TODO: Add docstring + type annotations.
-        """
+        Returns the columns of the relational expression.
 
-    @property
-    @abstractmethod
-    def columns(self):
-        """
-        TODO: Add docstring + type annotations.
+        Returns:
+            MutableSequence[Column]: The columns of the relational expression.
         """
 
     @abstractmethod
@@ -38,31 +73,50 @@ class Relational(ABC):
         """
 
     @abstractmethod
-    def to_string(self):
+    def to_string(self) -> str:
         """
-        TODO: Add docstring + type annotations.
+        Convert the relational expression to a string.
+
+        TODO: Refactor this API to include some form of string
+        builder so we can draw lines between children properly.
+
+        Returns:
+            str: A string representation of the relational tree
+            with this node at the root.
         """
 
     @abstractmethod
-    def can_merge(other: "Relational") -> bool:
+    def can_merge(self, other: "Relational") -> bool:
         """
-        TODO: Add docstring + type annotations.
+        Determine if two relational nodes can be merged together.
+
+        Args:
+            other (Relational): The other relational node to merge with.
+
+        Returns:
+            bool: Can the two relational nodes be merged together.
         """
 
     @abstractmethod
     def merge(self, other: "Relational") -> "Relational":
         """
-        TODO: Add docstring + type annotations.
+        Merge two relational nodes together to produce one output
+        relational node. This requires can_merge to return True.
+
+        Args:
+            other (Relational): The other relational node to merge with.
+
+        Returns:
+            Relational: A new relational node that is the result of merging
+            the two input relational nodes together and removing any redundant
+            components.
         """
 
 
-class Expression(ABC):
+class Column(NamedTuple):
     """
-    TODO: Add docstring.
+    An column expression consisting of a name and an expression.
     """
 
-    @abstractmethod
-    def to_string(self):
-        """
-        TODO: Add docstring + type annotations.
-        """
+    name: str
+    expr: "PyDoughOperatorAST"
