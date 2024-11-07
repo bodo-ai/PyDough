@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 from typing import Any, NamedTuple
 
+from sqlglot.expression import Expression
+
 from pydough.pydough_ast.pydough_operators.operator_ast import PyDoughOperatorAST
 
 
@@ -67,9 +69,12 @@ class Relational(ABC):
         """
 
     @abstractmethod
-    def to_sql_glot(self):
-        """
-        TODO: Add docstring + type annotations.
+    def to_sqlglot(self) -> "Expression":
+        """Translate the given relational expression
+        and its children to a SQLGlot expression.
+
+        Returns:
+            Expression: A SqlGlot expression representing the relational expression.
         """
 
     @abstractmethod
