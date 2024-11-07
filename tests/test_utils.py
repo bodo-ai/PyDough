@@ -29,6 +29,7 @@ from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
+    ChildAccess,
     ChildOperatorChildAccess,
     ChildReference,
     CollationExpression,
@@ -39,7 +40,6 @@ from pydough.pydough_ast import (
     PyDoughExpressionAST,
     Where,
 )
-from pydough.pydough_ast.collections import CollectionAccess
 from pydough.types import PyDoughType
 
 # Type alias for a function that takes in a string and generates metadata
@@ -420,7 +420,7 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
         access = self.child_info.local_build(builder, context, children_contexts)
-        assert isinstance(access, CollectionAccess)
+        assert isinstance(access, ChildAccess)
         return ChildOperatorChildAccess(
             access,
             self.is_last,
@@ -500,7 +500,7 @@ class ChildOperatorInfo(CollectionTestInfo):
         for idx, child_info in enumerate(self.children_info):
             child = ChildOperatorChildAccessInfo(
                 child_info,
-                idx == len(self.children_info) - 1 and self.successor is None,
+                idx == len(self.children_info) - 1,
             ).build(builder, context)
             assert isinstance(child, PyDoughCollectionAST)
             children.append(child)

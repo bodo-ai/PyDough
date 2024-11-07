@@ -85,7 +85,7 @@ class CollectionTreeForm:
                 case _:
                     raise Exception("Malformed collection tree form")
         for idx, child in enumerate(self.nested_trees):
-            new_prefix: str = f"{prefix}{self.PREDECESSOR_SPACER}"
+            new_prefix: str = f"{prefix}{self.CHILD_SPACER if self.has_successor else self.PREDECESSOR_SPACER}"
             is_last_child: bool = idx == len(self.nested_trees) - 1
             for line in child.to_string_rows():
                 if line[0] == " " and not is_last_child:

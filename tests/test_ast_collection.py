@@ -1190,6 +1190,7 @@ def test_collections_calc_terms(
         ),
     ],
 )
+# python -c "print('┌─── TPCH\n├─┬─ Partition[name=\'parts\', by=container]\n  └─┬─ AccessChild\n  │ └─── TableCollection[Parts]\n└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]\n  └─┬─ AccessChild\n    └─── SubCollection[Parts]')"
 def test_collections_to_string(
     calc_pipeline: CollectionTestInfo,
     expected_string: str,

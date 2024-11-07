@@ -20,11 +20,13 @@ __all__ = [
     "OrderBy",
     "PartitionBy",
     "ChildReference",
+    "ChildAccess",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
 from .collections import (
     Calc,
+    ChildAccess,
     ChildOperatorChildAccess,
     OrderBy,
     PartitionBy,
