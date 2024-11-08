@@ -4,7 +4,6 @@ TODO: add file-level docstring
 
 __all__ = ["ChildOperator"]
 
-from abc import abstractmethod
 from collections.abc import MutableSequence
 from functools import cache
 
@@ -63,14 +62,6 @@ class ChildOperator(PyDoughCollectionAST):
             return term
         else:
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
-
-    @property
-    @abstractmethod
-    def tree_item_string(self) -> str:
-        """
-        The string representation of the node on the single line that becomes
-        the `item_str` in its `CollectionTreeForm`.
-        """
 
     def to_tree_form(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.preceding_context.to_tree_form()

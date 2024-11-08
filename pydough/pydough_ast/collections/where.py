@@ -71,11 +71,13 @@ class Where(ChildOperator):
     def all_terms(self) -> set[str]:
         return self.preceding_context.all_terms
 
+    @property
+    def standalone_string(self) -> str:
+        return f"WHERE({self.condition.to_string()})"
+
     def to_string(self) -> str:
         assert self.preceding_context is not None
-        return (
-            f"{self.preceding_context.to_string()}.WHERE({self.condition.to_string()})"
-        )
+        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:

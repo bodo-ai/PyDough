@@ -10,7 +10,6 @@ from pydough.pydough_ast.errors import PyDoughASTException
 from .back_reference_collection import BackReferenceCollection
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
-from .collection_tree_form import CollectionTreeForm
 from .compound_sub_collection import CompoundSubCollection
 
 
@@ -75,15 +74,9 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         """
         return self._alias
 
-    def to_string(self) -> str:
-        return f"{self.context.to_string()}.{self.alias}"
+    @property
+    def standalone_string(self) -> str:
+        return self.alias
 
-    def to_tree_form(self) -> CollectionTreeForm:
-        assert self.ancestor_context is not None
-        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
-        predecessor.has_children = True
-        return CollectionTreeForm(
-            f"SubCollection[{self.alias}]",
-            predecessor.depth + 1,
-            predecessor=predecessor,
-        )
+    def to_string(self) -> str:
+        return f"{self.context.to_string()}.{self.standalone_string}"

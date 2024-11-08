@@ -76,10 +76,14 @@ class OrderBy(ChildOperator):
     def ordering(self) -> list[CollationExpression]:
         return self.collation
 
+    @property
+    def standalone_string(self) -> str:
+        collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
+        return f"ORDER_BY({collation_str})"
+
     def to_string(self) -> str:
         assert self.preceding_context is not None
-        collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
-        return f"{self.preceding_context.to_string()}.ORDER_BY({collation_str})"
+        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:

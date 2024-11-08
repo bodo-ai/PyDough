@@ -132,6 +132,14 @@ class PyDoughCollectionAST(PyDoughAST):
         unordered.
         """
 
+    @property
+    @abstractmethod
+    def standalone_string(self) -> str:
+        """
+        The string representation of the node within `to_string` without any
+        context of its predecessors/ancestors.
+        """
+
     @abstractmethod
     def to_string(self) -> str:
         """
@@ -144,6 +152,14 @@ class PyDoughCollectionAST(PyDoughAST):
         """
         Helper for `to_tree_string` that turns a collection into a
         CollectionTreeForm object which can be used to create a tree string.
+        """
+
+    @property
+    @abstractmethod
+    def tree_item_string(self) -> str:
+        """
+        The string representation of the node on the single line that becomes
+        the `item_str` in its `CollectionTreeForm`.
         """
 
     def to_tree_string(self) -> str:
@@ -173,10 +189,10 @@ class PyDoughCollectionAST(PyDoughAST):
             ├─── SubCollection[nations]
             ├─── Where[name != 'USA']
             ├─┬─ Calc[a=[BACK(1).name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
-            │ ├─┬─ CalcSubCollection
+            │ ├─┬─ AccessChild
             │ │ ├─ SubCollection[customers]
             │ │ └─── Where[acctbal > 0]
-            │ └─┬─ CalcSubCollection
+            │ └─┬─ AccessChild
             │   └─┬─ SubCollection[suppliers]
             │     ├─── Where[STARTSWITH(phone, '415')]
             │     └─┬─ SubCollection[supply_records]

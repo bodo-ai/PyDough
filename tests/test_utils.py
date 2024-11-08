@@ -29,7 +29,7 @@ from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
-    CalcChildCollection,
+    ChildOperatorChildAccess,
     CollationExpression,
     OrderBy,
     PyDoughAST,
@@ -37,7 +37,6 @@ from pydough.pydough_ast import (
     PyDoughExpressionAST,
     Where,
 )
-from pydough.pydough_ast.collections import CollectionAccess
 from pydough.types import PyDoughType
 
 # Type alias for a function that takes in a string and generates metadata
@@ -362,7 +361,7 @@ class TableCollectionInfo(CollectionTestInfo):
     ) -> PyDoughCollectionAST:
         if context is None:
             context = builder.build_global_context()
-        return builder.build_collection_access(self.name, context)
+        return builder.build_child_access(self.name, context)
 
 
 class SubCollectionInfo(TableCollectionInfo):
@@ -387,10 +386,10 @@ class SubCollectionInfo(TableCollectionInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return builder.build_collection_access(self.name, context)
+        return builder.build_child_access(self.name, context)
 
 
-class CalcChildCollectionInfo(CollectionTestInfo):
+class ChildOperatorChildAccessInfo(CollectionTestInfo):
     """
     CollectionTestInfo implementation class that wraps around a subcollection
     info within a Calc context. Contains the following fields:
@@ -417,9 +416,10 @@ class CalcChildCollectionInfo(CollectionTestInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        access = self.child_info.local_build(builder, context, children_contexts)
-        assert isinstance(access, CollectionAccess)
-        return CalcChildCollection(
+        access: PyDoughCollectionAST = self.child_info.local_build(
+            builder, context, children_contexts
+        )
+        return ChildOperatorChildAccess(
             access,
             self.is_last,
         )
@@ -496,8 +496,9 @@ class ChildOperatorInfo(CollectionTestInfo):
         """
         children: MutableSequence[PyDoughCollectionAST] = []
         for idx, child_info in enumerate(self.children_info):
-            child = CalcChildCollectionInfo(
-                child_info, idx == len(self.children_info) - 1
+            child = ChildOperatorChildAccessInfo(
+                child_info,
+                idx == len(self.children_info) - 1,
             ).build(builder, context)
             assert isinstance(child, PyDoughCollectionAST)
             children.append(child)
