@@ -6,7 +6,11 @@ avoid introducing extra nodes just to reorder or prune columns, so ideally their
 should be sparse.
 """
 
-from .abstract import Relational
+from collections.abc import MutableSequence
+
+from pydough.pydough_ast.expressions import PyDoughExpressionAST
+
+from .abstract import Column, Relational
 
 
 class Project(Relational):
@@ -15,3 +19,19 @@ class Project(Relational):
     relational algebra, which should involve some "compute" functions and may
     involve adding, removing, or reordering columns.
     """
+
+    def __init__(
+        self,
+        input: Relational,
+        columns: MutableSequence["Column"],
+        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+    ) -> None:
+        self._input: Relational = input
+        self._columns: MutableSequence[Column] = columns
+        self._orderings: MutableSequence[PyDoughExpressionAST] = (
+            orderings if orderings else []
+        )
+
+    @property
+    def inputs(self):
+        return [self._input]
