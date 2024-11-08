@@ -92,6 +92,61 @@ def test_scan_to_string(scan_node, output):
     assert scan_node.to_string() == output
 
 
+@pytest.mark.parametrize(
+    "first_scan, second_scan, output",
+    [
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_column("a"), make_column("b")]),
+            True,
+            id="matching_scans_no_orderings",
+        ),
+        pytest.param(
+            Scan(
+                "table1",
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Scan(
+                "table1",
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            True,
+            id="matching_scans_with_orderings",
+        ),
+        pytest.param(
+            Scan(
+                "table1",
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Scan(
+                "table1",
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="different_orderings",
+        ),
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_column("a")]),
+            False,
+            id="different_columns",
+        ),
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table2", [make_column("a"), make_column("b")]),
+            False,
+            id="different_tables",
+        ),
+    ],
+)
+def test_scan_equals(first_scan, second_scan, output):
+    assert first_scan.equals(second_scan) == output
+
+
 # @pytest.mark.parametrize(
 #     "first_scan, second_scan, output",
 #     [
