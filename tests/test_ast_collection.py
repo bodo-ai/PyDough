@@ -16,6 +16,7 @@ from test_utils import (
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
+    TopKInfo,
     WhereInfo,
 )
 
@@ -1446,6 +1447,26 @@ def test_collections_calc_terms(
 """,
             id="partition_data_with_data_order",
         ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("suppliers")],
+                total_sum=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+            )
+            ** TopKInfo([], 5, (ReferenceInfo("total_sum"), False, True)),
+            "Nations(total_sum=SUM(suppliers.account_balance)).TOP_K(5, total_sum.DESC(na_pos='last'))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  ├─┬─ Calc[total_sum=SUM($1.account_balance)]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[suppliers]
+  └─── TopK[5, total_sum.DESC(na_pos='last')]\
+""",
+            id="nations_topk",
+        ),
     ],
 )
 def test_collections_to_string(
@@ -1653,6 +1674,18 @@ def test_collections_to_string(
             ),
             ["retail_price.DESC(na_pos='last')"],
             id="partition_data_with_data_order",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("suppliers")],
+                total_sum=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("account_balance", 0)]
+                ),
+            )
+            ** TopKInfo([], 5, (ReferenceInfo("total_sum"), False, True)),
+            ["total_sum.DESC(na_pos='last')"],
+            id="nations_topk",
         ),
     ],
 )

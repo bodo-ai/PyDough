@@ -37,6 +37,7 @@ from pydough.pydough_ast import (
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
+    TopK,
     Where,
 )
 from pydough.types import PyDoughType
@@ -634,6 +635,56 @@ class OrderInfo(ChildOperatorInfo):
             assert isinstance(expr, PyDoughExpressionAST)
             collation.append(CollationExpression(expr, asc, na_last))
         return raw_order.with_collation(collation)
+
+
+class TopKInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a TOP K clause.
+    Contains the following fields:
+    - `records_to_keep`: the `K` value in TOP K.
+    - `collations`: a list of tuples in the form `(test_info, asc, na_last)`
+      ordering keys for the ORDER BY clause. Passed in via variadic arguments.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+        children: MutableSequence[CollectionTestInfo],
+        records_to_keep: int,
+        *args,
+    ):
+        super().__init__(children)
+        self.records_to_keep: int = records_to_keep
+        self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
+
+    def local_string(self) -> str:
+        collation_strings: list[str] = []
+        for info, asc, na_last in self.collation:
+            suffix = "ASC" if asc else "DESC"
+            kwarg = "'last'" if na_last else "'first'"
+            collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        return f"TopK[{self.child_strings()}{self.records_to_keep}, {', '.join(collation_strings)}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        raw_top_k = builder.build_top_k(context, children, self.records_to_keep)
+        assert isinstance(raw_top_k, TopK)
+        collation: list[CollationExpression] = []
+        for info, asc, na_last in self.collation:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, PyDoughExpressionAST)
+            collation.append(CollationExpression(expr, asc, na_last))
+        return raw_top_k.with_collation(collation)
 
 
 class PartitionInfo(ChildOperatorInfo):
