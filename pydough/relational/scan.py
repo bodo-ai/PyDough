@@ -25,7 +25,7 @@ class Scan(Relational):
         self,
         table_name: str,
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         self.table_name: str = table_name
         self._orderings: MutableSequence[PyDoughExpressionAST] = (
