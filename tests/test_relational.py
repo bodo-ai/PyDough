@@ -52,10 +52,16 @@ def test_scan_to_string():
             id="different_table",
         ),
         pytest.param(
+            id="matching_columns",
+        ),
+        pytest.param(
             id="disjoint_columns",
         ),
         pytest.param(
             id="overlapping_columns",
+        ),
+        pytest.param(
+            id="matching_orderings",
         ),
         pytest.param(
             id="disjoint_orderings",
@@ -76,19 +82,16 @@ def test_scan_can_merge():
     "first_scan, second_scan, output",
     [
         pytest.param(
+            id="matching_columns",
+        ),
+        pytest.param(
             id="disjoint_columns",
         ),
         pytest.param(
             id="overlapping_columns",
         ),
         pytest.param(
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            id="overlapping_orderings",
-        ),
-        pytest.param(
-            id="conflicting_orderings",
+            id="matching_orderings",
         ),
     ],
 )
@@ -101,6 +104,15 @@ def test_scan_merge():
     [
         pytest.param(
             id="different_table",
+        ),
+        pytest.param(
+            id="disjoint_orderings",
+        ),
+        pytest.param(
+            id="overlapping_orderings",
+        ),
+        pytest.param(
+            id="conflicting_orderings",
         ),
     ],
 )

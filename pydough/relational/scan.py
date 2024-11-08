@@ -70,6 +70,8 @@ class Scan(Relational):
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
         table_name = self.table_name
+        # Note: This ignores column ordering. We may need to revisit
+        # this later.
         columns = list(set(self.columns) | set(other.columns))
         orderings = self.orderings
         return Scan(table_name, columns, orderings)
