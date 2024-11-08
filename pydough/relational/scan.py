@@ -27,24 +27,13 @@ class Scan(Relational):
         columns: MutableSequence["Column"],
         orderings: MutableSequence["PyDoughExpressionAST"] | None,
     ) -> None:
+        super().__init__(columns, orderings)
         self.table_name: str = table_name
-        self._orderings: MutableSequence[PyDoughExpressionAST] = (
-            orderings if orderings else []
-        )
-        self._columns = columns
 
     @property
     def inputs(self):
         # A scan is required to be the leaf node of the relational tree.
         return []
-
-    @property
-    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
-        return self._orderings
-
-    @property
-    def columns(self) -> MutableSequence["Column"]:
-        return self._columns
 
     def to_sqlglot(self) -> "Expression":
         raise NotImplementedError(
