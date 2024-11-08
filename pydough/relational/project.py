@@ -13,9 +13,10 @@ from sqlglot.expressions import Expression
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
 from .abstract import Column, Relational
+from .single_relational import SingleRelational
 
 
-class Project(Relational):
+class Project(SingleRelational):
     """
     The Project node in the relational tree. This node represents a "calc" in
     relational algebra, which should involve some "compute" functions and may
@@ -28,15 +29,11 @@ class Project(Relational):
         columns: MutableSequence["Column"],
         orderings: MutableSequence["PyDoughExpressionAST"] | None,
     ) -> None:
-        self._input: Relational = input
+        super().__init__(input)
         self._columns: MutableSequence[Column] = columns
         self._orderings: MutableSequence[PyDoughExpressionAST] = (
             orderings if orderings else []
         )
-
-    @property
-    def inputs(self):
-        return [self._input]
 
     @property
     def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
@@ -59,8 +56,7 @@ class Project(Relational):
         if isinstance(other, Project):
             # TODO: Determine if two different orderings can be merged.
             return (
-                self.inputs[0].can_merge(other.inputs[0])
-                and self.orderings == other.orderings
+                self.input.can_merge(other.input) and self.orderings == other.orderings
             )
         else:
             return False
@@ -70,7 +66,8 @@ class Project(Relational):
             raise ValueError(
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
-        input = self.inputs[0].merge(other.inputs[0])
+        assert isinstance(other, Project)
+        input = self.input.merge(other.input)
         # TODO: Determine if/how we need to update the location of each column
         # relative to the input.
         # Note: This ignores column ordering. We should revisit
