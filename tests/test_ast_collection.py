@@ -664,6 +664,69 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
             },
             id="regions_lines_backcalc",
         ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts"),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            ),
+            {"container": 0, "total_price": 1},
+            {"container", "total_price", "parts"},
+            id="partition_with_order_part",
+        ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts")
+                ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            )
+            ** SubCollectionInfo("parts")
+            ** CalcInfo(
+                [],
+                part_name=ReferenceInfo("name"),
+                container=ReferenceInfo("container"),
+                ratio=FunctionInfo(
+                    "DIV",
+                    [
+                        ReferenceInfo("retail_price"),
+                        BackReferenceExpressionInfo("total_price", 1),
+                    ],
+                ),
+            ),
+            {"part_name": 0, "container": 1, "ratio": 2},
+            {
+                "container",
+                "ratio",
+                "brand",
+                "comment",
+                "key",
+                "lines",
+                "manufacturer",
+                "name",
+                "part_name",
+                "retail_price",
+                "size",
+                "suppliers_of_part",
+                "supply_records",
+                "type",
+            },
+            id="partition_data_with_data_order",
+        ),
     ],
 )
 def test_collections_calc_terms(
