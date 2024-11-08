@@ -69,6 +69,24 @@ class Relational(ABC):
         """
 
     @abstractmethod
+    def equals(self, other: "Relational") -> bool:
+        """
+        Determine if two relational nodes are exactly identical,
+        including column ordering.
+
+        Args:
+            other (Relational): The other relational node to compare against.
+
+        Returns:
+            bool: Are the two relational nodes equal.
+        """
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Relational):
+            return False
+        return self.equals(other)
+
+    @abstractmethod
     def to_sqlglot(self) -> "Expression":
         """Translate the given relational expression
         and its children to a SQLGlot expression.
@@ -89,6 +107,9 @@ class Relational(ABC):
             str: A string representation of the relational tree
             with this node at the root.
         """
+
+    def __repr__(self) -> str:
+        return self.to_string()
 
     @abstractmethod
     def can_merge(self, other: "Relational") -> bool:
