@@ -108,6 +108,9 @@ class Relational(ABC):
             with this node at the root.
         """
 
+    def __repr__(self) -> str:
+        return self.to_string()
+
     @abstractmethod
     def can_merge(self, other: "Relational") -> bool:
         """

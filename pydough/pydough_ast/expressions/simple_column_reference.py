@@ -26,6 +26,9 @@ class SimpleColumnReference(PyDoughExpressionAST):
         self._name: str = name
         self._data_type: PyDoughType = data_type
 
+    def __hash__(self) -> int:
+        return hash((self._name, self._data_type))
+
     @property
     def name(self) -> object:
         """

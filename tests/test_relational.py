@@ -226,25 +226,39 @@ def test_scan_can_merge(first_scan: Scan, second_scan: Scan, output: bool):
     assert first_scan.can_merge(second_scan) == output
 
 
-# @pytest.mark.parametrize(
-#     "first_scan, second_scan, output",
-#     [
-#         pytest.param(
-#             id="matching_columns",
-#         ),
-#         pytest.param(
-#             id="disjoint_columns",
-#         ),
-#         pytest.param(
-#             id="overlapping_columns",
-#         ),
-#         pytest.param(
-#             id="matching_orderings",
-#         ),
-#     ],
-# )
-# def test_scan_merge():
-#     pass
+@pytest.mark.parametrize(
+    "first_scan, second_scan, output",
+    [
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_column("a"), make_column("b")]),
+            id="matching_columns",
+        ),
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_column("c"), make_column("d")]),
+            Scan(
+                "table1",
+                [
+                    make_column("a"),
+                    make_column("b"),
+                    make_column("c"),
+                    make_column("d"),
+                ],
+            ),
+            id="disjoint_columns",
+        ),
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_column("b"), make_column("c")]),
+            Scan("table1", [make_column("a"), make_column("b"), make_column("c")]),
+            id="overlapping_columns",
+        ),
+    ],
+)
+def test_scan_merge(first_scan: Scan, second_scan: Scan, output: Scan):
+    assert first_scan.merge(second_scan) == output
 
 
 @pytest.mark.parametrize(
