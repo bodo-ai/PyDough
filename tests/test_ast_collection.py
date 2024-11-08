@@ -1188,6 +1188,132 @@ def test_collections_calc_terms(
 """,
             id="partition_part",
         ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Lineitems")
+                ** WhereInfo(
+                    [],
+                    FunctionInfo(
+                        "EQU", [ReferenceInfo("tax"), LiteralInfo(0, Int64Type())]
+                    ),
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("order")
+                        ** SubCollectionInfo("shipping_region"),
+                        SubCollectionInfo("part"),
+                    ],
+                    region_name=ChildReferenceInfo("name", 0),
+                    part_type=ChildReferenceInfo("type", 1),
+                ),
+                "lines",
+                [
+                    ChildReferenceInfo("region_name", 0),
+                    ChildReferenceInfo("part_type", 0),
+                ],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("lines")],
+                region_name=ReferenceInfo("region_name"),
+                part_type=ReferenceInfo("part_type"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("extended_price", 0)]
+                ),
+            ),
+            "Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
+            """\
+┌─── TPCH
+├─┬─ Partition[name='lines', by=('region_name', 'part_type')]
+│ └─┬─ AccessChild
+│   ├─── TableCollection[Lineitems]
+│   ├─── Where[tax == 0]
+│   └─┬─ Calc[region_name=$1.name, part_type=$2.type]
+│     ├─┬─ AccessChild
+│     │ └─┬─ SubCollection[order]
+│     │   └─── SubCollection[shipping_region]
+│     └─┬─ AccessChild
+│       └─── SubCollection[part]
+└─┬─ Calc[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
+  └─┬─ AccessChild
+    └─── PartitionChild[lines]\
+""",
+            id="partition_nested",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [
+                    PartitionInfo(
+                        PartitionInfo(
+                            SubCollectionInfo("orders") ** SubCollectionInfo("lines"),
+                            "lines",
+                            [
+                                ChildReferenceInfo("ship_date", 0),
+                                ChildReferenceInfo("receipt_date", 0),
+                            ],
+                        )
+                        ** CalcInfo(
+                            [SubCollectionInfo("lines")],
+                            order_sum=FunctionInfo(
+                                "SUM", [ChildReferenceInfo("extended_price", 0)]
+                            ),
+                        )
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "GRT",
+                                [
+                                    ReferenceInfo("order_sum"),
+                                    LiteralInfo(1000, Int64Type()),
+                                ],
+                            ),
+                        ),
+                        "day_totals",
+                        [ChildReferenceInfo("ship_date", 0)],
+                    )
+                    ** CalcInfo(
+                        [SubCollectionInfo("day_totals")],
+                        total_sum=FunctionInfo(
+                            "SUM", [ChildReferenceInfo("order_sum", 0)]
+                        ),
+                    )
+                    ** WhereInfo(
+                        [],
+                        FunctionInfo(
+                            "LET",
+                            [
+                                ReferenceInfo("total_sum"),
+                                LiteralInfo(2000, Int64Type()),
+                            ],
+                        ),
+                    ),
+                ],
+                name=ReferenceInfo("name"),
+                final_sum=FunctionInfo("SUM", [ChildReferenceInfo("total_sum", 0)]),
+            ),
+            "Customers(name=name, final_sum=SUM(Partition(Partition(orders.lines, name='lines', by=('ship_date', 'receipt_date'))(order_sum=SUM(lines.extended_price)).WHERE(order_sum > 1000), name='day_totals', by=ship_date)(total_sum=SUM(day_totals.order_sum)).WHERE(total_sum < 2000).total_sum))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  └─┬─ Calc[name=name, final_sum=SUM($1.total_sum)]
+    └─┬─ AccessChild
+      ├─┬─ Partition[name='day_totals', by=ship_date]
+      │ └─┬─ AccessChild
+      │   ├─┬─ Partition[name='lines', by=('ship_date', 'receipt_date')]
+      │   │ └─┬─ AccessChild
+      │   │   └─┬─ SubCollection[orders]
+      │   │     └─── SubCollection[lines]
+      │   ├─┬─ Calc[order_sum=SUM($1.extended_price)]
+      │   │ └─┬─ AccessChild
+      │   │   └─── PartitionChild[lines]
+      │   └─── Where[order_sum > 1000]
+      ├─┬─ Calc[total_sum=SUM($1.order_sum)]
+      │ └─┬─ AccessChild
+      │   └─── PartitionChild[day_totals]
+      └─── Where[total_sum < 2000]\
+""",
+            id="multi_partition_nested",
+        ),
     ],
 )
 def test_collections_to_string(

@@ -29,7 +29,6 @@ from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
-    ChildAccess,
     ChildOperatorChildAccess,
     ChildReference,
     CollationExpression,
@@ -419,8 +418,9 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        access = self.child_info.local_build(builder, context, children_contexts)
-        assert isinstance(access, ChildAccess)
+        access: PyDoughCollectionAST = self.child_info.local_build(
+            builder, context, children_contexts
+        )
         return ChildOperatorChildAccess(
             access,
             self.is_last,

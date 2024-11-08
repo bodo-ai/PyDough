@@ -10,7 +10,6 @@ from functools import cache
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 
 from .child_access import ChildAccess
-from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
 
@@ -32,7 +31,7 @@ class ChildOperatorChildAccess(ChildAccess):
         self._child_access: PyDoughCollectionAST = child_access
         self._is_last: bool = is_last
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
         raise NotImplementedError
 
     @property
@@ -88,8 +87,7 @@ class ChildOperatorChildAccess(ChildAccess):
             has_children=True,
             has_successor=not self.is_last,
         )
-        return CollectionTreeForm(
-            self.child_access.tree_item_string,
-            predecessor.depth + 1,
-            predecessor=predecessor,
-        )
+        tree_form: CollectionTreeForm = self.child_access.to_tree_form()
+        tree_form.depth = predecessor.depth + 1
+        tree_form.predecessor = predecessor
+        return tree_form

@@ -5,8 +5,8 @@ TODO: add file-level docstring
 __all__ = ["PartitionChild"]
 
 
+from .child_access import ChildAccess
 from .child_operator_child_access import ChildOperatorChildAccess
-from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
 
@@ -26,8 +26,8 @@ class PartitionChild(ChildOperatorChildAccess):
         super().__init__(child_access, True)
         self._partition_child_name: str = partition_child_name
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
-        raise NotImplementedError
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
+        return self
 
     @property
     def partition_child_name(self) -> str:
@@ -45,10 +45,13 @@ class PartitionChild(ChildOperatorChildAccess):
         return f"PartitionChild[{self.standalone_string}]"
 
     def to_tree_form(self) -> CollectionTreeForm:
-        return CollectionTreeForm(
-            f"PartitionChild[{self.partition_child_name}]",
+        predecessor: CollectionTreeForm = CollectionTreeForm(
+            self.tree_item_string,
             0,
             has_predecessor=True,
             has_children=True,
             has_successor=not self.is_last,
+        )
+        return CollectionTreeForm(
+            self.tree_item_string, predecessor.depth + 1, predecessor=predecessor
         )

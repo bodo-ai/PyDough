@@ -9,7 +9,6 @@ from pydough.metadata.properties import SubcollectionRelationshipMetadata
 
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
-from .collection_tree_form import CollectionTreeForm
 
 
 class SubCollection(CollectionAccess):
@@ -43,15 +42,6 @@ class SubCollection(CollectionAccess):
 
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
-
-    def to_tree_form(self) -> CollectionTreeForm:
-        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
-        predecessor.has_children = True
-        return CollectionTreeForm(
-            f"SubCollection[{self.subcollection_property.name}]",
-            predecessor.depth + 1,
-            predecessor=predecessor,
-        )
 
     @property
     def tree_item_string(self) -> str:

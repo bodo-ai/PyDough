@@ -9,7 +9,6 @@ from pydough.metadata import CollectionMetadata
 
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
-from .collection_tree_form import CollectionTreeForm
 
 
 class TableCollection(CollectionAccess):
@@ -34,12 +33,3 @@ class TableCollection(CollectionAccess):
     @property
     def tree_item_string(self) -> str:
         return f"TableCollection[{self.standalone_string}]"
-
-    def to_tree_form(self) -> CollectionTreeForm:
-        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
-        predecessor.has_children = True
-        return CollectionTreeForm(
-            f"TableCollection[{self.to_string()}]",
-            predecessor.depth + 1,
-            predecessor=predecessor,
-        )

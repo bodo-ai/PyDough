@@ -20,6 +20,7 @@ from pydough.pydough_ast.expressions import ColumnProperty
 
 from .child_access import ChildAccess
 from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
 
 
 class CollectionAccess(ChildAccess):
@@ -94,6 +95,16 @@ class CollectionAccess(ChildAccess):
             raise PyDoughASTException(
                 f"Unsupported property type for collection access: {property.__class__.name}"
             )
+
+    def to_tree_form(self) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
+        predecessor.has_children = True
+        tree_form: CollectionTreeForm = CollectionTreeForm(
+            self.tree_item_string,
+            predecessor.depth + 1,
+            predecessor=predecessor,
+        )
+        return tree_form
 
     def equals(self, other: object) -> bool:
         return (
