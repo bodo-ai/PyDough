@@ -3,7 +3,11 @@ Base abstract class for relational nodes that have a single input.
 This is done to reduce code duplication.
 """
 
-from .abstract import Relational
+from collections.abc import MutableSequence
+
+from pydough.pydough_ast.expressions import PyDoughExpressionAST
+
+from .abstract import Column, Relational
 
 
 class SingleRelational(Relational):
@@ -11,7 +15,13 @@ class SingleRelational(Relational):
     Base abstract class for relational nodes that have a single input.
     """
 
-    def __init__(self, input: Relational) -> None:
+    def __init__(
+        self,
+        input: Relational,
+        columns: MutableSequence["Column"],
+        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+    ) -> None:
+        super().__init__(columns, orderings)
         self._input: Relational = input
 
     @property

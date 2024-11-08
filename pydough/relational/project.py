@@ -29,11 +29,7 @@ class Project(SingleRelational):
         columns: MutableSequence["Column"],
         orderings: MutableSequence["PyDoughExpressionAST"] | None,
     ) -> None:
-        super().__init__(input)
-        self._columns: MutableSequence[Column] = columns
-        self._orderings: MutableSequence[PyDoughExpressionAST] = (
-            orderings if orderings else []
-        )
+        super().__init__(input, columns, orderings)
 
     @property
     def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:

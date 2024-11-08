@@ -20,6 +20,16 @@ class Relational(ABC):
     structure of all relational nodes in the PyDough system.
     """
 
+    def __init__(
+        self,
+        columns: MutableSequence["Column"],
+        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+    ) -> None:
+        self._columns: MutableSequence[Column] = columns
+        self._orderings: MutableSequence[PyDoughExpressionAST] = (
+            orderings if orderings else []
+        )
+
     @property
     @abstractmethod
     def inputs(self) -> MutableSequence["Relational"]:
@@ -47,7 +57,6 @@ class Relational(ABC):
         return {"orderings": self.orderings}
 
     @property
-    @abstractmethod
     def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
         """
         Returns the PyDoughExpressionAST that the relational expression is ordered by.
@@ -57,9 +66,9 @@ class Relational(ABC):
             MutableSequence[PyDoughExpressionAST]: The PyDoughExpressionAST that the relational expression is ordered by,
             possibly empty.
         """
+        return self._orderings
 
     @property
-    @abstractmethod
     def columns(self) -> MutableSequence["Column"]:
         """
         Returns the columns of the relational expression.
@@ -67,6 +76,7 @@ class Relational(ABC):
         Returns:
             MutableSequence[Column]: The columns of the relational expression.
         """
+        return self._columns
 
     @abstractmethod
     def to_sqlglot(self) -> "Expression":
