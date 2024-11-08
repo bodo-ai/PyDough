@@ -79,7 +79,7 @@ class ChildOperatorChildAccess(ChildAccess):
     def tree_item_string(self) -> str:
         return "AccessChild"
 
-    def to_tree_form(self) -> CollectionTreeForm:
+    def to_tree_form_isolated(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = CollectionTreeForm(
             self.tree_item_string,
             0,
@@ -91,3 +91,6 @@ class ChildOperatorChildAccess(ChildAccess):
         tree_form.depth = predecessor.depth + 1
         tree_form.predecessor = predecessor
         return tree_form
+
+    def to_tree_form(self) -> CollectionTreeForm:
+        return self.to_tree_form_isolated()

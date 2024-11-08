@@ -96,14 +96,19 @@ class CollectionAccess(ChildAccess):
                 f"Unsupported property type for collection access: {property.__class__.name}"
             )
 
+    def to_tree_form_isolated(self) -> CollectionTreeForm:
+        return CollectionTreeForm(
+            self.tree_item_string,
+            0,
+            has_predecessor=True,
+        )
+
     def to_tree_form(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
         predecessor.has_children = True
-        tree_form: CollectionTreeForm = CollectionTreeForm(
-            self.tree_item_string,
-            predecessor.depth + 1,
-            predecessor=predecessor,
-        )
+        tree_form: CollectionTreeForm = self.to_tree_form_isolated()
+        tree_form.depth = predecessor.depth + 1
+        tree_form.predecessor = predecessor
         return tree_form
 
     def equals(self, other: object) -> bool:
