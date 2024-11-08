@@ -31,14 +31,6 @@ class Project(SingleRelational):
     ) -> None:
         super().__init__(input, columns, orderings)
 
-    @property
-    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
-        return self._orderings
-
-    @property
-    def columns(self) -> MutableSequence["Column"]:
-        return self._columns
-
     def to_sqlglot(self) -> "Expression":
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
