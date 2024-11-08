@@ -1,5 +1,5 @@
 """
-This module contains the abstract base classes for the relational
+This file contains the abstract base classes for the relational
 representation. This roughly maps to a Relational Algebra representation
 but is not exact because it needs to maintain PyDough traits that define
 ordering and other properties of the relational expression.
