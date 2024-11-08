@@ -65,8 +65,10 @@ class Scan(Relational):
 
     def can_merge(self, other: Relational) -> bool:
         if isinstance(other, Scan):
-            return self.table_name == other.table_name and self.orderings_match(
-                other.orderings
+            return (
+                self.table_name == other.table_name
+                and self.orderings_match(other.orderings)
+                and self.columns_match(other.columns)
             )
         else:
             return False
@@ -77,15 +79,6 @@ class Scan(Relational):
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
         table_name = self.table_name
-        # Note: Right now we assume that we aren't doing a "TREE" merge, so we can just
-        # return a new node as though this node is the root of the tree. In the future
-        # we may need to provide a mapping.
-        col_set = set(self.columns)
-        cols = list(self.columns)
-        # Note: Since this is a scan we assume that column names must match the column
-        # names exactly.
-        for col in other.columns:
-            if col not in col_set:
-                cols.append(col)
+        cols = self.merge_columns(other.columns)
         orderings = self.orderings
         return Scan(table_name, cols, orderings)
