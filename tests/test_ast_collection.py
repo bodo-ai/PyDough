@@ -1314,6 +1314,75 @@ def test_collections_calc_terms(
 """,
             id="multi_partition_nested",
         ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts"),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            )
+            ** OrderInfo([], (ReferenceInfo("total_price"), False, True)),
+            "Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).ORDER_BY(total_price.DESC(na_pos='last'))",
+            """\
+┌─── TPCH
+├─┬─ Partition[name='parts', by=container]
+│ └─┬─ AccessChild
+│   └─── TableCollection[Parts]
+├─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+│ └─┬─ AccessChild
+│   └─── PartitionChild[parts]
+└─── OrderBy[total_price.DESC(na_pos='last')]\
+""",
+            id="partition_with_order_part",
+        ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts")
+                ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            )
+            ** SubCollectionInfo("parts")
+            ** CalcInfo(
+                [],
+                part_name=ReferenceInfo("name"),
+                container=ReferenceInfo("container"),
+                ratio=FunctionInfo(
+                    "DIV",
+                    [
+                        ReferenceInfo("retail_price"),
+                        BackReferenceExpressionInfo("total_price", 1),
+                    ],
+                ),
+            ),
+            "Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).parts(part_name=name, container=container, ratio=retail_price / BACK(1).total_price)",
+            """\
+┌─── TPCH
+├─┬─ Partition[name='parts', by=container]
+│ └─┬─ AccessChild
+│   ├─── TableCollection[Parts]
+│   └─── OrderBy[retail_price.DESC(na_pos='last')]
+└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+  ├─┬─ AccessChild
+  │ └─── PartitionChild[parts]
+  ├─── PartitionChild[parts]
+  └─── Calc[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]\
+""",
+            id="partition_data_with_data_order",
+        ),
     ],
 )
 def test_collections_to_string(
@@ -1441,6 +1510,86 @@ def test_collections_to_string(
             ),
             ["key.ASC(na_pos='last')"],
             id="regions_customers_order_where_calc_where",
+        ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts"),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            ),
+            None,
+            id="partition_without_order",
+        ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts"),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            )
+            ** OrderInfo([], (ReferenceInfo("total_price"), False, True)),
+            ["total_price.DESC(na_pos='last')"],
+            id="partition_with_order_part",
+        ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts")
+                ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            ),
+            None,
+            id="partition_with_data_order",
+        ),
+        pytest.param(
+            PartitionInfo(
+                TableCollectionInfo("Parts")
+                ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
+                "parts",
+                [ChildReferenceInfo("container", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts")],
+                container=ReferenceInfo("container"),
+                total_price=FunctionInfo(
+                    "SUM", [ChildReferenceInfo("retail_price", 0)]
+                ),
+            )
+            ** SubCollectionInfo("parts")
+            ** CalcInfo(
+                [],
+                part_name=ReferenceInfo("name"),
+                container=ReferenceInfo("container"),
+                ratio=FunctionInfo(
+                    "DIV",
+                    [
+                        ReferenceInfo("retail_price"),
+                        BackReferenceExpressionInfo("total_price", 1),
+                    ],
+                ),
+            ),
+            ["retail_price.DESC(na_pos='last')"],
+            id="partition_data_with_data_order",
         ),
     ],
 )

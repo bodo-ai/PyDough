@@ -141,7 +141,7 @@ class PartitionBy(ChildOperator):
             assert isinstance(term, ChildReference)
             return term
         elif term_name == self.child_name:
-            return PartitionChild(self.child, self.child_name)
+            return PartitionChild(self.child, self.child_name, self)
         else:
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
 

@@ -46,6 +46,16 @@ class CollectionTreeForm:
     PREDECESSOR_SPACER: str = "  "
     CHILD_SPACER: str = "│ "
 
+    def mark_ancestor_has_successor(self, ancestor: "CollectionTreeForm") -> None:
+        """
+        Marks the root of a subtree as having a successor if the parent of the
+        subtree has a child.
+        """
+        if self.predecessor is None:
+            self.has_successor = True
+        else:
+            self.predecessor.mark_ancestor_has_successor(ancestor)
+
     def to_string_rows(self) -> MutableSequence[str]:
         """
         Converts the tree form into the string representation in the format
@@ -57,8 +67,12 @@ class CollectionTreeForm:
         """
         answer: MutableSequence[str]
         prefix: str = self.PREDECESSOR_SPACER * self.depth
+        condition_tuple: tuple[bool, bool] = (
+            self.has_children or len(self.nested_trees) > 0,
+            self.has_successor,
+        )
         if not self.has_predecessor:
-            match (self.has_children, self.has_successor):
+            match condition_tuple:
                 case (False, False):
                     answer = [self.item_str]
                 case (False, True):
@@ -73,7 +87,7 @@ class CollectionTreeForm:
             answer = (
                 [] if self.predecessor is None else self.predecessor.to_string_rows()
             )
-            match (self.has_children, self.has_successor):
+            match condition_tuple:
                 case (False, False):
                     answer.append(f"{prefix}{self.BASE} {self.item_str}")
                 case (False, True):
@@ -84,11 +98,13 @@ class CollectionTreeForm:
                     answer.append(f"{prefix}{self.SUCCESSOR_PARENT} {self.item_str}")
                 case _:
                     raise Exception("Malformed collection tree form")
+        new_prefix: str = f"{prefix}{self.CHILD_SPACER if self.has_successor else self.PREDECESSOR_SPACER}"
         for idx, child in enumerate(self.nested_trees):
-            new_prefix: str = f"{prefix}{self.CHILD_SPACER if self.has_successor else self.PREDECESSOR_SPACER}"
             is_last_child: bool = idx == len(self.nested_trees) - 1
+            if self.has_children:
+                child.mark_ancestor_has_successor(self)
             for line in child.to_string_rows():
-                if line[0] == " " and not is_last_child:
+                if line[0] == " " and (self.has_children or not is_last_child):
                     line = f"{new_prefix}{self.CHILD_SPACER}{line[2:]}"
                 else:
                     line = f"{new_prefix}{line}"

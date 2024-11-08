@@ -148,6 +148,14 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @abstractmethod
+    def to_tree_form_isolated(self) -> CollectionTreeForm:
+        """
+        Helper for `to_tree_form` that returns the `CollectionTreeForm` for
+        the collection devoid of any information about its predecessors or
+        ancestors.
+        """
+
+    @abstractmethod
     def to_tree_form(self) -> CollectionTreeForm:
         """
         Helper for `to_tree_string` that turns a collection into a
