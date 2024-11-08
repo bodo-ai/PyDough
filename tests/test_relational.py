@@ -67,23 +67,23 @@ def test_scan_inputs():
     "scan_node, output",
     [
         pytest.param(
-            Scan("table", [make_column("a"), make_column("b")]),
-            "empty",
+            Scan("table1", [make_column("a"), make_column("b")]),
+            "SCAN(table=table1, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="no_orderings",
         ),
         pytest.param(
             # TODO: Update orderings when ASC/DESC is merged in the AST.
             Scan(
-                "table",
+                "table2",
                 [make_column("a"), make_column("b")],
                 [make_simple_column_reference("a")],
             ),
-            "empty",
+            "SCAN(table=table2, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
             id="with_orderings",
         ),
         pytest.param(
-            Scan("table", []),
-            "empty",
+            Scan("table3", []),
+            "SCAN(table=table3, columns=[], orderings=[])",
             id="no_columns",
         ),
     ],
