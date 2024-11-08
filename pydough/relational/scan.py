@@ -56,7 +56,7 @@ class Scan(Relational):
 
     def can_merge(self, other: Relational) -> bool:
         if isinstance(other, Scan):
-            # TODO: Determine if two orderings can be incompatible.
+            # TODO: Determine if two different orderings can be merged.
             return (
                 self.table_name == other.table_name
                 and self.orderings == other.orderings

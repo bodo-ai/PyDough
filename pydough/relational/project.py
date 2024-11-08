@@ -8,6 +8,8 @@ should be sparse.
 
 from collections.abc import MutableSequence
 
+from sqlglot.expressions import Expression
+
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
 from .abstract import Column, Relational
@@ -35,3 +37,44 @@ class Project(Relational):
     @property
     def inputs(self):
         return [self._input]
+
+    @property
+    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
+        return self._orderings
+
+    @property
+    def columns(self) -> MutableSequence["Column"]:
+        return self._columns
+
+    def to_sqlglot(self) -> "Expression":
+        raise NotImplementedError(
+            "Conversion to SQLGlot Expressions is not yet implemented."
+        )
+
+    def to_string(self) -> str:
+        # TODO: Should we visit the input?
+        return f"PROJECT(columns={self.columns}, orderings={self.orderings})"
+
+    def can_merge(self, other: Relational) -> bool:
+        if isinstance(other, Project):
+            # TODO: Determine if two different orderings can be merged.
+            return (
+                self.inputs[0].can_merge(other.inputs[0])
+                and self.orderings == other.orderings
+            )
+        else:
+            return False
+
+    def merge(self, other: Relational) -> Relational:
+        if not self.can_merge(other):
+            raise ValueError(
+                f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
+            )
+        input = self.inputs[0].merge(other.inputs[0])
+        # TODO: Determine if/how we need to update the location of each column
+        # relative to the input.
+        # Note: This ignores column ordering. We should revisit
+        # this later.
+        columns = list(set(self.columns) | set(other.columns))
+        orderings = self.orderings
+        return Project(input, columns, orderings)
