@@ -58,6 +58,23 @@ class Relational(ABC):
             possibly empty.
         """
 
+    def orderings_match(
+        self, other_orderings: MutableSequence["PyDoughExpressionAST"]
+    ) -> bool:
+        """
+        Determine if two orderings match in a way that would be considered equivalent
+        for the given node.
+
+        Args:
+            other_orderings (MutableSequence[PyDoughExpressionAST]): The orderings property
+            of another relational node.
+
+        Returns:
+            bool: Can the two orderings be considered equivalent and therefore safely merged.
+        """
+        # TODO: Allow merging compatible orderings?
+        return not self.orderings and not other_orderings
+
     @property
     @abstractmethod
     def columns(self) -> MutableSequence["Column"]:

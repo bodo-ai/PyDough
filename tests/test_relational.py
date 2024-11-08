@@ -317,3 +317,7 @@ def test_scan_merge(first_scan: Scan, second_scan: Scan, output: Scan):
 def test_scan_invalid_merge(first_scan: Scan, second_scan: Scan):
     with pytest.raises(ValueError, match="Cannot merge nodes"):
         first_scan.merge(second_scan)
+
+
+# def test_project_equals(first_project: Project, second_project: Project, output: bool):
+#     assert first_project.equals(second_project) == output

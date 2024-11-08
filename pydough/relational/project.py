@@ -48,15 +48,24 @@ class Project(SingleRelational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
+    def equals(self, other: "Relational") -> bool:
+        if not isinstance(other, Project):
+            return False
+        return (
+            self.input.equals(other.input)
+            and self.columns == other.columns
+            and self.orderings == other.orderings
+        )
+
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"PROJECT(columns={self.columns}, orderings={self.orderings})"
 
     def can_merge(self, other: Relational) -> bool:
         if isinstance(other, Project):
-            # TODO: Determine if two different orderings can be merged.
-            return (
-                self.input.can_merge(other.input) and self.orderings == other.orderings
+            # TODO: Can we allow inputs to ever not merge exactly?
+            return self.input.equals(other.input) and self.orderings_match(
+                other.orderings
             )
         else:
             return False
