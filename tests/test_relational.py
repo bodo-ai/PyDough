@@ -1,5 +1,8 @@
 """
 TODO: add file-level docstring
+
+General TODO for all tests:
+Update orderings when ASC/DESC is merged in the AST.
 """
 
 import pytest
@@ -79,7 +82,6 @@ def test_scan_inputs():
             id="no_orderings",
         ),
         pytest.param(
-            # TODO: Update orderings when ASC/DESC is merged in the AST.
             Scan(
                 "table2",
                 [make_column("a"), make_column("b")],
@@ -326,8 +328,32 @@ def test_scan_invalid_merge(first_scan: Scan, second_scan: Scan):
         first_scan.merge(second_scan)
 
 
+@pytest.mark.parametrize(
+    "project, output",
+    [
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            "PROJECT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="no_orderings",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            "PROJECT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
+            id="with_orderings",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), []),
+            "PROJECT(columns=[], orderings=[])",
+            id="no_columns",
+        ),
+    ],
+)
 def test_project_to_string(project: Project, output: str):
-    pass
+    assert project.to_string() == output
 
 
 @pytest.mark.parametrize(
@@ -385,18 +411,18 @@ def test_project_equals(first_project: Project, second_project: Project, output:
     assert first_project.equals(second_project) == output
 
 
-def test_project_can_merge(
-    first_project: Project, second_project: Project, output: bool
-):
-    pass
+# def test_project_can_merge(
+#     first_project: Project, second_project: Project, output: bool
+# ):
+#     pass
 
 
-def test_project_merge(
-    first_project: Project, second_project: Project, output: Project
-):
-    pass
+# def test_project_merge(
+#     first_project: Project, second_project: Project, output: Project
+# ):
+#     pass
 
 
-def test_project_invalid_merge(first_project: Project, second_project: Project):
-    with pytest.raises(ValueError, match="Cannot merge nodes"):
-        first_project.merge(second_project)
+# def test_project_invalid_merge(first_project: Project, second_project: Project):
+#     with pytest.raises(ValueError, match="Cannot merge nodes"):
+#         first_project.merge(second_project)
