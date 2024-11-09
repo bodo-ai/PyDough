@@ -326,6 +326,10 @@ def test_scan_invalid_merge(first_scan: Scan, second_scan: Scan):
         first_scan.merge(second_scan)
 
 
+def test_project_to_string(project: Project, output: str):
+    pass
+
+
 @pytest.mark.parametrize(
     "first_project, second_project, output",
     [
@@ -379,3 +383,20 @@ def test_scan_invalid_merge(first_scan: Scan, second_scan: Scan):
 )
 def test_project_equals(first_project: Project, second_project: Project, output: bool):
     assert first_project.equals(second_project) == output
+
+
+def test_project_can_merge(
+    first_project: Project, second_project: Project, output: bool
+):
+    pass
+
+
+def test_project_merge(
+    first_project: Project, second_project: Project, output: Project
+):
+    pass
+
+
+def test_project_invalid_merge(first_project: Project, second_project: Project):
+    with pytest.raises(ValueError, match="Cannot merge nodes"):
+        first_project.merge(second_project)
