@@ -559,6 +559,64 @@ def test_project_merge(
     assert first_project.merge(second_project) == output
 
 
-# def test_project_invalid_merge(first_project: Project, second_project: Project):
-#     with pytest.raises(ValueError, match="Cannot merge nodes"):
-#         first_project.merge(second_project)
+@pytest.mark.parametrize(
+    "first_project, second_project",
+    [
+        pytest.param(
+            Project(build_simple_scan(), []),
+            Project(Scan("table2", [], []), []),
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a")]),
+            Project(build_simple_scan(), [make_literal_column("a", 1)]),
+            id="conflict_column_definitions",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            # Note: Eventually this should be legal
+            id="matching_orderings",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            id="disjoint_orderings",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            # Note: If we allow merging orderings this should become legal.
+            id="overlapping_orderings",
+        ),
+        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
+        # Depends on other code changes merging.
+    ],
+)
+def test_project_invalid_merge(first_project: Project, second_project: Project):
+    with pytest.raises(ValueError, match="Cannot merge nodes"):
+        first_project.merge(second_project)
