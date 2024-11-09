@@ -165,6 +165,12 @@ def test_scan_to_string(scan_node: Scan, output: str):
             False,
             id="different_tables",
         ),
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            False,
+            id="different_nodes",
+        ),
     ],
 )
 def test_scan_equals(first_scan: Scan, second_scan: Scan, output: bool):
@@ -425,6 +431,12 @@ def test_project_to_string(project: Project, output: str):
             Project(Scan("table2", [], []), []),
             False,
             id="unequal_inputs",
+        ),
+        pytest.param(
+            Scan("table1", [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            False,
+            id="different_nodes",
         ),
     ],
 )
