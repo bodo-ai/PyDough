@@ -519,10 +519,44 @@ def test_project_can_merge(
     assert first_project.can_merge(second_project) == output
 
 
-# def test_project_merge(
-#     first_project: Project, second_project: Project, output: Project
-# ):
-#     pass
+@pytest.mark.parametrize(
+    "first_project, second_project, output",
+    [
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            id="matching_columns",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("c"), make_column("d")]),
+            Project(
+                build_simple_scan(),
+                [
+                    make_column("a"),
+                    make_column("b"),
+                    make_column("c"),
+                    make_column("d"),
+                ],
+            ),
+            id="disjoint_columns",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("b"), make_column("c")]),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b"), make_column("c")],
+            ),
+            id="overlapping_columns",
+        ),
+    ],
+)
+def test_project_merge(
+    first_project: Project, second_project: Project, output: Project
+):
+    assert first_project.merge(second_project) == output
 
 
 # def test_project_invalid_merge(first_project: Project, second_project: Project):
