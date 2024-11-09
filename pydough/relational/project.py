@@ -36,15 +36,8 @@ class Project(SingleRelational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
-    def equals(self, other: "Relational") -> bool:
-        if not isinstance(other, Project):
-            return False
-        return (
-            # TODO: Do we need a fast path for caching the inputs?
-            self.input.equals(other.input)
-            and self.columns == other.columns
-            and self.orderings == other.orderings
-        )
+    def node_equals(self, other: Relational) -> bool:
+        return isinstance(other, Project) and super().node_equals(other)
 
     def to_string(self) -> str:
         # TODO: Should we visit the input?

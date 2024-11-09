@@ -139,6 +139,19 @@ class Relational(ABC):
         return cols
 
     @abstractmethod
+    def node_equals(self, other: "Relational") -> bool:
+        """
+        Determine if two relational nodes are exactly identical,
+        excluding column ordering. This should be extended to avoid
+        duplicating equality logic shared across relational nodes.
+
+        Args:
+            other (Relational): The other relational node to compare against.
+
+        Returns:
+            bool: Are the two relational nodes equal.
+        """
+
     def equals(self, other: "Relational") -> bool:
         """
         Determine if two relational nodes are exactly identical,
@@ -150,6 +163,11 @@ class Relational(ABC):
         Returns:
             bool: Are the two relational nodes equal.
         """
+        return (
+            self.node_equals(other)
+            and self.columns == other.columns
+            and self.orderings == other.orderings
+        )
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Relational):

@@ -43,14 +43,8 @@ class Scan(Relational):
     def columns(self) -> MutableSequence["Column"]:
         return self._columns
 
-    def equals(self, other: "Relational") -> bool:
-        if not isinstance(other, Scan):
-            return False
-        return (
-            self.table_name == other.table_name
-            and self.columns == other.columns
-            and self.orderings == other.orderings
-        )
+    def node_equals(self, other: Relational) -> bool:
+        return isinstance(other, Scan) and self.table_name == other.table_name
 
     def to_sqlglot(self) -> "Expression":
         raise NotImplementedError(
