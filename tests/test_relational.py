@@ -48,15 +48,30 @@ def make_column(name: str) -> Column:
     return Column(name, make_simple_column_reference(name))
 
 
+def make_literal_column(name: str, value: int) -> Column:
+    """
+    Make a literal Int64 column with the given name. This is used
+    for generating various relational nodes.
+
+    Args:
+        name (str): The name of the column.
+        value (int): The value of the literal.
+
+    Returns:
+        Column: The output column.
+    """
+    return Column(name, Literal(value, Int64Type()))
+
+
 def test_column_equal():
     """
     Test that the column definition properly implements equality
     based on its elements.
     """
-    column1 = Column("a", Literal(1, Int64Type()))
-    column2 = Column("a", Literal(1, Int64Type()))
-    column3 = Column("b", Literal(1, Int64Type()))
-    column4 = Column("a", Literal(2, Int64Type()))
+    column1 = make_literal_column("a", 1)
+    column2 = make_literal_column("a", 1)
+    column3 = make_literal_column("b", 1)
+    column4 = make_literal_column("a", 2)
     assert column1 == column2
     assert column1 != column3
     assert column1 != column4
@@ -400,8 +415,14 @@ def test_project_to_string(project: Project, output: str):
             id="different_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(Scan("table2", [], []), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a")]),
+            Project(build_simple_scan(), [make_literal_column("a", 1)]),
+            False,
+            id="conflicting_column_definitions",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), []),
+            Project(Scan("table2", [], []), []),
             False,
             id="unequal_inputs",
         ),
@@ -411,10 +432,91 @@ def test_project_equals(first_project: Project, second_project: Project, output:
     assert first_project.equals(second_project) == output
 
 
-# def test_project_can_merge(
-#     first_project: Project, second_project: Project, output: bool
-# ):
-#     pass
+@pytest.mark.parametrize(
+    "first_project, second_project, output",
+    [
+        pytest.param(
+            Project(build_simple_scan(), []),
+            Project(Scan("table2", [], []), []),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            True,
+            id="matching_columns",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("c"), make_column("d")]),
+            True,
+            id="disjoint_columns",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("b"), make_column("c")]),
+            True,
+            id="overlapping_columns",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a")]),
+            Project(build_simple_scan(), [make_literal_column("a", 1)]),
+            False,
+            id="conflict_column_definitions",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            # Note: Eventually this should be legal
+            False,
+            id="matching_orderings",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="disjoint_orderings",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            # Note: If we allow merging orderings this should become legal.
+            False,
+            id="overlapping_orderings",
+        ),
+        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
+        # Depends on other code changes merging.
+    ],
+)
+def test_project_can_merge(
+    first_project: Project, second_project: Project, output: bool
+):
+    assert first_project.can_merge(second_project) == output
 
 
 # def test_project_merge(
