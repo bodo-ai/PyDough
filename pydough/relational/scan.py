@@ -25,7 +25,7 @@ class Scan(Relational):
         self,
         table_name: str,
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(columns, orderings)
         self.table_name: str = table_name
@@ -34,6 +34,23 @@ class Scan(Relational):
     def inputs(self):
         # A scan is required to be the leaf node of the relational tree.
         return []
+
+    @property
+    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
+        return self._orderings
+
+    @property
+    def columns(self) -> MutableSequence["Column"]:
+        return self._columns
+
+    def equals(self, other: "Relational") -> bool:
+        if not isinstance(other, Scan):
+            return False
+        return (
+            self.table_name == other.table_name
+            and self.columns == other.columns
+            and self.orderings == other.orderings
+        )
 
     def to_sqlglot(self) -> "Expression":
         raise NotImplementedError(
@@ -45,10 +62,10 @@ class Scan(Relational):
 
     def can_merge(self, other: Relational) -> bool:
         if isinstance(other, Scan):
-            # TODO: Determine if two different orderings can be merged.
             return (
                 self.table_name == other.table_name
-                and self.orderings == other.orderings
+                and self.orderings_match(other.orderings)
+                and self.columns_match(other.columns)
             )
         else:
             return False
@@ -59,8 +76,6 @@ class Scan(Relational):
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
         table_name = self.table_name
-        # Note: This ignores column ordering. We may need to revisit
-        # this later.
-        columns = list(set(self.columns) | set(other.columns))
+        cols = self.merge_columns(other.columns)
         orderings = self.orderings
-        return Scan(table_name, columns, orderings)
+        return Scan(table_name, cols, orderings)

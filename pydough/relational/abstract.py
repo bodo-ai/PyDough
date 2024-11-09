@@ -68,6 +68,23 @@ class Relational(ABC):
         """
         return self._orderings
 
+    def orderings_match(
+        self, other_orderings: MutableSequence["PyDoughExpressionAST"]
+    ) -> bool:
+        """
+        Determine if two orderings match in a way that would be considered equivalent
+        for the given node.
+
+        Args:
+            other_orderings (MutableSequence[PyDoughExpressionAST]): The orderings property
+            of another relational node.
+
+        Returns:
+            bool: Can the two orderings be considered equivalent and therefore safely merged.
+        """
+        # TODO: Allow merging compatible orderings?
+        return not self.orderings and not other_orderings
+
     @property
     def columns(self) -> MutableSequence["Column"]:
         """
@@ -77,6 +94,67 @@ class Relational(ABC):
             MutableSequence[Column]: The columns of the relational expression.
         """
         return self._columns
+
+    def columns_match(self, other_columns: MutableSequence["Column"]) -> bool:
+        """
+        Determine if two sets of columns match in a way that would be considered compatible
+        for the given node. In general we current assume that columns are indexed by name
+        and any columns with the same name must be equivalent.
+
+        Args:
+            other_columns (MutableSequence[Column]): The columns property
+            of another relational node.
+
+        Returns:
+            bool: Can the two columns be considered equivalent and therefore safely merged.
+        """
+        first_keys = {col.name: col.expr for col in self.columns}
+        second_keys = {col.name: col.expr for col in other_columns}
+        for key, value in first_keys.items():
+            if key in second_keys and value != second_keys[key]:
+                return False
+        return True
+
+    def merge_columns(self, other_columns: MutableSequence["Column"]) -> list["Column"]:
+        """
+        Merge two sets of columns together, keeping the original ordering
+        of self as much as possible. This eliminates any duplicates between
+        the two sets of columns and assumes that if two columns have the same name
+        then they must match (which is enforced by the columns_match method).
+
+        Args:
+            other_columns (MutableSequence[Column]): The columns property
+            of another relational node.
+
+
+        Returns:
+            list["Column"]: The list of merged columns keeping the original ordering
+            of self as much as possible.
+        """
+        cols = list(self.columns)
+        col_set = set(cols)
+        for col in other_columns:
+            if col not in col_set:
+                cols.append(col)
+        return cols
+
+    @abstractmethod
+    def equals(self, other: "Relational") -> bool:
+        """
+        Determine if two relational nodes are exactly identical,
+        including column ordering.
+
+        Args:
+            other (Relational): The other relational node to compare against.
+
+        Returns:
+            bool: Are the two relational nodes equal.
+        """
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Relational):
+            return False
+        return self.equals(other)
 
     @abstractmethod
     def to_sqlglot(self) -> "Expression":
@@ -99,6 +177,9 @@ class Relational(ABC):
             str: A string representation of the relational tree
             with this node at the root.
         """
+
+    def __repr__(self) -> str:
+        return self.to_string()
 
     @abstractmethod
     def can_merge(self, other: "Relational") -> bool:
