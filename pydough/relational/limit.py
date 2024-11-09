@@ -28,7 +28,7 @@ class Limit(SingleRelational):
         input: Relational,
         limit: "PyDoughExpressionAST",
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(input, columns, orderings)
         # TODO: Check that limit has an integer return type.

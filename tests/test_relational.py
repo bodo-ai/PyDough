@@ -12,6 +12,7 @@ from pydough.pydough_ast.expressions.simple_column_reference import (
     SimpleColumnReference,
 )
 from pydough.relational import Column
+from pydough.relational.limit import Limit
 from pydough.relational.project import Project
 from pydough.relational.scan import Scan
 from pydough.types import Int64Type
@@ -61,6 +62,20 @@ def make_literal_column(name: str, value: int) -> Column:
         Column: The output column.
     """
     return Column(name, Literal(value, Int64Type()))
+
+
+def make_limit_literal(limit: int) -> Literal:
+    """
+    Make a literal Int64 with the given limit. This is used for
+    generating various relational nodes.
+
+    Args:
+        limit (int): The value of the literal.
+
+    Returns:
+        Literal: The output literal.
+    """
+    return Literal(limit, Int64Type())
 
 
 def test_column_equal():
@@ -632,3 +647,45 @@ def test_project_merge(
 def test_project_invalid_merge(first_project: Project, second_project: Project):
     with pytest.raises(ValueError, match="Cannot merge nodes"):
         first_project.merge(second_project)
+
+
+@pytest.mark.parametrize(
+    "limit, output",
+    [
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(1),
+                [make_column("a"), make_column("b")],
+            ),
+            "LIMIT(limit=1, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="no_orderings_limit_1",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("a"), make_column("b")],
+            ),
+            "LIMIT(limit=5, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="no_orderings_limit_5",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            "LIMIT(limit=10, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
+            id="with_orderings",
+        ),
+        pytest.param(
+            Limit(build_simple_scan(), make_limit_literal(10), []),
+            "LIMIT(limit=10, columns=[], orderings=[])",
+            id="no_columns",
+        ),
+    ],
+)
+def test_limit_to_string(limit: Limit, output: str):
+    assert limit.to_string() == output
