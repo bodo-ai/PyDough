@@ -9,6 +9,7 @@ from pydough.pydough_ast.expressions.simple_column_reference import (
     SimpleColumnReference,
 )
 from pydough.relational import Column
+from pydough.relational.project import Project
 from pydough.relational.scan import Scan
 from pydough.types import Int64Type
 
@@ -58,8 +59,14 @@ def test_column_equal():
     assert column1 != column4
 
 
+def build_simple_scan() -> Scan:
+    # Helper function to generate a simple scan node for when
+    # relational operators need an input.
+    return Scan("table", [make_column("a"), make_column("b")])
+
+
 def test_scan_inputs():
-    scan = Scan("table", [make_column("a"), make_column("b")])
+    scan = build_simple_scan()
     assert scan.inputs == []
 
 
@@ -319,5 +326,56 @@ def test_scan_invalid_merge(first_scan: Scan, second_scan: Scan):
         first_scan.merge(second_scan)
 
 
-# def test_project_equals(first_project: Project, second_project: Project, output: bool):
-#     assert first_project.equals(second_project) == output
+@pytest.mark.parametrize(
+    "first_project, second_project, output",
+    [
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            True,
+            id="matching_projects_no_orderings",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            True,
+            id="matching_projects_with_orderings",
+        ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="different_orderings",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(build_simple_scan(), [make_column("a")]),
+            False,
+            id="different_columns",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(Scan("table2", [], []), [make_column("a"), make_column("b")]),
+            False,
+            id="unequal_inputs",
+        ),
+    ],
+)
+def test_project_equals(first_project: Project, second_project: Project, output: bool):
+    assert first_project.equals(second_project) == output
