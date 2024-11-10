@@ -25,7 +25,7 @@ class RelationalRoot(SingleRelational):
         self,
         input: Relational,
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(input, columns, orderings)
 
@@ -45,4 +45,4 @@ class RelationalRoot(SingleRelational):
         return False
 
     def merge(self, other: Relational) -> Relational:
-        raise NotImplementedError("Cannot merge root nodes.")
+        raise ValueError("Cannot merge root nodes.")
