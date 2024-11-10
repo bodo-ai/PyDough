@@ -3005,10 +3005,258 @@ def test_join_can_merge(first_join: Join, second_join: Join, output: bool):
     assert first_join.can_merge(second_join) == output
 
 
-# def test_join_merge(first_join: Join, second_join: Join):
-#     with pytest.raises(ValueError, match="Cannot merge nodes"):
-#         first_join.merge(second_join)
+@pytest.mark.parametrize(
+    "first_join, second_join, output",
+    [
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            id="same_columns_no_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("c")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b"), make_column("c")],
+            ),
+            id="overlapping_columns_no_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            id="subset_columns_no_ordering",
+        ),
+    ],
+)
+def test_join_merge(first_join: Join, second_join: Join, output: Join):
+    assert first_join.merge(second_join) == output
 
-# def test_join_invalid_merge(first_join: Join, second_join: Join):
-#     with pytest.raises(ValueError, match="Cannot merge nodes"):
-#         first_join.merge(second_join
+
+@pytest.mark.parametrize(
+    "first_join, second_join",
+    [
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            # Note: This could become legal in the future.
+            id="same_columns_same_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            id="diff_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            id="subset_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("c"), make_column("d")],
+                [make_simple_column_reference("a")],
+            ),
+            # Note: This could become legal in the future.
+            id="disjoint_columns_same_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(False),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            id="diff_conds",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.LEFT,
+                [make_column("a"), make_column("b")],
+            ),
+            id="diff_type",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                Scan("table2", [make_column("a"), make_column("b")]),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            id="different_left",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                Scan("table2", [make_column("a"), make_column("b")]),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            id="different_right",
+        ),
+        pytest.param(
+            Join(
+                Scan("table2", [make_column("a"), make_column("b")]),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                Scan("table2", [make_column("a"), make_column("b")]),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            # Note: This could become legal in the future.
+            id="swapped_inputs",
+        ),
+        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
+        # Depends on other code changes merging.
+    ],
+)
+def test_join_invalid_merge(first_join: Join, second_join: Join):
+    with pytest.raises(ValueError, match="Cannot merge nodes"):
+        first_join.merge(second_join)
