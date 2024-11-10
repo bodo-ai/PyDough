@@ -2322,8 +2322,66 @@ def test_root_to_string(root: RelationalRoot, output: str):
     assert root.to_string() == output
 
 
-# def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
-#     assert first_root.equals(second_root) == output
+@pytest.mark.parametrize(
+    "first_root, second_root, output",
+    [
+        pytest.param(
+            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            True,
+            id="matching_columns_no_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            RelationalRoot(build_simple_scan(), [make_column("b"), make_column("c")]),
+            False,
+            id="different_columns_no_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            True,
+            id="matching_columns_with_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="different_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            RelationalRoot(Scan("table2", []), [make_column("a"), make_column("b")]),
+            False,
+            id="different_inputs",
+        ),
+        pytest.param(
+            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Scan("table2", [make_column("a"), make_column("b")]),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
+    assert first_root.equals(second_root) == output
+
 
 # def test_root_can_merge(first_root: RelationalRoot, second_root: RelationalRoot):
 #     assert not first_root.can_merge(second_root)
