@@ -64,7 +64,7 @@ class Filter(SingleRelational):
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
         assert isinstance(other, Filter)
-        input = self.input.merge(other.input)
+        input = self.input
         condition = self.condition
         cols = self.merge_columns(other.columns)
         orderings = self.orderings

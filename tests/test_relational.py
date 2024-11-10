@@ -1212,7 +1212,7 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
 # def test_filter_to_string(filter: Filter, output: str):
 #     assert filter.to_string() == output
 
-# def test_filter_equals(first_filter: Filter, second_filter: Filter, output: bool):
+# def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
 #     assert first_filter.equals(second_filter) == output
 
 # def test_filter_can_merge(first_filter: Filter, second_filter: Filter, output: bool):
