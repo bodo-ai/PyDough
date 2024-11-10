@@ -34,11 +34,14 @@ class RelationalRoot(SingleRelational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
+    def node_equals(self, other: Relational) -> bool:
+        return isinstance(other, RelationalRoot) and super().node_equals(other)
+
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"ROOT(columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
+    def node_can_merge(self, other: Relational) -> bool:
         return False
 
     def merge(self, other: Relational) -> Relational:
