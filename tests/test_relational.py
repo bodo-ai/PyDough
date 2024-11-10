@@ -987,3 +987,71 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
 )
 def test_limit_can_merge(first_limit: Limit, second_limit: Limit, output: bool):
     assert first_limit.can_merge(second_limit) == output
+
+
+@pytest.mark.parametrize(
+    "first_limit, second_limit, output",
+    [
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            id="matching_columns_equal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("c"), make_column("d")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [
+                    make_column("a"),
+                    make_column("b"),
+                    make_column("c"),
+                    make_column("d"),
+                ],
+            ),
+            id="disjoint_columns_equal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("b"), make_column("c")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b"), make_column("c")],
+            ),
+            id="overlapping_columns_equal_limits",
+        ),
+    ],
+)
+def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
+    assert first_limit.merge(second_limit) == output
