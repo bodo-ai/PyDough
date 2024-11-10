@@ -45,4 +45,4 @@ class RelationalRoot(SingleRelational):
         return False
 
     def merge(self, other: Relational) -> Relational:
-        raise NotImplementedError("Cannot merge root nodes.")
+        raise ValueError("Cannot merge root nodes.")
