@@ -2086,9 +2086,210 @@ def test_filter_can_merge(first_filter: Filter, second_filter: Filter, output: b
     assert first_filter.can_merge(second_filter) == output
 
 
-# def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filter):
-#     assert first_filter.merge(second_filter) == output
+@pytest.mark.parametrize(
+    "first_filter, second_filter, output",
+    [
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            id="matching_columns_equal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("c"), make_column("d")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [
+                    make_column("a"),
+                    make_column("b"),
+                    make_column("c"),
+                    make_column("d"),
+                ],
+            ),
+            id="disjoint_columns_equal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("b"), make_column("c")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b"), make_column("c")],
+            ),
+            id="overlapping_columns_equal_conds",
+        ),
+    ],
+)
+def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filter):
+    assert first_filter.merge(second_filter) == output
 
-# def test_filter_invalid_merge(first_filter: Filter, second_filter: Filter):
-#     with pytest.raises(ValueError, match="Cannot merge nodes"):
-#         first_filter.merge(second_filter)
+
+@pytest.mark.parametrize(
+    "first_filter, second_filter",
+    [
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                Scan("table2", []),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("a"), make_column("b")],
+            ),
+            id="matching_columns_unequal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("c"), make_column("d")],
+            ),
+            id="disjoint_columns_unequal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("b"), make_column("c")],
+            ),
+            id="overlapping_columns_unequal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            # Note: Eventually this should be legal
+            id="matching_orderings_equal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            id="matching_orderings_unequal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            id="disjoint_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            # Note: If we allow merging orderings this should become legal.
+            id="overlapping_orderings_equal_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            id="overlapping_orderings_unequal_conds",
+        ),
+        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
+        # Depends on other code changes merging.
+    ],
+)
+def test_filter_invalid_merge(first_filter: Filter, second_filter: Filter):
+    with pytest.raises(ValueError, match="Cannot merge nodes"):
+        first_filter.merge(second_filter)
