@@ -2560,8 +2560,212 @@ def test_join_to_string(join: Join, output: str):
     assert join.to_string() == output
 
 
-# def test_join_equals(first_join: Join, second_join: Relational, output: bool):
-#     assert first_join.equals(second_join) == output
+@pytest.mark.parametrize(
+    "first_join, second_join, output",
+    [
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            True,
+            id="same_columns_no_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("c")],
+            ),
+            False,
+            id="diff_columns_no_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            True,
+            id="same_columns_same_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="diff_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("c")],
+                [make_simple_column_reference("a")],
+            ),
+            False,
+            id="diff_columns_same_ordering",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(False),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="swapped_conds",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.LEFT,
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="swapped_type",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                Scan("table2", [make_column("a"), make_column("b")]),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="different_left",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                Scan("table2", [make_column("a"), make_column("b")]),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="different_right",
+        ),
+        pytest.param(
+            Join(
+                Scan("table2", [make_column("a"), make_column("b")]),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Join(
+                build_simple_scan(),
+                Scan("table2", [make_column("a"), make_column("b")]),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="swapped_inputs",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            Scan("table2", [make_column("a"), make_column("b")]),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_join_equals(first_join: Join, second_join: Relational, output: bool):
+    assert first_join.equals(second_join) == output
+
 
 # def test_join_can_merge(first_join: Join, second_join: Join, output: bool):
 #     assert not first_join.can_merge(second_join)
