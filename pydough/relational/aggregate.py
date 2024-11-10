@@ -26,7 +26,7 @@ class Aggregate(SingleRelational):
         input: Relational,
         keys: list["Column"],
         aggregations: list["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(input, keys + aggregations, orderings)
         self._keys: list[Column] = keys
@@ -45,22 +45,27 @@ class Aggregate(SingleRelational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
+    def node_equals(self, other: Relational) -> bool:
+        return (
+            isinstance(other, Aggregate)
+            and self.keys == other.keys
+            and self.aggregations == other.aggregations
+            and super().node_equals(other)
+        )
+
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"Aggregation(keys={self.keys}, aggregations={self.aggregations}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Aggregate):
-            # TODO: Determine if two different orderings can be merged.
-            # TODO: Determine if we ever want to "merge" aggregations with a subset of keys via
-            # grouping sets.
-            return (
-                self.input.can_merge(other.input)
-                and self.orderings == other.orderings
-                and self.keys == other.keys
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        # TODO: Determine if we ever want to "merge" aggregations with a subset of keys via
+        # grouping sets.
+        return (
+            isinstance(other, Aggregate)
+            and self.orderings == other.orderings
+            and self.keys == other.keys
+            and super().node_can_merge(other)
+        )
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):

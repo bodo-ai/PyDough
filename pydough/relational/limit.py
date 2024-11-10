@@ -28,7 +28,7 @@ class Limit(SingleRelational):
         input: Relational,
         limit: "PyDoughExpressionAST",
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(input, columns, orderings)
         # TODO: Check that limit has an integer return type.
@@ -46,21 +46,24 @@ class Limit(SingleRelational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
+    def node_equals(self, other: Relational) -> bool:
+        return (
+            isinstance(other, Limit)
+            and self.limit == other.limit
+            and super().node_equals(other)
+        )
+
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"LIMIT(limit={self.limit}, columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Limit):
-            # TODO: Determine if two different orderings can be merged.
-            # TODO: Determine if we can merge limits with different limits by either taking the min or max.
-            return (
-                self.input.can_merge(other.input)
-                and self.orderings == other.orderings
-                and self.limit == other.limit
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        # TODO: Determine if we can merge limits with different limits by either taking the min or max.
+        return (
+            isinstance(other, Limit)
+            and self.limit == other.limit
+            and super().node_can_merge(other)
+        )
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):
@@ -69,11 +72,7 @@ class Limit(SingleRelational):
             )
         assert isinstance(other, Limit)
         input = self.input.merge(other.input)
-        # TODO: Determine if/how we need to update the location of each column
-        # relative to the input.
-        # Note: This ignores column ordering. We should revisit
-        # this later.
-        columns = list(set(self.columns) | set(other.columns))
+        cols = self.merge_columns(other.columns)
         orderings = self.orderings
         limit = self.limit
-        return Limit(input, limit, columns, orderings)
+        return Limit(input, limit, cols, orderings)

@@ -27,7 +27,7 @@ class Project(SingleRelational):
         self,
         input: Relational,
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(input, columns, orderings)
 
@@ -36,18 +36,15 @@ class Project(SingleRelational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
+    def node_equals(self, other: Relational) -> bool:
+        return isinstance(other, Project) and super().node_equals(other)
+
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"PROJECT(columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Project):
-            # TODO: Determine if two different orderings can be merged.
-            return (
-                self.input.can_merge(other.input) and self.orderings == other.orderings
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        return isinstance(other, Project) and super().node_can_merge(other)
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):
@@ -55,11 +52,7 @@ class Project(SingleRelational):
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
         assert isinstance(other, Project)
-        input = self.input.merge(other.input)
-        # TODO: Determine if/how we need to update the location of each column
-        # relative to the input.
-        # Note: This ignores column ordering. We should revisit
-        # this later.
-        columns = list(set(self.columns) | set(other.columns))
+        input = self.input
+        cols = self.merge_columns(other.columns)
         orderings = self.orderings
-        return Project(input, columns, orderings)
+        return Project(input, cols, orderings)
