@@ -1238,3 +1238,21 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
 # def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalRoot):
 #     with pytest.raises(ValueError, match="Cannot merge nodes"):
 #         first_root.merge(second_root)
+
+
+# def test_join_to_string(join: Join, output: str):
+#     assert join.to_string() == output
+
+# def test_join_equals(first_join: Join, second_join: Relational, output: bool):
+#     assert first_join.equals(second_join) == output
+
+# def test_join_can_merge(first_join: Join, second_join: Join, output: bool):
+#     assert not first_join.can_merge(second_join)
+
+# def test_join_merge(first_join: Join, second_join: Join):
+#     with pytest.raises(ValueError, match="Cannot merge nodes"):
+#         first_join.merge(second_join)
+
+# def test_join_invalid_merge(first_join: Join, second_join: Join):
+#     with pytest.raises(ValueError, match="Cannot merge nodes"):
+#         first_join.merge(second_join)

@@ -66,24 +66,29 @@ class Join(Relational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
+    def node_equals(self, other: Relational) -> bool:
+        return (
+            isinstance(other, Join)
+            and self.cond == other.cond
+            and self.join_type == other.join_type
+            and self.left.node_equals(other.left)
+            and self.right.node_equals(other.right)
+        )
+
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"JOIN(cond={self.cond}, type={self.join_type}, columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Join):
-            # TODO: Determine if two different orderings can be merged.
-            # TODO: Determine the "merge" rules for combining filters. Are we ANDing or ORing?
-            # TODO: Determine if we can handle swapping the left and right inputs.
-            return (
-                self.left.can_merge(other.left)
-                and self.right.can_merge(other.right)
-                and self.orderings == other.orderings
-                and self.cond == other.cond
-                and self.join_type == other.join_type
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        # TODO: Determine if left and right must always match exactly and if we can ever swap them.
+        # TODO: Determine if we cna ever merge cond based on AND/OR.
+        return (
+            isinstance(other, Join)
+            and self.cond == other.cond
+            and self.join_type == other.join_type
+            and self.left == other.left
+            and self.right == other.right
+        )
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):
@@ -91,14 +96,10 @@ class Join(Relational):
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
         assert isinstance(other, Join)
-        left = self.left.merge(other.left)
-        right = self.right.merge(other.right)
+        left = self.left
+        right = self.right
         cond = self.cond
         join_type = self.join_type
-        # TODO: Determine if/how we need to update the location of each column
-        # relative to the input.
-        # Note: This ignores column ordering. We should revisit
-        # this later.
-        columns = list(set(self.columns) | set(other.columns))
+        cols = self.merge_columns(other.columns)
         orderings = self.orderings
-        return Join(left, right, cond, join_type, columns, orderings)
+        return Join(left, right, cond, join_type, cols, orderings)
