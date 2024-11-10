@@ -1745,8 +1745,158 @@ def test_filter_to_string(filter: Filter, output: str):
     assert filter.to_string() == output
 
 
-# def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
-#     assert first_filter.equals(second_filter) == output
+@pytest.mark.parametrize(
+    "first_filter, second_filter, output",
+    [
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            True,
+            id="matching_no_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="different_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("c"), make_column("d")],
+            ),
+            False,
+            id="different_columns_no_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a")],
+            ),
+            False,
+            id="subset_columns_no_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="different_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            True,
+            id="matching_with_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            False,
+            id="different_cond_with_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a")],
+                [make_simple_column_reference("a")],
+            ),
+            False,
+            id="subset_columns_with_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Filter(
+                Scan("table2", [make_column("a"), make_column("b")], []),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            Scan("table2", [make_column("a"), make_column("b")]),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
+    assert first_filter.equals(second_filter) == output
+
 
 # def test_filter_can_merge(first_filter: Filter, second_filter: Filter, output: bool):
 #     assert first_filter.can_merge(second_filter) == output
