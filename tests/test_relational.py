@@ -802,3 +802,188 @@ def test_limit_to_string(limit: Limit, output: str):
 )
 def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool):
     assert first_limit.equals(second_limit) == output
+
+
+@pytest.mark.parametrize(
+    "first_limit, second_limit, output",
+    [
+        pytest.param(
+            Limit(build_simple_scan(), make_limit_literal(10), []),
+            Limit(Scan("table2", [], []), make_limit_literal(10), []),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            True,
+            id="matching_columns_equal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="matching_columns_unequal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("c"), make_column("d")],
+            ),
+            True,
+            id="disjoint_columns_equal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("c"), make_column("d")],
+            ),
+            False,
+            id="disjoint_columns_unequal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("b"), make_column("c")],
+            ),
+            True,
+            id="overlapping_columns_equal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("b"), make_column("c")],
+            ),
+            False,
+            id="overlapping_columns_unequal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            # Note: Eventually this should be legal
+            False,
+            id="matching_orderings_equal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            # Note: Eventually this should be legal
+            False,
+            id="matching_orderings_unequal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="disjoint_orderings",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            # Note: If we allow merging orderings this should become legal.
+            False,
+            id="overlapping_orderings_equal_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            # Note: If we allow merging orderings this should become legal.
+            False,
+            id="overlapping_orderings_unequal_limits",
+        ),
+        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
+        # Depends on other code changes merging.
+    ],
+)
+def test_limit_can_merge(first_limit: Limit, second_limit: Limit, output: bool):
+    assert first_limit.can_merge(second_limit) == output
