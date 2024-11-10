@@ -1229,7 +1229,7 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
 # def test_root_to_string(root: RelationalRoot, output: str):
 #     assert root.to_string() == output
 
-# def test_root_equals(first_root: RelationalRoot, second_root: RelationalRoot, output: bool):
+# def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
 #     assert first_root.equals(second_root) == output
 
 # def test_root_can_merge(first_root: RelationalRoot, second_root: RelationalRoot):
