@@ -57,17 +57,13 @@ class Limit(SingleRelational):
         # TODO: Should we visit the input?
         return f"LIMIT(limit={self.limit}, columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Limit):
-            # TODO: Determine if we can merge limits with different limits by either taking the min or max.
-            return (
-                self.input.can_merge(other.input)
-                and self.orderings_match(other.orderings)
-                and self.columns_match(other.columns)
-                and self.limit == other.limit
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        # TODO: Determine if we can merge limits with different limits by either taking the min or max.
+        return (
+            isinstance(other, Limit)
+            and self.limit == other.limit
+            and super().node_can_merge(other)
+        )
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):

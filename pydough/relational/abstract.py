@@ -200,6 +200,19 @@ class Relational(ABC):
         return self.to_string()
 
     @abstractmethod
+    def node_can_merge(self, other: "Relational") -> bool:
+        """
+        Determine if two relational nodes can be merged together.
+        This should be extended to avoid duplicating merge logic shared
+        across relational nodes.
+
+        Args:
+            other (Relational): The other relational node to merge against.
+
+        Returns:
+            bool: Can the two relational nodes be merged.
+        """
+
     def can_merge(self, other: "Relational") -> bool:
         """
         Determine if two relational nodes can be merged together.
@@ -210,6 +223,11 @@ class Relational(ABC):
         Returns:
             bool: Can the two relational nodes be merged together.
         """
+        return (
+            self.node_can_merge(other)
+            and self.orderings_match(other.orderings)
+            and self.columns_match(other.columns)
+        )
 
     @abstractmethod
     def merge(self, other: "Relational") -> "Relational":

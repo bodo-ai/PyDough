@@ -54,15 +54,8 @@ class Scan(Relational):
     def to_string(self) -> str:
         return f"SCAN(table={self.table_name}, columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Scan):
-            return (
-                self.table_name == other.table_name
-                and self.orderings_match(other.orderings)
-                and self.columns_match(other.columns)
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        return isinstance(other, Scan) and self.table_name == other.table_name
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):

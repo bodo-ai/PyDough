@@ -43,16 +43,8 @@ class Project(SingleRelational):
         # TODO: Should we visit the input?
         return f"PROJECT(columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Project):
-            # TODO: Can we allow inputs to ever not merge exactly?
-            return (
-                self.input.equals(other.input)
-                and self.orderings_match(other.orderings)
-                and self.columns_match(other.columns)
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        return isinstance(other, Project) and super().node_can_merge(other)
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):
