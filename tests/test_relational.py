@@ -11,7 +11,7 @@ from pydough.pydough_ast.expressions.literal import Literal
 from pydough.pydough_ast.expressions.simple_column_reference import (
     SimpleColumnReference,
 )
-from pydough.relational import Column
+from pydough.relational import Column, Relational
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
 from pydough.relational.scan import Scan
@@ -188,7 +188,7 @@ def test_scan_to_string(scan_node: Scan, output: str):
         ),
     ],
 )
-def test_scan_equals(first_scan: Scan, second_scan: Scan, output: bool):
+def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
     assert first_scan.equals(second_scan) == output
 
 
@@ -448,14 +448,16 @@ def test_project_to_string(project: Project, output: str):
             id="unequal_inputs",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
             Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Scan("table1", [make_column("a"), make_column("b")]),
             False,
             id="different_nodes",
         ),
     ],
 )
-def test_project_equals(first_project: Project, second_project: Project, output: bool):
+def test_project_equals(
+    first_project: Project, second_project: Relational, output: bool
+):
     assert first_project.equals(second_project) == output
 
 
@@ -689,3 +691,114 @@ def test_project_invalid_merge(first_project: Project, second_project: Project):
 )
 def test_limit_to_string(limit: Limit, output: str):
     assert limit.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "first_limit, second_limit, output",
+    [
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            True,
+            id="matching_limits_no_orderings",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("a"), make_column("b")],
+            ),
+            False,
+            id="different_limits_no_orderings",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            True,
+            id="matching_limits_with_orderings",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(5),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            False,
+            id="different_limits_with_orderings",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="different_orderings",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Limit(build_simple_scan(), make_limit_literal(10), [make_column("a")]),
+            False,
+            id="different_columns",
+        ),
+        pytest.param(
+            Limit(build_simple_scan(), make_limit_literal(5), []),
+            Limit(Scan("table2", [], []), make_limit_literal(5), []),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_column("a"), make_column("b")],
+            ),
+            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool):
+    assert first_limit.equals(second_limit) == output
