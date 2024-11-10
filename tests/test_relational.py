@@ -17,6 +17,7 @@ from pydough.pydough_ast.expressions.simple_column_reference import (
 from pydough.relational import Column, Relational
 from pydough.relational.aggregate import Aggregate
 from pydough.relational.filter import Filter
+from pydough.relational.join import Join, JoinType
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
 from pydough.relational.root import RelationalRoot
@@ -2494,8 +2495,70 @@ def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalR
         first_root.merge(second_root)
 
 
-# def test_join_to_string(join: Join, output: str):
-#     assert join.to_string() == output
+@pytest.mark.parametrize(
+    "join, output",
+    [
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+            ),
+            "JOIN(cond=True, type=inner, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="inner_join_no_orderings",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(False),
+                JoinType.LEFT,
+                [make_column("a"), make_column("b")],
+            ),
+            "JOIN(cond=False, type=left, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="left_join_no_orderings",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.RIGHT,
+                [make_column("a"), make_column("b")],
+            ),
+            "JOIN(cond=True, type=right, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="right_join_no_orderings",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.FULL_OUTER,
+                [make_column("a"), make_column("b")],
+            ),
+            "JOIN(cond=True, type=full outer, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="inner_join_no_orderings",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                make_cond_literal(True),
+                JoinType.INNER,
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            "JOIN(cond=True, type=inner, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
+            id="inner_join_with_orderings",
+        ),
+    ],
+)
+def test_join_to_string(join: Join, output: str):
+    assert join.to_string() == output
+
 
 # def test_join_equals(first_join: Join, second_join: Relational, output: bool):
 #     assert first_join.equals(second_join) == output

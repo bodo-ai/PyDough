@@ -17,7 +17,7 @@ class JoinType(StrEnum):
     INNER = "inner"
     LEFT = "left"
     RIGHT = "right"
-    FULL = "full"
+    FULL_OUTER = "full outer"
 
 
 class Join(Relational):
@@ -33,7 +33,7 @@ class Join(Relational):
         cond: "PyDoughExpressionAST",
         join_type: JoinType,
         columns: MutableSequence[Column],
-        orderings: MutableSequence[PyDoughExpressionAST] | None,
+        orderings: MutableSequence[PyDoughExpressionAST] | None = None,
     ) -> None:
         super().__init__(columns, orderings)
         self._left: Relational = left
