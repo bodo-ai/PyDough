@@ -25,7 +25,7 @@ class RelationalRoot(SingleRelational):
         self,
         input: Relational,
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(input, columns, orderings)
 

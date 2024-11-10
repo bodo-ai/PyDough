@@ -19,6 +19,7 @@ from pydough.relational.aggregate import Aggregate
 from pydough.relational.filter import Filter
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
+from pydough.relational.root import RelationalRoot
 from pydough.relational.scan import Scan
 from pydough.types import BooleanType, Int64Type
 
@@ -2295,8 +2296,31 @@ def test_filter_invalid_merge(first_filter: Filter, second_filter: Filter):
         first_filter.merge(second_filter)
 
 
-# def test_root_to_string(root: RelationalRoot, output: str):
-#     assert root.to_string() == output
+@pytest.mark.parametrize(
+    "root, output",
+    [
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+            ),
+            "ROOT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="no_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            "ROOT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
+            id="with_orderings",
+        ),
+    ],
+)
+def test_root_to_string(root: RelationalRoot, output: str):
+    assert root.to_string() == output
+
 
 # def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
 #     assert first_root.equals(second_root) == output
