@@ -16,10 +16,11 @@ from pydough.pydough_ast.expressions.simple_column_reference import (
 )
 from pydough.relational import Column, Relational
 from pydough.relational.aggregate import Aggregate
+from pydough.relational.filter import Filter
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
 from pydough.relational.scan import Scan
-from pydough.types import Int64Type
+from pydough.types import BooleanType, Int64Type
 
 
 def make_simple_column_reference(name: str) -> SimpleColumnReference:
@@ -80,6 +81,20 @@ def make_limit_literal(limit: int) -> Literal:
         Literal: The output literal.
     """
     return Literal(limit, Int64Type())
+
+
+def make_cond_literal(cond: bool) -> Literal:
+    """
+    Make a literal Bool with the given condition. This is used for
+    generating various relational nodes.
+
+    Args:
+        cond (bool): The value of the literal.
+
+    Returns:
+        Literal: The output literal.
+    """
+    return Literal(cond, BooleanType())
 
 
 def test_column_equal():
@@ -1702,8 +1717,33 @@ def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
         first_agg.merge(second_agg)
 
 
-# def test_filter_to_string(filter: Filter, output: str):
-#     assert filter.to_string() == output
+@pytest.mark.parametrize(
+    "filter, output",
+    [
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(True),
+                [make_column("a"), make_column("b")],
+            ),
+            "FILTER(condition=True, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            id="no_orderings",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                make_cond_literal(False),
+                [make_column("a"), make_column("b")],
+                [make_simple_column_reference("a")],
+            ),
+            "FILTER(condition=False, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
+            id="with_orderings",
+        ),
+    ],
+)
+def test_filter_to_string(filter: Filter, output: str):
+    assert filter.to_string() == output
+
 
 # def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
 #     assert first_filter.equals(second_filter) == output

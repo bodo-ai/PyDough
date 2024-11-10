@@ -25,7 +25,7 @@ class Filter(SingleRelational):
         input: Relational,
         condition: "PyDoughExpressionAST",
         columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
+        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
     ) -> None:
         super().__init__(input, columns, orderings)
         self._condition: PyDoughExpressionAST = condition
