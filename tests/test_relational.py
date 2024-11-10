@@ -1190,3 +1190,20 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
 def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
     with pytest.raises(ValueError, match="Cannot merge nodes"):
         first_limit.merge(second_limit)
+
+
+# def test_aggregate_to_string(agg: Aggregate, output: str):
+#     assert agg.to_string() == output
+
+# def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
+#     assert first_agg.equals(second_agg) == output
+
+# def test_aggregate_can_merge(first_agg: Aggregate, second_agg: Aggregate, output: bool):
+#     assert first_agg.can_merge(second_agg) == output
+
+# def test_aggregate_merge(first_agg: Aggregate, second_agg: Aggregate, output: Aggregate):
+#     assert first_agg.merge(second_agg) == output
+
+# def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
+#     with pytest.raises(ValueError, match="Cannot merge nodes"):
+#         first_agg.merge(second_agg)
