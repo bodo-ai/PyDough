@@ -1533,9 +1533,170 @@ def test_aggregate_can_merge(first_agg: Aggregate, second_agg: Aggregate, output
     assert first_agg.can_merge(second_agg) == output
 
 
-# def test_aggregate_merge(first_agg: Aggregate, second_agg: Aggregate, output: Aggregate):
-#     assert first_agg.merge(second_agg) == output
+@pytest.mark.parametrize(
+    "first_agg, second_agg, output",
+    [
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            id="matching_keys_no_orderings",
+        ),
+    ],
+)
+def test_aggregate_merge(
+    first_agg: Aggregate, second_agg: Aggregate, output: Aggregate
+):
+    assert first_agg.merge(second_agg) == output
 
-# def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
-#     with pytest.raises(ValueError, match="Cannot merge nodes"):
-#         first_agg.merge(second_agg)
+
+@pytest.mark.parametrize(
+    "first_agg, second_agg",
+    [
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                Scan("table2", [], []),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("c"), make_column("d")],
+                [],
+            ),
+            id="disjoint_keys_no_ordering",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("b")],
+                [],
+            ),
+            id="subset_keys_no_ordering",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("b"), make_column("c")],
+                [],
+            ),
+            id="overlapping_keys_no_ordering",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            id="matching_ordering_matching_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            id="matching_ordering_overlapping_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("b")],
+            ),
+            id="disjoint_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            # Note: If we allow merging orderings this should become legal.
+            id="overlapping_orderings_equal_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a"), make_simple_column_reference("b")],
+            ),
+            id="overlapping_orderings_overlapping_keys",
+        ),
+        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
+        # Depends on other code changes merging
+    ],
+)
+def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
+    with pytest.raises(ValueError, match="Cannot merge nodes"):
+        first_agg.merge(second_agg)
