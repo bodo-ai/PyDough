@@ -1233,8 +1233,144 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
     assert agg.to_string() == output
 
 
-# def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
-#     assert first_agg.equals(second_agg) == output
+@pytest.mark.parametrize(
+    "first_agg, second_agg, output",
+    [
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            True,
+            id="same_keys_no_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("c"), make_column("d")],
+                [],
+            ),
+            False,
+            id="different_keys_no_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a")],
+                [],
+            ),
+            False,
+            id="subset_keys_no_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            True,
+            id="same_keys_with_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("b")],
+            ),
+            False,
+            id="same_keys_different_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("c"), make_column("d")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            False,
+            id="different_keys_with_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            False,
+            id="subset_keys_with_orderings",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Aggregate(
+                Scan("table2", [make_column("a"), make_column("b")], []),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            Scan("table2", [make_column("a"), make_column("b")], []),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
+    assert first_agg.equals(second_agg) == output
+
 
 # def test_aggregate_can_merge(first_agg: Aggregate, second_agg: Aggregate, output: bool):
 #     assert first_agg.can_merge(second_agg) == output
