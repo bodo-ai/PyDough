@@ -55,7 +55,7 @@ class Aggregate(SingleRelational):
 
     def to_string(self) -> str:
         # TODO: Should we visit the input?
-        return f"Aggregation(keys={self.keys}, aggregations={self.aggregations}, orderings={self.orderings})"
+        return f"AGGREGATE(keys={self.keys}, aggregations={self.aggregations}, orderings={self.orderings})"
 
     def node_can_merge(self, other: Relational) -> bool:
         # TODO: Determine if we ever want to "merge" aggregations with a subset of keys via
@@ -73,12 +73,8 @@ class Aggregate(SingleRelational):
                 f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
             )
         assert isinstance(other, Aggregate)
-        input = self.input.merge(other.input)
-        # TODO: Determine if/how we need to update the location of each column
-        # relative to the input.
-        # Note: This ignores column ordering. We should revisit
-        # this later.
+        input = self.input
         keys = self.keys
-        aggregations = list(set(self.aggregations) | set(other.aggregations))
+        aggregations = self.merge_column_lists(self.aggregations, other.aggregations)
         orderings = self.orderings
         return Aggregate(input, keys, aggregations, orderings)

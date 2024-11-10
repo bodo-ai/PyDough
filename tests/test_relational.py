@@ -3,6 +3,9 @@ TODO: add file-level docstring
 
 General TODO for all tests:
 Update orderings when ASC/DESC is merged in the AST.
+
+General TODO for all aggregate tests:
+Update once we have AST nodes for aggregate functions.
 """
 
 import pytest
@@ -12,6 +15,7 @@ from pydough.pydough_ast.expressions.simple_column_reference import (
     SimpleColumnReference,
 )
 from pydough.relational import Column, Relational
+from pydough.relational.aggregate import Aggregate
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
 from pydough.relational.scan import Scan
@@ -1192,8 +1196,42 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
         first_limit.merge(second_limit)
 
 
-# def test_aggregate_to_string(agg: Aggregate, output: str):
-#     assert agg.to_string() == output
+@pytest.mark.parametrize(
+    "agg, output",
+    [
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[])",
+            id="no_orderings_no_aggregates",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+            ),
+            "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[])",
+            id="no_orderings_no_keys_no_aggregates",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                [make_column("a"), make_column("b")],
+                [],
+                [make_simple_column_reference("a")],
+            ),
+            "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[Column(a)])",
+            id="with_orderings_no_aggregates",
+        ),
+    ],
+)
+def test_aggregate_to_string(agg: Aggregate, output: str):
+    assert agg.to_string() == output
+
 
 # def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
 #     assert first_agg.equals(second_agg) == output

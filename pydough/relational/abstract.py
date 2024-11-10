@@ -115,6 +115,33 @@ class Relational(ABC):
                 return False
         return True
 
+    @staticmethod
+    def merge_column_lists(
+        cols1: MutableSequence["Column"], cols2: MutableSequence["Column"]
+    ) -> list["Column"]:
+        """
+        Merge two sets of columns together, keeping the original ordering
+        of cols1 as much as possible. This eliminates any duplicates between
+        the two sets of columns and assumes that if two columns have the same name
+        then they must match (which is enforced by the columns_match method).
+
+        Args:
+            cols1 (MutableSequence[Column]): The columns property
+            of a relational node.
+            cols2 (MutableSequence[Column]): The columns property
+            of another relational node.
+
+        Returns:
+            list["Column"]: The list of merged columns keeping the original ordering
+            of cols1 as much as possible.
+        """
+        cols = list(cols1)
+        col_set = set(cols)
+        for col in cols2:
+            if col not in col_set:
+                cols.append(col)
+        return cols
+
     def merge_columns(self, other_columns: MutableSequence["Column"]) -> list["Column"]:
         """
         Merge two sets of columns together, keeping the original ordering
@@ -131,12 +158,7 @@ class Relational(ABC):
             list["Column"]: The list of merged columns keeping the original ordering
             of self as much as possible.
         """
-        cols = list(self.columns)
-        col_set = set(cols)
-        for col in other_columns:
-            if col not in col_set:
-                cols.append(col)
-        return cols
+        return self.merge_column_lists(self.columns, other_columns)
 
     @abstractmethod
     def node_equals(self, other: "Relational") -> bool:
