@@ -1207,3 +1207,20 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
 # def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
 #     with pytest.raises(ValueError, match="Cannot merge nodes"):
 #         first_agg.merge(second_agg)
+
+
+# def test_filter_to_string(filter: Filter, output: str):
+#     assert filter.to_string() == output
+
+# def test_aggregate_equals(first_filter: Filter, second_filter: Filter, output: bool):
+#     assert first_filter.equals(second_filter) == output
+
+# def test_aggregate_can_merge(first_filter: Filter, second_filter: Filter, output: bool):
+#     assert first_filter.can_merge(second_filter) == output
+
+# def test_aggregate_merge(first_filter: Filter, second_filter: Filter, output: Filter):
+#     assert first_filter.merge(second_filter) == output
+
+# def test_aggregate_invalid_merge(first_filter: Filter, second_filter: Filter):
+#     with pytest.raises(ValueError, match="Cannot merge nodes"):
+#         first_filter.merge(second_filter)

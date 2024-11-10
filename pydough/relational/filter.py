@@ -39,21 +39,24 @@ class Filter(SingleRelational):
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
+    def node_equals(self, other: Relational) -> bool:
+        return (
+            isinstance(other, Filter)
+            and self.condition == other.condition
+            and super().node_equals(other)
+        )
+
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"FILTER(condition={self.condition}, columns={self.columns}, orderings={self.orderings})"
 
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Filter):
-            # TODO: Determine if two different orderings can be merged.
-            # TODO: Determine the "merge" rules for combining filters. Are we ANDing or ORing?
-            return (
-                self.input.can_merge(other.input)
-                and self.orderings == other.orderings
-                and self.condition == other.condition
-            )
-        else:
-            return False
+    def node_can_merge(self, other: Relational) -> bool:
+        # TODO: Determine the "merge" rules for combining filters. Are we ANDing or ORing?
+        return (
+            isinstance(other, Filter)
+            and self.condition == other.condition
+            and super().node_can_merge(other)
+        )
 
     def merge(self, other: Relational) -> Relational:
         if not self.can_merge(other):
@@ -63,10 +66,6 @@ class Filter(SingleRelational):
         assert isinstance(other, Filter)
         input = self.input.merge(other.input)
         condition = self.condition
-        # TODO: Determine if/how we need to update the location of each column
-        # relative to the input.
-        # Note: This ignores column ordering. We should revisit
-        # this later.
-        columns = list(set(self.columns) | set(other.columns))
+        cols = self.merge_columns(other.columns)
         orderings = self.orderings
-        return Filter(input, condition, columns, orderings)
+        return Filter(input, condition, cols, orderings)
