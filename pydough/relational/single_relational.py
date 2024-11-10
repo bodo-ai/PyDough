@@ -31,3 +31,18 @@ class SingleRelational(Relational):
     @property
     def input(self) -> Relational:
         return self._input
+
+    def node_equals(self, other: "Relational") -> bool:
+        """
+        Determine if two relational nodes are exactly identical,
+        excluding column ordering. This should be extended to avoid
+        duplicating equality logic shared across relational nodes.
+
+        Args:
+            other (Relational): The other relational node to compare against.
+
+        Returns:
+            bool: Are the two relational nodes equal.
+        """
+        # TODO: Do we need a fast path for caching the inputs?
+        return isinstance(other, SingleRelational) and self.input.equals(other.input)
