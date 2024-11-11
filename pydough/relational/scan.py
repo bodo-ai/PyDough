@@ -47,6 +47,7 @@ class Scan(Relational):
         return isinstance(other, Scan) and self.table_name == other.table_name
 
     def to_sqlglot(self) -> "Expression":
+        breakpoint()
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
