@@ -105,7 +105,7 @@ def global_ctx() -> dict[str, object]:
         ),
         pytest.param(
             "answer = (STARTSWITH(ROOT.x, 'hello') | ENDSWITH(ROOT.x, 'world')) & CONTAINS(ROOT.x, ' ')",
-            "((STARTSWITH(TPCH.x, 'hello') | ENDSWITH(TPCH.x, 'world')) & CONTAINS(TPCH.x, ' '))",
+            "((STARTSWITH(TPCH.x, 'hello':StringType()) | ENDSWITH(TPCH.x, 'world':StringType())) & CONTAINS(TPCH.x, ' ':StringType()))",
             id="arithmetic_04",
         ),
         pytest.param(
@@ -159,7 +159,7 @@ x = ROOT.Parts(part_name=LOWER(ROOT.name))
 y = x.WHERE(STARTSWITH(ROOT.part_name, 'a'))
 answer = y.ORDER_BY(ROOT.retail_price.DESC())\
 """,
-            "TPCH.Parts(part_name=LOWER(TPCH.name)).WHERE(STARTSWITH(TPCH.part_name, 'a')).ORDER_BY(TPCH.retail_price.DESC(na_pos='last'))",
+            "TPCH.Parts(part_name=LOWER(TPCH.name)).WHERE(STARTSWITH(TPCH.part_name, 'a':StringType())).ORDER_BY(TPCH.retail_price.DESC(na_pos='last'))",
             id="calc_with_where_order",
         ),
         pytest.param(
