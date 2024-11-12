@@ -4,7 +4,7 @@ This node is responsible for holding all types of joins.
 """
 
 from collections.abc import MutableSequence
-from enum import StrEnum
+from enum import Enum
 
 from sqlglot.expressions import Expression
 
@@ -13,7 +13,7 @@ from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from .abstract import Column, Relational
 
 
-class JoinType(StrEnum):
+class JoinType(Enum):
     INNER = "inner"
     LEFT = "left"
     RIGHT = "right"
