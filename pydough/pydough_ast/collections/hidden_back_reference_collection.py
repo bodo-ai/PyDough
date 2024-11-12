@@ -5,10 +5,13 @@ TODO: add file-level docstring
 __all__ = ["HiddenBackReferenceCollection"]
 
 
+from pydough.pydough_ast.errors import PyDoughASTException
+
 from .back_reference_collection import BackReferenceCollection
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
+from .compound_sub_collection import CompoundSubCollection
 
 
 class HiddenBackReferenceCollection(BackReferenceCollection):
@@ -19,27 +22,49 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
 
     def __init__(
         self,
-        compound: PyDoughCollectionAST,
-        ancestor: PyDoughCollectionAST,
+        context: PyDoughCollectionAST,
         alias: str,
         term_name: str,
         back_levels: int,
     ):
-        self._compound: PyDoughCollectionAST = compound
+        self._context: PyDoughCollectionAST = context
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._alias: str = alias
-        collection_access = ancestor.get_term(term_name)
+
+        compound: PyDoughCollectionAST = context
+        while compound.preceding_context is not None:
+            compound = compound.preceding_context
+        if not isinstance(compound, CompoundSubCollection):
+            raise PyDoughASTException(
+                f"Malformed hidden backreference expression: {self.to_string()}"
+            )
+        self._compound: CompoundSubCollection = compound
+        hidden_ancestor: CollectionAccess = compound.subcollection_chain[-back_levels]
+        collection_access = hidden_ancestor.get_collection(term_name)
         assert isinstance(collection_access, CollectionAccess)
         self._collection_access = collection_access
         super(BackReferenceCollection, self).__init__(
-            self._collection_access.collection, compound
+            collection_access.collection, context
+        )
+
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        return HiddenBackReferenceCollection(
+            new_ancestor, self.alias, self.term_name, self.back_levels
         )
 
     @property
-    def compound(self) -> PyDoughCollectionAST:
+    def context(self) -> PyDoughCollectionAST:
         """
-        The compound collection containing the hidden backreference.
+        The collection context the hidden backreference operates within.
+        """
+        return self._context
+
+    @property
+    def compound(self) -> CompoundSubCollection:
+        """
+        The compound subcollection access that the hidden back reference
+        traces to.
         """
         return self._compound
 
@@ -51,7 +76,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         return self._alias
 
     def to_string(self) -> str:
-        return f"{self.compound.to_string()}.{self.alias}"
+        return f"{self.context.to_string()}.{self.alias}"
 
     def to_tree_form(self) -> CollectionTreeForm:
         assert self.ancestor_context is not None

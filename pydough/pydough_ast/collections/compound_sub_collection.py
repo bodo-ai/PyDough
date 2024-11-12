@@ -5,7 +5,8 @@ TODO: add file-level docstring
 __all__ = ["CompoundSubCollection"]
 
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
+from functools import cache
 
 from pydough.metadata import CompoundRelationshipMetadata
 from pydough.metadata.properties import InheritedPropertyMetadata
@@ -15,8 +16,8 @@ from pydough.pydough_ast.expressions.hidden_back_reference_expression import (
     HiddenBackReferenceExpression,
 )
 
+from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
-from .hidden_back_reference_collection import HiddenBackReferenceCollection
 from .sub_collection import SubCollection
 
 
@@ -28,18 +29,44 @@ class CompoundSubCollection(SubCollection):
 
     def __init__(
         self,
-        subcollection_property: CompoundRelationshipMetadata,
+        compound: CompoundRelationshipMetadata,
         ancestor: PyDoughCollectionAST,
     ):
-        super().__init__(subcollection_property, ancestor)
+        super().__init__(compound, ancestor)
         self._subcollection_chain: MutableSequence[SubCollection] = []
-        self._inheritance_sources: MutableMapping[str, tuple[int, str]] = {}
+        self._inheritance_source_idx: dict[str, int] = {}
+        self._inheritance_source_name: dict[str, str] = {}
+
+        assert isinstance(compound, CompoundRelationshipMetadata)
+        inherited_map: dict[str, str] = {}
+        for name, property in compound.inherited_properties.items():
+            assert isinstance(property, InheritedPropertyMetadata)
+            inherited_map[name] = property.property_to_inherit.name
+            self._all_property_names.add(name)
+            if not property.is_subcollection:
+                self._calc_property_names.add(name)
+                self._calc_property_order[name] = len(self._calc_property_order)
+        ancestor_context = self.ancestor_context
+        assert ancestor_context is not None
+        self.populate_subcollection_chain(ancestor_context, compound, inherited_map)
+        undefined_inherited: set[str] = set(compound.inherited_properties) - set(
+            self._inheritance_source_name
+        )
+        if len(undefined_inherited) > 0:
+            breakpoint()
+            raise PyDoughASTException(
+                f"Undefined inherited properties: {undefined_inherited}"
+            )
+
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
+        return CompoundSubCollection(self.subcollection_property, new_ancestor)
 
     def populate_subcollection_chain(
         self,
         source: PyDoughCollectionAST,
         compound: CompoundRelationshipMetadata,
-        inherited_properties: MutableMapping[str, str],
+        inherited_properties: dict[str, str],
     ) -> SubCollection:
         """
         Recursive procedure used to define the `subcollection_chain` and
@@ -61,7 +88,6 @@ class CompoundSubCollection(SubCollection):
             The subcollection AST object corresponding to the last component
             of `compound`, once flattened.
         """
-        assert self._properties is not None
         # Invoke the procedure for the primary and secondary property.
         for property in [compound.primary_property, compound.secondary_property]:
             if isinstance(property, CompoundRelationshipMetadata):
@@ -70,19 +96,24 @@ class CompoundSubCollection(SubCollection):
                 # update the inherited properties dictionary to change the true
                 # names of the inherited properties to be whatever their true names
                 # are inside the nested compound.
+                new_inherited_properties: dict[str, str] = {}
                 for alias, property_name in inherited_properties.items():
                     if property_name in property.inherited_properties:
                         inh = property.inherited_properties[property_name]
                         assert isinstance(inh, InheritedPropertyMetadata)
-                        inherited_properties[alias] = inh.property_to_inherit.name
+                        new_inherited_properties[alias] = inh.property_to_inherit.name
+                    if property_name in property.other_collection.properties:
+                        new_inherited_properties[alias] = property_name
+                for alias in new_inherited_properties:
+                    inherited_properties.pop(alias)
                 source = self.populate_subcollection_chain(
-                    source, property, inherited_properties
+                    source, property, new_inherited_properties
                 )
             else:
                 # Otherwise, we are in a base case where we have found a true
                 # subcollection invocation. We maintain a set to mark which
                 # inherited properties were found.
-                term = source.get_term(property.name)
+                term = source.get_collection(property.name)
                 assert isinstance(term, SubCollection)
                 source = term
                 found_inherited: set[str] = set()
@@ -93,19 +124,10 @@ class CompoundSubCollection(SubCollection):
                 for alias, property_name in inherited_properties.items():
                     if property_name in property.other_collection.properties:
                         found_inherited.add(alias)
-                        self._inheritance_sources[alias] = (
-                            len(self._subcollection_chain),
-                            property_name,
+                        self._inheritance_source_idx[alias] = len(
+                            self._subcollection_chain
                         )
-                        inh_property: PyDoughAST = source.get_term(property_name)
-                        if isinstance(inh_property, PyDoughCollectionAST):
-                            self._properties[alias] = (None, inh_property)
-                        else:
-                            self._properties[alias] = (
-                                self._calc_counter,
-                                inh_property,
-                            )
-                            self._calc_counter += 1
+                        self._inheritance_source_name[alias] = property_name
                 # Remove any inherited properties found from the dictionary so
                 # subsequent recursive calls do not try to find the same
                 # inherited property (e.g. if the final collection mapped to
@@ -125,68 +147,47 @@ class CompoundSubCollection(SubCollection):
         The list of subcollection accesses used to define the compound
         relationship.
         """
-        # Ensure the lazy evaluation of `self.properties` has been completed
-        # so we know that the subcollection chain has been populated.
-        self.properties
         return self._subcollection_chain
 
     @property
-    def inheritance_sources(self) -> MutableMapping[str, tuple[int, str]]:
+    def inheritance_source_idx(self) -> dict[str, int]:
         """
         The mapping between each inherited property name and the integer
         position of the subcollection access it corresponds to from within
         the subcollection chain, as well as the name it had within that
         regular collection.
         """
-        # Ensure the lazy evaluation of `self.properties` has been completed
-        # so we know that the inheritance sources have been populated.
-        self.properties
-        return self._inheritance_sources
+        return self._inheritance_source_idx
 
     @property
-    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
-        # Lazily define the properties, if not already defined.
-        if self._properties is None:
-            # First invoke the TableCollection version to get the regular
-            # properties of the target collection added.
-            self._properties = super().properties
-            # Then, use the recursive `populate_subcollection_chain` to flatten
-            # the subcollections used in the compound into a sequence of
-            # regular subcollection AST nodes and identify where each inherited
-            # term came from.
-            compound = self.subcollection_property
-            assert isinstance(compound, CompoundRelationshipMetadata)
-            inherited_map: MutableMapping[str, str] = {}
-            for name, property in compound.inherited_properties.items():
-                assert isinstance(property, InheritedPropertyMetadata)
-                inherited_map[name] = property.property_to_inherit.name
-            ancestor_context = self.ancestor_context
-            assert ancestor_context is not None
-            self.populate_subcollection_chain(ancestor_context, compound, inherited_map)
-            # Make sure none of the inherited terms went unaccounted for.
-            undefined_inherited: set[str] = set(compound.inherited_properties) - set(
-                self.inheritance_sources
-            )
-            if len(undefined_inherited) > 0:
-                raise PyDoughASTException(
-                    f"Undefined inherited properties: {undefined_inherited}"
+    def inheritance_source_name(self) -> dict[str, int]:
+        """
+        The mapping between each inherited property name and the name it had in
+        the subcollection access it corresponds to from within the subcollection
+        chain.
+        """
+        return self._inheritance_source_idx
+
+    @cache
+    def get_term(self, term_name: str) -> PyDoughAST:
+        assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
+        if term_name in self.subcollection_property.inherited_properties:
+            source_idx: int = self.inheritance_source_idx[term_name]
+            back_levels: int = len(self.subcollection_chain) - source_idx
+            ancestor: PyDoughCollectionAST = self._subcollection_chain[source_idx]
+            original_name: str = self._inheritance_source_name[term_name]
+            expr = ancestor.get_term(original_name)
+            if isinstance(expr, PyDoughCollectionAST):
+                from .hidden_back_reference_collection import (
+                    HiddenBackReferenceCollection,
                 )
-            for alias, (location, original_name) in self._inheritance_sources.items():
-                calc_idx, expr = self._properties[alias]
-                ancestor: PyDoughCollectionAST = self._subcollection_chain[location]
-                back_levels: int = len(self.subcollection_chain) - location
-                if isinstance(expr, PyDoughCollectionAST):
-                    self._properties[alias] = (
-                        calc_idx,
-                        HiddenBackReferenceCollection(
-                            self, ancestor, alias, original_name, back_levels
-                        ),
-                    )
-                else:
-                    self._properties[alias] = (
-                        calc_idx,
-                        HiddenBackReferenceExpression(
-                            self, ancestor, alias, original_name, back_levels
-                        ),
-                    )
-        return self._properties
+
+                return HiddenBackReferenceCollection(
+                    self, term_name, original_name, back_levels
+                )
+            else:
+                return HiddenBackReferenceExpression(
+                    self, ancestor, term_name, original_name, back_levels
+                )
+        else:
+            return super().get_term(term_name)

@@ -21,6 +21,9 @@ class TableCollection(CollectionAccess):
     def __init__(self, collection: CollectionMetadata, ancestor: PyDoughCollectionAST):
         super().__init__(collection, ancestor)
 
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+        return TableCollection(self.collection, new_ancestor)
+
     def to_string(self) -> str:
         return self.collection.name
 

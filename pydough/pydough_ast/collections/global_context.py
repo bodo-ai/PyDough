@@ -7,7 +7,10 @@ __all__ = ["TableCollection"]
 
 from collections.abc import MutableMapping
 
-from pydough.metadata import CollectionMetadata, GraphMetadata
+from pydough.metadata import (
+    CollectionMetadata,
+    GraphMetadata,
+)
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 

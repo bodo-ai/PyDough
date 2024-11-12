@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["PyDoughCollectionAST"]
 
+
 from abc import abstractmethod
 from typing import Union
 
@@ -104,6 +105,22 @@ class PyDoughCollectionAST(PyDoughAST):
         """
         term = self.get_term(term_name)
         assert isinstance(term, PyDoughExpressionAST)
+        return term
+
+    def get_collection(self, term_name: str) -> "PyDoughCollectionAST":
+        """
+        Obtains a collection accessible from the current context by name.
+
+        Args:
+            `term_name`: the name of the term that is being extracted.
+
+
+        Returns:
+            `PyDoughASTException` if `term_name` is not a name of one of the
+            terms accessible in the context, or is not a collection.
+        """
+        term = self.get_term(term_name)
+        assert isinstance(term, PyDoughCollectionAST)
         return term
 
     @abstractmethod
