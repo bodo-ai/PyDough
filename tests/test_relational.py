@@ -9,10 +9,15 @@ Update once we have AST nodes for aggregate functions.
 """
 
 import pytest
-from conftest import make_relational_column, make_simple_column_reference
+from conftest import (
+    build_simple_scan,
+    make_literal_column,
+    make_relational_column,
+    make_simple_column_reference,
+)
 
 from pydough.pydough_ast.expressions.literal import Literal
-from pydough.relational import Column, Relational
+from pydough.relational import Relational
 from pydough.relational.aggregate import Aggregate
 from pydough.relational.filter import Filter
 from pydough.relational.join import Join, JoinType
@@ -21,21 +26,6 @@ from pydough.relational.project import Project
 from pydough.relational.root import RelationalRoot
 from pydough.relational.scan import Scan
 from pydough.types import BooleanType, Int64Type
-
-
-def make_literal_column(name: str, value: int) -> Column:
-    """
-    Make a literal Int64 column with the given name. This is used
-    for generating various relational nodes.
-
-    Args:
-        name (str): The name of the column.
-        value (int): The value of the literal.
-
-    Returns:
-        Column: The output column.
-    """
-    return Column(name, Literal(value, Int64Type()))
 
 
 def make_limit_literal(limit: int) -> Literal:
@@ -78,12 +68,6 @@ def test_column_equal():
     assert column1 == column2
     assert column1 != column3
     assert column1 != column4
-
-
-def build_simple_scan() -> Scan:
-    # Helper function to generate a simple scan node for when
-    # relational operators need an input.
-    return Scan("table", [make_relational_column("a"), make_relational_column("b")])
 
 
 def test_scan_inputs():

@@ -10,6 +10,7 @@ __all__ = [
     "Reference",
     "BackReferenceExpression",
     "ChildReference",
+    "SimpleColumnReference",
 ]
 
 from .back_reference_expression import BackReferenceExpression
@@ -19,3 +20,4 @@ from .expression_ast import PyDoughExpressionAST
 from .expression_function_call import ExpressionFunctionCall
 from .literal import Literal
 from .reference import Reference
+from .simple_column_reference import SimpleColumnReference

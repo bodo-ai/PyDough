@@ -4,6 +4,9 @@ TODO: add file-level docstring
 
 __all__ = ["Literal"]
 
+from sqlglot.expressions import Expression
+from sqlglot.expressions import Literal as SQLGlotLiteral
+
 from pydough.types import PyDoughType
 
 from .expression_ast import PyDoughExpressionAST
@@ -48,3 +51,7 @@ class Literal(PyDoughExpressionAST):
             and (self.pydough_type == other.pydough_type)
             and (self.value == other.value)
         )
+
+    def to_sqlglot(self) -> Expression:
+        # TODO: Add data type support.
+        return SQLGlotLiteral(value=self.value)

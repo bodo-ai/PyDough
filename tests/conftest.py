@@ -15,10 +15,12 @@ from pydough.database_connectors.database_connector import DatabaseConnection
 from pydough.metadata.graphs import GraphMetadata
 from pydough.pydough_ast import AstNodeBuilder
 from pydough.pydough_ast import pydough_operators as pydop
+from pydough.pydough_ast.expressions.literal import Literal
 from pydough.pydough_ast.expressions.simple_column_reference import (
     SimpleColumnReference,
 )
 from pydough.relational import Column
+from pydough.relational.scan import Scan
 from pydough.types import Int64Type
 
 
@@ -204,18 +206,44 @@ def make_simple_column_reference(name: str) -> SimpleColumnReference:
     return SimpleColumnReference(name, Int64Type())
 
 
-def make_relational_column(name: str) -> Column:
+def make_relational_column(name: str, input_name: str | None = None) -> Column:
     """
     Make an Int64 column with the given name. This is used
     for generating various relational nodes.
 
-    Note: This doesn't handle renaming a column.
-
     Args:
-        name (str): The name of the column in both the input and the
-        current node.
+        name (str): The name of the column in the current node.
+        input_name (str): The name of the column in the input.
+            If None we use the same name as the output.
 
     Returns:
         Column: The output column.
     """
-    return Column(name, make_simple_column_reference(name))
+    if input_name is None:
+        input_name = name
+    return Column(name, make_simple_column_reference(input_name))
+
+
+def make_literal_column(name: str, value: int) -> Column:
+    """
+    Make a literal Int64 column with the given name. This is used
+    for generating various relational nodes.
+
+    Args:
+        name (str): The name of the column.
+        value (int): The value of the literal.
+
+    Returns:
+        Column: The output column.
+    """
+    return Column(name, Literal(value, Int64Type()))
+
+
+def build_simple_scan() -> Scan:
+    """Builds a simple Scan relational node for use in other Relational node
+    testing.
+
+    Returns:
+        Scan: A simple scan on "table" with columns "a" and "b".
+    """
+    return Scan("table", [make_relational_column("a"), make_relational_column("b")])

@@ -6,7 +6,7 @@ This is done to reduce code duplication.
 from abc import abstractmethod
 from collections.abc import MutableSequence
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression, Identifier, Literal
 
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
@@ -103,3 +103,58 @@ class SingleRelational(Relational):
         Returns:
             Expression: The new SQLGlot expression for the input after possibly modifying the input.
         """
+
+    @staticmethod
+    def merge_sqlglot_columns(
+        new_columns: list[Expression],
+        old_columns: list[Expression],
+        old_column_deps: set[str],
+    ) -> tuple[list[Expression] | None, list[Expression]]:
+        """
+        Attempt to merge the new_columns with the old_columns whenever possible to reduce the amount of
+        SQL that needs to be generated for a new given column list. In addition to the columns themselves,
+        the old_columns could also produce dependencies for the new expression since it logically occurs
+        before the new columns, so we need to determine those for tracking.
+
+        The final result is presented as a tuple of two lists, the first list is the new columns
+        that need to be produced in a separate query and the second list is the list of columns that
+        can be placed in the original query. The new columns will be None if we can generate the SQL
+        entirely in the original query.
+
+        Args:
+            new_columns (list[Expression]): The new columns that need to be the output of the current Relational node.
+            old_columns (list[Expression]): The old columns that were the output of the previous Relational node.
+            deps (set[str]): A set of column names that are dependencies of the old columns in some operator other than
+                the "SELECT" component. For example a filter will need to include the column names of any WHERE conditions.
+
+        Returns:
+            tuple[list[Expression] | None, list[Expression]]: The columns that should be generated in a separate
+                new select statement and the columns that can be placed in the original query.
+        """
+        if old_column_deps:
+            # TODO: Support dependencies. We will implement this once
+            # we have an operator that generates dependencies working (e.g. filter).
+            return new_columns, old_columns
+        # Only support fusing columns that are simple renames, reordering, or literals for now.
+        # If we see just column references or literals though we can always merge.
+        # TODO: Enable merging more complex expressions for example we can merge a + b
+        # if a and b are both just simple columns in the input.
+        can_merge: bool = all(isinstance(c, (Literal, Identifier)) for c in new_columns)
+        if can_merge:
+            modified_new_columns = None
+            modified_old_columns = []
+            # Create a mapping for the old columns so we can replace column references.
+            old_column_map = {c.alias: c.this for c in old_columns}
+            for new_column in new_columns:
+                if isinstance(new_column, Literal):
+                    # If the new column is a literal, we can just add it to the old columns.
+                    modified_old_columns.append(new_column)
+                else:
+                    modified_old_columns.append(
+                        Identifier(
+                            alias=new_column.alias, this=old_column_map[new_column.this]
+                        )
+                    )
+            return modified_new_columns, modified_old_columns
+        else:
+            return new_columns, old_columns

@@ -8,7 +8,7 @@ should be sparse.
 
 from collections.abc import MutableSequence
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression, Select
 
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
@@ -32,9 +32,20 @@ class Project(SingleRelational):
         super().__init__(input, columns, orderings)
 
     def input_modifying_to_sqlglot(self, input_expr: Expression) -> Expression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
+        # TODO: Should we change the return type to always be Select?
+        assert isinstance(input_expr, Select)
+        new_columns: list[Expression] = [col.to_sqlglot() for col in self.columns]
+        old_columns: list[Expression] = input_expr.expressions
+        modified_new_columns: list[Expression] | None
+        modified_old_columns: list[Expression]
+        modified_new_columns, modified_old_columns = self.merge_sqlglot_columns(
+            new_columns, old_columns, set()
         )
+        input_expr.set("expressions", modified_old_columns)
+        if modified_new_columns is None:
+            return input_expr
+        else:
+            return Select(**{"expression": modified_new_columns, "from": input_expr})
 
     def node_equals(self, other: Relational) -> bool:
         return isinstance(other, Project) and super().node_equals(other)
