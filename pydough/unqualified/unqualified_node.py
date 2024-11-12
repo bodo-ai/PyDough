@@ -188,10 +188,19 @@ class UnqualifiedNode(ABC):
     def __neg__(self):
         return 0 - self
 
-    def __call__(self, **kwargs: dict[str, object]):
-        calc_args = [
-            (name, self.coerce_to_unqualified(arg)) for name, arg in kwargs.items()
-        ]
+    def __call__(self, *args, **kwargs: dict[str, object]):
+        calc_args: list[tuple[str, UnqualifiedNode]] = []
+        counter = 0
+        for arg in args:
+            name: str
+            while True:
+                name = f"_expr{counter}"
+                counter += 1
+                if name not in kwargs:
+                    break
+            calc_args.append((name, arg))
+        for name, arg in kwargs.items():
+            calc_args.append((name, self.coerce_to_unqualified(arg)))
         return UnqualifiedCalc(self, calc_args)
 
     def WHERE(self, cond: object):

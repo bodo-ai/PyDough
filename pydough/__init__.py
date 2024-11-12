@@ -2,6 +2,7 @@
 TODO: add module-level docstring
 """
 
-__all__ = ["parse_json_metadata_from_file"]
+__all__ = ["parse_json_metadata_from_file", "init_pydough_context"]
 
 from .metadata import parse_json_metadata_from_file
+from .unqualified import init_pydough_context
