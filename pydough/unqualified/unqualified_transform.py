@@ -66,14 +66,24 @@ class AddRootVisitor(ast.NodeTransformer):
                 keywords=[],
             ),
         )
-        result: ast.AST = ast.FunctionDef(
-            name=node.name,
-            args=node.args,
-            body=[import_root, import_parse, root_def] + node.body,
-            decorator_list=node.decorator_list,
-            type_params=node.type_params,
-            returns=node.returns,
-        )
+        result: ast.AST
+        if hasattr(node, "type_params"):
+            result = ast.FunctionDef(
+                name=node.name,
+                args=node.args,
+                body=[import_root, import_parse, root_def] + node.body,
+                decorator_list=node.decorator_list,
+                type_params=node.type_params,
+                returns=node.returns,
+            )
+        else:
+            result = ast.FunctionDef(  # type: ignore
+                name=node.name,
+                args=node.args,
+                body=[import_root, import_parse, root_def] + node.body,
+                decorator_list=node.decorator_list,
+                returns=node.returns,
+            )
         answer: ast.AST = self.generic_visit(result)
         return answer
 
