@@ -89,129 +89,129 @@ def verify_pydough_code_exec_match_unqualified(
     "pydough_str, answer_str",
     [
         pytest.param(
-            "answer = ROOT.Parts",
+            "answer = _ROOT.Parts",
             "TPCH.Parts",
             id="access_collection",
         ),
         pytest.param(
-            "answer = ROOT.Regions.nations",
+            "answer = _ROOT.Regions.nations",
             "TPCH.Regions.nations",
             id="access_subcollection",
         ),
         pytest.param(
-            "answer = ROOT.Regions.name",
+            "answer = _ROOT.Regions.name",
             "TPCH.Regions.name",
             id="access_property",
         ),
         pytest.param(
-            "answer = ROOT.Regions(region_name=ROOT.name, region_key=ROOT.key)",
+            "answer = _ROOT.Regions(region_name=_ROOT.name, region_key=_ROOT.key)",
             "TPCH.Regions(region_name=TPCH.name, region_key=TPCH.key)",
             id="simple_calc",
         ),
         pytest.param(
-            "answer = ROOT.Nations(nation_name=UPPER(ROOT.name), total_balance=SUM(ROOT.customers.acct_bal))",
+            "answer = _ROOT.Nations(nation_name=UPPER(_ROOT.name), total_balance=SUM(_ROOT.customers.acct_bal))",
             "TPCH.Nations(nation_name=UPPER(TPCH.name), total_balance=SUM(TPCH.customers.acct_bal))",
             id="calc_with_functions",
         ),
         pytest.param(
-            "answer = ROOT.x + 1",
+            "answer = _ROOT.x + 1",
             "(TPCH.x + 1:Int64Type())",
             id="arithmetic_01",
         ),
         pytest.param(
-            "answer = 2 + ROOT.x",
+            "answer = 2 + _ROOT.x",
             "(2:Int64Type() + TPCH.x)",
             id="arithmetic_02",
         ),
         pytest.param(
-            "answer = ((1.5 * ROOT.x) - 1)",
+            "answer = ((1.5 * _ROOT.x) - 1)",
             "((1.5:Float64Type() * TPCH.x) - 1:Int64Type())",
             id="arithmetic_03",
         ),
         pytest.param(
-            "answer = ((1.5 * ROOT.x) - 1)",
+            "answer = ((1.5 * _ROOT.x) - 1)",
             "((1.5:Float64Type() * TPCH.x) - 1:Int64Type())",
             id="arithmetic_03",
         ),
         pytest.param(
-            "answer = (STARTSWITH(ROOT.x, 'hello') | ENDSWITH(ROOT.x, 'world')) & CONTAINS(ROOT.x, ' ')",
+            "answer = (STARTSWITH(_ROOT.x, 'hello') | ENDSWITH(_ROOT.x, 'world')) & CONTAINS(_ROOT.x, ' ')",
             "((STARTSWITH(TPCH.x, 'hello':StringType()) | ENDSWITH(TPCH.x, 'world':StringType())) & CONTAINS(TPCH.x, ' ':StringType()))",
             id="arithmetic_04",
         ),
         pytest.param(
-            "answer = (1 / ROOT.x) ** 2 - ROOT.y",
+            "answer = (1 / _ROOT.x) ** 2 - _ROOT.y",
             "(((1:Int64Type() / TPCH.x) ** 2:Int64Type()) - TPCH.y)",
             id="arithmetic_05",
         ),
         pytest.param(
-            "answer = -(ROOT.x % 10) / 3.1415",
+            "answer = -(_ROOT.x % 10) / 3.1415",
             "((0:Int64Type() - (TPCH.x % 10:Int64Type())) / 3.1415:Float64Type())",
             id="arithmetic_06",
         ),
         pytest.param(
-            "answer = (+ROOT.x < -ROOT.y) ^ (ROOT.y == ROOT.z)",
+            "answer = (+_ROOT.x < -_ROOT.y) ^ (_ROOT.y == _ROOT.z)",
             "((TPCH.x < (0:Int64Type() - TPCH.y)) ^ (TPCH.y == TPCH.z))",
             id="arithmetic_07",
         ),
         pytest.param(
-            "answer = 'Hello' != ROOT.word",
+            "answer = 'Hello' != _ROOT.word",
             "(TPCH.word != 'Hello':StringType())",
             id="arithmetic_08",
         ),
         pytest.param(
-            "answer = ROOT.order_date >= datetime.date(2020, 1, 1)",
+            "answer = _ROOT.order_date >= datetime.date(2020, 1, 1)",
             "(TPCH.order_date >= datetime.date(2020, 1, 1):DateType())",
             id="arithmetic_09",
         ),
         pytest.param(
-            "answer = True & (0 >= ROOT.x)",
+            "answer = True & (0 >= _ROOT.x)",
             "(True:BooleanType() & (TPCH.x <= 0:Int64Type()))",
             id="arithmetic_10",
         ),
         pytest.param(
-            "answer = (ROOT.x == 42) | (45 == ROOT.x) | ((ROOT.x < 16) & (ROOT.x != 0)) | ((100 < ROOT.x) ^ (0 == ROOT.y))",
+            "answer = (_ROOT.x == 42) | (45 == _ROOT.x) | ((_ROOT.x < 16) & (_ROOT.x != 0)) | ((100 < _ROOT.x) ^ (0 == _ROOT.y))",
             "((((TPCH.x == 42:Int64Type()) | (TPCH.x == 45:Int64Type())) | ((TPCH.x < 16:Int64Type()) & (TPCH.x != 0:Int64Type()))) | ((TPCH.x > 100:Int64Type()) ^ (TPCH.y == 0:Int64Type())))",
             id="arithmetic_11",
         ),
         pytest.param(
-            "answer = False ^ 100 % 2.718281828 ** ROOT.x",
+            "answer = False ^ 100 % 2.718281828 ** _ROOT.x",
             "(False:BooleanType() ^ (100:Int64Type() % (2.718281828:Float64Type() ** TPCH.x)))",
             id="arithmetic_12",
         ),
         pytest.param(
-            "answer = ROOT.Parts(part_name=LOWER(ROOT.name)).suppliers_of_part.region(part_name=BACK(2).part_name)",
+            "answer = _ROOT.Parts(part_name=LOWER(_ROOT.name)).suppliers_of_part.region(part_name=BACK(2).part_name)",
             "TPCH.Parts(part_name=LOWER(TPCH.name)).suppliers_of_part.region(part_name=BACK(2).part_name)",
             id="multi_calc_with_back",
         ),
         pytest.param(
             """\
-x = ROOT.Parts(part_name=LOWER(ROOT.name))
-y = x.WHERE(STARTSWITH(ROOT.part_name, 'a'))
-answer = y.ORDER_BY(ROOT.retail_price.DESC())\
+x = _ROOT.Parts(part_name=LOWER(_ROOT.name))
+y = x.WHERE(STARTSWITH(_ROOT.part_name, 'a'))
+answer = y.ORDER_BY(_ROOT.retail_price.DESC())\
 """,
             "TPCH.Parts(part_name=LOWER(TPCH.name)).WHERE(STARTSWITH(TPCH.part_name, 'a':StringType())).ORDER_BY(TPCH.retail_price.DESC(na_pos='last'))",
             id="calc_with_where_order",
         ),
         pytest.param(
-            "answer = ROOT.Parts.TOP_K(10, by=(1 / (ROOT.retail_price - 30.0)).ASC(na_pos='first'))",
+            "answer = _ROOT.Parts.TOP_K(10, by=(1 / (_ROOT.retail_price - 30.0)).ASC(na_pos='first'))",
             "TPCH.Parts.TOP_K(10, by=((1:Int64Type() / (TPCH.retail_price - 30.0:Float64Type())).ASC(na_pos='first')))",
             id="topk_single",
         ),
         pytest.param(
-            "answer = ROOT.Parts.TOP_K(10, by=(ROOT.size.DESC(), ROOT.part_type.DESC()))",
+            "answer = _ROOT.Parts.TOP_K(10, by=(_ROOT.size.DESC(), _ROOT.part_type.DESC()))",
             "TPCH.Parts.TOP_K(10, by=(TPCH.size.DESC(na_pos='last'), TPCH.part_type.DESC(na_pos='last')))",
             id="topk_multiple",
         ),
         pytest.param(
             """\
-x = ROOT.Parts.ORDER_BY(ROOT.retail_price.ASC(na_pos='last'))
+x = _ROOT.Parts.ORDER_BY(_ROOT.retail_price.ASC(na_pos='last'))
 answer = x.TOP_K(100)\
 """,
             "TPCH.Parts.ORDER_BY(TPCH.retail_price.ASC(na_pos='last')).TOP_K(100)",
             id="order_topk_empty",
         ),
         pytest.param(
-            "answer = PARTITION(ROOT.Parts, name='parts', by=ROOT.part_type)(type=ROOT.part_type, total_price=SUM(ROOT.data.retail_price), n_orders=COUNT(ROOT.data.lines))",
+            "answer = PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.part_type, total_price=SUM(_ROOT.data.retail_price), n_orders=COUNT(_ROOT.data.lines))",
             "PARTITION(TPCH.Parts, name='parts', by=(TPCH.part_type))(type=TPCH.part_type, total_price=SUM(TPCH.data.retail_price), n_orders=COUNT(TPCH.data.lines))",
             id="partition",
         ),
@@ -226,23 +226,23 @@ def test_unqualified_to_string(
 ):
     """
     Tests that strings representing the setup of PyDough unqualified objects
-    (with unknown variables already pre-pended with `ROOT.`) are correctly
+    (with unknown variables already pre-pended with `_ROOT.`) are correctly
     transformed into UnqualifiedNode objects with an expected string
     representation. Each `pydough_str` should be called with `exec` to define
     a variable `answer` that is an `UnqualifiedNode` instance.
     """
-    # Test with the strings that contain "ROOT."
+    # Test with the strings that contain "_ROOT."
     root: UnqualifiedNode = UnqualifiedRoot(get_sample_graph("TPCH"))
-    env: dict[str, object] = {"ROOT": root}
+    env: dict[str, object] = {"_ROOT": root}
     verify_pydough_code_exec_match_unqualified(pydough_str, global_ctx, env, answer_str)
 
-    # Now test again, but with "ROOT." prefixes removed & re-added via
+    # Now test again, but with "_ROOT." prefixes removed & re-added via
     # a call to the `transform_code` procedure.
     altered_code: list[str] = [""]
     altered_code.append("def PYDOUGH_FUNC():")
     for line in pydough_str.splitlines():
         altered_code.append(
-            f"  {line.replace("ROOT.", "").replace("answer = ", "return ")}"
+            f"  {line.replace("_ROOT.", "").replace("answer = ", "return ")}"
         )
     new_code: str = ast.unparse(
         transform_code(

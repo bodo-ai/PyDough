@@ -15,9 +15,9 @@ class AddRootVisitor(ast.NodeTransformer):
     1. Whenever a variable is assigned, marks it as a known variable name
     (in addition to any `known_name` values passed in).
     2. Removes the `init_pydough_context` decorator from above any functions.
-    3. Adds `ROOT = UnqualifiedRoot(parse_json_from_metadata(file_path, graph_name))`
+    3. Adds `_ROOT = UnqualifiedRoot(parse_json_from_metadata(file_path, graph_name))`
     to the start of each function body.
-    4. Prepends any unknown variable names with `ROOT.`
+    4. Prepends any unknown variable names with `_ROOT.`
     """
 
     def __init__(self, file_path: str, graph_name: str, known_names: set[str]):
@@ -50,7 +50,7 @@ class AddRootVisitor(ast.NodeTransformer):
             level=0,
         )
         root_def: ast.AST = ast.Assign(
-            targets=[ast.Name(id="ROOT", ctx=ast.Store())],
+            targets=[ast.Name(id="_ROOT", ctx=ast.Store())],
             value=ast.Call(
                 func=ast.Name(id="UnqualifiedRoot", ctx=ast.Load()),
                 args=[
@@ -86,7 +86,7 @@ class AddRootVisitor(ast.NodeTransformer):
                 unrecognized_var = True
         if unrecognized_var:
             result = ast.Attribute(
-                value=ast.Name(id="ROOT", ctx=ast.Load()), attr=node.id, ctx=node.ctx
+                value=ast.Name(id="_ROOT", ctx=ast.Load()), attr=node.id, ctx=node.ctx
             )
             return result
         else:
@@ -98,8 +98,8 @@ def transform_code(
 ) -> ast.AST:
     """
     Transforms the source code into a new Python AST that has had the PyDough
-    decorator removed, had the definition of `ROOT` injected at the top of the
-    function body, and prepend unknown variables with `ROOT.`
+    decorator removed, had the definition of `_ROOT` injected at the top of the
+    function body, and prepend unknown variables with `_ROOT.`
 
     Args:
         `source`: the raw Python code string for the original function.
@@ -129,7 +129,7 @@ def transform_code(
 def init_pydough_context(file_path: str, graph_name: str):
     """
     Decorator that wraps around a PyDough function and transforms its body into
-    UnqualifiedNodes by prepending unknown variables with `ROOT.`
+    UnqualifiedNodes by prepending unknown variables with `_ROOT.`
 
     Args:
         `file_path`: the path to the JSON file containing the metadata for
