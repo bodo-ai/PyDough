@@ -18,6 +18,7 @@ __all__ = [
     "Where",
     "CollationExpression",
     "OrderBy",
+    "PartitionBy",
     "ChildReference",
     "ChildAccess",
 ]
@@ -28,6 +29,7 @@ from .collections import (
     ChildAccess,
     ChildOperatorChildAccess,
     OrderBy,
+    PartitionBy,
     PyDoughCollectionAST,
     SubCollection,
     TableCollection,
