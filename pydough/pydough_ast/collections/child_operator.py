@@ -4,7 +4,6 @@ TODO: add file-level docstring
 
 __all__ = ["ChildOperator"]
 
-from abc import abstractmethod
 from collections.abc import MutableSequence
 from functools import cache
 
@@ -12,7 +11,7 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import CollationExpression
 
-from .collection_access import CollectionAccess
+from .child_access import ChildAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
 
@@ -58,32 +57,29 @@ class ChildOperator(PyDoughCollectionAST):
     def get_term(self, term_name: str) -> PyDoughAST:
         if term_name in self.all_terms:
             term: PyDoughAST = self.preceding_context.get_term(term_name)
-            if isinstance(term, CollectionAccess):
+            if isinstance(term, ChildAccess):
                 term = term.clone_with_parent(self)
             return term
         else:
             raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
 
-    @property
-    @abstractmethod
-    def tree_item_string(self) -> str:
-        """
-        The string representation of the node on the single line that becomes
-        the `item_str` in its `CollectionTreeForm`.
-        """
+    def to_tree_form_isolated(self) -> CollectionTreeForm:
+        tree_form: CollectionTreeForm = CollectionTreeForm(
+            self.tree_item_string,
+            0,
+            has_predecessor=True,
+        )
+        for child in self.children:
+            child_tree: CollectionTreeForm = child.to_tree_form()
+            tree_form.nested_trees.append(child_tree)
+        return tree_form
 
     def to_tree_form(self) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.preceding_context.to_tree_form()
         predecessor.has_successor = True
-        tree_form: CollectionTreeForm = CollectionTreeForm(
-            self.tree_item_string,
-            predecessor.depth,
-            predecessor=predecessor,
-        )
-        for child in self.children:
-            child_tree: CollectionTreeForm = child.to_tree_form()
-            tree_form.has_children = True
-            tree_form.nested_trees.append(child_tree)
+        tree_form: CollectionTreeForm = self.to_tree_form_isolated()
+        tree_form.depth = predecessor.depth
+        tree_form.predecessor = predecessor
         return tree_form
 
     def equals(self, other: object) -> bool:

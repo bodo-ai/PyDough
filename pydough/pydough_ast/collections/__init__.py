@@ -9,15 +9,17 @@ __all__ = [
     "GlobalContext",
     "CollectionAccess",
     "SubCollection",
-    "CalcChildCollection",
+    "ChildOperatorChildAccess",
     "BackReferenceCollection",
     "Where",
     "OrderBy",
+    "ChildAccess",
 ]
 
 from .back_reference_collection import BackReferenceCollection
 from .calc import Calc
-from .calc_child_collection import CalcChildCollection
+from .child_access import ChildAccess
+from .child_operator_child_access import ChildOperatorChildAccess
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .global_context import GlobalContext

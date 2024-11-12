@@ -138,8 +138,13 @@ class Calc(ChildOperator):
             kwarg_strings.append(f"{name}={expr.to_string(tree_form)}")
         return ", ".join(kwarg_strings)
 
+    @property
+    def standalone_string(self) -> str:
+        return f"({self.calc_kwarg_strings(False)})"
+
     def to_string(self) -> str:
-        return f"{self.preceding_context.to_string()}({self.calc_kwarg_strings(False)})"
+        assert self.preceding_context is not None
+        return f"{self.preceding_context.to_string()}{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:

@@ -79,11 +79,22 @@ class GlobalContext(PyDoughCollectionAST):
             )
         return self.collections[term_name]
 
-    def to_string(self) -> str:
+    @property
+    def standalone_string(self) -> str:
         return self.graph.name
 
-    def to_tree_form(self) -> CollectionTreeForm:
+    def to_string(self) -> str:
+        return self.standalone_string
+
+    @property
+    def tree_item_string(self) -> str:
+        return self.standalone_string
+
+    def to_tree_form_isolated(self) -> CollectionTreeForm:
         return CollectionTreeForm(self.to_string(), 0)
+
+    def to_tree_form(self) -> CollectionTreeForm:
+        return self.to_tree_form_isolated()
 
     def equals(self, other: object) -> bool:
         return isinstance(other, GlobalContext) and self.graph == other.graph

@@ -5,7 +5,6 @@ TODO: add file-level docstring
 __all__ = ["CollectionAccess"]
 
 
-from abc import abstractmethod
 from functools import cache
 
 from pydough.metadata import (
@@ -19,10 +18,12 @@ from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import CollationExpression, ColumnProperty
 
+from .child_access import ChildAccess
 from .collection_ast import PyDoughCollectionAST
+from .collection_tree_form import CollectionTreeForm
 
 
-class CollectionAccess(PyDoughCollectionAST):
+class CollectionAccess(ChildAccess):
     """
     The AST node implementation class representing a table collection accessed
     either directly or as a subcollection of another collection.
@@ -33,8 +34,8 @@ class CollectionAccess(PyDoughCollectionAST):
         collection: CollectionMetadata,
         ancestor: PyDoughCollectionAST,
     ):
+        super().__init__(ancestor)
         self._collection: CollectionMetadata = collection
-        self._ancestor: PyDoughCollectionAST = ancestor
         self._all_property_names: set[str] = set()
         self._calc_property_names: set[str] = set()
         self._calc_property_order: dict[str, int] = {}
@@ -51,21 +52,6 @@ class CollectionAccess(PyDoughCollectionAST):
                     self._calc_property_order
                 )
 
-    @abstractmethod
-    def clone_with_parent(
-        self, new_ancestor: PyDoughCollectionAST
-    ) -> "CollectionAccess":
-        """
-        Copies `self` but with a new ancestor node that presumably has the
-        original ancestor in its predecessor chain.
-
-        Args:
-            `new_ancestor`: the node to use as the new parent of the clone.
-
-        Returns:
-            The cloned version of `self`.
-        """
-
     @property
     def collection(self) -> CollectionMetadata:
         """
@@ -73,14 +59,6 @@ class CollectionAccess(PyDoughCollectionAST):
         node.
         """
         return self._collection
-
-    @property
-    def ancestor_context(self) -> PyDoughCollectionAST:
-        return self._ancestor
-
-    @property
-    def preceding_context(self) -> PyDoughCollectionAST | None:
-        return None
 
     @property
     def calc_terms(self) -> set[str]:
@@ -122,7 +100,24 @@ class CollectionAccess(PyDoughCollectionAST):
                 f"Unsupported property type for collection access: {property.__class__.name}"
             )
 
+    def to_tree_form_isolated(self) -> CollectionTreeForm:
+        return CollectionTreeForm(
+            self.tree_item_string,
+            0,
+            has_predecessor=True,
+        )
+
+    def to_tree_form(self) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form()
+        predecessor.has_children = True
+        tree_form: CollectionTreeForm = self.to_tree_form_isolated()
+        tree_form.depth = predecessor.depth + 1
+        tree_form.predecessor = predecessor
+        return tree_form
+
     def equals(self, other: object) -> bool:
         return (
-            isinstance(other, CollectionAccess) and self.collection == other.collection
+            super().equals(other)
+            and isinstance(other, CollectionAccess)
+            and self.collection == other.collection
         )
