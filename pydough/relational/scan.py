@@ -46,7 +46,7 @@ class Scan(Relational):
     def node_equals(self, other: Relational) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
 
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> Expression:
         table_name = Identifier(this=self.table_name)
         columns = [col.to_sqlglot() for col in self.columns]
         table = Table(this=table_name)

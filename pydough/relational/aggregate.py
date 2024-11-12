@@ -40,7 +40,7 @@ class Aggregate(SingleRelational):
     def aggregations(self) -> list["Column"]:
         return self._aggregations
 
-    def to_sqlglot(self) -> "Expression":
+    def input_modifying_to_sqlglot(self, input_expr: Expression) -> Expression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )

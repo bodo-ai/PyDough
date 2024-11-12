@@ -197,7 +197,7 @@ class Relational(ABC):
         return self.equals(other)
 
     @abstractmethod
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> Expression:
         """Translate the given relational expression
         and its children to a SQLGlot expression.
 

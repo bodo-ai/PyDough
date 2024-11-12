@@ -61,7 +61,7 @@ class Join(Relational):
     def inputs(self):
         return [self.left, self.right]
 
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> Expression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )

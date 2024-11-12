@@ -66,7 +66,7 @@ class PyDoughExpressionAST(PyDoughAST):
             parenthesis around the string representation of `self`.
         """
 
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> Expression:
         """
         Converts the PyDough expression AST to a SQLGlot expression AST.
         Note: This is not an abstract method yet because the majority

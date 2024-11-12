@@ -31,7 +31,7 @@ class Project(SingleRelational):
     ) -> None:
         super().__init__(input, columns, orderings)
 
-    def to_sqlglot(self) -> "Expression":
+    def input_modifying_to_sqlglot(self, input_expr: Expression) -> Expression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
