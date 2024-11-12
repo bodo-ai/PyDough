@@ -15,6 +15,7 @@ __all__ = [
     "SubCollection",
     "Calc",
     "CalcChildCollection",
+    "Where",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -24,6 +25,7 @@ from .collections import (
     PyDoughCollectionAST,
     SubCollection,
     TableCollection,
+    Where,
 )
 from .errors import PyDoughASTException
 from .expressions import (

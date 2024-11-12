@@ -17,6 +17,7 @@ __all__ = [
     "BackReferenceExpressionInfo",
     "ChildReferenceInfo",
     "BackReferenceCollectionInfo",
+    "WhereInfo",
 ]
 
 from abc import ABC, abstractmethod
@@ -31,6 +32,7 @@ from pydough.pydough_ast import (
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
+    Where,
 )
 from pydough.pydough_ast.collections import CollectionAccess
 from pydough.types import PyDoughType
@@ -543,3 +545,39 @@ class CalcInfo(ChildOperatorInfo):
             assert isinstance(expr, PyDoughExpressionAST)
             args.append((name, expr))
         return raw_calc.with_terms(args)
+
+
+class WhereInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a WHERE clause.
+    Contains the following fields:
+    - `condition`: a test info describing the predicate for the WHERE clause.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self, children: MutableSequence[CollectionTestInfo], condition: AstNodeTestInfo
+    ):
+        super().__init__(children)
+        self.condition: AstNodeTestInfo = condition
+
+    def local_string(self) -> str:
+        return f"WHERE[{self.child_strings()}{self.condition.to_string()}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        raw_where = builder.build_where(context, children)
+        assert isinstance(raw_where, Where)
+        cond = self.condition.build(builder, context, children)
+        assert isinstance(cond, PyDoughExpressionAST)
+        return raw_where.with_condition(cond)

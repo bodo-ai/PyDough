@@ -14,6 +14,7 @@ from test_utils import (
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
+    WhereInfo,
 )
 
 from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
@@ -30,7 +31,8 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
     The AST node info for a query that calculates the ratio for each region
     between the of all part sale values (retail price of the part times the
     quantity purchased for each time it was purchased) that were sold to a
-    customer in the same region vs all part sale values from that region.
+    customer in the same region vs all part sale values from that region, only
+    counting sales where the shipping mode was 'AIR'.
 
     Equivalent SQL query:
     ```
@@ -57,15 +59,18 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
         AND O.o_custkey = C.c_custkey
         AND C.c_nationkey = N2.n_nationkey
         AND N2.n_regionkey = R2.r_regionkey
+        AND L.l_shipmode = 'AIR'
     GROUP BY region_name
     ```
 
     Equivalent PyDough code:
     ```
     is_intra_line = IFF(order.customer.region.name == BACK(3).name, 1, 0)
-    part_sales = suppliers.parts_supplied(
-        intra_value = retail_price * ps_lines(adj_quantity = quantity * is_intra_line).adj_quantity,
-        total_value = retail_price * ps_lines.quantity,
+    part_sales = suppliers.parts_supplied.ps_lines.WHERE(
+        shipmode == 'AIR
+    )(
+        intra_value = BACK(1).retail_price * quantity * is_intra_line,
+        total_value = BACK(1).retail_price * quantity,
     )
     Regions(
         region_name = name
@@ -77,16 +82,32 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
         [
             SubCollectionInfo("suppliers")
             ** SubCollectionInfo("parts_supplied")
+            ** SubCollectionInfo("ps_lines")
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "EQU",
+                    [ReferenceInfo("ship_mode"), LiteralInfo("AIR", StringType())],
+                ),
+            )
             ** CalcInfo(
                 [
-                    SubCollectionInfo("ps_lines")
-                    ** CalcInfo(
-                        [
-                            SubCollectionInfo("order")
-                            ** SubCollectionInfo("customer")
-                            ** SubCollectionInfo("region")
-                        ],
-                        adj_quantity=FunctionInfo(
+                    SubCollectionInfo("order")
+                    ** SubCollectionInfo("customer")
+                    ** SubCollectionInfo("region")
+                ],
+                value=FunctionInfo(
+                    "MUL",
+                    [
+                        BackReferenceExpressionInfo("retail_price", 1),
+                        ReferenceInfo("quantity"),
+                    ],
+                ),
+                adj_value=FunctionInfo(
+                    "MUL",
+                    [
+                        BackReferenceExpressionInfo("retail_price", 1),
+                        FunctionInfo(
                             "MUL",
                             [
                                 ReferenceInfo("quantity"),
@@ -106,20 +127,6 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                                 ),
                             ],
                         ),
-                    )
-                ],
-                value=FunctionInfo(
-                    "MUL",
-                    [
-                        ReferenceInfo("retail_price"),
-                        ChildReferenceInfo("adj_quantity", 0),
-                    ],
-                ),
-                adj_value=FunctionInfo(
-                    "MUL",
-                    [
-                        ReferenceInfo("retail_price"),
-                        ChildReferenceInfo("quantity", 0),
                     ],
                 ),
             )
@@ -133,8 +140,10 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
             ],
         ),
     )
-    adjusted_lines: str = "ps_lines(adj_quantity=quantity * IFF(BACK(3).name == order.customer.region.name, 1, 0))"
-    part_values: str = f"suppliers.parts_supplied(value=retail_price * {adjusted_lines}.adj_quantity, adj_value=retail_price * {adjusted_lines}.quantity)"
+    adjustment: str = "IFF(BACK(3).name == order.customer.region.name, 1, 0)"
+    base_value: str = "BACK(1).retail_price * quantity"
+    adjusted_value: str = f"BACK(1).retail_price * (quantity * {adjustment})"
+    part_values: str = f"suppliers.parts_supplied.ps_lines.WHERE(ship_mode == 'AIR')(value={base_value}, adj_value={adjusted_value})"
     string_representation: str = f"Regions(region_name=name, intra_ratio=SUM({part_values}.adj_value) / SUM({part_values}.value))"
     tree_string_representation: str = """\
 ──┬─ TPCH
@@ -142,15 +151,14 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
   └─┬─ Calc[region_name=name, intra_ratio=SUM($1.adj_value) / SUM($1.value)]
     └─┬─ CalcSubCollection
       └─┬─ SubCollection[suppliers]
-        ├─── SubCollection[parts_supplied]
-        └─┬─ Calc[value=retail_price * $1.adj_quantity, adj_value=retail_price * $1.quantity]
-          └─┬─ CalcSubCollection
-            ├─── SubCollection[ps_lines]
-            └─┬─ Calc[adj_quantity=quantity * IFF(BACK(3).name == $1.name, 1, 0)]
-              └─┬─ CalcSubCollection
-                └─┬─ SubCollection[order]
-                  └─┬─ SubCollection[customer]
-                    └─── SubCollection[region]\
+        └─┬─ SubCollection[parts_supplied]
+          ├─── SubCollection[ps_lines]
+          ├─── Where[ship_mode == 'AIR']
+          └─┬─ Calc[value=BACK(1).retail_price * quantity, adj_value=BACK(1).retail_price * (quantity * IFF(BACK(3).name == $1.name, 1, 0))]
+            └─┬─ CalcSubCollection
+              └─┬─ SubCollection[order]
+                └─┬─ SubCollection[customer]
+                  └─── SubCollection[region]\
 """
     return test_info, string_representation, tree_string_representation
 
@@ -521,7 +529,20 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
         pytest.param(
             (
                 TableCollectionInfo("Regions")
+                ** WhereInfo(
+                    [],
+                    FunctionInfo(
+                        "NEQ",
+                        [ReferenceInfo("name"), LiteralInfo("ASIA", StringType())],
+                    ),
+                )
                 ** SubCollectionInfo("nations")
+                ** WhereInfo(
+                    [],
+                    FunctionInfo(
+                        "NEQ", [ReferenceInfo("name"), LiteralInfo("USA", StringType())]
+                    ),
+                )
                 ** CalcInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 1),
@@ -556,6 +577,13 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                     nation_name=BackReferenceExpressionInfo("name", 3),
                     supplier_name=BackReferenceExpressionInfo("name", 2),
                     date=ReferenceInfo("ship_date"),
+                )
+                ** WhereInfo(
+                    [],
+                    FunctionInfo(
+                        "EQU",
+                        [ReferenceInfo("ship_mode"), LiteralInfo("AIR", StringType())],
+                    ),
                 )
             ),
             {"region_name": 0, "nation_name": 1, "supplier_name": 2, "date": 3},
@@ -724,6 +752,16 @@ def test_collections_calc_terms(
             id="regions_nations",
         ),
         pytest.param(
+            TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
+            "Regions.nations",
+            """\
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─── SubCollection[nations]\
+""",
+            id="regions_filter_nations_where",
+        ),
+        pytest.param(
             TableCollectionInfo("Regions")
             ** CalcInfo(
                 [],
@@ -761,17 +799,31 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Regions")
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ", [ReferenceInfo("name"), LiteralInfo("ASIA", StringType())]
+                ),
+            )
             ** SubCollectionInfo("nations")
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ", [ReferenceInfo("name"), LiteralInfo("USA", StringType())]
+                ),
+            )
             ** CalcInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
-            "Regions.nations(region_name=BACK(1).name, nation_name=name)",
+            "Regions.WHERE(name != 'ASIA').nations.WHERE(name != 'USA')(region_name=BACK(1).name, nation_name=name)",
             """\
 ──┬─ TPCH
-  └─┬─ TableCollection[Regions]
+  ├─── TableCollection[Regions]
+  └─┬─ Where[name != 'ASIA']
     ├─── SubCollection[nations]
+    ├─── Where[name != 'USA']
     └─── Calc[region_name=BACK(1).name, nation_name=name]\
 """,
             id="regions_nations_calc",

@@ -46,6 +46,9 @@ class ChildOperator(PyDoughCollectionAST):
     def preceding_context(self) -> PyDoughCollectionAST:
         return self._preceding_context
 
+    def get_expression_position(self, expr_name: str) -> int:
+        return self.preceding_context.get_expression_position(expr_name)
+
     @cache
     def get_term(self, term_name: str) -> PyDoughAST:
         if term_name in self.all_terms:
