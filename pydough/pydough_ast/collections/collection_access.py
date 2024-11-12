@@ -16,7 +16,7 @@ from pydough.metadata import (
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
-from pydough.pydough_ast.expressions import ColumnProperty
+from pydough.pydough_ast.expressions import CollationExpression, ColumnProperty
 
 from .child_access import ChildAccess
 from .collection_ast import PyDoughCollectionAST
@@ -67,6 +67,10 @@ class CollectionAccess(ChildAccess):
     @property
     def all_terms(self) -> set[str]:
         return self._all_property_names
+
+    @property
+    def ordering(self) -> list[CollationExpression] | None:
+        return None
 
     def get_expression_position(self, expr_name: str) -> int:
         if expr_name not in self.calc_terms:
