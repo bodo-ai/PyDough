@@ -242,7 +242,7 @@ def test_unqualified_to_string(
     altered_code.append("def PYDOUGH_FUNC():")
     for line in pydough_str.splitlines():
         altered_code.append(
-            f"  {line.replace("_ROOT.", "").replace("answer = ", "return ")}"
+            f"  {line.replace('_ROOT.', '').replace('answer = ', 'return ')}"
         )
     new_code: str = ast.unparse(
         transform_code(
