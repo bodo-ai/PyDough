@@ -68,7 +68,7 @@ class AddRootVisitor(ast.NodeTransformer):
         )
         result: ast.AST
         if hasattr(node, "type_params"):
-            result = ast.FunctionDef(
+            result = ast.FunctionDef(  # type: ignore
                 name=node.name,
                 args=node.args,
                 body=[import_root, import_parse, root_def] + node.body,
