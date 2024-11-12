@@ -26,9 +26,11 @@ __all__ = [
     "STARTSWITH",
     "ENDSWITH",
     "CONTAINS",
+    "qualify_node",
 ]
 
 from .errors import PyDoughUnqualifiedException
+from .qualification import qualify_node
 from .unqualified_node import (
     BACK,
     PARTITION,
