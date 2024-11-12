@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [{name = "Bodo.ai"}]
 requires-python = ">=3.10"
 # Note: sqlite is included in the standard library, so it doesn't need to be listed here.
-dependencies = ["pytz"]
+dependencies = ["pytz", "sqlglot[rs]"]
 
 [tool.uv]
 dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7"]

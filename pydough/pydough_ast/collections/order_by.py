@@ -29,12 +29,12 @@ class OrderBy(ChildOperator):
 
     def with_collation(self, collation: list[CollationExpression]) -> "OrderBy":
         """
-        Specifies the terms that are calculated inside of a CALC node,
-        returning the mutated CALC node afterwards. This is called after the
-        CALC node is created so that the terms can be expressions that
-        reference child nodes of the CALC. However, this must be called
-        on the ORDERBY node before any properties are accessed by `calc_terms`,
-        `all_terms`, `to_string`, etc.
+        Specifies the expressions that are used to do the ordering in an
+        ORDERBY node returning the mutated ORDERBY node afterwards. This is
+        called after the ORDERBY node is created so that the terms can be
+        expressions that reference child nodes of the ORDERBY. However, this
+        must be called on the ORDERBY node before any properties are accessed
+        by `calc_terms`, `all_terms`, `to_string`, etc.
 
         Args:
             `collation`: the list of collation nodes to order by.
@@ -48,7 +48,7 @@ class OrderBy(ChildOperator):
         """
         if self._collation is not None:
             raise PyDoughASTException(
-                "Cannot call `with_condition` more than once per ORDERBY node"
+                "Cannot call `with_collation` more than once per ORDERBY node"
             )
         self._collation = collation
         return self
