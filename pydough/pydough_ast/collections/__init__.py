@@ -15,6 +15,7 @@ __all__ = [
     "OrderBy",
     "PartitionBy",
     "ChildAccess",
+    "TopK",
 ]
 
 from .back_reference_collection import BackReferenceCollection
@@ -28,4 +29,5 @@ from .order_by import OrderBy
 from .partition_by import PartitionBy
 from .sub_collection import SubCollection
 from .table_collection import TableCollection
+from .top_k import TopK
 from .where import Where

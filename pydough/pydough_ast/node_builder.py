@@ -24,6 +24,7 @@ from .collections import (
     OrderBy,
     PartitionBy,
     PyDoughCollectionAST,
+    TopK,
     Where,
 )
 from .errors import PyDoughASTException
@@ -283,6 +284,26 @@ class AstNodeBuilder:
             The newly created PyDough ORDERBY instance.
         """
         return OrderBy(preceding_context, children)
+
+    def build_top_k(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        children: MutableSequence[PyDoughCollectionAST],
+        records_to_keep: int,
+    ) -> TopK:
+        """
+        Creates a TOP K instance, but `with_collation` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the ORDERBY term.
+            `records_to_keep`: the `K` value in the TOP K.
+
+        Returns:
+            The newly created PyDough TOP K instance.
+        """
+        return TopK(preceding_context, children, records_to_keep)
 
     def build_partition(
         self,

@@ -21,6 +21,7 @@ __all__ = [
     "PartitionBy",
     "ChildReference",
     "ChildAccess",
+    "TopK",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -33,6 +34,7 @@ from .collections import (
     PyDoughCollectionAST,
     SubCollection,
     TableCollection,
+    TopK,
     Where,
 )
 from .errors import PyDoughASTException
