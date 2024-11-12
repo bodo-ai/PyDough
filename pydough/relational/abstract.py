@@ -274,3 +274,16 @@ class Column(NamedTuple):
 
     name: str
     expr: "PyDoughExpressionAST"
+
+    def to_sqlglot(self) -> Expression:
+        """
+        Convert the column to a SQLGlot representation
+        by executing the expr and then assigning the name
+        as the name.
+
+        Returns:
+            Expression: The SQLGlot expression representing the column.
+        """
+        col = self.expr.to_sqlglot()
+        col.set("alias", self.name)
+        return col

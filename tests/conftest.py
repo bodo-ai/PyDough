@@ -15,6 +15,11 @@ from pydough.database_connectors.database_connector import DatabaseConnection
 from pydough.metadata.graphs import GraphMetadata
 from pydough.pydough_ast import AstNodeBuilder
 from pydough.pydough_ast import pydough_operators as pydop
+from pydough.pydough_ast.expressions.simple_column_reference import (
+    SimpleColumnReference,
+)
+from pydough.relational import Column
+from pydough.types import Int64Type
 
 
 @pytest.fixture(scope="session")
@@ -183,3 +188,34 @@ def sqlite3_people_jobs() -> DatabaseConnection:
     sqlite3_empty_connection.connection.commit()
     cursor.close()
     return sqlite3_empty_connection
+
+
+def make_simple_column_reference(name: str) -> SimpleColumnReference:
+    """
+    Make a simple column reference with type int64 and
+    the given name. This is used for generating various relational nodes.
+
+    Args:
+        name (str): The name of the column in the input.
+
+    Returns:
+        SimpleColumnReference: The AST node for the column.
+    """
+    return SimpleColumnReference(name, Int64Type())
+
+
+def make_relational_column(name: str) -> Column:
+    """
+    Make an Int64 column with the given name. This is used
+    for generating various relational nodes.
+
+    Note: This doesn't handle renaming a column.
+
+    Args:
+        name (str): The name of the column in both the input and the
+        current node.
+
+    Returns:
+        Column: The output column.
+    """
+    return Column(name, make_simple_column_reference(name))

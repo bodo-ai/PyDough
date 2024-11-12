@@ -6,6 +6,8 @@ __all__ = ["PyDoughExpressionAST"]
 
 from abc import abstractmethod
 
+from sqlglot.expressions import Expression
+
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.types import PyDoughType
 
@@ -63,3 +65,17 @@ class PyDoughExpressionAST(PyDoughAST):
             True if the string representation of `parent` should enclose
             parenthesis around the string representation of `self`.
         """
+
+    def to_sqlglot(self) -> "Expression":
+        """
+        Converts the PyDough expression AST to a SQLGlot expression AST.
+        Note: This is not an abstract method yet because the majority
+        of expressions do not have a direct mapping to SQLGlot expressions
+        yet.
+
+        Returns:
+            The SQLGlot expression AST equivalent to `self`.
+        """
+        raise NotImplementedError(
+            "Conversion to SQLGlot Expressions is not yet implemented."
+        )

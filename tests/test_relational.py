@@ -9,11 +9,9 @@ Update once we have AST nodes for aggregate functions.
 """
 
 import pytest
+from conftest import make_relational_column, make_simple_column_reference
 
 from pydough.pydough_ast.expressions.literal import Literal
-from pydough.pydough_ast.expressions.simple_column_reference import (
-    SimpleColumnReference,
-)
 from pydough.relational import Column, Relational
 from pydough.relational.aggregate import Aggregate
 from pydough.relational.filter import Filter
@@ -23,37 +21,6 @@ from pydough.relational.project import Project
 from pydough.relational.root import RelationalRoot
 from pydough.relational.scan import Scan
 from pydough.types import BooleanType, Int64Type
-
-
-def make_simple_column_reference(name: str) -> SimpleColumnReference:
-    """
-    Make a simple column reference with type int64 and
-    the given name. This is used for generating various relational nodes.
-
-    Args:
-        name (str): The name of the column in the input.
-
-    Returns:
-        SimpleColumnReference: The AST node for the column.
-    """
-    return SimpleColumnReference(name, Int64Type())
-
-
-def make_column(name: str) -> Column:
-    """
-    Make an Int64 column with the given name. This is used
-    for generating various relational nodes.
-
-    Note: This doesn't handle renaming a column.
-
-    Args:
-        name (str): The name of the column in both the input and the
-        current node.
-
-    Returns:
-        Column: The output column.
-    """
-    return Column(name, make_simple_column_reference(name))
 
 
 def make_literal_column(name: str, value: int) -> Column:
@@ -116,7 +83,7 @@ def test_column_equal():
 def build_simple_scan() -> Scan:
     # Helper function to generate a simple scan node for when
     # relational operators need an input.
-    return Scan("table", [make_column("a"), make_column("b")])
+    return Scan("table", [make_relational_column("a"), make_relational_column("b")])
 
 
 def test_scan_inputs():
@@ -128,14 +95,14 @@ def test_scan_inputs():
     "scan_node, output",
     [
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
             "SCAN(table=table1, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="no_orderings",
         ),
         pytest.param(
             Scan(
                 "table2",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             "SCAN(table=table2, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
@@ -156,20 +123,20 @@ def test_scan_to_string(scan_node: Scan, output: str):
     "first_scan, second_scan, output",
     [
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
             True,
             id="matching_scans_no_orderings",
         ),
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             True,
@@ -178,32 +145,35 @@ def test_scan_to_string(scan_node: Scan, output: str):
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
             id="different_orderings",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("a")]),
             False,
             id="different_columns",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table2", [make_relational_column("a"), make_relational_column("b")]),
             False,
             id="different_tables",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             False,
             id="different_nodes",
         ),
@@ -217,38 +187,38 @@ def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
     "first_scan, second_scan, output",
     [
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table2", [make_relational_column("a"), make_relational_column("b")]),
             False,
             id="different_table",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
             True,
             id="matching_columns",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("c"), make_column("d")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("c"), make_relational_column("d")]),
             True,
             id="disjoint_columns",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("b"), make_column("c")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("b"), make_relational_column("c")]),
             True,
             id="overlapping_columns",
         ),
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -258,12 +228,12 @@ def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -272,12 +242,12 @@ def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -296,29 +266,36 @@ def test_scan_can_merge(first_scan: Scan, second_scan: Scan, output: bool):
     "first_scan, second_scan, output",
     [
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
             id="matching_columns",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("c"), make_column("d")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("c"), make_relational_column("d")]),
             Scan(
                 "table1",
                 [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                    make_relational_column("d"),
                 ],
             ),
             id="disjoint_columns",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("b"), make_column("c")]),
-            Scan("table1", [make_column("a"), make_column("b"), make_column("c")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table1", [make_relational_column("b"), make_relational_column("c")]),
+            Scan(
+                "table1",
+                [
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                ],
+            ),
             id="overlapping_columns",
         ),
     ],
@@ -331,19 +308,19 @@ def test_scan_merge(first_scan: Scan, second_scan: Scan, output: Scan):
     "first_scan, second_scan",
     [
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
+            Scan("table2", [make_relational_column("a"), make_relational_column("b")]),
             id="different_table",
         ),
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -352,12 +329,12 @@ def test_scan_merge(first_scan: Scan, second_scan: Scan, output: Scan):
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             id="disjoint_orderings",
@@ -365,12 +342,12 @@ def test_scan_merge(first_scan: Scan, second_scan: Scan, output: Scan):
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -389,14 +366,17 @@ def test_scan_invalid_merge(first_scan: Scan, second_scan: Scan):
     "project, output",
     [
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             "PROJECT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="no_orderings",
         ),
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             "PROJECT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
@@ -417,20 +397,26 @@ def test_project_to_string(project: Project, output: str):
     "first_project, second_project, output",
     [
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             True,
             id="matching_projects_no_orderings",
         ),
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             True,
@@ -439,25 +425,28 @@ def test_project_to_string(project: Project, output: str):
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
             id="different_orderings",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(build_simple_scan(), [make_relational_column("a")]),
             False,
             id="different_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a")]),
+            Project(build_simple_scan(), [make_relational_column("a")]),
             Project(build_simple_scan(), [make_literal_column("a", 1)]),
             False,
             id="conflicting_column_definitions",
@@ -469,8 +458,11 @@ def test_project_to_string(project: Project, output: str):
             id="unequal_inputs",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Scan("table1", [make_relational_column("a"), make_relational_column("b")]),
             False,
             id="different_nodes",
         ),
@@ -492,25 +484,43 @@ def test_project_equals(
             id="unequal_inputs",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             True,
             id="matching_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("c"), make_column("d")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("c"), make_relational_column("d")],
+            ),
             True,
             id="disjoint_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("b"), make_column("c")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("b"), make_relational_column("c")],
+            ),
             True,
             id="overlapping_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a")]),
+            Project(build_simple_scan(), [make_relational_column("a")]),
             Project(build_simple_scan(), [make_literal_column("a", 1)]),
             False,
             id="conflict_column_definitions",
@@ -518,12 +528,12 @@ def test_project_equals(
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -533,12 +543,12 @@ def test_project_equals(
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -547,12 +557,12 @@ def test_project_equals(
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -573,31 +583,56 @@ def test_project_can_merge(
     "first_project, second_project, output",
     [
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             id="matching_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("c"), make_column("d")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("c"), make_relational_column("d")],
+            ),
             Project(
                 build_simple_scan(),
                 [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                    make_relational_column("d"),
                 ],
             ),
             id="disjoint_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("b"), make_column("c")]),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b"), make_column("c")],
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("b"), make_relational_column("c")],
+            ),
+            Project(
+                build_simple_scan(),
+                [
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                ],
             ),
             id="overlapping_columns",
         ),
@@ -618,19 +653,19 @@ def test_project_merge(
             id="unequal_inputs",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a")]),
+            Project(build_simple_scan(), [make_relational_column("a")]),
             Project(build_simple_scan(), [make_literal_column("a", 1)]),
             id="conflict_column_definitions",
         ),
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -639,12 +674,12 @@ def test_project_merge(
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             id="disjoint_orderings",
@@ -652,12 +687,12 @@ def test_project_merge(
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -679,7 +714,7 @@ def test_project_invalid_merge(first_project: Project, second_project: Project):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(1),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "LIMIT(limit=1, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="no_orderings_limit_1",
@@ -688,7 +723,7 @@ def test_project_invalid_merge(first_project: Project, second_project: Project):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "LIMIT(limit=5, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="no_orderings_limit_5",
@@ -697,7 +732,7 @@ def test_project_invalid_merge(first_project: Project, second_project: Project):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             "LIMIT(limit=10, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
@@ -721,12 +756,12 @@ def test_limit_to_string(limit: Limit, output: str):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             True,
             id="matching_limits_no_orderings",
@@ -735,12 +770,12 @@ def test_limit_to_string(limit: Limit, output: str):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="different_limits_no_orderings",
@@ -749,13 +784,13 @@ def test_limit_to_string(limit: Limit, output: str):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             True,
@@ -765,13 +800,13 @@ def test_limit_to_string(limit: Limit, output: str):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             False,
@@ -781,13 +816,13 @@ def test_limit_to_string(limit: Limit, output: str):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -797,9 +832,13 @@ def test_limit_to_string(limit: Limit, output: str):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
-            Limit(build_simple_scan(), make_limit_literal(10), [make_column("a")]),
+            Limit(
+                build_simple_scan(),
+                make_limit_literal(10),
+                [make_relational_column("a")],
+            ),
             False,
             id="different_columns",
         ),
@@ -813,9 +852,12 @@ def test_limit_to_string(limit: Limit, output: str):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             False,
             id="different_nodes",
         ),
@@ -838,12 +880,12 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             True,
             id="matching_columns_equal_limits",
@@ -852,12 +894,12 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="matching_columns_unequal_limits",
@@ -866,12 +908,12 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             True,
             id="disjoint_columns_equal_limits",
@@ -880,12 +922,12 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             False,
             id="disjoint_columns_unequal_limits",
@@ -894,12 +936,12 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             True,
             id="overlapping_columns_equal_limits",
@@ -908,12 +950,12 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             False,
             id="overlapping_columns_unequal_limits",
@@ -922,13 +964,13 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -939,13 +981,13 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             False,
@@ -955,13 +997,13 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -971,13 +1013,13 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -988,13 +1030,13 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             False,
@@ -1015,17 +1057,17 @@ def test_limit_can_merge(first_limit: Limit, second_limit: Limit, output: bool):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="matching_columns_equal_limits",
         ),
@@ -1033,21 +1075,21 @@ def test_limit_can_merge(first_limit: Limit, second_limit: Limit, output: bool):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
                 [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                    make_relational_column("d"),
                 ],
             ),
             id="disjoint_columns_equal_limits",
@@ -1056,17 +1098,21 @@ def test_limit_can_merge(first_limit: Limit, second_limit: Limit, output: bool):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b"), make_column("c")],
+                [
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                ],
             ),
             id="overlapping_columns_equal_limits",
         ),
@@ -1088,12 +1134,12 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="matching_columns_unequal_limits",
         ),
@@ -1101,12 +1147,12 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             id="disjoint_columns_unequal_limits",
         ),
@@ -1114,12 +1160,12 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             id="overlapping_columns_unequal_limits",
         ),
@@ -1127,13 +1173,13 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -1143,13 +1189,13 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             id="matching_orderings_unequal_limits",
@@ -1158,13 +1204,13 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             id="disjoint_orderings",
@@ -1173,13 +1219,13 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -1189,13 +1235,13 @@ def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
             Limit(
                 build_simple_scan(),
                 make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Limit(
                 build_simple_scan(),
                 make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             id="overlapping_orderings_unequal_limits",
@@ -1215,7 +1261,7 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[])",
@@ -1224,7 +1270,7 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[])",
@@ -1233,7 +1279,7 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1252,12 +1298,12 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             True,
@@ -1266,12 +1312,12 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
                 [],
             ),
             False,
@@ -1280,12 +1326,12 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a")],
+                [make_relational_column("a")],
                 [],
             ),
             False,
@@ -1294,13 +1340,13 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1310,13 +1356,13 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("b")],
             ),
@@ -1326,13 +1372,13 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1342,13 +1388,13 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a")],
+                [make_relational_column("a")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1358,12 +1404,16 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
-                Scan("table2", [make_column("a"), make_column("b")], []),
-                [make_column("a"), make_column("b")],
+                Scan(
+                    "table2",
+                    [make_relational_column("a"), make_relational_column("b")],
+                    [],
+                ),
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             False,
@@ -1372,10 +1422,12 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
-            Scan("table2", [make_column("a"), make_column("b")], []),
+            Scan(
+                "table2", [make_relational_column("a"), make_relational_column("b")], []
+            ),
             False,
             id="different_nodes",
         ),
@@ -1391,12 +1443,12 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 Scan("table2", [], []),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             False,
@@ -1405,12 +1457,12 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             True,
@@ -1419,12 +1471,12 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
                 [],
             ),
             False,
@@ -1433,12 +1485,12 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("b")],
+                [make_relational_column("b")],
                 [],
             ),
             False,
@@ -1447,12 +1499,12 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
                 [],
             ),
             False,
@@ -1461,13 +1513,13 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1477,13 +1529,13 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a")],
+                [make_relational_column("a")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1493,13 +1545,13 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("b")],
             ),
@@ -1509,13 +1561,13 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
@@ -1526,13 +1578,13 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a")],
+                [make_relational_column("a")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
@@ -1553,17 +1605,17 @@ def test_aggregate_can_merge(first_agg: Aggregate, second_agg: Aggregate, output
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             id="matching_keys_no_orderings",
@@ -1582,12 +1634,12 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 Scan("table2", [], []),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             id="unequal_inputs",
@@ -1595,12 +1647,12 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
                 [],
             ),
             id="disjoint_keys_no_ordering",
@@ -1608,12 +1660,12 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("b")],
+                [make_relational_column("b")],
                 [],
             ),
             id="subset_keys_no_ordering",
@@ -1621,12 +1673,12 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
                 [],
             ),
             id="overlapping_keys_no_ordering",
@@ -1634,13 +1686,13 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1649,13 +1701,13 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a")],
+                [make_relational_column("a")],
                 [],
                 [make_simple_column_reference("a")],
             ),
@@ -1664,13 +1716,13 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("b")],
             ),
@@ -1679,13 +1731,13 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
@@ -1695,13 +1747,13 @@ def test_aggregate_merge(
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a")],
+                [make_relational_column("a")],
                 [],
                 [make_simple_column_reference("a")],
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
@@ -1723,7 +1775,7 @@ def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "FILTER(condition=True, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="no_orderings",
@@ -1732,7 +1784,7 @@ def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             "FILTER(condition=False, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
@@ -1751,12 +1803,12 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             True,
             id="matching_no_orderings",
@@ -1765,12 +1817,12 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="different_conds",
@@ -1779,12 +1831,12 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             False,
             id="different_columns_no_orderings",
@@ -1793,12 +1845,12 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a")],
+                [make_relational_column("a")],
             ),
             False,
             id="subset_columns_no_orderings",
@@ -1807,13 +1859,13 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -1823,13 +1875,13 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             True,
@@ -1839,13 +1891,13 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             False,
@@ -1855,13 +1907,13 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a")],
+                [make_relational_column("a")],
                 [make_simple_column_reference("a")],
             ),
             False,
@@ -1871,12 +1923,16 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
-                Scan("table2", [make_column("a"), make_column("b")], []),
+                Scan(
+                    "table2",
+                    [make_relational_column("a"), make_relational_column("b")],
+                    [],
+                ),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="unequal_inputs",
@@ -1885,9 +1941,9 @@ def test_filter_to_string(filter: Filter, output: str):
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            Scan("table2", [make_relational_column("a"), make_relational_column("b")]),
             False,
             id="different_nodes",
         ),
@@ -1904,12 +1960,12 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 Scan("table2", []),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="unequal_inputs",
@@ -1918,12 +1974,12 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             True,
             id="matching_columns_equal_conds",
@@ -1932,12 +1988,12 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="matching_columns_unequal_conds",
@@ -1946,12 +2002,12 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             True,
             id="disjoint_columns_equal_conds",
@@ -1960,12 +2016,12 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             False,
             id="disjoint_columns_unequal_conds",
@@ -1974,12 +2030,12 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             True,
             id="overlapping_columns_equal_conds",
@@ -1988,12 +2044,12 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             False,
             id="overlapping_columns_unequal_conds",
@@ -2002,13 +2058,13 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -2019,13 +2075,13 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             False,
@@ -2035,13 +2091,13 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -2051,13 +2107,13 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -2068,13 +2124,13 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             False,
@@ -2095,17 +2151,17 @@ def test_filter_can_merge(first_filter: Filter, second_filter: Filter, output: b
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="matching_columns_equal_conds",
         ),
@@ -2113,21 +2169,21 @@ def test_filter_can_merge(first_filter: Filter, second_filter: Filter, output: b
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
                 [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                    make_relational_column("d"),
                 ],
             ),
             id="disjoint_columns_equal_conds",
@@ -2136,17 +2192,21 @@ def test_filter_can_merge(first_filter: Filter, second_filter: Filter, output: b
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b"), make_column("c")],
+                [
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                ],
             ),
             id="overlapping_columns_equal_conds",
         ),
@@ -2163,12 +2223,12 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 Scan("table2", []),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="unequal_inputs",
         ),
@@ -2176,12 +2236,12 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="matching_columns_unequal_conds",
         ),
@@ -2189,12 +2249,12 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
             ),
             id="disjoint_columns_unequal_conds",
         ),
@@ -2202,12 +2262,12 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("b"), make_column("c")],
+                [make_relational_column("b"), make_relational_column("c")],
             ),
             id="overlapping_columns_unequal_conds",
         ),
@@ -2215,13 +2275,13 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: Eventually this should be legal
@@ -2231,13 +2291,13 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             id="matching_orderings_unequal_conds",
@@ -2246,13 +2306,13 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             id="disjoint_orderings",
@@ -2261,13 +2321,13 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             # Note: If we allow merging orderings this should become legal.
@@ -2277,13 +2337,13 @@ def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filte
             Filter(
                 build_simple_scan(),
                 make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Filter(
                 build_simple_scan(),
                 make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             id="overlapping_orderings_unequal_conds",
@@ -2303,7 +2363,7 @@ def test_filter_invalid_merge(first_filter: Filter, second_filter: Filter):
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "ROOT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="no_orderings",
@@ -2311,7 +2371,7 @@ def test_filter_invalid_merge(first_filter: Filter, second_filter: Filter):
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             "ROOT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
@@ -2327,26 +2387,38 @@ def test_root_to_string(root: RelationalRoot, output: str):
     "first_root, second_root, output",
     [
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             True,
             id="matching_columns_no_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("b"), make_column("c")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("b"), make_relational_column("c")],
+            ),
             False,
             id="different_columns_no_orderings",
         ),
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             True,
@@ -2355,26 +2427,35 @@ def test_root_to_string(root: RelationalRoot, output: str):
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
             id="different_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(Scan("table2", []), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                Scan("table2", []),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             False,
             id="different_inputs",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            Scan("table2", [make_relational_column("a"), make_relational_column("b")]),
             False,
             id="different_nodes",
         ),
@@ -2388,29 +2469,44 @@ def test_root_equals(first_root: RelationalRoot, second_root: Relational, output
     "first_root, second_root",
     [
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             id="matching_columns_no_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("c"), make_column("d")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("c"), make_relational_column("d")],
+            ),
             id="different_columns_no_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(build_simple_scan(), [make_relational_column("a")]),
             id="subset_columns_no_orderings",
         ),
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             id="matching_columns_with_orderings",
@@ -2418,19 +2514,25 @@ def test_root_equals(first_root: RelationalRoot, second_root: Relational, output
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             id="matching_columns_different_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(Scan("table2", []), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                Scan("table2", []),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             id="different_inputs",
         ),
     ],
@@ -2443,29 +2545,44 @@ def test_root_can_merge(first_root: RelationalRoot, second_root: RelationalRoot)
     "first_root, second_root",
     [
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             id="matching_columns_no_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("c"), make_column("d")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("c"), make_relational_column("d")],
+            ),
             id="different_columns_no_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(build_simple_scan(), [make_relational_column("a")]),
             id="subset_columns_no_orderings",
         ),
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             id="matching_columns_with_orderings",
@@ -2473,19 +2590,25 @@ def test_root_can_merge(first_root: RelationalRoot, second_root: RelationalRoot)
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             id="matching_columns_different_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(Scan("table2", []), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
+            RelationalRoot(
+                Scan("table2", []),
+                [make_relational_column("a"), make_relational_column("b")],
+            ),
             id="different_inputs",
         ),
     ],
@@ -2504,7 +2627,7 @@ def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalR
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "JOIN(cond=True, type=inner, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="inner_join_no_orderings",
@@ -2515,7 +2638,7 @@ def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalR
                 build_simple_scan(),
                 make_cond_literal(False),
                 JoinType.LEFT,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "JOIN(cond=False, type=left, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="left_join_no_orderings",
@@ -2526,7 +2649,7 @@ def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalR
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.RIGHT,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "JOIN(cond=True, type=right, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="right_join_no_orderings",
@@ -2537,7 +2660,7 @@ def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalR
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.FULL_OUTER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             "JOIN(cond=True, type=full outer, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
             id="inner_join_no_orderings",
@@ -2548,7 +2671,7 @@ def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalR
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             "JOIN(cond=True, type=inner, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
@@ -2569,14 +2692,14 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             True,
             id="same_columns_no_ordering",
@@ -2587,14 +2710,14 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("c")],
+                [make_relational_column("a"), make_relational_column("c")],
             ),
             False,
             id="diff_columns_no_ordering",
@@ -2605,7 +2728,7 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -2613,7 +2736,7 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             True,
@@ -2625,7 +2748,7 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -2633,7 +2756,7 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -2645,7 +2768,7 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -2653,7 +2776,7 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("c")],
+                [make_relational_column("a"), make_relational_column("c")],
                 [make_simple_column_reference("a")],
             ),
             False,
@@ -2665,14 +2788,14 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(False),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="diff_conds",
@@ -2683,14 +2806,14 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.LEFT,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="diff_type",
@@ -2701,14 +2824,16 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="different_left",
@@ -2719,32 +2844,38 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="different_right",
         ),
         pytest.param(
             Join(
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="swapped_inputs",
@@ -2755,9 +2886,9 @@ def test_join_to_string(join: Join, output: str):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            Scan("table2", [make_relational_column("a"), make_relational_column("b")]),
             False,
             id="different_nodes",
         ),
@@ -2776,14 +2907,14 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             True,
             id="same_columns_no_ordering",
@@ -2794,14 +2925,14 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("c")],
+                [make_relational_column("a"), make_relational_column("c")],
             ),
             True,
             id="overlapping_columns_no_ordering",
@@ -2812,14 +2943,14 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a")],
+                [make_relational_column("a")],
             ),
             True,
             id="subset_columns_no_ordering",
@@ -2830,7 +2961,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -2838,7 +2969,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: This could become legal in the future.
@@ -2851,7 +2982,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -2859,7 +2990,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             False,
@@ -2871,7 +3002,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             Join(
@@ -2879,7 +3010,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             False,
@@ -2891,7 +3022,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -2899,7 +3030,7 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
                 [make_simple_column_reference("a")],
             ),
             # Note: This could become legal in the future.
@@ -2912,14 +3043,14 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(False),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="diff_conds",
@@ -2930,14 +3061,14 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.LEFT,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="diff_type",
@@ -2948,14 +3079,16 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="different_left",
@@ -2966,32 +3099,38 @@ def test_join_equals(first_join: Join, second_join: Relational, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             False,
             id="different_right",
         ),
         pytest.param(
             Join(
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             # Note: This could become legal in the future.
             False,
@@ -3014,21 +3153,21 @@ def test_join_can_merge(first_join: Join, second_join: Join, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="same_columns_no_ordering",
         ),
@@ -3038,21 +3177,25 @@ def test_join_can_merge(first_join: Join, second_join: Join, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("c")],
+                [make_relational_column("a"), make_relational_column("c")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b"), make_column("c")],
+                [
+                    make_relational_column("a"),
+                    make_relational_column("b"),
+                    make_relational_column("c"),
+                ],
             ),
             id="overlapping_columns_no_ordering",
         ),
@@ -3062,21 +3205,21 @@ def test_join_can_merge(first_join: Join, second_join: Join, output: bool):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a")],
+                [make_relational_column("a")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="subset_columns_no_ordering",
         ),
@@ -3095,7 +3238,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -3103,7 +3246,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             # Note: This could become legal in the future.
@@ -3115,7 +3258,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -3123,7 +3266,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("b")],
             ),
             id="diff_ordering",
@@ -3134,7 +3277,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a"), make_simple_column_reference("b")],
             ),
             Join(
@@ -3142,7 +3285,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             id="subset_ordering",
@@ -3153,7 +3296,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
                 [make_simple_column_reference("a")],
             ),
             Join(
@@ -3161,7 +3304,7 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("c"), make_column("d")],
+                [make_relational_column("c"), make_relational_column("d")],
                 [make_simple_column_reference("a")],
             ),
             # Note: This could become legal in the future.
@@ -3173,14 +3316,14 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(False),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="diff_conds",
         ),
@@ -3190,14 +3333,14 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.LEFT,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="diff_type",
         ),
@@ -3207,14 +3350,16 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="different_left",
         ),
@@ -3224,31 +3369,37 @@ def test_join_merge(first_join: Join, second_join: Join, output: Join):
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             id="different_right",
         ),
         pytest.param(
             Join(
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 build_simple_scan(),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             Join(
                 build_simple_scan(),
-                Scan("table2", [make_column("a"), make_column("b")]),
+                Scan(
+                    "table2", [make_relational_column("a"), make_relational_column("b")]
+                ),
                 make_cond_literal(True),
                 JoinType.INNER,
-                [make_column("a"), make_column("b")],
+                [make_relational_column("a"), make_relational_column("b")],
             ),
             # Note: This could become legal in the future.
             id="swapped_inputs",

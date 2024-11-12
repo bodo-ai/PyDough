@@ -7,7 +7,7 @@ class for more specific implementations.
 
 from collections.abc import MutableSequence
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression, From, Identifier, Select, Table
 
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
@@ -47,9 +47,15 @@ class Scan(Relational):
         return isinstance(other, Scan) and self.table_name == other.table_name
 
     def to_sqlglot(self) -> "Expression":
-        breakpoint()
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
+        table_name = Identifier(this=self.table_name)
+        columns = [col.to_sqlglot() for col in self.columns]
+        table = Table(this=table_name)
+        from_var = From(this=table)
+        return Select(
+            **{
+                "expressions": columns,
+                "from": from_var,
+            }
         )
 
     def to_string(self) -> str:

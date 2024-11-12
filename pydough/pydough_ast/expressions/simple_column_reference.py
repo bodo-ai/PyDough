@@ -7,6 +7,8 @@ like equivalence between columns.
 
 __all__ = ["SimpleColumnReference"]
 
+from sqlglot.expressions import Expression, Identifier
+
 from pydough.types import PyDoughType
 
 from .expression_ast import PyDoughExpressionAST
@@ -56,3 +58,16 @@ class SimpleColumnReference(PyDoughExpressionAST):
             and (self.pydough_type == other.pydough_type)
             and (self.name == other.name)
         )
+
+    def to_sqlglot(self) -> "Expression":
+        """
+        Converts the PyDough expression AST to a SQLGlot expression AST.
+        Note: This is not an abstract method yet because the majority
+        of expressions do not have a direct mapping to SQLGlot expressions
+        yet.
+
+        Returns:
+            The SQLGlot expression AST equivalent to representing a column access
+            by name.
+        """
+        return Identifier(this=self.name)
