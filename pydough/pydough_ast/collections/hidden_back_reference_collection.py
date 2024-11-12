@@ -75,6 +75,10 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         return self._alias
 
     @property
+    def key(self) -> str:
+        return f"{self.context.key}.{self.alias}"
+
+    @property
     def standalone_string(self) -> str:
         return self.alias
 

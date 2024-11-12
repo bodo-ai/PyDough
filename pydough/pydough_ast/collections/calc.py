@@ -99,6 +99,10 @@ class Calc(ChildOperator):
         return self._calc_term_values
 
     @property
+    def key(self) -> str:
+        return f"{self.preceding_context.key}.CALC"
+
+    @property
     def calc_terms(self) -> set[str]:
         return set(self.calc_term_indices)
 
@@ -159,4 +163,5 @@ class Calc(ChildOperator):
             super().equals(other)
             and isinstance(other, Calc)
             and self._calc_term_indices == other._calc_term_indices
+            and self._calc_term_values == other._calc_term_values
         )

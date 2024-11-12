@@ -5,6 +5,7 @@ TODO: add file-level docstring
 __all__ = ["PyDoughAST"]
 
 from abc import ABC, abstractmethod
+from hashlib import sha256
 
 
 class PyDoughAST(ABC):
@@ -17,7 +18,16 @@ class PyDoughAST(ABC):
         return self.equals(other)
 
     def __hash__(self):
-        return hash(id(self))
+        return int(sha256(self.key.encode()).hexdigest(), base=16)
+
+    @property
+    @abstractmethod
+    def key(self) -> str:
+        """
+        An string used to distinguish `self` to hash on so that AST nodes can
+        have cached methods. This key string is not necessarily unique for
+        objects even if they are not equal.
+        """
 
     @abstractmethod
     def equals(self, other: object) -> bool:
