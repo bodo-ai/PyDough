@@ -77,7 +77,7 @@ class Join(Relational):
 
     def to_string(self) -> str:
         # TODO: Should we visit the input?
-        return f"JOIN(cond={self.cond}, type={self.join_type}, columns={self.columns}, orderings={self.orderings})"
+        return f"JOIN(cond={self.cond}, type={self.join_type.value}, columns={self.columns}, orderings={self.orderings})"
 
     def node_can_merge(self, other: Relational) -> bool:
         # TODO: Determine if left and right must always match exactly and if we can ever swap them.
