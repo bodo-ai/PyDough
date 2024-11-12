@@ -11,6 +11,7 @@ from test_utils import (
     CollectionTestInfo,
     FunctionInfo,
     LiteralInfo,
+    OrderInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
@@ -1076,6 +1077,91 @@ def test_collections_calc_terms(
 """,
             id="globalcalc_b",
         ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True)),
+            "Nations.ORDER_BY(name.ASC(na_pos='last'))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─── OrderBy[name.ASC(na_pos='last')]\
+""",
+            id="nations_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo(
+                [SubCollectionInfo("suppliers")],
+                (
+                    FunctionInfo("SUM", [ChildReferenceInfo("account_balance", 0)]),
+                    False,
+                    True,
+                ),
+                (ReferenceInfo("name"), True, True),
+            ),
+            "Nations.ORDER_BY(SUM(suppliers.account_balance).DESC(na_pos='last'), name.ASC(na_pos='last'))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─┬─ OrderBy[SUM($1.account_balance).DESC(na_pos='last'), name.ASC(na_pos='last')]
+    └─┬─ CalcSubCollection
+      └─── SubCollection[suppliers]\
+""",
+            id="nations_nested_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("acctbal"), True, True)),
+            "Regions.ORDER_BY(name.ASC(na_pos='last')).nations.ORDER_BY(key.ASC(na_pos='last')).customers.ORDER_BY(acctbal.ASC(na_pos='last'))",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ OrderBy[name.ASC(na_pos='last')]
+    ├─── SubCollection[nations]
+    └─┬─ OrderBy[key.ASC(na_pos='last')]
+      ├─── SubCollection[customers]
+      └─── OrderBy[acctbal.ASC(na_pos='last')]\
+""",
+            id="regions_nations_customers_order",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
+                ),
+            )
+            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** OrderInfo([], (ReferenceInfo("region_name"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ",
+                    [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
+                ),
+            ),
+            "Regions.ORDER_BY(name.ASC(na_pos='last')).customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(acctbal > 1000)(region_name=BACK(1).name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
+            """\
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ OrderBy[name.ASC(na_pos='last')]
+    ├─── SubCollection[customers]
+    ├─── OrderBy[key.ASC(na_pos='last')]
+    ├─── Where[acctbal > 1000]
+    ├─── Calc[region_name=BACK(1).name]
+    ├─── OrderBy[region_name.ASC(na_pos='last')]
+    └─── Where[region_name != 'ASIA']\
+""",
+            id="regions_customers_order_where_calc_order_where",
+        ),
     ],
 )
 def test_collections_to_string(
@@ -1097,15 +1183,151 @@ def test_collections_to_string(
     ), "Mismatch between tree string representation and expected value"
 
 
-def test_regions_intra_ratio_to_string(
+@pytest.mark.parametrize(
+    "calc_pipeline, expected_collation_strings",
+    [
+        pytest.param(
+            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            None,
+            id="global_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("suppliers")
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("nation_name"),
+                supplier_name=ReferenceInfo("name"),
+            ),
+            None,
+            id="regions_suppliers_calc",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True)),
+            ["name.ASC(na_pos='last')"],
+            id="nations_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo(
+                [SubCollectionInfo("suppliers")],
+                (
+                    FunctionInfo("SUM", [ChildReferenceInfo("account_balance", 0)]),
+                    False,
+                    True,
+                ),
+                (ReferenceInfo("name"), True, True),
+            ),
+            [
+                "SUM(suppliers.account_balance).DESC(na_pos='last')",
+                "name.ASC(na_pos='last')",
+            ],
+            id="nations_nested_ordering",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("acctbal"), True, True)),
+            ["acctbal.ASC(na_pos='last')"],
+            id="regions_nations_customers_order",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** SubCollectionInfo("customers"),
+            None,
+            id="regions_nations_customers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
+                ),
+            )
+            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** OrderInfo([], (ReferenceInfo("region_name"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ",
+                    [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
+                ),
+            ),
+            ["region_name.ASC(na_pos='last')"],
+            id="regions_customers_order_where_calc_order_where",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("customers")
+            ** OrderInfo([], (ReferenceInfo("key"), True, True))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
+                ),
+            )
+            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "NEQ",
+                    [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
+                ),
+            ),
+            ["key.ASC(na_pos='last')"],
+            id="regions_customers_order_where_calc_where",
+        ),
+    ],
+)
+def test_collections_ordering(
+    calc_pipeline: CollectionTestInfo,
+    expected_collation_strings: list[str] | None,
+    tpch_node_builder: AstNodeBuilder,
+):
+    """
+    Verifies that various AST collection node structures have the expected
+    collation nodes to order by.
+    """
+    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    if expected_collation_strings is None:
+        assert (
+            collection.ordering is None
+        ), "expected collection to not have an ordering, but it did have one"
+    else:
+        assert (
+            collection.ordering is not None
+        ), "expected collection to have an ordering, but it did not"
+        collation_strings: list[str] = [
+            collation.to_string() for collation in collection.ordering
+        ]
+        assert (
+            collation_strings == expected_collation_strings
+        ), "Mismatch between string representation of collation keys and expected value"
+
+
+def test_regions_intra_ratio_string_order(
     region_intra_ratio: tuple[CollectionTestInfo, str, str],
     tpch_node_builder: AstNodeBuilder,
 ):
     """
-    Same as `test_collections_to_string` but specifically on the structure from
-    the `region_intra_ratio` fixture.
+    Same as `test_collections_to_string` and `test_collections_ordering`, but
+    specifically on the structure from the `region_intra_ratio` fixture.
     """
     calc_pipeline, expected_string, expected_tree_string = region_intra_ratio
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     assert collection.to_string() == expected_string
     assert collection.to_tree_string() == expected_tree_string
+    assert collection.ordering is None

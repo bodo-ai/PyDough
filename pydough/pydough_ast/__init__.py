@@ -16,12 +16,15 @@ __all__ = [
     "Calc",
     "CalcChildCollection",
     "Where",
+    "CollationExpression",
+    "OrderBy",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
 from .collections import (
     Calc,
     CalcChildCollection,
+    OrderBy,
     PyDoughCollectionAST,
     SubCollection,
     TableCollection,
@@ -29,6 +32,7 @@ from .collections import (
 )
 from .errors import PyDoughASTException
 from .expressions import (
+    CollationExpression,
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,

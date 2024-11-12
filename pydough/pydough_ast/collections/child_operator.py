@@ -10,6 +10,7 @@ from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.pydough_ast.expressions import CollationExpression
 
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
@@ -45,6 +46,10 @@ class ChildOperator(PyDoughCollectionAST):
     @property
     def preceding_context(self) -> PyDoughCollectionAST:
         return self._preceding_context
+
+    @property
+    def ordering(self) -> list[CollationExpression] | None:
+        return self.preceding_context.ordering
 
     def get_expression_position(self, expr_name: str) -> int:
         return self.preceding_context.get_expression_position(expr_name)

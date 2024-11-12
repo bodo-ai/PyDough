@@ -18,6 +18,7 @@ __all__ = [
     "ChildReferenceInfo",
     "BackReferenceCollectionInfo",
     "WhereInfo",
+    "OrderInfo",
 ]
 
 from abc import ABC, abstractmethod
@@ -29,6 +30,8 @@ from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
     CalcChildCollection,
+    CollationExpression,
+    OrderBy,
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
@@ -581,3 +584,50 @@ class WhereInfo(ChildOperatorInfo):
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionAST)
         return raw_where.with_condition(cond)
+
+
+class OrderInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a ORDERBEY clause.
+    Contains the following fields:
+    - `collations`: a list of tuples in the form `(test_info, asc, na_last)`
+      ordering keys for the ORDER BY clause. Passed in via variadic arguments.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+        children: MutableSequence[CollectionTestInfo],
+        *args,
+    ):
+        super().__init__(children)
+        self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
+
+    def local_string(self) -> str:
+        collation_strings: list[str] = []
+        for info, asc, na_last in self.collation:
+            suffix = "ASC" if asc else "DESC"
+            kwarg = "'last'" if na_last else "'first'"
+            collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        return f"OrderBy[{self.child_strings()}{', '.join(collation_strings)}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        raw_order = builder.build_order(context, children)
+        assert isinstance(raw_order, OrderBy)
+        collation: list[CollationExpression] = []
+        for info, asc, na_last in self.collation:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, PyDoughExpressionAST)
+            collation.append(CollationExpression(expr, asc, na_last))
+        return raw_order.with_collation(collation)

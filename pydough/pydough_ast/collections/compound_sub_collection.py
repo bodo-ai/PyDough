@@ -53,7 +53,6 @@ class CompoundSubCollection(SubCollection):
             self._inheritance_source_name
         )
         if len(undefined_inherited) > 0:
-            breakpoint()
             raise PyDoughASTException(
                 f"Undefined inherited properties: {undefined_inherited}"
             )

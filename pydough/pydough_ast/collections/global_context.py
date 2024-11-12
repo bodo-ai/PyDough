@@ -13,6 +13,7 @@ from pydough.metadata import (
 )
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.pydough_ast.expressions import CollationExpression
 
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
@@ -63,6 +64,10 @@ class GlobalContext(PyDoughCollectionAST):
     @property
     def all_terms(self) -> set[str]:
         return set(self.collections)
+
+    @property
+    def ordering(self) -> list[CollationExpression] | None:
+        return None
 
     def get_expression_position(self, expr_name: str) -> int:
         raise PyDoughASTException(f"Cannot call get_expression_position on {self!r}")

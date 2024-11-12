@@ -17,7 +17,7 @@ from pydough.metadata import (
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
-from pydough.pydough_ast.expressions import ColumnProperty
+from pydough.pydough_ast.expressions import CollationExpression, ColumnProperty
 
 from .collection_ast import PyDoughCollectionAST
 
@@ -32,11 +32,9 @@ class CollectionAccess(PyDoughCollectionAST):
         self,
         collection: CollectionMetadata,
         ancestor: PyDoughCollectionAST,
-        predecessor: PyDoughCollectionAST | None = None,
     ):
         self._collection: CollectionMetadata = collection
         self._ancestor: PyDoughCollectionAST = ancestor
-        self._predecessor: PyDoughCollectionAST | None = predecessor
         self._all_property_names: set[str] = set()
         self._calc_property_names: set[str] = set()
         self._calc_property_order: dict[str, int] = {}
@@ -82,7 +80,7 @@ class CollectionAccess(PyDoughCollectionAST):
 
     @property
     def preceding_context(self) -> PyDoughCollectionAST | None:
-        return self._predecessor
+        return None
 
     @property
     def calc_terms(self) -> set[str]:
@@ -91,6 +89,10 @@ class CollectionAccess(PyDoughCollectionAST):
     @property
     def all_terms(self) -> set[str]:
         return self._all_property_names
+
+    @property
+    def ordering(self) -> list[CollationExpression] | None:
+        return None
 
     def get_expression_position(self, expr_name: str) -> int:
         if expr_name not in self.calc_terms:

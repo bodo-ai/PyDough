@@ -9,6 +9,7 @@ from abc import abstractmethod
 from typing import Union
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.expressions.collation_expression import CollationExpression
 from pydough.pydough_ast.expressions.expression_ast import PyDoughExpressionAST
 
 from .collection_tree_form import CollectionTreeForm
@@ -122,6 +123,14 @@ class PyDoughCollectionAST(PyDoughAST):
         term = self.get_term(term_name)
         assert isinstance(term, PyDoughCollectionAST)
         return term
+
+    @property
+    @abstractmethod
+    def ordering(self) -> list[CollationExpression] | None:
+        """
+        Returns the ordering collation used by the collection, or None if it is
+        unordered.
+        """
 
     @abstractmethod
     def to_string(self) -> str:
