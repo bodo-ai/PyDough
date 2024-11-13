@@ -5,9 +5,14 @@ base expressions like column accesses, literals, and
 functions.
 """
 
+from typing import Any
+
 import pytest
 
-from pydough.relational.relational_expressions import RelationalExpression
+from pydough.relational.relational_expressions import (
+    ColumnOrdering,
+    RelationalExpression,
+)
 from pydough.relational.relational_expressions.column_reference import ColumnReference
 from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
@@ -121,3 +126,71 @@ def test_literals_equal(
     ref1: LiteralExpression, ref2: RelationalExpression, output: bool
 ):
     assert ref1.equals(ref2) == output
+
+
+@pytest.mark.parametrize(
+    "ordering, output",
+    [
+        pytest.param(
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            "ColumnOrdering(column=Column(name=a, type=Int64Type()), ascending=True, nulls_first=True)",
+            id="asc_nulls_first",
+        ),
+        pytest.param(
+            ColumnOrdering(ColumnReference("b", Int64Type()), True, False),
+            "ColumnOrdering(column=Column(name=b, type=Int64Type()), ascending=True, nulls_first=False)",
+            id="asc_nulls_last",
+        ),
+        pytest.param(
+            ColumnOrdering(ColumnReference("c", Int64Type()), False, True),
+            "ColumnOrdering(column=Column(name=c, type=Int64Type()), ascending=False, nulls_first=True)",
+            id="desc_nulls_first",
+        ),
+        pytest.param(
+            ColumnOrdering(ColumnReference("d", Int64Type()), False, False),
+            "ColumnOrdering(column=Column(name=d, type=Int64Type()), ascending=False, nulls_first=False)",
+            id="desc_nulls_last",
+        ),
+    ],
+)
+def test_column_ordering_to_string(ordering: ColumnOrdering, output: str):
+    assert ordering.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "ordering1, ordering2, output",
+    [
+        pytest.param(
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            True,
+            id="same_ordering",
+        ),
+        pytest.param(
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            ColumnOrdering(ColumnReference("b", Int64Type()), True, True),
+            False,
+            id="different_column",
+        ),
+        pytest.param(
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            ColumnOrdering(ColumnReference("a", Int64Type()), False, True),
+            False,
+            id="different_asc",
+        ),
+        pytest.param(
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, False),
+            False,
+            id="different_nulls_first",
+        ),
+        pytest.param(
+            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            LiteralExpression(1, Int64Type()),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_column_ordering_equal(ordering1: ColumnOrdering, ordering2: Any, output: bool):
+    assert (ordering1 == ordering2) == output
