@@ -44,6 +44,6 @@ class ColumnReference(RelationalExpression):
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, ColumnReference)
-            and (self.data_type == self.data_type)
+            and (self.data_type == other.data_type)
             and (self.name == other.name)
         )
