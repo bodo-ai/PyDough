@@ -100,10 +100,6 @@ class PartitionBy(ChildOperator):
 
     @property
     def key(self) -> str:
-        key_strings: list[str] = [self.child.key]
-        key_strings.append(f"NAME={self.child_name};BY=")
-        for expr in self.keys:
-            key_strings.append(expr.key)
         return f"{self.preceding_context.key}.PARTITION({self.child.key})"
 
     @property

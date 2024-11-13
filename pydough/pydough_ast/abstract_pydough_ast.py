@@ -18,6 +18,9 @@ class PyDoughAST(ABC):
         return self.equals(other)
 
     def __hash__(self):
+        # TODO: investigate whether this is too slow, and if so find something
+        # faster that has the same benefits (good hash function, possibly
+        # consistent)
         return int(sha256(self.key.encode()).hexdigest(), base=16)
 
     @property
