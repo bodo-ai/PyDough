@@ -489,13 +489,14 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "receipt_date": 11,
                 "ship_instruct": 12,
                 "ship_mode": 13,
-                "comment": 14,
-                "nation_name": 15,
-                "ps_availqty": 16,
-                "ps_supplycost": 17,
-                "ps_comment": 18,
-                "supplier_name": 19,
-                "supplier_address": 20,
+                "return_flag": 14,
+                "comment": 15,
+                "nation_name": 16,
+                "ps_availqty": 17,
+                "ps_supplycost": 18,
+                "ps_comment": 19,
+                "supplier_name": 20,
+                "supplier_address": 21,
             },
             {
                 "order_key",
@@ -512,6 +513,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "receipt_date",
                 "ship_instruct",
                 "ship_mode",
+                "return_flag",
                 "comment",
                 "part_and_supplier",
                 "order",
@@ -609,6 +611,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "receipt_date",
                 "ship_instruct",
                 "ship_mode",
+                "return_flag",
                 "comment",
                 "part_and_supplier",
                 "order",
@@ -648,6 +651,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "receipt_date",
                 "ship_instruct",
                 "ship_mode",
+                "return_flag",
                 "comment",
                 "part_and_supplier",
                 "order",
@@ -724,7 +728,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "size",
                 "suppliers_of_part",
                 "supply_records",
-                "type",
+                "part_type",
             },
             id="partition_data_with_data_order",
         ),
@@ -1268,7 +1272,7 @@ def test_collections_calc_terms(
                         SubCollectionInfo("part"),
                     ],
                     region_name=ChildReferenceInfo("name", 0),
-                    part_type=ChildReferenceInfo("type", 1),
+                    part_type=ChildReferenceInfo("part_type", 1),
                 ),
                 "lines",
                 [
@@ -1284,14 +1288,14 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceInfo("extended_price", 0)]
                 ),
             ),
-            "Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
+            "Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.part_type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
             """\
 ┌─── TPCH
 ├─┬─ Partition[name='lines', by=('region_name', 'part_type')]
 │ └─┬─ AccessChild
 │   ├─── TableCollection[Lineitems]
 │   ├─── Where[tax == 0]
-│   └─┬─ Calc[region_name=$1.name, part_type=$2.type]
+│   └─┬─ Calc[region_name=$1.name, part_type=$2.part_type]
 │     ├─┬─ AccessChild
 │     │ └─┬─ SubCollection[order]
 │     │   └─── SubCollection[shipping_region]
