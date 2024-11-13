@@ -86,6 +86,9 @@ class UnqualifiedNode(ABC):
         except AttributeError:
             return UnqualifiedAccess(self, name)
 
+    def __hash__(self):
+        return hash(repr(self))
+
     def __add__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
         return UnqualifiedBinaryOperation("+", self, other_unqualified)

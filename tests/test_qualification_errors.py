@@ -10,6 +10,7 @@ from test_utils import (
     graph_fetcher,
 )
 
+from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     SUM,
     UnqualifiedNode,
@@ -50,7 +51,8 @@ def test_qualify_error(
     representation. Each `pydough_str` should be called with `exec` to define
     a variable `answer` that is an `UnqualifiedNode` instance.
     """
-    root: UnqualifiedNode = UnqualifiedRoot(get_sample_graph("TPCH"))
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    root: UnqualifiedNode = UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = impl(root)
     with pytest.raises(Exception, match=re.escape(error_msg)):
-        qualify_node(unqualified)
+        qualify_node(unqualified, graph)
