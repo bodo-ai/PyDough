@@ -1,10 +1,11 @@
 """
-The representation of a column access for use in a relational tree.
-The provided name of the column should match the name that can be used
-for the column in the input node.
+The representation of a literal value for using in a relational
+expresion.
 """
 
-__all__ = ["ColumnReference"]
+__all__ = ["LiteralExpression"]
+
+from typing import Any
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 
@@ -13,25 +14,26 @@ from pydough.types import PyDoughType
 from .abstract import RelationalExpression
 
 
-class ColumnReference(RelationalExpression):
+class LiteralExpression(RelationalExpression):
     """
     The Expression implementation for accessing a column
     in a relational node.
     """
 
-    def __init__(self, name: str, data_type: PyDoughType):
+    def __init__(self, value: Any, data_type: PyDoughType):
         super().__init__(data_type)
-        self._name: str = name
+        self._value: Any = value
 
     def __hash__(self) -> int:
-        return hash((self.name, self.data_type))
+        # Note: This will break if the value isn't hashable.
+        return hash((self.value, self.data_type))
 
     @property
-    def name(self) -> object:
+    def value(self) -> object:
         """
-        The name of the column.
+        The literal's Python value.
         """
-        return self._name
+        return self._value
 
     def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
@@ -39,11 +41,11 @@ class ColumnReference(RelationalExpression):
         )
 
     def to_string(self) -> str:
-        return f"Column(name={self.name}, type={self.data_type})"
+        return f"Literal(value={self.value}, type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (
-            isinstance(other, ColumnReference)
+            isinstance(other, LiteralExpression)
             and (self.data_type == other.data_type)
-            and (self.name == other.name)
+            and (self.value == other.value)
         )
