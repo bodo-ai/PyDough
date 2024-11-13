@@ -49,7 +49,7 @@ class CollectionMetadata(AbstractMetadata):
         self._inherited_properties: MutableMapping[
             str, MutableSequence[InheritedPropertyMetadata]
         ] = defaultdict(list)
-        self._definition_order: MutableMapping[str, int] = {}
+        self._definition_order: dict[str, int] = {}
 
     @property
     def graph(self) -> GraphMetadata:

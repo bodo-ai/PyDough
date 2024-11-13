@@ -19,9 +19,13 @@ from .abstract_pydough_ast import PyDoughAST
 from .collections import (
     BackReferenceCollection,
     Calc,
-    CollectionAccess,
+    ChildAccess,
     GlobalContext,
+    OrderBy,
+    PartitionBy,
     PyDoughCollectionAST,
+    TopK,
+    Where,
 )
 from .errors import PyDoughASTException
 from .expressions import (
@@ -205,26 +209,26 @@ class AstNodeBuilder:
         """
         return GlobalContext(self.graph)
 
-    def build_collection_access(
+    def build_child_access(
         self, name: str, preceding_context: PyDoughCollectionAST
-    ) -> CollectionAccess:
+    ) -> ChildAccess:
         """
-        Creates a new collection access AST node.
+        Creates a new child access AST node.
 
         Args:
             `name`: the name of the collection being referenced.
             `preceding_context`: the collection node from which the
-            collection access is being fetched.
+            child access is being fetched.
 
         Returns:
-            The newly created PyDough CollectionAccess.
+            The newly created PyDough ChildAccess.
 
         Raises:
             `PyDoughMetadataException`: if `name` does not refer to a
             collection that `preceding_context` has access to.
         """
-        term = preceding_context.get_term(name)
-        assert isinstance(term, CollectionAccess)
+        term = preceding_context.get_collection(name)
+        assert isinstance(term, ChildAccess)
         return term
 
     def build_calc(
@@ -244,6 +248,82 @@ class AstNodeBuilder:
             The newly created PyDough CALC term.
         """
         return Calc(preceding_context, children)
+
+    def build_where(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        children: MutableSequence[PyDoughCollectionAST],
+    ) -> Where:
+        """
+        Creates a WHERE instance, but `with_condition` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the WHERE term.
+
+        Returns:
+            The newly created PyDough WHERE instance.
+        """
+        return Where(preceding_context, children)
+
+    def build_order(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        children: MutableSequence[PyDoughCollectionAST],
+    ) -> OrderBy:
+        """
+        Creates a ORDERBY instance, but `with_collation` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the ORDERBY term.
+
+        Returns:
+            The newly created PyDough ORDERBY instance.
+        """
+        return OrderBy(preceding_context, children)
+
+    def build_top_k(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        children: MutableSequence[PyDoughCollectionAST],
+        records_to_keep: int,
+    ) -> TopK:
+        """
+        Creates a TOP K instance, but `with_collation` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the ORDERBY term.
+            `records_to_keep`: the `K` value in the TOP K.
+
+        Returns:
+            The newly created PyDough TOP K instance.
+        """
+        return TopK(preceding_context, children, records_to_keep)
+
+    def build_partition(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        child: PyDoughCollectionAST,
+        child_name: str,
+    ) -> PartitionBy:
+        """
+        Creates a PARTITION BY instance, but `with_keys` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `child`: the child that is the input to the PARTITION BY term.
+            `child_name`: the name that is used to access `child`.
+
+        Returns:
+            The newly created PyDough PARTITION BY instance.
+        """
+        return PartitionBy(preceding_context, child, child_name)
 
     def build_back_reference_collection(
         self,

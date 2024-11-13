@@ -20,7 +20,8 @@ from .unqualified_node import UnqualifiedNode, UnqualifiedOperation
 
 class UnqualifiedOperator:
     """
-    Class for
+    Class for a PyDough function call. Instances of this class can be invoked
+    at the top level by PyDough code when imported.
     """
 
     def __init__(self, operation_name: str):
