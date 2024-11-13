@@ -2,13 +2,18 @@
 TODO: add file-level docstring.
 """
 
+import ast
 import datetime
+from collections.abc import Callable
 
 import pytest
-from test_utils import (
-    graph_fetcher,
+from test_utils import graph_fetcher
+from tpch_test_functions import (
+    impl_tpch_q6,
+    impl_tpch_q10,
 )
 
+from pydough import init_pydough_context
 from pydough.unqualified import (
     BACK,
     CONTAINS,
@@ -21,6 +26,7 @@ from pydough.unqualified import (
     UPPER,
     UnqualifiedNode,
     UnqualifiedRoot,
+    transform_code,
 )
 
 
@@ -47,6 +53,36 @@ def global_ctx() -> dict[str, object]:
         if hasattr(obj, "__name__"):
             extra_vars[obj.__name__] = obj
     return extra_vars
+
+
+def verify_pydough_code_exec_match_unqualified(
+    pydough_str: str, ctx: dict[str, object], env: dict[str, object], expected_str: str
+):
+    """
+    Verifies that executing a snippet of Python code corresponding to PyDough
+    code correctly produces an UnqualifiedNode instance with the expected
+    string representation. The string must store the final answer in a variable
+    named `answer`.
+
+    Args:
+        `pydough_str`: the source code to be checked.
+        `ctx`: the dictionary of global variables to be used for `exec`.
+        `env`: the dictionary of local variables  to be used for `exec`.
+        `expected_string`: the expected string representation of `answer`.
+
+    Raises:
+        `AssertionError` if `answer` was not defined, if it is not an
+        UnqualifiedNode, or its repr does not match `expected_str`.
+    """
+    exec(pydough_str, ctx, env)
+    assert "answer" in env, "Expected `pydough_str` to define a variable `answer`."
+    answer = env["answer"]
+    assert isinstance(
+        answer, UnqualifiedNode
+    ), "Expected `pydough_str` to define `answer` as an UnqualifiedNode."
+    assert (
+        repr(answer) == expected_str
+    ), "Mismatch between string representation of `answer` and expected value."
 
 
 @pytest.mark.parametrize(
@@ -157,13 +193,13 @@ answer = y.ORDER_BY(_ROOT.retail_price.DESC())\
             id="calc_with_where_order",
         ),
         pytest.param(
-            "answer = _ROOT.TOP_K(10, by=(1 / (_ROOT.retail_price - 30.0)).ASC(na_pos='first'))",
-            "TPCH.TOP_K(10, by=((1:Int64Type() / (TPCH.retail_price - 30.0:Float64Type())).ASC(na_pos='first')))",
+            "answer = _ROOT.Parts.TOP_K(10, by=(1 / (_ROOT.retail_price - 30.0)).ASC(na_pos='first'))",
+            "TPCH.Parts.TOP_K(10, by=((1:Int64Type() / (TPCH.retail_price - 30.0:Float64Type())).ASC(na_pos='first')))",
             id="topk_single",
         ),
         pytest.param(
-            "answer = _ROOT.TOP_K(10, by=(_ROOT.size.DESC(), _ROOT.type.DESC()))",
-            "TPCH.TOP_K(10, by=(TPCH.size.DESC(na_pos='last'), TPCH.type.DESC(na_pos='last')))",
+            "answer = _ROOT.Parts.TOP_K(10, by=(_ROOT.size.DESC(), _ROOT.part_type.DESC()))",
+            "TPCH.Parts.TOP_K(10, by=(TPCH.size.DESC(na_pos='last'), TPCH.part_type.DESC(na_pos='last')))",
             id="topk_multiple",
         ),
         pytest.param(
@@ -175,8 +211,8 @@ answer = x.TOP_K(100)\
             id="order_topk_empty",
         ),
         pytest.param(
-            "answer = PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.type, total_price=SUM(_ROOT.data.retail_price), n_orders=COUNT(_ROOT.data.lines))",
-            "PARTITION(TPCH.Parts, name='parts', by=(TPCH.part_type))(type=TPCH.type, total_price=SUM(TPCH.data.retail_price), n_orders=COUNT(TPCH.data.lines))",
+            "answer = PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.part_type, total_price=SUM(_ROOT.data.retail_price), n_orders=COUNT(_ROOT.data.lines))",
+            "PARTITION(TPCH.Parts, name='parts', by=(TPCH.part_type))(type=TPCH.part_type, total_price=SUM(TPCH.data.retail_price), n_orders=COUNT(TPCH.data.lines))",
             id="partition",
         ),
     ],
@@ -186,6 +222,7 @@ def test_unqualified_to_string(
     answer_str: str,
     global_ctx: dict[str, object],
     get_sample_graph: graph_fetcher,
+    sample_graph_path: str,
 ):
     """
     Tests that strings representing the setup of PyDough unqualified objects
@@ -194,14 +231,58 @@ def test_unqualified_to_string(
     representation. Each `pydough_str` should be called with `exec` to define
     a variable `answer` that is an `UnqualifiedNode` instance.
     """
+    # Test with the strings that contain "_ROOT."
     root: UnqualifiedNode = UnqualifiedRoot(get_sample_graph("TPCH"))
-    env = {"_ROOT": root}
-    exec(pydough_str, global_ctx, env)
-    assert "answer" in env, "Expected `pydough_str` to define a variable `answer`."
-    answer = env["answer"]
-    assert isinstance(
-        answer, UnqualifiedNode
-    ), "Expected `pydough_str` to define `answer` as an UnqualifiedNode."
+    env: dict[str, object] = {"_ROOT": root}
+    verify_pydough_code_exec_match_unqualified(pydough_str, global_ctx, env, answer_str)
+
+    # Now test again, but with "_ROOT." prefixes removed & re-added via
+    # a call to the `transform_code` procedure.
+    altered_code: list[str] = [""]
+    altered_code.append("def PYDOUGH_FUNC():")
+    for line in pydough_str.splitlines():
+        altered_code.append(
+            f"  {line.replace('_ROOT.', '').replace('answer = ', 'return ')}"
+        )
+    new_code: str = ast.unparse(
+        transform_code(
+            "\n".join(altered_code),
+            sample_graph_path,
+            "TPCH",
+            set(global_ctx) | {"init_pydough_context"},
+        )
+    )
+    new_code += "\nanswer = PYDOUGH_FUNC()"
+    verify_pydough_code_exec_match_unqualified(new_code, global_ctx, {}, answer_str)
+
+
+@pytest.mark.parametrize(
+    "func, as_string",
+    [
+        pytest.param(
+            impl_tpch_q6,
+            "TPCH.TPCH(revenue=SUM(TPCH.Lineitems.WHERE(((((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType())) & (TPCH.discount < 0.07:Float64Type())) & (TPCH.quantity < 24:Int64Type())))(amt=(TPCH.extendedprice * TPCH.discount)).amt))",
+            id="tpch_q6",
+        ),
+        pytest.param(
+            impl_tpch_q10,
+            "TPCH.Customers(key=TPCH.key, name=TPCH.name, revenue=SUM(TPCH.orders.WHERE(((TPCH.order_date >= datetime.date(1993, 10, 1):DateType()) & (TPCH.order_date < datetime.date(1994, 1, 1):DateType()))).lines.WHERE((TPCH.return_flag == 'R':StringType()))(amt=(TPCH.extendedprice * (1:Int64Type() - TPCH.discount))).amt), acctbal=TPCH.acctbal, nation_name=TPCH.nation.name, address=TPCH.address, phone=TPCH.phone, comment=TPCH.comment).ORDER_BY(TPCH.revenue.DESC(na_pos='last'), TPCH.key.ASC(na_pos='last')).TOP_K(20)",
+            id="tpch_q10",
+        ),
+    ],
+)
+def test_init_pydough_context(
+    func: Callable[[], UnqualifiedNode], as_string: str, sample_graph_path: str
+):
+    """
+    Tests that the `init_pydough_context` decorator correctly works on several
+    PyDough functions, transforming them into the correct unqualified nodes,
+    at least based on string representation.
+    """
+    new_func: Callable[[], UnqualifiedNode] = init_pydough_context(
+        sample_graph_path, "TPCH"
+    )(func)
+    answer: UnqualifiedNode = new_func()
     assert (
-        repr(answer) == answer_str
-    ), "Mismatch between string representation of `answer` and expected value."
+        repr(answer) == as_string
+    ), "Mismatch between string representation of unqualified nodes and expected output"

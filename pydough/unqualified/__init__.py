@@ -26,6 +26,8 @@ __all__ = [
     "STARTSWITH",
     "ENDSWITH",
     "CONTAINS",
+    "init_pydough_context",
+    "transform_code",
 ]
 
 from .errors import PyDoughUnqualifiedException
@@ -55,3 +57,4 @@ from .unqualified_operator import (
     UPPER,
     UnqualifiedOperator,
 )
+from .unqualified_transform import init_pydough_context, transform_code
