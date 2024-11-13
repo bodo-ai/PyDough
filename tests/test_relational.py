@@ -48,7 +48,7 @@ def test_scan_inputs():
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            "SCAN(table=table1, columns={'a': Column(a), 'b': Column(b)})",
+            "SCAN(table=table1, columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
             id="base_column",
         ),
         pytest.param(

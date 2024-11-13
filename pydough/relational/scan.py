@@ -10,7 +10,7 @@ from collections.abc import MutableMapping
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from .abstract import Relational
-from .relational_expressions.abstract import RelationalExpression
+from .relational_expressions import RelationalExpression
 
 
 class Scan(Relational):

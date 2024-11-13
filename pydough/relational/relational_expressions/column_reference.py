@@ -47,7 +47,7 @@ class ColumnReference(RelationalExpression):
         )
 
     def to_string(self) -> str:
-        return f"Column({self.name})"
+        return f"Column(name={self.name}, type={self.pydough_type})"
 
     def equals(self, other: object) -> bool:
         return (
