@@ -6,12 +6,12 @@ ordering and other properties of the relational expression.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from typing import Any, NamedTuple
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from .relational_expressions.abstract import RelationalExpression
 
 
 class Relational(ABC):
@@ -32,35 +32,8 @@ class Relational(ABC):
         """
 
     @property
-    def traits(self) -> MutableMapping[str, Any]:
-        """
-        Return the traits of the relational expression.
-        The traits in general may have a variable schema,
-        but each entry should be strongly defined. Here are
-        traits that should always be available:
-
-        - orderings: MutableSequence[PyDoughExpressionAST]
-
-        Returns:
-            MutableMapping[str, Any]: The traits of the relational expression.
-        """
-        return {"orderings": self.orderings}
-
-    @property
     @abstractmethod
-    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
-        """
-        Returns the PyDoughExpressionAST that the relational expression is ordered by.
-        Each PyDoughExpressionAST is a result computed relative to the given set of columns.
-
-        Returns:
-            MutableSequence[PyDoughExpressionAST]: The PyDoughExpressionAST that the relational expression is ordered by,
-            possibly empty.
-        """
-
-    @property
-    @abstractmethod
-    def columns(self) -> MutableSequence["Column"]:
+    def columns(self) -> MutableSequence["RelationalColumn"]:
         """
         Returns the columns of the relational expression.
 
@@ -82,23 +55,21 @@ class Relational(ABC):
         """
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, Relational):
-            return False
-        return self.equals(other)
+        return isinstance(other, Relational) and self.equals(other)
 
     @abstractmethod
-    def to_sqlglot(self) -> "Expression":
-        """Translate the given relational expression
+    def to_sqlglot(self) -> SQLGlotExpression:
+        """Translate the given relational node
         and its children to a SQLGlot expression.
 
         Returns:
-            Expression: A SqlGlot expression representing the relational expression.
+            Expression: A SqlGlot expression representing the relational node.
         """
 
     @abstractmethod
     def to_string(self) -> str:
         """
-        Convert the relational expression to a string.
+        Convert the relational node to a string.
 
         TODO: Refactor this API to include some form of string
         builder so we can draw lines between children properly.
@@ -111,38 +82,11 @@ class Relational(ABC):
     def __repr__(self) -> str:
         return self.to_string()
 
-    @abstractmethod
-    def can_merge(self, other: "Relational") -> bool:
-        """
-        Determine if two relational nodes can be merged together.
 
-        Args:
-            other (Relational): The other relational node to merge with.
-
-        Returns:
-            bool: Can the two relational nodes be merged together.
-        """
-
-    @abstractmethod
-    def merge(self, other: "Relational") -> "Relational":
-        """
-        Merge two relational nodes together to produce one output
-        relational node. This requires can_merge to return True.
-
-        Args:
-            other (Relational): The other relational node to merge with.
-
-        Returns:
-            Relational: A new relational node that is the result of merging
-            the two input relational nodes together and removing any redundant
-            components.
-        """
-
-
-class Column(NamedTuple):
+class RelationalColumn(NamedTuple):
     """
     An column expression consisting of a name and an expression.
     """
 
     name: str
-    expr: "PyDoughExpressionAST"
+    expr: RelationalExpression

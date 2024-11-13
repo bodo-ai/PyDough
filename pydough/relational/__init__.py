@@ -3,10 +3,10 @@ TODO: add module-level docstring
 """
 
 __all__ = [
-    "Column",
+    "RelationalColumn",
     "Relational",
 ]
 from .abstract import (
-    Column,
     Relational,
+    RelationalColumn,
 )
