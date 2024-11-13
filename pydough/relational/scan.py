@@ -5,13 +5,12 @@ represents any "base table" in relational algebra. As we expand to more types of
 class for more specific implementations.
 """
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-
-from .abstract import Column, Relational
+from .abstract import Relational
+from .relational_expressions import RelationalExpression
 
 
 class Scan(Relational):
@@ -22,12 +21,9 @@ class Scan(Relational):
     """
 
     def __init__(
-        self,
-        table_name: str,
-        columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
+        self, table_name: str, columns: MutableMapping[str, RelationalExpression]
     ) -> None:
-        super().__init__(columns, orderings)
+        super().__init__(columns)
         self.table_name: str = table_name
 
     @property
@@ -36,40 +32,16 @@ class Scan(Relational):
         return []
 
     @property
-    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
-        return self._orderings
-
-    @property
-    def columns(self) -> MutableSequence["Column"]:
+    def columns(self) -> MutableMapping[str, RelationalExpression]:
         return self._columns
 
     def node_equals(self, other: Relational) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
 
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
     def to_string(self) -> str:
-        return f"SCAN(table={self.table_name}, columns={self.columns}, orderings={self.orderings})"
-
-    def can_merge(self, other: Relational) -> bool:
-        if isinstance(other, Scan):
-            return (
-                self.table_name == other.table_name
-                and self.orderings_match(other.orderings)
-                and self.columns_match(other.columns)
-            )
-        else:
-            return False
-
-    def merge(self, other: Relational) -> Relational:
-        if not self.can_merge(other):
-            raise ValueError(
-                f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
-            )
-        table_name = self.table_name
-        cols = self.merge_columns(other.columns)
-        orderings = self.orderings
-        return Scan(table_name, cols, orderings)
+        return f"SCAN(table={self.table_name}, columns={self.columns})"
