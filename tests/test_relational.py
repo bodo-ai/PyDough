@@ -14,7 +14,7 @@ from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
 )
 from pydough.relational.scan import Scan
-from pydough.types import Int64Type, PyDoughType, UnknownType
+from pydough.types import Int64Type, PyDoughType, StringType, UnknownType
 
 
 def make_relational_column_reference(
@@ -415,3 +415,19 @@ def test_limit_to_string(limit: Limit, output: str):
 )
 def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool):
     assert first_limit.equals(second_limit) == output
+
+
+@pytest.mark.parametrize(
+    "literal",
+    [
+        pytest.param(make_relational_literal(1), id="unknown_type"),
+        pytest.param(make_relational_literal(1, StringType()), id="string_type"),
+    ],
+)
+def test_invalid_limit(literal: LiteralExpression):
+    """
+    Test to verify that we raise an error when the limit is not an integer
+    type regardless of the value type.
+    """
+    with pytest.raises(AssertionError, match="Limit must be an integer type"):
+        Limit(build_simple_scan(), literal, {})
