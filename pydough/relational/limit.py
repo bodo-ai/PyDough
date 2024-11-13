@@ -20,8 +20,6 @@ class Limit(SingleRelational):
     The Limit node in the relational tree. This node represents any TOP-N
     operations in the relational algebra. This operation is dependent on the
     orderings of the input relation.
-
-    TODO: Should this also allow top-n per group?
     """
 
     def __init__(
