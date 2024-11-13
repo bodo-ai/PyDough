@@ -20,11 +20,11 @@ class ColumnReference(RelationalExpression):
     """
 
     def __init__(self, name: str, data_type: PyDoughType):
+        super().__init__(data_type)
         self._name: str = name
-        self._data_type: PyDoughType = data_type
 
     def __hash__(self) -> int:
-        return hash((self._name, self._data_type))
+        return hash((self.name, self.data_type))
 
     @property
     def name(self) -> object:
@@ -33,25 +33,17 @@ class ColumnReference(RelationalExpression):
         """
         return self._name
 
-    @property
-    def pydough_type(self) -> PyDoughType:
-        return self._data_type
-
-    @property
-    def is_aggregation(self) -> bool:
-        return False
-
     def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
     def to_string(self) -> str:
-        return f"Column(name={self.name}, type={self.pydough_type})"
+        return f"Column(name={self.name}, type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, ColumnReference)
-            and (self.pydough_type == other.pydough_type)
+            and (self.data_type == self.data_type)
             and (self.name == other.name)
         )
