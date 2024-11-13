@@ -27,3 +27,6 @@ class ColumnOrdering:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
+
+    def to_string(self) -> str:
+        return f"ColumnOrdering(column={self.column}, ascending={self.ascending}, nulls_first={self.nulls_first})"
