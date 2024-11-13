@@ -1,8 +1,5 @@
 """
 TODO: add file-level docstring
-
-General TODO for all tests:
-Update orderings when ASC/DESC is merged in the AST.
 """
 
 from typing import Any
