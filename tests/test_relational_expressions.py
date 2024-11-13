@@ -9,7 +9,10 @@ import pytest
 
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.relational.relational_expressions.column_reference import ColumnReference
-from pydough.types import Int64Type, StringType
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
+from pydough.types import Int32Type, Int64Type, StringType
 
 
 @pytest.mark.parametrize(
@@ -52,10 +55,69 @@ def test_column_reference_to_string(column_ref: ColumnReference, output: str):
             False,
             id="different_type",
         ),
+        pytest.param(
+            ColumnReference("a", Int64Type()),
+            LiteralExpression(1, Int64Type()),
+            False,
+            id="different_expr",
+        ),
     ],
-    # TODO: Add a test for different types when we add literals
 )
 def test_column_reference_equals(
     ref1: ColumnReference, ref2: RelationalExpression, output: bool
+):
+    assert ref1.equals(ref2) == output
+
+
+@pytest.mark.parametrize(
+    "literal, output",
+    [
+        pytest.param(
+            LiteralExpression(1, Int64Type()),
+            "Literal(value=1, type=Int64Type())",
+            id="int_literal",
+        ),
+        pytest.param(
+            LiteralExpression("b", StringType()),
+            "Literal(value=b, type=StringType())",
+            id="string_literal",
+        ),
+    ],
+)
+def test_literal_expression_to_string(literal: LiteralExpression, output: str):
+    assert literal.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "ref1, ref2, output",
+    [
+        pytest.param(
+            LiteralExpression(1, Int64Type()),
+            LiteralExpression(1, Int64Type()),
+            True,
+            id="same_literal",
+        ),
+        pytest.param(
+            LiteralExpression(1, Int64Type()),
+            LiteralExpression(2, Int64Type()),
+            False,
+            id="different_value",
+        ),
+        pytest.param(
+            LiteralExpression(1, Int64Type()),
+            LiteralExpression(1, Int32Type()),
+            False,
+            id="different_type",
+        ),
+        pytest.param(
+            LiteralExpression(1, Int64Type()),
+            ColumnReference("a", Int64Type()),
+            False,
+            id="different_expr",
+        ),
+    ],
+)
+def test_literals_equal(
+    ref1: LiteralExpression, ref2: RelationalExpression, output: bool
 ):
     assert ref1.equals(ref2) == output

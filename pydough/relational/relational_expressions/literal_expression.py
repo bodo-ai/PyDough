@@ -1,6 +1,6 @@
 """
 The representation of a literal value for using in a relational
-expresion.
+expression.
 """
 
 __all__ = ["LiteralExpression"]
@@ -16,8 +16,13 @@ from .abstract import RelationalExpression
 
 class LiteralExpression(RelationalExpression):
     """
-    The Expression implementation for accessing a column
-    in a relational node.
+    The Expression implementation for an Literal value
+    in a relational node. There are no restrictions on the
+    relationship between the value and the type so we can
+    represent arbitrary Python classes as any type and lowering
+    to SQL is responsible for determining how this can be
+    achieved (e.g. casting) or translation must prevent this
+    from being generated.
     """
 
     def __init__(self, value: Any, data_type: PyDoughType):
