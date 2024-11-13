@@ -3,8 +3,8 @@ TODO: add module-level docstring
 """
 
 __all__ = [
-    "Relational",
+    "RelationalExpression",
 ]
 from .abstract import (
-    Relational,
+    RelationalExpression,
 )
