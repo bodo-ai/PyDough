@@ -17,6 +17,8 @@ __all__ = [
     "BackReferenceExpressionInfo",
     "ChildReferenceInfo",
     "BackReferenceCollectionInfo",
+    "WhereInfo",
+    "OrderInfo",
 ]
 
 from abc import ABC, abstractmethod
@@ -27,12 +29,17 @@ from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
-    CalcChildCollection,
+    ChildOperatorChildAccess,
+    ChildReference,
+    CollationExpression,
+    OrderBy,
+    PartitionBy,
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
+    TopK,
+    Where,
 )
-from pydough.pydough_ast.collections import CollectionAccess
 from pydough.types import PyDoughType
 
 # Type alias for a function that takes in a string and generates metadata
@@ -267,6 +274,9 @@ class CollectionTestInfo(AstNodeTestInfo):
     - `build` is already implemented and automatically pipelines into the next
       collection test info. Instead, each implementation class must implement
       a `local_build` method that works like the regular `build`.
+    - `to_string` is already implemented and automatically concatenated with
+      the next collection test info. Instead, each implementation class must
+      implement a `local_string` method that works like the regular `to_string`.
     """
 
     def __init__(self):
@@ -283,6 +293,18 @@ class CollectionTestInfo(AstNodeTestInfo):
         ), f"can only use ** for pipelining collection info when the right hand side is a collection info, not {other.__class__.__name__}"
         self.successor = other
         return self
+
+    @abstractmethod
+    def local_string(self) -> str:
+        """
+        String representation of the TestInfo before it is built into an AST node.
+        """
+
+    def to_string(self) -> str:
+        local_result: str = self.local_string()
+        if self.successor is None:
+            return local_result
+        return f"{local_result} -> {self.successor.to_string()}"
 
     @abstractmethod
     def local_build(
@@ -331,7 +353,7 @@ class TableCollectionInfo(CollectionTestInfo):
         super().__init__()
         self.name: str = name
 
-    def to_string(self) -> str:
+    def local_string(self) -> str:
         return f"Table[{self.name}]"
 
     def local_build(
@@ -342,7 +364,7 @@ class TableCollectionInfo(CollectionTestInfo):
     ) -> PyDoughCollectionAST:
         if context is None:
             context = builder.build_global_context()
-        return builder.build_collection_access(self.name, context)
+        return builder.build_child_access(self.name, context)
 
 
 class SubCollectionInfo(TableCollectionInfo):
@@ -355,7 +377,7 @@ class SubCollectionInfo(TableCollectionInfo):
     NOTE: must provide a `context` when building.
     """
 
-    def to_string(self) -> str:
+    def local_string(self) -> str:
         return f"SubCollection[{self.name}]"
 
     def local_build(
@@ -367,10 +389,10 @@ class SubCollectionInfo(TableCollectionInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        return builder.build_collection_access(self.name, context)
+        return builder.build_child_access(self.name, context)
 
 
-class CalcChildCollectionInfo(CollectionTestInfo):
+class ChildOperatorChildAccessInfo(CollectionTestInfo):
     """
     CollectionTestInfo implementation class that wraps around a subcollection
     info within a Calc context. Contains the following fields:
@@ -385,7 +407,7 @@ class CalcChildCollectionInfo(CollectionTestInfo):
         self.is_last: bool = is_last
         self.successor = child_info.successor
 
-    def to_string(self) -> str:
+    def local_string(self) -> str:
         return f"ChildSubCollection[{self.child_info!r}]"
 
     def local_build(
@@ -397,58 +419,13 @@ class CalcChildCollectionInfo(CollectionTestInfo):
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        access = self.child_info.local_build(builder, context, children_contexts)
-        assert isinstance(access, CollectionAccess)
-        return CalcChildCollection(
+        access: PyDoughCollectionAST = self.child_info.local_build(
+            builder, context, children_contexts
+        )
+        return ChildOperatorChildAccess(
             access,
             self.is_last,
         )
-
-
-class CalcInfo(CollectionTestInfo):
-    """
-    CollectionTestInfo implementation class to build a CALC term.
-    Contains the following fields:
-    - `args`: a list tuples containing a field name and a test info
-      to derive an expression in the CALC.
-
-    NOTE: must provide a `context` when building.
-    """
-
-    def __init__(self, children, **kwargs):
-        super().__init__()
-        self.children_info: MutableSequence[CollectionTestInfo] = children
-        self.args: MutableSequence[tuple[str, AstNodeTestInfo]] = list(kwargs.items())
-
-    def to_string(self) -> str:
-        args_strings: MutableSequence[str] = [
-            f"{name}={arg.to_string()}" for name, arg in self.args
-        ]
-        return f"Calc[{', '.join(args_strings)}]"
-
-    def local_build(
-        self,
-        builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
-        if context is None:
-            context = builder.build_global_context()
-        children: MutableSequence[PyDoughCollectionAST] = []
-        for idx, child_info in enumerate(self.children_info):
-            child = CalcChildCollectionInfo(
-                child_info, idx == len(self.children_info) - 1
-            ).build(builder, context)
-            assert isinstance(child, PyDoughCollectionAST)
-            children.append(child)
-        raw_calc = builder.build_calc(context, children)
-        assert isinstance(raw_calc, Calc)
-        args: MutableSequence[tuple[str, PyDoughExpressionAST]] = []
-        for name, info in self.args:
-            expr = info.build(builder, context, children)
-            assert isinstance(expr, PyDoughExpressionAST)
-            args.append((name, expr))
-        return raw_calc.with_terms(args)
 
 
 class BackReferenceCollectionInfo(CollectionTestInfo):
@@ -466,7 +443,7 @@ class BackReferenceCollectionInfo(CollectionTestInfo):
         self.name: str = name
         self.levels: int = levels
 
-    def to_string(self) -> str:
+    def local_string(self) -> str:
         return f"BackReferenceCollection[{self.levels}:{self.name}]"
 
     def local_build(
@@ -479,3 +456,278 @@ class BackReferenceCollectionInfo(CollectionTestInfo):
             context is not None
         ), "Cannot call .build() on BackReferenceCollectionInfo without providing a context"
         return builder.build_back_reference_collection(context, self.name, self.levels)
+
+
+class ChildOperatorInfo(CollectionTestInfo):
+    """
+    Base class for types of CollectionTestInfo that have child nodes, such as
+    CALC or WHERE.  Contains the following fields:
+    - `children_info`: a list of CollectionTestInfo objects that will be used
+       to build the child contexts.
+    """
+
+    def __init__(self, children: MutableSequence[CollectionTestInfo]):
+        super().__init__()
+        self.children_info: MutableSequence[CollectionTestInfo] = children
+
+    def child_strings(self) -> str:
+        """
+        Returns the string representations of all the children in a way that
+        can be easily used in each `local_string` implementation.
+        """
+        child_strings: list[str] = []
+        for idx, child in enumerate(self.children_info):
+            child_strings.append(f"${idx}: {child.to_string}")
+        if len(self.children_info) == 0:
+            return ""
+        return "\n" + "\n".join(child_strings) + "\n"
+
+    def build_children(
+        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
+    ) -> MutableSequence[PyDoughCollectionAST]:
+        """
+        Builds all of the child infos into the children of the operator.
+
+        Args:
+            `builder`: the builder that should be used to create the AST
+            objects.
+            `context`: an optional collection AST used as the context within
+            which the AST is created.
+
+        Returns:
+            The list of built child collections.
+        """
+        children: MutableSequence[PyDoughCollectionAST] = []
+        for idx, child_info in enumerate(self.children_info):
+            child = ChildOperatorChildAccessInfo(
+                child_info,
+                idx == len(self.children_info) - 1,
+            ).build(builder, context)
+            assert isinstance(child, PyDoughCollectionAST)
+            children.append(child)
+        return children
+
+
+class CalcInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a CALC node.
+    Contains the following fields:
+    - `children_info`: a list of CollectionTestInfo objects that will be used
+       to build the child contexts.
+    - `args`: a list tuples containing a field name and a test info to derive
+       an expression in the CALC. Passed in via keyword arguments to the
+       constructor, where the argument names are the field names and the
+       argument values are the expression infos.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(self, children: MutableSequence[CollectionTestInfo], **kwargs):
+        super().__init__(children)
+        self.args: MutableSequence[tuple[str, AstNodeTestInfo]] = list(kwargs.items())
+
+    def local_string(self) -> str:
+        args_strings: MutableSequence[str] = [
+            f"{name}={arg.to_string()}" for name, arg in self.args
+        ]
+        return f"Calc[{self.child_strings()}{', '.join(args_strings)}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder,
+            context,
+        )
+        raw_calc = builder.build_calc(context, children)
+        assert isinstance(raw_calc, Calc)
+        args: MutableSequence[tuple[str, PyDoughExpressionAST]] = []
+        for name, info in self.args:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, PyDoughExpressionAST)
+            args.append((name, expr))
+        return raw_calc.with_terms(args)
+
+
+class WhereInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a WHERE clause.
+    Contains the following fields:
+    - `condition`: a test info describing the predicate for the WHERE clause.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self, children: MutableSequence[CollectionTestInfo], condition: AstNodeTestInfo
+    ):
+        super().__init__(children)
+        self.condition: AstNodeTestInfo = condition
+
+    def local_string(self) -> str:
+        return f"WHERE[{self.child_strings()}{self.condition.to_string()}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        raw_where = builder.build_where(context, children)
+        assert isinstance(raw_where, Where)
+        cond = self.condition.build(builder, context, children)
+        assert isinstance(cond, PyDoughExpressionAST)
+        return raw_where.with_condition(cond)
+
+
+class OrderInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a ORDERBEY clause.
+    Contains the following fields:
+    - `collations`: a list of tuples in the form `(test_info, asc, na_last)`
+      ordering keys for the ORDER BY clause. Passed in via variadic arguments.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+        children: MutableSequence[CollectionTestInfo],
+        *args,
+    ):
+        super().__init__(children)
+        self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
+
+    def local_string(self) -> str:
+        collation_strings: list[str] = []
+        for info, asc, na_last in self.collation:
+            suffix = "ASC" if asc else "DESC"
+            kwarg = "'last'" if na_last else "'first'"
+            collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        return f"OrderBy[{self.child_strings()}{', '.join(collation_strings)}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        raw_order = builder.build_order(context, children)
+        assert isinstance(raw_order, OrderBy)
+        collation: list[CollationExpression] = []
+        for info, asc, na_last in self.collation:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, PyDoughExpressionAST)
+            collation.append(CollationExpression(expr, asc, na_last))
+        return raw_order.with_collation(collation)
+
+
+class TopKInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a TOP K clause.
+    Contains the following fields:
+    - `records_to_keep`: the `K` value in TOP K.
+    - `collations`: a list of tuples in the form `(test_info, asc, na_last)`
+      ordering keys for the ORDER BY clause. Passed in via variadic arguments.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+        children: MutableSequence[CollectionTestInfo],
+        records_to_keep: int,
+        *args,
+    ):
+        super().__init__(children)
+        self.records_to_keep: int = records_to_keep
+        self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
+
+    def local_string(self) -> str:
+        collation_strings: list[str] = []
+        for info, asc, na_last in self.collation:
+            suffix = "ASC" if asc else "DESC"
+            kwarg = "'last'" if na_last else "'first'"
+            collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        return f"TopK[{self.child_strings()}{self.records_to_keep}, {', '.join(collation_strings)}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        raw_top_k = builder.build_top_k(context, children, self.records_to_keep)
+        assert isinstance(raw_top_k, TopK)
+        collation: list[CollationExpression] = []
+        for info, asc, na_last in self.collation:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, PyDoughExpressionAST)
+            collation.append(CollationExpression(expr, asc, na_last))
+        return raw_top_k.with_collation(collation)
+
+
+class PartitionInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a PARTITION BY clause.
+    Contains the following fields:
+    - `child_name`: the name used to access the child.
+    - `keys`: a list of test info for the keys to partition on.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+        child: CollectionTestInfo,
+        child_name: str,
+        keys: list[AstNodeTestInfo],
+    ):
+        super().__init__([child])
+        self.child_name: str = child_name
+        self.keys: list[AstNodeTestInfo] = keys
+
+    def local_string(self) -> str:
+        key_strings_tup: tuple = tuple([key.to_string() for key in self.keys])
+        return f"PartitionBy[{self.child_strings()}name={self.child_name!r}, by={key_strings_tup}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        if context is None:
+            context = builder.build_global_context()
+        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+            builder, context
+        )
+        assert len(children) == 1
+        raw_partition = builder.build_partition(context, children[0], self.child_name)
+        assert isinstance(raw_partition, PartitionBy)
+        keys: list[ChildReference] = []
+        for info in self.keys:
+            expr = info.build(builder, context, children)
+            assert isinstance(expr, ChildReference)
+            keys.append(expr)
+        return raw_partition.with_keys(keys)

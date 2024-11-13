@@ -4,14 +4,12 @@ TODO: add file-level docstring
 
 __all__ = ["BackReferenceCollection"]
 
-from collections.abc import MutableMapping
 
-from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 
+from .child_access import ChildAccess
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
-from .collection_tree_form import CollectionTreeForm
 
 
 class BackReferenceCollection(CollectionAccess):
@@ -40,10 +38,13 @@ class BackReferenceCollection(CollectionAccess):
                     f"Cannot reference back {msg} above {parent!r}"
                 )
             ancestor = ancestor.ancestor_context
-        collection_access = ancestor.get_term(term_name)
-        assert isinstance(collection_access, CollectionAccess)
-        self._collection_access = collection_access
+        access = ancestor.get_collection(term_name)
+        assert isinstance(access, CollectionAccess)
+        self._collection_access: CollectionAccess = access
         super().__init__(self._collection_access.collection, ancestor)
+
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
+        return BackReferenceCollection(new_ancestor, self.term_name, self.back_levels)
 
     @property
     def back_levels(self) -> int:
@@ -67,11 +68,16 @@ class BackReferenceCollection(CollectionAccess):
         return self._collection_access
 
     @property
-    def properties(self) -> MutableMapping[str, tuple[int | None, PyDoughAST]]:
-        return self.collection_access.properties
+    def key(self) -> str:
+        return self.standalone_string
 
-    def to_string(self) -> str:
+    @property
+    def standalone_string(self) -> str:
         return f"BACK({self.back_levels}).{self.term_name}"
 
-    def to_tree_form(self) -> CollectionTreeForm:
-        raise NotImplementedError
+    def to_string(self) -> str:
+        return self.standalone_string
+
+    @property
+    def tree_item_string(self) -> str:
+        return f"SubCollection[{self.standalone_string}]"
