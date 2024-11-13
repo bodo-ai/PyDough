@@ -6,8 +6,8 @@ ordering and other properties of the relational expression.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableSequence
-from typing import Any, NamedTuple
+from collections.abc import MutableMapping, MutableSequence
+from typing import Any
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 
@@ -33,12 +33,16 @@ class Relational(ABC):
 
     @property
     @abstractmethod
-    def columns(self) -> MutableSequence["RelationalColumn"]:
+    def columns(self) -> MutableMapping[str, RelationalExpression]:
         """
         Returns the columns of the relational expression.
 
+        TODO: Associate an ordering in the future to avoid unnecessary SQL with the
+        final ordering of the root nodes.
+
         Returns:
-            MutableSequence[Column]: The columns of the relational expression.
+            MutableMapping[str, RelationalExpression]: The columns of the relational expression.
+                This does not have a defined ordering.
         """
 
     @abstractmethod
@@ -81,12 +85,3 @@ class Relational(ABC):
 
     def __repr__(self) -> str:
         return self.to_string()
-
-
-class RelationalColumn(NamedTuple):
-    """
-    An column expression consisting of a name and an expression.
-    """
-
-    name: str
-    expr: RelationalExpression

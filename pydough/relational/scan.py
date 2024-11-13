@@ -5,11 +5,12 @@ represents any "base table" in relational algebra. As we expand to more types of
 class for more specific implementations.
 """
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 
-from .abstract import Relational, RelationalColumn
+from .abstract import Relational
+from .relational_expressions.abstract import RelationalExpression
 
 
 class Scan(Relational):
@@ -20,10 +21,10 @@ class Scan(Relational):
     """
 
     def __init__(
-        self, table_name: str, columns: MutableSequence[RelationalColumn]
+        self, table_name: str, columns: MutableMapping[str, RelationalExpression]
     ) -> None:
         self.table_name: str = table_name
-        self._columns = columns
+        self._columns: MutableMapping[str, RelationalExpression] = columns
 
     @property
     def inputs(self):
@@ -31,13 +32,15 @@ class Scan(Relational):
         return []
 
     @property
-    def columns(self) -> MutableSequence[RelationalColumn]:
+    def columns(self) -> MutableMapping[str, RelationalExpression]:
         return self._columns
 
     def equals(self, other: "Relational") -> bool:
-        if not isinstance(other, Scan):
-            return False
-        return self.table_name == other.table_name and self.columns == other.columns
+        return (
+            isinstance(other, Scan)
+            and self.table_name == other.table_name
+            and self.columns == other.columns
+        )
 
     def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
