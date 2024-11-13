@@ -165,7 +165,7 @@ class Qualifier:
                 unqualified_parent = unqualified._parcel[0]
                 name = unqualified._parcel[1]
                 qualified_parent = self.qualify_collection(unqualified_parent)
-                answer = self.builder.build_collection_access(name, qualified_parent)
+                answer = self.builder.build_child_access(name, qualified_parent)
             case UnqualifiedRoot():
                 answer = context
             case UnqualifiedCalc():
