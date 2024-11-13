@@ -11,7 +11,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from pydough.types.integer_types import IntegerType
 
 from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from .relational_expressions import ColumnOrdering, RelationalExpression
 from .single_relational import SingleRelational
 
 
@@ -29,8 +29,7 @@ class Limit(SingleRelational):
         input: Relational,
         limit: RelationalExpression,
         columns: MutableMapping[str, RelationalExpression],
-        # TODO: FIXME
-        orderings: MutableSequence[str] | None = None,
+        orderings: MutableSequence[ColumnOrdering] | None = None,
     ) -> None:
         super().__init__(input, columns)
         # Note: The limit is a relational expression because it should be a constant
@@ -40,14 +39,16 @@ class Limit(SingleRelational):
             limit.data_type, IntegerType
         ), "Limit must be an integer type."
         self._limit: RelationalExpression = limit
-        self._orderings: MutableSequence[str] = [] if orderings is None else orderings
+        self._orderings: MutableSequence[ColumnOrdering] = (
+            [] if orderings is None else orderings
+        )
 
     @property
     def limit(self) -> RelationalExpression:
         return self._limit
 
     @property
-    def orderings(self) -> MutableSequence[str]:
+    def orderings(self) -> MutableSequence[ColumnOrdering]:
         return self._orderings
 
     def to_sqlglot(self) -> SQLGlotExpression:

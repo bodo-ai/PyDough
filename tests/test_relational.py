@@ -9,6 +9,7 @@ import pytest
 from pydough.relational import Relational
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
+from pydough.relational.relational_expressions import ColumnOrdering
 from pydough.relational.relational_expressions.column_reference import ColumnReference
 from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
@@ -47,6 +48,25 @@ def make_relational_literal(value: Any, typ: PyDoughType | None = None):
     """
     pydough_type = typ if typ is not None else UnknownType()
     return LiteralExpression(value, pydough_type)
+
+
+def make_relational_column_ordering(
+    column: ColumnReference, ascending: bool = True, nulls_first: bool = True
+):
+    """
+    Create a column ordering as a function of a Relational column reference
+    with the given ascending and nulls_first parameters.
+
+    Args:
+        name (str): _description_
+        typ (PyDoughType | None, optional): _description_. Defaults to None.
+        ascending (bool, optional): _description_. Defaults to True.
+        nulls_first (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        _type_: _description_
+    """
+    return ColumnOrdering(column, ascending, nulls_first)
 
 
 def build_simple_scan() -> Scan:
@@ -318,6 +338,26 @@ def test_project_equals(
             "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={}, orderings=[])",
             id="no_columns",
         ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    ),
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"), ascending=False
+                    ),
+                ],
+            ),
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnOrdering(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
+            id="orderings",
+        ),
     ],
 )
 def test_limit_to_string(limit: Limit, output: str):
@@ -385,6 +425,66 @@ def test_limit_to_string(limit: Limit, output: str):
             ),
             False,
             id="different_columns",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    )
+                ],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    )
+                ],
+            ),
+            True,
+            id="matching_ordering",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    )
+                ],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=False
+                    )
+                ],
+            ),
+            False,
+            id="different_orderings",
         ),
         pytest.param(
             Limit(build_simple_scan(), make_relational_literal(5, Int64Type()), {}),
