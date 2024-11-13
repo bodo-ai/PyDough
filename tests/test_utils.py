@@ -402,9 +402,8 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
     NOTE: must provide a `context` when building.
     """
 
-    def __init__(self, child_info: CollectionTestInfo, is_last: bool):
+    def __init__(self, child_info: CollectionTestInfo):
         self.child_info: CollectionTestInfo = child_info
-        self.is_last: bool = is_last
         self.successor = child_info.successor
 
     def local_string(self) -> str:
@@ -422,10 +421,7 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
         access: PyDoughCollectionAST = self.child_info.local_build(
             builder, context, children_contexts
         )
-        return ChildOperatorChildAccess(
-            access,
-            self.is_last,
-        )
+        return ChildOperatorChildAccess(access)
 
 
 class BackReferenceCollectionInfo(CollectionTestInfo):
@@ -499,10 +495,7 @@ class ChildOperatorInfo(CollectionTestInfo):
         """
         children: MutableSequence[PyDoughCollectionAST] = []
         for idx, child_info in enumerate(self.children_info):
-            child = ChildOperatorChildAccessInfo(
-                child_info,
-                idx == len(self.children_info) - 1,
-            ).build(builder, context)
+            child = ChildOperatorChildAccessInfo(child_info).build(builder, context)
             assert isinstance(child, PyDoughCollectionAST)
             children.append(child)
         return children
