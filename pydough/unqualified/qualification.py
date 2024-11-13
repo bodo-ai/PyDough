@@ -4,12 +4,15 @@ TODO: add file-level docstring
 
 __all__ = ["qualify_node"]
 
+from collections.abc import MutableSequence
 from functools import cache
 
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
+    ChildOperatorChildAccess,
+    GlobalContext,
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
@@ -22,6 +25,7 @@ from .unqualified_node import (
     UnqualifiedCalc,
     UnqualifiedLiteral,
     UnqualifiedNode,
+    UnqualifiedOperation,
     UnqualifiedRoot,
 )
 
@@ -67,6 +71,19 @@ class Qualifier:
         """
         self._memo[unqualified_str, context] = qualified_node
 
+    def mark_last_child(self, child: PyDoughCollectionAST | None) -> None:
+        """
+        TODO: add function docstring
+        """
+        if child is None:
+            raise PyDoughUnqualifiedException(
+                "Missing ChildOperatorChildAccess ancestor"
+            )
+        elif isinstance(child, ChildOperatorChildAccess):
+            child._is_last = True
+        else:
+            self.mark_last_child(child.ancestor_context)
+
     def qualify_expression(
         self,
         unqualified: UnqualifiedNode,
@@ -107,19 +124,35 @@ class Qualifier:
                 value: object = unqualified._parcel[0]
                 data_type: PyDoughType = unqualified._parcel[1]
                 answer = self.builder.build_literal(value, data_type)
+            case UnqualifiedOperation():
+                operation: str = unqualified._parcel[0]
+                unqualified_operands: MutableSequence[UnqualifiedNode] = (
+                    unqualified._parcel[1]
+                )
+                qualified_operands: MutableSequence[PyDoughAST] = []
+                for node in unqualified_operands:
+                    qualified_operands.append(
+                        self.qualify_expression(node, context, children)
+                    )
+                answer = self.builder.build_expression_function_call(
+                    operation, qualified_operands
+                )
             case UnqualifiedAccess():
                 unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-                qualified_parent: PyDoughCollectionAST = self.qualify_collection(
-                    unqualified_parent, context
-                )
                 name = unqualified._parcel[1]
-                ref_num: int
-                if qualified_parent in children:
-                    ref_num = children.index(qualified_parent)
+                if isinstance(unqualified_parent, UnqualifiedRoot):
+                    answer = self.builder.build_reference(context, name)
                 else:
-                    ref_num = len(children)
-                    children.append(qualified_parent)
-                answer = self.builder.build_child_reference(children, ref_num, name)
+                    qualified_parent: PyDoughCollectionAST = self.qualify_collection(
+                        unqualified_parent, context
+                    )
+                    ref_num: int
+                    if qualified_parent in children:
+                        ref_num = children.index(qualified_parent)
+                    else:
+                        ref_num = len(children)
+                        children.append(qualified_parent)
+                    answer = self.builder.build_child_reference(children, ref_num, name)
             case _:
                 raise PyDoughUnqualifiedException(f"Cannot qualify {unqualified!r}")
         self.add_definition(unqualified_str, context, answer)
@@ -164,8 +197,12 @@ class Qualifier:
             case UnqualifiedAccess():
                 unqualified_parent = unqualified._parcel[0]
                 name = unqualified._parcel[1]
-                qualified_parent = self.qualify_collection(unqualified_parent)
+                qualified_parent = self.qualify_collection(unqualified_parent, context)
                 answer = self.builder.build_child_access(name, qualified_parent)
+                if isinstance(unqualified_parent, UnqualifiedRoot) and not isinstance(
+                    context, GlobalContext
+                ):
+                    answer = ChildOperatorChildAccess(answer, False)
             case UnqualifiedRoot():
                 answer = context
             case UnqualifiedCalc():
@@ -173,7 +210,7 @@ class Qualifier:
                 unqualified_terms: list[tuple[str, UnqualifiedNode]] = (
                     unqualified._parcel[1]
                 )
-                qualified_parent = self.qualify_collection(unqualified_parent)
+                qualified_parent = self.qualify_collection(unqualified_parent, context)
                 children = []
                 terms: list[tuple[str, PyDoughExpressionAST]] = []
                 for name, term in unqualified_terms:
@@ -181,6 +218,8 @@ class Qualifier:
                         term, qualified_parent, children
                     )
                     terms.append((name, qualified_term))
+                if len(children) > 0:
+                    self.mark_last_child(children[-1])
                 calc: Calc = self.builder.build_calc(qualified_parent, children)
                 answer = calc.with_terms(terms)
             case _:
@@ -189,7 +228,9 @@ class Qualifier:
         return answer
 
 
-def qualify_node(unqualified: UnqualifiedNode, graph: GraphMetadata) -> PyDoughAST:
+def qualify_node(
+    unqualified: UnqualifiedNode, graph: GraphMetadata
+) -> PyDoughCollectionAST:
     """
     Transforms an `UnqualifiedNode` into a qualified node.
 

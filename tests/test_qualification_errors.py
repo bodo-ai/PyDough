@@ -34,7 +34,7 @@ def bad_pydough_impl_01(root: UnqualifiedNode) -> UnqualifiedNode:
     [
         pytest.param(
             bad_pydough_impl_01,
-            "xyz",
+            "Unrecognized term of simple table collection 'Nations' in graph 'TPCH': 'acctbal'",
             id="01",
         ),
     ],

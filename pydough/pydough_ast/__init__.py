@@ -22,6 +22,7 @@ __all__ = [
     "ChildReference",
     "ChildAccess",
     "TopK",
+    "GlobalContext",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -29,6 +30,7 @@ from .collections import (
     Calc,
     ChildAccess,
     ChildOperatorChildAccess,
+    GlobalContext,
     OrderBy,
     PartitionBy,
     PyDoughCollectionAST,
