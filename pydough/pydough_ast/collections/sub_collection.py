@@ -37,6 +37,10 @@ class SubCollection(CollectionAccess):
         return self._subcollection_property
 
     @property
+    def key(self) -> str:
+        return f"{self.ancestor_context.key}.{self.subcollection_property.name}"
+
+    @property
     def standalone_string(self) -> str:
         return self.subcollection_property.name
 

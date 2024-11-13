@@ -49,6 +49,10 @@ class ChildOperatorChildAccess(ChildAccess):
         return self._is_last
 
     @property
+    def key(self) -> str:
+        return self.child_access.key
+
+    @property
     def calc_terms(self) -> set[str]:
         return self.child_access.calc_terms
 
@@ -94,3 +98,10 @@ class ChildOperatorChildAccess(ChildAccess):
 
     def to_tree_form(self) -> CollectionTreeForm:
         return self.to_tree_form_isolated()
+
+    def equals(self, other: object) -> bool:
+        return (
+            super().equals(other)
+            and isinstance(other, ChildOperatorChildAccess)
+            and self.child_access.equals(other.child_access)
+        )

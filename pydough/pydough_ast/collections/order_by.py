@@ -65,6 +65,10 @@ class OrderBy(ChildOperator):
         return self._collation
 
     @property
+    def key(self) -> str:
+        return f"{self.preceding_context.key}.ORDERBY"
+
+    @property
     def calc_terms(self) -> set[str]:
         return self.preceding_context.calc_terms
 

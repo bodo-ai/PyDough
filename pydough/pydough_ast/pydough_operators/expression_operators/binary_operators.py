@@ -57,6 +57,10 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
         return self._binop
 
     @property
+    def key(self) -> str:
+        return f"BINOP-{self.binop}"
+
+    @property
     def is_aggregation(self) -> bool:
         return False
 

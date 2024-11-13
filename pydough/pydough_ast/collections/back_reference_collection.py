@@ -68,6 +68,10 @@ class BackReferenceCollection(CollectionAccess):
         return self._collection_access
 
     @property
+    def key(self) -> str:
+        return self.standalone_string
+
+    @property
     def standalone_string(self) -> str:
         return f"BACK({self.back_levels}).{self.term_name}"
 

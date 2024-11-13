@@ -99,6 +99,10 @@ class PartitionBy(ChildOperator):
         return self._child_name
 
     @property
+    def key(self) -> str:
+        return f"{self.preceding_context.key}.PARTITION({self.child.key})"
+
+    @property
     def calc_terms(self) -> set[str]:
         return set(self._key_name_indices)
 

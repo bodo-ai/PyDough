@@ -24,6 +24,10 @@ class TableCollection(CollectionAccess):
         return TableCollection(self.collection, new_ancestor)
 
     @property
+    def key(self) -> str:
+        return f"{self.ancestor_context.key}.{self.collection.name}"
+
+    @property
     def standalone_string(self) -> str:
         return self.collection.name
 

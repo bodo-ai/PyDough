@@ -64,6 +64,10 @@ class Where(ChildOperator):
         return self._condition
 
     @property
+    def key(self) -> str:
+        return f"{self.preceding_context.key}.WHERE"
+
+    @property
     def calc_terms(self) -> set[str]:
         return self.preceding_context.calc_terms
 

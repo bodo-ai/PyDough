@@ -43,7 +43,10 @@ class PartitionChild(ChildOperatorChildAccess):
         The name that the PartitionBy node gives to the ChildAccess.
         """
         return self._partition_child_name
-        return None
+
+    @property
+    def key(self) -> str:
+        return f"{self.ancestor_context.key}.{self.partition_child_name}"
 
     @property
     def ordering(self) -> list[CollationExpression] | None:

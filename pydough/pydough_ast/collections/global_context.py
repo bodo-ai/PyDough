@@ -49,6 +49,10 @@ class GlobalContext(PyDoughCollectionAST):
         return self._collections
 
     @property
+    def key(self) -> str:
+        return f"{self.graph.name}"
+
+    @property
     def ancestor_context(self) -> PyDoughCollectionAST | None:
         return None
 
