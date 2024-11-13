@@ -4,13 +4,13 @@ relational representation for any grouping operation that optionally involves
 keys and aggregate functions.
 """
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-
-from .abstract import Column, Relational
+from .abstract import Relational
+from .relational_expressions import RelationalExpression
+from .relational_expressions.column_reference import ColumnReference
 from .single_relational import SingleRelational
 
 
@@ -24,23 +24,23 @@ class Aggregate(SingleRelational):
     def __init__(
         self,
         input: Relational,
-        keys: list["Column"],
-        aggregations: list["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
+        keys: MutableMapping[str, ColumnReference],
+        aggregations: MutableMapping[str, RelationalExpression],
     ) -> None:
-        super().__init__(input, keys + aggregations, orderings)
-        self._keys: list[Column] = keys
-        self._aggregations: list[Column] = aggregations
+        super().__init__(input, {**keys, **aggregations})
+        self._keys: MutableMapping[str, ColumnReference] = keys
+        # TODO: Replace with aggregate expression base class.
+        self._aggregations: MutableMapping[str, RelationalExpression] = aggregations
 
     @property
-    def keys(self) -> list["Column"]:
+    def keys(self) -> MutableMapping[str, ColumnReference]:
         return self._keys
 
     @property
-    def aggregations(self) -> list["Column"]:
+    def aggregations(self) -> MutableMapping[str, RelationalExpression]:
         return self._aggregations
 
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
@@ -55,26 +55,4 @@ class Aggregate(SingleRelational):
 
     def to_string(self) -> str:
         # TODO: Should we visit the input?
-        return f"AGGREGATE(keys={self.keys}, aggregations={self.aggregations}, orderings={self.orderings})"
-
-    def node_can_merge(self, other: Relational) -> bool:
-        # TODO: Determine if we ever want to "merge" aggregations with a subset of keys via
-        # grouping sets.
-        return (
-            isinstance(other, Aggregate)
-            and self.orderings == other.orderings
-            and self.keys == other.keys
-            and super().node_can_merge(other)
-        )
-
-    def merge(self, other: Relational) -> Relational:
-        if not self.can_merge(other):
-            raise ValueError(
-                f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
-            )
-        assert isinstance(other, Aggregate)
-        input = self.input
-        keys = self.keys
-        aggregations = self.merge_column_lists(self.aggregations, other.aggregations)
-        orderings = self.orderings
-        return Aggregate(input, keys, aggregations, orderings)
+        return f"AGGREGATE(keys={self.keys}, aggregations={self.aggregations})"
