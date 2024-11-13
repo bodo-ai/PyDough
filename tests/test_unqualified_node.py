@@ -19,7 +19,6 @@ from pydough.unqualified import (
     STARTSWITH,
     SUM,
     UPPER,
-    UnqualifiedBack,
     UnqualifiedNode,
     UnqualifiedRoot,
 )
@@ -176,8 +175,8 @@ answer = x.TOP_K(100)\
             id="order_topk_empty",
         ),
         pytest.param(
-            "answer = PARTITION(_ROOT.Parts, name='parts', by=_ROOT.type)(type=_ROOT.type, total_price=SUM(_ROOT.data.retail_price), n_orders=COUNT(_ROOT.data.lines))",
-            "PARTITION(TPCH.Parts, name='parts', by=(TPCH.type))(type=TPCH.type, total_price=SUM(TPCH.data.retail_price), n_orders=COUNT(TPCH.data.lines))",
+            "answer = PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.type, total_price=SUM(_ROOT.data.retail_price), n_orders=COUNT(_ROOT.data.lines))",
+            "PARTITION(TPCH.Parts, name='parts', by=(TPCH.part_type))(type=TPCH.type, total_price=SUM(TPCH.data.retail_price), n_orders=COUNT(TPCH.data.lines))",
             id="partition",
         ),
     ],
@@ -196,7 +195,7 @@ def test_unqualified_to_string(
     a variable `answer` that is an `UnqualifiedNode` instance.
     """
     root: UnqualifiedNode = UnqualifiedRoot(get_sample_graph("TPCH"))
-    env = {"_ROOT": root, "BACK": UnqualifiedBack, "datetime": datetime}
+    env = {"_ROOT": root}
     exec(pydough_str, global_ctx, env)
     assert "answer" in env, "Expected `pydough_str` to define a variable `answer`."
     answer = env["answer"]
