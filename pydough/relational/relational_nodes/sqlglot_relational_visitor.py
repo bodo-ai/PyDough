@@ -5,6 +5,7 @@ SQLGlot query.
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from .abstract_node import Relational
 from .aggregate import Aggregate
 from .filter import Filter
 from .join import Join
@@ -25,6 +26,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def reset(self) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.reset")
+
+    def visit(self, relational: Relational) -> None:
+        raise NotImplementedError("SQLGlotRelationalVisitor.visit")
 
     def visit_scan(self, scan: Scan) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit_scan")
