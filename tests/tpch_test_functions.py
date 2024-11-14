@@ -2,8 +2,6 @@ __all__ = ["impl_tpch_q6", "impl_tpch_q10"]
 
 import datetime
 
-from pydough.unqualified import SUM
-
 # ruff: noqa
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
