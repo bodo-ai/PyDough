@@ -625,6 +625,60 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
+            ),
+            True,
+            id="same_aggs",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            True,
+            id="same_agg_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -641,6 +695,32 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
             ),
             False,
             id="different_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "c": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            False,
+            id="different_agg",
         ),
         pytest.param(
             Aggregate(
