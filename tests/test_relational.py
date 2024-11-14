@@ -1015,7 +1015,7 @@ def test_filter_requires_boolean_condition():
                     ("b", make_relational_column_reference("b")),
                 ],
             ),
-            "ROOT(columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
+            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=[])",
             id="no_orderings",
         ),
         pytest.param(
@@ -1029,7 +1029,7 @@ def test_filter_requires_boolean_condition():
                     make_relational_column_reference("a"), ascending=True
                 ),
             ),
-            "ROOT(columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
+            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
             id="with_orderings",
         ),
     ],
