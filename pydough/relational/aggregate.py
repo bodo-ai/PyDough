@@ -27,10 +27,16 @@ class Aggregate(SingleRelational):
         keys: MutableMapping[str, ColumnReference],
         aggregations: MutableMapping[str, CallExpression],
     ) -> None:
-        super().__init__(input, {**keys, **aggregations})
+        total_cols = {**keys, **aggregations}
+        assert len(total_cols) == len(keys) + len(
+            aggregations
+        ), "Keys and aggregations must have unique names"
+        super().__init__(input, total_cols)
         self._keys: MutableMapping[str, ColumnReference] = keys
         self._aggregations: MutableMapping[str, CallExpression] = aggregations
-        assert all(agg.is_aggregation for agg in aggregations.values())
+        assert all(
+            agg.is_aggregation for agg in aggregations.values()
+        ), "All functions used in aggregations must be aggregation functions"
 
     @property
     def keys(self) -> MutableMapping[str, ColumnReference]:

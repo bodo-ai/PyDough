@@ -6,11 +6,15 @@ from typing import Any
 
 import pytest
 
+from pydough.pydough_ast.pydough_operators.expression_operators import LOWER, SUM
 from pydough.relational import Relational
 from pydough.relational.aggregate import Aggregate
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
-from pydough.relational.relational_expressions import ColumnOrdering
+from pydough.relational.relational_expressions import (
+    ColumnOrdering,
+)
+from pydough.relational.relational_expressions.call_expression import CallExpression
 from pydough.relational.relational_expressions.column_reference import ColumnReference
 from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
@@ -676,3 +680,48 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
 )
 def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
     assert first_agg.equals(second_agg) == output
+
+
+def test_aggregate_requires_aggregations():
+    """
+    Test to verify that we raise an error when the aggregate node is
+    created without non-aggregation functions.
+    """
+    with pytest.raises(
+        AssertionError,
+        match="All functions used in aggregations must be aggregation functions",
+    ):
+        Aggregate(
+            build_simple_scan(),
+            {
+                "a": make_relational_column_reference("a"),
+                "b": make_relational_column_reference("b"),
+            },
+            {
+                "c": CallExpression(
+                    LOWER, StringType(), [ColumnReference("c", StringType())]
+                )
+            },
+        )
+
+
+def test_aggregate_unique_keys():
+    """
+    Test to verify that we raise an error when the aggregate node has duplicate
+    names between keys and aggregations.
+    """
+    with pytest.raises(
+        AssertionError, match="Keys and aggregations must have unique names"
+    ):
+        Aggregate(
+            build_simple_scan(),
+            {
+                "a": make_relational_column_reference("a"),
+                "b": make_relational_column_reference("b"),
+            },
+            {
+                "a": CallExpression(
+                    SUM, Int64Type(), [ColumnReference("c", Int64Type())]
+                )
+            },
+        )
