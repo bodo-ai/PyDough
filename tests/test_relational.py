@@ -546,12 +546,15 @@ def test_invalid_limit(literal: LiteralExpression):
                 build_simple_scan(),
                 {
                     "a": make_relational_column_reference("a"),
-                    "b": make_relational_column_reference("b"),
                 },
-                {},
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
             ),
-            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, aggregations={})",
-            id="no_aggregates",
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            id="key_and_agg",
         ),
         pytest.param(
             Aggregate(
@@ -563,6 +566,31 @@ def test_invalid_limit(literal: LiteralExpression):
                 {},
             ),
             "AGGREGATE(keys={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, aggregations={})",
+            id="no_aggregates",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
+            ),
+            "AGGREGATE(keys={}, aggregations={'a': Call(op=Function[SUM], inputs=[Column(name=a, type=Int64Type())], return_type=Int64Type()), 'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            id="no_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {},
+            ),
+            "AGGREGATE(keys={}, aggregations={})",
             id="no_keys_no_aggregates",
         ),
     ],
@@ -695,11 +723,10 @@ def test_aggregate_requires_aggregations():
             build_simple_scan(),
             {
                 "a": make_relational_column_reference("a"),
-                "b": make_relational_column_reference("b"),
             },
             {
-                "c": CallExpression(
-                    LOWER, StringType(), [ColumnReference("c", StringType())]
+                "b": CallExpression(
+                    LOWER, StringType(), [ColumnReference("b", StringType())]
                 )
             },
         )
@@ -717,11 +744,10 @@ def test_aggregate_unique_keys():
             build_simple_scan(),
             {
                 "a": make_relational_column_reference("a"),
-                "b": make_relational_column_reference("b"),
             },
             {
                 "a": CallExpression(
-                    SUM, Int64Type(), [ColumnReference("c", Int64Type())]
+                    SUM, Int64Type(), [ColumnReference("b", Int64Type())]
                 )
             },
         )
