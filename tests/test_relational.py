@@ -902,6 +902,9 @@ def test_aggregate_unique_keys():
     ],
 )
 def test_filter_to_string(filter: Filter, output: str):
+    """
+    Tests the to_string() functionality for the Filter node.
+    """
     assert filter.to_string() == output
 
 
@@ -1016,6 +1019,9 @@ def test_filter_to_string(filter: Filter, output: str):
     ],
 )
 def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
+    """
+    Tests the equality functionality for the Filter node.
+    """
     assert first_filter.equals(second_filter) == output
 
 
