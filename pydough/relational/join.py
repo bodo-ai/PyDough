@@ -3,14 +3,15 @@ Representation of the a join node in a relational tree.
 This node is responsible for holding all types of joins.
 """
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping
 from enum import Enum
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from pydough.types.boolean_type import BooleanType
 
-from .abstract import Column, Relational
+from .abstract import Relational
+from .relational_expressions import RelationalExpression
 
 
 class JoinType(Enum):
@@ -30,15 +31,17 @@ class Join(Relational):
         self,
         left: Relational,
         right: Relational,
-        cond: "PyDoughExpressionAST",
+        condition: RelationalExpression,
         join_type: JoinType,
-        columns: MutableSequence[Column],
-        orderings: MutableSequence[PyDoughExpressionAST] | None = None,
+        columns: MutableMapping[str, RelationalExpression],
     ) -> None:
-        super().__init__(columns, orderings)
+        super().__init__(columns)
         self._left: Relational = left
         self._right: Relational = right
-        self._cond: PyDoughExpressionAST = cond
+        assert isinstance(
+            condition.data_type, BooleanType
+        ), "Join condition must be a boolean type"
+        self._condition: RelationalExpression = condition
         self._join_type: JoinType = join_type
 
     @property
@@ -50,8 +53,8 @@ class Join(Relational):
         return self._right
 
     @property
-    def cond(self) -> PyDoughExpressionAST:
-        return self._cond
+    def condition(self) -> RelationalExpression:
+        return self._condition
 
     @property
     def join_type(self) -> JoinType:
@@ -61,7 +64,7 @@ class Join(Relational):
     def inputs(self):
         return [self.left, self.right]
 
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
@@ -69,37 +72,12 @@ class Join(Relational):
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Join)
-            and self.cond == other.cond
+            and self.condition == other.condition
             and self.join_type == other.join_type
             and self.left.node_equals(other.left)
             and self.right.node_equals(other.right)
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
-        return f"JOIN(cond={self.cond}, type={self.join_type.value}, columns={self.columns}, orderings={self.orderings})"
-
-    def node_can_merge(self, other: Relational) -> bool:
-        # TODO: Determine if left and right must always match exactly and if we can ever swap them.
-        # TODO: Determine if we cna ever merge cond based on AND/OR.
-        return (
-            isinstance(other, Join)
-            and self.cond == other.cond
-            and self.join_type == other.join_type
-            and self.left == other.left
-            and self.right == other.right
-        )
-
-    def merge(self, other: Relational) -> Relational:
-        if not self.can_merge(other):
-            raise ValueError(
-                f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
-            )
-        assert isinstance(other, Join)
-        left = self.left
-        right = self.right
-        cond = self.cond
-        join_type = self.join_type
-        cols = self.merge_columns(other.columns)
-        orderings = self.orderings
-        return Join(left, right, cond, join_type, cols, orderings)
+        # TODO: Should we visit the inputs?
+        return f"JOIN(cond={self.condition}, type={self.join_type.value}, columns={self.columns})"
