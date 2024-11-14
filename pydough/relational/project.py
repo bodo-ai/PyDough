@@ -6,13 +6,12 @@ avoid introducing extra nodes just to reorder or prune columns, so ideally their
 should be sparse.
 """
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-
-from .abstract import Column, Relational
+from .abstract import Relational
+from .relational_expressions import RelationalExpression
 from .single_relational import SingleRelational
 
 
@@ -26,12 +25,11 @@ class Project(SingleRelational):
     def __init__(
         self,
         input: Relational,
-        columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
+        columns: MutableMapping[str, RelationalExpression],
     ) -> None:
-        super().__init__(input, columns, orderings)
+        super().__init__(input, columns)
 
-    def to_sqlglot(self) -> "Expression":
+    def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
@@ -41,18 +39,4 @@ class Project(SingleRelational):
 
     def to_string(self) -> str:
         # TODO: Should we visit the input?
-        return f"PROJECT(columns={self.columns}, orderings={self.orderings})"
-
-    def node_can_merge(self, other: Relational) -> bool:
-        return isinstance(other, Project) and super().node_can_merge(other)
-
-    def merge(self, other: Relational) -> Relational:
-        if not self.can_merge(other):
-            raise ValueError(
-                f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
-            )
-        assert isinstance(other, Project)
-        input = self.input
-        cols = self.merge_columns(other.columns)
-        orderings = self.orderings
-        return Project(input, cols, orderings)
+        return f"PROJECT(columns={self.columns})"

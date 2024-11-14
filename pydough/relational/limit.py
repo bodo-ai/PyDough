@@ -4,13 +4,14 @@ This is the relational representation of top-n selection and typically depends
 on explicit ordering of the input relation.
 """
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping, MutableSequence
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from pydough.types.integer_types import IntegerType
 
-from .abstract import Column, Relational
+from .abstract import Relational
+from .relational_expressions import ColumnOrdering, RelationalExpression
 from .single_relational import SingleRelational
 
 
@@ -19,29 +20,36 @@ class Limit(SingleRelational):
     The Limit node in the relational tree. This node represents any TOP-N
     operations in the relational algebra. This operation is dependent on the
     orderings of the input relation.
-
-    TODO: Should this also allow top-n per group?
     """
 
     def __init__(
         self,
         input: Relational,
-        limit: "PyDoughExpressionAST",
-        columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
+        limit: RelationalExpression,
+        columns: MutableMapping[str, RelationalExpression],
+        orderings: MutableSequence[ColumnOrdering] | None = None,
     ) -> None:
-        super().__init__(input, columns, orderings)
-        # TODO: Check that limit has an integer return type.
-        # This is also likely required to be a constant expression for the original
-        # SQLGlot implementation, but in the future we may want to support more generic
-        # expressions, so we will make this a "lowering" restriction.
-        self._limit: PyDoughExpressionAST = limit
+        super().__init__(input, columns)
+        # Note: The limit is a relational expression because it should be a constant
+        # now but in the future could be a more complex expression that may require
+        # multi-step SQL to successfully evaluate.
+        assert isinstance(
+            limit.data_type, IntegerType
+        ), "Limit must be an integer type."
+        self._limit: RelationalExpression = limit
+        self._orderings: MutableSequence[ColumnOrdering] = (
+            [] if orderings is None else orderings
+        )
 
     @property
-    def limit(self) -> "PyDoughExpressionAST":
+    def limit(self) -> RelationalExpression:
         return self._limit
 
-    def to_sqlglot(self) -> "Expression":
+    @property
+    def orderings(self) -> MutableSequence[ColumnOrdering]:
+        return self._orderings
+
+    def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
@@ -50,29 +58,10 @@ class Limit(SingleRelational):
         return (
             isinstance(other, Limit)
             and self.limit == other.limit
+            and self.orderings == other.orderings
             and super().node_equals(other)
         )
 
     def to_string(self) -> str:
         # TODO: Should we visit the input?
         return f"LIMIT(limit={self.limit}, columns={self.columns}, orderings={self.orderings})"
-
-    def node_can_merge(self, other: Relational) -> bool:
-        # TODO: Determine if we can merge limits with different limits by either taking the min or max.
-        return (
-            isinstance(other, Limit)
-            and self.limit == other.limit
-            and super().node_can_merge(other)
-        )
-
-    def merge(self, other: Relational) -> Relational:
-        if not self.can_merge(other):
-            raise ValueError(
-                f"Cannot merge nodes {self.to_string()} and {other.to_string()}"
-            )
-        assert isinstance(other, Limit)
-        input = self.input.merge(other.input)
-        cols = self.merge_columns(other.columns)
-        orderings = self.orderings
-        limit = self.limit
-        return Limit(input, limit, cols, orderings)
