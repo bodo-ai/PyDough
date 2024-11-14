@@ -8,9 +8,7 @@ from collections.abc import MutableSequence
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.pydough_operators.expression_operators import (
-    ExpressionFunctionOperator,
-)
+from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
 from pydough.types import PyDoughType
 
 from .abstract import RelationalExpression
@@ -24,17 +22,17 @@ class CallExpression(RelationalExpression):
 
     def __init__(
         self,
-        op: ExpressionFunctionOperator,
+        op: PyDoughExpressionOperatorAST,
         return_type: PyDoughType,
         inputs: MutableSequence[RelationalExpression],
     ) -> None:
         super().__init__(return_type)
         # TODO: Should we move this op to a different type?
-        self._op: ExpressionFunctionOperator = op
+        self._op: PyDoughExpressionOperatorAST = op
         self._inputs: MutableSequence[RelationalExpression] = inputs
 
     @property
-    def op(self) -> ExpressionFunctionOperator:
+    def op(self) -> PyDoughExpressionOperatorAST:
         """
         The operation this call expression represents.
         """
