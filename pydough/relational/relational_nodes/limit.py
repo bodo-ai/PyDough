@@ -7,7 +7,7 @@ on explicit ordering of the input relation.
 from collections.abc import MutableMapping, MutableSequence
 
 from pydough.relational.relational_expressions import (
-    ColumnOrdering,
+    ColumnSortInfo,
     RelationalExpression,
 )
 from pydough.types.integer_types import IntegerType
@@ -28,7 +28,7 @@ class Limit(SingleRelational):
         input: Relational,
         limit: RelationalExpression,
         columns: MutableMapping[str, RelationalExpression],
-        orderings: MutableSequence[ColumnOrdering] | None = None,
+        orderings: MutableSequence[ColumnSortInfo] | None = None,
     ) -> None:
         super().__init__(input, columns)
         # Note: The limit is a relational expression because it should be a constant
@@ -38,7 +38,7 @@ class Limit(SingleRelational):
             limit.data_type, IntegerType
         ), "Limit must be an integer type."
         self._limit: RelationalExpression = limit
-        self._orderings: MutableSequence[ColumnOrdering] = (
+        self._orderings: MutableSequence[ColumnSortInfo] = (
             [] if orderings is None else orderings
         )
 
@@ -47,7 +47,7 @@ class Limit(SingleRelational):
         return self._limit
 
     @property
-    def orderings(self) -> MutableSequence[ColumnOrdering]:
+    def orderings(self) -> MutableSequence[ColumnSortInfo]:
         return self._orderings
 
     def node_equals(self, other: Relational) -> bool:

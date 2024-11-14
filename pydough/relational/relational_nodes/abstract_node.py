@@ -50,8 +50,9 @@ class Relational(ABC):
     def node_equals(self, other: "Relational") -> bool:
         """
         Determine if two relational nodes are exactly identical,
-        excluding column ordering. This should be extended to avoid
-        duplicating equality logic shared across relational nodes.
+        excluding column generic column details shared by every
+        node. This should be extended to avoid duplicating equality
+        logic shared across relational nodes.
 
         Args:
             other (Relational): The other relational node to compare against.

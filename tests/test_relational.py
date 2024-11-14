@@ -7,8 +7,8 @@ from typing import Any
 import pytest
 
 from pydough.relational.relational_expressions import (
-    ColumnOrdering,
     ColumnReference,
+    ColumnSortInfo,
     LiteralExpression,
 )
 from pydough.relational.relational_nodes import Limit, Project, Relational, Scan
@@ -61,9 +61,9 @@ def make_relational_column_ordering(
         nulls_first (bool, optional): _description_. Defaults to True.
 
     Returns:
-        _type_: _description_
+        ColumnSortInfo: The column ordering information.
     """
-    return ColumnOrdering(column, ascending, nulls_first)
+    return ColumnSortInfo(column, ascending, nulls_first)
 
 
 def build_simple_scan() -> Scan:
@@ -371,7 +371,7 @@ def test_project_equals(
                     ),
                 ],
             ),
-            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnOrdering(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnSortInfo(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnSortInfo(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
             id="orderings",
         ),
     ],
