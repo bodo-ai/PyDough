@@ -8,8 +8,6 @@ relational tree to build the final SQL query.
 from abc import ABC, abstractmethod
 from typing import Any
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
 __all__ = ["RelationalExpression"]
 
 from pydough.types import PyDoughType
@@ -23,11 +21,6 @@ class RelationalExpression(ABC):
     def data_type(self) -> PyDoughType:
         return self._data_type
 
-    @property
-    def is_aggregation(self) -> bool:
-        return False
-
-    @abstractmethod
     def equals(self, other: "RelationalExpression") -> bool:
         """
         Determine if two RelationalExpression nodes are exactly identical,
@@ -40,9 +33,13 @@ class RelationalExpression(ABC):
         Returns:
             bool: Are the two relational expressions equal.
         """
+        return (
+            isinstance(other, RelationalExpression)
+            and self.data_type == other.data_type
+        )
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, RelationalExpression) and self.equals(other)
+        return self.equals(other)
 
     @abstractmethod
     def to_string(self) -> str:
@@ -56,11 +53,3 @@ class RelationalExpression(ABC):
 
     def __repr__(self) -> str:
         return self.to_string()
-
-    @abstractmethod
-    def to_sqlglot(self) -> SQLGlotExpression:
-        """Translate the given relational expression
-
-        Returns:
-            Expression: A SqlGlot expression representing the relational expression.
-        """

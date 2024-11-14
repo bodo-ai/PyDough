@@ -6,15 +6,12 @@ from typing import Any
 
 import pytest
 
-from pydough.relational import Relational
-from pydough.relational.limit import Limit
-from pydough.relational.project import Project
-from pydough.relational.relational_expressions import ColumnOrdering
-from pydough.relational.relational_expressions.column_reference import ColumnReference
-from pydough.relational.relational_expressions.literal_expression import (
+from pydough.relational.relational_expressions import (
+    ColumnOrdering,
+    ColumnReference,
     LiteralExpression,
 )
-from pydough.relational.scan import Scan
+from pydough.relational.relational_nodes import Limit, Project, Relational, Scan
 from pydough.types import Int64Type, PyDoughType, StringType, UnknownType
 
 
@@ -70,8 +67,12 @@ def make_relational_column_ordering(
 
 
 def build_simple_scan() -> Scan:
-    # Helper function to generate a simple scan node for when
-    # relational operators need an input.
+    """
+    Build a simple scan node for reuse in tests.
+
+    Returns:
+        Scan: The Scan node.
+    """
     return Scan(
         "table",
         {
@@ -82,6 +83,9 @@ def build_simple_scan() -> Scan:
 
 
 def test_scan_inputs():
+    """
+    Tests the inputs property for the Scan node.
+    """
     scan = build_simple_scan()
     assert scan.inputs == []
 
@@ -108,6 +112,9 @@ def test_scan_inputs():
     ],
 )
 def test_scan_to_string(scan_node: Scan, output: str):
+    """
+    Tests the to_string() functionality for the Scan node.
+    """
     assert scan_node.to_string() == output
 
 
@@ -183,6 +190,9 @@ def test_scan_to_string(scan_node: Scan, output: str):
     ],
 )
 def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
+    """
+    Tests the equality functionality for the Scan node.
+    """
     assert first_scan.equals(second_scan) == output
 
 
@@ -208,6 +218,9 @@ def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
     ],
 )
 def test_project_to_string(project: Project, output: str):
+    """
+    Test the to_string() functionality for the Project node.
+    """
     assert project.to_string() == output
 
 
@@ -303,6 +316,9 @@ def test_project_to_string(project: Project, output: str):
 def test_project_equals(
     first_project: Project, second_project: Relational, output: bool
 ):
+    """
+    Tests the equality functionality for the Project node.
+    """
     assert first_project.equals(second_project) == output
 
 
