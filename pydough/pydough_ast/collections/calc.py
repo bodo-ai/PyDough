@@ -4,18 +4,18 @@ TODO: add file-level docstring
 
 __all__ = ["Calc"]
 
-
 from collections.abc import MutableMapping, MutableSequence
+from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
 
+from .child_operator import ChildOperator
 from .collection_ast import PyDoughCollectionAST
-from .collection_tree_form import CollectionTreeForm
 
 
-class Calc(PyDoughCollectionAST):
+class Calc(ChildOperator):
     """
     The AST node implementation class representing a CALC expression.
     """
@@ -25,11 +25,11 @@ class Calc(PyDoughCollectionAST):
         predecessor: PyDoughCollectionAST,
         children: MutableSequence[PyDoughCollectionAST],
     ):
-        self._predecessor: PyDoughCollectionAST = predecessor
-        self._children: MutableSequence[PyDoughCollectionAST] = children
+        super().__init__(predecessor, children)
         # Not initialized until with_terms is called
-        self._calc_term_indices: MutableMapping[str, int] | None = None
-        self._all_terms: MutableMapping[str, PyDoughAST] = {}
+        self._calc_term_indices: dict[str, int] | None = None
+        self._calc_term_values: MutableMapping[str, PyDoughExpressionAST] | None = None
+        self._all_term_names: set[str] = set()
 
     def with_terms(
         self, terms: MutableSequence[tuple[str, PyDoughExpressionAST]]
@@ -59,32 +59,23 @@ class Calc(PyDoughCollectionAST):
             raise PyDoughASTException(
                 "Cannot call `with_terms` on a CALC node more than once"
             )
-        self._calc_term_indices = {name: idx for idx, (name, _) in enumerate(terms)}
         # Include terms from the predecessor, with the terms from this CALC
-        # added in (overwriting any preceding properties with the same name)
-        self._all_terms = {}
-        preceding_context = self.preceding_context
-        assert preceding_context is not None
-        for name in preceding_context.all_terms:
-            self._all_terms[name] = preceding_context.get_term(name)
-        for name, property in terms:
-            self._all_terms[name] = property
+        # added in.
+        self._calc_term_indices = {}
+        self._calc_term_values = {}
+        for idx, (name, value) in enumerate(terms):
+            self._calc_term_indices[name] = idx
+            self._calc_term_values[name] = value
+            self._all_term_names.add(name)
+        self.all_terms.update(self.preceding_context.all_terms)
         return self
-
-    @property
-    def children(self) -> MutableSequence[PyDoughCollectionAST]:
-        """
-        The child collections accessible from the CALC used to derive
-        expressions in terms of a subcollection.
-        """
-        return self._children
 
     @property
     def calc_term_indices(
         self,
-    ) -> MutableMapping[str, int]:
+    ) -> dict[str, int]:
         """
-        MutableMapping of each named expression of the CALC to the index of the
+        Mapping of each named expression of the CALC to the index of the
         ordinal position of the property when included in a CALC.
         """
         if self._calc_term_indices is None:
@@ -94,12 +85,22 @@ class Calc(PyDoughCollectionAST):
         return self._calc_term_indices
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
-        return self._predecessor.ancestor_context
+    def calc_term_values(
+        self,
+    ) -> MutableMapping[str, PyDoughExpressionAST]:
+        """
+        Mapping of each named expression of the CALC to the AST node for
+        that expression.
+        """
+        if self._calc_term_values is None:
+            raise PyDoughASTException(
+                "Cannot access `_calc_term_values` of a Calc node before adding calc terms with `with_terms`"
+            )
+        return self._calc_term_values
 
     @property
-    def preceding_context(self) -> PyDoughCollectionAST:
-        return self._predecessor
+    def key(self) -> str:
+        return f"{self.preceding_context.key}.CALC"
 
     @property
     def calc_terms(self) -> set[str]:
@@ -107,54 +108,60 @@ class Calc(PyDoughCollectionAST):
 
     @property
     def all_terms(self) -> set[str]:
-        if self._calc_term_indices is None:
-            raise PyDoughASTException(
-                "Cannot access `all_terms` of a Calc node before adding calc terms with `with_terms`"
-            )
-        return set(self._all_terms)
+        return self._all_term_names
 
     def get_expression_position(self, expr_name: str) -> int:
-        if expr_name not in self.calc_term_indices:
+        if expr_name not in self.calc_terms:
             raise PyDoughASTException(f"Unrecognized CALC term: {expr_name!r}")
         return self.calc_term_indices[expr_name]
 
+    @cache
     def get_term(self, term_name: str) -> PyDoughAST:
-        if term_name not in self.all_terms:
-            raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
-        return self._all_terms[term_name]
+        if term_name in self.calc_term_values:
+            return self.calc_term_values[term_name]
+        else:
+            return super().get_term(term_name)
+
+    def calc_kwarg_strings(self, tree_form: bool) -> str:
+        """
+        Converts the terms of a CALC into a string in the form
+        `"x=1, y=phone_number, z=STARTSWITH(LOWER(name), 'a')"`
+
+        Args:
+            `tree_form` whether to convert the arguments to strings for a tree
+            form or not.
+
+        Returns:
+            The string representation of the arguments.
+        """
+        kwarg_strings: list[str] = []
+        for name in sorted(
+            self.calc_terms, key=lambda name: self.get_expression_position(name)
+        ):
+            expr: PyDoughExpressionAST = self.get_expr(name)
+            kwarg_strings.append(f"{name}={expr.to_string(tree_form)}")
+        return ", ".join(kwarg_strings)
+
+    @property
+    def standalone_string(self) -> str:
+        return f"({self.calc_kwarg_strings(False)})"
 
     def to_string(self) -> str:
-        kwarg_strings: MutableSequence[str] = []
-        for name in self.calc_term_indices:
-            expr: PyDoughExpressionAST = self.get_expr(name)
-            kwarg_strings.append(f"{name}={expr.to_string()}")
-        return f"{self.preceding_context.to_string()}({', '.join(kwarg_strings)})"
+        assert self.preceding_context is not None
+        return f"{self.preceding_context.to_string()}{self.standalone_string}"
 
-    def to_tree_form(self) -> CollectionTreeForm:
-        predecessor: CollectionTreeForm = self.preceding_context.to_tree_form()
-        predecessor.has_successor = True
-        kwarg_strings: MutableSequence[str] = []
-        for name in self.calc_term_indices:
-            expr: PyDoughExpressionAST = self.get_expr(name)
-            kwarg_strings.append(f"{name}={expr.to_string(tree_form=True)}")
-        tree_form: CollectionTreeForm = CollectionTreeForm(
-            f"Calc[{', '.join(kwarg_strings)}]",
-            predecessor.depth,
-            predecessor=predecessor,
-        )
-        for child in self.children:
-            child_tree: CollectionTreeForm = child.to_tree_form()
-            tree_form.has_children = True
-            tree_form.nested_trees.append(child_tree)
-        return tree_form
+    @property
+    def tree_item_string(self) -> str:
+        return f"Calc[{self.calc_kwarg_strings(True)}]"
 
     def equals(self, other: object) -> bool:
-        if self._all_terms is None:
-            raise PyDoughCollectionAST(
+        if self._calc_term_indices is None:
+            raise PyDoughASTException(
                 "Cannot invoke `equals` before calling `with_terms`"
             )
         return (
-            isinstance(other, Calc)
-            and self.preceding_context == other.preceding_context
+            super().equals(other)
+            and isinstance(other, Calc)
             and self._calc_term_indices == other._calc_term_indices
+            and self._calc_term_values == other._calc_term_values
         )

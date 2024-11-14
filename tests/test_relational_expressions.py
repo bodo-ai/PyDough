@@ -7,10 +7,10 @@ functions.
 
 import pytest
 
-from pydough.relational.relational_expressions import RelationalExpression
-from pydough.relational.relational_expressions.column_reference import ColumnReference
-from pydough.relational.relational_expressions.literal_expression import (
+from pydough.relational.relational_expressions import (
+    ColumnReference,
     LiteralExpression,
+    RelationalExpression,
 )
 from pydough.types import Int32Type, Int64Type, StringType
 
@@ -92,6 +92,9 @@ def test_column_reference_equals(
     ],
 )
 def test_literal_expression_to_string(literal: LiteralExpression, output: str):
+    """
+    Tests the to_string() method of the LiteralExpression class.
+    """
     assert literal.to_string() == output
 
 
@@ -127,4 +130,8 @@ def test_literal_expression_to_string(literal: LiteralExpression, output: str):
 def test_literals_equal(
     ref1: LiteralExpression, ref2: RelationalExpression, output: bool
 ):
+    """
+    Tests the equality behavior of a LiteralExpression with
+    another RelationalExpression.
+    """
     assert ref1.equals(ref2) == output

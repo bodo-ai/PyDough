@@ -44,8 +44,12 @@ def make_relational_literal(value: Any, typ: PyDoughType | None = None):
 
 
 def build_simple_scan() -> Scan:
-    # Helper function to generate a simple scan node for when
-    # relational operators need an input.
+    """
+    Build a simple scan node for reuse in tests.
+
+    Returns:
+        Scan: The Scan node.
+    """
     return Scan(
         "table",
         {
@@ -56,6 +60,9 @@ def build_simple_scan() -> Scan:
 
 
 def test_scan_inputs():
+    """
+    Tests the inputs property for the Scan node.
+    """
     scan = build_simple_scan()
     assert scan.inputs == []
 
@@ -188,6 +195,9 @@ def test_scan_equals(first_scan: Scan, second_scan: Scan, output: bool):
     ],
 )
 def test_project_to_string(project: Project, output: str):
+    """
+    Test the to_string() functionality for the Project node.
+    """
     assert project.to_string() == output
 
 
@@ -263,4 +273,7 @@ def test_project_to_string(project: Project, output: str):
     ],
 )
 def test_project_equals(first_project: Project, second_project: Project, output: bool):
+    """
+    Tests the equality functionality for the Project node.
+    """
     assert first_project.equals(second_project) == output
