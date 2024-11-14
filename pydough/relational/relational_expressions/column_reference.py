@@ -29,7 +29,7 @@ class ColumnReference(RelationalExpression):
         return hash((self.name, self.data_type))
 
     @property
-    def name(self) -> object:
+    def name(self) -> str:
         """
         The name of the column.
         """
