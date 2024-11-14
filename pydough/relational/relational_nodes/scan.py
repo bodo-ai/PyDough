@@ -7,10 +7,12 @@ class for more specific implementations.
 
 from collections.abc import MutableMapping
 
-from pydough.relational.relational_visitor import RelationalVisitor
+from pydough.relational.relational_expressions import (
+    RelationalExpression,
+)
 
-from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 
 
 class Scan(Relational):
@@ -30,10 +32,6 @@ class Scan(Relational):
     def inputs(self):
         # A scan is required to be the leaf node of the relational tree.
         return []
-
-    @property
-    def columns(self) -> MutableMapping[str, RelationalExpression]:
-        return self._columns
 
     def node_equals(self, other: Relational) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name

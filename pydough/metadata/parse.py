@@ -505,9 +505,7 @@ def get_property_dependencies(
         # When identifying an inherited property, can check if it is a known
         # property of the middle collection or if it is a known inherited
         # property alias of the primary/secondary property.
-        inherited_properties: MutableMapping[str, str] = property_json[
-            "inherited_properties"
-        ]
+        inherited_properties: dict[str, str] = property_json["inherited_properties"]
         inherited_dependencies: MutableSequence[PropertyKey] = []
         undefined_inherited_dependencies: MutableSequence[PropertyKey] = []
         has_unknown_inherited: bool = False

@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 from typing import Any
 
-from pydough.relational.relational_visitor import RelationalVisitor
+from pydough.relational.relational_expressions import RelationalExpression
 
-from .relational_expressions import RelationalExpression
+from .relational_visitor import RelationalVisitor
 
 
 class Relational(ABC):
@@ -39,9 +39,6 @@ class Relational(ABC):
         """
         Returns the columns of the relational expression.
 
-        TODO: Associate an ordering in the future to avoid unnecessary SQL with the
-        final ordering of the root nodes.
-
         Returns:
             MutableMapping[str, RelationalExpression]: The columns of the relational expression.
                 This does not have a defined ordering.
@@ -52,8 +49,9 @@ class Relational(ABC):
     def node_equals(self, other: "Relational") -> bool:
         """
         Determine if two relational nodes are exactly identical,
-        excluding column ordering. This should be extended to avoid
-        duplicating equality logic shared across relational nodes.
+        excluding column generic column details shared by every
+        node. This should be extended to avoid duplicating equality
+        logic shared across relational nodes.
 
         Args:
             other (Relational): The other relational node to compare against.
@@ -82,9 +80,6 @@ class Relational(ABC):
     def to_string(self) -> str:
         """
         Convert the relational node to a string.
-
-        TODO: Refactor this API to include some form of string
-        builder so we can draw lines between children properly.
 
         Returns:
             str: A string representation of the relational tree
