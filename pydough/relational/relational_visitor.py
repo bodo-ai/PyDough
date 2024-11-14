@@ -8,15 +8,6 @@ operations (e.g. string generation).
 
 from abc import ABC, abstractmethod
 
-from .abstract import Relational
-from .aggregate import Aggregate
-from .filter import Filter
-from .join import Join
-from .limit import Limit
-from .project import Project
-from .root import RelationalRoot
-from .scan import Scan
-
 __all__ = ["RelationalVisitor"]
 
 
@@ -37,7 +28,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit(self, node: Relational) -> None:
+    def visit(self, node) -> None:
         """
         The generic visit operation for a relational node. This can be used
         to either throw a default unsupported error or provide a base
@@ -47,7 +38,7 @@ class RelationalVisitor(ABC):
             node (Relational): The node to visit.
         """
 
-    def visit_inputs(self, node: Relational) -> None:
+    def visit_inputs(self, node) -> None:
         """
         Visit all inputs of the provided node. This is a helper method
         to avoid repeating the same code in each visit method.
@@ -59,7 +50,7 @@ class RelationalVisitor(ABC):
             child.accept(self)
 
     @abstractmethod
-    def visit_scan(self, scan: Scan) -> None:
+    def visit_scan(self, scan) -> None:
         """
         Visit a Scan node.
 
@@ -68,7 +59,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_join(self, join: Join) -> None:
+    def visit_join(self, join) -> None:
         """
         Visit a Join node.
 
@@ -77,7 +68,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_project(self, project: Project) -> None:
+    def visit_project(self, project) -> None:
         """
         Visit a Project node.
 
@@ -86,7 +77,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_filter(self, filter: Filter) -> None:
+    def visit_filter(self, filter) -> None:
         """
         Visit a filter node.
 
@@ -95,7 +86,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_aggregate(self, aggregate: Aggregate) -> None:
+    def visit_aggregate(self, aggregate) -> None:
         """
         Visit an Aggregate node.
 
@@ -104,7 +95,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_limit(self, limit: Limit) -> None:
+    def visit_limit(self, limit) -> None:
         """
         Visit a Limit node.
 
@@ -113,7 +104,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_root(self, root: RelationalRoot) -> None:
+    def visit_root(self, root) -> None:
         """
         Visit a root node.
 
