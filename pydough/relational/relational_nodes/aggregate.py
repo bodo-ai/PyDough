@@ -42,10 +42,16 @@ class Aggregate(SingleRelational):
 
     @property
     def keys(self) -> MutableMapping[str, ColumnReference]:
+        """
+        The keys for the aggregation operation.
+        """
         return self._keys
 
     @property
     def aggregations(self) -> MutableMapping[str, CallExpression]:
+        """
+        The aggregation functions for the aggregation operation.
+        """
         return self._aggregations
 
     def node_equals(self, other: Relational) -> bool:

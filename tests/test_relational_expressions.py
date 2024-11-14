@@ -33,6 +33,11 @@ from pydough.types import Int32Type, Int64Type, StringType
             "Column(name=b, type=StringType())",
             id="string_column",
         ),
+        pytest.param(
+            ColumnReference("b", StringType(), "left"),
+            "Column(input=left, name=b, type=StringType())",
+            id="input_name",
+        ),
     ],
 )
 def test_column_reference_to_string(column_ref: ColumnReference, output: str):
@@ -68,6 +73,18 @@ def test_column_reference_to_string(column_ref: ColumnReference, output: str):
             LiteralExpression(1, Int64Type()),
             False,
             id="different_expr",
+        ),
+        pytest.param(
+            ColumnReference("a", Int64Type(), "left"),
+            ColumnReference("a", Int64Type(), "right"),
+            False,
+            id="different_input_name",
+        ),
+        pytest.param(
+            ColumnReference("a", Int64Type(), "left"),
+            ColumnReference("a", Int64Type()),
+            False,
+            id="one_input_name",
         ),
     ],
 )

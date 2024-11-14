@@ -42,10 +42,17 @@ class RelationalRoot(SingleRelational):
 
     @property
     def ordered_columns(self) -> MutableSequence[tuple[str, RelationalExpression]]:
+        """
+        The columns in the final order that the output should be in.
+        """
         return self._ordered_columns
 
     @property
     def orderings(self) -> MutableSequence[ColumnSortInfo]:
+        """
+        The orderings that are used to determine the final output order if
+        any.
+        """
         return self._orderings
 
     def node_equals(self, other: Relational) -> bool:

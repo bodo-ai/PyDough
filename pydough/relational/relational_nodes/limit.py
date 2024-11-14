@@ -44,10 +44,16 @@ class Limit(SingleRelational):
 
     @property
     def limit(self) -> RelationalExpression:
+        """
+        The limit expression for the number of rows to return.
+        """
         return self._limit
 
     @property
     def orderings(self) -> MutableSequence[ColumnSortInfo]:
+        """
+        The orderings that are used to determine the top-n rows.
+        """
         return self._orderings
 
     def node_equals(self, other: Relational) -> bool:

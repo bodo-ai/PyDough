@@ -32,10 +32,6 @@ class Scan(Relational):
         # A scan is required to be the leaf node of the relational tree.
         return []
 
-    @property
-    def columns(self) -> MutableMapping[str, RelationalExpression]:
-        return self._columns
-
     def node_equals(self, other: Relational) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
 
