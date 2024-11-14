@@ -15,6 +15,8 @@ from pydough.database_connectors.database_connector import DatabaseConnection
 from pydough.metadata.graphs import GraphMetadata
 from pydough.pydough_ast import AstNodeBuilder
 from pydough.pydough_ast import pydough_operators as pydop
+from pydough.relational.relational_expressions import ColumnReference
+from pydough.types import PyDoughType, UnknownType
 
 
 @pytest.fixture(scope="session")
@@ -183,3 +185,25 @@ def sqlite3_people_jobs() -> DatabaseConnection:
     sqlite3_empty_connection.connection.commit()
     cursor.close()
     return sqlite3_empty_connection
+
+
+def make_relational_column_reference(
+    name: str, typ: PyDoughType | None = None, input_name: str | None = None
+) -> ColumnReference:
+    """
+    Make a column reference given name and type. This is used
+    for generating various relational nodes.
+
+    Args:
+        name (str): The name of the column in the input.
+        typ (PyDoughType | None): The PyDoughType of the column. Defaults to
+            None.
+        input_name (str | None): The name of the input node. This is
+            used by Join to differentiate between the left and right.
+            Defaults to None.
+
+    Returns:
+        Column: The output column.
+    """
+    pydough_type = typ if typ is not None else UnknownType()
+    return ColumnReference(name, pydough_type, input_name)
