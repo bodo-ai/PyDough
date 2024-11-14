@@ -59,6 +59,9 @@ def test_scan_inputs():
     ],
 )
 def test_scan_to_string(scan_node: Scan, output: str):
+    """
+    Tests the to_string() functionality for the Scan node.
+    """
     assert scan_node.to_string() == output
 
 
@@ -116,4 +119,7 @@ def test_scan_to_string(scan_node: Scan, output: str):
     ],
 )
 def test_scan_equals(first_scan: Scan, second_scan: Scan, output: bool):
+    """
+    Tests the equality functionality for the Scan node.
+    """
     assert first_scan.equals(second_scan) == output
