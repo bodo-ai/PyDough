@@ -6,12 +6,20 @@ from typing import Any
 
 import pytest
 
+from pydough.pydough_ast.pydough_operators import LOWER, SUM
 from pydough.relational.relational_expressions import (
+    CallExpression,
     ColumnReference,
     ColumnSortInfo,
     LiteralExpression,
 )
-from pydough.relational.relational_nodes import Limit, Project, Relational, Scan
+from pydough.relational.relational_nodes import (
+    Aggregate,
+    Limit,
+    Project,
+    Relational,
+    Scan,
+)
 from pydough.types import Int64Type, PyDoughType, StringType, UnknownType
 
 
@@ -553,3 +561,304 @@ def test_invalid_limit(literal: LiteralExpression):
     """
     with pytest.raises(AssertionError, match="Limit must be an integer type"):
         Limit(build_simple_scan(), literal, {})
+
+
+@pytest.mark.parametrize(
+    "agg, output",
+    [
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            id="key_and_agg",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, aggregations={})",
+            id="no_aggregates",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
+            ),
+            "AGGREGATE(keys={}, aggregations={'a': Call(op=Function[SUM], inputs=[Column(name=a, type=Int64Type())], return_type=Int64Type()), 'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            id="no_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {},
+            ),
+            "AGGREGATE(keys={}, aggregations={})",
+            id="no_keys_no_aggregates",
+        ),
+    ],
+)
+def test_aggregate_to_string(agg: Aggregate, output: str):
+    """
+    Tests the to_string() functionality for the Aggregate node.
+    """
+    assert agg.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "first_agg, second_agg, output",
+    [
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            True,
+            id="same_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
+            ),
+            True,
+            id="same_aggs",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            True,
+            id="same_agg_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "c": make_relational_column_reference("c"),
+                    "d": make_relational_column_reference("d"),
+                },
+                {},
+            ),
+            False,
+            id="different_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "c": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            False,
+            id="different_agg",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {"a": make_relational_column_reference("a")},
+                {},
+            ),
+            False,
+            id="subset_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            Aggregate(
+                Scan(
+                    "table2",
+                    {
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            Scan(
+                "table2",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
+    """
+    Tests the equality functionality for the Aggregate node.
+    """
+    assert first_agg.equals(second_agg) == output
+
+
+def test_aggregate_requires_aggregations():
+    """
+    Test to verify that we raise an error when the aggregate node is
+    created without non-aggregation functions.
+    """
+    with pytest.raises(
+        AssertionError,
+        match="All functions used in aggregations must be aggregation functions",
+    ):
+        Aggregate(
+            build_simple_scan(),
+            {
+                "a": make_relational_column_reference("a"),
+            },
+            {
+                "b": CallExpression(
+                    LOWER, StringType(), [ColumnReference("b", StringType())]
+                )
+            },
+        )
+
+
+def test_aggregate_unique_keys():
+    """
+    Test to verify that we raise an error when the aggregate node has duplicate
+    names between keys and aggregations.
+    """
+    with pytest.raises(
+        AssertionError, match="Keys and aggregations must have unique names"
+    ):
+        Aggregate(
+            build_simple_scan(),
+            {
+                "a": make_relational_column_reference("a"),
+            },
+            {
+                "a": CallExpression(
+                    SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                )
+            },
+        )

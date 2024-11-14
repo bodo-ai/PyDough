@@ -31,7 +31,7 @@ class SingleRelational(Relational):
     def input(self) -> Relational:
         return self._input
 
-    def node_equals(self, other: "Relational") -> bool:
+    def node_equals(self, other: Relational) -> bool:
         """
         Determine if two relational nodes are exactly identical,
         excluding column ordering. This should be extended to avoid
