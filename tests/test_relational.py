@@ -1363,6 +1363,9 @@ def test_root_duplicate_columns():
     ],
 )
 def test_join_to_string(join: Join, output: str):
+    """
+    Tests the to_string() functionality for the Join node.
+    """
     assert join.to_string() == output
 
 
@@ -1691,6 +1694,9 @@ def test_join_to_string(join: Join, output: str):
     ],
 )
 def test_join_equals(first_join: Join, second_join: Relational, output: bool):
+    """
+    Tests the equality functionality for the Join node.
+    """
     assert first_join.equals(second_join) == output
 
 
