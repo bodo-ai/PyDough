@@ -19,6 +19,7 @@ __all__ = [
     "POW",
     "SUB",
     "LOWER",
+    "UPPER",
     "IFF",
     "SUM",
     "YEAR",
@@ -30,6 +31,7 @@ __all__ = [
     "ENDSWITH",
     "CONTAINS",
     "LIKE",
+    "AVG",
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (

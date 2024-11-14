@@ -8,6 +8,7 @@ __all__ = [
     "UnqualifiedCalc",
     "UnqualifiedNode",
     "UnqualifiedOperation",
+    "UnqualifiedOperator",
     "UnqualifiedOrderBy",
     "UnqualifiedPartition",
     "UnqualifiedRoot",
@@ -25,6 +26,7 @@ from datetime import date
 from typing import Any
 
 from pydough.metadata import GraphMetadata
+from pydough.pydough_ast import pydough_operators as pydop
 from pydough.types import (
     BinaryType,
     BooleanType,
@@ -251,7 +253,20 @@ class UnqualifiedRoot(UnqualifiedNode):
     """
 
     def __init__(self, graph: GraphMetadata):
-        self._parcel: tuple[GraphMetadata] = (graph,)
+        self._parcel: tuple[GraphMetadata, set[str]] = (
+            graph,
+            set(pydop.builtin_registered_operators()),
+        )
+
+    def __getattribute__(self, name: str) -> Any:
+        if name == "PARTITION":
+            return PARTITION
+        elif name == "BACK":
+            return BACK
+        elif name in super(UnqualifiedNode, self).__getattribute__("_parcel")[1]:
+            return UnqualifiedOperator(name)
+        else:
+            return super().__getattribute__(name)
 
     def __repr__(self):
         return self._parcel[0].name
@@ -295,6 +310,28 @@ class UnqualifiedCollation(UnqualifiedNode):
     def __repr__(self):
         method = "ASC" if self._parcel[1] else "DESC"
         return f"{self._parcel[0]!r}.{method}(na_pos={self._parcel[2]!r})"
+
+
+class UnqualifiedOperator(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a function that has
+    yet to be called.
+    """
+
+    def __init__(self, name: str):
+        self._parcel: tuple[str] = (name,)
+
+    def __repr__(self):
+        return self._parcel[0]
+
+    def __call__(self, *args, **kwargs):
+        assert (
+            len(kwargs) == 0
+        ), "PyDough function calls do not support keyword arguments at this time"
+        operands: MutableSequence[UnqualifiedNode] = []
+        for arg in args:
+            operands.append(self.coerce_to_unqualified(arg))
+        return UnqualifiedOperation(self._parcel[0], operands)
 
 
 class UnqualifiedOperation(UnqualifiedNode):

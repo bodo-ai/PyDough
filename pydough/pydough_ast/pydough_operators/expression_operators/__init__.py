@@ -34,6 +34,8 @@ __all__ = [
     "ENDSWITH",
     "CONTAINS",
     "LIKE",
+    "UPPER",
+    "AVG",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -41,6 +43,7 @@ from .expression_function_operators import ExpressionFunctionOperator
 from .expression_operator_ast import PyDoughExpressionOperatorAST
 from .registered_expression_operators import (
     ADD,
+    AVG,
     BAN,
     BOR,
     BXR,
@@ -66,5 +69,6 @@ from .registered_expression_operators import (
     STARTSWITH,
     SUB,
     SUM,
+    UPPER,
     YEAR,
 )
