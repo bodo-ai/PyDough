@@ -7,11 +7,10 @@ __all__ = ["LiteralExpression"]
 
 from typing import Any
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
 from pydough.types import PyDoughType
 
 from .abstract import RelationalExpression
+from .relational_expression_visitor import RelationalExpressionVisitor
 
 
 class LiteralExpression(RelationalExpression):
@@ -40,11 +39,6 @@ class LiteralExpression(RelationalExpression):
         """
         return self._value
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def to_string(self) -> str:
         return f"Literal(value={self.value}, type={self.data_type})"
 
@@ -54,3 +48,6 @@ class LiteralExpression(RelationalExpression):
             and (self.data_type == other.data_type)
             and (self.value == other.value)
         )
+
+    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+        visitor.visit_literal_expression(self)

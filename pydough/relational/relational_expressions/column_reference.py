@@ -5,12 +5,10 @@ for the column in the input node.
 """
 
 __all__ = ["ColumnReference"]
-
-from sqlglot.expressions import Expression as SQLGlotExpression
-
 from pydough.types import PyDoughType
 
 from .abstract import RelationalExpression
+from .relational_expression_visitor import RelationalExpressionVisitor
 
 
 class ColumnReference(RelationalExpression):
@@ -46,11 +44,6 @@ class ColumnReference(RelationalExpression):
         """
         return self._input_name
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def to_string(self) -> str:
         input_name_str = f"input={self.input_name}, " if self.input_name else ""
         return f"Column({input_name_str}name={self.name}, type={self.data_type})"
@@ -62,3 +55,6 @@ class ColumnReference(RelationalExpression):
             and (self.name == other.name)
             and (self.input_name == other.input_name)
         )
+
+    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+        visitor.visit_column_reference(self)

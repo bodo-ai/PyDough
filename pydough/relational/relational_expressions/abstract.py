@@ -8,7 +8,7 @@ relational tree to build the final SQL query.
 from abc import ABC, abstractmethod
 from typing import Any
 
-from sqlglot.expressions import Expression as SQLGlotExpression
+from .relational_expression_visitor import RelationalExpressionVisitor
 
 __all__ = ["RelationalExpression"]
 
@@ -58,9 +58,10 @@ class RelationalExpression(ABC):
         return self.to_string()
 
     @abstractmethod
-    def to_sqlglot(self) -> SQLGlotExpression:
-        """Translate the given relational expression
+    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+        """
+        Visit this relational expression with the provided visitor.
 
-        Returns:
-            Expression: A SqlGlot expression representing the relational expression.
+        Args:
+            visitor (RelationalExpressionVisitor): The visitor to use to visit this node.
         """
