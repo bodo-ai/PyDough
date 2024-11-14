@@ -7,11 +7,11 @@ ordering and other properties of the relational expression.
 
 from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
-from typing import Any, NamedTuple
+from typing import Any
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from .relational_expressions import RelationalExpression
 
 
 class Relational(ABC):
@@ -20,15 +20,8 @@ class Relational(ABC):
     structure of all relational nodes in the PyDough system.
     """
 
-    def __init__(
-        self,
-        columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None,
-    ) -> None:
-        self._columns: MutableSequence[Column] = columns
-        self._orderings: MutableSequence[PyDoughExpressionAST] = (
-            orderings if orderings else []
-        )
+    def __init__(self, columns: MutableMapping[str, RelationalExpression]) -> None:
+        self._columns: MutableMapping[str, RelationalExpression] = columns
 
     @property
     @abstractmethod
@@ -42,123 +35,18 @@ class Relational(ABC):
         """
 
     @property
-    def traits(self) -> MutableMapping[str, Any]:
-        """
-        Return the traits of the relational expression.
-        The traits in general may have a variable schema,
-        but each entry should be strongly defined. Here are
-        traits that should always be available:
-
-        - orderings: MutableSequence[PyDoughExpressionAST]
-
-        Returns:
-            MutableMapping[str, Any]: The traits of the relational expression.
-        """
-        return {"orderings": self.orderings}
-
-    @property
-    def orderings(self) -> MutableSequence["PyDoughExpressionAST"]:
-        """
-        Returns the PyDoughExpressionAST that the relational expression is ordered by.
-        Each PyDoughExpressionAST is a result computed relative to the given set of columns.
-
-        Returns:
-            MutableSequence[PyDoughExpressionAST]: The PyDoughExpressionAST that the relational expression is ordered by,
-            possibly empty.
-        """
-        return self._orderings
-
-    def orderings_match(
-        self, other_orderings: MutableSequence["PyDoughExpressionAST"]
-    ) -> bool:
-        """
-        Determine if two orderings match in a way that would be considered equivalent
-        for the given node.
-
-        Args:
-            other_orderings (MutableSequence[PyDoughExpressionAST]): The orderings property
-            of another relational node.
-
-        Returns:
-            bool: Can the two orderings be considered equivalent and therefore safely merged.
-        """
-        # TODO: Allow merging compatible orderings?
-        return not self.orderings and not other_orderings
-
-    @property
-    def columns(self) -> MutableSequence["Column"]:
+    def columns(self) -> MutableMapping[str, RelationalExpression]:
         """
         Returns the columns of the relational expression.
 
+        TODO: Associate an ordering in the future to avoid unnecessary SQL with the
+        final ordering of the root nodes.
+
         Returns:
-            MutableSequence[Column]: The columns of the relational expression.
+            MutableMapping[str, RelationalExpression]: The columns of the relational expression.
+                This does not have a defined ordering.
         """
         return self._columns
-
-    def columns_match(self, other_columns: MutableSequence["Column"]) -> bool:
-        """
-        Determine if two sets of columns match in a way that would be considered compatible
-        for the given node. In general we current assume that columns are indexed by name
-        and any columns with the same name must be equivalent.
-
-        Args:
-            other_columns (MutableSequence[Column]): The columns property
-            of another relational node.
-
-        Returns:
-            bool: Can the two columns be considered equivalent and therefore safely merged.
-        """
-        first_keys = {col.name: col.expr for col in self.columns}
-        second_keys = {col.name: col.expr for col in other_columns}
-        for key, value in first_keys.items():
-            if key in second_keys and value != second_keys[key]:
-                return False
-        return True
-
-    @staticmethod
-    def merge_column_lists(
-        cols1: MutableSequence["Column"], cols2: MutableSequence["Column"]
-    ) -> list["Column"]:
-        """
-        Merge two sets of columns together, keeping the original ordering
-        of cols1 as much as possible. This eliminates any duplicates between
-        the two sets of columns and assumes that if two columns have the same name
-        then they must match (which is enforced by the columns_match method).
-
-        Args:
-            cols1 (MutableSequence[Column]): The columns property
-            of a relational node.
-            cols2 (MutableSequence[Column]): The columns property
-            of another relational node.
-
-        Returns:
-            list["Column"]: The list of merged columns keeping the original ordering
-            of cols1 as much as possible.
-        """
-        cols = list(cols1)
-        col_set = set(cols)
-        for col in cols2:
-            if col not in col_set:
-                cols.append(col)
-        return cols
-
-    def merge_columns(self, other_columns: MutableSequence["Column"]) -> list["Column"]:
-        """
-        Merge two sets of columns together, keeping the original ordering
-        of self as much as possible. This eliminates any duplicates between
-        the two sets of columns and assumes that if two columns have the same name
-        then they must match (which is enforced by the columns_match method).
-
-        Args:
-            other_columns (MutableSequence[Column]): The columns property
-            of another relational node.
-
-
-        Returns:
-            list["Column"]: The list of merged columns keeping the original ordering
-            of self as much as possible.
-        """
-        return self.merge_column_lists(self.columns, other_columns)
 
     @abstractmethod
     def node_equals(self, other: "Relational") -> bool:
@@ -185,30 +73,24 @@ class Relational(ABC):
         Returns:
             bool: Are the two relational nodes equal.
         """
-        return (
-            self.node_equals(other)
-            and self.columns == other.columns
-            and self.orderings == other.orderings
-        )
+        return self.node_equals(other) and self.columns == other.columns
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, Relational):
-            return False
-        return self.equals(other)
+        return isinstance(other, Relational) and self.equals(other)
 
     @abstractmethod
-    def to_sqlglot(self) -> "Expression":
-        """Translate the given relational expression
+    def to_sqlglot(self) -> SQLGlotExpression:
+        """Translate the given relational node
         and its children to a SQLGlot expression.
 
         Returns:
-            Expression: A SqlGlot expression representing the relational expression.
+            Expression: A SqlGlot expression representing the relational node.
         """
 
     @abstractmethod
     def to_string(self) -> str:
         """
-        Convert the relational expression to a string.
+        Convert the relational node to a string.
 
         TODO: Refactor this API to include some form of string
         builder so we can draw lines between children properly.
@@ -220,57 +102,3 @@ class Relational(ABC):
 
     def __repr__(self) -> str:
         return self.to_string()
-
-    @abstractmethod
-    def node_can_merge(self, other: "Relational") -> bool:
-        """
-        Determine if two relational nodes can be merged together.
-        This should be extended to avoid duplicating merge logic shared
-        across relational nodes.
-
-        Args:
-            other (Relational): The other relational node to merge against.
-
-        Returns:
-            bool: Can the two relational nodes be merged.
-        """
-
-    def can_merge(self, other: "Relational") -> bool:
-        """
-        Determine if two relational nodes can be merged together.
-
-        Args:
-            other (Relational): The other relational node to merge with.
-
-        Returns:
-            bool: Can the two relational nodes be merged together.
-        """
-        return (
-            self.node_can_merge(other)
-            and self.orderings_match(other.orderings)
-            and self.columns_match(other.columns)
-        )
-
-    @abstractmethod
-    def merge(self, other: "Relational") -> "Relational":
-        """
-        Merge two relational nodes together to produce one output
-        relational node. This requires can_merge to return True.
-
-        Args:
-            other (Relational): The other relational node to merge with.
-
-        Returns:
-            Relational: A new relational node that is the result of merging
-            the two input relational nodes together and removing any redundant
-            components.
-        """
-
-
-class Column(NamedTuple):
-    """
-    An column expression consisting of a name and an expression.
-    """
-
-    name: str
-    expr: "PyDoughExpressionAST"

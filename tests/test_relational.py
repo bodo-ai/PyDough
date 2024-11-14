@@ -1,121 +1,91 @@
 """
 TODO: add file-level docstring
-
-General TODO for all tests:
-Update orderings when ASC/DESC is merged in the AST.
-
-General TODO for all aggregate tests:
-Update once we have AST nodes for aggregate functions.
 """
+
+from typing import Any
 
 import pytest
 
-from pydough.pydough_ast.expressions.literal import Literal
-from pydough.pydough_ast.expressions.simple_column_reference import (
-    SimpleColumnReference,
-)
-from pydough.relational import Column, Relational
+from pydough.pydough_ast.pydough_operators.expression_operators import EQU, LOWER, SUM
+from pydough.relational import Relational
 from pydough.relational.aggregate import Aggregate
 from pydough.relational.filter import Filter
 from pydough.relational.limit import Limit
 from pydough.relational.project import Project
+from pydough.relational.relational_expressions import (
+    ColumnOrdering,
+)
+from pydough.relational.relational_expressions.call_expression import CallExpression
+from pydough.relational.relational_expressions.column_reference import ColumnReference
+from pydough.relational.relational_expressions.literal_expression import (
+    LiteralExpression,
+)
 from pydough.relational.root import RelationalRoot
 from pydough.relational.scan import Scan
-from pydough.types import BooleanType, Int64Type
+from pydough.types import BooleanType, Int64Type, PyDoughType, StringType, UnknownType
 
 
-def make_simple_column_reference(name: str) -> SimpleColumnReference:
+def make_relational_column_reference(
+    name: str, typ: PyDoughType | None = None
+) -> ColumnReference:
     """
-    Make a simple column reference with type int64 and
-    the given name. This is used for generating various relational nodes.
+    Make a column reference given name and type. This is used
+    for generating various relational nodes.
 
     Args:
         name (str): The name of the column in the input.
 
     Returns:
-        SimpleColumnReference: The AST node for the column.
-    """
-    return SimpleColumnReference(name, Int64Type())
-
-
-def make_column(name: str) -> Column:
-    """
-    Make an Int64 column with the given name. This is used
-    for generating various relational nodes.
-
-    Note: This doesn't handle renaming a column.
-
-    Args:
-        name (str): The name of the column in both the input and the
-        current node.
-
-    Returns:
         Column: The output column.
     """
-    return Column(name, make_simple_column_reference(name))
+    pydough_type = typ if typ is not None else UnknownType()
+    return ColumnReference(name, pydough_type)
 
 
-def make_literal_column(name: str, value: int) -> Column:
+def make_relational_literal(value: Any, typ: PyDoughType | None = None):
     """
-    Make a literal Int64 column with the given name. This is used
-    for generating various relational nodes.
-
-    Args:
-        name (str): The name of the column.
-        value (int): The value of the literal.
-
-    Returns:
-        Column: The output column.
-    """
-    return Column(name, Literal(value, Int64Type()))
-
-
-def make_limit_literal(limit: int) -> Literal:
-    """
-    Make a literal Int64 with the given limit. This is used for
+    Make a literal given value and type. This is used for
     generating various relational nodes.
 
     Args:
-        limit (int): The value of the literal.
+        value (Any): The value of the literal.
 
     Returns:
         Literal: The output literal.
     """
-    return Literal(limit, Int64Type())
+    pydough_type = typ if typ is not None else UnknownType()
+    return LiteralExpression(value, pydough_type)
 
 
-def make_cond_literal(cond: bool) -> Literal:
+def make_relational_column_ordering(
+    column: ColumnReference, ascending: bool = True, nulls_first: bool = True
+):
     """
-    Make a literal Bool with the given condition. This is used for
-    generating various relational nodes.
+    Create a column ordering as a function of a Relational column reference
+    with the given ascending and nulls_first parameters.
 
     Args:
-        cond (bool): The value of the literal.
+        name (str): _description_
+        typ (PyDoughType | None, optional): _description_. Defaults to None.
+        ascending (bool, optional): _description_. Defaults to True.
+        nulls_first (bool, optional): _description_. Defaults to True.
 
     Returns:
-        Literal: The output literal.
+        _type_: _description_
     """
-    return Literal(cond, BooleanType())
-
-
-def test_column_equal():
-    """
-    Test that the column definition properly implements equality
-    based on its elements.
-    """
-    column1 = make_literal_column("a", 1)
-    column2 = make_literal_column("a", 1)
-    column3 = make_literal_column("b", 1)
-    column4 = make_literal_column("a", 2)
-    assert column1 == column2
-    assert column1 != column3
-    assert column1 != column4
+    return ColumnOrdering(column, ascending, nulls_first)
 
 
 def build_simple_scan() -> Scan:
     # Helper function to generate a simple scan node for when
     # relational operators need an input.
-    return Scan("table", [make_column("a"), make_column("b")])
+    return Scan(
+        "table",
+        {
+            "a": make_relational_column_reference("a"),
+            "b": make_relational_column_reference("b"),
+        },
+    )
 
 
 def test_scan_inputs():
@@ -127,22 +97,19 @@ def test_scan_inputs():
     "scan_node, output",
     [
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            "SCAN(table=table1, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
-            id="no_orderings",
-        ),
-        pytest.param(
             Scan(
-                "table2",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                "table1",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            "SCAN(table=table2, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
-            id="with_orderings",
+            "SCAN(table=table1, columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
+            id="base_column",
         ),
         pytest.param(
-            Scan("table3", []),
-            "SCAN(table=table3, columns=[], orderings=[])",
+            Scan("table3", {}),
+            "SCAN(table=table3, columns={})",
             id="no_columns",
         ),
     ],
@@ -155,54 +122,68 @@ def test_scan_to_string(scan_node: Scan, output: str):
     "first_scan, second_scan, output",
     [
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
-            True,
-            id="matching_scans_no_orderings",
-        ),
-        pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             True,
-            id="matching_scans_with_orderings",
+            id="matching_scans",
         ),
         pytest.param(
             Scan(
                 "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="different_orderings",
-        ),
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a")]),
+            Scan("table1", {"a": make_relational_column_reference("a")}),
             False,
             id="different_columns",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            Scan(
+                "table1",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Scan(
+                "table2",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
             False,
             id="different_tables",
         ),
         pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Scan(
+                "table1",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Project(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
             False,
             id="different_nodes",
         ),
@@ -213,197 +194,22 @@ def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
 
 
 @pytest.mark.parametrize(
-    "first_scan, second_scan, output",
-    [
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
-            False,
-            id="different_table",
-        ),
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
-            True,
-            id="matching_columns",
-        ),
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("c"), make_column("d")]),
-            True,
-            id="disjoint_columns",
-        ),
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("b"), make_column("c")]),
-            True,
-            id="overlapping_columns",
-        ),
-        pytest.param(
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            False,
-            id="matching_orderings",
-        ),
-        pytest.param(
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            False,
-            id="overlapping_orderings",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
-    ],
-)
-def test_scan_can_merge(first_scan: Scan, second_scan: Scan, output: bool):
-    assert first_scan.can_merge(second_scan) == output
-
-
-@pytest.mark.parametrize(
-    "first_scan, second_scan, output",
-    [
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
-            id="matching_columns",
-        ),
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("c"), make_column("d")]),
-            Scan(
-                "table1",
-                [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
-                ],
-            ),
-            id="disjoint_columns",
-        ),
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("b"), make_column("c")]),
-            Scan("table1", [make_column("a"), make_column("b"), make_column("c")]),
-            id="overlapping_columns",
-        ),
-    ],
-)
-def test_scan_merge(first_scan: Scan, second_scan: Scan, output: Scan):
-    assert first_scan.merge(second_scan) == output
-
-
-@pytest.mark.parametrize(
-    "first_scan, second_scan",
-    [
-        pytest.param(
-            Scan("table1", [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
-            id="different_table",
-        ),
-        pytest.param(
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            id="matching_orderings",
-        ),
-        pytest.param(
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Scan(
-                "table1",
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            id="overlapping_orderings",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
-    ],
-)
-def test_scan_invalid_merge(first_scan: Scan, second_scan: Scan):
-    with pytest.raises(ValueError, match="Cannot merge nodes"):
-        first_scan.merge(second_scan)
-
-
-@pytest.mark.parametrize(
     "project, output",
     [
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            "PROJECT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            Project(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            "PROJECT(columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
             id="no_orderings",
         ),
         pytest.param(
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            "PROJECT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
-            id="with_orderings",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), []),
-            "PROJECT(columns=[], orderings=[])",
+            Project(build_simple_scan(), {}),
+            "PROJECT(columns={})",
             id="no_columns",
         ),
     ],
@@ -416,60 +222,86 @@ def test_project_to_string(project: Project, output: str):
     "first_project, second_project, output",
     [
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            True,
-            id="matching_projects_no_orderings",
-        ),
-        pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             True,
-            id="matching_projects_with_orderings",
+            id="matching_projects",
         ),
         pytest.param(
             Project(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="different_orderings",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a")]),
+            Project(build_simple_scan(), {"a": make_relational_column_reference("a")}),
             False,
             id="different_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a")]),
-            Project(build_simple_scan(), [make_literal_column("a", 1)]),
-            False,
-            id="conflicting_column_definitions",
+            Project(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Project(
+                build_simple_scan(),
+                {
+                    "b": make_relational_column_reference("b"),
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            True,
+            id="reordered_columns",
         ),
         pytest.param(
-            Project(build_simple_scan(), []),
-            Project(Scan("table2", [], []), []),
+            Project(build_simple_scan(), {"a": make_relational_column_reference("a")}),
+            Project(build_simple_scan(), {"a": make_relational_column_reference("b")}),
+            False,
+            id="conflicting_column_mappings",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), {"a": make_relational_column_reference("a")}),
+            Project(build_simple_scan(), {"a": make_relational_literal(1)}),
+            False,
+            id="conflicting_column_values",
+        ),
+        pytest.param(
+            Project(build_simple_scan(), {}),
+            Project(Scan("table2", {}), {}),
             False,
             id="unequal_inputs",
         ),
         pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Scan("table1", [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                {
+                    "b": make_relational_column_reference("b"),
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            Scan(
+                "table1",
+                {
+                    "b": make_relational_column_reference("b"),
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
             False,
             id="different_nodes",
         ),
@@ -482,230 +314,56 @@ def test_project_equals(
 
 
 @pytest.mark.parametrize(
-    "first_project, second_project, output",
-    [
-        pytest.param(
-            Project(build_simple_scan(), []),
-            Project(Scan("table2", [], []), []),
-            False,
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            True,
-            id="matching_columns",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("c"), make_column("d")]),
-            True,
-            id="disjoint_columns",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("b"), make_column("c")]),
-            True,
-            id="overlapping_columns",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a")]),
-            Project(build_simple_scan(), [make_literal_column("a", 1)]),
-            False,
-            id="conflict_column_definitions",
-        ),
-        pytest.param(
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            False,
-            id="matching_orderings",
-        ),
-        pytest.param(
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            False,
-            id="overlapping_orderings",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
-    ],
-)
-def test_project_can_merge(
-    first_project: Project, second_project: Project, output: bool
-):
-    assert first_project.can_merge(second_project) == output
-
-
-@pytest.mark.parametrize(
-    "first_project, second_project, output",
-    [
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            id="matching_columns",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("c"), make_column("d")]),
-            Project(
-                build_simple_scan(),
-                [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
-                ],
-            ),
-            id="disjoint_columns",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Project(build_simple_scan(), [make_column("b"), make_column("c")]),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b"), make_column("c")],
-            ),
-            id="overlapping_columns",
-        ),
-    ],
-)
-def test_project_merge(
-    first_project: Project, second_project: Project, output: Project
-):
-    assert first_project.merge(second_project) == output
-
-
-@pytest.mark.parametrize(
-    "first_project, second_project",
-    [
-        pytest.param(
-            Project(build_simple_scan(), []),
-            Project(Scan("table2", [], []), []),
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Project(build_simple_scan(), [make_column("a")]),
-            Project(build_simple_scan(), [make_literal_column("a", 1)]),
-            id="conflict_column_definitions",
-        ),
-        pytest.param(
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            id="matching_orderings",
-        ),
-        pytest.param(
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Project(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            id="overlapping_orderings",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
-    ],
-)
-def test_project_invalid_merge(first_project: Project, second_project: Project):
-    with pytest.raises(ValueError, match="Cannot merge nodes"):
-        first_project.merge(second_project)
-
-
-@pytest.mark.parametrize(
     "limit, output",
     [
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_limit_literal(1),
-                [make_column("a"), make_column("b")],
+                make_relational_literal(1, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            "LIMIT(limit=1, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
-            id="no_orderings_limit_1",
+            "LIMIT(limit=Literal(value=1, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
+            id="limit_1",
         ),
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
+                make_relational_literal(5, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            "LIMIT(limit=5, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
-            id="no_orderings_limit_5",
+            "LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
+            id="limit_5",
         ),
         pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            "LIMIT(limit=10, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
-            id="with_orderings",
-        ),
-        pytest.param(
-            Limit(build_simple_scan(), make_limit_literal(10), []),
-            "LIMIT(limit=10, columns=[], orderings=[])",
+            Limit(build_simple_scan(), make_relational_literal(10, Int64Type()), {}),
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={}, orderings=[])",
             id="no_columns",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    ),
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"), ascending=False
+                    ),
+                ],
+            ),
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnOrdering(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
+            id="orderings",
         ),
     ],
 )
@@ -719,102 +377,144 @@ def test_limit_to_string(limit: Limit, output: str):
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Limit(
                 build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            True,
-            id="matching_limits_no_orderings",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-            ),
-            False,
-            id="different_limits_no_orderings",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             True,
-            id="matching_limits_with_orderings",
+            id="matching_limits",
         ),
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Limit(
                 build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                make_relational_literal(5, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             False,
-            id="different_limits_with_orderings",
+            id="different_limits",
         ),
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Limit(
                 build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            False,
+            id="different_columns",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    )
+                ],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    )
+                ],
+            ),
+            True,
+            id="matching_ordering",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    )
+                ],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=False
+                    )
+                ],
             ),
             False,
             id="different_orderings",
         ),
         pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(build_simple_scan(), make_limit_literal(10), [make_column("a")]),
-            False,
-            id="different_columns",
-        ),
-        pytest.param(
-            Limit(build_simple_scan(), make_limit_literal(5), []),
-            Limit(Scan("table2", [], []), make_limit_literal(5), []),
+            Limit(build_simple_scan(), make_relational_literal(5, Int64Type()), {}),
+            Limit(Scan("table2", {}), make_relational_literal(5, Int64Type()), {}),
             False,
             id="unequal_inputs",
         ),
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            Project(build_simple_scan(), [make_column("a"), make_column("b")]),
+            Project(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
             False,
             id="different_nodes",
         ),
@@ -825,387 +525,19 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
 
 
 @pytest.mark.parametrize(
-    "first_limit, second_limit, output",
+    "literal",
     [
-        pytest.param(
-            Limit(build_simple_scan(), make_limit_literal(10), []),
-            Limit(Scan("table2", [], []), make_limit_literal(10), []),
-            False,
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            True,
-            id="matching_columns_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-            ),
-            False,
-            id="matching_columns_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("c"), make_column("d")],
-            ),
-            True,
-            id="disjoint_columns_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("c"), make_column("d")],
-            ),
-            False,
-            id="disjoint_columns_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("b"), make_column("c")],
-            ),
-            True,
-            id="overlapping_columns_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("b"), make_column("c")],
-            ),
-            False,
-            id="overlapping_columns_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            False,
-            id="matching_orderings_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            False,
-            id="matching_orderings_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            False,
-            id="overlapping_orderings_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            False,
-            id="overlapping_orderings_unequal_limits",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
+        pytest.param(make_relational_literal(1), id="unknown_type"),
+        pytest.param(make_relational_literal(1, StringType()), id="string_type"),
     ],
 )
-def test_limit_can_merge(first_limit: Limit, second_limit: Limit, output: bool):
-    assert first_limit.can_merge(second_limit) == output
-
-
-@pytest.mark.parametrize(
-    "first_limit, second_limit, output",
-    [
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            id="matching_columns_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("c"), make_column("d")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
-                ],
-            ),
-            id="disjoint_columns_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("b"), make_column("c")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b"), make_column("c")],
-            ),
-            id="overlapping_columns_equal_limits",
-        ),
-    ],
-)
-def test_limit_merge(first_limit: Limit, second_limit: Limit, output: Limit):
-    assert first_limit.merge(second_limit) == output
-
-
-@pytest.mark.parametrize(
-    "first_limit, second_limit",
-    [
-        pytest.param(
-            Limit(build_simple_scan(), make_limit_literal(10), []),
-            Limit(Scan("table2", [], []), make_limit_literal(10), []),
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-            ),
-            id="matching_columns_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("c"), make_column("d")],
-            ),
-            id="disjoint_columns_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("b"), make_column("c")],
-            ),
-            id="overlapping_columns_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            id="matching_orderings_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            id="matching_orderings_unequal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            id="overlapping_orderings_equal_limits",
-        ),
-        pytest.param(
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(10),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Limit(
-                build_simple_scan(),
-                make_limit_literal(5),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            id="overlapping_orderings_unequal_limits",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
-    ],
-)
-def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
-    with pytest.raises(ValueError, match="Cannot merge nodes"):
-        first_limit.merge(second_limit)
+def test_invalid_limit(literal: LiteralExpression):
+    """
+    Test to verify that we raise an error when the limit is not an integer
+    type regardless of the value type.
+    """
+    with pytest.raises(AssertionError, match="Limit must be an integer type"):
+        Limit(build_simple_scan(), literal, {})
 
 
 @pytest.mark.parametrize(
@@ -1214,30 +546,54 @@ def test_limit_invalid_merge(first_limit: Limit, second_limit: Limit):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
             ),
-            "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[])",
-            id="no_orderings_no_aggregates",
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            id="key_and_agg",
         ),
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
             ),
-            "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[])",
-            id="no_orderings_no_keys_no_aggregates",
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, aggregations={})",
+            id="no_aggregates",
         ),
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
             ),
-            "AGGREGATE(keys=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], aggregations=[], orderings=[Column(a)])",
-            id="with_orderings_no_aggregates",
+            "AGGREGATE(keys={}, aggregations={'a': Call(op=Function[SUM], inputs=[Column(name=a, type=Int64Type())], return_type=Int64Type()), 'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            id="no_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {},
+                {},
+            ),
+            "AGGREGATE(keys={}, aggregations={})",
+            id="no_keys_no_aggregates",
         ),
     ],
 )
@@ -1251,119 +607,162 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
             ),
             True,
-            id="same_keys_no_orderings",
+            id="same_keys",
         ),
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("c"), make_column("d")],
-                [],
-            ),
-            False,
-            id="different_keys_no_orderings",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a")],
-                [],
-            ),
-            False,
-            id="subset_keys_no_orderings",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
+                {},
+                {
+                    "a": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                    ),
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    ),
+                },
             ),
             True,
-            id="same_keys_with_orderings",
+            id="same_aggs",
         ),
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("b")],
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
+            ),
+            True,
+            id="same_agg_keys",
+        ),
+        pytest.param(
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
+            ),
+            Aggregate(
+                build_simple_scan(),
+                {
+                    "c": make_relational_column_reference("c"),
+                    "d": make_relational_column_reference("d"),
+                },
+                {},
             ),
             False,
-            id="same_keys_different_orderings",
+            id="different_keys",
         ),
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "b": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("c"), make_column("d")],
-                [],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+                {
+                    "c": CallExpression(
+                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    )
+                },
             ),
             False,
-            id="different_keys_with_orderings",
+            id="different_agg",
         ),
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
             ),
             Aggregate(
                 build_simple_scan(),
-                [make_column("a")],
-                [],
-                [make_simple_column_reference("a")],
+                {"a": make_relational_column_reference("a")},
+                {},
             ),
             False,
-            id="subset_keys_with_orderings",
+            id="subset_keys",
         ),
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
             ),
             Aggregate(
-                Scan("table2", [make_column("a"), make_column("b")], []),
-                [make_column("a"), make_column("b")],
-                [],
+                Scan(
+                    "table2",
+                    {
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
             ),
             False,
             id="unequal_inputs",
@@ -1371,10 +770,19 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         pytest.param(
             Aggregate(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                {},
             ),
-            Scan("table2", [make_column("a"), make_column("b")], []),
+            Scan(
+                "table2",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
             False,
             id="different_nodes",
         ),
@@ -1384,335 +792,47 @@ def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: 
     assert first_agg.equals(second_agg) == output
 
 
-@pytest.mark.parametrize(
-    "first_agg, second_agg, output",
-    [
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                Scan("table2", [], []),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            False,
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            True,
-            id="matching_keys_no_orderings",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("c"), make_column("d")],
-                [],
-            ),
-            False,
-            id="disjoint_keys_no_ordering",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("b")],
-                [],
-            ),
-            False,
-            id="subset_keys_no_ordering",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("b"), make_column("c")],
-                [],
-            ),
-            False,
-            id="overlapping_keys_no_ordering",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            False,
-            id="matching_ordering_matching_keys",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            False,
-            id="matching_ordering_overlapping_keys",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            False,
-            # Note: If we allow merging orderings this should become legal.
-            id="overlapping_orderings_equal_keys",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            False,
-            id="overlapping_orderings_overlapping_keys",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging
-    ],
-)
-def test_aggregate_can_merge(first_agg: Aggregate, second_agg: Aggregate, output: bool):
-    assert first_agg.can_merge(second_agg) == output
+def test_aggregate_requires_aggregations():
+    """
+    Test to verify that we raise an error when the aggregate node is
+    created without non-aggregation functions.
+    """
+    with pytest.raises(
+        AssertionError,
+        match="All functions used in aggregations must be aggregation functions",
+    ):
+        Aggregate(
+            build_simple_scan(),
+            {
+                "a": make_relational_column_reference("a"),
+            },
+            {
+                "b": CallExpression(
+                    LOWER, StringType(), [ColumnReference("b", StringType())]
+                )
+            },
+        )
 
 
-@pytest.mark.parametrize(
-    "first_agg, second_agg, output",
-    [
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            id="matching_keys_no_orderings",
-        ),
-    ],
-)
-def test_aggregate_merge(
-    first_agg: Aggregate, second_agg: Aggregate, output: Aggregate
-):
-    assert first_agg.merge(second_agg) == output
-
-
-@pytest.mark.parametrize(
-    "first_agg, second_agg",
-    [
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                Scan("table2", [], []),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("c"), make_column("d")],
-                [],
-            ),
-            id="disjoint_keys_no_ordering",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("b")],
-                [],
-            ),
-            id="subset_keys_no_ordering",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("b"), make_column("c")],
-                [],
-            ),
-            id="overlapping_keys_no_ordering",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            id="matching_ordering_matching_keys",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            id="matching_ordering_overlapping_keys",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("b")],
-            ),
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            id="overlapping_orderings_equal_keys",
-        ),
-        pytest.param(
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a")],
-                [],
-                [make_simple_column_reference("a")],
-            ),
-            Aggregate(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            id="overlapping_orderings_overlapping_keys",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging
-    ],
-)
-def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
-    with pytest.raises(ValueError, match="Cannot merge nodes"):
-        first_agg.merge(second_agg)
+def test_aggregate_unique_keys():
+    """
+    Test to verify that we raise an error when the aggregate node has duplicate
+    names between keys and aggregations.
+    """
+    with pytest.raises(
+        AssertionError, match="Keys and aggregations must have unique names"
+    ):
+        Aggregate(
+            build_simple_scan(),
+            {
+                "a": make_relational_column_reference("a"),
+            },
+            {
+                "a": CallExpression(
+                    SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                )
+            },
+        )
 
 
 @pytest.mark.parametrize(
@@ -1721,21 +841,33 @@ def test_aggregate_invalid_merge(first_agg: Aggregate, second_agg: Aggregate):
         pytest.param(
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            "FILTER(condition=True, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
-            id="no_orderings",
+            "FILTER(condition=Literal(value=True, type=BooleanType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
+            id="true_filter",
         ),
         pytest.param(
             Filter(
                 build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a"),
+                        LiteralExpression(1, Int64Type()),
+                    ],
+                ),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            "FILTER(condition=False, columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
-            id="with_orderings",
+            "FILTER(condition=Call(op=BinaryOperator[==], inputs=[Column(name=a, type=UnknownType()), Literal(value=1, type=Int64Type())], return_type=BooleanType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
+            id="function_filter",
         ),
     ],
 )
@@ -1749,27 +881,39 @@ def test_filter_to_string(filter: Filter, output: str):
         pytest.param(
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             True,
-            id="matching_no_orderings",
+            id="matching",
         ),
         pytest.param(
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Filter(
                 build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(False, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             False,
             id="different_conds",
@@ -1777,105 +921,45 @@ def test_filter_to_string(filter: Filter, output: str):
         pytest.param(
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("c"), make_column("d")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "c": make_relational_column_reference("a"),
+                    "d": make_relational_column_reference("b"),
+                },
             ),
             False,
-            id="different_columns_no_orderings",
+            id="different_columns",
         ),
         pytest.param(
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a")],
-            ),
-            False,
-            id="subset_columns_no_orderings",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="different_orderings",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            True,
-            id="matching_with_orderings",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            False,
-            id="different_cond_with_orderings",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a")],
-                [make_simple_column_reference("a")],
-            ),
-            False,
-            id="subset_columns_with_orderings",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                Scan("table2", [make_column("a"), make_column("b")], []),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                Scan(
+                    "table2",
+                    {
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
             False,
             id="unequal_inputs",
@@ -1883,10 +967,19 @@ def test_filter_to_string(filter: Filter, output: str):
         pytest.param(
             Filter(
                 build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
             ),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            Scan(
+                "table2",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
             False,
             id="different_nodes",
         ),
@@ -1896,404 +989,19 @@ def test_filter_equals(first_filter: Filter, second_filter: Relational, output: 
     assert first_filter.equals(second_filter) == output
 
 
-@pytest.mark.parametrize(
-    "first_filter, second_filter, output",
-    [
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                Scan("table2", []),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            False,
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            True,
-            id="matching_columns_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-            ),
-            False,
-            id="matching_columns_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("c"), make_column("d")],
-            ),
-            True,
-            id="disjoint_columns_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("c"), make_column("d")],
-            ),
-            False,
-            id="disjoint_columns_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("b"), make_column("c")],
-            ),
-            True,
-            id="overlapping_columns_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("b"), make_column("c")],
-            ),
-            False,
-            id="overlapping_columns_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            False,
-            id="matching_orderings_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            False,
-            id="matching_orderings_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            False,
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            False,
-            id="overlapping_orderings_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            False,
-            id="overlapping_orderings_unequal_conds",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
-    ],
-)
-def test_filter_can_merge(first_filter: Filter, second_filter: Filter, output: bool):
-    assert first_filter.can_merge(second_filter) == output
-
-
-@pytest.mark.parametrize(
-    "first_filter, second_filter, output",
-    [
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            id="matching_columns_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("c"), make_column("d")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [
-                    make_column("a"),
-                    make_column("b"),
-                    make_column("c"),
-                    make_column("d"),
-                ],
-            ),
-            id="disjoint_columns_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("b"), make_column("c")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b"), make_column("c")],
-            ),
-            id="overlapping_columns_equal_conds",
-        ),
-    ],
-)
-def test_filter_merge(first_filter: Filter, second_filter: Filter, output: Filter):
-    assert first_filter.merge(second_filter) == output
-
-
-@pytest.mark.parametrize(
-    "first_filter, second_filter",
-    [
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                Scan("table2", []),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            id="unequal_inputs",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-            ),
-            id="matching_columns_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("c"), make_column("d")],
-            ),
-            id="disjoint_columns_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("b"), make_column("c")],
-            ),
-            id="overlapping_columns_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            # Note: Eventually this should be legal
-            id="matching_orderings_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            id="matching_orderings_unequal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            id="disjoint_orderings",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            # Note: If we allow merging orderings this should become legal.
-            id="overlapping_orderings_equal_conds",
-        ),
-        pytest.param(
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(False),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            Filter(
-                build_simple_scan(),
-                make_cond_literal(True),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a"), make_simple_column_reference("b")],
-            ),
-            id="overlapping_orderings_unequal_conds",
-        ),
-        # TODO: Add a conflicting ordering test where A is ASC vs DESC.
-        # Depends on other code changes merging.
-    ],
-)
-def test_filter_invalid_merge(first_filter: Filter, second_filter: Filter):
-    with pytest.raises(ValueError, match="Cannot merge nodes"):
-        first_filter.merge(second_filter)
+def test_filter_requires_boolean_condition():
+    """
+    Test to verify that we raise an error when the filter node is
+    created with a non-boolean condition.
+    """
+    with pytest.raises(AssertionError, match="Filter condition must be a boolean type"):
+        Filter(
+            build_simple_scan(),
+            make_relational_literal(1, Int64Type()),
+            {
+                "a": make_relational_column_reference("a"),
+            },
+        )
 
 
 @pytest.mark.parametrize(
@@ -2302,18 +1010,26 @@ def test_filter_invalid_merge(first_filter: Filter, second_filter: Filter):
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
             ),
-            "ROOT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[])",
+            "ROOT(columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
             id="no_orderings",
         ),
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                make_relational_column_ordering(
+                    make_relational_column_reference("a"), ascending=True
+                ),
             ),
-            "ROOT(columns=[Column(name='a', expr=Column(a)), Column(name='b', expr=Column(b))], orderings=[Column(a)])",
+            "ROOT(columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
             id="with_orderings",
         ),
     ],
@@ -2326,27 +1042,84 @@ def test_root_to_string(root: RelationalRoot, output: str):
     "first_root, second_root, output",
     [
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
             True,
             id="matching_columns_no_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("b"), make_column("c")]),
+            # Note: Root is the only node that cares about column ordering.
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            False,
+            id="same_columns_different_indices",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("c", make_relational_column_reference("a")),
+                    ("d", make_relational_column_reference("b")),
+                ],
+            ),
             False,
             id="different_columns_no_orderings",
         ),
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
             ),
             True,
             id="matching_columns_with_orderings",
@@ -2354,26 +1127,92 @@ def test_root_to_string(root: RelationalRoot, output: str):
         pytest.param(
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
             ),
             RelationalRoot(
                 build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"), ascending=True
+                    ),
+                ],
             ),
             False,
             id="different_orderings",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(Scan("table2", []), [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=False
+                    ),
+                ],
+            ),
+            False,
+            id="different_direction",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                Scan("table2", {}),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
             False,
             id="different_inputs",
         ),
         pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            Scan("table2", [make_column("a"), make_column("b")]),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            Scan(
+                "table2",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
             False,
             id="different_nodes",
         ),
@@ -2383,112 +1222,16 @@ def test_root_equals(first_root: RelationalRoot, second_root: Relational, output
     assert first_root.equals(second_root) == output
 
 
-@pytest.mark.parametrize(
-    "first_root, second_root",
-    [
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            id="matching_columns_no_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("c"), make_column("d")]),
-            id="different_columns_no_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a")]),
-            id="subset_columns_no_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            id="matching_columns_with_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            id="matching_columns_different_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(Scan("table2", []), [make_column("a"), make_column("b")]),
-            id="different_inputs",
-        ),
-    ],
-)
-def test_root_can_merge(first_root: RelationalRoot, second_root: RelationalRoot):
-    assert not first_root.can_merge(second_root)
-
-
-@pytest.mark.parametrize(
-    "first_root, second_root",
-    [
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            id="matching_columns_no_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("c"), make_column("d")]),
-            id="different_columns_no_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(build_simple_scan(), [make_column("a")]),
-            id="subset_columns_no_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            id="matching_columns_with_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("a")],
-            ),
-            RelationalRoot(
-                build_simple_scan(),
-                [make_column("a"), make_column("b")],
-                [make_simple_column_reference("b")],
-            ),
-            id="matching_columns_different_orderings",
-        ),
-        pytest.param(
-            RelationalRoot(build_simple_scan(), [make_column("a"), make_column("b")]),
-            RelationalRoot(Scan("table2", []), [make_column("a"), make_column("b")]),
-            id="different_inputs",
-        ),
-    ],
-)
-def test_root_invalid_merge(first_root: RelationalRoot, second_root: RelationalRoot):
-    with pytest.raises(ValueError, match="Cannot merge root nodes"):
-        first_root.merge(second_root)
+def test_root_duplicate_columns():
+    """
+    Test to verify that we raise an error when the root node is
+    created with duplicate column names.
+    """
+    with pytest.raises(AssertionError, match="Duplicate column names found in root."):
+        RelationalRoot(
+            build_simple_scan(),
+            [
+                ("a", make_relational_column_reference("a")),
+                ("a", make_relational_column_reference("b")),
+            ],
+        )

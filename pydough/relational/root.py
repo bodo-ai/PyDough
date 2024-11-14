@@ -6,11 +6,10 @@ as any other traits that impact the shape/display of the final output.
 
 from collections.abc import MutableSequence
 
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-
-from .abstract import Column, Relational
+from .abstract import Relational
+from .relational_expressions import ColumnOrdering, RelationalExpression
 from .single_relational import SingleRelational
 
 
@@ -24,25 +23,42 @@ class RelationalRoot(SingleRelational):
     def __init__(
         self,
         input: Relational,
-        columns: MutableSequence["Column"],
-        orderings: MutableSequence["PyDoughExpressionAST"] | None = None,
+        ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
+        orderings: MutableSequence[ColumnOrdering] | None = None,
     ) -> None:
-        super().__init__(input, columns, orderings)
+        columns = dict(ordered_columns)
+        assert len(columns) == len(
+            ordered_columns
+        ), "Duplicate column names found in root."
+        super().__init__(input, columns)
+        self._ordered_columns: MutableSequence[tuple[str, RelationalExpression]] = (
+            ordered_columns
+        )
+        self._orderings: MutableSequence[ColumnOrdering] = (
+            [] if orderings is None else orderings
+        )
 
-    def to_sqlglot(self) -> "Expression":
+    @property
+    def ordered_columns(self) -> MutableSequence[tuple[str, RelationalExpression]]:
+        return self._ordered_columns
+
+    @property
+    def orderings(self) -> MutableSequence[ColumnOrdering]:
+        return self._orderings
+
+    def to_sqlglot(self) -> SQLGlotExpression:
         raise NotImplementedError(
             "Conversion to SQLGlot Expressions is not yet implemented."
         )
 
     def node_equals(self, other: Relational) -> bool:
-        return isinstance(other, RelationalRoot) and super().node_equals(other)
+        return (
+            isinstance(other, RelationalRoot)
+            and self.ordered_columns == other.ordered_columns
+            and self.orderings == other.orderings
+            and super().node_equals(other)
+        )
 
     def to_string(self) -> str:
         # TODO: Should we visit the input?
-        return f"ROOT(columns={self.columns}, orderings={self.orderings})"
-
-    def node_can_merge(self, other: Relational) -> bool:
-        return False
-
-    def merge(self, other: Relational) -> Relational:
-        raise ValueError("Cannot merge root nodes.")
+        return f"ROOT(columns={self.ordered_columns}, orderings={self.orderings})"
