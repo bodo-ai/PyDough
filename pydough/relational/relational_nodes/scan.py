@@ -7,8 +7,11 @@ class for more specific implementations.
 
 from collections.abc import MutableMapping
 
-from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from pydough.relational.relational_expressions import (
+    RelationalExpression,
+)
+
+from .abstract_node import Relational
 
 
 class Scan(Relational):

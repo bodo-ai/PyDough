@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 from typing import Any
 
-from .relational_expressions.abstract import RelationalExpression
+from pydough.relational.relational_expressions import RelationalExpression
 
 
 class Relational(ABC):
@@ -63,9 +63,6 @@ class Relational(ABC):
     def to_string(self) -> str:
         """
         Convert the relational node to a string.
-
-        TODO: Refactor this API to include some form of string
-        builder so we can draw lines between children properly.
 
         Returns:
             str: A string representation of the relational tree

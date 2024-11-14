@@ -4,8 +4,8 @@ TODO: add file-level docstring
 
 import pytest
 
-from pydough.relational.relational_expressions.column_reference import ColumnReference
-from pydough.relational.scan import Scan
+from pydough.relational.relational_expressions import ColumnReference
+from pydough.relational.relational_nodes import Scan
 from pydough.types import PyDoughType, UnknownType
 
 
