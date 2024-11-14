@@ -7,7 +7,7 @@ class for more specific implementations.
 
 from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression as SQLGlotExpression
+from pydough.relational.relational_visitor import RelationalVisitor
 
 from .abstract import Relational
 from .relational_expressions import RelationalExpression
@@ -38,10 +38,8 @@ class Scan(Relational):
     def node_equals(self, other: Relational) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_scan(self)
 
     def to_string(self) -> str:
         return f"SCAN(table={self.table_name}, columns={self.columns})"

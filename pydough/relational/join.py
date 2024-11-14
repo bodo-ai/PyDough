@@ -6,8 +6,7 @@ This node is responsible for holding all types of joins.
 from collections.abc import MutableMapping
 from enum import Enum
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
+from pydough.relational.relational_visitor import RelationalVisitor
 from pydough.types.boolean_type import BooleanType
 
 from .abstract import Relational
@@ -64,11 +63,6 @@ class Join(Relational):
     def inputs(self):
         return [self.left, self.right]
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Join)
@@ -79,5 +73,7 @@ class Join(Relational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the inputs?
         return f"JOIN(cond={self.condition}, type={self.join_type.value}, columns={self.columns})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_join(self)

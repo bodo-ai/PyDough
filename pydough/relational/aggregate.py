@@ -6,7 +6,7 @@ keys and aggregate functions.
 
 from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression as SQLGlotExpression
+from pydough.relational.relational_visitor import RelationalVisitor
 
 from .abstract import Relational
 from .relational_expressions.call_expression import CallExpression
@@ -46,11 +46,6 @@ class Aggregate(SingleRelational):
     def aggregations(self) -> MutableMapping[str, CallExpression]:
         return self._aggregations
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Aggregate)
@@ -60,5 +55,7 @@ class Aggregate(SingleRelational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"AGGREGATE(keys={self.keys}, aggregations={self.aggregations})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_aggregate(self)

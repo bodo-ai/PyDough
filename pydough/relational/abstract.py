@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 from typing import Any
 
-from sqlglot.expressions import Expression as SQLGlotExpression
+from pydough.relational.relational_visitor import RelationalVisitor
 
 from .relational_expressions import RelationalExpression
 
@@ -79,15 +79,6 @@ class Relational(ABC):
         return isinstance(other, Relational) and self.equals(other)
 
     @abstractmethod
-    def to_sqlglot(self) -> SQLGlotExpression:
-        """Translate the given relational node
-        and its children to a SQLGlot expression.
-
-        Returns:
-            Expression: A SqlGlot expression representing the relational node.
-        """
-
-    @abstractmethod
     def to_string(self) -> str:
         """
         Convert the relational node to a string.
@@ -102,3 +93,12 @@ class Relational(ABC):
 
     def __repr__(self) -> str:
         return self.to_string()
+
+    @abstractmethod
+    def accept(self, visitor: RelationalVisitor) -> None:
+        """
+        Accept a visitor to traverse the relational tree.
+
+        Args:
+            visitor (RelationalVisitor): The visitor to traverse the tree.
+        """

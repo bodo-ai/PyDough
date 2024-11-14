@@ -6,7 +6,7 @@ as any other traits that impact the shape/display of the final output.
 
 from collections.abc import MutableSequence
 
-from sqlglot.expressions import Expression as SQLGlotExpression
+from pydough.relational.relational_visitor import RelationalVisitor
 
 from .abstract import Relational
 from .relational_expressions import ColumnOrdering, RelationalExpression
@@ -46,11 +46,6 @@ class RelationalRoot(SingleRelational):
     def orderings(self) -> MutableSequence[ColumnOrdering]:
         return self._orderings
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, RelationalRoot)
@@ -60,5 +55,7 @@ class RelationalRoot(SingleRelational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"ROOT(columns={self.ordered_columns}, orderings={self.orderings})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_root(self)
