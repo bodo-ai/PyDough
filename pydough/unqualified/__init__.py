@@ -20,7 +20,11 @@ __all__ = [
     "BACK",
     "PARTITION",
     "SUM",
+    "AVG",
+    "MIN",
+    "MAX",
     "COUNT",
+    "YEAR",
     "LOWER",
     "UPPER",
     "STARTSWITH",
@@ -48,13 +52,17 @@ from .unqualified_node import (
     UnqualifiedWhere,
 )
 from .unqualified_operator import (
+    AVG,
     CONTAINS,
     COUNT,
     ENDSWITH,
     LOWER,
+    MAX,
+    MIN,
     STARTSWITH,
     SUM,
     UPPER,
+    YEAR,
     UnqualifiedOperator,
 )
 from .unqualified_transform import init_pydough_context, transform_code

@@ -9,7 +9,15 @@ from collections.abc import Callable
 import pytest
 from test_utils import graph_fetcher
 from tpch_test_functions import (
+    impl_tpch_q1,
+    impl_tpch_q2,
+    impl_tpch_q3,
+    impl_tpch_q4,
+    impl_tpch_q5,
     impl_tpch_q6,
+    impl_tpch_q7,
+    impl_tpch_q8,
+    impl_tpch_q9,
     impl_tpch_q10,
 )
 
@@ -260,13 +268,53 @@ def test_unqualified_to_string(
     "func, as_string",
     [
         pytest.param(
+            impl_tpch_q1,
+            "PARTITION(TPCH.Lineitems.WHERE((TPCH.ship_date <= datetime.date(1998, 12, 1):DateType())), name='l', by=(TPCH.return_flag, TPCH.line_status))(return_flag=TPCH.return_flag, line_status=TPCH.line_status, sum_qty=SUM(TPCH.l.quantity), sum_base_price=SUM(TPCH.l.extended_price), sum_disc_price=SUM((TPCH.l.extended_price * (1:Int64Type() - TPCH.l.discount))), sum_charge=SUM(((TPCH.l.extended_price * (1:Int64Type() - TPCH.l.discount)) * (1:Int64Type() + TPCH.l.tax))), avg_qty=AVG(TPCH.l.quantity), avg_price=AVG(TPCH.l.extended_price), avg_disc=AVG(TPCH.l.discount), count_order=COUNT(TPCH.l)).ORDER_BY(TPCH.return_flag.ASC(na_pos='last'), TPCH.line_status.ASC(na_pos='last'))",
+            id="tpch_q1",
+        ),
+        pytest.param(
+            impl_tpch_q2,
+            "PARTITION(TPCH.Nations.WHERE((TPCH.region.name == 'EUROPE':StringType())).suppliers.parts_supplied, name='p', by=(TPCH.part_key))(best_cost=MIN(TPCH.ps_supplycost)).p.WHERE((TPCH.ps_supplycost == TPCH.BACK(_expr0=1).best_cost)).WHERE((TPCH.ps_supplycost == TPCH.BACK(_expr0=1).best_cost))(s_acctbal=TPCH.BACK(_expr0=1).account_balance, s_name=TPCH.BACK(_expr0=1).name, n_name=TPCH.BACK(_expr0=2).name, p_partkey=TPCH.key, p_mfgr=TPCH.mfgr, s_address=TPCH.BACK(_expr0=1).address, s_phone=TPCH.BACK(_expr0=1).phone, s_comment=TPCH.BACK(_expr0=1).comment).ORDER_BY(TPCH.account_balance.DESC(na_pos='last'), TPCH.n_name.ASC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'), TPCH.p_partkey.ASC(na_pos='last'))",
+            id="tpch_q2",
+        ),
+        pytest.param(
+            impl_tpch_q3,
+            "PARTITION(TPCH.Orders.WHERE(((TPCH.customer.mktsegment == 'BUILDING':StringType()) & (TPCH.order_date < datetime.date(1995, 3, 15):DateType()))).lines.WHERE((TPCH.ship_date > datetime.date(1995, 3, 15):DateType()))(order_date=TPCH.BACK(_expr0=1).order_date, ship_priority=TPCH.BACK(_expr0=1).ship_priority), name='l', by=(TPCH.order_key, TPCH.order_date, TPCH.ship_priority))(l_orderkey=TPCH.order_key, revenue=SUM((TPCH.l.extended_price * (1:Int64Type() - TPCH.l.discount))), o_orderdate=TPCH.order_date, o_shippriority=TPCH.ship_priority).TOP_K(10, by=(TPCH.revenue.DESC(na_pos='last'), TPCH.o_orderdate.ASC(na_pos='last'), TPCH.l_orderkey.ASC(na_pos='last')))",
+            id="tpch_q3",
+        ),
+        pytest.param(
+            impl_tpch_q4,
+            "PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1993, 7, 1):DateType()) & (TPCH.order_date < datetime.date(1993, 10, 1):DateType())) & (COUNT(TPCH.lines.WHERE((TPCH.commit_date < TPCH.receipt_date))) > 0:Int64Type()))), name='o', by=(TPCH.order_priority))(_expr0=TPCH.order_priority, order_count=COUNT(TPCH.o)).ORDER_BY(TPCH.order_priority.ASC(na_pos='last'))",
+            id="tpch_q4",
+        ),
+        pytest.param(
+            impl_tpch_q5,
+            "TPCH.Nations.WHERE((TPCH.region.name == 'ASIA':StringType()))(n_name=TPCH.name, revenue=SUM(TPCH.customers.orders.WHERE(((TPCH.order_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.order_date < datetime.date(1995, 1, 1):DateType()))).lines.WHERE((TPCH.supplier.nation.name == TPCH.BACK(_expr0=3).name)).value)).ORDER_BY(TPCH.revenue.DESC(na_pos='last'))",
+            id="tpch_q5",
+        ),
+        pytest.param(
             impl_tpch_q6,
             "TPCH.TPCH(revenue=SUM(TPCH.Lineitems.WHERE(((((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType())) & (TPCH.discount < 0.07:Float64Type())) & (TPCH.quantity < 24:Int64Type())))(amt=(TPCH.extendedprice * TPCH.discount)).amt))",
             id="tpch_q6",
         ),
         pytest.param(
+            impl_tpch_q7,
+            "PARTITION(TPCH.Lineitems(supp_nation=TPCH.supplier.nation.name, cust_nation=TPCH.customer.nation.name, l_year=YEAR(TPCH.ship_date), volume=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).WHERE((((TPCH.ship_date >= datetime.date(1995, 1, 1):DateType()) & (TPCH.ship_date <= datetime.date(1996, 12, 31):DateType())) & (((TPCH.supp_nation == 'France':StringType()) & (TPCH.cust_nation == 'Germany':StringType())) | ((TPCH.supp_nation == 'Germany':StringType()) & (TPCH.cust_nation == 'France':StringType()))))), name='l', by=(TPCH.supp_nation, TPCH.cust_nation, TPCH.l_year))(supp_nation=TPCH.supp_nation, cust_nation=TPCH.cust_nation, l_year=TPCH.l_year, revenue=SUM(TPCH.l.volume)).ORDER_BY(TPCH.supp_nation.ASC(na_pos='last'), TPCH.cust_nation.ASC(na_pos='last'), TPCH.l_year.ASC(na_pos='last'))",
+            id="tpch_q7",
+        ),
+        pytest.param(
+            impl_tpch_q8,
+            "PARTITION(TPCH.Orders.WHERE((((TPCH.ship_date >= datetime.date(1995, 1, 1):DateType()) & (TPCH.ship_date <= datetime.date(1996, 12, 31):DateType())) & (TPCH.customer.region.name == 'AMERICA':StringType()))).lines(volume=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).supplier.WHERE((TPCH.ps_part.p_type == 'ECONOMY ANODIZED STEEL':StringType()))(o_year=YEAR(TPCH.BACK(_expr0=2).order_date), volume=TPCH.BACK(_expr0=1).volume, brazil_volume=TPCH.IFF(_expr0=(TPCH.nation.name == 'BRAZIL':StringType()), _expr1=TPCH.BACK(_expr0=1).volume, _expr2=0)), name='v', by=(TPCH.o_year))(o_year=TPCH.o_year, mkt_share=(SUM(TPCH.v.brazil_volume) / SUM(TPCH.v.volume)))",
+            id="tpch_q8",
+        ),
+        pytest.param(
+            impl_tpch_q9,
+            "PARTITION(TPCH.Nations.suppliers.lines(nation=TPCH.BACK(_expr0=2).name, o_year=YEAR(TPCH.order.order_date), value=((TPCH.extended_price * (1:Int64Type() - TPCH.discount)) - (TPCH.ps_supplycost * TPCH.quantity))).WHERE(CONTAINS(TPCH.part.name, 'green':StringType())), name='l', by=(TPCH.nation, TPCH.o_year))(nation=TPCH.nation, o_year=TPCH.o_year, amount=SUM(TPCH.l.value)).ORDER_BY(TPCH.nation.ASC(na_pos='last'), TPCH.o_year.dESC())",
+            id="tpch_q9",
+        ),
+        pytest.param(
             impl_tpch_q10,
-            "TPCH.Customers(key=TPCH.key, name=TPCH.name, revenue=SUM(TPCH.orders.WHERE(((TPCH.order_date >= datetime.date(1993, 10, 1):DateType()) & (TPCH.order_date < datetime.date(1994, 1, 1):DateType()))).lines.WHERE((TPCH.return_flag == 'R':StringType()))(amt=(TPCH.extendedprice * (1:Int64Type() - TPCH.discount))).amt), acctbal=TPCH.acctbal, nation_name=TPCH.nation.name, address=TPCH.address, phone=TPCH.phone, comment=TPCH.comment).ORDER_BY(TPCH.revenue.DESC(na_pos='last'), TPCH.key.ASC(na_pos='last')).TOP_K(20)",
+            "TPCH.Customers(c_key=TPCH.key, c_name=TPCH.name, revenue=SUM(TPCH.orders.WHERE(((TPCH.order_date >= datetime.date(1993, 10, 1):DateType()) & (TPCH.order_date < datetime.date(1994, 1, 1):DateType()))).lines.WHERE((TPCH.return_flag == 'R':StringType()))(amt=(TPCH.extendedprice * (1:Int64Type() - TPCH.discount))).amt), c_acctbal=TPCH.acctbal, n_name=TPCH.nation.name, c_address=TPCH.address, c_phone=TPCH.phone, c_comment=TPCH.comment).ORDER_BY(TPCH.revenue.DESC(na_pos='last'), TPCH.c_key.ASC(na_pos='last')).TOP_K(20)",
             id="tpch_q10",
         ),
     ],

@@ -24,11 +24,12 @@ __all__ = [
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (
+    AllowAny,
     ConstantType,
     RequireNumArgs,
     SelectArgumentType,
 )
-from pydough.types import BooleanType
+from pydough.types import BooleanType, Float64Type, Int64Type
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
@@ -53,4 +54,13 @@ LOWER = ExpressionFunctionOperator(
     "LOWER", False, RequireNumArgs(1), SelectArgumentType(0)
 )
 SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
+AVG = ExpressionFunctionOperator(
+    "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
+)
+COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
+MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
+MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
+YEAR = ExpressionFunctionOperator(
+    "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)

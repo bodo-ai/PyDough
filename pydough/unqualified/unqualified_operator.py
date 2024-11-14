@@ -46,9 +46,13 @@ class UnqualifiedOperator:
 
 
 SUM = UnqualifiedOperator("SUM")
+AVG = UnqualifiedOperator("AVG")
+MIN = UnqualifiedOperator("MIN")
+MAX = UnqualifiedOperator("MAX")
 COUNT = UnqualifiedOperator("COUNT")
 LOWER = UnqualifiedOperator("LOWER")
 UPPER = UnqualifiedOperator("UPPER")
+YEAR = UnqualifiedOperator("YEAR")
 STARTSWITH = UnqualifiedOperator("STARTSWITH")
 ENDSWITH = UnqualifiedOperator("ENDSWITH")
 CONTAINS = UnqualifiedOperator("CONTAINS")
