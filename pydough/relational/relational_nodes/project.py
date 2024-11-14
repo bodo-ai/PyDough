@@ -36,11 +36,9 @@ class Project(SingleRelational):
     def equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Project)
-            # TODO: Do we need a fast path for caching the inputs?
-            and self.input == other.input
             and self.columns == other.columns
+            and self.input.equals(other.input)
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"PROJECT(columns={self.columns})"
