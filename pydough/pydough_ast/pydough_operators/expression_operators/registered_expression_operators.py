@@ -21,6 +21,15 @@ __all__ = [
     "LOWER",
     "IFF",
     "SUM",
+    "YEAR",
+    "NOT",
+    "MIN",
+    "MAX",
+    "COUNT",
+    "STARTSWITH",
+    "ENDSWITH",
+    "CONTAINS",
+    "LIKE",
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (
@@ -53,6 +62,21 @@ BXR = BinaryOperator(BinOp.BXR, RequireNumArgs(2), SelectArgumentType(0))
 LOWER = ExpressionFunctionOperator(
     "LOWER", False, RequireNumArgs(1), SelectArgumentType(0)
 )
+UPPER = ExpressionFunctionOperator(
+    "UPPER", False, RequireNumArgs(1), SelectArgumentType(0)
+)
+STARTSWITH = ExpressionFunctionOperator(
+    "STARTSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+ENDSWITH = ExpressionFunctionOperator(
+    "ENDSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+CONTAINS = ExpressionFunctionOperator(
+    "CONTAINS", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+LIKE = ExpressionFunctionOperator(
+    "LIKE", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
 SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
 AVG = ExpressionFunctionOperator(
     "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
@@ -63,4 +87,7 @@ MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentT
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+NOT = ExpressionFunctionOperator(
+    "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())
 )

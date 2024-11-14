@@ -188,6 +188,9 @@ class UnqualifiedNode(ABC):
     def __neg__(self):
         return 0 - self
 
+    def __invert__(self):
+        return UnqualifiedOperation("NOT", [self])
+
     def __call__(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
         counter = 0

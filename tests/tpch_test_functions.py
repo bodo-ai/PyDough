@@ -2,7 +2,18 @@ __all__ = ["impl_tpch_q6", "impl_tpch_q6", "impl_tpch_q10"]
 
 import datetime
 
-from pydough.unqualified import SUM, PARTITION, AVG, MIN, MAX, COUNT, YEAR, CONTAINS
+from pydough.unqualified import (
+    SUM,
+    PARTITION,
+    AVG,
+    MIN,
+    MAX,
+    COUNT,
+    YEAR,
+    CONTAINS,
+    IFF,
+    LIKE,
+)
 
 # ruff: noqa
 # mypy: ignore-errors
@@ -209,4 +220,56 @@ def impl_tpch_q10():
         )
         .ORDER_BY(revenue.DESC(), c_key.ASC())
         .TOP_K(20)
+    )
+
+
+def impl_tpch_q11():
+    """
+    PyDough implementation of TPCH Q11.
+
+    TODO: this one may need fixing since it relates a global aggregated value
+    to something done within a partition.
+    """
+    selected_records = PartSupp.WHERE(supplier.nation.name == "GERMANY")
+    min_market_share = TPCH(
+        amt=SUM(selected_records.supplycost * selected_records.availqty) * 0.0001
+    )
+    return PARTITION(selected_records, name="ps", by=part_key)(
+        ps_partkey=part_key, val=SUM(ps.supplycost * ps.availqty)
+    ).WHERE(val > min_market_share.amt)
+
+
+def impl_tpch_q12():
+    """
+    PyDough implementation of TPCH Q12.
+    """
+    selected_lines = Lineitems.WHERE(
+        ((ship_mode == "MAIL") | (ship_mode == "SHIP"))
+        & (ship_date < commit_date)
+        & (commit_date < receipt_date)
+        & (receipt_date >= datetime.date(1994, 1, 1))
+        & (receipt_date < datetime.date(1995, 1, 1))
+    )(
+        is_high_priority=(order.order_priority == "1-URGENT")
+        | (order.order_priority == "2-HIGH"),
+    )
+    return PARTITION(selected_lines, "l", by=ship_mode)(
+        ship_mode=ship_mode,
+        high_line_count=SUM(l.is_high_priority),
+        low_line_count=SUM(~(l.is_high_priority)),
+    ).ORDER_BY(ship_mode.ASC())
+
+
+def impl_tpch_q13():
+    """
+    PyDough implementation of TPCH Q12.
+    """
+    customer_info = Customers(
+        key=key,
+        num_non_special_orders=COUNT(
+            orders.WHERE(~(LIKE(comment, "%special%requests%")))
+        ),
+    )
+    return PARTITION(customer_info, name="custs", by=num_non_special_orders)(
+        c_count=num_non_special_orders, custdist=COUNT(custs)
     )
