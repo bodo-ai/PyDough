@@ -377,6 +377,9 @@ def test_project_equals(
     ],
 )
 def test_limit_to_string(limit: Limit, output: str):
+    """
+    Tests the to_string() functionality for the Limit node.
+    """
     assert limit.to_string() == output
 
 
@@ -530,6 +533,9 @@ def test_limit_to_string(limit: Limit, output: str):
     ],
 )
 def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool):
+    """
+    Tests the equality functionality for the Limit node.
+    """
     assert first_limit.equals(second_limit) == output
 
 

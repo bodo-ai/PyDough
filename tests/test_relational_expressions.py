@@ -165,7 +165,10 @@ def test_literals_equal(
         ),
     ],
 )
-def test_column_ordering_to_string(ordering: ColumnSortInfo, output: str):
+def test_column_sort_info_to_string(ordering: ColumnSortInfo, output: str):
+    """
+    Tests the to_string() method of the ColumnSortInfo class.
+    """
     assert ordering.to_string() == output
 
 
@@ -204,5 +207,11 @@ def test_column_ordering_to_string(ordering: ColumnSortInfo, output: str):
         ),
     ],
 )
-def test_column_ordering_equal(ordering1: ColumnSortInfo, ordering2: Any, output: bool):
+def test_column_sort_info_equals(
+    ordering1: ColumnSortInfo, ordering2: Any, output: bool
+):
+    """
+    Tests the equality behavior of a ColumnSortInfo with
+    another object.
+    """
     assert (ordering1 == ordering2) == output
