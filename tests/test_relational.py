@@ -1072,6 +1072,9 @@ def test_filter_requires_boolean_condition():
     ],
 )
 def test_root_to_string(root: RelationalRoot, output: str):
+    """
+    Tests the to_string() functionality for the Root node.
+    """
     assert root.to_string() == output
 
 
@@ -1256,6 +1259,9 @@ def test_root_to_string(root: RelationalRoot, output: str):
     ],
 )
 def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
+    """
+    Tests the equality functionality for the Root node.
+    """
     assert first_root.equals(second_root) == output
 
 
