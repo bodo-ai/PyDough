@@ -621,6 +621,9 @@ def test_invalid_limit(literal: LiteralExpression):
     ],
 )
 def test_aggregate_to_string(agg: Aggregate, output: str):
+    """
+    Tests the to_string() functionality for the Aggregate node.
+    """
     assert agg.to_string() == output
 
 
@@ -812,6 +815,9 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
     ],
 )
 def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
+    """
+    Tests the equality functionality for the Aggregate node.
+    """
     assert first_agg.equals(second_agg) == output
 
 

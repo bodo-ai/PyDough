@@ -235,6 +235,9 @@ def test_column_sort_info_equals(
     ],
 )
 def test_call_expressions_to_string(expr: CallExpression, output: str):
+    """
+    Tests the to_string() method of the CallExpression class.
+    """
     assert expr.to_string() == output
 
 
@@ -282,6 +285,10 @@ def test_call_expressions_to_string(expr: CallExpression, output: str):
 def test_call_expressions_equal(
     expr1: CallExpression, expr2: RelationalExpression, output: bool
 ):
+    """
+    Tests the equality behavior of a CallExpression with another
+    RelationalExpression.
+    """
     assert expr1.equals(expr2) == output
 
 
@@ -301,4 +308,7 @@ def test_call_expressions_equal(
     ],
 )
 def test_call_expression_is_aggregation(expr: CallExpression, output: bool):
+    """
+    Tests the is_aggregation property of the CallExpression class.
+    """
     assert expr.is_aggregation == output
