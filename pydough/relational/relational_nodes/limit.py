@@ -6,12 +6,13 @@ on explicit ordering of the input relation.
 
 from collections.abc import MutableMapping, MutableSequence
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
+from pydough.relational.relational_expressions import (
+    ColumnSortInfo,
+    RelationalExpression,
+)
 from pydough.types.integer_types import IntegerType
 
-from .abstract import Relational
-from .relational_expressions import ColumnOrdering, RelationalExpression
+from .abstract_node import Relational
 from .single_relational import SingleRelational
 
 
@@ -27,7 +28,7 @@ class Limit(SingleRelational):
         input: Relational,
         limit: RelationalExpression,
         columns: MutableMapping[str, RelationalExpression],
-        orderings: MutableSequence[ColumnOrdering] | None = None,
+        orderings: MutableSequence[ColumnSortInfo] | None = None,
     ) -> None:
         super().__init__(input, columns)
         # Note: The limit is a relational expression because it should be a constant
@@ -37,7 +38,7 @@ class Limit(SingleRelational):
             limit.data_type, IntegerType
         ), "Limit must be an integer type."
         self._limit: RelationalExpression = limit
-        self._orderings: MutableSequence[ColumnOrdering] = (
+        self._orderings: MutableSequence[ColumnSortInfo] = (
             [] if orderings is None else orderings
         )
 
@@ -46,13 +47,8 @@ class Limit(SingleRelational):
         return self._limit
 
     @property
-    def orderings(self) -> MutableSequence[ColumnOrdering]:
+    def orderings(self) -> MutableSequence[ColumnSortInfo]:
         return self._orderings
-
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
 
     def node_equals(self, other: Relational) -> bool:
         return (
@@ -63,5 +59,4 @@ class Limit(SingleRelational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"LIMIT(limit={self.limit}, columns={self.columns}, orderings={self.orderings})"

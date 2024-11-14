@@ -6,23 +6,24 @@ from typing import Any
 
 import pytest
 
-from pydough.pydough_ast.pydough_operators.expression_operators import EQU, LOWER, SUM
-from pydough.relational import Relational
-from pydough.relational.aggregate import Aggregate
-from pydough.relational.filter import Filter
-from pydough.relational.join import Join, JoinType
-from pydough.relational.limit import Limit
-from pydough.relational.project import Project
+from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
 from pydough.relational.relational_expressions import (
-    ColumnOrdering,
-)
-from pydough.relational.relational_expressions.call_expression import CallExpression
-from pydough.relational.relational_expressions.column_reference import ColumnReference
-from pydough.relational.relational_expressions.literal_expression import (
+    CallExpression,
+    ColumnReference,
+    ColumnSortInfo,
     LiteralExpression,
 )
-from pydough.relational.root import RelationalRoot
-from pydough.relational.scan import Scan
+from pydough.relational.relational_nodes import (
+    Aggregate,
+    Filter,
+    Join,
+    JoinType,
+    Limit,
+    Project,
+    Relational,
+    RelationalRoot,
+    Scan,
+)
 from pydough.types import BooleanType, Int64Type, PyDoughType, StringType, UnknownType
 
 
@@ -77,14 +78,18 @@ def make_relational_column_ordering(
         nulls_first (bool, optional): _description_. Defaults to True.
 
     Returns:
-        _type_: _description_
+        ColumnSortInfo: The column ordering information.
     """
-    return ColumnOrdering(column, ascending, nulls_first)
+    return ColumnSortInfo(column, ascending, nulls_first)
 
 
 def build_simple_scan() -> Scan:
-    # Helper function to generate a simple scan node for when
-    # relational operators need an input.
+    """
+    Build a simple scan node for reuse in tests.
+
+    Returns:
+        Scan: The Scan node.
+    """
     return Scan(
         "table",
         {
@@ -95,6 +100,9 @@ def build_simple_scan() -> Scan:
 
 
 def test_scan_inputs():
+    """
+    Tests the inputs property for the Scan node.
+    """
     scan = build_simple_scan()
     assert scan.inputs == []
 
@@ -121,6 +129,9 @@ def test_scan_inputs():
     ],
 )
 def test_scan_to_string(scan_node: Scan, output: str):
+    """
+    Tests the to_string() functionality for the Scan node.
+    """
     assert scan_node.to_string() == output
 
 
@@ -196,6 +207,9 @@ def test_scan_to_string(scan_node: Scan, output: str):
     ],
 )
 def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
+    """
+    Tests the equality functionality for the Scan node.
+    """
     assert first_scan.equals(second_scan) == output
 
 
@@ -221,6 +235,9 @@ def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
     ],
 )
 def test_project_to_string(project: Project, output: str):
+    """
+    Test the to_string() functionality for the Project node.
+    """
     assert project.to_string() == output
 
 
@@ -316,6 +333,9 @@ def test_project_to_string(project: Project, output: str):
 def test_project_equals(
     first_project: Project, second_project: Relational, output: bool
 ):
+    """
+    Tests the equality functionality for the Project node.
+    """
     assert first_project.equals(second_project) == output
 
 
@@ -368,12 +388,15 @@ def test_project_equals(
                     ),
                 ],
             ),
-            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnOrdering(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnSortInfo(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnSortInfo(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
             id="orderings",
         ),
     ],
 )
 def test_limit_to_string(limit: Limit, output: str):
+    """
+    Tests the to_string() functionality for the Limit node.
+    """
     assert limit.to_string() == output
 
 
@@ -527,6 +550,9 @@ def test_limit_to_string(limit: Limit, output: str):
     ],
 )
 def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool):
+    """
+    Tests the equality functionality for the Limit node.
+    """
     assert first_limit.equals(second_limit) == output
 
 
@@ -604,6 +630,9 @@ def test_invalid_limit(literal: LiteralExpression):
     ],
 )
 def test_aggregate_to_string(agg: Aggregate, output: str):
+    """
+    Tests the to_string() functionality for the Aggregate node.
+    """
     assert agg.to_string() == output
 
 
@@ -795,6 +824,9 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
     ],
 )
 def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
+    """
+    Tests the equality functionality for the Aggregate node.
+    """
     assert first_agg.equals(second_agg) == output
 
 
@@ -878,6 +910,9 @@ def test_aggregate_unique_keys():
     ],
 )
 def test_filter_to_string(filter: Filter, output: str):
+    """
+    Tests the to_string() functionality for the Filter node.
+    """
     assert filter.to_string() == output
 
 
@@ -992,6 +1027,9 @@ def test_filter_to_string(filter: Filter, output: str):
     ],
 )
 def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
+    """
+    Tests the equality functionality for the Filter node.
+    """
     assert first_filter.equals(second_filter) == output
 
 
@@ -1035,12 +1073,15 @@ def test_filter_requires_boolean_condition():
                     make_relational_column_reference("a"), ascending=True
                 ),
             ),
-            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=ColumnOrdering(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
+            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=ColumnSortInfo(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
             id="with_orderings",
         ),
     ],
 )
 def test_root_to_string(root: RelationalRoot, output: str):
+    """
+    Tests the to_string() functionality for the Root node.
+    """
     assert root.to_string() == output
 
 
@@ -1225,6 +1266,9 @@ def test_root_to_string(root: RelationalRoot, output: str):
     ],
 )
 def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
+    """
+    Tests the equality functionality for the Root node.
+    """
     assert first_root.equals(second_root) == output
 
 

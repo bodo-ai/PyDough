@@ -6,12 +6,10 @@ __all__ = ["CallExpression"]
 
 from collections.abc import MutableSequence
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
 from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
 from pydough.types import PyDoughType
 
-from .abstract import RelationalExpression
+from .abstract_expression import RelationalExpression
 
 
 class CallExpression(RelationalExpression):
@@ -49,18 +47,13 @@ class CallExpression(RelationalExpression):
         """
         return self._inputs
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def to_string(self) -> str:
         return f"Call(op={self.op}, inputs={self.inputs}, return_type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, CallExpression)
-            and (self.data_type == other.data_type)
             and (self.op == other.op)
             and (self.inputs == other.inputs)
+            and super().equals(other)
         )

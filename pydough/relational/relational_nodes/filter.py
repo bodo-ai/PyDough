@@ -6,12 +6,10 @@ in SQL.
 
 from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
+from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
-from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from .abstract_node import Relational
 from .single_relational import SingleRelational
 
 
@@ -37,11 +35,6 @@ class Filter(SingleRelational):
     def condition(self) -> RelationalExpression:
         return self._condition
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Filter)
@@ -50,5 +43,4 @@ class Filter(SingleRelational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"FILTER(condition={self.condition}, columns={self.columns})"

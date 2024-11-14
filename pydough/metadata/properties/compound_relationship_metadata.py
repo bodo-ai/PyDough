@@ -185,7 +185,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         # no_collisions fields from the JSON.
         primary_property_name: str = property_json["primary_property"]
         secondary_property_name: str = property_json["secondary_property"]
-        inherited_properties_mapping: MutableMapping[str, str] = property_json[
+        inherited_properties_mapping: dict[str, str] = property_json[
             "inherited_properties"
         ]
         singular: bool = property_json["singular"]
