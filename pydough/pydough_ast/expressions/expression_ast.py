@@ -33,6 +33,10 @@ class PyDoughExpressionAST(PyDoughAST):
         can collapse multiple records into a scalar value.
         """
 
+    @property
+    def key(self) -> str:
+        return self.to_string()
+
     @abstractmethod
     def to_string(self, tree_form: bool = False) -> str:
         """

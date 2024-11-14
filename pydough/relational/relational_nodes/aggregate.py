@@ -6,11 +6,13 @@ keys and aggregate functions.
 
 from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression as SQLGlotExpression
+from pydough.relational.relational_expressions import (
+    CallExpression,
+    ColumnReference,
+    RelationalExpression,
+)
 
-from .abstract import Relational
-from .relational_expressions.call_expression import CallExpression
-from .relational_expressions.column_reference import ColumnReference
+from .abstract_node import Relational
 from .single_relational import SingleRelational
 
 
@@ -27,7 +29,7 @@ class Aggregate(SingleRelational):
         keys: MutableMapping[str, ColumnReference],
         aggregations: MutableMapping[str, CallExpression],
     ) -> None:
-        total_cols = {**keys, **aggregations}
+        total_cols: MutableMapping[str, RelationalExpression] = {**keys, **aggregations}
         assert len(total_cols) == len(keys) + len(
             aggregations
         ), "Keys and aggregations must have unique names"
@@ -46,11 +48,6 @@ class Aggregate(SingleRelational):
     def aggregations(self) -> MutableMapping[str, CallExpression]:
         return self._aggregations
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Aggregate)
@@ -60,5 +57,4 @@ class Aggregate(SingleRelational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"AGGREGATE(keys={self.keys}, aggregations={self.aggregations})"

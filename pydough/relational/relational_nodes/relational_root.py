@@ -6,10 +6,12 @@ as any other traits that impact the shape/display of the final output.
 
 from collections.abc import MutableSequence
 
-from sqlglot.expressions import Expression as SQLGlotExpression
+from pydough.relational.relational_expressions import (
+    ColumnSortInfo,
+    RelationalExpression,
+)
 
-from .abstract import Relational
-from .relational_expressions import ColumnOrdering, RelationalExpression
+from .abstract_node import Relational
 from .single_relational import SingleRelational
 
 
@@ -24,7 +26,7 @@ class RelationalRoot(SingleRelational):
         self,
         input: Relational,
         ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
-        orderings: MutableSequence[ColumnOrdering] | None = None,
+        orderings: MutableSequence[ColumnSortInfo] | None = None,
     ) -> None:
         columns = dict(ordered_columns)
         assert len(columns) == len(
@@ -34,7 +36,7 @@ class RelationalRoot(SingleRelational):
         self._ordered_columns: MutableSequence[tuple[str, RelationalExpression]] = (
             ordered_columns
         )
-        self._orderings: MutableSequence[ColumnOrdering] = (
+        self._orderings: MutableSequence[ColumnSortInfo] = (
             [] if orderings is None else orderings
         )
 
@@ -43,13 +45,8 @@ class RelationalRoot(SingleRelational):
         return self._ordered_columns
 
     @property
-    def orderings(self) -> MutableSequence[ColumnOrdering]:
+    def orderings(self) -> MutableSequence[ColumnSortInfo]:
         return self._orderings
-
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
 
     def node_equals(self, other: Relational) -> bool:
         return (
@@ -60,5 +57,4 @@ class RelationalRoot(SingleRelational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"ROOT(columns={self.ordered_columns}, orderings={self.orderings})"
