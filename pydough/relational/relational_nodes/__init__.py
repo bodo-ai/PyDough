@@ -3,10 +3,8 @@ TODO: add module-level docstring
 """
 
 __all__ = [
-    "Column",
     "Relational",
+    "Scan",
 ]
-from .abstract import (
-    Column,
-    Relational,
-)
+from .abstract_node import Relational
+from .scan import Scan
