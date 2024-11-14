@@ -23,11 +23,6 @@ class RelationalExpression(ABC):
     def data_type(self) -> PyDoughType:
         return self._data_type
 
-    @property
-    def is_aggregation(self) -> bool:
-        return False
-
-    @abstractmethod
     def equals(self, other: "RelationalExpression") -> bool:
         """
         Determine if two RelationalExpression nodes are exactly identical,
@@ -40,9 +35,13 @@ class RelationalExpression(ABC):
         Returns:
             bool: Are the two relational expressions equal.
         """
+        return (
+            isinstance(other, RelationalExpression)
+            and self.data_type == other.data_type
+        )
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, RelationalExpression) and self.equals(other)
+        return self.equals(other)
 
     @abstractmethod
     def to_string(self) -> str:

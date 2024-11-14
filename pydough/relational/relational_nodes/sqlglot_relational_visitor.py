@@ -5,14 +5,14 @@ SQLGlot query.
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 
-from . import RelationalVisitor
-from .abstract import Relational
+from .abstract_node import Relational
 from .aggregate import Aggregate
 from .filter import Filter
 from .join import Join
 from .limit import Limit
 from .project import Project
-from .root import RelationalRoot
+from .relational_root import RelationalRoot
+from .relational_visitor import RelationalVisitor
 from .scan import Scan
 
 __all__ = ["SQLGlotRelationalVisitor"]

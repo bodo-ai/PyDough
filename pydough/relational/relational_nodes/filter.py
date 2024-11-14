@@ -6,11 +6,11 @@ in SQL.
 
 from collections.abc import MutableMapping
 
-from pydough.relational.relational_visitor import RelationalVisitor
+from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
-from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -34,6 +34,9 @@ class Filter(SingleRelational):
 
     @property
     def condition(self) -> RelationalExpression:
+        """
+        The condition that is being filtered on.
+        """
         return self._condition
 
     def node_equals(self, other: Relational) -> bool:

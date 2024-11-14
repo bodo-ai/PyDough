@@ -6,10 +6,13 @@ as any other traits that impact the shape/display of the final output.
 
 from collections.abc import MutableSequence
 
-from pydough.relational.relational_visitor import RelationalVisitor
+from pydough.relational.relational_expressions import (
+    ColumnSortInfo,
+    RelationalExpression,
+)
 
-from .abstract import Relational
-from .relational_expressions import ColumnOrdering, RelationalExpression
+from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -24,7 +27,7 @@ class RelationalRoot(SingleRelational):
         self,
         input: Relational,
         ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
-        orderings: MutableSequence[ColumnOrdering] | None = None,
+        orderings: MutableSequence[ColumnSortInfo] | None = None,
     ) -> None:
         columns = dict(ordered_columns)
         assert len(columns) == len(
@@ -34,16 +37,23 @@ class RelationalRoot(SingleRelational):
         self._ordered_columns: MutableSequence[tuple[str, RelationalExpression]] = (
             ordered_columns
         )
-        self._orderings: MutableSequence[ColumnOrdering] = (
+        self._orderings: MutableSequence[ColumnSortInfo] = (
             [] if orderings is None else orderings
         )
 
     @property
     def ordered_columns(self) -> MutableSequence[tuple[str, RelationalExpression]]:
+        """
+        The columns in the final order that the output should be in.
+        """
         return self._ordered_columns
 
     @property
-    def orderings(self) -> MutableSequence[ColumnOrdering]:
+    def orderings(self) -> MutableSequence[ColumnSortInfo]:
+        """
+        The orderings that are used to determine the final output order if
+        any.
+        """
         return self._orderings
 
     def node_equals(self, other: Relational) -> bool:

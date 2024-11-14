@@ -9,7 +9,7 @@ from collections.abc import MutableSequence
 from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
 from pydough.types import PyDoughType
 
-from .abstract import RelationalExpression
+from .abstract_expression import RelationalExpression
 from .relational_expression_visitor import RelationalExpressionVisitor
 
 
@@ -54,9 +54,9 @@ class CallExpression(RelationalExpression):
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, CallExpression)
-            and (self.data_type == other.data_type)
             and (self.op == other.op)
             and (self.inputs == other.inputs)
+            and super().equals(other)
         )
 
     def accept(self, visitor: RelationalExpressionVisitor) -> None:

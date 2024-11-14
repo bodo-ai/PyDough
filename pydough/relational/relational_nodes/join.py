@@ -6,11 +6,11 @@ This node is responsible for holding all types of joins.
 from collections.abc import MutableMapping
 from enum import Enum
 
-from pydough.relational.relational_visitor import RelationalVisitor
+from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
-from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 
 
 class JoinType(Enum):
@@ -45,18 +45,30 @@ class Join(Relational):
 
     @property
     def left(self) -> Relational:
+        """
+        The left input to the join.
+        """
         return self._left
 
     @property
     def right(self) -> Relational:
+        """
+        The right input to the join.
+        """
         return self._right
 
     @property
     def condition(self) -> RelationalExpression:
+        """
+        The condition for the join.
+        """
         return self._condition
 
     @property
     def join_type(self) -> JoinType:
+        """
+        The type of the join.
+        """
         return self._join_type
 
     @property

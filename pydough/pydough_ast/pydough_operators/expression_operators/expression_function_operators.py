@@ -32,6 +32,10 @@ class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
         self._is_aggregation: bool = is_aggregation
 
     @property
+    def key(self) -> str:
+        return f"FUNCTION-{self.function_name}"
+
+    @property
     def is_aggregation(self) -> bool:
         return self._is_aggregation
 

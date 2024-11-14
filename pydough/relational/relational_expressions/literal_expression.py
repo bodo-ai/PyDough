@@ -9,7 +9,7 @@ from typing import Any
 
 from pydough.types import PyDoughType
 
-from .abstract import RelationalExpression
+from .abstract_expression import RelationalExpression
 from .relational_expression_visitor import RelationalExpressionVisitor
 
 
@@ -45,8 +45,8 @@ class LiteralExpression(RelationalExpression):
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, LiteralExpression)
-            and (self.data_type == other.data_type)
             and (self.value == other.value)
+            and super().equals(other)
         )
 
     def accept(self, visitor: RelationalExpressionVisitor) -> None:

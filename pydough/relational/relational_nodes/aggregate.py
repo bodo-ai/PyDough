@@ -6,11 +6,14 @@ keys and aggregate functions.
 
 from collections.abc import MutableMapping
 
-from pydough.relational.relational_visitor import RelationalVisitor
+from pydough.relational.relational_expressions import (
+    CallExpression,
+    ColumnReference,
+    RelationalExpression,
+)
 
-from .abstract import Relational
-from .relational_expressions.call_expression import CallExpression
-from .relational_expressions.column_reference import ColumnReference
+from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -27,7 +30,7 @@ class Aggregate(SingleRelational):
         keys: MutableMapping[str, ColumnReference],
         aggregations: MutableMapping[str, CallExpression],
     ) -> None:
-        total_cols = {**keys, **aggregations}
+        total_cols: MutableMapping[str, RelationalExpression] = {**keys, **aggregations}
         assert len(total_cols) == len(keys) + len(
             aggregations
         ), "Keys and aggregations must have unique names"
@@ -40,10 +43,16 @@ class Aggregate(SingleRelational):
 
     @property
     def keys(self) -> MutableMapping[str, ColumnReference]:
+        """
+        The keys for the aggregation operation.
+        """
         return self._keys
 
     @property
     def aggregations(self) -> MutableMapping[str, CallExpression]:
+        """
+        The aggregation functions for the aggregation operation.
+        """
         return self._aggregations
 
     def node_equals(self, other: Relational) -> bool:

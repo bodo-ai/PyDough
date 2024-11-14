@@ -237,7 +237,7 @@
             "name": {"type": "table_column", "column_name": "p_name", "data_type": "string"},
             "manufacturer": {"type": "table_column", "column_name": "p_mfgr", "data_type": "string"},
             "brand": {"type": "table_column", "column_name": "p_brand", "data_type": "string"},
-            "type": {"type": "table_column", "column_name": "p_type", "data_type": "string"},
+            "part_type": {"type": "table_column", "column_name": "p_type", "data_type": "string"},
             "size": {"type": "table_column", "column_name": "p_sie", "data_type": "int64"},
             "container": {"type": "table_column", "column_name": "p_container", "data_type": "string"},
             "retail_price": {"type": "table_column", "column_name": "p_retailprice", "data_type": "decimal[12,2]"},
@@ -320,6 +320,7 @@
             "receipt_date": {"type": "table_column", "column_name": "l_receiptdate", "data_type": "date"},
             "ship_instruct": {"type": "table_column", "column_name": "l_shipinstruct", "data_type": "string"},
             "ship_mode": {"type": "table_column", "column_name": "l_mode", "data_type": "string"},
+            "return_flag": {"type": "table_column", "column_name": "l_returnflag", "data_type": "string"},
             "comment": {"type": "table_column", "column_name": "l_comment", "data_type": "string"},
             "part_and_supplier": {
               "type": "simple_join",

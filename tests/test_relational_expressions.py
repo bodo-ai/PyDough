@@ -11,13 +11,11 @@ import pytest
 
 from pydough.pydough_ast.pydough_operators.expression_operators import LOWER, SUM
 from pydough.relational.relational_expressions import (
-    ColumnOrdering,
-    RelationalExpression,
-)
-from pydough.relational.relational_expressions.call_expression import CallExpression
-from pydough.relational.relational_expressions.column_reference import ColumnReference
-from pydough.relational.relational_expressions.literal_expression import (
+    CallExpression,
+    ColumnReference,
+    ColumnSortInfo,
     LiteralExpression,
+    RelationalExpression,
 )
 from pydough.types import Int32Type, Int64Type, StringType
 
@@ -43,6 +41,9 @@ from pydough.types import Int32Type, Int64Type, StringType
     ],
 )
 def test_column_reference_to_string(column_ref: ColumnReference, output: str):
+    """
+    Tests the to_string() method of the ColumnReference class.
+    """
     assert column_ref.to_string() == output
 
 
@@ -90,6 +91,10 @@ def test_column_reference_to_string(column_ref: ColumnReference, output: str):
 def test_column_reference_equals(
     ref1: ColumnReference, ref2: RelationalExpression, output: bool
 ):
+    """
+    Tests the equality behavior of a ColumnReference with
+    another RelationalExpression.
+    """
     assert ref1.equals(ref2) == output
 
 
@@ -109,6 +114,9 @@ def test_column_reference_equals(
     ],
 )
 def test_literal_expression_to_string(literal: LiteralExpression, output: str):
+    """
+    Tests the to_string() method of the LiteralExpression class.
+    """
     assert literal.to_string() == output
 
 
@@ -144,6 +152,10 @@ def test_literal_expression_to_string(literal: LiteralExpression, output: str):
 def test_literals_equal(
     ref1: LiteralExpression, ref2: RelationalExpression, output: bool
 ):
+    """
+    Tests the equality behavior of a LiteralExpression with
+    another RelationalExpression.
+    """
     assert ref1.equals(ref2) == output
 
 
@@ -151,28 +163,31 @@ def test_literals_equal(
     "ordering, output",
     [
         pytest.param(
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
-            "ColumnOrdering(column=Column(name=a, type=Int64Type()), ascending=True, nulls_first=True)",
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
+            "ColumnSortInfo(column=Column(name=a, type=Int64Type()), ascending=True, nulls_first=True)",
             id="asc_nulls_first",
         ),
         pytest.param(
-            ColumnOrdering(ColumnReference("b", Int64Type()), True, False),
-            "ColumnOrdering(column=Column(name=b, type=Int64Type()), ascending=True, nulls_first=False)",
+            ColumnSortInfo(ColumnReference("b", Int64Type()), True, False),
+            "ColumnSortInfo(column=Column(name=b, type=Int64Type()), ascending=True, nulls_first=False)",
             id="asc_nulls_last",
         ),
         pytest.param(
-            ColumnOrdering(ColumnReference("c", Int64Type()), False, True),
-            "ColumnOrdering(column=Column(name=c, type=Int64Type()), ascending=False, nulls_first=True)",
+            ColumnSortInfo(ColumnReference("c", Int64Type()), False, True),
+            "ColumnSortInfo(column=Column(name=c, type=Int64Type()), ascending=False, nulls_first=True)",
             id="desc_nulls_first",
         ),
         pytest.param(
-            ColumnOrdering(ColumnReference("d", Int64Type()), False, False),
-            "ColumnOrdering(column=Column(name=d, type=Int64Type()), ascending=False, nulls_first=False)",
+            ColumnSortInfo(ColumnReference("d", Int64Type()), False, False),
+            "ColumnSortInfo(column=Column(name=d, type=Int64Type()), ascending=False, nulls_first=False)",
             id="desc_nulls_last",
         ),
     ],
 )
-def test_column_ordering_to_string(ordering: ColumnOrdering, output: str):
+def test_column_sort_info_to_string(ordering: ColumnSortInfo, output: str):
+    """
+    Tests the to_string() method of the ColumnSortInfo class.
+    """
     assert ordering.to_string() == output
 
 
@@ -180,38 +195,44 @@ def test_column_ordering_to_string(ordering: ColumnOrdering, output: str):
     "ordering1, ordering2, output",
     [
         pytest.param(
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
             True,
             id="same_ordering",
         ),
         pytest.param(
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
-            ColumnOrdering(ColumnReference("b", Int64Type()), True, True),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ColumnSortInfo(ColumnReference("b", Int64Type()), True, True),
             False,
             id="different_column",
         ),
         pytest.param(
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
-            ColumnOrdering(ColumnReference("a", Int64Type()), False, True),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), False, True),
             False,
             id="different_asc",
         ),
         pytest.param(
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, False),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, False),
             False,
             id="different_nulls_first",
         ),
         pytest.param(
-            ColumnOrdering(ColumnReference("a", Int64Type()), True, True),
+            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
             LiteralExpression(1, Int64Type()),
             False,
             id="different_nodes",
         ),
     ],
 )
-def test_column_ordering_equal(ordering1: ColumnOrdering, ordering2: Any, output: bool):
+def test_column_sort_info_equals(
+    ordering1: ColumnSortInfo, ordering2: Any, output: bool
+):
+    """
+    Tests the equality behavior of a ColumnSortInfo with
+    another object.
+    """
     assert (ordering1 == ordering2) == output
 
 
@@ -231,6 +252,9 @@ def test_column_ordering_equal(ordering1: ColumnOrdering, ordering2: Any, output
     ],
 )
 def test_call_expressions_to_string(expr: CallExpression, output: str):
+    """
+    Tests the to_string() method of the CallExpression class.
+    """
     assert expr.to_string() == output
 
 
@@ -278,6 +302,10 @@ def test_call_expressions_to_string(expr: CallExpression, output: str):
 def test_call_expressions_equal(
     expr1: CallExpression, expr2: RelationalExpression, output: bool
 ):
+    """
+    Tests the equality behavior of a CallExpression with another
+    RelationalExpression.
+    """
     assert expr1.equals(expr2) == output
 
 
@@ -297,4 +325,7 @@ def test_call_expressions_equal(
     ],
 )
 def test_call_expression_is_aggregation(expr: CallExpression, output: bool):
+    """
+    Tests the is_aggregation property of the CallExpression class.
+    """
     assert expr.is_aggregation == output
