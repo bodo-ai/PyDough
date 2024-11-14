@@ -37,9 +37,6 @@ class Relational(ABC):
         """
         Returns the columns of the relational expression.
 
-        TODO: Associate an ordering in the future to avoid unnecessary SQL with the
-        final ordering of the root nodes.
-
         Returns:
             MutableMapping[str, RelationalExpression]: The columns of the relational expression.
                 This does not have a defined ordering.

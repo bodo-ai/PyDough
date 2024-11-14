@@ -44,18 +44,30 @@ class Join(Relational):
 
     @property
     def left(self) -> Relational:
+        """
+        The left input to the join.
+        """
         return self._left
 
     @property
     def right(self) -> Relational:
+        """
+        The right input to the join.
+        """
         return self._right
 
     @property
     def condition(self) -> RelationalExpression:
+        """
+        The condition for the join.
+        """
         return self._condition
 
     @property
     def join_type(self) -> JoinType:
+        """
+        The type of the join.
+        """
         return self._join_type
 
     @property

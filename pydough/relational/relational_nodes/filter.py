@@ -33,6 +33,9 @@ class Filter(SingleRelational):
 
     @property
     def condition(self) -> RelationalExpression:
+        """
+        The condition that is being filtered on.
+        """
         return self._condition
 
     def node_equals(self, other: Relational) -> bool:
