@@ -19,6 +19,7 @@ from pydough.relational.relational_nodes import (
     Limit,
     Project,
     Relational,
+    RelationalRoot,
     Scan,
 )
 from pydough.types import BooleanType, Int64Type, PyDoughType, StringType, UnknownType
@@ -1037,4 +1038,243 @@ def test_filter_requires_boolean_condition():
             {
                 "a": make_relational_column_reference("a"),
             },
+        )
+
+
+@pytest.mark.parametrize(
+    "root, output",
+    [
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=[])",
+            id="no_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                make_relational_column_ordering(
+                    make_relational_column_reference("a"), ascending=True
+                ),
+            ),
+            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=ColumnSortInfo(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
+            id="with_orderings",
+        ),
+    ],
+)
+def test_root_to_string(root: RelationalRoot, output: str):
+    """
+    Tests the to_string() functionality for the Root node.
+    """
+    assert root.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "first_root, second_root, output",
+    [
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            True,
+            id="matching_columns_no_orderings",
+        ),
+        pytest.param(
+            # Note: Root is the only node that cares about column ordering.
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            False,
+            id="same_columns_different_indices",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("c", make_relational_column_reference("a")),
+                    ("d", make_relational_column_reference("b")),
+                ],
+            ),
+            False,
+            id="different_columns_no_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
+            ),
+            True,
+            id="matching_columns_with_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"), ascending=True
+                    ),
+                ],
+            ),
+            False,
+            id="different_orderings",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    ),
+                ],
+            ),
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=False
+                    ),
+                ],
+            ),
+            False,
+            id="different_direction",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            RelationalRoot(
+                Scan("table2", {}),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            False,
+            id="different_inputs",
+        ),
+        pytest.param(
+            RelationalRoot(
+                build_simple_scan(),
+                [
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            Scan(
+                "table2",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
+    """
+    Tests the equality functionality for the Root node.
+    """
+    assert first_root.equals(second_root) == output
+
+
+def test_root_duplicate_columns():
+    """
+    Test to verify that we raise an error when the root node is
+    created with duplicate column names.
+    """
+    with pytest.raises(AssertionError, match="Duplicate column names found in root."):
+        RelationalRoot(
+            build_simple_scan(),
+            [
+                ("a", make_relational_column_reference("a")),
+                ("a", make_relational_column_reference("b")),
+            ],
         )
