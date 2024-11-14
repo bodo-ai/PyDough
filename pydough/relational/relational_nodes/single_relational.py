@@ -3,7 +3,7 @@ Base abstract class for relational nodes that have a single input.
 This is done to reduce code duplication.
 """
 
-from .abstract import Relational
+from .abstract_node import Relational
 
 
 class SingleRelational(Relational):

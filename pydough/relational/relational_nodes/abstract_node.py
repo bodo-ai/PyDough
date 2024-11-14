@@ -9,9 +9,7 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 from typing import Any
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
-from .relational_expressions.abstract import RelationalExpression
+from pydough.relational.relational_expressions import RelationalExpression
 
 
 class Relational(ABC):
@@ -62,21 +60,9 @@ class Relational(ABC):
         return isinstance(other, Relational) and self.equals(other)
 
     @abstractmethod
-    def to_sqlglot(self) -> SQLGlotExpression:
-        """Translate the given relational node
-        and its children to a SQLGlot expression.
-
-        Returns:
-            Expression: A SqlGlot expression representing the relational node.
-        """
-
-    @abstractmethod
     def to_string(self) -> str:
         """
         Convert the relational node to a string.
-
-        TODO: Refactor this API to include some form of string
-        builder so we can draw lines between children properly.
 
         Returns:
             str: A string representation of the relational tree

@@ -8,10 +8,9 @@ should be sparse.
 
 from collections.abc import MutableMapping
 
-from sqlglot.expressions import Expression
+from pydough.relational.relational_expressions import RelationalExpression
 
-from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from .abstract_node import Relational
 from .single_relational import SingleRelational
 
 
@@ -33,11 +32,6 @@ class Project(SingleRelational):
     @property
     def columns(self) -> MutableMapping[str, RelationalExpression]:
         return self._columns
-
-    def to_sqlglot(self) -> Expression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
 
     def equals(self, other: Relational) -> bool:
         return (

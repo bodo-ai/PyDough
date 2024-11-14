@@ -31,6 +31,9 @@ from pydough.types import Int32Type, Int64Type, StringType
     ],
 )
 def test_column_reference_to_string(column_ref: ColumnReference, output: str):
+    """
+    Tests the to_string() method of the ColumnReference class.
+    """
     assert column_ref.to_string() == output
 
 
@@ -66,6 +69,10 @@ def test_column_reference_to_string(column_ref: ColumnReference, output: str):
 def test_column_reference_equals(
     ref1: ColumnReference, ref2: RelationalExpression, output: bool
 ):
+    """
+    Tests the equality behavior of a ColumnReference with
+    another RelationalExpression.
+    """
     assert ref1.equals(ref2) == output
 
 
