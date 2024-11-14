@@ -9,8 +9,6 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableMapping, MutableSequence
 from typing import Any
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
 from .relational_expressions.abstract import RelationalExpression
 
 
@@ -60,15 +58,6 @@ class Relational(ABC):
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Relational) and self.equals(other)
-
-    @abstractmethod
-    def to_sqlglot(self) -> SQLGlotExpression:
-        """Translate the given relational node
-        and its children to a SQLGlot expression.
-
-        Returns:
-            Expression: A SqlGlot expression representing the relational node.
-        """
 
     @abstractmethod
     def to_string(self) -> str:
