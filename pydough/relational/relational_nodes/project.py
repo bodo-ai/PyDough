@@ -26,19 +26,10 @@ class Project(SingleRelational):
         input: Relational,
         columns: MutableMapping[str, RelationalExpression],
     ) -> None:
-        super().__init__(input)
-        self._columns: MutableMapping[str, RelationalExpression] = columns
+        super().__init__(input, columns)
 
-    @property
-    def columns(self) -> MutableMapping[str, RelationalExpression]:
-        return self._columns
-
-    def equals(self, other: Relational) -> bool:
-        return (
-            isinstance(other, Project)
-            and self.columns == other.columns
-            and self.input.equals(other.input)
-        )
+    def node_equals(self, other: Relational) -> bool:
+        return isinstance(other, Project) and super().node_equals(other)
 
     def to_string(self) -> str:
         return f"PROJECT(columns={self.columns})"

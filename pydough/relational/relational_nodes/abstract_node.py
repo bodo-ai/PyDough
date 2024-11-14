@@ -18,6 +18,9 @@ class Relational(ABC):
     structure of all relational nodes in the PyDough system.
     """
 
+    def __init__(self, columns: MutableMapping[str, RelationalExpression]) -> None:
+        self._columns: MutableMapping[str, RelationalExpression] = columns
+
     @property
     @abstractmethod
     def inputs(self) -> MutableSequence["Relational"]:
@@ -30,7 +33,6 @@ class Relational(ABC):
         """
 
     @property
-    @abstractmethod
     def columns(self) -> MutableMapping[str, RelationalExpression]:
         """
         Returns the columns of the relational expression.
@@ -42,8 +44,23 @@ class Relational(ABC):
             MutableMapping[str, RelationalExpression]: The columns of the relational expression.
                 This does not have a defined ordering.
         """
+        return self._columns
 
     @abstractmethod
+    def node_equals(self, other: "Relational") -> bool:
+        """
+        Determine if two relational nodes are exactly identical,
+        excluding column generic column details shared by every
+        node. This should be extended to avoid duplicating equality
+        logic shared across relational nodes.
+
+        Args:
+            other (Relational): The other relational node to compare against.
+
+        Returns:
+            bool: Are the two relational nodes equal.
+        """
+
     def equals(self, other: "Relational") -> bool:
         """
         Determine if two relational nodes are exactly identical,
@@ -55,6 +72,7 @@ class Relational(ABC):
         Returns:
             bool: Are the two relational nodes equal.
         """
+        return self.node_equals(other) and self.columns == other.columns
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Relational) and self.equals(other)

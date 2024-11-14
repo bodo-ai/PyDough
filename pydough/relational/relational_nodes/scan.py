@@ -24,8 +24,8 @@ class Scan(Relational):
     def __init__(
         self, table_name: str, columns: MutableMapping[str, RelationalExpression]
     ) -> None:
+        super().__init__(columns)
         self.table_name: str = table_name
-        self._columns: MutableMapping[str, RelationalExpression] = columns
 
     @property
     def inputs(self):
@@ -36,12 +36,8 @@ class Scan(Relational):
     def columns(self) -> MutableMapping[str, RelationalExpression]:
         return self._columns
 
-    def equals(self, other: "Relational") -> bool:
-        return (
-            isinstance(other, Scan)
-            and self.table_name == other.table_name
-            and self.columns == other.columns
-        )
+    def node_equals(self, other: Relational) -> bool:
+        return isinstance(other, Scan) and self.table_name == other.table_name
 
     def to_string(self) -> str:
         return f"SCAN(table={self.table_name}, columns={self.columns})"

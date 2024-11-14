@@ -6,9 +6,13 @@ from typing import Any
 
 import pytest
 
-from pydough.relational.relational_expressions import ColumnReference, LiteralExpression
-from pydough.relational.relational_nodes import Project, Scan
-from pydough.types import PyDoughType, UnknownType
+from pydough.relational.relational_expressions import (
+    ColumnReference,
+    ColumnSortInfo,
+    LiteralExpression,
+)
+from pydough.relational.relational_nodes import Limit, Project, Relational, Scan
+from pydough.types import Int64Type, PyDoughType, StringType, UnknownType
 
 
 def make_relational_column_reference(
@@ -41,6 +45,25 @@ def make_relational_literal(value: Any, typ: PyDoughType | None = None):
     """
     pydough_type = typ if typ is not None else UnknownType()
     return LiteralExpression(value, pydough_type)
+
+
+def make_relational_column_ordering(
+    column: ColumnReference, ascending: bool = True, nulls_first: bool = True
+):
+    """
+    Create a column ordering as a function of a Relational column reference
+    with the given ascending and nulls_first parameters.
+
+    Args:
+        name (str): _description_
+        typ (PyDoughType | None, optional): _description_. Defaults to None.
+        ascending (bool, optional): _description_. Defaults to True.
+        nulls_first (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        ColumnSortInfo: The column ordering information.
+    """
+    return ColumnSortInfo(column, ascending, nulls_first)
 
 
 def build_simple_scan() -> Scan:
@@ -162,11 +185,11 @@ def test_scan_to_string(scan_node: Scan, output: str):
                 },
             ),
             False,
-            id="different_tables",
+            id="different_nodes",
         ),
     ],
 )
-def test_scan_equals(first_scan: Scan, second_scan: Scan, output: bool):
+def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
     """
     Tests the equality functionality for the Scan node.
     """
@@ -270,10 +293,263 @@ def test_project_to_string(project: Project, output: str):
             False,
             id="unequal_inputs",
         ),
+        pytest.param(
+            Project(
+                build_simple_scan(),
+                {
+                    "b": make_relational_column_reference("b"),
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            Scan(
+                "table1",
+                {
+                    "b": make_relational_column_reference("b"),
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            False,
+            id="different_nodes",
+        ),
     ],
 )
-def test_project_equals(first_project: Project, second_project: Project, output: bool):
+def test_project_equals(
+    first_project: Project, second_project: Relational, output: bool
+):
     """
     Tests the equality functionality for the Project node.
     """
     assert first_project.equals(second_project) == output
+
+
+@pytest.mark.parametrize(
+    "limit, output",
+    [
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(1, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            "LIMIT(limit=Literal(value=1, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
+            id="limit_1",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(5, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            "LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
+            id="limit_5",
+        ),
+        pytest.param(
+            Limit(build_simple_scan(), make_relational_literal(10, Int64Type()), {}),
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={}, orderings=[])",
+            id="no_columns",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    ),
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"), ascending=False
+                    ),
+                ],
+            ),
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnSortInfo(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnSortInfo(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
+            id="orderings",
+        ),
+    ],
+)
+def test_limit_to_string(limit: Limit, output: str):
+    """
+    Tests the to_string() functionality for the Limit node.
+    """
+    assert limit.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "first_limit, second_limit, output",
+    [
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            True,
+            id="matching_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(5, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="different_limits",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            False,
+            id="different_columns",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    )
+                ],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a")
+                    )
+                ],
+            ),
+            True,
+            id="matching_ordering",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    )
+                ],
+            ),
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                [
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"), ascending=False
+                    )
+                ],
+            ),
+            False,
+            id="different_orderings",
+        ),
+        pytest.param(
+            Limit(build_simple_scan(), make_relational_literal(5, Int64Type()), {}),
+            Limit(Scan("table2", {}), make_relational_literal(5, Int64Type()), {}),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Limit(
+                build_simple_scan(),
+                make_relational_literal(10, Int64Type()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Project(
+                build_simple_scan(),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool):
+    """
+    Tests the equality functionality for the Limit node.
+    """
+    assert first_limit.equals(second_limit) == output
+
+
+@pytest.mark.parametrize(
+    "literal",
+    [
+        pytest.param(make_relational_literal(1), id="unknown_type"),
+        pytest.param(make_relational_literal(1, StringType()), id="string_type"),
+    ],
+)
+def test_invalid_limit(literal: LiteralExpression):
+    """
+    Test to verify that we raise an error when the limit is not an integer
+    type regardless of the value type.
+    """
+    with pytest.raises(AssertionError, match="Limit must be an integer type"):
+        Limit(build_simple_scan(), literal, {})
