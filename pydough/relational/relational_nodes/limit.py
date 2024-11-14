@@ -6,12 +6,13 @@ on explicit ordering of the input relation.
 
 from collections.abc import MutableMapping, MutableSequence
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
+from pydough.relational.relational_expressions import (
+    ColumnOrdering,
+    RelationalExpression,
+)
 from pydough.types.integer_types import IntegerType
 
-from .abstract import Relational
-from .relational_expressions import ColumnOrdering, RelationalExpression
+from .abstract_node import Relational
 from .single_relational import SingleRelational
 
 
@@ -49,11 +50,6 @@ class Limit(SingleRelational):
     def orderings(self) -> MutableSequence[ColumnOrdering]:
         return self._orderings
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Limit)
@@ -63,5 +59,4 @@ class Limit(SingleRelational):
         )
 
     def to_string(self) -> str:
-        # TODO: Should we visit the input?
         return f"LIMIT(limit={self.limit}, columns={self.columns}, orderings={self.orderings})"
