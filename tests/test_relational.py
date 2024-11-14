@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from pydough.pydough_ast.pydough_operators import LOWER, SUM
+from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
 from pydough.relational.relational_expressions import (
     CallExpression,
     ColumnReference,
@@ -15,12 +15,13 @@ from pydough.relational.relational_expressions import (
 )
 from pydough.relational.relational_nodes import (
     Aggregate,
+    Filter,
     Limit,
     Project,
     Relational,
     Scan,
 )
-from pydough.types import Int64Type, PyDoughType, StringType, UnknownType
+from pydough.types import BooleanType, Int64Type, PyDoughType, StringType, UnknownType
 
 
 def make_relational_column_reference(
@@ -860,5 +861,180 @@ def test_aggregate_unique_keys():
                 "a": CallExpression(
                     SUM, Int64Type(), [ColumnReference("b", Int64Type())]
                 )
+            },
+        )
+
+
+@pytest.mark.parametrize(
+    "filter, output",
+    [
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            "FILTER(condition=Literal(value=True, type=BooleanType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
+            id="true_filter",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a"),
+                        LiteralExpression(1, Int64Type()),
+                    ],
+                ),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            "FILTER(condition=Call(op=BinaryOperator[==], inputs=[Column(name=a, type=UnknownType()), Literal(value=1, type=Int64Type())], return_type=BooleanType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
+            id="function_filter",
+        ),
+    ],
+)
+def test_filter_to_string(filter: Filter, output: str):
+    """
+    Tests the to_string() functionality for the Filter node.
+    """
+    assert filter.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "first_filter, second_filter, output",
+    [
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            True,
+            id="matching",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(False, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="different_conds",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "c": make_relational_column_reference("a"),
+                    "d": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="different_columns",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Filter(
+                Scan(
+                    "table2",
+                    {
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="unequal_inputs",
+        ),
+        pytest.param(
+            Filter(
+                build_simple_scan(),
+                LiteralExpression(True, BooleanType()),
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Scan(
+                "table2",
+                {
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            False,
+            id="different_nodes",
+        ),
+    ],
+)
+def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
+    """
+    Tests the equality functionality for the Filter node.
+    """
+    assert first_filter.equals(second_filter) == output
+
+
+def test_filter_requires_boolean_condition():
+    """
+    Test to verify that we raise an error when the filter node is
+    created with a non-boolean condition.
+    """
+    with pytest.raises(AssertionError, match="Filter condition must be a boolean type"):
+        Filter(
+            build_simple_scan(),
+            make_relational_literal(1, Int64Type()),
+            {
+                "a": make_relational_column_reference("a"),
             },
         )
