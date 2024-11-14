@@ -7,9 +7,13 @@ __all__ = ["TableCollection"]
 
 from collections.abc import MutableMapping
 
-from pydough.metadata import CollectionMetadata, GraphMetadata
+from pydough.metadata import (
+    CollectionMetadata,
+    GraphMetadata,
+)
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
+from pydough.pydough_ast.expressions import CollationExpression
 
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
@@ -45,6 +49,10 @@ class GlobalContext(PyDoughCollectionAST):
         return self._collections
 
     @property
+    def key(self) -> str:
+        return f"{self.graph.name}"
+
+    @property
     def ancestor_context(self) -> PyDoughCollectionAST | None:
         return None
 
@@ -61,6 +69,10 @@ class GlobalContext(PyDoughCollectionAST):
     def all_terms(self) -> set[str]:
         return set(self.collections)
 
+    @property
+    def ordering(self) -> list[CollationExpression] | None:
+        return None
+
     def get_expression_position(self, expr_name: str) -> int:
         raise PyDoughASTException(f"Cannot call get_expression_position on {self!r}")
 
@@ -71,11 +83,22 @@ class GlobalContext(PyDoughCollectionAST):
             )
         return self.collections[term_name]
 
-    def to_string(self) -> str:
+    @property
+    def standalone_string(self) -> str:
         return self.graph.name
 
-    def to_tree_form(self) -> CollectionTreeForm:
+    def to_string(self) -> str:
+        return self.standalone_string
+
+    @property
+    def tree_item_string(self) -> str:
+        return self.standalone_string
+
+    def to_tree_form_isolated(self) -> CollectionTreeForm:
         return CollectionTreeForm(self.to_string(), 0)
+
+    def to_tree_form(self) -> CollectionTreeForm:
+        return self.to_tree_form_isolated()
 
     def equals(self, other: object) -> bool:
         return isinstance(other, GlobalContext) and self.graph == other.graph

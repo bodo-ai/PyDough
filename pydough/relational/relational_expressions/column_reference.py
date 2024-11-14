@@ -6,11 +6,9 @@ for the column in the input node.
 
 __all__ = ["ColumnReference"]
 
-from sqlglot.expressions import Expression as SQLGlotExpression
-
 from pydough.types import PyDoughType
 
-from .abstract import RelationalExpression
+from .abstract_expression import RelationalExpression
 
 
 class ColumnReference(RelationalExpression):
@@ -33,17 +31,12 @@ class ColumnReference(RelationalExpression):
         """
         return self._name
 
-    def to_sqlglot(self) -> SQLGlotExpression:
-        raise NotImplementedError(
-            "Conversion to SQLGlot Expressions is not yet implemented."
-        )
-
     def to_string(self) -> str:
         return f"Column(name={self.name}, type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, ColumnReference)
-            and (self.data_type == other.data_type)
             and (self.name == other.name)
+            and super().equals(other)
         )
