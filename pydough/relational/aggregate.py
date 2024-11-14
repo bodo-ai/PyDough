@@ -9,7 +9,7 @@ from collections.abc import MutableMapping
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from .abstract import Relational
-from .relational_expressions import RelationalExpression
+from .relational_expressions.call_expression import CallExpression
 from .relational_expressions.column_reference import ColumnReference
 from .single_relational import SingleRelational
 
@@ -25,19 +25,19 @@ class Aggregate(SingleRelational):
         self,
         input: Relational,
         keys: MutableMapping[str, ColumnReference],
-        aggregations: MutableMapping[str, RelationalExpression],
+        aggregations: MutableMapping[str, CallExpression],
     ) -> None:
         super().__init__(input, {**keys, **aggregations})
         self._keys: MutableMapping[str, ColumnReference] = keys
-        # TODO: Replace with aggregate expression base class.
-        self._aggregations: MutableMapping[str, RelationalExpression] = aggregations
+        self._aggregations: MutableMapping[str, CallExpression] = aggregations
+        assert all(agg.is_aggregation for agg in aggregations.values())
 
     @property
     def keys(self) -> MutableMapping[str, ColumnReference]:
         return self._keys
 
     @property
-    def aggregations(self) -> MutableMapping[str, RelationalExpression]:
+    def aggregations(self) -> MutableMapping[str, CallExpression]:
         return self._aggregations
 
     def to_sqlglot(self) -> SQLGlotExpression:
