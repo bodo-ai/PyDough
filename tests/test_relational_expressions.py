@@ -9,10 +9,12 @@ from typing import Any
 
 import pytest
 
+from pydough.pydough_ast.pydough_operators.expression_operators import LOWER, SUM
 from pydough.relational.relational_expressions import (
     ColumnOrdering,
     RelationalExpression,
 )
+from pydough.relational.relational_expressions.call_expression import CallExpression
 from pydough.relational.relational_expressions.column_reference import ColumnReference
 from pydough.relational.relational_expressions.literal_expression import (
     LiteralExpression,
@@ -194,3 +196,88 @@ def test_column_ordering_to_string(ordering: ColumnOrdering, output: str):
 )
 def test_column_ordering_equal(ordering1: ColumnOrdering, ordering2: Any, output: bool):
     assert (ordering1 == ordering2) == output
+
+
+@pytest.mark.parametrize(
+    "expr, output",
+    [
+        pytest.param(
+            CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
+            "Call(op=Function[LOWER], inputs=[Column(name=a, type=StringType())], return_type=StringType())",
+            id="lower",
+        ),
+        pytest.param(
+            CallExpression(SUM, Int64Type(), [ColumnReference("a", Int64Type())]),
+            "Call(op=Function[SUM], inputs=[Column(name=a, type=Int64Type())], return_type=Int64Type())",
+            id="sum",
+        ),
+    ],
+)
+def test_call_expressions_to_string(expr: CallExpression, output: str):
+    assert expr.to_string() == output
+
+
+@pytest.mark.parametrize(
+    "expr1, expr2, output",
+    [
+        pytest.param(
+            CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
+            CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
+            True,
+            id="same_call",
+        ),
+        pytest.param(
+            CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
+            CallExpression(LOWER, StringType(), [ColumnReference("b", StringType())]),
+            False,
+            id="different_column",
+        ),
+        pytest.param(
+            CallExpression(SUM, Int64Type(), [ColumnReference("a", Int64Type())]),
+            CallExpression(LOWER, Int64Type(), [ColumnReference("a", Int32Type())]),
+            False,
+            id="different_arg_type",
+        ),
+        pytest.param(
+            CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
+            CallExpression(SUM, Int64Type(), [ColumnReference("a", StringType())]),
+            False,
+            id="different_op",
+        ),
+        pytest.param(
+            CallExpression(SUM, Int32Type(), [ColumnReference("a", Int32Type())]),
+            CallExpression(SUM, Int64Type(), [ColumnReference("a", Int32Type())]),
+            False,
+            id="different_return_type",
+        ),
+        pytest.param(
+            CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
+            LiteralExpression(1, Int64Type()),
+            False,
+            id="different_expr",
+        ),
+    ],
+)
+def test_call_expressions_equal(
+    expr1: CallExpression, expr2: RelationalExpression, output: bool
+):
+    assert expr1.equals(expr2) == output
+
+
+@pytest.mark.parametrize(
+    "expr, output",
+    [
+        pytest.param(
+            CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
+            False,
+            id="lower",
+        ),
+        pytest.param(
+            CallExpression(SUM, Int64Type(), [ColumnReference("a", Int64Type())]),
+            True,
+            id="sum",
+        ),
+    ],
+)
+def test_call_expression_is_aggregation(expr: CallExpression, output: bool):
+    assert expr.is_aggregation == output
