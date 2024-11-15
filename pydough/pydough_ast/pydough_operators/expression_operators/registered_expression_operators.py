@@ -18,6 +18,7 @@ __all__ = [
     "NEQ",
     "POW",
     "SUB",
+    "LENGTH",
     "LOWER",
     "IFF",
     "SUM",
@@ -28,7 +29,7 @@ from pydough.pydough_ast.pydough_operators.type_inference import (
     RequireNumArgs,
     SelectArgumentType,
 )
-from pydough.types import BooleanType
+from pydough.types import BooleanType, Int64Type
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
@@ -51,6 +52,9 @@ BOR = BinaryOperator(BinOp.BOR, RequireNumArgs(2), SelectArgumentType(0))
 BXR = BinaryOperator(BinOp.BXR, RequireNumArgs(2), SelectArgumentType(0))
 LOWER = ExpressionFunctionOperator(
     "LOWER", False, RequireNumArgs(1), SelectArgumentType(0)
+)
+LENGTH = ExpressionFunctionOperator(
+    "LENGTH", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))

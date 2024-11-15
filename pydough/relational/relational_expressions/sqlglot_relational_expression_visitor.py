@@ -3,6 +3,7 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 from sqlglot.expressions import Literal as SQLGlotLiteral
@@ -14,6 +15,13 @@ from .literal_expression import LiteralExpression
 from .relational_expression_visitor import RelationalExpressionVisitor
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
+
+# SQLGlot doesn't have a clean interface for functional calls without
+# going through the parser. As a result, we generate our own map for now.
+func_map: dict[str, SQLGlotExpression] = {
+    "LOWER": sqlglot_expressions.Lower,
+    "LENGTH": sqlglot_expressions.Length,
+}
 
 
 class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
@@ -33,13 +41,19 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         """
         self._stack = []
 
-    def visit(self, expr: RelationalExpression) -> None:
-        raise NotImplementedError("SQLGlotRelationalExpressionVisitor.visit")
-
     def visit_call_expression(self, call_expression: CallExpression) -> None:
-        raise NotImplementedError(
-            "SQLGlotRelationalExpressionVisitor.visit_call_expression"
-        )
+        # Visit the inputs in reverse order so we can pop them off in order.
+        for arg in call_expression.inputs[::-1]:
+            arg.accept(self)
+        input_exprs: list[SQLGlotExpression] = [
+            self._stack.pop() for _ in range(len(call_expression.inputs))
+        ]
+        key: str = call_expression.op.function_name.upper()
+        if key in func_map:
+            # Create the function.
+            self._stack.append(func_map[key].from_arg_list(input_exprs))
+        else:
+            raise ValueError(f"Unsupported function {key}")
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # TODO: Handle data types.
