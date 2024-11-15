@@ -36,6 +36,9 @@ __all__ = [
     "LIKE",
     "UPPER",
     "AVG",
+    "NDISTINCT",
+    "ISIN",
+    "SLICE",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -55,6 +58,7 @@ from .registered_expression_operators import (
     GEQ,
     GRT,
     IFF,
+    ISIN,
     LEQ,
     LET,
     LIKE,
@@ -63,9 +67,11 @@ from .registered_expression_operators import (
     MIN,
     MOD,
     MUL,
+    NDISTINCT,
     NEQ,
     NOT,
     POW,
+    SLICE,
     STARTSWITH,
     SUB,
     SUM,

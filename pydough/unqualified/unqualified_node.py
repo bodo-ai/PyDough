@@ -28,6 +28,7 @@ from typing import Any
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import pydough_operators as pydop
 from pydough.types import (
+    ArrayType,
     BinaryType,
     BooleanType,
     DateType,
@@ -35,6 +36,7 @@ from pydough.types import (
     Int64Type,
     PyDoughType,
     StringType,
+    UnknownType,
 )
 
 from .errors import PyDoughUnqualifiedException
@@ -79,6 +81,18 @@ class UnqualifiedNode(ABC):
             return UnqualifiedLiteral(obj, BinaryType())
         if isinstance(obj, date):
             return UnqualifiedLiteral(obj, DateType())
+        if obj is None:
+            return UnqualifiedLiteral(obj, UnknownType())
+        if isinstance(obj, (list, tuple, set)):
+            elems: list[UnqualifiedLiteral] = []
+            typ: PyDoughType = UnknownType()
+            for elem in obj:
+                coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
+                assert isinstance(
+                    coerced_elem, UnqualifiedLiteral
+                ), f"Can only coerce list of literals to a literal, not {elem}"
+                elems.append(coerced_elem)
+            return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
 
     def __getattribute__(self, name: str) -> Any:
@@ -87,6 +101,18 @@ class UnqualifiedNode(ABC):
             return result
         except AttributeError:
             return UnqualifiedAccess(self, name)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            args: MutableSequence[UnqualifiedNode] = [self]
+            for arg in (key.start, key.stop, key.step):
+                coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
+                args.append(coerced_elem)
+            return UnqualifiedOperation("SLICE", args)
+        else:
+            raise PyDoughUnqualifiedException(
+                f"Cannot index into PyDough object {self} with {key!r}"
+            )
 
     def __add__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)

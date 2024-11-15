@@ -22,6 +22,15 @@ from tpch_test_functions import (
     impl_tpch_q11,
     impl_tpch_q12,
     impl_tpch_q13,
+    impl_tpch_q14,
+    impl_tpch_q15,
+    impl_tpch_q16,
+    impl_tpch_q17,
+    impl_tpch_q18,
+    impl_tpch_q19,
+    impl_tpch_q20,
+    impl_tpch_q21,
+    impl_tpch_q22,
 )
 
 from pydough import init_pydough_context
@@ -277,7 +286,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q6,
-            "TPCH.TPCH(revenue=SUM(TPCH.Lineitems.WHERE(((((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType())) & (TPCH.discount < 0.07:Float64Type())) & (TPCH.quantity < 24:Int64Type())))(amt=(TPCH.extendedprice * TPCH.discount)).amt))",
+            "TPCH.TPCH(revenue=SUM(TPCH.Lineitems.WHERE((((((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType())) & (TPCH.discount > 0.05:Float64Type())) & (TPCH.discount < 0.07:Float64Type())) & (TPCH.quantity < 24:Int64Type())))(amt=(TPCH.extendedprice * TPCH.discount)).amt))",
             id="tpch_q6",
         ),
         pytest.param(
@@ -314,6 +323,51 @@ def test_unqualified_to_string(
             impl_tpch_q13,
             "PARTITION(TPCH.Customers(key=TPCH.key, num_non_special_orders=COUNT(TPCH.orders.WHERE(NOT(LIKE(TPCH.comment, '%special%requests%':StringType()))))), name='custs', by=(TPCH.num_non_special_orders))(c_count=TPCH.num_non_special_orders, custdist=COUNT(TPCH.custs))",
             id="tpch_q13",
+        ),
+        pytest.param(
+            impl_tpch_q14,
+            "TPCH.TPCH(promo_revenue=((100.0:Float64Type() * SUM(TPCH.Lineitems.WHERE(((TPCH.ship_date >= datetime.date(1995, 9, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 10, 1):DateType())))(value=(TPCH.extended_price * (1:Int64Type() - TPCH.discount)), promo_value=IFF(STARTSWITH(TPCH.part.part_type, 'PROMO':StringType()), (TPCH.extended_price * (1:Int64Type() - TPCH.discount)), 0:Int64Type())).promo_value)) / SUM(TPCH.Lineitems.WHERE(((TPCH.ship_date >= datetime.date(1995, 9, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 10, 1):DateType())))(value=(TPCH.extended_price * (1:Int64Type() - TPCH.discount)), promo_value=IFF(STARTSWITH(TPCH.part.part_type, 'PROMO':StringType()), (TPCH.extended_price * (1:Int64Type() - TPCH.discount)), 0:Int64Type())).value)))",
+            id="tpch_q14",
+        ),
+        pytest.param(
+            impl_tpch_q15,
+            "TPCH.TPCH(max_revenue=MAX(TPCH.Suppliers(total_revenue=SUM((TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1996, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1996, 3, 1):DateType()))).extended_price * (1:Int64Type() - TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1996, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1996, 3, 1):DateType()))).discount)))).total_revenue)).supplier_values(s_suppkey=TPCH.key, s_name=TPCH.name, s_address=TPCH.address, s_phone=TPCH.phone_number, total_revenue=TPCH.total_revenue).WHERE((TPCH.total_revenue == BACK(1).max_revnue)).ORDER_BY(TPCH.s_suppkey.ASC(na_pos='last'))",
+            id="tpch_q15",
+        ),
+        pytest.param(
+            impl_tpch_q16,
+            "PARTITION(TPCH.Parts.WHERE((((TPCH.brand != 'BRAND#45':StringType()) & NOT(STARTSWITH(TPCH.part_type, 'MEDIUM POLISHED%':StringType()))) & ISIN(TPCH.size, [49:Int64Type(), 14:Int64Type(), 23:Int64Type(), 45:Int64Type(), 19:Int64Type(), 3:Int64Type(), 36:Int64Type(), 9:Int64Type()]:ArrayType(UnknownType())))).supply_records(p_brand=BACK(1).brand, p_type=BACK(1).part_type, p_size=BACK(1).size, ps_suppkey=TPCH.supplier_key).WHERE(NOT(LIKE(TPCH.supplier.comment, '%Customer%Complaints%':StringType()))), name='ps', by=(TPCH.p_brand, TPCH.p_type, TPCH.p_size))(p_brand=TPCH.p_brand, p_type=TPCH.p_type, p_size=TPCH.p_size, supplier_cnt=NDISTINCT(TPCH.ps.supplier_key))",
+            id="tpch_q16",
+        ),
+        pytest.param(
+            impl_tpch_q17,
+            "TPCH.TPCH(avg_yearly=(SUM(TPCH.parts.WHERE(((TPCH.p_brand == 'Brand#23':StringType()) & (TPCH.p_container == 'MED BOX':StringType())))(avg_quantity=AVG(TPCH.lines.quantity)).lines.WHERE((TPCH.quantity < (0.2:Float64Type() * BACK(1).avg_quantity))).extended_price) / 7.0:Float64Type()))",
+            id="tpch_q17",
+        ),
+        pytest.param(
+            impl_tpch_q18,
+            "TPCH.Orders(c_name=TPCH.customer.name, c_custkey=TPCH.customer.key, o_orderkey=TPCH.key, o_orderdate=TPCH.order_date, o_totalprice=TPCH.total_price, total_quantity=SUM(TPCH.lines.quantity)).WHERE((TPCH.total_quantity > 300:Int64Type())).ORDER_BY(TPCH.o_totalprice.DESC(na_pos='last'), TPCH.o_orderdate.ASC(na_pos='last'))",
+            id="tpch_q18",
+        ),
+        pytest.param(
+            impl_tpch_q19,
+            "TPCH.TPCH(revenue=SUM((TPCH.Lineitems.WHERE((((True:BooleanType() & (TPCH.shipinstruct == 'DELIVER IN PERSON':StringType())) & (TPCH.part.size >= 1:Int64Type())) & (((((((TPCH.part.size < 5:Int64Type()) & (TPCH.quantity >= 1:Int64Type())) & (TPCH.quantity <= 11:Int64Type())) & True:BooleanType()) & (TPCH.brand == 'Brand#12':StringType())) | (((((TPCH.part.size < 10:Int64Type()) & (TPCH.quantity >= 10:Int64Type())) & (TPCH.quantity <= 21:Int64Type())) & True:BooleanType()) & (TPCH.brand == 'Brand#23':StringType()))) | (((((TPCH.part.size < 15:Int64Type()) & (TPCH.quantity >= 20:Int64Type())) & (TPCH.quantity <= 31:Int64Type())) & True:BooleanType()) & (TPCH.brand == 'Brand#34':StringType()))))).extended_price * (1:Int64Type() - TPCH.Lineitems.WHERE((((True:BooleanType() & (TPCH.shipinstruct == 'DELIVER IN PERSON':StringType())) & (TPCH.part.size >= 1:Int64Type())) & (((((((TPCH.part.size < 5:Int64Type()) & (TPCH.quantity >= 1:Int64Type())) & (TPCH.quantity <= 11:Int64Type())) & True:BooleanType()) & (TPCH.brand == 'Brand#12':StringType())) | (((((TPCH.part.size < 10:Int64Type()) & (TPCH.quantity >= 10:Int64Type())) & (TPCH.quantity <= 21:Int64Type())) & True:BooleanType()) & (TPCH.brand == 'Brand#23':StringType()))) | (((((TPCH.part.size < 15:Int64Type()) & (TPCH.quantity >= 20:Int64Type())) & (TPCH.quantity <= 31:Int64Type())) & True:BooleanType()) & (TPCH.brand == 'Brand#34':StringType()))))).discount))))",
+            id="tpch_q19",
+        ),
+        pytest.param(
+            impl_tpch_q20,
+            "TPCH.Parts.WHERE(STARTSWITH(TPCH.name, 'forest':StringType()))(quantity_threshold=SUM(TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType()))).quantity)).suppliers.WHERE(((TPCH.ps_availqty > BACK(1).quantity_threshold) & (TPCH.nation.name == 'CANADA':StringType())))(s_name=TPCH.name, s_address=TPCH.address)",
+            id="tpch_q20",
+        ),
+        pytest.param(
+            impl_tpch_q21,
+            "TPCH.Suppliers.WHERE((TPCH.nation.name == 'SAUDI ARABIA':StringType()))(s_name=TPCH.name, numwait=COUNT(TPCH.lines.WHERE((TPCH.receipt_date > TPCH.commit_date)).order.WHERE((((TPCH.order_status == 'F':StringType()) & (COUNT(TPCH.lines.WHERE((TPCH.supplier_key != BACK(2).supplier_key))) > 0:Int64Type())) & (COUNT(TPCH.lines.WHERE(((TPCH.supplier_key != BACK(2).supplier_key) & (TPCH.receipt_date > TPCH.commit_date)))) == 0:Int64Type()))))).ORDER_BY(TPCH.numwait.DESC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'))",
+            id="tpch_q21",
+        ),
+        pytest.param(
+            impl_tpch_q22,
+            "PARTITION(TPCH.TPCH(avg_balance=AVG(TPCH.Customers(cntry_code=SLICE(TPCH.c_phone, None:UnknownType(), 2:Int64Type(), None:UnknownType())).WHERE((ISIN(TPCH.cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]:ArrayType(UnknownType())) & (COUNT(TPCH.orders) == 0:Int64Type()))).WHERE((TPCH.acct_bal > 0.0:Float64Type())).acct_bal)).cust_info.WHERE((TPCH.acct_bal > BACK(1).avg_balance)), name='custs', by=(TPCH.cntry_code))(cntry_code=TPCH.cntry_code, num_custs=COUNT(TPCH.custs), totacctbal=SUM(TPCH.acct_bal))",
+            id="tpch_q22",
         ),
     ],
 )
