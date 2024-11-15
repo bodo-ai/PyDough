@@ -5,6 +5,7 @@ the relation Tree to a single SQLGlot query component.
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
+from sqlglot.expressions import Literal as SQLGlotLiteral
 
 from .abstract_expression import RelationalExpression
 from .call_expression import CallExpression
@@ -41,9 +42,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         )
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
-        raise NotImplementedError(
-            "SQLGlotRelationalExpressionVisitor.visit_literal_expression"
-        )
+        # TODO: Handle data types.
+        self._stack.append(SQLGlotLiteral(value=literal_expression.value))
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         if column_reference.input_name is not None:
