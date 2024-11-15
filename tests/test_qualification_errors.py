@@ -12,7 +12,6 @@ from test_utils import (
 
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
-    SUM,
     UnqualifiedNode,
     UnqualifiedRoot,
     qualify_node,
@@ -26,7 +25,7 @@ def bad_pydough_impl_01(root: UnqualifiedNode) -> UnqualifiedNode:
     TPCH.Nations(nation_name=name, total_balance=SUM(acctbal))
     ```
     """
-    return root.Nations(nation_name=root.name, total_balance=SUM(root.acctbal))
+    return root.Nations(nation_name=root.name, total_balance=root.SUM(root.acctbal))
 
 
 @pytest.mark.parametrize(

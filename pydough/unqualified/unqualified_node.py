@@ -8,6 +8,7 @@ __all__ = [
     "UnqualifiedCalc",
     "UnqualifiedNode",
     "UnqualifiedOperation",
+    "UnqualifiedOperator",
     "UnqualifiedOrderBy",
     "UnqualifiedPartition",
     "UnqualifiedRoot",
@@ -25,7 +26,9 @@ from datetime import date
 from typing import Any
 
 from pydough.metadata import GraphMetadata
+from pydough.pydough_ast import pydough_operators as pydop
 from pydough.types import (
+    ArrayType,
     BinaryType,
     BooleanType,
     DateType,
@@ -33,6 +36,7 @@ from pydough.types import (
     Int64Type,
     PyDoughType,
     StringType,
+    UnknownType,
 )
 
 from .errors import PyDoughUnqualifiedException
@@ -77,6 +81,18 @@ class UnqualifiedNode(ABC):
             return UnqualifiedLiteral(obj, BinaryType())
         if isinstance(obj, date):
             return UnqualifiedLiteral(obj, DateType())
+        if obj is None:
+            return UnqualifiedLiteral(obj, UnknownType())
+        if isinstance(obj, (list, tuple, set)):
+            elems: list[UnqualifiedLiteral] = []
+            typ: PyDoughType = UnknownType()
+            for elem in obj:
+                coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
+                assert isinstance(
+                    coerced_elem, UnqualifiedLiteral
+                ), f"Can only coerce list of literals to a literal, not {elem}"
+                elems.append(coerced_elem)
+            return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
 
     def __getattribute__(self, name: str) -> Any:
@@ -88,6 +104,18 @@ class UnqualifiedNode(ABC):
 
     def __hash__(self):
         return hash(repr(self))
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            args: MutableSequence[UnqualifiedNode] = [self]
+            for arg in (key.start, key.stop, key.step):
+                coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
+                args.append(coerced_elem)
+            return UnqualifiedOperation("SLICE", args)
+        else:
+            raise PyDoughUnqualifiedException(
+                f"Cannot index into PyDough object {self} with {key!r}"
+            )
 
     def __add__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
@@ -191,6 +219,9 @@ class UnqualifiedNode(ABC):
     def __neg__(self):
         return 0 - self
 
+    def __invert__(self):
+        return UnqualifiedOperation("NOT", [self])
+
     def __call__(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
         counter = 0
@@ -251,7 +282,20 @@ class UnqualifiedRoot(UnqualifiedNode):
     """
 
     def __init__(self, graph: GraphMetadata):
-        self._parcel: tuple[GraphMetadata] = (graph,)
+        self._parcel: tuple[GraphMetadata, set[str]] = (
+            graph,
+            set(pydop.builtin_registered_operators()),
+        )
+
+    def __getattribute__(self, name: str) -> Any:
+        if name == "PARTITION":
+            return PARTITION
+        elif name == "BACK":
+            return BACK
+        elif name in super(UnqualifiedNode, self).__getattribute__("_parcel")[1]:
+            return UnqualifiedOperator(name)
+        else:
+            return super().__getattribute__(name)
 
     def __repr__(self):
         return self._parcel[0].name
@@ -295,6 +339,28 @@ class UnqualifiedCollation(UnqualifiedNode):
     def __repr__(self):
         method = "ASC" if self._parcel[1] else "DESC"
         return f"{self._parcel[0]!r}.{method}(na_pos={self._parcel[2]!r})"
+
+
+class UnqualifiedOperator(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a function that has
+    yet to be called.
+    """
+
+    def __init__(self, name: str):
+        self._parcel: tuple[str] = (name,)
+
+    def __repr__(self):
+        return self._parcel[0]
+
+    def __call__(self, *args, **kwargs):
+        assert (
+            len(kwargs) == 0
+        ), "PyDough function calls do not support keyword arguments at this time"
+        operands: MutableSequence[UnqualifiedNode] = []
+        for arg in args:
+            operands.append(self.coerce_to_unqualified(arg))
+        return UnqualifiedOperation(self._parcel[0], operands)
 
 
 class UnqualifiedOperation(UnqualifiedNode):

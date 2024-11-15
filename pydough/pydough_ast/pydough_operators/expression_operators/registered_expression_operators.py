@@ -19,16 +19,31 @@ __all__ = [
     "POW",
     "SUB",
     "LOWER",
+    "UPPER",
     "IFF",
     "SUM",
+    "YEAR",
+    "NOT",
+    "MIN",
+    "MAX",
+    "COUNT",
+    "STARTSWITH",
+    "ENDSWITH",
+    "CONTAINS",
+    "LIKE",
+    "AVG",
+    "NDISTINCT",
+    "ISIN",
+    "SLICE",
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (
+    AllowAny,
     ConstantType,
     RequireNumArgs,
     SelectArgumentType,
 )
-from pydough.types import BooleanType
+from pydough.types import BooleanType, Float64Type, Int64Type
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
@@ -52,5 +67,41 @@ BXR = BinaryOperator(BinOp.BXR, RequireNumArgs(2), SelectArgumentType(0))
 LOWER = ExpressionFunctionOperator(
     "LOWER", False, RequireNumArgs(1), SelectArgumentType(0)
 )
+UPPER = ExpressionFunctionOperator(
+    "UPPER", False, RequireNumArgs(1), SelectArgumentType(0)
+)
+STARTSWITH = ExpressionFunctionOperator(
+    "STARTSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+ENDSWITH = ExpressionFunctionOperator(
+    "ENDSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+CONTAINS = ExpressionFunctionOperator(
+    "CONTAINS", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+LIKE = ExpressionFunctionOperator(
+    "LIKE", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
 SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
+AVG = ExpressionFunctionOperator(
+    "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
+)
+COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
+NDISTINCT = ExpressionFunctionOperator(
+    "NDISTINCT", True, AllowAny(), ConstantType(Int64Type())
+)
+MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
+MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
+YEAR = ExpressionFunctionOperator(
+    "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+SLICE = ExpressionFunctionOperator(
+    "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)
+)
+NOT = ExpressionFunctionOperator(
+    "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())
+)
+ISIN = ExpressionFunctionOperator(
+    "ISIN", False, RequireNumArgs(2), ConstantType(BooleanType())
+)

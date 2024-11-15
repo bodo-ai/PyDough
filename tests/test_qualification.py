@@ -14,8 +14,6 @@ from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import PyDoughCollectionAST
 from pydough.unqualified import (
     BACK,
-    LOWER,
-    SUM,
     UnqualifiedNode,
     UnqualifiedRoot,
     qualify_node,
@@ -30,7 +28,7 @@ def pydough_impl_01(root: UnqualifiedNode) -> UnqualifiedNode:
     ```
     """
     return root.Nations(
-        nation_name=root.name, total_balance=SUM(root.customers.acctbal)
+        nation_name=root.name, total_balance=root.SUM(root.customers.acctbal)
     )
 
 
@@ -63,10 +61,10 @@ def pydough_impl_02(root: UnqualifiedNode) -> UnqualifiedNode:
         & (root.order_date < datetime.date(1996, 1, 1))
     ).lines
     return root.Nations.customers(
-        name=LOWER(root.name),
+        name=root.LOWER(root.name),
         nation_name=BACK(1).name,
-        total_1994=SUM(lines_1994.extended_price - lines_1994.tax / 2),
-        total_1995=SUM(lines_1995.extended_price - lines_1995.tax / 2),
+        total_1994=root.SUM(lines_1994.extended_price - lines_1994.tax / 2),
+        total_1995=root.SUM(lines_1995.extended_price - lines_1995.tax / 2),
     )
 
 
