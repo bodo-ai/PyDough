@@ -21,7 +21,7 @@ from sqlglot.expressions import (
     Where,
 )
 
-from pydough.pydough_ast.pydough_operators import EQU, LENGTH, LOWER
+from pydough.pydough_ast.pydough_operators import EQU, GEQ, LENGTH, LOWER
 from pydough.relational.relational_expressions import CallExpression
 from pydough.relational.relational_nodes import (
     Filter,
@@ -242,6 +242,63 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 }
             ),
             id="simple_filter",
+        ),
+        pytest.param(
+            Filter(
+                input=Filter(
+                    input=build_simple_scan(),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                ),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                },
+                condition=CallExpression(
+                    GEQ,
+                    BooleanType(),
+                    [make_relational_column_reference("b"), make_relational_literal(5)],
+                ),
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                                "where": Where(
+                                    this=sqlglot_expressions.EQ(
+                                        this=Identifier(this="a"),
+                                        expression=Literal(value=1),
+                                    )
+                                ),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="a"),
+                    ],
+                    "where": Where(
+                        this=sqlglot_expressions.GTE(
+                            this=Identifier(this="b"), expression=Literal(value=5)
+                        )
+                    ),
+                },
+            ),
+            id="nested_filters",
         ),
     ],
 )

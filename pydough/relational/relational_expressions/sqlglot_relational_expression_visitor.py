@@ -26,6 +26,11 @@ generic_func_map: dict[str, SQLGlotExpression] = {
 # These functions need an explicit constructor for binary.
 binary_func_map: dict[str, SQLGlotExpression] = {
     "==": sqlglot_expressions.EQ,
+    ">=": sqlglot_expressions.GTE,
+    ">": sqlglot_expressions.GT,
+    "<=": sqlglot_expressions.LTE,
+    "<": sqlglot_expressions.LT,
+    "!=": sqlglot_expressions.NEQ,
 }
 
 
