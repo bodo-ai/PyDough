@@ -3,6 +3,8 @@ Handle the conversion from the Relation Tree to a single
 SQLGlot query.
 """
 
+from enum import Enum
+
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
@@ -25,6 +27,22 @@ from .scan import Scan
 __all__ = ["SQLGlotRelationalVisitor"]
 
 
+class QueryStage(Enum):
+    """
+    Enum to represent the different stages of a SQL query.
+    This is used when determine what we need to check to
+    attempt and fuse clauses.
+    """
+
+    FROM = 1
+    WHERE = 2
+    GROUP_BY = 3
+    HAVING = 4
+    SELECT = 5
+    ORDER_BY = 6
+    LIMIT = 7
+
+
 class SQLGlotRelationalVisitor(RelationalVisitor):
     """
     The visitor pattern for creating SQLGlot expressions from
@@ -34,7 +52,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     def __init__(self) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
-        self._stack: list[SQLGlotExpression] = []
+        self._stack: list[Select] = []
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
             SQLGlotRelationalExpressionVisitor()
         )
@@ -76,9 +94,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 the original query.
         """
         if old_column_deps:
-            # TODO: Support dependencies. We will implement this once
-            # we have an operator that generates dependencies working
-            # (e.g. filter).
+            # TODO: Support dependencies to allow greater merging.
             return new_columns, old_columns
         # Only support fusing columns that are simple renames or literals for
         # now. If we see just column references or literals though we can
@@ -109,6 +125,41 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         else:
             return new_columns, old_columns
 
+    def _merge_selects(
+        self,
+        new_columns: list[SQLGlotExpression],
+        orig_select: Select,
+        query_stage: QueryStage,
+    ) -> Select:
+        """
+        Attempt to merge a new select statement with an existing one.
+        This is used to reduce the unnecessary generation of nested
+        queries. Currently this only supports merging the SELECT columns.
+
+        Args:
+            new_columns (list[SQLGlotExpression]): The new columns to attempt to merge.
+            orig_select (Select): The original select statement to merge with.
+            query_stage (QueryStage): The query stage for merging. This determines
+                where we need to check for dependencies.
+
+        Returns:
+            Select: A final select statement that may contain the merged columns.
+        """
+        deps: set[Identifier] = set()
+        # TODO: Add the other query stages once we have support for them.
+        if query_stage.value > QueryStage.WHERE.value and "where" in orig_select.args:
+            deps.update(
+                self._identifier_finder.find_identifiers(orig_select.args["where"])
+            )
+        new_exprs, old_exprs = self._try_merge_columns(
+            new_columns, orig_select.expressions, set()
+        )
+        orig_select.set("expressions", old_exprs)
+        if new_exprs is None:
+            return orig_select
+        else:
+            return Select().select(*new_exprs).from_(orig_select)
+
     def reset(self) -> None:
         """
         Reset clears the stack and resets the expression visitors.
@@ -125,7 +176,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in scan.columns.items()
         ]
-        query: SQLGlotExpression = Select().select(*exprs).from_(scan.table_name)
+        query: Select = Select().select(*exprs).from_(scan.table_name)
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
@@ -137,21 +188,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in project.columns.items()
         ]
-        input_expr: SQLGlotExpression = self._stack.pop()
-        new_exprs, old_exprs = self._try_merge_columns(
-            exprs, input_expr.expressions, set()
-        )
-        input_expr.set("expressions", old_exprs)
-        query: Select
-        if new_exprs is None:
-            query = input_expr
-        else:
-            query = Select().select(*new_exprs).from_(input_expr)
+        input_expr: Select = self._stack.pop()
+        query: Select = self._merge_selects(exprs, input_expr, QueryStage.SELECT)
         self._stack.append(query)
 
     def visit_filter(self, filter: Filter) -> None:
         self.visit_inputs(filter)
-        input_expr: SQLGlotExpression = self._stack.pop()
+        input_expr: Select = self._stack.pop()
         cond = self._expr_visitor.relational_to_sqlglot(filter.condition)
         exprs: list[SQLGlotExpression] = [
             self._expr_visitor.relational_to_sqlglot(col, alias)
@@ -164,15 +207,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             # TODO: Consider combining conditions?
             query = Select().select(*exprs).from_(input_expr)
         else:
-            # We can insert the cond directly and should try merging columns.
-            new_exprs, old_exprs = self._try_merge_columns(
-                exprs, input_expr.expressions, set()
-            )
-            input_expr.set("expressions", old_exprs)
-            if new_exprs is None:
-                query = input_expr
-            else:
-                query = Select().select(*new_exprs).from_(input_expr)
+            # Try merge the column sections
+            query = self._merge_selects(exprs, input_expr, QueryStage.WHERE)
         query = query.where(cond)
         self._stack.append(query)
 
