@@ -15,15 +15,6 @@ from tpch_test_functions import (
 
 from pydough import init_pydough_context
 from pydough.unqualified import (
-    BACK,
-    CONTAINS,
-    COUNT,
-    ENDSWITH,
-    LOWER,
-    PARTITION,
-    STARTSWITH,
-    SUM,
-    UPPER,
     UnqualifiedNode,
     UnqualifiedRoot,
     transform_code,
@@ -38,18 +29,7 @@ def global_ctx() -> dict[str, object]:
     operator bindings and certain modules.
     """
     extra_vars: dict[str, object] = {}
-    for obj in [
-        BACK,
-        PARTITION,
-        SUM,
-        COUNT,
-        LOWER,
-        UPPER,
-        STARTSWITH,
-        ENDSWITH,
-        CONTAINS,
-        datetime,
-    ]:
+    for obj in [datetime]:
         if hasattr(obj, "__name__"):
             extra_vars[obj.__name__] = obj
     return extra_vars
@@ -109,7 +89,7 @@ def verify_pydough_code_exec_match_unqualified(
             id="simple_calc",
         ),
         pytest.param(
-            "answer = _ROOT.Nations(nation_name=UPPER(_ROOT.name), total_balance=SUM(_ROOT.customers.acct_bal))",
+            "answer = _ROOT.Nations(nation_name=_ROOT.UPPER(_ROOT.name), total_balance=_ROOT.SUM(_ROOT.customers.acct_bal))",
             "TPCH.Nations(nation_name=UPPER(TPCH.name), total_balance=SUM(TPCH.customers.acct_bal))",
             id="calc_with_functions",
         ),
@@ -134,7 +114,7 @@ def verify_pydough_code_exec_match_unqualified(
             id="arithmetic_03",
         ),
         pytest.param(
-            "answer = (STARTSWITH(_ROOT.x, 'hello') | ENDSWITH(_ROOT.x, 'world')) & CONTAINS(_ROOT.x, ' ')",
+            "answer = (_ROOT.STARTSWITH(_ROOT.x, 'hello') | _ROOT.ENDSWITH(_ROOT.x, 'world')) & _ROOT.CONTAINS(_ROOT.x, ' ')",
             "((STARTSWITH(TPCH.x, 'hello':StringType()) | ENDSWITH(TPCH.x, 'world':StringType())) & CONTAINS(TPCH.x, ' ':StringType()))",
             id="arithmetic_04",
         ),
@@ -179,14 +159,14 @@ def verify_pydough_code_exec_match_unqualified(
             id="arithmetic_12",
         ),
         pytest.param(
-            "answer = _ROOT.Parts(part_name=LOWER(_ROOT.name)).suppliers_of_part.region(part_name=BACK(2).part_name)",
+            "answer = _ROOT.Parts(part_name=_ROOT.LOWER(_ROOT.name)).suppliers_of_part.region(part_name=_ROOT.BACK(2).part_name)",
             "TPCH.Parts(part_name=LOWER(TPCH.name)).suppliers_of_part.region(part_name=BACK(2).part_name)",
             id="multi_calc_with_back",
         ),
         pytest.param(
             """\
-x = _ROOT.Parts(part_name=LOWER(_ROOT.name))
-y = x.WHERE(STARTSWITH(_ROOT.part_name, 'a'))
+x = _ROOT.Parts(part_name=_ROOT.LOWER(_ROOT.name))
+y = x.WHERE(_ROOT.STARTSWITH(_ROOT.part_name, 'a'))
 answer = y.ORDER_BY(_ROOT.retail_price.DESC())\
 """,
             "TPCH.Parts(part_name=LOWER(TPCH.name)).WHERE(STARTSWITH(TPCH.part_name, 'a':StringType())).ORDER_BY(TPCH.retail_price.DESC(na_pos='last'))",
@@ -211,7 +191,7 @@ answer = x.TOP_K(100)\
             id="order_topk_empty",
         ),
         pytest.param(
-            "answer = PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.part_type, total_price=SUM(_ROOT.data.retail_price), n_orders=COUNT(_ROOT.data.lines))",
+            "answer = _ROOT.PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.part_type, total_price=_ROOT.SUM(_ROOT.data.retail_price), n_orders=_ROOT.COUNT(_ROOT.data.lines))",
             "PARTITION(TPCH.Parts, name='parts', by=(TPCH.part_type))(type=TPCH.part_type, total_price=SUM(TPCH.data.retail_price), n_orders=COUNT(TPCH.data.lines))",
             id="partition",
         ),
