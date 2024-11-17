@@ -152,7 +152,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 self._identifier_finder.find_identifiers(orig_select.args["where"])
             )
         new_exprs, old_exprs = self._try_merge_columns(
-            new_columns, orig_select.expressions, set()
+            new_columns, orig_select.expressions, deps
         )
         orig_select.set("expressions", old_exprs)
         if new_exprs is None:
