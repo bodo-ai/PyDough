@@ -11,6 +11,8 @@ from typing import Any
 
 from pydough.relational.relational_expressions import RelationalExpression
 
+from .relational_visitor import RelationalVisitor
+
 
 class Relational(ABC):
     """
@@ -86,3 +88,12 @@ class Relational(ABC):
 
     def __repr__(self) -> str:
         return self.to_string()
+
+    @abstractmethod
+    def accept(self, visitor: RelationalVisitor) -> None:
+        """
+        Accept a visitor to traverse the relational tree.
+
+        Args:
+            visitor (RelationalVisitor): The visitor to traverse the tree.
+        """

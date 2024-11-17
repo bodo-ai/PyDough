@@ -11,6 +11,7 @@ from collections.abc import MutableMapping
 from pydough.relational.relational_expressions import RelationalExpression
 
 from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -33,3 +34,6 @@ class Project(SingleRelational):
 
     def to_string(self) -> str:
         return f"PROJECT(columns={self.columns})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        return visitor.visit_project(self)

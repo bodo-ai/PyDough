@@ -13,6 +13,7 @@ from pydough.relational.relational_expressions import (
 from pydough.types.integer_types import IntegerType
 
 from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -66,3 +67,6 @@ class Limit(SingleRelational):
 
     def to_string(self) -> str:
         return f"LIMIT(limit={self.limit}, columns={self.columns}, orderings={self.orderings})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        return visitor.visit_limit(self)
