@@ -7,7 +7,10 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import SQLGlotRelationalExpressionVisitor
+from pydough.relational.relational_expressions import (
+    SQLGlotIdentifierFinder,
+    SQLGlotRelationalExpressionVisitor,
+)
 
 from .abstract_node import Relational
 from .aggregate import Aggregate
@@ -35,12 +38,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
             SQLGlotRelationalExpressionVisitor()
         )
+        self._identifier_finder = SQLGlotIdentifierFinder()
 
     @staticmethod
     def _try_merge_columns(
         new_columns: list[SQLGlotExpression],
         old_columns: list[SQLGlotExpression],
-        old_column_deps: set[str],
+        old_column_deps: set[Identifier],
     ) -> tuple[list[SQLGlotExpression] | None, list[SQLGlotExpression]]:
         """
         Attempt to merge the new_columns with the old_columns whenever
@@ -107,10 +111,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def reset(self) -> None:
         """
-        Reset clears the stack and resets the expression visitor.
+        Reset clears the stack and resets the expression visitors.
         """
         self._stack = []
         self._expr_visitor.reset()
+        self._identifier_finder.reset()
 
     def visit(self, relational: Relational) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit")
@@ -132,19 +137,44 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in project.columns.items()
         ]
-        input_expr = self._stack.pop()
+        input_expr: SQLGlotExpression = self._stack.pop()
         new_exprs, old_exprs = self._try_merge_columns(
             exprs, input_expr.expressions, set()
         )
         input_expr.set("expressions", old_exprs)
+        query: Select
         if new_exprs is None:
-            self._stack.append(input_expr)
+            query = input_expr
         else:
-            new_query = Select().select(*new_exprs).from_(input_expr)
-            self._stack.append(new_query)
+            query = Select().select(*new_exprs).from_(input_expr)
+        self._stack.append(query)
 
     def visit_filter(self, filter: Filter) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit_filter")
+        self.visit_inputs(filter)
+        input_expr: SQLGlotExpression = self._stack.pop()
+        cond = self._expr_visitor.relational_to_sqlglot(filter.condition)
+        exprs: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in filter.columns.items()
+        ]
+        query: Select
+        if "where" in input_expr.args:
+            # Check if we already have a where clause and if so we need to
+            # generate a new query.
+            # TODO: Consider combining conditions?
+            query = Select().select(*exprs).from_(input_expr)
+        else:
+            # We can insert the cond directly and should try merging columns.
+            new_exprs, old_exprs = self._try_merge_columns(
+                exprs, input_expr.expressions, set()
+            )
+            input_expr.set("expressions", old_exprs)
+            if new_exprs is None:
+                query = input_expr
+            else:
+                query = Select().select(*new_exprs).from_(input_expr)
+        query = query.where(cond)
+        self._stack.append(query)
 
     def visit_aggregate(self, aggregate: Aggregate) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit_aggregate")

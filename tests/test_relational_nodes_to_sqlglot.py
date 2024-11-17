@@ -11,17 +11,26 @@ from conftest import (
     make_relational_column_reference,
     make_relational_literal,
 )
-from sqlglot.expressions import Expression, From, Identifier, Literal, Select, Table
+from sqlglot.expressions import (
+    Expression,
+    From,
+    Identifier,
+    Literal,
+    Select,
+    Table,
+    Where,
+)
 
-from pydough.pydough_ast.pydough_operators import LENGTH, LOWER
+from pydough.pydough_ast.pydough_operators import EQU, LENGTH, LOWER
 from pydough.relational.relational_expressions import CallExpression
 from pydough.relational.relational_nodes import (
+    Filter,
     Project,
     Relational,
     Scan,
     SQLGlotRelationalVisitor,
 )
-from pydough.types import Int64Type, StringType
+from pydough.types import BooleanType, Int64Type, StringType
 
 
 @pytest.fixture(scope="module")
@@ -204,6 +213,35 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 }
             ),
             id="repeated_functions",
+        ),
+        pytest.param(
+            Filter(
+                input=build_simple_scan(),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [make_relational_column_reference("a"), make_relational_literal(1)],
+                ),
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a"),
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                    "where": Where(
+                        this=sqlglot_expressions.EQ(
+                            this=Identifier(this="a"), expression=Literal(value=1)
+                        )
+                    ),
+                }
+            ),
+            id="simple_filter",
         ),
     ],
 )

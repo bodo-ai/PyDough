@@ -18,9 +18,14 @@ __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
 # SQLGlot doesn't have a clean interface for functional calls without
 # going through the parser. As a result, we generate our own map for now.
-func_map: dict[str, SQLGlotExpression] = {
+# These functions can be generated with from_arg_list.
+generic_func_map: dict[str, SQLGlotExpression] = {
     "LOWER": sqlglot_expressions.Lower,
     "LENGTH": sqlglot_expressions.Length,
+}
+# These functions need an explicit constructor for binary.
+binary_func_map: dict[str, SQLGlotExpression] = {
+    "==": sqlglot_expressions.EQ,
 }
 
 
@@ -49,11 +54,19 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             self._stack.pop() for _ in range(len(call_expression.inputs))
         ]
         key: str = call_expression.op.function_name.upper()
-        if key in func_map:
-            # Create the function.
-            self._stack.append(func_map[key].from_arg_list(input_exprs))
+        output_expr: SQLGlotExpression
+        if key in generic_func_map:
+            output_expr = generic_func_map[key].from_arg_list(input_exprs)
+        elif key in binary_func_map:
+            assert (
+                len(input_exprs) == 2
+            ), "Expected exactly two inputs for binary function"
+            output_expr = binary_func_map[key](
+                this=input_exprs[0], expression=input_exprs[1]
+            )
         else:
             raise ValueError(f"Unsupported function {key}")
+        self._stack.append(output_expr)
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # TODO: Handle data types.
@@ -84,7 +97,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._stack.append(self.generate_column_reference_identifier(column_reference))
 
     def relational_to_sqlglot(
-        self, expr: RelationalExpression, output_name: str
+        self, expr: RelationalExpression, output_name: str | None = None
     ) -> SQLGlotExpression:
         """
         Interface to convert an entire relational expression to a SQLGlot expression
@@ -92,7 +105,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
         Args:
             expr (RelationalExpression): The relational expression to convert.
-            output_name (str): The name to assign to the final SQLGlot expression.
+            output_name (str | None): The name to assign to the final SQLGlot expression
+                or None if we should omit any alias.
 
         Returns:
             SQLGlotExpression: The final SQLGlot expression representing the entire
@@ -101,7 +115,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self.reset()
         expr.accept(self)
         result = self.get_sqlglot_result()
-        result.set("alias", output_name)
+        if output_name is not None:
+            result.set("alias", output_name)
         return result
 
     def get_sqlglot_result(self) -> SQLGlotExpression:

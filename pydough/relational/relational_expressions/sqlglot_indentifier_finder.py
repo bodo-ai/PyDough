@@ -48,7 +48,7 @@ class SQLGlotIdentifierFinder(RelationalExpressionVisitor):
             )
         )
 
-    def get_identifiers_set(self, expr: RelationalExpression) -> set[Identifier]:
+    def find_identifiers(self, expr: RelationalExpression) -> set[Identifier]:
         """
         Return the set of all identifiers used in the relational expression.
 
