@@ -21,7 +21,7 @@ from sqlglot.expressions import (
     Where,
 )
 
-from pydough.pydough_ast.pydough_operators import EQU, GEQ, LENGTH, LOWER
+from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
 from pydough.relational.relational_expressions import CallExpression
 from pydough.relational.relational_nodes import (
     Filter,
@@ -299,6 +299,83 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 },
             ),
             id="nested_filters",
+        ),
+        pytest.param(
+            Project(
+                input=Filter(
+                    input=Project(
+                        input=build_simple_scan(),
+                        columns={
+                            "c": CallExpression(
+                                ADD,
+                                Int64Type(),
+                                [
+                                    make_relational_column_reference("a"),
+                                    make_relational_literal(1, Int64Type()),
+                                ],
+                            ),
+                            "b": make_relational_column_reference("b"),
+                        },
+                    ),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "c": make_relational_column_reference("c"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    sqlglot_expressions.Add(
+                                        this=Identifier(this="a"),
+                                        expression=Literal(value=1),
+                                    ),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(
+                                    this=Select(
+                                        **{
+                                            "expressions": [
+                                                Identifier(this="a"),
+                                                Identifier(this="b"),
+                                            ],
+                                            "from": From(
+                                                this=Table(
+                                                    this=Identifier(this="table")
+                                                )
+                                            ),
+                                        }
+                                    )
+                                ),
+                                "where": Where(
+                                    this=sqlglot_expressions.EQ(
+                                        this=Identifier(this="a"),
+                                        expression=Literal(value=1),
+                                    )
+                                ),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                },
+            ),
+            id="condition_pruning_project",
         ),
     ],
 )

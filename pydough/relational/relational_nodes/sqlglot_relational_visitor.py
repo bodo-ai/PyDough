@@ -10,7 +10,6 @@ from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
 from pydough.relational.relational_expressions import (
-    SQLGlotIdentifierFinder,
     SQLGlotRelationalExpressionVisitor,
 )
 
@@ -56,7 +55,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
             SQLGlotRelationalExpressionVisitor()
         )
-        self._identifier_finder = SQLGlotIdentifierFinder()
 
     @staticmethod
     def _try_merge_columns(
@@ -148,9 +146,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         deps: set[Identifier] = set()
         # TODO: Add the other query stages once we have support for them.
         if query_stage.value > QueryStage.WHERE.value and "where" in orig_select.args:
-            deps.update(
-                self._identifier_finder.find_identifiers(orig_select.args["where"])
-            )
+            # deps.update(
+            #     self._identifier_finder.find_identifiers(orig_select.args["where"])
+            # )
+            pass
         new_exprs, old_exprs = self._try_merge_columns(
             new_columns, orig_select.expressions, deps
         )
@@ -166,7 +165,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         """
         self._stack = []
         self._expr_visitor.reset()
-        self._identifier_finder.reset()
 
     def visit(self, relational: Relational) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit")
