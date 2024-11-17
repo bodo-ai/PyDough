@@ -59,12 +59,29 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # TODO: Handle data types.
         self._stack.append(SQLGlotLiteral(value=literal_expression.value))
 
-    def visit_column_reference(self, column_reference: ColumnReference) -> None:
+    @staticmethod
+    def generate_column_reference_identifier(
+        column_reference: ColumnReference,
+    ) -> Identifier:
+        """
+        Generate an identifier for a column reference. This is split into a
+        separate static method to ensure consistency across multiple visitors.
+
+        Args:
+            column_reference (ColumnReference): The column reference to generate
+                an identifier for.
+
+        Returns:
+            Identifier: The output identifier.
+        """
         if column_reference.input_name is not None:
-            name = f"{column_reference.input_name}.{column_reference.name}"
+            full_name = f"{column_reference.input_name}.{column_reference.name}"
         else:
-            name = column_reference.name
-        self._stack.append(Identifier(this=name))
+            full_name = column_reference.name
+        return Identifier(this=full_name)
+
+    def visit_column_reference(self, column_reference: ColumnReference) -> None:
+        self._stack.append(self.generate_column_reference_identifier(column_reference))
 
     def relational_to_sqlglot(
         self, expr: RelationalExpression, output_name: str
