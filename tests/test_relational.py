@@ -5,6 +5,7 @@ TODO: add file-level docstring
 from typing import Any
 
 import pytest
+from conftest import make_relational_column_reference
 
 from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
 from pydough.relational.relational_expressions import (
@@ -25,28 +26,6 @@ from pydough.relational.relational_nodes import (
     Scan,
 )
 from pydough.types import BooleanType, Int64Type, PyDoughType, StringType, UnknownType
-
-
-def make_relational_column_reference(
-    name: str, typ: PyDoughType | None = None, input_name: str | None = None
-) -> ColumnReference:
-    """
-    Make a column reference given name and type. This is used
-    for generating various relational nodes.
-
-    Args:
-        name (str): The name of the column in the input.
-        typ (PyDoughType | None): The PyDoughType of the column. Defaults to
-            None.
-        input_name (str | None): The name of the input node. This is
-            used by Join to differentiate between the left and right.
-            Defaults to None.
-
-    Returns:
-        Column: The output column.
-    """
-    pydough_type = typ if typ is not None else UnknownType()
-    return ColumnReference(name, pydough_type, input_name)
 
 
 def make_relational_literal(value: Any, typ: PyDoughType | None = None):

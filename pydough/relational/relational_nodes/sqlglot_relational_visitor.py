@@ -4,6 +4,9 @@ SQLGlot query.
 """
 
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import Select
+
+from pydough.relational.relational_expressions import SQLGlotRelationalExpressionVisitor
 
 from .abstract_node import Relational
 from .aggregate import Aggregate
@@ -24,14 +27,31 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     the relational tree 1 node at a time.
     """
 
+    def __init__(self) -> None:
+        # Keep a stack of SQLGlot expressions so we can build up
+        # intermediate results.
+        self._stack: list[SQLGlotExpression] = []
+        self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
+            SQLGlotRelationalExpressionVisitor()
+        )
+
     def reset(self) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.reset")
+        """
+        Reset clears the stack and resets the expression visitor.
+        """
+        self._stack = []
+        self._expr_visitor.reset()
 
     def visit(self, relational: Relational) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit")
 
     def visit_scan(self, scan: Scan) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit_scan")
+        exprs: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in scan.columns.items()
+        ]
+        query: SQLGlotExpression = Select().select(*exprs).from_(scan.table_name)
+        self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit_join")
@@ -76,4 +96,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             SQLGlotExpression: The SQLGlot expression representing the tree we have already
                 visited.
         """
-        raise NotImplementedError("SQLGlotRelationalVisitor.get_sqlglot_result")
+        assert (
+            len(self._stack) == 1
+        ), "Expected exactly one SQLGlot expression on the stack"
+        return self._stack[0]

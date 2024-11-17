@@ -4,8 +4,9 @@ the relation Tree to a single SQLGlot query component.
 """
 
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import Identifier
 
-from .abstract import RelationalExpression
+from .abstract_expression import RelationalExpression
 from .call_expression import CallExpression
 from .column_reference import ColumnReference
 from .literal_expression import LiteralExpression
@@ -20,8 +21,16 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     the relational tree 1 node at a time.
     """
 
+    def __init__(self) -> None:
+        # Keep a stack of SQLGlot expressions so we can build up
+        # intermediate results.
+        self._stack: list[SQLGlotExpression] = []
+
     def reset(self) -> None:
-        raise NotImplementedError("SQLGlotRelationalExpressionVisitor.reset")
+        """
+        Reset just clears our stack.
+        """
+        self._stack = []
 
     def visit(self, expr: RelationalExpression) -> None:
         raise NotImplementedError("SQLGlotRelationalExpressionVisitor.visit")
@@ -37,9 +46,11 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         )
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
-        raise NotImplementedError(
-            "SQLGlotRelationalExpressionVisitor.visit_column_reference"
-        )
+        if column_reference.input_name is not None:
+            name = f"{column_reference.input_name}.{column_reference.name}"
+        else:
+            name = column_reference.name
+        self._stack.append(Identifier(this=name))
 
     def relational_to_sqlglot(
         self, expr: RelationalExpression, output_name: str
@@ -70,6 +81,5 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             SQLGlotExpression: The SQLGlot expression representing the tree we have already
                 visited.
         """
-        raise NotImplementedError(
-            "SQLGlotRelationalExpressionVisitor.get_sqlglot_result"
-        )
+        assert len(self._stack) == 1, "Expected exactly one expression on the stack"
+        return self._stack[0]
