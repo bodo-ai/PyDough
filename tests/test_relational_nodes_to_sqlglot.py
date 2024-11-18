@@ -489,6 +489,98 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
             ).limit(Literal(value=2)),
             id="nested_limits",
         ),
+        pytest.param(
+            Limit(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                limit=LiteralExpression(2, Int64Type()),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                                "where": Where(
+                                    this=sqlglot_expressions.EQ(
+                                        this=Identifier(this="a"),
+                                        expression=Literal(value=1),
+                                    )
+                                ),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                }
+            ).limit(Literal(value=2)),
+            id="filter_before_limit",
+        ),
+        pytest.param(
+            Filter(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(2, Int64Type()),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a"),
+                        make_relational_literal(1),
+                    ],
+                ),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        ).limit(Literal(value=2))
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "where": Where(
+                        this=sqlglot_expressions.EQ(
+                            this=Identifier(this="a"),
+                            expression=Literal(value=1),
+                        )
+                    ),
+                }
+            ),
+            id="limit_before_filter",
+        ),
     ],
 )
 def test_node_to_sqlglot(

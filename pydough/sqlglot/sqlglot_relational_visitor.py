@@ -148,7 +148,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         """
         deps: set[Identifier] = set()
         # Note: query_stage is currently unused because I need the think about the
-        # fully correct way to use it.
+        # fully correct way to use
         # TODO: Add the other query stages once we have support for them.
         if "where" in orig_select.args:
             deps.update(find_identifiers(orig_select.args["where"]))
