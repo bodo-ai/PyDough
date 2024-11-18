@@ -20,7 +20,6 @@ from pydough.relational.relational_nodes import (
     Join,
     Limit,
     Project,
-    Relational,
     RelationalRoot,
     RelationalVisitor,
     Scan,
@@ -199,9 +198,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._alias_modifier.reset()
         self._alias_counter = 0
 
-    def visit(self, relational: Relational) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit")
-
     def visit_scan(self, scan: Scan) -> None:
         exprs: list[SQLGlotExpression] = [
             self._expr_visitor.relational_to_sqlglot(col, alias)
@@ -333,7 +329,24 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_root(self, root: RelationalRoot) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit_root")
+        self.visit_inputs(root)
+        input_expr: Select = self._stack.pop()
+        # Pop the expressions in order.
+        exprs: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in root.ordered_columns
+        ]
+        ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(root.orderings)
+        query: Select
+        if ordering_exprs and "order" in input_expr.args:
+            query = Select().select(*exprs).from_(input_expr)
+        else:
+            query = self._merge_selects(
+                exprs, input_expr, find_identifiers_in_list(ordering_exprs)
+            )
+        if ordering_exprs:
+            query = query.order_by(*ordering_exprs)
+        self._stack.append(query)
 
     def relational_to_sqlglot(self, root: RelationalRoot) -> SQLGlotExpression:
         """
