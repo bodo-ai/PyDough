@@ -206,8 +206,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in filter.columns.items()
         ]
         query: Select
+        # TODO: Refactor a simpler way to check dependent expressions.
         if (
-            "where" in input_expr.args
+            "group_by" in input_expr.args
+            or "where" in input_expr.args
             or "order" in input_expr.args
             or "limit" in input_expr.args
         ):
@@ -223,7 +225,31 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_aggregate(self, aggregate: Aggregate) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit_aggregate")
+        self.visit_inputs(aggregate)
+        input_expr: Select = self._stack.pop()
+        keys: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in aggregate.keys.items()
+        ]
+        aggregations: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in aggregate.aggregations.items()
+        ]
+        select_cols = keys + aggregations
+        query: Select
+        if (
+            "group_by" in input_expr.args
+            or "order" in input_expr.args
+            or "limit" in input_expr.args
+        ):
+            query = Select().select(*select_cols).from_(input_expr)
+        else:
+            query = self._merge_selects(
+                select_cols, input_expr, find_identifiers_in_list(select_cols)
+            )
+        if keys:
+            query = query.group_by(*keys)
+        self._stack.append(query)
 
     def visit_limit(self, limit: Limit) -> None:
         self.visit_inputs(limit)

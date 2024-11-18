@@ -15,6 +15,7 @@ from conftest import (
 from sqlglot.expressions import (
     Expression,
     From,
+    Group,
     Identifier,
     Literal,
     Select,
@@ -22,9 +23,10 @@ from sqlglot.expressions import (
     Where,
 )
 
-from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
+from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUM
 from pydough.relational.relational_expressions import CallExpression, LiteralExpression
 from pydough.relational.relational_nodes import (
+    Aggregate,
     Filter,
     Limit,
     Project,
@@ -606,6 +608,99 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 }
             ).limit(Literal(value=2)),
             id="project_limit_combine",
+        ),
+        pytest.param(
+            Aggregate(
+                input=build_simple_scan(),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={},
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                    "group": Group(expressions=[Identifier(this="b")]),
+                }
+            ),
+            id="simple_distinct",
+        ),
+        pytest.param(
+            Aggregate(
+                input=build_simple_scan(),
+                keys={},
+                aggregations={
+                    "a": CallExpression(
+                        SUM, Int64Type(), [make_relational_column_reference("a")]
+                    )
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        set_expression_alias(
+                            sqlglot_expressions.Sum.from_arg_list(
+                                [Identifier(this="a")]
+                            ),
+                            "a",
+                        ),
+                    ],
+                }
+            ),
+            id="simple_sum",
+        ),
+        pytest.param(
+            Aggregate(
+                input=build_simple_scan(),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={
+                    "a": CallExpression(
+                        SUM, Int64Type(), [make_relational_column_reference("a")]
+                    )
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                        set_expression_alias(
+                            sqlglot_expressions.Sum.from_arg_list(
+                                [Identifier(this="a")]
+                            ),
+                            "a",
+                        ),
+                    ],
+                    "group": Group(expressions=[Identifier(this="b")]),
+                }
+            ),
+            id="simple_groupby_sum",
         ),
     ],
 )
