@@ -3,13 +3,14 @@ Handle the conversion from the Relation Tree to a single
 SQLGlot query.
 """
 
+from collections.abc import MutableSequence
 from enum import Enum
 
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import LiteralExpression
+from pydough.relational.relational_expressions import ColumnSortInfo, LiteralExpression
 from pydough.relational.relational_nodes import (
     Aggregate,
     Filter,
@@ -158,6 +159,29 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         else:
             return Select().select(*new_exprs).from_(orig_select)
 
+    def _convert_ordering(
+        self, ordering: MutableSequence[ColumnSortInfo]
+    ) -> list[SQLGlotExpression]:
+        """
+        Convert the orderings from the a relational operator into a variant
+        that can be used in SQLGlot.
+
+        Args:
+            ordering (MutableSequence[ColumnSortInfo]): The orderings to convert.
+
+        Returns:
+            list[SQLGlotExpression]: The converted orderings.
+        """
+        col_exprs = []
+        for col in ordering:
+            col_expr = self._expr_visitor.relational_to_sqlglot(col.column)
+            if col.ascending:
+                col_expr = col_expr.asc(nulls_first=col.nulls_first)
+            else:
+                col_expr = col_expr.desc(nulls_first=col.nulls_first)
+            col_exprs.append(col_expr)
+        return col_exprs
+
     def reset(self) -> None:
         """
         Reset clears the stack and resets the expression visitor.
@@ -232,6 +256,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         else:
             # Try merge the column sections
             query = self._merge_selects(exprs, input_expr, QueryStage.LIMIT)
+        ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(
+            limit.orderings
+        )
+        if ordering_exprs:
+            query = query.order_by(*ordering_exprs)
         query = query.limit(limit_expr)
         self._stack.append(query)
 

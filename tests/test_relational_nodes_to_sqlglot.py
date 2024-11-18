@@ -8,6 +8,7 @@ import pytest
 import sqlglot.expressions as sqlglot_expressions
 from conftest import (
     build_simple_scan,
+    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
 )
@@ -400,6 +401,45 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 }
             ).limit(Literal(value=1)),
             id="simple_limit",
+        ),
+        pytest.param(
+            Limit(
+                input=build_simple_scan(),
+                limit=LiteralExpression(1, Int64Type()),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"),
+                        ascending=False,
+                        nulls_first=False,
+                    ),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a"),
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            )
+            .order_by(
+                *[
+                    Identifier(this="a").asc(nulls_first=True),
+                    Identifier(this="b").desc(nulls_first=False),
+                ]
+            )
+            .limit(Literal(value=1)),
+            id="simple_limit_with_ordering",
         ),
     ],
 )
