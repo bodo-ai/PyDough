@@ -29,7 +29,7 @@ from pydough.relational.relational_nodes import (
     Relational,
     Scan,
 )
-from pydough.sqlglot import SQLGlotRelationalVisitor
+from pydough.sqlglot import SQLGlotRelationalVisitor, find_identifiers
 from pydough.types import BooleanType, Int64Type, StringType
 
 
@@ -395,3 +395,42 @@ def test_node_to_sqlglot(
     sqlglot_relational_visitor.reset()
     node.accept(sqlglot_relational_visitor)
     assert sqlglot_relational_visitor.get_sqlglot_result() == sqlglot_expr
+
+
+@pytest.mark.parametrize(
+    "expr, expected",
+    [
+        pytest.param(Identifier(this="a"), {Identifier(this="a")}, id="identifier"),
+        pytest.param(Literal(this=1), set(), id="literal"),
+        pytest.param(
+            sqlglot_expressions.Add(
+                this=Identifier(this="a"),
+                expression=Identifier(this="b"),
+            ),
+            {Identifier(this="a"), Identifier(this="b")},
+            id="function",
+        ),
+        pytest.param(
+            sqlglot_expressions.Add(
+                this=Identifier(this="a"),
+                expression=sqlglot_expressions.Add(
+                    this=Identifier(this="b"), expression=Identifier(this="c")
+                ),
+            ),
+            {Identifier(this="a"), Identifier(this="b"), Identifier(this="c")},
+            id="nested_function",
+        ),
+        pytest.param(
+            sqlglot_expressions.Add(
+                this=Identifier(this="a"),
+                expression=sqlglot_expressions.Add(
+                    this=Identifier(this="b"), expression=Identifier(this="a")
+                ),
+            ),
+            {Identifier(this="a"), Identifier(this="b")},
+            id="duplicate_identifier",
+        ),
+    ],
+)
+def test_expression_identifiers(expr: Expression, expected: set[Identifier]):
+    assert find_identifiers(expr) == expected
