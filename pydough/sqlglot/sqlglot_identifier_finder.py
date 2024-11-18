@@ -32,6 +32,7 @@ def find_identifiers(expr: SQLGlotExpression) -> set[Identifier]:
 
     Args:
         expr (SQLGlotExpression): The SQLGlotExpression to search
+
     Returns:
         set[Identifier]: The set of unique identifiers found in the
             expression.
