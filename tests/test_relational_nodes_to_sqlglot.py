@@ -323,7 +323,7 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                         EQU,
                         BooleanType(),
                         [
-                            make_relational_column_reference("a"),
+                            make_relational_column_reference("c"),
                             make_relational_literal(1),
                         ],
                     ),
@@ -366,18 +366,18 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                                         }
                                     )
                                 ),
-                                "where": Where(
-                                    this=sqlglot_expressions.EQ(
-                                        this=Identifier(this="a"),
-                                        expression=Literal(value=1),
-                                    )
-                                ),
                             }
                         )
                     ),
                     "expressions": [
                         Identifier(this="b"),
                     ],
+                    "where": Where(
+                        this=sqlglot_expressions.EQ(
+                            this=Identifier(this="c"),
+                            expression=Literal(value=1),
+                        )
+                    ),
                 },
             ),
             id="condition_pruning_project",
