@@ -35,6 +35,7 @@ binary_func_map: dict[str, SQLGlotExpression] = {
     "<": sqlglot_expressions.LT,
     "!=": sqlglot_expressions.NEQ,
     "+": sqlglot_expressions.Add,
+    "-": sqlglot_expressions.Sub,
 }
 
 

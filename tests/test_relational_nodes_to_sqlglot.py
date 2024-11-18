@@ -23,7 +23,7 @@ from sqlglot.expressions import (
     Where,
 )
 
-from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUM
+from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUB, SUM
 from pydough.relational.relational_expressions import CallExpression, LiteralExpression
 from pydough.relational.relational_nodes import (
     Aggregate,
@@ -702,6 +702,245 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
             ),
             id="simple_groupby_sum",
         ),
+        pytest.param(
+            Aggregate(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={},
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        )
+                    ),
+                    "where": Where(
+                        this=sqlglot_expressions.EQ(
+                            this=Identifier(this="a"),
+                            expression=Literal(value=1),
+                        )
+                    ),
+                    "group": Group(expressions=[Identifier(this="b")]),
+                }
+            ),
+            id="filter_before_aggregate",
+        ),
+        pytest.param(
+            Filter(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={
+                        "a": CallExpression(
+                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                        )
+                    },
+                ),
+                condition=CallExpression(
+                    GEQ,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a"),
+                        make_relational_literal(20),
+                    ],
+                ),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="b"),
+                                    set_expression_alias(
+                                        sqlglot_expressions.Sum.from_arg_list(
+                                            [Identifier(this="a")]
+                                        ),
+                                        "a",
+                                    ),
+                                ],
+                                "from": From(
+                                    this=Select(
+                                        **{
+                                            "expressions": [
+                                                Identifier(this="a"),
+                                                Identifier(this="b"),
+                                            ],
+                                            "from": From(
+                                                this=Table(
+                                                    this=Identifier(this="table")
+                                                )
+                                            ),
+                                        }
+                                    )
+                                ),
+                                "group": Group(expressions=[Identifier(this="b")]),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "where": Where(
+                        this=sqlglot_expressions.GTE(
+                            this=Identifier(this="a"),
+                            expression=Literal(value=20),
+                        )
+                    ),
+                }
+            ),
+            id="filter_after_aggregate",
+        ),
+        pytest.param(
+            Aggregate(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(10, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={},
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        ).limit(Literal(value=10))
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "group": Group(expressions=[Identifier(this="b")]),
+                }
+            ),
+            id="limit_before_aggregate",
+        ),
+        pytest.param(
+            Limit(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={},
+                ),
+                limit=LiteralExpression(10, Int64Type()),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"),
+                        ascending=False,
+                        nulls_first=True,
+                    )
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                    "group": Group(expressions=[Identifier(this="b")]),
+                }
+            )
+            .order_by(
+                *[
+                    Identifier(this="b").desc(nulls_first=True),
+                ]
+            )
+            .limit(Literal(value=10)),
+            id="limit_after_aggregate",
+        ),
+        pytest.param(
+            Project(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={},
+                ),
+                columns={
+                    "b": CallExpression(
+                        SUB,
+                        Int64Type(),
+                        [
+                            make_relational_column_reference("b"),
+                            make_relational_literal(1, Int64Type()),
+                        ],
+                    ),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                                "group": Group(expressions=[Identifier(this="b")]),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        set_expression_alias(
+                            sqlglot_expressions.Sub(
+                                this=Identifier(this="b"),
+                                expression=Literal(value=1),
+                            ),
+                            "b",
+                        ),
+                    ],
+                }
+            ),
+            id="project_after_aggregate",
+        ),
     ],
 )
 def test_node_to_sqlglot(
@@ -716,7 +955,8 @@ def test_node_to_sqlglot(
     # Note: We reset manually because we can't test full roots yet.
     sqlglot_relational_visitor.reset()
     node.accept(sqlglot_relational_visitor)
-    assert sqlglot_relational_visitor.get_sqlglot_result() == sqlglot_expr
+    actual = sqlglot_relational_visitor.get_sqlglot_result()
+    assert actual == sqlglot_expr
 
 
 @pytest.mark.parametrize(
