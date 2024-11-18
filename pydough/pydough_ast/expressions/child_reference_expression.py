@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["ChildReference"]
+__all__ = ["ChildReferenceExpression"]
 
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 
@@ -10,7 +10,7 @@ from .expression_ast import PyDoughExpressionAST
 from .reference import Reference
 
 
-class ChildReference(Reference):
+class ChildReferenceExpression(Reference):
     """
     The AST node implementation class representing a reference to a term in
     a child collection of a CALC.
@@ -27,7 +27,7 @@ class ChildReference(Reference):
     @property
     def child_idx(self) -> int:
         """
-        The integer index of the child from the CALC that hte ChildReference
+        The integer index of the child from the CALC that hte ChildReferenceExpression
         refers to.
         """
         return self._child_idx

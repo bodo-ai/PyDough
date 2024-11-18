@@ -9,12 +9,12 @@ __all__ = [
     "ExpressionFunctionCall",
     "Reference",
     "BackReferenceExpression",
-    "ChildReference",
+    "ChildReferenceExpression",
     "CollationExpression",
 ]
 
 from .back_reference_expression import BackReferenceExpression
-from .child_reference import ChildReference
+from .child_reference_expression import ChildReferenceExpression
 from .collation_expression import CollationExpression
 from .column_property import ColumnProperty
 from .expression_ast import PyDoughExpressionAST

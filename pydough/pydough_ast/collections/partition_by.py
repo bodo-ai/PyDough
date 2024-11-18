@@ -10,7 +10,7 @@ from functools import cache
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import (
-    ChildReference,
+    ChildReferenceExpression,
     CollationExpression,
 )
 
@@ -33,10 +33,10 @@ class PartitionBy(ChildOperator):
         super().__init__(predecessor, [child])
         self._child: PyDoughCollectionAST = child
         self._child_name: str = child_name
-        self._keys: list[ChildReference] | None = None
+        self._keys: list[ChildReferenceExpression] | None = None
         self._key_name_indices: dict[str, int] = {}
 
-    def with_keys(self, keys: list[ChildReference]) -> "PartitionBy":
+    def with_keys(self, keys: list[ChildReferenceExpression]) -> "PartitionBy":
         """
         Specifies the references to the keys that should be used to partition
         the child node.
@@ -61,7 +61,7 @@ class PartitionBy(ChildOperator):
         return self
 
     @property
-    def keys(self) -> list[ChildReference]:
+    def keys(self) -> list[ChildReferenceExpression]:
         """
         The partitioning keys for the PARTITION BY clause.
         """
@@ -142,7 +142,7 @@ class PartitionBy(ChildOperator):
     def get_term(self, term_name: str) -> PyDoughAST:
         if term_name in self._key_name_indices:
             term: PyDoughAST = self.keys[self._key_name_indices[term_name]]
-            assert isinstance(term, ChildReference)
+            assert isinstance(term, ChildReferenceExpression)
             return term
         elif term_name == self.child_name:
             return PartitionChild(self.child, self.child_name, self)

@@ -13,7 +13,7 @@ from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
     ChildOperatorChildAccess,
-    ChildReference,
+    ChildReferenceExpression,
     CollationExpression,
     OrderBy,
     PartitionBy,
@@ -132,6 +132,7 @@ class Qualifier:
         answer: PyDoughExpressionAST
         operation: str | None
         name: str
+        ref_num: int
         match unqualified:
             case UnqualifiedLiteral():
                 value: object = unqualified._parcel[0]
@@ -150,9 +151,20 @@ class Qualifier:
                         )
                     except PyDoughUnqualifiedException as e:
                         if self.not_expression_pattern.match(str(e)):
-                            qualified_operands.append(
+                            child_collection: PyDoughCollectionAST = (
                                 self.qualify_collection(node, context, True)
                             )
+                            if child_collection in children:
+                                ref_num = children.index(child_collection)
+                            else:
+                                ref_num = len(children)
+                                children.append(child_collection)
+                            child_collection_ref: PyDoughCollectionAST = (
+                                self.builder.build_child_reference_collection(
+                                    context, children, ref_num
+                                )
+                            )
+                            qualified_operands.append(child_collection_ref)
                         else:
                             raise e
                 answer = self.builder.build_expression_function_call(
@@ -202,13 +214,12 @@ class Qualifier:
                     if isinstance(unqualified_parent, UnqualifiedRoot):
                         answer = self.builder.build_reference(context, name)
                     else:
-                        ref_num: int
                         if qualified_parent in children:
                             ref_num = children.index(qualified_parent)
                         else:
                             ref_num = len(children)
                             children.append(qualified_parent)
-                        answer = self.builder.build_child_reference(
+                        answer = self.builder.build_child_reference_expression(
                             children, ref_num, name
                         )
             case _:
@@ -356,7 +367,7 @@ class Qualifier:
                 qualified_child: PyDoughCollectionAST = self.qualify_collection(
                     unqualified_child, qualified_parent, True
                 )
-                child_references: list[ChildReference] = []
+                child_references: list[ChildReferenceExpression] = []
                 children = []
                 for term in unqualified_nameless_terms:
                     qualified_term = self.qualify_expression(
@@ -365,7 +376,7 @@ class Qualifier:
                     assert isinstance(
                         qualified_term, Reference
                     ), "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
-                    child_ref: ChildReference = ChildReference(
+                    child_ref: ChildReferenceExpression = ChildReferenceExpression(
                         qualified_child, 0, qualified_term.term_name
                     )
                     child_references.append(child_ref)

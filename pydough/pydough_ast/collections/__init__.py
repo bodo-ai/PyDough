@@ -16,12 +16,14 @@ __all__ = [
     "PartitionBy",
     "ChildAccess",
     "TopK",
+    "ChildReferenceCollection",
 ]
 
 from .back_reference_collection import BackReferenceCollection
 from .calc import Calc
 from .child_access import ChildAccess
 from .child_operator_child_access import ChildOperatorChildAccess
+from .child_reference_collection import ChildReferenceCollection
 from .collection_access import CollectionAccess
 from .collection_ast import PyDoughCollectionAST
 from .global_context import GlobalContext

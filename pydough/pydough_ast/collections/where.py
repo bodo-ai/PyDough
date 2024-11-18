@@ -85,7 +85,7 @@ class Where(ChildOperator):
 
     @property
     def tree_item_string(self) -> str:
-        return f"Where[{self.condition.to_string()}]"
+        return f"Where[{self.condition.to_string(True)}]"
 
     def equals(self, other: object) -> bool:
         if self._condition is None:

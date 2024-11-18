@@ -19,7 +19,7 @@ from pydough.unqualified import (
 )
 
 
-def pydough_impl_01(root: UnqualifiedNode) -> UnqualifiedNode:
+def pydough_impl_misc_01(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following PyDough snippet:
     ```
@@ -31,7 +31,7 @@ def pydough_impl_01(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
-def pydough_impl_02(root: UnqualifiedNode) -> UnqualifiedNode:
+def pydough_impl_misc_02(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following PyDough snippet:
     ```
@@ -170,16 +170,16 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
     "impl, answer_tree_str",
     [
         pytest.param(
-            pydough_impl_01,
+            pydough_impl_misc_01,
             "──┬─ TPCH\n"
             "  ├─── TableCollection[Nations]\n"
             "  └─┬─ Calc[nation_name=name, total_balance=SUM($1.acctbal)]\n"
             "    └─┬─ AccessChild\n"
             "      └─── SubCollection[customers]",
-            id="01",
+            id="misc-01",
         ),
         pytest.param(
-            pydough_impl_02,
+            pydough_impl_misc_02,
             "──┬─ TPCH\n"
             "  └─┬─ TableCollection[Nations]\n"
             "    ├─── SubCollection[customers]\n"
@@ -192,7 +192,7 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
             "        ├─── SubCollection[orders]\n"
             "        └─┬─ Where[(order_date >= datetime.date(1995, 1, 1)) & (order_date < datetime.date(1996, 1, 1))]\n"
             "          └─── SubCollection[lines]",
-            id="02",
+            id="misc-02",
         ),
         pytest.param(
             pydough_impl_tpch_q1,
@@ -201,7 +201,7 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Lineitems]\n"
             "│   └─── Where[ship_date <= datetime.date(1998, 12, 1)]\n"
-            "├─┬─ Calc[l_returnflag=return_flag, l_linestatus=status, sum_qty=SUM($1.quantity), sum_base_price=SUM($1.extended_price), sum_disc_price=SUM($1.extended_price * (1 - $1.discount)), sum_charge=SUM(($1.extended_price * (1 - $1.discount)) * (1 + $1.tax)), avg_qty=AVG($1.quantity), avg_price=AVG($1.extended_price), avg_disc=AVG($1.discount), count_order=COUNT(l)]\n"
+            "├─┬─ Calc[l_returnflag=return_flag, l_linestatus=status, sum_qty=SUM($1.quantity), sum_base_price=SUM($1.extended_price), sum_disc_price=SUM($1.extended_price * (1 - $1.discount)), sum_charge=SUM(($1.extended_price * (1 - $1.discount)) * (1 + $1.tax)), avg_qty=AVG($1.quantity), avg_price=AVG($1.extended_price), avg_disc=AVG($1.discount), count_order=COUNT($1)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
             "└─── OrderBy[return_flag.ASC(na_pos='last'), status.ASC(na_pos='last')]",
@@ -213,7 +213,7 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Partition[name='p', by=key]\n"
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Nations]\n"
-            "│   └─┬─ Where[region.name == 'EUROPE']\n"
+            "│   └─┬─ Where[$1.name == 'EUROPE']\n"
             "│     ├─┬─ AccessChild\n"
             "│     │ └─── SubCollection[region]\n"
             "│     └─┬─ SubCollection[suppliers]\n"
@@ -233,7 +233,7 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Partition[name='l', by=('order_key', 'order_date', 'ship_priority')]\n"
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Orders]\n"
-            "│   └─┬─ Where[(customer.mktsegment == 'BUILDING') & (order_date < datetime.date(1995, 3, 15))]\n"
+            "│   └─┬─ Where[($1.mktsegment == 'BUILDING') & (order_date < datetime.date(1995, 3, 15))]\n"
             "│     ├─┬─ AccessChild\n"
             "│     │ └─── SubCollection[customer]\n"
             "│     ├─── SubCollection[lines]\n"
@@ -251,8 +251,13 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Partition[name='o', by=order_priority]\n"
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Orders]\n"
-            "│   └─── Where[((order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1))) & (COUNT(lines.WHERE(commit_date < receipt_date)) > 0)]\n"
-            "├─── Calc[order_priority=order_priority, order_count=COUNT(o)]\n"
+            "│   └─┬─ Where[((order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1))) & (COUNT($1) > 0)]\n"
+            "│     └─┬─ AccessChild\n"
+            "│       ├─── SubCollection[lines]\n"
+            "│       └─── Where[commit_date < receipt_date]\n"
+            "├─┬─ Calc[order_priority=order_priority, order_count=COUNT($1)]\n"
+            "│ └─┬─ AccessChild\n"
+            "│   └─── PartitionChild[o]\n"
             "└─── OrderBy[order_priority.ASC(na_pos='last')]",
             id="tpch-q4",
         ),

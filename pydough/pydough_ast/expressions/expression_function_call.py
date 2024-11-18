@@ -7,6 +7,7 @@ __all__ = ["ExpressionFunctionCall"]
 from collections.abc import MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
 from pydough.types import PyDoughType
 
@@ -56,6 +57,10 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self.operator.requires_enclosing_parens(parent)
 
     def to_string(self, tree_form: bool = False) -> str:
+        from pydough.pydough_ast.collections.child_reference_collection import (
+            ChildReferenceCollection,
+        )
+
         arg_strings: list[str] = []
         for arg in self.args:
             arg_string: str
@@ -63,6 +68,14 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
                 arg_string = arg.to_string(tree_form)
                 if arg.requires_enclosing_parens(self):
                     arg_string = f"({arg_string})"
+            elif isinstance(arg, PyDoughCollectionAST):
+                if tree_form:
+                    assert isinstance(
+                        arg, ChildReferenceCollection
+                    ), f"Unexpected argument to function call {arg}: expected an expression, or reference to a collection"
+                    arg_string = arg.tree_item_string
+                else:
+                    arg_string = arg.to_string()
             else:
                 arg_string = str(arg)
             arg_strings.append(arg_string)

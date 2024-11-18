@@ -19,11 +19,12 @@ __all__ = [
     "CollationExpression",
     "OrderBy",
     "PartitionBy",
-    "ChildReference",
+    "ChildReferenceExpression",
     "ChildAccess",
     "TopK",
-    "Reference",
     "GlobalContext",
+    "ChildReferenceCollection",
+    "Reference",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -31,6 +32,7 @@ from .collections import (
     Calc,
     ChildAccess,
     ChildOperatorChildAccess,
+    ChildReferenceCollection,
     GlobalContext,
     OrderBy,
     PartitionBy,
@@ -42,7 +44,7 @@ from .collections import (
 )
 from .errors import PyDoughASTException
 from .expressions import (
-    ChildReference,
+    ChildReferenceExpression,
     CollationExpression,
     ColumnProperty,
     ExpressionFunctionCall,
