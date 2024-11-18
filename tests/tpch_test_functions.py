@@ -49,26 +49,26 @@ def impl_tpch_q2():
     """
     PyDough implementation of TPCH Q2.
     """
-    selected_parts = Nations.WHERE(region.name == "EUROPE").suppliers.parts_supplied
-
-    minimal_parts = PARTITION(selected_parts, name="p", by=part_key)(
-        best_cost=MIN(ps_supplycost)
-    ).p.WHERE(ps_supplycost == BACK(1).best_cost)
-
-    return minimal_parts.WHERE(ps_supplycost == BACK(1).best_cost)(
+    selected_parts = Nations.WHERE(region.name == "EUROPE").suppliers.parts_supplied(
         s_acctbal=BACK(1).account_balance,
         s_name=BACK(1).name,
         n_name=BACK(2).name,
         p_partkey=key,
-        p_mfgr=mfgr,
+        p_mfgr=manufacturer,
         s_address=BACK(1).address,
         s_phone=BACK(1).phone,
         s_comment=BACK(1).comment,
-    ).ORDER_BY(
-        account_balance.DESC(),
-        n_name.ASC(),
-        s_name.ASC(),
-        p_partkey.ASC(),
+    )
+
+    return (
+        PARTITION(selected_parts, name="p", by=key)(best_cost=MIN(p.ps_supplycost))
+        .p.WHERE(ps_supplycost == BACK(1).best_cost)
+        .ORDER_BY(
+            s_acctbal.DESC(),
+            n_name.ASC(),
+            s_name.ASC(),
+            p_partkey.ASC(),
+        )
     )
 
 
