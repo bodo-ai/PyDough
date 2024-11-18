@@ -24,6 +24,7 @@ __all__ = [
     "TopK",
     "GlobalContext",
     "ChildReferenceCollection",
+    "Reference",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -49,5 +50,6 @@ from .expressions import (
     ExpressionFunctionCall,
     Literal,
     PyDoughExpressionAST,
+    Reference,
 )
 from .node_builder import AstNodeBuilder
