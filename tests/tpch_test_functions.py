@@ -120,7 +120,9 @@ def impl_tpch_q5():
     selected_lines = customers.orders.WHERE(
         (order_date >= datetime.date(1994, 1, 1))
         & (order_date < datetime.date(1995, 1, 1))
-    ).lines.WHERE(supplier.nation.name == BACK(3).name)
+    ).lines.WHERE(supplier.nation.name == BACK(3).name)(
+        value=extended_price * (1 - discount)
+    )
     return Nations.WHERE(region.name == "ASIA")(
         n_name=name, revenue=SUM(selected_lines.value)
     ).ORDER_BY(revenue.DESC())
@@ -136,7 +138,7 @@ def impl_tpch_q6():
         & (0.05 < discount)
         & (discount < 0.07)
         & (quantity < 24)
-    )(amt=extendedprice * discount)
+    )(amt=extended_price * discount)
     return TPCH(revenue=SUM(selected_lines.amt))
 
 
@@ -146,7 +148,7 @@ def impl_tpch_q7():
     """
     line_info = Lineitems(
         supp_nation=supplier.nation.name,
-        cust_nation=customer.nation.name,
+        cust_nation=order.customer.nation.name,
         l_year=YEAR(ship_date),
         volume=extended_price * (1 - discount),
     ).WHERE(
@@ -175,14 +177,14 @@ def impl_tpch_q8():
     PyDough implementation of TPCH Q8.
     """
     selected_orders = Orders.WHERE(
-        (ship_date >= datetime.date(1995, 1, 1))
-        & (ship_date <= datetime.date(1996, 12, 31))
+        (order_date >= datetime.date(1995, 1, 1))
+        & (order_date <= datetime.date(1996, 12, 31))
         & (customer.region.name == "AMERICA")
     )
 
     volume_data = selected_orders.lines(
         volume=extended_price * (1 - discount)
-    ).supplier.WHERE(ps_part.p_type == "ECONOMY ANODIZED STEEL")(
+    ).supplier.WHERE(ps_part.part_type == "ECONOMY ANODIZED STEEL")(
         o_year=YEAR(BACK(2).order_date),
         volume=BACK(1).volume,
         brazil_volume=IFF(nation.name == "BRAZIL", BACK(1).volume, 0),
@@ -206,7 +208,7 @@ def impl_tpch_q9():
         nation=nation, o_year=o_year, amount=SUM(l.value)
     ).ORDER_BY(
         nation.ASC(),
-        o_year.dESC(),
+        o_year.DESC(),
     )
 
 
@@ -217,21 +219,17 @@ def impl_tpch_q10():
     selected_lines = orders.WHERE(
         (order_date >= datetime.date(1993, 10, 1))
         & (order_date < datetime.date(1994, 1, 1))
-    ).lines.WHERE(return_flag == "R")(amt=extendedprice * (1 - discount))
-    return (
-        Customers(
-            c_key=key,
-            c_name=name,
-            revenue=SUM(selected_lines.amt),
-            c_acctbal=acctbal,
-            n_name=nation.name,
-            c_address=address,
-            c_phone=phone,
-            c_comment=comment,
-        )
-        .ORDER_BY(revenue.DESC(), c_key.ASC())
-        .TOP_K(20)
-    )
+    ).lines.WHERE(return_flag == "R")(amt=extended_price * (1 - discount))
+    return Customers(
+        c_key=key,
+        c_name=name,
+        revenue=SUM(selected_lines.amt),
+        c_acctbal=acctbal,
+        n_name=nation.name,
+        c_address=address,
+        c_phone=phone,
+        c_comment=comment,
+    ).TOP_K(20, by=(revenue.DESC(), c_key.ASC()))
 
 
 def impl_tpch_q11():
@@ -242,12 +240,19 @@ def impl_tpch_q11():
     to something done within a partition.
     """
     selected_records = PartSupp.WHERE(supplier.nation.name == "GERMANY")
-    min_market_share = TPCH(
-        amt=SUM(selected_records.supplycost * selected_records.availqty) * 0.0001
+    return (
+        TPCH(
+            min_market_share=SUM(
+                selected_records.supplycost * selected_records.availqty
+            )
+            * 0.0001
+        )
+        .PARTITION(selected_records, name="ps", by=part_key)(
+            ps_partkey=part_key, val=SUM(ps.supplycost * ps.availqty)
+        )
+        .WHERE(val > BACK(1).min_market_share)
+        .ORDER_BY(val.DESC())
     )
-    return PARTITION(selected_records, name="ps", by=part_key)(
-        ps_partkey=part_key, val=SUM(ps.supplycost * ps.availqty)
-    ).WHERE(val > min_market_share.amt)
 
 
 def impl_tpch_q12():
