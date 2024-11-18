@@ -516,21 +516,22 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                         this=Select(
                             **{
                                 "expressions": [
+                                    Identifier(this="a"),
                                     Identifier(this="b"),
                                 ],
                                 "from": From(this=Table(this=Identifier(this="table"))),
-                                "where": Where(
-                                    this=sqlglot_expressions.EQ(
-                                        this=Identifier(this="a"),
-                                        expression=Literal(value=1),
-                                    )
-                                ),
                             }
                         )
                     ),
                     "expressions": [
                         Identifier(this="b"),
                     ],
+                    "where": Where(
+                        this=sqlglot_expressions.EQ(
+                            this=Identifier(this="a"),
+                            expression=Literal(value=1),
+                        )
+                    ),
                 }
             ).limit(Literal(value=2)),
             id="filter_before_limit",
