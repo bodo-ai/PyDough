@@ -31,9 +31,9 @@ def impl_tpch_q1():
     PyDough implementation of TPCH Q1.
     """
     selected_lines = Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1)))
-    return PARTITION(selected_lines, name="l", by=(return_flag, line_status))(
-        return_flag,
-        line_status,
+    return PARTITION(selected_lines, name="l", by=(return_flag, status))(
+        l_returnflag=return_flag,
+        l_linestatus=status,
         sum_qty=SUM(l.quantity),
         sum_base_price=SUM(l.extended_price),
         sum_disc_price=SUM(l.extended_price * (1 - l.discount)),
@@ -42,7 +42,7 @@ def impl_tpch_q1():
         avg_price=AVG(l.extended_price),
         avg_disc=AVG(l.discount),
         count_order=COUNT(l),
-    ).ORDER_BY(return_flag.ASC(), line_status.ASC())
+    ).ORDER_BY(l_returnflag.ASC(), l_linestatus.ASC())
 
 
 def impl_tpch_q2():

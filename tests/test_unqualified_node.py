@@ -261,7 +261,7 @@ def test_unqualified_to_string(
     [
         pytest.param(
             impl_tpch_q1,
-            "TPCH.PARTITION(TPCH.Lineitems.WHERE((TPCH.ship_date <= datetime.date(1998, 12, 1):DateType())), name='l', by=(TPCH.return_flag, TPCH.line_status))(return_flag=TPCH.return_flag, line_status=TPCH.line_status, sum_qty=SUM(TPCH.l.quantity), sum_base_price=SUM(TPCH.l.extended_price), sum_disc_price=SUM((TPCH.l.extended_price * (1:Int64Type() - TPCH.l.discount))), sum_charge=SUM(((TPCH.l.extended_price * (1:Int64Type() - TPCH.l.discount)) * (1:Int64Type() + TPCH.l.tax))), avg_qty=AVG(TPCH.l.quantity), avg_price=AVG(TPCH.l.extended_price), avg_disc=AVG(TPCH.l.discount), count_order=COUNT(TPCH.l)).ORDER_BY(TPCH.return_flag.ASC(na_pos='last'), TPCH.line_status.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Lineitems.WHERE((TPCH.ship_date <= datetime.date(1998, 12, 1):DateType())), name='l', by=(TPCH.return_flag, TPCH.status))(l_returnflag=TPCH.return_flag, l_linestatus=TPCH.status, sum_qty=SUM(TPCH.l.quantity), sum_base_price=SUM(TPCH.l.extended_price), sum_disc_price=SUM((TPCH.l.extended_price * (1:Int64Type() - TPCH.l.discount))), sum_charge=SUM(((TPCH.l.extended_price * (1:Int64Type() - TPCH.l.discount)) * (1:Int64Type() + TPCH.l.tax))), avg_qty=AVG(TPCH.l.quantity), avg_price=AVG(TPCH.l.extended_price), avg_disc=AVG(TPCH.l.discount), count_order=COUNT(TPCH.l)).ORDER_BY(TPCH.l_returnflag.ASC(na_pos='last'), TPCH.l_linestatus.ASC(na_pos='last'))",
             id="tpch_q1",
         ),
         pytest.param(

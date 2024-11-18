@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["qualify_node"]
 
+import re
 from collections.abc import MutableSequence
 from functools import cache
 
@@ -47,6 +48,10 @@ from .unqualified_node import (
 
 
 class Qualifier:
+    not_expression_pattern: re.Pattern = re.compile(
+        "Cannot qualify (\S*) as an expression"
+    )
+
     def __init__(self, graph: GraphMetadata):
         self._graph: GraphMetadata = graph
         self._builder: AstNodeBuilder = AstNodeBuilder(graph)
@@ -115,10 +120,12 @@ class Qualifier:
         lookup: PyDoughAST | None = self.lookup_if_already_qualified(
             unqualified_str, context
         )
+        bad_expression: Exception = PyDoughUnqualifiedException(
+            f"Cannot qualify {unqualified.__class__.__name__} as an expression: {unqualified!r}"
+        )
         if lookup is not None:
-            assert isinstance(
-                lookup, PyDoughExpressionAST
-            ), f"Expected qualified answer to be an expression, received {lookup.__class__.__name__}"
+            if not isinstance(lookup, PyDoughExpressionAST):
+                raise bad_expression
             return lookup
         unqualified_expr: UnqualifiedNode
         qualified_expr: PyDoughExpressionAST
@@ -137,9 +144,17 @@ class Qualifier:
                 )
                 qualified_operands: MutableSequence[PyDoughAST] = []
                 for node in unqualified_operands:
-                    qualified_operands.append(
-                        self.qualify_expression(node, context, children)
-                    )
+                    try:
+                        qualified_operands.append(
+                            self.qualify_expression(node, context, children)
+                        )
+                    except PyDoughUnqualifiedException as e:
+                        if self.not_expression_pattern.match(str(e)):
+                            qualified_operands.append(
+                                self.qualify_collection(node, context, True)
+                            )
+                        else:
+                            raise e
                 answer = self.builder.build_expression_function_call(
                     operation, qualified_operands
                 )
@@ -177,21 +192,27 @@ class Qualifier:
                     answer = self.builder.build_back_reference_expression(
                         context, name, levels
                     )
-                elif isinstance(unqualified_parent, UnqualifiedRoot):
-                    answer = self.builder.build_reference(context, name)
                 else:
                     qualified_parent: PyDoughCollectionAST = self.qualify_collection(
                         unqualified_parent, context, True
                     )
-                    ref_num: int
-                    if qualified_parent in children:
-                        ref_num = children.index(qualified_parent)
+                    term: PyDoughAST = qualified_parent.get_term(name)
+                    if not isinstance(term, PyDoughExpressionAST):
+                        raise bad_expression
+                    if isinstance(unqualified_parent, UnqualifiedRoot):
+                        answer = self.builder.build_reference(context, name)
                     else:
-                        ref_num = len(children)
-                        children.append(qualified_parent)
-                    answer = self.builder.build_child_reference(children, ref_num, name)
+                        ref_num: int
+                        if qualified_parent in children:
+                            ref_num = children.index(qualified_parent)
+                        else:
+                            ref_num = len(children)
+                            children.append(qualified_parent)
+                        answer = self.builder.build_child_reference(
+                            children, ref_num, name
+                        )
             case _:
-                raise PyDoughUnqualifiedException(f"Cannot qualify {unqualified!r}")
+                raise bad_expression
         self.add_definition(unqualified_str, context, answer)
         return answer
 
@@ -225,10 +246,12 @@ class Qualifier:
         lookup: PyDoughAST | None = self.lookup_if_already_qualified(
             unqualified_str, context
         )
+        bad_collection: Exception = PyDoughUnqualifiedException(
+            f"Cannot qualify {unqualified.__class__.__name__} as a collection: {unqualified!r}"
+        )
         if lookup is not None:
-            assert isinstance(
-                lookup, PyDoughCollectionAST
-            ), f"Expected qualified answer to be a collection, received {lookup.__class__.__name__}"
+            if not isinstance(lookup, PyDoughCollectionAST):
+                raise bad_collection
             return lookup
         answer: PyDoughCollectionAST
         name: str
@@ -351,7 +374,7 @@ class Qualifier:
                 )
                 answer = partition.with_keys(child_references)
             case _:
-                raise PyDoughUnqualifiedException(f"Cannot qualify {unqualified!r}")
+                raise bad_collection
         self.add_definition(unqualified_str, context, answer)
         return answer
 
