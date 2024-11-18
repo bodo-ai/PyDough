@@ -131,7 +131,7 @@ class PartitionBy(ChildOperator):
         return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
 
     def to_string(self) -> str:
-        return self.standalone_string
+        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:
