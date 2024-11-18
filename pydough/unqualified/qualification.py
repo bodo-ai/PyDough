@@ -12,12 +12,14 @@ from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
     ChildOperatorChildAccess,
+    ChildReference,
     CollationExpression,
-    GlobalContext,
     OrderBy,
+    PartitionBy,
     PyDoughAST,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
+    Reference,
     TopK,
     Where,
 )
@@ -37,6 +39,7 @@ from .unqualified_node import (
     UnqualifiedNode,
     UnqualifiedOperation,
     UnqualifiedOrderBy,
+    UnqualifiedPartition,
     UnqualifiedRoot,
     UnqualifiedTopK,
     UnqualifiedWhere,
@@ -178,7 +181,7 @@ class Qualifier:
                     answer = self.builder.build_reference(context, name)
                 else:
                     qualified_parent: PyDoughCollectionAST = self.qualify_collection(
-                        unqualified_parent, context
+                        unqualified_parent, context, True
                     )
                     ref_num: int
                     if qualified_parent in children:
@@ -194,7 +197,10 @@ class Qualifier:
 
     @cache
     def qualify_collection(
-        self, unqualified: UnqualifiedNode, context: PyDoughCollectionAST
+        self,
+        unqualified: UnqualifiedNode,
+        context: PyDoughCollectionAST,
+        is_child: bool,
     ) -> PyDoughCollectionAST:
         """
         Transforms an `UnqualifiedNode` into a PyDoughCollectionAST node.
@@ -204,6 +210,8 @@ class Qualifier:
             `builder`: a builder object used to create new qualified nodes.
             `context`: the collection AST whose context the collection is being
             evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
 
         Returns:
             The PyDough AST object for the qualified collection node.
@@ -245,17 +253,17 @@ class Qualifier:
                     )
                 else:
                     qualified_parent = self.qualify_collection(
-                        unqualified_parent, context
+                        unqualified_parent, context, is_child
                     )
                     answer = self.builder.build_child_access(name, qualified_parent)
-                    if isinstance(
-                        unqualified_parent, UnqualifiedRoot
-                    ) and not isinstance(context, GlobalContext):
+                    if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
                         answer = ChildOperatorChildAccess(answer)
             case UnqualifiedCalc():
                 unqualified_parent = unqualified._parcel[0]
                 unqualified_terms = unqualified._parcel[1]
-                qualified_parent = self.qualify_collection(unqualified_parent, context)
+                qualified_parent = self.qualify_collection(
+                    unqualified_parent, context, is_child
+                )
                 children = []
                 qualified_terms = []
                 for name, term in unqualified_terms:
@@ -268,7 +276,9 @@ class Qualifier:
             case UnqualifiedWhere():
                 unqualified_parent = unqualified._parcel[0]
                 unqualified_cond: UnqualifiedNode = unqualified._parcel[1]
-                qualified_parent = self.qualify_collection(unqualified_parent, context)
+                qualified_parent = self.qualify_collection(
+                    unqualified_parent, context, is_child
+                )
                 children = []
                 qualified_term = self.qualify_expression(
                     unqualified_cond, qualified_parent, children
@@ -278,7 +288,9 @@ class Qualifier:
             case UnqualifiedOrderBy():
                 unqualified_parent = unqualified._parcel[0]
                 unqualified_nameless_terms = unqualified._parcel[1]
-                qualified_parent = self.qualify_collection(unqualified_parent, context)
+                qualified_parent = self.qualify_collection(
+                    unqualified_parent, context, is_child
+                )
                 children = []
                 qualified_collations = []
                 for term in unqualified_nameless_terms:
@@ -295,7 +307,9 @@ class Qualifier:
                 # TODO: add ability to infer the "by" clause from a predecessor
                 assert unqualified._parcel[2] is not None
                 unqualified_nameless_terms = unqualified._parcel[2]
-                qualified_parent = self.qualify_collection(unqualified_parent, context)
+                qualified_parent = self.qualify_collection(
+                    unqualified_parent, context, is_child
+                )
                 children = []
                 qualified_collations = []
                 for term in unqualified_nameless_terms:
@@ -308,6 +322,34 @@ class Qualifier:
                     qualified_parent, children, records_to_keep
                 )
                 answer = topk.with_collation(qualified_collations)
+            case UnqualifiedPartition():
+                unqualified_parent = unqualified._parcel[0]
+                unqualified_child: UnqualifiedNode = unqualified._parcel[1]
+                child_name: str = unqualified._parcel[2]
+                unqualified_nameless_terms = unqualified._parcel[3]
+                qualified_parent = self.qualify_collection(
+                    unqualified_parent, context, is_child
+                )
+                qualified_child: PyDoughCollectionAST = self.qualify_collection(
+                    unqualified_child, qualified_parent, True
+                )
+                child_references: list[ChildReference] = []
+                children = []
+                for term in unqualified_nameless_terms:
+                    qualified_term = self.qualify_expression(
+                        term, qualified_child, children
+                    )
+                    assert isinstance(
+                        qualified_term, Reference
+                    ), "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
+                    child_ref: ChildReference = ChildReference(
+                        qualified_child, 0, qualified_term.term_name
+                    )
+                    child_references.append(child_ref)
+                partition: PartitionBy = self.builder.build_partition(
+                    qualified_parent, qualified_child, child_name
+                )
+                answer = partition.with_keys(child_references)
             case _:
                 raise PyDoughUnqualifiedException(f"Cannot qualify {unqualified!r}")
         self.add_definition(unqualified_str, context, answer)
@@ -334,4 +376,6 @@ def qualify_node(
         qualified or is not recognized.
     """
     qual: Qualifier = Qualifier(graph)
-    return qual.qualify_collection(unqualified, qual.builder.build_global_context())
+    return qual.qualify_collection(
+        unqualified, qual.builder.build_global_context(), False
+    )
