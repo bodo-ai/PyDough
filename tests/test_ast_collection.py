@@ -1577,9 +1577,9 @@ def test_collections_to_string(
     non-tree string representation.
     """
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
-    # assert (
-    #     collection.to_string() == expected_string
-    # ), "Mismatch between non-tree string representation and expected value"
+    assert (
+        collection.to_string() == expected_string
+    ), "Mismatch between non-tree string representation and expected value"
     assert (
         collection.to_tree_string() == expected_tree_string
     ), "Mismatch between tree string representation and expected value"
