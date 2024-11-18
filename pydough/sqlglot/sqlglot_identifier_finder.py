@@ -29,8 +29,10 @@ def _visit_expression(expr: SQLGlotExpression, identifiers: set[Identifier]) -> 
 def find_identifiers(expr: SQLGlotExpression) -> set[Identifier]:
     """
     Find all the unique identifiers in a SQLGlot expression.
+
     Args:
         expr (SQLGlotExpression): The SQLGlotExpression to search
+
     Returns:
         set[Identifier]: The set of unique identifiers found in the
             expression.
