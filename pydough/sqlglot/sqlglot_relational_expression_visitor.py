@@ -8,11 +8,13 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from .abstract_expression import RelationalExpression
-from .call_expression import CallExpression
-from .column_reference import ColumnReference
-from .literal_expression import LiteralExpression
-from .relational_expression_visitor import RelationalExpressionVisitor
+from pydough.relational.relational_expressions import (
+    CallExpression,
+    ColumnReference,
+    LiteralExpression,
+    RelationalExpression,
+    RelationalExpressionVisitor,
+)
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 

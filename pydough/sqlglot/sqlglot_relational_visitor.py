@@ -9,19 +9,19 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import (
-    SQLGlotRelationalExpressionVisitor,
+from pydough.relational.relational_nodes import (
+    Aggregate,
+    Filter,
+    Join,
+    Limit,
+    Project,
+    Relational,
+    RelationalRoot,
+    RelationalVisitor,
+    Scan,
 )
 
-from .abstract_node import Relational
-from .aggregate import Aggregate
-from .filter import Filter
-from .join import Join
-from .limit import Limit
-from .project import Project
-from .relational_root import RelationalRoot
-from .relational_visitor import RelationalVisitor
-from .scan import Scan
+from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
 __all__ = ["SQLGlotRelationalVisitor"]
 

@@ -28,8 +28,8 @@ from pydough.relational.relational_nodes import (
     Project,
     Relational,
     Scan,
-    SQLGlotRelationalVisitor,
 )
+from pydough.sqlglot import SQLGlotRelationalVisitor
 from pydough.types import BooleanType, Int64Type, StringType
 
 
