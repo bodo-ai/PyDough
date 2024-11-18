@@ -289,9 +289,14 @@ class Qualifier:
                     qualified_parent = self.qualify_collection(
                         unqualified_parent, context, is_child
                     )
-                    answer = self.builder.build_child_access(name, qualified_parent)
-                    if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
-                        answer = ChildOperatorChildAccess(answer)
+                    if isinstance(unqualified_parent, UnqualifiedRoot) and name == repr(
+                        unqualified_parent
+                    ):
+                        return qualified_parent
+                    else:
+                        answer = self.builder.build_child_access(name, qualified_parent)
+                        if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+                            answer = ChildOperatorChildAccess(answer)
             case UnqualifiedCalc():
                 unqualified_parent = unqualified._parcel[0]
                 unqualified_terms = unqualified._parcel[1]
