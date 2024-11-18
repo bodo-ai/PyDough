@@ -505,7 +505,7 @@ class ChildOperatorInfo(CollectionTestInfo):
         """
         child_strings: list[str] = []
         for idx, child in enumerate(self.children_info):
-            child_strings.append(f"${idx}: {child.to_string}")
+            child_strings.append(f"${idx}: {child.to_string()}")
         if len(self.children_info) == 0:
             return ""
         return "\n" + "\n".join(child_strings) + "\n"

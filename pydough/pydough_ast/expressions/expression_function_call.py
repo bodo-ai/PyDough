@@ -65,7 +65,10 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
                 if arg.requires_enclosing_parens(self):
                     arg_string = f"({arg_string})"
             elif isinstance(arg, PyDoughCollectionAST):
-                arg_string = arg.standalone_string
+                if tree_form:
+                    arg_string = arg.tree_item_string
+                else:
+                    arg_string = arg.to_string()
             else:
                 arg_string = str(arg)
             arg_strings.append(arg_string)
