@@ -62,7 +62,11 @@ def impl_tpch_q2():
 
     return (
         PARTITION(selected_parts, name="p", by=key)(best_cost=MIN(p.ps_supplycost))
-        .p.WHERE(ps_supplycost == BACK(1).best_cost)
+        .p.WHERE(
+            (ps_supplycost == BACK(1).best_cost)
+            & ENDSWITH(part_type, "BRASS")
+            & (size == 15)
+        )
         .ORDER_BY(
             s_acctbal.DESC(),
             n_name.ASC(),

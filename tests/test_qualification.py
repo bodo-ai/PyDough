@@ -88,7 +88,11 @@ def pydough_impl_tpch_q2(root: UnqualifiedNode) -> UnqualifiedNode:
         root.PARTITION(selected_parts, name="p", by=root.key)(
             best_cost=root.MIN(root.p.ps_supplycost)
         )
-        .p.WHERE(root.ps_supplycost == root.BACK(1).best_cost)
+        .p.WHERE(
+            (root.ps_supplycost == root.BACK(1).best_cost)
+            & root.ENDSWITH(root.part_type, "BRASS")
+            & (root.size == 15)
+        )
         .ORDER_BY(
             root.s_acctbal.DESC(),
             root.n_name.ASC(),
@@ -142,7 +146,7 @@ def pydough_impl_tpch_q2(root: UnqualifiedNode) -> UnqualifiedNode:
             "  ├─┬─ AccessChild\n"
             "  │ └─── PartitionChild[p]\n"
             "  ├─── PartitionChild[p]\n"
-            "  ├─── Where[ps_supplycost == BACK(1).best_cost]\n"
+            "  ├─── Where[((ps_supplycost == BACK(1).best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15)]\n"
             "  └─── OrderBy[s_acctbal.DESC(na_pos='last'), n_name.ASC(na_pos='last'), s_name.ASC(na_pos='last'), p_partkey.ASC(na_pos='last')]",
             id="tpch-q2",
         ),
