@@ -32,8 +32,8 @@ def impl_tpch_q1():
     """
     selected_lines = Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1)))
     return PARTITION(selected_lines, name="l", by=(return_flag, line_status))(
-        return_flag=return_flag,
-        line_status=line_status,
+        return_flag,
+        line_status,
         sum_qty=SUM(l.quantity),
         sum_base_price=SUM(l.extended_price),
         sum_disc_price=SUM(l.extended_price * (1 - l.discount)),
@@ -49,26 +49,26 @@ def impl_tpch_q2():
     """
     PyDough implementation of TPCH Q2.
     """
-    selected_parts = Nations.WHERE(region.name == "EUROPE").suppliers.parts_supplied
-
-    minimal_parts = PARTITION(selected_parts, name="p", by=part_key)(
-        best_cost=MIN(ps_supplycost)
-    ).p.WHERE(ps_supplycost == BACK(1).best_cost)
-
-    return minimal_parts.WHERE(ps_supplycost == BACK(1).best_cost)(
+    selected_parts = Nations.WHERE(region.name == "EUROPE").suppliers.parts_supplied(
         s_acctbal=BACK(1).account_balance,
         s_name=BACK(1).name,
         n_name=BACK(2).name,
         p_partkey=key,
-        p_mfgr=mfgr,
+        p_mfgr=manufacturer,
         s_address=BACK(1).address,
         s_phone=BACK(1).phone,
         s_comment=BACK(1).comment,
-    ).ORDER_BY(
-        account_balance.DESC(),
-        n_name.ASC(),
-        s_name.ASC(),
-        p_partkey.ASC(),
+    )
+
+    return (
+        PARTITION(selected_parts, name="p", by=key)(best_cost=MIN(p.ps_supplycost))
+        .p.WHERE(ps_supplycost == BACK(1).best_cost)
+        .ORDER_BY(
+            s_acctbal.DESC(),
+            n_name.ASC(),
+            s_name.ASC(),
+            p_partkey.ASC(),
+        )
     )
 
 
@@ -79,8 +79,8 @@ def impl_tpch_q3():
     selected_lines = Orders.WHERE(
         (customer.mktsegment == "BUILDING") & (order_date < datetime.date(1995, 3, 15))
     ).lines.WHERE(ship_date > datetime.date(1995, 3, 15))(
-        order_date=BACK(1).order_date,
-        ship_priority=BACK(1).ship_priority,
+        BACK(1).order_date,
+        BACK(1).ship_priority,
     )
 
     return PARTITION(
@@ -155,9 +155,9 @@ def impl_tpch_q7():
     )
 
     return PARTITION(line_info, name="l", by=(supp_nation, cust_nation, l_year))(
-        supp_nation=supp_nation,
-        cust_nation=cust_nation,
-        l_year=l_year,
+        supp_nation,
+        cust_nation,
+        l_year,
         revenue=SUM(l.volume),
     ).ORDER_BY(
         supp_nation.ASC(),
@@ -261,7 +261,7 @@ def impl_tpch_q12():
         | (order.order_priority == "2-HIGH"),
     )
     return PARTITION(selected_lines, "l", by=ship_mode)(
-        ship_mode=ship_mode,
+        ship_mode,
         high_line_count=SUM(l.is_high_priority),
         low_line_count=SUM(~(l.is_high_priority)),
     ).ORDER_BY(ship_mode.ASC())
@@ -272,7 +272,7 @@ def impl_tpch_q13():
     PyDough implementation of TPCH Q13.
     """
     customer_info = Customers(
-        key=key,
+        key,
         num_non_special_orders=COUNT(
             orders.WHERE(~(LIKE(comment, "%special%requests%")))
         ),
@@ -345,9 +345,9 @@ def impl_tpch_q16():
         .WHERE(~LIKE(supplier.comment, "%Customer%Complaints%"))
     )
     return PARTITION(selected_records, name="ps", by=(p_brand, p_type, p_size))(
-        p_brand=p_brand,
-        p_type=p_type,
-        p_size=p_size,
+        p_brand,
+        p_type,
+        p_size,
         supplier_cnt=NDISTINCT(ps.supplier_key),
     )
 
@@ -467,7 +467,7 @@ def impl_tpch_q22():
         avg_balance=AVG(cust_info.WHERE(acct_bal > 0.0).acct_bal)
     ).cust_info.WHERE(acct_bal > BACK(1).avg_balance)
     return PARTITION(selected_customers, name="custs", by=cntry_code)(
-        cntry_code=cntry_code,
+        cntry_code,
         num_custs=COUNT(custs),
         totacctbal=SUM(acct_bal),
     )
