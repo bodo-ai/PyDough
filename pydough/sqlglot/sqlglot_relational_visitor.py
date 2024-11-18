@@ -3,8 +3,6 @@ Handle the conversion from the Relation Tree to a single
 SQLGlot query.
 """
 
-from enum import Enum
-
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
@@ -25,22 +23,6 @@ from .sqlglot_identifier_finder import find_identifiers
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
 __all__ = ["SQLGlotRelationalVisitor"]
-
-
-class QueryStage(Enum):
-    """
-    Enum to represent the different stages of a SQL query.
-    This is used when determine what we need to check to
-    attempt and fuse clauses.
-    """
-
-    FROM = 1
-    WHERE = 2
-    GROUP_BY = 3
-    HAVING = 4
-    SELECT = 5
-    ORDER_BY = 6
-    LIMIT = 7
 
 
 class SQLGlotRelationalVisitor(RelationalVisitor):
@@ -92,9 +74,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 select statement and the columns that can be placed in
                 the original query.
         """
-        if old_column_deps:
-            # TODO: Support dependencies to allow greater merging.
-            return new_columns, old_columns
         # Only support fusing columns that are simple renames or literals for
         # now. If we see just column references or literals though we can
         # always merge.
@@ -109,6 +88,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             # Create a mapping for the old columns so we can replace column
             # references.
             old_column_map = {c.alias: c for c in old_columns}
+            seen_cols: set[Identifier] = set()
             for new_column in new_columns:
                 if isinstance(new_column, SQLGlotLiteral):
                     # If the new column is a literal, we can just add it to the old
@@ -120,6 +100,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                     # multiple places, but this is currently okay.
                     expr.set("alias", new_column.alias)
                     modified_old_columns.append(expr)
+                    if isinstance(expr, Identifier):
+                        seen_cols.add(expr)
+            # Check that there are no missing dependencies in the old columns.
+            if old_column_deps - seen_cols:
+                return new_columns, old_columns
             return modified_new_columns, modified_old_columns
         else:
             return new_columns, old_columns
@@ -128,7 +113,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self,
         new_columns: list[SQLGlotExpression],
         orig_select: Select,
-        query_stage: QueryStage,
+        deps: set[Identifier],
     ) -> Select:
         """
         Attempt to merge a new select statement with an existing one.
@@ -138,16 +123,14 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         Args:
             new_columns (list[SQLGlotExpression]): The new columns to attempt to merge.
             orig_select (Select): The original select statement to merge with.
-            query_stage (QueryStage): The query stage for merging. This determines
-                where we need to check for dependencies.
+            deps (set[str]): A set of column names that are dependencies
+                of the old columns in some operator other than the
+                "SELECT" component. For example a filter will need to
+                include the column names of any WHERE conditions.
 
         Returns:
             Select: A final select statement that may contain the merged columns.
         """
-        deps: set[Identifier] = set()
-        # TODO: Add the other query stages once we have support for them.
-        if query_stage.value > QueryStage.WHERE.value and "where" in orig_select.args:
-            deps.update(find_identifiers(orig_select.args["where"]))
         new_exprs, old_exprs = self._try_merge_columns(
             new_columns, orig_select.expressions, deps
         )
@@ -185,7 +168,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in project.columns.items()
         ]
         input_expr: Select = self._stack.pop()
-        query: Select = self._merge_selects(exprs, input_expr, QueryStage.SELECT)
+        query: Select = self._merge_selects(exprs, input_expr, set())
         self._stack.append(query)
 
     def visit_filter(self, filter: Filter) -> None:
@@ -204,7 +187,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             query = Select().select(*exprs).from_(input_expr)
         else:
             # Try merge the column sections
-            query = self._merge_selects(exprs, input_expr, QueryStage.WHERE)
+            query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
         query = query.where(cond)
         self._stack.append(query)
 
