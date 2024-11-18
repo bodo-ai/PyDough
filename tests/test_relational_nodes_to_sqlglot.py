@@ -33,6 +33,7 @@ from pydough.relational.relational_nodes import (
     Limit,
     Project,
     Relational,
+    RelationalRoot,
     Scan,
 )
 from pydough.sqlglot import SQLGlotRelationalVisitor, find_identifiers
@@ -1212,6 +1213,130 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 )
             ),
             id="filter_after_join",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                        Identifier(this="a"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ),
+            id="simple_scan_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a"),
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ).order_by(
+                *[
+                    Identifier(this="a").asc(nulls_first=True),
+                ]
+            ),
+            id="simple_ordering_scan_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ),
+            id="pruning_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                },
+            ).order_by(
+                *[
+                    Identifier(this="a").asc(nulls_first=True),
+                ]
+            ),
+            id="pruning_root_ordering_dependent",
+        ),
+        pytest.param(
+            None,
+            None,
+            id="root_after_filter",
+        ),
+        pytest.param(
+            None,
+            None,
+            id="root_after_limit",
+        ),
+        pytest.param(
+            None,
+            None,
+            id="root_after_aggregate",
+        ),
+        pytest.param(
+            None,
+            None,
+            id="root_after_join",
         ),
     ],
 )
