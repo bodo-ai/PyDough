@@ -581,6 +581,31 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
             ),
             id="limit_before_filter",
         ),
+        pytest.param(
+            Project(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(2, Int64Type()),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                    "c": make_relational_literal(1),
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                        Literal(value=1, alias="c"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ).limit(Literal(value=2)),
+            id="project_limit_combine",
+        ),
     ],
 )
 def test_node_to_sqlglot(
