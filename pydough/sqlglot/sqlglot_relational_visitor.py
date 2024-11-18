@@ -147,9 +147,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             Select: A final select statement that may contain the merged columns.
         """
         deps: set[Identifier] = set()
+        # Note: query_stage is currently unused because I need the think about the
+        # fully correct way to use it.
         # TODO: Add the other query stages once we have support for them.
-        if query_stage.value > QueryStage.WHERE.value and "where" in orig_select.args:
+        if "where" in orig_select.args:
             deps.update(find_identifiers(orig_select.args["where"]))
+        if "order" in orig_select.args:
+            deps.update(find_identifiers(orig_select.args["order"]))
         new_exprs, old_exprs = self._try_merge_columns(
             new_columns, orig_select.expressions, deps
         )
@@ -222,7 +226,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in filter.columns.items()
         ]
         query: Select
-        if "where" in input_expr.args or "limit" in input_expr.args:
+        if (
+            "where" in input_expr.args
+            or "order" in input_expr.args
+            or "limit" in input_expr.args
+        ):
             # Check if we already have a where clause or limit. We
             # cannot merge these yet.
             # TODO: Consider allowing combining where if limit isn't
@@ -251,7 +259,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in limit.columns.items()
         ]
         query: Select
-        if "limit" in input_expr.args:
+        if "order" in input_expr.args or "limit" in input_expr.args:
             query = Select().select(*exprs).from_(input_expr)
         else:
             # Try merge the column sections

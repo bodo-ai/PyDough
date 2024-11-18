@@ -441,6 +441,54 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
             .limit(Literal(value=1)),
             id="simple_limit_with_ordering",
         ),
+        pytest.param(
+            Limit(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(5, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_column_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=True,
+                            nulls_first=False,
+                        ),
+                    ],
+                ),
+                limit=LiteralExpression(2, Int64Type()),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        )
+                        .order_by(
+                            *[
+                                Identifier(this="b").asc(nulls_first=False),
+                            ]
+                        )
+                        .limit(Literal(value=1))
+                    ),
+                    "expressions": [
+                        Identifier(this="a"),
+                    ],
+                }
+            ).limit(Literal(value=2)),
+            id="nested_limits",
+        ),
     ],
 )
 def test_node_to_sqlglot(
