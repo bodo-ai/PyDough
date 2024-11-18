@@ -1676,4 +1676,80 @@ def test_node_to_sqlglot(
     ],
 )
 def test_expression_identifiers(expr: Expression, expected: set[Identifier]):
+    """
+    Verify that we can properly find all of the identifiers in each expression.
+    """
     assert find_identifiers(expr) == expected
+
+
+@pytest.mark.parametrize(
+    "root, sqlglot_expr",
+    [
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                        Identifier(this="a"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ),
+            id="simple_scan_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                    "where": Where(
+                        this=sqlglot_expressions.EQ(
+                            this=Identifier(this="a"), expression=Literal(value=1)
+                        )
+                    ),
+                }
+            ),
+            id="root_after_filter",
+        ),
+    ],
+)
+def test_relational_to_sqlglot(
+    sqlglot_relational_visitor: SQLGlotRelationalVisitor,
+    root: RelationalRoot,
+    sqlglot_expr: Expression,
+):
+    """
+    Test converting a root node to SQLGlot using
+    relational_to_sqlglot
+    """
+    actual = sqlglot_relational_visitor.relational_to_sqlglot(root)
+    assert actual == sqlglot_expr
