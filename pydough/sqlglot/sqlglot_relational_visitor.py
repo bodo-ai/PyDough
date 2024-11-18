@@ -9,7 +9,11 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import ColumnSortInfo, LiteralExpression
+from pydough.relational.relational_expressions import (
+    ColumnReferenceInputNameModifier,
+    ColumnSortInfo,
+    LiteralExpression,
+)
 from pydough.relational.relational_nodes import (
     Aggregate,
     Filter,
@@ -41,6 +45,24 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
             SQLGlotRelationalExpressionVisitor()
         )
+        self._alias_modifier: ColumnReferenceInputNameModifier = (
+            ColumnReferenceInputNameModifier()
+        )
+        # Counter for generating unique table alias.
+        self._alias_counter: int = 0
+
+    def _generate_table_alias(self) -> str:
+        """
+        Generate a unique table alias for use in the SQLGlot query. This
+        is used to allow operators to have standard names but not reuse the
+        same table alias in the same query.
+
+        Returns:
+            str: A unique table alias.
+        """
+        alias = f"_table_alias_{self._alias_counter}"
+        self._alias_counter += 1
+        return alias
 
     @staticmethod
     def _try_merge_columns(
@@ -168,10 +190,14 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def reset(self) -> None:
         """
-        Reset clears the stack and resets the expression visitor.
+        Reset returns or resets all of the state associated with this
+        visitor, which is currently the stack, expression visitor, and
+        alias generator.
         """
         self._stack = []
         self._expr_visitor.reset()
+        self._alias_modifier.reset()
+        self._alias_counter = 0
 
     def visit(self, relational: Relational) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit")
@@ -185,7 +211,33 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit_join")
+        alias_map = {
+            "left": self._generate_table_alias(),
+            "right": self._generate_table_alias(),
+        }
+        self.visit_inputs(join)
+        right_expr: Select = self._stack.pop()
+        right_expr.set("alias", alias_map["right"])
+        left_expr: Select = self._stack.pop()
+        left_expr.set("alias", alias_map["left"])
+        self._alias_modifier.set_map(alias_map)
+        columns = {
+            alias: self._alias_modifier.modify_expression_names(col)
+            for alias, col in join.columns.items()
+        }
+        column_exprs = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in columns.items()
+        ]
+        cond = self._alias_modifier.modify_expression_names(join.condition)
+        cond_expr = self._expr_visitor.relational_to_sqlglot(cond)
+        query: Select = (
+            Select()
+            .select(*column_exprs)
+            .from_(left_expr)
+            .join(right_expr, on=cond_expr, join_type=join.join_type.value)
+        )
+        self._stack.append(query)
 
     def visit_project(self, project: Project) -> None:
         self.visit_inputs(project)

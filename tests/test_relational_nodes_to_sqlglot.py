@@ -28,6 +28,8 @@ from pydough.relational.relational_expressions import CallExpression, LiteralExp
 from pydough.relational.relational_nodes import (
     Aggregate,
     Filter,
+    Join,
+    JoinType,
     Limit,
     Project,
     Relational,
@@ -940,6 +942,212 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 }
             ),
             id="project_after_aggregate",
+        ),
+        pytest.param(
+            Join(
+                left=build_simple_scan(),
+                right=build_simple_scan(),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="left"),
+                        make_relational_column_reference("a", input_name="right"),
+                    ],
+                ),
+                join_type=JoinType.INNER,
+                columns={
+                    "a": make_relational_column_reference("a", input_name="left"),
+                    "b": make_relational_column_reference("b", input_name="right"),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=set_expression_alias(
+                            Select(
+                                **{
+                                    "expressions": [
+                                        Identifier(this="a"),
+                                        Identifier(this="b"),
+                                    ],
+                                    "from": From(
+                                        this=Table(this=Identifier(this="table"))
+                                    ),
+                                }
+                            ),
+                            "_table_alias_0",
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="_table_alias_0.a", alias="a"),
+                        Identifier(this="_table_alias_1.b", alias="b"),
+                    ],
+                }
+            ).join(
+                set_expression_alias(
+                    Select(
+                        **{
+                            "expressions": [
+                                Identifier(this="a"),
+                                Identifier(this="b"),
+                            ],
+                            "from": From(this=Table(this=Identifier(this="table"))),
+                        }
+                    ),
+                    "_table_alias_1",
+                ),
+                on=sqlglot_expressions.EQ(
+                    this=Identifier(this="_table_alias_0.a"),
+                    expression=Identifier(this="_table_alias_1.a"),
+                ),
+                join_type="inner",
+            ),
+            id="simple_join",
+        ),
+        pytest.param(
+            Join(
+                left=Join(
+                    left=build_simple_scan(),
+                    right=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a", input_name="left"),
+                            make_relational_column_reference("a", input_name="right"),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
+                    columns={
+                        "a": make_relational_column_reference("a", input_name="left"),
+                        "b": make_relational_column_reference("b", input_name="right"),
+                    },
+                ),
+                right=build_simple_scan(),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="left"),
+                        make_relational_column_reference("a", input_name="right"),
+                    ],
+                ),
+                join_type=JoinType.LEFT,
+                columns={
+                    "d": make_relational_column_reference("b", input_name="left"),
+                },
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=set_expression_alias(
+                            Select(
+                                **{
+                                    "from": From(
+                                        this=set_expression_alias(
+                                            Select(
+                                                **{
+                                                    "expressions": [
+                                                        Identifier(this="a"),
+                                                        Identifier(this="b"),
+                                                    ],
+                                                    "from": From(
+                                                        this=Table(
+                                                            this=Identifier(
+                                                                this="table"
+                                                            )
+                                                        )
+                                                    ),
+                                                }
+                                            ),
+                                            "_table_alias_2",
+                                        )
+                                    ),
+                                    "expressions": [
+                                        Identifier(this="_table_alias_2.a", alias="a"),
+                                        Identifier(this="_table_alias_3.b", alias="b"),
+                                    ],
+                                }
+                            ).join(
+                                set_expression_alias(
+                                    Select(
+                                        **{
+                                            "expressions": [
+                                                Identifier(this="a"),
+                                                Identifier(this="b"),
+                                            ],
+                                            "from": From(
+                                                this=Table(
+                                                    this=Identifier(this="table")
+                                                )
+                                            ),
+                                        }
+                                    ),
+                                    "_table_alias_3",
+                                ),
+                                on=sqlglot_expressions.EQ(
+                                    this=Identifier(this="_table_alias_2.a"),
+                                    expression=Identifier(this="_table_alias_3.a"),
+                                ),
+                                join_type="inner",
+                            ),
+                            "_table_alias_0",
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="_table_alias_0.b", alias="d"),
+                    ],
+                },
+            ).join(
+                set_expression_alias(
+                    Select(
+                        **{
+                            "expressions": [
+                                Identifier(this="a"),
+                                Identifier(this="b"),
+                            ],
+                            "from": From(this=Table(this=Identifier(this="table"))),
+                        }
+                    ),
+                    "_table_alias_1",
+                ),
+                on=sqlglot_expressions.EQ(
+                    this=Identifier(this="_table_alias_0.a"),
+                    expression=Identifier(this="_table_alias_1.a"),
+                ),
+                join_type="left",
+            ),
+            id="nested_join",
+        ),
+        pytest.param(
+            Join(
+                left=build_simple_scan(),
+                right=build_simple_scan(),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="left"),
+                        make_relational_column_reference("a", input_name="right"),
+                    ],
+                ),
+                join_type=JoinType.INNER,
+                columns={
+                    "a": make_relational_column_reference("a", input_name="left"),
+                    "b": make_relational_column_reference("b", input_name="right"),
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                    "group": Group(expressions=[Identifier(this="b")]),
+                }
+            ),
+            id="filter_after_join",
         ),
     ],
 )
