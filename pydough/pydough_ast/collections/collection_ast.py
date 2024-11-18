@@ -148,18 +148,26 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @abstractmethod
-    def to_tree_form_isolated(self) -> CollectionTreeForm:
+    def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
         """
         Helper for `to_tree_form` that returns the `CollectionTreeForm` for
         the collection devoid of any information about its predecessors or
         ancestors.
+
+        Args:
+            `is_last`: boolean indicating if the current subtree is the last
+            child of a ChildOperator node.
         """
 
     @abstractmethod
-    def to_tree_form(self) -> CollectionTreeForm:
+    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
         """
         Helper for `to_tree_string` that turns a collection into a
         CollectionTreeForm object which can be used to create a tree string.
+
+        Args:
+            `is_last`: boolean indicating if the current subtree is the last
+            child of a ChildOperator node.
         """
 
     @property
@@ -213,4 +221,4 @@ class PyDoughCollectionAST(PyDoughAST):
         Returns:
             The tree-like string representation of `self`.
         """
-        return "\n".join(self.to_tree_form().to_string_rows())
+        return "\n".join(self.to_tree_form(False).to_string_rows())

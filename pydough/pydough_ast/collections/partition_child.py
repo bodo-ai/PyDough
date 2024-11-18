@@ -63,17 +63,17 @@ class PartitionChild(ChildOperatorChildAccess):
     def tree_item_string(self) -> str:
         return f"PartitionChild[{self.standalone_string}]"
 
-    def to_tree_form_isolated(self) -> CollectionTreeForm:
+    def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
         return CollectionTreeForm(
             self.tree_item_string,
             0,
             has_predecessor=True,
         )
 
-    def to_tree_form(self) -> CollectionTreeForm:
-        ancestor: CollectionTreeForm = self.ancestor_context.to_tree_form()
+    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
+        ancestor: CollectionTreeForm = self.ancestor_context.to_tree_form(True)
         ancestor.has_children = True
-        tree_form: CollectionTreeForm = self.to_tree_form_isolated()
+        tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
         tree_form.predecessor = ancestor
         tree_form.depth = ancestor.depth + 1
         return tree_form

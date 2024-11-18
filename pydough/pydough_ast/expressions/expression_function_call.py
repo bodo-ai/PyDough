@@ -64,7 +64,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
                 if arg.requires_enclosing_parens(self):
                     arg_string = f"({arg_string})"
             else:
-                arg_string = str(arg_string)
+                arg_string = str(arg)
             arg_strings.append(arg_string)
         return self.operator.to_string(arg_strings)
 
