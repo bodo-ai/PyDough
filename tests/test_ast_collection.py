@@ -1221,7 +1221,7 @@ def test_collections_calc_terms(
                     "NDISTINCT", [ChildReferenceCollectionInfo(3)]
                 ),
             ),
-            "Nations(nation_name=name, n_customers=COUNT(customers), n_customers_without_orders=COUNT(customers.WHERE(COUNT(orders) == 0)), n_lines_with_tax=COUNT(customers.orders.lines.tax), n_part_orders=COUNT(customers.orders.lines.part), n_unique_parts_ordered=NDISTINCT(customers.orders.lines.part))' == 'Nations(nation_name=name, n_customers=COUNT(customers))",
+            "Nations(nation_name=name, n_customers=COUNT(customers), n_customers_without_orders=COUNT(customers.WHERE(COUNT(orders) == 0)), n_lines_with_tax=COUNT(customers.orders.lines.tax), n_part_orders=COUNT(customers.orders.lines.part), n_unique_parts_ordered=NDISTINCT(customers.orders.lines.part))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Nations]
@@ -1577,9 +1577,9 @@ def test_collections_to_string(
     non-tree string representation.
     """
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
-    # assert (
-    #     collection.to_string() == expected_string
-    # ), "Mismatch between non-tree string representation and expected value"
+    assert (
+        collection.to_string() == expected_string
+    ), "Mismatch between non-tree string representation and expected value"
     assert (
         collection.to_tree_string() == expected_tree_string
     ), "Mismatch between tree string representation and expected value"
