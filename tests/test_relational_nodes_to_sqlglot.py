@@ -22,9 +22,10 @@ from sqlglot.expressions import (
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
-from pydough.relational.relational_expressions import CallExpression
+from pydough.relational.relational_expressions import CallExpression, LiteralExpression
 from pydough.relational.relational_nodes import (
     Filter,
+    Limit,
     Project,
     Relational,
     Scan,
@@ -379,6 +380,26 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                 },
             ),
             id="condition_pruning_project",
+        ),
+        pytest.param(
+            Limit(
+                input=build_simple_scan(),
+                limit=LiteralExpression(1, Int64Type()),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a"),
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ).limit(Literal(value=1)),
+            id="simple_limit",
         ),
     ],
 )

@@ -9,6 +9,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
+from pydough.relational.relational_expressions import LiteralExpression
 from pydough.relational.relational_nodes import (
     Aggregate,
     Filter,
@@ -197,10 +198,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in filter.columns.items()
         ]
         query: Select
-        if "where" in input_expr.args:
-            # Check if we already have a where clause and if so we need to
-            # generate a new query.
-            # TODO: Consider combining conditions?
+        if "where" in input_expr.args or "limit" in input_expr.args:
+            # Check if we already have a where clause or limit. We
+            # cannot merge these yet.
+            # TODO: Consider allowing combining where if limit isn't
+            # present?
             query = Select().select(*exprs).from_(input_expr)
         else:
             # Try merge the column sections
@@ -212,7 +214,26 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         raise NotImplementedError("SQLGlotRelationalVisitor.visit_aggregate")
 
     def visit_limit(self, limit: Limit) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit_limit")
+        self.visit_inputs(limit)
+        input_expr: Select = self._stack.pop()
+        assert isinstance(
+            limit.limit, LiteralExpression
+        ), "Limit only supports literals"
+        limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+            limit.limit
+        )
+        exprs: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in limit.columns.items()
+        ]
+        query: Select
+        if "limit" in input_expr.args:
+            query = Select().select(*exprs).from_(input_expr)
+        else:
+            # Try merge the column sections
+            query = self._merge_selects(exprs, input_expr, QueryStage.LIMIT)
+        query = query.limit(limit_expr)
+        self._stack.append(query)
 
     def visit_root(self, root: RelationalRoot) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit_root")
