@@ -266,7 +266,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q2,
-            "TPCH.PARTITION(TPCH.Nations.WHERE((TPCH.region.name == 'EUROPE':StringType())).suppliers.parts_supplied, name='p', by=(TPCH.part_key))(best_cost=MIN(TPCH.ps_supplycost)).p.WHERE((TPCH.ps_supplycost == BACK(1).best_cost)).WHERE((TPCH.ps_supplycost == BACK(1).best_cost))(s_acctbal=BACK(1).account_balance, s_name=BACK(1).name, n_name=BACK(2).name, p_partkey=TPCH.key, p_mfgr=TPCH.mfgr, s_address=BACK(1).address, s_phone=BACK(1).phone, s_comment=BACK(1).comment).ORDER_BY(TPCH.account_balance.DESC(na_pos='last'), TPCH.n_name.ASC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'), TPCH.p_partkey.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Nations.WHERE((TPCH.region.name == 'EUROPE':StringType())).suppliers.parts_supplied(s_acctbal=BACK(1).account_balance, s_name=BACK(1).name, n_name=BACK(2).name, p_partkey=TPCH.key, p_mfgr=TPCH.manufacturer, s_address=BACK(1).address, s_phone=BACK(1).phone, s_comment=BACK(1).comment), name='p', by=(TPCH.key))(best_cost=MIN(TPCH.p.ps_supplycost)).p.WHERE((TPCH.ps_supplycost == BACK(1).best_cost)).ORDER_BY(TPCH.s_acctbal.DESC(na_pos='last'), TPCH.n_name.ASC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'), TPCH.p_partkey.ASC(na_pos='last'))",
             id="tpch_q2",
         ),
         pytest.param(
@@ -276,7 +276,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q4,
-            "TPCH.PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1993, 7, 1):DateType()) & (TPCH.order_date < datetime.date(1993, 10, 1):DateType())) & (COUNT(TPCH.lines.WHERE((TPCH.commit_date < TPCH.receipt_date))) > 0:Int64Type()))), name='o', by=(TPCH.order_priority))(_expr0=TPCH.order_priority, order_count=COUNT(TPCH.o)).ORDER_BY(TPCH.order_priority.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1993, 7, 1):DateType()) & (TPCH.order_date < datetime.date(1993, 10, 1):DateType())) & (COUNT(TPCH.lines.WHERE((TPCH.commit_date < TPCH.receipt_date))) > 0:Int64Type()))), name='o', by=(TPCH.order_priority))(order_priority=TPCH.order_priority, order_count=COUNT(TPCH.o)).ORDER_BY(TPCH.order_priority.ASC(na_pos='last'))",
             id="tpch_q4",
         ),
         pytest.param(

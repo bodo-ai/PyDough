@@ -224,13 +224,17 @@ class UnqualifiedNode(ABC):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
         counter = 0
         for arg in args:
+            unqualified_arg: UnqualifiedNode = self.coerce_to_unqualified(arg)
             name: str
-            while True:
-                name = f"_expr{counter}"
-                counter += 1
-                if name not in kwargs:
-                    break
-            calc_args.append((name, arg))
+            if isinstance(unqualified_arg, UnqualifiedAccess):
+                name = unqualified_arg._parcel[1]
+            else:
+                while True:
+                    name = f"_expr{counter}"
+                    counter += 1
+                    if name not in kwargs:
+                        break
+            calc_args.append((name, unqualified_arg))
         for name, arg in kwargs.items():
             calc_args.append((name, self.coerce_to_unqualified(arg)))
         return UnqualifiedCalc(self, calc_args)
