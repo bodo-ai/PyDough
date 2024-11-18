@@ -21,6 +21,7 @@ from pydough.relational.relational_nodes import (
     Scan,
 )
 
+from .sqlglot_identifier_finder import find_identifiers
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
 __all__ = ["SQLGlotRelationalVisitor"]
@@ -107,18 +108,18 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             modified_old_columns = []
             # Create a mapping for the old columns so we can replace column
             # references.
-            old_column_map = {c.alias: c.this for c in old_columns}
+            old_column_map = {c.alias: c for c in old_columns}
             for new_column in new_columns:
                 if isinstance(new_column, SQLGlotLiteral):
                     # If the new column is a literal, we can just add it to the old
                     # columns.
                     modified_old_columns.append(new_column)
                 else:
-                    modified_old_columns.append(
-                        Identifier(
-                            alias=new_column.alias, this=old_column_map[new_column.this]
-                        )
-                    )
+                    expr = old_column_map[new_column.this]
+                    # Note: This wouldn't be safe if we reused columns in
+                    # multiple places, but this is currently okay.
+                    expr.set("alias", new_column.alias)
+                    modified_old_columns.append(expr)
             return modified_new_columns, modified_old_columns
         else:
             return new_columns, old_columns
@@ -146,10 +147,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         deps: set[Identifier] = set()
         # TODO: Add the other query stages once we have support for them.
         if query_stage.value > QueryStage.WHERE.value and "where" in orig_select.args:
-            # deps.update(
-            #     self._identifier_finder.find_identifiers(orig_select.args["where"])
-            # )
-            pass
+            deps.update(find_identifiers(orig_select.args["where"]))
         new_exprs, old_exprs = self._try_merge_columns(
             new_columns, orig_select.expressions, deps
         )
@@ -161,7 +159,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def reset(self) -> None:
         """
-        Reset clears the stack and resets the expression visitors.
+        Reset clears the stack and resets the expression visitor.
         """
         self._stack = []
         self._expr_visitor.reset()
