@@ -1319,23 +1319,307 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
             id="pruning_root_ordering_dependent",
         ),
         pytest.param(
-            None,
-            None,
+            RelationalRoot(
+                input=Project(
+                    input=build_simple_scan(),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                        "c": CallExpression(
+                            ADD,
+                            Int64Type(),
+                            [
+                                make_relational_column_reference("a"),
+                                make_relational_literal(1, Int64Type()),
+                            ],
+                        ),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("c"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "from": From(
+                                    this=Select(
+                                        **{
+                                            "expressions": [
+                                                Identifier(this="a"),
+                                                Identifier(this="b"),
+                                            ],
+                                            "from": From(
+                                                this=Table(
+                                                    this=Identifier(this="table")
+                                                )
+                                            ),
+                                        }
+                                    )
+                                ),
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                    set_expression_alias(
+                                        sqlglot_expressions.Add(
+                                            this=Identifier(this="a"),
+                                            expression=Literal(value=1),
+                                        ),
+                                        "c",
+                                    ),
+                                ],
+                            },
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                }
+            ).order_by(
+                *[
+                    Identifier(this="c").asc(nulls_first=True),
+                ]
+            ),
+            id="root_after_project",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                    "where": Where(
+                        this=sqlglot_expressions.EQ(
+                            this=Identifier(this="a"), expression=Literal(value=1)
+                        )
+                    ),
+                }
+            ),
             id="root_after_filter",
         ),
         pytest.param(
-            None,
-            None,
+            RelationalRoot(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(10, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_column_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=True,
+                            nulls_first=True,
+                        ),
+                    ],
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    Identifier(this="a"),
+                                    Identifier(this="b"),
+                                ],
+                                "from": From(this=Table(this=Identifier(this="table"))),
+                            }
+                        )
+                        .order_by(
+                            *[
+                                Identifier(this="b").asc(nulls_first=True),
+                            ],
+                        )
+                        .limit(Literal(value=10))
+                    ),
+                    "expressions": [
+                        Identifier(this="b"),
+                        Identifier(this="a"),
+                    ],
+                }
+            ).order_by(
+                *[
+                    Identifier(this="a").asc(nulls_first=True),
+                ]
+            ),
             id="root_after_limit",
         ),
         pytest.param(
-            None,
-            None,
+            RelationalRoot(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={
+                        "a": CallExpression(
+                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                        )
+                    },
+                ),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=Select(
+                            **{
+                                "from": From(
+                                    this=Select(
+                                        **{
+                                            "expressions": [
+                                                Identifier(this="a"),
+                                                Identifier(this="b"),
+                                            ],
+                                            "from": From(
+                                                this=Table(
+                                                    this=Identifier(this="table")
+                                                )
+                                            ),
+                                        }
+                                    )
+                                ),
+                                "expressions": [
+                                    Identifier(this="b"),
+                                    set_expression_alias(
+                                        sqlglot_expressions.Sum.from_arg_list(
+                                            [Identifier(this="a")]
+                                        ),
+                                        "a",
+                                    ),
+                                ],
+                                "group": Group(expressions=[Identifier(this="b")]),
+                            }
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="a"),
+                    ],
+                },
+            ).order_by(
+                *[
+                    Identifier(this="a").asc(nulls_first=True),
+                ]
+            ),
+            # Note: Can be heavily optimized by simplifying the generated SQL.
             id="root_after_aggregate",
         ),
         pytest.param(
-            None,
-            None,
+            RelationalRoot(
+                Join(
+                    left=build_simple_scan(),
+                    right=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a", input_name="left"),
+                            make_relational_column_reference("a", input_name="right"),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
+                    columns={
+                        "a": make_relational_column_reference("a", input_name="left"),
+                        "b": make_relational_column_reference("b", input_name="right"),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            Select(
+                **{
+                    "from": From(
+                        this=set_expression_alias(
+                            Select(
+                                **{
+                                    "expressions": [
+                                        Identifier(this="a"),
+                                        Identifier(this="b"),
+                                    ],
+                                    "from": From(
+                                        this=Table(this=Identifier(this="table"))
+                                    ),
+                                }
+                            ),
+                            "_table_alias_0",
+                        )
+                    ),
+                    "expressions": [
+                        Identifier(this="_table_alias_1.b", alias="b"),
+                    ],
+                }
+            ).join(
+                set_expression_alias(
+                    Select(
+                        **{
+                            "expressions": [
+                                Identifier(this="a"),
+                                Identifier(this="b"),
+                            ],
+                            "from": From(this=Table(this=Identifier(this="table"))),
+                        }
+                    ),
+                    "_table_alias_1",
+                ),
+                on=sqlglot_expressions.EQ(
+                    this=Identifier(this="_table_alias_0.a"),
+                    expression=Identifier(this="_table_alias_1.a"),
+                ),
+                join_type="inner",
+            ),
             id="root_after_join",
         ),
     ],
