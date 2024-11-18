@@ -20,6 +20,7 @@ from .collections import (
     BackReferenceCollection,
     Calc,
     ChildAccess,
+    ChildReferenceCollection,
     GlobalContext,
     OrderBy,
     PartitionBy,
@@ -30,7 +31,7 @@ from .collections import (
 from .errors import PyDoughASTException
 from .expressions import (
     BackReferenceExpression,
-    ChildReference,
+    ChildReferenceExpression,
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
@@ -153,7 +154,7 @@ class AstNodeBuilder:
         """
         return Reference(collection, name)
 
-    def build_child_reference(
+    def build_child_reference_expression(
         self, children: MutableSequence[PyDoughCollectionAST], child_idx: int, name: str
     ) -> Reference:
         """
@@ -176,7 +177,7 @@ class AstNodeBuilder:
             raise PyDoughASTException(
                 f"Invalid child reference index {child_idx} with {len(children)} children"
             )
-        return ChildReference(children[child_idx], child_idx, name)
+        return ChildReferenceExpression(children[child_idx], child_idx, name)
 
     def build_back_reference_expression(
         self, collection: PyDoughCollectionAST, name: str, levels: int
@@ -346,3 +347,32 @@ class AstNodeBuilder:
             `PyDoughASTException`: if the terms are invalid for the CALC term.
         """
         return BackReferenceCollection(collection, term_name, back_levels)
+
+    def build_child_reference_collection(
+        self,
+        preceding_context: PyDoughCollectionAST,
+        children: MutableSequence[PyDoughCollectionAST],
+        child_idx: int,
+    ) -> ChildReferenceCollection:
+        """
+        Creates a new reference to a collection from a child collection of a
+        CALC or other child operator.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `children`: the child collections that the reference accesses.
+            `child_idx`: the index of the child collection being referenced.
+
+        Returns:
+            The newly created PyDough Child Reference.
+
+        Raises:
+            `PyDoughASTException`: if `child_idx` is not a valid index for `children`.
+        """
+        if child_idx not in range(len(children)):
+            raise PyDoughASTException(
+                f"Invalid child reference index {child_idx} with {len(children)} children"
+            )
+        return ChildReferenceCollection(
+            preceding_context, children[child_idx], child_idx
+        )

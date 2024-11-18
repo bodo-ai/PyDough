@@ -31,6 +31,7 @@ __all__ = [
     "ENDSWITH",
     "CONTAINS",
     "LIKE",
+    "NDISTINCT",
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (
@@ -83,6 +84,9 @@ AVG = ExpressionFunctionOperator(
     "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
 )
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
+NDISTINCT = ExpressionFunctionOperator(
+    "NDISTINCT", True, AllowAny(), ConstantType(Int64Type())
+)
 MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
 MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))

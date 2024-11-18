@@ -15,7 +15,7 @@ __all__ = [
     "SubCollectionInfo",
     "CalcInfo",
     "BackReferenceExpressionInfo",
-    "ChildReferenceInfo",
+    "ChildReferenceExpressionInfo",
     "BackReferenceCollectionInfo",
     "WhereInfo",
     "OrderInfo",
@@ -30,7 +30,7 @@ from pydough.pydough_ast import (
     AstNodeBuilder,
     Calc,
     ChildOperatorChildAccess,
-    ChildReference,
+    ChildReferenceExpression,
     CollationExpression,
     OrderBy,
     PartitionBy,
@@ -91,7 +91,7 @@ class AstNodeTestInfo(ABC):
             `context`: an optional collection AST used as the context within
             which the AST is created.
             `children_contexts`: an optional list of collection ASTs of
-            child nodes of a CALC that are accessible for ChildReference usage.
+            child nodes of a CALC that are accessible for ChildReferenceExpression usage.
 
         Returns:
             The new instance of the AST object.
@@ -235,7 +235,7 @@ class BackReferenceExpressionInfo(AstNodeTestInfo):
         return builder.build_back_reference_expression(context, self.name, self.levels)
 
 
-class ChildReferenceInfo(AstNodeTestInfo):
+class ChildReferenceExpressionInfo(AstNodeTestInfo):
     """
     TestInfo implementation class to build a child reference expression.
     Contains the following fields:
@@ -258,8 +258,8 @@ class ChildReferenceInfo(AstNodeTestInfo):
     ) -> PyDoughAST:
         assert (
             children_contexts is not None
-        ), "Cannot call .build() on ChildReferenceInfo without providing a list of child contexts"
-        return builder.build_child_reference(
+        ), "Cannot call .build() on ChildReferenceExpressionInfo without providing a list of child contexts"
+        return builder.build_child_reference_expression(
             children_contexts, self.child_idx, self.name
         )
 
@@ -322,7 +322,7 @@ class CollectionTestInfo(AstNodeTestInfo):
             `context`: an optional collection AST used as the context within
             which the AST is created.
             `children_contexts`: an optional list of collection ASTs of child
-            nodes of a CALC that are accessible for ChildReference usage.
+            nodes of a CALC that are accessible for ChildReferenceExpression usage.
 
         Returns:
             The new instance of the collection AST object.
@@ -397,14 +397,12 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
     CollectionTestInfo implementation class that wraps around a subcollection
     info within a Calc context. Contains the following fields:
     - `child_info`: the collection info for the child subcollection.
-    - `is_last`: the this the last child of the parent CALC.
 
     NOTE: must provide a `context` when building.
     """
 
-    def __init__(self, child_info: CollectionTestInfo, is_last: bool):
+    def __init__(self, child_info: CollectionTestInfo):
         self.child_info: CollectionTestInfo = child_info
-        self.is_last: bool = is_last
         self.successor = child_info.successor
 
     def local_string(self) -> str:
@@ -422,10 +420,7 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
         access: PyDoughCollectionAST = self.child_info.local_build(
             builder, context, children_contexts
         )
-        return ChildOperatorChildAccess(
-            access,
-            self.is_last,
-        )
+        return ChildOperatorChildAccess(access)
 
 
 class BackReferenceCollectionInfo(CollectionTestInfo):
@@ -456,6 +451,39 @@ class BackReferenceCollectionInfo(CollectionTestInfo):
             context is not None
         ), "Cannot call .build() on BackReferenceCollectionInfo without providing a context"
         return builder.build_back_reference_collection(context, self.name, self.levels)
+
+
+class ChildReferenceCollectionInfo(CollectionTestInfo):
+    """
+    CollectionTestInfo implementation class to build a reference to a
+    child collection. Contains the following fields:
+    - `idx`: the index of the calc term being referenced.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(self, idx: int):
+        super().__init__()
+        self.idx: int = idx
+
+    def local_string(self) -> str:
+        return f"ChildReferenceCollection[{self.idx}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionAST | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
+    ) -> PyDoughCollectionAST:
+        assert (
+            context is not None
+        ), "Cannot call .build() on ChildReferenceCollection without providing a context"
+        assert (
+            children_contexts is not None
+        ), "Cannot call .build() on ChildReferenceCollection without providing a list of child contexts"
+        return builder.build_child_reference_collection(
+            context, children_contexts, self.idx
+        )
 
 
 class ChildOperatorInfo(CollectionTestInfo):
@@ -501,7 +529,6 @@ class ChildOperatorInfo(CollectionTestInfo):
         for idx, child_info in enumerate(self.children_info):
             child = ChildOperatorChildAccessInfo(
                 child_info,
-                idx == len(self.children_info) - 1,
             ).build(builder, context)
             assert isinstance(child, PyDoughCollectionAST)
             children.append(child)
@@ -518,8 +545,6 @@ class CalcInfo(ChildOperatorInfo):
        an expression in the CALC. Passed in via keyword arguments to the
        constructor, where the argument names are the field names and the
        argument values are the expression infos.
-
-    NOTE: must provide a `context` when building.
     """
 
     def __init__(self, children: MutableSequence[CollectionTestInfo], **kwargs):
@@ -579,7 +604,7 @@ class WhereInfo(ChildOperatorInfo):
         children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         if context is None:
-            context = builder.build_global_context()
+            raise Exception("Must provide a context when building a WHERE clause.")
         children: MutableSequence[PyDoughCollectionAST] = self.build_children(
             builder, context
         )
@@ -623,7 +648,9 @@ class OrderInfo(ChildOperatorInfo):
         children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         if context is None:
-            context = builder.build_global_context()
+            raise Exception(
+                "Must provide context and children_contexts when building an ORDER BY clause."
+            )
         children: MutableSequence[PyDoughCollectionAST] = self.build_children(
             builder, context
         )
@@ -673,7 +700,9 @@ class TopKInfo(ChildOperatorInfo):
         children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughCollectionAST:
         if context is None:
-            context = builder.build_global_context()
+            raise Exception(
+                "Must provide context and children_contexts when building a TOPK clause."
+            )
         children: MutableSequence[PyDoughCollectionAST] = self.build_children(
             builder, context
         )
@@ -693,8 +722,6 @@ class PartitionInfo(ChildOperatorInfo):
     Contains the following fields:
     - `child_name`: the name used to access the child.
     - `keys`: a list of test info for the keys to partition on.
-
-    NOTE: must provide a `context` when building.
     """
 
     def __init__(
@@ -725,9 +752,9 @@ class PartitionInfo(ChildOperatorInfo):
         assert len(children) == 1
         raw_partition = builder.build_partition(context, children[0], self.child_name)
         assert isinstance(raw_partition, PartitionBy)
-        keys: list[ChildReference] = []
+        keys: list[ChildReferenceExpression] = []
         for info in self.keys:
             expr = info.build(builder, context, children)
-            assert isinstance(expr, ChildReference)
+            assert isinstance(expr, ChildReferenceExpression)
             keys.append(expr)
         return raw_partition.with_keys(keys)
