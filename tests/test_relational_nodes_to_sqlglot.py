@@ -157,15 +157,13 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "c": make_relational_literal(1),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                        Literal(value=1, alias="c"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                expressions=[
+                    Identifier(this="a"),
+                    Identifier(this="b"),
+                    Literal(value=1, alias="c"),
+                ],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="literal_addition",
         ),
@@ -185,46 +183,29 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     )
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
+            mkglot(
+                expressions=[
+                    set_alias(
+                        sqlglot_expressions.Length.from_arg_list(
+                            [Identifier(this="col1")]
+                        ),
+                        "col2",
+                    ),
+                ],
+                _from=mkglot(
+                    expressions=[
                         set_alias(
-                            sqlglot_expressions.Length.from_arg_list(
-                                [Identifier(this="col1")]
+                            sqlglot_expressions.Lower.from_arg_list(
+                                [Identifier(this="a")]
                             ),
-                            "col2",
+                            "col1",
                         ),
                     ],
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    set_alias(
-                                        sqlglot_expressions.Lower.from_arg_list(
-                                            [Identifier(this="a")]
-                                        ),
-                                        "col1",
-                                    ),
-                                ],
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Identifier(this="a"),
-                                                Identifier(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(
-                                                    this=Identifier(this="table")
-                                                )
-                                            ),
-                                        }
-                                    )
-                                ),
-                            }
-                        )
+                    _from=mkglot(
+                        expressions=[Identifier(this="a"), Identifier(this="b")],
+                        _from=Table(this=Identifier(this="table")),
                     ),
-                }
+                ),
             ),
             id="repeated_functions",
         ),
