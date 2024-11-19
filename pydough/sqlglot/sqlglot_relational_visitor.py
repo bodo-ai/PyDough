@@ -261,7 +261,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             or "order" in input_expr.args
             or "limit" in input_expr.args
         ):
-            query = Select().select(*select_cols).from_(input_expr)
+            query = self._build_subquery(input_expr, select_cols)
         else:
             query = self._merge_selects(
                 select_cols, input_expr, find_identifiers_in_list(select_cols)
