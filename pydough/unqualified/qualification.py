@@ -15,6 +15,7 @@ from pydough.pydough_ast import (
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
+    GlobalContext,
     OrderBy,
     PartitionBy,
     PyDoughAST,
@@ -370,6 +371,7 @@ class Qualifier:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__} as an expression: {unqualified!r}"
                 )
+        # Store the answer for cached lookup, then return it.
         self.add_definition(unqualified_str, context, answer)
         return answer
 
@@ -401,17 +403,26 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         name: str = unqualified._parcel[1]
         if isinstance(unqualified_parent, UnqualifiedBack):
+            # If the parent is an `UnqualifiedBack`, it means that this is a
+            # collection in the form "BACK(n).term_name".
             levels: int = unqualified_parent._parcel[0]
             return self.builder.build_back_reference_collection(context, name, levels)
         else:
+            # First, qualify the parent collection.
             qualified_parent: PyDoughCollectionAST = self.qualify_collection(
                 unqualified_parent, context, is_child
             )
-            if isinstance(unqualified_parent, UnqualifiedRoot) and name == repr(
-                unqualified_parent
+            if (
+                isinstance(qualified_parent, GlobalContext)
+                and name == qualified_parent.graph.name
             ):
+                # Special case: if the parent is the root context and the child
+                # is named after the graph name, return the parent since the
+                # child is just a de-sugared invocation of the global context.
                 return qualified_parent
             else:
+                # Otherwise, access the child collection from the qualified
+                # parent collection
                 answer: PyDoughCollectionAST = self.builder.build_child_access(
                     name, qualified_parent
                 )
@@ -451,11 +462,14 @@ class Qualifier:
         qualified_parent: PyDoughCollectionAST = self.qualify_collection(
             unqualified_parent, context, is_child
         )
+        # Qualify all of the CALC terms, storing the children built along
+        # the way.
         children: MutableSequence[PyDoughCollectionAST] = []
         qualified_terms: MutableSequence[tuple[str, PyDoughExpressionAST]] = []
         for name, term in unqualified_terms:
             qualified_term = self.qualify_expression(term, qualified_parent, children)
             qualified_terms.append((name, qualified_term))
+        # Use the qualified children & terms to create a new CALC node.
         calc: Calc = self.builder.build_calc(qualified_parent, children)
         return calc.with_terms(qualified_terms)
 
@@ -489,10 +503,13 @@ class Qualifier:
         qualified_parent: PyDoughCollectionAST = self.qualify_collection(
             unqualified_parent, context, is_child
         )
+        # Qualify the condition of the WHERE clause, storing the children
+        # built along the way.
         children: MutableSequence[PyDoughCollectionAST] = []
         qualified_cond = self.qualify_expression(
             unqualified_cond, qualified_parent, children
         )
+        # Use the qualified children & condition to create a new WHERE node.
         where: Where = self.builder.build_where(qualified_parent, children)
         return where.with_condition(qualified_cond)
 
@@ -526,6 +543,8 @@ class Qualifier:
         qualified_parent: PyDoughCollectionAST = self.qualify_collection(
             unqualified_parent, context, is_child
         )
+        # Qualify all of the collation terms, storing the children built along
+        # the way.
         children: MutableSequence[PyDoughCollectionAST] = []
         qualified_collations: list[CollationExpression] = []
         for term in unqualified_terms:
@@ -534,6 +553,7 @@ class Qualifier:
             )
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
+        # Use the qualified children & collation to create a new ORDER BY node.
         orderby: OrderBy = self.builder.build_order(qualified_parent, children)
         return orderby.with_collation(qualified_collations)
 
@@ -572,6 +592,8 @@ class Qualifier:
         qualified_parent: PyDoughCollectionAST = self.qualify_collection(
             unqualified_parent, context, is_child
         )
+        # Qualify all of the collation terms, storing the children built along
+        # the way.
         children: MutableSequence[PyDoughCollectionAST] = []
         qualified_collations: list[CollationExpression] = []
         for term in unqualified_terms:
@@ -580,6 +602,7 @@ class Qualifier:
             )
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
+        # Use the qualified children & collation to create a new TOP K node.
         topk: TopK = self.builder.build_top_k(
             qualified_parent, children, records_to_keep
         )
@@ -614,12 +637,18 @@ class Qualifier:
         unqualified_child: UnqualifiedNode = unqualified._parcel[1]
         child_name: str = unqualified._parcel[2]
         unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[3]
+        # Qualify all both the parent collection and the child that is being
+        # partitioned, using the qualified parent as the context for the
+        # child.
         qualified_parent: PyDoughCollectionAST = self.qualify_collection(
             unqualified_parent, context, is_child
         )
         qualified_child: PyDoughCollectionAST = self.qualify_collection(
             unqualified_child, qualified_parent, True
         )
+        # Qualify all of the partitioning keys (which, for now, can only be
+        # references to expressions in the child), storing the children built
+        # along the way (which should just be the child input).
         child_references: list[ChildReferenceExpression] = []
         children: MutableSequence[PyDoughCollectionAST] = []
         for term in unqualified_terms:
@@ -633,6 +662,7 @@ class Qualifier:
                 qualified_child, 0, qualified_term.term_name
             )
             child_references.append(child_ref)
+        # Use the qualified child & keys to create a new PARTITION node.
         partition: PartitionBy = self.builder.build_partition(
             qualified_parent, qualified_child, child_name
         )
@@ -699,6 +729,7 @@ class Qualifier:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__} as a collection: {unqualified!r}"
                 )
+        # Store the answer for cached lookup, then return it.
         self.add_definition(unqualified_str, context, answer)
         return answer
 
