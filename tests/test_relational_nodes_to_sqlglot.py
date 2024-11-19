@@ -964,7 +964,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
             Select(
                 **{
                     "from": From(
-                        this=set_expression_alias(
+                        this=set_alias(
                             Select(
                                 **{
                                     "expressions": [
@@ -985,7 +985,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     ],
                 }
             ).join(
-                set_expression_alias(
+                set_alias(
                     Select(
                         **{
                             "expressions": [
@@ -1041,11 +1041,11 @@ def set_alias(expr: Expression, alias: str) -> Expression:
             Select(
                 **{
                     "from": From(
-                        this=set_expression_alias(
+                        this=set_alias(
                             Select(
                                 **{
                                     "from": From(
-                                        this=set_expression_alias(
+                                        this=set_alias(
                                             Select(
                                                 **{
                                                     "expressions": [
@@ -1070,7 +1070,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                                     ],
                                 }
                             ).join(
-                                set_expression_alias(
+                                set_alias(
                                     Select(
                                         **{
                                             "expressions": [
@@ -1100,7 +1100,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     ],
                 },
             ).join(
-                set_expression_alias(
+                set_alias(
                     Select(
                         **{
                             "expressions": [
@@ -1157,7 +1157,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                         this=Select(
                             **{
                                 "from": From(
-                                    this=set_expression_alias(
+                                    this=set_alias(
                                         Select(
                                             **{
                                                 "expressions": [
@@ -1180,7 +1180,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                                 ],
                             }
                         ).join(
-                            set_expression_alias(
+                            set_alias(
                                 Select(
                                     **{
                                         "expressions": [
