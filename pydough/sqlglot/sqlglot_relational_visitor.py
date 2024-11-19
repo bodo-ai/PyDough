@@ -163,7 +163,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if new_exprs is None:
             return orig_select
         else:
-            return Select().select(*new_exprs).from_(orig_select)
+            return self._build_subquery(orig_select, new_exprs)
 
     def _convert_ordering(
         self, ordering: MutableSequence[ColumnSortInfo]
@@ -188,6 +188,25 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             col_exprs.append(col_expr)
         return col_exprs
 
+    @staticmethod
+    def _build_subquery(
+        input_expr: SQLGlotExpression | str, column_exprs: list[SQLGlotExpression]
+    ) -> Select:
+        """
+        Generate a subquery select statement with the given
+        input from and the given columns.
+
+        Args:
+            input_expr (SQLGlotExpression | str): The from input, which
+                is either an expression (e.g. another select) or a string
+                representing a table name.
+            column_exprs (list[SQLGlotExpression]): The columns to select.
+
+        Returns:
+            Select: A select statement representing the subquery.
+        """
+        return Select().select(*column_exprs).from_(input_expr)
+
     def reset(self) -> None:
         """
         Reset returns or resets all of the state associated with this
@@ -207,7 +226,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in scan.columns.items()
         ]
-        query: Select = Select().select(*exprs).from_(scan.table_name)
+        query: Select = self._build_subquery(scan.table_name, exprs)
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
@@ -269,7 +288,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             # cannot merge these yet.
             # TODO: Consider allowing combining where if limit isn't
             # present?
-            query = Select().select(*exprs).from_(input_expr)
+            query = self._build_subquery(input_expr, exprs)
         else:
             # Try merge the column sections
             query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
@@ -294,7 +313,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             or "order" in input_expr.args
             or "limit" in input_expr.args
         ):
-            query = Select().select(*select_cols).from_(input_expr)
+            query = self._build_subquery(input_expr, select_cols)
         else:
             query = self._merge_selects(
                 select_cols, input_expr, find_identifiers_in_list(select_cols)
@@ -308,7 +327,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         input_expr: Select = self._stack.pop()
         assert isinstance(
             limit.limit, LiteralExpression
-        ), "Limit only supports literals"
+        ), "Limit currently only supports literals"
         limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
             limit.limit
         )
@@ -321,7 +340,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         )
         query: Select
         if "order" in input_expr.args or "limit" in input_expr.args:
-            query = Select().select(*exprs).from_(input_expr)
+            query = self._build_subquery(input_expr, exprs)
         else:
             # Try merge the column sections
             query = self._merge_selects(
