@@ -732,10 +732,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_alias(
-                        Sub(
-                            this=Ident(this="b"),
-                            expression=Literal(value=1),
-                        ),
+                        mkglot_func(Sub, [Ident(this="b"), Literal(value=1)]),
                         "b",
                     ),
                 ],
