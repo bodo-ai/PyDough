@@ -45,7 +45,7 @@ class Calc(ChildOperator):
         Args:
             `terms`: the list of terms calculated in the CALC node as a list of
             tuples in the form `(name, expression)`. Each `expression` can
-            contain `ChildReference` instances that refer to an property of one
+            contain `ChildReferenceExpression` instances that refer to an property of one
             of the children of the CALC node.
 
         Returns:
