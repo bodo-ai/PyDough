@@ -311,7 +311,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q11,
-            "TPCH.TPCH(min_market_share=(SUM((TPCH.PartSupp.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType())).supplycost * TPCH.PartSupp.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType())).availqty)) * 0.0001:Float64Type())).PARTITION(TPCH.PartSupp.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType())), name='ps', by=(TPCH.part_key))(ps_partkey=TPCH.part_key, val=SUM((TPCH.ps.supplycost * TPCH.ps.availqty))).WHERE((TPCH.val > BACK(1).min_market_share)).ORDER_BY(TPCH.val.DESC(na_pos='last'))",
+            "TPCH.TPCH(min_market_share=(SUM(TPCH.PartSupp.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType()))(metric=(TPCH.supplycost * TPCH.availqty)).metric) * 0.0001:Float64Type())).Parts(ps_partkey=TPCH.key, val=SUM(TPCH.supply_records.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType()))(metric=(TPCH.supplycost * TPCH.availqty)).metric)).WHERE((TPCH.val > BACK(1).min_market_share)).ORDER_BY(TPCH.val.DESC(na_pos='last'))",
             id="tpch_q11",
         ),
         pytest.param(
