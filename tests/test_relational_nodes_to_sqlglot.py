@@ -340,7 +340,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                         this=Select(
                             **{
                                 "expressions": [
-                                    set_expression_alias(
+                                    set_alias(
                                         sqlglot_expressions.Add(
                                             this=Identifier(this="a"),
                                             expression=Literal(value=1),
