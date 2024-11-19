@@ -640,7 +640,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     expressions=[
                         Ident(this="b"),
                         set_alias(
-                            Sum.from_arg_list([Ident(this="a")]),
+                            mkglot_func(Sum, [Ident(this="a")]),
                             "a",
                         ),
                     ],
