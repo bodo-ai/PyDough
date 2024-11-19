@@ -41,9 +41,6 @@ class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
 
     @property
     def function_name(self) -> str:
-        """
-        The name of the function that this operator corresponds to.
-        """
         return self._function_name
 
     @property
