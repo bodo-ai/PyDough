@@ -15,12 +15,10 @@ from conftest import (
 from sqlglot.expressions import (
     Expression,
     From,
-    Group,
     Identifier,
     Literal,
     Select,
     Table,
-    Where,
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUB, SUM
@@ -536,28 +534,17 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     )
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                            }
-                        )
-                    ),
-                    "expressions": [
-                        set_alias(
-                            sqlglot_expressions.Sum.from_arg_list(
-                                [Identifier(this="a")]
-                            ),
-                            "a",
-                        ),
-                    ],
-                }
+            mkglot(
+                expressions=[
+                    set_alias(
+                        sqlglot_expressions.Sum.from_arg_list([Identifier(this="a")]),
+                        "a",
+                    )
+                ],
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                ),
             ),
             id="simple_sum",
         ),
@@ -573,30 +560,19 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     )
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                            }
-                        )
+            mkglot(
+                expressions=[
+                    Identifier(this="b"),
+                    set_alias(
+                        sqlglot_expressions.Sum.from_arg_list([Identifier(this="a")]),
+                        "a",
                     ),
-                    "expressions": [
-                        Identifier(this="b"),
-                        set_alias(
-                            sqlglot_expressions.Sum.from_arg_list(
-                                [Identifier(this="a")]
-                            ),
-                            "a",
-                        ),
-                    ],
-                    "group": Group(expressions=[Identifier(this="b")]),
-                }
+                ],
+                group_by=[Identifier(this="b")],
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                ),
             ),
             id="simple_groupby_sum",
         ),
@@ -621,30 +597,16 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
                 aggregations={},
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                            }
-                        )
-                    ),
-                    "where": Where(
-                        this=sqlglot_expressions.EQ(
-                            this=Identifier(this="a"),
-                            expression=Literal(value=1),
-                        )
-                    ),
-                    "group": Group(expressions=[Identifier(this="b")]),
-                }
+            mkglot(
+                expressions=[Identifier(this="b")],
+                where=sqlglot_expressions.EQ(
+                    this=Identifier(this="a"), expression=Literal(value=1)
+                ),
+                group_by=[Identifier(this="b")],
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                ),
             ),
             id="filter_before_aggregate",
         ),
@@ -673,49 +635,27 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="b"),
-                                    set_alias(
-                                        sqlglot_expressions.Sum.from_arg_list(
-                                            [Identifier(this="a")]
-                                        ),
-                                        "a",
-                                    ),
-                                ],
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Identifier(this="a"),
-                                                Identifier(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(
-                                                    this=Identifier(this="table")
-                                                )
-                                            ),
-                                        }
-                                    )
-                                ),
-                                "group": Group(expressions=[Identifier(this="b")]),
-                            }
-                        )
-                    ),
-                    "expressions": [
+            mkglot(
+                expressions=[Identifier(this="b")],
+                where=sqlglot_expressions.GTE(
+                    this=Identifier(this="a"), expression=Literal(value=20)
+                ),
+                _from=mkglot(
+                    expressions=[
                         Identifier(this="b"),
+                        set_alias(
+                            sqlglot_expressions.Sum.from_arg_list(
+                                [Identifier(this="a")]
+                            ),
+                            "a",
+                        ),
                     ],
-                    "where": Where(
-                        this=sqlglot_expressions.GTE(
-                            this=Identifier(this="a"),
-                            expression=Literal(value=20),
-                        )
+                    group_by=[Identifier(this="b")],
+                    _from=mkglot(
+                        expressions=[Identifier(this="a"), Identifier(this="b")],
+                        _from=Table(this=Identifier(this="table")),
                     ),
-                }
+                ),
             ),
             id="filter_after_aggregate",
         ),
@@ -734,24 +674,14 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
                 aggregations={},
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                            }
-                        ).limit(Literal(value=10))
-                    ),
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "group": Group(expressions=[Identifier(this="b")]),
-                }
+            mkglot(
+                expressions=[Identifier(this="b")],
+                group_by=[Identifier(this="b")],
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                    limit=Literal(value=10),
+                ),
             ),
             id="limit_before_aggregate",
         ),
@@ -776,21 +706,13 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     )
                 ],
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                    "group": Group(expressions=[Identifier(this="b")]),
-                }
-            )
-            .order_by(
-                *[
-                    Identifier(this="b").desc(nulls_first=True),
-                ]
-            )
-            .limit(Literal(value=10)),
+            mkglot(
+                expressions=[Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
+                group_by=[Identifier(this="b")],
+                order_by=[Identifier(this="b").desc(nulls_first=True)],
+                limit=Literal(value=10),
+            ),
             id="limit_after_aggregate",
         ),
         pytest.param(
@@ -813,29 +735,21 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     ),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                                "group": Group(expressions=[Identifier(this="b")]),
-                            }
-                        )
-                    ),
-                    "expressions": [
-                        set_alias(
-                            sqlglot_expressions.Sub(
-                                this=Identifier(this="b"),
-                                expression=Literal(value=1),
-                            ),
-                            "b",
+            mkglot(
+                expressions=[
+                    set_alias(
+                        sqlglot_expressions.Sub(
+                            this=Identifier(this="b"),
+                            expression=Literal(value=1),
                         ),
-                    ],
-                }
+                        "b",
+                    ),
+                ],
+                _from=mkglot(
+                    expressions=[Identifier(this="b")],
+                    group_by=[Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                ),
             ),
             id="project_after_aggregate",
         ),
