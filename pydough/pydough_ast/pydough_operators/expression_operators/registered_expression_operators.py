@@ -18,6 +18,7 @@ __all__ = [
     "NEQ",
     "POW",
     "SUB",
+    "LENGTH",
     "LOWER",
     "UPPER",
     "IFF",
@@ -64,6 +65,9 @@ GRT = BinaryOperator(BinOp.GRT, RequireNumArgs(2), ConstantType(BooleanType()))
 BAN = BinaryOperator(BinOp.BAN, RequireNumArgs(2), SelectArgumentType(0))
 BOR = BinaryOperator(BinOp.BOR, RequireNumArgs(2), SelectArgumentType(0))
 BXR = BinaryOperator(BinOp.BXR, RequireNumArgs(2), SelectArgumentType(0))
+LENGTH = ExpressionFunctionOperator(
+    "LENGTH", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
 LOWER = ExpressionFunctionOperator(
     "LOWER", False, RequireNumArgs(1), SelectArgumentType(0)
 )

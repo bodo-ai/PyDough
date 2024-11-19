@@ -3,8 +3,9 @@ TODO: add file-level docstring
 """
 
 import pytest
-from conftest import (
+from test_utils import (
     build_simple_scan,
+    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
 )
@@ -13,7 +14,6 @@ from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
 from pydough.relational.relational_expressions import (
     CallExpression,
     ColumnReference,
-    ColumnSortInfo,
     LiteralExpression,
 )
 from pydough.relational.relational_nodes import (
@@ -28,25 +28,6 @@ from pydough.relational.relational_nodes import (
     Scan,
 )
 from pydough.types import BooleanType, Int64Type, StringType
-
-
-def make_relational_column_ordering(
-    column: ColumnReference, ascending: bool = True, nulls_first: bool = True
-):
-    """
-    Create a column ordering as a function of a Relational column reference
-    with the given ascending and nulls_first parameters.
-
-    Args:
-        name (str): _description_
-        typ (PyDoughType | None, optional): _description_. Defaults to None.
-        ascending (bool, optional): _description_. Defaults to True.
-        nulls_first (bool, optional): _description_. Defaults to True.
-
-    Returns:
-        ColumnSortInfo: The column ordering information.
-    """
-    return ColumnSortInfo(column, ascending, nulls_first)
 
 
 def test_scan_inputs():

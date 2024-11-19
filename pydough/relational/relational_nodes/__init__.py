@@ -13,7 +13,6 @@ __all__ = [
     "RelationalRoot",
     "Scan",
     "RelationalVisitor",
-    "SQLGlotRelationalVisitor",
 ]
 from .abstract_node import Relational
 from .aggregate import Aggregate
@@ -24,4 +23,3 @@ from .project import Project
 from .relational_root import RelationalRoot
 from .relational_visitor import RelationalVisitor
 from .scan import Scan
-from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
