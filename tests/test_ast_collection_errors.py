@@ -9,7 +9,7 @@ from test_utils import (
     AstNodeTestInfo,
     BackReferenceExpressionInfo,
     CalcInfo,
-    ChildReferenceInfo,
+    ChildReferenceExpressionInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
@@ -70,13 +70,14 @@ from pydough.pydough_ast import AstNodeBuilder
             id="back_dne",
         ),
         pytest.param(
-            CalcInfo([], foo=ChildReferenceInfo("foo", 0)),
+            CalcInfo([], foo=ChildReferenceExpressionInfo("foo", 0)),
             "Invalid child reference index 0 with 0 children",
             id="child_dne",
         ),
         pytest.param(
             CalcInfo(
-                [TableCollectionInfo("Regions")], foo=ChildReferenceInfo("bar", 0)
+                [TableCollectionInfo("Regions")],
+                foo=ChildReferenceExpressionInfo("bar", 0),
             ),
             "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'bar'",
             id="child_expr_dne",

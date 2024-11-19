@@ -23,13 +23,11 @@ class ChildOperatorChildAccess(ChildAccess):
     def __init__(
         self,
         child_access: PyDoughCollectionAST,
-        is_last: bool,
     ):
         ancestor = child_access.ancestor_context
         assert ancestor is not None
         super().__init__(ancestor)
         self._child_access: PyDoughCollectionAST = child_access
-        self._is_last: bool = is_last
 
     def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
         raise NotImplementedError
@@ -40,13 +38,6 @@ class ChildOperatorChildAccess(ChildAccess):
         The collection node that is being wrapped.
         """
         return self._child_access
-
-    @property
-    def is_last(self) -> bool:
-        """
-        Whether this is the last child of the CALC
-        """
-        return self._is_last
 
     @property
     def key(self) -> str:
@@ -83,21 +74,21 @@ class ChildOperatorChildAccess(ChildAccess):
     def tree_item_string(self) -> str:
         return "AccessChild"
 
-    def to_tree_form_isolated(self) -> CollectionTreeForm:
+    def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = CollectionTreeForm(
             self.tree_item_string,
             0,
             has_predecessor=True,
             has_children=True,
-            has_successor=not self.is_last,
+            has_successor=not is_last,
         )
-        tree_form: CollectionTreeForm = self.child_access.to_tree_form()
+        tree_form: CollectionTreeForm = self.child_access.to_tree_form_isolated(False)
         tree_form.depth = predecessor.depth + 1
         tree_form.predecessor = predecessor
         return tree_form
 
-    def to_tree_form(self) -> CollectionTreeForm:
-        return self.to_tree_form_isolated()
+    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
+        return self.to_tree_form_isolated(is_last)
 
     def equals(self, other: object) -> bool:
         return (
