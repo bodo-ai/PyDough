@@ -43,7 +43,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     def visit_call_expression(self, call_expression: CallExpression) -> None:
         # Visit the inputs in reverse order so we can pop them off in order.
-        for arg in call_expression.inputs[::-1]:
+        for arg in reversed(call_expression.inputs):
             arg.accept(self)
         input_exprs: list[SQLGlotExpression] = [
             self._stack.pop() for _ in range(len(call_expression.inputs))
