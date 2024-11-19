@@ -251,6 +251,8 @@ def impl_tpch_q11():
         .ORDER_BY(val.DESC())
     )
 
+    # TODO: REWRITE W/O PARTITION JUST USING PARTS
+
 
 def impl_tpch_q12():
     """

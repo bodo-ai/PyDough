@@ -10,6 +10,7 @@ from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
+from .relational_expression_visitor import RelationalExpressionVisitor
 
 
 class CallExpression(RelationalExpression):
@@ -57,3 +58,6 @@ class CallExpression(RelationalExpression):
             and (self.inputs == other.inputs)
             and super().equals(other)
         )
+
+    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+        visitor.visit_call_expression(self)
