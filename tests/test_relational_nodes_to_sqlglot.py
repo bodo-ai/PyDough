@@ -85,7 +85,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
         }
     )
     if "where" in kwargs:
-        query = query.where(kwargs["where"])
+        query = query.where(kwargs.pop("where"))
+    assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
     return query
 
 
