@@ -40,7 +40,11 @@ from pydough.pydough_ast import (
     TopK,
     Where,
 )
-from pydough.relational.relational_expressions import ColumnReference, LiteralExpression
+from pydough.relational.relational_expressions import (
+    ColumnReference,
+    ColumnSortInfo,
+    LiteralExpression,
+)
 from pydough.relational.relational_nodes import Scan
 from pydough.types import PyDoughType, UnknownType
 
@@ -813,3 +817,22 @@ def build_simple_scan() -> Scan:
             "b": make_relational_column_reference("b"),
         },
     )
+
+
+def make_relational_column_ordering(
+    column: ColumnReference, ascending: bool = True, nulls_first: bool = True
+):
+    """
+    Create a column ordering as a function of a Relational column reference
+    with the given ascending and nulls_first parameters.
+
+    Args:
+        name (str): _description_
+        typ (PyDoughType | None, optional): _description_. Defaults to None.
+        ascending (bool, optional): _description_. Defaults to True.
+        nulls_first (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        ColumnSortInfo: The column ordering information.
+    """
+    return ColumnSortInfo(column, ascending, nulls_first)

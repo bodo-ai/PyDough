@@ -3,10 +3,13 @@ Handle the conversion from the Relation Tree to a single
 SQLGlot query.
 """
 
+from collections.abc import MutableSequence
+
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
+from pydough.relational.relational_expressions import ColumnSortInfo, LiteralExpression
 from pydough.relational.relational_nodes import (
     Aggregate,
     Filter,
@@ -19,7 +22,7 @@ from pydough.relational.relational_nodes import (
     Scan,
 )
 
-from .sqlglot_identifier_finder import find_identifiers
+from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
 __all__ = ["SQLGlotRelationalVisitor"]
@@ -138,7 +141,49 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if new_exprs is None:
             return orig_select
         else:
-            return Select().select(*new_exprs).from_(orig_select)
+            return self._build_subquery(orig_select, new_exprs)
+
+    def _convert_ordering(
+        self, ordering: MutableSequence[ColumnSortInfo]
+    ) -> list[SQLGlotExpression]:
+        """
+        Convert the orderings from the a relational operator into a variant
+        that can be used in SQLGlot.
+
+        Args:
+            ordering (MutableSequence[ColumnSortInfo]): The orderings to convert.
+
+        Returns:
+            list[SQLGlotExpression]: The converted orderings.
+        """
+        col_exprs = []
+        for col in ordering:
+            col_expr = self._expr_visitor.relational_to_sqlglot(col.column)
+            if col.ascending:
+                col_expr = col_expr.asc(nulls_first=col.nulls_first)
+            else:
+                col_expr = col_expr.desc(nulls_first=col.nulls_first)
+            col_exprs.append(col_expr)
+        return col_exprs
+
+    @staticmethod
+    def _build_subquery(
+        input_expr: SQLGlotExpression | str, column_exprs: list[SQLGlotExpression]
+    ) -> Select:
+        """
+        Generate a subquery select statement with the given
+        input from and the given columns.
+
+        Args:
+            input_expr (SQLGlotExpression | str): The from input, which
+                is either an expression (e.g. another select) or a string
+                representing a table name.
+            column_exprs (list[SQLGlotExpression]): The columns to select.
+
+        Returns:
+            Select: A select statement representing the subquery.
+        """
+        return Select().select(*column_exprs).from_(input_expr)
 
     def reset(self) -> None:
         """
@@ -155,7 +200,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in scan.columns.items()
         ]
-        query: Select = Select().select(*exprs).from_(scan.table_name)
+        query: Select = self._build_subquery(scan.table_name, exprs)
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
@@ -180,11 +225,16 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in filter.columns.items()
         ]
         query: Select
-        if "where" in input_expr.args:
-            # Check if we already have a where clause and if so we need to
-            # generate a new query.
-            # TODO: Consider combining conditions?
-            query = Select().select(*exprs).from_(input_expr)
+        if (
+            "where" in input_expr.args
+            or "order" in input_expr.args
+            or "limit" in input_expr.args
+        ):
+            # Check if we already have a where clause or limit. We
+            # cannot merge these yet.
+            # TODO: Consider allowing combining where if limit isn't
+            # present?
+            query = self._build_subquery(input_expr, exprs)
         else:
             # Try merge the column sections
             query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
@@ -195,7 +245,33 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         raise NotImplementedError("SQLGlotRelationalVisitor.visit_aggregate")
 
     def visit_limit(self, limit: Limit) -> None:
-        raise NotImplementedError("SQLGlotRelationalVisitor.visit_limit")
+        self.visit_inputs(limit)
+        input_expr: Select = self._stack.pop()
+        assert isinstance(
+            limit.limit, LiteralExpression
+        ), "Limit currently only supports literals"
+        limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+            limit.limit
+        )
+        exprs: list[SQLGlotExpression] = [
+            self._expr_visitor.relational_to_sqlglot(col, alias)
+            for alias, col in limit.columns.items()
+        ]
+        ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(
+            limit.orderings
+        )
+        query: Select
+        if "order" in input_expr.args or "limit" in input_expr.args:
+            query = self._build_subquery(input_expr, exprs)
+        else:
+            # Try merge the column sections
+            query = self._merge_selects(
+                exprs, input_expr, find_identifiers_in_list(ordering_exprs)
+            )
+        if ordering_exprs:
+            query = query.order_by(*ordering_exprs)
+        query = query.limit(limit_expr)
+        self._stack.append(query)
 
     def visit_root(self, root: RelationalRoot) -> None:
         raise NotImplementedError("SQLGlotRelationalVisitor.visit_root")

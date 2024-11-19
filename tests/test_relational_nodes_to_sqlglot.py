@@ -20,14 +20,16 @@ from sqlglot.expressions import (
 from sqlglot.expressions import Identifier as Ident
 from test_utils import (
     build_simple_scan,
+    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
-from pydough.relational.relational_expressions import CallExpression
+from pydough.relational.relational_expressions import CallExpression, LiteralExpression
 from pydough.relational.relational_nodes import (
     Filter,
+    Limit,
     Project,
     Relational,
     Scan,
@@ -86,6 +88,10 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     )
     if "where" in kwargs:
         query = query.where(kwargs.pop("where"))
+    if "order_by" in kwargs:
+        query = query.order_by(*kwargs.pop("order_by"))
+    if "limit" in kwargs:
+        query = query.limit(kwargs.pop("limit"))
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
     return query
 
@@ -317,6 +323,174 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 ),
             ),
             id="condition_pruning_project",
+        ),
+        pytest.param(
+            Limit(
+                input=build_simple_scan(),
+                limit=LiteralExpression(1, Int64Type()),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            mkglot(
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
+                limit=Literal(value=1),
+            ),
+            id="simple_limit",
+        ),
+        pytest.param(
+            Limit(
+                input=build_simple_scan(),
+                limit=LiteralExpression(1, Int64Type()),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"),
+                        ascending=False,
+                        nulls_first=False,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
+                order_by=[
+                    Ident(this="a").asc(nulls_first=True),
+                    Ident(this="b").desc(nulls_first=False),
+                ],
+                limit=Literal(value=1),
+            ),
+            id="simple_limit_with_ordering",
+        ),
+        pytest.param(
+            Limit(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(5, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_column_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=True,
+                            nulls_first=False,
+                        ),
+                    ],
+                ),
+                limit=LiteralExpression(2, Int64Type()),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                },
+            ),
+            mkglot(
+                expressions=[Ident(this="a")],
+                limit=Literal(value=2),
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    order_by=[Ident(this="b").asc(nulls_first=False)],
+                    limit=Literal(value=5),
+                ),
+            ),
+            id="nested_limits",
+        ),
+        pytest.param(
+            Limit(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                limit=LiteralExpression(2, Int64Type()),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
+                limit=Literal(value=2),
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                ),
+            ),
+            id="filter_before_limit",
+        ),
+        pytest.param(
+            Filter(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(2, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a"),
+                        make_relational_literal(1),
+                    ],
+                ),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    limit=Literal(value=2),
+                ),
+            ),
+            id="limit_before_filter",
+        ),
+        pytest.param(
+            Project(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(2, Int64Type()),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                    "c": make_relational_literal(1),
+                },
+            ),
+            mkglot(
+                expressions=[Ident(this="b"), set_alias(Literal(value=1), "c")],
+                _from=Table(this=Ident(this="table")),
+                limit=Literal(value=2),
+            ),
+            id="project_limit_combine",
         ),
     ],
 )
