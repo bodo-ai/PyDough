@@ -5,19 +5,23 @@ testing the actual runtime or converting entire complex trees.
 """
 
 import pytest
-import sqlglot.expressions as sqlglot_expressions
-from conftest import (
+from sqlglot.expressions import (
+    EQ,
+    GTE,
+    Add,
+    Expression,
+    From,
+    Length,
+    Literal,
+    Lower,
+    Select,
+    Table,
+)
+from sqlglot.expressions import Identifier as Ident
+from test_utils import (
     build_simple_scan,
     make_relational_column_reference,
     make_relational_literal,
-)
-from sqlglot.expressions import (
-    Expression,
-    From,
-    Identifier,
-    Literal,
-    Select,
-    Table,
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
@@ -58,10 +62,9 @@ def set_alias(expr: Expression, alias: str) -> Expression:
 
 def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select:
     """
-    Make a Select object with the given expressions and from clause and possibly
-    some additional components. We require the expressions and from clause directly
-    because all clauses must use them, although we do not require the 'from' clause
-    be a From object.
+    Make a Select object with the given expressions and from clause and
+    possibly some additional components. We require the expressions and
+    from clause directly because all clauses must use them.
 
     Args:
         expressions (list[Expression]): The expressions to add as columns.
@@ -98,8 +101,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
             ),
             mkglot(
-                expressions=[Identifier(this="a"), Identifier(this="b")],
-                _from=Table(this=Identifier(this="simple_scan")),
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=Table(this=Ident(this="simple_scan")),
             ),
             id="simple_scan",
         ),
@@ -112,8 +115,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
             ),
             mkglot(
-                expressions=[Identifier(this="a"), Identifier(this="b")],
-                _from=Table(this=Identifier(this="table")),
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
             ),
             id="simple_project",
         ),
@@ -125,8 +128,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
             ),
             mkglot(
-                expressions=[Identifier(this="b")],
-                _from=Table(this=Identifier(this="table")),
+                expressions=[Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
             ),
             id="column_pruning",
         ),
@@ -140,10 +143,10 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             ),
             mkglot(
                 expressions=[
-                    set_alias(Identifier(this="a"), "c"),
-                    Identifier(this="b"),
+                    set_alias(Ident(this="a"), "c"),
+                    Ident(this="b"),
                 ],
-                _from=Table(this=Identifier(this="table")),
+                _from=Table(this=Ident(this="table")),
             ),
             id="column_renaming",
         ),
@@ -158,11 +161,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             ),
             mkglot(
                 expressions=[
-                    Identifier(this="a"),
-                    Identifier(this="b"),
+                    Ident(this="a"),
+                    Ident(this="b"),
                     Literal(value=1, alias="c"),
                 ],
-                _from=Table(this=Identifier(this="table")),
+                _from=Table(this=Ident(this="table")),
             ),
             id="literal_addition",
         ),
@@ -185,24 +188,20 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             mkglot(
                 expressions=[
                     set_alias(
-                        sqlglot_expressions.Length.from_arg_list(
-                            [Identifier(this="col1")]
-                        ),
+                        Length.from_arg_list([Ident(this="col1")]),
                         "col2",
                     ),
                 ],
                 _from=mkglot(
                     expressions=[
                         set_alias(
-                            sqlglot_expressions.Lower.from_arg_list(
-                                [Identifier(this="a")]
-                            ),
+                            Lower.from_arg_list([Ident(this="a")]),
                             "col1",
                         ),
                     ],
                     _from=mkglot(
-                        expressions=[Identifier(this="a"), Identifier(this="b")],
-                        _from=Table(this=Identifier(this="table")),
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
                     ),
                 ),
             ),
@@ -222,11 +221,9 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 ),
             ),
             mkglot(
-                expressions=[Identifier(this="a"), Identifier(this="b")],
-                _from=Table(this=Identifier(this="table")),
-                where=sqlglot_expressions.EQ(
-                    this=Identifier(this="a"), expression=Literal(value=1)
-                ),
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
+                where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
             ),
             id="simple_filter",
         ),
@@ -257,16 +254,12 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 ),
             ),
             mkglot(
-                expressions=[Identifier(this="a")],
-                where=sqlglot_expressions.GTE(
-                    this=Identifier(this="b"), expression=Literal(value=5)
-                ),
+                expressions=[Ident(this="a")],
+                where=GTE(this=Ident(this="b"), expression=Literal(value=5)),
                 _from=mkglot(
-                    expressions=[Identifier(this="a"), Identifier(this="b")],
-                    _from=Table(this=Identifier(this="table")),
-                    where=sqlglot_expressions.EQ(
-                        this=Identifier(this="a"), expression=Literal(value=1)
-                    ),
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
                 ),
             ),
             id="nested_filters",
@@ -306,23 +299,19 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
             ),
             mkglot(
-                expressions=[Identifier(this="b")],
-                where=sqlglot_expressions.EQ(
-                    this=Identifier(this="c"), expression=Literal(value=1)
-                ),
+                expressions=[Ident(this="b")],
+                where=EQ(this=Ident(this="c"), expression=Literal(value=1)),
                 _from=mkglot(
                     expressions=[
                         set_alias(
-                            sqlglot_expressions.Add(
-                                this=Identifier(this="a"), expression=Literal(value=1)
-                            ),
+                            Add(this=Ident(this="a"), expression=Literal(value=1)),
                             "c",
                         ),
-                        Identifier(this="b"),
+                        Ident(this="b"),
                     ],
                     _from=mkglot(
-                        expressions=[Identifier(this="a"), Identifier(this="b")],
-                        _from=Table(this=Identifier(this="table")),
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
                     ),
                 ),
             ),
@@ -348,37 +337,33 @@ def test_node_to_sqlglot(
 @pytest.mark.parametrize(
     "expr, expected",
     [
-        pytest.param(Identifier(this="a"), {Identifier(this="a")}, id="identifier"),
+        pytest.param(Ident(this="a"), {Ident(this="a")}, id="Ident"),
         pytest.param(Literal(this=1), set(), id="literal"),
         pytest.param(
-            sqlglot_expressions.Add(
-                this=Identifier(this="a"),
-                expression=Identifier(this="b"),
+            Add(
+                this=Ident(this="a"),
+                expression=Ident(this="b"),
             ),
-            {Identifier(this="a"), Identifier(this="b")},
+            {Ident(this="a"), Ident(this="b")},
             id="function",
         ),
         pytest.param(
-            sqlglot_expressions.Add(
-                this=Identifier(this="a"),
-                expression=sqlglot_expressions.Add(
-                    this=Identifier(this="b"), expression=Identifier(this="c")
-                ),
+            Add(
+                this=Ident(this="a"),
+                expression=Add(this=Ident(this="b"), expression=Ident(this="c")),
             ),
-            {Identifier(this="a"), Identifier(this="b"), Identifier(this="c")},
+            {Ident(this="a"), Ident(this="b"), Ident(this="c")},
             id="nested_function",
         ),
         pytest.param(
-            sqlglot_expressions.Add(
-                this=Identifier(this="a"),
-                expression=sqlglot_expressions.Add(
-                    this=Identifier(this="b"), expression=Identifier(this="a")
-                ),
+            Add(
+                this=Ident(this="a"),
+                expression=Add(this=Ident(this="b"), expression=Ident(this="a")),
             ),
-            {Identifier(this="a"), Identifier(this="b")},
+            {Ident(this="a"), Ident(this="b")},
             id="duplicate_identifier",
         ),
     ],
 )
-def test_expression_identifiers(expr: Expression, expected: set[Identifier]):
+def test_expression_identifiers(expr: Expression, expected: set[Ident]):
     assert find_identifiers(expr) == expected

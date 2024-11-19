@@ -3,7 +3,7 @@ TODO: add file-level docstring
 """
 
 import pytest
-from conftest import (
+from test_utils import (
     build_simple_scan,
     make_relational_column_reference,
     make_relational_literal,
