@@ -57,6 +57,10 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
         return self._binop
 
     @property
+    def function_name(self) -> str:
+        return self.binop.value
+
+    @property
     def key(self) -> str:
         return f"BINOP-{self.binop}"
 

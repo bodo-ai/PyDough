@@ -5,6 +5,7 @@ testing the actual runtime or converting entire complex trees.
 """
 
 import pytest
+import sqlglot.expressions as sqlglot_expressions
 from conftest import (
     build_simple_scan,
     make_relational_column_reference,
@@ -12,17 +13,39 @@ from conftest import (
 )
 from sqlglot.expressions import Expression, From, Identifier, Literal, Select, Table
 
+from pydough.pydough_ast.pydough_operators import LENGTH, LOWER
+from pydough.relational.relational_expressions import CallExpression
 from pydough.relational.relational_nodes import (
     Project,
     Relational,
     Scan,
     SQLGlotRelationalVisitor,
 )
+from pydough.types import Int64Type, StringType
 
 
 @pytest.fixture(scope="module")
 def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
     return SQLGlotRelationalVisitor()
+
+
+def set_alias(expr: Expression, alias: str) -> Expression:
+    """
+    Update and return the given expression with the given alias.
+    This is used for expressions without the alias argument but who
+    can't use set because we must return the original expression,
+    for example in a fixture.
+
+    Args:
+        expr (Expression): The expression to update. This object is
+            modified in place.
+        alias (str): The alias name
+
+    Returns:
+        Expression: The updated expression.
+    """
+    expr.set("alias", alias)
+    return expr
 
 
 @pytest.mark.parametrize(
@@ -123,7 +146,65 @@ def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
             ),
             id="literal_addition",
         ),
-        # TODO: Add dependency tests. Requires ensuring functions are merged.
+        pytest.param(
+            Project(
+                input=Project(
+                    input=build_simple_scan(),
+                    columns={
+                        "col1": CallExpression(
+                            LOWER, StringType(), [make_relational_column_reference("a")]
+                        ),
+                    },
+                ),
+                columns={
+                    "col2": CallExpression(
+                        LENGTH, Int64Type(), [make_relational_column_reference("col1")]
+                    )
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        set_alias(
+                            sqlglot_expressions.Length.from_arg_list(
+                                [Identifier(this="col1")]
+                            ),
+                            "col2",
+                        ),
+                    ],
+                    "from": From(
+                        this=Select(
+                            **{
+                                "expressions": [
+                                    set_alias(
+                                        sqlglot_expressions.Lower.from_arg_list(
+                                            [Identifier(this="a")]
+                                        ),
+                                        "col1",
+                                    ),
+                                ],
+                                "from": From(
+                                    this=Select(
+                                        **{
+                                            "expressions": [
+                                                Identifier(this="a"),
+                                                Identifier(this="b"),
+                                            ],
+                                            "from": From(
+                                                this=Table(
+                                                    this=Identifier(this="table")
+                                                )
+                                            ),
+                                        }
+                                    )
+                                ),
+                            }
+                        )
+                    ),
+                }
+            ),
+            id="repeated_functions",
+        ),
     ],
 )
 def test_node_to_sqlglot(

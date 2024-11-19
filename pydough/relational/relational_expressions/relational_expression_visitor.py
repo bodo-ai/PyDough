@@ -26,17 +26,6 @@ class RelationalExpressionVisitor(ABC):
         """
 
     @abstractmethod
-    def visit(self, expr) -> None:
-        """
-        The generic visit operation for a relational expression. This can be used
-        to either throw a default unsupported error or provide a base
-        implementation.
-
-        Args:
-            expr (Relational): The expression to visit.
-        """
-
-    @abstractmethod
     def visit_call_expression(self, call_expression) -> None:
         """
         Visit a CallExpression node.
