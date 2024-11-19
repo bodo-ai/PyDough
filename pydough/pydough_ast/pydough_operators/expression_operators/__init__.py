@@ -35,6 +35,7 @@ __all__ = [
     "CONTAINS",
     "LIKE",
     "UPPER",
+    "NDISTINCT",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -61,6 +62,7 @@ from .registered_expression_operators import (
     MIN,
     MOD,
     MUL,
+    NDISTINCT,
     NEQ,
     NOT,
     POW,
