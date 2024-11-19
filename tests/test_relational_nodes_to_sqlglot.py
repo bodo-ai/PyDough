@@ -762,20 +762,18 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                             Select(
                                 **{
                                     "expressions": [
-                                        Identifier(this="a"),
-                                        Identifier(this="b"),
+                                        Ident(this="a"),
+                                        Ident(this="b"),
                                     ],
-                                    "from": From(
-                                        this=Table(this=Identifier(this="table"))
-                                    ),
+                                    "from": From(this=Table(this=Ident(this="table"))),
                                 }
                             ),
                             "_table_alias_0",
                         )
                     ),
                     "expressions": [
-                        Identifier(this="_table_alias_0.a", alias="a"),
-                        Identifier(this="_table_alias_1.b", alias="b"),
+                        Ident(this="_table_alias_0.a", alias="a"),
+                        Ident(this="_table_alias_1.b", alias="b"),
                     ],
                 }
             ).join(
@@ -783,17 +781,17 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     Select(
                         **{
                             "expressions": [
-                                Identifier(this="a"),
-                                Identifier(this="b"),
+                                Ident(this="a"),
+                                Ident(this="b"),
                             ],
-                            "from": From(this=Table(this=Identifier(this="table"))),
+                            "from": From(this=Table(this=Ident(this="table"))),
                         }
                     ),
                     "_table_alias_1",
                 ),
-                on=sqlglot_expressions.EQ(
-                    this=Identifier(this="_table_alias_0.a"),
-                    expression=Identifier(this="_table_alias_1.a"),
+                on=EQ(
+                    this=Ident(this="_table_alias_0.a"),
+                    expression=Ident(this="_table_alias_1.a"),
                 ),
                 join_type="inner",
             ),
@@ -843,14 +841,12 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                                             Select(
                                                 **{
                                                     "expressions": [
-                                                        Identifier(this="a"),
-                                                        Identifier(this="b"),
+                                                        Ident(this="a"),
+                                                        Ident(this="b"),
                                                     ],
                                                     "from": From(
                                                         this=Table(
-                                                            this=Identifier(
-                                                                this="table"
-                                                            )
+                                                            this=Ident(this="table")
                                                         )
                                                     ),
                                                 }
@@ -859,8 +855,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                                         )
                                     ),
                                     "expressions": [
-                                        Identifier(this="_table_alias_2.a", alias="a"),
-                                        Identifier(this="_table_alias_3.b", alias="b"),
+                                        Ident(this="_table_alias_2.a", alias="a"),
+                                        Ident(this="_table_alias_3.b", alias="b"),
                                     ],
                                 }
                             ).join(
@@ -868,21 +864,19 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                                     Select(
                                         **{
                                             "expressions": [
-                                                Identifier(this="a"),
-                                                Identifier(this="b"),
+                                                Ident(this="a"),
+                                                Ident(this="b"),
                                             ],
                                             "from": From(
-                                                this=Table(
-                                                    this=Identifier(this="table")
-                                                )
+                                                this=Table(this=Ident(this="table"))
                                             ),
                                         }
                                     ),
                                     "_table_alias_3",
                                 ),
-                                on=sqlglot_expressions.EQ(
-                                    this=Identifier(this="_table_alias_2.a"),
-                                    expression=Identifier(this="_table_alias_3.a"),
+                                on=EQ(
+                                    this=Ident(this="_table_alias_2.a"),
+                                    expression=Ident(this="_table_alias_3.a"),
                                 ),
                                 join_type="inner",
                             ),
@@ -890,7 +884,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                         )
                     ),
                     "expressions": [
-                        Identifier(this="_table_alias_0.b", alias="d"),
+                        Ident(this="_table_alias_0.b", alias="d"),
                     ],
                 },
             ).join(
@@ -898,17 +892,17 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     Select(
                         **{
                             "expressions": [
-                                Identifier(this="a"),
-                                Identifier(this="b"),
+                                Ident(this="a"),
+                                Ident(this="b"),
                             ],
-                            "from": From(this=Table(this=Identifier(this="table"))),
+                            "from": From(this=Table(this=Ident(this="table"))),
                         }
                     ),
                     "_table_alias_1",
                 ),
-                on=sqlglot_expressions.EQ(
-                    this=Identifier(this="_table_alias_0.a"),
-                    expression=Identifier(this="_table_alias_1.a"),
+                on=EQ(
+                    this=Ident(this="_table_alias_0.a"),
+                    expression=Ident(this="_table_alias_1.a"),
                 ),
                 join_type="left",
             ),
@@ -955,13 +949,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                                         Select(
                                             **{
                                                 "expressions": [
-                                                    Identifier(this="a"),
-                                                    Identifier(this="b"),
+                                                    Ident(this="a"),
+                                                    Ident(this="b"),
                                                 ],
                                                 "from": From(
-                                                    this=Table(
-                                                        this=Identifier(this="table")
-                                                    )
+                                                    this=Table(this=Ident(this="table"))
                                                 ),
                                             }
                                         ),
@@ -969,8 +961,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                                     )
                                 ),
                                 "expressions": [
-                                    Identifier(this="_table_alias_0.a", alias="a"),
-                                    Identifier(this="_table_alias_1.b", alias="b"),
+                                    Ident(this="_table_alias_0.a", alias="a"),
+                                    Ident(this="_table_alias_1.b", alias="b"),
                                 ],
                             }
                         ).join(
@@ -978,30 +970,30 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                                 Select(
                                     **{
                                         "expressions": [
-                                            Identifier(this="a"),
-                                            Identifier(this="b"),
+                                            Ident(this="a"),
+                                            Ident(this="b"),
                                         ],
                                         "from": From(
-                                            this=Table(this=Identifier(this="table"))
+                                            this=Table(this=Ident(this="table"))
                                         ),
                                     }
                                 ),
                                 "_table_alias_1",
                             ),
-                            on=sqlglot_expressions.EQ(
-                                this=Identifier(this="_table_alias_0.a"),
-                                expression=Identifier(this="_table_alias_1.a"),
+                            on=EQ(
+                                this=Ident(this="_table_alias_0.a"),
+                                expression=Ident(this="_table_alias_1.a"),
                             ),
                             join_type="inner",
                         )
                     ),
                     "expressions": [
-                        Identifier(this="a"),
+                        Ident(this="a"),
                     ],
                 }
             ).where(
-                sqlglot_expressions.GTE(
-                    this=Identifier(this="a"),
+                GTE(
+                    this=Ident(this="a"),
                     expression=Literal(value=5),
                 )
             ),
