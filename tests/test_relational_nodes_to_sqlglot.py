@@ -57,6 +57,36 @@ def set_alias(expr: Expression, alias: str) -> Expression:
     return expr
 
 
+def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select:
+    """
+    Make a Select object with the given expressions and from clause and possibly
+    some additional components. We require the expressions and from clause directly
+    because all clauses must use them, although we do not require the 'from' clause
+    be a From object.
+
+    Args:
+        expressions (list[Expression]): The expressions to add as columns.
+        _from (Expression): The from clause. It is not required to be a FROM.
+    Kwargs:
+        **kwargs: Additional keyword arguments that can be accepted
+            to build the Select object. Examples include 'from',
+            and 'where'.
+    Returns:
+        Select: The output select statement.
+    """
+    if not isinstance(_from, From):
+        _from = From(this=_from)
+    query: Select = Select(
+        **{
+            "expressions": expressions,
+            "from": _from,
+        }
+    )
+    if "where" in kwargs:
+        query = query.where(kwargs["where"])
+    return query
+
+
 @pytest.mark.parametrize(
     "node, sqlglot_expr",
     [
@@ -68,14 +98,9 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="simple_scan"))),
-                }
+            mkglot(
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="simple_scan")),
             ),
             id="simple_scan",
         ),
@@ -87,14 +112,9 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                [Identifier(this="a"), Identifier(this="b")],
+                Table(this=Identifier(this="table")),
             ),
             id="simple_project",
         ),
