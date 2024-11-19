@@ -18,7 +18,6 @@ from sqlglot.expressions import (
     Literal,
     Select,
     Table,
-    Where,
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
@@ -306,49 +305,26 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    set_alias(
-                                        sqlglot_expressions.Add(
-                                            this=Identifier(this="a"),
-                                            expression=Literal(value=1),
-                                        ),
-                                        "c",
-                                    ),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Identifier(this="a"),
-                                                Identifier(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(
-                                                    this=Identifier(this="table")
-                                                )
-                                            ),
-                                        }
-                                    )
-                                ),
-                            }
-                        )
-                    ),
-                    "expressions": [
+            mkglot(
+                expressions=[Identifier(this="b")],
+                where=sqlglot_expressions.EQ(
+                    this=Identifier(this="c"), expression=Literal(value=1)
+                ),
+                _from=mkglot(
+                    expressions=[
+                        set_alias(
+                            sqlglot_expressions.Add(
+                                this=Identifier(this="a"), expression=Literal(value=1)
+                            ),
+                            "c",
+                        ),
                         Identifier(this="b"),
                     ],
-                    "where": Where(
-                        this=sqlglot_expressions.EQ(
-                            this=Identifier(this="c"),
-                            expression=Literal(value=1),
-                        )
+                    _from=mkglot(
+                        expressions=[Identifier(this="a"), Identifier(this="b")],
+                        _from=Table(this=Identifier(this="table")),
                     ),
-                },
+                ),
             ),
             id="condition_pruning_project",
         ),
