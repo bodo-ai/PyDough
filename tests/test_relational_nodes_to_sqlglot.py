@@ -66,7 +66,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
 
     Args:
         expressions (list[Expression]): The expressions to add as columns.
-        _from (Expression): The from clause. It is not required to be a FROM.
+        _from (Expression): The from query that should not already be wrapped
+        in a FROM.
     Kwargs:
         **kwargs: Additional keyword arguments that can be accepted
             to build the Select object. Examples include 'from',
@@ -74,8 +75,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     Returns:
         Select: The output select statement.
     """
-    if not isinstance(_from, From):
-        _from = From(this=_from)
+    _from = From(this=_from)
     query: Select = Select(
         **{
             "expressions": expressions,
@@ -222,19 +222,12 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     [make_relational_column_reference("a"), make_relational_literal(1)],
                 ),
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                    "where": Where(
-                        this=sqlglot_expressions.EQ(
-                            this=Identifier(this="a"), expression=Literal(value=1)
-                        )
-                    ),
-                }
+            mkglot(
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
+                where=sqlglot_expressions.EQ(
+                    this=Identifier(this="a"), expression=Literal(value=1)
+                ),
             ),
             id="simple_filter",
         ),
@@ -264,34 +257,18 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     [make_relational_column_reference("b"), make_relational_literal(5)],
                 ),
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                                "where": Where(
-                                    this=sqlglot_expressions.EQ(
-                                        this=Identifier(this="a"),
-                                        expression=Literal(value=1),
-                                    )
-                                ),
-                            }
-                        )
+            mkglot(
+                expressions=[Identifier(this="a")],
+                where=sqlglot_expressions.GTE(
+                    this=Identifier(this="b"), expression=Literal(value=5)
+                ),
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                    where=sqlglot_expressions.EQ(
+                        this=Identifier(this="a"), expression=Literal(value=1)
                     ),
-                    "expressions": [
-                        Identifier(this="a"),
-                    ],
-                    "where": Where(
-                        this=sqlglot_expressions.GTE(
-                            this=Identifier(this="b"), expression=Literal(value=5)
-                        )
-                    ),
-                },
+                ),
             ),
             id="nested_filters",
         ),
