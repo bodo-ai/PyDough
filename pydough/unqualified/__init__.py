@@ -17,16 +17,12 @@ __all__ = [
     "PyDoughUnqualifiedException",
     "UnqualifiedOperator",
     "UnqualifiedBack",
-    "BACK",
-    "PARTITION",
     "init_pydough_context",
     "transform_code",
 ]
 
 from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
-    BACK,
-    PARTITION,
     UnqualifiedAccess,
     UnqualifiedBack,
     UnqualifiedBinaryOperation,

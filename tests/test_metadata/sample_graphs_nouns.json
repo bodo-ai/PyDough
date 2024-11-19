@@ -114,6 +114,7 @@
             "TPCH.Suppliers.region"
         ],
         "manufacturer": ["TPCH.Parts.manufacturer"],
+        "mktsegment": ["TPCH.Customers.mktsegment"],
         "brand": ["TPCH.Parts.brand"],
         "return_flag": ["TPCH.Lineitems.return_flag"],
         "part_type": ["TPCH.Parts.part_type"],
