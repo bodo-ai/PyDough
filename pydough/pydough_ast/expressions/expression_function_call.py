@@ -7,6 +7,7 @@ __all__ = ["ExpressionFunctionCall"]
 from collections.abc import MutableSequence
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
 from pydough.types import PyDoughType
 
@@ -63,8 +64,13 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
                 arg_string = arg.to_string(tree_form)
                 if arg.requires_enclosing_parens(self):
                     arg_string = f"({arg_string})"
+            elif isinstance(arg, PyDoughCollectionAST):
+                if tree_form:
+                    arg_string = arg.tree_item_string
+                else:
+                    arg_string = arg.to_string()
             else:
-                arg_string = str(arg_string)
+                arg_string = str(arg)
             arg_strings.append(arg_string)
         return self.operator.to_string(arg_strings)
 

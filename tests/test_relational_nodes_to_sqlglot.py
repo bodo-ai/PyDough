@@ -19,7 +19,6 @@ from sqlglot.expressions import (
     Literal,
     Select,
     Table,
-    Where,
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
@@ -59,6 +58,36 @@ def set_alias(expr: Expression, alias: str) -> Expression:
     return expr
 
 
+def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select:
+    """
+    Make a Select object with the given expressions and from clause and possibly
+    some additional components. We require the expressions and from clause directly
+    because all clauses must use them, although we do not require the 'from' clause
+    be a From object.
+
+    Args:
+        expressions (list[Expression]): The expressions to add as columns.
+        _from (Expression): The from query that should not already be wrapped
+        in a FROM.
+    Kwargs:
+        **kwargs: Additional keyword arguments that can be accepted
+            to build the Select object. Examples include 'from',
+            and 'where'.
+    Returns:
+        Select: The output select statement.
+    """
+    _from = From(this=_from)
+    query: Select = Select(
+        **{
+            "expressions": expressions,
+            "from": _from,
+        }
+    )
+    if "where" in kwargs:
+        query = query.where(kwargs["where"])
+    return query
+
+
 @pytest.mark.parametrize(
     "node, sqlglot_expr",
     [
@@ -70,14 +99,9 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="simple_scan"))),
-                }
+            mkglot(
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="simple_scan")),
             ),
             id="simple_scan",
         ),
@@ -89,14 +113,9 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="simple_project",
         ),
@@ -107,13 +126,9 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                expressions=[Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="column_pruning",
         ),
@@ -125,14 +140,12 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a", alias="c"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                expressions=[
+                    set_alias(Identifier(this="a"), "c"),
+                    Identifier(this="b"),
+                ],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="column_renaming",
         ),
@@ -145,15 +158,13 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "c": make_relational_literal(1),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                        Literal(value=1, alias="c"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                expressions=[
+                    Identifier(this="a"),
+                    Identifier(this="b"),
+                    Literal(value=1, alias="c"),
+                ],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="literal_addition",
         ),
@@ -173,46 +184,29 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     )
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
+            mkglot(
+                expressions=[
+                    set_alias(
+                        sqlglot_expressions.Length.from_arg_list(
+                            [Identifier(this="col1")]
+                        ),
+                        "col2",
+                    ),
+                ],
+                _from=mkglot(
+                    expressions=[
                         set_alias(
-                            sqlglot_expressions.Length.from_arg_list(
-                                [Identifier(this="col1")]
+                            sqlglot_expressions.Lower.from_arg_list(
+                                [Identifier(this="a")]
                             ),
-                            "col2",
+                            "col1",
                         ),
                     ],
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    set_alias(
-                                        sqlglot_expressions.Lower.from_arg_list(
-                                            [Identifier(this="a")]
-                                        ),
-                                        "col1",
-                                    ),
-                                ],
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Identifier(this="a"),
-                                                Identifier(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(
-                                                    this=Identifier(this="table")
-                                                )
-                                            ),
-                                        }
-                                    )
-                                ),
-                            }
-                        )
+                    _from=mkglot(
+                        expressions=[Identifier(this="a"), Identifier(this="b")],
+                        _from=Table(this=Identifier(this="table")),
                     ),
-                }
+                ),
             ),
             id="repeated_functions",
         ),
@@ -229,19 +223,12 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     [make_relational_column_reference("a"), make_relational_literal(1)],
                 ),
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                    "where": Where(
-                        this=sqlglot_expressions.EQ(
-                            this=Identifier(this="a"), expression=Literal(value=1)
-                        )
-                    ),
-                }
+            mkglot(
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
+                where=sqlglot_expressions.EQ(
+                    this=Identifier(this="a"), expression=Literal(value=1)
+                ),
             ),
             id="simple_filter",
         ),
@@ -271,34 +258,18 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     [make_relational_column_reference("b"), make_relational_literal(5)],
                 ),
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                                "where": Where(
-                                    this=sqlglot_expressions.EQ(
-                                        this=Identifier(this="a"),
-                                        expression=Literal(value=1),
-                                    )
-                                ),
-                            }
-                        )
+            mkglot(
+                expressions=[Identifier(this="a")],
+                where=sqlglot_expressions.GTE(
+                    this=Identifier(this="b"), expression=Literal(value=5)
+                ),
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                    where=sqlglot_expressions.EQ(
+                        this=Identifier(this="a"), expression=Literal(value=1)
                     ),
-                    "expressions": [
-                        Identifier(this="a"),
-                    ],
-                    "where": Where(
-                        this=sqlglot_expressions.GTE(
-                            this=Identifier(this="b"), expression=Literal(value=5)
-                        )
-                    ),
-                },
+                ),
             ),
             id="nested_filters",
         ),
@@ -336,49 +307,26 @@ def set_alias(expr: Expression, alias: str) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    set_alias(
-                                        sqlglot_expressions.Add(
-                                            this=Identifier(this="a"),
-                                            expression=Literal(value=1),
-                                        ),
-                                        "c",
-                                    ),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Identifier(this="a"),
-                                                Identifier(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(
-                                                    this=Identifier(this="table")
-                                                )
-                                            ),
-                                        }
-                                    )
-                                ),
-                            }
-                        )
-                    ),
-                    "expressions": [
+            mkglot(
+                expressions=[Identifier(this="b")],
+                where=sqlglot_expressions.EQ(
+                    this=Identifier(this="c"), expression=Literal(value=1)
+                ),
+                _from=mkglot(
+                    expressions=[
+                        set_alias(
+                            sqlglot_expressions.Add(
+                                this=Identifier(this="a"), expression=Literal(value=1)
+                            ),
+                            "c",
+                        ),
                         Identifier(this="b"),
                     ],
-                    "where": Where(
-                        this=sqlglot_expressions.EQ(
-                            this=Identifier(this="c"),
-                            expression=Literal(value=1),
-                        )
+                    _from=mkglot(
+                        expressions=[Identifier(this="a"), Identifier(this="b")],
+                        _from=Table(this=Identifier(this="table")),
                     ),
-                },
+                ),
             ),
             id="condition_pruning_project",
         ),
