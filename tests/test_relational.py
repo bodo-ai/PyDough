@@ -2,10 +2,12 @@
 TODO: add file-level docstring
 """
 
-from typing import Any
-
 import pytest
-from conftest import make_relational_column_reference
+from conftest import (
+    build_simple_scan,
+    make_relational_column_reference,
+    make_relational_literal,
+)
 
 from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
 from pydough.relational.relational_expressions import (
@@ -25,22 +27,7 @@ from pydough.relational.relational_nodes import (
     RelationalRoot,
     Scan,
 )
-from pydough.types import BooleanType, Int64Type, PyDoughType, StringType, UnknownType
-
-
-def make_relational_literal(value: Any, typ: PyDoughType | None = None):
-    """
-    Make a literal given value and type. This is used for
-    generating various relational nodes.
-
-    Args:
-        value (Any): The value of the literal.
-
-    Returns:
-        Literal: The output literal.
-    """
-    pydough_type = typ if typ is not None else UnknownType()
-    return LiteralExpression(value, pydough_type)
+from pydough.types import BooleanType, Int64Type, StringType
 
 
 def make_relational_column_ordering(
@@ -60,22 +47,6 @@ def make_relational_column_ordering(
         ColumnSortInfo: The column ordering information.
     """
     return ColumnSortInfo(column, ascending, nulls_first)
-
-
-def build_simple_scan() -> Scan:
-    """
-    Build a simple scan node for reuse in tests.
-
-    Returns:
-        Scan: The Scan node.
-    """
-    return Scan(
-        "table",
-        {
-            "a": make_relational_column_reference("a"),
-            "b": make_relational_column_reference("b"),
-        },
-    )
 
 
 def test_scan_inputs():

@@ -5,10 +5,15 @@ testing the actual runtime or converting entire complex trees.
 """
 
 import pytest
-from conftest import make_relational_column_reference
-from sqlglot.expressions import Expression, From, Identifier, Select, Table
+from conftest import (
+    build_simple_scan,
+    make_relational_column_reference,
+    make_relational_literal,
+)
+from sqlglot.expressions import Expression, From, Identifier, Literal, Select, Table
 
 from pydough.relational.relational_nodes import (
+    Project,
     Relational,
     Scan,
     SQLGlotRelationalVisitor,
@@ -41,7 +46,84 @@ def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
                 }
             ),
             id="simple_scan",
-        )
+        ),
+        pytest.param(
+            Project(
+                input=build_simple_scan(),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a"),
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ),
+            id="simple_project",
+        ),
+        pytest.param(
+            Project(
+                input=build_simple_scan(),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ),
+            id="column_pruning",
+        ),
+        pytest.param(
+            Project(
+                input=build_simple_scan(),
+                columns={
+                    "c": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a", alias="c"),
+                        Identifier(this="b"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ),
+            id="column_renaming",
+        ),
+        pytest.param(
+            Project(
+                input=build_simple_scan(),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                    "c": make_relational_literal(1),
+                },
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Identifier(this="a"),
+                        Identifier(this="b"),
+                        Literal(value=1, alias="c"),
+                    ],
+                    "from": From(this=Table(this=Identifier(this="table"))),
+                }
+            ),
+            id="literal_addition",
+        ),
+        # TODO: Add dependency tests. Requires ensuring functions are merged.
     ],
 )
 def test_node_to_sqlglot(
