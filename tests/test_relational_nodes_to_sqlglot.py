@@ -85,6 +85,10 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     )
     if "where" in kwargs:
         query = query.where(kwargs["where"])
+    if "order_by" in kwargs:
+        query = query.order_by(*kwargs["order_by"])
+    if "limit" in kwargs:
+        query = query.limit(kwargs["limit"])
     return query
 
 
@@ -339,15 +343,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
-            ).limit(Literal(value=1)),
+            mkglot(
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
+                limit=Literal(value=1),
+            ),
             id="simple_limit",
         ),
         pytest.param(
@@ -371,22 +371,15 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
-            )
-            .order_by(
-                *[
+            mkglot(
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
+                order_by=[
                     Identifier(this="a").asc(nulls_first=True),
                     Identifier(this="b").desc(nulls_first=False),
-                ]
-            )
-            .limit(Literal(value=1)),
+                ],
+                limit=Literal(value=1),
+            ),
             id="simple_limit_with_ordering",
         ),
         pytest.param(
@@ -411,30 +404,16 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "a": make_relational_column_reference("a"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                            }
-                        )
-                        .order_by(
-                            *[
-                                Identifier(this="b").asc(nulls_first=False),
-                            ]
-                        )
-                        .limit(Literal(value=1))
-                    ),
-                    "expressions": [
-                        Identifier(this="a"),
-                    ],
-                }
-            ).limit(Literal(value=2)),
+            mkglot(
+                expressions=[Identifier(this="a")],
+                limit=Literal(value=2),
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                    order_by=[Identifier(this="b").asc(nulls_first=False)],
+                    limit=Literal(value=5),
+                ),
+            ),
             id="nested_limits",
         ),
         pytest.param(
@@ -458,30 +437,17 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="a"),
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                            }
-                        )
-                    ),
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "where": Where(
-                        this=sqlglot_expressions.EQ(
-                            this=Identifier(this="a"),
-                            expression=Literal(value=1),
-                        )
-                    ),
-                }
-            ).limit(Literal(value=2)),
+            mkglot(
+                expressions=[Identifier(this="b")],
+                where=sqlglot_expressions.EQ(
+                    this=Identifier(this="a"), expression=Literal(value=1)
+                ),
+                limit=Literal(value=2),
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                ),
+            ),
             id="filter_before_limit",
         ),
         pytest.param(
@@ -490,6 +456,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     input=build_simple_scan(),
                     limit=LiteralExpression(2, Int64Type()),
                     columns={
+                        "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
                     },
                 ),
@@ -505,28 +472,16 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Identifier(this="b"),
-                                ],
-                                "from": From(this=Table(this=Identifier(this="table"))),
-                            }
-                        ).limit(Literal(value=2))
-                    ),
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "where": Where(
-                        this=sqlglot_expressions.EQ(
-                            this=Identifier(this="a"),
-                            expression=Literal(value=1),
-                        )
-                    ),
-                }
+            mkglot(
+                expressions=[Identifier(this="b")],
+                where=sqlglot_expressions.EQ(
+                    this=Identifier(this="a"), expression=Literal(value=1)
+                ),
+                _from=mkglot(
+                    expressions=[Identifier(this="a"), Identifier(this="b")],
+                    _from=Table(this=Identifier(this="table")),
+                    limit=Literal(value=2),
+                ),
             ),
             id="limit_before_filter",
         ),
@@ -544,15 +499,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "c": make_relational_literal(1),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="b"),
-                        Literal(value=1, alias="c"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
-            ).limit(Literal(value=2)),
+            mkglot(
+                expressions=[Identifier(this="b"), set_alias(Literal(value=1), "c")],
+                _from=Table(this=Identifier(this="table")),
+                limit=Literal(value=2),
+            ),
             id="project_limit_combine",
         ),
     ],
