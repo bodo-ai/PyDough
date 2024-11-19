@@ -29,7 +29,7 @@ def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
     return SQLGlotRelationalVisitor()
 
 
-def set_expression_alias(expr: Expression, alias: str) -> Expression:
+def set_alias(expr: Expression, alias: str) -> Expression:
     """
     Update and return the given expression with the given alias.
     This is used for expressions without the alias argument but who
@@ -165,7 +165,7 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
             Select(
                 **{
                     "expressions": [
-                        set_expression_alias(
+                        set_alias(
                             sqlglot_expressions.Length.from_arg_list(
                                 [Identifier(this="col1")]
                             ),
@@ -176,7 +176,7 @@ def set_expression_alias(expr: Expression, alias: str) -> Expression:
                         this=Select(
                             **{
                                 "expressions": [
-                                    set_expression_alias(
+                                    set_alias(
                                         sqlglot_expressions.Lower.from_arg_list(
                                             [Identifier(this="a")]
                                         ),
