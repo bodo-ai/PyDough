@@ -113,8 +113,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
             ),
             mkglot(
-                [Identifier(this="a"), Identifier(this="b")],
-                Table(this=Identifier(this="table")),
+                expressions=[Identifier(this="a"), Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="simple_project",
         ),
@@ -125,13 +125,9 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                expressions=[Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="column_pruning",
         ),
@@ -143,14 +139,12 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="a", alias="c"),
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                }
+            mkglot(
+                expressions=[
+                    set_alias(Identifier(this="a"), "c"),
+                    Identifier(this="b"),
+                ],
+                _from=Table(this=Identifier(this="table")),
             ),
             id="column_renaming",
         ),
