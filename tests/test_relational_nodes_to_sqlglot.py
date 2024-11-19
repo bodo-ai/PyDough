@@ -9,6 +9,7 @@ from sqlglot.expressions import (
     EQ,
     GTE,
     Add,
+    Binary,
     Expression,
     From,
     Length,
@@ -99,6 +100,17 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
         query = query.limit(kwargs.pop("limit"))
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
     return query
+
+
+def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
+    """
+    Make a function call expression with the given operator and arguments.
+    """
+    if issubclass(op, Binary):
+        assert len(args) == 2, "Binary functions require exactly 2 arguments"
+        return op(this=args[0], expression=args[1])
+    else:
+        return op.from_arg_list(args)
 
 
 @pytest.mark.parametrize(
@@ -759,25 +771,22 @@ def test_node_to_sqlglot(
         pytest.param(Ident(this="a"), {Ident(this="a")}, id="Ident"),
         pytest.param(Literal(this=1), set(), id="literal"),
         pytest.param(
-            Add(
-                this=Ident(this="a"),
-                expression=Ident(this="b"),
-            ),
+            mkglot_func(Add, [Ident(this="a"), Ident(this="b")]),
             {Ident(this="a"), Ident(this="b")},
             id="function",
         ),
         pytest.param(
-            Add(
-                this=Ident(this="a"),
-                expression=Add(this=Ident(this="b"), expression=Ident(this="c")),
+            mkglot_func(
+                Add,
+                [Ident(this="a"), mkglot_func(Add, [Ident(this="b"), Ident(this="c")])],
             ),
             {Ident(this="a"), Ident(this="b"), Ident(this="c")},
             id="nested_function",
         ),
         pytest.param(
-            Add(
-                this=Ident(this="a"),
-                expression=Add(this=Ident(this="b"), expression=Ident(this="a")),
+            mkglot_func(
+                Add,
+                [Ident(this="a"), mkglot_func(Add, [Ident(this="b"), Ident(this="a")])],
             ),
             {Ident(this="a"), Ident(this="b")},
             id="duplicate_identifier",
