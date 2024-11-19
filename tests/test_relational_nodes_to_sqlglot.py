@@ -20,6 +20,7 @@ from sqlglot.expressions import (
     Literal,
     Select,
     Table,
+    Where,
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUB, SUM
@@ -87,6 +88,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     )
     if "where" in kwargs:
         query = query.where(kwargs["where"])
+    if "group_by" in kwargs:
+        query = query.group_by(*kwargs["group_by"])
     if "order_by" in kwargs:
         query = query.order_by(*kwargs["order_by"])
     if "limit" in kwargs:
@@ -516,14 +519,10 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
                 },
                 aggregations={},
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Identifier(this="b"),
-                    ],
-                    "from": From(this=Table(this=Identifier(this="table"))),
-                    "group": Group(expressions=[Identifier(this="b")]),
-                }
+            mkglot(
+                expressions=[Identifier(this="b")],
+                _from=Table(this=Identifier(this="table")),
+                group_by=[Identifier(this="b")],
             ),
             id="simple_distinct",
         ),
