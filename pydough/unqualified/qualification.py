@@ -49,7 +49,7 @@ from .unqualified_node import (
 
 class Qualifier:
     not_expression_pattern: re.Pattern = re.compile(
-        "Cannot qualify (\S*) as an expression"
+        r"Cannot qualify (\S*) as an expression"
     )
 
     def __init__(self, graph: GraphMetadata):
@@ -119,7 +119,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedOperation,
         context: PyDoughCollectionAST,
-        children: list[PyDoughCollectionAST],
+        children: MutableSequence[PyDoughCollectionAST],
     ) -> PyDoughExpressionAST:
         """
         Transforms an `UnqualifiedOperation` into a PyDoughExpressionAST node.
@@ -181,7 +181,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedBinaryOperation,
         context: PyDoughCollectionAST,
-        children: list[PyDoughCollectionAST],
+        children: MutableSequence[PyDoughCollectionAST],
     ) -> PyDoughExpressionAST:
         """
         Transforms an `UnqualifiedBinaryOperation` into a PyDoughExpressionAST node.
@@ -226,7 +226,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedCollation,
         context: PyDoughCollectionAST,
-        children: list[PyDoughCollectionAST],
+        children: MutableSequence[PyDoughCollectionAST],
     ) -> PyDoughExpressionAST:
         """
         Transforms an `UnqualifiedCollation` into a PyDoughExpressionAST node.
@@ -255,11 +255,11 @@ class Qualifier:
         )
         return CollationExpression(qualified_expr, asc, na_last)
 
-    def qualify_access(
+    def qualify_expression_access(
         self,
         unqualified: UnqualifiedAccess,
         context: PyDoughCollectionAST,
-        children: list[PyDoughCollectionAST],
+        children: MutableSequence[PyDoughCollectionAST],
     ) -> PyDoughExpressionAST:
         """
         Transforms an `UnqualifiedAccess` into a PyDoughExpressionAST node.
@@ -320,7 +320,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedNode,
         context: PyDoughCollectionAST,
-        children: list[PyDoughCollectionAST],
+        children: MutableSequence[PyDoughCollectionAST],
     ) -> PyDoughExpressionAST:
         """
         Transforms an `UnqualifiedNode` into a PyDoughExpressionAST node.
@@ -365,13 +365,278 @@ class Qualifier:
             case UnqualifiedCollation():
                 answer = self.qualify_collation(unqualified, context, children)
             case UnqualifiedAccess():
-                answer = self.qualify_access(unqualified, context, children)
+                answer = self.qualify_expression_access(unqualified, context, children)
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__} as an expression: {unqualified!r}"
                 )
         self.add_definition(unqualified_str, context, answer)
         return answer
+
+    def qualify_collection_access(
+        self,
+        unqualified: UnqualifiedAccess,
+        context: PyDoughCollectionAST,
+        is_child: bool,
+    ) -> PyDoughCollectionAST:
+        """
+        Transforms an `UnqualifiedAccess` into a PyDoughCollectionAST node.
+
+        Args:
+            `unqualified`: the UnqualifiedAccess instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection AST whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        name: str = unqualified._parcel[1]
+        if isinstance(unqualified_parent, UnqualifiedBack):
+            levels: int = unqualified_parent._parcel[0]
+            return self.builder.build_back_reference_collection(context, name, levels)
+        else:
+            qualified_parent: PyDoughCollectionAST = self.qualify_collection(
+                unqualified_parent, context, is_child
+            )
+            if isinstance(unqualified_parent, UnqualifiedRoot) and name == repr(
+                unqualified_parent
+            ):
+                return qualified_parent
+            else:
+                answer: PyDoughCollectionAST = self.builder.build_child_access(
+                    name, qualified_parent
+                )
+                if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+                    answer = ChildOperatorChildAccess(answer)
+                return answer
+
+    def qualify_calc(
+        self,
+        unqualified: UnqualifiedCalc,
+        context: PyDoughCollectionAST,
+        is_child: bool,
+    ) -> PyDoughCollectionAST:
+        """
+        Transforms an `UnqualifiedCalc` into a PyDoughCollectionAST node.
+
+        Args:
+            `unqualified`: the UnqualifiedCalc instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection AST whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        unqualified_terms: MutableSequence[tuple[str, UnqualifiedNode]] = (
+            unqualified._parcel[1]
+        )
+        qualified_parent: PyDoughCollectionAST = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        children: MutableSequence[PyDoughCollectionAST] = []
+        qualified_terms: MutableSequence[tuple[str, PyDoughExpressionAST]] = []
+        for name, term in unqualified_terms:
+            qualified_term = self.qualify_expression(term, qualified_parent, children)
+            qualified_terms.append((name, qualified_term))
+        calc: Calc = self.builder.build_calc(qualified_parent, children)
+        return calc.with_terms(qualified_terms)
+
+    def qualify_where(
+        self,
+        unqualified: UnqualifiedWhere,
+        context: PyDoughCollectionAST,
+        is_child: bool,
+    ) -> PyDoughCollectionAST:
+        """
+        Transforms an `UnqualifiedWhere` into a PyDoughCollectionAST node.
+
+        Args:
+            `unqualified`: the UnqualifiedWhere instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection AST whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        unqualified_cond: UnqualifiedNode = unqualified._parcel[1]
+        qualified_parent: PyDoughCollectionAST = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        children: MutableSequence[PyDoughCollectionAST] = []
+        qualified_cond = self.qualify_expression(
+            unqualified_cond, qualified_parent, children
+        )
+        where: Where = self.builder.build_where(qualified_parent, children)
+        return where.with_condition(qualified_cond)
+
+    def qualify_order_by(
+        self,
+        unqualified: UnqualifiedOrderBy,
+        context: PyDoughCollectionAST,
+        is_child: bool,
+    ) -> PyDoughCollectionAST:
+        """
+        Transforms an `UnqualifiedOrderBy` into a PyDoughCollectionAST node.
+
+        Args:
+            `unqualified`: the UnqualifiedOrderBy instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection AST whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
+        qualified_parent: PyDoughCollectionAST = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        children: MutableSequence[PyDoughCollectionAST] = []
+        qualified_collations: list[CollationExpression] = []
+        for term in unqualified_terms:
+            qualified_term: PyDoughExpressionAST = self.qualify_expression(
+                term, qualified_parent, children
+            )
+            assert isinstance(qualified_term, CollationExpression)
+            qualified_collations.append(qualified_term)
+        orderby: OrderBy = self.builder.build_order(qualified_parent, children)
+        return orderby.with_collation(qualified_collations)
+
+    def qualify_top_k(
+        self,
+        unqualified: UnqualifiedTopK,
+        context: PyDoughCollectionAST,
+        is_child: bool,
+    ) -> PyDoughCollectionAST:
+        """
+        Transforms an `UnqualifiedTopK` into a PyDoughCollectionAST node.
+
+        Args:
+            `unqualified`: the UnqualifiedTopK instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection AST whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        records_to_keep: int = unqualified._parcel[1]
+        # TODO: add ability to infer the "by" clause from a predecessor
+        assert (
+            unqualified._parcel[2] is not None
+        ), "TopK does not currently support an implied 'by' clause."
+        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[2]
+        qualified_parent: PyDoughCollectionAST = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        children: MutableSequence[PyDoughCollectionAST] = []
+        qualified_collations: list[CollationExpression] = []
+        for term in unqualified_terms:
+            qualified_term: PyDoughExpressionAST = self.qualify_expression(
+                term, qualified_parent, children
+            )
+            assert isinstance(qualified_term, CollationExpression)
+            qualified_collations.append(qualified_term)
+        topk: TopK = self.builder.build_top_k(
+            qualified_parent, children, records_to_keep
+        )
+        return topk.with_collation(qualified_collations)
+
+    def qualify_partition(
+        self,
+        unqualified: UnqualifiedPartition,
+        context: PyDoughCollectionAST,
+        is_child: bool,
+    ) -> PyDoughCollectionAST:
+        """
+        Transforms an `UnqualifiedPartition` into a PyDoughCollectionAST node.
+
+        Args:
+            `unqualified`: the UnqualifiedPartition instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection AST whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        unqualified_child: UnqualifiedNode = unqualified._parcel[1]
+        child_name: str = unqualified._parcel[2]
+        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[3]
+        qualified_parent: PyDoughCollectionAST = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        qualified_child: PyDoughCollectionAST = self.qualify_collection(
+            unqualified_child, qualified_parent, True
+        )
+        child_references: list[ChildReferenceExpression] = []
+        children: MutableSequence[PyDoughCollectionAST] = []
+        for term in unqualified_terms:
+            qualified_term: PyDoughExpressionAST = self.qualify_expression(
+                term, qualified_child, children
+            )
+            assert isinstance(
+                qualified_term, Reference
+            ), "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
+            child_ref: ChildReferenceExpression = ChildReferenceExpression(
+                qualified_child, 0, qualified_term.term_name
+            )
+            child_references.append(child_ref)
+        partition: PartitionBy = self.builder.build_partition(
+            qualified_parent, qualified_child, child_name
+        )
+        return partition.with_keys(child_references)
 
     @cache
     def qualify_collection(
@@ -413,130 +678,23 @@ class Qualifier:
                 )
             return lookup
         answer: PyDoughCollectionAST
-        name: str
-        unqualified_parent: UnqualifiedNode
-        qualified_parent: PyDoughCollectionAST
-        children: MutableSequence[PyDoughCollectionAST]
-        unqualified_terms: MutableSequence[tuple[str, UnqualifiedNode]]
-        unqualified_nameless_terms: MutableSequence[UnqualifiedNode]
-        qualified_terms: MutableSequence[tuple[str, PyDoughExpressionAST]]
-        qualified_collations: MutableSequence[CollationExpression]
-        qualified_term: PyDoughExpressionAST
         match unqualified:
             case UnqualifiedRoot():
+                # Special case: when the root has been reached, it is assumed
+                # to refer to the context variable that was passed in.
                 answer = context
             case UnqualifiedAccess():
-                unqualified_parent = unqualified._parcel[0]
-                name = unqualified._parcel[1]
-                if isinstance(unqualified_parent, UnqualifiedBack):
-                    levels: int = unqualified_parent._parcel[0]
-                    answer = self.builder.build_back_reference_collection(
-                        context, name, levels
-                    )
-                else:
-                    qualified_parent = self.qualify_collection(
-                        unqualified_parent, context, is_child
-                    )
-                    if isinstance(unqualified_parent, UnqualifiedRoot) and name == repr(
-                        unqualified_parent
-                    ):
-                        return qualified_parent
-                    else:
-                        answer = self.builder.build_child_access(name, qualified_parent)
-                        if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
-                            answer = ChildOperatorChildAccess(answer)
+                answer = self.qualify_collection_access(unqualified, context, is_child)
             case UnqualifiedCalc():
-                unqualified_parent = unqualified._parcel[0]
-                unqualified_terms = unqualified._parcel[1]
-                qualified_parent = self.qualify_collection(
-                    unqualified_parent, context, is_child
-                )
-                children = []
-                qualified_terms = []
-                for name, term in unqualified_terms:
-                    qualified_term = self.qualify_expression(
-                        term, qualified_parent, children
-                    )
-                    qualified_terms.append((name, qualified_term))
-                calc: Calc = self.builder.build_calc(qualified_parent, children)
-                answer = calc.with_terms(qualified_terms)
+                answer = self.qualify_calc(unqualified, context, is_child)
             case UnqualifiedWhere():
-                unqualified_parent = unqualified._parcel[0]
-                unqualified_cond: UnqualifiedNode = unqualified._parcel[1]
-                qualified_parent = self.qualify_collection(
-                    unqualified_parent, context, is_child
-                )
-                children = []
-                qualified_term = self.qualify_expression(
-                    unqualified_cond, qualified_parent, children
-                )
-                where: Where = self.builder.build_where(qualified_parent, children)
-                answer = where.with_condition(qualified_term)
+                answer = self.qualify_where(unqualified, context, is_child)
             case UnqualifiedOrderBy():
-                unqualified_parent = unqualified._parcel[0]
-                unqualified_nameless_terms = unqualified._parcel[1]
-                qualified_parent = self.qualify_collection(
-                    unqualified_parent, context, is_child
-                )
-                children = []
-                qualified_collations = []
-                for term in unqualified_nameless_terms:
-                    qualified_term = self.qualify_expression(
-                        term, qualified_parent, children
-                    )
-                    assert isinstance(qualified_term, CollationExpression)
-                    qualified_collations.append(qualified_term)
-                orderby: OrderBy = self.builder.build_order(qualified_parent, children)
-                answer = orderby.with_collation(qualified_collations)
+                answer = self.qualify_order_by(unqualified, context, is_child)
             case UnqualifiedTopK():
-                unqualified_parent = unqualified._parcel[0]
-                records_to_keep: int = unqualified._parcel[1]
-                # TODO: add ability to infer the "by" clause from a predecessor
-                assert unqualified._parcel[2] is not None
-                unqualified_nameless_terms = unqualified._parcel[2]
-                qualified_parent = self.qualify_collection(
-                    unqualified_parent, context, is_child
-                )
-                children = []
-                qualified_collations = []
-                for term in unqualified_nameless_terms:
-                    qualified_term = self.qualify_expression(
-                        term, qualified_parent, children
-                    )
-                    assert isinstance(qualified_term, CollationExpression)
-                    qualified_collations.append(qualified_term)
-                topk: TopK = self.builder.build_top_k(
-                    qualified_parent, children, records_to_keep
-                )
-                answer = topk.with_collation(qualified_collations)
+                answer = self.qualify_top_k(unqualified, context, is_child)
             case UnqualifiedPartition():
-                unqualified_parent = unqualified._parcel[0]
-                unqualified_child: UnqualifiedNode = unqualified._parcel[1]
-                child_name: str = unqualified._parcel[2]
-                unqualified_nameless_terms = unqualified._parcel[3]
-                qualified_parent = self.qualify_collection(
-                    unqualified_parent, context, is_child
-                )
-                qualified_child: PyDoughCollectionAST = self.qualify_collection(
-                    unqualified_child, qualified_parent, True
-                )
-                child_references: list[ChildReferenceExpression] = []
-                children = []
-                for term in unqualified_nameless_terms:
-                    qualified_term = self.qualify_expression(
-                        term, qualified_child, children
-                    )
-                    assert isinstance(
-                        qualified_term, Reference
-                    ), "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
-                    child_ref: ChildReferenceExpression = ChildReferenceExpression(
-                        qualified_child, 0, qualified_term.term_name
-                    )
-                    child_references.append(child_ref)
-                partition: PartitionBy = self.builder.build_partition(
-                    qualified_parent, qualified_child, child_name
-                )
-                answer = partition.with_keys(child_references)
+                answer = self.qualify_partition(unqualified, context, is_child)
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__} as a collection: {unqualified!r}"
