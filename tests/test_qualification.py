@@ -295,18 +295,13 @@ def pydough_impl_tpch_q11(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for TPC-H query 11.
     """
-    selected_records = root.PartSupp.WHERE(root.supplier.nation.name == "GERMANY")
+    is_german_supplier = root.supplier.nation.name == "GERMANY"
+    metric = root.supplycost * root.availqty
+    selected_records = root.PartSupp.WHERE(is_german_supplier)(metric=metric)
+    selected_part_records = root.supply_records.WHERE(is_german_supplier)(metric=metric)
     return (
-        root.TPCH(
-            min_market_share=root.SUM(
-                selected_records.supplycost * selected_records.availqty
-            )
-            * 0.0001
-        )
-        .PARTITION(selected_records, name="ps", by=root.part_key)(
-            ps_partkey=root.part_key,
-            val=root.SUM(root.ps.supplycost * root.ps.availqty),
-        )
+        root.TPCH(min_market_share=root.SUM(selected_records.metric) * 0.0001)
+        .Parts(ps_partkey=root.key, val=root.SUM(selected_part_records.metric))
         .WHERE(root.val > root.BACK(1).min_market_share)
         .ORDER_BY(root.val.DESC())
     )
@@ -771,25 +766,25 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
         pytest.param(
             pydough_impl_tpch_q11,
             "┌─── TPCH\n"
-            "├─┬─ Calc[min_market_share=SUM($1.supplycost * $1.availqty) * 0.0001]\n"
-            "│ └─┬─ AccessChild\n"
-            "│   ├─── TableCollection[PartSupp]\n"
-            "│   └─┬─ Where[$1.name == 'GERMANY']\n"
-            "│     └─┬─ AccessChild\n"
-            "│       └─┬─ SubCollection[supplier]\n"
-            "│         └─── SubCollection[nation]\n"
-            "├─┬─ Partition[name='ps', by=part_key]\n"
-            "│ └─┬─ AccessChild\n"
-            "│   ├─── TableCollection[PartSupp]\n"
-            "│   └─┬─ Where[$1.name == 'GERMANY']\n"
-            "│     └─┬─ AccessChild\n"
-            "│       └─┬─ SubCollection[supplier]\n"
-            "│         └─── SubCollection[nation]\n"
-            "├─┬─ Calc[ps_partkey=part_key, val=SUM($1.supplycost * $1.availqty)]\n"
-            "│ └─┬─ AccessChild\n"
-            "│   └─── PartitionChild[ps]\n"
-            "├─── Where[val > BACK(1).min_market_share]\n"
-            "└─── OrderBy[val.DESC(na_pos='last')]",
+            "└─┬─ Calc[min_market_share=SUM($1.metric) * 0.0001]\n"
+            "  ├─┬─ AccessChild\n"
+            "  │ ├─── TableCollection[PartSupp]\n"
+            "  │ ├─┬─ Where[$1.name == 'GERMANY']\n"
+            "  │ │ └─┬─ AccessChild\n"
+            "  │ │   └─┬─ SubCollection[supplier]\n"
+            "  │ │     └─── SubCollection[nation]\n"
+            "  │ └─── Calc[metric=supplycost * availqty]\n"
+            "  ├─── TableCollection[Parts]\n"
+            "  ├─┬─ Calc[ps_partkey=key, val=SUM($1.metric)]\n"
+            "  │ └─┬─ AccessChild\n"
+            "  │   ├─── SubCollection[supply_records]\n"
+            "  │   ├─┬─ Where[$1.name == 'GERMANY']\n"
+            "  │   │ └─┬─ AccessChild\n"
+            "  │   │   └─┬─ SubCollection[supplier]\n"
+            "  │   │     └─── SubCollection[nation]\n"
+            "  │   └─── Calc[metric=supplycost * availqty]\n"
+            "  ├─── Where[val > BACK(1).min_market_share]\n"
+            "  └─── OrderBy[val.DESC(na_pos='last')]",
             id="tpch-q11",
         ),
         pytest.param(

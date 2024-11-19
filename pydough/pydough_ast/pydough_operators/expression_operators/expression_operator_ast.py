@@ -35,6 +35,17 @@ class PyDoughExpressionOperatorAST(PyDoughOperatorAST):
         """
         return self._deducer
 
+    @property
+    @abstractmethod
+    def function_name(self) -> str:
+        """
+        The name of the function that this operator represents. This will
+        be used for other components that are function dependent.
+
+        Returns:
+            str: The name used for the function.
+        """
+
     @abstractmethod
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         """

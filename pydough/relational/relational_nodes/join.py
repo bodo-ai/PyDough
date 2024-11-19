@@ -10,6 +10,7 @@ from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 
 
 class JoinType(Enum):
@@ -85,3 +86,6 @@ class Join(Relational):
 
     def to_string(self) -> str:
         return f"JOIN(cond={self.condition}, type={self.join_type.value}, columns={self.columns})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_join(self)

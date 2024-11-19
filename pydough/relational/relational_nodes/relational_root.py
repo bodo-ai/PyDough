@@ -12,6 +12,7 @@ from pydough.relational.relational_expressions import (
 )
 
 from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -65,3 +66,6 @@ class RelationalRoot(SingleRelational):
 
     def to_string(self) -> str:
         return f"ROOT(columns={self.ordered_columns}, orderings={self.orderings})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_root(self)

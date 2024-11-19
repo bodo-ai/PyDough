@@ -13,6 +13,7 @@ from pydough.relational.relational_expressions import (
 )
 
 from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -64,3 +65,6 @@ class Aggregate(SingleRelational):
 
     def to_string(self) -> str:
         return f"AGGREGATE(keys={self.keys}, aggregations={self.aggregations})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_aggregate(self)

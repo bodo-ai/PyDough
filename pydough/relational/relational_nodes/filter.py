@@ -10,6 +10,7 @@ from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import Relational
+from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -47,3 +48,6 @@ class Filter(SingleRelational):
 
     def to_string(self) -> str:
         return f"FILTER(condition={self.condition}, columns={self.columns})"
+
+    def accept(self, visitor: RelationalVisitor) -> None:
+        visitor.visit_filter(self)

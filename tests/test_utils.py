@@ -40,7 +40,13 @@ from pydough.pydough_ast import (
     TopK,
     Where,
 )
-from pydough.types import PyDoughType
+from pydough.relational.relational_expressions import (
+    ColumnReference,
+    ColumnSortInfo,
+    LiteralExpression,
+)
+from pydough.relational.relational_nodes import Scan
+from pydough.types import PyDoughType, UnknownType
 
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
@@ -756,3 +762,75 @@ class PartitionInfo(ChildOperatorInfo):
             assert isinstance(expr, ChildReferenceExpression)
             keys.append(expr)
         return raw_partition.with_keys(keys)
+
+
+def make_relational_column_reference(
+    name: str, typ: PyDoughType | None = None, input_name: str | None = None
+) -> ColumnReference:
+    """
+    Make a column reference given name and type. This is used
+    for generating various relational nodes.
+
+    Args:
+        name (str): The name of the column in the input.
+        typ (PyDoughType | None): The PyDoughType of the column. Defaults to
+            None.
+        input_name (str | None): The name of the input node. This is
+            used by Join to differentiate between the left and right.
+            Defaults to None.
+
+    Returns:
+        Column: The output column.
+    """
+    pydough_type = typ if typ is not None else UnknownType()
+    return ColumnReference(name, pydough_type, input_name)
+
+
+def make_relational_literal(value: Any, typ: PyDoughType | None = None):
+    """
+    Make a literal given value and type. This is used for
+    generating various relational nodes.
+
+    Args:
+        value (Any): The value of the literal.
+
+    Returns:
+        Literal: The output literal.
+    """
+    pydough_type = typ if typ is not None else UnknownType()
+    return LiteralExpression(value, pydough_type)
+
+
+def build_simple_scan() -> Scan:
+    """
+    Build a simple scan node for reuse in tests.
+
+    Returns:
+        Scan: The Scan node.
+    """
+    return Scan(
+        "table",
+        {
+            "a": make_relational_column_reference("a"),
+            "b": make_relational_column_reference("b"),
+        },
+    )
+
+
+def make_relational_column_ordering(
+    column: ColumnReference, ascending: bool = True, nulls_first: bool = True
+):
+    """
+    Create a column ordering as a function of a Relational column reference
+    with the given ascending and nulls_first parameters.
+
+    Args:
+        name (str): _description_
+        typ (PyDoughType | None, optional): _description_. Defaults to None.
+        ascending (bool, optional): _description_. Defaults to True.
+        nulls_first (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        ColumnSortInfo: The column ordering information.
+    """
+    return ColumnSortInfo(column, ascending, nulls_first)

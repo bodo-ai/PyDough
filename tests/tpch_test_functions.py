@@ -236,17 +236,13 @@ def impl_tpch_q11():
     """
     PyDough implementation of TPCH Q11.
     """
-    selected_records = PartSupp.WHERE(supplier.nation.name == "GERMANY")
+    is_german_supplier = supplier.nation.name == "GERMANY"
+    metric = supplycost * availqty
+    selected_records = PartSupp.WHERE(is_german_supplier)(metric=metric)
+    selected_part_records = supply_records.WHERE(is_german_supplier)(metric=metric)
     return (
-        TPCH(
-            min_market_share=SUM(
-                selected_records.supplycost * selected_records.availqty
-            )
-            * 0.0001
-        )
-        .PARTITION(selected_records, name="ps", by=part_key)(
-            ps_partkey=part_key, val=SUM(ps.supplycost * ps.availqty)
-        )
+        TPCH(min_market_share=SUM(selected_records.metric) * 0.0001)
+        .Parts(ps_partkey=key, val=SUM(selected_part_records.metric))
         .WHERE(val > BACK(1).min_market_share)
         .ORDER_BY(val.DESC())
     )

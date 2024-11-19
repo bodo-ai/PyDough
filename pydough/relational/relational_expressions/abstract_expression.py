@@ -8,6 +8,8 @@ relational tree to build the final SQL query.
 from abc import ABC, abstractmethod
 from typing import Any
 
+from .relational_expression_visitor import RelationalExpressionVisitor
+
 __all__ = ["RelationalExpression"]
 
 from pydough.types import PyDoughType
@@ -53,3 +55,12 @@ class RelationalExpression(ABC):
 
     def __repr__(self) -> str:
         return self.to_string()
+
+    @abstractmethod
+    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+        """
+        Visit this relational expression with the provided visitor.
+
+        Args:
+            visitor (RelationalExpressionVisitor): The visitor to use to visit this node.
+        """
