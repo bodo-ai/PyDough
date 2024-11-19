@@ -221,4 +221,4 @@ class PyDoughCollectionAST(PyDoughAST):
         Returns:
             The tree-like string representation of `self`.
         """
-        return "\n".join(self.to_tree_form(False).to_string_rows())
+        return "\n".join(self.to_tree_form(True).to_string_rows())
