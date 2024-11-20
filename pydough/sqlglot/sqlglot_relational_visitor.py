@@ -25,6 +25,7 @@ from pydough.relational.relational_nodes import (
     Scan,
 )
 
+from .sqlglot_helpers import get_glot_name, set_glot_alias
 from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
@@ -111,7 +112,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             modified_old_columns = []
             # Create a mapping for the old columns so we can replace column
             # references.
-            old_column_map = {c.alias: c for c in old_columns}
+            old_column_map = {get_glot_name(c): c for c in old_columns}
             seen_cols: set[Identifier] = set()
             for new_column in new_columns:
                 if isinstance(new_column, SQLGlotLiteral):
@@ -119,10 +120,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                     # columns.
                     modified_old_columns.append(new_column)
                 else:
-                    expr = old_column_map[new_column.this]
-                    # Note: This wouldn't be safe if we reused columns in
-                    # multiple places, but this is currently okay.
-                    expr.set("alias", new_column.alias)
+                    new_name = get_glot_name(new_column)
+                    expr = set_glot_alias(old_column_map[new_column.this], new_name)
                     modified_old_columns.append(expr)
                     if isinstance(expr, Identifier):
                         seen_cols.add(expr)
@@ -158,7 +157,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         new_exprs, old_exprs = self._try_merge_columns(
             new_columns, orig_select.expressions, deps
         )
-        breakpoint()
         orig_select.set("expressions", old_exprs)
         if new_exprs is None:
             return orig_select

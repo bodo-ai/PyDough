@@ -84,7 +84,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ),
                 ],
             ),
-            "",
+            "SELECT b FROM (SELECT a, b, a + 1 AS c FROM (SELECT a, b FROM table)) ORDER BY c",
             id="project_scan_with_ordering",
         ),
     ],

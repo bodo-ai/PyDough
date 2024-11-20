@@ -18,6 +18,8 @@ from pydough.relational.relational_expressions import (
 from pydough.types import DecimalType, PyDoughType
 from pydough.types.integer_types import IntegerType
 
+from .sqlglot_helpers import set_glot_alias
+
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
 # SQLGlot doesn't have a clean interface for functional calls without
@@ -135,10 +137,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self.reset()
         expr.accept(self)
         result = self.get_sqlglot_result()
-        breakpoint()
         if output_name is not None:
-            result = result.as_(output_name)
-            # result.set("alias", output_name)
+            result = set_glot_alias(result, output_name)
         return result
 
     def get_sqlglot_result(self) -> SQLGlotExpression:
