@@ -5,6 +5,7 @@ SQLGlot query.
 
 from collections.abc import MutableSequence
 
+from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery
 from sqlglot.expressions import Literal as SQLGlotLiteral
@@ -25,7 +26,7 @@ from pydough.relational.relational_nodes import (
     Scan,
 )
 
-from .sqlglot_helpers import get_glot_name, set_glot_alias
+from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
 from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
@@ -63,6 +64,23 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         alias = f"_table_alias_{self._alias_counter}"
         self._alias_counter += 1
         return alias
+
+    @staticmethod
+    def _is_mergeable_column(expr: SQLGlotExpression) -> bool:
+        """
+        Determine if a given SQLGlot expression is a candidate
+        for merging with other columns.
+
+        Args:
+            expr (SQLGlotExpression): The expression to check.
+
+        Returns:
+            bool: Can we potentially merge this column.
+        """
+        if isinstance(expr, SQLGlotAlias):
+            return SQLGlotRelationalVisitor._is_mergeable_column(expr.this)
+        else:
+            return isinstance(expr, (SQLGlotLiteral, Identifier))
 
     @staticmethod
     def _try_merge_columns(
@@ -105,7 +123,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # TODO: Enable merging more complex expressions for example we can
         # merge a + b if a and b are both just simple columns in the input.
         can_merge: bool = all(
-            isinstance(c, (SQLGlotLiteral, Identifier)) for c in new_columns
+            SQLGlotRelationalVisitor._is_mergeable_column(c) for c in new_columns
         )
         if can_merge:
             modified_new_columns = None
@@ -115,12 +133,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             old_column_map = {get_glot_name(c): c for c in old_columns}
             seen_cols: set[Identifier] = set()
             for new_column in new_columns:
+                new_name = get_glot_name(new_column)
+                new_column = unwrap_alias(new_column)
                 if isinstance(new_column, SQLGlotLiteral):
                     # If the new column is a literal, we can just add it to the old
                     # columns.
-                    modified_old_columns.append(new_column)
+                    modified_old_columns.append(set_glot_alias(new_column, new_name))
                 else:
-                    new_name = get_glot_name(new_column)
                     expr = set_glot_alias(old_column_map[new_column.this], new_name)
                     modified_old_columns.append(expr)
                     if isinstance(expr, Identifier):
@@ -244,11 +263,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ]
         cond = self._alias_modifier.modify_expression_names(join.condition)
         cond_expr = self._expr_visitor.relational_to_sqlglot(cond)
-        query: Select = (
-            Select()
-            .select(*column_exprs)
-            .from_(Subquery(this=left_expr))
-            .join(right_expr, on=cond_expr, join_type=join.join_type.value)
+        query: Select = self._build_subquery(left_expr, column_exprs).join(
+            right_expr, on=cond_expr, join_type=join.join_type.value
         )
         self._stack.append(query)
 
@@ -356,7 +372,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(root.orderings)
         query: Select
         if ordering_exprs and "order" in input_expr.args:
-            query = Select().select(*exprs).from_(input_expr)
+            query = self._build_subquery(input_expr, exprs)
         else:
             query = self._merge_selects(
                 exprs, input_expr, find_identifiers_in_list(ordering_exprs)
