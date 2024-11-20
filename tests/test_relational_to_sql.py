@@ -14,10 +14,13 @@ from test_utils import (
 
 from pydough.pydough_ast.pydough_operators import (
     ADD,
+    AND,
     COUNT,
     DIV,
     EQU,
+    GEQ,
     LEQ,
+    LET,
     MUL,
     SUB,
     SUM,
@@ -34,7 +37,7 @@ from pydough.relational.relational_nodes import (
     Scan,
 )
 from pydough.sqlglot import convert_relation_to_sql
-from pydough.types import BooleanType, DateType, Int64Type, UnknownType
+from pydough.types import BooleanType, DateType, DecimalType, Int64Type, UnknownType
 
 
 @pytest.fixture(scope="module")
@@ -751,6 +754,128 @@ def test_convert_relation_to_sql(
             ),
             "SELECT L_RETURNFLAG, L_LINESTATUS, SUM_QTY, SUM_BASE_PRICE, SUM_DISC_PRICE, SUM_CHARGE, CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY, CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE, CAST(SUM_TAX AS REAL) / COUNT_ORDER AS AVG_DISC, COUNT_ORDER FROM (SELECT L_RETURNFLAG, L_LINESTATUS, SUM(L_QUANTITY) AS SUM_QTY, SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE, SUM(L_TAX) AS SUM_TAX, SUM(TEMP_COL0) AS SUM_DISC_PRICE, SUM(TEMP_COL1) AS SUM_CHARGE, COUNT() AS COUNT_ORDER FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_TAX, L_RETURNFLAG, L_LINESTATUS, TEMP_COL0, TEMP_COL0 * (1 + L_EXTENDEDPRICE) AS TEMP_COL1 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS TEMP_COL0 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE <= '1998-12-01'))) GROUP BY L_RETURNFLAG, L_LINESTATUS) ORDER BY L_RETURNFLAG, L_LINESTATUS",
             id="tpch_q1",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("REVENUE", make_relational_column_reference("REVENUE")),
+                ],
+                input=Aggregate(
+                    keys={},
+                    aggregations={
+                        "REVENUE": CallExpression(
+                            SUM,
+                            UnknownType(),
+                            [make_relational_column_reference("TEMP_COL0")],
+                        )
+                    },
+                    input=Project(
+                        columns={
+                            "TEMP_COL0": CallExpression(
+                                MUL,
+                                UnknownType(),
+                                [
+                                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                                    make_relational_column_reference("L_DISCOUNT"),
+                                ],
+                            ),
+                        },
+                        input=Filter(
+                            columns={
+                                "L_EXTENDEDPRICE": make_relational_column_reference(
+                                    "L_EXTENDEDPRICE"
+                                ),
+                                "L_DISCOUNT": make_relational_column_reference(
+                                    "L_DISCOUNT"
+                                ),
+                            },
+                            condition=CallExpression(
+                                AND,
+                                BooleanType(),
+                                [
+                                    CallExpression(
+                                        LET,
+                                        BooleanType(),
+                                        [
+                                            make_relational_column_reference(
+                                                "L_QUANTITY"
+                                            ),
+                                            make_relational_literal(24, Int64Type()),
+                                        ],
+                                    ),
+                                    CallExpression(
+                                        LEQ,
+                                        BooleanType(),
+                                        [
+                                            make_relational_column_reference(
+                                                "L_EXTENDEDPRICE"
+                                            ),
+                                            make_relational_literal(
+                                                "0.07", DecimalType(3, 2)
+                                            ),
+                                        ],
+                                    ),
+                                    CallExpression(
+                                        GEQ,
+                                        BooleanType(),
+                                        [
+                                            make_relational_column_reference(
+                                                "L_EXTENDEDPRICE"
+                                            ),
+                                            make_relational_literal(
+                                                "0.05", DecimalType(3, 2)
+                                            ),
+                                        ],
+                                    ),
+                                    CallExpression(
+                                        LET,
+                                        BooleanType(),
+                                        [
+                                            make_relational_column_reference(
+                                                "L_SHIPDATE"
+                                            ),
+                                            make_relational_literal(
+                                                "1995-01-01", DateType()
+                                            ),
+                                        ],
+                                    ),
+                                    CallExpression(
+                                        GEQ,
+                                        BooleanType(),
+                                        [
+                                            make_relational_column_reference(
+                                                "L_SHIPDATE"
+                                            ),
+                                            make_relational_literal(
+                                                "1994-01-01", DateType()
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                            input=Scan(
+                                table_name="LINEITEM",
+                                columns={
+                                    "L_QUANTITY": make_relational_column_reference(
+                                        "L_QUANTITY"
+                                    ),
+                                    "L_DISCOUNT": make_relational_column_reference(
+                                        "L_DISCOUNT"
+                                    ),
+                                    "L_EXTENDEDPRICE": make_relational_column_reference(
+                                        "L_EXTENDEDPRICE"
+                                    ),
+                                    "L_SHIPDATE": make_relational_column_reference(
+                                        "L_SHIPDATE"
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            "SELECT SUM(TEMP_COL0) AS REVENUE FROM (SELECT L_EXTENDEDPRICE * L_DISCOUNT AS TEMP_COL0 FROM (SELECT L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_QUANTITY, L_DISCOUNT, L_EXTENDEDPRICE, L_SHIPDATE FROM LINEITEM) WHERE (L_QUANTITY < 24) AND (L_EXTENDEDPRICE <= 0.07) AND (L_EXTENDEDPRICE >= 0.05) AND (L_SHIPDATE < '1995-01-01') AND (L_SHIPDATE >= '1994-01-01')))",
+            id="tpch_q6",
         ),
     ],
 )

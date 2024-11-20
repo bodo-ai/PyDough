@@ -8,6 +8,7 @@ __all__ = [
     "BinOp",
     "BinaryOperator",
     "ADD",
+    "AND",
     "BAN",
     "BOR",
     "BXR",
@@ -44,6 +45,7 @@ from .expression_function_operators import ExpressionFunctionOperator
 from .expression_operator_ast import PyDoughExpressionOperatorAST
 from .registered_expression_operators import (
     ADD,
+    AND,
     BAN,
     BOR,
     BXR,

@@ -38,6 +38,7 @@ __all__ = [
 from pydough.pydough_ast.pydough_operators.type_inference import (
     AllowAny,
     ConstantType,
+    RequireMinArgs,
     RequireNumArgs,
     SelectArgumentType,
 )
@@ -99,4 +100,7 @@ YEAR = ExpressionFunctionOperator(
 )
 NOT = ExpressionFunctionOperator(
     "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())
+)
+AND = ExpressionFunctionOperator(
+    "AND", False, RequireMinArgs(2), ConstantType(BooleanType())
 )

@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny"]
+__all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny", "RequireMinArgs"]
 
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
@@ -78,6 +78,35 @@ class RequireNumArgs(TypeVerifier):
                 suffix = "argument" if self._num_args == 1 else "arguments"
                 raise PyDoughASTException(
                     f"Expected {self.num_args} {suffix}, received {len(args)}"
+                )
+            return False
+        return True
+
+
+class RequireMinArgs(TypeVerifier):
+    """
+    Type verifier implementation class that requires a minimum number of arguments
+    """
+
+    def __init__(self, min_args: int):
+        self._min_args: int = min_args
+
+    @property
+    def min_args(self) -> int:
+        """
+        The minimum number of arguments that the verifier expects to be
+        provided.
+        """
+        return self._min_args
+
+    def accepts(
+        self, args: MutableSequence[PyDoughAST], error_on_fail: bool = True
+    ) -> bool:
+        if len(args) < self.min_args:
+            if error_on_fail:
+                suffix = "argument" if self._min_args == 1 else "arguments"
+                raise PyDoughASTException(
+                    f"Expected at least {self.min_args} {suffix}, received {len(args)}"
                 )
             return False
         return True
