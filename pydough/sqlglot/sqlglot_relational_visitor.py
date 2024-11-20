@@ -253,9 +253,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         }
         self.visit_inputs(join)
         right_expr: Select = self._stack.pop()
-        right_expr.set("alias", alias_map["right"])
         left_expr: Select = self._stack.pop()
-        left_expr.set("alias", alias_map["left"])
         self._alias_modifier.set_map(alias_map)
         columns = {
             alias: self._alias_modifier.modify_expression_names(col)
