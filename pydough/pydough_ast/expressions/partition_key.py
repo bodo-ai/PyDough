@@ -5,6 +5,8 @@ TODO: add file-level docstring
 __all__ = ["PartitionKey"]
 
 
+from functools import cache
+
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.types import PyDoughType
@@ -49,6 +51,7 @@ class PartitionKey(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return self.expr.is_aggregation
 
+    @cache
     def is_singular(self, context: PyDoughAST) -> bool:
         assert isinstance(context, PyDoughCollectionAST)
         return (context == self.collection) or self.collection.is_singular(context)

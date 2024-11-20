@@ -5,6 +5,8 @@ TODO: add file-level docstring
 __all__ = ["ChildReferenceCollection"]
 
 
+from functools import cache
+
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.expressions.collation_expression import CollationExpression
 
@@ -63,6 +65,7 @@ class ChildReferenceCollection(ChildAccess):
     def ordering(self) -> list[CollationExpression] | None:
         return self.collection.ordering
 
+    @cache
     def is_singular(self, context: PyDoughCollectionAST) -> bool:
         return self.collection.is_singular(context)
 

@@ -5,6 +5,8 @@ TODO: add file-level docstring
 __all__ = ["SubCollection"]
 
 
+from functools import cache
+
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 
 from .collection_access import CollectionAccess
@@ -36,6 +38,7 @@ class SubCollection(CollectionAccess):
         """
         return self._subcollection_property
 
+    @cache
     def is_singular(self, context: PyDoughCollectionAST) -> bool:
         if self.subcollection_property.is_plural:
             return False

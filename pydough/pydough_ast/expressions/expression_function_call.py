@@ -5,6 +5,7 @@ TODO: add file-level docstring
 __all__ = ["ExpressionFunctionCall"]
 
 from collections.abc import MutableSequence
+from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
@@ -53,6 +54,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return self.operator.is_aggregation
 
+    @cache
     def is_singular(self, context: PyDoughAST) -> bool:
         assert isinstance(context, PyDoughCollectionAST)
         if self.is_aggregation:

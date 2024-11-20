@@ -7,6 +7,7 @@ __all__ = ["PyDoughCollectionAST"]
 
 from abc import abstractmethod
 from collections.abc import Iterable
+from functools import cached_property
 from typing import Union
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
@@ -75,11 +76,12 @@ class PyDoughCollectionAST(PyDoughAST):
             for each record of the context, and False otherwise.
         """
 
-    @property
+    @cached_property
     def starting_predecessor(self) -> "PyDoughCollectionAST":
         """
         Returns the predecessor at the start of the current chain of preceding
-        collections, or `self` if this is the start of that chain.
+        collections, or `self` if this is the start of that chain. The process
+        also unwraps any ChildOperatorChildAccess terms.
         """
         from pydough.pydough_ast.collections import ChildOperatorChildAccess
 

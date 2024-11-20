@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["Reference"]
 
+
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.errors import PyDoughASTException

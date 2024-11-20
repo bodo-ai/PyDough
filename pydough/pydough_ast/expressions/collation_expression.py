@@ -5,6 +5,8 @@ TODO: add file-level docstring
 __all__ = ["CollationExpression"]
 
 
+from functools import cache
+
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.types import PyDoughType
 
@@ -51,6 +53,7 @@ class CollationExpression(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return self.expr.is_aggregation
 
+    @cache
     def is_singular(self, context: PyDoughAST) -> bool:
         return self.expr.is_singular(context)
 
