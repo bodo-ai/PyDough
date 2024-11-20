@@ -51,8 +51,6 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
     if old_name == alias:
         return expr
     else:
-        if isinstance(expr, SQLGlotAlias):
-            breakpoint()
         return expr.as_(alias)
 
 
