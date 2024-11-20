@@ -798,9 +798,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                     "_table_alias_1",
                 ),
-                on=EQ(
-                    this=Ident(this="_table_alias_0.a"),
-                    expression=Ident(this="_table_alias_1.a"),
+                on=mkglot_func(
+                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
                 ),
                 join_type="inner",
             ),
@@ -883,9 +882,12 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                     ),
                                     "_table_alias_3",
                                 ),
-                                on=EQ(
-                                    this=Ident(this="_table_alias_2.a"),
-                                    expression=Ident(this="_table_alias_3.a"),
+                                on=mkglot_func(
+                                    EQ,
+                                    [
+                                        Ident(this="_table_alias_2.a"),
+                                        Ident(this="_table_alias_3.a"),
+                                    ],
                                 ),
                                 join_type="inner",
                             ),
@@ -909,9 +911,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                     "_table_alias_1",
                 ),
-                on=EQ(
-                    this=Ident(this="_table_alias_0.a"),
-                    expression=Ident(this="_table_alias_1.a"),
+                on=mkglot_func(
+                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
                 ),
                 join_type="left",
             ),
@@ -989,9 +990,12 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                 ),
                                 "_table_alias_1",
                             ),
-                            on=EQ(
-                                this=Ident(this="_table_alias_0.a"),
-                                expression=Ident(this="_table_alias_1.a"),
+                            on=mkglot_func(
+                                EQ,
+                                [
+                                    Ident(this="_table_alias_0.a"),
+                                    Ident(this="_table_alias_1.a"),
+                                ],
                             ),
                             join_type="inner",
                         )
@@ -1000,12 +1004,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         Ident(this="a"),
                     ],
                 }
-            ).where(
-                GTE(
-                    this=Ident(this="a"),
-                    expression=Literal(value=5),
-                )
-            ),
+            ).where(mkglot_func(GTE, [Ident(this="a"), Literal(value=5)])),
             id="filter_after_join",
         ),
     ],
