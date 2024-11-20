@@ -307,6 +307,42 @@ def sqlite_dialect() -> SQLiteDialect:
             "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 WHERE NOT EXISTS(SELECT 1 FROM (SELECT a, b FROM table) AS _table_alias_1 WHERE _table_alias_0.a = _table_alias_1.a)",
             id="simple_anti_join",
         ),
+        pytest.param(
+            Join(
+                left=Join(
+                    left=build_simple_scan(),
+                    right=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a", input_name="left"),
+                            make_relational_column_reference("a", input_name="right"),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
+                    columns={
+                        "a": make_relational_column_reference("a", input_name="left"),
+                        "b": make_relational_column_reference("b", input_name="right"),
+                    },
+                ),
+                right=build_simple_scan(),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="left"),
+                        make_relational_column_reference("a", input_name="right"),
+                    ],
+                ),
+                join_type=JoinType.LEFT,
+                columns={
+                    "d": make_relational_column_reference("b", input_name="left"),
+                },
+            ),
+            "SELECT _table_alias_0.b AS d FROM (SELECT _table_alias_2.a AS a, _table_alias_3.b AS b FROM (SELECT a, b FROM table) AS _table_alias_2 INNER JOIN (SELECT a, b FROM table) AS _table_alias_3 ON _table_alias_2.a = _table_alias_3.a) AS _table_alias_0 LEFT JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a",
+            id="nested_join",
+        ),
     ],
 )
 def test_convert_relation_to_sql(
