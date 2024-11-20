@@ -959,11 +959,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="_table_alias_0.b", alias="d")],
+                expressions=[set_alias(Ident(this="_table_alias_0.b"), "d")],
                 _from=mkglot(
                     expressions=[
-                        Ident(this="_table_alias_2.a", alias="a"),
-                        Ident(this="_table_alias_3.b", alias="b"),
+                        set_alias(Ident(this="_table_alias_2.a"), "a"),
+                        set_alias(Ident(this="_table_alias_3.b"), "b"),
                     ],
                     _from=mkglot(
                         expressions=[Ident(this="a"), Ident(this="b")],
@@ -1041,8 +1041,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 where=mkglot_func(GTE, [Ident(this="a"), mk_literal(5, False)]),
                 _from=mkglot(
                     expressions=[
-                        Ident(this="_table_alias_0.a", alias="a"),
-                        Ident(this="_table_alias_1.b", alias="b"),
+                        set_alias(Ident(this="_table_alias_0.a"), "a"),
+                        set_alias(Ident(this="_table_alias_1.b"), "b"),
                     ],
                     _from=mkglot(
                         expressions=[Ident(this="a"), Ident(this="b")],
@@ -1327,7 +1327,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="_table_alias_1.b", alias="b")],
+                expressions=[set_alias(Ident(this="_table_alias_1.b"), "b")],
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
