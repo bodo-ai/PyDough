@@ -4,6 +4,8 @@ SQLGlot expressions. This is just testing the conversion and is not
 testing the actual runtime or converting entire complex trees.
 """
 
+from dataclasses import dataclass
+
 import pytest
 from sqlglot.expressions import (
     EQ,
@@ -12,7 +14,6 @@ from sqlglot.expressions import (
     Binary,
     Expression,
     From,
-    Group,
     Length,
     Literal,
     Lower,
@@ -50,6 +51,13 @@ from pydough.types import BooleanType, Int64Type, StringType
 @pytest.fixture(scope="module")
 def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
     return SQLGlotRelationalVisitor()
+
+
+@dataclass
+class GlotJoin:
+    on: Expression
+    right_query: Expression
+    join_type: str
 
 
 def set_alias(expr: Expression, alias: str) -> Expression:
@@ -103,6 +111,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
         query = query.order_by(*kwargs.pop("order_by"))
     if "limit" in kwargs:
         query = query.limit(kwargs.pop("limit"))
+    if "join" in kwargs:
+        join = kwargs.pop("join")
+        query = query.join(join.right_query, on=join.on, join_type=join.join_type)
+    if "alias" in kwargs:
+        query = set_alias(query, kwargs.pop("alias"))
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
     return query
 
@@ -767,44 +780,31 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     "b": make_relational_column_reference("b", input_name="right"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=set_alias(
-                            Select(
-                                **{
-                                    "expressions": [
-                                        Ident(this="a"),
-                                        Ident(this="b"),
-                                    ],
-                                    "from": From(this=Table(this=Ident(this="table"))),
-                                }
-                            ),
-                            "_table_alias_0",
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="_table_alias_0.a", alias="a"),
-                        Ident(this="_table_alias_1.b", alias="b"),
-                    ],
-                }
-            ).join(
-                set_alias(
-                    Select(
-                        **{
-                            "expressions": [
-                                Ident(this="a"),
-                                Ident(this="b"),
-                            ],
-                            "from": From(this=Table(this=Ident(this="table"))),
-                        }
-                    ),
-                    "_table_alias_1",
+            mkglot(
+                expressions=[
+                    set_alias(Ident(this="_table_alias_0.a"), "a"),
+                    set_alias(Ident(this="_table_alias_1.b"), "b"),
+                ],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    alias="_table_alias_0",
                 ),
-                on=mkglot_func(
-                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="inner",
                 ),
-                join_type="inner",
             ),
             id="simple_join",
         ),
@@ -841,83 +841,50 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     "d": make_relational_column_reference("b", input_name="left"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=set_alias(
-                            Select(
-                                **{
-                                    "from": From(
-                                        this=set_alias(
-                                            Select(
-                                                **{
-                                                    "expressions": [
-                                                        Ident(this="a"),
-                                                        Ident(this="b"),
-                                                    ],
-                                                    "from": From(
-                                                        this=Table(
-                                                            this=Ident(this="table")
-                                                        )
-                                                    ),
-                                                }
-                                            ),
-                                            "_table_alias_2",
-                                        )
-                                    ),
-                                    "expressions": [
-                                        Ident(this="_table_alias_2.a", alias="a"),
-                                        Ident(this="_table_alias_3.b", alias="b"),
-                                    ],
-                                }
-                            ).join(
-                                set_alias(
-                                    Select(
-                                        **{
-                                            "expressions": [
-                                                Ident(this="a"),
-                                                Ident(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(this=Ident(this="table"))
-                                            ),
-                                        }
-                                    ),
-                                    "_table_alias_3",
-                                ),
-                                on=mkglot_func(
-                                    EQ,
-                                    [
-                                        Ident(this="_table_alias_2.a"),
-                                        Ident(this="_table_alias_3.a"),
-                                    ],
-                                ),
-                                join_type="inner",
-                            ),
-                            "_table_alias_0",
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="_table_alias_0.b", alias="d"),
+            mkglot(
+                expressions=[Ident(this="_table_alias_0.b", alias="d")],
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="_table_alias_2.a", alias="a"),
+                        Ident(this="_table_alias_3.b", alias="b"),
                     ],
-                },
-            ).join(
-                set_alias(
-                    Select(
-                        **{
-                            "expressions": [
-                                Ident(this="a"),
-                                Ident(this="b"),
-                            ],
-                            "from": From(this=Table(this=Ident(this="table"))),
-                        }
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_2",
                     ),
-                    "_table_alias_1",
+                    alias="_table_alias_0",
+                    join=GlotJoin(
+                        right_query=mkglot(
+                            expressions=[Ident(this="a"), Ident(this="b")],
+                            _from=Table(this=Ident(this="table")),
+                            alias="_table_alias_3",
+                        ),
+                        on=mkglot_func(
+                            EQ,
+                            [
+                                Ident(this="_table_alias_2.a"),
+                                Ident(this="_table_alias_3.a"),
+                            ],
+                        ),
+                        join_type="inner",
+                    ),
                 ),
-                on=mkglot_func(
-                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="left",
                 ),
-                join_type="left",
             ),
             id="nested_join",
         ),
@@ -952,62 +919,36 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     "a": make_relational_column_reference("a"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "from": From(
-                                    this=set_alias(
-                                        Select(
-                                            **{
-                                                "expressions": [
-                                                    Ident(this="a"),
-                                                    Ident(this="b"),
-                                                ],
-                                                "from": From(
-                                                    this=Table(this=Ident(this="table"))
-                                                ),
-                                            }
-                                        ),
-                                        "_table_alias_0",
-                                    )
-                                ),
-                                "expressions": [
-                                    Ident(this="_table_alias_0.a", alias="a"),
-                                    Ident(this="_table_alias_1.b", alias="b"),
-                                ],
-                            }
-                        ).join(
-                            set_alias(
-                                Select(
-                                    **{
-                                        "expressions": [
-                                            Ident(this="a"),
-                                            Ident(this="b"),
-                                        ],
-                                        "from": From(
-                                            this=Table(this=Ident(this="table"))
-                                        ),
-                                    }
-                                ),
-                                "_table_alias_1",
-                            ),
-                            on=mkglot_func(
-                                EQ,
-                                [
-                                    Ident(this="_table_alias_0.a"),
-                                    Ident(this="_table_alias_1.a"),
-                                ],
-                            ),
-                            join_type="inner",
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="a"),
+            mkglot(
+                expressions=[Ident(this="a")],
+                where=mkglot_func(GTE, [Ident(this="a"), Literal(value=5)]),
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="_table_alias_0.a", alias="a"),
+                        Ident(this="_table_alias_1.b", alias="b"),
                     ],
-                }
-            ).where(mkglot_func(GTE, [Ident(this="a"), Literal(value=5)])),
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_0",
+                    ),
+                    join=GlotJoin(
+                        right_query=mkglot(
+                            expressions=[Ident(this="a"), Ident(this="b")],
+                            _from=Table(this=Ident(this="table")),
+                            alias="_table_alias_1",
+                        ),
+                        on=mkglot_func(
+                            EQ,
+                            [
+                                Ident(this="_table_alias_0.a"),
+                                Ident(this="_table_alias_1.a"),
+                            ],
+                        ),
+                        join_type="inner",
+                    ),
+                ),
+            ),
             id="filter_after_join",
         ),
         pytest.param(
@@ -1018,14 +959,9 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("a", make_relational_column_reference("a")),
                 ],
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Ident(this="b"),
-                        Ident(this="a"),
-                    ],
-                    "from": From(this=Table(this=Ident(this="table"))),
-                }
+            mkglot(
+                expressions=[Ident(this="b"), Ident(this="a")],
+                _from=Table(this=Ident(this="table")),
             ),
             id="simple_scan_root",
         ),
@@ -1044,18 +980,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Ident(this="a"),
-                        Ident(this="b"),
-                    ],
-                    "from": From(this=Table(this=Ident(this="table"))),
-                }
-            ).order_by(
-                *[
-                    Ident(this="a").asc(nulls_first=True),
-                ]
+            mkglot(
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
+                order_by=[Ident(this="a").asc(nulls_first=True)],
             ),
             id="simple_ordering_scan_root",
         ),
@@ -1066,13 +994,9 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("a", make_relational_column_reference("a")),
                 ],
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Ident(this="a"),
-                    ],
-                    "from": From(this=Table(this=Ident(this="table"))),
-                }
+            mkglot(
+                expressions=[Ident(this="a")],
+                _from=Table(this=Ident(this="table")),
             ),
             id="pruning_root",
         ),
@@ -1090,27 +1014,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Ident(this="a"),
-                                    Ident(this="b"),
-                                ],
-                                "from": From(this=Table(this=Ident(this="table"))),
-                            }
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="b"),
-                    ],
-                },
-            ).order_by(
-                *[
-                    Ident(this="a").asc(nulls_first=True),
-                ]
+            mkglot(
+                expressions=[Ident(this="b")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                ),
             ),
             id="pruning_root_ordering_dependent",
         ),
@@ -1142,45 +1052,23 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Ident(this="a"),
-                                                Ident(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(this=Ident(this="table"))
-                                            ),
-                                        }
-                                    )
-                                ),
-                                "expressions": [
-                                    Ident(this="a"),
-                                    Ident(this="b"),
-                                    set_alias(
-                                        mkglot_func(
-                                            Add, [Ident(this="a"), Literal(value=1)]
-                                        ),
-                                        "c",
-                                    ),
-                                ],
-                            },
-                        )
-                    ),
-                    "expressions": [
+            mkglot(
+                expressions=[Ident(this="b")],
+                order_by=[Ident(this="c").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="a"),
                         Ident(this="b"),
+                        set_alias(
+                            mkglot_func(Add, [Ident(this="a"), Literal(value=1)]),
+                            "c",
+                        ),
                     ],
-                }
-            ).order_by(
-                *[
-                    Ident(this="c").asc(nulls_first=True),
-                ]
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                    ),
+                ),
             ),
             id="root_after_project",
         ),
@@ -1205,16 +1093,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("b", make_relational_column_reference("b")),
                 ],
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Ident(this="b"),
-                    ],
-                    "from": From(this=Table(this=Ident(this="table"))),
-                    "where": Where(
-                        this=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)])
-                    ),
-                }
+            mkglot(
+                expressions=[Ident(this="b")],
+                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                _from=Table(this=Ident(this="table")),
             ),
             id="root_after_filter",
         ),
@@ -1247,34 +1129,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Ident(this="a"),
-                                    Ident(this="b"),
-                                ],
-                                "from": From(this=Table(this=Ident(this="table"))),
-                            }
-                        )
-                        .order_by(
-                            *[
-                                Ident(this="b").asc(nulls_first=True),
-                            ],
-                        )
-                        .limit(Literal(value=10))
-                    ),
-                    "expressions": [
-                        Ident(this="b"),
-                        Ident(this="a"),
-                    ],
-                }
-            ).order_by(
-                *[
-                    Ident(this="a").asc(nulls_first=True),
-                ]
+            mkglot(
+                expressions=[Ident(this="b"), Ident(this="a")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    order_by=[Ident(this="b").asc(nulls_first=True)],
+                    limit=Literal(value=10),
+                ),
             ),
             id="root_after_limit",
         ),
@@ -1302,43 +1165,23 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Ident(this="a"),
-                                                Ident(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(this=Ident(this="table"))
-                                            ),
-                                        }
-                                    )
-                                ),
-                                "expressions": [
-                                    Ident(this="b"),
-                                    set_alias(
-                                        mkglot_func(Sum, [Ident(this="a")]),
-                                        "a",
-                                    ),
-                                ],
-                                "group": Group(expressions=[Ident(this="b")]),
-                            }
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="a"),
+            mkglot(
+                expressions=[Ident(this="a")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="b"),
+                        set_alias(
+                            mkglot_func(Sum, [Ident(this="a")]),
+                            "a",
+                        ),
                     ],
-                },
-            ).order_by(
-                *[
-                    Ident(this="a").asc(nulls_first=True),
-                ]
+                    group_by=[Ident(this="b")],
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                    ),
+                ),
             ),
             # Note: Can be heavily optimized by simplifying the generated SQL.
             id="root_after_aggregate",
@@ -1366,43 +1209,28 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("b", make_relational_column_reference("b")),
                 ],
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=set_alias(
-                            Select(
-                                **{
-                                    "expressions": [
-                                        Ident(this="a"),
-                                        Ident(this="b"),
-                                    ],
-                                    "from": From(this=Table(this=Ident(this="table"))),
-                                }
-                            ),
-                            "_table_alias_0",
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="_table_alias_1.b", alias="b"),
-                    ],
-                }
-            ).join(
-                set_alias(
-                    Select(
-                        **{
-                            "expressions": [
-                                Ident(this="a"),
-                                Ident(this="b"),
-                            ],
-                            "from": From(this=Table(this=Ident(this="table"))),
-                        }
-                    ),
-                    "_table_alias_1",
+            mkglot(
+                expressions=[Ident(this="_table_alias_1.b", alias="b")],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    alias="_table_alias_0",
                 ),
-                on=mkglot_func(
-                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="inner",
                 ),
-                join_type="inner",
             ),
             id="root_after_join",
         ),
