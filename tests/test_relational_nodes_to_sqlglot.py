@@ -810,6 +810,94 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
         ),
         pytest.param(
             Join(
+                left=build_simple_scan(),
+                right=build_simple_scan(),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="left"),
+                        make_relational_column_reference("a", input_name="right"),
+                    ],
+                ),
+                join_type=JoinType.SEMI,
+                columns={
+                    "a": make_relational_column_reference("a", input_name="left"),
+                },
+            ),
+            mkglot(
+                expressions=[
+                    set_alias(Ident(this="_table_alias_0.a"), "a"),
+                ],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    alias="_table_alias_0",
+                ),
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="semi",
+                ),
+            ),
+            id="simple_semi_join",
+        ),
+        pytest.param(
+            Join(
+                left=build_simple_scan(),
+                right=build_simple_scan(),
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="left"),
+                        make_relational_column_reference("a", input_name="right"),
+                    ],
+                ),
+                join_type=JoinType.ANTI,
+                columns={
+                    "b": make_relational_column_reference("b", input_name="right"),
+                },
+            ),
+            mkglot(
+                expressions=[
+                    set_alias(Ident(this="_table_alias_1.b"), "b"),
+                ],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    alias="_table_alias_0",
+                ),
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="anti",
+                ),
+            ),
+            id="simple_anti_join",
+        ),
+        pytest.param(
+            Join(
                 left=Join(
                     left=build_simple_scan(),
                     right=build_simple_scan(),
