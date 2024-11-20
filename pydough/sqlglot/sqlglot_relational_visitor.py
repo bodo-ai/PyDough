@@ -6,7 +6,7 @@ SQLGlot query.
 from collections.abc import MutableSequence
 
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier, Select
+from sqlglot.expressions import Identifier, Select, Subquery
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
 from pydough.relational.relational_expressions import (
@@ -158,6 +158,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         new_exprs, old_exprs = self._try_merge_columns(
             new_columns, orig_select.expressions, deps
         )
+        breakpoint()
         orig_select.set("expressions", old_exprs)
         if new_exprs is None:
             return orig_select
@@ -189,22 +190,21 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     @staticmethod
     def _build_subquery(
-        input_expr: SQLGlotExpression | str, column_exprs: list[SQLGlotExpression]
+        input_expr: Select, column_exprs: list[SQLGlotExpression]
     ) -> Select:
         """
         Generate a subquery select statement with the given
         input from and the given columns.
 
         Args:
-            input_expr (SQLGlotExpression | str): The from input, which
-                is either an expression (e.g. another select) or a string
-                representing a table name.
+            input_expr (Select): The from input, which should be
+                another select statement.
             column_exprs (list[SQLGlotExpression]): The columns to select.
 
         Returns:
             Select: A select statement representing the subquery.
         """
-        return Select().select(*column_exprs).from_(input_expr)
+        return Select().select(*column_exprs).from_(Subquery(this=input_expr))
 
     def reset(self) -> None:
         """
@@ -222,7 +222,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in scan.columns.items()
         ]
-        query: Select = self._build_subquery(scan.table_name, exprs)
+        query: Select = Select().select(*exprs).from_(scan.table_name)
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
