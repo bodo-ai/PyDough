@@ -5,6 +5,7 @@ testing the actual runtime or converting entire complex trees.
 """
 
 from dataclasses import dataclass
+from typing import Any
 
 import pytest
 from sqlglot.expressions import (
@@ -44,7 +45,7 @@ from pydough.relational.relational_nodes import (
     RelationalRoot,
     Scan,
 )
-from pydough.sqlglot import SQLGlotRelationalVisitor, find_identifiers
+from pydough.sqlglot import SQLGlotRelationalVisitor, find_identifiers, set_glot_alias
 from pydough.types import BooleanType, Int64Type, StringType
 
 
@@ -75,8 +76,27 @@ def set_alias(expr: Expression, alias: str) -> Expression:
     Returns:
         Expression: The updated expression.
     """
-    expr.set("alias", alias)
+    if isinstance(expr, Select):
+        # TODO: Replace with set_glot_alias when we confirm
+        # the correct behavior for Select objects.
+        expr.set("alias", alias)
+    else:
+        expr = set_glot_alias(expr, alias)
     return expr
+
+
+def mk_literal(value: Any, is_string: bool = False) -> Literal:
+    """
+    Make a literal expression with the given value.
+
+    Args:
+        value (int): The value to use for the literal.
+        is_string (bool): Whether the literal should be a string.
+
+    Returns:
+        Literal: The output literal expression.
+    """
+    return Literal(this=str(value), is_string=is_string)
 
 
 def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select:
@@ -198,14 +218,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 columns={
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
-                    "c": make_relational_literal(1),
+                    "c": make_relational_literal(1, Int64Type()),
                 },
             ),
             mkglot(
                 expressions=[
                     Ident(this="a"),
                     Ident(this="b"),
-                    Literal(value=1, alias="c"),
+                    set_alias(mk_literal(1, False), "c"),
                 ],
                 _from=Table(this=Ident(this="table")),
             ),
@@ -259,13 +279,16 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 condition=CallExpression(
                     EQU,
                     BooleanType(),
-                    [make_relational_column_reference("a"), make_relational_literal(1)],
+                    [
+                        make_relational_column_reference("a"),
+                        make_relational_literal(1, Int64Type()),
+                    ],
                 ),
             ),
             mkglot(
                 expressions=[Ident(this="a"), Ident(this="b")],
                 _from=Table(this=Ident(this="table")),
-                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
             ),
             id="simple_filter",
         ),
@@ -282,7 +305,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1),
+                            make_relational_literal(1, Int64Type()),
                         ],
                     ),
                 ),
@@ -292,16 +315,19 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 condition=CallExpression(
                     GEQ,
                     BooleanType(),
-                    [make_relational_column_reference("b"), make_relational_literal(5)],
+                    [
+                        make_relational_column_reference("b"),
+                        make_relational_literal(5, Int64Type()),
+                    ],
                 ),
             ),
             mkglot(
                 expressions=[Ident(this="a")],
-                where=mkglot_func(GTE, [Ident(this="b"), Literal(value=5)]),
+                where=mkglot_func(GTE, [Ident(this="b"), mk_literal(5, False)]),
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
-                    where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                    where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
                 ),
             ),
             id="nested_filters",
@@ -328,7 +354,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("c"),
-                            make_relational_literal(1),
+                            make_relational_literal(1, Int64Type()),
                         ],
                     ),
                     columns={
@@ -342,11 +368,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="c"), Literal(value=1)]),
+                where=mkglot_func(EQ, [Ident(this="c"), mk_literal(1, False)]),
                 _from=mkglot(
                     expressions=[
                         set_alias(
-                            mkglot_func(Add, [Ident(this="a"), Literal(value=1)]),
+                            mkglot_func(Add, [Ident(this="a"), mk_literal(1, False)]),
                             "c",
                         ),
                         Ident(this="b"),
@@ -371,7 +397,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[Ident(this="a"), Ident(this="b")],
                 _from=Table(this=Ident(this="table")),
-                limit=Literal(value=1),
+                limit=mk_literal(1, False),
             ),
             id="simple_limit",
         ),
@@ -403,7 +429,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     Ident(this="a").asc(nulls_first=True),
                     Ident(this="b").desc(nulls_first=False),
                 ],
-                limit=Literal(value=1),
+                limit=mk_literal(1, False),
             ),
             id="simple_limit_with_ordering",
         ),
@@ -431,12 +457,12 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="a")],
-                limit=Literal(value=2),
+                limit=mk_literal(2, False),
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
                     order_by=[Ident(this="b").asc(nulls_first=False)],
-                    limit=Literal(value=5),
+                    limit=mk_literal(5, False),
                 ),
             ),
             id="nested_limits",
@@ -450,7 +476,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1),
+                            make_relational_literal(1, Int64Type()),
                         ],
                     ),
                     columns={
@@ -464,8 +490,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
-                limit=Literal(value=2),
+                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                limit=mk_literal(2, False),
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
@@ -488,7 +514,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(1),
+                        make_relational_literal(1, Int64Type()),
                     ],
                 ),
                 columns={
@@ -497,11 +523,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
-                    limit=Literal(value=2),
+                    limit=mk_literal(2, False),
                 ),
             ),
             id="limit_before_filter",
@@ -517,13 +543,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ),
                 columns={
                     "b": make_relational_column_reference("b"),
-                    "c": make_relational_literal(1),
+                    "c": make_relational_literal(1, Int64Type()),
                 },
             ),
             mkglot(
-                expressions=[Ident(this="b"), set_alias(Literal(value=1), "c")],
+                expressions=[Ident(this="b"), set_alias(mk_literal(1, False), "c")],
                 _from=Table(this=Ident(this="table")),
-                limit=Literal(value=2),
+                limit=mk_literal(2, False),
             ),
             id="project_limit_combine",
         ),
@@ -603,7 +629,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1),
+                            make_relational_literal(1, Int64Type()),
                         ],
                     ),
                     columns={
@@ -617,7 +643,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
                 group_by=[Ident(this="b")],
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
@@ -644,7 +670,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(20),
+                        make_relational_literal(20, Int64Type()),
                     ],
                 ),
                 columns={
@@ -653,7 +679,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=mkglot_func(GTE, [Ident(this="a"), Literal(value=20)]),
+                where=mkglot_func(GTE, [Ident(this="a"), mk_literal(20, False)]),
                 _from=mkglot(
                     expressions=[
                         Ident(this="b"),
@@ -692,7 +718,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
-                    limit=Literal(value=10),
+                    limit=mk_literal(10, False),
                 ),
             ),
             id="limit_before_aggregate",
@@ -723,7 +749,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=Table(this=Ident(this="table")),
                 group_by=[Ident(this="b")],
                 order_by=[Ident(this="b").desc(nulls_first=True)],
-                limit=Literal(value=10),
+                limit=mk_literal(10, False),
             ),
             id="limit_after_aggregate",
         ),
@@ -750,7 +776,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_alias(
-                        mkglot_func(Sub, [Ident(this="b"), Literal(value=1)]),
+                        mkglot_func(Sub, [Ident(this="b"), mk_literal(1, False)]),
                         "b",
                     ),
                 ],
@@ -1000,7 +1026,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(5),
+                        make_relational_literal(5, Int64Type()),
                     ],
                 ),
                 columns={
@@ -1009,7 +1035,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="a")],
-                where=mkglot_func(GTE, [Ident(this="a"), Literal(value=5)]),
+                where=mkglot_func(GTE, [Ident(this="a"), mk_literal(5, False)]),
                 _from=mkglot(
                     expressions=[
                         Ident(this="_table_alias_0.a", alias="a"),
@@ -1148,7 +1174,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         Ident(this="a"),
                         Ident(this="b"),
                         set_alias(
-                            mkglot_func(Add, [Ident(this="a"), Literal(value=1)]),
+                            mkglot_func(Add, [Ident(this="a"), mk_literal(1, False)]),
                             "c",
                         ),
                     ],
@@ -1169,7 +1195,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1),
+                            make_relational_literal(1, Int64Type()),
                         ],
                     ),
                     columns={
@@ -1183,7 +1209,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
                 _from=Table(this=Ident(this="table")),
             ),
             id="root_after_filter",
@@ -1224,7 +1250,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
                     order_by=[Ident(this="b").asc(nulls_first=True)],
-                    limit=Literal(value=10),
+                    limit=mk_literal(10, False),
                 ),
             ),
             id="root_after_limit",
@@ -1344,7 +1370,7 @@ def test_node_to_sqlglot(
     "expr, expected",
     [
         pytest.param(Ident(this="a"), {Ident(this="a")}, id="Ident"),
-        pytest.param(Literal(this=1), set(), id="literal"),
+        pytest.param(mk_literal(1, False), set(), id="literal"),
         pytest.param(
             mkglot_func(Add, [Ident(this="a"), Ident(this="b")]),
             {Ident(this="a"), Ident(this="b")},
@@ -1406,7 +1432,7 @@ def test_expression_identifiers(expr: Expression, expected: set[Ident]):
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1),
+                            make_relational_literal(1, Int64Type()),
                         ],
                     ),
                     columns={
@@ -1425,7 +1451,7 @@ def test_expression_identifiers(expr: Expression, expected: set[Ident]):
                     ],
                     "from": From(this=Table(this=Ident(this="table"))),
                     "where": Where(
-                        this=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)])
+                        this=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)])
                     ),
                 }
             ),
