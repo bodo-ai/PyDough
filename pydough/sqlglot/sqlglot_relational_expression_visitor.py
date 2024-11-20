@@ -5,7 +5,7 @@ the relation Tree to a single SQLGlot query component.
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier
+from sqlglot.expressions import Identifier, Paren
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
 from pydough.relational.relational_expressions import (
@@ -78,9 +78,20 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             assert (
                 len(input_exprs) == 2
             ), "Expected exactly two inputs for binary function"
-            output_expr = binary_func_map[key](
-                this=input_exprs[0], expression=input_exprs[1]
-            )
+            # Note: SQLGlot explicit inserts parentheses for binary operations
+            # during parsing.
+            left: SQLGlotExpression
+            right: SQLGlotExpression
+            if isinstance(input_exprs[0], (Identifier, SQLGlotLiteral)):
+                left = input_exprs[0]
+            else:
+                left = Paren(this=input_exprs[0])
+            if isinstance(input_exprs[1], (Identifier, SQLGlotLiteral)):
+                right = input_exprs[1]
+            else:
+                right = Paren(this=input_exprs[1])
+
+            output_expr = binary_func_map[key](this=left, expression=right)
         else:
             raise ValueError(f"Unsupported function {key}")
         self._stack.append(output_expr)
