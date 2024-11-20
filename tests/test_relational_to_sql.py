@@ -91,97 +91,131 @@ def sqlite_dialect() -> SQLiteDialect:
             id="project_scan_with_ordering",
         ),
         pytest.param(
-            Filter(
-                input=build_simple_scan(),
-                columns={
-                    "a": make_relational_column_reference("a"),
-                    "b": make_relational_column_reference("b"),
-                },
-                condition=CallExpression(
-                    EQU,
-                    BooleanType(),
-                    [
-                        make_relational_column_reference("a"),
-                        make_relational_literal(1, Int64Type()),
-                    ],
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Filter(
+                    input=build_simple_scan(),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1, Int64Type()),
+                        ],
+                    ),
                 ),
             ),
             "SELECT a, b FROM table WHERE a = 1",
             id="simple_filter",
         ),
         pytest.param(
-            Limit(
-                input=build_simple_scan(),
-                limit=LiteralExpression(1, Int64Type()),
-                columns={
-                    "a": make_relational_column_reference("a"),
-                    "b": make_relational_column_reference("b"),
-                },
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(1, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
             ),
             "SELECT a, b FROM table LIMIT 1",
             id="simple_limit",
         ),
         pytest.param(
-            Limit(
-                input=build_simple_scan(),
-                limit=LiteralExpression(10, Int64Type()),
-                columns={
-                    "a": make_relational_column_reference("a"),
-                    "b": make_relational_column_reference("b"),
-                },
-                orderings=[
-                    make_relational_column_ordering(
-                        make_relational_column_reference("a"),
-                        ascending=True,
-                        nulls_first=True,
-                    ),
-                    make_relational_column_ordering(
-                        make_relational_column_reference("b"),
-                        ascending=False,
-                        nulls_first=False,
-                    ),
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
                 ],
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(10, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_column_ordering(
+                            make_relational_column_reference("a"),
+                            ascending=True,
+                            nulls_first=True,
+                        ),
+                        make_relational_column_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=False,
+                            nulls_first=False,
+                        ),
+                    ],
+                ),
             ),
             "SELECT a, b FROM table ORDER BY a, b DESC LIMIT 10",
             id="simple_limit_with_ordering",
         ),
         pytest.param(
-            Aggregate(
-                input=build_simple_scan(),
-                keys={
-                    "b": make_relational_column_reference("b"),
-                },
-                aggregations={},
+            RelationalRoot(
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={},
+                ),
             ),
             "SELECT b FROM table GROUP BY b",
             id="simple_distinct",
         ),
         pytest.param(
-            Aggregate(
-                input=build_simple_scan(),
-                keys={},
-                aggregations={
-                    "a": CallExpression(
-                        SUM, Int64Type(), [make_relational_column_reference("a")]
-                    )
-                },
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={},
+                    aggregations={
+                        "a": CallExpression(
+                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                        )
+                    },
+                ),
             ),
             "SELECT SUM(a) AS a FROM (SELECT a, b FROM table)",
             id="simple_sum",
         ),
         pytest.param(
-            Aggregate(
-                input=build_simple_scan(),
-                keys={
-                    "b": make_relational_column_reference("b"),
-                },
-                aggregations={
-                    "a": CallExpression(
-                        SUM, Int64Type(), [make_relational_column_reference("a")]
-                    )
-                },
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={
+                        "a": CallExpression(
+                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                        )
+                    },
+                ),
             ),
-            "SELECT b, SUM(a) AS a FROM (SELECT a, b FROM table) GROUP BY b",
+            "SELECT SUM(a) AS a, b FROM (SELECT a, b FROM table) GROUP BY b",
             id="simple_groupby_sum",
         ),
     ],
