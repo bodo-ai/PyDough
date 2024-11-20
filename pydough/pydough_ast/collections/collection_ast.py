@@ -81,10 +81,17 @@ class PyDoughCollectionAST(PyDoughAST):
         Returns the predecessor at the start of the current chain of preceding
         collections, or `self` if this is the start of that chain.
         """
+        from pydough.pydough_ast.collections import ChildOperatorChildAccess
+
         predecessor: PyDoughCollectionAST | None = self.preceding_context
+        result: PyDoughCollectionAST
         if predecessor is None:
-            return self
-        return predecessor.starting_predecessor
+            result = self
+        else:
+            result = predecessor.starting_predecessor
+        while isinstance(result, ChildOperatorChildAccess):
+            result = result.child_access.starting_predecessor
+        return result
 
     def verify_singular_terms(self, exprs: Iterable[PyDoughExpressionAST]) -> None:
         """
@@ -98,8 +105,9 @@ class PyDoughCollectionAST(PyDoughAST):
             `PyDoughASTException` if any element of `exprs` is not singular with
             regards to the current collection.
         """
+        relative_context: PyDoughCollectionAST = self.starting_predecessor
         for expr in exprs:
-            if not expr.is_singular(self):
+            if not expr.is_singular(relative_context):
                 raise PyDoughASTException(
                     f"Expected all terms in {self.standalone_string} to be singular, but encountered a plural expression: {expr.to_string()}"
                 )

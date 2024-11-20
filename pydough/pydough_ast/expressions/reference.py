@@ -6,6 +6,7 @@ __all__ = ["Reference"]
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
+from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.types import PyDoughType
 
 from .expression_ast import PyDoughExpressionAST
@@ -21,6 +22,10 @@ class Reference(PyDoughExpressionAST):
         self._collection: PyDoughCollectionAST = collection
         self._term_name: str = term_name
         self._expression: PyDoughExpressionAST = collection.get_expr(term_name)
+        if not self.expression.is_singular(collection.starting_predecessor):
+            raise PyDoughASTException(
+                f"Cannot reference plural expression {self.expression} from {self.collection}"
+            )
 
     @property
     def collection(self) -> PyDoughCollectionAST:
@@ -52,11 +57,8 @@ class Reference(PyDoughExpressionAST):
         return self.expression.is_aggregation
 
     def is_singular(self, context: PyDoughAST) -> bool:
-        assert isinstance(context, PyDoughCollectionAST)
-        return self.expression.is_singular(self.collection) and (
-            (context.starting_predecessor == self.collection.starting_predecessor)
-            or self.collection.is_singular(context)
-        )
+        # References are already known to be singular via their construction.
+        return True
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False

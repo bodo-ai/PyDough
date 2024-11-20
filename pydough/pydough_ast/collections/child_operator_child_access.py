@@ -63,13 +63,13 @@ class ChildOperatorChildAccess(ChildAccess):
         return term
 
     def is_singular(self, context: PyDoughCollectionAST) -> bool:
-        return self.child_access.is_singular(self.ancestor_context) and (
+        ancestor: PyDoughCollectionAST | None = self.child_access.ancestor_context
+        assert ancestor is not None
+        relative_context: PyDoughCollectionAST = ancestor.starting_predecessor
+        return self.child_access.is_singular(relative_context) and (
             isinstance(self.child_access, BackReferenceCollection)
-            or (
-                context.starting_predecessor
-                == self.ancestor_context.starting_predecessor
-            )
-            or self.ancestor_context.is_singular(context)
+            or (context == relative_context)
+            or relative_context.is_singular(context)
         )
 
     @property

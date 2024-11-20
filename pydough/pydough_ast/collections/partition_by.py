@@ -59,6 +59,7 @@ class PartitionBy(ChildOperator):
         self._keys = [PartitionKey(self, key) for key in keys]
         for idx, ref in enumerate(keys):
             self._key_name_indices[ref.term_name] = idx
+        self.verify_singular_terms(self._keys)
         return self
 
     @property
@@ -67,6 +68,10 @@ class PartitionBy(ChildOperator):
         # context, but has been referred to as the preceding context so that
         # it can inherit from ChildOperator and behave correctly.
         return self.preceding_context
+
+    @property
+    def starting_predecessor(self) -> PyDoughCollectionAST:
+        return self
 
     @property
     def keys(self) -> list[PartitionKey]:
