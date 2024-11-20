@@ -53,6 +53,17 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return self.operator.is_aggregation
 
+    def is_singular(self, context: PyDoughAST) -> bool:
+        assert isinstance(context, PyDoughCollectionAST)
+        if self.is_aggregation:
+            return True
+        for arg in self.args:
+            if isinstance(
+                arg, (PyDoughExpressionAST, PyDoughCollectionAST)
+            ) and not arg.is_singular(context):
+                return False
+        return True
+
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return self.operator.requires_enclosing_parens(parent)
 

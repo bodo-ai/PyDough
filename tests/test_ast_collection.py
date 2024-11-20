@@ -1043,17 +1043,19 @@ def test_collections_calc_terms(
                 ratio=FunctionInfo(
                     "DIV",
                     [
-                        ChildReferenceExpressionInfo("quantity", 0),
+                        FunctionInfo(
+                            "SUM", [ChildReferenceExpressionInfo("quantity", 0)]
+                        ),
                         ReferenceInfo("ps_availqty"),
                     ],
                 ),
             ),
-            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
+            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM(ps_lines.quantity) / ps_availqty)",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
-    └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=$1.quantity / ps_availqty]
+    └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM($1.quantity) / ps_availqty]
       ├─┬─ AccessChild
       │ └─── SubCollection[ps_lines]
       └─┬─ AccessChild
@@ -1083,14 +1085,14 @@ def test_collections_calc_terms(
                 nation_name=ChildReferenceExpressionInfo("name", 1),
                 supplier_name=BackReferenceExpressionInfo("name", 1),
                 part_name=ReferenceInfo("name"),
-                ratio=ChildReferenceExpressionInfo("ratio", 0),
+                ratio=FunctionInfo("MAX", [ChildReferenceExpressionInfo("ratio", 0)]),
             ),
-            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
+            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX(ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio))",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
-    └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=$1.ratio]
+    └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX($1.ratio)]
       ├─┬─ AccessChild
       │ ├─── SubCollection[ps_lines]
       │ └─── Calc[ratio=quantity / BACK(1).ps_availqty]

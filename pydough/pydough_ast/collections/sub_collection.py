@@ -36,6 +36,13 @@ class SubCollection(CollectionAccess):
         """
         return self._subcollection_property
 
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        if self.subcollection_property.is_plural:
+            return False
+        return (context == self.ancestor_context) or self.ancestor_context.is_singular(
+            context
+        )
+
     @property
     def key(self) -> str:
         return f"{self.ancestor_context.key}.{self.subcollection_property.name}"

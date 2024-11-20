@@ -67,6 +67,9 @@ class BackReferenceCollection(CollectionAccess):
         """
         return self._collection_access
 
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        return self.collection_access.is_singular(context)
+
     @property
     def key(self) -> str:
         return self.standalone_string

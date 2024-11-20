@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["ChildReferenceExpression"]
 
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 
 from .expression_ast import PyDoughExpressionAST
@@ -31,6 +32,12 @@ class ChildReferenceExpression(Reference):
         refers to.
         """
         return self._child_idx
+
+    def is_singular(self, context: PyDoughAST) -> bool:
+        assert isinstance(context, PyDoughCollectionAST)
+        return self.collection.is_singular(context) and self.expression.is_singular(
+            self.collection
+        )
 
     def to_string(self, tree_form: bool = False) -> str:
         if tree_form:

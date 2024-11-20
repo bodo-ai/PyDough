@@ -82,6 +82,15 @@ from pydough.pydough_ast import AstNodeBuilder
             "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'bar'",
             id="child_expr_dne",
         ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [SubCollectionInfo("nations")],
+                nation_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "Expected all terms in (nation_name=nations.name) to be singular, but encountered a plural expression: nations.name",
+            id="plural_subcollection_term",
+        ),
     ],
 )
 def test_malformed_collection_sequences(

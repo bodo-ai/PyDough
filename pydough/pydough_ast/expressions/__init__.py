@@ -11,6 +11,7 @@ __all__ = [
     "BackReferenceExpression",
     "ChildReferenceExpression",
     "CollationExpression",
+    "PartitionKey",
 ]
 
 from .back_reference_expression import BackReferenceExpression
@@ -20,4 +21,5 @@ from .column_property import ColumnProperty
 from .expression_ast import PyDoughExpressionAST
 from .expression_function_call import ExpressionFunctionCall
 from .literal import Literal
+from .partition_key import PartitionKey
 from .reference import Reference

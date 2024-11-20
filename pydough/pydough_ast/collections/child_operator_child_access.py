@@ -9,6 +9,7 @@ from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 
+from .back_reference_collection import BackReferenceCollection
 from .child_access import ChildAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
@@ -60,6 +61,16 @@ class ChildOperatorChildAccess(ChildAccess):
         if isinstance(term, ChildAccess):
             term = term.clone_with_parent(self)
         return term
+
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        return self.child_access.is_singular(self.ancestor_context) and (
+            isinstance(self.child_access, BackReferenceCollection)
+            or (
+                context.starting_predecessor
+                == self.ancestor_context.starting_predecessor
+            )
+            or self.ancestor_context.is_singular(context)
+        )
 
     @property
     def standalone_string(self) -> str:

@@ -5,6 +5,7 @@ TODO: add file-level docstring
 __all__ = ["ColumnProperty"]
 
 from pydough.metadata.properties import TableColumnMetadata
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.types import PyDoughType
 
@@ -34,6 +35,9 @@ class ColumnProperty(PyDoughExpressionAST):
     @property
     def is_aggregation(self) -> bool:
         return False
+
+    def is_singular(self, context: PyDoughAST) -> bool:
+        return True
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False

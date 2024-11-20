@@ -63,6 +63,9 @@ class ChildReferenceCollection(ChildAccess):
     def ordering(self) -> list[CollationExpression] | None:
         return self.collection.ordering
 
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        return self.collection.is_singular(context)
+
     def get_expression_position(self, expr_name: str) -> int:
         return self.collection.get_expression_position(expr_name)
 

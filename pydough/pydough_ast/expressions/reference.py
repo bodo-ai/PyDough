@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["Reference"]
 
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.types import PyDoughType
 
@@ -49,6 +50,13 @@ class Reference(PyDoughExpressionAST):
     @property
     def is_aggregation(self) -> bool:
         return self.expression.is_aggregation
+
+    def is_singular(self, context: PyDoughAST) -> bool:
+        assert isinstance(context, PyDoughCollectionAST)
+        return self.expression.is_singular(self.collection) and (
+            (context.starting_predecessor == self.collection.starting_predecessor)
+            or self.collection.is_singular(context)
+        )
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False

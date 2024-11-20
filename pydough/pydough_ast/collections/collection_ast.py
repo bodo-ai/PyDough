@@ -6,9 +6,11 @@ __all__ = ["PyDoughCollectionAST"]
 
 
 from abc import abstractmethod
+from collections.abc import Iterable
 from typing import Union
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions.collation_expression import CollationExpression
 from pydough.pydough_ast.expressions.expression_ast import PyDoughExpressionAST
 
@@ -57,6 +59,50 @@ class PyDoughCollectionAST(PyDoughAST):
         """
         The set of expression/subcollection names accessible by the context.
         """
+
+    @abstractmethod
+    def is_singular(self, context: "PyDoughCollectionAST") -> bool:
+        """
+        Returns whether the collection is singular with regards to a
+        context collection.
+
+        Args:
+            `context`: the collection that the singular/plural status of the
+            current collection is being checked against.
+
+        Returns:
+            True if there is at most a single record of the current collection
+            for each record of the context, and False otherwise.
+        """
+
+    @property
+    def starting_predecessor(self) -> "PyDoughCollectionAST":
+        """
+        Returns the predecessor at the start of the current chain of preceding
+        collections, or `self` if this is the start of that chain.
+        """
+        predecessor: PyDoughCollectionAST | None = self.preceding_context
+        if predecessor is None:
+            return self
+        return predecessor.starting_predecessor
+
+    def verify_singular_terms(self, exprs: Iterable[PyDoughExpressionAST]) -> None:
+        """
+        Verifies that a list of expressions is singular with regards to the
+        current collection, e.g. they can used as CALC terms.
+
+        Args:
+            `exprs`: the list of expression to be checked.
+
+        Raises:
+            `PyDoughASTException` if any element of `exprs` is not singular with
+            regards to the current collection.
+        """
+        for expr in exprs:
+            if not expr.is_singular(self):
+                raise PyDoughASTException(
+                    f"Expected all terms in {self.standalone_string} to be singular, but encountered a plural expression: {expr.to_string()}"
+                )
 
     @abstractmethod
     def get_expression_position(self, expr_name: str) -> int:

@@ -3,6 +3,7 @@ TODO: add file-level docstring
 """
 
 __all__ = ["BackReferenceExpression"]
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.types import PyDoughType
@@ -53,19 +54,15 @@ class BackReferenceExpression(Reference):
         return self._ancestor
 
     @property
-    def expression(self) -> PyDoughExpressionAST:
-        """
-        The original expression that the reference refers to.
-        """
-        return self._expression
-
-    @property
     def pydough_type(self) -> PyDoughType:
         return self.expression.pydough_type
 
     @property
     def is_aggregation(self) -> bool:
         return self.expression.is_aggregation
+
+    def is_singular(self, context: PyDoughAST) -> bool:
+        return True
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False

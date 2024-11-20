@@ -12,6 +12,7 @@ from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import (
     ChildReferenceExpression,
     CollationExpression,
+    PartitionKey,
 )
 
 from .child_operator import ChildOperator
@@ -33,7 +34,7 @@ class PartitionBy(ChildOperator):
         super().__init__(predecessor, [child])
         self._child: PyDoughCollectionAST = child
         self._child_name: str = child_name
-        self._keys: list[ChildReferenceExpression] | None = None
+        self._keys: list[PartitionKey] | None = None
         self._key_name_indices: dict[str, int] = {}
 
     def with_keys(self, keys: list[ChildReferenceExpression]) -> "PartitionBy":
@@ -55,7 +56,7 @@ class PartitionBy(ChildOperator):
             raise PyDoughASTException(
                 "Cannot call `with_keys` more than once per PARTITION BY node"
             )
-        self._keys = keys
+        self._keys = [PartitionKey(self, key) for key in keys]
         for idx, ref in enumerate(keys):
             self._key_name_indices[ref.term_name] = idx
         return self
@@ -68,7 +69,7 @@ class PartitionBy(ChildOperator):
         return self.preceding_context
 
     @property
-    def keys(self) -> list[ChildReferenceExpression]:
+    def keys(self) -> list[PartitionKey]:
         """
         The partitioning keys for the PARTITION BY clause.
         """
@@ -121,13 +122,19 @@ class PartitionBy(ChildOperator):
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # It is presumed that PARTITION BY always creates a plural
+        # subcollection of the ancestor context containing 1+ bins of data
+        # from the child collection.
+        return False
+
     @property
     def standalone_string(self) -> str:
         keys_str: str
         if len(self.keys) == 1:
-            keys_str = self.keys[0].term_name
+            keys_str = self.keys[0].expr.term_name
         else:
-            keys_str = str(tuple([expr.term_name for expr in self.keys]))
+            keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
         return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
 
     def to_string(self) -> str:
@@ -137,9 +144,9 @@ class PartitionBy(ChildOperator):
     def tree_item_string(self) -> str:
         keys_str: str
         if len(self.keys) == 1:
-            keys_str = self.keys[0].term_name
+            keys_str = self.keys[0].expr.term_name
         else:
-            keys_str = str(tuple([expr.term_name for expr in self.keys]))
+            keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
         return f"Partition[name={self.child_name!r}, by={keys_str}]"
 
     def get_expression_position(self, expr_name: str) -> int:
@@ -148,8 +155,7 @@ class PartitionBy(ChildOperator):
     @cache
     def get_term(self, term_name: str) -> PyDoughAST:
         if term_name in self._key_name_indices:
-            term: PyDoughAST = self.keys[self._key_name_indices[term_name]]
-            assert isinstance(term, ChildReferenceExpression)
+            term: PartitionKey = self.keys[self._key_name_indices[term_name]]
             return term
         elif term_name == self.child_name:
             return PartitionChild(self.child, self.child_name, self)

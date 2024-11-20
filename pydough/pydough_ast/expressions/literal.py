@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["Literal"]
 
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.types import PyDoughType
 
 from .expression_ast import PyDoughExpressionAST
@@ -35,6 +36,9 @@ class Literal(PyDoughExpressionAST):
     @property
     def is_aggregation(self) -> bool:
         return False
+
+    def is_singular(self, context: PyDoughAST) -> bool:
+        return True
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return False
