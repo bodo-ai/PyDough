@@ -247,7 +247,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         query: Select = (
             Select()
             .select(*column_exprs)
-            .from_(left_expr)
+            .from_(Subquery(this=left_expr))
             .join(right_expr, on=cond_expr, join_type=join.join_type.value)
         )
         self._stack.append(query)
