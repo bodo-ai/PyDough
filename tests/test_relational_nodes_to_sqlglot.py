@@ -20,6 +20,7 @@ from sqlglot.expressions import (
     Lower,
     Select,
     Sub,
+    Subquery,
     Sum,
     Table,
     Where,
@@ -116,6 +117,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     Returns:
         Select: The output select statement.
     """
+    if isinstance(_from, Select):
+        _from = Subquery(this=_from)
     _from = From(this=_from)
     query: Select = Select(
         **{
