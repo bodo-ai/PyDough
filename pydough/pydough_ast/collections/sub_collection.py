@@ -40,6 +40,9 @@ class SubCollection(CollectionAccess):
 
     @cache
     def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # A subcollection is singular if the underlying subcollection property
+        # is singular and the parent collection is singular relative to the
+        # desired context (or the parent is the desired context).
         if self.subcollection_property.is_plural:
             return False
         relative_ancestor: PyDoughCollectionAST = (

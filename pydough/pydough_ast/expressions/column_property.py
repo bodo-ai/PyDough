@@ -37,6 +37,8 @@ class ColumnProperty(PyDoughExpressionAST):
         return False
 
     def is_singular(self, context: PyDoughAST) -> bool:
+        # Column properties are always singular since they can only exist
+        # within the context of the table collection they come from.
         return True
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:

@@ -38,6 +38,7 @@ class Literal(PyDoughExpressionAST):
         return False
 
     def is_singular(self, context: PyDoughAST) -> bool:
+        # Literals are always singular.
         return True
 
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:

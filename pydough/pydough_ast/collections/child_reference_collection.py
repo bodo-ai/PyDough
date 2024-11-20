@@ -67,6 +67,9 @@ class ChildReferenceCollection(ChildAccess):
 
     @cache
     def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # A child reference collection is singular with regards to a context
+        # if and only if the collection it refers to is singular with regard
+        # to that context.
         return self.collection.is_singular(context)
 
     def get_expression_position(self, expr_name: str) -> int:

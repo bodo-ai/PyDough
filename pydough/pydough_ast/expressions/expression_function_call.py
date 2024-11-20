@@ -56,6 +56,8 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
 
     @cache
     def is_singular(self, context: PyDoughAST) -> bool:
+        # Function calls are singular if they are aggregations or if all of
+        # their operands are also singular.
         assert isinstance(context, PyDoughCollectionAST)
         if self.is_aggregation:
             return True

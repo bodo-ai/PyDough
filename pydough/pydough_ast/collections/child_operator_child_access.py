@@ -63,6 +63,12 @@ class ChildOperatorChildAccess(ChildAccess):
         return term
 
     def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # When a child operator acceses a child collection, the child is
+        # singular with regards to a context if the child is singular
+        # relative to its own parent, and one of 3 other conditions is true:
+        # 1. The child access is a BACK node (automatically singular)
+        # 2. The parent of the child access is the context
+        # 3. The parent of the child access is singular relative to the context
         ancestor: PyDoughCollectionAST | None = self.child_access.ancestor_context
         assert ancestor is not None
         relative_context: PyDoughCollectionAST = ancestor.starting_predecessor

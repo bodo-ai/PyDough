@@ -53,6 +53,9 @@ class PartitionKey(PyDoughExpressionAST):
 
     @cache
     def is_singular(self, context: PyDoughAST) -> bool:
+        # A partition key is singular with regards to a context if and only
+        # if the PARTITION BY clause it corresponds to is also singular with
+        # regards to that context (or the PARTITION BY clause is the context).
         assert isinstance(context, PyDoughCollectionAST)
         return (context == self.collection) or self.collection.is_singular(context)
 

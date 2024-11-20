@@ -56,40 +56,64 @@ class Qualifier:
     def __init__(self, graph: GraphMetadata):
         self._graph: GraphMetadata = graph
         self._builder: AstNodeBuilder = AstNodeBuilder(graph)
-        self._memo: dict[tuple[str, PyDoughCollectionAST | None], PyDoughAST] = {}
+        self._memo: dict[tuple[str, PyDoughCollectionAST], PyDoughAST] = {}
 
     @property
     def graph(self) -> GraphMetadata:
         """
-        TODO: add function docstring
+        The metadata for the PyDough graph in which is used to identify
+        collections and properties.
         """
         return self._graph
 
     @property
     def builder(self) -> AstNodeBuilder:
         """
-        TODO: add function docstring
+        The builder used by the qualifier to create AST nodes.
         """
         return self._builder
 
     def lookup_if_already_qualified(
         self,
         unqualified_str: str,
-        context: PyDoughCollectionAST | None,
+        context: PyDoughCollectionAST,
     ) -> PyDoughAST | None:
         """
-        TODO: add function docstring
+        Fetches the qualified definition of an unqualified node (by string) if
+        it has already been defined within a certain context. Returns None
+        if it has not.
+
+        Args:
+            `unqualified_str`: the string representation of the unqualified
+            node (used for lookups since true equality is unsupported on
+            unqualified nodes).
+            `context`: the collection context in which the qualification is
+            being done.
+
+        Returns:
+            The stored answer if one has already been computed, otherwise None.
         """
         return self._memo.get((unqualified_str, context), None)
 
     def add_definition(
         self,
         unqualified_str: str,
-        context: PyDoughCollectionAST | None,
+        context: PyDoughCollectionAST,
         qualified_node: PyDoughAST,
     ):
         """
-        TODO: add function docstring
+        Persists the qualified definition of an unqualified node (by string)
+        once it has been defined within a certain context so that the answer
+        can be instantly fetched if required again..
+
+        Args:
+            `unqualified_str`: the string representation of the unqualified
+            node (used for lookups since true equality is unsupported on
+            unqualified nodes).
+            `context`: the collection context in which the qualification is
+            being done.
+            `qualifeid_node`: the qualified definition of the unqualified node
+            when placed within the context.
         """
         self._memo[unqualified_str, context] = qualified_node
 

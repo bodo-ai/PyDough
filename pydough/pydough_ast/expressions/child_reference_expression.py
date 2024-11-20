@@ -42,6 +42,10 @@ class ChildReferenceExpression(Reference):
 
     @cache
     def is_singular(self, context: PyDoughAST) -> bool:
+        # Child reference expressions are already known to be singular relative
+        # to the child collection to the via their construction, so they are
+        # singular relative to the context if and only if their child collection
+        # is singular relative to the context.
         assert isinstance(context, PyDoughCollectionAST)
         return self.collection.is_singular(context)
 

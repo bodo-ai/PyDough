@@ -50,6 +50,8 @@ class ChildOperator(PyDoughCollectionAST):
         return self.preceding_context.ordering
 
     def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # A child operator, by default, inherits singular/plural relationships
+        # from its predecessor.
         return self.preceding_context.is_singular(context)
 
     def get_expression_position(self, expr_name: str) -> int:
