@@ -1059,7 +1059,7 @@ def test_collections_calc_terms(
       ├─┬─ AccessChild
       │ └─── SubCollection[ps_lines]
       └─┬─ AccessChild
-        ├─── SubCollection[BACK(1).nation]
+        ├─── BackSubCollection[1, nation]
         └─── Calc[nation_name=name]\
 """,
             id="suppliers_parts_childcalc_a",
@@ -1097,7 +1097,7 @@ def test_collections_calc_terms(
       │ ├─── SubCollection[ps_lines]
       │ └─── Calc[ratio=quantity / BACK(1).ps_availqty]
       └─┬─ AccessChild
-        └─── SubCollection[BACK(1).nation]\
+        └─── BackSubCollection[1, nation]\
 """,
             id="suppliers_parts_childcalc_b",
         ),
@@ -1565,6 +1565,37 @@ def test_collections_calc_terms(
   └─── TopK[5, total_sum.DESC(na_pos='last')]\
 """,
             id="nations_topk",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** SubCollectionInfo("suppliers")
+            ** PartitionInfo(
+                SubCollectionInfo("parts_supplied"),
+                "parts",
+                [ChildReferenceExpressionInfo("part_type", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
+                part_type=ReferenceInfo("part_type"),
+                num_parts=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                num_custs=FunctionInfo(
+                    "COUNT", [BackReferenceCollectionInfo("customers", 2)]
+                ),
+            ),
+            "TPCH.Nations.suppliers.Partition(parts_supplied, name='parts', by=part_type)(part_type=part_type, num_parts=COUNT(parts.suppliers_of_part), num_custs=COUNT(BACK(2).customers))",
+            """\
+──┬─ TPCH
+  └─┬─ TableCollection[Nations]
+    ├─── SubCollection[suppliers]
+    ├─┬─ Partition[name='parts', by=part_type]
+    │ └─┬─ AccessChild
+    │   └─── SubCollection[parts_supplied]
+    └─┬─ Calc[part_type=part_type, num_parts=COUNT($1), num_custs=COUNT(BackSubCollection[2, customers])]
+      └─┬─ AccessChild
+        └─┬─ PartitionChild[parts]
+          └─── SubCollection[suppliers_of_part]\
+""",
+            id="partition_backreference",
         ),
     ],
 )

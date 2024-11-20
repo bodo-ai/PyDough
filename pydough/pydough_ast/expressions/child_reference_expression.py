@@ -28,7 +28,6 @@ class ChildReferenceExpression(Reference):
         self._term_name: str = term_name
         self._expression: PyDoughExpressionAST = self._collection.get_expr(term_name)
         if not self.expression.is_singular(collection.starting_predecessor):
-            breakpoint()
             raise PyDoughASTException(
                 f"Cannot reference plural expression {self.expression} from {self.collection}"
             )

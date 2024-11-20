@@ -88,4 +88,4 @@ class BackReferenceCollection(CollectionAccess):
 
     @property
     def tree_item_string(self) -> str:
-        return f"SubCollection[{self.standalone_string}]"
+        return f"BackSubCollection[{self.back_levels}, {self.term_name}]"

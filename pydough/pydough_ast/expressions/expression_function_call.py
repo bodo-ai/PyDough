@@ -70,6 +70,9 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self.operator.requires_enclosing_parens(parent)
 
     def to_string(self, tree_form: bool = False) -> str:
+        from pydough.pydough_ast.collections.back_reference_collection import (
+            BackReferenceCollection,
+        )
         from pydough.pydough_ast.collections.child_reference_collection import (
             ChildReferenceCollection,
         )
@@ -84,7 +87,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
             elif isinstance(arg, PyDoughCollectionAST):
                 if tree_form:
                     assert isinstance(
-                        arg, ChildReferenceCollection
+                        arg, (ChildReferenceCollection, BackReferenceCollection)
                     ), f"Unexpected argument to function call {arg}: expected an expression, or reference to a collection"
                     arg_string = arg.tree_item_string
                 else:
