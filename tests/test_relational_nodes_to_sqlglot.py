@@ -1164,9 +1164,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                     Ident(this="a"),
                                     Ident(this="b"),
                                     set_alias(
-                                        Add(
-                                            this=Ident(this="a"),
-                                            expression=Literal(value=1),
+                                        mkglot_func(
+                                            Add, [Ident(this="a"), Literal(value=1)]
                                         ),
                                         "c",
                                     ),
@@ -1213,7 +1212,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ],
                     "from": From(this=Table(this=Ident(this="table"))),
                     "where": Where(
-                        this=EQ(this=Ident(this="a"), expression=Literal(value=1))
+                        this=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)])
                     ),
                 }
             ),
@@ -1324,7 +1323,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                 "expressions": [
                                     Ident(this="b"),
                                     set_alias(
-                                        Sum.from_arg_list([Ident(this="a")]),
+                                        mkglot_func(Sum, [Ident(this="a")]),
                                         "a",
                                     ),
                                 ],
@@ -1400,9 +1399,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                     "_table_alias_1",
                 ),
-                on=EQ(
-                    this=Ident(this="_table_alias_0.a"),
-                    expression=Ident(this="_table_alias_1.a"),
+                on=mkglot_func(
+                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
                 ),
                 join_type="inner",
             ),
@@ -1511,7 +1509,7 @@ def test_expression_identifiers(expr: Expression, expected: set[Ident]):
                     ],
                     "from": From(this=Table(this=Ident(this="table"))),
                     "where": Where(
-                        this=EQ(this=Ident(this="a"), expression=Literal(value=1))
+                        this=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)])
                     ),
                 }
             ),
