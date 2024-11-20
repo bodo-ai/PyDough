@@ -137,9 +137,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self.reset()
         expr.accept(self)
         result = self.get_sqlglot_result()
-        if output_name is not None:
-            result = set_glot_alias(result, output_name)
-        return result
+        return set_glot_alias(result, output_name)
 
     def get_sqlglot_result(self) -> SQLGlotExpression:
         """
