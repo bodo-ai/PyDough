@@ -207,7 +207,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     @staticmethod
     def _build_subquery(
-        input_expr: Select, column_exprs: list[SQLGlotExpression]
+        input_expr: Select,
+        column_exprs: list[SQLGlotExpression],
+        alias: str | None = None,
     ) -> Select:
         """
         Generate a subquery select statement with the given
@@ -221,7 +223,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         Returns:
             Select: A select statement representing the subquery.
         """
-        return Select().select(*column_exprs).from_(Subquery(this=input_expr))
+        return (
+            Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
+        )
 
     def reset(self) -> None:
         """
@@ -263,8 +267,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ]
         cond = self._alias_modifier.modify_expression_names(join.condition)
         cond_expr = self._expr_visitor.relational_to_sqlglot(cond)
-        query: Select = self._build_subquery(left_expr, column_exprs).join(
-            right_expr, on=cond_expr, join_type=join.join_type.value
+        query: Select = self._build_subquery(
+            left_expr, column_exprs, alias_map["left"]
+        ).join(
+            Subquery(this=right_expr, alias=alias_map["right"]),
+            on=cond_expr,
+            join_type=join.join_type.value,
         )
         self._stack.append(query)
 
