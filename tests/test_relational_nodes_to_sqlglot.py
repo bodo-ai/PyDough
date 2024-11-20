@@ -4,6 +4,8 @@ SQLGlot expressions. This is just testing the conversion and is not
 testing the actual runtime or converting entire complex trees.
 """
 
+from dataclasses import dataclass
+
 import pytest
 from sqlglot.expressions import (
     EQ,
@@ -47,6 +49,13 @@ from pydough.types import BooleanType, Int64Type, StringType
 @pytest.fixture(scope="module")
 def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
     return SQLGlotRelationalVisitor()
+
+
+@dataclass
+class GlotJoin:
+    on: Expression
+    right_query: Expression
+    join_type: str
 
 
 def set_alias(expr: Expression, alias: str) -> Expression:
@@ -100,6 +109,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
         query = query.order_by(*kwargs.pop("order_by"))
     if "limit" in kwargs:
         query = query.limit(kwargs.pop("limit"))
+    if "join" in kwargs:
+        join = kwargs.pop("join")
+        query = query.join(join.right_query, on=join.on, join_type=join.join_type)
+    if "alias" in kwargs:
+        query = set_alias(query, kwargs.pop("alias"))
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
     return query
 
@@ -764,44 +778,31 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     "b": make_relational_column_reference("b", input_name="right"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=set_alias(
-                            Select(
-                                **{
-                                    "expressions": [
-                                        Ident(this="a"),
-                                        Ident(this="b"),
-                                    ],
-                                    "from": From(this=Table(this=Ident(this="table"))),
-                                }
-                            ),
-                            "_table_alias_0",
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="_table_alias_0.a", alias="a"),
-                        Ident(this="_table_alias_1.b", alias="b"),
-                    ],
-                }
-            ).join(
-                set_alias(
-                    Select(
-                        **{
-                            "expressions": [
-                                Ident(this="a"),
-                                Ident(this="b"),
-                            ],
-                            "from": From(this=Table(this=Ident(this="table"))),
-                        }
-                    ),
-                    "_table_alias_1",
+            mkglot(
+                expressions=[
+                    set_alias(Ident(this="_table_alias_0.a"), "a"),
+                    set_alias(Ident(this="_table_alias_1.b"), "b"),
+                ],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    alias="_table_alias_0",
                 ),
-                on=mkglot_func(
-                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="inner",
                 ),
-                join_type="inner",
             ),
             id="simple_join",
         ),
@@ -838,83 +839,50 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     "d": make_relational_column_reference("b", input_name="left"),
                 },
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=set_alias(
-                            Select(
-                                **{
-                                    "from": From(
-                                        this=set_alias(
-                                            Select(
-                                                **{
-                                                    "expressions": [
-                                                        Ident(this="a"),
-                                                        Ident(this="b"),
-                                                    ],
-                                                    "from": From(
-                                                        this=Table(
-                                                            this=Ident(this="table")
-                                                        )
-                                                    ),
-                                                }
-                                            ),
-                                            "_table_alias_2",
-                                        )
-                                    ),
-                                    "expressions": [
-                                        Ident(this="_table_alias_2.a", alias="a"),
-                                        Ident(this="_table_alias_3.b", alias="b"),
-                                    ],
-                                }
-                            ).join(
-                                set_alias(
-                                    Select(
-                                        **{
-                                            "expressions": [
-                                                Ident(this="a"),
-                                                Ident(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(this=Ident(this="table"))
-                                            ),
-                                        }
-                                    ),
-                                    "_table_alias_3",
-                                ),
-                                on=mkglot_func(
-                                    EQ,
-                                    [
-                                        Ident(this="_table_alias_2.a"),
-                                        Ident(this="_table_alias_3.a"),
-                                    ],
-                                ),
-                                join_type="inner",
-                            ),
-                            "_table_alias_0",
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="_table_alias_0.b", alias="d"),
+            mkglot(
+                expressions=[Ident(this="_table_alias_0.b", alias="d")],
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="_table_alias_2.a", alias="a"),
+                        Ident(this="_table_alias_3.b", alias="b"),
                     ],
-                },
-            ).join(
-                set_alias(
-                    Select(
-                        **{
-                            "expressions": [
-                                Ident(this="a"),
-                                Ident(this="b"),
-                            ],
-                            "from": From(this=Table(this=Ident(this="table"))),
-                        }
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_2",
                     ),
-                    "_table_alias_1",
+                    alias="_table_alias_0",
+                    join=GlotJoin(
+                        right_query=mkglot(
+                            expressions=[Ident(this="a"), Ident(this="b")],
+                            _from=Table(this=Ident(this="table")),
+                            alias="_table_alias_3",
+                        ),
+                        on=mkglot_func(
+                            EQ,
+                            [
+                                Ident(this="_table_alias_2.a"),
+                                Ident(this="_table_alias_3.a"),
+                            ],
+                        ),
+                        join_type="inner",
+                    ),
                 ),
-                on=mkglot_func(
-                    EQ, [Ident(this="_table_alias_0.a"), Ident(this="_table_alias_1.a")]
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="left",
                 ),
-                join_type="left",
             ),
             id="nested_join",
         ),
