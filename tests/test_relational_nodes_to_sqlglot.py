@@ -14,7 +14,6 @@ from sqlglot.expressions import (
     Binary,
     Expression,
     From,
-    Group,
     Length,
     Literal,
     Lower,
@@ -1094,16 +1093,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("b", make_relational_column_reference("b")),
                 ],
             ),
-            Select(
-                **{
-                    "expressions": [
-                        Ident(this="b"),
-                    ],
-                    "from": From(this=Table(this=Ident(this="table"))),
-                    "where": Where(
-                        this=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)])
-                    ),
-                }
+            mkglot(
+                expressions=[Ident(this="b")],
+                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                _from=Table(this=Ident(this="table")),
             ),
             id="root_after_filter",
         ),
@@ -1136,34 +1129,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "expressions": [
-                                    Ident(this="a"),
-                                    Ident(this="b"),
-                                ],
-                                "from": From(this=Table(this=Ident(this="table"))),
-                            }
-                        )
-                        .order_by(
-                            *[
-                                Ident(this="b").asc(nulls_first=True),
-                            ],
-                        )
-                        .limit(Literal(value=10))
-                    ),
-                    "expressions": [
-                        Ident(this="b"),
-                        Ident(this="a"),
-                    ],
-                }
-            ).order_by(
-                *[
-                    Ident(this="a").asc(nulls_first=True),
-                ]
+            mkglot(
+                expressions=[Ident(this="b"), Ident(this="a")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    order_by=[Ident(this="b").asc(nulls_first=True)],
+                    limit=Literal(value=10),
+                ),
             ),
             id="root_after_limit",
         ),
@@ -1191,43 +1165,23 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                 ],
             ),
-            Select(
-                **{
-                    "from": From(
-                        this=Select(
-                            **{
-                                "from": From(
-                                    this=Select(
-                                        **{
-                                            "expressions": [
-                                                Ident(this="a"),
-                                                Ident(this="b"),
-                                            ],
-                                            "from": From(
-                                                this=Table(this=Ident(this="table"))
-                                            ),
-                                        }
-                                    )
-                                ),
-                                "expressions": [
-                                    Ident(this="b"),
-                                    set_alias(
-                                        mkglot_func(Sum, [Ident(this="a")]),
-                                        "a",
-                                    ),
-                                ],
-                                "group": Group(expressions=[Ident(this="b")]),
-                            }
-                        )
-                    ),
-                    "expressions": [
-                        Ident(this="a"),
+            mkglot(
+                expressions=[Ident(this="a")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="b"),
+                        set_alias(
+                            mkglot_func(Sum, [Ident(this="a")]),
+                            "a",
+                        ),
                     ],
-                },
-            ).order_by(
-                *[
-                    Ident(this="a").asc(nulls_first=True),
-                ]
+                    group_by=[Ident(this="b")],
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                    ),
+                ),
             ),
             # Note: Can be heavily optimized by simplifying the generated SQL.
             id="root_after_aggregate",
