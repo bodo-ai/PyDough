@@ -15,6 +15,10 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
     RelationalExpressionVisitor,
 )
+from pydough.types import DecimalType, PyDoughType
+from pydough.types.integer_types import IntegerType
+
+from .sqlglot_helpers import set_glot_alias
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
@@ -79,8 +83,16 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._stack.append(output_expr)
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
-        # TODO: Handle data types.
-        self._stack.append(SQLGlotLiteral(value=literal_expression.value))
+        pydough_type: PyDoughType = literal_expression.data_type
+        is_string: bool
+        if isinstance(pydough_type, (IntegerType, DecimalType)):
+            is_string = False
+        else:
+            # TODO: Handle casting for non-string literal types.
+            is_string = True
+        self._stack.append(
+            SQLGlotLiteral(this=str(literal_expression.value), is_string=is_string)
+        )
 
     @staticmethod
     def generate_column_reference_identifier(
@@ -125,9 +137,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self.reset()
         expr.accept(self)
         result = self.get_sqlglot_result()
-        if output_name is not None:
-            result.set("alias", output_name)
-        return result
+        return set_glot_alias(result, output_name)
 
     def get_sqlglot_result(self) -> SQLGlotExpression:
         """
