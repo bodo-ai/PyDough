@@ -3,7 +3,7 @@ Representation of the a join node in a relational tree.
 This node is responsible for holding all types of joins.
 """
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from enum import Enum
 
 from pydough.relational.relational_expressions import RelationalExpression
@@ -72,8 +72,20 @@ class Join(Relational):
         return self._join_type
 
     @property
-    def inputs(self):
+    def inputs(self) -> MutableSequence[Relational]:
         return [self.left, self.right]
+
+    @property
+    def default_input_aliases(self) -> list[str]:
+        """
+        Provide the default aliases for each input
+        to this node. This is used when remapping the
+        names of each input for differentiating columns.
+
+        Note: The lowering steps are not required to use this alias
+        and can choose any name they want.
+        """
+        return ["left", "right"]
 
     def node_equals(self, other: Relational) -> bool:
         return (

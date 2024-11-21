@@ -5,7 +5,7 @@ represents any "base table" in relational algebra. As we expand to more types of
 class for more specific implementations.
 """
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.relational.relational_expressions import (
     RelationalExpression,
@@ -29,7 +29,7 @@ class Scan(Relational):
         self.table_name: str = table_name
 
     @property
-    def inputs(self):
+    def inputs(self) -> MutableSequence[Relational]:
         # A scan is required to be the leaf node of the relational tree.
         return []
 
