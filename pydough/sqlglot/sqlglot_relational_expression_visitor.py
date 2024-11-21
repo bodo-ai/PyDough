@@ -43,7 +43,7 @@ binary_func_map: dict[str, SQLGlotExpression] = {
     "-": sqlglot_expressions.Sub,
     "*": sqlglot_expressions.Mul,
     "/": sqlglot_expressions.Div,
-    "AND": sqlglot_expressions.And,
+    "&": sqlglot_expressions.And,
 }
 
 

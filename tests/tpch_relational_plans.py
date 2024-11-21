@@ -12,7 +12,7 @@ from test_utils import (
 
 from pydough.pydough_ast.pydough_operators import (
     ADD,
-    AND,
+    BAN,
     COUNT,
     DIV,
     GEQ,
@@ -304,7 +304,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                         "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
                     },
                     condition=CallExpression(
-                        AND,
+                        BAN,
                         BooleanType(),
                         [
                             CallExpression(
