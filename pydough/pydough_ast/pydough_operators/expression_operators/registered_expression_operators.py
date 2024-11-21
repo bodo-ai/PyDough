@@ -32,7 +32,10 @@ __all__ = [
     "ENDSWITH",
     "CONTAINS",
     "LIKE",
+    "AVG",
     "NDISTINCT",
+    "ISIN",
+    "SLICE",
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (
@@ -97,6 +100,12 @@ IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgument
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
+SLICE = ExpressionFunctionOperator(
+    "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)
+)
 NOT = ExpressionFunctionOperator(
     "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())
+)
+ISIN = ExpressionFunctionOperator(
+    "ISIN", False, RequireNumArgs(2), ConstantType(BooleanType())
 )

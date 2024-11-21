@@ -16,18 +16,17 @@ __all__ = [
     "UnqualifiedWhere",
     "UnqualifiedLiteral",
     "UnqualifiedBack",
-    "BACK",
-    "PARTITION",
 ]
 
 from abc import ABC
 from collections.abc import Iterable, MutableSequence
 from datetime import date
-from typing import Any
+from typing import Any, Union
 
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import pydough_operators as pydop
 from pydough.types import (
+    ArrayType,
     BinaryType,
     BooleanType,
     DateType,
@@ -35,6 +34,7 @@ from pydough.types import (
     Int64Type,
     PyDoughType,
     StringType,
+    UnknownType,
 )
 
 from .errors import PyDoughUnqualifiedException
@@ -79,6 +79,18 @@ class UnqualifiedNode(ABC):
             return UnqualifiedLiteral(obj, BinaryType())
         if isinstance(obj, date):
             return UnqualifiedLiteral(obj, DateType())
+        if obj is None:
+            return UnqualifiedLiteral(obj, UnknownType())
+        if isinstance(obj, (list, tuple, set)):
+            elems: list[UnqualifiedLiteral] = []
+            typ: PyDoughType = UnknownType()
+            for elem in obj:
+                coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
+                assert isinstance(
+                    coerced_elem, UnqualifiedLiteral
+                ), f"Can only coerce list of literals to a literal, not {elem}"
+                elems.append(coerced_elem)
+            return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
 
     def __getattribute__(self, name: str) -> Any:
@@ -87,6 +99,21 @@ class UnqualifiedNode(ABC):
             return result
         except AttributeError:
             return UnqualifiedAccess(self, name)
+
+    def __hash__(self):
+        return hash(repr(self))
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            args: MutableSequence[UnqualifiedNode] = [self]
+            for arg in (key.start, key.stop, key.step):
+                coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
+                args.append(coerced_elem)
+            return UnqualifiedOperation("SLICE", args)
+        else:
+            raise PyDoughUnqualifiedException(
+                f"Cannot index into PyDough object {self} with {key!r}"
+            )
 
     def __add__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
@@ -190,32 +217,41 @@ class UnqualifiedNode(ABC):
     def __neg__(self):
         return 0 - self
 
+    def __invert__(self):
+        return UnqualifiedOperation("NOT", [self])
+
     def __call__(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
         counter = 0
         for arg in args:
+            unqualified_arg: UnqualifiedNode = self.coerce_to_unqualified(arg)
             name: str
-            while True:
-                name = f"_expr{counter}"
-                counter += 1
-                if name not in kwargs:
-                    break
-            calc_args.append((name, arg))
+            if isinstance(unqualified_arg, UnqualifiedAccess):
+                name = unqualified_arg._parcel[1]
+            else:
+                while True:
+                    name = f"_expr{counter}"
+                    counter += 1
+                    if name not in kwargs:
+                        break
+            calc_args.append((name, unqualified_arg))
         for name, arg in kwargs.items():
             calc_args.append((name, self.coerce_to_unqualified(arg)))
         return UnqualifiedCalc(self, calc_args)
 
-    def WHERE(self, cond: object):
+    def WHERE(self, cond: object) -> "UnqualifiedWhere":
         cond_unqualified: UnqualifiedNode = self.coerce_to_unqualified(cond)
         return UnqualifiedWhere(self, cond_unqualified)
 
-    def ORDER_BY(self, *keys):
+    def ORDER_BY(self, *keys) -> "UnqualifiedOrderBy":
         keys_unqualified: MutableSequence[UnqualifiedNode] = [
             self.coerce_to_unqualified(key) for key in keys
         ]
         return UnqualifiedOrderBy(self, keys_unqualified)
 
-    def TOP_K(self, k: int, by: object | Iterable[object] | None = None):
+    def TOP_K(
+        self, k: int, by: object | Iterable[object] | None = None
+    ) -> "UnqualifiedTopK":
         if by is None:
             return UnqualifiedTopK(self, k, None)
         else:
@@ -226,19 +262,39 @@ class UnqualifiedNode(ABC):
                 keys_unqualified = [self.coerce_to_unqualified(by)]
             return UnqualifiedTopK(self, k, keys_unqualified)
 
-    def ASC(self, na_pos="last"):
+    def ASC(self, na_pos="last") -> "UnqualifiedCollation":
         assert na_pos in (
             "first",
             "last",
         ), f"Unrecognized `na_pos` value for `ASC`: {na_pos!r}"
         return UnqualifiedCollation(self, True, na_pos)
 
-    def DESC(self, na_pos="last"):
+    def DESC(self, na_pos="last") -> "UnqualifiedCollation":
         assert na_pos in (
             "first",
             "last",
         ), f"Unrecognized `na_pos` value for `DESC`: {na_pos!r}"
         return UnqualifiedCollation(self, False, na_pos)
+
+    def PARTITION(
+        self,
+        data: "UnqualifiedNode",
+        name: str,
+        by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+    ) -> "UnqualifiedPartition":
+        """
+        Method used to create a PARTITION node.
+        """
+        if isinstance(by, UnqualifiedNode):
+            return UnqualifiedPartition(self, data, name, [by])
+        else:
+            return UnqualifiedPartition(self, data, name, list(by))
+
+    def BACK(self, levels: int) -> "UnqualifiedBack":
+        """
+        Method used to create a BACK node.
+        """
+        return UnqualifiedBack(levels)
 
 
 class UnqualifiedRoot(UnqualifiedNode):
@@ -256,11 +312,7 @@ class UnqualifiedRoot(UnqualifiedNode):
         )
 
     def __getattribute__(self, name: str) -> Any:
-        if name == "PARTITION":
-            return PARTITION
-        elif name == "BACK":
-            return BACK
-        elif name in super(UnqualifiedNode, self).__getattribute__("_parcel")[1]:
+        if name in super(UnqualifiedNode, self).__getattribute__("_parcel")[1]:
             return UnqualifiedOperator(name)
         else:
             return super().__getattribute__(name)
@@ -467,9 +519,16 @@ class UnqualifiedPartition(UnqualifiedNode):
     """
 
     def __init__(
-        self, data: UnqualifiedNode, name: str, keys: MutableSequence[UnqualifiedNode]
+        self,
+        parent: UnqualifiedNode,
+        data: UnqualifiedNode,
+        name: str,
+        keys: MutableSequence[UnqualifiedNode],
     ):
-        self._parcel: tuple[UnqualifiedNode, str, MutableSequence[UnqualifiedNode]] = (
+        self._parcel: tuple[
+            UnqualifiedNode, UnqualifiedNode, str, MutableSequence[UnqualifiedNode]
+        ] = (
+            parent,
             data,
             name,
             keys,
@@ -477,25 +536,6 @@ class UnqualifiedPartition(UnqualifiedNode):
 
     def __repr__(self):
         key_strings: list[str] = []
-        for node in self._parcel[2]:
+        for node in self._parcel[3]:
             key_strings.append(f"{node!r}")
-        return f"PARTITION({self._parcel[0]!r}, name={self._parcel[1]!r}, by=({', '.join(key_strings)}))"
-
-
-def BACK(levels: int) -> UnqualifiedBack:
-    """
-    Function used to create a BACK node.
-    """
-    return UnqualifiedBack(levels)
-
-
-def PARTITION(
-    data: UnqualifiedNode, name: str, by: Iterable[UnqualifiedNode] | UnqualifiedNode
-) -> UnqualifiedPartition:
-    """
-    Function used to create a PARTITION node.
-    """
-    if isinstance(by, UnqualifiedNode):
-        return UnqualifiedPartition(data, name, [by])
-    else:
-        return UnqualifiedPartition(data, name, list(by))
+        return f"{self._parcel[0]!r}.PARTITION({self._parcel[1]!r}, name={self._parcel[2]!r}, by=({', '.join(key_strings)}))"
