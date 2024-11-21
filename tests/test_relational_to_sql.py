@@ -18,6 +18,7 @@ from tpch_relational_plans import (
 )
 
 from pydough.pydough_ast.pydough_operators import (
+    ABS,
     ADD,
     EQU,
     MUL,
@@ -476,6 +477,27 @@ def sqlite_dialect() -> SQLiteDialect:
             ),
             "SELECT a * (b + 1) AS a, a + (b * 1) AS b FROM (SELECT a, b FROM table)",
             id="nested_binary_functions",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_ordering(
+                        CallExpression(
+                            ABS,
+                            Int64Type(),
+                            [make_relational_column_reference("a")],
+                        ),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            "SELECT a FROM table ORDER BY ABS(a)",
+            id="ordering_function",
         ),
     ],
 )
