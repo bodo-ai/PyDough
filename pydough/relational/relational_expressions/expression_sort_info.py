@@ -1,5 +1,5 @@
 """
-The representation of ordering for a column within a relational node.
+The representation of ordering for an expression within a relational node.
 This is not a proper RelationalExpression because it cannot be used as
 a component of other expressions, but it is heavily tied to this definition.
 """
