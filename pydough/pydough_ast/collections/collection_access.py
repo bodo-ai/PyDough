@@ -100,6 +100,9 @@ class CollectionAccess(ChildAccess):
                 f"Unsupported property type for collection access: {property.__class__.name}"
             )
 
+    def to_string(self) -> str:
+        return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
+
     def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
         return CollectionTreeForm(
             self.tree_item_string,

@@ -22,7 +22,9 @@ __all__ = [
     "ChildReferenceExpression",
     "ChildAccess",
     "TopK",
+    "GlobalContext",
     "ChildReferenceCollection",
+    "Reference",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -31,6 +33,7 @@ from .collections import (
     ChildAccess,
     ChildOperatorChildAccess,
     ChildReferenceCollection,
+    GlobalContext,
     OrderBy,
     PartitionBy,
     PyDoughCollectionAST,
@@ -47,5 +50,6 @@ from .expressions import (
     ExpressionFunctionCall,
     Literal,
     PyDoughExpressionAST,
+    Reference,
 )
 from .node_builder import AstNodeBuilder

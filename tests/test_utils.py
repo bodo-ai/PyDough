@@ -533,9 +533,7 @@ class ChildOperatorInfo(CollectionTestInfo):
         """
         children: MutableSequence[PyDoughCollectionAST] = []
         for idx, child_info in enumerate(self.children_info):
-            child = ChildOperatorChildAccessInfo(
-                child_info,
-            ).build(builder, context)
+            child = ChildOperatorChildAccessInfo(child_info).build(builder, context)
             assert isinstance(child, PyDoughCollectionAST)
             children.append(child)
         return children

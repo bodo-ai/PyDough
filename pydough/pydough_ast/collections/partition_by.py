@@ -61,6 +61,13 @@ class PartitionBy(ChildOperator):
         return self
 
     @property
+    def ancestor_context(self) -> PyDoughCollectionAST | None:
+        # For PARTITION_BY, the "preceding context" is actually the ancestor
+        # context, but has been referred to as the preceding context so that
+        # it can inherit from ChildOperator and behave correctly.
+        return self.preceding_context
+
+    @property
     def keys(self) -> list[ChildReferenceExpression]:
         """
         The partitioning keys for the PARTITION BY clause.
@@ -124,7 +131,7 @@ class PartitionBy(ChildOperator):
         return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
 
     def to_string(self) -> str:
-        return self.standalone_string
+        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:
