@@ -4,7 +4,6 @@ TODO: add file-level docstring
 
 __all__ = [
     "ADD",
-    "AND",
     "BAN",
     "BOR",
     "BXR",
@@ -64,9 +63,9 @@ EQU = BinaryOperator(BinOp.EQU, RequireNumArgs(2), ConstantType(BooleanType()))
 NEQ = BinaryOperator(BinOp.NEQ, RequireNumArgs(2), ConstantType(BooleanType()))
 GEQ = BinaryOperator(BinOp.GEQ, RequireNumArgs(2), ConstantType(BooleanType()))
 GRT = BinaryOperator(BinOp.GRT, RequireNumArgs(2), ConstantType(BooleanType()))
-BAN = BinaryOperator(BinOp.BAN, RequireNumArgs(2), SelectArgumentType(0))
-BOR = BinaryOperator(BinOp.BOR, RequireNumArgs(2), SelectArgumentType(0))
-BXR = BinaryOperator(BinOp.BXR, RequireNumArgs(2), SelectArgumentType(0))
+BAN = BinaryOperator(BinOp.BAN, RequireMinArgs(2), SelectArgumentType(0))
+BOR = BinaryOperator(BinOp.BOR, RequireMinArgs(2), SelectArgumentType(0))
+BXR = BinaryOperator(BinOp.BXR, RequireMinArgs(2), SelectArgumentType(0))
 LENGTH = ExpressionFunctionOperator(
     "LENGTH", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
@@ -107,9 +106,6 @@ SLICE = ExpressionFunctionOperator(
 )
 NOT = ExpressionFunctionOperator(
     "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())
-)
-AND = ExpressionFunctionOperator(
-    "AND", False, RequireMinArgs(2), ConstantType(BooleanType())
 )
 ISIN = ExpressionFunctionOperator(
     "ISIN", False, RequireNumArgs(2), ConstantType(BooleanType())

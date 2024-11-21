@@ -14,7 +14,7 @@ from test_utils import (
 
 from pydough.pydough_ast.pydough_operators import (
     ADD,
-    AND,
+    BAN,
     COUNT,
     DIV,
     EQU,
@@ -790,7 +790,7 @@ def test_convert_relation_to_sql(
                                 ),
                             },
                             condition=CallExpression(
-                                AND,
+                                BAN,
                                 BooleanType(),
                                 [
                                     CallExpression(
