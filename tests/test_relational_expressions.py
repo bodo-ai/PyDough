@@ -184,7 +184,7 @@ def test_literals_equal(
         ),
     ],
 )
-def test_column_sort_info_to_string(ordering: ExpressionSortInfo, output: str):
+def test_expression_sort_info_to_string(ordering: ExpressionSortInfo, output: str):
     """
     Tests the to_string() method of the ExpressionSortInfo class.
     """
@@ -226,7 +226,7 @@ def test_column_sort_info_to_string(ordering: ExpressionSortInfo, output: str):
         ),
     ],
 )
-def test_column_sort_info_equals(
+def test_expression_sort_info_equals(
     ordering1: ExpressionSortInfo, ordering2: Any, output: bool
 ):
     """

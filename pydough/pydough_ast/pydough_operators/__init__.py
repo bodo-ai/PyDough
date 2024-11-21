@@ -12,6 +12,7 @@ __all__ = [
     "PyDoughOperatorAST",
     "ConstantType",
     "PyDoughExpressionOperatorAST",
+    "ABS",
     "ADD",
     "BAN",
     "BOR",
@@ -40,6 +41,7 @@ __all__ = [
 ]
 
 from .expression_operators import (
+    ABS,
     ADD,
     BAN,
     BOR,
