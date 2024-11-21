@@ -4,20 +4,26 @@ This is not a proper RelationalExpression because it cannot be used as
 a component of other expressions, but it is heavily tied to this definition.
 """
 
-__all__ = ["ColumnSortInfo"]
+__all__ = ["ExpressionSortInfo"]
 
 from dataclasses import dataclass
 
-from .column_reference import ColumnReference
+from .abstract_expression import RelationalExpression
 
 
 @dataclass
-class ColumnSortInfo:
-    """Representation of a column ordering."""
+class ExpressionSortInfo:
+    """Representation of an expression ordering."""
 
-    column: ColumnReference
+    expr: RelationalExpression
     ascending: bool
     nulls_first: bool
 
     def to_string(self) -> str:
-        return f"ColumnSortInfo(column={self.column}, ascending={self.ascending}, nulls_first={self.nulls_first})"
+        return f"ExpressionSortInfo(expression={self.expr}, ascending={self.ascending}, nulls_first={self.nulls_first})"
+
+    def __str__(self) -> str:
+        return self.to_string()
+
+    def __repr__(self) -> str:
+        return self.to_string()

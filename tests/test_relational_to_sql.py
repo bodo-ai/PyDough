@@ -7,9 +7,9 @@ import pytest
 from sqlglot.dialects.sqlite import SQLite as SQLiteDialect
 from test_utils import (
     build_simple_scan,
-    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
+    make_relational_ordering,
 )
 from tpch_relational_plans import (
     tpch_query_1_plan,
@@ -62,7 +62,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
@@ -93,7 +93,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("c"),
                         ascending=True,
                         nulls_first=True,
@@ -160,12 +160,12 @@ def sqlite_dialect() -> SQLiteDialect:
                         "b": make_relational_column_reference("b"),
                     },
                     orderings=[
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("a"),
                             ascending=True,
                             nulls_first=True,
                         ),
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("b"),
                             ascending=False,
                             nulls_first=False,

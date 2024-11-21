@@ -42,8 +42,9 @@ from pydough.pydough_ast import (
 )
 from pydough.relational import (
     ColumnReference,
-    ColumnSortInfo,
+    ExpressionSortInfo,
     LiteralExpression,
+    RelationalExpression,
     Scan,
 )
 from pydough.types import PyDoughType, UnknownType
@@ -817,11 +818,11 @@ def build_simple_scan() -> Scan:
     )
 
 
-def make_relational_column_ordering(
-    column: ColumnReference, ascending: bool = True, nulls_first: bool = True
+def make_relational_ordering(
+    expr: RelationalExpression, ascending: bool = True, nulls_first: bool = True
 ):
     """
-    Create a column ordering as a function of a Relational column reference
+    Create am ordering as a function of a Relational column reference
     with the given ascending and nulls_first parameters.
 
     Args:
@@ -831,6 +832,6 @@ def make_relational_column_ordering(
         nulls_first (bool, optional): _description_. Defaults to True.
 
     Returns:
-        ColumnSortInfo: The column ordering information.
+        ExpressionSortInfo: The column ordering information.
     """
-    return ColumnSortInfo(column, ascending, nulls_first)
+    return ExpressionSortInfo(expr, ascending, nulls_first)

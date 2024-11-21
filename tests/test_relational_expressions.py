@@ -13,7 +13,7 @@ from pydough.pydough_ast.pydough_operators.expression_operators import LOWER, SU
 from pydough.relational import (
     CallExpression,
     ColumnReference,
-    ColumnSortInfo,
+    ExpressionSortInfo,
     LiteralExpression,
     RelationalExpression,
 )
@@ -163,30 +163,30 @@ def test_literals_equal(
     "ordering, output",
     [
         pytest.param(
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
-            "ColumnSortInfo(column=Column(name=a, type=Int64Type()), ascending=True, nulls_first=True)",
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, True),
+            "ExpressionSortInfo(expression=Column(name=a, type=Int64Type()), ascending=True, nulls_first=True)",
             id="asc_nulls_first",
         ),
         pytest.param(
-            ColumnSortInfo(ColumnReference("b", Int64Type()), True, False),
-            "ColumnSortInfo(column=Column(name=b, type=Int64Type()), ascending=True, nulls_first=False)",
+            ExpressionSortInfo(ColumnReference("b", Int64Type()), True, False),
+            "ExpressionSortInfo(expression=Column(name=b, type=Int64Type()), ascending=True, nulls_first=False)",
             id="asc_nulls_last",
         ),
         pytest.param(
-            ColumnSortInfo(ColumnReference("c", Int64Type()), False, True),
-            "ColumnSortInfo(column=Column(name=c, type=Int64Type()), ascending=False, nulls_first=True)",
+            ExpressionSortInfo(ColumnReference("c", Int64Type()), False, True),
+            "ExpressionSortInfo(expression=Column(name=c, type=Int64Type()), ascending=False, nulls_first=True)",
             id="desc_nulls_first",
         ),
         pytest.param(
-            ColumnSortInfo(ColumnReference("d", Int64Type()), False, False),
-            "ColumnSortInfo(column=Column(name=d, type=Int64Type()), ascending=False, nulls_first=False)",
+            ExpressionSortInfo(ColumnReference("d", Int64Type()), False, False),
+            "ExpressionSortInfo(expression=Column(name=d, type=Int64Type()), ascending=False, nulls_first=False)",
             id="desc_nulls_last",
         ),
     ],
 )
-def test_column_sort_info_to_string(ordering: ColumnSortInfo, output: str):
+def test_column_sort_info_to_string(ordering: ExpressionSortInfo, output: str):
     """
-    Tests the to_string() method of the ColumnSortInfo class.
+    Tests the to_string() method of the ExpressionSortInfo class.
     """
     assert ordering.to_string() == output
 
@@ -195,31 +195,31 @@ def test_column_sort_info_to_string(ordering: ColumnSortInfo, output: str):
     "ordering1, ordering2, output",
     [
         pytest.param(
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, True),
             True,
             id="same_ordering",
         ),
         pytest.param(
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
-            ColumnSortInfo(ColumnReference("b", Int64Type()), True, True),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ExpressionSortInfo(ColumnReference("b", Int64Type()), True, True),
             False,
             id="different_column",
         ),
         pytest.param(
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
-            ColumnSortInfo(ColumnReference("a", Int64Type()), False, True),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), False, True),
             False,
             id="different_asc",
         ),
         pytest.param(
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, False),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, False),
             False,
             id="different_nulls_first",
         ),
         pytest.param(
-            ColumnSortInfo(ColumnReference("a", Int64Type()), True, True),
+            ExpressionSortInfo(ColumnReference("a", Int64Type()), True, True),
             LiteralExpression(1, Int64Type()),
             False,
             id="different_nodes",
@@ -227,10 +227,10 @@ def test_column_sort_info_to_string(ordering: ColumnSortInfo, output: str):
     ],
 )
 def test_column_sort_info_equals(
-    ordering1: ColumnSortInfo, ordering2: Any, output: bool
+    ordering1: ExpressionSortInfo, ordering2: Any, output: bool
 ):
     """
-    Tests the equality behavior of a ColumnSortInfo with
+    Tests the equality behavior of a ExpressionSortInfo with
     another object.
     """
     assert (ordering1 == ordering2) == output

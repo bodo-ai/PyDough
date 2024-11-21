@@ -5,9 +5,9 @@ TODO: add file-level docstring
 import pytest
 from test_utils import (
     build_simple_scan,
-    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
+    make_relational_ordering,
 )
 
 from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
@@ -309,15 +309,13 @@ def test_project_equals(
                     "b": make_relational_column_reference("b"),
                 },
                 [
-                    make_relational_column_ordering(
-                        make_relational_column_reference("a")
-                    ),
-                    make_relational_column_ordering(
+                    make_relational_ordering(make_relational_column_reference("a")),
+                    make_relational_ordering(
                         make_relational_column_reference("b"), ascending=False
                     ),
                 ],
             ),
-            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ColumnSortInfo(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ColumnSortInfo(column=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
+            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ExpressionSortInfo(expression=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ExpressionSortInfo(expression=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
             id="orderings",
         ),
     ],
@@ -399,11 +397,7 @@ def test_limit_to_string(limit: Limit, output: str):
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
                 },
-                [
-                    make_relational_column_ordering(
-                        make_relational_column_reference("a")
-                    )
-                ],
+                [make_relational_ordering(make_relational_column_reference("a"))],
             ),
             Limit(
                 build_simple_scan(),
@@ -412,11 +406,7 @@ def test_limit_to_string(limit: Limit, output: str):
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
                 },
-                [
-                    make_relational_column_ordering(
-                        make_relational_column_reference("a")
-                    )
-                ],
+                [make_relational_ordering(make_relational_column_reference("a"))],
             ),
             True,
             id="matching_ordering",
@@ -430,7 +420,7 @@ def test_limit_to_string(limit: Limit, output: str):
                     "b": make_relational_column_reference("b"),
                 },
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"), ascending=True
                     )
                 ],
@@ -443,7 +433,7 @@ def test_limit_to_string(limit: Limit, output: str):
                     "b": make_relational_column_reference("b"),
                 },
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"), ascending=False
                     )
                 ],
@@ -998,11 +988,11 @@ def test_filter_requires_boolean_condition():
                     ("a", make_relational_column_reference("a")),
                     ("b", make_relational_column_reference("b")),
                 ],
-                make_relational_column_ordering(
+                make_relational_ordering(
                     make_relational_column_reference("a"), ascending=True
                 ),
             ),
-            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=ColumnSortInfo(column=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
+            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=ExpressionSortInfo(expression=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
             id="with_orderings",
         ),
     ],
@@ -1080,7 +1070,7 @@ def test_root_to_string(root: RelationalRoot, output: str):
                     ("b", make_relational_column_reference("b")),
                 ],
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"), ascending=True
                     ),
                 ],
@@ -1092,7 +1082,7 @@ def test_root_to_string(root: RelationalRoot, output: str):
                     ("b", make_relational_column_reference("b")),
                 ],
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"), ascending=True
                     ),
                 ],
@@ -1108,7 +1098,7 @@ def test_root_to_string(root: RelationalRoot, output: str):
                     ("b", make_relational_column_reference("b")),
                 ],
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"), ascending=True
                     ),
                 ],
@@ -1120,7 +1110,7 @@ def test_root_to_string(root: RelationalRoot, output: str):
                     ("b", make_relational_column_reference("b")),
                 ],
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("b"), ascending=True
                     ),
                 ],
@@ -1136,7 +1126,7 @@ def test_root_to_string(root: RelationalRoot, output: str):
                     ("b", make_relational_column_reference("b")),
                 ],
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"), ascending=True
                     ),
                 ],
@@ -1148,7 +1138,7 @@ def test_root_to_string(root: RelationalRoot, output: str):
                     ("b", make_relational_column_reference("b")),
                 ],
                 [
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"), ascending=False
                     ),
                 ],
