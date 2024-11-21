@@ -287,193 +287,125 @@ def tpch_query_3_plan() -> RelationalRoot:
     # Note: Since this plan contains joins, to reduce the complexity
     # of each part we assign separate variables to each source table
     # and only put at most 1 join in each variable.
-    customer = Aggregate(
-        keys={"C_CUSTKEY": make_relational_column_reference("C_CUSTKEY")},
-        aggregations={
-            "CUST_COUNT": CallExpression(COUNT, Int64Type(), []),
+    customer = Filter(
+        columns={
+            "C_CUSTKEY": make_relational_column_reference("C_CUSTKEY"),
         },
-        input=Filter(
+        condition=CallExpression(
+            EQU,
+            BooleanType(),
+            [
+                make_relational_column_reference("C_MKTSEGMENT"),
+                make_relational_literal("BUILDING", StringType()),
+            ],
+        ),
+        input=Scan(
+            table_name="CUSTOMER",
             columns={
                 "C_CUSTKEY": make_relational_column_reference("C_CUSTKEY"),
+                "C_MKTSEGMENT": make_relational_column_reference("C_MKTSEGMENT"),
             },
-            condition=CallExpression(
-                EQU,
-                BooleanType(),
-                [
-                    make_relational_column_reference("C_MKTSEGMENT"),
-                    make_relational_literal("BUILDING", StringType()),
-                ],
-            ),
-            input=Scan(
-                table_name="CUSTOMER",
-                columns={
-                    "C_CUSTKEY": make_relational_column_reference("C_CUSTKEY"),
-                    "C_MKTSEGMENT": make_relational_column_reference("C_MKTSEGMENT"),
-                },
-            ),
         ),
     )
-    orders = Aggregate(
-        keys={
+
+    orders = Filter(
+        columns={
             "O_CUSTKEY": make_relational_column_reference("O_CUSTKEY"),
             "O_ORDERKEY": make_relational_column_reference("O_ORDERKEY"),
             "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
             "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
         },
-        aggregations={
-            "ORDER_COUNT": CallExpression(COUNT, Int64Type(), []),
-        },
-        input=Filter(
+        condition=CallExpression(
+            LET,
+            BooleanType(),
+            [
+                make_relational_column_reference("O_ORDERDATE"),
+                make_relational_literal("1995-03-15", DateType()),
+            ],
+        ),
+        input=Scan(
+            table_name="ORDERS",
             columns={
                 "O_CUSTKEY": make_relational_column_reference("O_CUSTKEY"),
                 "O_ORDERKEY": make_relational_column_reference("O_ORDERKEY"),
                 "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
                 "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
             },
+        ),
+    )
+
+    customer_orders_join = Join(
+        columns={
+            "O_ORDERKEY": make_relational_column_reference(
+                "O_ORDERKEY", input_name="left"
+            ),
+            "O_ORDERDATE": make_relational_column_reference(
+                "O_ORDERDATE", input_name="left"
+            ),
+            "O_SHIPPRIORITY": make_relational_column_reference(
+                "O_SHIPPRIORITY", input_name="left"
+            ),
+        },
+        left=orders,
+        right=customer,
+        condition=CallExpression(
+            EQU,
+            BooleanType(),
+            [
+                make_relational_column_reference("O_CUSTKEY", input_name="left"),
+                make_relational_column_reference("C_CUSTKEY", input_name="right"),
+            ],
+        ),
+        join_type=JoinType.INNER,
+    )
+
+    lineitem = Project(
+        columns={
+            "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+            "REVENUE": CallExpression(
+                MUL,
+                UnknownType(),
+                [
+                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                    CallExpression(
+                        SUB,
+                        UnknownType(),
+                        [
+                            make_relational_literal(1, Int64Type()),
+                            make_relational_column_reference("L_DISCOUNT"),
+                        ],
+                    ),
+                ],
+            ),
+        },
+        input=Filter(
+            columns={
+                "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+                "L_EXTENDEDPRICE": make_relational_column_reference("L_EXTENDEDPRICE"),
+                "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
+            },
             condition=CallExpression(
-                LET,
+                GRT,
                 BooleanType(),
                 [
-                    make_relational_column_reference("O_ORDERDATE"),
+                    make_relational_column_reference("L_SHIPDATE"),
                     make_relational_literal("1995-03-15", DateType()),
                 ],
             ),
             input=Scan(
-                table_name="ORDERS",
-                columns={
-                    "O_CUSTKEY": make_relational_column_reference("O_CUSTKEY"),
-                    "O_ORDERKEY": make_relational_column_reference("O_ORDERKEY"),
-                    "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
-                    "O_SHIPPRIORITY": make_relational_column_reference(
-                        "O_SHIPPRIORITY"
-                    ),
-                },
-            ),
-        ),
-    )
-    customer_orders_join = Aggregate(
-        keys={
-            "O_ORDERKEY": make_relational_column_reference("O_ORDERKEY"),
-            "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
-            "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
-        },
-        aggregations={
-            "TEMP_COL0": CallExpression(
-                SUM,
-                UnknownType(),
-                [make_relational_column_reference("TEMP_COL0")],
-            ),
-        },
-        input=Project(
-            columns={
-                "O_ORDERKEY": make_relational_column_reference("O_ORDERKEY"),
-                "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
-                "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
-                "TEMP_COL0": CallExpression(
-                    MUL,
-                    UnknownType(),
-                    [
-                        make_relational_column_reference("ORDER_COUNT"),
-                        make_relational_column_reference("CUST_COUNT"),
-                    ],
-                ),
-            },
-            input=Join(
-                columns={
-                    "O_ORDERKEY": make_relational_column_reference(
-                        "O_ORDERKEY", input_name="left"
-                    ),
-                    "O_ORDERDATE": make_relational_column_reference(
-                        "O_ORDERDATE", input_name="left"
-                    ),
-                    "O_SHIPPRIORITY": make_relational_column_reference(
-                        "O_SHIPPRIORITY", input_name="left"
-                    ),
-                    "ORDER_COUNT": make_relational_column_reference(
-                        "ORDER_COUNT", input_name="left"
-                    ),
-                    "CUST_COUNT": make_relational_column_reference(
-                        "CUST_COUNT", input_name="right"
-                    ),
-                },
-                left=orders,
-                right=customer,
-                condition=CallExpression(
-                    EQU,
-                    BooleanType(),
-                    [
-                        make_relational_column_reference(
-                            "O_CUSTKEY", input_name="left"
-                        ),
-                        make_relational_column_reference(
-                            "C_CUSTKEY", input_name="right"
-                        ),
-                    ],
-                ),
-                join_type=JoinType.INNER,
-            ),
-        ),
-    )
-    lineitem = Aggregate(
-        keys={
-            "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
-        },
-        aggregations={
-            "REVENUE": CallExpression(
-                SUM,
-                UnknownType(),
-                [make_relational_column_reference("TEMP_COL1")],
-            ),
-        },
-        input=Project(
-            columns={
-                "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
-                "TEMP_COL1": CallExpression(
-                    MUL,
-                    UnknownType(),
-                    [
-                        make_relational_column_reference("L_EXTENDEDPRICE"),
-                        CallExpression(
-                            SUB,
-                            UnknownType(),
-                            [
-                                make_relational_literal(1, Int64Type()),
-                                make_relational_column_reference("L_DISCOUNT"),
-                            ],
-                        ),
-                    ],
-                ),
-            },
-            input=Filter(
+                table_name="LINEITEM",
                 columns={
                     "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
                     "L_EXTENDEDPRICE": make_relational_column_reference(
                         "L_EXTENDEDPRICE"
                     ),
                     "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
+                    "L_SHIPDATE": make_relational_column_reference("L_SHIPDATE"),
                 },
-                condition=CallExpression(
-                    GRT,
-                    BooleanType(),
-                    [
-                        make_relational_column_reference("L_SHIPDATE"),
-                        make_relational_literal("1995-03-15", DateType()),
-                    ],
-                ),
-                input=Scan(
-                    table_name="LINEITEM",
-                    columns={
-                        "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
-                        "L_EXTENDEDPRICE": make_relational_column_reference(
-                            "L_EXTENDEDPRICE"
-                        ),
-                        "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
-                        "L_SHIPDATE": make_relational_column_reference("L_SHIPDATE"),
-                    },
-                ),
             ),
         ),
     )
+
     return RelationalRoot(
         ordered_columns=[
             ("L_ORDERKEY", make_relational_column_reference("L_ORDERKEY")),
@@ -523,56 +455,36 @@ def tpch_query_3_plan() -> RelationalRoot:
                     nulls_first=True,
                 ),
             ],
-            input=Project(
+            input=Join(
                 columns={
-                    "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
-                    "O_SHIPPRIORITY": make_relational_column_reference(
-                        "O_SHIPPRIORITY"
+                    "L_ORDERKEY": make_relational_column_reference(
+                        "L_ORDERKEY", input_name="left"
                     ),
-                    "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
-                    "REVENUE": CallExpression(
-                        MUL,
-                        UnknownType(),
-                        [
-                            make_relational_column_reference("REVENUE"),
-                            make_relational_column_reference("TEMP_COL0"),
-                        ],
+                    "REVENUE": make_relational_column_reference(
+                        "REVENUE", input_name="left"
+                    ),
+                    "O_ORDERDATE": make_relational_column_reference(
+                        "O_ORDERDATE", input_name="left"
+                    ),
+                    "O_SHIPPRIORITY": make_relational_column_reference(
+                        "O_SHIPPRIORITY", input_name="left"
                     ),
                 },
-                input=Join(
-                    columns={
-                        "L_ORDERKEY": make_relational_column_reference(
+                left=lineitem,
+                right=customer_orders_join,
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference(
                             "L_ORDERKEY", input_name="left"
                         ),
-                        "REVENUE": make_relational_column_reference(
-                            "REVENUE", input_name="left"
+                        make_relational_column_reference(
+                            "O_ORDERKEY", input_name="right"
                         ),
-                        "O_ORDERDATE": make_relational_column_reference(
-                            "O_ORDERDATE", input_name="right"
-                        ),
-                        "O_SHIPPRIORITY": make_relational_column_reference(
-                            "O_SHIPPRIORITY", input_name="right"
-                        ),
-                        "TEMP_COL0": make_relational_column_reference(
-                            "TEMP_COL0", input_name="right"
-                        ),
-                    },
-                    left=lineitem,
-                    right=customer_orders_join,
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference(
-                                "L_ORDERKEY", input_name="left"
-                            ),
-                            make_relational_column_reference(
-                                "O_ORDERKEY", input_name="right"
-                            ),
-                        ],
-                    ),
-                    join_type=JoinType.INNER,
+                    ],
                 ),
+                join_type=JoinType.INNER,
             ),
         ),
     )
