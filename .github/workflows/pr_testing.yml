@@ -26,16 +26,24 @@ jobs:
           set -xe pipefail
           echo "commitMsg=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
 
-  run-tests:
-    strategy:
-      matrix:
-        python-version:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-    needs: [get-msg]
-    name: python
+  setup-uv:
+    name: Setup UV
     runs-on: ubuntu-latest
+    needs: [get-msg]
+    # https://docs.github.com/en/actions/learn-github-actions/expressions#contains
+    # contains is case-insensitive
+    if: contains(needs.get-msg.outputs.commitMsg, '[run ci]')
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          # Install a specific version of uv.
+          version: "0.4.23"
+
+  download-tpch-db:
+    name: Verify TPCH DB
+    runs-on: ubuntu-latest
+    needs: [get-msg, "setup-uv"]
     # https://docs.github.com/en/actions/learn-github-actions/expressions#contains
     # contains is case-insensitive
     if: contains(needs.get-msg.outputs.commitMsg, '[run ci]')
@@ -43,12 +51,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          # Install a specific version of uv.
-          version: "0.4.23"
+      - name: Download TPCH DB
+        run: ./tpch_demo/setup_tpch.sh ./tpch_demo/tpch.db
 
+      - name: Verify TPCH DB
+        run: uv run pytest tpch_demo/test_tpch_download.py
+
+  run-tests:
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+    needs: [get-msg, "setup-uv", "download-tpch-db"]
+    name: python
+    runs-on: ubuntu-latest
+    # https://docs.github.com/en/actions/learn-github-actions/expressions#contains
+    # contains is case-insensitive
+    if: contains(needs.get-msg.outputs.commitMsg, '[run ci]')
+    steps:
       - name: Run Ruff
         run: uv run ruff check .
 

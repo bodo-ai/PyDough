@@ -8,6 +8,8 @@ https://peps.python.org/pep-0249/
 import sqlite3
 from typing import Any
 
+__all__ = ["DatabaseConnection"]
+
 
 class DatabaseConnection:
     """

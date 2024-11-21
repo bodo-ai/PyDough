@@ -4,14 +4,17 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
+from typing import Any
+
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from pydough.database_connectors import DatabaseConnection
 from pydough.relational.relational_nodes import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
-__all__ = ["convert_relation_to_sql"]
+__all__ = ["convert_relation_to_sql", "execute_relational"]
 
 
 def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect) -> str:
@@ -31,5 +34,10 @@ def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect)
     return glot_expr.sql(dialect)
 
 
-def execute_relational(relational: RelationalRoot):
-    pass
+def execute_relational(
+    relational: RelationalRoot, dialect: SQLGlotDialect, connection: DatabaseConnection
+) -> list[Any]:
+    # TODO: Determine the design to combine dialect and connection
+    # into a single object.
+    sql: str = convert_relation_to_sql(relational, dialect)
+    return connection.execute_query(sql)
