@@ -7,7 +7,7 @@ __all__ = ["ChildAccess"]
 
 from abc import abstractmethod
 
-from pydough.pydough_ast.expressions import CollationExpression
+from pydough.pydough_ast.expressions.collation_expression import CollationExpression
 
 from .collection_ast import PyDoughCollectionAST
 
