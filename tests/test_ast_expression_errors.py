@@ -21,7 +21,11 @@ def test_binop_wrong_num_args(binary_operators: pydop.BinaryOperator):
     Verifies that every binary operator raises an appropriate exception
     when called with an insufficient number of arguments.
     """
-    msg: str = f"Invalid operator invocation '? {binary_operators.binop.value} ?': Expected 2 arguments, received 0"
+    msg: str
+    if binary_operators.binop in (pydop.BinOp.BAN, pydop.BinOp.BOR, pydop.BinOp.BXR):
+        msg = f"Invalid operator invocation '? {binary_operators.binop.value} ?': Expected at least 2 arguments, received 0"
+    else:
+        msg = f"Invalid operator invocation '? {binary_operators.binop.value} ?': Expected 2 arguments, received 0"
     with pytest.raises(PyDoughASTException, match=re.escape(msg)):
         binary_operators.verify_allows_args([])
 

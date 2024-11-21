@@ -43,6 +43,7 @@ binary_func_map: dict[str, SQLGlotExpression] = {
     "-": sqlglot_expressions.Sub,
     "*": sqlglot_expressions.Mul,
     "/": sqlglot_expressions.Div,
+    "&": sqlglot_expressions.And,
 }
 
 
@@ -75,23 +76,23 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         if key in generic_func_map:
             output_expr = generic_func_map[key].from_arg_list(input_exprs)
         elif key in binary_func_map:
-            assert (
-                len(input_exprs) == 2
-            ), "Expected exactly two inputs for binary function"
+            assert len(input_exprs) >= 2, "Need at least 2 binary inputs"
             # Note: SQLGlot explicit inserts parentheses for binary operations
             # during parsing.
-            left: SQLGlotExpression
-            right: SQLGlotExpression
             if isinstance(input_exprs[0], (Identifier, SQLGlotLiteral)):
-                left = input_exprs[0]
+                output_expr = input_exprs[0]
             else:
-                left = Paren(this=input_exprs[0])
-            if isinstance(input_exprs[1], (Identifier, SQLGlotLiteral)):
-                right = input_exprs[1]
-            else:
-                right = Paren(this=input_exprs[1])
-
-            output_expr = binary_func_map[key](this=left, expression=right)
+                output_expr = Paren(this=input_exprs[0])
+            for expr in input_exprs[1:]:
+                other_expr: SQLGlotExpression
+                if isinstance(expr, (Identifier, SQLGlotLiteral)):
+                    other_expr = expr
+                else:
+                    other_expr = Paren(this=expr)
+                # Build the expressions on the left since the operator is left-associative.
+                output_expr = binary_func_map[key](
+                    this=output_expr, expression=other_expr
+                )
         else:
             raise ValueError(f"Unsupported function {key}")
         self._stack.append(output_expr)
