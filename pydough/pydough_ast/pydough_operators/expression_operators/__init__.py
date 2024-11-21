@@ -7,6 +7,7 @@ __all__ = [
     "ExpressionFunctionOperator",
     "BinOp",
     "BinaryOperator",
+    "ABS",
     "ADD",
     "BAN",
     "BOR",
@@ -46,6 +47,7 @@ from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
 from .expression_operator_ast import PyDoughExpressionOperatorAST
 from .registered_expression_operators import (
+    ABS,
     ADD,
     AVG,
     BAN,

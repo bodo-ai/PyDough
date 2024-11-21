@@ -7,9 +7,9 @@ import pytest
 from sqlglot.dialects.sqlite import SQLite as SQLiteDialect
 from test_utils import (
     build_simple_scan,
-    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
+    make_relational_ordering,
 )
 from tpch_relational_plans import (
     tpch_query_1_plan,
@@ -18,18 +18,20 @@ from tpch_relational_plans import (
 )
 
 from pydough.pydough_ast.pydough_operators import (
+    ABS,
     ADD,
     EQU,
     MUL,
     SUM,
 )
-from pydough.relational.relational_expressions import CallExpression, LiteralExpression
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     RelationalRoot,
 )
@@ -61,7 +63,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
@@ -92,7 +94,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("c"),
                         ascending=True,
                         nulls_first=True,
@@ -159,12 +161,12 @@ def sqlite_dialect() -> SQLiteDialect:
                         "b": make_relational_column_reference("b"),
                     },
                     orderings=[
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("a"),
                             ascending=True,
                             nulls_first=True,
                         ),
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("b"),
                             ascending=False,
                             nulls_first=False,
@@ -475,6 +477,27 @@ def sqlite_dialect() -> SQLiteDialect:
             ),
             "SELECT a * (b + 1) AS a, a + (b * 1) AS b FROM (SELECT a, b FROM table)",
             id="nested_binary_functions",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_ordering(
+                        CallExpression(
+                            ABS,
+                            Int64Type(),
+                            [make_relational_column_reference("a")],
+                        ),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            "SELECT a FROM table ORDER BY ABS(a)",
+            id="ordering_function",
         ),
     ],
 )

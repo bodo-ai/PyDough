@@ -11,6 +11,7 @@ import pytest
 from sqlglot.expressions import (
     EQ,
     GTE,
+    Abs,
     Add,
     Binary,
     Expression,
@@ -27,19 +28,29 @@ from sqlglot.expressions import (
 from sqlglot.expressions import Identifier as Ident
 from test_utils import (
     build_simple_scan,
-    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
+    make_relational_ordering,
 )
 
-from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUB, SUM
-from pydough.relational.relational_expressions import CallExpression, LiteralExpression
-from pydough.relational.relational_nodes import (
+from pydough.pydough_ast.pydough_operators import (
+    ABS,
+    ADD,
+    EQU,
+    GEQ,
+    LENGTH,
+    LOWER,
+    SUB,
+    SUM,
+)
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     Relational,
     RelationalRoot,
@@ -442,12 +453,12 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
                     ),
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("b"),
                         ascending=False,
                         nulls_first=False,
@@ -467,6 +478,35 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
         ),
         pytest.param(
             Limit(
+                input=build_simple_scan(),
+                limit=LiteralExpression(1, Int64Type()),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                },
+                orderings=[
+                    make_relational_ordering(
+                        CallExpression(
+                            ABS,
+                            Int64Type(),
+                            [make_relational_column_reference("a")],
+                        ),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="a")],
+                _from=GlotFrom(Table(this=Ident(this="table"))),
+                order_by=[
+                    mkglot_func(Abs, [Ident(this="a")]).asc(nulls_first=True),
+                ],
+                limit=mk_literal(1, False),
+            ),
+            id="simple_limit_with_func_ordering",
+        ),
+        pytest.param(
+            Limit(
                 input=Limit(
                     input=build_simple_scan(),
                     limit=LiteralExpression(5, Int64Type()),
@@ -475,7 +515,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         "b": make_relational_column_reference("b"),
                     },
                     orderings=[
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("b"),
                             ascending=True,
                             nulls_first=False,
@@ -787,7 +827,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     "b": make_relational_column_reference("b"),
                 },
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("b"),
                         ascending=False,
                         nulls_first=True,
@@ -1165,7 +1205,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
@@ -1199,7 +1239,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
@@ -1239,7 +1279,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("c"),
                         ascending=True,
                         nulls_first=True,
@@ -1310,7 +1350,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         "b": make_relational_column_reference("b"),
                     },
                     orderings=[
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("b"),
                             ascending=True,
                             nulls_first=True,
@@ -1322,7 +1362,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("a", make_relational_column_reference("a")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
@@ -1360,7 +1400,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ("a", make_relational_column_reference("a")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
@@ -1443,6 +1483,31 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ),
             ),
             id="root_after_join",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_ordering(
+                        CallExpression(
+                            ABS,
+                            Int64Type(),
+                            [make_relational_column_reference("a")],
+                        ),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="a")],
+                order_by=[mkglot_func(Abs, [Ident(this="a")]).asc(nulls_first=True)],
+                _from=GlotFrom(Table(this=Ident(this="table"))),
+            ),
+            id="root_with_expr_ordering",
         ),
     ],
 )

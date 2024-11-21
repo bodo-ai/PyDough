@@ -5,9 +5,9 @@ tests that need to process relational plans.
 """
 
 from test_utils import (
-    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
+    make_relational_ordering,
 )
 
 from pydough.pydough_ast.pydough_operators import (
@@ -24,9 +24,9 @@ from pydough.pydough_ast.pydough_operators import (
     SUB,
     SUM,
 )
-from pydough.relational.relational_expressions import CallExpression
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
     Join,
     JoinType,
@@ -69,12 +69,12 @@ def tpch_query_1_plan() -> RelationalRoot:
             ("COUNT_ORDER", make_relational_column_reference("COUNT_ORDER")),
         ],
         orderings=[
-            make_relational_column_ordering(
+            make_relational_ordering(
                 make_relational_column_reference("L_RETURNFLAG"),
                 ascending=True,
                 nulls_first=True,
             ),
-            make_relational_column_ordering(
+            make_relational_ordering(
                 make_relational_column_reference("L_LINESTATUS"),
                 ascending=True,
                 nulls_first=True,
@@ -414,17 +414,17 @@ def tpch_query_3_plan() -> RelationalRoot:
             ("O_SHIPPRIORITY", make_relational_column_reference("O_SHIPPRIORITY")),
         ],
         orderings=[
-            make_relational_column_ordering(
+            make_relational_ordering(
                 make_relational_column_reference("REVENUE"),
                 ascending=False,
                 nulls_first=False,
             ),
-            make_relational_column_ordering(
+            make_relational_ordering(
                 make_relational_column_reference("O_ORDERDATE"),
                 ascending=True,
                 nulls_first=True,
             ),
-            make_relational_column_ordering(
+            make_relational_ordering(
                 make_relational_column_reference("L_ORDERKEY"),
                 ascending=True,
                 nulls_first=True,
@@ -439,17 +439,17 @@ def tpch_query_3_plan() -> RelationalRoot:
                 "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
             },
             orderings=[
-                make_relational_column_ordering(
+                make_relational_ordering(
                     make_relational_column_reference("REVENUE"),
                     ascending=False,
                     nulls_first=False,
                 ),
-                make_relational_column_ordering(
+                make_relational_ordering(
                     make_relational_column_reference("O_ORDERDATE"),
                     ascending=True,
                     nulls_first=True,
                 ),
-                make_relational_column_ordering(
+                make_relational_ordering(
                     make_relational_column_reference("L_ORDERKEY"),
                     ascending=True,
                     nulls_first=True,
