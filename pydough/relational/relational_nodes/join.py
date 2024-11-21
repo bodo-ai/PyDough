@@ -18,6 +18,8 @@ class JoinType(Enum):
     LEFT = "left"
     RIGHT = "right"
     FULL_OUTER = "full outer"
+    ANTI = "anti"
+    SEMI = "semi"
 
 
 class Join(Relational):
