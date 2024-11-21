@@ -44,9 +44,6 @@ class SubCollection(CollectionAccess):
     def standalone_string(self) -> str:
         return self.subcollection_property.name
 
-    def to_string(self) -> str:
-        return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
-
     @property
     def tree_item_string(self) -> str:
         return f"SubCollection[{self.standalone_string}]"

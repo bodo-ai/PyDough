@@ -148,7 +148,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
     base_value: str = "BACK(1).retail_price * quantity"
     adjusted_value: str = f"BACK(1).retail_price * (quantity * {adjustment})"
     part_values: str = f"suppliers.parts_supplied.ps_lines.WHERE(ship_mode == 'AIR')(value={base_value}, adj_value={adjusted_value})"
-    string_representation: str = f"Regions(region_name=name, intra_ratio=SUM({part_values}.adj_value) / SUM({part_values}.value))"
+    string_representation: str = f"TPCH.Regions(region_name=name, intra_ratio=SUM({part_values}.adj_value) / SUM({part_values}.value))"
     tree_string_representation: str = """\
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -805,7 +805,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Regions"),
-            "Regions",
+            "TPCH.Regions",
             """\
 ──┬─ TPCH
   └─── TableCollection[Regions]\
@@ -814,7 +814,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
-            "Regions.nations",
+            "TPCH.Regions.nations",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
@@ -824,7 +824,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
-            "Regions.nations",
+            "TPCH.Regions.nations",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
@@ -837,7 +837,7 @@ def test_collections_calc_terms(
             ** CalcInfo(
                 [],
             ),
-            "Regions()",
+            "TPCH.Regions()",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -860,7 +860,7 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "Regions(region_name=name, adjusted_key=(key - 1) * 2)",
+            "TPCH.Regions(region_name=name, adjusted_key=(key - 1) * 2)",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -888,7 +888,7 @@ def test_collections_calc_terms(
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
-            "Regions.WHERE(name != 'ASIA').nations.WHERE(name != 'USA')(region_name=BACK(1).name, nation_name=name)",
+            "TPCH.Regions.WHERE(name != 'ASIA').nations.WHERE(name != 'USA')(region_name=BACK(1).name, nation_name=name)",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -908,7 +908,7 @@ def test_collections_calc_terms(
                 nation_name=ReferenceInfo("nation_name"),
                 supplier_name=ReferenceInfo("name"),
             ),
-            "Regions.suppliers(region_name=BACK(1).name, nation_name=nation_name, supplier_name=name)",
+            "TPCH.Regions.suppliers(region_name=BACK(1).name, nation_name=nation_name, supplier_name=name)",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
@@ -921,7 +921,7 @@ def test_collections_calc_terms(
             TableCollectionInfo("Parts")
             ** SubCollectionInfo("suppliers_of_part")
             ** SubCollectionInfo("ps_lines"),
-            "Parts.suppliers_of_part.ps_lines",
+            "TPCH.Parts.suppliers_of_part.ps_lines",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Parts]
@@ -939,7 +939,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("account_balance", 0)]
                 ),
             ),
-            "Nations(nation_name=name, total_supplier_balances=SUM(suppliers.account_balance))",
+            "TPCH.Nations(nation_name=name, total_supplier_balances=SUM(suppliers.account_balance))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Nations]
@@ -958,7 +958,7 @@ def test_collections_calc_terms(
                 region_name=BackReferenceExpressionInfo("adj_name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
-            "Regions(adj_name=LOWER(name)).nations(region_name=BACK(1).adj_name, nation_name=name)",
+            "TPCH.Regions(adj_name=LOWER(name)).nations(region_name=BACK(1).adj_name, nation_name=name)",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -986,7 +986,7 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied.retail_price - 1.0))",
+            "TPCH.Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied.retail_price - 1.0))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
@@ -1017,7 +1017,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("adj_retail_price", 0)]
                 ),
             ),
-            "Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied(adj_retail_price=retail_price - 1.0).adj_retail_price))",
+            "TPCH.Suppliers(supplier_name=name, total_retail_price=SUM(parts_supplied(adj_retail_price=retail_price - 1.0).adj_retail_price))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
@@ -1048,7 +1048,7 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
+            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
@@ -1085,7 +1085,7 @@ def test_collections_calc_terms(
                 part_name=ReferenceInfo("name"),
                 ratio=ChildReferenceExpressionInfo("ratio", 0),
             ),
-            "Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
+            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
@@ -1157,7 +1157,7 @@ def test_collections_calc_terms(
         pytest.param(
             TableCollectionInfo("Nations")
             ** OrderInfo([], (ReferenceInfo("name"), True, True)),
-            "Nations.ORDER_BY(name.ASC(na_pos='last'))",
+            "TPCH.Nations.ORDER_BY(name.ASC(na_pos='last'))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Nations]
@@ -1172,7 +1172,7 @@ def test_collections_calc_terms(
                 nation_name=ReferenceInfo("name"),
                 n_customers=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
             ),
-            "Nations(nation_name=name, n_customers=COUNT(customers))",
+            "TPCH.Nations(nation_name=name, n_customers=COUNT(customers))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Nations]
@@ -1221,7 +1221,7 @@ def test_collections_calc_terms(
                     "NDISTINCT", [ChildReferenceCollectionInfo(3)]
                 ),
             ),
-            "Nations(nation_name=name, n_customers=COUNT(customers), n_customers_without_orders=COUNT(customers.WHERE(COUNT(orders) == 0)), n_lines_with_tax=COUNT(customers.orders.lines.tax), n_part_orders=COUNT(customers.orders.lines.part), n_unique_parts_ordered=NDISTINCT(customers.orders.lines.part))",
+            "TPCH.Nations(nation_name=name, n_customers=COUNT(customers), n_customers_without_orders=COUNT(customers.WHERE(COUNT(orders) == 0)), n_lines_with_tax=COUNT(customers.orders.lines.tax), n_part_orders=COUNT(customers.orders.lines.part), n_unique_parts_ordered=NDISTINCT(customers.orders.lines.part))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Nations]
@@ -1258,7 +1258,7 @@ def test_collections_calc_terms(
                 ),
                 (ReferenceInfo("name"), True, True),
             ),
-            "Nations.ORDER_BY(SUM(suppliers.account_balance).DESC(na_pos='last'), name.ASC(na_pos='last'))",
+            "TPCH.Nations.ORDER_BY(SUM(suppliers.account_balance).DESC(na_pos='last'), name.ASC(na_pos='last'))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Nations]
@@ -1275,7 +1275,7 @@ def test_collections_calc_terms(
             ** OrderInfo([], (ReferenceInfo("key"), True, True))
             ** SubCollectionInfo("customers")
             ** OrderInfo([], (ReferenceInfo("acctbal"), True, True)),
-            "Regions.ORDER_BY(name.ASC(na_pos='last')).nations.ORDER_BY(key.ASC(na_pos='last')).customers.ORDER_BY(acctbal.ASC(na_pos='last'))",
+            "TPCH.Regions.ORDER_BY(name.ASC(na_pos='last')).nations.ORDER_BY(key.ASC(na_pos='last')).customers.ORDER_BY(acctbal.ASC(na_pos='last'))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -1307,7 +1307,7 @@ def test_collections_calc_terms(
                     [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
                 ),
             ),
-            "Regions.ORDER_BY(name.ASC(na_pos='last')).customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(acctbal > 1000)(region_name=BACK(1).name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
+            "TPCH.Regions.ORDER_BY(name.ASC(na_pos='last')).customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(acctbal > 1000)(region_name=BACK(1).name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -1334,7 +1334,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
             ),
-            "Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price))",
+            "TPCH.Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price))",
             """\
 ┌─── TPCH
 ├─┬─ Partition[name='parts', by=container]
@@ -1378,7 +1378,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
                 ),
             ),
-            "Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.part_type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
+            "TPCH.Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.part_type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
             """\
 ┌─── TPCH
 ├─┬─ Partition[name='lines', by=('region_name', 'part_type')]
@@ -1452,7 +1452,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("total_sum", 0)]
                 ),
             ),
-            "Customers(name=name, final_sum=SUM(Partition(Partition(orders.lines, name='lines', by=('ship_date', 'receipt_date'))(order_sum=SUM(lines.extended_price)).WHERE(order_sum > 1000), name='day_totals', by=ship_date)(total_sum=SUM(day_totals.order_sum)).WHERE(total_sum < 2000).total_sum))",
+            "TPCH.Customers(name=name, final_sum=SUM(Partition(Partition(orders.lines, name='lines', by=('ship_date', 'receipt_date'))(order_sum=SUM(lines.extended_price)).WHERE(order_sum > 1000), name='day_totals', by=ship_date)(total_sum=SUM(day_totals.order_sum)).WHERE(total_sum < 2000).total_sum))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Customers]
@@ -1489,7 +1489,7 @@ def test_collections_calc_terms(
                 ),
             )
             ** OrderInfo([], (ReferenceInfo("total_price"), False, True)),
-            "Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).ORDER_BY(total_price.DESC(na_pos='last'))",
+            "TPCH.Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).ORDER_BY(total_price.DESC(na_pos='last'))",
             """\
 ┌─── TPCH
 ├─┬─ Partition[name='parts', by=container]
@@ -1529,7 +1529,7 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).parts(part_name=name, container=container, ratio=retail_price / BACK(1).total_price)",
+            "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).parts(part_name=name, container=container, ratio=retail_price / BACK(1).total_price)",
             """\
 ┌─── TPCH
 ├─┬─ Partition[name='parts', by=container]
@@ -1553,7 +1553,7 @@ def test_collections_calc_terms(
                 ),
             )
             ** TopKInfo([], 5, (ReferenceInfo("total_sum"), False, True)),
-            "Nations(total_sum=SUM(suppliers.account_balance)).TOP_K(5, total_sum.DESC(na_pos='last'))",
+            "TPCH.Nations(total_sum=SUM(suppliers.account_balance)).TOP_K(5, total_sum.DESC(na_pos='last'))",
             """\
 ──┬─ TPCH
   ├─── TableCollection[Nations]

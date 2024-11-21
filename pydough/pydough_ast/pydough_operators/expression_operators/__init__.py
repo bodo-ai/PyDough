@@ -36,7 +36,10 @@ __all__ = [
     "CONTAINS",
     "LIKE",
     "UPPER",
+    "AVG",
     "NDISTINCT",
+    "ISIN",
+    "SLICE",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -44,6 +47,7 @@ from .expression_function_operators import ExpressionFunctionOperator
 from .expression_operator_ast import PyDoughExpressionOperatorAST
 from .registered_expression_operators import (
     ADD,
+    AVG,
     BAN,
     BOR,
     BXR,
@@ -55,6 +59,7 @@ from .registered_expression_operators import (
     GEQ,
     GRT,
     IFF,
+    ISIN,
     LENGTH,
     LEQ,
     LET,
@@ -68,6 +73,7 @@ from .registered_expression_operators import (
     NEQ,
     NOT,
     POW,
+    SLICE,
     STARTSWITH,
     SUB,
     SUM,

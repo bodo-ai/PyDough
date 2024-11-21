@@ -13,10 +13,19 @@ from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql"]
 
-# Cache a visitor for the module
-_visitor: SQLGlotRelationalVisitor = SQLGlotRelationalVisitor()
-
 
 def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect) -> str:
-    glot_expr: SQLGlotExpression = _visitor.relational_to_sqlglot(relational)
+    """
+    Convert the given relational tree to a SQL string using the given dialect.
+
+    Args:
+        relational (RelationalRoot): The relational tree to convert.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
+
+    Returns:
+        str: The SQL string representing the relational tree.
+    """
+    glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor().relational_to_sqlglot(
+        relational
+    )
     return glot_expr.sql(dialect)

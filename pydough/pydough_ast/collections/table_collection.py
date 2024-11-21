@@ -31,9 +31,6 @@ class TableCollection(CollectionAccess):
     def standalone_string(self) -> str:
         return self.collection.name
 
-    def to_string(self) -> str:
-        return self.standalone_string
-
     @property
     def tree_item_string(self) -> str:
         return f"TableCollection[{self.standalone_string}]"
