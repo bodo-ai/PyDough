@@ -21,6 +21,7 @@ from sqlglot.expressions import (
     Sub,
     Sum,
     Table,
+    Where,
 )
 from sqlglot.expressions import Identifier as Ident
 from test_utils import (
@@ -40,6 +41,7 @@ from pydough.relational.relational_nodes import (
     Limit,
     Project,
     Relational,
+    RelationalRoot,
     Scan,
 )
 from pydough.sqlglot import SQLGlotRelationalVisitor, find_identifiers
@@ -949,6 +951,289 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             id="filter_after_join",
         ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="b"), Ident(this="a")],
+                _from=Table(this=Ident(this="table")),
+            ),
+            id="simple_scan_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+            ),
+            id="simple_ordering_scan_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="a")],
+                _from=Table(this=Ident(this="table")),
+            ),
+            id="pruning_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                ),
+            ),
+            id="pruning_root_ordering_dependent",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Project(
+                    input=build_simple_scan(),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                        "c": CallExpression(
+                            ADD,
+                            Int64Type(),
+                            [
+                                make_relational_column_reference("a"),
+                                make_relational_literal(1, Int64Type()),
+                            ],
+                        ),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("c"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                order_by=[Ident(this="c").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="a"),
+                        Ident(this="b"),
+                        set_alias(
+                            mkglot_func(Add, [Ident(this="a"), Literal(value=1)]),
+                            "c",
+                        ),
+                    ],
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                    ),
+                ),
+            ),
+            id="root_after_project",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                _from=Table(this=Ident(this="table")),
+            ),
+            id="root_after_filter",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(10, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_column_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=True,
+                            nulls_first=True,
+                        ),
+                    ],
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="b"), Ident(this="a")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    order_by=[Ident(this="b").asc(nulls_first=True)],
+                    limit=Literal(value=10),
+                ),
+            ),
+            id="root_after_limit",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={
+                        "a": CallExpression(
+                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                        )
+                    },
+                ),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("a"),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="a")],
+                order_by=[Ident(this="a").asc(nulls_first=True)],
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="b"),
+                        set_alias(
+                            mkglot_func(Sum, [Ident(this="a")]),
+                            "a",
+                        ),
+                    ],
+                    group_by=[Ident(this="b")],
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                    ),
+                ),
+            ),
+            # Note: Can be heavily optimized by simplifying the generated SQL.
+            id="root_after_aggregate",
+        ),
+        pytest.param(
+            RelationalRoot(
+                Join(
+                    left=build_simple_scan(),
+                    right=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a", input_name="left"),
+                            make_relational_column_reference("a", input_name="right"),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
+                    columns={
+                        "a": make_relational_column_reference("a", input_name="left"),
+                        "b": make_relational_column_reference("b", input_name="right"),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="_table_alias_1.b", alias="b")],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    alias="_table_alias_0",
+                ),
+                join=GlotJoin(
+                    right_query=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                        alias="_table_alias_1",
+                    ),
+                    on=mkglot_func(
+                        EQ,
+                        [
+                            Ident(this="_table_alias_0.a"),
+                            Ident(this="_table_alias_1.a"),
+                        ],
+                    ),
+                    join_type="inner",
+                ),
+            ),
+            id="root_after_join",
+        ),
     ],
 )
 def test_node_to_sqlglot(
@@ -996,4 +1281,78 @@ def test_node_to_sqlglot(
     ],
 )
 def test_expression_identifiers(expr: Expression, expected: set[Ident]):
+    """
+    Verify that we can properly find all of the identifiers in each expression.
+    """
     assert find_identifiers(expr) == expected
+
+
+@pytest.mark.parametrize(
+    "root, sqlglot_expr",
+    [
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                    ("a", make_relational_column_reference("a")),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Ident(this="b"),
+                        Ident(this="a"),
+                    ],
+                    "from": From(this=Table(this=Ident(this="table"))),
+                }
+            ),
+            id="simple_scan_root",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                ordered_columns=[
+                    ("b", make_relational_column_reference("b")),
+                ],
+            ),
+            Select(
+                **{
+                    "expressions": [
+                        Ident(this="b"),
+                    ],
+                    "from": From(this=Table(this=Ident(this="table"))),
+                    "where": Where(
+                        this=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)])
+                    ),
+                }
+            ),
+            id="root_after_filter",
+        ),
+    ],
+)
+def test_relational_to_sqlglot(
+    sqlglot_relational_visitor: SQLGlotRelationalVisitor,
+    root: RelationalRoot,
+    sqlglot_expr: Expression,
+):
+    """
+    Test converting a root node to SQLGlot using
+    relational_to_sqlglot
+    """
+    actual = sqlglot_relational_visitor.relational_to_sqlglot(root)
+    assert actual == sqlglot_expr
