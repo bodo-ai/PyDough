@@ -29,7 +29,3 @@ def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect)
         relational
     )
     return glot_expr.sql(dialect)
-
-
-def execute_relational(relational: RelationalRoot):
-    pass

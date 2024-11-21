@@ -8,7 +8,7 @@ __all__ = [
     "SQLGlotRelationalVisitor",
     "unwrap_alias",
 ]
-from .relational_to_sql import convert_relation_to_sql
+from .execute_relational import convert_relation_to_sql
 from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
 from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
