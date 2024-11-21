@@ -1,7 +1,7 @@
 """
-Class that converts the relational tree to a SQL implementation
-via SQLGlot. This class acts as the main connector between the
-relational tree and the SQLGlot library.
+Class that converts the relational tree to the "executed" forms
+of PyDough, which is either returns the SQL text or executes
+the query on the database.
 """
 
 from sqlglot.dialects import Dialect as SQLGlotDialect
@@ -29,3 +29,7 @@ def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect)
         relational
     )
     return glot_expr.sql(dialect)
+
+
+def execute_relational(relational: RelationalRoot):
+    pass
