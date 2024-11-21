@@ -59,7 +59,7 @@ from pydough.pydough_ast import AstNodeBuilder
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
             ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 3)),
-            "Cannot reference back 3 levels above Regions.nations",
+            "Cannot reference back 3 levels above TPCH.Regions.nations",
             id="back_too_far",
         ),
         pytest.param(

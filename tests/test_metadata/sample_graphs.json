@@ -405,6 +405,7 @@
           "nation_key": {"type": "table_column", "column_name": "c_nationkey", "data_type": "int64"},
           "phone": {"type": "table_column", "column_name": "c_phone", "data_type": "string"},
           "acctbal": {"type": "table_column", "column_name": "c_acctbal", "data_type": "decimal[12,2]"},
+          "mktsegment": {"type": "table_column", "column_name": "c_mktsegment", "data_type": "string"},
           "comment": {"type": "table_column", "column_name": "c_comment", "data_type": "string"}
         }
       }
