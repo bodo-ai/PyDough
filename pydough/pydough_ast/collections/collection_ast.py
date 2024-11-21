@@ -161,7 +161,10 @@ class PyDoughCollectionAST(PyDoughAST):
             terms accessible in the context, or is not an expression.
         """
         term = self.get_term(term_name)
-        assert isinstance(term, PyDoughExpressionAST)
+        if not isinstance(term, PyDoughExpressionAST):
+            raise PyDoughASTException(
+                f"Property {term_name!r} of {self} is not an expression"
+            )
         return term
 
     def get_collection(self, term_name: str) -> "PyDoughCollectionAST":
@@ -177,7 +180,10 @@ class PyDoughCollectionAST(PyDoughAST):
             terms accessible in the context, or is not a collection.
         """
         term = self.get_term(term_name)
-        assert isinstance(term, PyDoughCollectionAST)
+        if not isinstance(term, PyDoughCollectionAST):
+            raise PyDoughASTException(
+                f"Property {term_name!r} of {self} is not a collection"
+            )
         return term
 
     @property
