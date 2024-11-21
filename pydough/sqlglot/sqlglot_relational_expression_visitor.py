@@ -24,6 +24,7 @@ __all__ = ["SQLGlotRelationalExpressionVisitor"]
 generic_func_map: dict[str, SQLGlotExpression] = {
     "LOWER": sqlglot_expressions.Lower,
     "LENGTH": sqlglot_expressions.Length,
+    "SUM": sqlglot_expressions.Sum,
 }
 # These functions need an explicit constructor for binary.
 binary_func_map: dict[str, SQLGlotExpression] = {
@@ -34,6 +35,7 @@ binary_func_map: dict[str, SQLGlotExpression] = {
     "<": sqlglot_expressions.LT,
     "!=": sqlglot_expressions.NEQ,
     "+": sqlglot_expressions.Add,
+    "-": sqlglot_expressions.Sub,
 }
 
 

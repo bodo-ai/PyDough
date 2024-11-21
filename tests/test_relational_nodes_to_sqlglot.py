@@ -9,12 +9,15 @@ from sqlglot.expressions import (
     EQ,
     GTE,
     Add,
+    Binary,
     Expression,
     From,
     Length,
     Literal,
     Lower,
     Select,
+    Sub,
+    Sum,
     Table,
 )
 from sqlglot.expressions import Identifier as Ident
@@ -25,9 +28,10 @@ from test_utils import (
     make_relational_literal,
 )
 
-from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER
+from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUB, SUM
 from pydough.relational.relational_expressions import CallExpression, LiteralExpression
 from pydough.relational.relational_nodes import (
+    Aggregate,
     Filter,
     Limit,
     Project,
@@ -88,12 +92,25 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     )
     if "where" in kwargs:
         query = query.where(kwargs.pop("where"))
+    if "group_by" in kwargs:
+        query = query.group_by(*kwargs.pop("group_by"))
     if "order_by" in kwargs:
         query = query.order_by(*kwargs.pop("order_by"))
     if "limit" in kwargs:
         query = query.limit(kwargs.pop("limit"))
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
     return query
+
+
+def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
+    """
+    Make a function call expression with the given operator and arguments.
+    """
+    if issubclass(op, Binary):
+        assert len(args) == 2, "Binary functions require exactly 2 arguments"
+        return op(this=args[0], expression=args[1])
+    else:
+        return op.from_arg_list(args)
 
 
 @pytest.mark.parametrize(
@@ -195,14 +212,14 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             mkglot(
                 expressions=[
                     set_alias(
-                        Length.from_arg_list([Ident(this="col1")]),
+                        mkglot_func(Length, [Ident(this="col1")]),
                         "col2",
                     ),
                 ],
                 _from=mkglot(
                     expressions=[
                         set_alias(
-                            Lower.from_arg_list([Ident(this="a")]),
+                            mkglot_func(Lower, [Ident(this="a")]),
                             "col1",
                         ),
                     ],
@@ -230,7 +247,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             mkglot(
                 expressions=[Ident(this="a"), Ident(this="b")],
                 _from=Table(this=Ident(this="table")),
-                where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
+                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
             ),
             id="simple_filter",
         ),
@@ -262,11 +279,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             ),
             mkglot(
                 expressions=[Ident(this="a")],
-                where=GTE(this=Ident(this="b"), expression=Literal(value=5)),
+                where=mkglot_func(GTE, [Ident(this="b"), Literal(value=5)]),
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
-                    where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
+                    where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
                 ),
             ),
             id="nested_filters",
@@ -307,11 +324,11 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=EQ(this=Ident(this="c"), expression=Literal(value=1)),
+                where=mkglot_func(EQ, [Ident(this="c"), Literal(value=1)]),
                 _from=mkglot(
                     expressions=[
                         set_alias(
-                            Add(this=Ident(this="a"), expression=Literal(value=1)),
+                            mkglot_func(Add, [Ident(this="a"), Literal(value=1)]),
                             "c",
                         ),
                         Ident(this="b"),
@@ -429,7 +446,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
+                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
                 limit=Literal(value=2),
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
@@ -462,7 +479,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                where=EQ(this=Ident(this="a"), expression=Literal(value=1)),
+                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
                 _from=mkglot(
                     expressions=[Ident(this="a"), Ident(this="b")],
                     _from=Table(this=Ident(this="table")),
@@ -492,6 +509,241 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
             ),
             id="project_limit_combine",
         ),
+        pytest.param(
+            Aggregate(
+                input=build_simple_scan(),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={},
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
+                group_by=[Ident(this="b")],
+            ),
+            id="simple_distinct",
+        ),
+        pytest.param(
+            Aggregate(
+                input=build_simple_scan(),
+                keys={},
+                aggregations={
+                    "a": CallExpression(
+                        SUM, Int64Type(), [make_relational_column_reference("a")]
+                    )
+                },
+            ),
+            mkglot(
+                expressions=[
+                    set_alias(
+                        mkglot_func(Sum, [Ident(this="a")]),
+                        "a",
+                    )
+                ],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                ),
+            ),
+            id="simple_sum",
+        ),
+        pytest.param(
+            Aggregate(
+                input=build_simple_scan(),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={
+                    "a": CallExpression(
+                        SUM, Int64Type(), [make_relational_column_reference("a")]
+                    )
+                },
+            ),
+            mkglot(
+                expressions=[
+                    Ident(this="b"),
+                    set_alias(
+                        mkglot_func(Sum, [Ident(this="a")]),
+                        "a",
+                    ),
+                ],
+                group_by=[Ident(this="b")],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                ),
+            ),
+            id="simple_groupby_sum",
+        ),
+        pytest.param(
+            Aggregate(
+                input=Filter(
+                    input=build_simple_scan(),
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a"),
+                            make_relational_literal(1),
+                        ],
+                    ),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={},
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                where=mkglot_func(EQ, [Ident(this="a"), Literal(value=1)]),
+                group_by=[Ident(this="b")],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                ),
+            ),
+            id="filter_before_aggregate",
+        ),
+        pytest.param(
+            Filter(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={
+                        "a": CallExpression(
+                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                        )
+                    },
+                ),
+                condition=CallExpression(
+                    GEQ,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a"),
+                        make_relational_literal(20),
+                    ],
+                ),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                where=mkglot_func(GTE, [Ident(this="a"), Literal(value=20)]),
+                _from=mkglot(
+                    expressions=[
+                        Ident(this="b"),
+                        set_alias(
+                            mkglot_func(Sum, [Ident(this="a")]),
+                            "a",
+                        ),
+                    ],
+                    group_by=[Ident(this="b")],
+                    _from=mkglot(
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=Table(this=Ident(this="table")),
+                    ),
+                ),
+            ),
+            id="filter_after_aggregate",
+        ),
+        pytest.param(
+            Aggregate(
+                input=Limit(
+                    input=build_simple_scan(),
+                    limit=LiteralExpression(10, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+                keys={
+                    "b": make_relational_column_reference("b"),
+                },
+                aggregations={},
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                group_by=[Ident(this="b")],
+                _from=mkglot(
+                    expressions=[Ident(this="a"), Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                    limit=Literal(value=10),
+                ),
+            ),
+            id="limit_before_aggregate",
+        ),
+        pytest.param(
+            Limit(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={},
+                ),
+                limit=LiteralExpression(10, Int64Type()),
+                columns={
+                    "b": make_relational_column_reference("b"),
+                },
+                orderings=[
+                    make_relational_column_ordering(
+                        make_relational_column_reference("b"),
+                        ascending=False,
+                        nulls_first=True,
+                    )
+                ],
+            ),
+            mkglot(
+                expressions=[Ident(this="b")],
+                _from=Table(this=Ident(this="table")),
+                group_by=[Ident(this="b")],
+                order_by=[Ident(this="b").desc(nulls_first=True)],
+                limit=Literal(value=10),
+            ),
+            id="limit_after_aggregate",
+        ),
+        pytest.param(
+            Project(
+                input=Aggregate(
+                    input=build_simple_scan(),
+                    keys={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    aggregations={},
+                ),
+                columns={
+                    "b": CallExpression(
+                        SUB,
+                        Int64Type(),
+                        [
+                            make_relational_column_reference("b"),
+                            make_relational_literal(1, Int64Type()),
+                        ],
+                    ),
+                },
+            ),
+            mkglot(
+                expressions=[
+                    set_alias(
+                        mkglot_func(Sub, [Ident(this="b"), Literal(value=1)]),
+                        "b",
+                    ),
+                ],
+                _from=mkglot(
+                    expressions=[Ident(this="b")],
+                    group_by=[Ident(this="b")],
+                    _from=Table(this=Ident(this="table")),
+                ),
+            ),
+            id="project_after_aggregate",
+        ),
     ],
 )
 def test_node_to_sqlglot(
@@ -506,7 +758,8 @@ def test_node_to_sqlglot(
     # Note: We reset manually because we can't test full roots yet.
     sqlglot_relational_visitor.reset()
     node.accept(sqlglot_relational_visitor)
-    assert sqlglot_relational_visitor.get_sqlglot_result() == sqlglot_expr
+    actual = sqlglot_relational_visitor.get_sqlglot_result()
+    assert actual == sqlglot_expr
 
 
 @pytest.mark.parametrize(
@@ -515,25 +768,22 @@ def test_node_to_sqlglot(
         pytest.param(Ident(this="a"), {Ident(this="a")}, id="Ident"),
         pytest.param(Literal(this=1), set(), id="literal"),
         pytest.param(
-            Add(
-                this=Ident(this="a"),
-                expression=Ident(this="b"),
-            ),
+            mkglot_func(Add, [Ident(this="a"), Ident(this="b")]),
             {Ident(this="a"), Ident(this="b")},
             id="function",
         ),
         pytest.param(
-            Add(
-                this=Ident(this="a"),
-                expression=Add(this=Ident(this="b"), expression=Ident(this="c")),
+            mkglot_func(
+                Add,
+                [Ident(this="a"), mkglot_func(Add, [Ident(this="b"), Ident(this="c")])],
             ),
             {Ident(this="a"), Ident(this="b"), Ident(this="c")},
             id="nested_function",
         ),
         pytest.param(
-            Add(
-                this=Ident(this="a"),
-                expression=Add(this=Ident(this="b"), expression=Ident(this="a")),
+            mkglot_func(
+                Add,
+                [Ident(this="a"), mkglot_func(Add, [Ident(this="b"), Ident(this="a")])],
             ),
             {Ident(this="a"), Ident(this="b")},
             id="duplicate_identifier",
