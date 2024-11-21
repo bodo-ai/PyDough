@@ -33,13 +33,14 @@ from test_utils import (
 )
 
 from pydough.pydough_ast.pydough_operators import ADD, EQU, GEQ, LENGTH, LOWER, SUB, SUM
-from pydough.relational.relational_expressions import CallExpression, LiteralExpression
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     Relational,
     RelationalRoot,

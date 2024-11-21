@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from pydough.pydough_ast.pydough_operators.expression_operators import LOWER, SUM
-from pydough.relational.relational_expressions import (
+from pydough.relational import (
     CallExpression,
     ColumnReference,
     ColumnSortInfo,

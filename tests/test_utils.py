@@ -40,12 +40,12 @@ from pydough.pydough_ast import (
     TopK,
     Where,
 )
-from pydough.relational.relational_expressions import (
+from pydough.relational import (
     ColumnReference,
     ColumnSortInfo,
     LiteralExpression,
+    Scan,
 )
-from pydough.relational.relational_nodes import Scan
 from pydough.types import PyDoughType, UnknownType
 
 # Type alias for a function that takes in a string and generates metadata

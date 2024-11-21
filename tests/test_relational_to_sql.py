@@ -23,13 +23,14 @@ from pydough.pydough_ast.pydough_operators import (
     MUL,
     SUM,
 )
-from pydough.relational.relational_expressions import CallExpression, LiteralExpression
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     RelationalRoot,
 )

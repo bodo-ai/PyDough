@@ -8,7 +8,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Paren
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import (
+from pydough.relational import (
     CallExpression,
     ColumnReference,
     LiteralExpression,

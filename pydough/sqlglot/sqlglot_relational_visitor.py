@@ -10,16 +10,14 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import (
+from pydough.relational import (
+    Aggregate,
     ColumnReferenceInputNameModifier,
     ColumnSortInfo,
-    LiteralExpression,
-)
-from pydough.relational.relational_nodes import (
-    Aggregate,
     Filter,
     Join,
     Limit,
+    LiteralExpression,
     Project,
     RelationalRoot,
     RelationalVisitor,

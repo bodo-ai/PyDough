@@ -24,9 +24,9 @@ from pydough.pydough_ast.pydough_operators import (
     SUB,
     SUM,
 )
-from pydough.relational.relational_expressions import CallExpression
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
     Join,
     JoinType,

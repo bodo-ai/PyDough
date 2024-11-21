@@ -11,17 +11,15 @@ from test_utils import (
 )
 
 from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
-from pydough.relational.relational_expressions import (
+from pydough.relational import (
+    Aggregate,
     CallExpression,
     ColumnReference,
-    LiteralExpression,
-)
-from pydough.relational.relational_nodes import (
-    Aggregate,
     Filter,
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     Relational,
     RelationalRoot,
