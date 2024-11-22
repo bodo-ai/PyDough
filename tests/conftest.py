@@ -11,7 +11,11 @@ import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
 
 import pydough
-from pydough.database_connectors.database_connector import DatabaseConnection
+from pydough.database_connectors import (
+    DatabaseConnection,
+    DatabaseContext,
+    DatabaseDialect,
+)
 from pydough.metadata.graphs import GraphMetadata
 from pydough.pydough_ast import AstNodeBuilder
 from pydough.pydough_ast import pydough_operators as pydop
@@ -133,8 +137,21 @@ def binary_operators(request) -> pydop.BinaryOperator:
     return request.param
 
 
+@pytest.fixture(
+    params=[
+        pytest.param(DatabaseDialect.ANSI, id="ansi"),
+        pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+    ]
+)
+def sqlite_dialects(request) -> DatabaseDialect:
+    """
+    Returns the SQLite dialect.
+    """
+    return request.param
+
+
 @pytest.fixture(scope="session")
-def sqlite3_people_jobs() -> DatabaseConnection:
+def sqlite_people_jobs() -> DatabaseConnection:
     """
     Return a SQLite database connection a new in memory database that
     is pre-loaded with the PEOPLE and JOBS tables with the following properties:
@@ -183,3 +200,14 @@ def sqlite3_people_jobs() -> DatabaseConnection:
     sqlite3_empty_connection.connection.commit()
     cursor.close()
     return sqlite3_empty_connection
+
+
+@pytest.fixture
+def sqlite_people_jobs_context(
+    sqlite_people_jobs: DatabaseConnection, sqlite_dialects: DatabaseDialect
+) -> DatabaseContext:
+    """
+    Returns a DatabaseContext for the SQLite PEOPLE and JOBS tables
+    with the given dialect.
+    """
+    return DatabaseContext(sqlite_people_jobs, sqlite_dialects)

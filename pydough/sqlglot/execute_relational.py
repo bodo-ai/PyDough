@@ -18,7 +18,7 @@ from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
-__all__ = ["convert_relation_to_sql", "execute_relational"]
+__all__ = ["convert_relation_to_sql", "execute"]
 
 
 def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect) -> str:
@@ -57,7 +57,7 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
         raise ValueError(f"Unsupported dialect: {dialect}")
 
 
-def execute_relational(relational: RelationalRoot, ctx: DatabaseContext) -> list[Any]:
+def execute(relational: RelationalRoot, ctx: DatabaseContext) -> list[Any]:
     """
     Execute the given relational tree on the given database access
     context and return the result.
