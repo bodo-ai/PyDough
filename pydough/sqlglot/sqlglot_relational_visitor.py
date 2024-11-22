@@ -252,9 +252,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
-        alias_map = {
-            key: self._generate_table_alias() for key in join.default_input_aliases
-        }
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))][
             ::-1
@@ -266,6 +263,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 seen_names[column] += 1
         # Only keep duplicate names.
         kept_names = {key for key, value in seen_names.items() if value > 1}
+        alias_map = {
+            join.default_input_aliases[i]: self._generate_table_alias()
+            for i in range(len(join.inputs))
+            if kept_names.intersection(join.inputs[i].columns.keys())
+        }
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
@@ -279,12 +281,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in columns.items()
         ]
         query: Select = self._build_subquery(
-            inputs[0], column_exprs, alias_map[join.default_input_aliases[0]]
+            inputs[0], column_exprs, alias_map.get(join.default_input_aliases[0], None)
         )
         joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
         for i in range(1, len(inputs)):
             subquery: Subquery = Subquery(
-                this=inputs[i], alias=alias_map[join.default_input_aliases[i]]
+                this=inputs[i], alias=alias_map.get(join.default_input_aliases[i], None)
             )
             cond: RelationalExpression = (
                 join.conditions[i - 1]
