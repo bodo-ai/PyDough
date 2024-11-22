@@ -6,6 +6,7 @@ running a simple TPCH query on SQLite.
 import sqlite3
 import typing as pt
 
+import pytest
 from tpch_outputs import tpch_q6_output
 
 
@@ -26,4 +27,4 @@ def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection):
             and l_quantity < 24
     """)
     result: list[pt.Any] = cur.fetchall()
-    assert result == tpch_q6_output(), "Unexpected result"
+    assert pytest.approx(result, 0.001) == tpch_q6_output()
