@@ -27,4 +27,4 @@ def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection):
             and l_quantity < 24
     """)
     result: list[pt.Any] = cur.fetchall()
-    assert pytest.approx(result, abs=0.001) == tpch_q6_output()
+    assert [pytest.approx(x, abs=0.001) for x in result] == tpch_q6_output()

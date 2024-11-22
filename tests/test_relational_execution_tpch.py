@@ -30,4 +30,5 @@ def test_tpch(
     Test the example TPC-H relational trees executed on a
     SQLite database.
     """
-    assert pytest.approx(execute(root, sqlite_tpch_db_context), abs=0.001) == output
+    result = execute(root, sqlite_tpch_db_context)
+    assert [pytest.approx(x, abs=0.001) for x in result] == output
