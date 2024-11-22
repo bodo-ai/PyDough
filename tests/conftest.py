@@ -5,7 +5,7 @@ TODO: add file-level docstring.
 import json
 import os
 import sqlite3
-from collections.abc import Iterator, MutableMapping
+from collections.abc import MutableMapping
 
 import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
@@ -226,13 +226,11 @@ def sqlite_tpch_db_path() -> str:
 
 
 @pytest.fixture(scope="module")
-def sqlite_tpch_db(sqlite_tpch_db_path: str) -> Iterator[sqlite3.Connection]:
+def sqlite_tpch_db(sqlite_tpch_db_path: str) -> sqlite3.Connection:
     """
     Download the TPCH data and return a connection to the SQLite database.
     """
-    conn: sqlite3.Connection = sqlite3.connect(sqlite_tpch_db_path)
-    yield conn
-    conn.close()
+    return sqlite3.connect(sqlite_tpch_db_path)
 
 
 @pytest.fixture
