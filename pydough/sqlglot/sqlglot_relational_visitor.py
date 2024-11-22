@@ -252,9 +252,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             key: self._generate_table_alias() for key in join.default_input_aliases
         }
         self.visit_inputs(join)
-        inputs: list[Select] = list(
-            reversed([self._stack.pop() for _ in range(len(join.inputs))])
-        )
+        inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))][
+            ::-1
+        ]
         self._alias_modifier.set_map(alias_map)
         columns = {
             alias: self._alias_modifier.modify_expression_names(col)
@@ -265,7 +265,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in columns.items()
         ]
         query: Select = self._build_subquery(
-            inputs[0], column_exprs, join.default_input_aliases[0]
+            inputs[0], column_exprs, alias_map[join.default_input_aliases[0]]
         )
         joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
         for i in range(1, len(inputs)):
