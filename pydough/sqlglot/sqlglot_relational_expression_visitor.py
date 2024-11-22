@@ -5,7 +5,7 @@ the relation Tree to a single SQLGlot query component.
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier
+from sqlglot.expressions import Identifier, Paren
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
 from pydough.relational.relational_expressions import (
@@ -15,6 +15,10 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
     RelationalExpressionVisitor,
 )
+from pydough.types import DecimalType, PyDoughType
+from pydough.types.integer_types import IntegerType
+
+from .sqlglot_helpers import set_glot_alias
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
@@ -24,6 +28,8 @@ __all__ = ["SQLGlotRelationalExpressionVisitor"]
 generic_func_map: dict[str, SQLGlotExpression] = {
     "LOWER": sqlglot_expressions.Lower,
     "LENGTH": sqlglot_expressions.Length,
+    "SUM": sqlglot_expressions.Sum,
+    "COUNT": sqlglot_expressions.Count,
 }
 # These functions need an explicit constructor for binary.
 binary_func_map: dict[str, SQLGlotExpression] = {
@@ -34,6 +40,10 @@ binary_func_map: dict[str, SQLGlotExpression] = {
     "<": sqlglot_expressions.LT,
     "!=": sqlglot_expressions.NEQ,
     "+": sqlglot_expressions.Add,
+    "-": sqlglot_expressions.Sub,
+    "*": sqlglot_expressions.Mul,
+    "/": sqlglot_expressions.Div,
+    "&": sqlglot_expressions.And,
 }
 
 
@@ -66,19 +76,38 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         if key in generic_func_map:
             output_expr = generic_func_map[key].from_arg_list(input_exprs)
         elif key in binary_func_map:
-            assert (
-                len(input_exprs) == 2
-            ), "Expected exactly two inputs for binary function"
-            output_expr = binary_func_map[key](
-                this=input_exprs[0], expression=input_exprs[1]
-            )
+            assert len(input_exprs) >= 2, "Need at least 2 binary inputs"
+            # Note: SQLGlot explicit inserts parentheses for binary operations
+            # during parsing.
+            if isinstance(input_exprs[0], (Identifier, SQLGlotLiteral)):
+                output_expr = input_exprs[0]
+            else:
+                output_expr = Paren(this=input_exprs[0])
+            for expr in input_exprs[1:]:
+                other_expr: SQLGlotExpression
+                if isinstance(expr, (Identifier, SQLGlotLiteral)):
+                    other_expr = expr
+                else:
+                    other_expr = Paren(this=expr)
+                # Build the expressions on the left since the operator is left-associative.
+                output_expr = binary_func_map[key](
+                    this=output_expr, expression=other_expr
+                )
         else:
             raise ValueError(f"Unsupported function {key}")
         self._stack.append(output_expr)
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
-        # TODO: Handle data types.
-        self._stack.append(SQLGlotLiteral(value=literal_expression.value))
+        pydough_type: PyDoughType = literal_expression.data_type
+        is_string: bool
+        if isinstance(pydough_type, (IntegerType, DecimalType)):
+            is_string = False
+        else:
+            # TODO: Handle casting for non-string literal types.
+            is_string = True
+        self._stack.append(
+            SQLGlotLiteral(this=str(literal_expression.value), is_string=is_string)
+        )
 
     @staticmethod
     def generate_column_reference_identifier(
@@ -123,9 +152,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self.reset()
         expr.accept(self)
         result = self.get_sqlglot_result()
-        if output_name is not None:
-            result.set("alias", output_name)
-        return result
+        return set_glot_alias(result, output_name)
 
     def get_sqlglot_result(self) -> SQLGlotExpression:
         """

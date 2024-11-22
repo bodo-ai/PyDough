@@ -1291,6 +1291,48 @@ def test_root_duplicate_columns():
             "JOIN(cond=Call(op=BinaryOperator[==], inputs=[Column(input=left, name=b, type=UnknownType()), Column(input=right, name=b, type=UnknownType())], return_type=BooleanType()), type=full outer, columns={'a': Column(input=left, name=a, type=UnknownType()), 'b': Column(input=right, name=b, type=UnknownType())})",
             id="full_outer_join",
         ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("b", input_name="left"),
+                        make_relational_column_reference("b", input_name="right"),
+                    ],
+                ),
+                JoinType.ANTI,
+                {
+                    "a": make_relational_column_reference("a", input_name="left"),
+                    "b": make_relational_column_reference("b", input_name="right"),
+                },
+            ),
+            "JOIN(cond=Call(op=BinaryOperator[==], inputs=[Column(input=left, name=b, type=UnknownType()), Column(input=right, name=b, type=UnknownType())], return_type=BooleanType()), type=anti, columns={'a': Column(input=left, name=a, type=UnknownType()), 'b': Column(input=right, name=b, type=UnknownType())})",
+            id="anti_join",
+        ),
+        pytest.param(
+            Join(
+                build_simple_scan(),
+                build_simple_scan(),
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("b", input_name="left"),
+                        make_relational_column_reference("b", input_name="right"),
+                    ],
+                ),
+                JoinType.SEMI,
+                {
+                    "a": make_relational_column_reference("a", input_name="left"),
+                    "b": make_relational_column_reference("b", input_name="right"),
+                },
+            ),
+            "JOIN(cond=Call(op=BinaryOperator[==], inputs=[Column(input=left, name=b, type=UnknownType()), Column(input=right, name=b, type=UnknownType())], return_type=BooleanType()), type=semi, columns={'a': Column(input=left, name=a, type=UnknownType()), 'b': Column(input=right, name=b, type=UnknownType())})",
+            id="semi_join",
+        ),
     ],
 )
 def test_join_to_string(join: Join, output: str):
