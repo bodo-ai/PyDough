@@ -7,9 +7,13 @@ the query on the database.
 from typing import Any
 
 from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.database_connectors import DatabaseConnection
+from pydough.database_connectors import (
+    DatabaseContext,
+    DatabaseDialect,
+)
 from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
@@ -34,10 +38,37 @@ def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect)
     return glot_expr.sql(dialect)
 
 
-def execute_relational(
-    relational: RelationalRoot, dialect: SQLGlotDialect, connection: DatabaseConnection
-) -> list[Any]:
-    # TODO: Determine the design to combine dialect and connection
-    # into a single object.
-    sql: str = convert_relation_to_sql(relational, dialect)
-    return connection.execute_query(sql)
+def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
+    """
+    Convert the given DatabaseDialect to the corresponding SQLGlotDialect.
+
+    Args:
+        dialect (DatabaseDialect): The dialect to convert.
+
+    Returns:
+        SQLGlotDialect: The corresponding SQLGlot dialect.
+    """
+    if dialect == DatabaseDialect.ANSI:
+        # Note: ANSI is the base dialect for SQLGlot.
+        return SQLGlotDialect()
+    elif dialect == DatabaseDialect.SQLITE:
+        return SQLiteDialect()
+    else:
+        raise ValueError(f"Unsupported dialect: {dialect}")
+
+
+def execute_relational(relational: RelationalRoot, ctx: DatabaseContext) -> list[Any]:
+    """
+    Execute the given relational tree on the given database access
+    context and return the result.
+
+    Args:
+        relational (RelationalRoot): The relational tree to execute.
+        ctx (DatabaseContext): The database context to execute the query in.
+
+    Returns:
+        list[Any]: The result of the query.
+    """
+    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
+    sql: str = convert_relation_to_sql(relational, sqlglot_dialect)
+    return ctx.connection.execute_query(sql)
