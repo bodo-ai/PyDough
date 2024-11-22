@@ -236,7 +236,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         """
         self._stack = []
         self._expr_visitor.reset()
-        self._alias_modifier.reset()
         self._alias_counter = 0
 
     def visit_scan(self, scan: Scan) -> None:
@@ -257,7 +256,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ]
         self._alias_modifier.set_map(alias_map)
         columns = {
-            alias: self._alias_modifier.modify_expression_names(col)
+            alias: col.accept_shuttle(self._alias_modifier)
             for alias, col in join.columns.items()
         }
         column_exprs = [
@@ -272,8 +271,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             subquery: Subquery = Subquery(
                 this=inputs[i], alias=alias_map[join.default_input_aliases[i]]
             )
-            cond: RelationalExpression = self._alias_modifier.modify_expression_names(
-                join.conditions[i - 1]
+            cond: RelationalExpression = join.conditions[i - 1].accept_shuttle(
+                self._alias_modifier
             )
             cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
                 cond
