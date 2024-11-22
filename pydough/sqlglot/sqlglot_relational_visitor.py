@@ -405,13 +405,19 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             limit.orderings
         )
         query: Select
-        if "order" in input_expr.args or "limit" in input_expr.args:
-            query = self._build_subquery(input_expr, exprs)
-        else:
-            # Try merge the column sections
+        if self._is_mergeable_ordering(ordering_exprs, input_expr):
             query = self._merge_selects(
                 exprs, input_expr, find_identifiers_in_list(ordering_exprs)
             )
+            if "order" in query.args:
+                # avoid repeating the order by clause
+                ordering_exprs = []
+            if "limit" in input_expr.args:
+                breakpoint()
+                # avoid repeating the limit clause
+                limit_expr = None
+        else:
+            query = self._build_subquery(input_expr, exprs)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
         query = query.limit(limit_expr)

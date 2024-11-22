@@ -154,6 +154,68 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(1, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                    ),
+                    limit=LiteralExpression(5, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+            ),
+            "SELECT a, b FROM table LIMIT 1",
+            id="duplicate_limit_min_inner",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(5, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                        orderings=[
+                            make_relational_ordering(
+                                make_relational_column_reference("a"),
+                                ascending=True,
+                                nulls_first=True,
+                            ),
+                            make_relational_ordering(
+                                make_relational_column_reference("b"),
+                                ascending=False,
+                                nulls_first=False,
+                            ),
+                        ],
+                    ),
+                    limit=LiteralExpression(1, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+            ),
+            "SELECT a, b FROM table LIMIT 1",
+            id="duplicate_limit_min_outer",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
                     input=build_simple_scan(),
                     limit=LiteralExpression(10, Int64Type()),
                     columns={
