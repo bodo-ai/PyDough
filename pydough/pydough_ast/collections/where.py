@@ -50,6 +50,7 @@ class Where(ChildOperator):
                 "Cannot call `with_condition` more than once per Where node"
             )
         self._condition = condition
+        self.verify_singular_terms([condition])
         return self
 
     @property

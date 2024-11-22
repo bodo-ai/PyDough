@@ -23,6 +23,11 @@ class TableCollection(CollectionAccess):
     def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
         return TableCollection(self.collection, new_ancestor)
 
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # A table collection is always a plural subcollection of the global
+        # context since PyDough does not know how many rows it contains.
+        return False
+
     @property
     def key(self) -> str:
         return f"{self.ancestor_context.key}.{self.collection.name}"

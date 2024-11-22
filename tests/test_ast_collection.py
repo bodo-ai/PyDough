@@ -1043,21 +1043,23 @@ def test_collections_calc_terms(
                 ratio=FunctionInfo(
                     "DIV",
                     [
-                        ChildReferenceExpressionInfo("quantity", 0),
+                        FunctionInfo(
+                            "SUM", [ChildReferenceExpressionInfo("quantity", 0)]
+                        ),
                         ReferenceInfo("ps_availqty"),
                     ],
                 ),
             ),
-            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines.quantity / ps_availqty)",
+            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM(ps_lines.quantity) / ps_availqty)",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
-    └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=$1.quantity / ps_availqty]
+    └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM($1.quantity) / ps_availqty]
       ├─┬─ AccessChild
       │ └─── SubCollection[ps_lines]
       └─┬─ AccessChild
-        ├─── SubCollection[BACK(1).nation]
+        ├─── BackSubCollection[1, nation]
         └─── Calc[nation_name=name]\
 """,
             id="suppliers_parts_childcalc_a",
@@ -1083,19 +1085,19 @@ def test_collections_calc_terms(
                 nation_name=ChildReferenceExpressionInfo("name", 1),
                 supplier_name=BackReferenceExpressionInfo("name", 1),
                 part_name=ReferenceInfo("name"),
-                ratio=ChildReferenceExpressionInfo("ratio", 0),
+                ratio=FunctionInfo("MAX", [ChildReferenceExpressionInfo("ratio", 0)]),
             ),
-            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio)",
+            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX(ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio))",
             """\
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
-    └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=$1.ratio]
+    └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX($1.ratio)]
       ├─┬─ AccessChild
       │ ├─── SubCollection[ps_lines]
       │ └─── Calc[ratio=quantity / BACK(1).ps_availqty]
       └─┬─ AccessChild
-        └─── SubCollection[BACK(1).nation]\
+        └─── BackSubCollection[1, nation]\
 """,
             id="suppliers_parts_childcalc_b",
         ),
@@ -1563,6 +1565,37 @@ def test_collections_calc_terms(
   └─── TopK[5, total_sum.DESC(na_pos='last')]\
 """,
             id="nations_topk",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** SubCollectionInfo("suppliers")
+            ** PartitionInfo(
+                SubCollectionInfo("parts_supplied"),
+                "parts",
+                [ChildReferenceExpressionInfo("part_type", 0)],
+            )
+            ** CalcInfo(
+                [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
+                part_type=ReferenceInfo("part_type"),
+                num_parts=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                num_custs=FunctionInfo(
+                    "COUNT", [BackReferenceCollectionInfo("customers", 2)]
+                ),
+            ),
+            "TPCH.Nations.suppliers.Partition(parts_supplied, name='parts', by=part_type)(part_type=part_type, num_parts=COUNT(parts.suppliers_of_part), num_custs=COUNT(BACK(2).customers))",
+            """\
+──┬─ TPCH
+  └─┬─ TableCollection[Nations]
+    ├─── SubCollection[suppliers]
+    ├─┬─ Partition[name='parts', by=part_type]
+    │ └─┬─ AccessChild
+    │   └─── SubCollection[parts_supplied]
+    └─┬─ Calc[part_type=part_type, num_parts=COUNT($1), num_custs=COUNT(BackSubCollection[2, customers])]
+      └─┬─ AccessChild
+        └─┬─ PartitionChild[parts]
+          └─── SubCollection[suppliers_of_part]\
+""",
+            id="partition_backreference",
         ),
     ],
 )
