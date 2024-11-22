@@ -4,7 +4,7 @@ via a SQLGlot intermediate.
 """
 
 import pytest
-from sqlglot.dialects.sqlite import SQLite as SQLiteDialect
+from sqlglot.dialects import SQLite as SQLiteDialect
 from test_utils import (
     build_simple_scan,
     make_relational_column_reference,

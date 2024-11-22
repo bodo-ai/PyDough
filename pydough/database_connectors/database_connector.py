@@ -6,9 +6,11 @@ https://peps.python.org/pep-0249/
 # Copyright (C) 2024 Bodo Inc. All rights reserved.
 
 import sqlite3
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
-__all__ = ["DatabaseConnection"]
+__all__ = ["DatabaseConnection", "DatabaseDialect", "DatabaseContext"]
 
 
 class DatabaseConnection:
@@ -67,3 +69,22 @@ class DatabaseConnection:
             sqlite3.Connection: The connection PyDough is managing.
         """
         return self._connection
+
+
+class DatabaseDialect(Enum):
+    """Enum for the supported database dialects.
+    In general the dialects should"""
+
+    ANSI = "ansi"
+    SQLITE = "sqlite"
+
+
+@dataclass
+class DatabaseContext:
+    """
+    Simple dataclass wrapper to manage the database connection and
+    the required corresponding dialect.
+    """
+
+    connection: DatabaseConnection
+    dialect: DatabaseDialect
