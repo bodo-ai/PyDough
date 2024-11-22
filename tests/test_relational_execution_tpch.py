@@ -45,4 +45,4 @@ def test_tpch(
     SQLite database.
     """
     result = execute(root, sqlite_tpch_db_context)
-    assert [pytest.approx(x, abs=0.001) for x in result] == output
+    assert [pytest.approx(x, rel=1e-5, abs=1e-8) for x in result] == output
