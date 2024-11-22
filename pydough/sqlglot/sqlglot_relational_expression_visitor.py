@@ -27,8 +27,10 @@ __all__ = ["SQLGlotRelationalExpressionVisitor"]
 # These functions can be generated with from_arg_list.
 generic_func_map: dict[str, SQLGlotExpression] = {
     "ABS": sqlglot_expressions.Abs,
+    "AVG": sqlglot_expressions.Avg,
     "LOWER": sqlglot_expressions.Lower,
     "LENGTH": sqlglot_expressions.Length,
+    "MAX": sqlglot_expressions.Max,
     "SUM": sqlglot_expressions.Sum,
     "COUNT": sqlglot_expressions.Count,
 }

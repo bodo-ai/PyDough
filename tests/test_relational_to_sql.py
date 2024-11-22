@@ -510,6 +510,44 @@ def sqlite_dialect() -> SQLiteDialect:
             "SELECT a FROM table ORDER BY ABS(a)",
             id="ordering_function",
         ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                input=Join(
+                    inputs=[
+                        build_simple_scan(),
+                        build_simple_scan(),
+                        build_simple_scan(),
+                    ],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        ),
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t2"),
+                            ],
+                        ),
+                    ],
+                    join_types=[JoinType.INNER, JoinType.INNER],
+                    columns={
+                        "a": make_relational_column_reference("a", input_name="t0"),
+                    },
+                ),
+            ),
+            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a INNER JOIN (SELECT a, b FROM table) AS _table_alias_2 ON _table_alias_0.a = _table_alias_2.a",
+            id="multi_join",
+        ),
     ],
 )
 def test_convert_relation_to_sql(
