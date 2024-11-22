@@ -19,6 +19,7 @@ from pydough.relational import (
     Limit,
     LiteralExpression,
     Project,
+    RelationalExpression,
     RelationalRoot,
     RelationalVisitor,
     Scan,
@@ -248,12 +249,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def visit_join(self, join: Join) -> None:
         alias_map = {
-            "left": self._generate_table_alias(),
-            "right": self._generate_table_alias(),
+            key: self._generate_table_alias() for key in join.default_input_aliases
         }
         self.visit_inputs(join)
-        right_expr: Select = self._stack.pop()
-        left_expr: Select = self._stack.pop()
+        inputs: list[Select] = list(
+            reversed([self._stack.pop() for _ in range(len(join.inputs))])
+        )
         self._alias_modifier.set_map(alias_map)
         columns = {
             alias: self._alias_modifier.modify_expression_names(col)
@@ -263,15 +264,24 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in columns.items()
         ]
-        cond = self._alias_modifier.modify_expression_names(join.condition)
-        cond_expr = self._expr_visitor.relational_to_sqlglot(cond)
         query: Select = self._build_subquery(
-            left_expr, column_exprs, alias_map["left"]
-        ).join(
-            Subquery(this=right_expr, alias=alias_map["right"]),
-            on=cond_expr,
-            join_type=join.join_type.value,
+            inputs[0], column_exprs, join.default_input_aliases[0]
         )
+        joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
+        for i in range(1, len(inputs)):
+            subquery: Subquery = Subquery(
+                this=inputs[i], alias=alias_map[join.default_input_aliases[i]]
+            )
+            cond: RelationalExpression = self._alias_modifier.modify_expression_names(
+                join.conditions[i - 1]
+            )
+            cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+                cond
+            )
+            join_type: str = join.join_types[i - 1].value
+            joins.append((subquery, cond_expr, join_type))
+        for subquery, cond_expr, join_type in joins:
+            query = query.join(subquery, on=cond_expr, join_type=join_type)
         self._stack.append(query)
 
     def visit_project(self, project: Project) -> None:

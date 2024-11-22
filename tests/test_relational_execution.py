@@ -63,22 +63,23 @@ def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext):
         ],
         input=Join(
             columns={
-                "name": make_relational_column_reference("name", input_name="left"),
+                "name": make_relational_column_reference("name", input_name="t0"),
                 "total_salary": make_relational_column_reference(
-                    "total_salary", input_name="right"
+                    "total_salary", input_name="t1"
                 ),
             },
-            left=people,
-            right=jobs,
-            join_type=JoinType.LEFT,
-            condition=CallExpression(
-                EQU,
-                BooleanType(),
-                [
-                    make_relational_column_reference("person_id", input_name="left"),
-                    make_relational_column_reference("person_id", input_name="right"),
-                ],
-            ),
+            inputs=[people, jobs],
+            conditions=[
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("person_id", input_name="t0"),
+                        make_relational_column_reference("person_id", input_name="t1"),
+                    ],
+                )
+            ],
+            join_types=[JoinType.LEFT],
         ),
     )
     output: list[Any] = execute(result, sqlite_people_jobs_context)

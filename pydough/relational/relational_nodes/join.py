@@ -24,58 +24,65 @@ class JoinType(Enum):
 
 class Join(Relational):
     """
-    Relational representation of any type of join operation, including
-    inner, left, right, and full joins.
+    Relational representation of all join operations. This single
+    node can represent multiple joins at once, similar to a multi-join
+    in other systems to enable better lowering and easier translation
+    from earlier stages in the pipeline.
+
+    However, unlike a traditional Multi-Join in most relational algebra
+    implementations, this join does not ensure that joins can be reordered
+    and provides a specific join ordering that is the only guaranteed
+    valid ordering.
+
+    In particular if we have 3 inputs A, B, and C, with join types INNER
+    and SEMI, then the join ordering is treated as:
+
+    (A INNER B) SEMI C
+
+    It should be noted that this isn't necessarily the only valid join ordering,
+    but this node makes no guarantees that the inputs can be reordered.
     """
 
     def __init__(
         self,
-        left: Relational,
-        right: Relational,
-        condition: RelationalExpression,
-        join_type: JoinType,
+        inputs: list[Relational],
+        conditions: list[RelationalExpression],
+        join_types: list[JoinType],
         columns: MutableMapping[str, RelationalExpression],
     ) -> None:
         super().__init__(columns)
-        self._left: Relational = left
-        self._right: Relational = right
-        assert isinstance(
-            condition.data_type, BooleanType
+        num_inputs = len(inputs)
+        num_conditions = len(conditions)
+        num_join_types = len(join_types)
+        assert (
+            num_inputs >= 2
+            and num_conditions == (num_inputs - 1)
+            and num_conditions == num_join_types
+        ), "Number of inputs, conditions, and join types must be the same"
+        self._inputs = inputs
+        assert all(
+            isinstance(cond.data_type, BooleanType) for cond in conditions
         ), "Join condition must be a boolean type"
-        self._condition: RelationalExpression = condition
-        self._join_type: JoinType = join_type
+        self._conditions: list[RelationalExpression] = conditions
+        self._join_types: list[JoinType] = join_types
 
     @property
-    def left(self) -> Relational:
+    def conditions(self) -> list[RelationalExpression]:
         """
-        The left input to the join.
+        The conditions for the joins.
         """
-        return self._left
+        return self._conditions
 
     @property
-    def right(self) -> Relational:
+    def join_types(self) -> list[JoinType]:
         """
-        The right input to the join.
+        The types of the joins.
         """
-        return self._right
-
-    @property
-    def condition(self) -> RelationalExpression:
-        """
-        The condition for the join.
-        """
-        return self._condition
-
-    @property
-    def join_type(self) -> JoinType:
-        """
-        The type of the join.
-        """
-        return self._join_type
+        return self._join_types
 
     @property
     def inputs(self) -> MutableSequence[Relational]:
-        return [self.left, self.right]
+        return self._inputs
 
     @property
     def default_input_aliases(self) -> list[str]:
@@ -87,19 +94,21 @@ class Join(Relational):
         Note: The lowering steps are not required to use this alias
         and can choose any name they want.
         """
-        return ["left", "right"]
+        return [f"t{i}" for i in range(len(self.inputs))]
 
     def node_equals(self, other: Relational) -> bool:
         return (
             isinstance(other, Join)
-            and self.condition == other.condition
-            and self.join_type == other.join_type
-            and self.left.node_equals(other.left)
-            and self.right.node_equals(other.right)
+            and self.conditions == other.conditions
+            and self.join_types == other.join_types
+            and all(
+                self.inputs[i].node_equals(other.inputs[i])
+                for i in range(len(self.inputs))
+            )
         )
 
     def to_string(self) -> str:
-        return f"JOIN(cond={self.condition}, type={self.join_type.value}, columns={self.columns})"
+        return f"JOIN(conditions={self.conditions}, types={[t.value for t in self.join_types]}, columns={self.columns})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_join(self)
