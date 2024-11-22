@@ -206,7 +206,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT a, b FROM table LIMIT 1",
+            "SELECT a, b FROM table ORDER BY a, b DESC LIMIT 1",
             id="duplicate_limit_min_outer",
         ),
         pytest.param(

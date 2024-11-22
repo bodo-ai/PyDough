@@ -529,15 +529,9 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="a")],
+                order_by=[Ident(this="b").asc(nulls_first=False)],
                 limit=mk_literal(2, False),
-                _from=GlotFrom(
-                    mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
-                        order_by=[Ident(this="b").asc(nulls_first=False)],
-                        limit=mk_literal(5, False),
-                    )
-                ),
+                _from=GlotFrom(Table(this=Ident(this="table"))),
             ),
             id="nested_limits",
         ),

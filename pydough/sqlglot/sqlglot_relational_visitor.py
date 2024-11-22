@@ -413,9 +413,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 # avoid repeating the order by clause
                 ordering_exprs = []
             if "limit" in input_expr.args:
-                breakpoint()
-                # avoid repeating the limit clause
-                limit_expr = None
+                existing_limit = input_expr.args.pop("limit").expression
+                # Note: We only allow literal limits now.
+                limit_expr = min(limit_expr, existing_limit, key=lambda x: x.this)
         else:
             query = self._build_subquery(input_expr, exprs)
         if ordering_exprs:
