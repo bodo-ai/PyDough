@@ -212,6 +212,28 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         return glot_exprs
 
     @staticmethod
+    def _is_mergeable_ordering(
+        ordering: list[SQLGlotExpression], input_expr: Select
+    ) -> bool:
+        """
+        Determine if the given ordering can be merged with the input
+        expression. This occurs when the orderings are identical or
+        either side doesn't contain any ordering.
+
+        Args:
+            ordering (list[SQLGlotExpression]): The new ordering, possibly
+                an empty list.
+            input_expr (Select): The old ordering.
+
+        Returns:
+            bool: Can the orderings be merged together.
+        """
+        if "order" not in input_expr.args or not ordering:
+            return True
+        else:
+            return ordering == input_expr.args["order"].expressions
+
+    @staticmethod
     def _build_subquery(
         input_expr: Select,
         column_exprs: list[SQLGlotExpression],
@@ -405,12 +427,16 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ]
         ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(root.orderings)
         query: Select
-        if ordering_exprs and "order" in input_expr.args:
-            query = self._build_subquery(input_expr, exprs)
-        else:
+
+        if self._is_mergeable_ordering(ordering_exprs, input_expr):
             query = self._merge_selects(
                 exprs, input_expr, find_identifiers_in_list(ordering_exprs)
             )
+            if "order" in query.args:
+                # avoid repeating the order by clause
+                ordering_exprs = []
+        else:
+            query = self._build_subquery(input_expr, exprs)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
         self._stack.append(query)
