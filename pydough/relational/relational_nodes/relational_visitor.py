@@ -29,17 +29,6 @@ class RelationalVisitor(ABC):
         Clear any internal state to allow reusing this visitor.
         """
 
-    @abstractmethod
-    def visit(self, node) -> None:
-        """
-        The generic visit operation for a relational node. This can be used
-        to either throw a default unsupported error or provide a base
-        implementation.
-
-        Args:
-            node (Relational): The node to visit.
-        """
-
     def visit_inputs(self, node) -> None:
         """
         Visit all inputs of the provided node. This is a helper method
