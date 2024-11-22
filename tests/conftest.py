@@ -214,7 +214,7 @@ def sqlite_people_jobs_context(
 
 
 @pytest.fixture(scope="module")
-def tpch_db_path() -> str:
+def sqlite_tpch_db_path() -> str:
     """
     Return the path to the TPCH database. We setup testing
     to always be in the base module at the same location with
@@ -226,10 +226,18 @@ def tpch_db_path() -> str:
 
 
 @pytest.fixture(scope="module")
-def tpch_db(tpch_db_path: str) -> Iterator[sqlite3.Connection]:
+def sqlite_tpch_db(sqlite_tpch_db_path: str) -> Iterator[sqlite3.Connection]:
     """
     Download the TPCH data and return a connection to the SQLite database.
     """
-    conn: sqlite3.Connection = sqlite3.connect(tpch_db_path)
+    conn: sqlite3.Connection = sqlite3.connect(sqlite_tpch_db_path)
     yield conn
     conn.close()
+
+
+@pytest.fixture
+def sqlite_tpch_db_context(sqlite_tpch_db):
+    """
+    Return a DatabaseContext for the SQLite TPCH database.
+    """
+    return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)

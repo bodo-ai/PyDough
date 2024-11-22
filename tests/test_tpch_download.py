@@ -6,14 +6,14 @@ running a simple TPCH query on SQLite.
 import sqlite3
 import typing as pt
 
-import pytest
+from tpch_outputs import tpch_q6_output
 
 
-def test_tpch_q6(tpch_db: sqlite3.Connection):
+def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection):
     """
     Run the TPCH Q6 query on the SQLite database.
     """
-    cur: sqlite3.Cursor = tpch_db.cursor()
+    cur: sqlite3.Cursor = sqlite_tpch_db.cursor()
     cur.execute("""
         select
             sum(l_extendedprice * l_discount) as revenue
@@ -26,6 +26,4 @@ def test_tpch_q6(tpch_db: sqlite3.Connection):
             and l_quantity < 24
     """)
     result: list[pt.Any] = cur.fetchall()
-    assert len(result) == 1, "Expected one row"
-    assert len(result[0]) == 1, "Expected one column"
-    assert result[0][0] == pytest.approx(123141078.2283, rel=1e-4), "Unexpected result"
+    assert result == tpch_q6_output(), "Unexpected result"
