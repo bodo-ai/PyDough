@@ -25,17 +25,23 @@ __all__ = [
     "GlobalContext",
     "ChildReferenceCollection",
     "Reference",
+    "ChildOperator",
+    "CompoundSubCollection",
+    "PartitionChild",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
 from .collections import (
     Calc,
     ChildAccess,
+    ChildOperator,
     ChildOperatorChildAccess,
     ChildReferenceCollection,
+    CompoundSubCollection,
     GlobalContext,
     OrderBy,
     PartitionBy,
+    PartitionChild,
     PyDoughCollectionAST,
     SubCollection,
     TableCollection,
