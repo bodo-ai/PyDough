@@ -5,7 +5,7 @@ TODO: add file-level docstring.
 import json
 import os
 import sqlite3
-from collections.abc import MutableMapping
+from collections.abc import Iterator, MutableMapping
 
 import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
@@ -211,3 +211,33 @@ def sqlite_people_jobs_context(
     with the given dialect.
     """
     return DatabaseContext(sqlite_people_jobs, sqlite_dialects)
+
+
+@pytest.fixture(scope="module")
+def sqlite_tpch_db_path() -> str:
+    """
+    Return the path to the TPCH database. We setup testing
+    to always be in the base module at the same location with
+    the name tpch.db.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    return os.path.join(base_dir, "tpch.db")
+
+
+@pytest.fixture(scope="module")
+def sqlite_tpch_db(sqlite_tpch_db_path: str) -> Iterator[sqlite3.Connection]:
+    """
+    Download the TPCH data and return a connection to the SQLite database.
+    """
+    conn: sqlite3.Connection = sqlite3.connect(sqlite_tpch_db_path)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def sqlite_tpch_db_context(sqlite_tpch_db):
+    """
+    Return a DatabaseContext for the SQLite TPCH database.
+    """
+    return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)

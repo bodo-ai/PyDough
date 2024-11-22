@@ -50,10 +50,7 @@ jobs:
           version: "0.4.23"
 
       - name: Download TPCH DB
-        run: ./tpch_demo/setup_tpch.sh ./tpch_demo/tpch.db
-
-      - name: Verify TPCH DB
-        run: uv run pytest tpch_demo/test_tpch_download.py
+        run: ./tpch_demo/setup_tpch.sh ./tpch.db
 
       - name: Run Ruff
         run: uv run ruff check .

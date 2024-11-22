@@ -541,7 +541,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 LEQ,
                                 BooleanType(),
                                 [
-                                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                                    make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal("0.07", DecimalType(3, 2)),
                                 ],
                             ),
@@ -549,7 +549,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 GEQ,
                                 BooleanType(),
                                 [
-                                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                                    make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal("0.05", DecimalType(3, 2)),
                                 ],
                             ),
