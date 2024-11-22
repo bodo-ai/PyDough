@@ -62,11 +62,9 @@ def tpch_query_1_plan() -> RelationalRoot:
                 "SUM_DISC_PRICE",
                 make_relational_column_reference("SUM_DISC_PRICE"),
             ),
-            # ERROR!
             ("SUM_CHARGE", make_relational_column_reference("SUM_CHARGE")),
             ("AVG_QTY", make_relational_column_reference("AVG_QTY")),
             ("AVG_PRICE", make_relational_column_reference("AVG_PRICE")),
-            # ERROR!
             ("AVG_DISC", make_relational_column_reference("AVG_DISC")),
             ("COUNT_ORDER", make_relational_column_reference("COUNT_ORDER")),
         ],
