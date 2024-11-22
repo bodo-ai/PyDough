@@ -38,7 +38,11 @@ class ColumnReferenceInputNameModifier(RelationalExpressionShuttle):
         return literal_expression
 
     def visit_column_reference(self, column_reference) -> RelationalExpression:
-        if column_reference.input_name in self._input_name_map:
+        if column_reference.input_name is None:
+            # We ignore remapping any references without input names.
+            # This is useful for handling unique names.
+            return column_reference
+        elif column_reference.input_name in self._input_name_map:
             return ColumnReference(
                 column_reference.name,
                 column_reference.data_type,

@@ -3,7 +3,8 @@ Handle the conversion from the Relation Tree to a single
 SQLGlot query.
 """
 
-from collections.abc import MutableSequence
+from collections import defaultdict
+from collections.abc import MutableMapping, MutableSequence
 
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -13,6 +14,7 @@ from sqlglot.expressions import Literal as SQLGlotLiteral
 from pydough.relational import (
     Aggregate,
     ColumnReferenceInputNameModifier,
+    ColumnReferenceInputNameRemover,
     ExpressionSortInfo,
     Filter,
     Join,
@@ -47,6 +49,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
+        )
+        self._alias_remover: ColumnReferenceInputNameRemover = (
+            ColumnReferenceInputNameRemover()
         )
         # Counter for generating unique table alias.
         self._alias_counter: int = 0
@@ -254,9 +259,19 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))][
             ::-1
         ]
+        # Compute a dictionary to find all duplicate names.
+        seen_names: MutableMapping[str, int] = defaultdict(int)
+        for input in join.inputs:
+            for column in input.columns.keys():
+                seen_names[column] += 1
+        # Only keep duplicate names.
+        kept_names = {key for key, value in seen_names.items() if value > 1}
+        self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
-            alias: col.accept_shuttle(self._alias_modifier)
+            alias: col.accept_shuttle(self._alias_remover).accept_shuttle(
+                self._alias_modifier
+            )
             for alias, col in join.columns.items()
         }
         column_exprs = [
@@ -271,8 +286,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             subquery: Subquery = Subquery(
                 this=inputs[i], alias=alias_map[join.default_input_aliases[i]]
             )
-            cond: RelationalExpression = join.conditions[i - 1].accept_shuttle(
-                self._alias_modifier
+            cond: RelationalExpression = (
+                join.conditions[i - 1]
+                .accept_shuttle(self._alias_remover)
+                .accept_shuttle(self._alias_modifier)
             )
             cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
                 cond
