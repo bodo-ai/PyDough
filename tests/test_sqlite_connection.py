@@ -30,6 +30,7 @@ def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
     assert output == {i: 2 for i in range(10)}, "Unexpected result"
 
 
+@pytest.mark.skip("__del__ is disabled while we decide on the right behavior.")
 def test_unusable_after_del() -> None:
     """
     Test that the underlying connection is closed when the DatabaseConnection

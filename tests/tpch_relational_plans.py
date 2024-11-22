@@ -455,36 +455,52 @@ def tpch_query_3_plan() -> RelationalRoot:
                     nulls_first=True,
                 ),
             ],
-            input=Join(
-                columns={
-                    "L_ORDERKEY": make_relational_column_reference(
-                        "L_ORDERKEY", input_name="left"
-                    ),
-                    "REVENUE": make_relational_column_reference(
-                        "REVENUE", input_name="left"
-                    ),
-                    "O_ORDERDATE": make_relational_column_reference(
-                        "O_ORDERDATE", input_name="right"
-                    ),
+            input=Aggregate(
+                keys={
+                    "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+                    "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
                     "O_SHIPPRIORITY": make_relational_column_reference(
-                        "O_SHIPPRIORITY", input_name="right"
+                        "O_SHIPPRIORITY"
                     ),
                 },
-                left=lineitem,
-                right=customer_orders_join,
-                condition=CallExpression(
-                    EQU,
-                    BooleanType(),
-                    [
-                        make_relational_column_reference(
+                aggregations={
+                    "REVENUE": CallExpression(
+                        SUM,
+                        UnknownType(),
+                        [make_relational_column_reference("REVENUE")],
+                    ),
+                },
+                input=Join(
+                    columns={
+                        "L_ORDERKEY": make_relational_column_reference(
                             "L_ORDERKEY", input_name="left"
                         ),
-                        make_relational_column_reference(
-                            "O_ORDERKEY", input_name="right"
+                        "REVENUE": make_relational_column_reference(
+                            "REVENUE", input_name="left"
                         ),
-                    ],
+                        "O_ORDERDATE": make_relational_column_reference(
+                            "O_ORDERDATE", input_name="right"
+                        ),
+                        "O_SHIPPRIORITY": make_relational_column_reference(
+                            "O_SHIPPRIORITY", input_name="right"
+                        ),
+                    },
+                    left=lineitem,
+                    right=customer_orders_join,
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference(
+                                "L_ORDERKEY", input_name="left"
+                            ),
+                            make_relational_column_reference(
+                                "O_ORDERKEY", input_name="right"
+                            ),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
                 ),
-                join_type=JoinType.INNER,
             ),
         ),
     )
