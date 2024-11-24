@@ -46,6 +46,16 @@ class RelTranslation:
         ), f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.__class__.__name__}"
         for expr in desired_inputs:
             assert isinstance(expr, ColumnProperty)
+            table_name: str = expr.column_property.column_name
+            pydough_name: str = expr.column_property.name
+            scan_ref: ColumnReference = ColumnReference(
+                table_name, expr.column_property.data_type
+            )
+            out_ref: ColumnReference = ColumnReference(
+                pydough_name, expr.column_property.data_type
+            )
+            output_mappings[expr] = out_ref
+            out_columns[pydough_name] = scan_ref
         answer = Scan(node.collection.table_path, out_columns)
         return answer, output_mappings
 
