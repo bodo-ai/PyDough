@@ -5,6 +5,7 @@ tests that need to process relational plans.
 """
 
 from datetime import date
+from decimal import Decimal
 
 from test_utils import (
     make_relational_column_reference,
@@ -562,7 +563,9 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 BooleanType(),
                                 [
                                     make_relational_column_reference("L_DISCOUNT"),
-                                    make_relational_literal("0.07", DecimalType(3, 2)),
+                                    make_relational_literal(
+                                        Decimal("0.07"), DecimalType(3, 2)
+                                    ),
                                 ],
                             ),
                             CallExpression(
@@ -570,7 +573,9 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 BooleanType(),
                                 [
                                     make_relational_column_reference("L_DISCOUNT"),
-                                    make_relational_literal("0.05", DecimalType(3, 2)),
+                                    make_relational_literal(
+                                        Decimal("0.05"), DecimalType(3, 2)
+                                    ),
                                 ],
                             ),
                             CallExpression(
