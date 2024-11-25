@@ -239,20 +239,21 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.INNER,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.INNER],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
-                        "b": make_relational_column_reference("b", input_name="right"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
+                        "b": make_relational_column_reference("b", input_name="t1"),
                     },
                 ),
             ),
@@ -265,19 +266,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.LEFT,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.LEFT],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -290,19 +292,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.RIGHT,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.RIGHT],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -315,19 +318,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.FULL_OUTER,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.FULL_OUTER],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -340,19 +344,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.SEMI,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.SEMI],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -365,19 +370,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.ANTI,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.ANTI],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -390,43 +396,48 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("d", make_relational_column_reference("d")),
                 ],
                 input=Join(
-                    left=Join(
-                        left=build_simple_scan(),
-                        right=build_simple_scan(),
-                        condition=CallExpression(
+                    inputs=[
+                        Join(
+                            inputs=[build_simple_scan(), build_simple_scan()],
+                            conditions=[
+                                CallExpression(
+                                    EQU,
+                                    BooleanType(),
+                                    [
+                                        make_relational_column_reference(
+                                            "a", input_name="t0"
+                                        ),
+                                        make_relational_column_reference(
+                                            "a", input_name="t1"
+                                        ),
+                                    ],
+                                )
+                            ],
+                            join_types=[JoinType.INNER],
+                            columns={
+                                "a": make_relational_column_reference(
+                                    "a", input_name="t0"
+                                ),
+                                "b": make_relational_column_reference(
+                                    "b", input_name="t1"
+                                ),
+                            },
+                        ),
+                        build_simple_scan(),
+                    ],
+                    conditions=[
+                        CallExpression(
                             EQU,
                             BooleanType(),
                             [
-                                make_relational_column_reference(
-                                    "a", input_name="left"
-                                ),
-                                make_relational_column_reference(
-                                    "a", input_name="right"
-                                ),
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
                             ],
-                        ),
-                        join_type=JoinType.INNER,
-                        columns={
-                            "a": make_relational_column_reference(
-                                "a", input_name="left"
-                            ),
-                            "b": make_relational_column_reference(
-                                "b", input_name="right"
-                            ),
-                        },
-                    ),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.LEFT,
+                        )
+                    ],
+                    join_types=[JoinType.LEFT],
                     columns={
-                        "d": make_relational_column_reference("b", input_name="left"),
+                        "d": make_relational_column_reference("b", input_name="t0"),
                     },
                 ),
             ),
@@ -498,6 +509,44 @@ def sqlite_dialect() -> SQLiteDialect:
             ),
             "SELECT a FROM table ORDER BY ABS(a)",
             id="ordering_function",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                input=Join(
+                    inputs=[
+                        build_simple_scan(),
+                        build_simple_scan(),
+                        build_simple_scan(),
+                    ],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        ),
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t2"),
+                            ],
+                        ),
+                    ],
+                    join_types=[JoinType.INNER, JoinType.INNER],
+                    columns={
+                        "a": make_relational_column_reference("a", input_name="t0"),
+                    },
+                ),
+            ),
+            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a INNER JOIN (SELECT a, b FROM table) AS _table_alias_2 ON _table_alias_0.a = _table_alias_2.a",
+            id="multi_join",
         ),
     ],
 )

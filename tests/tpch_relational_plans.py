@@ -335,26 +335,27 @@ def tpch_query_3_plan() -> RelationalRoot:
     customer_orders_join = Join(
         columns={
             "O_ORDERKEY": make_relational_column_reference(
-                "O_ORDERKEY", input_name="left"
+                "O_ORDERKEY", input_name="t0"
             ),
             "O_ORDERDATE": make_relational_column_reference(
-                "O_ORDERDATE", input_name="left"
+                "O_ORDERDATE", input_name="t0"
             ),
             "O_SHIPPRIORITY": make_relational_column_reference(
-                "O_SHIPPRIORITY", input_name="left"
+                "O_SHIPPRIORITY", input_name="t0"
             ),
         },
-        left=orders,
-        right=customer,
-        condition=CallExpression(
-            EQU,
-            BooleanType(),
-            [
-                make_relational_column_reference("O_CUSTKEY", input_name="left"),
-                make_relational_column_reference("C_CUSTKEY", input_name="right"),
-            ],
-        ),
-        join_type=JoinType.INNER,
+        inputs=[orders, customer],
+        conditions=[
+            CallExpression(
+                EQU,
+                BooleanType(),
+                [
+                    make_relational_column_reference("O_CUSTKEY", input_name="t0"),
+                    make_relational_column_reference("C_CUSTKEY", input_name="t1"),
+                ],
+            )
+        ],
+        join_types=[JoinType.INNER],
     )
 
     lineitem = Project(
@@ -471,33 +472,34 @@ def tpch_query_3_plan() -> RelationalRoot:
                 input=Join(
                     columns={
                         "L_ORDERKEY": make_relational_column_reference(
-                            "L_ORDERKEY", input_name="left"
+                            "L_ORDERKEY", input_name="t0"
                         ),
                         "REVENUE": make_relational_column_reference(
-                            "REVENUE", input_name="left"
+                            "REVENUE", input_name="t0"
                         ),
                         "O_ORDERDATE": make_relational_column_reference(
-                            "O_ORDERDATE", input_name="right"
+                            "O_ORDERDATE", input_name="t1"
                         ),
                         "O_SHIPPRIORITY": make_relational_column_reference(
-                            "O_SHIPPRIORITY", input_name="right"
+                            "O_SHIPPRIORITY", input_name="t1"
                         ),
                     },
-                    left=lineitem,
-                    right=customer_orders_join,
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference(
-                                "L_ORDERKEY", input_name="left"
-                            ),
-                            make_relational_column_reference(
-                                "O_ORDERKEY", input_name="right"
-                            ),
-                        ],
-                    ),
-                    join_type=JoinType.INNER,
+                    inputs=[lineitem, customer_orders_join],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference(
+                                    "L_ORDERKEY", input_name="t0"
+                                ),
+                                make_relational_column_reference(
+                                    "O_ORDERKEY", input_name="t1"
+                                ),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.INNER],
                 ),
             ),
         ),
