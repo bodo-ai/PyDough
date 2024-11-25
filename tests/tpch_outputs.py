@@ -2,14 +2,26 @@
 File that holds expected outputs for the TPC-H queries.
 """
 
-from typing import Any
+import pandas as pd
 
 
-def tpch_q1_output() -> list[Any]:
+def tpch_q1_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 1.
     """
-    return [
+    columns = [
+        "L_RETURNFLAG",
+        "L_LINESTATUS",
+        "SUM_QTY",
+        "SUM_BASE_PRICE",
+        "SUM_DISC_PRICE",
+        "SUM_CHARGE",
+        "AVG_QTY",
+        "AVG_PRICE",
+        "AVG_DISC",
+        "COUNT_ORDER",
+    ]
+    data = [
         (
             "A",
             "F",
@@ -59,13 +71,15 @@ def tpch_q1_output() -> list[Any]:
             1478870,
         ),
     ]
+    return pd.DataFrame(data, columns=columns)
 
 
-def tpch_q3_output() -> list[Any]:
+def tpch_q3_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 3.
     """
-    return [
+    columns = ["L_ORDERKEY", "REVENUE", "O_ORDERDATE", "O_SHIPPRIORITY"]
+    data = [
         (2456423, 406181.0111, "1995-03-05", 0),
         (3459808, 405838.6989, "1995-03-04", 0),
         (492164, 390324.061, "1995-02-19", 0),
@@ -77,10 +91,13 @@ def tpch_q3_output() -> list[Any]:
         (993600, 371407.4595, "1995-03-05", 0),
         (2300070, 367371.1452, "1995-03-13", 0),
     ]
+    return pd.DataFrame(data, columns=columns)
 
 
-def tpch_q6_output() -> list[Any]:
+def tpch_q6_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 6.
     """
-    return [(123141078.2283,)]
+    columns = ["REVENUE"]
+    data = [(123141078.2283,)]
+    return pd.DataFrame(data, columns=columns)

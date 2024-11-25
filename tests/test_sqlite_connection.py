@@ -5,6 +5,7 @@ using a SQLite database backend.
 
 import sqlite3
 
+import pandas as pd
 import pytest
 
 from pydough.database_connectors.database_connector import DatabaseConnection
@@ -18,16 +19,16 @@ def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
         sqlite_people_jobs (DatabaseConnection): The DatabaseConnection object to test.
     """
     query: str = """
-        SELECT PEOPLE.person_id, COUNT(*) FROM PEOPLE
+        SELECT PEOPLE.person_id, COUNT(*) as num_entries FROM PEOPLE
         JOIN JOBS
             ON PEOPLE.person_id = JOBS.person_id
         GROUP BY PEOPLE.person_id
     """
-    result: list[sqlite3.Row] = sqlite_people_jobs.execute_query(query)
-    assert len(result) == 10, "Expected 10 rows"
-    assert len(result[0]) == 2, "Expected 2 columns"
-    output: dict[int, int] = {row[0]: row[1] for row in result}
-    assert output == {i: 2 for i in range(10)}, "Unexpected result"
+    result: pd.DataFrame = sqlite_people_jobs.execute_query(query)
+    columns = ["person_id", "num_entries"]
+    data = [(i, 2) for i in range(10)]
+    expected = pd.DataFrame(data, columns=columns)
+    pd.testing.assert_frame_equal(result, expected)
 
 
 @pytest.mark.skip("__del__ is disabled while we decide on the right behavior.")

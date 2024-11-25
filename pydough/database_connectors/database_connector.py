@@ -8,7 +8,8 @@ https://peps.python.org/pep-0249/
 import sqlite3
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+
+import pandas as pd
 
 __all__ = ["DatabaseConnection", "DatabaseDialect", "DatabaseContext"]
 
@@ -40,7 +41,7 @@ class DatabaseConnection:
         # investigate if this is the right thing to do.
         pass
 
-    def execute_query(self, sql: str) -> list[Any]:
+    def execute_query(self, sql: str) -> pd.DataFrame:
         """Create a cursor object using the connection and execute the query,
         returning the entire result.
 
@@ -55,9 +56,12 @@ class DatabaseConnection:
         """
         cursor: sqlite3.Cursor = self._connection.cursor()
         cursor.execute(sql)
+        column_names: list[str] = [description[0] for description in cursor.description]
         # No need to close the cursor, as its closed by del.
         # TODO: Cache the cursor?
-        return cursor.fetchall()
+        # TODO: enable typed DataFrames.
+        data = cursor.fetchall()
+        return pd.DataFrame(data, columns=column_names)
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.

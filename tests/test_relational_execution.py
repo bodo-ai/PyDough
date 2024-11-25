@@ -4,6 +4,7 @@ Simple tests to verify that SQL queries can be executed on a SQLite database.
 
 from typing import Any
 
+import pandas as pd
 from test_utils import make_relational_column_reference, make_relational_ordering
 
 from pydough.database_connectors import DatabaseContext
@@ -90,8 +91,10 @@ def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext):
     salary_results: list[float] = [
         sum((i + j + 5.7) * 1000 for j in range(2)) for i in range(10)
     ]
-    expected_output = list(zip(people_results, salary_results))
-    assert output == expected_output
+    expected_output = pd.DataFrame(
+        list(zip(people_results, salary_results)), columns=["name", "total_salary"]
+    )
+    pd.testing.assert_frame_equal(output, expected_output)
 
 
 def test_person_jobs_multi_join(sqlite_people_jobs_context: DatabaseContext):
@@ -189,5 +192,7 @@ def test_person_jobs_multi_join(sqlite_people_jobs_context: DatabaseContext):
     # select the top half of the people.
     people_results: list[str] = [f"Person {i}" for i in range(5, 10)]
     salary_results: list[float] = [(i + 1 + 5.7) * 1000 for i in range(5, 10)]
-    expected_output = list(zip(people_results, salary_results))
-    assert output == expected_output
+    expected_output = pd.DataFrame(
+        list(zip(people_results, salary_results)), columns=["name", "max_salary"]
+    )
+    pd.testing.assert_frame_equal(output, expected_output)
