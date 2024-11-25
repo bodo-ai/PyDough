@@ -535,3 +535,194 @@ def tpch_q11_output() -> pd.DataFrame:
         (85606, 15053957.150000002),
     ]
     return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q12_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 12.
+    """
+    columns = ["L_SHIPMODE", "HIGH_LINE_COUNT", "LOW_LINE_COUNT"]
+    data = [("MAIL", 6202, 9324), ("SHIP", 6200, 9262)]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q13_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 13. Note: This is truncated to
+    the first 10 rows.
+    """
+    columns = ["C_COUNT", "CUSTDIST"]
+    data = [
+        (0, 50005),
+        (9, 6641),
+        (10, 6532),
+        (11, 6014),
+        (8, 5937),
+        (12, 5639),
+        (13, 5024),
+        (19, 4793),
+        (7, 4687),
+        (17, 4587),
+    ]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q14_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 14.
+    """
+    columns = ["PROMO_REVENUE"]
+    data = [(16.38077862639554,)]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q15_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 15.
+    """
+    columns = ["S_SUPPKEY", "S_NAME", "S_ADDRESS", "S_PHONE", "TOTAL_REVENUE"]
+    data = [
+        (
+            8449,
+            "Supplier#000008449",
+            "Wp34zim9qYFbVctdW",
+            "20-469-856-8873",
+            1772627.2087,
+        )
+    ]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q16_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 16. Note: This is truncated to
+    the first 10 rows.
+    """
+    columns = ["P_BRAND", "P_TYPE", "P_SIZE", "SUPPLIER_COUNT"]
+    data = [
+        ("Brand#41", "MEDIUM BRUSHED TIN", 3, 28),
+        ("Brand#54", "STANDARD BRUSHED COPPER", 14, 27),
+        ("Brand#11", "STANDARD BRUSHED TIN", 23, 24),
+        ("Brand#11", "STANDARD BURNISHED BRASS", 36, 24),
+        ("Brand#15", "MEDIUM ANODIZED NICKEL", 3, 24),
+        ("Brand#15", "SMALL ANODIZED BRASS", 45, 24),
+        ("Brand#15", "SMALL BURNISHED NICKEL", 19, 24),
+        ("Brand#21", "MEDIUM ANODIZED COPPER", 3, 24),
+        ("Brand#22", "SMALL BRUSHED NICKEL", 3, 24),
+        ("Brand#22", "SMALL BURNISHED BRASS", 19, 24),
+    ]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q17_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 17.
+
+    This query needs manual rewriting to run efficiently in SQLite
+    by avoiding the correlated join.
+    """
+    columns = ["AVG_YEARLY"]
+    data = [(348406.0542857143,)]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q18_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 18. Note: This is truncated to
+    the first 10 rows.
+    """
+    columns = [
+        "C_NAME",
+        "C_CUSTKEY",
+        "O_ORDERKEY",
+        "O_ORDERDATE",
+        "O_TOTALPRICE",
+        "TOTAL_QUANTITY",
+    ]
+    data = [
+        ("Customer#000128120", 128120, 4722021, "1994-04-07", 544089.09, 323),
+        ("Customer#000144617", 144617, 3043270, "1997-02-12", 530604.44, 317),
+        ("Customer#000013940", 13940, 2232932, "1997-04-13", 522720.61, 304),
+        ("Customer#000066790", 66790, 2199712, "1996-09-30", 515531.82, 327),
+        ("Customer#000046435", 46435, 4745607, "1997-07-03", 508047.99, 309),
+        ("Customer#000015272", 15272, 3883783, "1993-07-28", 500241.33, 302),
+        ("Customer#000146608", 146608, 3342468, "1994-06-12", 499794.58, 303),
+        ("Customer#000096103", 96103, 5984582, "1992-03-16", 494398.79, 312),
+        ("Customer#000024341", 24341, 1474818, "1992-11-15", 491348.26, 302),
+        ("Customer#000137446", 137446, 5489475, "1997-05-23", 487763.25, 311),
+    ]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q19_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 19.
+    """
+    columns = ["REVENUE"]
+    data = [(3083843.0578,)]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q20_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 20. Note: This is truncated to
+    the first 10 rows.
+
+    This query needs manual rewriting to run efficiently in SQLite
+    by avoiding the correlated join.
+    """
+    columns = ["S_NAME", "S_ADDRESS"]
+    data = [
+        ("Supplier#000000020", "iybAE,RmTymrZVYaFZva2SH,j"),
+        ("Supplier#000000091", "YV45D7TkfdQanOOZ7q9QxkyGUapU1oOWU6q3"),
+        ("Supplier#000000205", "rF uV8d0JNEk"),
+        ("Supplier#000000285", "Br7e1nnt1yxrw6ImgpJ7YdhFDjuBf"),
+        ("Supplier#000000287", "7a9SP7qW5Yku5PvSg"),
+        ("Supplier#000000354", "w8fOo5W,aS"),
+        ("Supplier#000000378", "FfbhyCxWvcPrO8ltp9"),
+        ("Supplier#000000402", "i9Sw4DoyMhzhKXCH9By,AYSgmD"),
+        ("Supplier#000000530", "0qwCMwobKY OcmLyfRXlagA8ukENJv,"),
+        ("Supplier#000000555", "TfB,a5bfl3Ah 3Z 74GqnNs6zKVGM"),
+    ]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q21_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 21. Note: This is truncated to
+    the first 10 rows.
+    """
+    columns = ["S_NAME", "NUM_WAIT"]
+    data = [
+        ("Supplier#000002829", 20),
+        ("Supplier#000005808", 18),
+        ("Supplier#000000262", 17),
+        ("Supplier#000000496", 17),
+        ("Supplier#000002160", 17),
+        ("Supplier#000002301", 17),
+        ("Supplier#000002540", 17),
+        ("Supplier#000003063", 17),
+        ("Supplier#000005178", 17),
+        ("Supplier#000008331", 17),
+    ]
+    return pd.DataFrame(data, columns=columns)
+
+
+def tpch_q22_output() -> pd.DataFrame:
+    """
+    Expected output for TPC-H query 22.
+
+    This query needs manual rewriting to run efficiently in SQLite
+    by avoiding the correlated join.
+    """
+    columns = ["CNTRYCODE", "NUMCUST", "TOTACCTBAL"]
+    data = [
+        ("13", 888, 6737713.99),
+        ("17", 861, 6460573.72),
+        ("18", 964, 7236687.4),
+        ("23", 892, 6701457.95),
+        ("29", 948, 7158866.63),
+        ("30", 909, 6808436.13),
+        ("31", 922, 6806670.18),
+    ]
+    return pd.DataFrame(data, columns=columns)
