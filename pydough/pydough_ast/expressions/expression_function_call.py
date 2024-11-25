@@ -5,6 +5,7 @@ TODO: add file-level docstring
 __all__ = ["ExpressionFunctionCall"]
 
 from collections.abc import MutableSequence
+from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
@@ -53,10 +54,27 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return self.operator.is_aggregation
 
+    @cache
+    def is_singular(self, context: PyDoughAST) -> bool:
+        # Function calls are singular if they are aggregations or if all of
+        # their operands are also singular.
+        assert isinstance(context, PyDoughCollectionAST)
+        if self.is_aggregation:
+            return True
+        for arg in self.args:
+            if isinstance(
+                arg, (PyDoughExpressionAST, PyDoughCollectionAST)
+            ) and not arg.is_singular(context):
+                return False
+        return True
+
     def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
         return self.operator.requires_enclosing_parens(parent)
 
     def to_string(self, tree_form: bool = False) -> str:
+        from pydough.pydough_ast.collections.back_reference_collection import (
+            BackReferenceCollection,
+        )
         from pydough.pydough_ast.collections.child_reference_collection import (
             ChildReferenceCollection,
         )
@@ -71,7 +89,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
             elif isinstance(arg, PyDoughCollectionAST):
                 if tree_form:
                     assert isinstance(
-                        arg, ChildReferenceCollection
+                        arg, (ChildReferenceCollection, BackReferenceCollection)
                     ), f"Unexpected argument to function call {arg}: expected an expression, or reference to a collection"
                     arg_string = arg.tree_item_string
                 else:

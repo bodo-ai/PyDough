@@ -68,6 +68,7 @@ class Calc(ChildOperator):
             self._calc_term_values[name] = value
             self._all_term_names.add(name)
         self.all_terms.update(self.preceding_context.all_terms)
+        self.verify_singular_terms(self._calc_term_values.values())
         return self
 
     @property

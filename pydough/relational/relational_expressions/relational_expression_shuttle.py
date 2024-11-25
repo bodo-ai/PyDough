@@ -17,16 +17,21 @@ class RelationalExpressionShuttle(ABC):
     at the end of each visit.
     """
 
-    @abstractmethod
     def visit_call_expression(self, call_expression):
         """
-        Visit a CallExpression node.
+        Visit a CallExpression node. This is the default implementation that visits
+        all children of the call expression and returns a new call expression with
+        the modified children.
 
         Args:
             call_expression (CallExpression): The call expression node to visit.
         Returns:
             RelationalExpression: The new node resulting from visiting this node.
         """
+        from .call_expression import CallExpression
+
+        args = [args.accept_shuttle(self) for args in call_expression.inputs]
+        return CallExpression(call_expression.op, call_expression.data_type, args)
 
     @abstractmethod
     def visit_literal_expression(self, literal_expression):

@@ -9,6 +9,7 @@ from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 
+from .back_reference_collection import BackReferenceCollection
 from .child_access import ChildAccess
 from .collection_ast import PyDoughCollectionAST
 from .collection_tree_form import CollectionTreeForm
@@ -60,6 +61,22 @@ class ChildOperatorChildAccess(ChildAccess):
         if isinstance(term, ChildAccess):
             term = term.clone_with_parent(self)
         return term
+
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # When a child operator acceses a child collection, the child is
+        # singular with regards to a context if the child is singular
+        # relative to its own parent, and one of 3 other conditions is true:
+        # 1. The child access is a BACK node (automatically singular)
+        # 2. The parent of the child access is the context
+        # 3. The parent of the child access is singular relative to the context
+        ancestor: PyDoughCollectionAST | None = self.child_access.ancestor_context
+        assert ancestor is not None
+        relative_context: PyDoughCollectionAST = ancestor.starting_predecessor
+        return self.child_access.is_singular(relative_context) and (
+            isinstance(self.child_access, BackReferenceCollection)
+            or (context == relative_context)
+            or relative_context.is_singular(context)
+        )
 
     @property
     def standalone_string(self) -> str:
