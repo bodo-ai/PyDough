@@ -154,6 +154,107 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(1, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                    ),
+                    limit=LiteralExpression(5, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+            ),
+            "SELECT a, b FROM table LIMIT 1",
+            id="duplicate_limit_min_inner",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(5, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                        orderings=[
+                            make_relational_ordering(
+                                make_relational_column_reference("a"),
+                                ascending=True,
+                                nulls_first=True,
+                            ),
+                            make_relational_ordering(
+                                make_relational_column_reference("b"),
+                                ascending=False,
+                                nulls_first=False,
+                            ),
+                        ],
+                    ),
+                    limit=LiteralExpression(1, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+            ),
+            "SELECT a, b FROM table ORDER BY a, b DESC LIMIT 1",
+            id="duplicate_limit_min_outer",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(5, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                        orderings=[
+                            make_relational_ordering(
+                                make_relational_column_reference("a"),
+                                ascending=True,
+                                nulls_first=True,
+                            ),
+                        ],
+                    ),
+                    limit=LiteralExpression(2, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=False,
+                            nulls_first=False,
+                        ),
+                    ],
+                ),
+            ),
+            "SELECT a, b FROM (SELECT a, b FROM table ORDER BY a LIMIT 5) ORDER BY b DESC LIMIT 2",
+            id="duplicate_limit_different_ordering",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
                     input=build_simple_scan(),
                     limit=LiteralExpression(10, Int64Type()),
                     columns={
@@ -570,7 +671,7 @@ def test_convert_relation_to_sql(
         ),
         pytest.param(
             tpch_query_3_plan(),
-            "SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY, SUM(REVENUE) AS REVENUE FROM (SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS REVENUE FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE > '1995-03-15')) INNER JOIN (SELECT O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT O_CUSTKEY, O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM ORDERS WHERE O_ORDERDATE < '1995-03-15') INNER JOIN (SELECT C_CUSTKEY FROM (SELECT C_CUSTKEY, C_MKTSEGMENT FROM CUSTOMER) WHERE C_MKTSEGMENT = 'BUILDING') ON O_CUSTKEY = C_CUSTKEY) ON L_ORDERKEY = O_ORDERKEY) GROUP BY L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY) ORDER BY REVENUE DESC, O_ORDERDATE, L_ORDERKEY LIMIT 10) ORDER BY REVENUE DESC, O_ORDERDATE, L_ORDERKEY",
+            "SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY, SUM(REVENUE) AS REVENUE FROM (SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS REVENUE FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE > '1995-03-15')) INNER JOIN (SELECT O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT O_CUSTKEY, O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM ORDERS WHERE O_ORDERDATE < '1995-03-15') INNER JOIN (SELECT C_CUSTKEY FROM (SELECT C_CUSTKEY, C_MKTSEGMENT FROM CUSTOMER) WHERE C_MKTSEGMENT = 'BUILDING') ON O_CUSTKEY = C_CUSTKEY) ON L_ORDERKEY = O_ORDERKEY) GROUP BY L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY) ORDER BY REVENUE DESC, O_ORDERDATE, L_ORDERKEY LIMIT 10",
             id="tpch_q3",
         ),
         pytest.param(
