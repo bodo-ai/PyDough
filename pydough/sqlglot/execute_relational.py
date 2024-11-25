@@ -7,7 +7,7 @@ the query on the database.
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 
-from pydough.relational.relational_nodes import RelationalRoot
+from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 

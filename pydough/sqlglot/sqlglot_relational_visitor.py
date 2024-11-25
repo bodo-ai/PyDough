@@ -10,16 +10,14 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import (
-    ColumnReferenceInputNameModifier,
-    ColumnSortInfo,
-    LiteralExpression,
-)
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    ColumnReferenceInputNameModifier,
+    ExpressionSortInfo,
     Filter,
     Join,
     Limit,
+    LiteralExpression,
     Project,
     RelationalRoot,
     RelationalVisitor,
@@ -183,27 +181,29 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             return self._build_subquery(orig_select, new_exprs)
 
     def _convert_ordering(
-        self, ordering: MutableSequence[ColumnSortInfo]
+        self, ordering: MutableSequence[ExpressionSortInfo]
     ) -> list[SQLGlotExpression]:
         """
         Convert the orderings from the a relational operator into a variant
         that can be used in SQLGlot.
 
         Args:
-            ordering (MutableSequence[ColumnSortInfo]): The orderings to convert.
+            ordering (MutableSequence[ExpressionSortInfo]): The orderings to convert.
 
         Returns:
             list[SQLGlotExpression]: The converted orderings.
         """
-        col_exprs = []
+        glot_exprs: list[SQLGlotExpression] = []
         for col in ordering:
-            col_expr = self._expr_visitor.relational_to_sqlglot(col.column)
+            glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+                col.expr
+            )
             if col.ascending:
-                col_expr = col_expr.asc(nulls_first=col.nulls_first)
+                glot_expr = glot_expr.asc(nulls_first=col.nulls_first)
             else:
-                col_expr = col_expr.desc(nulls_first=col.nulls_first)
-            col_exprs.append(col_expr)
-        return col_exprs
+                glot_expr = glot_expr.desc(nulls_first=col.nulls_first)
+            glot_exprs.append(glot_expr)
+        return glot_exprs
 
     @staticmethod
     def _build_subquery(

@@ -8,7 +8,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Paren
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import (
+from pydough.relational import (
     CallExpression,
     ColumnReference,
     LiteralExpression,
@@ -26,6 +26,7 @@ __all__ = ["SQLGlotRelationalExpressionVisitor"]
 # going through the parser. As a result, we generate our own map for now.
 # These functions can be generated with from_arg_list.
 generic_func_map: dict[str, SQLGlotExpression] = {
+    "ABS": sqlglot_expressions.Abs,
     "LOWER": sqlglot_expressions.Lower,
     "LENGTH": sqlglot_expressions.Length,
     "SUM": sqlglot_expressions.Sum,
