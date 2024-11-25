@@ -216,6 +216,45 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(5, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                        orderings=[
+                            make_relational_ordering(
+                                make_relational_column_reference("a"),
+                                ascending=True,
+                                nulls_first=True,
+                            ),
+                        ],
+                    ),
+                    limit=LiteralExpression(2, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=False,
+                            nulls_first=False,
+                        ),
+                    ],
+                ),
+            ),
+            "SELECT a, b FROM (SELECT a, b FROM table ORDER BY a LIMIT 5) ORDER BY b DESC LIMIT 2",
+            id="duplicate_limit_different_ordering",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
                     input=build_simple_scan(),
                     limit=LiteralExpression(10, Int64Type()),
                     columns={
