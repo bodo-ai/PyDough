@@ -10,12 +10,12 @@ import pytest
 from pydough.database_connectors.database_connector import DatabaseConnection
 
 
-def test_query_execution(sqlite3_people_jobs: DatabaseConnection) -> None:
+def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
     """
     Test that the DatabaseConnection can execute a query on the SQLite database.
 
     Args:
-        sqlite3_people_jobs (DatabaseConnection): The DatabaseConnection object to test.
+        sqlite_people_jobs (DatabaseConnection): The DatabaseConnection object to test.
     """
     query: str = """
         SELECT PEOPLE.person_id, COUNT(*) FROM PEOPLE
@@ -23,13 +23,14 @@ def test_query_execution(sqlite3_people_jobs: DatabaseConnection) -> None:
             ON PEOPLE.person_id = JOBS.person_id
         GROUP BY PEOPLE.person_id
     """
-    result: list[sqlite3.Row] = sqlite3_people_jobs.execute_query(query)
+    result: list[sqlite3.Row] = sqlite_people_jobs.execute_query(query)
     assert len(result) == 10, "Expected 10 rows"
     assert len(result[0]) == 2, "Expected 2 columns"
     output: dict[int, int] = {row[0]: row[1] for row in result}
     assert output == {i: 2 for i in range(10)}, "Unexpected result"
 
 
+@pytest.mark.skip("__del__ is disabled while we decide on the right behavior.")
 def test_unusable_after_del() -> None:
     """
     Test that the underlying connection is closed when the DatabaseConnection

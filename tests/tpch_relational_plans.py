@@ -108,7 +108,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                     DIV,
                     UnknownType(),
                     [
-                        make_relational_column_reference("SUM_TAX"),
+                        make_relational_column_reference("SUM_DISCOUNT"),
                         make_relational_column_reference("COUNT_ORDER"),
                     ],
                 ),
@@ -130,10 +130,10 @@ def tpch_query_1_plan() -> RelationalRoot:
                         UnknownType(),
                         [make_relational_column_reference("L_EXTENDEDPRICE")],
                     ),
-                    "SUM_TAX": CallExpression(
+                    "SUM_DISCOUNT": CallExpression(
                         SUM,
                         UnknownType(),
-                        [make_relational_column_reference("L_TAX")],
+                        [make_relational_column_reference("L_DISCOUNT")],
                     ),
                     "SUM_DISC_PRICE": CallExpression(
                         SUM,
@@ -157,7 +157,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                         "L_EXTENDEDPRICE": make_relational_column_reference(
                             "L_EXTENDEDPRICE"
                         ),
-                        "L_TAX": make_relational_column_reference("L_TAX"),
+                        "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
                         "L_RETURNFLAG": make_relational_column_reference(
                             "L_RETURNFLAG"
                         ),
@@ -175,9 +175,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                                     UnknownType(),
                                     [
                                         make_relational_literal(1, Int64Type()),
-                                        make_relational_column_reference(
-                                            "L_EXTENDEDPRICE"
-                                        ),
+                                        make_relational_column_reference("L_TAX"),
                                     ],
                                 ),
                             ],
@@ -455,36 +453,52 @@ def tpch_query_3_plan() -> RelationalRoot:
                     nulls_first=True,
                 ),
             ],
-            input=Join(
-                columns={
-                    "L_ORDERKEY": make_relational_column_reference(
-                        "L_ORDERKEY", input_name="left"
-                    ),
-                    "REVENUE": make_relational_column_reference(
-                        "REVENUE", input_name="left"
-                    ),
-                    "O_ORDERDATE": make_relational_column_reference(
-                        "O_ORDERDATE", input_name="left"
-                    ),
+            input=Aggregate(
+                keys={
+                    "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+                    "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
                     "O_SHIPPRIORITY": make_relational_column_reference(
-                        "O_SHIPPRIORITY", input_name="left"
+                        "O_SHIPPRIORITY"
                     ),
                 },
-                left=lineitem,
-                right=customer_orders_join,
-                condition=CallExpression(
-                    EQU,
-                    BooleanType(),
-                    [
-                        make_relational_column_reference(
+                aggregations={
+                    "REVENUE": CallExpression(
+                        SUM,
+                        UnknownType(),
+                        [make_relational_column_reference("REVENUE")],
+                    ),
+                },
+                input=Join(
+                    columns={
+                        "L_ORDERKEY": make_relational_column_reference(
                             "L_ORDERKEY", input_name="left"
                         ),
-                        make_relational_column_reference(
-                            "O_ORDERKEY", input_name="right"
+                        "REVENUE": make_relational_column_reference(
+                            "REVENUE", input_name="left"
                         ),
-                    ],
+                        "O_ORDERDATE": make_relational_column_reference(
+                            "O_ORDERDATE", input_name="right"
+                        ),
+                        "O_SHIPPRIORITY": make_relational_column_reference(
+                            "O_SHIPPRIORITY", input_name="right"
+                        ),
+                    },
+                    left=lineitem,
+                    right=customer_orders_join,
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference(
+                                "L_ORDERKEY", input_name="left"
+                            ),
+                            make_relational_column_reference(
+                                "O_ORDERKEY", input_name="right"
+                            ),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
                 ),
-                join_type=JoinType.INNER,
             ),
         ),
     )
@@ -541,7 +555,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 LEQ,
                                 BooleanType(),
                                 [
-                                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                                    make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal("0.07", DecimalType(3, 2)),
                                 ],
                             ),
@@ -549,7 +563,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 GEQ,
                                 BooleanType(),
                                 [
-                                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                                    make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal("0.05", DecimalType(3, 2)),
                                 ],
                             ),

@@ -16,7 +16,7 @@ To setup your Sqlite database we provide the a script, `setup_tpch.sh`. This scr
 ./setup_tpch.sh <database_file_path>
 ```
 
-Note: This script will not combine with an existing database file and will fail if tahe file already exists at the provided path.
+Note: This script will not combine with an existing database file and will fail if the file already exists at the provided path.
 
 ## Demo Dependencies
 In addition to the set of PyDough dependencies, the TPCH demo requires the following
