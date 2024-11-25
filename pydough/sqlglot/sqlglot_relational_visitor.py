@@ -253,9 +253,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def visit_join(self, join: Join) -> None:
         self.visit_inputs(join)
-        inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))][
-            ::-1
-        ]
+        inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
+        inputs.reverse()
         # Compute a dictionary to find all duplicate names.
         seen_names: MutableMapping[str, int] = defaultdict(int)
         for input in join.inputs:

@@ -33,6 +33,22 @@ class PyDoughExpressionAST(PyDoughAST):
         can collapse multiple records into a scalar value.
         """
 
+    @abstractmethod
+    def is_singular(self, context: PyDoughAST) -> bool:
+        """
+        Returns whether the expression is singular with regards to a
+        context collection.
+
+        Args:
+            `context`: the collection that the singular/plural status of the
+            current expression is being checked against. Note: despite the
+            annotation, this must be a collection.
+
+        Returns:
+            True if there is at most a single record of the current expression
+            for each record of the context, and False otherwise.
+        """
+
     @property
     def key(self) -> str:
         return self.to_string()
