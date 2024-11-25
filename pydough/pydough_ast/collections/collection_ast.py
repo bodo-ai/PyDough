@@ -6,9 +6,12 @@ __all__ = ["PyDoughCollectionAST"]
 
 
 from abc import abstractmethod
+from collections.abc import Iterable
+from functools import cached_property
 from typing import Union
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
+from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions.collation_expression import CollationExpression
 from pydough.pydough_ast.expressions.expression_ast import PyDoughExpressionAST
 
@@ -59,6 +62,59 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @abstractmethod
+    def is_singular(self, context: "PyDoughCollectionAST") -> bool:
+        """
+        Returns whether the collection is singular with regards to a
+        context collection.
+
+        Args:
+            `context`: the collection that the singular/plural status of the
+            current collection is being checked against.
+
+        Returns:
+            True if there is at most a single record of the current collection
+            for each record of the context, and False otherwise.
+        """
+
+    @cached_property
+    def starting_predecessor(self) -> "PyDoughCollectionAST":
+        """
+        Returns the predecessor at the start of the current chain of preceding
+        collections, or `self` if this is the start of that chain. The process
+        also unwraps any ChildOperatorChildAccess terms.
+        """
+        from pydough.pydough_ast.collections import ChildOperatorChildAccess
+
+        predecessor: PyDoughCollectionAST | None = self.preceding_context
+        result: PyDoughCollectionAST
+        if predecessor is None:
+            result = self
+        else:
+            result = predecessor.starting_predecessor
+        while isinstance(result, ChildOperatorChildAccess):
+            result = result.child_access.starting_predecessor
+        return result
+
+    def verify_singular_terms(self, exprs: Iterable[PyDoughExpressionAST]) -> None:
+        """
+        Verifies that a list of expressions is singular with regards to the
+        current collection, e.g. they can used as CALC terms.
+
+        Args:
+            `exprs`: the list of expression to be checked.
+
+        Raises:
+            `PyDoughASTException` if any element of `exprs` is not singular with
+            regards to the current collection.
+        """
+        relative_context: PyDoughCollectionAST = self.starting_predecessor
+        for expr in exprs:
+            if not expr.is_singular(relative_context):
+                raise PyDoughASTException(
+                    f"Expected all terms in {self.standalone_string} to be singular, but encountered a plural expression: {expr.to_string()}"
+                )
+
+    @abstractmethod
     def get_expression_position(self, expr_name: str) -> int:
         """
         Retrieves the ordinal position of an expression within the collection
@@ -105,7 +161,10 @@ class PyDoughCollectionAST(PyDoughAST):
             terms accessible in the context, or is not an expression.
         """
         term = self.get_term(term_name)
-        assert isinstance(term, PyDoughExpressionAST)
+        if not isinstance(term, PyDoughExpressionAST):
+            raise PyDoughASTException(
+                f"Property {term_name!r} of {self} is not an expression"
+            )
         return term
 
     def get_collection(self, term_name: str) -> "PyDoughCollectionAST":
@@ -121,7 +180,10 @@ class PyDoughCollectionAST(PyDoughAST):
             terms accessible in the context, or is not a collection.
         """
         term = self.get_term(term_name)
-        assert isinstance(term, PyDoughCollectionAST)
+        if not isinstance(term, PyDoughCollectionAST):
+            raise PyDoughASTException(
+                f"Property {term_name!r} of {self} is not a collection"
+            )
         return term
 
     @property

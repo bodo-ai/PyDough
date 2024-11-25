@@ -73,6 +73,9 @@ class GlobalContext(PyDoughCollectionAST):
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        raise PyDoughASTException(f"Cannot call is_singular on {self!r}")
+
     def get_expression_position(self, expr_name: str) -> int:
         raise PyDoughASTException(f"Cannot call get_expression_position on {self!r}")
 

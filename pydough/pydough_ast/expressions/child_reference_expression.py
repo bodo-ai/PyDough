@@ -4,7 +4,11 @@ TODO: add file-level docstring
 
 __all__ = ["ChildReferenceExpression"]
 
+from functools import cache
+
+from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
+from pydough.pydough_ast.errors import PyDoughASTException
 
 from .expression_ast import PyDoughExpressionAST
 from .reference import Reference
@@ -23,6 +27,10 @@ class ChildReferenceExpression(Reference):
         self._child_idx: int = child_idx
         self._term_name: str = term_name
         self._expression: PyDoughExpressionAST = self._collection.get_expr(term_name)
+        if not self.expression.is_singular(collection.starting_predecessor):
+            raise PyDoughASTException(
+                f"Cannot reference plural expression {self.expression} from {self.collection}"
+            )
 
     @property
     def child_idx(self) -> int:
@@ -31,6 +39,15 @@ class ChildReferenceExpression(Reference):
         refers to.
         """
         return self._child_idx
+
+    @cache
+    def is_singular(self, context: PyDoughAST) -> bool:
+        # Child reference expressions are already known to be singular relative
+        # to the child collection to the via their construction, so they are
+        # singular relative to the context if and only if their child collection
+        # is singular relative to the context.
+        assert isinstance(context, PyDoughCollectionAST)
+        return self.collection.is_singular(context)
 
     def to_string(self, tree_form: bool = False) -> str:
         if tree_form:

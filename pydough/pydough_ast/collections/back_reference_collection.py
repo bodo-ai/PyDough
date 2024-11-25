@@ -5,6 +5,8 @@ TODO: add file-level docstring
 __all__ = ["BackReferenceCollection"]
 
 
+from functools import cache
+
 from pydough.pydough_ast.errors import PyDoughASTException
 
 from .child_access import ChildAccess
@@ -67,6 +69,12 @@ class BackReferenceCollection(CollectionAccess):
         """
         return self._collection_access
 
+    @cache
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        return self.collection_access.is_singular(
+            self.collection_access.ancestor_context.starting_predecessor
+        )
+
     @property
     def key(self) -> str:
         return self.standalone_string
@@ -80,4 +88,4 @@ class BackReferenceCollection(CollectionAccess):
 
     @property
     def tree_item_string(self) -> str:
-        return f"SubCollection[{self.standalone_string}]"
+        return f"BackSubCollection[{self.back_levels}, {self.term_name}]"
