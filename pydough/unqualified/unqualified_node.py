@@ -308,7 +308,11 @@ class UnqualifiedRoot(UnqualifiedNode):
     def __init__(self, graph: GraphMetadata):
         self._parcel: tuple[GraphMetadata, set[str]] = (
             graph,
-            set(pydop.builtin_registered_operators()),
+            {
+                operator_name
+                for operator_name, operator in pydop.builtin_registered_operators().items()
+                if not isinstance(operator, pydop.BinaryOperator)
+            },
         )
 
     def __getattribute__(self, name: str) -> Any:

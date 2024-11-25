@@ -53,13 +53,6 @@ class BackReferenceExpression(Reference):
         return self._ancestor
 
     @property
-    def expression(self) -> PyDoughExpressionAST:
-        """
-        The original expression that the reference refers to.
-        """
-        return self._expression
-
-    @property
     def pydough_type(self) -> PyDoughType:
         return self.expression.pydough_type
 

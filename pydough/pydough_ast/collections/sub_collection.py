@@ -5,6 +5,8 @@ TODO: add file-level docstring
 __all__ = ["SubCollection"]
 
 
+from functools import cache
+
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 
 from .collection_access import CollectionAccess
@@ -35,6 +37,18 @@ class SubCollection(CollectionAccess):
         The subcollection property referenced by the collection node.
         """
         return self._subcollection_property
+
+    @cache
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # A subcollection is singular if the underlying subcollection property
+        # is singular and the parent collection is singular relative to the
+        # desired context (or the parent is the desired context).
+        if self.subcollection_property.is_plural:
+            return False
+        relative_ancestor: PyDoughCollectionAST = (
+            self.ancestor_context.starting_predecessor
+        )
+        return (context == relative_ancestor) or relative_ancestor.is_singular(context)
 
     @property
     def key(self) -> str:
