@@ -51,6 +51,7 @@ class OrderBy(ChildOperator):
                 "Cannot call `with_collation` more than once per ORDERBY node"
             )
         self._collation = collation
+        self.verify_singular_terms(collation)
         return self
 
     @property

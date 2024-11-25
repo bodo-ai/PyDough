@@ -52,6 +52,12 @@ class PartitionChild(ChildOperatorChildAccess):
     def ordering(self) -> list[CollationExpression] | None:
         return self._child_access.ordering
 
+    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+        # The child of a PARTITION BY clause is always presumed to be plural
+        # since PyDough must assume that multiple records can be grouped
+        # together into the same bucket.
+        return False
+
     @property
     def standalone_string(self) -> str:
         return self.partition_child_name

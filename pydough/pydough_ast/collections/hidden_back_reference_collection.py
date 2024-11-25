@@ -84,3 +84,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
 
     def to_string(self) -> str:
         return f"{self.context.to_string()}.{self.standalone_string}"
+
+    @property
+    def tree_item_string(self) -> str:
+        return f"SubCollection[{self.standalone_string}]"
