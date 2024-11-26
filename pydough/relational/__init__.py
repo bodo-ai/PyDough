@@ -1,5 +1,6 @@
 __all__ = [
     "Aggregate",
+    "ColumnPruner",
     "Filter",
     "Join",
     "JoinType",
@@ -34,6 +35,7 @@ from .relational_expressions import (
 )
 from .relational_nodes import (
     Aggregate,
+    ColumnPruner,
     Filter,
     Join,
     JoinType,

@@ -8,9 +8,12 @@ from pydough.relational.relational_expressions import (
 )
 
 from .abstract_node import Relational
+from .aggregate import Aggregate
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher
 from .relational_root import RelationalRoot
+
+__all__ = ["ColumnPruner"]
 
 
 class ColumnPruner:
@@ -53,8 +56,17 @@ class ColumnPruner:
                 be changed if columns were pruned from it.
         """
         # Prune columns from the node.
+        if isinstance(node, Aggregate):
+            # Avoid pruning keys from an aggregate node. In the future we may
+            # want to decouple the keys from the columns so not all keys need to
+            # be present in the output.
+            required_columns = set(node.keys.keys())
+        else:
+            required_columns = set()
         columns = {
-            name: expr for name, expr in node.columns.items() if name in kept_columns
+            name: expr
+            for name, expr in node.columns.items()
+            if name in kept_columns or name in required_columns
         }
         # Update the columns.
         new_node = node.copy(columns=columns)
@@ -66,6 +78,8 @@ class ColumnPruner:
         )
         # Determine which identifiers to pass to each input.
         new_inputs: list[Relational] = []
+        # Note: The ColumnPruner should only be run when all input names are
+        # still present in the columns.
         for i, default_input_name in enumerate(new_node.default_input_aliases):
             s: set[str] = set()
             for identifier in found_identifiers:
