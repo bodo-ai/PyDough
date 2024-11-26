@@ -19,8 +19,8 @@ __all__ = ["ColumnPruner"]
 class ColumnPruner:
     def __init__(self) -> None:
         self._column_finder: ColumnReferenceFinder = ColumnReferenceFinder()
-        # Note: We set recurse=False so we only check the expressions in the current
-        # node.
+        # Note: We set recurse=False so we only check the expressions in the
+        # current node.
         self._dispatcher = RelationalExpressionDispatcher(
             self._column_finder, recurse=False
         )
