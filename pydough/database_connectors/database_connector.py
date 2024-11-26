@@ -41,9 +41,9 @@ class DatabaseConnection:
         # investigate if this is the right thing to do.
         pass
 
-    def execute_query(self, sql: str) -> pd.DataFrame:
+    def execute_query_df(self, sql: str) -> pd.DataFrame:
         """Create a cursor object using the connection and execute the query,
-        returning the entire result.
+        returning the entire result as a Pandas DataFrame.
 
         TODO: Support parameters. Dependent on knowing which Python types
         are in scope and how we need to test them.

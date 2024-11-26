@@ -24,7 +24,7 @@ def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
             ON PEOPLE.person_id = JOBS.person_id
         GROUP BY PEOPLE.person_id
     """
-    result: pd.DataFrame = sqlite_people_jobs.execute_query(query)
+    result: pd.DataFrame = sqlite_people_jobs.execute_query_df(query)
     columns = ["person_id", "num_entries"]
     data = [(i, 2) for i in range(10)]
     expected = pd.DataFrame(data, columns=columns)
