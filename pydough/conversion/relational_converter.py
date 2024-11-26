@@ -42,6 +42,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 from pydough.relational.relational_nodes import (
+    ColumnPruner,
     Join,
     JoinType,
     Relational,
@@ -258,7 +259,7 @@ class RelTranslation:
             old_reference = rhs_output.expressions[expr]
             old_name: str = old_reference.name
             new_name: str = old_name
-            idx: int = 0
+            idx: int = 1
             while new_name in join_columns:
                 new_name = f"{old_name}_{idx}"
                 idx += 1
@@ -444,7 +445,7 @@ class RelTranslation:
         return final_calc.with_terms(final_terms), ordering
 
 
-def convert_ast_to_relational(node: PyDoughCollectionAST) -> Relational:
+def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
     """
     TODO: add function docstring
     """
@@ -482,4 +483,7 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> Relational:
                 relational_expr, col_expr.asc, not col_expr.na_last
             )
             orderings.append(collation_expr)
-    return RelationalRoot(output[0].relation, ordered_columns, orderings)
+    unpruned_result: RelationalRoot = RelationalRoot(
+        output[0].relation, ordered_columns, orderings
+    )
+    return ColumnPruner().prune_unused_columns(unpruned_result)

@@ -44,9 +44,9 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
         pytest.param(
             TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
             """
-ROOT(columns=[('key', key_0), ('name', name_0), ('region_key', region_key), ('comment', comment_0)], orderings=[])
- JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment': t0.comment, 'comment_0': t1.comment, 'key': t0.key, 'key_0': t1.key, 'name': t0.name, 'name_0': t1.name, 'region_key': t1.region_key})
-  SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+ROOT(columns=[('key', key_1), ('name', name_1), ('region_key', region_key), ('comment', comment_1)], orderings=[])
+ JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_1': t1.key, 'name_1': t1.name, 'region_key': t1.region_key})
+  SCAN(table=tpch.REGION, columns={'key': r_regionkey})
   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
 """,
             id="join_region_nations",
@@ -56,11 +56,11 @@ ROOT(columns=[('key', key_0), ('name', name_0), ('region_key', region_key), ('co
             ** SubCollectionInfo("nations")
             ** SubCollectionInfo("customers"),
             """
-ROOT(columns=[('key', key_1), ('name', name_1), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment_1)], orderings=[])
- JOIN(conditions=[t0.key_0 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment': t0.comment, 'comment_0': t0.comment_0, 'comment_1': t1.comment, 'key': t0.key, 'key_0': t0.key_0, 'key_1': t1.key, 'mktsegment': t1.mktsegment, 'name': t0.name, 'name_0': t0.name_0, 'name_1': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone, 'region_key': t0.region_key})
-  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment': t0.comment, 'comment_0': t1.comment, 'key': t0.key, 'key_0': t1.key, 'name': t0.name, 'name_0': t1.name, 'region_key': t1.region_key})
-   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
-   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+ROOT(columns=[('key', key_2), ('name', name_2), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment_2)], orderings=[])
+ JOIN(conditions=[t0.key_1 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment_2': t1.comment, 'key_2': t1.key, 'mktsegment': t1.mktsegment, 'name_2': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_1': t1.key})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'address': c_address, 'comment': c_comment, 'key': c_custkey, 'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
 """,
             id="join_region_nations_customers",
