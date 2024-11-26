@@ -10,6 +10,18 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 
 def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
+    """
+    Determine when due to the next SQL operator not using standard
+    function syntax, we may need to apply parentheses to the current
+    expression to avoid operator precedence issues.
+
+    Args:
+        expression (SQLGlotExpression): The expression to check.
+
+    Returns:
+        SQLGlotExpression: The expression with parentheses applied if
+            necessary.
+    """
     if isinstance(expression, (Binary, Concat)):
         return Paren(this=expression)
     else:
