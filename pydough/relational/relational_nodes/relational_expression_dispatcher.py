@@ -28,20 +28,20 @@ class RelationalExpressionDispatcher(RelationalVisitor):
     def __init__(
         self, expr_visitor: RelationalExpressionVisitor, recurse: bool
     ) -> None:
-        self.expr_visitor = expr_visitor
-        self.recurse = recurse
+        self._expr_visitor: RelationalExpressionVisitor = expr_visitor
+        self._recurse: bool = recurse
 
     def reset(self) -> None:
-        pass
+        self._expr_visitor.reset()
 
     def visit_common(self, node: Relational) -> None:
         """
         Applies a visit common to each node.
         """
-        if self.recurse:
+        if self._recurse:
             self.visit_inputs(node)
         for expr in node.columns.values():
-            expr.accept(self.expr_visitor)
+            expr.accept(self._expr_visitor)
 
     def visit_scan(self, scan: Scan) -> None:
         self.visit_common(scan)
@@ -49,25 +49,25 @@ class RelationalExpressionDispatcher(RelationalVisitor):
     def visit_join(self, join: Join) -> None:
         self.visit_common(join)
         for cond in join.conditions:
-            cond.accept(self.expr_visitor)
+            cond.accept(self._expr_visitor)
 
     def visit_project(self, project: Project) -> None:
         self.visit_common(project)
 
     def visit_filter(self, filter: Filter) -> None:
         self.visit_common(filter)
-        filter.condition.accept(self.expr_visitor)
+        filter.condition.accept(self._expr_visitor)
 
     def visit_aggregate(self, aggregate: Aggregate) -> None:
         self.visit_common(aggregate)
 
     def visit_limit(self, limit: Limit) -> None:
         self.visit_common(limit)
-        limit.limit.accept(self.expr_visitor)
+        limit.limit.accept(self._expr_visitor)
         for order in limit.orderings:
-            order.expr.accept(self.expr_visitor)
+            order.expr.accept(self._expr_visitor)
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_common(root)
         for order in root.orderings:
-            order.expr.accept(self.expr_visitor)
+            order.expr.accept(self._expr_visitor)
