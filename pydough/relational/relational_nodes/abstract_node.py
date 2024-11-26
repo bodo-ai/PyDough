@@ -76,10 +76,28 @@ class Relational(ABC):
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Relational) and self.equals(other)
 
+    def make_column_string(
+        self, columns: MutableMapping[str, Any], compact: bool
+    ) -> str:
+        """
+        Converts the columns of the relational node to a deterministically
+        ordered string (alphabetically).
+        """
+        pairs: list[str] = []
+        for key in sorted(columns):
+            expr = columns[key]
+            assert isinstance(expr, RelationalExpression)
+            pairs.append(f"{key!r}: {columns[key].to_string(compact)}")
+        return f"{{{', '.join(pairs)}}}"
+
     @abstractmethod
-    def to_string(self) -> str:
+    def to_string(self, compact: bool = False) -> str:
         """
         Convert the relational node to a string.
+
+        Args:
+            `compact`: if True, converts to a more minimal string form for the
+            purposes of conversion to a tree string.
 
         Returns:
             str: A string representation of the relational tree
@@ -88,6 +106,21 @@ class Relational(ABC):
 
     def __repr__(self) -> str:
         return self.to_string()
+
+    def to_tree_string(self) -> str:
+        """
+        Convert the relational node to a string, including the descendants
+        of the node.
+
+        Returns:
+            str: A string representation of the relational tree
+            with this node at the root.
+        """
+        from .tree_string_visitor import TreeStringVisitor
+
+        visitor: TreeStringVisitor = TreeStringVisitor()
+        self.accept(visitor)
+        return visitor.make_tree_string()
 
     @abstractmethod
     def accept(self, visitor: RelationalVisitor) -> None:

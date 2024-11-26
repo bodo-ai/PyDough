@@ -98,8 +98,8 @@ class Join(Relational):
             and self.right.node_equals(other.right)
         )
 
-    def to_string(self) -> str:
-        return f"JOIN(cond={self.condition}, type={self.join_type.value}, columns={self.columns})"
+    def to_string(self, compact: bool = False) -> str:
+        return f"JOIN(cond={self.condition.to_string(compact)}, type={self.join_type.value}, columns={self.make_column_string(self.columns, compact)})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_join(self)

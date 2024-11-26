@@ -45,9 +45,25 @@ class ColumnReference(RelationalExpression):
         """
         return self._input_name
 
-    def to_string(self) -> str:
-        input_name_str = f"input={self.input_name}, " if self.input_name else ""
-        return f"Column({input_name_str}name={self.name}, type={self.data_type})"
+    def with_input(self, input_name: str) -> "ColumnReference":
+        """
+        Returns a clone of a ColumnReference but with a new input name.
+
+        Args:
+            `input_name`: the value of input_name used for the clone.
+
+        Returns:
+            The clones value of `self` with the desired `input_name`.
+        """
+        return ColumnReference(self.name, self.data_type, input_name)
+
+    def to_string(self, compact: bool = False) -> str:
+        if compact:
+            prefix: str = f"{self.input_name}." if self.input_name else ""
+            return f"{prefix}{self.name}"
+        else:
+            input_name_str = f"input={self.input_name}, " if self.input_name else ""
+            return f"Column({input_name_str}name={self.name}, type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (

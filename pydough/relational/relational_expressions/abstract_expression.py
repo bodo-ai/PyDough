@@ -44,7 +44,7 @@ class RelationalExpression(ABC):
         return self.equals(other)
 
     @abstractmethod
-    def to_string(self) -> str:
+    def to_string(self, compact: bool = False) -> str:
         """
         Convert the relational expression to a string.
 
