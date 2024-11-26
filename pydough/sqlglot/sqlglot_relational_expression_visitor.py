@@ -21,6 +21,7 @@ from .call_expression_conversion import (
     apply_parens,
     convert_contains,
     convert_endswith,
+    convert_iff,
     convert_isin,
     convert_startswith,
 )
@@ -70,6 +71,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         "CONTAINS": convert_contains,
         "ENDSWITH": convert_endswith,
         "ISIN": convert_isin,
+        "IFF": convert_iff,
     }
 
     def __init__(self) -> None:

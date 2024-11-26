@@ -139,3 +139,26 @@ def convert_isin(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     # literals are in the same literal expression.
     values: SQLGlotExpression = arguments[1]
     return sqlglot_expressions.In(this=column, expressions=values)
+
+
+def convert_iff(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+    """
+    Convert a IFF call expression to a SQLGlot expression. This
+    is done because SQLGlot does not automatically convert IFF
+    to a CASE expression for SQLite.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality
+            of iff.
+    """
+    condition: SQLGlotExpression = arguments[0]
+    true_expr: SQLGlotExpression = arguments[1]
+    false_expr: SQLGlotExpression = arguments[2]
+    return (
+        sqlglot_expressions.Case()
+        .when(condition=condition, then=true_expr)
+        .else_(false_expr)
+    )

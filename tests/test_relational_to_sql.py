@@ -24,6 +24,7 @@ from pydough.pydough_ast.pydough_operators import (
     CONTAINS,
     ENDSWITH,
     EQU,
+    IFF,
     ISIN,
     MUL,
     STARTSWITH,
@@ -829,6 +830,34 @@ def test_tpch_relational_to_sql(
             ),
             "SELECT b FROM table WHERE b IN (1, 2, 3)",
             id="isin",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("a", make_relational_column_reference("a"))],
+                input=Project(
+                    input=build_simple_scan(),
+                    columns={
+                        "a": CallExpression(
+                            IFF,
+                            Int64Type(),
+                            [
+                                CallExpression(
+                                    EQU,
+                                    BooleanType(),
+                                    [
+                                        make_relational_column_reference("b"),
+                                        make_relational_literal(1, Int64Type()),
+                                    ],
+                                ),
+                                make_relational_literal(1, UnknownType()),
+                                make_relational_literal(1, UnknownType()),
+                            ],
+                        ),
+                    },
+                ),
+            ),
+            "SELECT CASE WHEN b = 1 THEN 1 ELSE 1 END AS a FROM (SELECT a, b FROM table)",
+            id="iff",
         ),
     ],
 )
