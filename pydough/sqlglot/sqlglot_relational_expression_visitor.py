@@ -3,9 +3,11 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+from collections.abc import Callable
+
 import sqlglot.expressions as sqlglot_expressions
-from sqlglot.expressions import Binary, Identifier, Paren
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import Identifier
 
 from pydough.relational import (
     CallExpression,
@@ -15,6 +17,12 @@ from pydough.relational import (
     RelationalExpressionVisitor,
 )
 
+from .call_expression_conversion import (
+    apply_parens,
+    convert_contains,
+    convert_endswith,
+    convert_startswith,
+)
 from .sqlglot_helpers import set_glot_alias
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
@@ -53,6 +61,15 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     the relational tree 1 node at a time.
     """
 
+    # Mapping for builtin functions that require complex conversions.
+    special_func_map: dict[
+        str, Callable[[list[SQLGlotExpression]], SQLGlotExpression]
+    ] = {
+        "STARTSWITH": convert_startswith,
+        "CONTAINS": convert_contains,
+        "ENDSWITH": convert_endswith,
+    }
+
     def __init__(self) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
@@ -73,22 +90,17 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         ]
         key: str = call_expression.op.function_name.upper()
         output_expr: SQLGlotExpression
-        if key in generic_func_map:
+        if key in self.special_func_map:
+            output_expr = self.special_func_map[key](input_exprs)
+        elif key in generic_func_map:
             output_expr = generic_func_map[key].from_arg_list(input_exprs)
         elif key in binary_func_map:
             assert len(input_exprs) >= 2, "Need at least 2 binary inputs"
             # Note: SQLGlot explicit inserts parentheses for binary operations
             # during parsing.
-            if isinstance(input_exprs[0], Binary):
-                output_expr = Paren(this=input_exprs[0])
-            else:
-                output_expr = input_exprs[0]
+            output_expr = apply_parens(input_exprs[0])
             for expr in input_exprs[1:]:
-                other_expr: SQLGlotExpression
-                if isinstance(expr, Binary):
-                    other_expr = Paren(this=expr)
-                else:
-                    other_expr = expr
+                other_expr: SQLGlotExpression = apply_parens(expr)
                 # Build the expressions on the left since the operator is left-associative.
                 output_expr = binary_func_map[key](
                     this=output_expr, expression=other_expr
