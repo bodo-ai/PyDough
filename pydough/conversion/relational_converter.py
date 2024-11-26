@@ -80,14 +80,14 @@ class HybridTree:
         return self._children
 
     @property
-    def successor(self) -> "HybridTree" | None:
+    def successor(self) -> Optional["HybridTree"]:
         """
         TODO
         """
         return self._successor
 
     @property
-    def parent(self) -> "HybridTree" | None:
+    def parent(self) -> Optional["HybridTree"]:
         """
         TODO
         """
