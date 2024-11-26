@@ -1,5 +1,6 @@
 __all__ = [
     "Aggregate",
+    "ColumnPruner",
     "Filter",
     "Join",
     "JoinType",
@@ -9,9 +10,11 @@ __all__ = [
     "RelationalRoot",
     "Scan",
     "RelationalVisitor",
+    "RelationalExpressionDispatcher",
     "CallExpression",
     "ExpressionSortInfo",
     "ColumnReference",
+    "ColumnReferenceFinder",
     "ColumnReferenceInputNameModifier",
     "ColumnReferenceInputNameRemover",
     "LiteralExpression",
@@ -22,6 +25,7 @@ __all__ = [
 from .relational_expressions import (
     CallExpression,
     ColumnReference,
+    ColumnReferenceFinder,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
     ExpressionSortInfo,
@@ -31,12 +35,14 @@ from .relational_expressions import (
 )
 from .relational_nodes import (
     Aggregate,
+    ColumnPruner,
     Filter,
     Join,
     JoinType,
     Limit,
     Project,
     Relational,
+    RelationalExpressionDispatcher,
     RelationalRoot,
     RelationalVisitor,
     Scan,
