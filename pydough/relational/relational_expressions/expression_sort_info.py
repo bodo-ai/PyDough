@@ -24,7 +24,7 @@ class ExpressionSortInfo:
             suffix: str = f"{'asc' if self.ascending else 'desc'}_{'first' if self.nulls_first else 'last'}"
             return f"({self.expr.to_string(compact)}):{suffix}"
         else:
-            return f"ExpressionSortInfo(column={self.expr.to_string(compact)}, ascending={self.ascending}, nulls_first={self.nulls_first})"
+            return f"ExpressionSortInfo(expression={self.expr.to_string(compact)}, ascending={self.ascending}, nulls_first={self.nulls_first})"
 
     def __str__(self) -> str:
         return self.to_string()
