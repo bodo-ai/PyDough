@@ -7,6 +7,8 @@ from .column_reference import ColumnReference
 from .literal_expression import LiteralExpression
 from .relational_expression_visitor import RelationalExpressionVisitor
 
+__all__ = ["ColumnReferenceFinder"]
+
 
 class ColumnReferenceFinder(RelationalExpressionVisitor):
     """

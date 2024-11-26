@@ -8,7 +8,10 @@ should be sparse.
 
 from collections.abc import MutableMapping, MutableSequence
 
-from pydough.relational.relational_expressions import RelationalExpression
+from pydough.relational.relational_expressions import (
+    ColumnReference,
+    RelationalExpression,
+)
 
 from .abstract_node import Relational
 from .relational_visitor import RelationalVisitor
@@ -37,6 +40,18 @@ class Project(SingleRelational):
 
     def accept(self, visitor: RelationalVisitor) -> None:
         return visitor.visit_project(self)
+
+    def is_identity(self) -> bool:
+        """
+        Checks if the project is an identity project, meaning that it
+        every column is just a mapping to a column of the same name.
+        """
+        return all(
+            isinstance(val, ColumnReference)
+            and key == val.name
+            and val.input_name is None
+            for key, val in self.columns.items()
+        )
 
     def node_copy(
         self,

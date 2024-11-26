@@ -85,7 +85,7 @@ class Join(Relational):
         return self._inputs
 
     @property
-    def default_input_aliases(self) -> list[str]:
+    def default_input_aliases(self) -> list[str | None]:
         """
         Provide the default aliases for each input
         to this node. This is used when remapping the

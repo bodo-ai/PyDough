@@ -13,6 +13,7 @@ __all__ = [
     "CallExpression",
     "ExpressionSortInfo",
     "ColumnReference",
+    "ColumnReferenceFinder",
     "ColumnReferenceInputNameModifier",
     "ColumnReferenceInputNameRemover",
     "LiteralExpression",
@@ -23,6 +24,7 @@ __all__ = [
 from .relational_expressions import (
     CallExpression,
     ColumnReference,
+    ColumnReferenceFinder,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
     ExpressionSortInfo,

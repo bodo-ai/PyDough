@@ -35,6 +35,20 @@ class Relational(ABC):
         """
 
     @property
+    def default_input_aliases(self) -> list[str | None]:
+        """
+        Provide the default aliases for each input
+        to this node. This is used when remapping the
+        names of each input for differentiating columns.
+        By default we don't use an alias, which maps to None
+        for each input.
+
+        Note: The lowering steps are not required to use this alias
+        and can choose any name they want.
+        """
+        return [None for i in range(len(self.inputs))]
+
+    @property
     def columns(self) -> MutableMapping[str, RelationalExpression]:
         """
         Returns the columns of the relational expression.

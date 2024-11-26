@@ -34,6 +34,9 @@ class RelationalExpressionDispatcher(RelationalVisitor):
     def reset(self) -> None:
         self._expr_visitor.reset()
 
+    def get_expr_visitor(self) -> RelationalExpressionVisitor:
+        return self._expr_visitor
+
     def visit_common(self, node: Relational) -> None:
         """
         Applies a visit common to each node.
