@@ -9,6 +9,7 @@ __all__ = ["ColumnReference"]
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
+from .relational_expression_shuttle import RelationalExpressionShuttle
 from .relational_expression_visitor import RelationalExpressionVisitor
 
 
@@ -45,7 +46,7 @@ class ColumnReference(RelationalExpression):
         """
         return self._input_name
 
-    def with_input(self, input_name: str) -> "ColumnReference":
+    def with_input(self, input_name: str | None) -> "ColumnReference":
         """
         Returns a clone of a ColumnReference but with a new input name.
 
@@ -75,3 +76,8 @@ class ColumnReference(RelationalExpression):
 
     def accept(self, visitor: RelationalExpressionVisitor) -> None:
         visitor.visit_column_reference(self)
+
+    def accept_shuttle(
+        self, shuttle: RelationalExpressionShuttle
+    ) -> RelationalExpression:
+        return shuttle.visit_column_reference(self)

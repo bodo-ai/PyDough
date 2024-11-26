@@ -8,6 +8,7 @@ relational tree to build the final SQL query.
 from abc import ABC, abstractmethod
 from typing import Any
 
+from .relational_expression_shuttle import RelationalExpressionShuttle
 from .relational_expression_visitor import RelationalExpressionVisitor
 
 __all__ = ["RelationalExpression"]
@@ -62,5 +63,23 @@ class RelationalExpression(ABC):
         Visit this relational expression with the provided visitor.
 
         Args:
-            visitor (RelationalExpressionVisitor): The visitor to use to visit this node.
+            visitor (RelationalExpressionVisitor): The visitor to use to visit
+                this node.
+        """
+
+    @abstractmethod
+    def accept_shuttle(
+        self, shuttle: RelationalExpressionShuttle
+    ) -> "RelationalExpression":
+        """
+        Visit this relational expression with the provided shuttle and
+        return the new expression.
+
+        Args:
+            shuttle (RelationalExpressionShuttle): The shuttle to use to visit
+                this node.
+
+        Returns:
+            RelationalExpression: The new expression resulting from visiting
+                this node.
         """

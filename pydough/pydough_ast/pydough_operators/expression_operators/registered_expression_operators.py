@@ -3,6 +3,7 @@ TODO: add file-level docstring
 """
 
 __all__ = [
+    "ABS",
     "ADD",
     "BAN",
     "BOR",
@@ -110,3 +111,4 @@ NOT = ExpressionFunctionOperator(
 ISIN = ExpressionFunctionOperator(
     "ISIN", False, RequireNumArgs(2), ConstantType(BooleanType())
 )
+ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))

@@ -5,9 +5,9 @@ tests that need to process relational plans.
 """
 
 from test_utils import (
-    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
+    make_relational_ordering,
 )
 
 from pydough.pydough_ast.pydough_operators import (
@@ -15,22 +15,34 @@ from pydough.pydough_ast.pydough_operators import (
     BAN,
     COUNT,
     DIV,
+    EQU,
     GEQ,
+    GRT,
     LEQ,
     LET,
     MUL,
     SUB,
     SUM,
 )
-from pydough.relational.relational_expressions import CallExpression
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
+    Join,
+    JoinType,
+    Limit,
     Project,
     RelationalRoot,
     Scan,
 )
-from pydough.types import BooleanType, DateType, DecimalType, Int64Type, UnknownType
+from pydough.types import (
+    BooleanType,
+    DateType,
+    DecimalType,
+    Int64Type,
+    StringType,
+    UnknownType,
+)
 
 
 def tpch_query_1_plan() -> RelationalRoot:
@@ -57,12 +69,12 @@ def tpch_query_1_plan() -> RelationalRoot:
             ("COUNT_ORDER", make_relational_column_reference("COUNT_ORDER")),
         ],
         orderings=[
-            make_relational_column_ordering(
+            make_relational_ordering(
                 make_relational_column_reference("L_RETURNFLAG"),
                 ascending=True,
                 nulls_first=True,
             ),
-            make_relational_column_ordering(
+            make_relational_ordering(
                 make_relational_column_reference("L_LINESTATUS"),
                 ascending=True,
                 nulls_first=True,
@@ -96,7 +108,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                     DIV,
                     UnknownType(),
                     [
-                        make_relational_column_reference("SUM_TAX"),
+                        make_relational_column_reference("SUM_DISCOUNT"),
                         make_relational_column_reference("COUNT_ORDER"),
                     ],
                 ),
@@ -118,10 +130,10 @@ def tpch_query_1_plan() -> RelationalRoot:
                         UnknownType(),
                         [make_relational_column_reference("L_EXTENDEDPRICE")],
                     ),
-                    "SUM_TAX": CallExpression(
+                    "SUM_DISCOUNT": CallExpression(
                         SUM,
                         UnknownType(),
-                        [make_relational_column_reference("L_TAX")],
+                        [make_relational_column_reference("L_DISCOUNT")],
                     ),
                     "SUM_DISC_PRICE": CallExpression(
                         SUM,
@@ -135,7 +147,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                     ),
                     "COUNT_ORDER": CallExpression(
                         COUNT,
-                        UnknownType(),
+                        Int64Type(),
                         [],
                     ),
                 },
@@ -145,7 +157,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                         "L_EXTENDEDPRICE": make_relational_column_reference(
                             "L_EXTENDEDPRICE"
                         ),
-                        "L_TAX": make_relational_column_reference("L_TAX"),
+                        "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
                         "L_RETURNFLAG": make_relational_column_reference(
                             "L_RETURNFLAG"
                         ),
@@ -163,9 +175,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                                     UnknownType(),
                                     [
                                         make_relational_literal(1, Int64Type()),
-                                        make_relational_column_reference(
-                                            "L_EXTENDEDPRICE"
-                                        ),
+                                        make_relational_column_reference("L_TAX"),
                                     ],
                                 ),
                             ],
@@ -268,6 +278,234 @@ def tpch_query_1_plan() -> RelationalRoot:
     )
 
 
+def tpch_query_3_plan() -> RelationalRoot:
+    """
+    Valid relational plan for TPC-H Query 3.
+    """
+    # Note: Since this plan contains joins, to reduce the complexity
+    # of each part we assign separate variables to each source table
+    # and only put at most 1 join in each variable.
+    customer = Filter(
+        columns={
+            "C_CUSTKEY": make_relational_column_reference("C_CUSTKEY"),
+        },
+        condition=CallExpression(
+            EQU,
+            BooleanType(),
+            [
+                make_relational_column_reference("C_MKTSEGMENT"),
+                make_relational_literal("BUILDING", StringType()),
+            ],
+        ),
+        input=Scan(
+            table_name="CUSTOMER",
+            columns={
+                "C_CUSTKEY": make_relational_column_reference("C_CUSTKEY"),
+                "C_MKTSEGMENT": make_relational_column_reference("C_MKTSEGMENT"),
+            },
+        ),
+    )
+
+    orders = Filter(
+        columns={
+            "O_CUSTKEY": make_relational_column_reference("O_CUSTKEY"),
+            "O_ORDERKEY": make_relational_column_reference("O_ORDERKEY"),
+            "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
+            "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
+        },
+        condition=CallExpression(
+            LET,
+            BooleanType(),
+            [
+                make_relational_column_reference("O_ORDERDATE"),
+                make_relational_literal("1995-03-15", DateType()),
+            ],
+        ),
+        input=Scan(
+            table_name="ORDERS",
+            columns={
+                "O_CUSTKEY": make_relational_column_reference("O_CUSTKEY"),
+                "O_ORDERKEY": make_relational_column_reference("O_ORDERKEY"),
+                "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
+                "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
+            },
+        ),
+    )
+
+    customer_orders_join = Join(
+        columns={
+            "O_ORDERKEY": make_relational_column_reference(
+                "O_ORDERKEY", input_name="t0"
+            ),
+            "O_ORDERDATE": make_relational_column_reference(
+                "O_ORDERDATE", input_name="t0"
+            ),
+            "O_SHIPPRIORITY": make_relational_column_reference(
+                "O_SHIPPRIORITY", input_name="t0"
+            ),
+        },
+        inputs=[orders, customer],
+        conditions=[
+            CallExpression(
+                EQU,
+                BooleanType(),
+                [
+                    make_relational_column_reference("O_CUSTKEY", input_name="t0"),
+                    make_relational_column_reference("C_CUSTKEY", input_name="t1"),
+                ],
+            )
+        ],
+        join_types=[JoinType.INNER],
+    )
+
+    lineitem = Project(
+        columns={
+            "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+            "REVENUE": CallExpression(
+                MUL,
+                UnknownType(),
+                [
+                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                    CallExpression(
+                        SUB,
+                        UnknownType(),
+                        [
+                            make_relational_literal(1, Int64Type()),
+                            make_relational_column_reference("L_DISCOUNT"),
+                        ],
+                    ),
+                ],
+            ),
+        },
+        input=Filter(
+            columns={
+                "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+                "L_EXTENDEDPRICE": make_relational_column_reference("L_EXTENDEDPRICE"),
+                "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
+            },
+            condition=CallExpression(
+                GRT,
+                BooleanType(),
+                [
+                    make_relational_column_reference("L_SHIPDATE"),
+                    make_relational_literal("1995-03-15", DateType()),
+                ],
+            ),
+            input=Scan(
+                table_name="LINEITEM",
+                columns={
+                    "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+                    "L_EXTENDEDPRICE": make_relational_column_reference(
+                        "L_EXTENDEDPRICE"
+                    ),
+                    "L_DISCOUNT": make_relational_column_reference("L_DISCOUNT"),
+                    "L_SHIPDATE": make_relational_column_reference("L_SHIPDATE"),
+                },
+            ),
+        ),
+    )
+
+    return RelationalRoot(
+        ordered_columns=[
+            ("L_ORDERKEY", make_relational_column_reference("L_ORDERKEY")),
+            ("REVENUE", make_relational_column_reference("REVENUE")),
+            ("O_ORDERDATE", make_relational_column_reference("O_ORDERDATE")),
+            ("O_SHIPPRIORITY", make_relational_column_reference("O_SHIPPRIORITY")),
+        ],
+        orderings=[
+            make_relational_ordering(
+                make_relational_column_reference("REVENUE"),
+                ascending=False,
+                nulls_first=False,
+            ),
+            make_relational_ordering(
+                make_relational_column_reference("O_ORDERDATE"),
+                ascending=True,
+                nulls_first=True,
+            ),
+            make_relational_ordering(
+                make_relational_column_reference("L_ORDERKEY"),
+                ascending=True,
+                nulls_first=True,
+            ),
+        ],
+        input=Limit(
+            limit=make_relational_literal(10, Int64Type()),
+            columns={
+                "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+                "REVENUE": make_relational_column_reference("REVENUE"),
+                "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
+                "O_SHIPPRIORITY": make_relational_column_reference("O_SHIPPRIORITY"),
+            },
+            orderings=[
+                make_relational_ordering(
+                    make_relational_column_reference("REVENUE"),
+                    ascending=False,
+                    nulls_first=False,
+                ),
+                make_relational_ordering(
+                    make_relational_column_reference("O_ORDERDATE"),
+                    ascending=True,
+                    nulls_first=True,
+                ),
+                make_relational_ordering(
+                    make_relational_column_reference("L_ORDERKEY"),
+                    ascending=True,
+                    nulls_first=True,
+                ),
+            ],
+            input=Aggregate(
+                keys={
+                    "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
+                    "O_ORDERDATE": make_relational_column_reference("O_ORDERDATE"),
+                    "O_SHIPPRIORITY": make_relational_column_reference(
+                        "O_SHIPPRIORITY"
+                    ),
+                },
+                aggregations={
+                    "REVENUE": CallExpression(
+                        SUM,
+                        UnknownType(),
+                        [make_relational_column_reference("REVENUE")],
+                    ),
+                },
+                input=Join(
+                    columns={
+                        "L_ORDERKEY": make_relational_column_reference(
+                            "L_ORDERKEY", input_name="t0"
+                        ),
+                        "REVENUE": make_relational_column_reference(
+                            "REVENUE", input_name="t0"
+                        ),
+                        "O_ORDERDATE": make_relational_column_reference(
+                            "O_ORDERDATE", input_name="t1"
+                        ),
+                        "O_SHIPPRIORITY": make_relational_column_reference(
+                            "O_SHIPPRIORITY", input_name="t1"
+                        ),
+                    },
+                    inputs=[lineitem, customer_orders_join],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference(
+                                    "L_ORDERKEY", input_name="t0"
+                                ),
+                                make_relational_column_reference(
+                                    "O_ORDERKEY", input_name="t1"
+                                ),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.INNER],
+                ),
+            ),
+        ),
+    )
+
+
 def tpch_query_6_plan() -> RelationalRoot:
     """
     Valid relational plan for TPC-H Query 6.
@@ -319,7 +557,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 LEQ,
                                 BooleanType(),
                                 [
-                                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                                    make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal("0.07", DecimalType(3, 2)),
                                 ],
                             ),
@@ -327,7 +565,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 GEQ,
                                 BooleanType(),
                                 [
-                                    make_relational_column_reference("L_EXTENDEDPRICE"),
+                                    make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal("0.05", DecimalType(3, 2)),
                                 ],
                             ),

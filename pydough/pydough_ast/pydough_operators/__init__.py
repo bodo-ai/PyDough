@@ -12,7 +12,9 @@ __all__ = [
     "PyDoughOperatorAST",
     "ConstantType",
     "PyDoughExpressionOperatorAST",
+    "ABS",
     "ADD",
+    "AVG",
     "BAN",
     "BOR",
     "BXR",
@@ -23,6 +25,7 @@ __all__ = [
     "GRT",
     "LEQ",
     "LET",
+    "MAX",
     "MOD",
     "MUL",
     "NEQ",
@@ -40,7 +43,9 @@ __all__ = [
 ]
 
 from .expression_operators import (
+    ABS,
     ADD,
+    AVG,
     BAN,
     BOR,
     BXR,
@@ -54,6 +59,7 @@ from .expression_operators import (
     LEQ,
     LET,
     LOWER,
+    MAX,
     MOD,
     MUL,
     NEQ,

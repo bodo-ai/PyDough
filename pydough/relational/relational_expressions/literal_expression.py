@@ -10,6 +10,7 @@ from typing import Any
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
+from .relational_expression_shuttle import RelationalExpressionShuttle
 from .relational_expression_visitor import RelationalExpressionVisitor
 
 
@@ -54,3 +55,8 @@ class LiteralExpression(RelationalExpression):
 
     def accept(self, visitor: RelationalExpressionVisitor) -> None:
         visitor.visit_literal_expression(self)
+
+    def accept_shuttle(
+        self, shuttle: RelationalExpressionShuttle
+    ) -> RelationalExpression:
+        return shuttle.visit_literal_expression(self)

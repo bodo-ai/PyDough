@@ -3,24 +3,25 @@ Handle the conversion from the Relation Tree to a single
 SQLGlot query.
 """
 
-from collections.abc import MutableSequence
+from collections import defaultdict
+from collections.abc import MutableMapping, MutableSequence
 
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
-from pydough.relational.relational_expressions import (
-    ColumnReferenceInputNameModifier,
-    ColumnSortInfo,
-    LiteralExpression,
-)
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    ColumnReferenceInputNameModifier,
+    ColumnReferenceInputNameRemover,
+    ExpressionSortInfo,
     Filter,
     Join,
     Limit,
+    LiteralExpression,
     Project,
+    RelationalExpression,
     RelationalRoot,
     RelationalVisitor,
     Scan,
@@ -48,6 +49,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
+        )
+        self._alias_remover: ColumnReferenceInputNameRemover = (
+            ColumnReferenceInputNameRemover()
         )
         # Counter for generating unique table alias.
         self._alias_counter: int = 0
@@ -183,27 +187,51 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             return self._build_subquery(orig_select, new_exprs)
 
     def _convert_ordering(
-        self, ordering: MutableSequence[ColumnSortInfo]
+        self, ordering: MutableSequence[ExpressionSortInfo]
     ) -> list[SQLGlotExpression]:
         """
         Convert the orderings from the a relational operator into a variant
         that can be used in SQLGlot.
 
         Args:
-            ordering (MutableSequence[ColumnSortInfo]): The orderings to convert.
+            ordering (MutableSequence[ExpressionSortInfo]): The orderings to convert.
 
         Returns:
             list[SQLGlotExpression]: The converted orderings.
         """
-        col_exprs = []
+        glot_exprs: list[SQLGlotExpression] = []
         for col in ordering:
-            col_expr = self._expr_visitor.relational_to_sqlglot(col.column)
+            glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+                col.expr
+            )
             if col.ascending:
-                col_expr = col_expr.asc(nulls_first=col.nulls_first)
+                glot_expr = glot_expr.asc(nulls_first=col.nulls_first)
             else:
-                col_expr = col_expr.desc(nulls_first=col.nulls_first)
-            col_exprs.append(col_expr)
-        return col_exprs
+                glot_expr = glot_expr.desc(nulls_first=col.nulls_first)
+            glot_exprs.append(glot_expr)
+        return glot_exprs
+
+    @staticmethod
+    def _is_mergeable_ordering(
+        ordering: list[SQLGlotExpression], input_expr: Select
+    ) -> bool:
+        """
+        Determine if the given ordering can be merged with the input
+        expression. This occurs when the orderings are identical or
+        either side doesn't contain any ordering.
+
+        Args:
+            ordering (list[SQLGlotExpression]): The new ordering, possibly
+                an empty list.
+            input_expr (Select): The old ordering.
+
+        Returns:
+            bool: Can the orderings be merged together.
+        """
+        if "order" not in input_expr.args or not ordering:
+            return True
+        else:
+            return ordering == input_expr.args["order"].expressions
 
     @staticmethod
     def _build_subquery(
@@ -235,7 +263,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         """
         self._stack = []
         self._expr_visitor.reset()
-        self._alias_modifier.reset()
         self._alias_counter = 0
 
     def visit_scan(self, scan: Scan) -> None:
@@ -247,31 +274,53 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
-        alias_map = {
-            "left": self._generate_table_alias(),
-            "right": self._generate_table_alias(),
-        }
         self.visit_inputs(join)
-        right_expr: Select = self._stack.pop()
-        left_expr: Select = self._stack.pop()
+        inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
+        inputs.reverse()
+        # Compute a dictionary to find all duplicate names.
+        seen_names: MutableMapping[str, int] = defaultdict(int)
+        for input in join.inputs:
+            for column in input.columns.keys():
+                seen_names[column] += 1
+        # Only keep duplicate names.
+        kept_names = {key for key, value in seen_names.items() if value > 1}
+        alias_map = {
+            join.default_input_aliases[i]: self._generate_table_alias()
+            for i in range(len(join.inputs))
+            if kept_names.intersection(join.inputs[i].columns.keys())
+        }
+        self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
-            alias: self._alias_modifier.modify_expression_names(col)
+            alias: col.accept_shuttle(self._alias_remover).accept_shuttle(
+                self._alias_modifier
+            )
             for alias, col in join.columns.items()
         }
         column_exprs = [
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in columns.items()
         ]
-        cond = self._alias_modifier.modify_expression_names(join.condition)
-        cond_expr = self._expr_visitor.relational_to_sqlglot(cond)
         query: Select = self._build_subquery(
-            left_expr, column_exprs, alias_map["left"]
-        ).join(
-            Subquery(this=right_expr, alias=alias_map["right"]),
-            on=cond_expr,
-            join_type=join.join_type.value,
+            inputs[0], column_exprs, alias_map.get(join.default_input_aliases[0], None)
         )
+        joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
+        for i in range(1, len(inputs)):
+            subquery: Subquery = Subquery(
+                this=inputs[i], alias=alias_map.get(join.default_input_aliases[i], None)
+            )
+            cond: RelationalExpression = (
+                join.conditions[i - 1]
+                .accept_shuttle(self._alias_remover)
+                .accept_shuttle(self._alias_modifier)
+            )
+            cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+                cond
+            )
+            join_type: str = join.join_types[i - 1].value
+            joins.append((subquery, cond_expr, join_type))
+        for subquery, cond_expr, join_type in joins:
+            query = query.join(subquery, on=cond_expr, join_type=join_type)
         self._stack.append(query)
 
     def visit_project(self, project: Project) -> None:
@@ -355,13 +404,19 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             limit.orderings
         )
         query: Select
-        if "order" in input_expr.args or "limit" in input_expr.args:
-            query = self._build_subquery(input_expr, exprs)
-        else:
-            # Try merge the column sections
+        if self._is_mergeable_ordering(ordering_exprs, input_expr):
             query = self._merge_selects(
                 exprs, input_expr, find_identifiers_in_list(ordering_exprs)
             )
+            if "order" in query.args:
+                # avoid repeating the order by clause
+                ordering_exprs = []
+            if "limit" in input_expr.args:
+                existing_limit = input_expr.args.pop("limit").expression
+                # Note: We only allow literal limits now.
+                limit_expr = min(limit_expr, existing_limit, key=lambda x: x.this)
+        else:
+            query = self._build_subquery(input_expr, exprs)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
         query = query.limit(limit_expr)
@@ -377,12 +432,16 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ]
         ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(root.orderings)
         query: Select
-        if ordering_exprs and "order" in input_expr.args:
-            query = self._build_subquery(input_expr, exprs)
-        else:
+
+        if self._is_mergeable_ordering(ordering_exprs, input_expr):
             query = self._merge_selects(
                 exprs, input_expr, find_identifiers_in_list(ordering_exprs)
             )
+            if "order" in query.args:
+                # avoid repeating the order by clause
+                ordering_exprs = []
+        else:
+            query = self._build_subquery(input_expr, exprs)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
         self._stack.append(query)

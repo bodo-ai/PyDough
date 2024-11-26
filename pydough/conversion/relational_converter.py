@@ -37,7 +37,7 @@ from pydough.pydough_ast import (
 from pydough.relational.relational_expressions import (
     CallExpression,
     ColumnReference,
-    ColumnSortInfo,
+    ExpressionSortInfo,
     LiteralExpression,
     RelationalExpression,
 )
@@ -210,13 +210,12 @@ class RelTranslation:
         out_columns: dict[PyDoughExpressionAST, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
         out_rel: Join = Join(
-            ancestry[0].relation,
-            rhs_output.relation,
-            LiteralExpression(True, BooleanType()),
-            JoinType.INNER,
+            [ancestry[0].relation, rhs_output.relation],
+            [LiteralExpression(True, BooleanType())],
+            [JoinType.INNER],
             join_columns,
         )
-        input_aliases: list[str] = out_rel.default_input_aliases
+        input_aliases: list[str | None] = out_rel.default_input_aliases
 
         if isinstance(node.subcollection_property, SimpleJoinMetadata):
             # If the subcollection is a simple join property, extract the keys
@@ -242,7 +241,7 @@ class RelTranslation:
                 join_cond = CallExpression(
                     pydop.BAN, BooleanType(), [join_cond, cond_terms[i]]
                 )
-            out_rel._condition = join_cond
+            out_rel._conditions[0] = join_cond
         elif not isinstance(node.subcollection_property, CartesianProductMetadata):
             raise NotImplementedError()
 
@@ -462,7 +461,7 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> Relational:
     output: list[TranslationOutput] = translator.rel_translation(hybrid, [])
     assert len(output) > 0
     ordered_columns: list[tuple[str, RelationalExpression]] = []
-    orderings: list[ColumnSortInfo] | None = None
+    orderings: list[ExpressionSortInfo] | None = None
 
     # Extract the relevant expressions for the final columns and ordering keys
     # so that the root node can be built from them.
@@ -479,7 +478,7 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> Relational:
                 raise NotImplementedError(
                     "TODO: support root ordering on expressions besides column references"
                 )
-            collation_expr: ColumnSortInfo = ColumnSortInfo(
+            collation_expr: ExpressionSortInfo = ExpressionSortInfo(
                 relational_expr, col_expr.asc, not col_expr.na_last
             )
             orderings.append(collation_expr)

@@ -6,7 +6,7 @@ a component of other expressions, but it is heavily
 tied to this definition.
 """
 
-__all__ = ["ColumnOrdering"]
+__all__ = ["ExpressionSortInfo"]
 
 from dataclasses import dataclass
 
@@ -14,7 +14,7 @@ from .column_reference import ColumnReference
 
 
 @dataclass
-class ColumnOrdering:
+class ExpressionSortInfo:
     """Representation of a column ordering."""
 
     column: ColumnReference
@@ -26,4 +26,4 @@ class ColumnOrdering:
             suffix: str = f"{'asc' if self.ascending else 'desc'}_{'first' if self.nulls_first else 'last'}"
             return f"({self.column.to_string(compact)}):{suffix}"
         else:
-            return f"ColumnSortInfo(column={self.column.to_string(compact)}, ascending={self.ascending}, nulls_first={self.nulls_first})"
+            return f"ExpressionSortInfo(column={self.column.to_string(compact)}, ascending={self.ascending}, nulls_first={self.nulls_first})"

@@ -4,10 +4,10 @@ This node is responsible for enforcing the final orderings and columns as well
 as any other traits that impact the shape/display of the final output.
 """
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.relational.relational_expressions import (
-    ColumnSortInfo,
+    ExpressionSortInfo,
     RelationalExpression,
 )
 
@@ -27,7 +27,7 @@ class RelationalRoot(SingleRelational):
         self,
         input: Relational,
         ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
-        orderings: MutableSequence[ColumnSortInfo] | None = None,
+        orderings: MutableSequence[ExpressionSortInfo] | None = None,
     ) -> None:
         columns = dict(ordered_columns)
         assert len(columns) == len(
@@ -37,7 +37,7 @@ class RelationalRoot(SingleRelational):
         self._ordered_columns: MutableSequence[tuple[str, RelationalExpression]] = (
             ordered_columns
         )
-        self._orderings: MutableSequence[ColumnSortInfo] = (
+        self._orderings: MutableSequence[ExpressionSortInfo] = (
             [] if orderings is None else orderings
         )
 
@@ -49,7 +49,7 @@ class RelationalRoot(SingleRelational):
         return self._ordered_columns
 
     @property
-    def orderings(self) -> MutableSequence[ColumnSortInfo]:
+    def orderings(self) -> MutableSequence[ExpressionSortInfo]:
         """
         The orderings that are used to determine the final output order if
         any.
@@ -78,3 +78,12 @@ class RelationalRoot(SingleRelational):
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_root(self)
+
+    def node_copy(
+        self,
+        columns: MutableMapping[str, RelationalExpression],
+        inputs: MutableSequence[Relational],
+    ) -> Relational:
+        assert len(inputs) == 1, "Root node should have exactly one input"
+        assert columns == self.columns, "Root columns should not be modified"
+        return RelationalRoot(inputs[0], self.ordered_columns, self.orderings)

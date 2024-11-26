@@ -4,28 +4,34 @@ via a SQLGlot intermediate.
 """
 
 import pytest
-from sqlglot.dialects.sqlite import SQLite as SQLiteDialect
+from sqlglot.dialects import SQLite as SQLiteDialect
 from test_utils import (
     build_simple_scan,
-    make_relational_column_ordering,
     make_relational_column_reference,
     make_relational_literal,
+    make_relational_ordering,
 )
-from tpch_relational_plans import tpch_query_1_plan, tpch_query_6_plan
+from tpch_relational_plans import (
+    tpch_query_1_plan,
+    tpch_query_3_plan,
+    tpch_query_6_plan,
+)
 
 from pydough.pydough_ast.pydough_operators import (
+    ABS,
     ADD,
     EQU,
     MUL,
     SUM,
 )
-from pydough.relational.relational_expressions import CallExpression, LiteralExpression
-from pydough.relational.relational_nodes import (
+from pydough.relational import (
     Aggregate,
+    CallExpression,
     Filter,
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     RelationalRoot,
 )
@@ -57,7 +63,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("a"),
                         ascending=True,
                         nulls_first=True,
@@ -88,7 +94,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 orderings=[
-                    make_relational_column_ordering(
+                    make_relational_ordering(
                         make_relational_column_reference("c"),
                         ascending=True,
                         nulls_first=True,
@@ -148,6 +154,107 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(1, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                    ),
+                    limit=LiteralExpression(5, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+            ),
+            "SELECT a, b FROM table LIMIT 1",
+            id="duplicate_limit_min_inner",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(5, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                        orderings=[
+                            make_relational_ordering(
+                                make_relational_column_reference("a"),
+                                ascending=True,
+                                nulls_first=True,
+                            ),
+                            make_relational_ordering(
+                                make_relational_column_reference("b"),
+                                ascending=False,
+                                nulls_first=False,
+                            ),
+                        ],
+                    ),
+                    limit=LiteralExpression(1, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                ),
+            ),
+            "SELECT a, b FROM table ORDER BY a, b DESC LIMIT 1",
+            id="duplicate_limit_min_outer",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
+                    input=Limit(
+                        input=build_simple_scan(),
+                        limit=LiteralExpression(5, Int64Type()),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                        },
+                        orderings=[
+                            make_relational_ordering(
+                                make_relational_column_reference("a"),
+                                ascending=True,
+                                nulls_first=True,
+                            ),
+                        ],
+                    ),
+                    limit=LiteralExpression(2, Int64Type()),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                    },
+                    orderings=[
+                        make_relational_ordering(
+                            make_relational_column_reference("b"),
+                            ascending=False,
+                            nulls_first=False,
+                        ),
+                    ],
+                ),
+            ),
+            "SELECT a, b FROM (SELECT a, b FROM table ORDER BY a LIMIT 5) ORDER BY b DESC LIMIT 2",
+            id="duplicate_limit_different_ordering",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                ],
+                input=Limit(
                     input=build_simple_scan(),
                     limit=LiteralExpression(10, Int64Type()),
                     columns={
@@ -155,12 +262,12 @@ def sqlite_dialect() -> SQLiteDialect:
                         "b": make_relational_column_reference("b"),
                     },
                     orderings=[
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("a"),
                             ascending=True,
                             nulls_first=True,
                         ),
-                        make_relational_column_ordering(
+                        make_relational_ordering(
                             make_relational_column_reference("b"),
                             ascending=False,
                             nulls_first=False,
@@ -233,20 +340,21 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("b", make_relational_column_reference("b")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.INNER,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.INNER],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
-                        "b": make_relational_column_reference("b", input_name="right"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
+                        "b": make_relational_column_reference("b", input_name="t1"),
                     },
                 ),
             ),
@@ -259,19 +367,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.LEFT,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.LEFT],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -284,19 +393,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.RIGHT,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.RIGHT],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -309,19 +419,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.FULL_OUTER,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.FULL_OUTER],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -334,19 +445,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.SEMI,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.SEMI],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -359,19 +471,20 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("a", make_relational_column_reference("a")),
                 ],
                 input=Join(
-                    left=build_simple_scan(),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.ANTI,
+                    inputs=[build_simple_scan(), build_simple_scan()],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        )
+                    ],
+                    join_types=[JoinType.ANTI],
                     columns={
-                        "a": make_relational_column_reference("a", input_name="left"),
+                        "a": make_relational_column_reference("a", input_name="t0"),
                     },
                 ),
             ),
@@ -384,47 +497,52 @@ def sqlite_dialect() -> SQLiteDialect:
                     ("d", make_relational_column_reference("d")),
                 ],
                 input=Join(
-                    left=Join(
-                        left=build_simple_scan(),
-                        right=build_simple_scan(),
-                        condition=CallExpression(
+                    inputs=[
+                        Join(
+                            inputs=[build_simple_scan(), build_simple_scan()],
+                            conditions=[
+                                CallExpression(
+                                    EQU,
+                                    BooleanType(),
+                                    [
+                                        make_relational_column_reference(
+                                            "a", input_name="t0"
+                                        ),
+                                        make_relational_column_reference(
+                                            "a", input_name="t1"
+                                        ),
+                                    ],
+                                )
+                            ],
+                            join_types=[JoinType.INNER],
+                            columns={
+                                "a": make_relational_column_reference(
+                                    "a", input_name="t0"
+                                ),
+                                "b": make_relational_column_reference(
+                                    "b", input_name="t1"
+                                ),
+                            },
+                        ),
+                        build_simple_scan(),
+                    ],
+                    conditions=[
+                        CallExpression(
                             EQU,
                             BooleanType(),
                             [
-                                make_relational_column_reference(
-                                    "a", input_name="left"
-                                ),
-                                make_relational_column_reference(
-                                    "a", input_name="right"
-                                ),
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
                             ],
-                        ),
-                        join_type=JoinType.INNER,
-                        columns={
-                            "a": make_relational_column_reference(
-                                "a", input_name="left"
-                            ),
-                            "b": make_relational_column_reference(
-                                "b", input_name="right"
-                            ),
-                        },
-                    ),
-                    right=build_simple_scan(),
-                    condition=CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="left"),
-                            make_relational_column_reference("a", input_name="right"),
-                        ],
-                    ),
-                    join_type=JoinType.LEFT,
+                        )
+                    ],
+                    join_types=[JoinType.LEFT],
                     columns={
-                        "d": make_relational_column_reference("b", input_name="left"),
+                        "d": make_relational_column_reference("b", input_name="t0"),
                     },
                 ),
             ),
-            "SELECT _table_alias_0.b AS d FROM (SELECT _table_alias_2.a AS a, _table_alias_3.b AS b FROM (SELECT a, b FROM table) AS _table_alias_2 INNER JOIN (SELECT a, b FROM table) AS _table_alias_3 ON _table_alias_2.a = _table_alias_3.a) AS _table_alias_0 LEFT JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a",
+            "SELECT _table_alias_2.b AS d FROM (SELECT _table_alias_0.a AS a, _table_alias_1.b AS b FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a) AS _table_alias_2 LEFT JOIN (SELECT a, b FROM table) AS _table_alias_3 ON _table_alias_2.a = _table_alias_3.a",
             id="nested_join",
         ),
         pytest.param(
@@ -472,6 +590,65 @@ def sqlite_dialect() -> SQLiteDialect:
             "SELECT a * (b + 1) AS a, a + (b * 1) AS b FROM (SELECT a, b FROM table)",
             id="nested_binary_functions",
         ),
+        pytest.param(
+            RelationalRoot(
+                input=build_simple_scan(),
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                orderings=[
+                    make_relational_ordering(
+                        CallExpression(
+                            ABS,
+                            Int64Type(),
+                            [make_relational_column_reference("a")],
+                        ),
+                        ascending=True,
+                        nulls_first=True,
+                    ),
+                ],
+            ),
+            "SELECT a FROM table ORDER BY ABS(a)",
+            id="ordering_function",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                ],
+                input=Join(
+                    inputs=[
+                        build_simple_scan(),
+                        build_simple_scan(),
+                        build_simple_scan(),
+                    ],
+                    conditions=[
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        ),
+                        CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t2"),
+                            ],
+                        ),
+                    ],
+                    join_types=[JoinType.INNER, JoinType.INNER],
+                    columns={
+                        "a": make_relational_column_reference("a", input_name="t0"),
+                    },
+                ),
+            ),
+            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a INNER JOIN (SELECT a, b FROM table) AS _table_alias_2 ON _table_alias_0.a = _table_alias_2.a",
+            id="multi_join",
+        ),
     ],
 )
 def test_convert_relation_to_sql(
@@ -489,12 +666,17 @@ def test_convert_relation_to_sql(
     [
         pytest.param(
             tpch_query_1_plan(),
-            "SELECT L_RETURNFLAG, L_LINESTATUS, SUM_QTY, SUM_BASE_PRICE, SUM_DISC_PRICE, SUM_CHARGE, CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY, CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE, CAST(SUM_TAX AS REAL) / COUNT_ORDER AS AVG_DISC, COUNT_ORDER FROM (SELECT L_RETURNFLAG, L_LINESTATUS, SUM(L_QUANTITY) AS SUM_QTY, SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE, SUM(L_TAX) AS SUM_TAX, SUM(TEMP_COL0) AS SUM_DISC_PRICE, SUM(TEMP_COL1) AS SUM_CHARGE, COUNT() AS COUNT_ORDER FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_TAX, L_RETURNFLAG, L_LINESTATUS, TEMP_COL0, TEMP_COL0 * (1 + L_EXTENDEDPRICE) AS TEMP_COL1 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS TEMP_COL0 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE <= '1998-12-01'))) GROUP BY L_RETURNFLAG, L_LINESTATUS) ORDER BY L_RETURNFLAG, L_LINESTATUS",
+            "SELECT L_RETURNFLAG, L_LINESTATUS, SUM_QTY, SUM_BASE_PRICE, SUM_DISC_PRICE, SUM_CHARGE, CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY, CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE, CAST(SUM_DISCOUNT AS REAL) / COUNT_ORDER AS AVG_DISC, COUNT_ORDER FROM (SELECT L_RETURNFLAG, L_LINESTATUS, SUM(L_QUANTITY) AS SUM_QTY, SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE, SUM(L_DISCOUNT) AS SUM_DISCOUNT, SUM(TEMP_COL0) AS SUM_DISC_PRICE, SUM(TEMP_COL1) AS SUM_CHARGE, COUNT() AS COUNT_ORDER FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_RETURNFLAG, L_LINESTATUS, TEMP_COL0, TEMP_COL0 * (1 + L_TAX) AS TEMP_COL1 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS TEMP_COL0 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE <= '1998-12-01'))) GROUP BY L_RETURNFLAG, L_LINESTATUS) ORDER BY L_RETURNFLAG, L_LINESTATUS",
             id="tpch_q1",
         ),
         pytest.param(
+            tpch_query_3_plan(),
+            "SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY, SUM(REVENUE) AS REVENUE FROM (SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS REVENUE FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE > '1995-03-15')) INNER JOIN (SELECT O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT O_CUSTKEY, O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM ORDERS WHERE O_ORDERDATE < '1995-03-15') INNER JOIN (SELECT C_CUSTKEY FROM (SELECT C_CUSTKEY, C_MKTSEGMENT FROM CUSTOMER) WHERE C_MKTSEGMENT = 'BUILDING') ON O_CUSTKEY = C_CUSTKEY) ON L_ORDERKEY = O_ORDERKEY) GROUP BY L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY) ORDER BY REVENUE DESC, O_ORDERDATE, L_ORDERKEY LIMIT 10",
+            id="tpch_q3",
+        ),
+        pytest.param(
             tpch_query_6_plan(),
-            "SELECT SUM(TEMP_COL0) AS REVENUE FROM (SELECT L_EXTENDEDPRICE * L_DISCOUNT AS TEMP_COL0 FROM (SELECT L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_QUANTITY, L_DISCOUNT, L_EXTENDEDPRICE, L_SHIPDATE FROM LINEITEM) WHERE (L_QUANTITY < 24) AND (L_EXTENDEDPRICE <= 0.07) AND (L_EXTENDEDPRICE >= 0.05) AND (L_SHIPDATE < '1995-01-01') AND (L_SHIPDATE >= '1994-01-01')))",
+            "SELECT SUM(TEMP_COL0) AS REVENUE FROM (SELECT L_EXTENDEDPRICE * L_DISCOUNT AS TEMP_COL0 FROM (SELECT L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_QUANTITY, L_DISCOUNT, L_EXTENDEDPRICE, L_SHIPDATE FROM LINEITEM) WHERE (L_QUANTITY < 24) AND (L_DISCOUNT <= 0.07) AND (L_DISCOUNT >= 0.05) AND (L_SHIPDATE < '1995-01-01') AND (L_SHIPDATE >= '1994-01-01')))",
             id="tpch_q6",
         ),
     ],
