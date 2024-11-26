@@ -52,6 +52,23 @@ def convert_concat(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
         return Concat(expressions=inputs)
 
 
+def convert_like(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+    """
+    Support for generating a LIKE expression from a list of arguments.
+    This is given a function because it is a conversion target.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality
+            of like.
+    """
+    column: SQLGlotExpression = apply_parens(arguments[0])
+    pattern: SQLGlotExpression = apply_parens(arguments[1])
+    return sqlglot_expressions.Like(this=column, expression=pattern)
+
+
 def convert_startswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     """
     Convert a STARTSWITH call expression to a SQLGlot expression. This
@@ -65,12 +82,11 @@ def convert_startswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
         SQLGlotExpression: The SQLGlot expression matching the functionality
             of startswith.
     """
-    column: SQLGlotExpression = apply_parens(arguments[0])
-    pattern: SQLGlotExpression = arguments[1]
-    new_pattern: SQLGlotExpression = apply_parens(
-        convert_concat([sqlglot_expressions.convert("%"), pattern])
+    column: SQLGlotExpression = arguments[0]
+    pattern: SQLGlotExpression = convert_concat(
+        [sqlglot_expressions.convert("%"), arguments[1]]
     )
-    return sqlglot_expressions.Like(this=column, expression=new_pattern)
+    return convert_like([column, pattern])
 
 
 def convert_endswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
@@ -86,12 +102,11 @@ def convert_endswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
         SQLGlotExpression: The SQLGlot expression matching the functionality
             of endswith.
     """
-    column: SQLGlotExpression = apply_parens(arguments[0])
-    pattern: SQLGlotExpression = arguments[1]
-    new_pattern: SQLGlotExpression = apply_parens(
-        convert_concat([pattern, sqlglot_expressions.convert("%")])
+    column: SQLGlotExpression = arguments[0]
+    pattern: SQLGlotExpression = convert_concat(
+        [arguments[1], sqlglot_expressions.convert("%")]
     )
-    return sqlglot_expressions.Like(this=column, expression=new_pattern)
+    return convert_like([column, pattern])
 
 
 def convert_contains(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
@@ -108,18 +123,15 @@ def convert_contains(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
             of contains.
     """
     # TODO: Update when contains maps to multiple functions (e.g. ARRAY_CONTAINS).
-    column: SQLGlotExpression = apply_parens(arguments[0])
-    pattern: SQLGlotExpression = arguments[1]
-    new_pattern: SQLGlotExpression = apply_parens(
-        convert_concat(
-            [
-                sqlglot_expressions.convert("%"),
-                pattern,
-                sqlglot_expressions.convert("%"),
-            ]
-        )
+    column: SQLGlotExpression = arguments[0]
+    pattern: SQLGlotExpression = convert_concat(
+        [
+            sqlglot_expressions.convert("%"),
+            arguments[1],
+            sqlglot_expressions.convert("%"),
+        ]
     )
-    return sqlglot_expressions.Like(this=column, expression=new_pattern)
+    return convert_like([column, pattern])
 
 
 def convert_isin(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
