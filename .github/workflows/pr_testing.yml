@@ -53,7 +53,7 @@ jobs:
         run: ./tpch_demo/setup_tpch.sh ./tpch.db
 
       - name: Run Ruff
-        run: uv run ruff check .
+        run: uv run --python ${{ matrix.python-version }} ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/
+        run: uv run --python ${{ matrix.python-version }} pytest tests/
