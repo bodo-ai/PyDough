@@ -4,6 +4,9 @@ to represent various TPC-H queries. These are stored to simplify other
 tests that need to process relational plans.
 """
 
+from datetime import date
+from decimal import Decimal
+
 from test_utils import (
     make_relational_column_reference,
     make_relational_literal,
@@ -225,7 +228,9 @@ def tpch_query_1_plan() -> RelationalRoot:
                                     make_relational_column_reference("L_SHIPDATE"),
                                     # Note: This will be treated as a string literal
                                     # which is fine for now.
-                                    make_relational_literal("1998-12-01", DateType()),
+                                    make_relational_literal(
+                                        date(1998, 12, 1), DateType()
+                                    ),
                                 ],
                             ),
                             columns={
@@ -318,7 +323,7 @@ def tpch_query_3_plan() -> RelationalRoot:
             BooleanType(),
             [
                 make_relational_column_reference("O_ORDERDATE"),
-                make_relational_literal("1995-03-15", DateType()),
+                make_relational_literal(date(1995, 3, 15), DateType()),
             ],
         ),
         input=Scan(
@@ -388,7 +393,7 @@ def tpch_query_3_plan() -> RelationalRoot:
                 BooleanType(),
                 [
                     make_relational_column_reference("L_SHIPDATE"),
-                    make_relational_literal("1995-03-15", DateType()),
+                    make_relational_literal(date(1995, 3, 15), DateType()),
                 ],
             ),
             input=Scan(
@@ -558,7 +563,9 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 BooleanType(),
                                 [
                                     make_relational_column_reference("L_DISCOUNT"),
-                                    make_relational_literal("0.07", DecimalType(3, 2)),
+                                    make_relational_literal(
+                                        Decimal("0.07"), DecimalType(3, 2)
+                                    ),
                                 ],
                             ),
                             CallExpression(
@@ -566,7 +573,9 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 BooleanType(),
                                 [
                                     make_relational_column_reference("L_DISCOUNT"),
-                                    make_relational_literal("0.05", DecimalType(3, 2)),
+                                    make_relational_literal(
+                                        Decimal("0.05"), DecimalType(3, 2)
+                                    ),
                                 ],
                             ),
                             CallExpression(
@@ -574,7 +583,9 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 BooleanType(),
                                 [
                                     make_relational_column_reference("L_SHIPDATE"),
-                                    make_relational_literal("1995-01-01", DateType()),
+                                    make_relational_literal(
+                                        date(1995, 1, 1), DateType()
+                                    ),
                                 ],
                             ),
                             CallExpression(
@@ -582,7 +593,9 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 BooleanType(),
                                 [
                                     make_relational_column_reference("L_SHIPDATE"),
-                                    make_relational_literal("1994-01-01", DateType()),
+                                    make_relational_literal(
+                                        date(1994, 1, 1), DateType()
+                                    ),
                                 ],
                             ),
                         ],
