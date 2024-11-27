@@ -136,6 +136,8 @@ def convert_isin(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     """
     column: SQLGlotExpression = apply_parens(arguments[0])
     # Note: We only handle the case with multiple literals where all
-    # literals are in the same literal expression.
+    # literals are in the same literal expression. This code will need
+    # to change when we support PyDough expressions like:
+    # Collection.WHERE(ISIN(name, plural_subcollection.name))
     values: SQLGlotExpression = arguments[1]
     return sqlglot_expressions.In(this=column, expressions=values)
