@@ -46,8 +46,8 @@ class Filter(SingleRelational):
             and super().node_equals(other)
         )
 
-    def to_string(self) -> str:
-        return f"FILTER(condition={self.condition}, columns={self.columns})"
+    def to_string(self, compact: bool = False) -> str:
+        return f"FILTER(condition={self.condition.to_string(compact)}, columns={self.make_column_string(self.columns, compact)})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_filter(self)

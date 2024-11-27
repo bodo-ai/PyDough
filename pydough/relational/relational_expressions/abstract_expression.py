@@ -13,7 +13,8 @@ from .relational_expression_visitor import RelationalExpressionVisitor
 
 __all__ = ["RelationalExpression"]
 
-from pydough.types import PyDoughType
+import pydough.pydough_ast.pydough_operators as pydop
+from pydough.types import BooleanType, PyDoughType
 
 
 class RelationalExpression(ABC):
@@ -23,6 +24,29 @@ class RelationalExpression(ABC):
     @property
     def data_type(self) -> PyDoughType:
         return self._data_type
+
+    @staticmethod
+    def form_conjunction(terms: list["RelationalExpression"]) -> "RelationalExpression":
+        """
+        Builds a condition from a conjunction of terms.
+
+        Args:
+            `terms`: the list of relational expressions forming the
+            conjunction.
+
+        Returns:
+            A relational expression describing the logical-AND of the
+            values of `terms`.
+        """
+        from .call_expression import CallExpression
+        from .literal_expression import LiteralExpression
+
+        if len(terms) == 0:
+            return LiteralExpression(True, BooleanType())
+        elif len(terms) == 1:
+            return terms[0]
+        else:
+            return CallExpression(pydop.BAN, BooleanType(), terms)
 
     def equals(self, other: "RelationalExpression") -> bool:
         """
@@ -45,7 +69,7 @@ class RelationalExpression(ABC):
         return self.equals(other)
 
     @abstractmethod
-    def to_string(self) -> str:
+    def to_string(self, compact: bool = False) -> str:
         """
         Convert the relational expression to a string.
 

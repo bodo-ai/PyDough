@@ -19,8 +19,12 @@ class ExpressionSortInfo:
     ascending: bool
     nulls_first: bool
 
-    def to_string(self) -> str:
-        return f"ExpressionSortInfo(expression={self.expr}, ascending={self.ascending}, nulls_first={self.nulls_first})"
+    def to_string(self, compact: bool = False) -> str:
+        if compact:
+            suffix: str = f"{'asc' if self.ascending else 'desc'}_{'first' if self.nulls_first else 'last'}"
+            return f"({self.expr.to_string(compact)}):{suffix}"
+        else:
+            return f"ExpressionSortInfo(expression={self.expr.to_string(compact)}, ascending={self.ascending}, nulls_first={self.nulls_first})"
 
     def __str__(self) -> str:
         return self.to_string()

@@ -64,8 +64,17 @@ class RelationalRoot(SingleRelational):
             and super().node_equals(other)
         )
 
-    def to_string(self) -> str:
-        return f"ROOT(columns={self.ordered_columns}, orderings={self.orderings})"
+    def to_string(self, compact: bool = False) -> str:
+        columns: list[str] = [
+            f"({name!r}, {col.to_string(compact)})"
+            for name, col in self.ordered_columns
+        ]
+        orderings: list[str] = [
+            ordering.to_string(compact) for ordering in self.orderings
+        ]
+        return (
+            f"ROOT(columns=[{', '.join(columns)}], orderings=[{', '.join(orderings)}])"
+        )
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_root(self)

@@ -35,8 +35,8 @@ class Project(SingleRelational):
     def node_equals(self, other: Relational) -> bool:
         return isinstance(other, Project) and super().node_equals(other)
 
-    def to_string(self) -> str:
-        return f"PROJECT(columns={self.columns})"
+    def to_string(self, compact: bool = False) -> str:
+        return f"PROJECT(columns={self.make_column_string(self.columns, compact)})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         return visitor.visit_project(self)

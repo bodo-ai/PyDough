@@ -65,8 +65,11 @@ class Limit(SingleRelational):
             and super().node_equals(other)
         )
 
-    def to_string(self) -> str:
-        return f"LIMIT(limit={self.limit}, columns={self.columns}, orderings={self.orderings})"
+    def to_string(self, compact: bool = False) -> str:
+        orderings: list[str] = [
+            ordering.to_string(compact) for ordering in self.orderings
+        ]
+        return f"LIMIT(limit={self.limit}, columns={self.make_column_string(self.columns, compact)}, orderings=[{', '.join(orderings)}])"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         return visitor.visit_limit(self)

@@ -49,8 +49,12 @@ class CallExpression(RelationalExpression):
         """
         return self._inputs
 
-    def to_string(self) -> str:
-        return f"Call(op={self.op}, inputs={self.inputs}, return_type={self.data_type})"
+    def to_string(self, compact: bool = False) -> str:
+        if compact:
+            arg_strings: list[str] = [arg.to_string(compact) for arg in self.inputs]
+            return self.op.to_string(arg_strings)
+        else:
+            return f"Call(op={self.op}, inputs={self.inputs}, return_type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (

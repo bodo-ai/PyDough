@@ -988,11 +988,13 @@ def test_filter_requires_boolean_condition():
                     ("a", make_relational_column_reference("a")),
                     ("b", make_relational_column_reference("b")),
                 ],
-                make_relational_ordering(
-                    make_relational_column_reference("a"), ascending=True
-                ),
+                [
+                    make_relational_ordering(
+                        make_relational_column_reference("a"), ascending=True
+                    )
+                ],
             ),
-            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=ExpressionSortInfo(expression=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True))",
+            "ROOT(columns=[('a', Column(name=a, type=UnknownType())), ('b', Column(name=b, type=UnknownType()))], orderings=[ExpressionSortInfo(expression=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True)])",
             id="with_orderings",
         ),
     ],

@@ -39,8 +39,8 @@ class Scan(Relational):
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_scan(self)
 
-    def to_string(self) -> str:
-        return f"SCAN(table={self.table_name}, columns={self.columns})"
+    def to_string(self, compact=False) -> str:
+        return f"SCAN(table={self.table_name}, columns={self.make_column_string(self.columns, compact)})"
 
     def node_copy(
         self,

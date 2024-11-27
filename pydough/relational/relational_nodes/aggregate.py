@@ -63,8 +63,8 @@ class Aggregate(SingleRelational):
             and super().node_equals(other)
         )
 
-    def to_string(self) -> str:
-        return f"AGGREGATE(keys={self.keys}, aggregations={self.aggregations})"
+    def to_string(self, compact: bool = False) -> str:
+        return f"AGGREGATE(keys={self.make_column_string(self.keys, compact)}, aggregations={self.make_column_string(self.aggregations, compact)})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_aggregate(self)

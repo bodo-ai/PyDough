@@ -40,8 +40,11 @@ class LiteralExpression(RelationalExpression):
         """
         return self._value
 
-    def to_string(self) -> str:
-        return f"Literal(value={self.value}, type={self.data_type})"
+    def to_string(self, compact: bool = False) -> str:
+        if compact:
+            return f"{self.value}:{self.data_type}"
+        else:
+            return f"Literal(value={self.value}, type={self.data_type})"
 
     def equals(self, other: object) -> bool:
         return (

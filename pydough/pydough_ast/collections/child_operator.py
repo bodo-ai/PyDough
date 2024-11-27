@@ -59,9 +59,13 @@ class ChildOperator(PyDoughCollectionAST):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughAST:
+        from pydough.pydough_ast.expressions import PyDoughExpressionAST, Reference
+
         term: PyDoughAST = self.preceding_context.get_term(term_name)
         if isinstance(term, ChildAccess):
             term = term.clone_with_parent(self)
+        elif isinstance(term, PyDoughExpressionAST):
+            term = Reference(self.preceding_context, term_name)
         return term
 
     def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:

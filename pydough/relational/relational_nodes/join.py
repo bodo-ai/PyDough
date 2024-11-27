@@ -107,8 +107,9 @@ class Join(Relational):
             )
         )
 
-    def to_string(self) -> str:
-        return f"JOIN(conditions={self.conditions}, types={[t.value for t in self.join_types]}, columns={self.columns})"
+    def to_string(self, compact: bool = False) -> str:
+        conditions: list[str] = [cond.to_string(compact) for cond in self.conditions]
+        return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_join(self)
