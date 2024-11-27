@@ -51,6 +51,7 @@ from .hybrid_tree import (
     HybridLiteralExpr,
     HybridOperation,
     HybridRefExpr,
+    HybridRoot,
     HybridTree,
     make_hybrid_tree,
 )
@@ -64,54 +65,68 @@ class TranslationOutput:
 
 class RelTranslation:
     def translate_expression(
-        self, expr: HybridExpr, context: TranslationOutput
+        self, expr: HybridExpr, context: TranslationOutput | None
     ) -> RelationalExpression:
         """
-        TODO: add function docstring
+        Converts a HybridExpr to a RelationalExpression node based on the
+        current context. NOTE: currently only supported for literals, columns,
+        and column references.
+
+        Args:
+            `expr`: the HybridExpr node to be converted.
+            `context`: the datastructure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts. Can be omitted in certain contexts, such as
+            when deriving a table scan or literal.
+
+        Returns:
+            The converted relational expression.
         """
         match expr:
+            case HybridColumnExpr():
+                return ColumnReference(
+                    expr.column.column_property.column_name, expr.typ
+                )
             case HybridLiteralExpr():
                 return LiteralExpression(expr.literal.value, expr.typ)
             case HybridRefExpr():
+                assert context is not None
                 return context.expressions[expr]
             case _:
                 raise NotImplementedError(expr.__class__.__name__)
 
     def build_simple_table_scan(
-        self, node: HybridCollectionAccess, table_path: str
+        self, node: HybridCollectionAccess
     ) -> TranslationOutput:
         """
-        TODO: add function docstring
+        Converts an access of a collection into a table scan.
+
+        Args:
+            `node`: the node corresponding to accessing a collection
+            (could be a standalone table collection or subcollection access).
+
+        Returns:
+            The TranslationOutput payload containing the table scan as well
+            as the expression mappings so future references know how to
+            access the table columns.
         """
         out_columns: dict[HybridExpr, ColumnReference] = {}
         scan_columns: dict[str, RelationalExpression] = {}
         for expr_name in node.terms:
-            hybrid_expr = node.terms[expr_name]
-            assert isinstance(hybrid_expr, HybridColumnExpr)
-            hybrid_ref: HybridRefExpr = HybridRefExpr(expr_name, hybrid_expr.typ)
-            scan_ref: ColumnReference = ColumnReference(
-                hybrid_expr.column.column_property.column_name, hybrid_expr.typ
+            hybrid_expr: HybridExpr = node.terms[expr_name]
+            scan_ref: RelationalExpression = self.translate_expression(
+                hybrid_expr, None
             )
-            out_ref: ColumnReference = ColumnReference(expr_name, hybrid_expr.typ)
+            assert isinstance(scan_ref, ColumnReference)
             scan_columns[expr_name] = scan_ref
+            hybrid_ref: HybridRefExpr = HybridRefExpr(expr_name, hybrid_expr.typ)
+            out_ref: ColumnReference = ColumnReference(expr_name, hybrid_expr.typ)
             out_columns[hybrid_ref] = out_ref
-        answer = Scan(table_path, scan_columns)
-        return TranslationOutput(answer, out_columns)
-
-    def translate_table_collection(
-        self, node: HybridCollectionAccess
-    ) -> TranslationOutput:
-        """
-        TODO: add function docstring
-        """
-        collection_access: CollectionAccess = node.collection
-        assert isinstance(collection_access, TableCollection)
         assert isinstance(
-            collection_access.collection, SimpleTableMetadata
-        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
-        return self.build_simple_table_scan(
-            node, collection_access.collection.table_path
-        )
+            node.collection.collection, SimpleTableMetadata
+        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.collection.__class__.__name__}"
+        answer = Scan(node.collection.collection.table_path, scan_columns)
+        return TranslationOutput(answer, out_columns)
 
     def translate_sub_collection(
         self,
@@ -120,7 +135,21 @@ class RelTranslation:
         context: TranslationOutput,
     ) -> TranslationOutput:
         """
-        TODO: add function docstring
+        Converts a subcollection access into a join from the parent onto
+        a scan of the child.
+
+        Args:
+            `node`: the node corresponding to the subcollection access.
+            `parent`: the hybrid tree of the previous layer that the access
+            steps down from.
+            `context`: the datastructure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts. Can be omitted in certain contexts, such as
+            when deriving a table scan or literal.
+
+        Returns:
+            The TranslationOutput payload containing an INNER join of the
+            relational node for the parent and the table scan of the child.
         """
 
         # First, build the table scan for the collection being stepped into.
@@ -129,9 +158,7 @@ class RelTranslation:
         assert isinstance(
             collection_access.collection, SimpleTableMetadata
         ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
-        rhs_output: TranslationOutput = self.build_simple_table_scan(
-            node, collection_access.collection.table_path
-        )
+        rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
         # Create the join node so we know what aliases it uses, but leave
         # the condition as always-True and the output columns empty for now.
@@ -239,28 +266,50 @@ class RelTranslation:
             hybrid.pipeline
         ), f"Pipeline index {pipeline_idx} is too big for hybrid tree:\n{hybrid}"
 
-        # TODO: deal with ancestors of a table collection
+        # Identify the operation that will be computed at this stage.
         operation: HybridOperation = hybrid.pipeline[pipeline_idx]
-        if isinstance(operation, HybridCollectionAccess) and isinstance(
-            operation.collection, TableCollection
-        ):
-            return self.translate_table_collection(operation)
 
-        context: TranslationOutput
-        parent: HybridTree | None = hybrid.parent
-        if pipeline_idx == 0:
-            assert parent is not None
-            context = self.rel_translation(parent, len(parent.pipeline) - 1)
+        # Identify the preceding hybrid tree operation on the current level,
+        # or the last operation from the previous level if at the start, or
+        # none if we have arrived at the true start.
+        preceding_tree: HybridTree
+        preceding_idx: int
+        if pipeline_idx > 0:
+            preceding_tree = hybrid
+            preceding_idx = pipeline_idx - 1
+        elif hybrid.parent is not None:
+            preceding_tree = hybrid.parent
+            preceding_idx = len(hybrid.parent.pipeline) - 1
         else:
-            context = self.rel_translation(hybrid, pipeline_idx - 1)
+            raise NotImplementedError()
 
+        # Base case: deal with operations that do not contend with a
+        # predecessor. TODO: deal with global CALC operations.
+        if isinstance(preceding_tree.pipeline[preceding_idx], HybridRoot):
+            if isinstance(operation, HybridCollectionAccess) and isinstance(
+                operation.collection, TableCollection
+            ):
+                return self.build_simple_table_scan(operation)
+            else:
+                raise NotImplementedError()
+
+        # First, recursively fetch the TranslationOutput of the preceding
+        # operation on the current level of the hybrid tree, or the last
+        # operation from the preceding level if we are at the start of the
+        # current levle.
+        context: TranslationOutput = self.rel_translation(preceding_tree, preceding_idx)
+
+        # Then, dispatch onto the logic to transform from the context into the
+        # new translation output.
         match operation:
             case HybridCollectionAccess():
                 if isinstance(operation.collection, SubCollection) and not isinstance(
                     operation.collection, CompoundSubCollection
                 ):
-                    assert parent is not None
-                    return self.translate_sub_collection(operation, parent, context)
+                    assert hybrid.parent is not None
+                    return self.translate_sub_collection(
+                        operation, hybrid.parent, context
+                    )
                 else:
                     raise NotImplementedError(
                         f"TODO: support relational conversion on {operation.__class__.__name__}"
@@ -319,7 +368,17 @@ class RelTranslation:
 
 def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
     """
-    TODO: add function docstring
+    Main API for converting from the collection AST form into relational
+    nodes.
+
+    Args:
+        `node`: the PyDough AST collection node to be translated.
+
+    Returns:
+        The RelationalRoot for the entire PyDough calculation that the
+        collection node corresponds to. Ensures that the calc terms of
+        `node` are included in the root in the correct order, and if it
+        has an ordering then the relational root stores that information.
     """
     # Pre-process the AST node so the final CALC term includes any ordering
     # keys.

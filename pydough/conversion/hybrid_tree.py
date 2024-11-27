@@ -25,6 +25,7 @@ __all__ = [
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
 
 import pydough.pydough_ast.pydough_operators as pydop
@@ -49,7 +50,7 @@ from pydough.types import PyDoughType
 
 class HybridExpr(ABC):
     """
-    TODO: add class docstring
+    The base class for expression nodes within a hybrid operation.
     """
 
     def __init__(self, typ: PyDoughType):
@@ -64,13 +65,23 @@ class HybridExpr(ABC):
     @abstractmethod
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         """
-        TODO: add function docstring
+        Renames references in an expression if contained in a renaming
+        dictionary.
+
+        Args:
+            `renamings`: a dictionary mapping names of any references to the
+            new name that they should adopt.
+
+        Returns:
+            The transformed copy of self, if necessary, otherwise
+            just returns self.
         """
 
 
 class HybridCollation(HybridExpr):
     """
-    TODO: add class docstring
+    Class for HybridExpr terms that are another HybridExpr term wrapped in
+    information about how to sort by them.
     """
 
     def __init__(self, expr: HybridExpr, asc: bool, na_first: bool):
@@ -85,14 +96,15 @@ class HybridCollation(HybridExpr):
         return f"({self.expr!r}):{suffix}"
 
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return HybridCollation(
-            self.expr.apply_renamings(renamings), self.asc, self.na_first
-        )
+        renamed_expr: HybridExpr = self.expr.apply_renamings(renamings)
+        if renamed_expr is self.expr:
+            return self
+        return HybridCollation(renamed_expr, self.asc, self.na_first)
 
 
 class HybridColumnExpr(HybridExpr):
     """
-    TODO: add class docstring
+    Class for HybridExpr terms that are references to a column from a table.
     """
 
     def __init__(self, column: ColumnProperty):
@@ -108,7 +120,8 @@ class HybridColumnExpr(HybridExpr):
 
 class HybridRefExpr(HybridExpr):
     """
-    TODO: add class docstring
+    Class for HybridExpr terms that are references to a term from a preceding
+    HybridOperation.
     """
 
     def __init__(self, name: str, typ: PyDoughType):
@@ -126,7 +139,8 @@ class HybridRefExpr(HybridExpr):
 
 class HybridChildRefExpr(HybridExpr):
     """
-    TODO: add class docstring
+    Class for HybridExpr terms that are references to a term from a child
+    operation.
     """
 
     def __init__(self, name: str, child_idx: int, typ: PyDoughType):
@@ -143,7 +157,8 @@ class HybridChildRefExpr(HybridExpr):
 
 class HybridBackRefExpr(HybridExpr):
     """
-    TODO: add class docstring
+    Class for HybridExpr terms that are references to a term from an
+    ancestor operation.
     """
 
     def __init__(self, name: str, back_idx: int, typ: PyDoughType):
@@ -160,7 +175,7 @@ class HybridBackRefExpr(HybridExpr):
 
 class HybridLiteralExpr(HybridExpr):
     """
-    TODO: add class docstring
+    Class for HybridExpr terms that are literals.
     """
 
     def __init__(self, literal: Literal):
@@ -176,7 +191,7 @@ class HybridLiteralExpr(HybridExpr):
 
 class HybridFunctionExpr(HybridExpr):
     """
-    TODO: add class docstring
+    Class for HybridExpr terms that are function calls.
     """
 
     def __init__(
@@ -201,16 +216,28 @@ class HybridFunctionExpr(HybridExpr):
         return self.operator.to_string(arg_strings)
 
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return HybridFunctionExpr(
-            self.operator,
-            [arg.apply_renamings(renamings) for arg in self.args],
-            self.typ,
-        )
+        renamed_args: list[HybridExpr] = [
+            arg.apply_renamings(renamings) for arg in self.args
+        ]
+        if all(
+            expr is renamed_expr for expr, renamed_expr in zip(self.args, renamed_args)
+        ):
+            return self
+        return HybridFunctionExpr(self.operator, renamed_args, self.typ)
 
 
 class HybridOperation:
     """
-    TODO: add class docstring
+    Base class for an operation done within a pipeline of a HybridTree, such
+    as a filter or table collection access. Every such class contains the
+    following:
+    - `terms`: mapping of names to expressions accessible from that point in
+               the pipeline execution.
+    - `renamings`: mapping of names to a new name that should be used to access
+               them from within `terms`. This is used when a `CALC` overrides a
+               term name so that future invocations of the term name use the
+               renamed version, while key operations like joins can still
+               access the original version.
     """
 
     def __init__(self, terms: dict[str, HybridExpr], renamings: dict[str, str]):
@@ -220,7 +247,7 @@ class HybridOperation:
 
 class HybridRoot(HybridOperation):
     """
-    TODO: add class docstring
+    Class for HybridOperation corresponding to the "root" context.
     """
 
     def __init__(self):
@@ -232,7 +259,8 @@ class HybridRoot(HybridOperation):
 
 class HybridCollectionAccess(HybridOperation):
     """
-    TODO: add class docstring
+    Class for HybridOperation corresponding to accessing a collection (either
+    directly or as a subcollection).
     """
 
     def __init__(self, collection: CollectionAccess):
@@ -250,7 +278,7 @@ class HybridCollectionAccess(HybridOperation):
 
 class HybridCalc(HybridOperation):
     """
-    TODO: add class docstring
+    Class for HybridOperation corresponding to a CALC operation.
     """
 
     def __init__(
@@ -285,7 +313,7 @@ class HybridCalc(HybridOperation):
 
 class HybridFilter(HybridOperation):
     """
-    TODO: add class docstring
+    Class for HybridOperation corresponding to a WHERE operation.
     """
 
     def __init__(
@@ -302,7 +330,7 @@ class HybridFilter(HybridOperation):
 
 class HybridOrder(HybridOperation):
     """
-    TODO: add class docstring
+    Class for HybridOperation corresponding to an ORDER BY operation.
     """
 
     def __init__(
@@ -322,7 +350,7 @@ class HybridOrder(HybridOperation):
 
 class HybridLimit(HybridOperation):
     """
-    TODO: add class docstring
+    Class for HybridOperation corresponding to a TOP K operation.
     """
 
     def __init__(
@@ -337,19 +365,71 @@ class HybridLimit(HybridOperation):
         return f"LIMIT_{self.topk.records_to_keep}[{self.collation}]"
 
 
+class ConnectionType(Enum):
+    """
+    An enum describing how a hybrid tree is connected to a child tree.
+    """
+
+    SINGULAR = 0
+    """
+    The child should be 1:1 with regards to the parent, and can thus be
+    accessed via a simple left-join without having to worry about cardinality
+    contamination.
+    """
+
+    AGGREGATION = 1
+    """
+    The child is being accessed for the purposes of aggregating its columns.
+    """
+
+    COUNT = 2
+    """
+    The child is being accessed for the purposes of counting how many rows it
+    has.
+    """
+
+    NDISTINCT = 3
+    """
+    The child is being accessed for the purposes of counting how many
+    distinct elements it has.
+    """
+
+    HAS = 4
+    """
+    The child is being used as a semi-join.
+    """
+
+    HASNOT = 5
+    """
+    The child is being used as an anti-join.
+    """
+
+
 @dataclass
 class HybridConnection:
+    """
+    Parcel class corresponding to information about one of the children
+    of a HybridTree. Contains the following information:
+    - `parent`: the HybridTree that the connection exists within.
+    - `subtree`: the HybridTree corresponding to the child itself, starting
+      from the bottom.
+    - `connection_type`: an enum indicating which connection type is being
+       used.
+    """
+
     parent: "HybridTree"
     subtree: "HybridTree"
-    is_singular: bool = True
-    is_aggregation: bool = False
-    is_count: bool = False
-    is_ndistinct: bool = False
-    is_has: bool = False
-    is_hasnot: bool = False
+    connection_type: ConnectionType
 
 
 class HybridTree:
+    """
+    The datastructure class used to keep track of the overall computation in
+    a tree structure where each level has a pipeline of operations, possibly
+    has a singular predecessor and/or successor, and can have children that
+    the operations in the pipeline can access.
+    """
+
     def __init__(
         self,
         root_operation: HybridOperation,
@@ -368,9 +448,7 @@ class HybridTree:
         lines.append(" -> ".join(repr(operation) for operation in self.pipeline))
         prefix = " " if self.successor is None else "↓"
         for idx, child in enumerate(self.children):
-            lines.append(
-                f"{prefix} child #{idx} ({'agg' if child.is_aggregation else 'sing'}):"
-            )
+            lines.append(f"{prefix} child #{idx} ({child.connection_type}):")
             for line in repr(child.subtree).splitlines():
                 lines.append(f"{prefix} {line}")
         if self.successor is not None:
@@ -380,67 +458,68 @@ class HybridTree:
     @property
     def pipeline(self) -> list[HybridOperation]:
         """
-        TODO
+        The sequence of operations done in the current level of the hybrid
+        tree.
         """
         return self._pipeline
 
     @property
     def children(self) -> list[HybridConnection]:
         """
-        TODO
+        The child operations evaluated so that they can be used by operations
+        in the pipeline.
         """
         return self._children
 
     @property
     def successor(self) -> Optional["HybridTree"]:
         """
-        TODO
+        The next level below in the HybridTree, if present.
         """
         return self._successor
 
     @property
     def parent(self) -> Optional["HybridTree"]:
         """
-        TODO
+        The previous level above in the HybridTree, if present.
         """
         return self._parent
 
     @property
     def is_hidden_level(self) -> bool:
         """
-        TODO
+        True if the current level should be disregarded when converting
+        PyDoughAST BACK terms to HybridExpr BACK terms.
         """
         return self._is_hidden_level
 
     @property
     def is_connection_root(self) -> bool:
         """
-        TODO
+        True if the current level is the top of a subtree located inside of
+        a HybridConnection.
         """
         return self._is_connection_root
 
     def add_child(
         self,
         child: "HybridTree",
-        is_singular: bool = True,
-        is_aggregation: bool = False,
-        is_count: bool = False,
-        is_ndistinct: bool = False,
-        is_has: bool = False,
-        is_hasnot: bool = False,
+        connection_type: ConnectionType,
     ) -> int:
         """
-        TODO
+        Adds a new child operation to the current level so that operations in
+        the pipeline can make use of it.
+
+        Args:
+            `child`: the subtree to be connected to `self` as a child
+            (starting at the bottom of the subtree).
+            `connection_type`: enum indcating what kind of connection is to be
+            used to link `self` to `child`.
         """
         connection: HybridConnection = HybridConnection(
             self,
             child,
-            is_singular,
-            is_aggregation,
-            is_count,
-            is_ndistinct,
-            is_has,
-            is_hasnot,
+            connection_type,
         )
         for idx, existing_child in enumerate(self.children):
             if child == existing_child:
@@ -451,7 +530,10 @@ class HybridTree:
 
     def add_successor(self, successor: "HybridTree") -> None:
         """
-        TODO
+        Marks two hybrid trees in a predecessor-successor relationship.
+
+        Args:
+            `successor`: the HybridTree to be marked as one level below `self`.
         """
         if self._successor is not None:
             raise Exception("Duplicate successor")
@@ -461,7 +543,16 @@ class HybridTree:
 
 def make_hybrid_expr(hybrid: HybridTree, expr: PyDoughExpressionAST) -> HybridExpr:
     """
-    TODO: Add function docstring
+    Converts an AST expression into a HybridExpr. Currently only supports
+    literals, tale columns, and references.
+
+    Args:
+        `hybrid`: the hybrid tree that should be used to derive the translation
+        of `expr`, as it is the context in which the `expr` will live.
+        `expr`: the AST expression to be converted.
+
+    Returns:
+        The HybridExpr node corresponding to `expr`
     """
     match expr:
         case Literal():
@@ -478,7 +569,13 @@ def make_hybrid_expr(hybrid: HybridTree, expr: PyDoughExpressionAST) -> HybridEx
 
 def make_hybrid_tree(node: PyDoughCollectionAST) -> HybridTree:
     """
-    TODO: Add function docstring
+    Converts a collection AST into the HybridTree format.
+
+    Args:
+        `node`: the collection AST to be converted.
+
+    Returns:
+        The HybridTree representation of `node`.
     """
     hybrid: HybridTree
     successor_hybrid: HybridTree
