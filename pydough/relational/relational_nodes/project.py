@@ -43,7 +43,7 @@ class Project(SingleRelational):
 
     def is_identity(self) -> bool:
         """
-        Checks if the project is an identity project, meaning that it
+        Checks if a project is an identity project. This means that
         every column is just a mapping to a column of the same name.
         """
         return all(
