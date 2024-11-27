@@ -70,3 +70,11 @@ class Limit(SingleRelational):
 
     def accept(self, visitor: RelationalVisitor) -> None:
         return visitor.visit_limit(self)
+
+    def node_copy(
+        self,
+        columns: MutableMapping[str, RelationalExpression],
+        inputs: MutableSequence[Relational],
+    ) -> Relational:
+        assert len(inputs) == 1, "Limit node should have exactly one input"
+        return Limit(inputs[0], self.limit, columns, self.orderings)
