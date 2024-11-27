@@ -39,6 +39,7 @@ generic_func_map: dict[str, SQLGlotExpression] = {
     "MAX": sqlglot_expressions.Max,
     "SUM": sqlglot_expressions.Sum,
     "COUNT": sqlglot_expressions.Count,
+    "IFF": sqlglot_expressions.If,
 }
 # These functions need an explicit constructor for binary.
 binary_func_map: dict[str, SQLGlotExpression] = {

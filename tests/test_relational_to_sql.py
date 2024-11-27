@@ -24,6 +24,8 @@ from pydough.pydough_ast.pydough_operators import (
     CONTAINS,
     ENDSWITH,
     EQU,
+    GEQ,
+    IFF,
     ISIN,
     MUL,
     STARTSWITH,
@@ -41,7 +43,7 @@ from pydough.relational import (
     RelationalRoot,
 )
 from pydough.sqlglot import convert_relation_to_sql
-from pydough.types import BooleanType, Int64Type, UnknownType
+from pydough.types import BooleanType, Int64Type, StringType, UnknownType
 
 
 @pytest.fixture(scope="module")
@@ -829,6 +831,34 @@ def test_tpch_relational_to_sql(
             ),
             "SELECT b FROM table WHERE b IN (1, 2, 3)",
             id="isin",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("a", make_relational_column_reference("a"))],
+                input=Project(
+                    input=build_simple_scan(),
+                    columns={
+                        "a": CallExpression(
+                            IFF,
+                            Int64Type(),
+                            [
+                                CallExpression(
+                                    GEQ,
+                                    BooleanType(),
+                                    [
+                                        make_relational_column_reference("b"),
+                                        make_relational_literal(0, Int64Type()),
+                                    ],
+                                ),
+                                make_relational_literal("Positive", StringType()),
+                                make_relational_literal("Negative", StringType()),
+                            ],
+                        ),
+                    },
+                ),
+            ),
+            "SELECT IIF(b >= 0, 'Positive', 'Negative') AS a FROM (SELECT a, b FROM table)",
+            id="iff",
         ),
     ],
 )
