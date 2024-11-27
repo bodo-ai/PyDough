@@ -5,6 +5,8 @@ SQLGlot.
 """
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.dialects.sqlite import SQLite as SQLiteDialect
 from sqlglot.expressions import Binary, Concat, Paren
 from sqlglot.expressions import Expression as SQLGlotExpression
 
@@ -28,7 +30,9 @@ def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
         return expression
 
 
-def convert_concat(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+def convert_concat(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
     """
     Support for generating a CONCAT expression from a list of arguments.
     This is optimized for the case where all arguments are string literals
@@ -37,6 +41,7 @@ def convert_concat(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     Args:
         arguments (list[SQLGlotExpression]): The list of arguments to
             concatenate.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
 
     Returns:
         SQLGlotExpression: A CONCAT expression or equivalent string literal.
@@ -52,13 +57,16 @@ def convert_concat(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
         return Concat(expressions=inputs)
 
 
-def convert_like(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+def convert_like(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
     """
     Support for generating a LIKE expression from a list of arguments.
     This is given a function because it is a conversion target.
 
     Args:
         arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
 
     Returns:
         SQLGlotExpression: The SQLGlot expression matching the functionality
@@ -69,7 +77,9 @@ def convert_like(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     return sqlglot_expressions.Like(this=column, expression=pattern)
 
 
-def convert_startswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+def convert_startswith(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
     """
     Convert a STARTSWITH call expression to a SQLGlot expression. This
     is done because SQLGlot does not automatically convert STARTSWITH
@@ -77,6 +87,7 @@ def convert_startswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
 
     Args:
         arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
 
     Returns:
         SQLGlotExpression: The SQLGlot expression matching the functionality
@@ -84,12 +95,15 @@ def convert_startswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     """
     column: SQLGlotExpression = arguments[0]
     pattern: SQLGlotExpression = convert_concat(
-        [sqlglot_expressions.convert("%"), arguments[1]]
+        [sqlglot_expressions.convert("%"), arguments[1]],
+        dialect,
     )
-    return convert_like([column, pattern])
+    return convert_like([column, pattern], dialect)
 
 
-def convert_endswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+def convert_endswith(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
     """
     Convert a ENDSWITH call expression to a SQLGlot expression. This
     is done because SQLGlot does not automatically convert ENDSWITH
@@ -97,6 +111,7 @@ def convert_endswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
 
     Args:
         arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
 
     Returns:
         SQLGlotExpression: The SQLGlot expression matching the functionality
@@ -104,12 +119,15 @@ def convert_endswith(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     """
     column: SQLGlotExpression = arguments[0]
     pattern: SQLGlotExpression = convert_concat(
-        [arguments[1], sqlglot_expressions.convert("%")]
+        [arguments[1], sqlglot_expressions.convert("%")],
+        dialect,
     )
-    return convert_like([column, pattern])
+    return convert_like([column, pattern], dialect)
 
 
-def convert_contains(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+def convert_contains(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
     """
     Convert a CONTAINS call expression to a SQLGlot expression. This
     is done because SQLGlot does not automatically convert CONTAINS
@@ -117,6 +135,7 @@ def convert_contains(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
 
     Args:
         arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
 
     Returns:
         SQLGlotExpression: The SQLGlot expression matching the functionality
@@ -129,18 +148,22 @@ def convert_contains(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
             sqlglot_expressions.convert("%"),
             arguments[1],
             sqlglot_expressions.convert("%"),
-        ]
+        ],
+        dialect,
     )
-    return convert_like([column, pattern])
+    return convert_like([column, pattern], dialect)
 
 
-def convert_isin(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+def convert_isin(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
     """
     Convert a ISIN call expression to a SQLGlot expression. This
     is done because converting to IN is non-standard.
 
     Args:
         arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
 
     Returns:
         SQLGlotExpression: The SQLGlot expression matching the functionality
@@ -153,7 +176,9 @@ def convert_isin(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
     return sqlglot_expressions.In(this=column, expressions=values)
 
 
-def convert_iff(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+def convert_iff(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
     """
     Convert a IFF call expression to a SQLGlot expression. This
     is done because SQLGlot does not automatically convert IFF
@@ -161,6 +186,7 @@ def convert_iff(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
 
     Args:
         arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
 
     Returns:
         SQLGlotExpression: The SQLGlot expression matching the functionality
@@ -174,3 +200,29 @@ def convert_iff(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
         .when(condition=condition, then=true_expr)
         .else_(false_expr)
     )
+
+
+def convert_year(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
+    """
+    Convert a YEAR call expression to a SQLGlot expression. This
+    is done because SQLGlot does not automatically convert YEAR
+    to equivalent SQL operation in SQLite.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality
+            of year.
+    """
+    column: SQLGlotExpression = arguments[0]
+    if isinstance(dialect, SQLiteDialect):
+        return sqlglot_expressions.Cast(
+            this=sqlglot_expressions.TimeToStr(this=column, format="%Y"),
+            to=sqlglot_expressions.DataType(this=sqlglot_expressions.DataType.Type.INT),
+        )
+    else:
+        return sqlglot_expressions.Year(this=column)

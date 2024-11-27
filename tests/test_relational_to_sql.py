@@ -30,6 +30,7 @@ from pydough.pydough_ast.pydough_operators import (
     MUL,
     STARTSWITH,
     SUM,
+    YEAR,
 )
 from pydough.relational import (
     Aggregate,
@@ -880,6 +881,23 @@ def test_tpch_relational_to_sql(
             ),
             "SELECT CASE WHEN b = 1 THEN 1 ELSE 1 END AS a FROM (SELECT a, b FROM table)",
             id="iff",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("a", make_relational_column_reference("a"))],
+                input=Project(
+                    input=build_simple_scan(),
+                    columns={
+                        "a": CallExpression(
+                            YEAR,
+                            Int64Type(),
+                            [make_relational_column_reference("a")],
+                        ),
+                    },
+                ),
+            ),
+            "SELECT CAST(STRFTIME(%Y, a) AS INTEGER) AS a FROM (SELECT a, b FROM table)",
+            id="year",
         ),
     ],
 )

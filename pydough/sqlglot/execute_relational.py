@@ -32,9 +32,9 @@ def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect)
     Returns:
         str: The SQL string representing the relational tree.
     """
-    glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor().relational_to_sqlglot(
-        relational
-    )
+    glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
+        dialect
+    ).relational_to_sqlglot(relational)
     return glot_expr.sql(dialect)
 
 

@@ -6,6 +6,7 @@ the relation Tree to a single SQLGlot query component.
 from collections.abc import Callable
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 
@@ -25,6 +26,7 @@ from .call_expression_conversion import (
     convert_isin,
     convert_like,
     convert_startswith,
+    convert_year,
 )
 from .sqlglot_helpers import set_glot_alias
 
@@ -66,7 +68,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     # Mapping for builtin functions that require complex conversions.
     special_func_map: dict[
-        str, Callable[[list[SQLGlotExpression]], SQLGlotExpression]
+        str, Callable[[list[SQLGlotExpression], SQLGlotDialect], SQLGlotExpression]
     ] = {
         "STARTSWITH": convert_startswith,
         "CONTAINS": convert_contains,
@@ -74,12 +76,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         "ISIN": convert_isin,
         "IFF": convert_iff,
         "LIKE": convert_like,
+        "YEAR": convert_year,
     }
 
-    def __init__(self) -> None:
+    def __init__(self, dialect: SQLGlotDialect) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
+        self._dialect: SQLGlotDialect = dialect
 
     def reset(self) -> None:
         """
@@ -97,7 +101,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         key: str = call_expression.op.function_name.upper()
         output_expr: SQLGlotExpression
         if key in self.special_func_map:
-            output_expr = self.special_func_map[key](input_exprs)
+            output_expr = self.special_func_map[key](input_exprs, self._dialect)
         elif key in generic_func_map:
             output_expr = generic_func_map[key].from_arg_list(input_exprs)
         elif key in binary_func_map:
