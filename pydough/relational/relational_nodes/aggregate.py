@@ -4,7 +4,7 @@ relational representation for any grouping operation that optionally involves
 keys and aggregate functions.
 """
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 
 from pydough.relational.relational_expressions import (
     CallExpression,
@@ -68,3 +68,24 @@ class Aggregate(SingleRelational):
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_aggregate(self)
+
+    def node_copy(
+        self,
+        columns: MutableMapping[str, RelationalExpression],
+        inputs: MutableSequence[Relational],
+    ) -> Relational:
+        assert len(inputs) == 1, "Aggregate node should have exactly one input"
+        # Aggregate nodes don't cleanly map to the existing columns API.
+        # We still fulfill it as much as possible by mapping all column
+        # references to the keys since aggregates must be functions.
+        keys = {}
+        aggregations = {}
+        for key, val in columns.items():
+            if isinstance(val, ColumnReference):
+                keys[key] = val
+            else:
+                assert isinstance(
+                    val, CallExpression
+                ), "All columns must be references or functions"
+                aggregations[key] = val
+        return Aggregate(inputs[0], keys, aggregations)
