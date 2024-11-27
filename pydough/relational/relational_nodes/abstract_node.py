@@ -35,6 +35,20 @@ class Relational(ABC):
         """
 
     @property
+    def default_input_aliases(self) -> list[str | None]:
+        """
+        Provide the default aliases for each input
+        to this node. This is used when remapping the
+        names of each input for differentiating columns.
+        By default we don't use an alias, which maps to None
+        for each input.
+
+        Note: The lowering steps are not required to use this alias
+        and can choose any name they want.
+        """
+        return [None for i in range(len(self.inputs))]
+
+    @property
     def columns(self) -> MutableMapping[str, RelationalExpression]:
         """
         Returns the columns of the relational expression.
@@ -97,3 +111,47 @@ class Relational(ABC):
         Args:
             visitor (RelationalVisitor): The visitor to traverse the tree.
         """
+
+    @abstractmethod
+    def node_copy(
+        self,
+        columns: MutableMapping[str, RelationalExpression],
+        inputs: MutableSequence["Relational"],
+    ) -> "Relational":
+        """
+        Copy the given relational node with the provided columns and/or
+        inputs. This copy maintains any additional properties of the
+        given node in the output. Every node is required to implement
+        this directly.
+
+        Args:
+            columns (MutableMapping[str, RelationalExpression]): The columns
+                to copy.
+            inputs (MutableSequence[Relational]): The inputs to copy.
+
+        Returns:
+            Relational: The copied relational node.
+        """
+
+    def copy(
+        self,
+        columns: MutableMapping[str, RelationalExpression] | None = None,
+        inputs: MutableSequence["Relational"] | None = None,
+    ) -> "Relational":
+        """
+        Copy the given relational node with the provided columns and/or
+        inputs. This copy maintains any additional properties of the
+        given node in the output. If any of the inputs are None, then we
+        will grab those fields from the current node.
+
+        Args:
+            columns (MutableMapping[str, RelationalExpression] | None): The
+                columns to copy.
+            inputs (MutableSequence[Relational] | None): The inputs to copy.
+
+        Returns:
+            Relational: The copied relational node.
+        """
+        columns = self.columns if columns is None else columns
+        inputs = self.inputs if inputs is None else inputs
+        return self.node_copy(columns, inputs)
