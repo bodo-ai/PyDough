@@ -17,12 +17,12 @@ class ColumnReferenceInputNameModifier(RelationalExpressionShuttle):
     input name to a new input name based on a dictionary.
     """
 
-    def __init__(self, input_name_map: dict[str, str] | None = None) -> None:
-        self._input_name_map: dict[str, str] = (
+    def __init__(self, input_name_map: dict[str | None, str] | None = None) -> None:
+        self._input_name_map: dict[str | None, str] = (
             {} if input_name_map is None else input_name_map
         )
 
-    def set_map(self, input_name_map: dict[str, str]) -> None:
+    def set_map(self, input_name_map: dict[str | None, str]) -> None:
         self._input_name_map = input_name_map
 
     def visit_literal_expression(
