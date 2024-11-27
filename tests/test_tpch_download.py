@@ -6,7 +6,7 @@ running a simple TPCH query on SQLite.
 import sqlite3
 import typing as pt
 
-import pytest
+import pandas as pd
 from tpch_outputs import tpch_q6_output
 
 
@@ -17,7 +17,7 @@ def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection):
     cur: sqlite3.Cursor = sqlite_tpch_db.cursor()
     cur.execute("""
         select
-            sum(l_extendedprice * l_discount) as revenue
+            sum(l_extendedprice * l_discount) as REVENUE
         from
             lineitem
         where
@@ -27,4 +27,6 @@ def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection):
             and l_quantity < 24
     """)
     result: list[pt.Any] = cur.fetchall()
-    assert [pytest.approx(x, rel=1e-5, abs=1e-8) for x in result] == tpch_q6_output()
+    columns = [description[0] for description in cur.description]
+    output = pd.DataFrame(result, columns=columns)
+    pd.testing.assert_frame_equal(output, tpch_q6_output())

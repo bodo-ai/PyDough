@@ -71,4 +71,4 @@ def execute(relational: RelationalRoot, ctx: DatabaseContext) -> list[Any]:
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
     sql: str = convert_relation_to_sql(relational, sqlglot_dialect)
-    return ctx.connection.execute_query(sql)
+    return ctx.connection.execute_query_df(sql)

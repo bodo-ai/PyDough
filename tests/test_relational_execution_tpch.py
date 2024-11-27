@@ -2,8 +2,7 @@
 Simple tests to run TPC-H queries on SQLite.
 """
 
-from typing import Any
-
+import pandas as pd
 import pytest
 from tpch_outputs import tpch_q1_output, tpch_q3_output, tpch_q6_output
 from tpch_relational_plans import (
@@ -38,11 +37,11 @@ from pydough.sqlglot import execute
     ],
 )
 def test_tpch(
-    root: RelationalRoot, output: list[Any], sqlite_tpch_db_context: DatabaseContext
+    root: RelationalRoot, output: pd.DataFrame, sqlite_tpch_db_context: DatabaseContext
 ):
     """
     Test the example TPC-H relational trees executed on a
     SQLite database.
     """
     result = execute(root, sqlite_tpch_db_context)
-    assert [pytest.approx(x, rel=1e-5, abs=1e-8) for x in result] == output
+    pd.testing.assert_frame_equal(result, output)
