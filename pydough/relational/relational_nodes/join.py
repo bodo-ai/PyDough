@@ -45,7 +45,7 @@ class Join(Relational):
 
     def __init__(
         self,
-        inputs: list[Relational],
+        inputs: MutableSequence[Relational],
         conditions: list[RelationalExpression],
         join_types: list[JoinType],
         columns: MutableMapping[str, RelationalExpression],
@@ -85,7 +85,7 @@ class Join(Relational):
         return self._inputs
 
     @property
-    def default_input_aliases(self) -> list[str]:
+    def default_input_aliases(self) -> list[str | None]:
         """
         Provide the default aliases for each input
         to this node. This is used when remapping the
@@ -112,3 +112,10 @@ class Join(Relational):
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_join(self)
+
+    def node_copy(
+        self,
+        columns: MutableMapping[str, RelationalExpression],
+        inputs: MutableSequence[Relational],
+    ) -> Relational:
+        return Join(inputs, self.conditions, self.join_types, columns)

@@ -41,3 +41,11 @@ class Scan(Relational):
 
     def to_string(self) -> str:
         return f"SCAN(table={self.table_name}, columns={self.columns})"
+
+    def node_copy(
+        self,
+        columns: MutableMapping[str, RelationalExpression],
+        inputs: MutableSequence[Relational],
+    ) -> Relational:
+        assert not inputs, "Scan node should have 0 inputs"
+        return Scan(self.table_name, columns)
