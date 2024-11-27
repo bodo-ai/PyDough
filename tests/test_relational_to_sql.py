@@ -20,8 +20,12 @@ from tpch_relational_plans import (
 from pydough.pydough_ast.pydough_operators import (
     ABS,
     ADD,
+    BAN,
+    CONTAINS,
+    ENDSWITH,
     EQU,
     MUL,
+    STARTSWITH,
     SUM,
 )
 from pydough.relational import (
@@ -691,6 +695,127 @@ def test_tpch_relational_to_sql(
 
     These plans are generated from a couple simple plans we built with
     Apache Calcite in Bodo's SQL optimizer.
+    """
+    created_sql: str = convert_relation_to_sql(root, sqlite_dialect)
+    assert created_sql == sql_text
+
+
+@pytest.mark.parametrize(
+    "root, sql_text",
+    [
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("b", make_relational_column_reference("b"))],
+                input=Filter(
+                    input=build_simple_scan(),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    condition=CallExpression(
+                        BAN,
+                        BooleanType(),
+                        [
+                            CallExpression(
+                                STARTSWITH,
+                                BooleanType(),
+                                [
+                                    make_relational_column_reference("b"),
+                                    make_relational_literal("a", UnknownType()),
+                                ],
+                            ),
+                            CallExpression(
+                                STARTSWITH,
+                                BooleanType(),
+                                [
+                                    make_relational_column_reference("b"),
+                                    make_relational_column_reference("a"),
+                                ],
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            "SELECT b FROM table WHERE (b LIKE '%a') AND (b LIKE ('%' || a))",
+            id="starts_with",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("b", make_relational_column_reference("b"))],
+                input=Filter(
+                    input=build_simple_scan(),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    condition=CallExpression(
+                        BAN,
+                        BooleanType(),
+                        [
+                            CallExpression(
+                                ENDSWITH,
+                                BooleanType(),
+                                [
+                                    make_relational_column_reference("b"),
+                                    make_relational_literal("a", UnknownType()),
+                                ],
+                            ),
+                            CallExpression(
+                                ENDSWITH,
+                                BooleanType(),
+                                [
+                                    make_relational_column_reference("b"),
+                                    make_relational_column_reference("a"),
+                                ],
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            "SELECT b FROM table WHERE (b LIKE 'a%') AND (b LIKE (a || '%'))",
+            id="ends_with",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("b", make_relational_column_reference("b"))],
+                input=Filter(
+                    input=build_simple_scan(),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    condition=CallExpression(
+                        BAN,
+                        BooleanType(),
+                        [
+                            CallExpression(
+                                CONTAINS,
+                                BooleanType(),
+                                [
+                                    make_relational_column_reference("b"),
+                                    make_relational_literal("a", UnknownType()),
+                                ],
+                            ),
+                            CallExpression(
+                                CONTAINS,
+                                BooleanType(),
+                                [
+                                    make_relational_column_reference("b"),
+                                    make_relational_column_reference("a"),
+                                ],
+                            ),
+                        ],
+                    ),
+                ),
+            ),
+            "SELECT b FROM table WHERE (b LIKE '%a%') AND (b LIKE ('%' || a || '%'))",
+            id="contains",
+        ),
+    ],
+)
+def test_function_to_sql(
+    root: RelationalRoot, sql_text: str, sqlite_dialect: SQLiteDialect
+):
+    """
+    Tests that should be small as we need to just test converting a function
+    to SQL.
     """
     created_sql: str = convert_relation_to_sql(root, sqlite_dialect)
     assert created_sql == sql_text
