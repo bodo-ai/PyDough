@@ -59,11 +59,47 @@ from .hybrid_tree import (
 
 @dataclass
 class TranslationOutput:
+    """
+    The output payload for the conversion of a HybridTree prefix to
+    a Relational structure. Contains the Relational node tree in question,
+    as well as a mapping that can be used to identify what column to use to
+    access any HybridExpr's equivalent expression in the Relational node.
+    """
+
     relation: Relational
     expressions: dict[HybridExpr, ColumnReference]
 
 
 class RelTranslation:
+    def get_ref_by_name(
+        self,
+        operation: HybridOperation,
+        context: TranslationOutput,
+        name: str,
+        input_alias: str | None = None,
+    ) -> ColumnReference:
+        """
+        Fetches an expression as a column reference by its original name,
+        decorated with the appropriate input alias.
+
+        Args:
+            `operation`: the hybrid operation node corresponding to the
+            location where the ref is being accessed from.
+            `context`: the datastructure storing information about the
+            translated relational information so far, including references to
+            columns for expressions that have already been defined.
+            `name`: the original name of the expression being sought from
+            `operation`.
+            `input_alias`: an optional alias to the input where the expression
+            comes from..
+
+        Returns:
+            The column reference to the join key.
+        """
+        ref: HybridRefExpr = operation.terms[name].make_into_ref(name)
+        # HybridRefExpr(key_name, operation.terms[key_name].typ)
+        return context.expressions[ref].with_input(input_alias)
+
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
     ) -> RelationalExpression:
@@ -162,6 +198,7 @@ class RelTranslation:
 
         # Create the join node so we know what aliases it uses, but leave
         # the condition as always-True and the output columns empty for now.
+        # The condition & output columns will be filled in later.
         out_columns: dict[HybridExpr, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
         out_rel: Join = Join(
@@ -177,17 +214,13 @@ class RelTranslation:
             # and build the corresponding (lhs_key == rhs_key) conditions
             cond_terms: list[RelationalExpression] = []
             for lhs_name in collection_access.subcollection_property.keys:
-                lhs_expr: HybridExpr = parent.pipeline[-1].terms[lhs_name]
-                lhs_expr = HybridRefExpr(lhs_name, lhs_expr.typ)
-                lhs_key: ColumnReference = context.expressions[lhs_expr].with_input(
-                    input_aliases[0]
+                lhs_key: ColumnReference = self.get_ref_by_name(
+                    parent.pipeline[-1], context, lhs_name, input_aliases[0]
                 )
                 for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
-                    rhs_expr: HybridExpr = node.terms[rhs_name]
-                    rhs_expr = HybridRefExpr(rhs_name, rhs_expr.typ)
-                    rhs_key: ColumnReference = rhs_output.expressions[
-                        rhs_expr
-                    ].with_input(input_aliases[1])
+                    rhs_key: ColumnReference = self.get_ref_by_name(
+                        node, rhs_output, rhs_name, input_aliases[1]
+                    )
                     cond: RelationalExpression = CallExpression(
                         pydop.EQU, BooleanType(), [lhs_key, rhs_key]
                     )
@@ -233,7 +266,21 @@ class RelTranslation:
         context: TranslationOutput,
     ) -> TranslationOutput:
         """
-        TODO: add function docstring
+        Converts a calc into a project on top of its child to derive additional
+        terms.
+
+        Args:
+            `node`: the node corresponding to the calc being derived.
+            `parent`: the hybrid tree of the previous layer that the access
+            steps down from.
+            `context`: the datastructure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts. Can be omitted in certain contexts, such as
+            when deriving a table scan or literal.
+
+        Returns:
+            The TranslationOutput payload containing a PROJECT on top of
+            the relational node for the parent to derive any additional terms.
         """
         proj_columns: dict[str, RelationalExpression] = {}
         out_columns: dict[HybridExpr, ColumnReference] = {}
@@ -260,7 +307,21 @@ class RelTranslation:
         pipeline_idx: int,
     ) -> TranslationOutput:
         """
-        TODO: add function docstring
+        The recursive procedure for converting a prefix of the hybrid tree
+        into a TranslationOutput payload.
+
+        Args:
+            `hybrid`: the current level of the hybrid tree to be derived,
+            including all levels before it.
+            `pipeline_idx`: the index of the operation in the pipeline of the
+            current level that is to be derived, as well as all operations
+            preceding it in the pipeline.
+
+        Returns:
+            The TranslationOutput payload corresponding to the relational
+            node to derive the prefix of the hybrid tree up to the level of
+            `hybrid` from all pipeline operators up to and including the
+            value of `pipeline_idx`.
         """
         assert pipeline_idx < len(
             hybrid.pipeline

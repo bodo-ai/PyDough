@@ -54,8 +54,11 @@ class ColumnReference(RelationalExpression):
             `input_name`: the value of input_name used for the clone.
 
         Returns:
-            The clones value of `self` with the desired `input_name`.
+            The cloned value of `self` with the desired `input_name`, or just
+            `self` if the input name is the same as `self`.
         """
+        if self.input_name == input_name:
+            return self
         return ColumnReference(self.name, self.data_type, input_name)
 
     def to_string(self, compact: bool = False) -> str:

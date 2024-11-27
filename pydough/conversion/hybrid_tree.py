@@ -77,6 +77,21 @@ class HybridExpr(ABC):
             just returns self.
         """
 
+    def make_into_ref(self, name: str) -> "HybridRefExpr":
+        """
+        Converts a HybridExpr into a reference with the desired name.
+
+        Args:
+            `name`: the name of the desired reference.
+
+        Returns:
+            A HybridRefExpr corresponding to `self` but with the provided name,
+            or just `self` if `self` is already a HybridRefExpr with that name.
+        """
+        if isinstance(self, HybridRefExpr) and self.name == name:
+            return self
+        return HybridRefExpr(name, self.typ)
+
 
 class HybridCollation(HybridExpr):
     """
