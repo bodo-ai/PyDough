@@ -6,6 +6,7 @@ __all__ = [
     "CallExpression",
     "ExpressionSortInfo",
     "ColumnReference",
+    "ColumnReferenceFinder",
     "ColumnReferenceInputNameModifier",
     "ColumnReferenceInputNameRemover",
     "LiteralExpression",
@@ -15,6 +16,7 @@ __all__ = [
 from .abstract_expression import RelationalExpression
 from .call_expression import CallExpression
 from .column_reference import ColumnReference
+from .column_reference_finder import ColumnReferenceFinder
 from .column_reference_input_name_modifier import ColumnReferenceInputNameModifier
 from .column_reference_input_name_remover import ColumnReferenceInputNameRemover
 from .expression_sort_info import ExpressionSortInfo
