@@ -120,3 +120,24 @@ def convert_contains(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
         )
     )
     return sqlglot_expressions.Like(this=column, expression=new_pattern)
+
+
+def convert_isin(arguments: list[SQLGlotExpression]) -> SQLGlotExpression:
+    """
+    Convert a ISIN call expression to a SQLGlot expression. This
+    is done because converting to IN is non-standard.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality
+            of isin.
+    """
+    column: SQLGlotExpression = apply_parens(arguments[0])
+    # Note: We only handle the case with multiple literals where all
+    # literals are in the same literal expression. This code will need
+    # to change when we support PyDough expressions like:
+    # Collection.WHERE(ISIN(name, plural_subcollection.name))
+    values: SQLGlotExpression = arguments[1]
+    return sqlglot_expressions.In(this=column, expressions=values)

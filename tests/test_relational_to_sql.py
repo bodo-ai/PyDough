@@ -24,6 +24,7 @@ from pydough.pydough_ast.pydough_operators import (
     CONTAINS,
     ENDSWITH,
     EQU,
+    ISIN,
     MUL,
     STARTSWITH,
     SUM,
@@ -807,6 +808,27 @@ def test_tpch_relational_to_sql(
             ),
             "SELECT b FROM table WHERE (b LIKE '%a%') AND (b LIKE ('%' || a || '%'))",
             id="contains",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("b", make_relational_column_reference("b"))],
+                input=Filter(
+                    input=build_simple_scan(),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    condition=CallExpression(
+                        ISIN,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("b"),
+                            make_relational_literal([1, 2, 3], UnknownType()),
+                        ],
+                    ),
+                ),
+            ),
+            "SELECT b FROM table WHERE b IN (1, 2, 3)",
+            id="isin",
         ),
     ],
 )

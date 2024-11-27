@@ -21,6 +21,7 @@ from .call_expression_conversion import (
     apply_parens,
     convert_contains,
     convert_endswith,
+    convert_isin,
     convert_startswith,
 )
 from .sqlglot_helpers import set_glot_alias
@@ -68,6 +69,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         "STARTSWITH": convert_startswith,
         "CONTAINS": convert_contains,
         "ENDSWITH": convert_endswith,
+        "ISIN": convert_isin,
     }
 
     def __init__(self) -> None:
