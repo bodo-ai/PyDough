@@ -5,7 +5,6 @@ TODO: add file-level docstring
 __all__ = ["convert_ast_to_relational"]
 
 
-from collections.abc import MutableMapping
 from dataclasses import dataclass
 
 import pydough.pydough_ast.pydough_operators as pydop
@@ -71,6 +70,10 @@ class TranslationOutput:
 
 
 class RelTranslation:
+    def __init__(self):
+        # An index used for creating fake column names
+        self.dummy_idx = 1
+
     def get_ref_by_name(
         self,
         operation: HybridOperation,
@@ -97,7 +100,6 @@ class RelTranslation:
             The column reference to the join key.
         """
         ref: HybridRefExpr = operation.terms[name].make_into_ref(name)
-        # HybridRefExpr(key_name, operation.terms[key_name].typ)
         return context.expressions[ref].with_input(input_alias)
 
     def translate_expression(
@@ -226,12 +228,7 @@ class RelTranslation:
                     )
                     cond_terms.append(cond)
             # Build the condition as the conjunction of `cond_terms`
-            join_cond: RelationalExpression = cond_terms[0]
-            for i in range(1, len(cond_terms)):
-                join_cond = CallExpression(
-                    pydop.BAN, BooleanType(), [join_cond, cond_terms[i]]
-                )
-            out_rel._conditions[0] = join_cond
+            out_rel._conditions[0] = RelationalExpression.form_conjunction(cond_terms)
         elif not isinstance(
             collection_access.subcollection_property, CartesianProductMetadata
         ):
@@ -245,14 +242,16 @@ class RelTranslation:
             ].with_input(input_aliases[0])
             context.expressions[expr] = new_ancestor_reference
             join_columns[new_ancestor_reference.name] = new_ancestor_reference
-        for expr in rhs_output.expressions:
-            old_reference = rhs_output.expressions[expr]
+        expr_refs: list[tuple[HybridExpr, ColumnReference]] = list(
+            rhs_output.expressions.items()
+        )
+        expr_refs.sort(key=lambda pair: pair[1].name)
+        for expr, old_reference in expr_refs:
             old_name: str = old_reference.name
             new_name: str = old_name
-            idx: int = 1
             while new_name in join_columns:
-                new_name = f"{old_name}_{idx}"
-                idx += 1
+                new_name = f"{old_name}_{self.dummy_idx}"
+                self.dummy_idx += 1
             new_reference: ColumnReference = ColumnReference(
                 new_name, old_reference.data_type
             )
@@ -284,13 +283,8 @@ class RelTranslation:
         """
         proj_columns: dict[str, RelationalExpression] = {}
         out_columns: dict[HybridExpr, ColumnReference] = {}
-        out_rel: Project = Project(context.relation, proj_columns)
-        in_columns: MutableMapping[str, RelationalExpression] = context.relation.columns
-        in_expressions: dict[HybridExpr, ColumnReference] = context.expressions
-        for name in in_columns:
-            proj_columns[name] = in_columns[name]
-        for expr in in_expressions:
-            out_columns[expr] = in_expressions[expr]
+        # Populate every expression into the project's columns by translating
+        # it relative to the input context.
         for name in node.terms:
             hybrid_expr: HybridExpr = node.terms[name]
             ref_expr: HybridRefExpr = HybridRefExpr(name, hybrid_expr.typ)
@@ -299,6 +293,7 @@ class RelTranslation:
             )
             proj_columns[name] = rel_expr
             out_columns[ref_expr] = ColumnReference(name, rel_expr.data_type)
+        out_rel: Project = Project(context.relation, proj_columns)
         return TranslationOutput(out_rel, out_columns)
 
     def rel_translation(

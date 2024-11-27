@@ -373,11 +373,11 @@ class HybridLimit(HybridOperation):
     ):
         super().__init__(predecessor.terms, {})
         self.predecessor: HybridOperation = predecessor
-        self.topk: TopK = topk
+        self.limit: TopK = topk
         self.collation: list[HybridCollation] = collation
 
     def __repr__(self):
-        return f"LIMIT_{self.topk.records_to_keep}[{self.collation}]"
+        return f"LIMIT_{self.limit.records_to_keep}[{self.collation}]"
 
 
 class ConnectionType(Enum):

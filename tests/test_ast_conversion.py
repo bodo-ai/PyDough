@@ -72,8 +72,8 @@ ROOT(columns=[('fizz', fizz), ('buzz', buzz)], orderings=[])
             TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
             """
 ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
- PROJECT(columns={'comment': comment_1, 'key': key_1, 'name': name_1, 'region_key': region_key})
-  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_1': t1.key, 'name_1': t1.name, 'region_key': t1.region_key})
+ PROJECT(columns={'comment': comment_1, 'key': key_2, 'name': name_3, 'region_key': region_key})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
 """,
@@ -85,8 +85,8 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ** SubCollectionInfo("customers"),
             """
 ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment)], orderings=[])
- JOIN(conditions=[t0.key_1 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment': t1.comment, 'key': t1.key, 'mktsegment': t1.mktsegment, 'name': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone})
-  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_1': t1.key})
+ JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment': t1.comment, 'key': t1.key, 'mktsegment': t1.mktsegment, 'name': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'address': c_address, 'comment': c_comment, 'key': c_custkey, 'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
@@ -108,10 +108,10 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
             ),
             """
 ROOT(columns=[('key_0', key_0), ('name', name), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
- PROJECT(columns={'key_0': -3:Int64Type(), 'mktsegment': mktsegment, 'name': name_1, 'phone': phone})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_1': t1.name, 'phone': t1.phone})
-   PROJECT(columns={'key': key_1})
-    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_1': t1.key})
+ PROJECT(columns={'key_0': -3:Int64Type(), 'mktsegment': mktsegment, 'name': name_6, 'phone': phone})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_6': t1.name, 'phone': t1.phone})
+   PROJECT(columns={'key': key_2})
+    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
      SCAN(table=tpch.REGION, columns={'key': r_regionkey})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
    SCAN(table=tpch.CUSTOMER, columns={'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
