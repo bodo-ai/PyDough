@@ -27,6 +27,7 @@ from pydough.pydough_ast.pydough_operators import (
     GEQ,
     IFF,
     ISIN,
+    LIKE,
     MUL,
     STARTSWITH,
     SUM,
@@ -831,6 +832,27 @@ def test_tpch_relational_to_sql(
             ),
             "SELECT b FROM table WHERE b IN (1, 2, 3)",
             id="isin",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[("b", make_relational_column_reference("b"))],
+                input=Filter(
+                    input=build_simple_scan(),
+                    columns={
+                        "b": make_relational_column_reference("b"),
+                    },
+                    condition=CallExpression(
+                        LIKE,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("b"),
+                            make_relational_literal("%abc%efg%", StringType()),
+                        ],
+                    ),
+                ),
+            ),
+            "SELECT b FROM table WHERE b LIKE '%abc%efg%'",
+            id="like",
         ),
         pytest.param(
             RelationalRoot(
