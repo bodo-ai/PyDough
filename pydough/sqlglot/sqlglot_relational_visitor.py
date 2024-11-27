@@ -6,6 +6,7 @@ SQLGlot query.
 from collections import defaultdict
 from collections.abc import MutableMapping, MutableSequence
 
+from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery
@@ -40,12 +41,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     the relational tree 1 node at a time.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, dialect: SQLGlotDialect) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor()
+            SQLGlotRelationalExpressionVisitor(dialect)
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
