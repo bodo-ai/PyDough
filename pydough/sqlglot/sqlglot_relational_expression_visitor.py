@@ -21,7 +21,6 @@ from .call_expression_conversion import (
     apply_parens,
     convert_contains,
     convert_endswith,
-    convert_iff,
     convert_isin,
     convert_startswith,
 )
@@ -40,6 +39,7 @@ generic_func_map: dict[str, SQLGlotExpression] = {
     "MAX": sqlglot_expressions.Max,
     "SUM": sqlglot_expressions.Sum,
     "COUNT": sqlglot_expressions.Count,
+    "IFF": sqlglot_expressions.If,
 }
 # These functions need an explicit constructor for binary.
 binary_func_map: dict[str, SQLGlotExpression] = {
@@ -71,7 +71,6 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         "CONTAINS": convert_contains,
         "ENDSWITH": convert_endswith,
         "ISIN": convert_isin,
-        "IFF": convert_iff,
     }
 
     def __init__(self) -> None:

@@ -856,7 +856,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT CASE WHEN b = 1 THEN 1 ELSE 1 END AS a FROM (SELECT a, b FROM table)",
+            "SELECT IIF(b = 1, 1, 1) AS a FROM (SELECT a, b FROM table)",
             id="iff",
         ),
     ],
