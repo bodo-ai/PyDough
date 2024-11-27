@@ -28,6 +28,7 @@ __all__ = [
     "ChildOperator",
     "CompoundSubCollection",
     "PartitionChild",
+    "CollectionAccess",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -37,6 +38,7 @@ from .collections import (
     ChildOperator,
     ChildOperatorChildAccess,
     ChildReferenceCollection,
+    CollectionAccess,
     CompoundSubCollection,
     GlobalContext,
     OrderBy,

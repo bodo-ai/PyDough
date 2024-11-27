@@ -5,8 +5,8 @@ TODO: add file-level docstring
 __all__ = ["convert_ast_to_relational"]
 
 
+from collections.abc import MutableMapping
 from dataclasses import dataclass
-from typing import Optional
 
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.metadata import (
@@ -16,23 +16,14 @@ from pydough.metadata import (
 )
 from pydough.pydough_ast import (
     Calc,
-    ChildOperator,
-    ChildOperatorChildAccess,
     CollationExpression,
-    ColumnProperty,
+    CollectionAccess,
     CompoundSubCollection,
-    GlobalContext,
-    Literal,
-    OrderBy,
-    PartitionBy,
-    PartitionChild,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
     Reference,
     SubCollection,
     TableCollection,
-    TopK,
-    Where,
 )
 from pydough.relational.relational_expressions import (
     CallExpression,
@@ -45,190 +36,128 @@ from pydough.relational.relational_nodes import (
     ColumnPruner,
     Join,
     JoinType,
+    Project,
     Relational,
     RelationalRoot,
     Scan,
 )
 from pydough.types import BooleanType
 
+from .hybrid_tree import (
+    HybridCalc,
+    HybridCollectionAccess,
+    HybridColumnExpr,
+    HybridExpr,
+    HybridLiteralExpr,
+    HybridOperation,
+    HybridRefExpr,
+    HybridTree,
+    make_hybrid_tree,
+)
+
 
 @dataclass
 class TranslationOutput:
     relation: Relational
-    node: PyDoughCollectionAST
-    expressions: dict[PyDoughExpressionAST, ColumnReference]
-
-
-class HybridTree:
-    def __init__(self, collection: PyDoughCollectionAST):
-        self._collection: PyDoughCollectionAST = collection
-        self._children: list[HybridTree] = []
-        self._successor: HybridTree | None = None
-        self._parent: HybridTree | None = None
-
-    @property
-    def collection(self) -> PyDoughCollectionAST:
-        """
-        TODO
-        """
-        return self._collection
-
-    @property
-    def children(self) -> list["HybridTree"]:
-        """
-        TODO
-        """
-        return self._children
-
-    @property
-    def successor(self) -> Optional["HybridTree"]:
-        """
-        TODO
-        """
-        return self._successor
-
-    @property
-    def parent(self) -> Optional["HybridTree"]:
-        """
-        TODO
-        """
-        return self._parent
-
-    def __repr__(self):
-        child_strings: list[str] = []
-        for child in self.children + (
-            [self.successor] if self.successor is not None else []
-        ):
-            for child_lines in repr(child).splitlines():
-                child_strings.append(f" {child_lines}")
-        return f"{self.collection.standalone_string}\n{'\n'.join(child_strings)}"
-
-    def add_child(self, child: "HybridTree") -> None:
-        """
-        TODO
-        """
-        if child in self._children:
-            raise Exception("Duplicate child")
-        self._children.append(child)
-        child._parent = self
-
-    def add_successor(self, child: "HybridTree") -> None:
-        """
-        TODO
-        """
-        if self._successor is not None:
-            raise Exception("Duplicate successor")
-        self._successor = child
-        child._parent = self
-
-    @staticmethod
-    def make_hybrid_tree(
-        node: PyDoughCollectionAST,
-        propagated_children: list["HybridTree"] | None = None,
-        propagated_successor: Optional["HybridTree"] = None,
-    ) -> "HybridTree":
-        """
-        TODO
-        """
-        hybrid: HybridTree = HybridTree(node)
-        if propagated_successor is not None:
-            hybrid.add_successor(propagated_successor)
-        if propagated_children is not None:
-            for propagated_child in propagated_children:
-                hybrid.add_child(propagated_child)
-        next_children: list[HybridTree] = []
-        if isinstance(node, ChildOperatorChildAccess):
-            return hybrid
-        if isinstance(node, ChildOperator):
-            for child in node.children:
-                next_children.append(HybridTree.make_hybrid_tree(child))
-        if node.preceding_context is not None:
-            return HybridTree.make_hybrid_tree(
-                node.preceding_context, next_children, hybrid
-            )
-        elif node.ancestor_context is not None:
-            return HybridTree.make_hybrid_tree(
-                node.ancestor_context, next_children, hybrid
-            )
-        else:
-            return hybrid
+    expressions: dict[HybridExpr, ColumnReference]
 
 
 class RelTranslation:
+    def translate_expression(
+        self, expr: HybridExpr, context: TranslationOutput
+    ) -> RelationalExpression:
+        """
+        TODO: add function docstring
+        """
+        match expr:
+            case HybridLiteralExpr():
+                return LiteralExpression(expr.literal.value, expr.typ)
+            case HybridRefExpr():
+                return context.expressions[expr]
+            case _:
+                raise NotImplementedError(expr.__class__.__name__)
+
     def build_simple_table_scan(
-        self, node: PyDoughCollectionAST, table_path: str
+        self, node: HybridCollectionAccess, table_path: str
     ) -> TranslationOutput:
         """
         TODO: add function docstring
         """
-        out_columns: dict[PyDoughExpressionAST, ColumnReference] = {}
+        out_columns: dict[HybridExpr, ColumnReference] = {}
         scan_columns: dict[str, RelationalExpression] = {}
-        for expr_name in node.calc_terms:
-            expr: PyDoughExpressionAST = node.get_expr(expr_name)
-            assert isinstance(expr, ColumnProperty)
+        for expr_name in node.terms:
+            hybrid_expr = node.terms[expr_name]
+            assert isinstance(hybrid_expr, HybridColumnExpr)
+            hybrid_ref: HybridRefExpr = HybridRefExpr(expr_name, hybrid_expr.typ)
             scan_ref: ColumnReference = ColumnReference(
-                expr.column_property.column_name, expr.column_property.data_type
+                hybrid_expr.column.column_property.column_name, hybrid_expr.typ
             )
-            out_ref: ColumnReference = ColumnReference(
-                expr_name, expr.column_property.data_type
-            )
+            out_ref: ColumnReference = ColumnReference(expr_name, hybrid_expr.typ)
             scan_columns[expr_name] = scan_ref
-            out_columns[expr] = out_ref
+            out_columns[hybrid_ref] = out_ref
         answer = Scan(table_path, scan_columns)
-        return TranslationOutput(answer, node, out_columns)
+        return TranslationOutput(answer, out_columns)
 
     def translate_table_collection(
-        self, node: TableCollection
-    ) -> list[TranslationOutput]:
+        self, node: HybridCollectionAccess
+    ) -> TranslationOutput:
         """
         TODO: add function docstring
         """
+        collection_access: CollectionAccess = node.collection
+        assert isinstance(collection_access, TableCollection)
         assert isinstance(
-            node.collection, SimpleTableMetadata
-        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.__class__.__name__}"
-        return [self.build_simple_table_scan(node, node.collection.table_path)]
+            collection_access.collection, SimpleTableMetadata
+        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
+        return self.build_simple_table_scan(
+            node, collection_access.collection.table_path
+        )
 
     def translate_sub_collection(
         self,
-        node: SubCollection,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
+        node: HybridCollectionAccess,
+        parent: HybridTree,
+        context: TranslationOutput,
+    ) -> TranslationOutput:
         """
         TODO: add function docstring
         """
-        assert len(ancestry) > 0
 
         # First, build the table scan for the collection being stepped into.
+        collection_access: CollectionAccess = node.collection
+        assert isinstance(collection_access, SubCollection)
         assert isinstance(
-            node.collection, SimpleTableMetadata
-        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.__class__.__name__}"
+            collection_access.collection, SimpleTableMetadata
+        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
         rhs_output: TranslationOutput = self.build_simple_table_scan(
-            node, node.collection.table_path
+            node, collection_access.collection.table_path
         )
 
         # Create the join node so we know what aliases it uses, but leave
         # the condition as always-True and the output columns empty for now.
-        out_columns: dict[PyDoughExpressionAST, ColumnReference] = {}
+        out_columns: dict[HybridExpr, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
         out_rel: Join = Join(
-            [ancestry[0].relation, rhs_output.relation],
+            [context.relation, rhs_output.relation],
             [LiteralExpression(True, BooleanType())],
             [JoinType.INNER],
             join_columns,
         )
         input_aliases: list[str | None] = out_rel.default_input_aliases
 
-        if isinstance(node.subcollection_property, SimpleJoinMetadata):
+        if isinstance(collection_access.subcollection_property, SimpleJoinMetadata):
             # If the subcollection is a simple join property, extract the keys
             # and build the corresponding (lhs_key == rhs_key) conditions
             cond_terms: list[RelationalExpression] = []
-            for lhs_name in node.subcollection_property.keys:
-                lhs_expr: PyDoughExpressionAST = ancestry[0].node.get_expr(lhs_name)
-                lhs_key: ColumnReference = (
-                    ancestry[0].expressions[lhs_expr].with_input(input_aliases[0])
+            for lhs_name in collection_access.subcollection_property.keys:
+                lhs_expr: HybridExpr = parent.pipeline[-1].terms[lhs_name]
+                lhs_expr = HybridRefExpr(lhs_name, lhs_expr.typ)
+                lhs_key: ColumnReference = context.expressions[lhs_expr].with_input(
+                    input_aliases[0]
                 )
-                for rhs_name in node.subcollection_property.keys[lhs_name]:
-                    rhs_expr: PyDoughExpressionAST = node.get_expr(rhs_name)
+                for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
+                    rhs_expr: HybridExpr = node.terms[rhs_name]
+                    rhs_expr = HybridRefExpr(rhs_name, rhs_expr.typ)
                     rhs_key: ColumnReference = rhs_output.expressions[
                         rhs_expr
                     ].with_input(input_aliases[1])
@@ -243,18 +172,19 @@ class RelTranslation:
                     pydop.BAN, BooleanType(), [join_cond, cond_terms[i]]
                 )
             out_rel._conditions[0] = join_cond
-        elif not isinstance(node.subcollection_property, CartesianProductMetadata):
+        elif not isinstance(
+            collection_access.subcollection_property, CartesianProductMetadata
+        ):
             raise NotImplementedError()
 
         # Redecorate all of the predecessor terms with the LHS alias, and add
         # to the output columns of the JOIN node.
-        for ancestor in ancestry:
-            for expr in ancestor.expressions:
-                new_ancestor_reference: ColumnReference = ancestor.expressions[
-                    expr
-                ].with_input(input_aliases[0])
-                ancestor.expressions[expr] = new_ancestor_reference
-                join_columns[new_ancestor_reference.name] = new_ancestor_reference
+        for expr in context.expressions:
+            new_ancestor_reference: ColumnReference = context.expressions[
+                expr
+            ].with_input(input_aliases[0])
+            context.expressions[expr] = new_ancestor_reference
+            join_columns[new_ancestor_reference.name] = new_ancestor_reference
         for expr in rhs_output.expressions:
             old_reference = rhs_output.expressions[expr]
             old_name: str = old_reference.name
@@ -268,122 +198,79 @@ class RelTranslation:
             )
             join_columns[new_name] = old_reference.with_input(input_aliases[1])
             out_columns[expr] = new_reference
-        ancestry.insert(0, TranslationOutput(out_rel, node, out_columns))
-        return ancestry
-
-    def translate_compound_sub_collection(
-        self,
-        node: CompoundSubCollection,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
-        """
-        TODO: add function docstring
-        """
-        raise NotImplementedError()
-
-    def translate_partition_child(
-        self,
-        node: PartitionChild,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
-        """
-        TODO: add function docstring
-        """
-        raise NotImplementedError()
+        return TranslationOutput(out_rel, out_columns)
 
     def translate_calc(
         self,
-        hybrid: HybridTree,
-        node: Calc,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
+        node: HybridCalc,
+        context: TranslationOutput,
+    ) -> TranslationOutput:
         """
         TODO: add function docstring
         """
-        raise NotImplementedError()
-
-    def translate_where(
-        self,
-        hybrid: HybridTree,
-        node: Where,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
-        """
-        TODO: add function docstring
-        """
-        raise NotImplementedError()
-
-    def translate_order_by(
-        self,
-        hybrid: HybridTree,
-        node: OrderBy,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
-        """
-        TODO: add function docstring
-        """
-        raise NotImplementedError()
-
-    def translate_top_k(
-        self,
-        hybrid: HybridTree,
-        node: TopK,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
-        """
-        TODO: add function docstring
-        """
-        raise NotImplementedError()
-
-    def translate_partition_by(
-        self,
-        hybrid: HybridTree,
-        node: PartitionBy,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
-        """
-        TODO: add function docstring
-        """
-        raise NotImplementedError()
+        proj_columns: dict[str, RelationalExpression] = {}
+        out_columns: dict[HybridExpr, ColumnReference] = {}
+        out_rel: Project = Project(context.relation, proj_columns)
+        in_columns: MutableMapping[str, RelationalExpression] = context.relation.columns
+        in_expressions: dict[HybridExpr, ColumnReference] = context.expressions
+        for name in in_columns:
+            proj_columns[name] = in_columns[name]
+        for expr in in_expressions:
+            out_columns[expr] = in_expressions[expr]
+        for name in node.terms:
+            hybrid_expr: HybridExpr = node.terms[name]
+            ref_expr: HybridRefExpr = HybridRefExpr(name, hybrid_expr.typ)
+            rel_expr: RelationalExpression = self.translate_expression(
+                hybrid_expr, context
+            )
+            proj_columns[name] = rel_expr
+            out_columns[ref_expr] = ColumnReference(name, rel_expr.data_type)
+        return TranslationOutput(out_rel, out_columns)
 
     def rel_translation(
         self,
         hybrid: HybridTree,
-        ancestry: list[TranslationOutput],
-    ) -> list[TranslationOutput]:
+        pipeline_idx: int,
+    ) -> TranslationOutput:
         """
         TODO: add function docstring
         """
-        node: PyDoughCollectionAST = hybrid.collection
-        output: list[TranslationOutput]
-        match node:
-            case TableCollection():
-                output = self.translate_table_collection(node)
-            case CompoundSubCollection():
-                output = self.translate_compound_sub_collection(node, ancestry)
-            case SubCollection():
-                output = self.translate_sub_collection(node, ancestry)
-            case PartitionChild():
-                output = self.translate_partition_child(node, ancestry)
-            case Calc():
-                output = self.translate_calc(hybrid, node, ancestry)
-            case Where():
-                output = self.translate_where(hybrid, node, ancestry)
-            case OrderBy():
-                output = self.translate_order_by(hybrid, node, ancestry)
-            case TopK():
-                output = self.translate_top_k(hybrid, node, ancestry)
-            case PartitionBy():
-                output = self.translate_partition_by(hybrid, node, ancestry)
-            case GlobalContext():
-                output = []
+        assert pipeline_idx < len(
+            hybrid.pipeline
+        ), f"Pipeline index {pipeline_idx} is too big for hybrid tree:\n{hybrid}"
+
+        # TODO: deal with ancestors of a table collection
+        operation: HybridOperation = hybrid.pipeline[pipeline_idx]
+        if isinstance(operation, HybridCollectionAccess) and isinstance(
+            operation.collection, TableCollection
+        ):
+            return self.translate_table_collection(operation)
+
+        context: TranslationOutput
+        parent: HybridTree | None = hybrid.parent
+        if pipeline_idx == 0:
+            assert parent is not None
+            context = self.rel_translation(parent, len(parent.pipeline) - 1)
+        else:
+            context = self.rel_translation(hybrid, pipeline_idx - 1)
+
+        match operation:
+            case HybridCollectionAccess():
+                if isinstance(operation.collection, SubCollection) and not isinstance(
+                    operation.collection, CompoundSubCollection
+                ):
+                    assert parent is not None
+                    return self.translate_sub_collection(operation, parent, context)
+                else:
+                    raise NotImplementedError(
+                        f"TODO: support relational conversion on {operation.__class__.__name__}"
+                    )
+            case HybridCalc():
+                return self.translate_calc(operation, context)
             case _:
                 raise NotImplementedError(
-                    f"TODO: support relational conversion on {node.__class__.__name__}"
+                    f"TODO: support relational conversion on {operation.__class__.__name__}"
                 )
-        if hybrid.successor is None:
-            return output
-        return self.rel_translation(hybrid.successor, output)
 
     @staticmethod
     def preprocess_root(
@@ -391,32 +278,17 @@ class RelTranslation:
     ) -> tuple[PyDoughCollectionAST, list[CollationExpression]]:
         """
         Transforms the final PyDough collection by appending it with an extra CALC
+        containing all of the columns that are outputted or used for ordering.
         """
-        # Skip this step if every one of the original columns is a primitive
-        # expression and there is either no ordering, or all of the ordering
-        # keys is also one of the final columns.
-        original_calc_terms: set[str] = node.calc_terms
-        original_expressions: set[PyDoughExpressionAST] = {
-            node.get_expr(name) for name in original_calc_terms
-        }
-        if all(
-            isinstance(expr, (Reference, Literal, ColumnProperty))
-            for expr in original_expressions
-        ) and (
-            node.ordering is None
-            or all(
-                collation.expr in original_expressions for collation in node.ordering
-            )
-        ):
-            return node, [] if node.ordering is None else node.ordering
-
         # Fetch all of the expressions that should be kept in the final output
+        original_calc_terms: set[str] = node.calc_terms
         children: list[PyDoughCollectionAST] = []
         final_terms: list[tuple[str, PyDoughExpressionAST]] = []
         all_names: set[str] = set()
         for name in original_calc_terms:
             final_terms.append((name, Reference(node, name)))
             all_names.add(name)
+        final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
         dummy_counter = 0
         final_calc: Calc = Calc(node, children)
 
@@ -458,23 +330,44 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
     # Convert the AST node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the
     # final rel node.
-    hybrid: HybridTree = HybridTree.make_hybrid_tree(node)
-    output: list[TranslationOutput] = translator.rel_translation(hybrid, [])
-    assert len(output) > 0
+    hybrid: HybridTree = make_hybrid_tree(node)
+    renamings: dict[str, str] = hybrid.pipeline[-1].renamings
+    #######################################################################
+    ###              FOR DEBUGGING: UNCOMMENT THIS SECTION              ###
+    #######################################################################
+    # base_hybrid: HybridTree = hybrid
+    # while base_hybrid.parent is not None:
+    #     base_hybrid = base_hybrid.parent
+    # print(base_hybrid)
+    output: TranslationOutput = translator.rel_translation(
+        hybrid, len(hybrid.pipeline) - 1
+    )
     ordered_columns: list[tuple[str, RelationalExpression]] = []
     orderings: list[ExpressionSortInfo] | None = None
 
     # Extract the relevant expressions for the final columns and ordering keys
     # so that the root node can be built from them.
-    for name in final_terms:
-        expr: PyDoughExpressionAST = node.get_expr(name)
-        rel_expr: RelationalExpression = output[0].expressions[expr]
+    hybrid_expr: HybridExpr
+    rel_expr: RelationalExpression
+    name: str
+    original_name: str
+    positions: dict[str, int] = {}
+    for original_name in final_terms:
+        name = renamings.get(original_name, original_name)
+        hybrid_expr = hybrid.pipeline[-1].terms[name]
+        rel_expr = output.expressions[hybrid_expr]
         ordered_columns.append((name, rel_expr))
-    ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
+        positions[name] = node.get_expression_position(original_name)
+    ordered_columns.sort(key=lambda col: positions[col[0]])
     if collation is not None:
         orderings = []
         for col_expr in collation:
-            relational_expr = output[0].expressions[col_expr.expr]
+            raw_expr = col_expr.expr
+            assert isinstance(raw_expr, Reference)
+            original_name = raw_expr.term_name
+            name = renamings.get(original_name, original_name)
+            hybrid_expr = HybridRefExpr(name, raw_expr.pydough_type)
+            relational_expr = output.expressions[hybrid_expr]
             if not isinstance(relational_expr, ColumnReference):
                 raise NotImplementedError(
                     "TODO: support root ordering on expressions besides column references"
@@ -484,6 +377,6 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
             )
             orderings.append(collation_expr)
     unpruned_result: RelationalRoot = RelationalRoot(
-        output[0].relation, ordered_columns, orderings
+        output.relation, ordered_columns, orderings
     )
     return ColumnPruner().prune_unused_columns(unpruned_result)
