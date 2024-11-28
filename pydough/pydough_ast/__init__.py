@@ -29,6 +29,7 @@ __all__ = [
     "CompoundSubCollection",
     "PartitionChild",
     "CollectionAccess",
+    "BackReferenceExpression",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -52,6 +53,7 @@ from .collections import (
 )
 from .errors import PyDoughASTException
 from .expressions import (
+    BackReferenceExpression,
     ChildReferenceExpression,
     CollationExpression,
     ColumnProperty,

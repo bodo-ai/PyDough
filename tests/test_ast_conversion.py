@@ -18,6 +18,7 @@ from test_utils import (
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
 from pydough.types import (
+    Float64Type,
     Int64Type,
     StringType,
 )
@@ -92,6 +93,95 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'address': c_address, 'comment': c_comment, 'key': c_custkey, 'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
 """,
             id="join_region_nations_customers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [],
+                name=FunctionInfo("LOWER", [ReferenceInfo("name")]),
+                country_code=FunctionInfo(
+                    "SLICE",
+                    [
+                        ReferenceInfo("phone"),
+                        LiteralInfo(0, Int64Type()),
+                        LiteralInfo(3, Int64Type()),
+                        LiteralInfo(1, Int64Type()),
+                    ],
+                ),
+                adjusted_account_balance=FunctionInfo(
+                    "IFF",
+                    [
+                        FunctionInfo(
+                            "LET",
+                            [
+                                ReferenceInfo("acctbal"),
+                                LiteralInfo(0, Int64Type()),
+                            ],
+                        ),
+                        LiteralInfo(0, Int64Type()),
+                        ReferenceInfo("acctbal"),
+                    ],
+                ),
+                is_named_john=FunctionInfo(
+                    "LET",
+                    [
+                        FunctionInfo("LOWER", [ReferenceInfo("name")]),
+                        LiteralInfo("john", StringType()),
+                    ],
+                ),
+            ),
+            """\
+\
+""",
+            id="scan_customer_call_functions",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("region")],
+                nation_name=ReferenceInfo("name"),
+                region_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            """\
+\
+""",
+            id="nations_access_region",
+        ),
+        pytest.param(
+            TableCollectionInfo("Lineitems")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("part_and_supplier")
+                    ** SubCollectionInfo("supplier")
+                    ** SubCollectionInfo("nation"),
+                    SubCollectionInfo("order")
+                    ** SubCollectionInfo("customer")
+                    ** SubCollectionInfo("nation"),
+                ],
+                ship_year=FunctionInfo(
+                    "YEAR", [ChildReferenceExpressionInfo("ship_date", 1)]
+                ),
+                supplier_nation=ChildReferenceExpressionInfo("name", 0),
+                customer_nation=ChildReferenceExpressionInfo("name", 1),
+                value=FunctionInfo(
+                    "MUL",
+                    [
+                        ReferenceInfo("extended_price"),
+                        FunctionInfo(
+                            "SUB",
+                            [
+                                LiteralInfo(1.0, Float64Type()),
+                                ReferenceInfo("discount"),
+                            ],
+                        ),
+                    ],
+                ),
+            ),
+            """\
+\
+""",
+            id="lineitems_access_cust_supplier_nations",
+            marks=pytest.mark.skip("TODO"),
         ),
         pytest.param(
             TableCollectionInfo("Regions")

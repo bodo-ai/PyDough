@@ -30,7 +30,9 @@ from typing import Optional
 
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.pydough_ast import (
+    BackReferenceExpression,
     Calc,
+    ChildReferenceExpression,
     CollectionAccess,
     ColumnProperty,
     CompoundSubCollection,
@@ -574,6 +576,10 @@ def make_hybrid_expr(hybrid: HybridTree, expr: PyDoughExpressionAST) -> HybridEx
             return HybridLiteralExpr(expr)
         case ColumnProperty():
             return HybridColumnExpr(expr)
+        case ChildReferenceExpression() | BackReferenceExpression():
+            raise NotImplementedError(
+                f"TODO: support converting {expr.__class__.__name__}"
+            )
         case Reference():
             return HybridRefExpr(expr.term_name, expr.pydough_type)
         case _:
