@@ -36,6 +36,7 @@ from pydough.pydough_ast import (
     CollectionAccess,
     ColumnProperty,
     CompoundSubCollection,
+    ExpressionFunctionCall,
     GlobalContext,
     Literal,
     OrderBy,
@@ -213,12 +214,12 @@ class HybridFunctionExpr(HybridExpr):
 
     def __init__(
         self,
-        operator: pydop.PyDoughOperatorAST,
+        operator: pydop.PyDoughExpressionOperatorAST,
         args: list[HybridExpr],
         typ: PyDoughType,
     ):
         super().__init__(typ)
-        self.operator: pydop.PyDoughOperatorAST = operator
+        self.operator: pydop.PyDoughExpressionOperatorAST = operator
         self.args: list[HybridExpr] = args
 
     def __repr__(self):
@@ -582,6 +583,15 @@ def make_hybrid_expr(hybrid: HybridTree, expr: PyDoughExpressionAST) -> HybridEx
             )
         case Reference():
             return HybridRefExpr(expr.term_name, expr.pydough_type)
+        case ExpressionFunctionCall():
+            args: list[HybridExpr] = []
+            for arg in expr.args:
+                if not isinstance(arg, PyDoughExpressionAST):
+                    raise NotImplementedError(
+                        f"TODO: support converting {arg.__class__.__name__} as a function argument"
+                    )
+                args.append(make_hybrid_expr(hybrid, arg))
+            return HybridFunctionExpr(expr.operator, args, expr.pydough_type)
         case _:
             raise NotImplementedError(
                 f"TODO: support converting {expr.__class__.__name__}"

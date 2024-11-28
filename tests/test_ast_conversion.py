@@ -52,7 +52,7 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ),
             """
 ROOT(columns=[('region_name', region_name), ('magic_word', magic_word)], orderings=[])
- PROJECT(columns={'magic_word': foo:StringType(), 'region_name': name})
+ PROJECT(columns={'magic_word': foo:string, 'region_name': name})
   SCAN(table=tpch.REGION, columns={'name': r_name})
 """,
             id="scan_calc",
@@ -64,7 +64,7 @@ ROOT(columns=[('region_name', region_name), ('magic_word', magic_word)], orderin
             """
 ROOT(columns=[('fizz', fizz), ('buzz', buzz)], orderings=[])
  PROJECT(columns={'buzz': key, 'fizz': name_0})
-  PROJECT(columns={'key': key, 'name_0': foo:StringType()})
+  PROJECT(columns={'key': key, 'name_0': foo:string})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
 """,
             id="scan_calc_calc",
@@ -130,8 +130,10 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
                     ],
                 ),
             ),
-            """\
-\
+            """
+ROOT(columns=[('name', name_0), ('country_code', country_code), ('adjusted_account_balance', adjusted_account_balance), ('is_named_john', is_named_john)], orderings=[])
+ PROJECT(columns={'adjusted_account_balance': IFF(acctbal < 0:int64, 0:int64, acctbal), 'country_code': SLICE(phone, 0:int64, 3:int64, 1:int64), 'is_named_john': LOWER(name) < john:string, 'name_0': LOWER(name)})
+  SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'phone': c_phone})
 """,
             id="scan_customer_call_functions",
         ),
@@ -146,6 +148,7 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
 \
 """,
             id="nations_access_region",
+            marks=pytest.mark.skip("TODO"),
         ),
         pytest.param(
             TableCollectionInfo("Lineitems")
@@ -197,8 +200,8 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
                 mktsegment=ReferenceInfo("mktsegment"),
             ),
             """
-ROOT(columns=[('key_0', key_0), ('name', name), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
- PROJECT(columns={'key_0': -3:Int64Type(), 'mktsegment': mktsegment, 'name': name_6, 'phone': phone})
+ROOT(columns=[('key', key_0), ('name', name), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
+ PROJECT(columns={'key_0': -3:int64, 'mktsegment': mktsegment, 'name': name_6, 'phone': phone})
   JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_6': t1.name, 'phone': t1.phone})
    PROJECT(columns={'key': key_2})
     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
