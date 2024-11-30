@@ -86,11 +86,12 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ** SubCollectionInfo("customers"),
             """
 ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment)], orderings=[])
- JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment': t1.comment, 'key': t1.key, 'mktsegment': t1.mktsegment, 'name': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone})
-  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
-   SCAN(table=tpch.REGION, columns={'key': r_regionkey})
-   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
-  SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'address': c_address, 'comment': c_comment, 'key': c_custkey, 'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
+ PROJECT(columns={'acctbal': acctbal, 'address': address, 'comment': comment_4, 'key': key_5, 'mktsegment': mktsegment, 'name': name_6, 'nation_key': nation_key, 'phone': phone})
+  JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment_4': t1.comment, 'key_5': t1.key, 'mktsegment': t1.mktsegment, 'name_6': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'address': c_address, 'comment': c_comment, 'key': c_custkey, 'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
 """,
             id="join_region_nations_customers",
         ),
@@ -144,11 +145,14 @@ ROOT(columns=[('name', name_0), ('country_code', country_code), ('adjusted_accou
                 nation_name=ReferenceInfo("name"),
                 region_name=ChildReferenceExpressionInfo("name", 0),
             ),
-            """\
-\
+            """
+ROOT(columns=[('nation_name', nation_name), ('region_name', region_name)], orderings=[])
+ PROJECT(columns={'nation_name': name, 'region_name': name_3})
+  JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'name': t0.name, 'name_3': t1.name})
+   SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
             id="nations_access_region",
-            marks=pytest.mark.skip("TODO"),
         ),
         pytest.param(
             TableCollectionInfo("Lineitems")
@@ -161,9 +165,7 @@ ROOT(columns=[('name', name_0), ('country_code', country_code), ('adjusted_accou
                     ** SubCollectionInfo("customer")
                     ** SubCollectionInfo("nation"),
                 ],
-                ship_year=FunctionInfo(
-                    "YEAR", [ChildReferenceExpressionInfo("ship_date", 1)]
-                ),
+                ship_year=FunctionInfo("YEAR", [ReferenceInfo("ship_date")]),
                 supplier_nation=ChildReferenceExpressionInfo("name", 0),
                 customer_nation=ChildReferenceExpressionInfo("name", 1),
                 value=FunctionInfo(
@@ -180,11 +182,24 @@ ROOT(columns=[('name', name_0), ('country_code', country_code), ('adjusted_accou
                     ],
                 ),
             ),
-            """\
-\
+            """
+ROOT(columns=[('ship_year', ship_year), ('supplier_nation', supplier_nation), ('customer_nation', customer_nation), ('value', value)], orderings=[])
+ PROJECT(columns={'customer_nation': name_9, 'ship_year': YEAR(ship_date), 'supplier_nation': name_4, 'value': extended_price * 1.0:float64 - discount})
+  JOIN(conditions=[t0.order_key == t1.key], types=['left'], columns={'discount': t0.discount, 'extended_price': t0.extended_price, 'name_4': t0.name_4, 'name_9': t1.name_9, 'ship_date': t0.ship_date})
+   JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['left'], columns={'discount': t0.discount, 'extended_price': t0.extended_price, 'name_4': t1.name_4, 'order_key': t0.order_key, 'ship_date': t0.ship_date})
+    SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
+    JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'name_4': t1.name, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+     JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'nation_key': t1.nation_key, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_9': t1.name})
+    JOIN(conditions=[t0.customer_key == t1.key], types=['inner'], columns={'key': t0.key, 'nation_key': t1.nation_key})
+     SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+     SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
 """,
             id="lineitems_access_cust_supplier_nations",
-            marks=pytest.mark.skip("TODO"),
         ),
         pytest.param(
             TableCollectionInfo("Regions")

@@ -43,9 +43,13 @@ from pydough.relational.relational_nodes import (
 from pydough.types import BooleanType
 
 from .hybrid_tree import (
+    ConnectionType,
+    HybridBackRefExpr,
     HybridCalc,
+    HybridChildRefExpr,
     HybridCollectionAccess,
     HybridColumnExpr,
+    HybridConnection,
     HybridExpr,
     HybridFunctionExpr,
     HybridLiteralExpr,
@@ -75,34 +79,6 @@ class RelTranslation:
         # An index used for creating fake column names
         self.dummy_idx = 1
 
-    def get_ref_by_name(
-        self,
-        operation: HybridOperation,
-        context: TranslationOutput,
-        name: str,
-        input_alias: str | None = None,
-    ) -> ColumnReference:
-        """
-        Fetches an expression as a column reference by its original name,
-        decorated with the appropriate input alias.
-
-        Args:
-            `operation`: the hybrid operation node corresponding to the
-            location where the ref is being accessed from.
-            `context`: the datastructure storing information about the
-            translated relational information so far, including references to
-            columns for expressions that have already been defined.
-            `name`: the original name of the expression being sought from
-            `operation`.
-            `input_alias`: an optional alias to the input where the expression
-            comes from..
-
-        Returns:
-            The column reference to the join key.
-        """
-        ref: HybridRefExpr = operation.terms[name].make_into_ref(name)
-        return context.expressions[ref].with_input(input_alias)
-
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
     ) -> RelationalExpression:
@@ -128,7 +104,7 @@ class RelTranslation:
                 )
             case HybridLiteralExpr():
                 return LiteralExpression(expr.literal.value, expr.typ)
-            case HybridRefExpr():
+            case HybridRefExpr() | HybridChildRefExpr() | HybridBackRefExpr():
                 assert context is not None
                 return context.expressions[expr]
             case HybridFunctionExpr() if not expr.operator.is_aggregation:
@@ -205,66 +181,33 @@ class RelTranslation:
         ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
-        # Create the join node so we know what aliases it uses, but leave
-        # the condition as always-True and the output columns empty for now.
-        # The condition & output columns will be filled in later.
-        out_columns: dict[HybridExpr, ColumnReference] = {}
-        join_columns: dict[str, RelationalExpression] = {}
-        out_rel: Join = Join(
-            [context.relation, rhs_output.relation],
-            [LiteralExpression(True, BooleanType())],
-            [JoinType.INNER],
-            join_columns,
-        )
-        input_aliases: list[str | None] = out_rel.default_input_aliases
-
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         if isinstance(collection_access.subcollection_property, SimpleJoinMetadata):
             # If the subcollection is a simple join property, extract the keys
             # and build the corresponding (lhs_key == rhs_key) conditions
-            cond_terms: list[RelationalExpression] = []
             for lhs_name in collection_access.subcollection_property.keys:
-                lhs_key: ColumnReference = self.get_ref_by_name(
-                    parent.pipeline[-1], context, lhs_name, input_aliases[0]
+                lhs_key: HybridExpr = (
+                    parent.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
                 )
                 for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
-                    rhs_key: ColumnReference = self.get_ref_by_name(
-                        node, rhs_output, rhs_name, input_aliases[1]
-                    )
-                    cond: RelationalExpression = CallExpression(
-                        pydop.EQU, BooleanType(), [lhs_key, rhs_key]
-                    )
-                    cond_terms.append(cond)
-            # Build the condition as the conjunction of `cond_terms`
-            out_rel._conditions[0] = RelationalExpression.form_conjunction(cond_terms)
+                    rhs_key: HybridExpr = node.terms[rhs_name].make_into_ref(rhs_name)
+                    join_keys.append((lhs_key, rhs_key))
         elif not isinstance(
             collection_access.subcollection_property, CartesianProductMetadata
         ):
-            raise NotImplementedError()
-
-        # Redecorate all of the predecessor terms with the LHS alias, and add
-        # to the output columns of the JOIN node.
-        for expr in context.expressions:
-            new_ancestor_reference: ColumnReference = context.expressions[
-                expr
-            ].with_input(input_aliases[0])
-            context.expressions[expr] = new_ancestor_reference
-            join_columns[new_ancestor_reference.name] = new_ancestor_reference
-        expr_refs: list[tuple[HybridExpr, ColumnReference]] = list(
-            rhs_output.expressions.items()
-        )
-        expr_refs.sort(key=lambda pair: pair[1].name)
-        for expr, old_reference in expr_refs:
-            old_name: str = old_reference.name
-            new_name: str = old_name
-            while new_name in join_columns:
-                new_name = f"{old_name}_{self.dummy_idx}"
-                self.dummy_idx += 1
-            new_reference: ColumnReference = ColumnReference(
-                new_name, old_reference.data_type
+            raise NotImplementedError(
+                f"Unsupported subcollection property type used for accessing a subcollection: {collection_access.subcollection_property.__class__.__name__}"
             )
-            join_columns[new_name] = old_reference.with_input(input_aliases[1])
-            out_columns[expr] = new_reference
-        return TranslationOutput(out_rel, out_columns)
+
+        return self.join_outputs(
+            parent.pipeline[-1],
+            context,
+            node,
+            rhs_output,
+            JoinType.INNER,
+            join_keys,
+            None,
+        )
 
     def translate_calc(
         self,
@@ -302,6 +245,252 @@ class RelTranslation:
             out_columns[ref_expr] = ColumnReference(name, rel_expr.data_type)
         out_rel: Project = Project(context.relation, proj_columns)
         return TranslationOutput(out_rel, out_columns)
+
+    def join_outputs(
+        self,
+        lhs_hybrid: HybridOperation,
+        lhs_result: TranslationOutput,
+        rhs_hybrid: HybridOperation,
+        rhs_result: TranslationOutput,
+        join_type: JoinType,
+        join_keys: list[tuple[HybridExpr, HybridExpr]],
+        child_idx: int | None,
+    ) -> TranslationOutput:
+        """
+        TODO
+        """
+        # Create the join node so we know what aliases it uses, but leave
+        # the condition as always-True and the output columns empty for now.
+        # The condition & output columns will be filled in later.
+        out_columns: dict[HybridExpr, ColumnReference] = {}
+        join_columns: dict[str, RelationalExpression] = {}
+        out_rel: Join = Join(
+            [lhs_result.relation, rhs_result.relation],
+            [LiteralExpression(True, BooleanType())],
+            [join_type],
+            join_columns,
+        )
+        input_aliases: list[str | None] = out_rel.default_input_aliases
+
+        # Build the corresponding (lhs_key == rhs_key) conditions
+        cond_terms: list[RelationalExpression] = []
+        for lhs_key, rhs_key in join_keys:
+            lhs_key_column: ColumnReference = lhs_result.expressions[
+                lhs_key
+            ].with_input(input_aliases[0])
+            rhs_key_column: ColumnReference = rhs_result.expressions[
+                rhs_key
+            ].with_input(input_aliases[1])
+            cond: RelationalExpression = CallExpression(
+                pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
+            )
+            cond_terms.append(cond)
+        out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
+
+        # Propagate all of the references from the left hand side. If the join
+        # is being done to step down from a parent into a child then promote
+        # the back levels of the reference by 1. If the join is being done to
+        # pull elements from the child context into the current context, then
+        # maintain them as-is.
+        for expr in lhs_result.expressions:
+            existing_ref: ColumnReference = lhs_result.expressions[expr]
+            join_columns[existing_ref.name] = existing_ref.with_input(input_aliases[0])
+            if child_idx is None:
+                out_columns[expr.shift_back(1)] = existing_ref
+            else:
+                out_columns[expr] = existing_ref
+
+        # Add all of the new references from the right hand side (in
+        # alphabetical order).
+        expr_refs: list[tuple[HybridExpr, ColumnReference]] = list(
+            rhs_result.expressions.items()
+        )
+        expr_refs.sort(key=lambda pair: pair[1].name)
+        for expr, old_reference in expr_refs:
+            # If the join is being done to pull elements from the child context
+            # into the current context, then promote the references to child
+            # references.
+            if child_idx is not None:
+                if not isinstance(expr, HybridRefExpr):
+                    continue
+                expr = HybridChildRefExpr(expr.name, child_idx, expr.typ)
+            # Names from the LHS are maintained as-is, so if there is a
+            # an overlapping name in the RHS, a new name must be found.
+            old_name: str = old_reference.name
+            new_name: str = old_name
+            while new_name in join_columns:
+                new_name = f"{old_name}_{self.dummy_idx}"
+                self.dummy_idx += 1
+            new_reference: ColumnReference = ColumnReference(
+                new_name, old_reference.data_type
+            )
+            join_columns[new_name] = old_reference.with_input(input_aliases[1])
+            out_columns[expr] = new_reference
+        return TranslationOutput(out_rel, out_columns)
+
+    def handle_child(
+        self,
+        result: TranslationOutput,
+        operation: HybridOperation,
+        child: HybridConnection,
+        child_idx: int,
+    ) -> TranslationOutput:
+        """
+        TODO
+        """
+        child_output, join_keys = self.translate_child(
+            result, child, child.subtree, len(child.subtree.pipeline) - 1
+        )
+        if child.connection_type == ConnectionType.SINGULAR:
+            return self.join_outputs(
+                operation,
+                result,
+                child.subtree.pipeline[-1],
+                child_output,
+                JoinType.LEFT,
+                join_keys,
+                child_idx,
+            )
+        else:
+            raise NotImplementedError(
+                f"TODO: support connection type {child.connection_type}"
+            )
+
+    def handle_children(
+        self, result: TranslationOutput, hybrid: HybridTree, pipeline_idx: int
+    ) -> TranslationOutput:
+        """
+        TODO
+        """
+        for child_idx, child in enumerate(hybrid.children):
+            if child.required_steps == pipeline_idx:
+                result = self.handle_child(
+                    result, hybrid.pipeline[pipeline_idx], child, child_idx
+                )
+        return result
+
+    def translate_child_sub_collection(
+        self, connection: HybridConnection, node: HybridCollectionAccess
+    ) -> tuple[TranslationOutput, list[tuple[HybridExpr, HybridExpr]]]:
+        """
+        TODO
+        """
+        # First, build the table scan for the collection being stepped into.
+        collection_access: CollectionAccess = node.collection
+        assert isinstance(collection_access, SubCollection)
+        assert isinstance(
+            collection_access.collection, SimpleTableMetadata
+        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
+        table_scan: TranslationOutput = self.build_simple_table_scan(node)
+
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+        if isinstance(collection_access.subcollection_property, SimpleJoinMetadata):
+            # If the subcollection is a simple join property, extract the keys
+            # and build the corresponding (lhs_key == rhs_key) conditions
+            for lhs_name in collection_access.subcollection_property.keys:
+                lhs_key: HybridExpr = (
+                    connection.parent.pipeline[-1]
+                    .terms[lhs_name]
+                    .make_into_ref(lhs_name)
+                )
+                for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
+                    rhs_key: HybridExpr = node.terms[rhs_name].make_into_ref(rhs_name)
+                    join_keys.append((lhs_key, rhs_key))
+        elif not isinstance(
+            collection_access.subcollection_property, CartesianProductMetadata
+        ):
+            raise NotImplementedError(
+                f"Unsupported subcollection property type used for accessing a subcollection: {collection_access.subcollection_property.__class__.__name__}"
+            )
+        return table_scan, join_keys
+
+    def translate_child(
+        self,
+        parent_result: TranslationOutput,
+        connection: HybridConnection,
+        hybrid: HybridTree,
+        pipeline_idx: int,
+    ) -> tuple[TranslationOutput, list[tuple[HybridExpr, HybridExpr]]]:
+        """
+        TODO:
+        """
+        assert pipeline_idx < len(
+            hybrid.pipeline
+        ), f"Pipeline index {pipeline_idx} is too big for hybrid tree:\n{hybrid}"
+
+        # Identify the operation that will be computed at this stage.
+        operation: HybridOperation = hybrid.pipeline[pipeline_idx]
+
+        # Base case: if at the start, process the beginning of the child
+        # subtree relative to the parent. Currently only supports cases where
+        # the base is directly accessing a table collection or is a single-step
+        # subcollection access.
+        result: TranslationOutput
+        result_join_keys: list[tuple[HybridExpr, HybridExpr]]
+        if pipeline_idx == 0 and hybrid.parent is None:
+            if isinstance(operation, HybridCollectionAccess):
+                if isinstance(operation.collection, TableCollection):
+                    result = self.build_simple_table_scan(operation)
+                    result_join_keys = []
+                elif isinstance(operation.collection, SubCollection) and not isinstance(
+                    operation.collection, CompoundSubCollection
+                ):
+                    result, result_join_keys = self.translate_child_sub_collection(
+                        connection, operation
+                    )
+                else:
+                    raise NotImplementedError
+            else:
+                raise NotImplementedError
+            result = self.handle_children(result, hybrid, pipeline_idx)
+            return result, result_join_keys
+
+        # First, recursively fetch the TranslationOutput of the preceding
+        # operation on the current level of the hybrid tree, or the last
+        # operation from the preceding level if we are at the start of the
+        # current level.
+        context: TranslationOutput
+        if pipeline_idx > 0:
+            context, result_join_keys = self.translate_child(
+                parent_result, connection, hybrid, pipeline_idx - 1
+            )
+        elif hybrid.parent is not None:
+            context, result_join_keys = self.translate_child(
+                parent_result,
+                connection,
+                hybrid.parent,
+                len(hybrid.parent.pipeline) - 1,
+            )
+        else:
+            raise ValueError("Malformed case")
+
+        # Then, dispatch onto the logic to transform from the context into the
+        # new translation output.
+        match operation:
+            case HybridCollectionAccess():
+                if isinstance(operation.collection, SubCollection) and not isinstance(
+                    operation.collection, CompoundSubCollection
+                ):
+                    assert hybrid.parent is not None
+                    result = self.translate_sub_collection(
+                        operation, hybrid.parent, context
+                    )
+                    result_join_keys = [
+                        (lhs_key, rhs_key.shift_back(1))
+                        for lhs_key, rhs_key in result_join_keys
+                    ]
+                else:
+                    raise NotImplementedError(
+                        f"TODO: support relational conversion on {operation.__class__.__name__}"
+                    )
+            case HybridCalc():
+                result = self.translate_calc(operation, context)
+            case _:
+                raise NotImplementedError(
+                    f"TODO: support relational conversion on {operation.__class__.__name__}"
+                )
+        result = self.handle_children(result, hybrid, pipeline_idx)
+        return result, result_join_keys
 
     def rel_translation(
         self,
@@ -348,18 +537,20 @@ class RelTranslation:
 
         # Base case: deal with operations that do not contend with a
         # predecessor. TODO: deal with global CALC operations.
+        result: TranslationOutput
         if isinstance(preceding_tree.pipeline[preceding_idx], HybridRoot):
             if isinstance(operation, HybridCollectionAccess) and isinstance(
                 operation.collection, TableCollection
             ):
-                return self.build_simple_table_scan(operation)
+                result = self.build_simple_table_scan(operation)
+                return self.handle_children(result, hybrid, pipeline_idx)
             else:
                 raise NotImplementedError()
 
         # First, recursively fetch the TranslationOutput of the preceding
         # operation on the current level of the hybrid tree, or the last
         # operation from the preceding level if we are at the start of the
-        # current levle.
+        # current lavel.
         context: TranslationOutput = self.rel_translation(preceding_tree, preceding_idx)
 
         # Then, dispatch onto the logic to transform from the context into the
@@ -370,7 +561,7 @@ class RelTranslation:
                     operation.collection, CompoundSubCollection
                 ):
                     assert hybrid.parent is not None
-                    return self.translate_sub_collection(
+                    result = self.translate_sub_collection(
                         operation, hybrid.parent, context
                     )
                 else:
@@ -378,11 +569,12 @@ class RelTranslation:
                         f"TODO: support relational conversion on {operation.__class__.__name__}"
                     )
             case HybridCalc():
-                return self.translate_calc(operation, context)
+                result = self.translate_calc(operation, context)
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
                 )
+        return self.handle_children(result, hybrid, pipeline_idx)
 
     @staticmethod
     def preprocess_root(
