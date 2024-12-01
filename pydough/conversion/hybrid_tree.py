@@ -85,7 +85,19 @@ class HybridExpr(ABC):
     @abstractmethod
     def shift_back(self, levels: int) -> "HybridExpr":
         """
-        TODO
+        Promotes a HybridRefExpr into a HybridBackRefExpr with the specified
+        number of levels, or increases the number of levels of a
+        HybridBackRefExpr by the specified number of levels.
+
+        Args:
+            `levels`: the amount of back levels to increase by.
+
+        Returns:
+            The transformed HybridBackRefExpr.
+
+        Raises:
+            NotImplementedError: if called on an invalid type of HybridExpr for
+            this operation.
         """
 
     def make_into_ref(self, name: str) -> "HybridRefExpr":
@@ -147,7 +159,7 @@ class HybridColumnExpr(HybridExpr):
         return self
 
     def shift_back(self, levels: int) -> HybridExpr:
-        return HybridBackRefExpr(self.column.column_property.name, 1, self.typ)
+        return HybridBackRefExpr(self.column.column_property.name, levels, self.typ)
 
 
 class HybridRefExpr(HybridExpr):
@@ -169,7 +181,7 @@ class HybridRefExpr(HybridExpr):
         return self
 
     def shift_back(self, levels: int) -> HybridExpr:
-        return HybridBackRefExpr(self.name, 1, self.typ)
+        return HybridBackRefExpr(self.name, levels, self.typ)
 
 
 class HybridChildRefExpr(HybridExpr):
