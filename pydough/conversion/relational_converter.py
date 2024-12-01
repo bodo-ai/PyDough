@@ -17,7 +17,6 @@ from pydough.pydough_ast import (
     Calc,
     CollationExpression,
     CollectionAccess,
-    CompoundSubCollection,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
     Reference,
@@ -471,7 +470,8 @@ class RelTranslation:
         # Identify the operation that will be computed at this stage, and the
         # previous stage on the current level of the hybrid tree, or the last
         # operation from the preceding level if we are at the start of the
-        # current level. However, one may not exist...
+        # current level. However, one may not exist, in which case the current
+        # stage must be defined as the first step.
         operation: HybridOperation = hybrid.pipeline[pipeline_idx]
         result: TranslationOutput
         preceding_hybrid: tuple[HybridTree, int] | None = None
@@ -480,53 +480,46 @@ class RelTranslation:
         elif hybrid.parent is not None:
             preceding_hybrid = (hybrid.parent, len(hybrid.parent.pipeline) - 1)
 
+        # First, recursively fetch the TranslationOutput of the preceding
+        # stage, if valid.
+        context: TranslationOutput | None
         if preceding_hybrid is None or isinstance(
             preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot
         ):
-            # Base case: if at the start, process the beginning of the child
-            # subtree relative to the parent. Currently only supports cases where
-            # the base is directly accessing a table collection or is a single-step
-            # subcollection access.
-            if isinstance(operation, HybridCollectionAccess):
+            context = None
+        else:
+            context = self.rel_translation(connection, *preceding_hybrid)
+
+        # Then, dispatch onto the logic to transform from the context into the
+        # new translation output.
+        match operation:
+            case HybridCollectionAccess():
                 if isinstance(operation.collection, TableCollection):
                     result = self.build_simple_table_scan(operation)
-                elif isinstance(operation.collection, SubCollection) and not isinstance(
-                    operation.collection, CompoundSubCollection
-                ):
-                    assert connection is not None
-                    result = self.translate_child_sub_collection(connection, operation)
                 else:
-                    raise NotImplementedError(operation.__class__.__name__)
-            else:
-                raise NotImplementedError(operation.__class__.__name__)
-        else:
-            # First, recursively fetch the TranslationOutput of the preceding
-            # stage.
-            context: TranslationOutput = self.rel_translation(
-                connection, *preceding_hybrid
-            )
-
-            # Then, dispatch onto the logic to transform from the context into the
-            # new translation output.
-            match operation:
-                case HybridCollectionAccess():
-                    if isinstance(
-                        operation.collection, SubCollection
-                    ) and not isinstance(operation.collection, CompoundSubCollection):
-                        assert hybrid.parent is not None
+                    # For subcollection accesses, the access is either a step
+                    # from a parent into a child (if the parent exists), or the
+                    # root of a child subtree (if the parent does not exist).
+                    if hybrid.parent is not None:
+                        assert context is not None, "Malformed HybridTree pattern."
                         result = self.translate_sub_collection(
                             operation, hybrid.parent, context
                         )
                     else:
-                        raise NotImplementedError(
-                            f"TODO: support relational conversion on {operation.__class__.__name__}"
+                        assert connection is not None, "Malformed HybridTree pattern."
+                        result = self.translate_child_sub_collection(
+                            connection, operation
                         )
-                case HybridCalc():
-                    result = self.translate_calc(operation, context)
-                case _:
+            case HybridCalc():
+                if context is None:
                     raise NotImplementedError(
-                        f"TODO: support relational conversion on {operation.__class__.__name__}"
+                        "TODO: Implement HybridCalc without a parent context."
                     )
+                result = self.translate_calc(operation, context)
+            case _:
+                raise NotImplementedError(
+                    f"TODO: support relational conversion on {operation.__class__.__name__}"
+                )
         return self.handle_children(result, hybrid, pipeline_idx)
 
     @staticmethod
