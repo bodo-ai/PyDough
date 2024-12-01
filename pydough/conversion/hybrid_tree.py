@@ -503,14 +503,14 @@ class HybridTree:
 
     def __repr__(self):
         lines = []
+        if self.parent is not None:
+            lines.extend(repr(self.parent).splitlines())
         lines.append(" -> ".join(repr(operation) for operation in self.pipeline))
         prefix = " " if self.successor is None else "↓"
         for idx, child in enumerate(self.children):
             lines.append(f"{prefix} child #{idx} ({child.connection_type}):")
             for line in repr(child.subtree).splitlines():
                 lines.append(f"{prefix} {line}")
-        if self.successor is not None:
-            lines.extend(repr(self.successor).splitlines())
         return "\n".join(lines)
 
     @property
@@ -643,10 +643,23 @@ def make_hybrid_expr(
                 expr.term_name, expr.term_name
             )
             return HybridChildRefExpr(expr_name, hybrid_child_index, expr.pydough_type)
-        case ChildReferenceExpression() | BackReferenceExpression():
-            raise NotImplementedError(
-                f"TODO: support converting {expr.__class__.__name__}"
+        case BackReferenceExpression():
+            ancestor_tree: HybridTree = hybrid
+            back_idx: int = 0
+            true_steps_back: int = 0
+            while true_steps_back < expr.back_levels:
+                if ancestor_tree.parent is None:
+                    raise NotImplementedError(
+                        "TODO: support BACK references that step from a child subtree back into a parent context."
+                    )
+                ancestor_tree = ancestor_tree.parent
+                back_idx += true_steps_back
+                if not ancestor_tree.is_hidden_level:
+                    true_steps_back += 1
+            expr_name = ancestor_tree.pipeline[-1].renamings.get(
+                expr.term_name, expr.term_name
             )
+            return HybridBackRefExpr(expr_name, expr.back_levels, expr.pydough_type)
         case Reference():
             expr_name = hybrid.pipeline[-1].renamings.get(
                 expr.term_name, expr.term_name

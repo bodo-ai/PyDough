@@ -424,9 +424,17 @@ class RelTranslation:
         """
         proj_columns: dict[str, RelationalExpression] = {}
         out_columns: dict[HybridExpr, ColumnReference] = {}
+        # Propagate all of the existing columns.
+        for name in context.relation.columns:
+            proj_columns[name] = ColumnReference(
+                name, context.relation.columns[name].data_type
+            )
+        for expr in context.expressions:
+            out_columns[expr] = context.expressions[expr].with_input(None)
         # Populate every expression into the project's columns by translating
         # it relative to the input context.
-        for name in node.terms:
+        for name in node.new_expressions:
+            name = node.renamings.get(name, name)
             hybrid_expr: HybridExpr = node.terms[name]
             ref_expr: HybridRefExpr = HybridRefExpr(name, hybrid_expr.typ)
             rel_expr: RelationalExpression = self.translate_expression(
