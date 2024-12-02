@@ -231,21 +231,40 @@ class RelTranslation:
     def apply_aggregations(
         self,
         connection: HybridConnection,
-        join_keys: list[tuple[HybridExpr, HybridExpr]],
         context: TranslationOutput,
+        agg_keys: list[HybridExpr],
     ) -> TranslationOutput:
         """
-        TODO
+        Transforms the TranslationOutput payload from translating the
+        subtree of HyrbidConnection by grouping it using the specified
+        aggregation keys then deriving the aggregations in the `aggs` mapping
+        of the HybridAggregation.
+
+        Args:
+            `connection`: the HybridConnection whose subtree is being derived.
+            This connection must be of an aggregation type.
+            `context`: the TranslationOutput being augmented.
+            `agg_keys`: the list of expressions corresponding to the keys
+            that should be used to aggregate `context`.
+
+        Returns:
+            The TranslationOutput payload for `context` wrapped in an
+            aggregation.
         """
         assert connection.connection_type == ConnectionType.AGGREGATION
         out_columns: dict[HybridExpr, ColumnReference] = {}
         keys: dict[str, ColumnReference] = {}
         aggregations: dict[str, CallExpression] = {}
-        for _, rhs_key in join_keys:
-            rhs_expr = self.translate_expression(rhs_key, context)
-            assert isinstance(rhs_expr, ColumnReference)
-            out_columns[rhs_key] = rhs_expr
-            keys[rhs_expr.name] = rhs_expr
+        # First, propagate all key columns into the output, and add them to
+        # the keys mapping of the aggregate.
+        for agg_key in agg_keys:
+            agg_key_expr = self.translate_expression(agg_key, context)
+            assert isinstance(agg_key_expr, ColumnReference)
+            out_columns[agg_key] = agg_key_expr
+            keys[agg_key_expr.name] = agg_key_expr
+        # Then, add all of the agg calls to the aggregations mapping of the
+        # the aggregate, and add references to the corresponding dummy-names
+        # to the output.
         for agg_name, agg_func in connection.aggs.items():
             assert agg_name not in keys
             col_ref: ColumnReference = ColumnReference(agg_name, agg_func.typ)
@@ -285,6 +304,7 @@ class RelTranslation:
                     child, child.subtree, len(child.subtree.pipeline) - 1
                 )
                 join_keys: list[tuple[HybridExpr, HybridExpr]] = child_output.join_keys
+                agg_keys: list[HybridExpr] = [rhs_key for _, rhs_key in join_keys]
                 match child.connection_type:
                     case ConnectionType.SINGULAR:
                         context = self.join_outputs(
@@ -296,7 +316,7 @@ class RelTranslation:
                         )
                     case ConnectionType.AGGREGATION:
                         child_output = self.apply_aggregations(
-                            child, join_keys, child_output
+                            child, child_output, agg_keys
                         )
                         context = self.join_outputs(
                             context,
