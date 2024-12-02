@@ -472,12 +472,15 @@ class HybridConnection:
        used.
     - `required_steps`: an index indicating which step in the pipeline must be
        completed before the child can be defined.
+    - `aggs`: a list of aggregation calls made onto expressions relative to the
+       context of `subtree`.
     """
 
     parent: "HybridTree"
     subtree: "HybridTree"
     connection_type: ConnectionType
     required_steps: int
+    aggs: list[HybridExpr]
 
 
 class HybridTree:
@@ -575,7 +578,7 @@ class HybridTree:
             used to link `self` to `child`.
         """
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1
+            self, child, connection_type, len(self.pipeline) - 1, []
         )
         for idx, existing_child in enumerate(self.children):
             if child == existing_child:
@@ -602,14 +605,16 @@ class HybridTree:
         TODO
         """
         for child_idx, child in enumerate(child_operator.children):
-            if not child.is_singular(child_operator.starting_predecessor):
-                raise NotImplementedError(
-                    "TODO: support accessing plural child, e.g. for aggregation"
-                )
             subtree: HybridTree = make_hybrid_tree(child)
-            child_idx_mapping[child_idx] = self.add_child(
-                subtree, ConnectionType.SINGULAR
-            )
+            connection_type: ConnectionType
+            if child.is_singular(child_operator.starting_predecessor):
+                connection_type = ConnectionType.SINGULAR
+            else:
+                # TODO: parse out the finer differences in aggregation types
+                # for COUNT, NDISTINCT, HAS, and HASNOT, versus just general
+                # aggregation.
+                connection_type = ConnectionType.AGGREGATION
+            child_idx_mapping[child_idx] = self.add_child(subtree, connection_type)
 
 
 def make_hybrid_expr(
