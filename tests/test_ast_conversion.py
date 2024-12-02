@@ -320,11 +320,14 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
                     ],
                 ),
             ),
-            """\
-\
+            """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
+ FILTER(condition=name_3 == ASIA:string, columns={'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
+  JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t0.region_key})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
             id="asian_regions",
-            marks=pytest.mark.skip("TODO"),
         ),
         pytest.param(
             TableCollectionInfo("Lineitems")
