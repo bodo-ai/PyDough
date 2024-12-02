@@ -482,6 +482,31 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
 """,
             id="order_by_expression",
         ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, False))
+            ** SubCollectionInfo("nations"),
+            """
+""",
+            id="order_by_before_join",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** WhereInfo(
+                [SubCollectionInfo("region")],
+                FunctionInfo(
+                    "EQU",
+                    [
+                        ChildReferenceExpressionInfo("name", 0),
+                        LiteralInfo("ASIA", StringType()),
+                    ],
+                ),
+            ),
+            """
+""",
+            id="ordered_asian_nations",
+        ),
     ],
 )
 def test_ast_to_relational(
