@@ -518,11 +518,12 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(n
             ** OrderInfo(
                 [], (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, False)
             )
-            ** TopKInfo([], 10),
+            ** TopKInfo(
+                [], 10, (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, False)
+            ),
             """
 """,
             id="order_by_expression",
-            marks=pytest.mark.skip("TODO"),
         ),
         pytest.param(
             TableCollectionInfo("Regions")
