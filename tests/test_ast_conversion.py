@@ -10,6 +10,7 @@ from test_utils import (
     CollectionTestInfo,
     FunctionInfo,
     LiteralInfo,
+    OrderInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
@@ -328,7 +329,7 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
-            id="asian_regions",
+            id="asian_nations",
         ),
         pytest.param(
             TableCollectionInfo("Lineitems")
@@ -410,6 +411,33 @@ ROOT(columns=[('nation_name', nation_name), ('region_name', region_name)], order
     SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
 """,
             id="join_topk",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("name"),
+            ),
+            """
+""",
+            id="join_order_by",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("name"),
+            )
+            ** OrderInfo([], (ReferenceInfo("region_name"), False, True)),
+            """
+""",
+            id="replace_order_by",
         ),
     ],
 )
