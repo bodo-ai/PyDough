@@ -238,21 +238,21 @@ class RelTranslation:
         TODO
         """
         assert connection.connection_type == ConnectionType.AGGREGATION
-        col_ref: ColumnReference
         out_columns: dict[HybridExpr, ColumnReference] = {}
         keys: dict[str, ColumnReference] = {}
         aggregations: dict[str, CallExpression] = {}
         for _, rhs_key in join_keys:
-            col_ref = context.expressions[rhs_key]
-            out_columns[rhs_key] = col_ref
-            keys[col_ref.name] = col_ref
+            rhs_expr = self.translate_expression(rhs_key, context)
+            assert isinstance(rhs_expr, ColumnReference)
+            out_columns[rhs_key] = rhs_expr
+            keys[rhs_expr.name] = rhs_expr
         for agg_name, agg_func in connection.aggs.items():
             assert agg_name not in keys
-            col_ref = ColumnReference(agg_name, agg_func.typ)
+            col_ref: ColumnReference = ColumnReference(agg_name, agg_func.typ)
             hybrid_expr: HybridExpr = HybridRefExpr(agg_name, agg_func.typ)
             out_columns[hybrid_expr] = col_ref
             args: list[RelationalExpression] = [
-                context.expressions[arg] for arg in agg_func.args
+                self.translate_expression(arg, context) for arg in agg_func.args
             ]
             aggregations[agg_name] = CallExpression(
                 agg_func.operator, agg_func.typ, args
