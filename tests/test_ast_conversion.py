@@ -399,12 +399,12 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
             ** TopKInfo([], 10)
             ** CalcInfo(
                 [],
-                nation_name=BackReferenceExpressionInfo("name", 1),
-                region_name=ReferenceInfo("name"),
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("name"),
             ),
             """
-ROOT(columns=[('nation_name', nation_name), ('region_name', region_name)], orderings=[])
- PROJECT(columns={'nation_name': name, 'region_name': name_3})
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[])
+ PROJECT(columns={'nation_name': name_3, 'region_name': name})
   LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'name': name, 'name_3': name_3}, orderings=[])
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
