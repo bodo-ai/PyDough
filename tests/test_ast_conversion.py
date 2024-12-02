@@ -719,7 +719,6 @@ def test_ast_to_relational_alternative_aggregation_configs(
     configs:
     - `SUM` defaulting to zero is disabled.
     - `COUNT` defaulting to zero is disabled.
-    - `AVG` defaulting to zero is enabled.
     """
     default_config.toggle_sum_default_zero(False)
     default_config.toggle_avg_default_zero(True)
