@@ -13,6 +13,7 @@ from test_utils import (
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
+    TopKInfo,
     WhereInfo,
 )
 
@@ -381,6 +382,34 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
     SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
 """,
             id="filter_back",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions") ** TopKInfo([], 2),
+            """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
+ LIMIT(limit=Literal(value=2, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[])
+  SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            id="simple_topk",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** TopKInfo([], 10)
+            ** CalcInfo(
+                [],
+                nation_name=BackReferenceExpressionInfo("name", 1),
+                region_name=ReferenceInfo("name"),
+            ),
+            """
+ROOT(columns=[('nation_name', nation_name), ('region_name', region_name)], orderings=[])
+ PROJECT(columns={'nation_name': name, 'region_name': name_3})
+  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'name': name, 'name_3': name_3}, orderings=[])
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+            id="join_topk",
         ),
     ],
 )

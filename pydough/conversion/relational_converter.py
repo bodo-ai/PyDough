@@ -23,24 +23,23 @@ from pydough.pydough_ast import (
     SubCollection,
     TableCollection,
 )
-from pydough.relational.relational_expressions import (
+from pydough.relational import (
     CallExpression,
+    ColumnPruner,
     ColumnReference,
     ExpressionSortInfo,
-    LiteralExpression,
-    RelationalExpression,
-)
-from pydough.relational.relational_nodes import (
-    ColumnPruner,
     Filter,
     Join,
     JoinType,
+    Limit,
+    LiteralExpression,
     Project,
     Relational,
+    RelationalExpression,
     RelationalRoot,
     Scan,
 )
-from pydough.types import BooleanType
+from pydough.types import BooleanType, Int64Type
 
 from .hybrid_tree import (
     ConnectionType,
@@ -53,6 +52,7 @@ from .hybrid_tree import (
     HybridExpr,
     HybridFilter,
     HybridFunctionExpr,
+    HybridLimit,
     HybridLiteralExpr,
     HybridOperation,
     HybridRefExpr,
@@ -441,6 +441,43 @@ class RelTranslation:
         }
         return TranslationOutput(out_rel, out_columns, context.join_keys)
 
+    def translate_limit(
+        self,
+        node: HybridLimit,
+        context: TranslationOutput,
+    ) -> TranslationOutput:
+        """
+        Converts a HybridLimit into a relational Limit node on top of its child.
+
+        Args:
+            `node`: the node corresponding to the calc being derived.
+            `parent`: the hybrid tree of the previous layer that the access
+            steps down from.
+            `context`: the data structure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts. Can be omitted in certain contexts, such as
+            when deriving a table scan or literal.
+
+        Returns:
+            The TranslationOutput payload containing a Limit on top of
+            the relational node for the parent to derive any additional terms.
+        """
+        # Keep all existing columns.
+        kept_columns: dict[str, RelationalExpression] = {
+            name: ColumnReference(name, context.relation.columns[name].data_type)
+            for name in context.relation.columns
+        }
+        limit_expr: LiteralExpression = LiteralExpression(
+            node.limit.records_to_keep, Int64Type()
+        )
+        # TODO: Determine how to handle orderings in the limit.
+        out_rel: Limit = Limit(context.relation, limit_expr, kept_columns)
+        out_columns: dict[HybridExpr, ColumnReference] = {
+            expr: context.expressions[expr].with_input(None)
+            for expr in context.expressions
+        }
+        return TranslationOutput(out_rel, out_columns, context.join_keys)
+
     def translate_calc(
         self,
         node: HybridCalc,
@@ -568,6 +605,9 @@ class RelTranslation:
             case HybridFilter():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
+            case HybridLimit():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_limit(operation, context)
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
@@ -617,6 +657,45 @@ class RelTranslation:
                     )
 
         return final_calc.with_terms(final_terms), ordering
+
+
+def make_relational_ordering(
+    collation: list[CollationExpression],
+    renamings: dict[str, str],
+    expressions: dict[HybridExpr, ColumnReference],
+) -> list[ExpressionSortInfo]:
+    """
+    Converts a list of collation expressions into a list of ExpressionSortInfo.
+
+    Args:
+        collation (list[CollationExpression]): The list of collation
+            expressions to convert.
+        renamings (dict[str, str]): The dictionary of renamings to apply to
+            the collation expressions.
+        expressions (dict[HybridExpr, ColumnReference]): The dictionary of
+            expressions to use for the relational ordering.
+
+    Returns:
+        list[ExpressionSortInfo]: The ordering expressions converted into
+        ExpressionSortInfo.
+    """
+    orderings: list[ExpressionSortInfo] = []
+    for col_expr in collation:
+        raw_expr = col_expr.expr
+        assert isinstance(raw_expr, Reference)
+        original_name = raw_expr.term_name
+        name = renamings.get(original_name, original_name)
+        hybrid_expr = HybridRefExpr(name, raw_expr.pydough_type)
+        relational_expr = expressions[hybrid_expr]
+        if not isinstance(relational_expr, ColumnReference):
+            raise NotImplementedError(
+                "TODO: support ordering on expressions besides column references"
+            )
+        collation_expr: ExpressionSortInfo = ExpressionSortInfo(
+            relational_expr, col_expr.asc, not col_expr.na_last
+        )
+        orderings.append(collation_expr)
+    return orderings
 
 
 def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
@@ -670,22 +749,7 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
         ordered_columns.append((original_name, rel_expr))
     ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
     if collation is not None:
-        orderings = []
-        for col_expr in collation:
-            raw_expr = col_expr.expr
-            assert isinstance(raw_expr, Reference)
-            original_name = raw_expr.term_name
-            name = renamings.get(original_name, original_name)
-            hybrid_expr = HybridRefExpr(name, raw_expr.pydough_type)
-            relational_expr = output.expressions[hybrid_expr]
-            if not isinstance(relational_expr, ColumnReference):
-                raise NotImplementedError(
-                    "TODO: support root ordering on expressions besides column references"
-                )
-            collation_expr: ExpressionSortInfo = ExpressionSortInfo(
-                relational_expr, col_expr.asc, not col_expr.na_last
-            )
-            orderings.append(collation_expr)
+        orderings = make_relational_ordering(collation, renamings, output.expressions)
     unpruned_result: RelationalRoot = RelationalRoot(
         output.relation, ordered_columns, orderings
     )
