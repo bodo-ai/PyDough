@@ -25,10 +25,12 @@ from pydough.pydough_ast import pydough_operators as pydop
 @pytest.fixture
 def default_config() -> PyDoughConfigs:
     """
-    The default configuration of PyDoughConfigs used in testing. This is
+    The de-facto configuration of PyDoughConfigs used in testing. This is
     re-created with each request since a test function can mutate this.
     """
-    return PyDoughConfigs()
+    return PyDoughConfigs(
+        sum_default_zero=True, avg_default_zero=False, count_default_zero=True
+    )
 
 
 @pytest.fixture(scope="session")

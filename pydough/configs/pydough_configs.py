@@ -29,7 +29,7 @@ class PyDoughConfigs:
         Switches the value of the `sum_default_zero` config to the specified
         value.
         """
-        self._sum_default_zeros = flag
+        self._sum_default_zero = flag
 
     @property
     def avg_default_zero(self) -> bool:
@@ -52,7 +52,7 @@ class PyDoughConfigs:
         Whether to ensure that COUNT calculations default to zero if there are no
         records to count of (e.g. all null, or no children).
         """
-        return self._sum_default_zero
+        return self._count_default_zero
 
     def toggle_count_default_zero(self, flag: bool):
         """

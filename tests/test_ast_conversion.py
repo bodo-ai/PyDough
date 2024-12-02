@@ -480,9 +480,9 @@ ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), 
             """
 ROOT(columns=[('nation_name', nation_name_0), ('total_consumer_value', total_consumer_value), ('total_supplier_value', total_supplier_value), ('avg_consumer_value', avg_consumer_value), ('avg_supplier_value', avg_supplier_value), ('best_consumer_value', best_consumer_value), ('best_supplier_value', best_supplier_value)], orderings=[])
  PROJECT(columns={'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': avg_supplier_value, 'best_consumer_value': agg_2, 'best_supplier_value': agg_2_3, 'nation_name_0': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': total_supplier_value})
-  PROJECT(columns={'agg_2': agg_2, 'agg_2_3': agg_2_3, 'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': DEFAULT_TO(agg_0_1, 0:int64), 'key': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': DEFAULT_TO(agg_1_2, 0:int64)})
+  PROJECT(columns={'agg_2': agg_2, 'agg_2_3': agg_2_3, 'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': agg_0_1, 'key': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': DEFAULT_TO(agg_1_2, 0:int64)})
    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0_1': t1.agg_0, 'agg_1_2': t1.agg_1, 'agg_2': t0.agg_2, 'agg_2_3': t1.agg_2, 'avg_consumer_value': t0.avg_consumer_value, 'key': t0.key, 'total_consumer_value': t0.total_consumer_value})
-    PROJECT(columns={'agg_2': agg_2, 'avg_consumer_value': DEFAULT_TO(agg_0, 0:int64), 'key': key, 'total_consumer_value': DEFAULT_TO(agg_1, 0:int64)})
+    PROJECT(columns={'agg_2': agg_2, 'avg_consumer_value': agg_0, 'key': key, 'total_consumer_value': DEFAULT_TO(agg_1, 0:int64)})
      JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'key': t0.key})
       SCAN(table=tpch.NATION, columns={'key': n_nationkey})
       AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': SUM(acctbal), 'agg_2': MAX(acctbal)})
@@ -665,6 +665,65 @@ def test_ast_to_relational(
     Tests whether the AST nodes are correctly translated into Relational nodes
     with the expected string representation.
     """
+    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    relational = convert_ast_to_relational(collection, default_config)
+    assert (
+        relational.to_tree_string() == expected_relational_string.strip()
+    ), "Mismatch between full string representation of output Relational node versus expected string"
+
+
+@pytest.mark.parametrize(
+    "calc_pipeline, expected_relational_string",
+    [
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("customers")],
+                nation_name=ReferenceInfo("name"),
+                total_bal=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                num_bal=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                avg_bal=FunctionInfo(
+                    "AVG", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                min_bal=FunctionInfo(
+                    "MIN", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                max_bal=FunctionInfo(
+                    "MAX", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+            ),
+            """
+ROOT(columns=[('nation_name', nation_name), ('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal)], orderings=[])
+ PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:int64), 'max_bal': agg_1, 'min_bal': agg_2, 'nation_name': name, 'num_bal': agg_3, 'total_bal': agg_4})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'agg_4': t1.agg_4, 'name': t0.name})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': SUM(acctbal)})
+    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
+""",
+            id="various_aggfuncs_simple",
+        ),
+    ],
+)
+def test_ast_to_relational_alternative_aggregation_configs(
+    calc_pipeline: CollectionTestInfo,
+    expected_relational_string: str,
+    tpch_node_builder: AstNodeBuilder,
+    default_config: PyDoughConfigs,
+):
+    """
+    Same as `test_ast_to_relational` but with various alternative aggregation
+    configs:
+    - `SUM` defaulting to zero is disabled.
+    - `COUNT` defaulting to zero is disabled.
+    - `AVG` defaulting to zero is enabled.
+    """
+    default_config.toggle_sum_default_zero(False)
+    default_config.toggle_avg_default_zero(True)
+    default_config.toggle_count_default_zero(False)
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
     assert (
