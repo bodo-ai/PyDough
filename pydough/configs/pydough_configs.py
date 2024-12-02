@@ -4,6 +4,41 @@ TODO: add file-level docstring
 
 __all__ = ["PyDoughConfigs"]
 
+from typing import Any, Generic, TypeVar
+
+T = TypeVar("T")
+
+
+class ConfigProperty(Generic[T]):
+    """
+    A type-generic property class to be used as a descriptor inside of the
+    PyDoughConfigs class. An invocation of `ConfigProperty` looks as follows:
+
+    ```
+    class ClassName:
+        ...
+        foo = ConfigProperty[str]("")
+        bar = ConfigProperty[int](0)
+    ```
+
+    In this example, every instance of the class `ClassName` now has two
+    properties: `foo` has type `str` and a default of `""`, and `bar`
+    has type `int` and has a default value of `0`. Both properties have
+    standard getters and setters usable via `.foo` and `.bar`.
+    """
+
+    def __init__(self, default: T):
+        self._default: T = default
+
+    def __set_name__(self, owner, name):
+        self._name = name
+
+    def __get__(self, instance, owner) -> T:
+        return instance.__dict__.get(self._name, self._default)
+
+    def __set__(self, instance, value: T):
+        instance.__dict__[self._name] = value
+
 
 class PyDoughConfigs:
     """
@@ -11,40 +46,21 @@ class PyDoughConfigs:
     PyDough.
     """
 
-    def __init__(
-        self,
-        sum_default_zero: bool = True,
-        avg_default_zero: bool = False,
-    ):
-        self._sum_default_zero: bool = sum_default_zero
-        self._avg_default_zero: bool = avg_default_zero
+    sum_default_zero = ConfigProperty[bool](True)
+    """
+    If True, then the `SUM` function always defaults to 0 if there are no
+    records to be summed up. If False, the output could be `NULL`. The default
+    is True.
+    """
 
-    @property
-    def sum_default_zero(self) -> bool:
-        """
-        Whether to ensure that SUM calculations default to zero if there are no
-        records to take the sum of (e.g. all null, or no children).
-        """
-        return self._sum_default_zero
+    avg_default_zero = ConfigProperty[bool](False)
+    """
+    If True, then the `AVG` function always defaults to 0 if there are no
+    records to be averaged. If False, the output could be `NULL`. The default
+    is False.
+    """
 
-    def toggle_sum_default_zero(self, flag: bool):
-        """
-        Switches the value of the `sum_default_zero` config to the specified
-        value.
-        """
-        self._sum_default_zero = flag
-
-    @property
-    def avg_default_zero(self) -> bool:
-        """
-        Whether to ensure that AVG calculations default to zero if there are no
-        records to take the average of (e.g. all null, or no children).
-        """
-        return self._avg_default_zero
-
-    def toggle_avg_default_zero(self, flag: bool):
-        """
-        Switches the value of the `avg_default_zero` config to the specified
-        value.
-        """
-        self._avg_default_zero = flag
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name not in dir(self):
+            raise AttributeError(f"Unrecognized PyDough config name: {name}")
+        super().__setattr__(name, value)

@@ -28,7 +28,10 @@ def default_config() -> PyDoughConfigs:
     The de-facto configuration of PyDoughConfigs used in testing. This is
     re-created with each request since a test function can mutate this.
     """
-    return PyDoughConfigs(sum_default_zero=True, avg_default_zero=False)
+    config: PyDoughConfigs = PyDoughConfigs()
+    # config.sum_default_zero = True
+    # config.avg_default_zero = False
+    return config
 
 
 @pytest.fixture(scope="session")

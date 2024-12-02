@@ -167,7 +167,7 @@ def test_qualify_error(
     impl: Callable[[UnqualifiedNode], UnqualifiedNode],
     error_msg: str,
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Tests that strings representing the setup of PyDough unqualified objects
     (with unknown variables already pre-pended with `_ROOT.`) are correctly

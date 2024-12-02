@@ -660,7 +660,7 @@ def test_ast_to_relational(
     expected_relational_string: str,
     tpch_node_builder: AstNodeBuilder,
     default_config: PyDoughConfigs,
-):
+) -> None:
     """
     Tests whether the AST nodes are correctly translated into Relational nodes
     with the expected string representation.
@@ -713,15 +713,15 @@ def test_ast_to_relational_alternative_aggregation_configs(
     expected_relational_string: str,
     tpch_node_builder: AstNodeBuilder,
     default_config: PyDoughConfigs,
-):
+) -> None:
     """
     Same as `test_ast_to_relational` but with various alternative aggregation
     configs:
     - `SUM` defaulting to zero is disabled.
     - `COUNT` defaulting to zero is disabled.
     """
-    default_config.toggle_sum_default_zero(False)
-    default_config.toggle_avg_default_zero(True)
+    default_config.sum_default_zero = False
+    default_config.avg_default_zero = True
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
     assert (
