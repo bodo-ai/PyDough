@@ -4,6 +4,7 @@ TODO: add file-level docstring.
 
 import pytest
 from test_utils import (
+    BackReferenceExpressionInfo,
     CalcInfo,
     ChildReferenceExpressionInfo,
     CollectionTestInfo,
@@ -217,14 +218,76 @@ ROOT(columns=[('ship_year', ship_year), ('supplier_nation', supplier_nation), ('
             """
 ROOT(columns=[('key', key_0), ('name', name), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
  PROJECT(columns={'key_0': -3:int64, 'mktsegment': mktsegment, 'name': name_6, 'phone': phone})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_6': t1.name, 'phone': t1.phone})
-   PROJECT(columns={'key': key_2})
-    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
-     SCAN(table=tpch.REGION, columns={'key': r_regionkey})
-     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+  JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_6': t1.name, 'phone': t1.phone})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
    SCAN(table=tpch.CUSTOMER, columns={'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
 """,
             id="join_regions_nations_calc_override",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("name"),
+            ),
+            """
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[])
+ PROJECT(columns={'nation_name': name_3, 'region_name': name})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+   SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+            id="region_nations_backref",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** TableCollectionInfo("nations")
+            ** TableCollectionInfo("customers")
+            ** TableCollectionInfo("orders")
+            ** SubCollectionInfo("lines")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("part_and_supplier")
+                    ** SubCollectionInfo("supplier")
+                    ** SubCollectionInfo("nation")
+                    ** SubCollectionInfo("region")
+                    ** CalcInfo([], nation_name=BackReferenceExpressionInfo("name", 1))
+                ],
+                order_year=FunctionInfo(
+                    "YEAR", [BackReferenceExpressionInfo("order_date", 1)]
+                ),
+                customer_region=BackReferenceExpressionInfo("name", 4),
+                customer_nation=BackReferenceExpressionInfo("name", 3),
+                supplier_region=ChildReferenceExpressionInfo("name", 0),
+                nation_name=ChildReferenceExpressionInfo("nation_name", 0),
+            ),
+            """
+ROOT(columns=[('order_year', order_year), ('customer_region', customer_region), ('customer_nation', customer_nation), ('supplier_region', supplier_region), ('nation_name', nation_name)], orderings=[])
+ PROJECT(columns={'customer_nation': name_3, 'customer_region': name, 'nation_name': nation_name, 'order_year': YEAR(order_date), 'supplier_region': name_16})
+  JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['left'], columns={'name': t0.name, 'name_16': t1.name_16, 'name_3': t0.name_3, 'nation_name': t1.nation_name, 'order_date': t0.order_date})
+   JOIN(conditions=[t0.key_8 == t1.order_key], types=['inner'], columns={'name': t0.name, 'name_3': t0.name_3, 'order_date': t0.order_date, 'part_key': t1.part_key, 'supplier_key': t1.supplier_key})
+    JOIN(conditions=[t0.key_5 == t1.customer_key], types=['inner'], columns={'key_8': t1.key, 'name': t0.name, 'name_3': t0.name_3, 'order_date': t1.order_date})
+     JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key_5': t1.key, 'name': t0.name, 'name_3': t0.name_3})
+      JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name, 'name_3': t1.name})
+       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+      SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+     SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+    SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
+   PROJECT(columns={'name_16': name_16, 'nation_name': name_13, 'part_key': part_key, 'supplier_key': supplier_key})
+    JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'name_13': t0.name_13, 'name_16': t1.name, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+     JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'name_13': t1.name, 'part_key': t0.part_key, 'region_key': t1.region_key, 'supplier_key': t0.supplier_key})
+      JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'nation_key': t1.nation_key, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+       SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            id="lines_shipping_vs_customer_region",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
