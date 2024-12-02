@@ -414,6 +414,34 @@ ROOT(columns=[('okey', okey), ('lavg', lavg)], orderings=[])
             id="orders_sum_vs_count_line_price",
         ),
         pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("customers"),
+                    SubCollectionInfo("suppliers"),
+                ],
+                nation_name=ReferenceInfo("key"),
+                consumer_value=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                producer_value=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("account_balance", 1)]
+                ),
+            ),
+            """
+ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), ('producer_value', producer_value)], orderings=[])
+ PROJECT(columns={'consumer_value': agg_0, 'nation_name': key, 'producer_value': agg_0_1})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'key': t0.key})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(acctbal)})
+     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(account_balance)})
+    SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
+""",
+            id="multiple_simple_aggregations",
+        ),
+        pytest.param(
             TableCollectionInfo("Regions")
             ** WhereInfo(
                 [],
