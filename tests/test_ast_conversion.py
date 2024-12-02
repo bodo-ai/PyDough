@@ -18,6 +18,7 @@ from test_utils import (
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
 from pydough.types import (
+    Float64Type,
     Int64Type,
     StringType,
 )
@@ -51,7 +52,7 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ),
             """
 ROOT(columns=[('region_name', region_name), ('magic_word', magic_word)], orderings=[])
- PROJECT(columns={'magic_word': foo:StringType(), 'region_name': name})
+ PROJECT(columns={'magic_word': foo:string, 'region_name': name})
   SCAN(table=tpch.REGION, columns={'name': r_name})
 """,
             id="scan_calc",
@@ -63,7 +64,7 @@ ROOT(columns=[('region_name', region_name), ('magic_word', magic_word)], orderin
             """
 ROOT(columns=[('fizz', fizz), ('buzz', buzz)], orderings=[])
  PROJECT(columns={'buzz': key, 'fizz': name_0})
-  PROJECT(columns={'key': key, 'name_0': foo:StringType()})
+  PROJECT(columns={'key': key, 'name_0': foo:string})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
 """,
             id="scan_calc_calc",
@@ -94,6 +95,98 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
             id="join_region_nations_customers",
         ),
         pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [],
+                name=FunctionInfo("LOWER", [ReferenceInfo("name")]),
+                country_code=FunctionInfo(
+                    "SLICE",
+                    [
+                        ReferenceInfo("phone"),
+                        LiteralInfo(0, Int64Type()),
+                        LiteralInfo(3, Int64Type()),
+                        LiteralInfo(1, Int64Type()),
+                    ],
+                ),
+                adjusted_account_balance=FunctionInfo(
+                    "IFF",
+                    [
+                        FunctionInfo(
+                            "LET",
+                            [
+                                ReferenceInfo("acctbal"),
+                                LiteralInfo(0, Int64Type()),
+                            ],
+                        ),
+                        LiteralInfo(0, Int64Type()),
+                        ReferenceInfo("acctbal"),
+                    ],
+                ),
+                is_named_john=FunctionInfo(
+                    "LET",
+                    [
+                        FunctionInfo("LOWER", [ReferenceInfo("name")]),
+                        LiteralInfo("john", StringType()),
+                    ],
+                ),
+            ),
+            """
+ROOT(columns=[('name', name_0), ('country_code', country_code), ('adjusted_account_balance', adjusted_account_balance), ('is_named_john', is_named_john)], orderings=[])
+ PROJECT(columns={'adjusted_account_balance': IFF(acctbal < 0:int64, 0:int64, acctbal), 'country_code': SLICE(phone, 0:int64, 3:int64, 1:int64), 'is_named_john': LOWER(name) < john:string, 'name_0': LOWER(name)})
+  SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'phone': c_phone})
+""",
+            id="scan_customer_call_functions",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("region")],
+                nation_name=ReferenceInfo("name"),
+                region_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            """\
+\
+""",
+            id="nations_access_region",
+            marks=pytest.mark.skip("TODO"),
+        ),
+        pytest.param(
+            TableCollectionInfo("Lineitems")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("part_and_supplier")
+                    ** SubCollectionInfo("supplier")
+                    ** SubCollectionInfo("nation"),
+                    SubCollectionInfo("order")
+                    ** SubCollectionInfo("customer")
+                    ** SubCollectionInfo("nation"),
+                ],
+                ship_year=FunctionInfo(
+                    "YEAR", [ChildReferenceExpressionInfo("ship_date", 1)]
+                ),
+                supplier_nation=ChildReferenceExpressionInfo("name", 0),
+                customer_nation=ChildReferenceExpressionInfo("name", 1),
+                value=FunctionInfo(
+                    "MUL",
+                    [
+                        ReferenceInfo("extended_price"),
+                        FunctionInfo(
+                            "SUB",
+                            [
+                                LiteralInfo(1.0, Float64Type()),
+                                ReferenceInfo("discount"),
+                            ],
+                        ),
+                    ],
+                ),
+            ),
+            """\
+\
+""",
+            id="lineitems_access_cust_supplier_nations",
+            marks=pytest.mark.skip("TODO"),
+        ),
+        pytest.param(
             TableCollectionInfo("Regions")
             ** CalcInfo([], key=LiteralInfo(-1, Int64Type()))
             ** SubCollectionInfo("nations")
@@ -107,8 +200,8 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
                 mktsegment=ReferenceInfo("mktsegment"),
             ),
             """
-ROOT(columns=[('key_0', key_0), ('name', name), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
- PROJECT(columns={'key_0': -3:Int64Type(), 'mktsegment': mktsegment, 'name': name_6, 'phone': phone})
+ROOT(columns=[('key', key_0), ('name', name), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
+ PROJECT(columns={'key_0': -3:int64, 'mktsegment': mktsegment, 'name': name_6, 'phone': phone})
   JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_6': t1.name, 'phone': t1.phone})
    PROJECT(columns={'key': key_2})
     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})

@@ -47,6 +47,7 @@ from .hybrid_tree import (
     HybridCollectionAccess,
     HybridColumnExpr,
     HybridExpr,
+    HybridFunctionExpr,
     HybridLiteralExpr,
     HybridOperation,
     HybridRefExpr,
@@ -130,6 +131,12 @@ class RelTranslation:
             case HybridRefExpr():
                 assert context is not None
                 return context.expressions[expr]
+            case HybridFunctionExpr() if not expr.operator.is_aggregation:
+                assert context is not None
+                inputs: list[RelationalExpression] = [
+                    self.translate_expression(arg, context) for arg in expr.args
+                ]
+                return CallExpression(expr.operator, expr.typ, inputs)
             case _:
                 raise NotImplementedError(expr.__class__.__name__)
 
@@ -466,14 +473,12 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
     rel_expr: RelationalExpression
     name: str
     original_name: str
-    positions: dict[str, int] = {}
     for original_name in final_terms:
         name = renamings.get(original_name, original_name)
         hybrid_expr = hybrid.pipeline[-1].terms[name]
         rel_expr = output.expressions[hybrid_expr]
-        ordered_columns.append((name, rel_expr))
-        positions[name] = node.get_expression_position(original_name)
-    ordered_columns.sort(key=lambda col: positions[col[0]])
+        ordered_columns.append((original_name, rel_expr))
+    ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
     if collation is not None:
         orderings = []
         for col_expr in collation:

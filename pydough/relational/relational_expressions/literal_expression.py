@@ -42,7 +42,7 @@ class LiteralExpression(RelationalExpression):
 
     def to_string(self, compact: bool = False) -> str:
         if compact:
-            return f"{self.value}:{self.data_type}"
+            return f"{self.value}:{self.data_type.json_string}"
         else:
             return f"Literal(value={self.value}, type={self.data_type})"
 
