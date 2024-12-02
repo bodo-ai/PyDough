@@ -470,8 +470,10 @@ class RelTranslation:
         limit_expr: LiteralExpression = LiteralExpression(
             node.limit.records_to_keep, Int64Type()
         )
-        # TODO: Determine how to handle orderings in the limit.
-        out_rel: Limit = Limit(context.relation, limit_expr, kept_columns)
+        orderings: list[ExpressionSortInfo] = make_relational_ordering(
+            node.collation, node.renamings, context.expressions
+        )
+        out_rel: Limit = Limit(context.relation, limit_expr, kept_columns, orderings)
         out_columns: dict[HybridExpr, ColumnReference] = {
             expr: context.expressions[expr].with_input(None)
             for expr in context.expressions
@@ -636,27 +638,27 @@ class RelTranslation:
 
         # Add all of the expressions that are used as ordering keys,
         # transforming any non-references into references.
-        ordering: list[CollationExpression] = []
+        ordering: list[tuple[str, bool, bool]] = []
         if node.ordering is not None:
             for expr in node.ordering:
-                if isinstance(expr.expr, Reference):
-                    ordering.append(expr)
-                else:
-                    dummy_name: str
-                    while True:
-                        dummy_name = f"_order_expr_{dummy_counter}"
-                        dummy_counter += 1
-                        if dummy_name not in all_names:
-                            break
-                    final_terms.append((dummy_name, expr.expr))
-                    all_names.add(dummy_name)
-                    ordering.append(
-                        CollationExpression(
-                            Reference(final_calc, dummy_name), expr.asc, expr.na_last
-                        )
-                    )
+                # if type(expr.expr) is Reference:
+                #     ordering.append(expr)
+                # else:
+                dummy_name: str
+                while True:
+                    dummy_name = f"_order_expr_{dummy_counter}"
+                    dummy_counter += 1
+                    if dummy_name not in all_names:
+                        break
+                final_terms.append((dummy_name, expr.expr))
+                all_names.add(dummy_name)
+                ordering.append((dummy_name, expr.asc, expr.na_last))
 
-        return final_calc.with_terms(final_terms), ordering
+        final_calc = final_calc.with_terms(final_terms)
+        return final_calc, [
+            CollationExpression(Reference(final_calc, name), asc, na_last)
+            for name, asc, na_last in ordering
+        ]
 
 
 def make_relational_ordering(
@@ -679,6 +681,7 @@ def make_relational_ordering(
         list[ExpressionSortInfo]: The ordering expressions converted into
         ExpressionSortInfo.
     """
+    breakpoint()
     orderings: list[ExpressionSortInfo] = []
     for col_expr in collation:
         raw_expr = col_expr.expr
@@ -717,6 +720,7 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
     translator: RelTranslation = RelTranslation()
     final_terms: set[str] = node.calc_terms
     node, collation = translator.preprocess_root(node)
+    breakpoint()
 
     # Convert the AST node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the

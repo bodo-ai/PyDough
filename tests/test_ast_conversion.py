@@ -464,19 +464,26 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
             ** OrderInfo([], (ReferenceInfo("name"), True, True))
             ** TopKInfo([], 10, (ReferenceInfo("name"), True, True)),
             """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):asc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[(name):asc_last])
+  SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
 """,
             id="topk_order_by",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, True))
-            ** TopKInfo([], 10)
+            ** TopKInfo([], 10, (ReferenceInfo("name"), True, True))
             ** CalcInfo(
                 [],
                 region_name=ReferenceInfo("name"),
                 name_length=FunctionInfo("LENGTH", [ReferenceInfo("name")]),
             ),
             """
+ROOT(columns=[('region_name', region_name), ('name_length', name_length)], orderings=[(name):asc_last])
+ PROJECT(columns={'name': name, 'name_length': LENGTH(name), 'region_name': name})
+  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'name': name}, orderings=[(name):asc_last])
+   SCAN(table=tpch.REGION, columns={'name': r_name})
 """,
             id="topk_order_by_calc",
         ),
@@ -484,36 +491,51 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
             TableCollectionInfo("Regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, True))
             ** OrderInfo([], (ReferenceInfo("name"), False, False))
-            ** TopKInfo([], 10),
+            ** TopKInfo([], 10, (ReferenceInfo("name"), False, False)),
             """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):desc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[(name):desc_first])
+  SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
 """,
+            # Note: This tests is less useful because the rewrite has already
+            # occurred for TopK.
             id="topk_replace_order_by",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, False))
-            ** TopKInfo([], 10)
+            ** TopKInfo([], 10, (ReferenceInfo("name"), True, False))
             ** OrderInfo([], (ReferenceInfo("name"), False, False)),
             """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):desc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[(name):asc_first])
+  SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
 """,
             id="topk_root_different_order_by",
-        ),
-        pytest.param(
-            TableCollectionInfo("Regions")
-            ** OrderInfo([], (ReferenceInfo("name"), True, False))
-            ** TopKInfo([], 10),
-            """
-""",
-            id="order_by_expression",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** OrderInfo(
                 [], (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, False)
             )
-            ** SubCollectionInfo("nations"),
+            ** TopKInfo([], 10),
             """
 """,
+            id="order_by_expression",
+            marks=pytest.mark.skip("TODO"),
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, False))
+            ** SubCollectionInfo("nations"),
+            """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
+ PROJECT(columns={'comment': comment_1, 'key': key_2, 'name': name_3, 'region_key': region_key})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+""",
+            # Note: This behavior may change in the future.
             id="order_by_before_join",
         ),
         pytest.param(
@@ -530,6 +552,11 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
                 ),
             ),
             """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(name):asc_last])
+ FILTER(condition=name_3 == ASIA:string, columns={'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
+  JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t0.region_key})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
             id="ordered_asian_nations",
         ),

@@ -592,6 +592,8 @@ def make_hybrid_expr(
         case ColumnProperty():
             return HybridColumnExpr(expr)
         case ChildReferenceExpression():
+            if expr.child_idx not in child_ref_mapping:
+                breakpoint()
             hybrid_child_index: int = child_ref_mapping[expr.child_idx]
             child_tree: HybridTree = hybrid.children[hybrid_child_index].subtree
             expr_name = child_tree.pipeline[-1].renamings.get(
@@ -678,6 +680,8 @@ def make_hybrid_tree(node: PyDoughCollectionAST) -> HybridTree:
         case TopK():
             hybrid = make_hybrid_tree(node.preceding_context)
             hybrid.populate_children(node, child_ref_mapping)
+            # TODO: Ensure all collation expressions are generated
+            # as a preceding calc.
             hybrid.pipeline.append(
                 HybridLimit(hybrid.pipeline[-1], node, node.collation)
             )
@@ -685,6 +689,7 @@ def make_hybrid_tree(node: PyDoughCollectionAST) -> HybridTree:
         case OrderBy():
             hybrid = make_hybrid_tree(node.preceding_context)
             hybrid.populate_children(node, child_ref_mapping)
+            breakpoint()
             return hybrid
         case ChildOperatorChildAccess():
             match node.child_access:
