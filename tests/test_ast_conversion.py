@@ -559,7 +559,7 @@ ROOT(columns=[('order_key', order_key), ('max_ratio', max_ratio)], orderings=[])
             TableCollectionInfo("Parts")
             ** CalcInfo(
                 [SubCollectionInfo("supply_records")],
-                order_key=ReferenceInfo("key"),
+                name=ReferenceInfo("name"),
                 total_delta=FunctionInfo(
                     "SUM",
                     [
