@@ -60,7 +60,7 @@ def test_column_property_type(
     property_info: AstNodeTestInfo,
     expected_type: PyDoughType,
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Tests that column properties have the correct return type.
     """
@@ -163,7 +163,7 @@ def test_literal_type(
     literal_info: AstNodeTestInfo,
     expected_type: PyDoughType,
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Tests that literal expressions have the correct return type.
     """
@@ -335,7 +335,7 @@ def test_literal_type(
 )
 def test_expression_strings(
     expr_info: AstNodeTestInfo, expected_string: str, tpch_node_builder: AstNodeBuilder
-):
+) -> None:
     """
     Tests that expressions generate the expected string representation. Note,
     the column names seen here will essentially never be seen in actual string

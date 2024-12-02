@@ -10,7 +10,7 @@ import pandas as pd
 from tpch_outputs import tpch_q6_output
 
 
-def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection):
+def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection) -> None:
     """
     Run the TPCH Q6 query on the SQLite database.
     """

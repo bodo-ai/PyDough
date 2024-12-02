@@ -740,7 +740,7 @@ def test_collections_calc_terms(
     expected_calcs: dict[str, int],
     expected_total_names: set[str],
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Tests that a sequence of collection-producing AST nodes results in the
     correct calc terms & total set of available terms.
@@ -1604,7 +1604,7 @@ def test_collections_to_string(
     expected_string: str,
     expected_tree_string: str,
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Verifies that various AST collection node structures produce the expected
     non-tree string representation.
@@ -1825,7 +1825,7 @@ def test_collections_ordering(
     calc_pipeline: CollectionTestInfo,
     expected_collation_strings: list[str] | None,
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Verifies that various AST collection node structures have the expected
     collation nodes to order by.
@@ -1850,7 +1850,7 @@ def test_collections_ordering(
 def test_regions_intra_ratio_string_order(
     region_intra_ratio: tuple[CollectionTestInfo, str, str],
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Same as `test_collections_to_string` and `test_collections_ordering`, but
     specifically on the structure from the `region_intra_ratio` fixture.

@@ -74,7 +74,7 @@ def test_verification(
     args_info: MutableSequence[AstNodeTestInfo],
     error_message: str,
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Checks that verifiers accept reject by raising an exception
     and also returns False.

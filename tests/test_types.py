@@ -125,7 +125,7 @@ from pydough.types import parse_type_from_string
         ),
     ],
 )
-def test_valid_parsing_and_unparsing(type_string, repr_string):
+def test_valid_parsing_and_unparsing(type_string: str, repr_string: str) -> None:
     """
     Verify that each type can be correctly parsed from its JSON string form into
     the correct type object, and unparsed into either its correct Python repr form
