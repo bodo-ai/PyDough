@@ -416,6 +416,8 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
             TableCollectionInfo("Regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, True)),
             """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):asc_last])
+ SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
 """,
             id="simple_order_by",
         ),
@@ -506,6 +508,16 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
             """
 """,
             id="ordered_asian_nations",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo(
+                [SubCollectionInfo("region")],
+                (ChildReferenceExpressionInfo("name", 0), True, True),
+            ),
+            """
+""",
+            id="nations_order_by_region",
         ),
     ],
 )

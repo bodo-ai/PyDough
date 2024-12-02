@@ -726,6 +726,15 @@ def make_hybrid_tree(node: PyDoughCollectionAST) -> HybridTree:
             # TODO: support collation. Requires order by handling.
             hybrid.pipeline.append(HybridLimit(hybrid.pipeline[-1], node, []))
             return hybrid
+        case OrderBy():
+            hybrid = make_hybrid_tree(node.preceding_context)
+            hybrid.populate_children(node, child_ref_mapping)
+            collation: list[HybridCollation] = []
+            for order in node.ordering:
+                expr = make_hybrid_expr(hybrid, order.expr, child_ref_mapping)
+                collation.append(HybridCollation(expr, order.asc, order.na_last))
+            hybrid.pipeline.append(HybridOrder(hybrid.pipeline[-1], node, collation))
+            return hybrid
         case ChildOperatorChildAccess():
             match node.child_access:
                 case CompoundSubCollection():
