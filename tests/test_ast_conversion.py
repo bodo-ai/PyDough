@@ -414,8 +414,17 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
         ),
         pytest.param(
             TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True)),
+            """
+""",
+            id="simple_order_by",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
-            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** OrderInfo(
+                [], (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, True)
+            )
             ** CalcInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 1),
@@ -438,6 +447,40 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
             """
 """,
             id="replace_order_by",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** TopKInfo([], 10),
+            """
+""",
+            id="topk_order_by",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** OrderInfo([], (ReferenceInfo("name"), False, False))
+            ** TopKInfo([], 10),
+            """
+""",
+            id="topk_replace_order_by",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, False))
+            ** TopKInfo([], 10)
+            ** OrderInfo([], (ReferenceInfo("name"), False, False)),
+            """
+""",
+            id="topk_root_different_order_by",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, False))
+            ** TopKInfo([], 10),
+            """
+""",
+            id="order_by_expression",
         ),
     ],
 )
