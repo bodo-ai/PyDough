@@ -698,7 +698,7 @@ def test_ast_to_relational(
             ),
             """
 ROOT(columns=[('nation_name', nation_name), ('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal)], orderings=[])
- PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:int64), 'max_bal': agg_1, 'min_bal': agg_2, 'nation_name': name, 'num_bal': agg_3, 'total_bal': agg_4})
+ PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:int64), 'max_bal': agg_1, 'min_bal': agg_2, 'nation_name': name, 'num_bal': DEFAULT_TO(agg_3, 0:int64), 'total_bal': agg_4})
   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'agg_4': t1.agg_4, 'name': t0.name})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': SUM(acctbal)})
@@ -723,7 +723,6 @@ def test_ast_to_relational_alternative_aggregation_configs(
     """
     default_config.toggle_sum_default_zero(False)
     default_config.toggle_avg_default_zero(True)
-    default_config.toggle_count_default_zero(False)
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
     assert (
