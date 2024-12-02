@@ -32,6 +32,8 @@ import pydough.pydough_ast.pydough_operators as pydop
 from pydough.pydough_ast import (
     BackReferenceExpression,
     Calc,
+    ChildOperator,
+    ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollectionAccess,
     ColumnProperty,
@@ -80,6 +82,24 @@ class HybridExpr(ABC):
             just returns self.
         """
 
+    @abstractmethod
+    def shift_back(self, levels: int) -> "HybridExpr":
+        """
+        Promotes a HybridRefExpr into a HybridBackRefExpr with the specified
+        number of levels, or increases the number of levels of a
+        HybridBackRefExpr by the specified number of levels.
+
+        Args:
+            `levels`: the amount of back levels to increase by.
+
+        Returns:
+            The transformed HybridBackRefExpr.
+
+        Raises:
+            NotImplementedError: if called on an invalid type of HybridExpr for
+            this operation.
+        """
+
     def make_into_ref(self, name: str) -> "HybridRefExpr":
         """
         Converts a HybridExpr into a reference with the desired name.
@@ -119,6 +139,9 @@ class HybridCollation(HybridExpr):
             return self
         return HybridCollation(renamed_expr, self.asc, self.na_first)
 
+    def shift_back(self, levels: int) -> HybridExpr:
+        raise NotImplementedError
+
 
 class HybridColumnExpr(HybridExpr):
     """
@@ -134,6 +157,9 @@ class HybridColumnExpr(HybridExpr):
 
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
+
+    def shift_back(self, levels: int) -> HybridExpr:
+        return HybridBackRefExpr(self.column.column_property.name, levels, self.typ)
 
 
 class HybridRefExpr(HybridExpr):
@@ -154,6 +180,9 @@ class HybridRefExpr(HybridExpr):
             return HybridRefExpr(renamings[self.name], self.typ)
         return self
 
+    def shift_back(self, levels: int) -> HybridExpr:
+        return HybridBackRefExpr(self.name, levels, self.typ)
+
 
 class HybridChildRefExpr(HybridExpr):
     """
@@ -171,6 +200,9 @@ class HybridChildRefExpr(HybridExpr):
 
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
+
+    def shift_back(self, levels: int) -> HybridExpr:
+        raise NotImplementedError
 
 
 class HybridBackRefExpr(HybridExpr):
@@ -190,6 +222,9 @@ class HybridBackRefExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
+    def shift_back(self, levels: int) -> HybridExpr:
+        return HybridBackRefExpr(self.name, self.back_idx + 1, self.typ)
+
 
 class HybridLiteralExpr(HybridExpr):
     """
@@ -205,6 +240,9 @@ class HybridLiteralExpr(HybridExpr):
 
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
+
+    def shift_back(self, levels: int) -> HybridExpr:
+        raise NotImplementedError
 
 
 class HybridFunctionExpr(HybridExpr):
@@ -242,6 +280,9 @@ class HybridFunctionExpr(HybridExpr):
         ):
             return self
         return HybridFunctionExpr(self.operator, renamed_args, self.typ)
+
+    def shift_back(self, levels: int) -> HybridExpr:
+        raise NotImplementedError
 
 
 class HybridOperation:
@@ -302,7 +343,6 @@ class HybridCalc(HybridOperation):
     def __init__(
         self,
         predecessor: HybridOperation,
-        calc: Calc,
         new_expressions: dict[str, HybridExpr],
     ):
         terms: dict[str, HybridExpr] = {}
@@ -334,12 +374,9 @@ class HybridFilter(HybridOperation):
     Class for HybridOperation corresponding to a WHERE operation.
     """
 
-    def __init__(
-        self, predecessor: HybridOperation, where: Where, condition: HybridExpr
-    ):
+    def __init__(self, predecessor: HybridOperation, condition: HybridExpr):
         super().__init__(predecessor.terms, {})
         self.predecessor: HybridOperation = predecessor
-        self.where: Where = where
         self.condition: HybridExpr = condition
 
     def __repr__(self):
@@ -433,11 +470,14 @@ class HybridConnection:
       from the bottom.
     - `connection_type`: an enum indicating which connection type is being
        used.
+    - `required_steps`: an index indicating which step in the pipeline must be
+       completed before the child can be defined.
     """
 
     parent: "HybridTree"
     subtree: "HybridTree"
     connection_type: ConnectionType
+    required_steps: int
 
 
 class HybridTree:
@@ -535,15 +575,12 @@ class HybridTree:
             used to link `self` to `child`.
         """
         connection: HybridConnection = HybridConnection(
-            self,
-            child,
-            connection_type,
+            self, child, connection_type, len(self.pipeline) - 1
         )
         for idx, existing_child in enumerate(self.children):
             if child == existing_child:
                 return idx
         self._children.append(connection)
-        child._parent = self
         return len(self.children) - 1
 
     def add_successor(self, successor: "HybridTree") -> None:
@@ -558,8 +595,26 @@ class HybridTree:
         self._successor = successor
         successor._parent = self
 
+    def populate_children(
+        self, child_operator: ChildOperator, child_idx_mapping: dict[int, int]
+    ) -> None:
+        """
+        TODO
+        """
+        for child_idx, child in enumerate(child_operator.children):
+            if not child.is_singular(child_operator.starting_predecessor):
+                raise NotImplementedError(
+                    "TODO: support accessing plural child, e.g. for aggregation"
+                )
+            subtree: HybridTree = make_hybrid_tree(child)
+            child_idx_mapping[child_idx] = self.add_child(
+                subtree, ConnectionType.SINGULAR
+            )
 
-def make_hybrid_expr(hybrid: HybridTree, expr: PyDoughExpressionAST) -> HybridExpr:
+
+def make_hybrid_expr(
+    hybrid: HybridTree, expr: PyDoughExpressionAST, child_ref_mapping: dict[int, int]
+) -> HybridExpr:
     """
     Converts an AST expression into a HybridExpr. Currently only supports
     literals, tale columns, and references.
@@ -568,21 +623,35 @@ def make_hybrid_expr(hybrid: HybridTree, expr: PyDoughExpressionAST) -> HybridEx
         `hybrid`: the hybrid tree that should be used to derive the translation
         of `expr`, as it is the context in which the `expr` will live.
         `expr`: the AST expression to be converted.
+        `child_ref_mapping`: mapping of indices used by child references in the
+        original expressions to the index of the child hybrid tree relative to
+        the current level.
 
     Returns:
         The HybridExpr node corresponding to `expr`
     """
+    expr_name: str
     match expr:
         case Literal():
             return HybridLiteralExpr(expr)
         case ColumnProperty():
             return HybridColumnExpr(expr)
-        case ChildReferenceExpression() | BackReferenceExpression():
+        case ChildReferenceExpression():
+            hybrid_child_index: int = child_ref_mapping[expr.child_idx]
+            child_tree: HybridTree = hybrid.children[hybrid_child_index].subtree
+            expr_name = child_tree.pipeline[-1].renamings.get(
+                expr.term_name, expr.term_name
+            )
+            return HybridChildRefExpr(expr_name, hybrid_child_index, expr.pydough_type)
+        case BackReferenceExpression():
             raise NotImplementedError(
                 f"TODO: support converting {expr.__class__.__name__}"
             )
         case Reference():
-            return HybridRefExpr(expr.term_name, expr.pydough_type)
+            expr_name = hybrid.pipeline[-1].renamings.get(
+                expr.term_name, expr.term_name
+            )
+            return HybridRefExpr(expr_name, expr.pydough_type)
         case ExpressionFunctionCall():
             args: list[HybridExpr] = []
             for arg in expr.args:
@@ -590,7 +659,7 @@ def make_hybrid_expr(hybrid: HybridTree, expr: PyDoughExpressionAST) -> HybridEx
                     raise NotImplementedError(
                         f"TODO: support converting {arg.__class__.__name__} as a function argument"
                     )
-                args.append(make_hybrid_expr(hybrid, arg))
+                args.append(make_hybrid_expr(hybrid, arg, child_ref_mapping))
             return HybridFunctionExpr(expr.operator, args, expr.pydough_type)
         case _:
             raise NotImplementedError(
@@ -604,6 +673,7 @@ def make_hybrid_tree(node: PyDoughCollectionAST) -> HybridTree:
 
     Args:
         `node`: the collection AST to be converted.
+        `is_root_of_child`:
 
     Returns:
         The HybridTree representation of `node`.
@@ -611,30 +681,39 @@ def make_hybrid_tree(node: PyDoughCollectionAST) -> HybridTree:
     hybrid: HybridTree
     successor_hybrid: HybridTree
     expr: HybridExpr
+    child_ref_mapping: dict[int, int] = {}
     match node:
         case GlobalContext():
             return HybridTree(HybridRoot())
         case CompoundSubCollection():
             raise NotImplementedError(f"{node.__class__.__name__}")
         case TableCollection() | SubCollection():
-            hybrid = make_hybrid_tree(node.ancestor_context)
             successor_hybrid = HybridTree(HybridCollectionAccess(node))
+            hybrid = make_hybrid_tree(node.ancestor_context)
             hybrid.add_successor(successor_hybrid)
             return successor_hybrid
         case Calc():
             hybrid = make_hybrid_tree(node.preceding_context)
+            hybrid.populate_children(node, child_ref_mapping)
             new_expressions: dict[str, HybridExpr] = {}
             for name in node.calc_terms:
-                expr = make_hybrid_expr(hybrid, node.get_expr(name))
+                expr = make_hybrid_expr(hybrid, node.get_expr(name), child_ref_mapping)
                 new_expressions[name] = expr
-            hybrid.pipeline.append(
-                HybridCalc(hybrid.pipeline[-1], node, new_expressions)
-            )
+            hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_expressions))
             return hybrid
         case Where():
             hybrid = make_hybrid_tree(node.preceding_context)
-            expr = make_hybrid_expr(hybrid, node.condition)
-            hybrid.pipeline.append(HybridFilter(hybrid.pipeline[-1], node, expr))
+            hybrid.populate_children(node, child_ref_mapping)
+            expr = make_hybrid_expr(hybrid, node.condition, child_ref_mapping)
+            hybrid.pipeline.append(HybridFilter(hybrid.pipeline[-1], expr))
             return hybrid
+        case ChildOperatorChildAccess():
+            match node.child_access:
+                case CompoundSubCollection():
+                    raise NotImplementedError(f"{node.__class__.__name__}")
+                case TableCollection() | SubCollection():
+                    return HybridTree(HybridCollectionAccess(node.child_access))
+                case _:
+                    raise NotImplementedError(f"{node.__class__.__name__}")
         case _:
             raise NotImplementedError(f"{node.__class__.__name__}")
