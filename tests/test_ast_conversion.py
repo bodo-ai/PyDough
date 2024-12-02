@@ -560,14 +560,14 @@ ROOT(columns=[('order_key', order_key), ('max_ratio', max_ratio)], orderings=[])
             ** CalcInfo(
                 [SubCollectionInfo("supply_records")],
                 order_key=ReferenceInfo("key"),
-                max_ratio=FunctionInfo(
-                    "AVG",
+                total_delta=FunctionInfo(
+                    "SUM",
                     [
                         FunctionInfo(
                             "SUB",
                             [
                                 ReferenceInfo("retail_price"),
-                                ChildReferenceExpressionInfo("availqty", 0),
+                                ChildReferenceExpressionInfo("supplycost", 0),
                             ],
                         )
                     ],
