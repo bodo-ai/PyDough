@@ -906,15 +906,13 @@ class HybridTranslator:
                 child_connection = hybrid.children[child_idx]
                 # Generate a unique name for the agg call to push into the child
                 # connection.
-                agg_name: str
-                while True:
+                agg_name: str = f"agg_{agg_counter}"
+                while (
+                    agg_name in child_connection.subtree.pipeline[-1].terms
+                    or agg_name in child_connection.aggs
+                ):
                     agg_name = f"agg_{agg_counter}"
                     agg_counter += 1
-                    if (
-                        agg_name not in child_connection.subtree.pipeline[-1].terms
-                        and agg_name not in child_connection.aggs
-                    ):
-                        break
                 child_connection.aggs[agg_name] = hybrid_call
                 result_ref: HybridExpr = HybridChildRefExpr(
                     agg_name, child_idx, expr.pydough_type
