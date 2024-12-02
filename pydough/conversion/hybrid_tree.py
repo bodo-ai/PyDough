@@ -643,7 +643,7 @@ def make_hybrid_expr(
                 expr.term_name, expr.term_name
             )
             return HybridChildRefExpr(expr_name, hybrid_child_index, expr.pydough_type)
-        case ChildReferenceExpression() | BackReferenceExpression():
+        case BackReferenceExpression():
             raise NotImplementedError(
                 f"TODO: support converting {expr.__class__.__name__}"
             )
