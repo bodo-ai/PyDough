@@ -215,7 +215,7 @@ def test_malformed_collection_sequences(
     calc_pipeline: AstNodeTestInfo,
     error_message: str,
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Tests that building a malformed sequence of collections produces the
     expected error message.

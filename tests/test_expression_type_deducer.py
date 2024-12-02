@@ -46,7 +46,7 @@ def test_returned_type(
     args_info: MutableSequence[AstNodeTestInfo],
     expected_type: PyDoughType,
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Checks that expression ttype deducers produce the correct type.
     """

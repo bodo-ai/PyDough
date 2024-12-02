@@ -819,6 +819,29 @@ class HybridTranslator:
             )
         return agg_ref
 
+    def get_agg_name(self, connection: "HybridConnection") -> str:
+        """
+        Generates a unique name for an aggregation function's output that
+        is not already used.
+
+        Args:
+            `connection`: the HybridConnection in which the aggregation
+            is being defined. The name cannot overlap with any other agg
+            names or term names of the connection.
+
+        Returns:
+            The new name to be used.
+        """
+        agg_name: str = f"agg_{self.agg_counter}"
+        while (
+            agg_name in connection.subtree.pipeline[-1].terms
+            or agg_name in connection.aggs
+        ):
+            self.agg_counter += 1
+            agg_name = f"agg_{self.agg_counter}"
+        self.agg_counter += 1
+        return agg_name
+
     def handle_collection_count(
         self,
         hybrid: HybridTree,
@@ -843,15 +866,7 @@ class HybridTranslator:
         child_connection: HybridConnection = hybrid.children[child_idx]
         # Generate a unique name for the agg call to push into the child
         # connection.
-        agg_name: str
-        while True:
-            agg_name = f"agg_{self.agg_counter}"
-            self.agg_counter += 1
-            if (
-                agg_name not in child_connection.subtree.pipeline[-1].terms
-                and agg_name not in child_connection.aggs
-            ):
-                break
+        agg_name: str = self.get_agg_name(child_connection)
         child_connection.aggs[agg_name] = count_call
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
@@ -992,15 +1007,7 @@ class HybridTranslator:
                 child_connection = hybrid.children[child_idx]
                 # Generate a unique name for the agg call to push into the child
                 # connection.
-                agg_name: str
-                while True:
-                    agg_name = f"agg_{self.agg_counter}"
-                    self.agg_counter += 1
-                    if (
-                        agg_name not in child_connection.subtree.pipeline[-1].terms
-                        and agg_name not in child_connection.aggs
-                    ):
-                        break
+                agg_name: str = self.get_agg_name(child_connection)
                 child_connection.aggs[agg_name] = hybrid_call
                 result_ref: HybridExpr = HybridChildRefExpr(
                     agg_name, child_idx, expr.pydough_type
