@@ -6,6 +6,11 @@ __all__ = ["PyDoughConfigs"]
 
 
 class PyDoughConfigs:
+    """
+    Class used to store information about various configuration settings of
+    PyDough.
+    """
+
     def __init__(
         self,
         sum_default_zero: bool = True,

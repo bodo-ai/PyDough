@@ -787,12 +787,13 @@ class HybridTranslator:
         Converts an AST expression into a HybridExpr.
 
         Args:
-            `hybrid`: the hybrid tree that should be used to derive the translation
-            of `expr`, as it is the context in which the `expr` will live.
+            `hybrid`: the hybrid tree that should be used to derive the
+            translation of `expr`, as it is the context in which the `expr`
+            will live.
             `expr`: the AST expression to be converted.
-            `child_ref_mapping`: mapping of indices used by child references in the
-            original expressions to the index of the child hybrid tree relative to
-            the current level.
+            `child_ref_mapping`: mapping of indices used by child references in
+            the original expressions to the index of the child hybrid tree
+            relative to the current level.
 
         Returns:
             The HybridExpr node corresponding to `expr`
