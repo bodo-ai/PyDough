@@ -55,7 +55,6 @@ from .hybrid_tree import (
     HybridLimit,
     HybridLiteralExpr,
     HybridOperation,
-    HybridOrder,
     HybridRefExpr,
     HybridRoot,
     HybridTree,
@@ -609,10 +608,6 @@ class RelTranslation:
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
-            case HybridOrder():
-                assert context is not None, "Malformed HybridTree pattern."
-                # TODO: Handle generating a join.
-                result = context
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"

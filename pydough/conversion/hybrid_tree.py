@@ -4,7 +4,6 @@ TODO: add file-level docstring
 
 __all__ = [
     "HybridExpr",
-    "HybridCollation",
     "HybridColumnExpr",
     "HybridRefExpr",
     "HybridBackRefExpr",
@@ -16,7 +15,6 @@ __all__ = [
     "HybridCollectionAccess",
     "HybridFilter",
     "HybridCalc",
-    "HybridOrder",
     "HybridLimit",
     "HybridTree",
     "make_hybrid_tree",
@@ -35,6 +33,7 @@ from pydough.pydough_ast import (
     ChildOperator,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
+    CollationExpression,
     CollectionAccess,
     ColumnProperty,
     CompoundSubCollection,
@@ -114,33 +113,6 @@ class HybridExpr(ABC):
         if isinstance(self, HybridRefExpr) and self.name == name:
             return self
         return HybridRefExpr(name, self.typ)
-
-
-class HybridCollation(HybridExpr):
-    """
-    Class for HybridExpr terms that are another HybridExpr term wrapped in
-    information about how to sort by them.
-    """
-
-    def __init__(self, expr: HybridExpr, asc: bool, na_first: bool):
-        self.expr: HybridExpr = expr
-        self.asc: bool = asc
-        self.na_first: bool = na_first
-
-    def __repr__(self):
-        suffix: str = (
-            f"{'asc' if self.asc else 'desc'}_{'first' if self.na_first else 'last'}"
-        )
-        return f"({self.expr!r}):{suffix}"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        renamed_expr: HybridExpr = self.expr.apply_renamings(renamings)
-        if renamed_expr is self.expr:
-            return self
-        return HybridCollation(renamed_expr, self.asc, self.na_first)
-
-    def shift_back(self, levels: int) -> HybridExpr:
-        raise NotImplementedError
 
 
 class HybridColumnExpr(HybridExpr):
@@ -383,38 +355,21 @@ class HybridFilter(HybridOperation):
         return f"FILTER[{self.condition}]"
 
 
-class HybridOrder(HybridOperation):
-    """
-    Class for HybridOperation corresponding to an ORDER BY operation.
-    """
-
-    def __init__(
-        self,
-        predecessor: HybridOperation,
-        order: OrderBy,
-        collation: list[HybridCollation],
-    ):
-        super().__init__(predecessor.terms, {})
-        self.predecessor: HybridOperation = predecessor
-        self.order: OrderBy = order
-        self.collation: list[HybridCollation] = collation
-
-    def __repr__(self):
-        return f"ORDER[{self.collation}]"
-
-
 class HybridLimit(HybridOperation):
     """
     Class for HybridOperation corresponding to a TOP K operation.
     """
 
     def __init__(
-        self, predecessor: HybridOperation, topk: TopK, collation: list[HybridCollation]
+        self,
+        predecessor: HybridOperation,
+        topk: TopK,
+        collation: list[CollationExpression],
     ):
         super().__init__(predecessor.terms, {})
         self.predecessor: HybridOperation = predecessor
         self.limit: TopK = topk
-        self.collation: list[HybridCollation] = collation
+        self.collation: list[CollationExpression] = collation
 
     def __repr__(self):
         return f"LIMIT_{self.limit.records_to_keep}[{self.collation}]"
@@ -723,17 +678,13 @@ def make_hybrid_tree(node: PyDoughCollectionAST) -> HybridTree:
         case TopK():
             hybrid = make_hybrid_tree(node.preceding_context)
             hybrid.populate_children(node, child_ref_mapping)
-            # TODO: support collation. Requires order by handling.
-            hybrid.pipeline.append(HybridLimit(hybrid.pipeline[-1], node, []))
+            hybrid.pipeline.append(
+                HybridLimit(hybrid.pipeline[-1], node, node.collation)
+            )
             return hybrid
         case OrderBy():
             hybrid = make_hybrid_tree(node.preceding_context)
             hybrid.populate_children(node, child_ref_mapping)
-            collation: list[HybridCollation] = []
-            for order in node.ordering:
-                expr = make_hybrid_expr(hybrid, order.expr, child_ref_mapping)
-                collation.append(HybridCollation(expr, order.asc, order.na_last))
-            hybrid.pipeline.append(HybridOrder(hybrid.pipeline[-1], node, collation))
             return hybrid
         case ChildOperatorChildAccess():
             match node.child_access:

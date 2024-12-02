@@ -462,10 +462,23 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
         pytest.param(
             TableCollectionInfo("Regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, True))
-            ** TopKInfo([], 10),
+            ** TopKInfo([], 10, (ReferenceInfo("name"), True, True)),
             """
 """,
             id="topk_order_by",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** TopKInfo([], 10)
+            ** CalcInfo(
+                [],
+                region_name=ReferenceInfo("name"),
+                name_length=FunctionInfo("LENGTH", [ReferenceInfo("name")]),
+            ),
+            """
+""",
+            id="topk_order_by_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
