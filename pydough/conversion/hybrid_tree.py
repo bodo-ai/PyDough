@@ -430,29 +430,67 @@ class ConnectionType(Enum):
     SINGULAR = 0
     """
     The child should be 1:1 with regards to the parent, and can thus be
-    accessed via a simple left-join without having to worry about cardinality
+    accessed via a simple left join without having to worry about cardinality
     contamination.
+    
+    If this overlaps with a `HAS` connection, then the left join becomes an
+    INNER join.
+    
+    If this overlaps with a `HASNOT` connection, then this connection becomes
+    a `HASNOT` connection and all accesses to it are replaced with `NULL`.
     """
 
     AGGREGATION = 1
     """
     The child is being accessed for the purposes of aggregating its columns.
+    The aggregation is done on top of the translated subtree before it is
+    combined with the parent tree via a left join. The aggregate call may be
+    augmented after the left join, e.g. to coalesce with a default value if the
+    left join was not used. The grouping keys for the aggregate are the keys
+    used to join the parent tree output onto the subtree ouput.
+    
+    If this overlaps with a `HAS` connection, then the left join becomes an
+    INNER join, and the post-processing is not required.
+    
+    If this connection overlaps with a `HASNOT` connection, then this
+    connection becomes a `HASNOT` connection and all accesses to it are
+    replaced with `NULL` (augmented by the usual post-processing step).
+
+    If this is used as a child access of a `PARTITION` node, there is no left
+    join, though some of the post-processing steps may still occur.
     """
 
     NDISTINCT = 2
     """
     The child is being accessed for the purposes of counting how many
-    distinct elements it has.
+    distinct elements it has. This is implemented by grouping the child subtree
+    on both the original grouping keys as well as the unique columns of the
+    subcollection without any aggregations, then having the `aggs` list contain
+    a solitary `COUNT` term before being left-joined. The result is coalesced
+    with 0, unless this is used as a child access of a `PARTITION` node.
+
+    If this overlaps with a `HAS` connection, then the left join becomes an
+    INNER join, and the coalescing is skipped.
+    
+    If this connection overlaps with a `HASNOT` connection, then this
+    connection becomes a `HASNOT` connection and the `COUNT` is replaced with
+    a constant zero.
     """
 
     HAS = 3
     """
-    The child is being used as a semi-join.
+    The child is being used as a semi-join. NOTE: if there is ever an overlap
+    between this case & another usage (e.g. `Nations.WHERE(HAS(x))(res=x.y)` or
+    `Nations.WHERE(HAS(x))(res=SUM(x.y))`), see the other enums for
+    explanations of what happens in those overlap cases.
     """
 
     HASNOT = 4
     """
-    The child is being used as an anti-join.
+    The child is being used as an anti-join. NOTE: if there is ever an overlap
+    between this case & another usage (e.g. `Nations.WHERE(HASNOT(x))(res=x.y)`
+    or `Nations.WHERE(HASNOT(x))(res=SUM(x.y))`, see the other enums for
+    explanations of what happens in those overlap cases.
     """
 
 
@@ -470,6 +508,11 @@ class HybridConnection:
        completed before the child can be defined.
     - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
+    - `only_keep_matches`: a boolean to indicate whether the parent subtree's
+       records can be discarded if they have no matches in the child subtree.
+       If this is True, it means any LEFT joins can be replaced with INNER
+       joins. This occurs if, for example, a `SINGULAR` connection overlaps
+       with a `HAS` connection.
     """
 
     parent: "HybridTree"
@@ -477,6 +520,7 @@ class HybridConnection:
     connection_type: ConnectionType
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
+    only_keep_matches: bool
 
 
 class HybridTree:
@@ -577,7 +621,7 @@ class HybridTree:
             used to link `self` to `child`.
         """
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}
+            self, child, connection_type, len(self.pipeline) - 1, {}, False
         )
         for idx, existing_connection in enumerate(self.children):
             if (

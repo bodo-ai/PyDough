@@ -306,12 +306,18 @@ class RelTranslation:
                 )
                 join_keys: list[tuple[HybridExpr, HybridExpr]] = child_output.join_keys
                 agg_keys: list[HybridExpr] = [rhs_key for _, rhs_key in join_keys]
+                # Use INNER joins if the parent should only be kept if it has
+                # a match, otherwise use LEFT joins. Does not apply to SEMI or
+                # ANTI joins.
+                join_type: JoinType = (
+                    JoinType.INNER if child.only_keep_matches else JoinType.LEFT
+                )
                 match child.connection_type:
                     case ConnectionType.SINGULAR:
                         context = self.join_outputs(
                             context,
                             child_output,
-                            JoinType.LEFT,
+                            join_type,
                             join_keys,
                             child_idx,
                         )
@@ -322,10 +328,12 @@ class RelTranslation:
                         context = self.join_outputs(
                             context,
                             child_output,
-                            JoinType.LEFT,
+                            join_type,
                             join_keys,
                             child_idx,
                         )
+                    case ConnectionType.NDISTINCT:
+                        raise NotImplementedError("TODO: support NDISTINCT connections")
                     case ConnectionType.HAS:
                         context = self.join_outputs(
                             context,
@@ -338,14 +346,12 @@ class RelTranslation:
                         context = self.join_outputs(
                             context,
                             child_output,
-                            JoinType.SEMI,
+                            JoinType.ANTI,
                             join_keys,
                             child_idx,
                         )
                     case conn_type:
-                        raise NotImplementedError(
-                            f"TODO: support connection type {conn_type}"
-                        )
+                        raise ValueError(f"Invalid connection type {conn_type}")
         return context
 
     def build_simple_table_scan(
