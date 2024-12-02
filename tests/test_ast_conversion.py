@@ -451,6 +451,11 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
             )
             ** OrderInfo([], (ReferenceInfo("region_name"), False, True)),
             """
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(region_name):desc_last])
+ PROJECT(columns={'nation_name': name_3, 'region_name': name})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+   SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
 """,
             id="replace_order_by",
         ),
