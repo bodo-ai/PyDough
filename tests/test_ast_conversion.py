@@ -299,10 +299,14 @@ ROOT(columns=[('order_year', order_year), ('customer_region', customer_region), 
             )
             ** SubCollectionInfo("nations"),
             """\
-\
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
+ PROJECT(columns={'comment': comment_1, 'key': key_2, 'name': name_3, 'region_key': region_key})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
+   FILTER(condition=name == ASIA:string, columns={'key': key})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
 """,
             id="join_asia_region_nations",
-            marks=pytest.mark.skip("TODO"),
         ),
         pytest.param(
             TableCollectionInfo("Nations")
