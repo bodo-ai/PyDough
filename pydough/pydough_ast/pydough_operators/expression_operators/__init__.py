@@ -41,6 +41,7 @@ __all__ = [
     "NDISTINCT",
     "ISIN",
     "SLICE",
+    "DEFAULT_TO",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -55,6 +56,7 @@ from .registered_expression_operators import (
     BXR,
     CONTAINS,
     COUNT,
+    DEFAULT_TO,
     DIV,
     ENDSWITH,
     EQU,

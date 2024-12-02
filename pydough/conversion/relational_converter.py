@@ -8,6 +8,7 @@ __all__ = ["convert_ast_to_relational"]
 from dataclasses import dataclass
 
 import pydough.pydough_ast.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.metadata import (
     CartesianProductMetadata,
     SimpleJoinMetadata,
@@ -56,8 +57,8 @@ from .hybrid_tree import (
     HybridOperation,
     HybridRefExpr,
     HybridRoot,
+    HybridTranslator,
     HybridTree,
-    make_hybrid_tree,
 )
 
 
@@ -661,7 +662,9 @@ class RelTranslation:
         return final_calc.with_terms(final_terms), ordering
 
 
-def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
+def convert_ast_to_relational(
+    node: PyDoughCollectionAST, configs: PyDoughConfigs
+) -> RelationalRoot:
     """
     Main API for converting from the collection AST form into relational
     nodes.
@@ -684,7 +687,7 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
     # Convert the AST node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the
     # final rel node.
-    hybrid: HybridTree = make_hybrid_tree(node)
+    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1

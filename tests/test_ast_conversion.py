@@ -16,6 +16,7 @@ from test_utils import (
     WhereInfo,
 )
 
+from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
 from pydough.types import (
@@ -300,7 +301,7 @@ ROOT(columns=[('order_year', order_year), ('customer_region', customer_region), 
             ),
             """
 ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
- PROJECT(columns={'lsum': agg_0, 'okey': key})
+ PROJECT(columns={'lsum': DEFAULT_TO(agg_0, 0:int64), 'okey': key})
   JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
    SCAN(table=tpch.ORDER, columns={'key': o_orderkey})
    AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(extended_price)})
@@ -319,7 +320,7 @@ ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
             ),
             """
 ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
- PROJECT(columns={'lsum': agg_0, 'okey': key})
+ PROJECT(columns={'lsum': DEFAULT_TO(agg_0, 0:int64), 'okey': key})
   JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
    SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
    AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': SUM(extended_price)})
@@ -344,7 +345,7 @@ ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
             ),
             """
 ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
- PROJECT(columns={'lsum': agg_0, 'okey': key})
+ PROJECT(columns={'lsum': DEFAULT_TO(agg_0, 0:int64), 'okey': key})
   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey})
    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(extended_price)})
@@ -372,7 +373,7 @@ ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
             ),
             """
 ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
- PROJECT(columns={'lsum': agg_0, 'okey': key})
+ PROJECT(columns={'lsum': DEFAULT_TO(agg_0, 0:int64), 'okey': key})
   JOIN(conditions=[t0.key == t1.region_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
    AGGREGATE(keys={'region_key': region_key}, aggregations={'agg_0': SUM(extended_price)})
@@ -405,7 +406,7 @@ ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
             ),
             """
 ROOT(columns=[('okey', okey), ('lavg', lavg)], orderings=[])
- PROJECT(columns={'lavg': agg_0 / agg_1, 'okey': key})
+ PROJECT(columns={'lavg': DEFAULT_TO(agg_0, 0:int64) / DEFAULT_TO(agg_1, 0:int64), 'okey': key})
   JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'key': t0.key})
    SCAN(table=tpch.ORDER, columns={'key': o_orderkey})
    AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(extended_price), 'agg_1': COUNT(extended_price)})
@@ -430,7 +431,7 @@ ROOT(columns=[('okey', okey), ('lavg', lavg)], orderings=[])
             ),
             """
 ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), ('producer_value', producer_value)], orderings=[])
- PROJECT(columns={'consumer_value': agg_0, 'nation_name': key, 'producer_value': agg_0_1})
+ PROJECT(columns={'consumer_value': DEFAULT_TO(agg_0, 0:int64), 'nation_name': key, 'producer_value': DEFAULT_TO(agg_0_1, 0:int64)})
   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'key': t0.key})
    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
     SCAN(table=tpch.NATION, columns={'key': n_nationkey})
@@ -448,6 +449,9 @@ ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), 
                 total_consumer_value=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
                 ),
+                avg_consumer_value=FunctionInfo(
+                    "AVG", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
             )
             ** CalcInfo(
                 [SubCollectionInfo("suppliers")],
@@ -455,12 +459,17 @@ ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), 
                 total_supplier_value=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("account_balance", 0)]
                 ),
+                avg_supplier_value=FunctionInfo(
+                    "AVG", [ChildReferenceExpressionInfo("account_balance", 0)]
+                ),
             )
             ** CalcInfo(
                 [SubCollectionInfo("suppliers"), SubCollectionInfo("customers")],
                 nation_name=ReferenceInfo("key"),
                 total_consumer_value=ReferenceInfo("total_consumer_value"),
                 total_supplier_value=ReferenceInfo("total_supplier_value"),
+                avg_consumer_value=ReferenceInfo("avg_consumer_value"),
+                avg_supplier_value=ReferenceInfo("avg_supplier_value"),
                 best_consumer_value=FunctionInfo(
                     "MAX", [ChildReferenceExpressionInfo("acctbal", 1)]
                 ),
@@ -469,16 +478,16 @@ ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), 
                 ),
             ),
             """
-ROOT(columns=[('nation_name', nation_name_0), ('total_consumer_value', total_consumer_value), ('total_supplier_value', total_supplier_value), ('best_consumer_value', best_consumer_value), ('best_supplier_value', best_supplier_value)], orderings=[])
- PROJECT(columns={'best_consumer_value': agg_1, 'best_supplier_value': agg_1_2, 'nation_name_0': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': total_supplier_value})
-  PROJECT(columns={'agg_1': agg_1, 'agg_1_2': agg_1_2, 'key': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': agg_0_1})
-   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0_1': t1.agg_0, 'agg_1': t0.agg_1, 'agg_1_2': t1.agg_1, 'key': t0.key, 'total_consumer_value': t0.total_consumer_value})
-    PROJECT(columns={'agg_1': agg_1, 'key': key, 'total_consumer_value': agg_0})
-     JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'key': t0.key})
+ROOT(columns=[('nation_name', nation_name_0), ('total_consumer_value', total_consumer_value), ('total_supplier_value', total_supplier_value), ('avg_consumer_value', avg_consumer_value), ('avg_supplier_value', avg_supplier_value), ('best_consumer_value', best_consumer_value), ('best_supplier_value', best_supplier_value)], orderings=[])
+ PROJECT(columns={'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': avg_supplier_value, 'best_consumer_value': agg_2, 'best_supplier_value': agg_2_3, 'nation_name_0': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': total_supplier_value})
+  PROJECT(columns={'agg_2': agg_2, 'agg_2_3': agg_2_3, 'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': DEFAULT_TO(agg_0_1, 0:int64), 'key': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': DEFAULT_TO(agg_1_2, 0:int64)})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0_1': t1.agg_0, 'agg_1_2': t1.agg_1, 'agg_2': t0.agg_2, 'agg_2_3': t1.agg_2, 'avg_consumer_value': t0.avg_consumer_value, 'key': t0.key, 'total_consumer_value': t0.total_consumer_value})
+    PROJECT(columns={'agg_2': agg_2, 'avg_consumer_value': DEFAULT_TO(agg_0, 0:int64), 'key': key, 'total_consumer_value': DEFAULT_TO(agg_1, 0:int64)})
+     JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'key': t0.key})
       SCAN(table=tpch.NATION, columns={'key': n_nationkey})
-      AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(acctbal), 'agg_1': MAX(acctbal)})
+      AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': SUM(acctbal), 'agg_2': MAX(acctbal)})
        SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
-    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(account_balance), 'agg_1': MAX(account_balance)})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(account_balance), 'agg_1': SUM(account_balance), 'agg_2': MAX(account_balance)})
      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
 """,
             id="multiple_simple_aggregations_multiple_calcs",
@@ -650,13 +659,14 @@ def test_ast_to_relational(
     calc_pipeline: CollectionTestInfo,
     expected_relational_string: str,
     tpch_node_builder: AstNodeBuilder,
+    default_config: PyDoughConfigs,
 ):
     """
     Tests whether the AST nodes are correctly translated into Relational nodes
     with the expected string representation.
     """
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection)
+    relational = convert_ast_to_relational(collection, default_config)
     assert (
         relational.to_tree_string() == expected_relational_string.strip()
     ), "Mismatch between full string representation of output Relational node versus expected string"

@@ -37,6 +37,7 @@ __all__ = [
     "NDISTINCT",
     "ISIN",
     "SLICE",
+    "DEFAULT_TO",
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (
@@ -67,6 +68,9 @@ GRT = BinaryOperator(BinOp.GRT, RequireNumArgs(2), ConstantType(BooleanType()))
 BAN = BinaryOperator(BinOp.BAN, RequireMinArgs(2), SelectArgumentType(0))
 BOR = BinaryOperator(BinOp.BOR, RequireMinArgs(2), SelectArgumentType(0))
 BXR = BinaryOperator(BinOp.BXR, RequireMinArgs(2), SelectArgumentType(0))
+DEFAULT_TO = ExpressionFunctionOperator(
+    "DEFAULT_TO", False, AllowAny(), SelectArgumentType(0)
+)
 LENGTH = ExpressionFunctionOperator(
     "LENGTH", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
