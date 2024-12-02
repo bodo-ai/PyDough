@@ -29,8 +29,9 @@ def default_config() -> PyDoughConfigs:
     re-created with each request since a test function can mutate this.
     """
     config: PyDoughConfigs = PyDoughConfigs()
-    # config.sum_default_zero = True
-    # config.avg_default_zero = False
+    # Set the defaults manually, in case they ever change.
+    config.sum_default_zero = True
+    config.avg_default_zero = False
     return config
 
 
