@@ -472,7 +472,7 @@ class HybridConnection:
        used.
     - `required_steps`: an index indicating which step in the pipeline must be
        completed before the child can be defined.
-    - `aggs`: a list of aggregation calls made onto expressions relative to the
+    - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
     """
 
@@ -480,7 +480,7 @@ class HybridConnection:
     subtree: "HybridTree"
     connection_type: ConnectionType
     required_steps: int
-    aggs: list[HybridExpr]
+    aggs: dict[str, HybridFunctionExpr]
 
 
 class HybridTree:
@@ -578,7 +578,7 @@ class HybridTree:
             used to link `self` to `child`.
         """
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, []
+            self, child, connection_type, len(self.pipeline) - 1, {}
         )
         for idx, existing_child in enumerate(self.children):
             if child == existing_child:
@@ -617,6 +617,50 @@ class HybridTree:
             child_idx_mapping[child_idx] = self.add_child(subtree, connection_type)
 
 
+def make_hybrid_agg_expr(
+    hybrid: HybridTree, expr: PyDoughExpressionAST, child_ref_mapping: dict[int, int]
+) -> tuple[HybridExpr, int | None]:
+    """
+    TODO
+    """
+    hybrid_result: HybridExpr
+    child_idx: int | None = None
+    match expr:
+        case Literal():
+            hybrid_result = HybridLiteralExpr(expr)
+        case ChildReferenceExpression():
+            child_idx = child_ref_mapping[expr.child_idx]
+            child_connection = hybrid.children[child_idx]
+            expr_name = child_connection.subtree.pipeline[-1].renamings.get(
+                expr.term_name, expr.term_name
+            )
+            hybrid_result = HybridRefExpr(expr_name, expr.pydough_type)
+        case ExpressionFunctionCall() if not expr.operator.is_aggregation:
+            args: list[HybridExpr] = []
+            for arg in expr.args:
+                if not isinstance(arg, PyDoughExpressionAST):
+                    raise NotImplementedError(
+                        f"TODO: support converting {arg.__class__.__name__} as a function argument"
+                    )
+                hybrid_arg, hybrid_child_index = make_hybrid_agg_expr(
+                    hybrid, arg, child_ref_mapping
+                )
+                if hybrid_child_index is not None:
+                    if child_idx is None:
+                        child_idx = hybrid_child_index
+                    elif hybrid_child_index != child_idx:
+                        raise NotImplementedError(
+                            "Unsupported case: multiple child indices referenced by aggregation arguments"
+                        )
+                args.append(hybrid_arg)
+            hybrid_result = HybridFunctionExpr(expr.operator, args, expr.pydough_type)
+        case _:
+            raise NotImplementedError(
+                f"TODO: support converting {expr.__class__.__name__} in aggregations"
+            )
+    return hybrid_result, child_idx
+
+
 def make_hybrid_expr(
     hybrid: HybridTree, expr: PyDoughExpressionAST, child_ref_mapping: dict[int, int]
 ) -> HybridExpr:
@@ -636,6 +680,9 @@ def make_hybrid_expr(
         The HybridExpr node corresponding to `expr`
     """
     expr_name: str
+    child_connection: HybridConnection
+    agg_counter: int = 0
+    args: list[HybridExpr] = []
     match expr:
         case Literal():
             return HybridLiteralExpr(expr)
@@ -643,8 +690,8 @@ def make_hybrid_expr(
             return HybridColumnExpr(expr)
         case ChildReferenceExpression():
             hybrid_child_index: int = child_ref_mapping[expr.child_idx]
-            child_tree: HybridTree = hybrid.children[hybrid_child_index].subtree
-            expr_name = child_tree.pipeline[-1].renamings.get(
+            child_connection = hybrid.children[hybrid_child_index]
+            expr_name = child_connection.subtree.pipeline[-1].renamings.get(
                 expr.term_name, expr.term_name
             )
             return HybridChildRefExpr(expr_name, hybrid_child_index, expr.pydough_type)
@@ -670,8 +717,7 @@ def make_hybrid_expr(
                 expr.term_name, expr.term_name
             )
             return HybridRefExpr(expr_name, expr.pydough_type)
-        case ExpressionFunctionCall():
-            args: list[HybridExpr] = []
+        case ExpressionFunctionCall() if not expr.operator.is_aggregation:
             for arg in expr.args:
                 if not isinstance(arg, PyDoughExpressionAST):
                     raise NotImplementedError(
@@ -679,6 +725,45 @@ def make_hybrid_expr(
                     )
                 args.append(make_hybrid_expr(hybrid, arg, child_ref_mapping))
             return HybridFunctionExpr(expr.operator, args, expr.pydough_type)
+        case ExpressionFunctionCall() if expr.operator.is_aggregation:
+            hybrid_arg: HybridExpr
+            child_idx: int | None = None
+            arg_child_idx: int | None = None
+            for arg in expr.args:
+                if not isinstance(arg, PyDoughExpressionAST):
+                    raise NotImplementedError(
+                        f"TODO: support converting {arg.__class__.__name__} as a function argument"
+                    )
+                hybrid_arg, arg_child_idx = make_hybrid_agg_expr(
+                    hybrid, arg, child_ref_mapping
+                )
+                if arg_child_idx is not None:
+                    if child_idx is None:
+                        child_idx = arg_child_idx
+                    elif arg_child_idx != child_idx:
+                        raise NotImplementedError(
+                            "Unsupported case: multiple child indices referenced by aggregation arguments"
+                        )
+                args.append(hybrid_arg)
+            if child_idx is None:
+                raise NotImplementedError(
+                    "Unsupported case: no child indices referenced by aggregation arguments"
+                )
+            hybrid_call: HybridFunctionExpr = HybridFunctionExpr(
+                expr.operator, args, expr.pydough_type
+            )
+            child_connection = hybrid.children[child_idx]
+            agg_name: str
+            while True:
+                agg_name = f"agg_{agg_counter}"
+                agg_counter += 1
+                if (
+                    agg_name not in child_connection.subtree.pipeline[-1].terms
+                    and agg_name not in child_connection.aggs
+                ):
+                    break
+            child_connection.aggs[agg_name] = hybrid_call
+            return HybridChildRefExpr(agg_name, child_idx, expr.pydough_type)
         case _:
             raise NotImplementedError(
                 f"TODO: support converting {expr.__class__.__name__}"

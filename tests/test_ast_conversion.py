@@ -290,6 +290,130 @@ ROOT(columns=[('order_year', order_year), ('customer_region', customer_region), 
             id="lines_shipping_vs_customer_region",
         ),
         pytest.param(
+            TableCollectionInfo("Orders")
+            ** CalcInfo(
+                [SubCollectionInfo("lines")],
+                okey=ReferenceInfo("key"),
+                lsum=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
+                ),
+            ),
+            """
+ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
+ PROJECT(columns={'lsum': agg_0, 'okey': key})
+  JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+   SCAN(table=tpch.ORDER, columns={'key': o_orderkey})
+   AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(extended_price)})
+    SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey})
+""",
+            id="orders_sum_line_price",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [SubCollectionInfo("orders") ** SubCollectionInfo("lines")],
+                okey=ReferenceInfo("key"),
+                lsum=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
+                ),
+            ),
+            """
+ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
+ PROJECT(columns={'lsum': agg_0, 'okey': key})
+  JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+   SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
+   AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': SUM(extended_price)})
+    JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'customer_key': t0.customer_key, 'extended_price': t1.extended_price})
+     SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+     SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey})
+""",
+            id="customers_sum_line_price",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("customers")
+                    ** SubCollectionInfo("orders")
+                    ** SubCollectionInfo("lines")
+                ],
+                okey=ReferenceInfo("key"),
+                lsum=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
+                ),
+            ),
+            """
+ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
+ PROJECT(columns={'lsum': agg_0, 'okey': key})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(extended_price)})
+    JOIN(conditions=[t0.key_2 == t1.order_key], types=['inner'], columns={'extended_price': t1.extended_price, 'nation_key': t0.nation_key})
+     JOIN(conditions=[t0.key == t1.customer_key], types=['inner'], columns={'key_2': t1.key, 'nation_key': t0.nation_key})
+      SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+      SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+     SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey})
+""",
+            id="nations_sum_line_price",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("nations")
+                    ** SubCollectionInfo("customers")
+                    ** SubCollectionInfo("orders")
+                    ** SubCollectionInfo("lines")
+                ],
+                okey=ReferenceInfo("key"),
+                lsum=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
+                ),
+            ),
+            """
+ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
+ PROJECT(columns={'lsum': agg_0, 'okey': key})
+  JOIN(conditions=[t0.key == t1.region_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+   AGGREGATE(keys={'region_key': region_key}, aggregations={'agg_0': SUM(extended_price)})
+    JOIN(conditions=[t0.key_5 == t1.order_key], types=['inner'], columns={'extended_price': t1.extended_price, 'region_key': t0.region_key})
+     JOIN(conditions=[t0.key_2 == t1.customer_key], types=['inner'], columns={'key_5': t1.key, 'region_key': t0.region_key})
+      JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key_2': t1.key, 'region_key': t0.region_key})
+       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+      SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+     SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey})
+""",
+            id="regions_sum_line_price",
+        ),
+        pytest.param(
+            TableCollectionInfo("Orders")
+            ** CalcInfo(
+                [SubCollectionInfo("lines")],
+                okey=ReferenceInfo("key"),
+                lavg=FunctionInfo(
+                    "DIV",
+                    [
+                        FunctionInfo(
+                            "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
+                        ),
+                        FunctionInfo(
+                            "COUNT", [ChildReferenceExpressionInfo("extended_price", 0)]
+                        ),
+                    ],
+                ),
+            ),
+            """
+ROOT(columns=[('okey', okey), ('lavg', lavg)], orderings=[])
+ PROJECT(columns={'lavg': agg_0 / agg_1, 'okey': key})
+  JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'key': t0.key})
+   SCAN(table=tpch.ORDER, columns={'key': o_orderkey})
+   AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(extended_price), 'agg_1': COUNT(extended_price)})
+    SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey})
+""",
+            id="orders_sum_vs_count_line_price",
+        ),
+        pytest.param(
             TableCollectionInfo("Regions")
             ** WhereInfo(
                 [],

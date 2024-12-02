@@ -31,6 +31,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 from pydough.relational.relational_nodes import (
+    Aggregate,
     ColumnPruner,
     Join,
     JoinType,
@@ -107,7 +108,7 @@ class RelTranslation:
             case HybridRefExpr() | HybridChildRefExpr() | HybridBackRefExpr():
                 assert context is not None
                 return context.expressions[expr]
-            case HybridFunctionExpr() if not expr.operator.is_aggregation:
+            case HybridFunctionExpr():
                 assert context is not None
                 inputs: list[RelationalExpression] = [
                     self.translate_expression(arg, context) for arg in expr.args
@@ -188,40 +189,76 @@ class RelTranslation:
             else:
                 out_columns[expr] = existing_ref
 
-        # If this is stepping down from a parent to a child, shift all the
-        # join keys accordingly.
-        if child_idx is None:
-            out_join_keys = [
-                (lhs_key, rhs_key.shift_back(1)) for lhs_key, rhs_key in out_join_keys
-            ]
+        # Skip the following steps for semi/anti joins
+        if join_type not in (JoinType.SEMI, JoinType.ANTI):
+            # If this is stepping down from a parent to a child, shift all the
+            # join keys accordingly.
+            if child_idx is None:
+                out_join_keys = [
+                    (lhs_key, rhs_key.shift_back(1))
+                    for lhs_key, rhs_key in out_join_keys
+                ]
 
-        # Add all of the new references from the right hand side (in
-        # alphabetical order).
-        expr_refs: list[tuple[HybridExpr, ColumnReference]] = list(
-            rhs_result.expressions.items()
-        )
-        expr_refs.sort(key=lambda pair: pair[1].name)
-        for expr, old_reference in expr_refs:
-            # If the join is being done to pull elements from the child context
-            # into the current context, then promote the references to child
-            # references.
-            if child_idx is not None:
-                if not isinstance(expr, HybridRefExpr):
-                    continue
-                expr = HybridChildRefExpr(expr.name, child_idx, expr.typ)
-            # Names from the LHS are maintained as-is, so if there is a
-            # an overlapping name in the RHS, a new name must be found.
-            old_name: str = old_reference.name
-            new_name: str = old_name
-            while new_name in join_columns:
-                new_name = f"{old_name}_{self.dummy_idx}"
-                self.dummy_idx += 1
-            new_reference: ColumnReference = ColumnReference(
-                new_name, old_reference.data_type
+            # Add all of the new references from the right hand side (in
+            # alphabetical order).
+            expr_refs: list[tuple[HybridExpr, ColumnReference]] = list(
+                rhs_result.expressions.items()
             )
-            join_columns[new_name] = old_reference.with_input(input_aliases[1])
-            out_columns[expr] = new_reference
+            expr_refs.sort(key=lambda pair: pair[1].name)
+            for expr, old_reference in expr_refs:
+                # If the join is being done to pull elements from the child context
+                # into the current context, then promote the references to child
+                # references.
+                if child_idx is not None:
+                    if not isinstance(expr, HybridRefExpr):
+                        continue
+                    expr = HybridChildRefExpr(expr.name, child_idx, expr.typ)
+                # Names from the LHS are maintained as-is, so if there is a
+                # an overlapping name in the RHS, a new name must be found.
+                old_name: str = old_reference.name
+                new_name: str = old_name
+                while new_name in join_columns:
+                    new_name = f"{old_name}_{self.dummy_idx}"
+                    self.dummy_idx += 1
+                new_reference: ColumnReference = ColumnReference(
+                    new_name, old_reference.data_type
+                )
+                join_columns[new_name] = old_reference.with_input(input_aliases[1])
+                out_columns[expr] = new_reference
+
         return TranslationOutput(out_rel, out_columns, out_join_keys)
+
+    def apply_aggregations(
+        self,
+        connection: HybridConnection,
+        join_keys: list[tuple[HybridExpr, HybridExpr]],
+        context: TranslationOutput,
+    ) -> TranslationOutput:
+        """
+        TODO
+        """
+        assert connection.connection_type == ConnectionType.AGGREGATION
+        col_ref: ColumnReference
+        out_columns: dict[HybridExpr, ColumnReference] = {}
+        keys: dict[str, ColumnReference] = {}
+        aggregations: dict[str, CallExpression] = {}
+        for _, rhs_key in join_keys:
+            col_ref = context.expressions[rhs_key]
+            out_columns[rhs_key] = col_ref
+            keys[col_ref.name] = col_ref
+        for agg_name, agg_func in connection.aggs.items():
+            assert agg_name not in keys
+            col_ref = ColumnReference(agg_name, agg_func.typ)
+            hybrid_expr: HybridExpr = HybridRefExpr(agg_name, agg_func.typ)
+            out_columns[hybrid_expr] = col_ref
+            args: list[RelationalExpression] = [
+                context.expressions[arg] for arg in agg_func.args
+            ]
+            aggregations[agg_name] = CallExpression(
+                agg_func.operator, agg_func.typ, args
+            )
+        out_rel: Relational = Aggregate(context.relation, keys, aggregations)
+        return TranslationOutput(out_rel, out_columns, context.join_keys)
 
     def handle_children(
         self, context: TranslationOutput, hybrid: HybridTree, pipeline_idx: int
@@ -247,18 +284,47 @@ class RelTranslation:
                 child_output = self.rel_translation(
                     child, child.subtree, len(child.subtree.pipeline) - 1
                 )
-                if child.connection_type == ConnectionType.SINGULAR:
-                    context = self.join_outputs(
-                        context,
-                        child_output,
-                        JoinType.LEFT,
-                        child_output.join_keys,
-                        child_idx,
-                    )
-                else:
-                    raise NotImplementedError(
-                        f"TODO: support connection type {child.connection_type}"
-                    )
+                join_keys: list[tuple[HybridExpr, HybridExpr]] = child_output.join_keys
+                match child.connection_type:
+                    case ConnectionType.SINGULAR:
+                        context = self.join_outputs(
+                            context,
+                            child_output,
+                            JoinType.LEFT,
+                            join_keys,
+                            child_idx,
+                        )
+                    case ConnectionType.AGGREGATION:
+                        child_output = self.apply_aggregations(
+                            child, join_keys, child_output
+                        )
+                        context = self.join_outputs(
+                            context,
+                            child_output,
+                            JoinType.LEFT,
+                            join_keys,
+                            child_idx,
+                        )
+                    case ConnectionType.HAS:
+                        context = self.join_outputs(
+                            context,
+                            child_output,
+                            JoinType.SEMI,
+                            join_keys,
+                            child_idx,
+                        )
+                    case ConnectionType.HASNOT:
+                        context = self.join_outputs(
+                            context,
+                            child_output,
+                            JoinType.SEMI,
+                            join_keys,
+                            child_idx,
+                        )
+                    case conn_type:
+                        raise NotImplementedError(
+                            f"TODO: support connection type {conn_type}"
+                        )
         return context
 
     def build_simple_table_scan(
@@ -600,13 +666,6 @@ def convert_ast_to_relational(node: PyDoughCollectionAST) -> RelationalRoot:
     # final rel node.
     hybrid: HybridTree = make_hybrid_tree(node)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
-    #######################################################################
-    ###              FOR DEBUGGING: UNCOMMENT THIS SECTION              ###
-    #######################################################################
-    # base_hybrid: HybridTree = hybrid
-    # while base_hybrid.parent is not None:
-    #     base_hybrid = base_hybrid.parent
-    # print(base_hybrid)
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
     )
