@@ -424,16 +424,20 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(n
         pytest.param(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
-            ** OrderInfo(
-                [], (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, True)
-            )
+            ** OrderInfo([], (ReferenceInfo("name"), False, True))
             ** CalcInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
             """
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(name_3):desc_last])
+ PROJECT(columns={'name_3': name_3, 'nation_name': name_3, 'region_name': name})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+   SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
 """,
+            # TODO: Prune name_3 from project since its now equivalent to nation_name.
             id="join_order_by",
         ),
         pytest.param(
@@ -486,7 +490,9 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(n
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** OrderInfo([], (ReferenceInfo("name"), True, False))
+            ** OrderInfo(
+                [], (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, False)
+            )
             ** SubCollectionInfo("nations"),
             """
 """,
