@@ -537,8 +537,6 @@ class RelTranslation:
         """
         proj_columns: dict[str, RelationalExpression] = {}
         out_columns: dict[HybridExpr, ColumnReference] = {}
-        if context is None:
-            context = self.handle_children()
         # Propagate all of the existing columns.
         for name in context.relation.columns:
             proj_columns[name] = ColumnReference(
