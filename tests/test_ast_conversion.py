@@ -1046,10 +1046,11 @@ ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('tota
             id="mostly_positive_accounts_per_nation3",
         ),
         pytest.param(
-            TableCollectionInfo("Regions") ** TopKInfo([], 2),
+            TableCollectionInfo("Regions")
+            ** TopKInfo([], 2, (ReferenceInfo("name"), True, True)),
             """
-ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
- LIMIT(limit=Literal(value=2, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[])
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):asc_last])
+ LIMIT(limit=Literal(value=2, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[(name):asc_last])
   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
 """,
             id="simple_topk",
@@ -1057,16 +1058,16 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
         pytest.param(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
-            ** TopKInfo([], 10)
+            ** TopKInfo([], 10, (ReferenceInfo("name"), True, True))
             ** CalcInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
             """
-ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[])
- PROJECT(columns={'nation_name': name_3, 'region_name': name})
-  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'name': name, 'name_3': name_3}, orderings=[])
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(name_3):asc_last])
+ PROJECT(columns={'name_3': name_3, 'nation_name': name_3, 'region_name': name})
+  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'name': name, 'name_3': name_3}, orderings=[(name_3):asc_last])
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
     SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
@@ -1237,25 +1238,55 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ** CalcInfo(
                 [
                     # TODO: Add an ordering to the topk
-                    SubCollectionInfo("suppliers") ** TopKInfo([], 100),
+                    SubCollectionInfo("suppliers")
+                    ** TopKInfo(
+                        [], 100, (ReferenceInfo("account_balance"), True, True)
+                    ),
                 ],
                 name=ReferenceInfo("name"),
                 n_top_suppliers=FunctionInfo(
                     "COUNT", [ChildReferenceExpressionInfo("key", 0)]
                 ),
-            )
-            ** TopKInfo([], 10),
+            ),
             """
 ROOT(columns=[('name', name), ('n_top_suppliers', n_top_suppliers)], orderings=[])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'n_top_suppliers': n_top_suppliers, 'name': name}, orderings=[])
-  PROJECT(columns={'n_top_suppliers': DEFAULT_TO(agg_0, 0:int64), 'name': name})
-   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
-    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
-     LIMIT(limit=Literal(value=100, type=Int64Type()), columns={'key': key, 'nation_key': nation_key}, orderings=[])
-      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+ PROJECT(columns={'n_top_suppliers': DEFAULT_TO(agg_0, 0:int64), 'name': name})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+    LIMIT(limit=Literal(value=100, type=Int64Type()), columns={'key': key, 'nation_key': nation_key}, orderings=[(account_balance):asc_last])
+     SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="count_at_most_100_suppliers_per_nation",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** OrderInfo(
+                [SubCollectionInfo("suppliers")],
+                (
+                    FunctionInfo("COUNT", [ChildReferenceExpressionInfo("key", 0)]),
+                    True,
+                    True,
+                ),
+            ),
+            """
+""",
+            id="nations_order_by_num_suppliers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** TopKInfo(
+                [SubCollectionInfo("suppliers")],
+                5,
+                (
+                    FunctionInfo("COUNT", [ChildReferenceExpressionInfo("key", 0)]),
+                    True,
+                    True,
+                ),
+            ),
+            """
+""",
+            id="top_5_nations_by_num_suppliers",
         ),
     ],
 )
