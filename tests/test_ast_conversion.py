@@ -54,7 +54,7 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ),
             """
 ROOT(columns=[('region_name', region_name), ('magic_word', magic_word)], orderings=[])
- PROJECT(columns={'magic_word': foo:string, 'region_name': name})
+ PROJECT(columns={'magic_word': 'foo':string, 'region_name': name})
   SCAN(table=tpch.REGION, columns={'name': r_name})
 """,
             id="scan_calc",
@@ -66,7 +66,7 @@ ROOT(columns=[('region_name', region_name), ('magic_word', magic_word)], orderin
             """
 ROOT(columns=[('fizz', fizz), ('buzz', buzz)], orderings=[])
  PROJECT(columns={'buzz': key, 'fizz': name_0})
-  PROJECT(columns={'key': key, 'name_0': foo:string})
+  PROJECT(columns={'key': key, 'name_0': 'foo':string})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
 """,
             id="scan_calc_calc",
@@ -135,7 +135,7 @@ ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key',
             ),
             """
 ROOT(columns=[('name', name_0), ('country_code', country_code), ('adjusted_account_balance', adjusted_account_balance), ('is_named_john', is_named_john)], orderings=[])
- PROJECT(columns={'adjusted_account_balance': IFF(acctbal < 0:int64, 0:int64, acctbal), 'country_code': SLICE(phone, 0:int64, 3:int64, 1:int64), 'is_named_john': LOWER(name) < john:string, 'name_0': LOWER(name)})
+ PROJECT(columns={'adjusted_account_balance': IFF(acctbal < 0:int64, 0:int64, acctbal), 'country_code': SLICE(phone, 0:int64, 3:int64, 1:int64), 'is_named_john': LOWER(name) < 'john':string, 'name_0': LOWER(name)})
   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'phone': c_phone})
 """,
             id="scan_customer_call_functions",
@@ -600,7 +600,7 @@ ROOT(columns=[('order_key', order_key), ('max_ratio', max_ratio)], orderings=[])
 ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
  PROJECT(columns={'comment': comment_1, 'key': key_2, 'name': name_3, 'region_key': region_key})
   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
-   FILTER(condition=name == ASIA:string, columns={'key': key})
+   FILTER(condition=name == 'ASIA':string, columns={'key': key})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
 """,
@@ -620,7 +620,7 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ),
             """
 ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
- FILTER(condition=name_3 == ASIA:string, columns={'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
+ FILTER(condition=name_3 == 'ASIA':string, columns={'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
   JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t0.region_key})
    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
