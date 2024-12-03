@@ -575,7 +575,7 @@ class RelTranslation:
             node.limit.records_to_keep, Int64Type()
         )
         orderings: list[ExpressionSortInfo] = make_relational_ordering(
-            node.collation, node.renamings, context.expressions
+            node.collation, context.expressions
         )
         out_rel: Limit = Limit(context.relation, limit_expr, kept_columns, orderings)
         return TranslationOutput(out_rel, context.expressions, context.join_keys)
@@ -748,7 +748,6 @@ class RelTranslation:
 
 def make_relational_ordering(
     collation: list[HybridCollation],
-    renamings: dict[str, str],
     expressions: dict[HybridExpr, ColumnReference],
 ) -> list[ExpressionSortInfo]:
     """
@@ -757,8 +756,6 @@ def make_relational_ordering(
     Args:
         collation (list[CollationExpression]): The list of collation
             expressions to convert.
-        renamings (dict[str, str]): The dictionary of renamings to apply to
-            the collation expressions.
         expressions (dict[HybridExpr, ColumnReference]): The dictionary of
             expressions to use for the relational ordering.
 
@@ -768,12 +765,7 @@ def make_relational_ordering(
     """
     orderings: list[ExpressionSortInfo] = []
     for col_expr in collation:
-        raw_expr = col_expr.expr
-        assert isinstance(raw_expr, HybridRefExpr)
-        original_name = raw_expr.name
-        name = renamings.get(original_name, original_name)
-        hybrid_expr = HybridRefExpr(name, raw_expr.typ)
-        relational_expr: ColumnReference = expressions[hybrid_expr]
+        relational_expr: ColumnReference = expressions[col_expr.expr]
         collation_expr: ExpressionSortInfo = ExpressionSortInfo(
             relational_expr, col_expr.asc, col_expr.na_first
         )
@@ -827,9 +819,7 @@ def convert_ast_to_relational(
         ordered_columns.append((original_name, rel_expr))
     ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
     if hybrid.ordering:
-        orderings = make_relational_ordering(
-            hybrid.ordering, renamings, output.expressions
-        )
+        orderings = make_relational_ordering(hybrid.ordering, output.expressions)
     unpruned_result: RelationalRoot = RelationalRoot(
         output.relation, ordered_columns, orderings
     )
