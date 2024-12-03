@@ -139,7 +139,7 @@ class HybridCollation(HybridExpr):
         renamed_expr: HybridExpr = self.expr.apply_renamings(renamings)
         if renamed_expr is self.expr:
             return self
-        return HybridCollation(renamed_expr, self.asc, not self.na_first)
+        return HybridCollation(renamed_expr, self.asc, self.na_first)
 
     def shift_back(self, levels: int) -> HybridExpr:
         raise NotImplementedError
