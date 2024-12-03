@@ -11,6 +11,7 @@ import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
 
 import pydough
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
@@ -19,6 +20,19 @@ from pydough.database_connectors import (
 from pydough.metadata.graphs import GraphMetadata
 from pydough.pydough_ast import AstNodeBuilder
 from pydough.pydough_ast import pydough_operators as pydop
+
+
+@pytest.fixture
+def default_config() -> PyDoughConfigs:
+    """
+    The de-facto configuration of PyDoughConfigs used in testing. This is
+    re-created with each request since a test function can mutate this.
+    """
+    config: PyDoughConfigs = PyDoughConfigs()
+    # Set the defaults manually, in case they ever change.
+    config.sum_default_zero = True
+    config.avg_default_zero = False
+    return config
 
 
 @pytest.fixture(scope="session")

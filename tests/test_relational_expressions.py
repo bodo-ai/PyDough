@@ -40,7 +40,7 @@ from pydough.types import Int32Type, Int64Type, StringType
         ),
     ],
 )
-def test_column_reference_to_string(column_ref: ColumnReference, output: str):
+def test_column_reference_to_string(column_ref: ColumnReference, output: str) -> None:
     """
     Tests the to_string() method of the ColumnReference class.
     """
@@ -90,7 +90,7 @@ def test_column_reference_to_string(column_ref: ColumnReference, output: str):
 )
 def test_column_reference_equals(
     ref1: ColumnReference, ref2: RelationalExpression, output: bool
-):
+) -> None:
     """
     Tests the equality behavior of a ColumnReference with
     another RelationalExpression.
@@ -113,7 +113,7 @@ def test_column_reference_equals(
         ),
     ],
 )
-def test_literal_expression_to_string(literal: LiteralExpression, output: str):
+def test_literal_expression_to_string(literal: LiteralExpression, output: str) -> None:
     """
     Tests the to_string() method of the LiteralExpression class.
     """
@@ -151,7 +151,7 @@ def test_literal_expression_to_string(literal: LiteralExpression, output: str):
 )
 def test_literals_equal(
     ref1: LiteralExpression, ref2: RelationalExpression, output: bool
-):
+) -> None:
     """
     Tests the equality behavior of a LiteralExpression with
     another RelationalExpression.
@@ -184,7 +184,9 @@ def test_literals_equal(
         ),
     ],
 )
-def test_expression_sort_info_to_string(ordering: ExpressionSortInfo, output: str):
+def test_expression_sort_info_to_string(
+    ordering: ExpressionSortInfo, output: str
+) -> None:
     """
     Tests the to_string() method of the ExpressionSortInfo class.
     """
@@ -228,7 +230,7 @@ def test_expression_sort_info_to_string(ordering: ExpressionSortInfo, output: st
 )
 def test_expression_sort_info_equals(
     ordering1: ExpressionSortInfo, ordering2: Any, output: bool
-):
+) -> None:
     """
     Tests the equality behavior of a ExpressionSortInfo with
     another object.
@@ -251,7 +253,7 @@ def test_expression_sort_info_equals(
         ),
     ],
 )
-def test_call_expressions_to_string(expr: CallExpression, output: str):
+def test_call_expressions_to_string(expr: CallExpression, output: str) -> None:
     """
     Tests the to_string() method of the CallExpression class.
     """
@@ -301,7 +303,7 @@ def test_call_expressions_to_string(expr: CallExpression, output: str):
 )
 def test_call_expressions_equal(
     expr1: CallExpression, expr2: RelationalExpression, output: bool
-):
+) -> None:
     """
     Tests the equality behavior of a CallExpression with another
     RelationalExpression.
@@ -324,7 +326,7 @@ def test_call_expressions_equal(
         ),
     ],
 )
-def test_call_expression_is_aggregation(expr: CallExpression, output: bool):
+def test_call_expression_is_aggregation(expr: CallExpression, output: bool) -> None:
     """
     Tests the is_aggregation property of the CallExpression class.
     """

@@ -46,6 +46,7 @@ __all__ = [
     "ExpressionFunctionOperator",
     "BinOp",
     "BinaryOperator",
+    "DEFAULT_TO",
 ]
 
 from .expression_operators import (
@@ -57,6 +58,7 @@ from .expression_operators import (
     BXR,
     CONTAINS,
     COUNT,
+    DEFAULT_TO,
     DIV,
     ENDSWITH,
     EQU,

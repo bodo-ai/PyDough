@@ -32,7 +32,7 @@ from pydough.types import (
 )
 
 
-def test_graph_structure(sample_graphs: GraphMetadata):
+def test_graph_structure(sample_graphs: GraphMetadata) -> None:
     """
     Testing that the sample graphs, when parsed, each produce correctly formatted
     GraphMetadata objects.
@@ -74,7 +74,9 @@ def test_graph_structure(sample_graphs: GraphMetadata):
         pytest.param("Empty", [], id="Empty"),
     ],
 )
-def test_get_collection_names(graph_name: str, answer, get_sample_graph: graph_fetcher):
+def test_get_collection_names(
+    graph_name: str, answer, get_sample_graph: graph_fetcher
+) -> None:
     """
     Testing that the get_collection_names method of GraphMetadata correctly
     fetches the names of all collections in the metadata for a graph.
@@ -143,7 +145,7 @@ def test_get_property_names(
     collection_name: str,
     answer: MutableSequence[str],
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Testing that the get_property_names method of CollectionMetadata correctly
     fetches the names of all properties in the metadata for a collection.
@@ -161,7 +163,7 @@ def test_get_sample_graph_nouns(
     sample_graph_names: str,
     get_sample_graph: graph_fetcher,
     get_sample_graph_nouns: noun_fetcher,
-):
+) -> None:
     """
     Testing that the get_nouns method of CollectionMetadata correctly
     identifies each noun in the graph and all of its meanings.
@@ -224,7 +226,7 @@ def test_simple_table_info(
     table_path: str,
     unique_properties: MutableSequence[str | MutableSequence[str]],
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Testing that the table path and unique properties fields of simple table
     collections are set correctly.
@@ -295,7 +297,7 @@ def test_table_column_info(
     column_name: str,
     data_type: PyDoughType,
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Testing that the type and column name fields of properties are set
     correctly.
@@ -362,7 +364,7 @@ def test_simple_join_info(
     no_collisions: bool,
     keys: MutableMapping[str, MutableSequence[str]],
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Testing that the fields of simple join properties are set correctly.
     """
@@ -539,7 +541,7 @@ def test_compound_relationship_info(
     inherited_properties: dict[str, str],
     reverse_inherited_properties: dict[str, str],
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Testing that the fields of compound relationships are set correctly.
     """

@@ -424,6 +424,6 @@ def column_pruner() -> ColumnPruner:
 )
 def test_pruning_columns(
     column_pruner: ColumnPruner, input: RelationalRoot, output: RelationalRoot
-):
+) -> None:
     pruned = column_pruner.prune_unused_columns(input)
     assert pruned == output

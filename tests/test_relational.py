@@ -28,7 +28,7 @@ from pydough.relational import (
 from pydough.types import BooleanType, Int64Type, StringType
 
 
-def test_scan_inputs():
+def test_scan_inputs() -> None:
     """
     Tests the inputs property for the Scan node.
     """
@@ -57,7 +57,7 @@ def test_scan_inputs():
         ),
     ],
 )
-def test_scan_to_string(scan_node: Scan, output: str):
+def test_scan_to_string(scan_node: Scan, output: str) -> None:
     """
     Tests the to_string() functionality for the Scan node.
     """
@@ -135,7 +135,7 @@ def test_scan_to_string(scan_node: Scan, output: str):
         ),
     ],
 )
-def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
+def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool) -> None:
     """
     Tests the equality functionality for the Scan node.
     """
@@ -163,7 +163,7 @@ def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool):
         ),
     ],
 )
-def test_project_to_string(project: Project, output: str):
+def test_project_to_string(project: Project, output: str) -> None:
     """
     Test the to_string() functionality for the Project node.
     """
@@ -261,7 +261,7 @@ def test_project_to_string(project: Project, output: str):
 )
 def test_project_equals(
     first_project: Project, second_project: Relational, output: bool
-):
+) -> None:
     """
     Tests the equality functionality for the Project node.
     """
@@ -320,7 +320,7 @@ def test_project_equals(
         ),
     ],
 )
-def test_limit_to_string(limit: Limit, output: str):
+def test_limit_to_string(limit: Limit, output: str) -> None:
     """
     Tests the to_string() functionality for the Limit node.
     """
@@ -468,7 +468,9 @@ def test_limit_to_string(limit: Limit, output: str):
         ),
     ],
 )
-def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool):
+def test_limit_equals(
+    first_limit: Limit, second_limit: Relational, output: bool
+) -> None:
     """
     Tests the equality functionality for the Limit node.
     """
@@ -482,7 +484,7 @@ def test_limit_equals(first_limit: Limit, second_limit: Relational, output: bool
         pytest.param(make_relational_literal(1, StringType()), id="string_type"),
     ],
 )
-def test_invalid_limit(literal: LiteralExpression):
+def test_invalid_limit(literal: LiteralExpression) -> None:
     """
     Test to verify that we raise an error when the limit is not an integer
     type regardless of the value type.
@@ -548,7 +550,7 @@ def test_invalid_limit(literal: LiteralExpression):
         ),
     ],
 )
-def test_aggregate_to_string(agg: Aggregate, output: str):
+def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
     """
     Tests the to_string() functionality for the Aggregate node.
     """
@@ -742,14 +744,16 @@ def test_aggregate_to_string(agg: Aggregate, output: str):
         ),
     ],
 )
-def test_aggregate_equals(first_agg: Aggregate, second_agg: Relational, output: bool):
+def test_aggregate_equals(
+    first_agg: Aggregate, second_agg: Relational, output: bool
+) -> None:
     """
     Tests the equality functionality for the Aggregate node.
     """
     assert first_agg.equals(second_agg) == output
 
 
-def test_aggregate_requires_aggregations():
+def test_aggregate_requires_aggregations() -> None:
     """
     Test to verify that we raise an error when the aggregate node is
     created without non-aggregation functions.
@@ -771,7 +775,7 @@ def test_aggregate_requires_aggregations():
         )
 
 
-def test_aggregate_unique_keys():
+def test_aggregate_unique_keys() -> None:
     """
     Test to verify that we raise an error when the aggregate node has duplicate
     names between keys and aggregations.
@@ -828,7 +832,7 @@ def test_aggregate_unique_keys():
         ),
     ],
 )
-def test_filter_to_string(filter: Filter, output: str):
+def test_filter_to_string(filter: Filter, output: str) -> None:
     """
     Tests the to_string() functionality for the Filter node.
     """
@@ -945,14 +949,16 @@ def test_filter_to_string(filter: Filter, output: str):
         ),
     ],
 )
-def test_filter_equals(first_filter: Filter, second_filter: Relational, output: bool):
+def test_filter_equals(
+    first_filter: Filter, second_filter: Relational, output: bool
+) -> None:
     """
     Tests the equality functionality for the Filter node.
     """
     assert first_filter.equals(second_filter) == output
 
 
-def test_filter_requires_boolean_condition():
+def test_filter_requires_boolean_condition() -> None:
     """
     Test to verify that we raise an error when the filter node is
     created with a non-boolean condition.
@@ -999,7 +1005,7 @@ def test_filter_requires_boolean_condition():
         ),
     ],
 )
-def test_root_to_string(root: RelationalRoot, output: str):
+def test_root_to_string(root: RelationalRoot, output: str) -> None:
     """
     Tests the to_string() functionality for the Root node.
     """
@@ -1186,14 +1192,16 @@ def test_root_to_string(root: RelationalRoot, output: str):
         ),
     ],
 )
-def test_root_equals(first_root: RelationalRoot, second_root: Relational, output: bool):
+def test_root_equals(
+    first_root: RelationalRoot, second_root: Relational, output: bool
+) -> None:
     """
     Tests the equality functionality for the Root node.
     """
     assert first_root.equals(second_root) == output
 
 
-def test_root_duplicate_columns():
+def test_root_duplicate_columns() -> None:
     """
     Test to verify that we raise an error when the root node is
     created with duplicate column names.
@@ -1354,7 +1362,7 @@ def test_root_duplicate_columns():
         ),
     ],
 )
-def test_join_to_string(join: Join, output: str):
+def test_join_to_string(join: Join, output: str) -> None:
     """
     Tests the to_string() functionality for the Join node.
     """
@@ -1890,14 +1898,14 @@ def test_join_to_string(join: Join, output: str):
         ),
     ],
 )
-def test_join_equals(first_join: Join, second_join: Relational, output: bool):
+def test_join_equals(first_join: Join, second_join: Relational, output: bool) -> None:
     """
     Tests the equality functionality for the Join node.
     """
     assert first_join.equals(second_join) == output
 
 
-def test_join_requires_boolean_condition():
+def test_join_requires_boolean_condition() -> None:
     """
     Test to verify that we raise an error when the join node is
     created with a non-boolean condition.

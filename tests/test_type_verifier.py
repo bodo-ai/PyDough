@@ -33,7 +33,7 @@ def test_verification(
     verifier: pydop.TypeVerifier,
     args_info: MutableSequence[AstNodeTestInfo],
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Checks that verifiers accept certain arguments without raising an exception
     and also returns True.

@@ -28,7 +28,7 @@ from pydough.sqlglot import execute
 from pydough.types import BooleanType, UnknownType
 
 
-def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext):
+def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext) -> None:
     """
     Tests a simple join and aggregate to compute the total salary for each
     person in the PEOPLE table.
@@ -97,7 +97,7 @@ def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext):
     pd.testing.assert_frame_equal(output, expected_output)
 
 
-def test_person_jobs_multi_join(sqlite_people_jobs_context: DatabaseContext):
+def test_person_jobs_multi_join(sqlite_people_jobs_context: DatabaseContext) -> None:
     """
     Tests an example of a query that uses a join relational node to
     represent multiple joins. It should be noted that this may not be optimal

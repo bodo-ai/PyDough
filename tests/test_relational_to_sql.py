@@ -662,7 +662,7 @@ def sqlite_dialect() -> SQLiteDialect:
 )
 def test_convert_relation_to_sql(
     root: RelationalRoot, sql_text: str, sqlite_dialect: SQLiteDialect
-):
+) -> None:
     """
     Test converting a relational tree to SQL text in the SQLite dialect.
     """
@@ -692,7 +692,7 @@ def test_convert_relation_to_sql(
 )
 def test_tpch_relational_to_sql(
     root: RelationalRoot, sql_text: str, sqlite_dialect: SQLiteDialect
-):
+) -> None:
     """
     Test that we can take possible relational trees from select TPCH queries
     and convert them to reasonable SQL text. This will not be 1:1 in the result,
@@ -904,7 +904,7 @@ def test_tpch_relational_to_sql(
 )
 def test_function_to_sql(
     root: RelationalRoot, sql_text: str, sqlite_dialect: SQLiteDialect
-):
+) -> None:
     """
     Tests that should be small as we need to just test converting a function
     to SQL.

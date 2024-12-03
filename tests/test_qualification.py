@@ -972,7 +972,7 @@ def test_qualify_node_to_ast_string(
     impl: Callable[[UnqualifiedNode], UnqualifiedNode],
     answer_tree_str: str,
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
     qualified AST version, with the correct string representation.

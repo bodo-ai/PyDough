@@ -47,7 +47,7 @@ def test_invalid_deduction(
     args_info: MutableSequence[AstNodeTestInfo],
     error_message: str,
     tpch_node_builder: AstNodeBuilder,
-):
+) -> None:
     """
     Checks cases where calling an expression type deducer on a list of PyDough
     AST objects should raise an exception

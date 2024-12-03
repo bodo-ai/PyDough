@@ -1524,7 +1524,7 @@ def test_node_to_sqlglot(
     sqlglot_relational_visitor: SQLGlotRelationalVisitor,
     node: Relational,
     sqlglot_expr: Expression,
-):
+) -> None:
     """
     Test converting individual subtrees to SQLGlot starting
     from the given node.
@@ -1564,7 +1564,7 @@ def test_node_to_sqlglot(
         ),
     ],
 )
-def test_expression_identifiers(expr: Expression, expected: set[Ident]):
+def test_expression_identifiers(expr: Expression, expected: set[Ident]) -> None:
     """
     Verify that we can properly find all of the identifiers in each expression.
     """
@@ -1622,7 +1622,7 @@ def test_relational_to_sqlglot(
     sqlglot_relational_visitor: SQLGlotRelationalVisitor,
     root: RelationalRoot,
     sqlglot_expr: Expression,
-):
+) -> None:
     """
     Test converting a root node to SQLGlot using
     relational_to_sqlglot
