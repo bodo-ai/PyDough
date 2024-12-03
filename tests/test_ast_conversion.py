@@ -666,19 +666,168 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             ** WhereInfo(
                 [],
                 FunctionInfo(
-                    "LET",
+                    "CONTAINS",
                     [ReferenceInfo("name"), BackReferenceExpressionInfo("name", 1)],
                 ),
             ),
             """
 ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
  PROJECT(columns={'comment': comment_1, 'key': key_2, 'name': name_3, 'region_key': region_key})
-  FILTER(condition=name_3 < name, columns={'comment_1': comment_1, 'key_2': key_2, 'name_3': name_3, 'region_key': region_key})
+  FILTER(condition=CONTAINS(name_3, name), columns={'comment_1': comment_1, 'key_2': key_2, 'name_3': name_3, 'region_key': region_key})
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t1.region_key})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
     SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
 """,
-            id="filter_back",
+            id="nation_name_contains_region_name",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** SubCollectionInfo("customers")
+            ** SubCollectionInfo("orders")
+            ** SubCollectionInfo("lines")
+            ** WhereInfo(
+                [
+                    SubCollectionInfo("part_and_supplier")
+                    ** SubCollectionInfo("supplier")
+                    ** SubCollectionInfo("nation")
+                    ** SubCollectionInfo("region")
+                ],
+                FunctionInfo(
+                    "EQU",
+                    [
+                        BackReferenceExpressionInfo("name", 4),
+                        ChildReferenceExpressionInfo("name", 0),
+                    ],
+                ),
+            )
+            ** CalcInfo(
+                [],
+                rname=BackReferenceExpressionInfo("name", 4),
+                price=ReferenceInfo("extended_price"),
+            ),
+            """
+ROOT(columns=[('rname', rname), ('price', price)], orderings=[])
+ PROJECT(columns={'price': extended_price, 'rname': name})
+  FILTER(condition=name == name_16, columns={'extended_price': extended_price, 'name': name})
+   JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['left'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'name_16': t1.name_16})
+    JOIN(conditions=[t0.key_8 == t1.order_key], types=['inner'], columns={'extended_price': t1.extended_price, 'name': t0.name, 'part_key': t1.part_key, 'supplier_key': t1.supplier_key})
+     JOIN(conditions=[t0.key_5 == t1.customer_key], types=['inner'], columns={'key_8': t1.key, 'name': t0.name})
+      JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key_5': t1.key, 'name': t0.name})
+       JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name})
+        SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+      SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+     SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
+    JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'name_16': t1.name, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+     JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'part_key': t0.part_key, 'region_key': t1.region_key, 'supplier_key': t0.supplier_key})
+      JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'nation_key': t1.nation_key, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+       SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            id="lineitem_regional_shipments",
+        ),
+        pytest.param(
+            TableCollectionInfo("Lineitems")
+            ** WhereInfo(
+                [
+                    SubCollectionInfo("order")
+                    ** SubCollectionInfo("customer")
+                    ** SubCollectionInfo("nation")
+                    ** SubCollectionInfo("region"),
+                    SubCollectionInfo("part_and_supplier")
+                    ** SubCollectionInfo("supplier")
+                    ** SubCollectionInfo("nation")
+                    ** SubCollectionInfo("region"),
+                ],
+                FunctionInfo(
+                    "EQU",
+                    [
+                        ChildReferenceExpressionInfo("name", 0),
+                        ChildReferenceExpressionInfo("name", 1),
+                    ],
+                ),
+            )
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("order")
+                    ** SubCollectionInfo("customer")
+                    ** SubCollectionInfo("nation")
+                    ** SubCollectionInfo("region")
+                ],
+                rname=ChildReferenceExpressionInfo("name", 0),
+                price=ReferenceInfo("extended_price"),
+            ),
+            """
+ROOT(columns=[('rname', rname), ('price', price)], orderings=[])
+ PROJECT(columns={'price': extended_price, 'rname': name_8})
+  FILTER(condition=name_8 == name_15, columns={'extended_price': extended_price, 'name_8': name_8})
+   JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['left'], columns={'extended_price': t0.extended_price, 'name_15': t1.name_15, 'name_8': t0.name_8})
+    JOIN(conditions=[t0.order_key == t1.key], types=['left'], columns={'extended_price': t0.extended_price, 'name_8': t1.name_8, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+     SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
+     JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_8': t1.name})
+      JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+       JOIN(conditions=[t0.customer_key == t1.key], types=['inner'], columns={'key': t0.key, 'nation_key': t1.nation_key})
+        SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'name_15': t1.name, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+     JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'part_key': t0.part_key, 'region_key': t1.region_key, 'supplier_key': t0.supplier_key})
+      JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'nation_key': t1.nation_key, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+       SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            id="lineitem_regional_shipments2",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** SubCollectionInfo("customers")
+            ** SubCollectionInfo("orders")
+            ** SubCollectionInfo("lines")
+            ** SubCollectionInfo("order")
+            ** SubCollectionInfo("customer")
+            ** SubCollectionInfo("nation")
+            ** SubCollectionInfo("region")
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "EQU",
+                    [
+                        ReferenceInfo("name"),
+                        BackReferenceExpressionInfo("name", 8),
+                    ],
+                ),
+            ),
+            """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
+ PROJECT(columns={'comment': comment_31, 'key': key_32, 'name': name_33})
+  FILTER(condition=name_33 == name, columns={'comment_31': comment_31, 'key_32': key_32, 'name_33': name_33})
+   JOIN(conditions=[t0.region_key_30 == t1.key], types=['inner'], columns={'comment_31': t1.comment, 'key_32': t1.key, 'name': t0.name, 'name_33': t1.name})
+    JOIN(conditions=[t0.nation_key_25 == t1.key], types=['inner'], columns={'name': t0.name, 'region_key_30': t1.region_key})
+     JOIN(conditions=[t0.customer_key_12 == t1.key], types=['inner'], columns={'name': t0.name, 'nation_key_25': t1.nation_key})
+      JOIN(conditions=[t0.order_key == t1.key], types=['inner'], columns={'customer_key_12': t1.customer_key, 'name': t0.name})
+       JOIN(conditions=[t0.key_8 == t1.order_key], types=['inner'], columns={'name': t0.name, 'order_key': t1.order_key})
+        JOIN(conditions=[t0.key_5 == t1.customer_key], types=['inner'], columns={'key_8': t1.key, 'name': t0.name})
+         JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key_5': t1.key, 'name': t0.name})
+          JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name})
+           SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+           SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+         SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+        SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey})
+       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+      SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+    SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            id="lineitem_regional_shipments3",
         ),
     ],
 )
