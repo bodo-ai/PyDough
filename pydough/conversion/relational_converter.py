@@ -575,7 +575,7 @@ class RelTranslation:
             node.records_to_keep, Int64Type()
         )
         orderings: list[ExpressionSortInfo] = make_relational_ordering(
-            node.collation, context.expressions
+            node.orderings, context.expressions
         )
         out_rel: Limit = Limit(context.relation, limit_expr, kept_columns, orderings)
         return TranslationOutput(out_rel, context.expressions, context.join_keys)
@@ -818,8 +818,9 @@ def convert_ast_to_relational(
         rel_expr = output.expressions[hybrid_expr]
         ordered_columns.append((original_name, rel_expr))
     ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
-    if hybrid.ordering:
-        orderings = make_relational_ordering(hybrid.ordering, output.expressions)
+    hybrid_orderings: list[HybridCollation] = hybrid.pipeline[-1].orderings
+    if hybrid_orderings:
+        orderings = make_relational_ordering(hybrid_orderings, output.expressions)
     unpruned_result: RelationalRoot = RelationalRoot(
         output.relation, ordered_columns, orderings
     )
