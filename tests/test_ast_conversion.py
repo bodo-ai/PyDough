@@ -6,6 +6,7 @@ import pytest
 from test_utils import (
     BackReferenceExpressionInfo,
     CalcInfo,
+    ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
     CollectionTestInfo,
     FunctionInfo,
@@ -432,13 +433,13 @@ ROOT(columns=[('okey', okey), ('lavg', lavg)], orderings=[])
             ),
             """
 ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), ('producer_value', producer_value)], orderings=[])
- PROJECT(columns={'consumer_value': DEFAULT_TO(agg_0, 0:int64), 'nation_name': key, 'producer_value': DEFAULT_TO(agg_0_1, 0:int64)})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'key': t0.key})
+ PROJECT(columns={'consumer_value': DEFAULT_TO(agg_0, 0:int64), 'nation_name': key, 'producer_value': DEFAULT_TO(agg_1, 0:int64)})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'key': t0.key})
    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
     SCAN(table=tpch.NATION, columns={'key': n_nationkey})
     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(acctbal)})
      SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
-   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(account_balance)})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': SUM(account_balance)})
     SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
 """,
             id="multiple_simple_aggregations_single_calc",
@@ -480,18 +481,67 @@ ROOT(columns=[('nation_name', nation_name), ('consumer_value', consumer_value), 
             ),
             """
 ROOT(columns=[('nation_name', nation_name_0), ('total_consumer_value', total_consumer_value), ('total_supplier_value', total_supplier_value), ('avg_consumer_value', avg_consumer_value), ('avg_supplier_value', avg_supplier_value), ('best_consumer_value', best_consumer_value), ('best_supplier_value', best_supplier_value)], orderings=[])
- PROJECT(columns={'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': avg_supplier_value, 'best_consumer_value': agg_2, 'best_supplier_value': agg_2_3, 'nation_name_0': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': total_supplier_value})
-  PROJECT(columns={'agg_2': agg_2, 'agg_2_3': agg_2_3, 'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': agg_0_1, 'key': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': DEFAULT_TO(agg_1_2, 0:int64)})
-   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0_1': t1.agg_0, 'agg_1_2': t1.agg_1, 'agg_2': t0.agg_2, 'agg_2_3': t1.agg_2, 'avg_consumer_value': t0.avg_consumer_value, 'key': t0.key, 'total_consumer_value': t0.total_consumer_value})
-    PROJECT(columns={'agg_2': agg_2, 'avg_consumer_value': agg_0, 'key': key, 'total_consumer_value': DEFAULT_TO(agg_1, 0:int64)})
-     JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'key': t0.key})
+ PROJECT(columns={'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': avg_supplier_value, 'best_consumer_value': agg_4, 'best_supplier_value': agg_5, 'nation_name_0': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': total_supplier_value})
+  PROJECT(columns={'agg_4': agg_4, 'agg_5': agg_5, 'avg_consumer_value': avg_consumer_value, 'avg_supplier_value': agg_2, 'key': key, 'total_consumer_value': total_consumer_value, 'total_supplier_value': DEFAULT_TO(agg_3, 0:int64)})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'agg_4': t0.agg_4, 'agg_5': t1.agg_5, 'avg_consumer_value': t0.avg_consumer_value, 'key': t0.key, 'total_consumer_value': t0.total_consumer_value})
+    PROJECT(columns={'agg_4': agg_4, 'avg_consumer_value': agg_0, 'key': key, 'total_consumer_value': DEFAULT_TO(agg_1, 0:int64)})
+     JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_4': t1.agg_4, 'key': t0.key})
       SCAN(table=tpch.NATION, columns={'key': n_nationkey})
-      AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': SUM(acctbal), 'agg_2': MAX(acctbal)})
+      AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': SUM(acctbal), 'agg_4': MAX(acctbal)})
        SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
-    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(account_balance), 'agg_1': SUM(account_balance), 'agg_2': MAX(account_balance)})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_2': AVG(account_balance), 'agg_3': SUM(account_balance), 'agg_5': MAX(account_balance)})
      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
 """,
             id="multiple_simple_aggregations_multiple_calcs",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("customers")],
+                nation_name=ReferenceInfo("key"),
+                num_customers=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+            ),
+            """
+ROOT(columns=[('nation_name', nation_name), ('num_customers', num_customers)], orderings=[])
+ PROJECT(columns={'nation_name': key, 'num_customers': DEFAULT_TO(agg_0, 0:int64)})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT()})
+    SCAN(table=tpch.CUSTOMER, columns={'nation_key': c_nationkey})
+""",
+            id="count_single_subcollection",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [SubCollectionInfo("customers"), SubCollectionInfo("suppliers")],
+                nation_name=ReferenceInfo("key"),
+                num_customers=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                num_suppliers=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(1)]),
+                customer_to_supplier_wealth_ratio=FunctionInfo(
+                    "DIV",
+                    [
+                        FunctionInfo(
+                            "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
+                        ),
+                        FunctionInfo(
+                            "SUM", [ChildReferenceExpressionInfo("account_balance", 1)]
+                        ),
+                    ],
+                ),
+            ),
+            """
+ROOT(columns=[('nation_name', nation_name), ('num_customers', num_customers), ('num_suppliers', num_suppliers), ('customer_to_supplier_wealth_ratio', customer_to_supplier_wealth_ratio)], orderings=[])
+ PROJECT(columns={'customer_to_supplier_wealth_ratio': DEFAULT_TO(agg_0, 0:int64) / DEFAULT_TO(agg_1, 0:int64), 'nation_name': key, 'num_customers': DEFAULT_TO(agg_2, 0:int64), 'num_suppliers': DEFAULT_TO(agg_3, 0:int64)})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'agg_2': t0.agg_2, 'agg_3': t1.agg_3, 'key': t0.key})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_2': t1.agg_2, 'key': t0.key})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(acctbal), 'agg_2': COUNT()})
+     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': SUM(account_balance), 'agg_3': COUNT()})
+    SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
+""",
+            id="count_multiple_subcollections_alongside_aggs",
         ),
         pytest.param(
             TableCollectionInfo("Nations")
@@ -1139,13 +1189,14 @@ def test_ast_to_relational(
                 max_bal=FunctionInfo(
                     "MAX", [ChildReferenceExpressionInfo("acctbal", 0)]
                 ),
+                num_cust=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
             ),
             """
-ROOT(columns=[('nation_name', nation_name), ('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal)], orderings=[])
- PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:int64), 'max_bal': agg_1, 'min_bal': agg_2, 'nation_name': name, 'num_bal': DEFAULT_TO(agg_3, 0:int64), 'total_bal': agg_4})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'agg_4': t1.agg_4, 'name': t0.name})
+ROOT(columns=[('nation_name', nation_name), ('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal), ('num_cust', num_cust)], orderings=[])
+ PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:int64), 'max_bal': agg_1, 'min_bal': agg_2, 'nation_name': name, 'num_bal': DEFAULT_TO(agg_3, 0:int64), 'num_cust': DEFAULT_TO(agg_4, 0:int64), 'total_bal': agg_5})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'agg_4': t1.agg_4, 'agg_5': t1.agg_5, 'name': t0.name})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': SUM(acctbal)})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': COUNT(), 'agg_5': SUM(acctbal)})
     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
 """,
             id="various_aggfuncs_simple",

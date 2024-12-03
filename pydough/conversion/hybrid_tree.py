@@ -35,6 +35,7 @@ from pydough.pydough_ast import (
     Calc,
     ChildOperator,
     ChildOperatorChildAccess,
+    ChildReferenceCollection,
     ChildReferenceExpression,
     CollectionAccess,
     ColumnProperty,
@@ -429,35 +430,67 @@ class ConnectionType(Enum):
     SINGULAR = 0
     """
     The child should be 1:1 with regards to the parent, and can thus be
-    accessed via a simple left-join without having to worry about cardinality
+    accessed via a simple left join without having to worry about cardinality
     contamination.
+    
+    If this overlaps with a `HAS` connection, then the left join becomes an
+    INNER join.
+    
+    If this overlaps with a `HASNOT` connection, then this connection becomes
+    a `HASNOT` connection and all accesses to it are replaced with `NULL`.
     """
 
     AGGREGATION = 1
     """
     The child is being accessed for the purposes of aggregating its columns.
+    The aggregation is done on top of the translated subtree before it is
+    combined with the parent tree via a left join. The aggregate call may be
+    augmented after the left join, e.g. to coalesce with a default value if the
+    left join was not used. The grouping keys for the aggregate are the keys
+    used to join the parent tree output onto the subtree ouput.
+    
+    If this overlaps with a `HAS` connection, then the left join becomes an
+    INNER join, and the post-processing is not required.
+    
+    If this connection overlaps with a `HASNOT` connection, then this
+    connection becomes a `HASNOT` connection and all accesses to it are
+    replaced with `NULL` (augmented by the usual post-processing step).
+
+    If this is used as a child access of a `PARTITION` node, there is no left
+    join, though some of the post-processing steps may still occur.
     """
 
-    COUNT = 2
-    """
-    The child is being accessed for the purposes of counting how many rows it
-    has.
-    """
-
-    NDISTINCT = 3
+    NDISTINCT = 2
     """
     The child is being accessed for the purposes of counting how many
-    distinct elements it has.
+    distinct elements it has. This is implemented by grouping the child subtree
+    on both the original grouping keys as well as the unique columns of the
+    subcollection without any aggregations, then having the `aggs` list contain
+    a solitary `COUNT` term before being left-joined. The result is coalesced
+    with 0, unless this is used as a child access of a `PARTITION` node.
+
+    If this overlaps with a `HAS` connection, then the left join becomes an
+    INNER join, and the coalescing is skipped.
+    
+    If this connection overlaps with a `HASNOT` connection, then this
+    connection becomes a `HASNOT` connection and the `COUNT` is replaced with
+    a constant zero.
     """
 
-    HAS = 4
+    HAS = 3
     """
-    The child is being used as a semi-join.
+    The child is being used as a semi-join. NOTE: if there is ever an overlap
+    between this case & another usage (e.g. `Nations.WHERE(HAS(x))(res=x.y)` or
+    `Nations.WHERE(HAS(x))(res=SUM(x.y))`), see the other enums for
+    explanations of what happens in those overlap cases.
     """
 
-    HASNOT = 5
+    HASNOT = 4
     """
-    The child is being used as an anti-join.
+    The child is being used as an anti-join. NOTE: if there is ever an overlap
+    between this case & another usage (e.g. `Nations.WHERE(HASNOT(x))(res=x.y)`
+    or `Nations.WHERE(HASNOT(x))(res=SUM(x.y))`, see the other enums for
+    explanations of what happens in those overlap cases.
     """
 
 
@@ -475,6 +508,11 @@ class HybridConnection:
        completed before the child can be defined.
     - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
+    - `only_keep_matches`: a boolean to indicate whether the parent subtree's
+       records can be discarded if they have no matches in the child subtree.
+       If this is True, it means any LEFT joins can be replaced with INNER
+       joins. This occurs if, for example, a `SINGULAR` connection overlaps
+       with a `HAS` connection.
     """
 
     parent: "HybridTree"
@@ -482,6 +520,7 @@ class HybridConnection:
     connection_type: ConnectionType
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
+    only_keep_matches: bool
 
 
 class HybridTree:
@@ -582,7 +621,7 @@ class HybridTree:
             used to link `self` to `child`.
         """
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}
+            self, child, connection_type, len(self.pipeline) - 1, {}, False
         )
         for idx, existing_connection in enumerate(self.children):
             if (
@@ -613,6 +652,8 @@ class HybridTranslator:
 
     def __init__(self, configs: PyDoughConfigs):
         self.configs = configs
+        # An index used for creating fake column names for aggregations
+        self.agg_counter: int = 0
 
     def populate_children(
         self,
@@ -778,6 +819,60 @@ class HybridTranslator:
             )
         return agg_ref
 
+    def get_agg_name(self, connection: "HybridConnection") -> str:
+        """
+        Generates a unique name for an aggregation function's output that
+        is not already used.
+
+        Args:
+            `connection`: the HybridConnection in which the aggregation
+            is being defined. The name cannot overlap with any other agg
+            names or term names of the connection.
+
+        Returns:
+            The new name to be used.
+        """
+        agg_name: str = f"agg_{self.agg_counter}"
+        while (
+            agg_name in connection.subtree.pipeline[-1].terms
+            or agg_name in connection.aggs
+        ):
+            self.agg_counter += 1
+            agg_name = f"agg_{self.agg_counter}"
+        self.agg_counter += 1
+        return agg_name
+
+    def handle_collection_count(
+        self,
+        hybrid: HybridTree,
+        expr: ExpressionFunctionCall,
+        child_ref_mapping: dict[int, int],
+    ) -> HybridExpr:
+        """
+        TODO
+        """
+        assert (
+            expr.operator == pydop.COUNT
+        ), f"Malformed call to handle_collection_count: {expr}"
+        assert len(expr.args) == 1, f"Malformed call to handle_collection_count: {expr}"
+        collection_arg = expr.args[0]
+        assert isinstance(
+            collection_arg, ChildReferenceCollection
+        ), f"Malformed call to handle_collection_count: {expr}"
+        count_call: HybridFunctionExpr = HybridFunctionExpr(
+            pydop.COUNT, [], expr.pydough_type
+        )
+        child_idx: int = child_ref_mapping[collection_arg.child_idx]
+        child_connection: HybridConnection = hybrid.children[child_idx]
+        # Generate a unique name for the agg call to push into the child
+        # connection.
+        agg_name: str = self.get_agg_name(child_connection)
+        child_connection.aggs[agg_name] = count_call
+        result_ref: HybridExpr = HybridChildRefExpr(
+            agg_name, child_idx, expr.pydough_type
+        )
+        return self.postprocess_agg_output(count_call, result_ref)
+
     def make_hybrid_expr(
         self,
         hybrid: HybridTree,
@@ -801,7 +896,6 @@ class HybridTranslator:
         """
         expr_name: str
         child_connection: HybridConnection
-        agg_counter: int = 0
         args: list[HybridExpr] = []
         match expr:
             case Literal():
@@ -859,7 +953,7 @@ class HybridTranslator:
                 for arg in expr.args:
                     if not isinstance(arg, PyDoughExpressionAST):
                         raise NotImplementedError(
-                            f"TODO: support converting {arg.__class__.__name__} as a function argument"
+                            "PyDough does not yet support converting collections as function arguments to a non-aggregation function"
                         )
                     args.append(self.make_hybrid_expr(hybrid, arg, child_ref_mapping))
                 return HybridFunctionExpr(expr.operator, args, expr.pydough_type)
@@ -876,15 +970,22 @@ class HybridTranslator:
                 child_idx: int | None = None
                 arg_child_idx: int | None = None
                 for arg in expr.args:
-                    # It is possible for `arg` to be a collection (e.g. COUNT or
-                    # NDISTINCT) but this case is a TODO item.
-                    if not isinstance(arg, PyDoughExpressionAST):
-                        raise NotImplementedError(
-                            f"TODO: support converting {arg.__class__.__name__} as a function argument"
+                    if isinstance(arg, PyDoughExpressionAST):
+                        hybrid_arg, arg_child_idx = self.make_hybrid_agg_expr(
+                            hybrid, arg, child_ref_mapping
                         )
-                    hybrid_arg, arg_child_idx = self.make_hybrid_agg_expr(
-                        hybrid, arg, child_ref_mapping
-                    )
+                    else:
+                        if not isinstance(arg, ChildReferenceCollection):
+                            raise NotImplementedError("Cannot process argument")
+                        # TODO: handle NDISTINCT
+                        if expr.operator == pydop.COUNT:
+                            return self.handle_collection_count(
+                                hybrid, expr, child_ref_mapping
+                            )
+                        else:
+                            raise NotImplementedError(
+                                f"PyDough does not yet support collection arguments for aggregation function {expr.operator}"
+                            )
                     # Accumulate the `arg_child_idx` value from the argument across
                     # all function arguments, ensuring that at the end there is
                     # exactly one child subtree that the agg call corresponds to.
@@ -906,13 +1007,7 @@ class HybridTranslator:
                 child_connection = hybrid.children[child_idx]
                 # Generate a unique name for the agg call to push into the child
                 # connection.
-                agg_name: str = f"agg_{agg_counter}"
-                while (
-                    agg_name in child_connection.subtree.pipeline[-1].terms
-                    or agg_name in child_connection.aggs
-                ):
-                    agg_name = f"agg_{agg_counter}"
-                    agg_counter += 1
+                agg_name: str = self.get_agg_name(child_connection)
                 child_connection.aggs[agg_name] = hybrid_call
                 result_ref: HybridExpr = HybridChildRefExpr(
                     agg_name, child_idx, expr.pydough_type
