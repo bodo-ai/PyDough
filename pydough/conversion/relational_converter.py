@@ -572,7 +572,7 @@ class RelTranslation:
             for name in context.relation.columns
         }
         limit_expr: LiteralExpression = LiteralExpression(
-            node.limit.records_to_keep, Int64Type()
+            node.records_to_keep, Int64Type()
         )
         orderings: list[ExpressionSortInfo] = make_relational_ordering(
             node.collation, context.expressions

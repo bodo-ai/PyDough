@@ -390,16 +390,16 @@ class HybridLimit(HybridOperation):
     def __init__(
         self,
         predecessor: HybridOperation,
-        topk: TopK,
+        records_to_keep: int,
         collation: list[HybridCollation],
     ):
         super().__init__(predecessor.terms, {})
         self.predecessor: HybridOperation = predecessor
-        self.limit: TopK = topk
+        self.records_to_keep: int = records_to_keep
         self.collation: list[HybridCollation] = collation
 
     def __repr__(self):
-        return f"LIMIT_{self.limit.records_to_keep}[{self.collation}]"
+        return f"LIMIT_{self.records_to_keep}[{self.collation}]"
 
 
 class ConnectionType(Enum):
@@ -1098,7 +1098,11 @@ class HybridTranslator:
                 if new_nodes:
                     hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_nodes))
                 hybrid.pipeline.append(
-                    HybridLimit(hybrid.pipeline[-1], node, hybrid.ordering.copy())
+                    HybridLimit(
+                        hybrid.pipeline[-1],
+                        node.records_to_keep,
+                        hybrid.ordering.copy(),
+                    )
                 )
                 return hybrid
             case OrderBy():
