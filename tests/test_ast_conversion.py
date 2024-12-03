@@ -829,6 +829,80 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
 """,
             id="lineitem_regional_shipments3",
         ),
+        pytest.param(
+            None,
+            """
+""",
+            id="positive_accounts_per_nation",
+        ),
+        pytest.param(
+            None,
+            """
+""",
+            id="mostly_positive_accounts_per_nation",
+        ),
+        pytest.param(
+            None,
+            """
+""",
+            id="mostly_positive_accounts_per_nation2",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("suppliers")
+                    ** WhereInfo(
+                        [],
+                        FunctionInfo(
+                            "GRT",
+                            [
+                                ReferenceInfo("account_balance"),
+                                LiteralInfo(0.0, Float64Type()),
+                            ],
+                        ),
+                    ),
+                    SubCollectionInfo("suppliers"),
+                ],
+                name=ReferenceInfo("name"),
+                suppliers_in_black=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("key", 0)]
+                ),
+                total_suppliers=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("key", 1)]
+                ),
+            )
+            ** WhereInfo(
+                [],
+                FunctionInfo(
+                    "GRT",
+                    [
+                        ReferenceInfo("suppliers_in_black"),
+                        FunctionInfo(
+                            "MUL",
+                            [
+                                LiteralInfo(0.5, Float64Type()),
+                                ReferenceInfo("total_suppliers"),
+                            ],
+                        ),
+                    ],
+                ),
+            ),
+            """
+ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
+ FILTER(condition=suppliers_in_black > 0.5:float64 * total_suppliers, columns={'name': name, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
+  PROJECT(columns={'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_0_1, 0:int64)})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'name': t0.name})
+    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+      FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
+       SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+""",
+            id="mostly_positive_accounts_per_nation3",
+        ),
     ],
 )
 def test_ast_to_relational(
@@ -843,6 +917,8 @@ def test_ast_to_relational(
     """
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
+    # breakpoint()
+    # print(relational.to_tree_string())
     assert (
         relational.to_tree_string() == expected_relational_string.strip()
     ), "Mismatch between full string representation of output Relational node versus expected string"

@@ -83,7 +83,6 @@ class CollectionAccess(ChildAccess):
         from .sub_collection import SubCollection
 
         if term_name not in self.all_terms:
-            breakpoint()
             raise PyDoughASTException(
                 f"Unrecognized term of {self.collection.error_name}: {term_name!r}"
             )
