@@ -9,6 +9,7 @@ from pydough.relational.relational_expressions import (
 
 from .abstract_node import Relational
 from .aggregate import Aggregate
+from .empty_singleton import EmptySingleton
 from .filter import Filter
 from .join import Join
 from .limit import Limit
@@ -69,6 +70,9 @@ class RelationalExpressionDispatcher(RelationalVisitor):
         limit.limit.accept(self._expr_visitor)
         for order in limit.orderings:
             order.expr.accept(self._expr_visitor)
+
+    def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
+        pass
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_common(root)
