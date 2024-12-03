@@ -661,7 +661,7 @@ ROOT(columns=[('part_key', part_key), ('supplier_key', supplier_key), ('order_ke
             """
 ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d)], orderings=[])
  PROJECT(columns={'a': 0:int64, 'b': X:string, 'c': 3.14:float64, 'd': True:bool})
-  EmptyValues()
+  EMPTYSINGLETON()
 """,
             id="global_calc_simple",
         ),
@@ -682,7 +682,7 @@ ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d)], orderings=[])
 ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d)], orderings=[])
  PROJECT(columns={'a': a, 'b': b, 'c': 3.14:float64, 'd': True:bool})
   PROJECT(columns={'a': 0:int64, 'b': X:string})
-   EmptyValues()
+   EMPTYSINGLETON()
 """,
             id="global_calc_multiple",
         ),
@@ -766,7 +766,7 @@ ROOT(columns=[('part_name', part_name), ('is_above_cutoff', is_above_cutoff), ('
  PROJECT(columns={'is_above_cutoff': retail_price > a, 'is_nickel': CONTAINS(part_type, b), 'part_name': name})
   JOIN(conditions=[True:bool], types=['inner'], columns={'a': t0.a, 'b': t0.b, 'name': t1.name, 'part_type': t1.part_type, 'retail_price': t1.retail_price})
    PROJECT(columns={'a': 28.15:int64, 'b': NICKEL:string})
-    EmptyValues()
+    EMPTYSINGLETON()
    SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
 """,
             id="global_calc_backref",

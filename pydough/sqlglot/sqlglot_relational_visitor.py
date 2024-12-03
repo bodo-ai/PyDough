@@ -16,7 +16,7 @@ from pydough.relational import (
     Aggregate,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
-    EmptyValues,
+    EmptySingleton,
     ExpressionSortInfo,
     Filter,
     Join,
@@ -424,7 +424,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         query = query.limit(limit_expr)
         self._stack.append(query)
 
-    def visit_empty_values(self, empty_values: EmptyValues) -> None:
+    def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
         self._stack.append(Select().from_(values([()])))
 
     def visit_root(self, root: RelationalRoot) -> None:

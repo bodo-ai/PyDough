@@ -36,7 +36,7 @@ from pydough.pydough_ast.pydough_operators import (
 from pydough.relational import (
     Aggregate,
     CallExpression,
-    EmptyValues,
+    EmptySingleton,
     Filter,
     Join,
     JoinType,
@@ -117,7 +117,7 @@ def sqlite_dialect() -> SQLiteDialect:
         pytest.param(
             RelationalRoot(
                 input=Project(
-                    input=EmptyValues(),
+                    input=EmptySingleton(),
                     columns={
                         "A": make_relational_literal(42, Int64Type()),
                         "B": make_relational_literal("foo", StringType()),

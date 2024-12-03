@@ -34,7 +34,7 @@ from pydough.relational.relational_expressions import (
 from pydough.relational.relational_nodes import (
     Aggregate,
     ColumnPruner,
-    EmptyValues,
+    EmptySingleton,
     Join,
     JoinType,
     Project,
@@ -152,9 +152,9 @@ class RelTranslation:
         join_columns: dict[str, RelationalExpression] = {}
         out_join_keys: list[tuple[HybridExpr, HybridExpr]] = lhs_result.join_keys
 
-        # Special case: if the lhs is an EmptyValues, just return the RHS,
+        # Special case: if the lhs is an EmptySingleton, just return the RHS,
         # decorated if needed.
-        if isinstance(lhs_result.relation, EmptyValues):
+        if isinstance(lhs_result.relation, EmptySingleton):
             if child_idx is None:
                 return rhs_result
             else:
@@ -612,7 +612,7 @@ class RelTranslation:
         elif isinstance(preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot):
             # If at the true root, set the starting context to just be a dummy
             # VALUES clause.
-            context = TranslationOutput(EmptyValues(), {}, [])
+            context = TranslationOutput(EmptySingleton(), {}, [])
             context = self.handle_children(context, *preceding_hybrid)
         else:
             context = self.rel_translation(connection, *preceding_hybrid)

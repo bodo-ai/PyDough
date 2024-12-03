@@ -15,7 +15,7 @@ from pydough.relational import (
     Aggregate,
     CallExpression,
     ColumnReference,
-    EmptyValues,
+    EmptySingleton,
     Filter,
     Join,
     JoinType,
@@ -171,11 +171,21 @@ def test_project_to_string(project: Project, output: str) -> None:
     assert project.to_string() == output
 
 
-def test_empty_values_to_string() -> None:
+def test_empty_singleton_to_string() -> None:
     """
-    Test the to_string() functionality for the EmptyValues node.
+    Test the to_string() functionality for the EmptySingleton node.
     """
-    assert EmptyValues().to_string() == "EmptyValues()"
+    assert EmptySingleton().to_string() == "EMPTYSINGLETON()"
+
+
+def test_empty_singleton_equals() -> None:
+    """
+    Test the equality functionality for the the EmptySingleton node.
+    """
+    assert EmptySingleton() == EmptySingleton()
+    assert EmptySingleton() != build_simple_scan()
+    assert EmptySingleton() != 42
+    assert EmptySingleton() != "EMPTYSINGLETON()"
 
 
 @pytest.mark.parametrize(

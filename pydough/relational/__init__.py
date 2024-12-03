@@ -20,7 +20,7 @@ __all__ = [
     "LiteralExpression",
     "RelationalExpression",
     "RelationalExpressionVisitor",
-    "EmptyValues",
+    "EmptySingleton",
 ]
 
 from .relational_expressions import (
@@ -37,7 +37,7 @@ from .relational_expressions import (
 from .relational_nodes import (
     Aggregate,
     ColumnPruner,
-    EmptyValues,
+    EmptySingleton,
     Filter,
     Join,
     JoinType,
