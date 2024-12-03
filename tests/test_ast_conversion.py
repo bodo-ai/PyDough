@@ -830,20 +830,160 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
             id="lineitem_regional_shipments3",
         ),
         pytest.param(
-            None,
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("suppliers")
+                    ** WhereInfo(
+                        [],
+                        FunctionInfo(
+                            "GRT",
+                            [
+                                ReferenceInfo("account_balance"),
+                                LiteralInfo(0.0, Float64Type()),
+                            ],
+                        ),
+                    ),
+                    SubCollectionInfo("suppliers"),
+                ],
+                name=ReferenceInfo("name"),
+                suppliers_in_black=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("key", 0)]
+                ),
+                total_suppliers=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("key", 1)]
+                ),
+            ),
             """
+ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
+ PROJECT(columns={'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_0_1, 0:int64)})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'name': t0.name})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+     FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
+      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
-            id="positive_accounts_per_nation",
+            id="num_positive_accounts_per_nation",
         ),
         pytest.param(
-            None,
+            TableCollectionInfo("Nations")
+            ** CalcInfo([], name=ReferenceInfo("name"))
+            ** WhereInfo(
+                [
+                    SubCollectionInfo("suppliers")
+                    ** WhereInfo(
+                        [],
+                        FunctionInfo(
+                            "GRT",
+                            [
+                                ReferenceInfo("account_balance"),
+                                LiteralInfo(0.0, Float64Type()),
+                            ],
+                        ),
+                    ),
+                    SubCollectionInfo("suppliers"),
+                ],
+                FunctionInfo(
+                    "GRT",
+                    [
+                        FunctionInfo("COUNT", [ChildReferenceExpressionInfo("key", 0)]),
+                        FunctionInfo(
+                            "MUL",
+                            [
+                                LiteralInfo(0.5, Float64Type()),
+                                FunctionInfo(
+                                    "COUNT", [ChildReferenceExpressionInfo("key", 1)]
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ),
             """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=DEFAULT_TO(agg_0, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_0_1, 0:int64), columns={'name': name})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'name': t0.name})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+     FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
+      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
-            id="mostly_positive_accounts_per_nation",
+            id="mostly_positive_accounts_per_nation1",
         ),
         pytest.param(
-            None,
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("suppliers")
+                    ** WhereInfo(
+                        [],
+                        FunctionInfo(
+                            "GRT",
+                            [
+                                ReferenceInfo("account_balance"),
+                                LiteralInfo(0.0, Float64Type()),
+                            ],
+                        ),
+                    ),
+                    SubCollectionInfo("suppliers"),
+                ],
+                name=ReferenceInfo("name"),
+                suppliers_in_black=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("key", 0)]
+                ),
+                total_suppliers=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("key", 1)]
+                ),
+            )
+            ** WhereInfo(
+                [
+                    SubCollectionInfo("suppliers")
+                    ** WhereInfo(
+                        [],
+                        FunctionInfo(
+                            "GRT",
+                            [
+                                ReferenceInfo("account_balance"),
+                                LiteralInfo(0.0, Float64Type()),
+                            ],
+                        ),
+                    ),
+                    SubCollectionInfo("suppliers"),
+                ],
+                FunctionInfo(
+                    "GRT",
+                    [
+                        FunctionInfo("COUNT", [ChildReferenceExpressionInfo("key", 0)]),
+                        FunctionInfo(
+                            "MUL",
+                            [
+                                LiteralInfo(0.5, Float64Type()),
+                                FunctionInfo(
+                                    "COUNT", [ChildReferenceExpressionInfo("key", 1)]
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ),
             """
+ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
+ FILTER(condition=DEFAULT_TO(agg_1, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_1_2, 0:int64), columns={'name': name, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
+  PROJECT(columns={'agg_1': agg_1, 'agg_1_2': agg_1_2, 'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_0_1, 0:int64)})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'agg_1': t0.agg_1, 'agg_1_2': t1.agg_1, 'name': t0.name})
+    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'key': t0.key, 'name': t0.name})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key), 'agg_1': COUNT(key)})
+      FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
+       SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key), 'agg_1': COUNT(key)})
+     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="mostly_positive_accounts_per_nation2",
         ),
@@ -917,8 +1057,6 @@ def test_ast_to_relational(
     """
     collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
-    # breakpoint()
-    # print(relational.to_tree_string())
     assert (
         relational.to_tree_string() == expected_relational_string.strip()
     ), "Mismatch between full string representation of output Relational node versus expected string"
