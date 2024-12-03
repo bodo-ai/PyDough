@@ -223,7 +223,7 @@ def test_unqualified_to_string(
     global_ctx: dict[str, object],
     get_sample_graph: graph_fetcher,
     sample_graph_path: str,
-):
+) -> None:
     """
     Tests that strings representing the setup of PyDough unqualified objects
     (with unknown variables already pre-pended with `_ROOT.`) are correctly
@@ -373,7 +373,7 @@ def test_unqualified_to_string(
 )
 def test_init_pydough_context(
     func: Callable[[], UnqualifiedNode], as_string: str, sample_graph_path: str
-):
+) -> None:
     """
     Tests that the `init_pydough_context` decorator correctly works on several
     PyDough functions, transforming them into the correct unqualified nodes,
