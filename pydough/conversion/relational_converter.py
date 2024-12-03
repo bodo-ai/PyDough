@@ -716,12 +716,10 @@ class RelTranslation:
                 if type(expr.expr) is Reference:
                     ordering.append((expr.expr.term_name, expr.asc, expr.na_last))
                 else:
-                    dummy_name: str
-                    while True:
-                        dummy_name = f"_order_expr_{dummy_counter}"
+                    dummy_name: str = f"_order_expr_{dummy_counter}"
+                    while dummy_name in all_names:
                         dummy_counter += 1
-                        if dummy_name not in all_names:
-                            break
+                        dummy_name = f"_order_expr_{dummy_counter}"
                     final_terms.append((dummy_name, expr.expr))
                     all_names.add(dummy_name)
                     ordering.append((dummy_name, expr.asc, expr.na_last))
