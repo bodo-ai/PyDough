@@ -1069,11 +1069,13 @@ class HybridTranslator:
                 return hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:
-                    case CompoundSubCollection():
-                        raise NotImplementedError(f"{node.__class__.__name__}")
-                    case TableCollection() | SubCollection():
+                    case TableCollection() | SubCollection() if not isinstance(
+                        node.child_access, CompoundSubCollection
+                    ):
                         return HybridTree(HybridCollectionAccess(node.child_access))
                     case _:
-                        raise NotImplementedError(f"{node.__class__.__name__}")
+                        raise NotImplementedError(
+                            f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
+                        )
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")

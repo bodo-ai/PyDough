@@ -35,6 +35,7 @@ from pydough.relational.relational_nodes import (
     Aggregate,
     ColumnPruner,
     EmptySingleton,
+    Filter,
     Join,
     JoinType,
     Project,
@@ -53,6 +54,7 @@ from .hybrid_tree import (
     HybridColumnExpr,
     HybridConnection,
     HybridExpr,
+    HybridFilter,
     HybridFunctionExpr,
     HybridLiteralExpr,
     HybridOperation,
@@ -92,7 +94,7 @@ class RelTranslation:
 
         Args:
             `expr`: the HybridExpr node to be converted.
-            `context`: the datastructure storing information used by the
+            `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts. Can be omitted in certain contexts, such as
             when deriving a table scan or literal.
@@ -423,7 +425,7 @@ class RelTranslation:
             `node`: the node corresponding to the subcollection access.
             `parent`: the hybrid tree of the previous layer that the access
             steps down from.
-            `context`: the datastructure storing information used by the
+            `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts. Can be omitted in certain contexts, such as
             when deriving a table scan or literal.
@@ -515,6 +517,36 @@ class RelTranslation:
 
         return result
 
+    def translate_filter(
+        self,
+        node: HybridFilter,
+        context: TranslationOutput,
+    ) -> TranslationOutput:
+        """
+        Converts a filter into a relational Filter node on top of its child.
+
+        Args:
+            `node`: the node corresponding to the filter being derived.
+            `context`: the data structure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts. Can be omitted in certain contexts, such as
+            when deriving a table scan or literal.
+
+        Returns:
+            The TranslationOutput payload containing a FILTER on top of
+            the relational node for the parent to derive any additional terms.
+        """
+        # Keep all existing columns.
+        kept_columns: dict[str, RelationalExpression] = {
+            name: ColumnReference(name, context.relation.columns[name].data_type)
+            for name in context.relation.columns
+        }
+        condition: RelationalExpression = self.translate_expression(
+            node.condition, context
+        )
+        out_rel: Filter = Filter(context.relation, condition, kept_columns)
+        return TranslationOutput(out_rel, context.expressions, context.join_keys)
+
     def translate_calc(
         self,
         node: HybridCalc,
@@ -526,7 +558,7 @@ class RelTranslation:
 
         Args:
             `node`: the node corresponding to the calc being derived.
-            `context`: the datastructure storing information used by the
+            `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts and the corresponding relational node.
 
@@ -648,6 +680,9 @@ class RelTranslation:
             case HybridCalc():
                 assert context is not None
                 result = self.translate_calc(operation, context)
+            case HybridFilter():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_filter(operation, context)
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"

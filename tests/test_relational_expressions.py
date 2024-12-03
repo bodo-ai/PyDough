@@ -108,7 +108,7 @@ def test_column_reference_equals(
         ),
         pytest.param(
             LiteralExpression("b", StringType()),
-            "Literal(value=b, type=StringType())",
+            "Literal(value='b', type=StringType())",
             id="string_literal",
         ),
     ],
