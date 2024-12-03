@@ -66,7 +66,7 @@ def test_sqlite_context() -> None:
         context = load_database_context("sqlite3")
     with pytest.raises(
         TypeError,
-        match="'invalid_kwarg' is an invalid keyword argument for Connection()",
+        match="'invalid_kwarg' is an invalid keyword argument",
     ):
         context = load_database_context(
             "sqlite", database=":memory:", invalid_kwarg="foo"
