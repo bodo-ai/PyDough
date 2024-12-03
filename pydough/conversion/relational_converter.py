@@ -496,13 +496,9 @@ class RelTranslation:
     ) -> TranslationOutput:
         """
         Converts a filter into a relational Filter node on top of its child.
-        TODO: This may need an additional project on top of the child to derive
-        filter terms.
 
         Args:
-            `node`: the node corresponding to the calc being derived.
-            `parent`: the hybrid tree of the previous layer that the access
-            steps down from.
+            `node`: the node corresponding to the filter being derived.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts. Can be omitted in certain contexts, such as
@@ -517,16 +513,11 @@ class RelTranslation:
             name: ColumnReference(name, context.relation.columns[name].data_type)
             for name in context.relation.columns
         }
-        # TODO: Handle complex expressions like WHERE(A = SUM(other.B))
         condition: RelationalExpression = self.translate_expression(
             node.condition, context
         )
         out_rel: Filter = Filter(context.relation, condition, kept_columns)
-        out_columns: dict[HybridExpr, ColumnReference] = {
-            expr: context.expressions[expr].with_input(None)
-            for expr in context.expressions
-        }
-        return TranslationOutput(out_rel, out_columns, context.join_keys)
+        return TranslationOutput(out_rel, context.expressions, context.join_keys)
 
     def translate_calc(
         self,
@@ -539,8 +530,6 @@ class RelTranslation:
 
         Args:
             `node`: the node corresponding to the calc being derived.
-            `parent`: the hybrid tree of the previous layer that the access
-            steps down from.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts. Can be omitted in certain contexts, such as
