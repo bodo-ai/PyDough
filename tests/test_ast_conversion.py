@@ -1149,7 +1149,6 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
 """,
-            # TODO: Prune name_3 from project since its now equivalent to nation_name.
             id="join_order_by",
         ),
         pytest.param(
@@ -1234,6 +1233,10 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(n
                 [], 10, (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, False)
             ),
             """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(_ordering_0):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'_ordering_0': _ordering_0, 'comment': comment, 'key': key, 'name': name}, orderings=[(_ordering_0):asc_first])
+  PROJECT(columns={'_ordering_0': LENGTH(name), 'comment': comment, 'key': key, 'name': name})
+   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
 """,
             id="order_by_expression",
         ),
@@ -1280,6 +1283,11 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
                 (ChildReferenceExpressionInfo("name", 0), True, True),
             ),
             """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(_ordering_0):asc_last])
+ PROJECT(columns={'_ordering_0': name_3, 'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
+  JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t0.region_key})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
             id="nations_order_by_region",
         ),
@@ -1287,7 +1295,6 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
             TableCollectionInfo("Nations")
             ** CalcInfo(
                 [
-                    # TODO: Add an ordering to the topk
                     SubCollectionInfo("suppliers")
                     ** TopKInfo(
                         [], 100, (ReferenceInfo("account_balance"), True, True)
@@ -1320,6 +1327,12 @@ ROOT(columns=[('name', name), ('n_top_suppliers', n_top_suppliers)], orderings=[
                 ),
             ),
             """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(_ordering_0):asc_last])
+ PROJECT(columns={'_ordering_0': DEFAULT_TO(agg_0, 0:int64), 'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'region_key': t0.region_key})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="nations_order_by_num_suppliers",
         ),
@@ -1335,6 +1348,13 @@ ROOT(columns=[('name', name), ('n_top_suppliers', n_top_suppliers)], orderings=[
                 ),
             ),
             """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(_ordering_0):asc_last])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'_ordering_0': _ordering_0, 'comment': comment, 'key': key, 'name': name, 'region_key': region_key}, orderings=[(_ordering_0):asc_last])
+  PROJECT(columns={'_ordering_0': DEFAULT_TO(agg_0, 0:int64), 'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'region_key': t0.region_key})
+    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="top_5_nations_by_num_suppliers",
         ),

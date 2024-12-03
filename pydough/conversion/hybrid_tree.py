@@ -4,6 +4,7 @@ TODO: add file-level docstring
 
 __all__ = [
     "HybridExpr",
+    "HybridCollation",
     "HybridColumnExpr",
     "HybridRefExpr",
     "HybridBackRefExpr",
@@ -115,6 +116,33 @@ class HybridExpr(ABC):
         if isinstance(self, HybridRefExpr) and self.name == name:
             return self
         return HybridRefExpr(name, self.typ)
+
+
+class HybridCollation(HybridExpr):
+    """
+    Class for HybridExpr terms that are another HybridExpr term wrapped in
+    information about how to sort by them.
+    """
+
+    def __init__(self, expr: HybridExpr, asc: bool, na_first: bool):
+        self.expr: HybridExpr = expr
+        self.asc: bool = asc
+        self.na_first: bool = na_first
+
+    def __repr__(self):
+        suffix: str = (
+            f"{'asc' if self.asc else 'desc'}_{'first' if self.na_first else 'last'}"
+        )
+        return f"({self.expr!r}):{suffix}"
+
+    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
+        renamed_expr: HybridExpr = self.expr.apply_renamings(renamings)
+        if renamed_expr is self.expr:
+            return self
+        return HybridCollation(renamed_expr, self.asc, not self.na_first)
+
+    def shift_back(self, levels: int) -> HybridExpr:
+        raise NotImplementedError
 
 
 class HybridColumnExpr(HybridExpr):
@@ -366,12 +394,12 @@ class HybridLimit(HybridOperation):
         self,
         predecessor: HybridOperation,
         topk: TopK,
-        collation: list[CollationExpression],
+        collation: list[HybridCollation],
     ):
         super().__init__(predecessor.terms, {})
         self.predecessor: HybridOperation = predecessor
         self.limit: TopK = topk
-        self.collation: list[CollationExpression] = collation
+        self.collation: list[HybridCollation] = collation
 
     def __repr__(self):
         return f"LIMIT_{self.limit.records_to_keep}[{self.collation}]"
@@ -387,10 +415,10 @@ class ConnectionType(Enum):
     The child should be 1:1 with regards to the parent, and can thus be
     accessed via a simple left join without having to worry about cardinality
     contamination.
-    
+
     If this overlaps with a `HAS` connection, then the left join becomes an
     INNER join.
-    
+
     If this overlaps with a `HASNOT` connection, then this connection becomes
     a `HASNOT` connection and all accesses to it are replaced with `NULL`.
     """
@@ -403,10 +431,10 @@ class ConnectionType(Enum):
     augmented after the left join, e.g. to coalesce with a default value if the
     left join was not used. The grouping keys for the aggregate are the keys
     used to join the parent tree output onto the subtree ouput.
-    
+
     If this overlaps with a `HAS` connection, then the left join becomes an
     INNER join, and the post-processing is not required.
-    
+
     If this connection overlaps with a `HASNOT` connection, then this
     connection becomes a `HASNOT` connection and all accesses to it are
     replaced with `NULL` (augmented by the usual post-processing step).
@@ -426,7 +454,7 @@ class ConnectionType(Enum):
 
     If this overlaps with a `HAS` connection, then the left join becomes an
     INNER join, and the coalescing is skipped.
-    
+
     If this connection overlaps with a `HASNOT` connection, then this
     connection becomes a `HASNOT` connection and the `COUNT` is replaced with
     a constant zero.
@@ -498,6 +526,7 @@ class HybridTree:
         self._parent: HybridTree | None = None
         self._is_hidden_level: bool = is_hidden_level
         self._is_connection_root: bool = is_connection_root
+        self._ordering: list[HybridCollation] = []
 
     def __repr__(self):
         lines = []
@@ -559,6 +588,13 @@ class HybridTree:
         a HybridConnection.
         """
         return self._is_connection_root
+
+    @property
+    def ordering(self) -> list[HybridCollation]:
+        """
+        The ordering of the records in the current level.
+        """
+        return self._ordering
 
     def add_child(
         self,
@@ -973,6 +1009,37 @@ class HybridTranslator:
                     f"TODO: support converting {expr.__class__.__name__}"
                 )
 
+    def process_hybrid_collations(
+        self,
+        hybrid: HybridTree,
+        collations: list[CollationExpression],
+        child_ref_mapping: dict[int, int],
+    ) -> dict[str, HybridExpr]:
+        new_expressions: dict[str, HybridExpr] = {}
+        hybrid.ordering.clear()
+        for i, collation in enumerate(collations):
+            new_collation: HybridCollation
+            if type(collation.expr) is Reference:
+                new_collation = HybridCollation(
+                    HybridRefExpr(
+                        collation.expr.term_name, collation.expr.pydough_type
+                    ),
+                    collation.asc,
+                    not collation.na_last,
+                )
+            else:
+                # TODO: Fix the name of the ordering.
+                name = f"_ordering_{i}"
+                expr = self.make_hybrid_expr(hybrid, collation.expr, child_ref_mapping)
+                new_expressions[name] = expr
+                new_collation = HybridCollation(
+                    HybridRefExpr(name, collation.expr.pydough_type),
+                    collation.asc,
+                    not collation.na_last,
+                )
+            hybrid.ordering.append(new_collation)
+        return new_expressions
+
     def make_hybrid_tree(self, node: PyDoughCollectionAST) -> HybridTree:
         """
         Converts a collection AST into the HybridTree format.
@@ -1018,13 +1085,23 @@ class HybridTranslator:
             case TopK():
                 hybrid = self.make_hybrid_tree(node.preceding_context)
                 self.populate_children(hybrid, node, child_ref_mapping)
+                new_nodes = self.process_hybrid_collations(
+                    hybrid, node.collation, child_ref_mapping
+                )
+                if new_nodes:
+                    hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_nodes))
                 hybrid.pipeline.append(
-                    HybridLimit(hybrid.pipeline[-1], node, node.ordering)
+                    HybridLimit(hybrid.pipeline[-1], node, hybrid.ordering.copy())
                 )
                 return hybrid
             case OrderBy():
                 hybrid = self.make_hybrid_tree(node.preceding_context)
                 self.populate_children(hybrid, node, child_ref_mapping)
+                new_nodes = self.process_hybrid_collations(
+                    hybrid, node.collation, child_ref_mapping
+                )
+                if new_nodes:
+                    hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_nodes))
                 return hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:
