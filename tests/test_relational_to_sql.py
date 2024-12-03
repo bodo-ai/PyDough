@@ -36,6 +36,7 @@ from pydough.pydough_ast.pydough_operators import (
 from pydough.relational import (
     Aggregate,
     CallExpression,
+    EmptySingleton,
     Filter,
     Join,
     JoinType,
@@ -112,6 +113,24 @@ def sqlite_dialect() -> SQLiteDialect:
             ),
             "SELECT b FROM (SELECT a, b, a + 1 AS c FROM (SELECT a, b FROM table)) ORDER BY c",
             id="project_scan_with_ordering",
+        ),
+        pytest.param(
+            RelationalRoot(
+                input=Project(
+                    input=EmptySingleton(),
+                    columns={
+                        "A": make_relational_literal(42, Int64Type()),
+                        "B": make_relational_literal("foo", StringType()),
+                    },
+                ),
+                ordered_columns=[
+                    ("A", make_relational_column_reference("A")),
+                    ("B", make_relational_column_reference("B")),
+                ],
+                orderings=[],
+            ),
+            "SELECT 42 AS A, 'foo' AS B FROM (VALUES ())",
+            id="simple_values",
         ),
         pytest.param(
             RelationalRoot(

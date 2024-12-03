@@ -38,7 +38,7 @@ from pydough.sqlglot import execute
 )
 def test_tpch(
     root: RelationalRoot, output: pd.DataFrame, sqlite_tpch_db_context: DatabaseContext
-):
+) -> None:
     """
     Test the example TPC-H relational trees executed on a
     SQLite database.

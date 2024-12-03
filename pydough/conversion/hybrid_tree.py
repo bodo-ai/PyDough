@@ -85,21 +85,18 @@ class HybridExpr(ABC):
         """
 
     @abstractmethod
-    def shift_back(self, levels: int) -> "HybridExpr":
+    def shift_back(self, levels: int) -> Optional["HybridExpr"]:
         """
         Promotes a HybridRefExpr into a HybridBackRefExpr with the specified
         number of levels, or increases the number of levels of a
-        HybridBackRefExpr by the specified number of levels.
+        HybridBackRefExpr by the specified number of levels. Returns None if
+        the expression cannot be shifted back (e.g. a child reference).
 
         Args:
             `levels`: the amount of back levels to increase by.
 
         Returns:
             The transformed HybridBackRefExpr.
-
-        Raises:
-            NotImplementedError: if called on an invalid type of HybridExpr for
-            this operation.
         """
 
     def make_into_ref(self, name: str) -> "HybridRefExpr":
@@ -141,7 +138,7 @@ class HybridCollation(HybridExpr):
             return self
         return HybridCollation(renamed_expr, self.asc, self.na_first)
 
-    def shift_back(self, levels: int) -> HybridExpr:
+    def shift_back(self, levels: int) -> HybridExpr | None:
         raise NotImplementedError
 
 
@@ -160,7 +157,7 @@ class HybridColumnExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr:
+    def shift_back(self, levels: int) -> HybridExpr | None:
         return HybridBackRefExpr(self.column.column_property.name, levels, self.typ)
 
 
@@ -182,7 +179,7 @@ class HybridRefExpr(HybridExpr):
             return HybridRefExpr(renamings[self.name], self.typ)
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr:
+    def shift_back(self, levels: int) -> HybridExpr | None:
         return HybridBackRefExpr(self.name, levels, self.typ)
 
 
@@ -203,8 +200,8 @@ class HybridChildRefExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr:
-        raise NotImplementedError
+    def shift_back(self, levels: int) -> HybridExpr | None:
+        return None
 
 
 class HybridBackRefExpr(HybridExpr):
@@ -224,8 +221,8 @@ class HybridBackRefExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr:
-        return HybridBackRefExpr(self.name, self.back_idx + 1, self.typ)
+    def shift_back(self, levels: int) -> HybridExpr | None:
+        return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -243,8 +240,8 @@ class HybridLiteralExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr:
-        raise NotImplementedError
+    def shift_back(self, levels: int) -> HybridExpr | None:
+        return None
 
 
 class HybridFunctionExpr(HybridExpr):
@@ -283,8 +280,8 @@ class HybridFunctionExpr(HybridExpr):
             return self
         return HybridFunctionExpr(self.operator, renamed_args, self.typ)
 
-    def shift_back(self, levels: int) -> HybridExpr:
-        raise NotImplementedError
+    def shift_back(self, levels: int) -> HybridExpr | None:
+        return None
 
 
 class HybridOperation:
@@ -779,7 +776,7 @@ class HybridTranslator:
         return hybrid_result, child_idx
 
     def postprocess_agg_output(
-        self, agg_call: HybridFunctionExpr, agg_ref: HybridExpr
+        self, agg_call: HybridFunctionExpr, agg_ref: HybridExpr, joins_can_nullify: bool
     ) -> HybridExpr:
         """
         Transforms an aggregation function call in any ways that are necessary
@@ -790,18 +787,22 @@ class HybridTranslator:
             transformed if the configs demand it.
             `agg_ref`: the reference to the aggregation call that is
             transformed if the configs demand it.
+            `joins_can_nullify`: True if the aggregation is fed into a left
+            join, which creates the requirement for some aggregations like
+            `COUNT` to have their defaults replaced.
 
         Returns:
             The transformed version of `agg_ref`, if postprocessing is required,
         """
         # If doing a SUM or AVG, and the configs are set to default those
         # functions to zero when there are no values, decorate the result
-        # with `DEFAULT_TO(x, 0)`. Also, always does this step with COUNT since
-        # the semantics of that function never allow returning NULL.
+        # with `DEFAULT_TO(x, 0)`. Also, always does this step with COUNT for
+        # left joins since the semantics of that function never allow returning
+        # NULL.
         if (
             (agg_call.operator == pydop.SUM and self.configs.sum_default_zero)
             or (agg_call.operator == pydop.AVG and self.configs.avg_default_zero)
-            or (agg_call.operator == pydop.COUNT)
+            or (agg_call.operator == pydop.COUNT and joins_can_nullify)
         ):
             agg_ref = HybridFunctionExpr(
                 pydop.DEFAULT_TO,
@@ -862,7 +863,10 @@ class HybridTranslator:
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
         )
-        return self.postprocess_agg_output(count_call, result_ref)
+        # The null-adding join is not done if this is the root level, since
+        # that just means all the aggregations are no-groupby aggregations.
+        joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
+        return self.postprocess_agg_output(count_call, result_ref, joins_can_nullify)
 
     def make_hybrid_expr(
         self,
@@ -1003,7 +1007,10 @@ class HybridTranslator:
                 result_ref: HybridExpr = HybridChildRefExpr(
                     agg_name, child_idx, expr.pydough_type
                 )
-                return self.postprocess_agg_output(hybrid_call, result_ref)
+                joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
+                return self.postprocess_agg_output(
+                    hybrid_call, result_ref, joins_can_nullify
+                )
             case _:
                 raise NotImplementedError(
                     f"TODO: support converting {expr.__class__.__name__}"
@@ -1105,11 +1112,13 @@ class HybridTranslator:
                 return hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:
-                    case CompoundSubCollection():
-                        raise NotImplementedError(f"{node.__class__.__name__}")
-                    case TableCollection() | SubCollection():
+                    case TableCollection() | SubCollection() if not isinstance(
+                        node.child_access, CompoundSubCollection
+                    ):
                         return HybridTree(HybridCollectionAccess(node.child_access))
                     case _:
-                        raise NotImplementedError(f"{node.__class__.__name__}")
+                        raise NotImplementedError(
+                            f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
+                        )
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
