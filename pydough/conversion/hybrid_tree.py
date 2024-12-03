@@ -25,7 +25,7 @@ __all__ = [
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
@@ -115,14 +115,14 @@ class HybridExpr(ABC):
         return HybridRefExpr(name, self.typ)
 
 
-class HybridCollation(HybridExpr):
+class HybridCollation:
     """
     Class for HybridExpr terms that are another HybridExpr term wrapped in
     information about how to sort by them.
     """
 
-    def __init__(self, expr: HybridExpr, asc: bool, na_first: bool):
-        self.expr: HybridExpr = expr
+    def __init__(self, expr: "HybridRefExpr", asc: bool, na_first: bool):
+        self.expr: HybridRefExpr = expr
         self.asc: bool = asc
         self.na_first: bool = na_first
 
@@ -131,15 +131,6 @@ class HybridCollation(HybridExpr):
             f"{'asc' if self.asc else 'desc'}_{'first' if self.na_first else 'last'}"
         )
         return f"({self.expr!r}):{suffix}"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        renamed_expr: HybridExpr = self.expr.apply_renamings(renamings)
-        if renamed_expr is self.expr:
-            return self
-        return HybridCollation(renamed_expr, self.asc, self.na_first)
-
-    def shift_back(self, levels: int) -> HybridExpr | None:
-        raise NotImplementedError
 
 
 class HybridColumnExpr(HybridExpr):
@@ -640,8 +631,8 @@ class HybridTranslator:
 
     def __init__(self, configs: PyDoughConfigs):
         self.configs = configs
-        # An index used for creating fake column names for aggregations
-        self.agg_counter: int = 0
+        # An index used for creating fake column names for aliases
+        self.alias_counter: int = 0
 
     def populate_children(
         self,
@@ -824,15 +815,22 @@ class HybridTranslator:
         Returns:
             The new name to be used.
         """
-        agg_name: str = f"agg_{self.agg_counter}"
-        while (
-            agg_name in connection.subtree.pipeline[-1].terms
-            or agg_name in connection.aggs
-        ):
-            self.agg_counter += 1
-            agg_name = f"agg_{self.agg_counter}"
-        self.agg_counter += 1
-        return agg_name
+        return self.get_internal_name(
+            "agg", [connection.subtree.pipeline[-1].terms, connection.aggs]
+        )
+
+    def get_ordering_name(self, hybrid: HybridTree) -> str:
+        return self.get_internal_name("ordering", [hybrid.pipeline[-1].terms])
+
+    def get_internal_name(
+        self, prefix: str, reserved_names: list[dict[str, Any]]
+    ) -> str:
+        name = f"{prefix}_{self.alias_counter}"
+        while any(name in s for s in reserved_names):
+            self.alias_counter += 1
+            name = f"{prefix}_{self.alias_counter}"
+        self.alias_counter += 1
+        return name
 
     def handle_collection_count(
         self,
@@ -1024,13 +1022,11 @@ class HybridTranslator:
     ) -> dict[str, HybridExpr]:
         new_expressions: dict[str, HybridExpr] = {}
         hybrid.ordering.clear()
-        for i, collation in enumerate(collations):
-            new_collation: HybridCollation
-            # TODO: Fix the name of the ordering.
-            name = f"_ordering_{i}"
+        for collation in collations:
+            name = self.get_ordering_name(hybrid)
             expr = self.make_hybrid_expr(hybrid, collation.expr, child_ref_mapping)
             new_expressions[name] = expr
-            new_collation = HybridCollation(
+            new_collation: HybridCollation = HybridCollation(
                 HybridRefExpr(name, collation.expr.pydough_type),
                 collation.asc,
                 not collation.na_last,
