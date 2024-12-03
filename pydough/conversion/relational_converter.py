@@ -696,7 +696,6 @@ class RelTranslation:
         """
         # Fetch all of the expressions that should be kept in the final output
         original_calc_terms: set[str] = node.calc_terms
-        children: list[PyDoughCollectionAST] = []
         final_terms: list[tuple[str, PyDoughExpressionAST]] = []
         all_names: set[str] = set()
         for name in original_calc_terms:
@@ -704,7 +703,6 @@ class RelTranslation:
             all_names.add(name)
         final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
         dummy_counter = 0
-        final_calc: Calc = Calc(node, children)
 
         # Add all of the expressions that are used as ordering keys,
         # transforming any non-references into references.
@@ -724,7 +722,8 @@ class RelTranslation:
                     all_names.add(dummy_name)
                     ordering.append((dummy_name, expr.asc, expr.na_last))
 
-        final_calc = final_calc.with_terms(final_terms)
+        children: list[PyDoughCollectionAST] = []
+        final_calc: Calc = Calc(node, children).with_terms(final_terms)
         updated_orderings: list[CollationExpression] = [
             CollationExpression(Reference(final_calc, name), asc, na_last)
             for name, asc, na_last in ordering
