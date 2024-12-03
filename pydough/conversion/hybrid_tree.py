@@ -1026,24 +1026,15 @@ class HybridTranslator:
         hybrid.ordering.clear()
         for i, collation in enumerate(collations):
             new_collation: HybridCollation
-            if type(collation.expr) is Reference:
-                new_collation = HybridCollation(
-                    HybridRefExpr(
-                        collation.expr.term_name, collation.expr.pydough_type
-                    ),
-                    collation.asc,
-                    not collation.na_last,
-                )
-            else:
-                # TODO: Fix the name of the ordering.
-                name = f"_ordering_{i}"
-                expr = self.make_hybrid_expr(hybrid, collation.expr, child_ref_mapping)
-                new_expressions[name] = expr
-                new_collation = HybridCollation(
-                    HybridRefExpr(name, collation.expr.pydough_type),
-                    collation.asc,
-                    not collation.na_last,
-                )
+            # TODO: Fix the name of the ordering.
+            name = f"_ordering_{i}"
+            expr = self.make_hybrid_expr(hybrid, collation.expr, child_ref_mapping)
+            new_expressions[name] = expr
+            new_collation = HybridCollation(
+                HybridRefExpr(name, collation.expr.pydough_type),
+                collation.asc,
+                not collation.na_last,
+            )
             hybrid.ordering.append(new_collation)
         return new_expressions
 
@@ -1089,30 +1080,21 @@ class HybridTranslator:
                 expr = self.make_hybrid_expr(hybrid, node.condition, child_ref_mapping)
                 hybrid.pipeline.append(HybridFilter(hybrid.pipeline[-1], expr))
                 return hybrid
-            case TopK():
+            case OrderBy() | TopK():
                 hybrid = self.make_hybrid_tree(node.preceding_context)
                 self.populate_children(hybrid, node, child_ref_mapping)
                 new_nodes = self.process_hybrid_collations(
                     hybrid, node.collation, child_ref_mapping
                 )
-                if new_nodes:
-                    hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_nodes))
-                hybrid.pipeline.append(
-                    HybridLimit(
-                        hybrid.pipeline[-1],
-                        node.records_to_keep,
-                        hybrid.ordering.copy(),
+                hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_nodes))
+                if isinstance(node, TopK):
+                    hybrid.pipeline.append(
+                        HybridLimit(
+                            hybrid.pipeline[-1],
+                            node.records_to_keep,
+                            hybrid.ordering.copy(),
+                        )
                     )
-                )
-                return hybrid
-            case OrderBy():
-                hybrid = self.make_hybrid_tree(node.preceding_context)
-                self.populate_children(hybrid, node, child_ref_mapping)
-                new_nodes = self.process_hybrid_collations(
-                    hybrid, node.collation, child_ref_mapping
-                )
-                if new_nodes:
-                    hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_nodes))
                 return hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:
