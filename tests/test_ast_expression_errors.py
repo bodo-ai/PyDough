@@ -16,7 +16,7 @@ from pydough.pydough_ast import (
 )
 
 
-def test_binop_wrong_num_args(binary_operators: pydop.BinaryOperator):
+def test_binop_wrong_num_args(binary_operators: pydop.BinaryOperator) -> None:
     """
     Verifies that every binary operator raises an appropriate exception
     when called with an insufficient number of arguments.
@@ -58,7 +58,7 @@ def test_function_wrong_num_args(
     call_info: AstNodeTestInfo,
     error_string: str,
     get_sample_graph: graph_fetcher,
-):
+) -> None:
     """
     Verifies that every function operator raises an appropriate exception
     when called with an insufficient number of arguments.
