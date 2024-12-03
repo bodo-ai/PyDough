@@ -923,8 +923,9 @@ class HybridTranslator:
             case TopK():
                 hybrid = self.make_hybrid_tree(node.preceding_context)
                 self.populate_children(hybrid, node, child_ref_mapping)
-                # TODO: support collation. Requires order by handling.
-                hybrid.pipeline.append(HybridLimit(hybrid.pipeline[-1], node, []))
+                hybrid.pipeline.append(
+                    HybridLimit(hybrid.pipeline[-1], node, node.ordering)
+                )
                 return hybrid
             case OrderBy():
                 hybrid = self.make_hybrid_tree(node.preceding_context)
