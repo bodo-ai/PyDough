@@ -85,6 +85,23 @@ class DatabaseDialect(Enum):
     ANSI = "ansi"
     SQLITE = "sqlite"
 
+    @staticmethod
+    def from_string(dialect: str) -> "DatabaseDialect":
+        """Convert a string to a DatabaseDialect enum.
+
+        Args:
+            dialect (str): The string representation of the dialect.
+
+        Returns:
+            DatabaseDialect: The dialect enum.
+        """
+        if dialect == "ansi":
+            return DatabaseDialect.ANSI
+        elif dialect == "sqlite":
+            return DatabaseDialect.SQLITE
+        else:
+            raise ValueError(f"Unsupported dialect: {dialect}")
+
 
 @dataclass
 class DatabaseContext:

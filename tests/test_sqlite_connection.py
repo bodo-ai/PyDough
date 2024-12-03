@@ -8,7 +8,12 @@ import sqlite3
 import pandas as pd
 import pytest
 
-from pydough.database_connectors.database_connector import DatabaseConnection
+from pydough.database_connectors import (
+    DatabaseConnection,
+    DatabaseContext,
+    DatabaseDialect,
+    load_database_context,
+)
 
 
 def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
@@ -48,3 +53,24 @@ def test_unusable_after_del() -> None:
     del db
     with pytest.raises(sqlite3.ProgrammingError):
         connection.execute("SELECT 1")
+
+
+def test_sqlite_context() -> None:
+    context: DatabaseContext = load_database_context("sqlite", database=":memory:")
+    result: pd.DataFrame = context.connection.execute_query_df("Select 1 as A")
+    pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))
+    assert context.dialect == DatabaseDialect.SQLITE
+    with pytest.raises(ValueError, match="SQLite connection requires a database path."):
+        context = load_database_context("sqlite")
+    with pytest.raises(ValueError):
+        context = load_database_context("sqlite3")
+    with pytest.raises(
+        TypeError,
+        match="'invalid_kwarg' is an invalid keyword argument for Connection()",
+    ):
+        context = load_database_context(
+            "sqlite", database=":memory:", invalid_kwarg="foo"
+        )
+    with pytest.raises(ValueError):
+        # TODO: Potentially remove/move in the future.
+        context = load_database_context("mysql", database=":memory:")
