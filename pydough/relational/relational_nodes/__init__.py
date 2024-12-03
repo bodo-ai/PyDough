@@ -15,10 +15,12 @@ __all__ = [
     "RelationalVisitor",
     "RelationalExpressionDispatcher",
     "Scan",
+    "EmptySingleton",
 ]
 from .abstract_node import Relational
 from .aggregate import Aggregate
 from .column_pruner import ColumnPruner
+from .empty_singleton import EmptySingleton
 from .filter import Filter
 from .join import Join, JoinType
 from .limit import Limit

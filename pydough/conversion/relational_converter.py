@@ -34,6 +34,7 @@ from pydough.relational.relational_expressions import (
 from pydough.relational.relational_nodes import (
     Aggregate,
     ColumnPruner,
+    EmptySingleton,
     Filter,
     Join,
     JoinType,
@@ -112,7 +113,6 @@ class RelTranslation:
                 assert context is not None
                 return context.expressions[expr]
             case HybridFunctionExpr():
-                assert context is not None
                 inputs: list[RelationalExpression] = [
                     self.translate_expression(arg, context) for arg in expr.args
                 ]
@@ -150,12 +150,29 @@ class RelTranslation:
             created by joining `lhs_result` and `lhs_result` in the manner
             described.
         """
-        # Create the join node so we know what aliases it uses, but leave
-        # the condition as always-True and the output columns empty for now.
-        # The condition & output columns will be filled in later.
         out_columns: dict[HybridExpr, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
         out_join_keys: list[tuple[HybridExpr, HybridExpr]] = lhs_result.join_keys
+
+        # Special case: if the lhs is an EmptySingleton, just return the RHS,
+        # decorated if needed.
+        if isinstance(lhs_result.relation, EmptySingleton):
+            if child_idx is None:
+                return rhs_result
+            else:
+                for expr, col_ref in rhs_result.expressions.items():
+                    if isinstance(expr, HybridRefExpr):
+                        child_ref: HybridExpr = HybridChildRefExpr(
+                            expr.name, child_idx, expr.typ
+                        )
+                        out_columns[child_ref] = col_ref
+                return TranslationOutput(
+                    rhs_result.relation, out_columns, out_join_keys
+                )
+
+        # Create the join node so we know what aliases it uses, but leave
+        # the condition as always-True and the output columns empty for now.
+        # The condition & output columns will be filled in later.
         out_rel: Join = Join(
             [lhs_result.relation, rhs_result.relation],
             [LiteralExpression(True, BooleanType())],
@@ -188,7 +205,9 @@ class RelTranslation:
             existing_ref: ColumnReference = lhs_result.expressions[expr]
             join_columns[existing_ref.name] = existing_ref.with_input(input_aliases[0])
             if child_idx is None:
-                out_columns[expr.shift_back(1)] = existing_ref
+                shifted_expr: HybridExpr | None = expr.shift_back(1)
+                if shifted_expr is not None:
+                    out_columns[shifted_expr] = existing_ref
             else:
                 out_columns[expr] = existing_ref
 
@@ -197,10 +216,13 @@ class RelTranslation:
             # If this is stepping down from a parent to a child, shift all the
             # join keys accordingly.
             if child_idx is None:
-                out_join_keys = [
-                    (lhs_key, rhs_key.shift_back(1))
-                    for lhs_key, rhs_key in out_join_keys
-                ]
+                for idx, (lhs_key, rhs_key) in enumerate(out_join_keys):
+                    shifted_key: HybridExpr | None = rhs_key.shift_back(1)
+                    if shifted_key is None:
+                        raise ValueError(
+                            f"Invalid join key: {rhs_key} (cannot be shifted back)"
+                        )
+                    out_join_keys[idx] = (lhs_key, shifted_key)
 
             # Add all of the new references from the right hand side (in
             # alphabetical order).
@@ -291,7 +313,7 @@ class RelTranslation:
         bringing them into context via the handler.
 
         Args:
-            `context`: the TranslationOutput being augmented.
+            `context`: the TranslationOutput being augmented, if one exists.
             `hybrid`: the current level of the HybridTree.
             `pipeline_idx`: the index of the element in the pipeline of
             `hybrid` that has just been defined, meaning any children that
@@ -538,11 +560,11 @@ class RelTranslation:
             `node`: the node corresponding to the calc being derived.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
-            preceding contexts. Can be omitted in certain contexts, such as
-            when deriving a table scan or literal.
+            preceding contexts and the corresponding relational node.
 
         Returns:
-            The TranslationOutput payload containing a PROJECT on top of
+            The TranslationOutput payload containing a PROJECT that propagates
+            any existing terms top of
             the relational node for the parent to derive any additional terms.
         """
         proj_columns: dict[str, RelationalExpression] = {}
@@ -566,7 +588,10 @@ class RelTranslation:
             proj_columns[name] = rel_expr
             out_columns[ref_expr] = ColumnReference(name, rel_expr.data_type)
         out_rel: Project = Project(context.relation, proj_columns)
-        return TranslationOutput(out_rel, out_columns, context.join_keys)
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = (
+            [] if context is None else context.join_keys
+        )
+        return TranslationOutput(out_rel, out_columns, join_keys)
 
     def rel_translation(
         self,
@@ -614,10 +639,13 @@ class RelTranslation:
         # First, recursively fetch the TranslationOutput of the preceding
         # stage, if valid.
         context: TranslationOutput | None
-        if preceding_hybrid is None or isinstance(
-            preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot
-        ):
+        if preceding_hybrid is None:
             context = None
+        elif isinstance(preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot):
+            # If at the true root, set the starting context to just be a dummy
+            # VALUES clause.
+            context = TranslationOutput(EmptySingleton(), {}, [])
+            context = self.handle_children(context, *preceding_hybrid)
         else:
             context = self.rel_translation(connection, *preceding_hybrid)
 
@@ -627,6 +655,14 @@ class RelTranslation:
             case HybridCollectionAccess():
                 if isinstance(operation.collection, TableCollection):
                     result = self.build_simple_table_scan(operation)
+                    if context is not None:
+                        result = self.join_outputs(
+                            context,
+                            result,
+                            JoinType.INNER,
+                            [],
+                            None,
+                        )
                 else:
                     # For subcollection accesses, the access is either a step
                     # from a parent into a child (if the parent exists), or the
@@ -642,10 +678,7 @@ class RelTranslation:
                             connection, operation
                         )
             case HybridCalc():
-                if context is None:
-                    raise NotImplementedError(
-                        "TODO: Implement HybridCalc without a parent context."
-                    )
+                assert context is not None
                 result = self.translate_calc(operation, context)
             case HybridFilter():
                 assert context is not None, "Malformed HybridTree pattern."
