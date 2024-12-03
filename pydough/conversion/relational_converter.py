@@ -708,11 +708,13 @@ class RelTranslation:
 
         # Add all of the expressions that are used as ordering keys,
         # transforming any non-references into references.
-        ordering: list[CollationExpression] = []
+        # We rewrite any existing expr values here to ensure that we
+        # have a standard form of generating a new input.
+        ordering: list[tuple[str, bool, bool]] = []
         if node.ordering is not None:
             for expr in node.ordering:
                 if type(expr.expr) is Reference:
-                    ordering.append(expr)
+                    ordering.append((expr.expr.term_name, expr.asc, expr.na_last))
                 else:
                     dummy_name: str
                     while True:
@@ -722,16 +724,14 @@ class RelTranslation:
                             break
                     final_terms.append((dummy_name, expr.expr))
                     all_names.add(dummy_name)
-                    ordering.append(
-                        # TODO: FIXME
-                        CollationExpression(
-                            Reference(final_calc, dummy_name), expr.asc, expr.na_last
-                        )
-                    )
+                    ordering.append((dummy_name, expr.asc, expr.na_last))
 
         final_calc = final_calc.with_terms(final_terms)
-        # TODO: FIXME
-        return final_calc, ordering
+        updated_orderings: list[CollationExpression] = [
+            CollationExpression(Reference(final_calc, name), asc, na_last)
+            for name, asc, na_last in ordering
+        ]
+        return final_calc, updated_orderings
 
 
 def make_relational_ordering(
