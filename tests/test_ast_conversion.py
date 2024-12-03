@@ -1072,6 +1072,31 @@ ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], order
 """,
             id="join_topk",
         ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalcInfo(
+                [
+                    # TODO: Add an ordering to the topk
+                    SubCollectionInfo("suppliers") ** TopKInfo([], 100),
+                ],
+                name=ReferenceInfo("name"),
+                n_top_suppliers=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("key", 0)]
+                ),
+            )
+            ** TopKInfo([], 10),
+            """
+ROOT(columns=[('name', name), ('n_top_suppliers', n_top_suppliers)], orderings=[])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'n_top_suppliers': n_top_suppliers, 'name': name}, orderings=[])
+  PROJECT(columns={'n_top_suppliers': DEFAULT_TO(agg_0, 0:int64), 'name': name})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+     LIMIT(limit=Literal(value=100, type=Int64Type()), columns={'key': key, 'nation_key': nation_key}, orderings=[])
+      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+""",
+            id="count_at_most_100_suppliers_per_nation",
+        ),
     ],
 )
 def test_ast_to_relational(

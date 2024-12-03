@@ -528,9 +528,7 @@ class RelTranslation:
         Converts a HybridLimit into a relational Limit node on top of its child.
 
         Args:
-            `node`: the node corresponding to the calc being derived.
-            `parent`: the hybrid tree of the previous layer that the access
-            steps down from.
+            `node`: the node corresponding to the limit being derived.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts. Can be omitted in certain contexts, such as
@@ -550,11 +548,7 @@ class RelTranslation:
         )
         # TODO: Determine how to handle orderings in the limit.
         out_rel: Limit = Limit(context.relation, limit_expr, kept_columns)
-        out_columns: dict[HybridExpr, ColumnReference] = {
-            expr: context.expressions[expr].with_input(None)
-            for expr in context.expressions
-        }
-        return TranslationOutput(out_rel, out_columns, context.join_keys)
+        return TranslationOutput(out_rel, context.expressions, context.join_keys)
 
     def translate_calc(
         self,
@@ -762,11 +756,7 @@ def make_relational_ordering(
         original_name = raw_expr.term_name
         name = renamings.get(original_name, original_name)
         hybrid_expr = HybridRefExpr(name, raw_expr.pydough_type)
-        relational_expr = expressions[hybrid_expr]
-        if not isinstance(relational_expr, ColumnReference):
-            raise NotImplementedError(
-                "TODO: support ordering on expressions besides column references"
-            )
+        relational_expr: ColumnReference = expressions[hybrid_expr]
         collation_expr: ExpressionSortInfo = ExpressionSortInfo(
             relational_expr, col_expr.asc, not col_expr.na_last
         )
