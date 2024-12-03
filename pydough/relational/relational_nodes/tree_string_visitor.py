@@ -54,5 +54,8 @@ class TreeStringVisitor(RelationalVisitor):
     def visit_limit(self, limit) -> None:
         self.visit_node(limit)
 
+    def visit_empty_values(self, empty_values) -> None:
+        self.visit_node(empty_values)
+
     def visit_root(self, root) -> None:
         self.visit_node(root)

@@ -21,6 +21,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.pydough_ast import AstNodeBuilder, PyDoughCollectionAST
 from pydough.types import (
+    BooleanType,
     Float64Type,
     Int64Type,
     StringType,
@@ -615,6 +616,192 @@ ROOT(columns=[('order_key', order_key), ('max_ratio', max_ratio)], orderings=[])
             id="aggregate_mixed_levels_simple",
         ),
         pytest.param(
+            TableCollectionInfo("Orders")
+            ** CalcInfo(
+                [SubCollectionInfo("lines")],
+                total_quantity=FunctionInfo(
+                    "MAX", [ChildReferenceExpressionInfo("quantity", 0)]
+                ),
+            )
+            ** SubCollectionInfo("lines")
+            ** CalcInfo(
+                [],
+                part_key=ReferenceInfo("part_key"),
+                supplier_key=ReferenceInfo("supplier_key"),
+                order_key=ReferenceInfo("order_key"),
+                order_quantity_ratio=FunctionInfo(
+                    "DIV",
+                    [
+                        ReferenceInfo("quantity"),
+                        BackReferenceExpressionInfo("total_quantity", 1),
+                    ],
+                ),
+            ),
+            """
+ROOT(columns=[('part_key', part_key), ('supplier_key', supplier_key), ('order_key', order_key), ('order_quantity_ratio', order_quantity_ratio)], orderings=[])
+ PROJECT(columns={'order_key': order_key_2, 'order_quantity_ratio': quantity / total_quantity, 'part_key': part_key, 'supplier_key': supplier_key})
+  JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'order_key_2': t1.order_key, 'part_key': t1.part_key, 'quantity': t1.quantity, 'supplier_key': t1.supplier_key, 'total_quantity': t0.total_quantity})
+   PROJECT(columns={'key': key, 'total_quantity': agg_0})
+    JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+     SCAN(table=tpch.ORDER, columns={'key': o_orderkey})
+     AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': MAX(quantity)})
+      SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'quantity': l_quantity})
+   SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'quantity': l_quantity, 'supplier_key': l_suppkey})
+""",
+            id="aggregate_then_backref",
+        ),
+        pytest.param(
+            CalcInfo(
+                [],
+                a=LiteralInfo(0, Int64Type()),
+                b=LiteralInfo("X", StringType()),
+                c=LiteralInfo(3.14, Float64Type()),
+                d=LiteralInfo(True, BooleanType()),
+            ),
+            """
+ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d)], orderings=[])
+ PROJECT(columns={'a': 0:int64, 'b': X:string, 'c': 3.14:float64, 'd': True:bool})
+  EmptyValues()
+""",
+            id="global_calc_simple",
+        ),
+        pytest.param(
+            CalcInfo(
+                [],
+                a=LiteralInfo(0, Int64Type()),
+                b=LiteralInfo("X", StringType()),
+            )
+            ** CalcInfo(
+                [],
+                a=ReferenceInfo("a"),
+                b=ReferenceInfo("b"),
+                c=LiteralInfo(3.14, Float64Type()),
+                d=LiteralInfo(True, BooleanType()),
+            ),
+            """
+ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d)], orderings=[])
+ PROJECT(columns={'a': a, 'b': b, 'c': 3.14:float64, 'd': True:bool})
+  PROJECT(columns={'a': 0:int64, 'b': X:string})
+   EmptyValues()
+""",
+            id="global_calc_multiple",
+        ),
+        pytest.param(
+            CalcInfo(
+                [TableCollectionInfo("Customers")],
+                total_bal=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                num_bal=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                avg_bal=FunctionInfo(
+                    "AVG", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                min_bal=FunctionInfo(
+                    "MIN", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                max_bal=FunctionInfo(
+                    "MAX", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                num_cust=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+            ),
+            """
+ROOT(columns=[('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal), ('num_cust', num_cust)], orderings=[])
+ PROJECT(columns={'avg_bal': agg_0, 'max_bal': agg_1, 'min_bal': agg_2, 'num_bal': agg_3, 'num_cust': agg_4, 'total_bal': DEFAULT_TO(agg_5, 0:int64)})
+  AGGREGATE(keys={}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': COUNT(), 'agg_5': SUM(acctbal)})
+   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal})
+""",
+            id="global_aggfuncs",
+        ),
+        pytest.param(
+            CalcInfo(
+                [
+                    TableCollectionInfo("Customers"),
+                    TableCollectionInfo("Suppliers"),
+                    TableCollectionInfo("Parts"),
+                ],
+                num_cust=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                num_supp=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(1)]),
+                num_part=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(2)]),
+            ),
+            """
+ROOT(columns=[('num_cust', num_cust), ('num_supp', num_supp), ('num_part', num_part)], orderings=[])
+ PROJECT(columns={'num_cust': agg_0, 'num_part': agg_1, 'num_supp': agg_2})
+  JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'agg_2': t0.agg_2})
+   JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t0.agg_0, 'agg_2': t1.agg_2})
+    AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+     SCAN(table=tpch.CUSTOMER, columns={})
+    AGGREGATE(keys={}, aggregations={'agg_2': COUNT()})
+     SCAN(table=tpch.SUPPLIER, columns={})
+   AGGREGATE(keys={}, aggregations={'agg_1': COUNT()})
+    SCAN(table=tpch.PART, columns={})
+""",
+            id="global_aggfuncs_multiple_children",
+        ),
+        pytest.param(
+            CalcInfo(
+                [],
+                a=LiteralInfo(28.15, Int64Type()),
+                b=LiteralInfo("NICKEL", StringType()),
+            )
+            ** TableCollectionInfo("Parts")
+            ** CalcInfo(
+                [],
+                part_name=ReferenceInfo("name"),
+                is_above_cutoff=FunctionInfo(
+                    "GRT",
+                    [
+                        ReferenceInfo("retail_price"),
+                        BackReferenceExpressionInfo("a", 1),
+                    ],
+                ),
+                is_nickel=FunctionInfo(
+                    "CONTAINS",
+                    [ReferenceInfo("part_type"), BackReferenceExpressionInfo("b", 1)],
+                ),
+            ),
+            """
+ROOT(columns=[('part_name', part_name), ('is_above_cutoff', is_above_cutoff), ('is_nickel', is_nickel)], orderings=[])
+ PROJECT(columns={'is_above_cutoff': retail_price > a, 'is_nickel': CONTAINS(part_type, b), 'part_name': name})
+  JOIN(conditions=[True:bool], types=['inner'], columns={'a': t0.a, 'b': t0.b, 'name': t1.name, 'part_type': t1.part_type, 'retail_price': t1.retail_price})
+   PROJECT(columns={'a': 28.15:int64, 'b': NICKEL:string})
+    EmptyValues()
+   SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            id="global_calc_backref",
+        ),
+        pytest.param(
+            CalcInfo(
+                [TableCollectionInfo("Parts")],
+                avg_price=FunctionInfo(
+                    "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                ),
+            )
+            ** TableCollectionInfo("Parts")
+            ** CalcInfo(
+                [],
+                part_name=ReferenceInfo("name"),
+                is_above_avg=FunctionInfo(
+                    "GRT",
+                    [
+                        ReferenceInfo("retail_price"),
+                        BackReferenceExpressionInfo("avg_price", 1),
+                    ],
+                ),
+            ),
+            """
+ROOT(columns=[('part_name', part_name), ('is_above_avg', is_above_avg)], orderings=[])
+ PROJECT(columns={'is_above_avg': retail_price > avg_price, 'part_name': name})
+  JOIN(conditions=[True:bool], types=['inner'], columns={'avg_price': t0.avg_price, 'name': t1.name, 'retail_price': t1.retail_price})
+   PROJECT(columns={'avg_price': agg_0})
+    AGGREGATE(keys={}, aggregations={'agg_0': AVG(retail_price)})
+     SCAN(table=tpch.PART, columns={'retail_price': p_retailprice})
+   SCAN(table=tpch.PART, columns={'name': p_name, 'retail_price': p_retailprice})
+""",
+            id="global_aggfunc_backref",
+        ),
+        pytest.param(
             TableCollectionInfo("Parts")
             ** CalcInfo(
                 [SubCollectionInfo("supply_records")],
@@ -756,6 +943,34 @@ ROOT(columns=[('nation_name', nation_name), ('total_bal', total_bal), ('num_bal'
     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
 """,
             id="various_aggfuncs_simple",
+        ),
+        pytest.param(
+            CalcInfo(
+                [TableCollectionInfo("Customers")],
+                total_bal=FunctionInfo(
+                    "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                num_bal=FunctionInfo(
+                    "COUNT", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                avg_bal=FunctionInfo(
+                    "AVG", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                min_bal=FunctionInfo(
+                    "MIN", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                max_bal=FunctionInfo(
+                    "MAX", [ChildReferenceExpressionInfo("acctbal", 0)]
+                ),
+                num_cust=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+            ),
+            """
+ROOT(columns=[('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal), ('num_cust', num_cust)], orderings=[])
+ PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:int64), 'max_bal': agg_1, 'min_bal': agg_2, 'num_bal': agg_3, 'num_cust': agg_4, 'total_bal': agg_5})
+  AGGREGATE(keys={}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': COUNT(), 'agg_5': SUM(acctbal)})
+   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal})
+""",
+            id="various_aggfuncs_global",
         ),
     ],
 )

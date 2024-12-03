@@ -15,6 +15,7 @@ from pydough.relational import (
     Aggregate,
     CallExpression,
     ColumnReference,
+    EmptyValues,
     Filter,
     Join,
     JoinType,
@@ -168,6 +169,13 @@ def test_project_to_string(project: Project, output: str) -> None:
     Test the to_string() functionality for the Project node.
     """
     assert project.to_string() == output
+
+
+def test_empty_values_to_string() -> None:
+    """
+    Test the to_string() functionality for the EmptyValues node.
+    """
+    assert EmptyValues().to_string() == "EmptyValues()"
 
 
 @pytest.mark.parametrize(

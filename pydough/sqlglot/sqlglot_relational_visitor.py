@@ -9,13 +9,14 @@ from collections.abc import MutableMapping, MutableSequence
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier, Select, Subquery
+from sqlglot.expressions import Identifier, Select, Subquery, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
 
 from pydough.relational import (
     Aggregate,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
+    EmptyValues,
     ExpressionSortInfo,
     Filter,
     Join,
@@ -422,6 +423,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             query = query.order_by(*ordering_exprs)
         query = query.limit(limit_expr)
         self._stack.append(query)
+
+    def visit_empty_values(self, empty_values: EmptyValues) -> None:
+        self._stack.append(Select().from_(values([()])))
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_inputs(root)
