@@ -620,7 +620,7 @@ ROOT(columns=[('order_key', order_key), ('max_ratio', max_ratio)], orderings=[])
             ** CalcInfo(
                 [SubCollectionInfo("lines")],
                 total_quantity=FunctionInfo(
-                    "MAX", [ChildReferenceExpressionInfo("quantity", 0)]
+                    "SUM", [ChildReferenceExpressionInfo("quantity", 0)]
                 ),
             )
             ** SubCollectionInfo("lines")
@@ -641,10 +641,10 @@ ROOT(columns=[('order_key', order_key), ('max_ratio', max_ratio)], orderings=[])
 ROOT(columns=[('part_key', part_key), ('supplier_key', supplier_key), ('order_key', order_key), ('order_quantity_ratio', order_quantity_ratio)], orderings=[])
  PROJECT(columns={'order_key': order_key_2, 'order_quantity_ratio': quantity / total_quantity, 'part_key': part_key, 'supplier_key': supplier_key})
   JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'order_key_2': t1.order_key, 'part_key': t1.part_key, 'quantity': t1.quantity, 'supplier_key': t1.supplier_key, 'total_quantity': t0.total_quantity})
-   PROJECT(columns={'key': key, 'total_quantity': agg_0})
+   PROJECT(columns={'key': key, 'total_quantity': DEFAULT_TO(agg_0, 0:int64)})
     JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
      SCAN(table=tpch.ORDER, columns={'key': o_orderkey})
-     AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': MAX(quantity)})
+     AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(quantity)})
       SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'quantity': l_quantity})
    SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'quantity': l_quantity, 'supplier_key': l_suppkey})
 """,

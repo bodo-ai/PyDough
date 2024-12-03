@@ -202,7 +202,6 @@ class RelTranslation:
         for expr in lhs_result.expressions:
             existing_ref: ColumnReference = lhs_result.expressions[expr]
             join_columns[existing_ref.name] = existing_ref.with_input(input_aliases[0])
-            # breakpoint()
             if child_idx is None:
                 shifted_expr: HybridExpr | None = expr.shift_back(1)
                 if shifted_expr is not None:
