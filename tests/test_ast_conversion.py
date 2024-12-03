@@ -907,14 +907,14 @@ ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[])
             ),
             """
 ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
- PROJECT(columns={'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_0_1, 0:int64)})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'name': t0.name})
+ PROJECT(columns={'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_1, 0:int64)})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'name': t0.name})
    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
      FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
       SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
-   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key)})
     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="num_positive_accounts_per_nation",
@@ -955,14 +955,14 @@ ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('tota
             ),
             """
 ROOT(columns=[('name', name)], orderings=[])
- FILTER(condition=DEFAULT_TO(agg_0, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_0_1, 0:int64), columns={'name': name})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'name': t0.name})
+ FILTER(condition=DEFAULT_TO(agg_0, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_1, 0:int64), columns={'name': name})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'name': t0.name})
    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
      FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
       SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
-   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key)})
     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="mostly_positive_accounts_per_nation1",
@@ -1025,15 +1025,15 @@ ROOT(columns=[('name', name)], orderings=[])
             ),
             """
 ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
- FILTER(condition=DEFAULT_TO(agg_1, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_1_2, 0:int64), columns={'name': name, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
-  PROJECT(columns={'agg_1': agg_1, 'agg_1_2': agg_1_2, 'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_0_1, 0:int64)})
-   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'agg_1': t0.agg_1, 'agg_1_2': t1.agg_1, 'name': t0.name})
-    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'key': t0.key, 'name': t0.name})
+ FILTER(condition=DEFAULT_TO(agg_2, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_3, 0:int64), columns={'name': name, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
+  PROJECT(columns={'agg_2': agg_2, 'agg_3': agg_3, 'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_1, 0:int64)})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'agg_2': t0.agg_2, 'agg_3': t1.agg_3, 'name': t0.name})
+    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_2': t1.agg_2, 'key': t0.key, 'name': t0.name})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key), 'agg_1': COUNT(key)})
+     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key), 'agg_2': COUNT(key)})
       FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
        SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
-    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key), 'agg_1': COUNT(key)})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key), 'agg_3': COUNT(key)})
      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="mostly_positive_accounts_per_nation2",
@@ -1082,14 +1082,14 @@ ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('tota
             """
 ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
  FILTER(condition=suppliers_in_black > 0.5:float64 * total_suppliers, columns={'name': name, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
-  PROJECT(columns={'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_0_1, 0:int64)})
-   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_0_1': t1.agg_0, 'name': t0.name})
+  PROJECT(columns={'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_1, 0:int64)})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'name': t0.name})
     JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
      AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
       FILTER(condition=account_balance > 0.0:float64, columns={'key': key, 'nation_key': nation_key})
        SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
-    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key)})
      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
 """,
             id="mostly_positive_accounts_per_nation3",
