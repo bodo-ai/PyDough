@@ -20,6 +20,7 @@ __all__ = [
     "HybridLimit",
     "HybridTree",
     "HybridTranslator",
+    "HybridPartition",
 ]
 
 
@@ -44,6 +45,9 @@ from pydough.pydough_ast import (
     GlobalContext,
     Literal,
     OrderBy,
+    PartitionBy,
+    PartitionChild,
+    PartitionKey,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
     Reference,
@@ -380,6 +384,27 @@ class HybridFilter(HybridOperation):
 
     def __repr__(self):
         return f"FILTER[{self.condition}]"
+
+
+class HybridPartition(HybridOperation):
+    """
+    Class for HybridOperation corresponding to a PARTITION operation.
+    """
+
+    def __init__(self):
+        super().__init__({}, {})
+        self.key_names: list[str] = []
+
+    def __repr__(self):
+        key_map = {name: self.terms[name] for name in self.key_names}
+        return f"PARTITION[{key_map}]"
+
+    def add_key(self, key_name: str, key_expr: HybridExpr) -> None:
+        """
+        TODO: add docstring
+        """
+        self.key_names.append(key_name)
+        self.terms[key_name] = key_expr
 
 
 class HybridOrder(HybridOperation):
@@ -722,6 +747,8 @@ class HybridTranslator:
         # it is possible that `expr` does not correspond to any child index.
         child_idx: int | None = None
         match expr:
+            case PartitionKey():
+                return self.make_hybrid_agg_expr(hybrid, expr.expr, child_ref_mapping)
             case Literal():
                 # Literals are kept as-is.
                 hybrid_result = HybridLiteralExpr(expr)
@@ -902,6 +929,8 @@ class HybridTranslator:
         child_connection: HybridConnection
         args: list[HybridExpr] = []
         match expr:
+            case PartitionKey():
+                return self.make_hybrid_expr(hybrid, expr.expr, child_ref_mapping)
             case Literal():
                 return HybridLiteralExpr(expr)
             case ColumnProperty():
@@ -1067,12 +1096,27 @@ class HybridTranslator:
                 expr = self.make_hybrid_expr(hybrid, node.condition, child_ref_mapping)
                 hybrid.pipeline.append(HybridFilter(hybrid.pipeline[-1], expr))
                 return hybrid
+            case PartitionBy():
+                hybrid = self.make_hybrid_tree(node.preceding_context)
+                partition: HybridPartition = HybridPartition()
+                successor_hybrid = HybridTree(partition)
+                hybrid.add_successor(successor_hybrid)
+                self.populate_children(successor_hybrid, node, child_ref_mapping)
+                for key_name in node.calc_terms:
+                    key = node.get_expr(key_name)
+                    expr = self.make_hybrid_expr(
+                        successor_hybrid, key, child_ref_mapping
+                    )
+                    partition.add_key(key_name, expr)
+                return successor_hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:
                     case TableCollection() | SubCollection() if not isinstance(
                         node.child_access, CompoundSubCollection
                     ):
                         return HybridTree(HybridCollectionAccess(node.child_access))
+                    case PartitionChild():
+                        return self.make_hybrid_tree(node.child_access.child_access)
                     case _:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
