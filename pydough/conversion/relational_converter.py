@@ -16,7 +16,6 @@ from pydough.metadata import (
 )
 from pydough.pydough_ast import (
     Calc,
-    CollationExpression,
     CollectionAccess,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
@@ -49,6 +48,7 @@ from .hybrid_tree import (
     HybridBackRefExpr,
     HybridCalc,
     HybridChildRefExpr,
+    HybridCollation,
     HybridCollectionAccess,
     HybridColumnExpr,
     HybridConnection,
@@ -572,10 +572,12 @@ class RelTranslation:
             for name in context.relation.columns
         }
         limit_expr: LiteralExpression = LiteralExpression(
-            node.limit.records_to_keep, Int64Type()
+            node.records_to_keep, Int64Type()
         )
-        # TODO: Determine how to handle orderings in the limit.
-        out_rel: Limit = Limit(context.relation, limit_expr, kept_columns)
+        orderings: list[ExpressionSortInfo] = make_relational_ordering(
+            node.orderings, context.expressions
+        )
+        out_rel: Limit = Limit(context.relation, limit_expr, kept_columns, orderings)
         return TranslationOutput(out_rel, context.expressions, context.join_keys)
 
     def translate_calc(
@@ -726,51 +728,26 @@ class RelTranslation:
     @staticmethod
     def preprocess_root(
         node: PyDoughCollectionAST,
-    ) -> tuple[PyDoughCollectionAST, list[CollationExpression]]:
+    ) -> PyDoughCollectionAST:
         """
         Transforms the final PyDough collection by appending it with an extra CALC
-        containing all of the columns that are outputted or used for ordering.
+        containing all of the columns that are output.
         """
         # Fetch all of the expressions that should be kept in the final output
         original_calc_terms: set[str] = node.calc_terms
-        children: list[PyDoughCollectionAST] = []
         final_terms: list[tuple[str, PyDoughExpressionAST]] = []
         all_names: set[str] = set()
         for name in original_calc_terms:
             final_terms.append((name, Reference(node, name)))
             all_names.add(name)
         final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
-        dummy_counter = 0
-        final_calc: Calc = Calc(node, children)
-
-        # Add all of the expressions that are used as ordering keys,
-        # transforming any non-references into references.
-        ordering: list[CollationExpression] = []
-        if node.ordering is not None:
-            for expr in node.ordering:
-                if isinstance(expr.expr, Reference):
-                    ordering.append(expr)
-                else:
-                    dummy_name: str
-                    while True:
-                        dummy_name = f"_order_expr_{dummy_counter}"
-                        dummy_counter += 1
-                        if dummy_name not in all_names:
-                            break
-                    final_terms.append((dummy_name, expr.expr))
-                    all_names.add(dummy_name)
-                    ordering.append(
-                        CollationExpression(
-                            Reference(final_calc, dummy_name), expr.asc, expr.na_last
-                        )
-                    )
-
-        return final_calc.with_terms(final_terms), ordering
+        children: list[PyDoughCollectionAST] = []
+        final_calc: Calc = Calc(node, children).with_terms(final_terms)
+        return final_calc
 
 
 def make_relational_ordering(
-    collation: list[CollationExpression],
-    renamings: dict[str, str],
+    collation: list[HybridCollation],
     expressions: dict[HybridExpr, ColumnReference],
 ) -> list[ExpressionSortInfo]:
     """
@@ -779,8 +756,6 @@ def make_relational_ordering(
     Args:
         collation (list[CollationExpression]): The list of collation
             expressions to convert.
-        renamings (dict[str, str]): The dictionary of renamings to apply to
-            the collation expressions.
         expressions (dict[HybridExpr, ColumnReference]): The dictionary of
             expressions to use for the relational ordering.
 
@@ -790,14 +765,9 @@ def make_relational_ordering(
     """
     orderings: list[ExpressionSortInfo] = []
     for col_expr in collation:
-        raw_expr = col_expr.expr
-        assert isinstance(raw_expr, Reference)
-        original_name = raw_expr.term_name
-        name = renamings.get(original_name, original_name)
-        hybrid_expr = HybridRefExpr(name, raw_expr.pydough_type)
-        relational_expr: ColumnReference = expressions[hybrid_expr]
+        relational_expr: ColumnReference = expressions[col_expr.expr]
         collation_expr: ExpressionSortInfo = ExpressionSortInfo(
-            relational_expr, col_expr.asc, not col_expr.na_last
+            relational_expr, col_expr.asc, col_expr.na_first
         )
         orderings.append(collation_expr)
     return orderings
@@ -823,7 +793,7 @@ def convert_ast_to_relational(
     # keys.
     translator: RelTranslation = RelTranslation()
     final_terms: set[str] = node.calc_terms
-    node, collation = translator.preprocess_root(node)
+    node = translator.preprocess_root(node)
 
     # Convert the AST node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the
@@ -848,8 +818,9 @@ def convert_ast_to_relational(
         rel_expr = output.expressions[hybrid_expr]
         ordered_columns.append((original_name, rel_expr))
     ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
-    if collation is not None:
-        orderings = make_relational_ordering(collation, renamings, output.expressions)
+    hybrid_orderings: list[HybridCollation] = hybrid.pipeline[-1].orderings
+    if hybrid_orderings:
+        orderings = make_relational_ordering(hybrid_orderings, output.expressions)
     unpruned_result: RelationalRoot = RelationalRoot(
         output.relation, ordered_columns, orderings
     )
