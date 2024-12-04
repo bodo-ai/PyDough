@@ -7,8 +7,15 @@ For each of these tests we create a new session so that we can
 manipulate the session without affecting other tests.
 """
 
+import pandas as pd
+
 from pydough.configs import PyDoughConfigs, PyDoughSession
-from pydough.database_connectors import DatabaseDialect, empty_connection
+from pydough.database_connectors import (
+    DatabaseConnection,
+    DatabaseContext,
+    DatabaseDialect,
+    empty_connection,
+)
 from pydough.metadata import GraphMetadata
 
 
@@ -42,3 +49,26 @@ def test_load_metadata_graph(sample_graph_path: str, sample_graph_names: str) ->
     assert graph.name == sample_graph_names
     assert graph.path == sample_graph_names
     assert graph.components == [sample_graph_names]
+
+
+# TODO: Add a test that we can generate SQL using a session's default.
+# This is not possible until we have the to_sql() APIs working.
+
+
+def test_connect_sqlite_database() -> None:
+    """
+    Tests that we can connect to a SQLite database,
+    it can execute SQL, and that the session is updated.
+    """
+    session: PyDoughSession = PyDoughSession()
+    database: DatabaseContext = session.connect_database("sqlite", database=":memory:")
+    assert database is session.database
+    assert database.connection is not empty_connection
+    assert database.dialect is DatabaseDialect.SQLITE
+    connection_paths: list[DatabaseConnection] = [
+        session.database.connection,
+        database.connection,
+    ]
+    for connection in connection_paths:
+        result: pd.DataFrame = connection.execute_query_df("Select 1 as A")
+        pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))
