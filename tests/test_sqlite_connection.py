@@ -8,7 +8,12 @@ import sqlite3
 import pandas as pd
 import pytest
 
-from pydough.database_connectors.database_connector import DatabaseConnection
+from pydough.database_connectors import (
+    DatabaseConnection,
+    DatabaseContext,
+    DatabaseDialect,
+    load_database_context,
+)
 
 
 def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
@@ -48,3 +53,58 @@ def test_unusable_after_del() -> None:
     del db
     with pytest.raises(sqlite3.ProgrammingError):
         connection.execute("SELECT 1")
+
+
+@pytest.mark.parametrize(
+    "database_name",
+    [
+        pytest.param("sqlite", id="lowercase"),
+        pytest.param("SQLITE", id="uppercase"),
+    ],
+)
+def test_sqlite_context(database_name: str) -> None:
+    """
+    Test that we can execute SQL against load_database_context.
+    """
+    context: DatabaseContext = load_database_context(database_name, database=":memory:")
+    result: pd.DataFrame = context.connection.execute_query_df("Select 1 as A")
+    pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))
+    assert context.dialect == DatabaseDialect.SQLITE
+
+
+def test_sqlite_context_no_path() -> None:
+    """
+    Test that we error if a Database path is not provided.
+    """
+    with pytest.raises(ValueError, match="SQLite connection requires a database path."):
+        load_database_context("sqlite")
+
+
+def test_sqlite_context_wrong_name() -> None:
+    """
+    Test that we error if the database name is incorrect.
+    """
+    with pytest.raises(ValueError, match="Unsupported database: sqlite3"):
+        load_database_context("sqlite3", database=":memory:")
+
+
+def test_sqlite_context_invalid_arg() -> None:
+    """
+    Test that load_database_context errors if useless
+    argument is provided.
+    """
+    with pytest.raises(
+        TypeError,
+        match="'invalid_kwarg' is an invalid keyword argument",
+    ):
+        load_database_context("sqlite", database=":memory:", invalid_kwarg="foo")
+
+
+def test_unsupported_database() -> None:
+    """
+    Test that we error if an unsupported database is provided.
+
+    TODO: Remove when we support mysql or move to a more generic file.
+    """
+    with pytest.raises(ValueError):
+        load_database_context("mysql", database=":memory:")
