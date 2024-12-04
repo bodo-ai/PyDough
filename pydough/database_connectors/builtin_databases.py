@@ -24,13 +24,17 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         DatabaseContext: The database context object.
     """
     supported_databases = {"sqlite"}
-    if database_name not in supported_databases:
-        raise ValueError(
-            f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
-            "Any other database must be created manually by specifying the connection and dialect."
-        )
-    connection = load_sqlite_connection(**kwargs)
-    dialect: DatabaseDialect = DatabaseDialect.from_string(database_name)
+    connection: DatabaseConnection
+    dialect: DatabaseDialect
+    match database_name.lower():
+        case "sqlite":
+            connection = load_sqlite_connection(**kwargs)
+            dialect = DatabaseDialect.SQLITE
+        case _:
+            raise ValueError(
+                f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
+                "Any other database must be created manually by specifying the connection and dialect."
+            )
     return DatabaseContext(connection, dialect)
 
 
