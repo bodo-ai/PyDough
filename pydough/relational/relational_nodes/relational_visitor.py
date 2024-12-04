@@ -95,6 +95,15 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
+    def visit_empty_singleton(self, singleton) -> None:
+        """
+        Visit an EmptySingleton node.
+
+        Args:
+            singleton (EmptySingleton): The empty singleton node to visit.
+        """
+
+    @abstractmethod
     def visit_root(self, root) -> None:
         """
         Visit a root node.

@@ -578,6 +578,10 @@ class Qualifier:
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
         # Use the qualified children & collation to create a new ORDER BY node.
+        if not qualified_collations:
+            raise PyDoughUnqualifiedException(
+                "ORDER BY requires a 'by' clause to be specified."
+            )
         orderby: OrderBy = self.builder.build_order(qualified_parent, children)
         return orderby.with_collation(qualified_collations)
 
@@ -626,6 +630,10 @@ class Qualifier:
             )
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
+        if not qualified_collations:
+            raise PyDoughUnqualifiedException(
+                "TopK requires a 'by' clause to be specified."
+            )
         # Use the qualified children & collation to create a new TOP K node.
         topk: TopK = self.builder.build_top_k(
             qualified_parent, children, records_to_keep
