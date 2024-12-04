@@ -39,11 +39,11 @@ class PyDoughSession:
     def __init__(self) -> None:
         self._metadata: GraphMetadata | None = None
         self._config: PyDoughConfigs = PyDoughConfigs()
-        # By default we have a backend that cannot execute any SQL but can still
-        # generate ANSI SQL, since this doesn't require any database setup. We
-        # create a new DatabaseContext each time instead of a singleton since
-        # a user may opt to provide their own connection by just swapping the
-        # connection attribute.
+        # By default we have a backend that cannot execute any SQL but can
+        # still generate ANSI SQL, since this doesn't require any database
+        # setup. We create a new DatabaseContext each time instead of a
+        # singleton since a user may opt to provide their own connection
+        # by just swapping the connection attribute.
         self._database: DatabaseContext = DatabaseContext(
             connection=empty_connection, dialect=DatabaseDialect.ANSI
         )
