@@ -916,6 +916,10 @@ ROOT(columns=[('part_name', part_name), ('is_above_avg', is_above_avg)], orderin
                     ),
                 ),
                 """
+ROOT(columns=[('part_type', part_type), ('num_parts', num_parts), ('avg_price', avg_price)], orderings=[])
+ PROJECT(columns={'avg_price': agg_0, 'num_parts': DEFAULT_TO(agg_1, 0:int64), 'part_type': part_type})
+  AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
+   SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
 """,
             ),
             id="agg_parts_by_type_simple",
@@ -959,6 +963,23 @@ ROOT(columns=[('part_name', part_name), ('is_above_avg', is_above_avg)], orderin
                     ),
                 ),
                 """
+ROOT(columns=[('year', year), ('customer_nation', customer_nation), ('supplier_nation', supplier_nation), ('num_occurrences', num_occurrences), ('total_value', total_value)], orderings=[])
+ PROJECT(columns={'customer_nation': customer_nation, 'num_occurrences': DEFAULT_TO(agg_0, 0:int64), 'supplier_nation': supplier_nation, 'total_value': DEFAULT_TO(agg_1, 0:int64), 'year': year})
+  AGGREGATE(keys={'customer_nation': customer_nation, 'supplier_nation': supplier_nation, 'year': year}, aggregations={'agg_0': COUNT(), 'agg_1': SUM(value)})
+   PROJECT(columns={'customer_nation': name, 'supplier_nation': name_18, 'value': extended_price, 'year': YEAR(order_date)})
+    JOIN(conditions=[t0.nation_key_14 == t1.key], types=['inner'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'name_18': t1.name, 'order_date': t0.order_date})
+     JOIN(conditions=[t0.supplier_key_9 == t1.key], types=['inner'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'nation_key_14': t1.nation_key, 'order_date': t0.order_date})
+      JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['inner'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'order_date': t0.order_date, 'supplier_key_9': t1.supplier_key})
+       JOIN(conditions=[t0.key_5 == t1.order_key], types=['inner'], columns={'extended_price': t1.extended_price, 'name': t0.name, 'order_date': t0.order_date, 'part_key': t1.part_key, 'supplier_key': t1.supplier_key})
+        JOIN(conditions=[t0.key_2 == t1.customer_key], types=['inner'], columns={'key_5': t1.key, 'name': t0.name, 'order_date': t1.order_date})
+         JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name})
+          SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+         SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+        SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
 """,
             ),
             id="count_cust_supplier_nation_combos",
@@ -1004,6 +1025,15 @@ ROOT(columns=[('part_name', part_name), ('is_above_avg', is_above_avg)], orderin
                     ),
                 ),
                 """
+ROOT(columns=[('part_type', part_type), ('percentage_of_parts', percentage_of_parts), ('avg_price', avg_price)], orderings=[])
+ FILTER(condition=avg_price >= global_avg_price, columns={'avg_price': avg_price, 'part_type': part_type, 'percentage_of_parts': percentage_of_parts})
+  PROJECT(columns={'avg_price': agg_2, 'global_avg_price': global_avg_price, 'part_type': part_type, 'percentage_of_parts': DEFAULT_TO(agg_3, 0:int64) / total_num_parts})
+   JOIN(conditions=[True:bool], types=['left'], columns={'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'global_avg_price': t0.global_avg_price, 'part_type': t1.part_type, 'total_num_parts': t0.total_num_parts})
+    PROJECT(columns={'global_avg_price': agg_0, 'total_num_parts': agg_1})
+     AGGREGATE(keys={}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
+      SCAN(table=tpch.PART, columns={'retail_price': p_retailprice})
+    AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_2': AVG(retail_price), 'agg_3': COUNT()})
+     SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
 """,
             ),
             id="agg_parts_by_type_backref_global",

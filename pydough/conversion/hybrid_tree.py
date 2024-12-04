@@ -535,6 +535,8 @@ class HybridConnection:
        If this is True, it means any LEFT joins can be replaced with INNER
        joins. This occurs if, for example, a `SINGULAR` connection overlaps
        with a `HAS` connection.
+    - `agg_keys` (optional): the expressions used to aggregate the subtree
+       relative to its ancestor, expressed in terms of the base of the subtree.
     """
 
     parent: "HybridTree"
@@ -543,6 +545,7 @@ class HybridConnection:
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
     only_keep_matches: bool
+    agg_keys: list[HybridExpr] | None
 
 
 class HybridTree:
@@ -641,9 +644,13 @@ class HybridTree:
             (starting at the bottom of the subtree).
             `connection_type`: enum indcating what kind of connection is to be
             used to link `self` to `child`.
+
+        Returns:
+            The index of the newly inserted child (or the index of an existing
+            child that matches it).
         """
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}, False
+            self, child, connection_type, len(self.pipeline) - 1, {}, False, None
         )
         for idx, existing_connection in enumerate(self.children):
             if (
@@ -708,7 +715,7 @@ class HybridTranslator:
                 connection_type = ConnectionType.SINGULAR
             else:
                 # TODO: parse out the finer differences in aggregation types
-                # for COUNT, NDISTINCT, HAS, and HASNOT, versus just general
+                # for NDISTINCT, HAS, and HASNOT, versus just general
                 # aggregation.
                 connection_type = ConnectionType.AGGREGATION
             child_idx_mapping[child_idx] = hybrid.add_child(subtree, connection_type)
@@ -1102,12 +1109,16 @@ class HybridTranslator:
                 successor_hybrid = HybridTree(partition)
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
+                partition_child_idx: int = child_ref_mapping[0]
+                key_exprs: list[HybridExpr] = []
                 for key_name in node.calc_terms:
                     key = node.get_expr(key_name)
                     expr = self.make_hybrid_expr(
                         successor_hybrid, key, child_ref_mapping
                     )
                     partition.add_key(key_name, expr)
+                    key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                successor_hybrid.children[partition_child_idx].agg_keys = key_exprs
                 return successor_hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:

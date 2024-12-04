@@ -58,6 +58,7 @@ from .hybrid_tree import (
     HybridFunctionExpr,
     HybridLiteralExpr,
     HybridOperation,
+    HybridPartition,
     HybridRefExpr,
     HybridRoot,
     HybridTranslator,
@@ -329,7 +330,11 @@ class RelTranslation:
                     child, child.subtree, len(child.subtree.pipeline) - 1
                 )
                 join_keys: list[tuple[HybridExpr, HybridExpr]] = child_output.join_keys
-                agg_keys: list[HybridExpr] = [rhs_key for _, rhs_key in join_keys]
+                agg_keys: list[HybridExpr]
+                if child.agg_keys is None:
+                    agg_keys = [rhs_key for _, rhs_key in join_keys]
+                else:
+                    agg_keys = child.agg_keys
                 # Use INNER joins if the parent should only be kept if it has
                 # a match, otherwise use LEFT joins. Does not apply to SEMI or
                 # ANTI joins.
@@ -427,8 +432,7 @@ class RelTranslation:
             steps down from.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
-            preceding contexts. Can be omitted in certain contexts, such as
-            when deriving a table scan or literal.
+            preceding contexts.
 
         Returns:
             The TranslationOutput payload containing an INNER join of the
@@ -517,6 +521,48 @@ class RelTranslation:
 
         return result
 
+    def translate_partition(
+        self,
+        node: HybridPartition,
+        context: TranslationOutput,
+        hybrid: HybridTree,
+        pipeline_idx: int,
+    ) -> TranslationOutput:
+        """
+        Converts a partition into the correct context so that subsequent
+        child-handling operations can add the aggregate children.
+
+        Args:
+            `node`: the node corresponding to the partition being derived.
+            `context`: the data structure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts.
+            `hybrid`: the current level of the hybrid tree to be derived,
+            including all levels before it.
+            `pipeline_idx`: the index of the operation in the pipeline of the
+            current level that is to be derived, as well as all operations
+            preceding it in the pipeline.
+
+        Returns:
+            TODO
+        """
+        expressions: dict[HybridExpr, ColumnReference] = {}
+        agg_keys: list[tuple[HybridExpr, HybridExpr]] = []
+        for expr, ref in context.expressions.items():
+            shifted_expr: HybridExpr | None = expr.shift_back(1)
+            if shifted_expr is not None:
+                expressions[shifted_expr] = ref
+        for key_name in node.key_names:
+            key_expr = node.terms[key_name]
+            agg_keys.append((key_expr, key_expr))
+        result: TranslationOutput = TranslationOutput(context.relation, expressions, [])
+        result = self.handle_children(result, hybrid, pipeline_idx)
+        for _, agg_key in agg_keys:
+            assert isinstance(agg_key, HybridChildRefExpr)
+            hybrid_ref: HybridRefExpr = HybridRefExpr(agg_key.name, agg_key.typ)
+            result.expressions[hybrid_ref] = result.expressions[agg_key]
+        return TranslationOutput(result.relation, result.expressions, result.join_keys)
+
     def translate_filter(
         self,
         node: HybridFilter,
@@ -529,8 +575,7 @@ class RelTranslation:
             `node`: the node corresponding to the filter being derived.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
-            preceding contexts. Can be omitted in certain contexts, such as
-            when deriving a table scan or literal.
+            preceding contexts.
 
         Returns:
             The TranslationOutput payload containing a FILTER on top of
@@ -651,6 +696,7 @@ class RelTranslation:
 
         # Then, dispatch onto the logic to transform from the context into the
         # new translation output.
+        handled_children: bool = False
         match operation:
             case HybridCollectionAccess():
                 if isinstance(operation.collection, TableCollection):
@@ -678,16 +724,24 @@ class RelTranslation:
                             connection, operation
                         )
             case HybridCalc():
-                assert context is not None
+                assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_calc(operation, context)
             case HybridFilter():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
+            case HybridPartition():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_partition(
+                    operation, context, hybrid, pipeline_idx
+                )
+                handled_children = True
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
                 )
-        return self.handle_children(result, hybrid, pipeline_idx)
+        if not handled_children:
+            result = self.handle_children(result, hybrid, pipeline_idx)
+        return result
 
     @staticmethod
     def preprocess_root(
