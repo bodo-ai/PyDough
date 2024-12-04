@@ -529,8 +529,8 @@ class RelTranslation:
         pipeline_idx: int,
     ) -> TranslationOutput:
         """
-        Converts a partition into the correct context so that subsequent
-        child-handling operations can add the aggregate children.
+        Converts a partition into the correct context with access to the
+        aggregated child inputs.
 
         Args:
             `node`: the node corresponding to the partition being derived.
@@ -544,24 +544,24 @@ class RelTranslation:
             preceding it in the pipeline.
 
         Returns:
-            TODO
+            The TranslationOutput payload containing access to the aggregated
+            child corresponding tot he partition data.
         """
         expressions: dict[HybridExpr, ColumnReference] = {}
-        agg_keys: list[tuple[HybridExpr, HybridExpr]] = []
         for expr, ref in context.expressions.items():
             shifted_expr: HybridExpr | None = expr.shift_back(1)
             if shifted_expr is not None:
                 expressions[shifted_expr] = ref
-        for key_name in node.key_names:
-            key_expr = node.terms[key_name]
-            agg_keys.append((key_expr, key_expr))
         result: TranslationOutput = TranslationOutput(context.relation, expressions, [])
         result = self.handle_children(result, hybrid, pipeline_idx)
-        for _, agg_key in agg_keys:
-            assert isinstance(agg_key, HybridChildRefExpr)
-            hybrid_ref: HybridRefExpr = HybridRefExpr(agg_key.name, agg_key.typ)
-            result.expressions[hybrid_ref] = result.expressions[agg_key]
-        return TranslationOutput(result.relation, result.expressions, result.join_keys)
+        # Pull every aggregation key into the current context since it is now
+        # accessible as a normal ref instead of a child ref.
+        for key_name in node.key_names:
+            key_expr = node.terms[key_name]
+            assert isinstance(key_expr, HybridChildRefExpr)
+            hybrid_ref: HybridRefExpr = HybridRefExpr(key_expr.name, key_expr.typ)
+            result.expressions[hybrid_ref] = result.expressions[key_expr]
+        return result
 
     def translate_filter(
         self,

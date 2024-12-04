@@ -401,7 +401,11 @@ class HybridPartition(HybridOperation):
 
     def add_key(self, key_name: str, key_expr: HybridExpr) -> None:
         """
-        TODO: add docstring
+        Adds a new key to the HybridPartition.
+
+        Args:
+            `key_name`: the name of the partitioning key.
+            `key_expr`: the expression used to partition.
         """
         self.key_names.append(key_name)
         self.terms[key_name] = key_expr
@@ -884,7 +888,20 @@ class HybridTranslator:
         child_ref_mapping: dict[int, int],
     ) -> HybridExpr:
         """
-        TODO
+        Special case of `make_hybrid_expr` specifically for expressions that
+        are the COUNT of a subcollection.
+
+        Args:
+            `hybrid`: the hybrid tree that should be used to derive the
+            translation of `expr`, as it is the context in which the `expr`
+            will live.
+            `expr`: the AST expression to be converted.
+            `child_ref_mapping`: mapping of indices used by child references in
+            the original expressions to the index of the child hybrid tree
+            relative to the current level.
+
+        Returns:
+            The HybridExpr node corresponding to `expr`
         """
         assert (
             expr.operator == pydop.COUNT
