@@ -548,6 +548,8 @@ class RelTranslation:
             child corresponding tot he partition data.
         """
         expressions: dict[HybridExpr, ColumnReference] = {}
+        # Account for the fact that the PARTITION is stepping down a level,
+        # without actually joining.
         for expr, ref in context.expressions.items():
             shifted_expr: HybridExpr | None = expr.shift_back(1)
             if shifted_expr is not None:
