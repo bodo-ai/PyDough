@@ -15,8 +15,9 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
+    load_database_context,
 )
-from pydough.metadata import GraphMetadata
+from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 
 
 def test_defaults() -> None:
@@ -34,6 +35,46 @@ def test_defaults() -> None:
     assert session.database is not None
     assert session.database.connection is empty_connection
     assert session.database.dialect is DatabaseDialect.ANSI
+
+
+def test_setting_config() -> None:
+    """
+    Test that the config property can be set directly
+    through a setter for a session.
+    """
+    session: PyDoughSession = PyDoughSession()
+    old_config: PyDoughConfigs = session.config
+    new_config: PyDoughConfigs = PyDoughConfigs()
+    session.config = new_config
+    assert session.config is new_config
+    assert session.config is not old_config
+
+
+def test_setting_metadata(sample_graph_path: str, sample_graph_names: str) -> None:
+    """
+    Test that the metadata property can be set directly
+    through a setter for a session.
+    """
+    session: PyDoughSession = PyDoughSession()
+    graph: GraphMetadata = parse_json_metadata_from_file(
+        sample_graph_path, sample_graph_names
+    )
+    old_graph: GraphMetadata | None = session.metadata
+    session.metadata = graph
+    assert session.metadata is graph and graph is not None
+    assert old_graph is None
+
+
+def test_setting_database() -> None:
+    """
+    Test that the database property can be set directly.
+    """
+    session: PyDoughSession = PyDoughSession()
+    database: DatabaseContext = load_database_context("sqlite", database=":memory:")
+    old_database: DatabaseContext = session.database
+    session.database = database
+    assert session.database is database
+    assert session.database is not old_database
 
 
 def test_load_metadata_graph(sample_graph_path: str, sample_graph_names: str) -> None:

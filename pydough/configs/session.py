@@ -58,6 +58,16 @@ class PyDoughSession:
         """
         return self._metadata
 
+    @metadata.setter
+    def metadata(self, graph: GraphMetadata | None) -> None:
+        """
+        Set the active metadata graph.
+
+        Args:
+            graph (GraphMetadata | None): The metadata graph to set.
+        """
+        self._metadata = graph
+
     @property
     def config(self) -> PyDoughConfigs:
         """
@@ -68,6 +78,16 @@ class PyDoughSession:
         """
         return self._config
 
+    @config.setter
+    def config(self, config: PyDoughConfigs) -> None:
+        """
+        Set the active PyDough configuration.
+
+        Args:
+            config (PyDoughConfigs): The PyDough configuration to set.
+        """
+        self._config = config
+
     @property
     def database(self) -> DatabaseContext:
         """
@@ -77,6 +97,16 @@ class PyDoughSession:
             DatabaseContext: The active database context.
         """
         return self._database
+
+    @database.setter
+    def database(self, context: DatabaseContext) -> None:
+        """
+        Set the active database context.
+
+        Args:
+            context (DatabaseContext): The database context to set.
+        """
+        self._database = context
 
     def connect_database(self, database_name: str, **kwargs) -> DatabaseContext:
         """
