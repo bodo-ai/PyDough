@@ -1,14 +1,20 @@
 """
-Tests for the session module. This doesn't directly test the
-active session but instead unit tests the core functionality
+Tests for the session module. This unit tests the core functionality
 of any session.
 
 For each of these tests we create a new session so that we can
 manipulate the session without affecting other tests.
+
+In addition, we do some testing on the defaults/supported behavior
+for the active session to verify that it works. Importantly, in all
+tests anything that impacts the active session must be READ-ONLY to
+ensure that we don't affect other tests, or that in the teardown step
+we replace the active session with a new default session.
 """
 
 import pandas as pd
 
+import pydough
 from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.database_connectors import (
     DatabaseConnection,
@@ -25,16 +31,18 @@ def test_defaults() -> None:
     Tests that a sessions defaults are set correctly.
     """
     session: PyDoughSession = PyDoughSession()
-    assert session.metadata is None
-    assert session.config is not None
-    default_config: PyDoughConfigs = PyDoughConfigs()
-    # TODO: Add an API to iterate and check all of the properties
-    # match the defaults.
-    assert session.config.sum_default_zero is default_config.sum_default_zero
-    assert session.config.avg_default_zero is default_config.avg_default_zero
-    assert session.database is not None
-    assert session.database.connection is empty_connection
-    assert session.database.dialect is DatabaseDialect.ANSI
+    sessions: list[PyDoughSession] = [session, pydough.active_session]
+    for session in sessions:
+        assert session.metadata is None
+        assert session.config is not None
+        default_config: PyDoughConfigs = PyDoughConfigs()
+        # TODO: Add an API to iterate and check all of the properties
+        # match the defaults.
+        assert session.config.sum_default_zero is default_config.sum_default_zero
+        assert session.config.avg_default_zero is default_config.avg_default_zero
+        assert session.database is not None
+        assert session.database.connection is empty_connection
+        assert session.database.dialect is DatabaseDialect.ANSI
 
 
 def test_setting_config() -> None:
