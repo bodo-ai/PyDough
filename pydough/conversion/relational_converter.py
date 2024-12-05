@@ -655,7 +655,9 @@ class RelTranslation:
         context: TranslationOutput,
     ) -> TranslationOutput:
         """
-        TODO
+        Converts a step into the child of a PARTITION node into a join between
+        the aggregated partitions versus the data that was originally being
+        partitioned.
 
         Args:
             `node`: the node corresponding to the partition child access.
@@ -666,7 +668,8 @@ class RelTranslation:
             preceding contexts.
 
         Returns:
-            TODO
+            The TranslationOutput payload containing expressions for both the
+            aggregated partitions and the original partitioned data.
         """
         child_output: TranslationOutput = self.rel_translation(
             None, node.subtree, len(node.subtree.pipeline) - 1
