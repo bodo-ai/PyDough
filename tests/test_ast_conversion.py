@@ -1199,6 +1199,125 @@ ROOT(columns=[('part_type', part_type), ('percentage_of_parts', percentage_of_pa
         ),
         pytest.param(
             (
+                PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** WhereInfo(
+                    [SubCollectionInfo("p")],
+                    FunctionInfo(
+                        "GRT",
+                        [
+                            FunctionInfo(
+                                "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                            ),
+                            LiteralInfo(27.5, Float64Type()),
+                        ],
+                    ),
+                )
+                ** SubCollectionInfo("p")
+                ** CalcInfo(
+                    [],
+                    part_name=ReferenceInfo("name"),
+                    part_type=ReferenceInfo("part_type"),
+                    retail_price=ReferenceInfo("retail_price"),
+                ),
+                """
+ROOT(columns=[('part_name', part_name), ('part_type', part_type), ('retail_price', retail_price)], orderings=[])
+ PROJECT(columns={'part_name': name, 'part_type': part_type_1, 'retail_price': retail_price})
+  JOIN(conditions=[t0.part_type == t1.part_type], types=['inner'], columns={'name': t1.name, 'part_type_1': t1.part_type, 'retail_price': t1.retail_price})
+   FILTER(condition=agg_0 > 27.5:float64, columns={'part_type': part_type})
+    AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price)})
+     SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+   SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="access_partition_child_after_filter",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("p")],
+                    avg_price=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** SubCollectionInfo("p")
+                ** CalcInfo(
+                    [],
+                    part_name=ReferenceInfo("name"),
+                    part_type=ReferenceInfo("part_type"),
+                    retail_price_versus_avg=FunctionInfo(
+                        "SUB",
+                        [
+                            ReferenceInfo("retail_price"),
+                            BackReferenceExpressionInfo("avg_price", 1),
+                        ],
+                    ),
+                ),
+                """
+ROOT(columns=[('part_name', part_name), ('part_type', part_type), ('retail_price_versus_avg', retail_price_versus_avg)], orderings=[])
+ PROJECT(columns={'part_name': name, 'part_type': part_type_1, 'retail_price_versus_avg': retail_price - avg_price})
+  JOIN(conditions=[t0.part_type == t1.part_type], types=['inner'], columns={'avg_price': t0.avg_price, 'name': t1.name, 'part_type_1': t1.part_type, 'retail_price': t1.retail_price})
+   PROJECT(columns={'avg_price': agg_0, 'part_type': part_type})
+    AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price)})
+     SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+   SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="access_partition_child_backref_calc",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("p")],
+                    avg_price=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** SubCollectionInfo("p")
+                ** CalcInfo(
+                    [],
+                    part_name=ReferenceInfo("name"),
+                    part_type=ReferenceInfo("part_type"),
+                    retail_price=ReferenceInfo("retail_price"),
+                )
+                ** WhereInfo(
+                    [],
+                    FunctionInfo(
+                        "LET",
+                        [
+                            ReferenceInfo("retail_price"),
+                            BackReferenceExpressionInfo("avg_price", 1),
+                        ],
+                    ),
+                ),
+                """
+ROOT(columns=[('part_name', part_name), ('part_type', part_type), ('retail_price', retail_price)], orderings=[])
+ FILTER(condition=retail_price < avg_price, columns={'part_name': part_name, 'part_type': part_type, 'retail_price': retail_price})
+  PROJECT(columns={'avg_price': avg_price, 'part_name': name, 'part_type': part_type_1, 'retail_price': retail_price})
+   JOIN(conditions=[t0.part_type == t1.part_type], types=['inner'], columns={'avg_price': t0.avg_price, 'name': t1.name, 'part_type_1': t1.part_type, 'retail_price': t1.retail_price})
+    PROJECT(columns={'avg_price': agg_0, 'part_type': part_type})
+     AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price)})
+      SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+    SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="access_partition_child_filter_backref_filter",
+        ),
+        pytest.param(
+            (
                 TableCollectionInfo("Regions")
                 ** WhereInfo(
                     [],
