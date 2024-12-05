@@ -120,7 +120,7 @@ def impl_tpch_q5():
     selected_lines = customers.orders.WHERE(
         (order_date >= datetime.date(1994, 1, 1))
         & (order_date < datetime.date(1995, 1, 1))
-    ).lines.WHERE(supplier.nation.name == BACK(3).name)(
+    ).lines.WHERE(part_and_supplier.supplier.nation.name == BACK(3).name)(
         value=extended_price * (1 - discount)
     )
     return Nations.WHERE(region.name == "ASIA")(
@@ -147,7 +147,7 @@ def impl_tpch_q7():
     PyDough implementation of TPCH Q7.
     """
     line_info = Lineitems(
-        supp_nation=supplier.nation.name,
+        supp_nation=part_and_supplier.supplier.nation.name,
         cust_nation=order.customer.nation.name,
         l_year=YEAR(ship_date),
         volume=extended_price * (1 - discount),
@@ -199,11 +199,13 @@ def impl_tpch_q9():
     """
     PyDough implementation of TPCH Q9.
     """
-    selected_lines = Nations.suppliers.lines(
-        nation=BACK(2).name,
+    selected_lines = Nations.suppliers.supply_records.WHERE(
+        CONTAINS(part.name, "green")
+    ).lines(
+        nation=BACK(3).name,
         o_year=YEAR(order.order_date),
-        value=extended_price * (1 - discount) - ps_supplycost * quantity,
-    ).WHERE(CONTAINS(part.name, "green"))
+        value=extended_price * (1 - discount) - BACK(1).ps_supplycost * quantity,
+    )
     return PARTITION(selected_lines, name="l", by=(nation, o_year))(
         nation=nation, o_year=o_year, amount=SUM(l.value)
     ).ORDER_BY(
@@ -237,12 +239,12 @@ def impl_tpch_q11():
     PyDough implementation of TPCH Q11.
     """
     is_german_supplier = supplier.nation.name == "GERMANY"
-    metric = supplycost * availqty
-    selected_records = PartSupp.WHERE(is_german_supplier)(metric=metric)
-    selected_part_records = supply_records.WHERE(is_german_supplier)(metric=metric)
+    selected_records = PartSupp.WHERE(is_german_supplier)(metric=supplycost * availqty)
     return (
         TPCH(min_market_share=SUM(selected_records.metric) * 0.0001)
-        .Parts(ps_partkey=key, val=SUM(selected_part_records.metric))
+        .PARTITION(selected_records, name="ps", by=part_key)(
+            ps_partkey=part_key, val=SUM(ps.metric)
+        )
         .WHERE(val > BACK(1).min_market_share)
         .ORDER_BY(val.DESC())
     )
@@ -309,7 +311,7 @@ def impl_tpch_q15():
     """
     PyDough implementation of TPCH Q15.
     """
-    selected_lines = lines.WHERE(
+    selected_lines = supply_records.lines.WHERE(
         (ship_date >= datetime.date(1996, 1, 1))
         & (ship_date < datetime.date(1996, 3, 1))
     )
@@ -359,8 +361,8 @@ def impl_tpch_q17():
     PyDough implementation of TPCH Q17.
     """
     selected_lines = Parts.WHERE((brand == "Brand#23") & (container == "MED BOX"))(
-        avg_quantity=AVG(lines.quantity)
-    ).lines.WHERE(quantity < 0.2 * BACK(1).avg_quantity)
+        avg_quantity=AVG(supply_records.lines.quantity)
+    ).supply_records.lines.WHERE(quantity < 0.2 * BACK(2).avg_quantity)
     return TPCH(avg_yearly=SUM(selected_lines.extended_price) / 7.0)
 
 
