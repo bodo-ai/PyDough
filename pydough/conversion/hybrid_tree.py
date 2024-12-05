@@ -624,7 +624,8 @@ class HybridTree:
         """
         return self._agg_keys
 
-    def set_keys(self, agg_keys: list[HybridExpr]) -> None:
+    @agg_keys.setter
+    def agg_keys(self, agg_keys: list[HybridExpr]) -> None:
         """
         Assigns the aggregation keys to a hybrid tree.
         """
@@ -1235,9 +1236,9 @@ class HybridTranslator:
                     )
                     partition.add_key(key_name, expr)
                     key_exprs.append(HybridRefExpr(key_name, expr.typ))
-                successor_hybrid.children[partition_child_idx].subtree.set_keys(
-                    key_exprs
-                )
+                successor_hybrid.children[
+                    partition_child_idx
+                ].subtree.agg_keys = key_exprs
                 return successor_hybrid
             case OrderBy() | TopK():
                 hybrid = self.make_hybrid_tree(node.preceding_context)
@@ -1268,9 +1269,9 @@ class HybridTranslator:
                                 node.child_access.subcollection_property,
                                 successor_hybrid.pipeline[-1],
                             )
-                            successor_hybrid.set_keys(agg_keys)
+                            successor_hybrid.agg_keys = agg_keys
                         else:
-                            successor_hybrid.set_keys([])
+                            successor_hybrid.agg_keys = []
                         return successor_hybrid
                     case PartitionChild():
                         successor_hybrid = self.make_hybrid_tree(
@@ -1285,7 +1286,7 @@ class HybridTranslator:
                                 child_ref_mapping,
                             )
                             key_exprs.append(expr)
-                        successor_hybrid.set_keys(key_exprs)
+                        successor_hybrid.agg_keys = key_exprs
                         return successor_hybrid
                     case _:
                         raise NotImplementedError(
