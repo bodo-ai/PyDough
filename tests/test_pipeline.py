@@ -170,10 +170,33 @@ ROOT(columns=[('supp_nation', supp_nation), ('cust_nation', cust_nation), ('l_ye
             (
                 pydough_impl_tpch_q8,
                 """
+ROOT(columns=[('o_year', o_year), ('mkt_share', mkt_share)], orderings=[])
+ PROJECT(columns={'mkt_share': DEFAULT_TO(agg_0, 0:int64) / DEFAULT_TO(agg_1, 0:int64), 'o_year': o_year})
+  AGGREGATE(keys={'o_year': o_year}, aggregations={'agg_0': SUM(brazil_volume), 'agg_1': SUM(volume)})
+   FILTER(condition=order_date >= datetime.date(1995, 1, 1):date & order_date <= datetime.date(1996, 12, 31):date & name_18 == 'AMERICA':string, columns={'brazil_volume': brazil_volume, 'o_year': o_year, 'volume': volume})
+    JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'brazil_volume': t0.brazil_volume, 'name_18': t1.name_18, 'o_year': t0.o_year, 'order_date': t0.order_date, 'volume': t0.volume})
+     PROJECT(columns={'brazil_volume': IFF(name == 'BRAZIL':string, volume, 0:int64), 'customer_key': customer_key, 'o_year': YEAR(order_date), 'order_date': order_date, 'volume': volume})
+      JOIN(conditions=[t0.order_key == t1.key], types=['inner'], columns={'customer_key': t1.customer_key, 'name': t0.name, 'order_date': t1.order_date, 'volume': t0.volume})
+       PROJECT(columns={'name': name, 'order_key': order_key, 'volume': extended_price * 1:int64 - discount})
+        JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['inner'], columns={'discount': t1.discount, 'extended_price': t1.extended_price, 'name': t0.name, 'order_key': t1.order_key})
+         FILTER(condition=part_type == 'ECONOMY ANODIZED STEEL':string, columns={'name': name, 'part_key': part_key, 'supplier_key': supplier_key})
+          JOIN(conditions=[t0.part_key == t1.key], types=['left'], columns={'name': t0.name, 'part_key': t0.part_key, 'part_type': t1.part_type, 'supplier_key': t0.supplier_key})
+           JOIN(conditions=[t0.key_2 == t1.supplier_key], types=['inner'], columns={'name': t0.name, 'part_key': t1.part_key, 'supplier_key': t1.supplier_key})
+            JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name})
+             SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+             SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+            SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+           SCAN(table=tpch.PART, columns={'key': p_partkey, 'part_type': p_type})
+         SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
+       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+     JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_18': t1.name})
+      JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+       SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
             ),
             id="tpch_q8",
-            marks=pytest.mark.skip("TODO: support compounds & inherited properties"),
         ),
         pytest.param(
             (
@@ -426,10 +449,27 @@ ROOT(columns=[('revenue', revenue)], orderings=[])
             (
                 pydough_impl_tpch_q20,
                 """
+ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[])
+ FILTER(condition=name_3 == 'CANADA':string & DEFAULT_TO(agg_1, 0:int64) > 0:int64, columns={'s_address': s_address, 's_name': s_name})
+  JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_1': t1.agg_1, 'name_3': t0.name_3, 's_address': t0.s_address, 's_name': t0.s_name})
+   JOIN(conditions=[t0.nation_key == t1.key], types=['left'], columns={'key': t0.key, 'name_3': t1.name, 's_address': t0.s_address, 's_name': t0.s_name})
+    PROJECT(columns={'key': key, 'nation_key': nation_key, 's_address': address, 's_name': name})
+     SCAN(table=tpch.SUPPLIER, columns={'address': s_address, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_1': COUNT()})
+    FILTER(condition=STARTSWITH(name, 'forest':string) & availqty > DEFAULT_TO(agg_0, 0:int64) * 0.5:float64, columns={'supplier_key': supplier_key})
+     JOIN(conditions=[t0.key == t1.part_key], types=['left'], columns={'agg_0': t1.agg_0, 'availqty': t0.availqty, 'name': t0.name, 'supplier_key': t0.supplier_key})
+      JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'availqty': t0.availqty, 'key': t1.key, 'name': t1.name, 'supplier_key': t0.supplier_key})
+       SCAN(table=tpch.PARTSUPP, columns={'availqty': ps_availqty, 'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+       SCAN(table=tpch.PART, columns={'key': p_partkey, 'name': p_name})
+      AGGREGATE(keys={'part_key': part_key}, aggregations={'agg_0': SUM(quantity)})
+       FILTER(condition=ship_date >= datetime.date(1994, 1, 1):date & ship_date < datetime.date(1995, 1, 1):date, columns={'part_key': part_key, 'quantity': quantity})
+        JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['inner'], columns={'part_key': t0.part_key, 'quantity': t1.quantity, 'ship_date': t1.ship_date})
+         SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+         SCAN(table=tpch.LINEITEM, columns={'part_key': l_partkey, 'quantity': l_quantity, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
 """,
             ),
             id="tpch_q20",
-            marks=pytest.mark.skip("TODO: support compounds & inherited properties"),
         ),
         pytest.param(
             (
@@ -438,7 +478,7 @@ ROOT(columns=[('revenue', revenue)], orderings=[])
 """,
             ),
             id="tpch_q21",
-            marks=pytest.mark.skip("TODO: support compounds & inherited properties"),
+            marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
         pytest.param(
             (

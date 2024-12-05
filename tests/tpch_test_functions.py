@@ -176,22 +176,26 @@ def impl_tpch_q8():
     """
     PyDough implementation of TPCH Q8.
     """
-    selected_orders = Orders.WHERE(
-        (order_date >= datetime.date(1995, 1, 1))
-        & (order_date <= datetime.date(1996, 12, 31))
-        & (customer.region.name == "AMERICA")
-    )
-
-    volume_data = selected_orders.lines(
-        volume=extended_price * (1 - discount)
-    ).supplier.WHERE(ps_part.part_type == "ECONOMY ANODIZED STEEL")(
-        o_year=YEAR(BACK(2).order_date),
-        volume=BACK(1).volume,
-        brazil_volume=IFF(nation.name == "BRAZIL", BACK(1).volume, 0),
+    volume_data = (
+        Nations.suppliers.supply_records.WHERE(
+            part.part_type == "ECONOMY ANODIZED STEEL"
+        )
+        .lines(volume=extended_price * (1 - discount))
+        .order(
+            o_year=YEAR(order_date),
+            volume=BACK(1).volume,
+            brazil_volume=IFF(BACK(4).name == "BRAZIL", BACK(1).volume, 0),
+        )
+        .WHERE(
+            (order_date >= datetime.date(1995, 1, 1))
+            & (order_date <= datetime.date(1996, 12, 31))
+            & (customer.nation.region.name == "AMERICA")
+        )
     )
 
     return PARTITION(volume_data, name="v", by=o_year)(
-        o_year=o_year, mkt_share=SUM(v.brazil_volume) / SUM(v.volume)
+        o_year=o_year,
+        mkt_share=SUM(v.brazil_volume) / SUM(v.volume),
     )
 
 
@@ -437,15 +441,20 @@ def impl_tpch_q20():
     """
     PyDough implementation of TPCH Q20.
     """
-    selected_lines = lines.WHERE(
-        (ship_date >= datetime.date(1994, 1, 1))
-        & (ship_date < datetime.date(1995, 1, 1))
+    part_qty = SUM(
+        supply_records.lines.WHERE(
+            (ship_date >= datetime.date(1994, 1, 1))
+            & (ship_date < datetime.date(1995, 1, 1))
+        ).quantity
     )
-    return Parts.WHERE(STARTSWITH(name, "forest"))(
-        quantity_threshold=SUM(selected_lines.quantity)
-    ).suppliers_of_part.WHERE(
-        (ps_availqty > BACK(1).quantity_threshold) & (nation.name == "CANADA")
-    )(s_name=name, s_address=address)
+    selected_part_supplied = supply_records.part.WHERE(
+        STARTSWITH(name, "forest") & (BACK(1).availqty > part_qty * 0.5)
+    )
+
+    return Suppliers(
+        s_name=name,
+        s_address=address,
+    ).WHERE((nation.name == "CANADA") & (COUNT(selected_part_supplied) > 0))
 
 
 def impl_tpch_q21():
@@ -454,7 +463,7 @@ def impl_tpch_q21():
     """
     date_check = receipt_date > commit_date
     different_supplier = supplier_key != BACK(2).supplier_key
-    waiting_entries = lines.WHERE(receipt_date > commit_date).order.WHERE(
+    waiting_entries = supply_records.lines.WHERE(date_check).order.WHERE(
         (order_status == "F")
         & (COUNT(lines.WHERE(different_supplier)) > 0)
         & (COUNT(lines.WHERE(different_supplier & date_check)) == 0)
