@@ -31,6 +31,7 @@ from typing import Optional
 
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.metadata import SimpleJoinMetadata
 from pydough.pydough_ast import (
     BackReferenceExpression,
     Calc,
@@ -539,8 +540,6 @@ class HybridConnection:
        If this is True, it means any LEFT joins can be replaced with INNER
        joins. This occurs if, for example, a `SINGULAR` connection overlaps
        with a `HAS` connection.
-    - `agg_keys` (optional): the expressions used to aggregate the subtree
-       relative to its ancestor, expressed in terms of the base of the subtree.
     """
 
     parent: "HybridTree"
@@ -549,7 +548,6 @@ class HybridConnection:
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
     only_keep_matches: bool
-    agg_keys: list[HybridExpr] | None
 
 
 class HybridTree:
@@ -572,6 +570,7 @@ class HybridTree:
         self._parent: HybridTree | None = None
         self._is_hidden_level: bool = is_hidden_level
         self._is_connection_root: bool = is_connection_root
+        self._agg_keys: list[HybridExpr] | None = None
 
     def __repr__(self):
         lines = []
@@ -634,6 +633,20 @@ class HybridTree:
         """
         return self._is_connection_root
 
+    @property
+    def agg_keys(self) -> list[HybridExpr] | None:
+        """
+        The list of keys used to aggregate this HybridTree relative to its
+        ancestor, if it is the root of a HybridConnection.
+        """
+        return self._agg_keys
+
+    def set_keys(self, agg_keys: list[HybridExpr]) -> None:
+        """
+        Assigns the aggregation keys to a hybrid tree.
+        """
+        self._agg_keys = agg_keys
+
     def add_child(
         self,
         child: "HybridTree",
@@ -654,7 +667,7 @@ class HybridTree:
             child that matches it).
         """
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}, False, None
+            self, child, connection_type, len(self.pipeline) - 1, {}, False
         )
         for idx, existing_connection in enumerate(self.children):
             if (
@@ -676,6 +689,13 @@ class HybridTree:
             raise Exception("Duplicate successor")
         self._successor = successor
         successor._parent = self
+        if self.agg_keys is not None:
+            successor_agg_keys: list[HybridExpr] = []
+            for key in self.agg_keys:
+                shifted_expr: HybridExpr | None = key.shift_back(1)
+                assert shifted_expr is not None
+                successor_agg_keys.append(shifted_expr)
+            successor._agg_keys = successor_agg_keys
 
 
 class HybridTranslator:
@@ -1093,6 +1113,7 @@ class HybridTranslator:
         successor_hybrid: HybridTree
         expr: HybridExpr
         child_ref_mapping: dict[int, int] = {}
+        key_exprs: list[HybridExpr] = []
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot())
@@ -1127,7 +1148,6 @@ class HybridTranslator:
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
                 partition_child_idx: int = child_ref_mapping[0]
-                key_exprs: list[HybridExpr] = []
                 for key_name in node.calc_terms:
                     key = node.get_expr(key_name)
                     expr = self.make_hybrid_expr(
@@ -1135,16 +1155,50 @@ class HybridTranslator:
                     )
                     partition.add_key(key_name, expr)
                     key_exprs.append(HybridRefExpr(key_name, expr.typ))
-                successor_hybrid.children[partition_child_idx].agg_keys = key_exprs
+                successor_hybrid.children[partition_child_idx].subtree.set_keys(
+                    key_exprs
+                )
                 return successor_hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:
                     case TableCollection() | SubCollection() if not isinstance(
                         node.child_access, CompoundSubCollection
                     ):
-                        return HybridTree(HybridCollectionAccess(node.child_access))
+                        successor_hybrid = HybridTree(
+                            HybridCollectionAccess(node.child_access)
+                        )
+                        if isinstance(node.child_access, SubCollection) and isinstance(
+                            node.child_access.subcollection_property, SimpleJoinMetadata
+                        ):
+                            for (
+                                rhs_key_names
+                            ) in node.child_access.subcollection_property.keys.values():
+                                for rhs_key_name in rhs_key_names:
+                                    rhs_key: HybridExpr = (
+                                        successor_hybrid.pipeline[-1]
+                                        .terms[rhs_key_name]
+                                        .make_into_ref(rhs_key_name)
+                                    )
+                                    key_exprs.append(rhs_key)
+                            successor_hybrid.set_keys(key_exprs)
+                        else:
+                            successor_hybrid.set_keys([])
+                        return successor_hybrid
                     case PartitionChild():
-                        return self.make_hybrid_tree(node.child_access.child_access)
+                        successor_hybrid = self.make_hybrid_tree(
+                            node.child_access.child_access
+                        )
+                        partition_by = node.child_access.ancestor_context
+                        assert isinstance(partition_by, PartitionBy)
+                        for key in partition_by.keys:
+                            expr = self.make_hybrid_expr(
+                                successor_hybrid,
+                                Reference(node.child_access, key.expr.term_name),
+                                child_ref_mapping,
+                            )
+                            key_exprs.append(expr)
+                        successor_hybrid.set_keys(key_exprs)
+                        return successor_hybrid
                     case _:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"

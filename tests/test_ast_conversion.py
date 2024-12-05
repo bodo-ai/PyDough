@@ -927,6 +927,163 @@ ROOT(columns=[('part_type', part_type), ('num_parts', num_parts), ('avg_price', 
         pytest.param(
             (
                 PartitionInfo(
+                    TableCollectionInfo("Orders")
+                    ** CalcInfo(
+                        [],
+                        year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
+                        month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
+                    ),
+                    "o",
+                    [
+                        ChildReferenceExpressionInfo("year", 0),
+                        ChildReferenceExpressionInfo("month", 0),
+                    ],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("o")],
+                    year=ReferenceInfo("year"),
+                    month=ReferenceInfo("month"),
+                    total_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('year', year), ('month', month), ('total_orders', total_orders)], orderings=[])
+ PROJECT(columns={'month': month, 'total_orders': DEFAULT_TO(agg_0, 0:int64), 'year': year})
+  AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_0': COUNT()})
+   PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+    SCAN(table=tpch.ORDER, columns={'order_date': o_orderdate})
+""",
+            ),
+            id="agg_orders_by_year_month_basic",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Orders")
+                    ** CalcInfo(
+                        [],
+                        year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
+                        month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
+                    ),
+                    "o",
+                    [
+                        ChildReferenceExpressionInfo("year", 0),
+                        ChildReferenceExpressionInfo("month", 0),
+                    ],
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("o"),
+                        SubCollectionInfo("o")
+                        ** WhereInfo(
+                            [
+                                SubCollectionInfo("customer")
+                                ** SubCollectionInfo("nation")
+                                ** SubCollectionInfo("region")
+                            ],
+                            FunctionInfo(
+                                "EQU",
+                                [
+                                    ChildReferenceExpressionInfo("name", 0),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        ),
+                    ],
+                    year=ReferenceInfo("year"),
+                    month=ReferenceInfo("month"),
+                    num_european_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    total_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(1)]
+                    ),
+                ),
+                """
+ROOT(columns=[('year', year), ('month', month), ('num_european_orders', num_european_orders), ('total_orders', total_orders)], orderings=[])
+ PROJECT(columns={'month': month, 'num_european_orders': DEFAULT_TO(agg_0, 0:int64), 'total_orders': DEFAULT_TO(agg_1, 0:int64), 'year': year})
+  JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'month': t0.month, 'year': t0.year})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_0': COUNT()})
+    PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+     SCAN(table=tpch.ORDER, columns={'order_date': o_orderdate})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_1': COUNT()})
+    FILTER(condition=name_6 == 'ASIA':string, columns={'month': month, 'year': year})
+     JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'month': t0.month, 'name_6': t1.name_6, 'year': t0.year})
+      PROJECT(columns={'customer_key': customer_key, 'month': MONTH(order_date), 'year': YEAR(order_date)})
+       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'order_date': o_orderdate})
+      JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_6': t1.name})
+       JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="agg_orders_by_year_month_vs_europe",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Orders")
+                    ** CalcInfo(
+                        [],
+                        year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
+                        month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
+                    ),
+                    "o",
+                    [
+                        ChildReferenceExpressionInfo("year", 0),
+                        ChildReferenceExpressionInfo("month", 0),
+                    ],
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("o")
+                        ** WhereInfo(
+                            [
+                                SubCollectionInfo("customer")
+                                ** SubCollectionInfo("nation")
+                                ** SubCollectionInfo("region")
+                            ],
+                            FunctionInfo(
+                                "EQU",
+                                [
+                                    ChildReferenceExpressionInfo("name", 0),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        ),
+                    ],
+                    year=ReferenceInfo("year"),
+                    month=ReferenceInfo("month"),
+                    num_european_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('year', year), ('month', month), ('num_european_orders', num_european_orders)], orderings=[])
+ PROJECT(columns={'month': month, 'num_european_orders': DEFAULT_TO(agg_0, 0:int64), 'year': year})
+  JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t1.agg_0, 'month': t0.month, 'year': t0.year})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={})
+    PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+     SCAN(table=tpch.ORDER, columns={'order_date': o_orderdate})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_0': COUNT()})
+    FILTER(condition=name_6 == 'ASIA':string, columns={'month': month, 'year': year})
+     JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'month': t0.month, 'name_6': t1.name_6, 'year': t0.year})
+      PROJECT(columns={'customer_key': customer_key, 'month': MONTH(order_date), 'year': YEAR(order_date)})
+       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'order_date': o_orderdate})
+      JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_6': t1.name})
+       JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="agg_orders_by_year_month_jjust_europe",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
                     TableCollectionInfo("Nations")
                     ** SubCollectionInfo("customers")
                     ** SubCollectionInfo("orders")

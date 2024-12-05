@@ -331,10 +331,10 @@ class RelTranslation:
                 )
                 join_keys: list[tuple[HybridExpr, HybridExpr]] = child_output.join_keys
                 agg_keys: list[HybridExpr]
-                if child.agg_keys is None:
+                if child.subtree.agg_keys is None:
                     agg_keys = [rhs_key for _, rhs_key in join_keys]
                 else:
-                    agg_keys = child.agg_keys
+                    agg_keys = child.subtree.agg_keys
                 # Use INNER joins if the parent should only be kept if it has
                 # a match, otherwise use LEFT joins. Does not apply to SEMI or
                 # ANTI joins.
