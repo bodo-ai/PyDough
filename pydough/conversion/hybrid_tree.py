@@ -16,7 +16,6 @@ __all__ = [
     "HybridCollectionAccess",
     "HybridFilter",
     "HybridCalc",
-    "HybridOrder",
     "HybridLimit",
     "HybridTree",
     "HybridTranslator",
@@ -27,7 +26,7 @@ __all__ = [
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
@@ -39,6 +38,7 @@ from pydough.pydough_ast import (
     ChildOperatorChildAccess,
     ChildReferenceCollection,
     ChildReferenceExpression,
+    CollationExpression,
     CollectionAccess,
     ColumnProperty,
     CompoundSubCollection,
@@ -120,14 +120,14 @@ class HybridExpr(ABC):
         return HybridRefExpr(name, self.typ)
 
 
-class HybridCollation(HybridExpr):
+class HybridCollation:
     """
     Class for HybridExpr terms that are another HybridExpr term wrapped in
     information about how to sort by them.
     """
 
-    def __init__(self, expr: HybridExpr, asc: bool, na_first: bool):
-        self.expr: HybridExpr = expr
+    def __init__(self, expr: "HybridRefExpr", asc: bool, na_first: bool):
+        self.expr: HybridRefExpr = expr
         self.asc: bool = asc
         self.na_first: bool = na_first
 
@@ -136,15 +136,6 @@ class HybridCollation(HybridExpr):
             f"{'asc' if self.asc else 'desc'}_{'first' if self.na_first else 'last'}"
         )
         return f"({self.expr!r}):{suffix}"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        renamed_expr: HybridExpr = self.expr.apply_renamings(renamings)
-        if renamed_expr is self.expr:
-            return self
-        return HybridCollation(renamed_expr, self.asc, self.na_first)
-
-    def shift_back(self, levels: int) -> HybridExpr | None:
-        raise NotImplementedError
 
 
 class HybridColumnExpr(HybridExpr):
@@ -303,9 +294,15 @@ class HybridOperation:
                access the original version.
     """
 
-    def __init__(self, terms: dict[str, HybridExpr], renamings: dict[str, str]):
+    def __init__(
+        self,
+        terms: dict[str, HybridExpr],
+        renamings: dict[str, str],
+        orderings: list[HybridCollation],
+    ):
         self.terms: dict[str, HybridExpr] = terms
         self.renamings: dict[str, str] = renamings
+        self.orderings: list[HybridCollation] = orderings
 
 
 class HybridRoot(HybridOperation):
@@ -314,7 +311,7 @@ class HybridRoot(HybridOperation):
     """
 
     def __init__(self):
-        super().__init__({}, {})
+        super().__init__({}, {}, [])
 
     def __repr__(self):
         return "ROOT"
@@ -333,7 +330,7 @@ class HybridCollectionAccess(HybridOperation):
             expr = collection.get_expr(name)
             assert isinstance(expr, ColumnProperty)
             terms[name] = HybridColumnExpr(expr)
-        super().__init__(terms, {})
+        super().__init__(terms, {}, [])
 
     def __repr__(self):
         return f"COLLECTION[{self.collection.collection.name}]"
@@ -348,6 +345,7 @@ class HybridCalc(HybridOperation):
         self,
         predecessor: HybridOperation,
         new_expressions: dict[str, HybridExpr],
+        orderings: list[HybridCollation],
     ):
         terms: dict[str, HybridExpr] = {}
         renamings: dict[str, str] = {}
@@ -365,7 +363,7 @@ class HybridCalc(HybridOperation):
                 idx += 1
             terms[used_name] = expr
             renamings[name] = used_name
-        super().__init__(terms, renamings)
+        super().__init__(terms, renamings, orderings)
         self.calc = Calc
         self.new_expressions = new_expressions
 
@@ -379,7 +377,7 @@ class HybridFilter(HybridOperation):
     """
 
     def __init__(self, predecessor: HybridOperation, condition: HybridExpr):
-        super().__init__(predecessor.terms, {})
+        super().__init__(predecessor.terms, {}, predecessor.orderings)
         self.predecessor: HybridOperation = predecessor
         self.condition: HybridExpr = condition
 
@@ -393,7 +391,7 @@ class HybridPartition(HybridOperation):
     """
 
     def __init__(self):
-        super().__init__({}, {})
+        super().__init__({}, {}, [])
         self.key_names: list[str] = []
 
     def __repr__(self):
@@ -412,41 +410,22 @@ class HybridPartition(HybridOperation):
         self.terms[key_name] = key_expr
 
 
-class HybridOrder(HybridOperation):
-    """
-    Class for HybridOperation corresponding to an ORDER BY operation.
-    """
-
-    def __init__(
-        self,
-        predecessor: HybridOperation,
-        order: OrderBy,
-        collation: list[HybridCollation],
-    ):
-        super().__init__(predecessor.terms, {})
-        self.predecessor: HybridOperation = predecessor
-        self.order: OrderBy = order
-        self.collation: list[HybridCollation] = collation
-
-    def __repr__(self):
-        return f"ORDER[{self.collation}]"
-
-
 class HybridLimit(HybridOperation):
     """
     Class for HybridOperation corresponding to a TOP K operation.
     """
 
     def __init__(
-        self, predecessor: HybridOperation, topk: TopK, collation: list[HybridCollation]
+        self,
+        predecessor: HybridOperation,
+        records_to_keep: int,
     ):
-        super().__init__(predecessor.terms, {})
+        super().__init__(predecessor.terms, {}, predecessor.orderings)
         self.predecessor: HybridOperation = predecessor
-        self.limit: TopK = topk
-        self.collation: list[HybridCollation] = collation
+        self.records_to_keep: int = records_to_keep
 
     def __repr__(self):
-        return f"LIMIT_{self.limit.records_to_keep}[{self.collation}]"
+        return f"LIMIT_{self.records_to_keep}[{self.orderings}]"
 
 
 class ConnectionType(Enum):
@@ -459,10 +438,10 @@ class ConnectionType(Enum):
     The child should be 1:1 with regards to the parent, and can thus be
     accessed via a simple left join without having to worry about cardinality
     contamination.
-    
+
     If this overlaps with a `HAS` connection, then the left join becomes an
     INNER join.
-    
+
     If this overlaps with a `HASNOT` connection, then this connection becomes
     a `HASNOT` connection and all accesses to it are replaced with `NULL`.
     """
@@ -475,10 +454,10 @@ class ConnectionType(Enum):
     augmented after the left join, e.g. to coalesce with a default value if the
     left join was not used. The grouping keys for the aggregate are the keys
     used to join the parent tree output onto the subtree ouput.
-    
+
     If this overlaps with a `HAS` connection, then the left join becomes an
     INNER join, and the post-processing is not required.
-    
+
     If this connection overlaps with a `HASNOT` connection, then this
     connection becomes a `HASNOT` connection and all accesses to it are
     replaced with `NULL` (augmented by the usual post-processing step).
@@ -498,7 +477,7 @@ class ConnectionType(Enum):
 
     If this overlaps with a `HAS` connection, then the left join becomes an
     INNER join, and the coalescing is skipped.
-    
+
     If this connection overlaps with a `HASNOT` connection, then this
     connection becomes a `HASNOT` connection and the `COUNT` is replaced with
     a constant zero.
@@ -705,8 +684,8 @@ class HybridTranslator:
 
     def __init__(self, configs: PyDoughConfigs):
         self.configs = configs
-        # An index used for creating fake column names for aggregations
-        self.agg_counter: int = 0
+        # An index used for creating fake column names for aliases
+        self.alias_counter: int = 0
 
     def populate_children(
         self,
@@ -891,15 +870,22 @@ class HybridTranslator:
         Returns:
             The new name to be used.
         """
-        agg_name: str = f"agg_{self.agg_counter}"
-        while (
-            agg_name in connection.subtree.pipeline[-1].terms
-            or agg_name in connection.aggs
-        ):
-            self.agg_counter += 1
-            agg_name = f"agg_{self.agg_counter}"
-        self.agg_counter += 1
-        return agg_name
+        return self.get_internal_name(
+            "agg", [connection.subtree.pipeline[-1].terms, connection.aggs]
+        )
+
+    def get_ordering_name(self, hybrid: HybridTree) -> str:
+        return self.get_internal_name("ordering", [hybrid.pipeline[-1].terms])
+
+    def get_internal_name(
+        self, prefix: str, reserved_names: list[dict[str, Any]]
+    ) -> str:
+        name = f"{prefix}_{self.alias_counter}"
+        while any(name in s for s in reserved_names):
+            self.alias_counter += 1
+            name = f"{prefix}_{self.alias_counter}"
+        self.alias_counter += 1
+        return name
 
     def handle_collection_count(
         self,
@@ -1098,6 +1084,39 @@ class HybridTranslator:
                     f"TODO: support converting {expr.__class__.__name__}"
                 )
 
+    def process_hybrid_collations(
+        self,
+        hybrid: HybridTree,
+        collations: list[CollationExpression],
+        child_ref_mapping: dict[int, int],
+    ) -> tuple[dict[str, HybridExpr], list[HybridCollation]]:
+        """_summary_
+
+        Args:
+            `hybrid` The hybrid tree used to handle ordering expressions.
+            `collations` The collations to process and convert to
+                HybridCollation values.
+            `child_ref_mapping` The child mapping to track for handling
+                child references in the collations.
+
+        Returns:
+            A tuple containing a dictionary of new expressions for generating
+            a calc and a list of the new HybridCollation values.
+        """
+        new_expressions: dict[str, HybridExpr] = {}
+        hybrid_orderings: list[HybridCollation] = []
+        for collation in collations:
+            name = self.get_ordering_name(hybrid)
+            expr = self.make_hybrid_expr(hybrid, collation.expr, child_ref_mapping)
+            new_expressions[name] = expr
+            new_collation: HybridCollation = HybridCollation(
+                HybridRefExpr(name, collation.expr.pydough_type),
+                collation.asc,
+                not collation.na_last,
+            )
+            hybrid_orderings.append(new_collation)
+        return new_expressions, hybrid_orderings
+
     def make_hybrid_tree(self, node: PyDoughCollectionAST) -> HybridTree:
         """
         Converts a collection AST into the HybridTree format.
@@ -1133,7 +1152,13 @@ class HybridTranslator:
                         hybrid, node.get_expr(name), child_ref_mapping
                     )
                     new_expressions[name] = expr
-                hybrid.pipeline.append(HybridCalc(hybrid.pipeline[-1], new_expressions))
+                hybrid.pipeline.append(
+                    HybridCalc(
+                        hybrid.pipeline[-1],
+                        new_expressions,
+                        hybrid.pipeline[-1].orderings,
+                    )
+                )
                 return hybrid
             case Where():
                 hybrid = self.make_hybrid_tree(node.preceding_context)
@@ -1159,6 +1184,22 @@ class HybridTranslator:
                     key_exprs
                 )
                 return successor_hybrid
+            case OrderBy() | TopK():
+                hybrid = self.make_hybrid_tree(node.preceding_context)
+                self.populate_children(hybrid, node, child_ref_mapping)
+                new_nodes: dict[str, HybridExpr]
+                hybrid_orderings: list[HybridCollation]
+                new_nodes, hybrid_orderings = self.process_hybrid_collations(
+                    hybrid, node.collation, child_ref_mapping
+                )
+                hybrid.pipeline.append(
+                    HybridCalc(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
+                )
+                if isinstance(node, TopK):
+                    hybrid.pipeline.append(
+                        HybridLimit(hybrid.pipeline[-1], node.records_to_keep)
+                    )
+                return hybrid
             case ChildOperatorChildAccess():
                 match node.child_access:
                     case TableCollection() | SubCollection() if not isinstance(

@@ -11,10 +11,12 @@ from test_utils import (
     CollectionTestInfo,
     FunctionInfo,
     LiteralInfo,
+    OrderInfo,
     PartitionInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
+    TopKInfo,
     WhereInfo,
 )
 
@@ -1238,7 +1240,7 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
             ),
-            id="asian_regions",
+            id="asian_nations",
         ),
         pytest.param(
             (
@@ -1699,6 +1701,426 @@ ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('tota
 """,
             ),
             id="mostly_positive_accounts_per_nation3",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** TopKInfo([], 2, (ReferenceInfo("name"), True, True)),
+                """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_0):asc_last])
+ LIMIT(limit=Literal(value=2, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_last])
+  PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': name})
+   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="simple_topk",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** TopKInfo([], 10, (ReferenceInfo("name"), True, True))
+                ** CalcInfo(
+                    [],
+                    region_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=ReferenceInfo("name"),
+                ),
+                """
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(ordering_0):asc_last])
+ PROJECT(columns={'nation_name': name_3, 'ordering_0': ordering_0, 'region_name': name})
+  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'name': name, 'name_3': name_3, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_last])
+   PROJECT(columns={'name': name, 'name_3': name_3, 'ordering_0': name_3})
+    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+     SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+            ),
+            id="join_topk",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** OrderInfo([], (ReferenceInfo("name"), True, True)),
+                """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_0):asc_last])
+ PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': name})
+  SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="simple_order_by",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** OrderInfo([], (ReferenceInfo("name"), False, True))
+                ** CalcInfo(
+                    [],
+                    region_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=ReferenceInfo("name"),
+                ),
+                """
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(ordering_0):desc_last])
+ PROJECT(columns={'nation_name': name_3, 'ordering_0': ordering_0, 'region_name': name})
+  PROJECT(columns={'name': name, 'name_3': name_3, 'ordering_0': name_3})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+            ),
+            id="join_order_by",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** OrderInfo([], (ReferenceInfo("name"), True, True))
+                ** CalcInfo(
+                    [],
+                    region_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=ReferenceInfo("name"),
+                )
+                ** OrderInfo([], (ReferenceInfo("region_name"), False, True)),
+                """
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(ordering_1):desc_last])
+ PROJECT(columns={'nation_name': nation_name, 'ordering_1': region_name, 'region_name': region_name})
+  PROJECT(columns={'nation_name': name_3, 'region_name': name})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+            ),
+            id="replace_order_by",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** OrderInfo([], (ReferenceInfo("name"), True, True))
+                ** TopKInfo([], 10, (ReferenceInfo("name"), True, True)),
+                """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_1):asc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name, 'ordering_1': ordering_1}, orderings=[(ordering_1):asc_last])
+  PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_1': name})
+   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="topk_order_by",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** OrderInfo([], (ReferenceInfo("name"), True, True))
+                ** TopKInfo([], 10, (ReferenceInfo("name"), True, True))
+                ** CalcInfo(
+                    [],
+                    region_name=ReferenceInfo("name"),
+                    name_length=FunctionInfo("LENGTH", [ReferenceInfo("name")]),
+                ),
+                """
+ROOT(columns=[('region_name', region_name), ('name_length', name_length)], orderings=[(ordering_1):asc_last])
+ PROJECT(columns={'name_length': LENGTH(name), 'ordering_1': ordering_1, 'region_name': name})
+  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'name': name, 'ordering_1': ordering_1}, orderings=[(ordering_1):asc_last])
+   PROJECT(columns={'name': name, 'ordering_1': name})
+    SCAN(table=tpch.REGION, columns={'name': r_name})
+""",
+            ),
+            id="topk_order_by_calc",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** OrderInfo([], (ReferenceInfo("name"), True, True))
+                ** OrderInfo([], (ReferenceInfo("name"), False, False))
+                ** TopKInfo([], 10, (ReferenceInfo("name"), False, False)),
+                """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_2):desc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name, 'ordering_2': ordering_2}, orderings=[(ordering_2):desc_first])
+  PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_2': name})
+   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            # Note: This tests is less useful because the rewrite has already
+            # occurred for TopK.
+            id="topk_replace_order_by",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** OrderInfo([], (ReferenceInfo("name"), True, False))
+                ** TopKInfo([], 10, (ReferenceInfo("name"), True, False))
+                ** OrderInfo([], (ReferenceInfo("name"), False, False)),
+                """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_2):desc_first])
+ PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_2': name})
+  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[(ordering_1):asc_first])
+   PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_1': name})
+    SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="topk_root_different_order_by",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** OrderInfo(
+                    [], (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, False)
+                )
+                ** TopKInfo(
+                    [],
+                    10,
+                    (FunctionInfo("LENGTH", [ReferenceInfo("name")]), True, False),
+                ),
+                """
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_1):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name, 'ordering_1': ordering_1}, orderings=[(ordering_1):asc_first])
+  PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_1': LENGTH(name)})
+   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="order_by_expression",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** OrderInfo([], (ReferenceInfo("name"), True, False))
+                ** SubCollectionInfo("nations"),
+                """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
+ PROJECT(columns={'comment': comment_1, 'key': key_2, 'name': name_3, 'region_key': region_key})
+  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+""",
+            ),
+            # Note: This behavior may change in the future.
+            id="order_by_before_join",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** OrderInfo([], (ReferenceInfo("name"), True, True))
+                ** WhereInfo(
+                    [SubCollectionInfo("region")],
+                    FunctionInfo(
+                        "EQU",
+                        [
+                            ChildReferenceExpressionInfo("name", 0),
+                            LiteralInfo("ASIA", StringType()),
+                        ],
+                    ),
+                ),
+                """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(ordering_0):asc_last])
+ FILTER(condition=name_3 == 'ASIA':string, columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': ordering_0, 'region_key': region_key})
+  JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_3': t1.name, 'ordering_0': t0.ordering_0, 'region_key': t0.region_key})
+   PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': name, 'region_key': region_key})
+    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="ordered_asian_nations",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** OrderInfo(
+                    [SubCollectionInfo("region")],
+                    (ReferenceInfo("name"), True, True),
+                    (ChildReferenceExpressionInfo("name", 0), True, True),
+                ),
+                """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(ordering_0):asc_last, (ordering_1):asc_last])
+ PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': name, 'ordering_1': name_3, 'region_key': region_key})
+  JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t0.region_key})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="nations_region_order_by_name",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("suppliers")
+                        ** TopKInfo(
+                            [], 100, (ReferenceInfo("account_balance"), True, True)
+                        ),
+                    ],
+                    name=ReferenceInfo("name"),
+                    n_top_suppliers=FunctionInfo(
+                        "COUNT", [ChildReferenceExpressionInfo("key", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('name', name), ('n_top_suppliers', n_top_suppliers)], orderings=[])
+ PROJECT(columns={'n_top_suppliers': DEFAULT_TO(agg_1, 0:int64), 'name': name})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_1': t1.agg_1, 'name': t0.name})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key)})
+    LIMIT(limit=Literal(value=100, type=Int64Type()), columns={'key': key, 'nation_key': nation_key}, orderings=[(ordering_0):asc_last])
+     PROJECT(columns={'key': key, 'nation_key': nation_key, 'ordering_0': account_balance})
+      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
+""",
+            ),
+            id="count_at_most_100_suppliers_per_nation",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** OrderInfo(
+                    [SubCollectionInfo("suppliers")],
+                    (
+                        FunctionInfo("COUNT", [ChildReferenceExpressionInfo("key", 0)]),
+                        True,
+                        True,
+                    ),
+                ),
+                """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(ordering_0):asc_last])
+ PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': DEFAULT_TO(agg_1, 0:int64), 'region_key': region_key})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_1': t1.agg_1, 'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'region_key': t0.region_key})
+   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key)})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+""",
+            ),
+            id="nations_order_by_num_suppliers",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** TopKInfo(
+                    [SubCollectionInfo("suppliers")],
+                    5,
+                    (
+                        FunctionInfo("COUNT", [ChildReferenceExpressionInfo("key", 0)]),
+                        True,
+                        True,
+                    ),
+                ),
+                """
+ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[(ordering_0):asc_last])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': ordering_0, 'region_key': region_key}, orderings=[(ordering_0):asc_last])
+  PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': DEFAULT_TO(agg_1, 0:int64), 'region_key': region_key})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_1': t1.agg_1, 'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'region_key': t0.region_key})
+    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key)})
+     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+""",
+            ),
+            id="top_5_nations_by_num_suppliers",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** TopKInfo(
+                    [SubCollectionInfo("suppliers")],
+                    5,
+                    (
+                        FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                        True,
+                        True,
+                    ),
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("suppliers")],
+                    name=ReferenceInfo("name"),
+                    total_bal=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("account_balance", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('name', name), ('total_bal', total_bal)], orderings=[(ordering_0):asc_last])
+ PROJECT(columns={'name': name, 'ordering_0': ordering_0, 'total_bal': DEFAULT_TO(agg_2, 0:int64)})
+  LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'agg_2': agg_2, 'name': name, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_last])
+   PROJECT(columns={'agg_2': agg_2, 'name': name, 'ordering_0': DEFAULT_TO(agg_1, 0:int64)})
+    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'name': t0.name})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(), 'agg_2': SUM(account_balance)})
+      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
+""",
+            ),
+            id="top_5_nations_balance_by_num_suppliers",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** CalcInfo(
+                    [],
+                    region_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=ReferenceInfo("name"),
+                )
+                ** OrderInfo([], (BackReferenceExpressionInfo("name", 1), False, True)),
+                """
+ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(ordering_0):desc_last])
+ PROJECT(columns={'nation_name': nation_name, 'ordering_0': name, 'region_name': region_name})
+  PROJECT(columns={'name': name, 'nation_name': name_3, 'region_name': name})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+            ),
+            id="join_order_by_back_reference",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** CalcInfo(
+                    [],
+                    nation_name=ReferenceInfo("name"),
+                )
+                ** OrderInfo([], (BackReferenceExpressionInfo("name", 1), False, True)),
+                """
+ROOT(columns=[('nation_name', nation_name)], orderings=[(ordering_0):desc_last])
+ PROJECT(columns={'nation_name': nation_name, 'ordering_0': name})
+  PROJECT(columns={'name': name, 'nation_name': name_3})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+            ),
+            id="join_order_by_pruned_back_reference",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** CalcInfo(
+                    [],
+                    ordering_0=ReferenceInfo("name"),
+                    ordering_1=ReferenceInfo("key"),
+                    ordering_2=ReferenceInfo("comment"),
+                )
+                ** OrderInfo(
+                    [],
+                    (FunctionInfo("LOWER", [ReferenceInfo("name")]), True, True),
+                    (FunctionInfo("ABS", [ReferenceInfo("key")]), False, True),
+                    (FunctionInfo("LENGTH", [ReferenceInfo("comment")]), True, False),
+                )
+                ** CalcInfo(
+                    [],
+                    ordering_0=ReferenceInfo("ordering_2"),
+                    ordering_1=ReferenceInfo("ordering_0"),
+                    ordering_2=ReferenceInfo("ordering_1"),
+                    ordering_3=ReferenceInfo("ordering_2"),
+                    ordering_4=ReferenceInfo("ordering_1"),
+                    ordering_5=ReferenceInfo("ordering_0"),
+                    ordering_6=FunctionInfo("LOWER", [ReferenceInfo("name")]),
+                    ordering_7=FunctionInfo("ABS", [ReferenceInfo("key")]),
+                    ordering_8=FunctionInfo("LENGTH", [ReferenceInfo("comment")]),
+                ),
+                """
+ROOT(columns=[('ordering_0', ordering_0_0), ('ordering_1', ordering_1_0), ('ordering_2', ordering_2_0), ('ordering_3', ordering_3_0), ('ordering_4', ordering_4_0), ('ordering_5', ordering_5_0), ('ordering_6', ordering_6), ('ordering_7', ordering_7), ('ordering_8', ordering_8)], orderings=[(ordering_3):asc_last, (ordering_4):desc_last, (ordering_5):asc_first])
+ PROJECT(columns={'ordering_0_0': ordering_2, 'ordering_1_0': ordering_0, 'ordering_2_0': ordering_1, 'ordering_3': ordering_3, 'ordering_3_0': ordering_2, 'ordering_4': ordering_4, 'ordering_4_0': ordering_1, 'ordering_5': ordering_5, 'ordering_5_0': ordering_0, 'ordering_6': LOWER(name), 'ordering_7': ABS(key), 'ordering_8': LENGTH(comment)})
+  PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': ordering_0, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': LOWER(name), 'ordering_4': ABS(key), 'ordering_5': LENGTH(comment)})
+   PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': name, 'ordering_1': key, 'ordering_2': comment})
+    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name})
+""",
+            ),
+            id="ordering_name_overload",
         ),
     ],
 )
