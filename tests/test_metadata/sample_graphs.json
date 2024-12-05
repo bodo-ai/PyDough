@@ -196,7 +196,7 @@
               "secondary_property": "lines",
               "singular": false,
               "no_collisions": true,
-              "inherited_properties": {"nation_name": "name", "ps_part": "ps_part", "ps_availqty": "ps_availqty", "ps_supplycost": "ps_supplycost", "ps_comment": "ps_comment", "supplier_name": "name", "supplier_address": "address", "other_parts_supplied": "parts_supplied"},
+              "inherited_properties": {"nation_name": "name", "supplier_name": "name", "supplier_address": "address", "other_parts_supplied": "parts_supplied"},
               "reverse_relationship_name": "supplier_region"
             }
           }
@@ -260,12 +260,11 @@
               "reverse_relationship_name": "parts_supplied"
             },
             "lines": {
-              "type": "compound",
-              "primary_property": "supply_records",
-              "secondary_property": "lines",
+              "type": "simple_join",
+              "other_collection_name": "Lineitems",
               "singular": false,
               "no_collisions": true,
-              "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty", "ps_supplycost": "supplycost", "ps_comment": "comment"},
+              "keys": {"key": ["part_key"]},
               "reverse_relationship_name": "part"
             }
           }
@@ -291,12 +290,11 @@
               "reverse_relationship_name": "supplier"
             },
             "lines": {
-              "type": "compound",
-              "primary_property": "supply_records",
-              "secondary_property": "lines",
+              "type": "simple_join",
+              "other_collection_name": "Lineitems",
               "singular": false,
               "no_collisions": true,
-              "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty", "ps_supplycost": "supplycost", "ps_comment": "comment"},
+              "keys": {"key": ["supplier_key"]},
               "reverse_relationship_name": "supplier"
             }
           }

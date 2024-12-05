@@ -120,7 +120,7 @@ def impl_tpch_q5():
     selected_lines = customers.orders.WHERE(
         (order_date >= datetime.date(1994, 1, 1))
         & (order_date < datetime.date(1995, 1, 1))
-    ).lines.WHERE(part_and_supplier.supplier.nation.name == BACK(3).name)(
+    ).lines.WHERE(supplier.nation.name == BACK(3).name)(
         value=extended_price * (1 - discount)
     )
     return Nations.WHERE(region.name == "ASIA")(
@@ -147,7 +147,7 @@ def impl_tpch_q7():
     PyDough implementation of TPCH Q7.
     """
     line_info = Lineitems(
-        supp_nation=part_and_supplier.supplier.nation.name,
+        supp_nation=supplier.nation.name,
         cust_nation=order.customer.nation.name,
         l_year=YEAR(ship_date),
         volume=extended_price * (1 - discount),
@@ -300,9 +300,7 @@ def impl_tpch_q14():
         & (ship_date < datetime.date(1995, 10, 1))
     )(
         value=value,
-        promo_value=IFF(
-            STARTSWITH(part_and_supplier.part.part_type, "PROMO"), value, 0
-        ),
+        promo_value=IFF(STARTSWITH(part.part_type, "PROMO"), value, 0),
     )
     return TPCH(
         promo_revenue=100.0
@@ -315,7 +313,7 @@ def impl_tpch_q15():
     """
     PyDough implementation of TPCH Q15.
     """
-    selected_lines = supply_records.lines.WHERE(
+    selected_lines = lines.WHERE(
         (ship_date >= datetime.date(1996, 1, 1))
         & (ship_date < datetime.date(1996, 3, 1))
     )
@@ -365,8 +363,8 @@ def impl_tpch_q17():
     PyDough implementation of TPCH Q17.
     """
     selected_lines = Parts.WHERE((brand == "Brand#23") & (container == "MED BOX"))(
-        avg_quantity=AVG(supply_records.lines.quantity)
-    ).supply_records.lines.WHERE(quantity < 0.2 * BACK(2).avg_quantity)
+        avg_quantity=AVG(lines.quantity)
+    ).lines.WHERE(quantity < 0.2 * BACK(1).avg_quantity)
     return TPCH(avg_yearly=SUM(selected_lines.extended_price) / 7.0)
 
 
@@ -398,37 +396,37 @@ def impl_tpch_q19():
     selected_lines = Lineitems.WHERE(
         (shipmode in ("AIR", "AIR REG"))
         & (ship_instruct == "DELIVER IN PERSON")
-        & (part_and_supplier.part.size >= 1)
+        & (part.size >= 1)
         & (
             (
-                (part_and_supplier.part.size < 5)
+                (part.size < 5)
                 & (quantity >= 1)
                 & (quantity <= 11)
                 & ISIN(
-                    part_and_supplier.part.container,
+                    part.container,
                     ("SM CASE", "SM BOX", "SM PACK", "SM PKG"),
                 )
-                & (part_and_supplier.part.brand == "Brand#12")
+                & (part.brand == "Brand#12")
             )
             | (
-                (part_and_supplier.part.size < 10)
+                (part.size < 10)
                 & (quantity >= 10)
                 & (quantity <= 21)
                 & ISIN(
-                    part_and_supplier.part.container,
+                    part.container,
                     ("MED CASE", "MED BOX", "MED PACK", "MED PKG"),
                 )
-                & (part_and_supplier.part.brand == "Brand#23")
+                & (part.brand == "Brand#23")
             )
             | (
-                (part_and_supplier.part.size < 15)
+                (part.size < 15)
                 & (quantity >= 20)
                 & (quantity <= 31)
                 & ISIN(
-                    part_and_supplier.part.container,
+                    part.container,
                     ("LG CASE", "LG BOX", "LG PACK", "LG PKG"),
                 )
-                & (part_and_supplier.part.brand == "Brand#34")
+                & (part.brand == "Brand#34")
             )
         )
     )
@@ -442,7 +440,7 @@ def impl_tpch_q20():
     PyDough implementation of TPCH Q20.
     """
     part_qty = SUM(
-        supply_records.lines.WHERE(
+        lines.WHERE(
             (ship_date >= datetime.date(1994, 1, 1))
             & (ship_date < datetime.date(1995, 1, 1))
         ).quantity
@@ -463,7 +461,7 @@ def impl_tpch_q21():
     """
     date_check = receipt_date > commit_date
     different_supplier = supplier_key != BACK(2).supplier_key
-    waiting_entries = supply_records.lines.WHERE(date_check).order.WHERE(
+    waiting_entries = lines.WHERE(date_check).order.WHERE(
         (order_status == "F")
         & (COUNT(lines.WHERE(different_supplier)) > 0)
         & (COUNT(lines.WHERE(different_supplier & date_check)) == 0)
