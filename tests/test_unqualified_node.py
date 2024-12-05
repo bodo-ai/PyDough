@@ -276,7 +276,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q4,
-            "TPCH.PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1993, 7, 1):DateType()) & (TPCH.order_date < datetime.date(1993, 10, 1):DateType())) & (COUNT(TPCH.lines.WHERE((TPCH.commit_date < TPCH.receipt_date))) > 0:Int64Type()))), name='o', by=(TPCH.order_priority))(order_priority=TPCH.order_priority, order_count=COUNT(TPCH.o)).ORDER_BY(TPCH.order_priority.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1993, 7, 1):DateType()) & (TPCH.order_date < datetime.date(1993, 10, 1):DateType())) & HAS(TPCH.lines.WHERE((TPCH.commit_date < TPCH.receipt_date))))), name='o', by=(TPCH.order_priority))(order_priority=TPCH.order_priority, order_count=COUNT(TPCH.o)).ORDER_BY(TPCH.order_priority.ASC(na_pos='last'))",
             id="tpch_q4",
         ),
         pytest.param(
@@ -356,17 +356,17 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q20,
-            "TPCH.Suppliers(s_name=TPCH.name, s_address=TPCH.address).WHERE(((TPCH.nation.name == 'CANADA':StringType()) & (COUNT(TPCH.supply_records.part.WHERE((STARTSWITH(TPCH.name, 'forest':StringType()) & (BACK(1).availqty > (SUM(TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType()))).quantity) * 0.5:Float64Type()))))) > 0:Int64Type())))",
+            "TPCH.Suppliers(s_name=TPCH.name, s_address=TPCH.address).WHERE(((TPCH.nation.name == 'CANADA':StringType()) & HAS(TPCH.supply_records.part.WHERE((STARTSWITH(TPCH.name, 'forest':StringType()) & (BACK(1).availqty > (SUM(TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType()))).quantity) * 0.5:Float64Type())))))))",
             id="tpch_q20",
         ),
         pytest.param(
             impl_tpch_q21,
-            "TPCH.Suppliers.WHERE((TPCH.nation.name == 'SAUDI ARABIA':StringType()))(s_name=TPCH.name, numwait=COUNT(TPCH.lines.WHERE((TPCH.receipt_date > TPCH.commit_date)).order.WHERE((((TPCH.order_status == 'F':StringType()) & (COUNT(TPCH.lines.WHERE((TPCH.supplier_key != BACK(2).supplier_key))) > 0:Int64Type())) & (COUNT(TPCH.lines.WHERE(((TPCH.supplier_key != BACK(2).supplier_key) & (TPCH.receipt_date > TPCH.commit_date)))) == 0:Int64Type()))))).ORDER_BY(TPCH.numwait.DESC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'))",
+            "TPCH.Suppliers.WHERE((TPCH.nation.name == 'SAUDI ARABIA':StringType()))(s_name=TPCH.name, numwait=COUNT(TPCH.lines.WHERE((TPCH.receipt_date > TPCH.commit_date)).order.WHERE((((TPCH.order_status == 'F':StringType()) & HAS(TPCH.lines.WHERE((TPCH.supplier_key != BACK(2).supplier_key)))) & HASNOT(TPCH.lines.WHERE(((TPCH.supplier_key != BACK(2).supplier_key) & (TPCH.receipt_date > TPCH.commit_date)))))))).ORDER_BY(TPCH.numwait.DESC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'))",
             id="tpch_q21",
         ),
         pytest.param(
             impl_tpch_q22,
-            "TPCH.TPCH(avg_balance=AVG(TPCH.Customers(cntry_code=SLICE(TPCH.phone, None:UnknownType(), 2:Int64Type(), None:UnknownType())).WHERE((ISIN(TPCH.cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]:ArrayType(UnknownType())) & (COUNT(TPCH.orders) == 0:Int64Type()))).WHERE((TPCH.acctbal > 0.0:Float64Type())).acctbal)).PARTITION(TPCH.Customers(cntry_code=SLICE(TPCH.phone, None:UnknownType(), 2:Int64Type(), None:UnknownType())).WHERE(((ISIN(TPCH.cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]:ArrayType(UnknownType())) & (COUNT(TPCH.orders) == 0:Int64Type())) & (TPCH.acctbal > BACK(1).avg_balance))), name='custs', by=(TPCH.cntry_code))(cntry_code=TPCH.cntry_code, num_custs=COUNT(TPCH.custs), totacctbal=SUM(TPCH.custs.acctbal))",
+            "TPCH.TPCH(avg_balance=AVG(TPCH.Customers(cntry_code=SLICE(TPCH.phone, None:UnknownType(), 2:Int64Type(), None:UnknownType())).WHERE((ISIN(TPCH.cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]:ArrayType(UnknownType())) & HASNOT(TPCH.orders))).WHERE((TPCH.acctbal > 0.0:Float64Type())).acctbal)).PARTITION(TPCH.Customers(cntry_code=SLICE(TPCH.phone, None:UnknownType(), 2:Int64Type(), None:UnknownType())).WHERE((ISIN(TPCH.cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]:ArrayType(UnknownType())) & HASNOT(TPCH.orders))).WHERE((TPCH.acctbal > BACK(1).avg_balance)), name='custs', by=(TPCH.cntry_code))(cntry_code=TPCH.cntry_code, num_custs=COUNT(TPCH.custs), totacctbal=SUM(TPCH.custs.acctbal))",
             id="tpch_q22",
         ),
     ],

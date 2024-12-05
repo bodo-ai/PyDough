@@ -166,7 +166,7 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
     selected_orders = root.Orders.WHERE(
         (root.order_date >= datetime.date(1993, 7, 1))
         & (root.order_date < datetime.date(1993, 10, 1))
-        & (root.COUNT(selected_lines) > 0)
+        & root.HAS(selected_lines)
     )
     return root.PARTITION(selected_orders, name="o", by=root.order_priority)(
         root.order_priority,
@@ -528,7 +528,7 @@ def pydough_impl_tpch_q20(root: UnqualifiedNode) -> UnqualifiedNode:
     return root.Suppliers(
         s_name=root.name,
         s_address=root.address,
-    ).WHERE((root.nation.name == "CANADA") & (root.COUNT(selected_part_supplied) > 0))
+    ).WHERE((root.nation.name == "CANADA") & root.HAS(selected_part_supplied))
 
 
 def pydough_impl_tpch_q21(root: UnqualifiedNode) -> UnqualifiedNode:
@@ -541,8 +541,8 @@ def pydough_impl_tpch_q21(root: UnqualifiedNode) -> UnqualifiedNode:
         root.receipt_date > root.commit_date
     ).order.WHERE(
         (root.order_status == "F")
-        & (root.COUNT(root.lines.WHERE(different_supplier)) > 0)
-        & (root.COUNT(root.lines.WHERE(different_supplier & date_check)) == 0)
+        & root.HAS(root.lines.WHERE(different_supplier))
+        & root.HASNOT(root.lines.WHERE(different_supplier & date_check))
     )
     return root.Suppliers.WHERE(root.nation.name == "SAUDI ARABIA")(
         s_name=root.name,
@@ -556,24 +556,18 @@ def pydough_impl_tpch_q21(root: UnqualifiedNode) -> UnqualifiedNode:
 def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for TPC-H query 22.
-
-    TODO: figure out a way to avoid computing the filtered customers twice.
     """
-    cust_info = root.Customers(cntry_code=root.phone[:2]).WHERE(
+    selected_customers = root.Customers(cntry_code=root.phone[:2]).WHERE(
         root.ISIN(root.cntry_code, ("13", "31", "23", "29", "30", "18", "17"))
-        & (root.COUNT(root.orders) == 0)
-    )
-    selected_customers = (
-        root.Customers(cntry_code=root.phone[:2])
-        .WHERE(
-            root.ISIN(root.cntry_code, ("13", "31", "23", "29", "30", "18", "17"))
-            & (root.COUNT(root.orders) == 0)
-        )
-        .WHERE(root.acctbal > root.BACK(1).avg_balance)
+        & root.HASNOT(root.orders)
     )
     return root.TPCH(
-        avg_balance=root.AVG(cust_info.WHERE(root.acctbal > 0.0).acctbal)
-    ).PARTITION(selected_customers, name="custs", by=root.cntry_code)(
+        avg_balance=root.AVG(selected_customers.WHERE(root.acctbal > 0.0).acctbal)
+    ).PARTITION(
+        selected_customers.WHERE(root.acctbal > root.BACK(1).avg_balance),
+        name="custs",
+        by=root.cntry_code,
+    )(
         root.cntry_code,
         num_custs=root.COUNT(root.custs),
         totacctbal=root.SUM(root.custs.acctbal),
@@ -667,7 +661,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Partition[name='o', by=order_priority]\n"
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Orders]\n"
-            "│   └─┬─ Where[(order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1)) & (COUNT($1) > 0)]\n"
+            "│   └─┬─ Where[(order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1)) & HAS($1)]\n"
             "│     └─┬─ AccessChild\n"
             "│       ├─── SubCollection[lines]\n"
             "│       └─── Where[commit_date < receipt_date]\n"
@@ -939,7 +933,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "──┬─ TPCH\n"
             "  ├─── TableCollection[Suppliers]\n"
             "  ├─── Calc[s_name=name, s_address=address]\n"
-            "  └─┬─ Where[($1.name == 'CANADA') & (COUNT($2) > 0)]\n"
+            "  └─┬─ Where[($1.name == 'CANADA') & HAS($2)]\n"
             "    ├─┬─ AccessChild\n"
             "    │ └─── SubCollection[nation]\n"
             "    └─┬─ AccessChild\n"
@@ -963,7 +957,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │   ├─── SubCollection[lines]\n"
             "  │   └─┬─ Where[receipt_date > commit_date]\n"
             "  │     ├─── SubCollection[order]\n"
-            "  │     └─┬─ Where[(order_status == 'F') & (COUNT($1) > 0) & (COUNT($2) == 0)]\n"
+            "  │     └─┬─ Where[(order_status == 'F') & HAS($1) & HASNOT($2)]\n"
             "  │       ├─┬─ AccessChild\n"
             "  │       │ ├─── SubCollection[lines]\n"
             "  │       │ └─── Where[supplier_key != BACK(2).supplier_key]\n"
@@ -980,7 +974,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Customers]\n"
             "│   ├─── Calc[cntry_code=SLICE(phone, None, 2, None)]\n"
-            "│   ├─┬─ Where[ISIN(cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]) & (COUNT($1) == 0)]\n"
+            "│   ├─┬─ Where[ISIN(cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]) & HASNOT($1)]\n"
             "│   │ └─┬─ AccessChild\n"
             "│   │   └─── SubCollection[orders]\n"
             "│   └─── Where[acctbal > 0.0]\n"
@@ -988,7 +982,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Customers]\n"
             "│   ├─── Calc[cntry_code=SLICE(phone, None, 2, None)]\n"
-            "│   ├─┬─ Where[ISIN(cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]) & (COUNT($1) == 0)]\n"
+            "│   ├─┬─ Where[ISIN(cntry_code, ['13':StringType(), '31':StringType(), '23':StringType(), '29':StringType(), '30':StringType(), '18':StringType(), '17':StringType()]) & HASNOT($1)]\n"
             "│   │ └─┬─ AccessChild\n"
             "│   │   └─── SubCollection[orders]\n"
             "│   └─── Where[acctbal > BACK(1).avg_balance]\n"
