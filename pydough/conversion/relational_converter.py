@@ -57,6 +57,7 @@ from .hybrid_tree import (
     HybridLiteralExpr,
     HybridOperation,
     HybridPartition,
+    HybridPartitionChild,
     HybridRefExpr,
     HybridRoot,
     HybridTranslator,
@@ -648,6 +649,41 @@ class RelTranslation:
         )
         return TranslationOutput(out_rel, out_columns, join_keys)
 
+    def translate_partition_child(
+        self,
+        node: HybridPartitionChild,
+        context: TranslationOutput,
+    ) -> TranslationOutput:
+        """
+        TODO
+
+        Args:
+            `node`: the node corresponding to the partition child access.
+            `parent`: the hybrid tree of the previous layer that the access
+            steps down from.
+            `context`: the data structure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts.
+
+        Returns:
+            TODO
+        """
+        child_output: TranslationOutput = self.rel_translation(
+            None, node.subtree, len(node.subtree.pipeline) - 1
+        )
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+        assert node.subtree.agg_keys is not None
+        for agg_key in node.subtree.agg_keys:
+            join_keys.append((agg_key, agg_key))
+
+        return self.join_outputs(
+            context,
+            child_output,
+            JoinType.INNER,
+            join_keys,
+            None,
+        )
+
     def rel_translation(
         self,
         connection: HybridConnection | None,
@@ -733,6 +769,9 @@ class RelTranslation:
                         result = self.translate_child_sub_collection(
                             connection, operation
                         )
+            case HybridPartitionChild():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_partition_child(operation, context)
             case HybridCalc():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_calc(operation, context)

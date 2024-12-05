@@ -65,10 +65,37 @@ ROOT(columns=[('l_returnflag', l_returnflag), ('l_linestatus', l_linestatus), ('
             (
                 pydough_impl_tpch_q2,
                 """
+ROOT(columns=[('s_acctbal', s_acctbal), ('s_name', s_name), ('n_name', n_name), ('p_partkey', p_partkey), ('p_mfgr', p_mfgr), ('s_address', s_address), ('s_phone', s_phone), ('s_comment', s_comment)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
+ PROJECT(columns={'n_name': n_name, 'ordering_1': s_acctbal, 'ordering_2': n_name, 'ordering_3': s_name, 'ordering_4': p_partkey, 'p_mfgr': p_mfgr, 'p_partkey': p_partkey, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
+  PROJECT(columns={'n_name': n_name, 'p_mfgr': manufacturer, 'p_partkey': key_19, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
+   FILTER(condition=supplycost_21 == best_cost & ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
+    JOIN(conditions=[t0.key_9 == t1.key_19], types=['inner'], columns={'best_cost': t0.best_cost, 'key_19': t1.key_19, 'manufacturer': t1.manufacturer, 'n_name': t1.n_name, 'part_type': t1.part_type, 's_acctbal': t1.s_acctbal, 's_address': t1.s_address, 's_comment': t1.s_comment, 's_name': t1.s_name, 's_phone': t1.s_phone, 'size': t1.size, 'supplycost_21': t1.supplycost})
+     PROJECT(columns={'best_cost': agg_0, 'key_9': key_9})
+      AGGREGATE(keys={'key_9': key_9}, aggregations={'agg_0': MIN(supplycost)})
+       JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'key_9': t1.key, 'supplycost': t0.supplycost})
+        JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'part_key': t1.part_key, 'supplycost': t1.supplycost})
+         JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key_5': t1.key})
+          FILTER(condition=name_3 == 'EUROPE':string, columns={'key': key})
+           JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'key': t0.key, 'name_3': t1.name})
+            SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+            SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+          SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+         SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
+        SCAN(table=tpch.PART, columns={'key': p_partkey})
+     PROJECT(columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': name, 'part_type': part_type, 's_acctbal': account_balance, 's_address': address, 's_comment': comment_14, 's_name': name_16, 's_phone': phone, 'size': size, 'supplycost': supplycost})
+      JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'key_19': t1.key, 'manufacturer': t1.manufacturer, 'name': t0.name, 'name_16': t0.name_16, 'part_type': t1.part_type, 'phone': t0.phone, 'size': t1.size, 'supplycost': t0.supplycost})
+       JOIN(conditions=[t0.key_15 == t1.supplier_key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'name': t0.name, 'name_16': t0.name_16, 'part_key': t1.part_key, 'phone': t0.phone, 'supplycost': t1.supplycost})
+        JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'address': t1.address, 'comment_14': t1.comment, 'key_15': t1.key, 'name': t0.name, 'name_16': t1.name, 'phone': t1.phone})
+         FILTER(condition=name_13 == 'EUROPE':string, columns={'key': key, 'name': name})
+          JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'key': t0.key, 'name': t0.name, 'name_13': t1.name})
+           SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+           SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+         SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'address': s_address, 'comment': s_comment, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey, 'phone': s_phone})
+        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
+       SCAN(table=tpch.PART, columns={'key': p_partkey, 'manufacturer': p_mfgr, 'part_type': p_type, 'size': p_size})
 """,
             ),
             id="tpch_q2",
-            marks=pytest.mark.skip("TODO: support stepping into a partition child"),
         ),
         pytest.param(
             (

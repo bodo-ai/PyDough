@@ -49,23 +49,33 @@ def impl_tpch_q2():
     """
     PyDough implementation of TPCH Q2.
     """
-    selected_parts = Nations.WHERE(region.name == "EUROPE").suppliers.parts_supplied(
-        s_acctbal=BACK(1).account_balance,
-        s_name=BACK(1).name,
-        n_name=BACK(2).name,
-        p_partkey=key,
-        p_mfgr=manufacturer,
-        s_address=BACK(1).address,
-        s_phone=BACK(1).phone,
-        s_comment=BACK(1).comment,
+    selected_parts = Nations.WHERE(
+        region.name == "EUROPE"
+    ).suppliers.supply_records.part(
+        s_acctbal=BACK(2).account_balance,
+        s_name=BACK(2).name,
+        n_name=BACK(3).name,
+        s_address=BACK(2).address,
+        s_phone=BACK(2).phone,
+        s_comment=BACK(2).comment,
+        supplycost=BACK(1).supplycost,
     )
 
     return (
-        PARTITION(selected_parts, name="p", by=key)(best_cost=MIN(p.ps_supplycost))
+        PARTITION(selected_parts, name="p", by=key)(best_cost=MIN(p.supplycost))
         .p.WHERE(
-            (ps_supplycost == BACK(1).best_cost)
+            (supplycost == BACK(1).best_cost)
             & ENDSWITH(part_type, "BRASS")
             & (size == 15)
+        )(
+            s_acctbal=s_acctbal,
+            s_name=s_name,
+            n_name=n_name,
+            p_partkey=key,
+            p_mfgr=manufacturer,
+            s_address=s_address,
+            s_phone=s_phone,
+            s_comment=s_comment,
         )
         .ORDER_BY(
             s_acctbal.DESC(),

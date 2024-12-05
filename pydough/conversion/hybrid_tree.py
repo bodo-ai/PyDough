@@ -20,8 +20,8 @@ __all__ = [
     "HybridTree",
     "HybridTranslator",
     "HybridPartition",
+    "HybridPartitionChild",
 ]
-
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -319,6 +319,23 @@ class HybridRoot(HybridOperation):
 
     def __repr__(self):
         return "ROOT"
+
+
+class HybridPartitionChild(HybridOperation):
+    """
+    TODO
+    """
+
+    def __init__(self, subtree: "HybridTree"):
+        self.subtree: HybridTree = subtree
+        super().__init__(
+            subtree.pipeline[-1].terms,
+            subtree.pipeline[-1].renamings,
+            subtree.pipeline[-1].orderings,
+        )
+
+    def __repr__(self):
+        return "PARTITION_CHILD[*]"
 
 
 class HybridCollectionAccess(HybridOperation):
@@ -1197,6 +1214,13 @@ class HybridTranslator:
             case TableCollection() | SubCollection():
                 successor_hybrid = HybridTree(HybridCollectionAccess(node))
                 hybrid = self.make_hybrid_tree(node.ancestor_context)
+                hybrid.add_successor(successor_hybrid)
+                return successor_hybrid
+            case PartitionChild():
+                hybrid = self.make_hybrid_tree(node.ancestor_context)
+                successor_hybrid = HybridTree(
+                    HybridPartitionChild(hybrid.children[0].subtree)
+                )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case Calc():
