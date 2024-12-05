@@ -1750,11 +1750,11 @@ def test_collections_calc_terms(
                 (FunctionInfo("HAS", [ChildReferenceCollectionInfo(1)]), True, True),
                 (ReferenceInfo("key"), True, True),
             ),
-            "TPCH.Suppliers(has_part_24=HAS(parts_supplied.WHERE(size == 24)), hasnot_part_25=HASNOT(parts_supplied.WHERE(size == 25))).WHERE(HASNOT(parts_supplied.WHERE(size == 26)) & HAS(parts_supplied.WHERE(size == 27))).TOP_K(100, HAS(parts_supplied.WHERE(size == 28)).ASC(na_pos='last'), HASNOT(parts_supplied.WHERE(size == 29)).ASC(na_pos='last'), key.ASC(na_pos='last')).ORDER_BY(HASNOT(parts_supplied.WHERE(size == 30)).ASC(na_pos='last'), HAS(parts_supplied.WHERE(size == 31)).ASC(na_pos='last'), key.ASC(na_pos='last'))",
+            "TPCH.Suppliers(has_part_24=COUNT(parts_supplied.WHERE(size == 24)) > 0, hasnot_part_25=COUNT(parts_supplied.WHERE(size == 25)) == 0).WHERE(HASNOT(parts_supplied.WHERE(size == 26)) & HAS(parts_supplied.WHERE(size == 27))).TOP_K(100, (COUNT(parts_supplied.WHERE(size == 28)) > 0).ASC(na_pos='last'), (COUNT(parts_supplied.WHERE(size == 29)) == 0).ASC(na_pos='last'), key.ASC(na_pos='last')).ORDER_BY((COUNT(parts_supplied.WHERE(size == 30)) == 0).ASC(na_pos='last'), (COUNT(parts_supplied.WHERE(size == 31)) > 0).ASC(na_pos='last'), key.ASC(na_pos='last'))",
             """
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
-  ├─┬─ Calc[has_part_24=HAS($1), hasnot_part_25=HASNOT($2)]
+  ├─┬─ Calc[has_part_24=COUNT($1) > 0, hasnot_part_25=COUNT($2) == 0]
   │ ├─┬─ AccessChild
   │ │ ├─── SubCollection[parts_supplied]
   │ │ └─── Where[size == 24]
@@ -1768,14 +1768,14 @@ def test_collections_calc_terms(
   │ └─┬─ AccessChild
   │   ├─── SubCollection[parts_supplied]
   │   └─── Where[size == 27]
-  ├─┬─ TopK[100, HAS($1).ASC(na_pos='last'), HASNOT($2).ASC(na_pos='last'), key.ASC(na_pos='last')]
+  ├─┬─ TopK[100, (COUNT($1) > 0).ASC(na_pos='last'), (COUNT($2) == 0).ASC(na_pos='last'), key.ASC(na_pos='last')]
   │ ├─┬─ AccessChild
   │ │ ├─── SubCollection[parts_supplied]
   │ │ └─── Where[size == 28]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[parts_supplied]
   │   └─── Where[size == 29]
-  └─┬─ OrderBy[HASNOT($1).ASC(na_pos='last'), HAS($2).ASC(na_pos='last'), key.ASC(na_pos='last')]
+  └─┬─ OrderBy[(COUNT($1) == 0).ASC(na_pos='last'), (COUNT($2) > 0).ASC(na_pos='last'), key.ASC(na_pos='last')]
     ├─┬─ AccessChild
     │ ├─── SubCollection[parts_supplied]
     │ └─── Where[size == 30]
@@ -1943,11 +1943,11 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.Parts.WHERE(HAS(suppliers_of_part.nation.WHERE(name == 'GERMANY')) | HASNOT(suppliers_of_part.nation.WHERE(name == 'BRAZIL')) | HAS(suppliers_of_part.nation.WHERE(name == 'USA')) | HASNOT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) | CONTAINS(part_type, 'ECONOMY'))",
+            "TPCH.Parts.WHERE((COUNT(suppliers_of_part.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'BRAZIL')) == 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'USA')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) == 0) | CONTAINS(part_type, 'ECONOMY'))",
             """
 ──┬─ TPCH
   ├─── TableCollection[Parts]
-  └─┬─ Where[HAS($1) | HASNOT($2) | HAS($3) | HASNOT($4) | CONTAINS(part_type, 'ECONOMY')]
+  └─┬─ Where[(COUNT($1) > 0) | (COUNT($2) == 0) | (COUNT($3) > 0) | (COUNT($4) == 0) | CONTAINS(part_type, 'ECONOMY')]
     ├─┬─ AccessChild
     │ └─┬─ SubCollection[suppliers_of_part]
     │   ├─── SubCollection[nation]
@@ -2096,11 +2096,11 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.Parts.WHERE((HAS(suppliers_of_part.nation.WHERE(name == 'GERMANY')) | HAS(suppliers_of_part.nation.WHERE(name == 'BRAZIL'))) & (HAS(suppliers_of_part.nation.WHERE(name == 'USA')) | HAS(suppliers_of_part.nation.WHERE(name == 'FRANCE'))) & HAS(suppliers_of_part.nation.WHERE(name == 'ARGENTINA')) & (HAS(suppliers_of_part.nation.WHERE(name == 'CANADA')) & HAS(suppliers_of_part.nation.WHERE(name == 'INDIA')) & CONTAINS(part_type, 'ECONOMY') & (HAS(suppliers_of_part.nation.WHERE(name == 'GERMANY')) | HAS(suppliers_of_part.nation.WHERE(name == 'FRANCE')))))",
+            "TPCH.Parts.WHERE(((COUNT(suppliers_of_part.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'BRAZIL')) > 0)) & ((COUNT(suppliers_of_part.nation.WHERE(name == 'USA')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) > 0)) & HAS(suppliers_of_part.nation.WHERE(name == 'ARGENTINA')) & HAS(suppliers_of_part.nation.WHERE(name == 'CANADA')) & HAS(suppliers_of_part.nation.WHERE(name == 'INDIA')) & CONTAINS(part_type, 'ECONOMY') & ((COUNT(suppliers_of_part.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) > 0)))",
             """
 ──┬─ TPCH
   ├─── TableCollection[Parts]
-  └─┬─ Where[(HAS($1) | HAS($2)) & (HAS($3) | HAS($4)) & HAS($5) & (HAS($6) & HAS($7) & CONTAINS(part_type, 'ECONOMY') & (HAS($1) | HAS($4)))]
+  └─┬─ Where[((COUNT($1) > 0) | (COUNT($2) > 0)) & ((COUNT($3) > 0) | (COUNT($4) > 0)) & HAS($5) & HAS($6) & HAS($7) & CONTAINS(part_type, 'ECONOMY') & ((COUNT($1) > 0) | (COUNT($4) > 0))]
     ├─┬─ AccessChild
     │ └─┬─ SubCollection[suppliers_of_part]
     │   ├─── SubCollection[nation]
