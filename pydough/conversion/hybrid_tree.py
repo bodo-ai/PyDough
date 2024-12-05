@@ -30,7 +30,11 @@ from typing import Any, Optional
 
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
-from pydough.metadata import SimpleJoinMetadata
+from pydough.metadata import (
+    CartesianProductMetadata,
+    SimpleJoinMetadata,
+    SubcollectionRelationshipMetadata,
+)
 from pydough.pydough_ast import (
     BackReferenceExpression,
     Calc,
@@ -687,6 +691,57 @@ class HybridTranslator:
         # An index used for creating fake column names for aliases
         self.alias_counter: int = 0
 
+    @staticmethod
+    def get_agg_keys(
+        subcollection_property: SubcollectionRelationshipMetadata,
+        child_node: HybridOperation,
+    ) -> list[HybridExpr]:
+        """
+        TODO
+        """
+        agg_keys: list[HybridExpr] = []
+        if isinstance(subcollection_property, SimpleJoinMetadata):
+            # If the subcollection is a simple join property, extract the keys.
+            for lhs_name in subcollection_property.keys:
+                for rhs_name in subcollection_property.keys[lhs_name]:
+                    rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
+                        rhs_name
+                    )
+                    agg_keys.append(rhs_key)
+        elif not isinstance(subcollection_property, CartesianProductMetadata):
+            raise NotImplementedError(
+                f"Unsupported subcollection property type used for accessing a subcollection: {subcollection_property.__class__.__name__}"
+            )
+        return agg_keys
+
+    @staticmethod
+    def get_subcollection_join_keys(
+        subcollection_property: SubcollectionRelationshipMetadata,
+        parent_node: HybridOperation,
+        child_node: HybridOperation,
+    ) -> list[tuple[HybridExpr, HybridExpr]]:
+        """
+        TODO
+        """
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+        if isinstance(subcollection_property, SimpleJoinMetadata):
+            # If the subcollection is a simple join property, extract the keys
+            # and build the corresponding (lhs_key == rhs_key) conditions
+            for lhs_name in subcollection_property.keys:
+                lhs_key: HybridExpr = parent_node.terms[lhs_name].make_into_ref(
+                    lhs_name
+                )
+                for rhs_name in subcollection_property.keys[lhs_name]:
+                    rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
+                        rhs_name
+                    )
+                    join_keys.append((lhs_key, rhs_key))
+        elif not isinstance(subcollection_property, CartesianProductMetadata):
+            raise NotImplementedError(
+                f"Unsupported subcollection property type used for accessing a subcollection: {subcollection_property.__class__.__name__}"
+            )
+        return join_keys
+
     def populate_children(
         self,
         hybrid: HybridTree,
@@ -1208,20 +1263,12 @@ class HybridTranslator:
                         successor_hybrid = HybridTree(
                             HybridCollectionAccess(node.child_access)
                         )
-                        if isinstance(node.child_access, SubCollection) and isinstance(
-                            node.child_access.subcollection_property, SimpleJoinMetadata
-                        ):
-                            for (
-                                rhs_key_names
-                            ) in node.child_access.subcollection_property.keys.values():
-                                for rhs_key_name in rhs_key_names:
-                                    rhs_key: HybridExpr = (
-                                        successor_hybrid.pipeline[-1]
-                                        .terms[rhs_key_name]
-                                        .make_into_ref(rhs_key_name)
-                                    )
-                                    key_exprs.append(rhs_key)
-                            successor_hybrid.set_keys(key_exprs)
+                        if isinstance(node.child_access, SubCollection):
+                            agg_keys: list[HybridExpr] = HybridTranslator.get_agg_keys(
+                                node.child_access.subcollection_property,
+                                successor_hybrid.pipeline[-1],
+                            )
+                            successor_hybrid.set_keys(agg_keys)
                         else:
                             successor_hybrid.set_keys([])
                         return successor_hybrid
