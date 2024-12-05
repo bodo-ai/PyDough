@@ -10,8 +10,6 @@ from dataclasses import dataclass
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import (
-    CartesianProductMetadata,
-    SimpleJoinMetadata,
     SimpleTableMetadata,
 )
 from pydough.pydough_ast import (
@@ -447,23 +445,13 @@ class RelTranslation:
         ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
-        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
-        if isinstance(collection_access.subcollection_property, SimpleJoinMetadata):
-            # If the subcollection is a simple join property, extract the keys
-            # and build the corresponding (lhs_key == rhs_key) conditions
-            for lhs_name in collection_access.subcollection_property.keys:
-                lhs_key: HybridExpr = (
-                    parent.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
-                )
-                for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
-                    rhs_key: HybridExpr = node.terms[rhs_name].make_into_ref(rhs_name)
-                    join_keys.append((lhs_key, rhs_key))
-        elif not isinstance(
-            collection_access.subcollection_property, CartesianProductMetadata
-        ):
-            raise NotImplementedError(
-                f"Unsupported subcollection property type used for accessing a subcollection: {collection_access.subcollection_property.__class__.__name__}"
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = (
+            HybridTranslator.get_subcollection_join_keys(
+                collection_access.subcollection_property,
+                parent.pipeline[-1],
+                node,
             )
+        )
 
         return self.join_outputs(
             context,
@@ -500,24 +488,11 @@ class RelTranslation:
         ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
         result: TranslationOutput = self.build_simple_table_scan(node)
 
-        if isinstance(collection_access.subcollection_property, SimpleJoinMetadata):
-            # If the subcollection is a simple join property, extract the keys
-            # and build the corresponding (lhs_key == rhs_key) conditions
-            for lhs_name in collection_access.subcollection_property.keys:
-                lhs_key: HybridExpr = (
-                    connection.parent.pipeline[-1]
-                    .terms[lhs_name]
-                    .make_into_ref(lhs_name)
-                )
-                for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
-                    rhs_key: HybridExpr = node.terms[rhs_name].make_into_ref(rhs_name)
-                    result.join_keys.append((lhs_key, rhs_key))
-        elif not isinstance(
-            collection_access.subcollection_property, CartesianProductMetadata
-        ):
-            raise NotImplementedError(
-                f"Unsupported subcollection property type used for accessing a subcollection: {collection_access.subcollection_property.__class__.__name__}"
-            )
+        result.join_keys = HybridTranslator.get_subcollection_join_keys(
+            collection_access.subcollection_property,
+            connection.parent.pipeline[connection.required_steps],
+            node,
+        )
 
         return result
 
