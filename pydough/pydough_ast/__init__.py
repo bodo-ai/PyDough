@@ -30,6 +30,7 @@ __all__ = [
     "PartitionChild",
     "CollectionAccess",
     "BackReferenceExpression",
+    "PartitionKey",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
@@ -59,6 +60,7 @@ from .expressions import (
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
+    PartitionKey,
     PyDoughExpressionAST,
     Reference,
 )

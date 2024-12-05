@@ -25,6 +25,8 @@ __all__ = [
     "IFF",
     "SUM",
     "YEAR",
+    "MONTH",
+    "DAY",
     "NOT",
     "MIN",
     "MAX",
@@ -105,6 +107,12 @@ MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentT
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+MONTH = ExpressionFunctionOperator(
+    "MONTH", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+DAY = ExpressionFunctionOperator(
+    "DAY", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)
