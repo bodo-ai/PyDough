@@ -353,7 +353,9 @@ def pydough_impl_tpch_q14(root: UnqualifiedNode) -> UnqualifiedNode:
         & (root.ship_date < datetime.date(1995, 10, 1))
     )(
         value=value,
-        promo_value=root.IFF(root.STARTSWITH(root.part.part_type, "PROMO"), value, 0),
+        promo_value=root.IFF(
+            root.STARTSWITH(root.part_and_supplier.part.part_type, "PROMO"), value, 0
+        ),
     )
     return root.TPCH(
         promo_revenue=100.0
@@ -455,34 +457,37 @@ def pydough_impl_tpch_q19(root: UnqualifiedNode) -> UnqualifiedNode:
     selected_lines = root.Lineitems.WHERE(
         (root.shipmode in ("AIR", "AIR REG"))
         & (root.ship_instruct == "DELIVER IN PERSON")
-        & (root.part.size >= 1)
+        & (root.part_and_supplier.part.size >= 1)
         & (
             (
-                (root.part.size < 5)
+                (root.part_and_supplier.part.size < 5)
                 & (root.quantity >= 1)
                 & (root.quantity <= 11)
                 & root.ISIN(
-                    root.part.container, ("SM CASE", "SM BOX", "SM PACK", "SM PKG")
+                    root.part_and_supplier.part.container,
+                    ("SM CASE", "SM BOX", "SM PACK", "SM PKG"),
                 )
-                & (root.part.brand == "Brand#12")
+                & (root.part_and_supplier.part.brand == "Brand#12")
             )
             | (
-                (root.part.size < 10)
+                (root.part_and_supplier.part.size < 10)
                 & (root.quantity >= 10)
                 & (root.quantity <= 21)
                 & root.ISIN(
-                    root.part.container, ("MED CASE", "MED BOX", "MED PACK", "MED PKG")
+                    root.part_and_supplier.part.container,
+                    ("MED CASE", "MED BOX", "MED PACK", "MED PKG"),
                 )
-                & (root.part.brand == "Brand#23")
+                & (root.part_and_supplier.part.brand == "Brand#23")
             )
             | (
-                (root.part.size < 15)
+                (root.part_and_supplier.part.size < 15)
                 & (root.quantity >= 20)
                 & (root.quantity <= 31)
                 & root.ISIN(
-                    root.part.container, ("LG CASE", "LG BOX", "LG PACK", "LG PKG")
+                    root.part_and_supplier.part.container,
+                    ("LG CASE", "LG BOX", "LG PACK", "LG PKG"),
                 )
-                & (root.part.brand == "Brand#34")
+                & (root.part_and_supplier.part.brand == "Brand#34")
             )
         )
     )
@@ -827,7 +832,8 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "    ├─── Where[(ship_date >= datetime.date(1995, 9, 1)) & (ship_date < datetime.date(1995, 10, 1))]\n"
             "    └─┬─ Calc[value=extended_price * (1 - discount), promo_value=IFF(STARTSWITH($1.part_type, 'PROMO'), extended_price * (1 - discount), 0)]\n"
             "      └─┬─ AccessChild\n"
-            "        └─── SubCollection[part]",
+            "        └─┬─ SubCollection[part_and_supplier]\n"
+            "          └─── SubCollection[part]",
             id="tpch-q14",
         ),
         pytest.param(
@@ -901,7 +907,8 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "    ├─── TableCollection[Lineitems]\n"
             "    └─┬─ Where[((True & (ship_instruct == 'DELIVER IN PERSON')) & ($1.size >= 1)) & ((((((($1.size < 5) & (quantity >= 1)) & (quantity <= 11)) & ISIN($1.container, ['SM CASE':StringType(), 'SM BOX':StringType(), 'SM PACK':StringType(), 'SM PKG':StringType()])) & ($1.brand == 'Brand#12')) | ((((($1.size < 10) & (quantity >= 10)) & (quantity <= 21)) & ISIN($1.container, ['MED CASE':StringType(), 'MED BOX':StringType(), 'MED PACK':StringType(), 'MED PKG':StringType()])) & ($1.brand == 'Brand#23'))) | ((((($1.size < 15) & (quantity >= 20)) & (quantity <= 31)) & ISIN($1.container, ['LG CASE':StringType(), 'LG BOX':StringType(), 'LG PACK':StringType(), 'LG PKG':StringType()])) & ($1.brand == 'Brand#34')))]\n"
             "      └─┬─ AccessChild\n"
-            "        └─── SubCollection[part]",
+            "        └─┬─ SubCollection[part_and_supplier]\n"
+            "          └─── SubCollection[part]",
             id="tpch-q19",
         ),
         pytest.param(

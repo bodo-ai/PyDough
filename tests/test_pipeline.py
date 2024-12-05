@@ -71,10 +71,19 @@ ROOT(columns=[('c_key', c_key), ('c_name', c_name), ('revenue', revenue), ('c_ac
             (
                 pydough_impl_tpch_q14,
                 """
+ROOT(columns=[('promo_revenue', promo_revenue)], orderings=[])
+ PROJECT(columns={'promo_revenue': 100.0:float64 * DEFAULT_TO(agg_0, 0:int64) / DEFAULT_TO(agg_1, 0:int64)})
+  AGGREGATE(keys={}, aggregations={'agg_0': SUM(promo_value), 'agg_1': SUM(value)})
+   PROJECT(columns={'promo_value': IFF(STARTSWITH(part_type, 'PROMO':string), extended_price * 1:int64 - discount, 0:int64), 'value': extended_price * 1:int64 - discount})
+    JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['left'], columns={'discount': t0.discount, 'extended_price': t0.extended_price, 'part_type': t1.part_type})
+     FILTER(condition=ship_date >= datetime.date(1995, 9, 1):date & ship_date < datetime.date(1995, 10, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'part_key': part_key, 'supplier_key': supplier_key})
+      SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
+     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'part_key': t0.part_key, 'part_type': t1.part_type, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.PART, columns={'key': p_partkey, 'part_type': p_type})
 """,
             ),
             id="tpch_q14",
-            marks=pytest.mark.skip("TODO: support or remove compounds"),
         ),
         pytest.param(
             (
@@ -98,10 +107,18 @@ ROOT(columns=[('c_name', c_name), ('c_custkey', c_custkey), ('o_orderkey', o_ord
             (
                 pydough_impl_tpch_q19,
                 """
+ROOT(columns=[('revenue', revenue)], orderings=[])
+ PROJECT(columns={'revenue': DEFAULT_TO(agg_0, 0:int64)})
+  AGGREGATE(keys={}, aggregations={'agg_0': SUM(extended_price * 1:int64 - discount)})
+   FILTER(condition=True:bool & ship_instruct == 'DELIVER IN PERSON':string & size >= 1:int64 & size < 5:int64 & quantity >= 1:int64 & quantity <= 11:int64 & ISIN(container, ['SM CASE':StringType(), 'SM BOX':StringType(), 'SM PACK':StringType(), 'SM PKG':StringType()]:array[unknown]) & brand == 'Brand#12':string | size < 10:int64 & quantity >= 10:int64 & quantity <= 21:int64 & ISIN(container, ['MED CASE':StringType(), 'MED BOX':StringType(), 'MED PACK':StringType(), 'MED PKG':StringType()]:array[unknown]) & brand == 'Brand#23':string | size < 15:int64 & quantity >= 20:int64 & quantity <= 31:int64 & ISIN(container, ['LG CASE':StringType(), 'LG BOX':StringType(), 'LG PACK':StringType(), 'LG PKG':StringType()]:array[unknown]) & brand == 'Brand#34':string, columns={'discount': discount, 'extended_price': extended_price})
+    JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['left'], columns={'brand': t1.brand, 'container': t1.container, 'discount': t0.discount, 'extended_price': t0.extended_price, 'quantity': t0.quantity, 'ship_instruct': t0.ship_instruct, 'size': t1.size})
+     SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'quantity': l_quantity, 'ship_instruct': l_shipinstruct, 'supplier_key': l_suppkey})
+     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'brand': t1.brand, 'container': t1.container, 'part_key': t0.part_key, 'size': t1.size, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.PART, columns={'brand': p_brand, 'container': p_container, 'key': p_partkey, 'size': p_size})
 """,
             ),
             id="tpch_q19",
-            marks=pytest.mark.skip("TODO: support or remove compounds"),
         ),
     ],
 )

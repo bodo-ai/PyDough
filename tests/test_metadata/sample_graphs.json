@@ -238,7 +238,7 @@
             "manufacturer": {"type": "table_column", "column_name": "p_mfgr", "data_type": "string"},
             "brand": {"type": "table_column", "column_name": "p_brand", "data_type": "string"},
             "part_type": {"type": "table_column", "column_name": "p_type", "data_type": "string"},
-            "size": {"type": "table_column", "column_name": "p_sie", "data_type": "int64"},
+            "size": {"type": "table_column", "column_name": "p_size", "data_type": "int64"},
             "container": {"type": "table_column", "column_name": "p_container", "data_type": "string"},
             "retail_price": {"type": "table_column", "column_name": "p_retailprice", "data_type": "decimal[12,2]"},
             "comment": {"type": "table_column", "column_name": "p_comment", "data_type": "string"},

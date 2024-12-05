@@ -292,7 +292,12 @@ def impl_tpch_q14():
     selected_lines = Lineitems.WHERE(
         (ship_date >= datetime.date(1995, 9, 1))
         & (ship_date < datetime.date(1995, 10, 1))
-    )(value=value, promo_value=IFF(STARTSWITH(part.part_type, "PROMO"), value, 0))
+    )(
+        value=value,
+        promo_value=IFF(
+            STARTSWITH(part_and_supplier.part.part_type, "PROMO"), value, 0
+        ),
+    )
     return TPCH(
         promo_revenue=100.0
         * SUM(selected_lines.promo_value)
@@ -387,28 +392,37 @@ def impl_tpch_q19():
     selected_lines = Lineitems.WHERE(
         (shipmode in ("AIR", "AIR REG"))
         & (ship_instruct == "DELIVER IN PERSON")
-        & (part.size >= 1)
+        & (part_and_supplier.part.size >= 1)
         & (
             (
-                (part.size < 5)
+                (part_and_supplier.part.size < 5)
                 & (quantity >= 1)
                 & (quantity <= 11)
-                & ISIN(part.container, ("SM CASE", "SM BOX", "SM PACK", "SM PKG"))
-                & (part.brand == "Brand#12")
+                & ISIN(
+                    part_and_supplier.part.container,
+                    ("SM CASE", "SM BOX", "SM PACK", "SM PKG"),
+                )
+                & (part_and_supplier.part.brand == "Brand#12")
             )
             | (
-                (part.size < 10)
+                (part_and_supplier.part.size < 10)
                 & (quantity >= 10)
                 & (quantity <= 21)
-                & ISIN(part.container, ("MED CASE", "MED BOX", "MED PACK", "MED PKG"))
-                & (part.brand == "Brand#23")
+                & ISIN(
+                    part_and_supplier.part.container,
+                    ("MED CASE", "MED BOX", "MED PACK", "MED PKG"),
+                )
+                & (part_and_supplier.part.brand == "Brand#23")
             )
             | (
-                (part.size < 15)
+                (part_and_supplier.part.size < 15)
                 & (quantity >= 20)
                 & (quantity <= 31)
-                & ISIN(part.container, ("LG CASE", "LG BOX", "LG PACK", "LG PKG"))
-                & (part.brand == "Brand#34")
+                & ISIN(
+                    part_and_supplier.part.container,
+                    ("LG CASE", "LG BOX", "LG PACK", "LG PKG"),
+                )
+                & (part_and_supplier.part.brand == "Brand#34")
             )
         )
     )
