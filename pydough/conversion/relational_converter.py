@@ -84,22 +84,33 @@ class RelTranslation:
         # An index used for creating fake column names
         self.dummy_idx = 1
 
-    def get_null_name(self, relation: Relational) -> str:
+    def make_null_column(self, relation: Relational) -> ColumnReference:
         """
-        TODO
+        Inserts a new column into the relation whose value is NULL. If such a
+        column already exists, it is used.
+
+        Args:
+            `relation`: the Relational node that the `NULL` term is being
+            inserted into.
+
+        Returns:
+            A `ColumnReference` to the new/existing column of `relation` that
+            is `NULL`.
         """
         name: str = f"NULL_{self.dummy_idx}"
         while True:
             if name not in relation.columns:
-                return name
+                break
             existing_val: RelationalExpression = relation.columns[name]
             if (
                 isinstance(existing_val, LiteralExpression)
                 and existing_val.value is None
             ):
-                return name
+                break
             self.dummy_idx += 1
             name = f"NULL_{self.dummy_idx}"
+        relation.columns[name] = LiteralExpression(None, UnknownType())
+        return ColumnReference(name, UnknownType())
 
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
@@ -355,33 +366,24 @@ class RelTranslation:
                     agg_keys = [rhs_key for _, rhs_key in join_keys]
                 else:
                     agg_keys = child.subtree.agg_keys
-                join_type: JoinType = child.connection_type.join_type()
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
                         ConnectionType.SINGULAR
                         | ConnectionType.SINGULAR_ONLY_MATCH
+                        | ConnectionType.AGGREGATION
+                        | ConnectionType.AGGREGATION_ONLY_MATCH
                         | ConnectionType.SEMI
                         | ConnectionType.ANTI
                     ):
+                        if child.connection_type.is_aggregation:
+                            child_output = self.apply_aggregations(
+                                child, child_output, agg_keys
+                            )
                         context = self.join_outputs(
                             context,
                             child_output,
-                            join_type,
-                            join_keys,
-                            child_idx,
-                        )
-                    case (
-                        ConnectionType.AGGREGATION
-                        | ConnectionType.AGGREGATION_ONLY_MATCH
-                    ):
-                        child_output = self.apply_aggregations(
-                            child, child_output, agg_keys
-                        )
-                        context = self.join_outputs(
-                            context,
-                            child_output,
-                            join_type,
+                            child.connection_type.join_type,
                             join_keys,
                             child_idx,
                         )
@@ -393,36 +395,28 @@ class RelTranslation:
                         context = self.join_outputs(
                             context,
                             child_output,
-                            join_type,
+                            child.connection_type.join_type,
                             join_keys,
                             child_idx,
                         )
                         # Map every child_idx reference from child_output to null
-                        null_name: str = self.get_null_name(context.relation)
+                        null_column: ColumnReference = self.make_null_column(
+                            context.relation
+                        )
                         for expr in child_output.expressions:
                             if isinstance(expr, HybridRefExpr):
-                                context.relation.columns[null_name] = LiteralExpression(
-                                    None, UnknownType()
-                                )
                                 child_expr = HybridChildRefExpr(
                                     expr.name, child_idx, expr.typ
                                 )
-                                context.expressions[child_expr] = ColumnReference(
-                                    null_name, expr.typ
-                                )
+                                context.expressions[child_expr] = null_column
                         # For aggregations, map every child_idx reference to the
                         # `aggs` list to null
                         if child.connection_type == ConnectionType.NO_MATCH_AGGREGATION:
                             for agg_name, agg_expr in child.aggs.items():
-                                context.relation.columns[null_name] = LiteralExpression(
-                                    None, UnknownType()
-                                )
                                 child_expr = HybridChildRefExpr(
                                     agg_name, child_idx, agg_expr.typ
                                 )
-                                context.expressions[child_expr] = ColumnReference(
-                                    null_name, agg_expr.typ
-                                )
+                                context.expressions[child_expr] = null_column
                     case conn_type:
                         raise ValueError(f"Unsupported connection type {conn_type}")
         return context

@@ -538,9 +538,26 @@ class ConnectionType(Enum):
     the NDISTINCT output with 0.
     """
 
+    @property
+    def is_aggregation(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 3 AGGREGATION
+        cases.
+        """
+        match self:
+            case (
+                ConnectionType.AGGREGATION
+                | ConnectionType.AGGREGATION_ONLY_MATCH
+                | ConnectionType.NO_MATCH_AGGREGATION
+            ):
+                return True
+            case _:
+                return False
+
+    @property
     def join_type(self) -> JoinType:
         """
-        TODO
+        The type of join that the connection type corresponds to.
         """
         match self:
             case (
@@ -1224,7 +1241,10 @@ class HybridTranslator:
         child_ref_mapping: dict[int, int],
     ) -> HybridExpr:
         """
-        TODO
+        Handler function for translating a `HAS` or `HASNOT` expression by
+        mutating the referenced HybridConnection so it enforces that predicate,
+        then returning an expression indicating that the condition has been
+        met.
         """
         assert expr.operator in (
             pydop.HAS,
