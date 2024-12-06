@@ -487,17 +487,17 @@ def pydough_impl_tpch_q19(root: UnqualifiedNode) -> UnqualifiedNode:
             | (
                 (root.part.size <= 10)
                 & (root.quantity >= 10)
-                & (root.quantity <= 21)
+                & (root.quantity <= 20)
                 & root.ISIN(
                     root.part.container,
-                    ("MED CASE", "MED BOX", "MED PACK", "MED PKG"),
+                    ("MED BAG", "MED BOX", "MED PACK", "MED PKG"),
                 )
                 & (root.part.brand == "Brand#23")
             )
             | (
                 (root.part.size <= 15)
                 & (root.quantity >= 20)
-                & (root.quantity <= 31)
+                & (root.quantity <= 30)
                 & root.ISIN(
                     root.part.container,
                     ("LG CASE", "LG BOX", "LG PACK", "LG PKG"),
@@ -932,7 +932,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "└─┬─ Calc[revenue=SUM($1.extended_price * (1 - $1.discount))]\n"
             "  └─┬─ AccessChild\n"
             "    ├─── TableCollection[Lineitems]\n"
-            "    └─┬─ Where[ISIN(ship_mode, ['AIR', 'AIR REG']) & (ship_instruct == 'DELIVER IN PERSON') & ($1.size >= 1) & (((($1.size <= 5) & (quantity >= 1) & (quantity <= 11) & ISIN($1.container, ['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']) & ($1.brand == 'Brand#12')) | (($1.size <= 10) & (quantity >= 10) & (quantity <= 21) & ISIN($1.container, ['MED CASE', 'MED BOX', 'MED PACK', 'MED PKG']) & ($1.brand == 'Brand#23'))) | (($1.size <= 15) & (quantity >= 20) & (quantity <= 31) & ISIN($1.container, ['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']) & ($1.brand == 'Brand#34')))]\n"
+            "    └─┬─ Where[ISIN(ship_mode, ['AIR', 'AIR REG']) & (ship_instruct == 'DELIVER IN PERSON') & ($1.size >= 1) & (((($1.size <= 5) & (quantity >= 1) & (quantity <= 11) & ISIN($1.container, ['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']) & ($1.brand == 'Brand#12')) | (($1.size <= 10) & (quantity >= 10) & (quantity <= 20) & ISIN($1.container, ['MED BAG', 'MED BOX', 'MED PACK', 'MED PKG']) & ($1.brand == 'Brand#23'))) | (($1.size <= 15) & (quantity >= 20) & (quantity <= 30) & ISIN($1.container, ['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']) & ($1.brand == 'Brand#34')))]\n"
             "      └─┬─ AccessChild\n"
             "        └─── SubCollection[part]",
             id="tpch-q19",

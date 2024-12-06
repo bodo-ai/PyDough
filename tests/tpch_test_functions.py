@@ -419,17 +419,17 @@ def impl_tpch_q19():
             | (
                 (part.size <= 10)
                 & (quantity >= 10)
-                & (quantity <= 21)
+                & (quantity <= 20)
                 & ISIN(
                     part.container,
-                    ("MED CASE", "MED BOX", "MED PACK", "MED PKG"),
+                    ("MED BAG", "MED BOX", "MED PACK", "MED PKG"),
                 )
                 & (part.brand == "Brand#23")
             )
             | (
                 (part.size <= 15)
                 & (quantity >= 20)
-                & (quantity <= 31)
+                & (quantity <= 30)
                 & ISIN(
                     part.container,
                     ("LG CASE", "LG BOX", "LG PACK", "LG PKG"),
