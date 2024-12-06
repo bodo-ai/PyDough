@@ -20,8 +20,8 @@ __all__ = [
     "HybridTree",
     "HybridTranslator",
     "HybridPartition",
+    "HybridPartitionChild",
 ]
-
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -338,6 +338,24 @@ class HybridCollectionAccess(HybridOperation):
 
     def __repr__(self):
         return f"COLLECTION[{self.collection.collection.name}]"
+
+
+class HybridPartitionChild(HybridOperation):
+    """
+    Class for HybridOperation corresponding to accessing the data of a
+    PARTITION as a child.
+    """
+
+    def __init__(self, subtree: "HybridTree"):
+        self.subtree: HybridTree = subtree
+        super().__init__(
+            subtree.pipeline[-1].terms,
+            subtree.pipeline[-1].renamings,
+            subtree.pipeline[-1].orderings,
+        )
+
+    def __repr__(self):
+        return "PARTITION_CHILD[*]"
 
 
 class HybridCalc(HybridOperation):
@@ -698,7 +716,17 @@ class HybridTranslator:
         child_node: HybridOperation,
     ) -> list[HybridExpr]:
         """
-        TODO
+        Fetches the list of keys used to aggregate a child node relative to its
+        parent node, specifically when the child is a subcollection access.
+
+        Args:
+            `subcollection_property`: the metadata for the subcollection
+            access.
+            `child_node`: the HybridOperation node corresponding to the access.
+
+        Returns:
+            The list of expressions used to aggregate the child, expressed in
+            terms of its level.
         """
         agg_keys: list[HybridExpr] = []
         if isinstance(subcollection_property, SimpleJoinMetadata):
@@ -722,7 +750,19 @@ class HybridTranslator:
         child_node: HybridOperation,
     ) -> list[tuple[HybridExpr, HybridExpr]]:
         """
-        TODO
+        Fetches the list of pairs of keys used to join a parent node onto its
+        child node
+
+        Args:
+            `subcollection_property`: the metadata for the subcollection
+            access.
+            `parent_node`: the HybridOperation node corresponding to the parent.
+            `child_node`: the HybridOperation node corresponding to the access.
+
+        Returns:
+            A list of tuples in the form `(lhs_key, rhs_key)` where each
+            `lhs_key` is the join key from the parent's perspective and each
+            `rhs_key` is the join key from the child's perspective.
         """
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         if isinstance(subcollection_property, SimpleJoinMetadata):
@@ -1197,6 +1237,13 @@ class HybridTranslator:
             case TableCollection() | SubCollection():
                 successor_hybrid = HybridTree(HybridCollectionAccess(node))
                 hybrid = self.make_hybrid_tree(node.ancestor_context)
+                hybrid.add_successor(successor_hybrid)
+                return successor_hybrid
+            case PartitionChild():
+                hybrid = self.make_hybrid_tree(node.ancestor_context)
+                successor_hybrid = HybridTree(
+                    HybridPartitionChild(hybrid.children[0].subtree)
+                )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case Calc():

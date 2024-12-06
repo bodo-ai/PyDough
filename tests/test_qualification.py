@@ -97,25 +97,33 @@ def pydough_impl_tpch_q2(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     selected_parts = root.Nations.WHERE(
         root.region.name == "EUROPE"
-    ).suppliers.parts_supplied(
-        s_acctbal=root.BACK(1).account_balance,
-        s_name=root.BACK(1).name,
-        n_name=root.BACK(2).name,
-        p_partkey=root.key,
-        p_mfgr=root.manufacturer,
-        s_address=root.BACK(1).address,
-        s_phone=root.BACK(1).phone,
-        s_comment=root.BACK(1).comment,
+    ).suppliers.supply_records.part(
+        s_acctbal=root.BACK(2).account_balance,
+        s_name=root.BACK(2).name,
+        n_name=root.BACK(3).name,
+        s_address=root.BACK(2).address,
+        s_phone=root.BACK(2).phone,
+        s_comment=root.BACK(2).comment,
+        supplycost=root.BACK(1).supplycost,
     )
 
     return (
         root.PARTITION(selected_parts, name="p", by=root.key)(
-            best_cost=root.MIN(root.p.ps_supplycost)
+            best_cost=root.MIN(root.p.supplycost)
         )
         .p.WHERE(
-            (root.ps_supplycost == root.BACK(1).best_cost)
+            (root.supplycost == root.BACK(1).best_cost)
             & root.ENDSWITH(root.part_type, "BRASS")
             & (root.size == 15)
+        )(
+            s_acctbal=root.s_acctbal,
+            s_name=root.s_name,
+            n_name=root.n_name,
+            p_partkey=root.key,
+            p_mfgr=root.manufacturer,
+            s_address=root.s_address,
+            s_phone=root.s_phone,
+            s_comment=root.s_comment,
         )
         .ORDER_BY(
             root.s_acctbal.DESC(),
@@ -623,13 +631,15 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│     ├─┬─ AccessChild\n"
             "│     │ └─── SubCollection[region]\n"
             "│     └─┬─ SubCollection[suppliers]\n"
-            "│       ├─── SubCollection[parts_supplied]\n"
-            "│       └─── Calc[s_acctbal=BACK(1).account_balance, s_name=BACK(1).name, n_name=BACK(2).name, p_partkey=key, p_mfgr=manufacturer, s_address=BACK(1).address, s_phone=BACK(1).phone, s_comment=BACK(1).comment]\n"
-            "└─┬─ Calc[best_cost=MIN($1.ps_supplycost)]\n"
+            "│       └─┬─ SubCollection[supply_records]\n"
+            "│         ├─── SubCollection[part]\n"
+            "│         └─── Calc[s_acctbal=BACK(2).account_balance, s_name=BACK(2).name, n_name=BACK(3).name, s_address=BACK(2).address, s_phone=BACK(2).phone, s_comment=BACK(2).comment, supplycost=BACK(1).supplycost]\n"
+            "└─┬─ Calc[best_cost=MIN($1.supplycost)]\n"
             "  ├─┬─ AccessChild\n"
             "  │ └─── PartitionChild[p]\n"
             "  ├─── PartitionChild[p]\n"
-            "  ├─── Where[((ps_supplycost == BACK(1).best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15)]\n"
+            "  ├─── Where[((supplycost == BACK(1).best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15)]\n"
+            "  ├─── Calc[s_acctbal=s_acctbal, s_name=s_name, n_name=n_name, p_partkey=key, p_mfgr=manufacturer, s_address=s_address, s_phone=s_phone, s_comment=s_comment]\n"
             "  └─── OrderBy[s_acctbal.DESC(na_pos='last'), n_name.ASC(na_pos='last'), s_name.ASC(na_pos='last'), p_partkey.ASC(na_pos='last')]",
             id="tpch-q2",
         ),
