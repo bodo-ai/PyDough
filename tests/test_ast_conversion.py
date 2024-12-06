@@ -2483,14 +2483,17 @@ ROOT(columns=[('name', name), ('region_name', region_name)], orderings=[])
                     avg_price_of_10parts=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
                 ),
                 """
-ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts)], orderings=[])
- PROJECT(columns={'avg_price_of_10parts': agg_0, 'name': name, 'num_10parts': DEFAULT_TO(agg_1, 0:int64)})
-  FILTER(condition=True:bool, columns={'agg_0': agg_0, 'agg_1': agg_1, 'name': name})
-   JOIN(conditions=[t0.key == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'name': t0.name})
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ PROJECT(columns={'avg_price_of_10parts': agg_0, 'name': name, 'num_10parts': DEFAULT_TO(agg_1, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(agg_2, 0:int64)})
+  FILTER(condition=True:bool, columns={'agg_0': agg_0, 'agg_1': agg_1, 'agg_2': agg_2, 'name': name})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'name': t0.name})
     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
-    AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
+    AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT(), 'agg_2': SUM(retail_price)})
      FILTER(condition=size == 10:int64, columns={'retail_price': retail_price, 'supplier_key': supplier_key})
       JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'size': t1.size, 'supplier_key': t0.supplier_key})
        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
@@ -2521,6 +2524,9 @@ ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10par
                     avg_price_of_10parts=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
                 )
                 ** WhereInfo(
                     [
@@ -2537,12 +2543,12 @@ ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10par
                     FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
                 ),
                 """
-ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts)], orderings=[])
- FILTER(condition=True:bool, columns={'avg_price_of_10parts': avg_price_of_10parts, 'name': name, 'num_10parts': num_10parts})
-  PROJECT(columns={'avg_price_of_10parts': agg_0, 'name': name, 'num_10parts': DEFAULT_TO(agg_1, 0:int64)})
-   JOIN(conditions=[t0.key == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'name': t0.name})
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ FILTER(condition=True:bool, columns={'avg_price_of_10parts': avg_price_of_10parts, 'name': name, 'num_10parts': num_10parts, 'sum_price_of_10parts': sum_price_of_10parts})
+  PROJECT(columns={'avg_price_of_10parts': agg_0, 'name': name, 'num_10parts': DEFAULT_TO(agg_1, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(agg_2, 0:int64)})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'name': t0.name})
     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
-    AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
+    AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT(), 'agg_2': SUM(retail_price)})
      FILTER(condition=size == 10:int64, columns={'retail_price': retail_price, 'supplier_key': supplier_key})
       JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'size': t1.size, 'supplier_key': t0.supplier_key})
        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
@@ -2683,10 +2689,13 @@ ROOT(columns=[('name', name), ('region_name', region_name)], orderings=[])
                     avg_price_of_10parts=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
                 ),
                 """
-ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts)], orderings=[])
- PROJECT(columns={'avg_price_of_10parts': NULL_2, 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64)})
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ PROJECT(columns={'avg_price_of_10parts': NULL_2, 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(NULL_2, 0:int64)})
   FILTER(condition=True:bool, columns={'NULL_2': NULL_2, 'name': name})
    JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name})
     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
@@ -2720,6 +2729,9 @@ ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10par
                     avg_price_of_10parts=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
                 )
                 ** WhereInfo(
                     [
@@ -2736,9 +2748,9 @@ ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10par
                     FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
                 ),
                 """
-ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts)], orderings=[])
- FILTER(condition=True:bool, columns={'avg_price_of_10parts': avg_price_of_10parts, 'name': name, 'num_10parts': num_10parts})
-  PROJECT(columns={'avg_price_of_10parts': NULL_2, 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64)})
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ FILTER(condition=True:bool, columns={'avg_price_of_10parts': avg_price_of_10parts, 'name': name, 'num_10parts': num_10parts, 'sum_price_of_10parts': sum_price_of_10parts})
+  PROJECT(columns={'avg_price_of_10parts': NULL_2, 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(NULL_2, 0:int64)})
    JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name})
     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
     FILTER(condition=size == 10:int64, columns={'supplier_key': supplier_key})
@@ -2842,6 +2854,60 @@ ROOT(columns=[('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_ba
 """,
             ),
             id="various_aggfuncs_global",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    num_10parts=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    avg_price_of_10parts=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ PROJECT(columns={'avg_price_of_10parts': DEFAULT_TO(NULL_2, 0:int64), 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64), 'sum_price_of_10parts': NULL_2})
+  FILTER(condition=True:bool, columns={'NULL_2': NULL_2, 'name': name})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+    FILTER(condition=size == 10:int64, columns={'supplier_key': supplier_key})
+     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'size': t1.size, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.PART, columns={'key': p_partkey, 'size': p_size})
+""",
+            ),
+            id="anti_aggregate",
         ),
     ],
 )
