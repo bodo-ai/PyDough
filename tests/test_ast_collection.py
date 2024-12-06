@@ -196,7 +196,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                     ** CalcInfo(
                         [],
                         value=FunctionInfo(
-                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                            "MUL", [ReferenceInfo("quantity"), ReferenceInfo("tax")]
                         ),
                     ),
                 ],
@@ -493,11 +493,8 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "return_flag": 14,
                 "comment": 15,
                 "nation_name": 16,
-                "ps_availqty": 17,
-                "ps_supplycost": 18,
-                "ps_comment": 19,
-                "supplier_name": 20,
-                "supplier_address": 21,
+                "supplier_name": 17,
+                "supplier_address": 18,
             },
             {
                 "order_key",
@@ -521,10 +518,6 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "supplier",
                 "part",
                 "nation_name",
-                "ps_part",
-                "ps_availqty",
-                "ps_supplycost",
-                "ps_comment",
                 "supplier_name",
                 "supplier_address",
                 "other_parts_supplied",
@@ -659,10 +652,6 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "supplier",
                 "part",
                 "nation_name",
-                "ps_part",
-                "ps_availqty",
-                "ps_supplycost",
-                "ps_comment",
                 "supplier_name",
                 "supplier_address",
                 "other_parts_supplied",
@@ -781,7 +770,7 @@ def test_collections_calc_terms(
                     ** CalcInfo(
                         [],
                         value=FunctionInfo(
-                            "MUL", [ReferenceInfo("ps_availqty"), ReferenceInfo("tax")]
+                            "MUL", [ReferenceInfo("quantity"), ReferenceInfo("tax")]
                         ),
                     ),
                 ],
@@ -790,7 +779,7 @@ def test_collections_calc_terms(
                 ),
                 t_value=FunctionInfo("SUM", [ChildReferenceExpressionInfo("value", 1)]),
             ),
-            "TPCH(n_balance=SUM(Suppliers.account_balance), t_value=SUM(Parts.lines(value=ps_availqty * tax).value))",
+            "TPCH(n_balance=SUM(Suppliers.account_balance), t_value=SUM(Parts.lines(value=quantity * tax).value))",
             """\
 ┌─── TPCH
 └─┬─ Calc[n_balance=SUM($1.account_balance), t_value=SUM($2.value)]
@@ -799,7 +788,7 @@ def test_collections_calc_terms(
   └─┬─ AccessChild
     └─┬─ TableCollection[Parts]
       ├─── SubCollection[lines]
-      └─── Calc[value=ps_availqty * tax]\
+      └─── Calc[value=quantity * tax]\
 """,
             id="global_nested_calc",
         ),
