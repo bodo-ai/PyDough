@@ -16,6 +16,7 @@ from pydough.pydough_ast import (
     ChildReferenceExpression,
     CollationExpression,
     GlobalContext,
+    Literal,
     OrderBy,
     PartitionBy,
     PyDoughAST,
@@ -138,6 +139,14 @@ class Qualifier:
         """
         value: object = unqualified._parcel[0]
         data_type: PyDoughType = unqualified._parcel[1]
+        if isinstance(value, (list, tuple)):
+            literal_elems: list[object] = []
+            for elem in value:
+                assert isinstance(elem, UnqualifiedLiteral)
+                expr: PyDoughExpressionAST = self.qualify_literal(elem)
+                assert isinstance(expr, Literal)
+                literal_elems.append(expr.value)
+            return self.builder.build_literal(literal_elems, data_type)
         return self.builder.build_literal(value, data_type)
 
     def qualify_operation(

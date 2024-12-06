@@ -4,8 +4,7 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
-from typing import Any
-
+import pandas as pd
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -18,7 +17,7 @@ from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
-__all__ = ["convert_relation_to_sql", "execute"]
+__all__ = ["convert_relation_to_sql", "execute_df"]
 
 
 def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect) -> str:
@@ -57,18 +56,24 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
         raise ValueError(f"Unsupported dialect: {dialect}")
 
 
-def execute(relational: RelationalRoot, ctx: DatabaseContext) -> list[Any]:
+def execute_df(
+    relational: RelationalRoot, ctx: DatabaseContext, display_sql: bool = False
+) -> pd.DataFrame:
     """
     Execute the given relational tree on the given database access
     context and return the result.
 
     Args:
-        relational (RelationalRoot): The relational tree to execute.
-        ctx (DatabaseContext): The database context to execute the query in.
+        `relational`: The relational tree to execute.
+        `ctx`: The database context to execute the query in.
+        `display_sql`: if True, prints out the SQL that will be run before
+        it is executed.
 
     Returns:
-        list[Any]: The result of the query.
+        The result of the query as a Pandas DataFrame
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
     sql: str = convert_relation_to_sql(relational, sqlglot_dialect)
+    if display_sql:
+        print("SQL query:\n", sql)
     return ctx.connection.execute_query_df(sql)

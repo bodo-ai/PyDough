@@ -759,7 +759,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE '%a') AND (b LIKE ('%' || a))",
+            "SELECT b FROM table WHERE (b LIKE 'a%') AND (b LIKE (a || '%'))",
             id="starts_with",
         ),
         pytest.param(
@@ -916,7 +916,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT CAST(STRFTIME(%Y, a) AS INTEGER) AS a FROM (SELECT a, b FROM table)",
+            "SELECT CAST(STRFTIME('%Y', a) AS INTEGER) AS a FROM (SELECT a, b FROM table)",
             id="year",
         ),
     ],

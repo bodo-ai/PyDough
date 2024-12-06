@@ -1235,6 +1235,9 @@ class HybridTranslator:
     def get_internal_name(
         self, prefix: str, reserved_names: list[dict[str, Any]]
     ) -> str:
+        """
+        TODO
+        """
         name = f"{prefix}_{self.alias_counter}"
         while any(name in s for s in reserved_names):
             self.alias_counter += 1

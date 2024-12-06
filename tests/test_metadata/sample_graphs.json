@@ -317,7 +317,7 @@
             "commit_date": {"type": "table_column", "column_name": "l_commitdate", "data_type": "date"},
             "receipt_date": {"type": "table_column", "column_name": "l_receiptdate", "data_type": "date"},
             "ship_instruct": {"type": "table_column", "column_name": "l_shipinstruct", "data_type": "string"},
-            "ship_mode": {"type": "table_column", "column_name": "l_mode", "data_type": "string"},
+            "ship_mode": {"type": "table_column", "column_name": "l_shipmode", "data_type": "string"},
             "return_flag": {"type": "table_column", "column_name": "l_returnflag", "data_type": "string"},
             "comment": {"type": "table_column", "column_name": "l_comment", "data_type": "string"},
             "part_and_supplier": {
