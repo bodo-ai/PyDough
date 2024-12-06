@@ -794,7 +794,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE 'a%') AND (b LIKE (a || '%'))",
+            "SELECT b FROM table WHERE (b LIKE '%a') AND (b LIKE ('%' || a))",
             id="ends_with",
         ),
         pytest.param(

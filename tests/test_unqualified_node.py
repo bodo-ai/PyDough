@@ -266,7 +266,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q2,
-            "TPCH.PARTITION(TPCH.Nations.WHERE((TPCH.region.name == 'EUROPE':StringType())).suppliers.supply_records.part(s_acctbal=BACK(2).account_balance, s_name=BACK(2).name, n_name=BACK(3).name, s_address=BACK(2).address, s_phone=BACK(2).phone, s_comment=BACK(2).comment, supplycost=BACK(1).supplycost), name='p', by=(TPCH.key))(best_cost=MIN(TPCH.p.supplycost)).p.WHERE((((TPCH.supplycost == BACK(1).best_cost) & ENDSWITH(TPCH.part_type, 'BRASS':StringType())) & (TPCH.size == 15:Int64Type())))(s_acctbal=TPCH.s_acctbal, s_name=TPCH.s_name, n_name=TPCH.n_name, p_partkey=TPCH.key, p_mfgr=TPCH.manufacturer, s_address=TPCH.s_address, s_phone=TPCH.s_phone, s_comment=TPCH.s_comment).TOP_K(10, by=(TPCH.s_acctbal.DESC(na_pos='last'), TPCH.n_name.ASC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'), TPCH.p_partkey.ASC(na_pos='last')))",
+            "TPCH.PARTITION(TPCH.Nations.WHERE((TPCH.region.name == 'EUROPE':StringType())).suppliers.supply_records.part(s_acctbal=BACK(2).account_balance, s_name=BACK(2).name, n_name=BACK(3).name, s_address=BACK(2).address, s_phone=BACK(2).phone, s_comment=BACK(2).comment, supplycost=BACK(1).supplycost).WHERE((TPCH.root.ENDSWITH(part_type=TPCH.root.part_type, _expr0='BRASS':StringType()) & (TPCH.root.size == 15:Int64Type()))), name='p', by=(TPCH.key))(best_cost=MIN(TPCH.p.supplycost)).p.WHERE((((TPCH.supplycost == BACK(1).best_cost) & ENDSWITH(TPCH.part_type, 'BRASS':StringType())) & (TPCH.size == 15:Int64Type())))(s_acctbal=TPCH.s_acctbal, s_name=TPCH.s_name, n_name=TPCH.n_name, p_partkey=TPCH.key, p_mfgr=TPCH.manufacturer, s_address=TPCH.s_address, s_phone=TPCH.s_phone, s_comment=TPCH.s_comment).TOP_K(10, by=(TPCH.s_acctbal.DESC(na_pos='last'), TPCH.n_name.ASC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'), TPCH.p_partkey.ASC(na_pos='last')))",
             id="tpch_q2",
         ),
         pytest.param(
@@ -331,7 +331,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q15,
-            "TPCH.TPCH(max_revenue=MAX(TPCH.Suppliers(total_revenue=SUM((TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1996, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1996, 4, 1):DateType()))).extended_price * (1:Int64Type() - TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1996, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1996, 3, 1):DateType()))).discount)))).total_revenue)).Suppliers(s_suppkey=TPCH.key, s_name=TPCH.name, s_address=TPCH.address, s_phone=TPCH.phone_number, total_revenue=TPCH.total_revenue).WHERE((TPCH.total_revenue == BACK(1).max_revenue)).ORDER_BY(TPCH.s_suppkey.ASC(na_pos='last'))",
+            "TPCH.TPCH(max_revenue=MAX(TPCH.Suppliers(total_revenue=SUM((TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1996, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1996, 4, 1):DateType()))).extended_price * (1:Int64Type() - TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1996, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1996, 4, 1):DateType()))).discount)))).total_revenue)).Suppliers(s_suppkey=TPCH.key, s_name=TPCH.name, s_address=TPCH.address, s_phone=TPCH.phone_number, total_revenue=TPCH.total_revenue).WHERE((TPCH.total_revenue == BACK(1).max_revenue)).ORDER_BY(TPCH.s_suppkey.ASC(na_pos='last'))",
             id="tpch_q15",
         ),
         pytest.param(

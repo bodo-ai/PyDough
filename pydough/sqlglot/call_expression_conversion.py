@@ -119,7 +119,7 @@ def convert_endswith(
     """
     column: SQLGlotExpression = arguments[0]
     pattern: SQLGlotExpression = convert_concat(
-        [arguments[1], sqlglot_expressions.convert("%")],
+        [sqlglot_expressions.convert("%"), arguments[1]],
         dialect,
     )
     return convert_like([column, pattern], dialect)

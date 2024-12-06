@@ -49,16 +49,18 @@ def impl_tpch_q2():
     """
     PyDough implementation of TPCH Q2, truncated to 10 rows.
     """
-    selected_parts = Nations.WHERE(
-        region.name == "EUROPE"
-    ).suppliers.supply_records.part(
-        s_acctbal=BACK(2).account_balance,
-        s_name=BACK(2).name,
-        n_name=BACK(3).name,
-        s_address=BACK(2).address,
-        s_phone=BACK(2).phone,
-        s_comment=BACK(2).comment,
-        supplycost=BACK(1).supplycost,
+    selected_parts = (
+        Nations.WHERE(region.name == "EUROPE")
+        .suppliers.supply_records.part(
+            s_acctbal=BACK(2).account_balance,
+            s_name=BACK(2).name,
+            n_name=BACK(3).name,
+            s_address=BACK(2).address,
+            s_phone=BACK(2).phone,
+            s_comment=BACK(2).comment,
+            supplycost=BACK(1).supplycost,
+        )
+        .WHERE(root.ENDSWITH(root.part_type, "BRASS") & (root.size == 15))
     )
 
     return (
