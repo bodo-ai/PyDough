@@ -539,20 +539,93 @@ class ConnectionType(Enum):
     """
 
     @property
+    def is_singular(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 3 SINGULAR
+        cases.
+        """
+        return self in (
+            ConnectionType.SINGULAR,
+            ConnectionType.SINGULAR_ONLY_MATCH,
+            ConnectionType.NO_MATCH_SINGULAR,
+        )
+
+    @property
     def is_aggregation(self) -> bool:
         """
         Whether the connection type corresponds to one of the 3 AGGREGATION
         cases.
         """
-        match self:
-            case (
-                ConnectionType.AGGREGATION
-                | ConnectionType.AGGREGATION_ONLY_MATCH
-                | ConnectionType.NO_MATCH_AGGREGATION
-            ):
-                return True
-            case _:
-                return False
+        return self in (
+            ConnectionType.AGGREGATION,
+            ConnectionType.AGGREGATION_ONLY_MATCH,
+            ConnectionType.NO_MATCH_AGGREGATION,
+        )
+
+    @property
+    def is_ndistinct(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 3 NDISTINCT
+        cases.
+        """
+        return self in (
+            ConnectionType.NDISTINCT,
+            ConnectionType.NDISTINCT_ONLY_MATCH,
+            ConnectionType.NO_MATCH_NDISTINCT,
+        )
+
+    @property
+    def is_semi(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 4 SEMI cases.
+        """
+        return self in (
+            ConnectionType.SEMI,
+            ConnectionType.SINGULAR_ONLY_MATCH,
+            ConnectionType.AGGREGATION_ONLY_MATCH,
+            ConnectionType.NDISTINCT_ONLY_MATCH,
+        )
+
+    @property
+    def is_anti(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 4 ANTI cases.
+        """
+        return self in (
+            ConnectionType.ANTI,
+            ConnectionType.NO_MATCH_SINGULAR,
+            ConnectionType.NO_MATCH_AGGREGATION,
+            ConnectionType.NO_MATCH_AGGREGATION,
+        )
+
+    @property
+    def is_neutral_matching(self) -> bool:
+        """
+        Whether the connection type is neutral with regards to how it accesses
+        any child terms.
+        """
+        return self in (ConnectionType.SEMI, ConnectionType.ANTI)
+
+    @property
+    def is_singular_compatible(self) -> bool:
+        """
+        Whether the connection type can be reconciled with SINGULAR.
+        """
+        return self.is_singular or self.is_neutral_matching
+
+    @property
+    def is_aggregation_compatible(self) -> bool:
+        """
+        Whether the connection type can be reconciled with AGGREGATION.
+        """
+        return self.is_aggregation or self.is_neutral_matching
+
+    @property
+    def is_ndistinct_compatible(self) -> bool:
+        """
+        Whether the connection type can be reconciled with NDISTINCT.
+        """
+        return self.is_ndistinct or self.is_neutral_matching
 
     @property
     def join_type(self) -> JoinType:
@@ -565,14 +638,20 @@ class ConnectionType(Enum):
                 | ConnectionType.AGGREGATION
                 | ConnectionType.NDISTINCT
             ):
+                # A regular connection without SEMI or ANTI has to be a LEFT
+                # join since parent records without subcollection instances
+                # must be maintained.
                 return JoinType.LEFT
             case (
                 ConnectionType.SINGULAR_ONLY_MATCH
                 | ConnectionType.AGGREGATION_ONLY_MATCH
                 | ConnectionType.NDISTINCT_ONLY_MATCH
             ):
+                # A regular connection combined with SEMI can be an INNER join
+                # since records without matches can be dropped.
                 return JoinType.INNER
             case ConnectionType.SEMI:
+                # A standalone SEMI connection just becomes a SEMI join.
                 return JoinType.SEMI
             case (
                 ConnectionType.ANTI
@@ -580,97 +659,73 @@ class ConnectionType(Enum):
                 | ConnectionType.NO_MATCH_AGGREGATION
                 | ConnectionType.NO_MATCH_NDISTINCT
             ):
+                # Any type of ANTI connection just becomes an ANTI join; the
+                # relational conversion step is responsible for converting any
+                # references to the child expressions/aggregations to NULL
+                # since they do not exist.
                 return JoinType.ANTI
             case _:
                 raise ValueError(f"Connection type {self} does not have a join type")
 
     def reconcile_connection_types(self, other: "ConnectionType") -> "ConnectionType":
-        """ """
+        """
+        Combines two connection types and returns the resulting connection
+        type used when they overlap.
+
+        Args:
+            `other`: the other connection type that is to be reconciled
+            with `self`.
+
+        Returns:
+            The connection type produced when `self` and `other` overlap.
+        """
+        # For duplicates, the connection type is unmodified
         if self == other:
-            return other
-        match (self, other):
-            case (
-                (
-                    ConnectionType.SEMI
-                    | ConnectionType.SINGULAR_ONLY_MATCH,
-                    ConnectionType.SINGULAR,
-                )
-                | (
-                    ConnectionType.SINGULAR
-                    | ConnectionType.SINGULAR_ONLY_MATCH,
-                    ConnectionType.SEMI,
-                )
-            ):
+            return self
+
+        # Determine whether the connection types are being reconciled into
+        # a combination that keeps matches or drops matches (has to be
+        # exactly one of these).
+        either_semi: bool = self.is_semi or other.is_semi
+        either_anti: bool = self.is_anti or other.is_anti
+        only_match: bool
+        if either_semi and not either_anti:
+            only_match = True
+        elif either_anti and not either_semi:
+            only_match = False
+        else:
+            raise ValueError(
+                f"Malformed or unsupported combination of connection types: {self} and {other}"
+            )
+
+        # Determine if the connection types are being resolved into a SINGULAR
+        # combination.
+        if self.is_singular_compatible and other.is_singular_compatible:
+            if only_match:
                 return ConnectionType.SINGULAR_ONLY_MATCH
-            case (
-                (
-                    ConnectionType.SEMI
-                    | ConnectionType.AGGREGATION_ONLY_MATCH,
-                    ConnectionType.AGGREGATION,
-                )
-                | (
-                    ConnectionType.AGGREGATION
-                    | ConnectionType.AGGREGATION_ONLY_MATCH,
-                    ConnectionType.SEMI,
-                )
-            ):
-                return ConnectionType.AGGREGATION_ONLY_MATCH
-            case (
-                (
-                    ConnectionType.SEMI
-                    | ConnectionType.NDISTINCT_ONLY_MATCH,
-                    ConnectionType.NDISTINCT,
-                )
-                | (
-                    ConnectionType.NDISTINCT
-                    | ConnectionType.NDISTINCT_ONLY_MATCH,
-                    ConnectionType.SEMI,
-                )
-            ):
-                return ConnectionType.NDISTINCT_ONLY_MATCH
-            case (
-                (
-                    ConnectionType.ANTI
-                    | ConnectionType.NO_MATCH_SINGULAR,
-                    ConnectionType.SINGULAR,
-                )
-                | (
-                    ConnectionType.SINGULAR
-                    | ConnectionType.NO_MATCH_SINGULAR,
-                    ConnectionType.ANTI,
-                )
-            ):
+            else:
                 return ConnectionType.NO_MATCH_SINGULAR
-            case (
-                (
-                    ConnectionType.ANTI
-                    | ConnectionType.NO_MATCH_AGGREGATION,
-                    ConnectionType.AGGREGATION,
-                )
-                | (
-                    ConnectionType.AGGREGATION
-                    | ConnectionType.NO_MATCH_AGGREGATION,
-                    ConnectionType.ANTI,
-                )
-            ):
+
+        # Determine if the connection types are being resolved into an
+        # AGGREGATION combination.
+        if self.is_aggregation_compatible and other.is_aggregation_compatible:
+            if only_match:
+                return ConnectionType.AGGREGATION_ONLY_MATCH
+            else:
                 return ConnectionType.NO_MATCH_AGGREGATION
-            case (
-                (
-                    ConnectionType.ANTI
-                    | ConnectionType.NO_MATCH_NDISTINCT,
-                    ConnectionType.NDISTINCT,
-                )
-                | (
-                    ConnectionType.NDISTINCT
-                    | ConnectionType.NO_MATCH_NDISTINCT,
-                    ConnectionType.ANTI,
-                )
-            ):
+
+        # Determine if the connection types are being resolved into a NDISTINCT
+        # combination.
+        if self.is_ndistinct_compatible and other.is_ndistinct_compatible:
+            if only_match:
+                return ConnectionType.NDISTINCT_ONLY_MATCH
+            else:
                 return ConnectionType.NO_MATCH_NDISTINCT
-            case _:
-                raise ValueError(
-                    f"Malformed or unsupported combination of connection types: {self} and {other}"
-                )
+
+        # Every other combination is malformed
+        raise ValueError(
+            f"Malformed combination of connection types: {self} and {other}"
+        )
 
 
 @dataclass
