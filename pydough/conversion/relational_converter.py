@@ -39,7 +39,7 @@ from pydough.relational import (
     RelationalRoot,
     Scan,
 )
-from pydough.types import BooleanType, Int64Type
+from pydough.types import BooleanType, Int64Type, UnknownType
 
 from .hybrid_tree import (
     ConnectionType,
@@ -83,6 +83,23 @@ class RelTranslation:
     def __init__(self):
         # An index used for creating fake column names
         self.dummy_idx = 1
+
+    def get_null_name(self, relation: Relational) -> str:
+        """
+        TODO
+        """
+        name: str = f"NULL_{self.dummy_idx}"
+        while True:
+            if name not in relation.columns:
+                return name
+            existing_val: RelationalExpression = relation.columns[name]
+            if (
+                isinstance(existing_val, LiteralExpression)
+                and existing_val.value is None
+            ):
+                return name
+            self.dummy_idx += 1
+            name = f"NULL_{self.dummy_idx}"
 
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
@@ -276,7 +293,11 @@ class RelTranslation:
             The TranslationOutput payload for `context` wrapped in an
             aggregation.
         """
-        assert connection.connection_type == ConnectionType.AGGREGATION
+        assert connection.connection_type in (
+            ConnectionType.AGGREGATION,
+            ConnectionType.AGGREGATION_ONLY_MATCH,
+            ConnectionType.NO_MATCH_AGGREGATION,
+        )
         out_columns: dict[HybridExpr, ColumnReference] = {}
         keys: dict[str, ColumnReference] = {}
         aggregations: dict[str, CallExpression] = {}
@@ -334,14 +355,15 @@ class RelTranslation:
                     agg_keys = [rhs_key for _, rhs_key in join_keys]
                 else:
                     agg_keys = child.subtree.agg_keys
-                # Use INNER joins if the parent should only be kept if it has
-                # a match, otherwise use LEFT joins. Does not apply to SEMI or
-                # ANTI joins.
-                join_type: JoinType = (
-                    JoinType.INNER if child.only_keep_matches else JoinType.LEFT
-                )
+                join_type: JoinType = child.connection_type.join_type()
+                child_expr: HybridExpr
                 match child.connection_type:
-                    case ConnectionType.SINGULAR:
+                    case (
+                        ConnectionType.SINGULAR
+                        | ConnectionType.SINGULAR_ONLY_MATCH
+                        | ConnectionType.SEMI
+                        | ConnectionType.ANTI
+                    ):
                         context = self.join_outputs(
                             context,
                             child_output,
@@ -349,7 +371,10 @@ class RelTranslation:
                             join_keys,
                             child_idx,
                         )
-                    case ConnectionType.AGGREGATION:
+                    case (
+                        ConnectionType.AGGREGATION
+                        | ConnectionType.AGGREGATION_ONLY_MATCH
+                    ):
                         child_output = self.apply_aggregations(
                             child, child_output, agg_keys
                         )
@@ -360,26 +385,46 @@ class RelTranslation:
                             join_keys,
                             child_idx,
                         )
-                    case ConnectionType.NDISTINCT:
-                        raise NotImplementedError("TODO: support NDISTINCT connections")
-                    case ConnectionType.HAS:
+                    case (
+                        ConnectionType.NO_MATCH_SINGULAR
+                        | ConnectionType.NO_MATCH_AGGREGATION
+                    ):
+                        assert child_idx is not None
                         context = self.join_outputs(
                             context,
                             child_output,
-                            JoinType.SEMI,
+                            join_type,
                             join_keys,
                             child_idx,
                         )
-                    case ConnectionType.HASNOT:
-                        context = self.join_outputs(
-                            context,
-                            child_output,
-                            JoinType.ANTI,
-                            join_keys,
-                            child_idx,
-                        )
+                        # Map every child_idx reference from child_output to null
+                        null_name: str = self.get_null_name(context.relation)
+                        for expr in child_output.expressions:
+                            if isinstance(expr, HybridRefExpr):
+                                context.relation.columns[null_name] = LiteralExpression(
+                                    None, UnknownType()
+                                )
+                                child_expr = HybridChildRefExpr(
+                                    expr.name, child_idx, expr.typ
+                                )
+                                context.expressions[child_expr] = ColumnReference(
+                                    null_name, expr.typ
+                                )
+                        # For aggregations, map every child_idx reference to the
+                        # `aggs` list to null
+                        if child.connection_type == ConnectionType.NO_MATCH_AGGREGATION:
+                            for agg_name, agg_expr in child.aggs.items():
+                                context.relation.columns[null_name] = LiteralExpression(
+                                    None, UnknownType()
+                                )
+                                child_expr = HybridChildRefExpr(
+                                    agg_name, child_idx, agg_expr.typ
+                                )
+                                context.expressions[child_expr] = ColumnReference(
+                                    null_name, agg_expr.typ
+                                )
                     case conn_type:
-                        raise ValueError(f"Invalid connection type {conn_type}")
+                        raise ValueError(f"Unsupported connection type {conn_type}")
         return context
 
     def build_simple_table_scan(
