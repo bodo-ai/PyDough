@@ -97,31 +97,33 @@ ROOT(columns=[('s_acctbal', s_acctbal), ('s_name', s_name), ('n_name', n_name), 
  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'n_name': n_name, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'ordering_4': ordering_4, 'p_mfgr': p_mfgr, 'p_partkey': p_partkey, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
   PROJECT(columns={'n_name': n_name, 'ordering_1': s_acctbal, 'ordering_2': n_name, 'ordering_3': s_name, 'ordering_4': p_partkey, 'p_mfgr': p_mfgr, 'p_partkey': p_partkey, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
    PROJECT(columns={'n_name': n_name, 'p_mfgr': manufacturer, 'p_partkey': key_19, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
-    FILTER(condition=supplycost_21 == best_cost & ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
-     JOIN(conditions=[t0.key_9 == t1.key_19], types=['inner'], columns={'best_cost': t0.best_cost, 'key_19': t1.key_19, 'manufacturer': t1.manufacturer, 'n_name': t1.n_name, 'part_type': t1.part_type, 's_acctbal': t1.s_acctbal, 's_address': t1.s_address, 's_comment': t1.s_comment, 's_name': t1.s_name, 's_phone': t1.s_phone, 'size': t1.size, 'supplycost_21': t1.supplycost})
+    FILTER(condition=supplycost_21 == best_cost, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
+     JOIN(conditions=[t0.key_9 == t1.key_19], types=['inner'], columns={'best_cost': t0.best_cost, 'key_19': t1.key_19, 'manufacturer': t1.manufacturer, 'n_name': t1.n_name, 's_acctbal': t1.s_acctbal, 's_address': t1.s_address, 's_comment': t1.s_comment, 's_name': t1.s_name, 's_phone': t1.s_phone, 'supplycost_21': t1.supplycost})
       PROJECT(columns={'best_cost': agg_0, 'key_9': key_9})
        AGGREGATE(keys={'key_9': key_9}, aggregations={'agg_0': MIN(supplycost)})
-        JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'key_9': t1.key, 'supplycost': t0.supplycost})
-         JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'part_key': t1.part_key, 'supplycost': t1.supplycost})
-          JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key_5': t1.key})
-           FILTER(condition=name_3 == 'EUROPE':string, columns={'key': key})
-            JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'key': t0.key, 'name_3': t1.name})
-             SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+        FILTER(condition=ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_9': key_9, 'supplycost': supplycost})
+         JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'key_9': t1.key, 'part_type': t1.part_type, 'size': t1.size, 'supplycost': t0.supplycost})
+          JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'part_key': t1.part_key, 'supplycost': t1.supplycost})
+           JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key_5': t1.key})
+            FILTER(condition=name_3 == 'EUROPE':string, columns={'key': key})
+             JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'key': t0.key, 'name_3': t1.name})
+              SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+              SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+            SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+           SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
+          SCAN(table=tpch.PART, columns={'key': p_partkey, 'part_type': p_type, 'size': p_size})
+      FILTER(condition=ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone, 'supplycost': supplycost})
+       PROJECT(columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': name, 'part_type': part_type, 's_acctbal': account_balance, 's_address': address, 's_comment': comment_14, 's_name': name_16, 's_phone': phone, 'size': size, 'supplycost': supplycost})
+        JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'key_19': t1.key, 'manufacturer': t1.manufacturer, 'name': t0.name, 'name_16': t0.name_16, 'part_type': t1.part_type, 'phone': t0.phone, 'size': t1.size, 'supplycost': t0.supplycost})
+         JOIN(conditions=[t0.key_15 == t1.supplier_key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'name': t0.name, 'name_16': t0.name_16, 'part_key': t1.part_key, 'phone': t0.phone, 'supplycost': t1.supplycost})
+          JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'address': t1.address, 'comment_14': t1.comment, 'key_15': t1.key, 'name': t0.name, 'name_16': t1.name, 'phone': t1.phone})
+           FILTER(condition=name_13 == 'EUROPE':string, columns={'key': key, 'name': name})
+            JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'key': t0.key, 'name': t0.name, 'name_13': t1.name})
+             SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
              SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
-           SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+           SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'address': s_address, 'comment': s_comment, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey, 'phone': s_phone})
           SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
-         SCAN(table=tpch.PART, columns={'key': p_partkey})
-      PROJECT(columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': name, 'part_type': part_type, 's_acctbal': account_balance, 's_address': address, 's_comment': comment_14, 's_name': name_16, 's_phone': phone, 'size': size, 'supplycost': supplycost})
-       JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'key_19': t1.key, 'manufacturer': t1.manufacturer, 'name': t0.name, 'name_16': t0.name_16, 'part_type': t1.part_type, 'phone': t0.phone, 'size': t1.size, 'supplycost': t0.supplycost})
-        JOIN(conditions=[t0.key_15 == t1.supplier_key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'name': t0.name, 'name_16': t0.name_16, 'part_key': t1.part_key, 'phone': t0.phone, 'supplycost': t1.supplycost})
-         JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'address': t1.address, 'comment_14': t1.comment, 'key_15': t1.key, 'name': t0.name, 'name_16': t1.name, 'phone': t1.phone})
-          FILTER(condition=name_13 == 'EUROPE':string, columns={'key': key, 'name': name})
-           JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'key': t0.key, 'name': t0.name, 'name_13': t1.name})
-            SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
-            SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
-          SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'address': s_address, 'comment': s_comment, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey, 'phone': s_phone})
-         SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
-        SCAN(table=tpch.PART, columns={'key': p_partkey, 'manufacturer': p_mfgr, 'part_type': p_type, 'size': p_size})
+         SCAN(table=tpch.PART, columns={'key': p_partkey, 'manufacturer': p_mfgr, 'part_type': p_type, 'size': p_size})
 """,
                 tpch_q2_output,
             ),
@@ -140,7 +142,7 @@ ROOT(columns=[('l_orderkey', l_orderkey), ('revenue', revenue), ('o_orderdate', 
       JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'discount': t1.discount, 'extended_price': t1.extended_price, 'order_date': t0.order_date, 'order_key': t1.order_key, 'ship_date': t1.ship_date, 'ship_priority': t0.ship_priority})
        FILTER(condition=mktsegment == 'BUILDING':string & order_date < datetime.date(1995, 3, 15):date, columns={'key': key, 'order_date': order_date, 'ship_priority': ship_priority})
         JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'key': t0.key, 'mktsegment': t1.mktsegment, 'order_date': t0.order_date, 'ship_priority': t0.ship_priority})
-         SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate, 'ship_priority': o_shipriority})
+         SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate, 'ship_priority': o_shippriority})
          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'mktsegment': c_mktsegment})
        SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'ship_date': l_shipdate})
 """,
@@ -152,13 +154,13 @@ ROOT(columns=[('l_orderkey', l_orderkey), ('revenue', revenue), ('o_orderdate', 
             (
                 pydough_impl_tpch_q4,
                 """
-ROOT(columns=[('order_priority', order_priority), ('order_count', order_count)], orderings=[(ordering_1):asc_last])
- PROJECT(columns={'order_count': order_count, 'order_priority': order_priority, 'ordering_1': order_priority})
-  PROJECT(columns={'order_count': DEFAULT_TO(agg_0, 0:int64), 'order_priority': order_priority})
+ROOT(columns=[('o_orderpriority', o_orderpriority), ('order_count', order_count)], orderings=[(ordering_1):asc_last])
+ PROJECT(columns={'o_orderpriority': o_orderpriority, 'order_count': order_count, 'ordering_1': order_priority})
+  PROJECT(columns={'o_orderpriority': order_priority, 'order_count': DEFAULT_TO(agg_0, 0:int64), 'order_priority': order_priority})
    AGGREGATE(keys={'order_priority': order_priority}, aggregations={'agg_0': COUNT()})
     FILTER(condition=order_date >= datetime.date(1993, 7, 1):date & order_date < datetime.date(1993, 10, 1):date & True:bool, columns={'order_priority': order_priority})
      JOIN(conditions=[t0.key == t1.order_key], types=['semi'], columns={'order_date': t0.order_date, 'order_priority': t0.order_priority})
-      SCAN(table=tpch.ORDER, columns={'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority})
+      SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority})
       FILTER(condition=commit_date < receipt_date, columns={'order_key': order_key})
        SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate})
 """,
@@ -209,7 +211,7 @@ ROOT(columns=[('supp_nation', supp_nation), ('cust_nation', cust_nation), ('l_ye
          SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
        JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_8': t1.name})
         JOIN(conditions=[t0.customer_key == t1.key], types=['inner'], columns={'key': t0.key, 'nation_key': t1.nation_key})
-         SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey})
+         SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey})
          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
         SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
 """,
@@ -239,7 +241,7 @@ ROOT(columns=[('o_year', o_year), ('mkt_share', mkt_share)], orderings=[])
             SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
            SCAN(table=tpch.PART, columns={'key': p_partkey, 'part_type': p_type})
          SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
-       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+       SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
      JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_18': t1.name})
       JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
@@ -271,7 +273,7 @@ ROOT(columns=[('nation', nation), ('o_year', o_year), ('amount', amount)], order
            SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
           SCAN(table=tpch.PART, columns={'key': p_partkey, 'name': p_name})
         SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'quantity': l_quantity, 'supplier_key': l_suppkey})
-       SCAN(table=tpch.ORDER, columns={'key': o_orderkey, 'order_date': o_orderdate})
+       SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_date': o_orderdate})
 """,
                 tpch_q9_output,
             ),
@@ -281,10 +283,10 @@ ROOT(columns=[('nation', nation), ('o_year', o_year), ('amount', amount)], order
             (
                 pydough_impl_tpch_q10,
                 """
-ROOT(columns=[('c_key', c_key), ('c_name', c_name), ('revenue', revenue), ('c_acctbal', c_acctbal), ('n_name', n_name), ('c_address', c_address), ('c_phone', c_phone), ('c_comment', c_comment)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
- LIMIT(limit=Literal(value=20, type=Int64Type()), columns={'c_acctbal': c_acctbal, 'c_address': c_address, 'c_comment': c_comment, 'c_key': c_key, 'c_name': c_name, 'c_phone': c_phone, 'n_name': n_name, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'revenue': revenue}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
-  PROJECT(columns={'c_acctbal': c_acctbal, 'c_address': c_address, 'c_comment': c_comment, 'c_key': c_key, 'c_name': c_name, 'c_phone': c_phone, 'n_name': n_name, 'ordering_1': revenue, 'ordering_2': c_key, 'revenue': revenue})
-   PROJECT(columns={'c_acctbal': acctbal, 'c_address': address, 'c_comment': comment, 'c_key': key, 'c_name': name, 'c_phone': phone, 'n_name': name_4, 'revenue': DEFAULT_TO(agg_0, 0:int64)})
+ROOT(columns=[('c_custkey', c_custkey), ('c_name', c_name), ('revenue', revenue), ('c_acctbal', c_acctbal), ('n_name', n_name), ('c_address', c_address), ('c_phone', c_phone), ('c_comment', c_comment)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
+ LIMIT(limit=Literal(value=20, type=Int64Type()), columns={'c_acctbal': c_acctbal, 'c_address': c_address, 'c_comment': c_comment, 'c_custkey': c_custkey, 'c_name': c_name, 'c_phone': c_phone, 'n_name': n_name, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'revenue': revenue}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
+  PROJECT(columns={'c_acctbal': c_acctbal, 'c_address': c_address, 'c_comment': c_comment, 'c_custkey': c_custkey, 'c_name': c_name, 'c_phone': c_phone, 'n_name': n_name, 'ordering_1': revenue, 'ordering_2': c_custkey, 'revenue': revenue})
+   PROJECT(columns={'c_acctbal': acctbal, 'c_address': address, 'c_comment': comment, 'c_custkey': key, 'c_name': name, 'c_phone': phone, 'n_name': name_4, 'revenue': DEFAULT_TO(agg_0, 0:int64)})
     JOIN(conditions=[t0.nation_key == t1.key], types=['left'], columns={'acctbal': t0.acctbal, 'address': t0.address, 'agg_0': t0.agg_0, 'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_4': t1.name, 'phone': t0.phone})
      JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'acctbal': t0.acctbal, 'address': t0.address, 'agg_0': t1.agg_0, 'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'nation_key': t0.nation_key, 'phone': t0.phone})
       SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'address': c_address, 'comment': c_comment, 'key': c_custkey, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
@@ -293,7 +295,7 @@ ROOT(columns=[('c_key', c_key), ('c_name', c_name), ('revenue', revenue), ('c_ac
         FILTER(condition=return_flag == 'R':string, columns={'customer_key': customer_key, 'discount': discount, 'extended_price': extended_price})
          JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'customer_key': t0.customer_key, 'discount': t1.discount, 'extended_price': t1.extended_price, 'return_flag': t1.return_flag})
           FILTER(condition=order_date >= datetime.date(1993, 10, 1):date & order_date < datetime.date(1994, 1, 1):date, columns={'customer_key': customer_key, 'key': key})
-           SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+           SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
           SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'return_flag': l_returnflag})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
 """,
@@ -337,15 +339,15 @@ ROOT(columns=[('ps_partkey', ps_partkey), ('value', value)], orderings=[(orderin
             (
                 pydough_impl_tpch_q12,
                 """
-ROOT(columns=[('ship_mode', ship_mode), ('high_line_count', high_line_count), ('low_line_count', low_line_count)], orderings=[(ordering_2):asc_last])
- PROJECT(columns={'high_line_count': high_line_count, 'low_line_count': low_line_count, 'ordering_2': ship_mode, 'ship_mode': ship_mode})
-  PROJECT(columns={'high_line_count': DEFAULT_TO(agg_0, 0:int64), 'low_line_count': DEFAULT_TO(agg_1, 0:int64), 'ship_mode': ship_mode})
+ROOT(columns=[('l_shipmode', l_shipmode), ('high_line_count', high_line_count), ('low_line_count', low_line_count)], orderings=[(ordering_2):asc_last])
+ PROJECT(columns={'high_line_count': high_line_count, 'l_shipmode': l_shipmode, 'low_line_count': low_line_count, 'ordering_2': ship_mode})
+  PROJECT(columns={'high_line_count': DEFAULT_TO(agg_0, 0:int64), 'l_shipmode': ship_mode, 'low_line_count': DEFAULT_TO(agg_1, 0:int64), 'ship_mode': ship_mode})
    AGGREGATE(keys={'ship_mode': ship_mode}, aggregations={'agg_0': SUM(is_high_priority), 'agg_1': SUM(NOT(is_high_priority))})
     PROJECT(columns={'is_high_priority': order_priority == '1-URGENT':string | order_priority == '2-HIGH':string, 'ship_mode': ship_mode})
      JOIN(conditions=[t0.order_key == t1.key], types=['left'], columns={'order_priority': t1.order_priority, 'ship_mode': t0.ship_mode})
       FILTER(condition=ship_mode == 'MAIL':string | ship_mode == 'SHIP':string & ship_date < commit_date & commit_date < receipt_date & receipt_date >= datetime.date(1994, 1, 1):date & receipt_date < datetime.date(1995, 1, 1):date, columns={'order_key': order_key, 'ship_mode': ship_mode})
        SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate, 'ship_date': l_shipdate, 'ship_mode': l_shipmode})
-      SCAN(table=tpch.ORDER, columns={'key': o_orderkey, 'order_priority': o_orderpriority})
+      SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_priority': o_orderpriority})
 """,
                 tpch_q12_output,
             ),
@@ -366,14 +368,14 @@ ROOT(columns=[('c_count', c_count), ('custdist', custdist)], orderings=[(orderin
         SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
         AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': COUNT()})
          FILTER(condition=NOT(LIKE(comment, '%special%requests%':string)), columns={'customer_key': customer_key})
-          SCAN(table=tpch.ORDER, columns={'comment': o_comment, 'customer_key': o_custkey})
+          SCAN(table=tpch.ORDERS, columns={'comment': o_comment, 'customer_key': o_custkey})
      AGGREGATE(keys={'num_non_special_orders': num_non_special_orders}, aggregations={'agg_2': COUNT()})
       PROJECT(columns={'num_non_special_orders': DEFAULT_TO(agg_1, 0:int64)})
        JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_1': t1.agg_1})
         SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
         AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_1': COUNT()})
          FILTER(condition=NOT(LIKE(comment, '%special%requests%':string)), columns={'customer_key': customer_key})
-          SCAN(table=tpch.ORDER, columns={'comment': o_comment, 'customer_key': o_custkey})
+          SCAN(table=tpch.ORDERS, columns={'comment': o_comment, 'customer_key': o_custkey})
 """,
                 tpch_q13_output,
             ),
@@ -412,11 +414,11 @@ ROOT(columns=[('s_suppkey', s_suppkey), ('s_name', s_name), ('s_address', s_addr
          JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_0': t1.agg_0})
           SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey})
           AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': SUM(extended_price * 1:int64 - discount)})
-           FILTER(condition=ship_date >= datetime.date(1996, 1, 1):date & ship_date < datetime.date(1996, 3, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'supplier_key': supplier_key})
+           FILTER(condition=ship_date >= datetime.date(1996, 1, 1):date & ship_date < datetime.date(1996, 4, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'supplier_key': supplier_key})
             SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
       SCAN(table=tpch.SUPPLIER, columns={'address': s_address, 'key': s_suppkey, 'name': s_name, 'phone': s_phone})
      AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_2': SUM(extended_price * 1:int64 - discount)})
-      FILTER(condition=ship_date >= datetime.date(1996, 1, 1):date & ship_date < datetime.date(1996, 3, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'supplier_key': supplier_key})
+      FILTER(condition=ship_date >= datetime.date(1996, 1, 1):date & ship_date < datetime.date(1996, 4, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'supplier_key': supplier_key})
        SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
 """,
                 tpch_q15_output,
@@ -427,16 +429,16 @@ ROOT(columns=[('s_suppkey', s_suppkey), ('s_name', s_name), ('s_address', s_addr
             (
                 pydough_impl_tpch_q16,
                 """
-ROOT(columns=[('p_brand', p_brand), ('p_type', p_type), ('p_size', p_size), ('supplier_count', supplier_count)], orderings=[(ordering_1):desc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'ordering_1': ordering_1, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count}, orderings=[(ordering_1):desc_last])
-  PROJECT(columns={'ordering_1': supplier_count, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count})
+ROOT(columns=[('p_brand', p_brand), ('p_type', p_type), ('p_size', p_size), ('supplier_count', supplier_count)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
+  PROJECT(columns={'ordering_1': supplier_count, 'ordering_2': p_brand, 'ordering_3': p_type, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count})
    PROJECT(columns={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': agg_0})
     AGGREGATE(keys={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type}, aggregations={'agg_0': NDISTINCT(supplier_key)})
      FILTER(condition=NOT(LIKE(comment_2, '%Customer%Complaints%':string)), columns={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_key': supplier_key})
       JOIN(conditions=[t0.supplier_key == t1.key], types=['left'], columns={'comment_2': t1.comment, 'p_brand': t0.p_brand, 'p_size': t0.p_size, 'p_type': t0.p_type, 'supplier_key': t0.supplier_key})
        PROJECT(columns={'p_brand': brand, 'p_size': size, 'p_type': part_type, 'supplier_key': supplier_key})
         JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'brand': t0.brand, 'part_type': t0.part_type, 'size': t0.size, 'supplier_key': t1.supplier_key})
-         FILTER(condition=brand != 'BRAND#45':string & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%':string)) & ISIN(size, [49:Int64Type(), 14:Int64Type(), 23:Int64Type(), 45:Int64Type(), 19:Int64Type(), 3:Int64Type(), 36:Int64Type(), 9:Int64Type()]:array[unknown]), columns={'brand': brand, 'key': key, 'part_type': part_type, 'size': size})
+         FILTER(condition=brand != 'BRAND#45':string & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%':string)) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9]:array[unknown]), columns={'brand': brand, 'key': key, 'part_type': part_type, 'size': size})
           SCAN(table=tpch.PART, columns={'brand': p_brand, 'key': p_partkey, 'part_type': p_type, 'size': p_size})
          SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
        SCAN(table=tpch.SUPPLIER, columns={'comment': s_comment, 'key': s_suppkey})
@@ -477,7 +479,7 @@ ROOT(columns=[('c_name', c_name), ('c_custkey', c_custkey), ('o_orderkey', o_ord
     PROJECT(columns={'c_custkey': key_2, 'c_name': name, 'o_orderdate': order_date, 'o_orderkey': key, 'o_totalprice': total_price, 'total_quantity': DEFAULT_TO(agg_0, 0:int64)})
      JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'key_2': t0.key_2, 'name': t0.name, 'order_date': t0.order_date, 'total_price': t0.total_price})
       JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'key': t0.key, 'key_2': t1.key, 'name': t1.name, 'order_date': t0.order_date, 'total_price': t0.total_price})
-       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate, 'total_price': o_totalprice})
+       SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate, 'total_price': o_totalprice})
        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'name': c_name})
       AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(quantity)})
        SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'quantity': l_quantity})
@@ -493,7 +495,7 @@ ROOT(columns=[('c_name', c_name), ('c_custkey', c_custkey), ('o_orderkey', o_ord
 ROOT(columns=[('revenue', revenue)], orderings=[])
  PROJECT(columns={'revenue': DEFAULT_TO(agg_0, 0:int64)})
   AGGREGATE(keys={}, aggregations={'agg_0': SUM(extended_price * 1:int64 - discount)})
-   FILTER(condition=ISIN(ship_mode, ['AIR':StringType(), 'AIR REG':StringType()]:array[unknown]) & ship_instruct == 'DELIVER IN PERSON':string & size >= 1:int64 & size < 5:int64 & quantity >= 1:int64 & quantity <= 11:int64 & ISIN(container, ['SM CASE':StringType(), 'SM BOX':StringType(), 'SM PACK':StringType(), 'SM PKG':StringType()]:array[unknown]) & brand == 'Brand#12':string | size < 10:int64 & quantity >= 10:int64 & quantity <= 21:int64 & ISIN(container, ['MED CASE':StringType(), 'MED BOX':StringType(), 'MED PACK':StringType(), 'MED PKG':StringType()]:array[unknown]) & brand == 'Brand#23':string | size < 15:int64 & quantity >= 20:int64 & quantity <= 31:int64 & ISIN(container, ['LG CASE':StringType(), 'LG BOX':StringType(), 'LG PACK':StringType(), 'LG PKG':StringType()]:array[unknown]) & brand == 'Brand#34':string, columns={'discount': discount, 'extended_price': extended_price})
+   FILTER(condition=ISIN(ship_mode, ['AIR', 'AIR REG']:array[unknown]) & ship_instruct == 'DELIVER IN PERSON':string & size >= 1:int64 & size <= 5:int64 & quantity >= 1:int64 & quantity <= 11:int64 & ISIN(container, ['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']:array[unknown]) & brand == 'Brand#12':string | size <= 10:int64 & quantity >= 10:int64 & quantity <= 20:int64 & ISIN(container, ['MED BAG', 'MED BOX', 'MED PACK', 'MED PKG']:array[unknown]) & brand == 'Brand#23':string | size <= 15:int64 & quantity >= 20:int64 & quantity <= 30:int64 & ISIN(container, ['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']:array[unknown]) & brand == 'Brand#34':string, columns={'discount': discount, 'extended_price': extended_price})
     JOIN(conditions=[t0.part_key == t1.key], types=['left'], columns={'brand': t1.brand, 'container': t1.container, 'discount': t0.discount, 'extended_price': t0.extended_price, 'quantity': t0.quantity, 'ship_instruct': t0.ship_instruct, 'ship_mode': t0.ship_mode, 'size': t1.size})
      SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'quantity': l_quantity, 'ship_instruct': l_shipinstruct, 'ship_mode': l_shipmode})
      SCAN(table=tpch.PART, columns={'brand': p_brand, 'container': p_container, 'key': p_partkey, 'size': p_size})
@@ -590,9 +592,9 @@ def test_pydough_pipeline(
     unqualified: UnqualifiedNode = unqualified_impl(root)
     qualified: PyDoughCollectionAST = qualify_node(unqualified, graph)
     relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
-    # assert (
-    #     relational.to_tree_string() == relational_string.strip()
-    # ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+    assert (
+        relational.to_tree_string() == relational_string.strip()
+    ), "Mismatch between tree string representation of relational node and expected Relational tree string"
 
     # Run the relational tree through the execution and confirm that the output
     # matches the expected DataFrame, without anything

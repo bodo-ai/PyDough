@@ -352,7 +352,7 @@
       },
       "Orders": {
         "type": "simple_table",
-        "table_path": "tpch.ORDER",
+        "table_path": "tpch.ORDERS",
         "unique_properties": ["key"],
         "properties": {
           "key": {"type": "table_column", "column_name": "o_orderkey", "data_type": "int64"},
@@ -362,7 +362,7 @@
           "order_date": {"type": "table_column", "column_name": "o_orderdate", "data_type": "date"},
           "order_priority": {"type": "table_column", "column_name": "o_orderpriority", "data_type": "int64"},
           "clerk": {"type": "table_column", "column_name": "clerk", "data_type": "int64"},
-          "ship_priority": {"type": "table_column", "column_name": "o_shipriority", "data_type": "int64"},
+          "ship_priority": {"type": "table_column", "column_name": "o_shippriority", "data_type": "int64"},
           "comment": {"type": "table_column", "column_name": "o_comment", "data_type": "string"},
           "customer": {
             "type": "simple_join",

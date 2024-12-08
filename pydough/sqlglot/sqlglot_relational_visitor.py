@@ -207,9 +207,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 col.expr
             )
             if col.ascending:
-                glot_expr = glot_expr.asc(nulls_first=col.nulls_first)
+                # glot_expr = glot_expr.asc(nulls_first=col.nulls_first)
+                glot_expr = glot_expr.asc()
             else:
-                glot_expr = glot_expr.desc(nulls_first=col.nulls_first)
+                # glot_expr = glot_expr.desc(nulls_first=col.nulls_first)
+                glot_expr = glot_expr.desc()
             glot_exprs.append(glot_expr)
         return glot_exprs
 

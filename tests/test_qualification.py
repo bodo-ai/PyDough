@@ -170,7 +170,7 @@ def pydough_impl_tpch_q4(root: UnqualifiedNode) -> UnqualifiedNode:
         & root.HAS(selected_lines)
     )
     return root.PARTITION(selected_orders, name="o", by=root.order_priority)(
-        root.order_priority,
+        o_orderpriority=root.order_priority,
         order_count=root.COUNT(root.o),
     ).ORDER_BY(root.order_priority.ASC())
 
@@ -296,7 +296,7 @@ def pydough_impl_tpch_q10(root: UnqualifiedNode) -> UnqualifiedNode:
         amt=root.extended_price * (1 - root.discount)
     )
     return root.Customers(
-        c_key=root.key,
+        c_custkey=root.key,
         c_name=root.name,
         revenue=root.SUM(selected_lines.amt),
         c_acctbal=root.acctbal,
@@ -304,7 +304,7 @@ def pydough_impl_tpch_q10(root: UnqualifiedNode) -> UnqualifiedNode:
         c_address=root.address,
         c_phone=root.phone,
         c_comment=root.comment,
-    ).TOP_K(20, by=(root.revenue.DESC(), root.c_key.ASC()))
+    ).TOP_K(20, by=(root.revenue.DESC(), root.c_custkey.ASC()))
 
 
 def pydough_impl_tpch_q11(root: UnqualifiedNode) -> UnqualifiedNode:
@@ -340,7 +340,7 @@ def pydough_impl_tpch_q12(root: UnqualifiedNode) -> UnqualifiedNode:
         | (root.order.order_priority == "2-HIGH"),
     )
     return root.PARTITION(selected_lines, "l", by=root.ship_mode)(
-        root.ship_mode,
+        l_shipmode=root.ship_mode,
         high_line_count=root.SUM(root.l.is_high_priority),
         low_line_count=root.SUM(~(root.l.is_high_priority)),
     ).ORDER_BY(root.ship_mode.ASC())
@@ -671,7 +671,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│     └─┬─ AccessChild\n"
             "│       ├─── SubCollection[lines]\n"
             "│       └─── Where[commit_date < receipt_date]\n"
-            "├─┬─ Calc[order_priority=order_priority, order_count=COUNT($1)]\n"
+            "├─┬─ Calc[o_orderpriority=order_priority, order_count=COUNT($1)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[o]\n"
             "└─── OrderBy[order_priority.ASC(na_pos='last')]",
@@ -779,7 +779,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             pydough_impl_tpch_q10,
             "──┬─ TPCH\n"
             "  ├─── TableCollection[Customers]\n"
-            "  ├─┬─ Calc[c_key=key, c_name=name, revenue=SUM($1.amt), c_acctbal=acctbal, n_name=$2.name, c_address=address, c_phone=phone, c_comment=comment]\n"
+            "  ├─┬─ Calc[c_custkey=key, c_name=name, revenue=SUM($1.amt), c_acctbal=acctbal, n_name=$2.name, c_address=address, c_phone=phone, c_comment=comment]\n"
             "  │ ├─┬─ AccessChild\n"
             "  │ │ ├─── SubCollection[orders]\n"
             "  │ │ └─┬─ Where[(order_date >= datetime.date(1993, 10, 1)) & (order_date < datetime.date(1994, 1, 1))]\n"
@@ -788,7 +788,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │ │   └─── Calc[amt=extended_price * (1 - discount)]\n"
             "  │ └─┬─ AccessChild\n"
             "  │   └─── SubCollection[nation]\n"
-            "  └─── TopK[20, revenue.DESC(na_pos='last'), c_key.ASC(na_pos='last')]",
+            "  └─── TopK[20, revenue.DESC(na_pos='last'), c_custkey.ASC(na_pos='last')]",
             id="tpch-q10",
         ),
         pytest.param(
@@ -827,7 +827,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│   └─┬─ Calc[is_high_priority=($1.order_priority == '1-URGENT') | ($1.order_priority == '2-HIGH')]\n"
             "│     └─┬─ AccessChild\n"
             "│       └─── SubCollection[order]\n"
-            "├─┬─ Calc[ship_mode=ship_mode, high_line_count=SUM($1.is_high_priority), low_line_count=SUM(NOT($1.is_high_priority))]\n"
+            "├─┬─ Calc[l_shipmode=ship_mode, high_line_count=SUM($1.is_high_priority), low_line_count=SUM(NOT($1.is_high_priority))]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
             "└─── OrderBy[ship_mode.ASC(na_pos='last')]",

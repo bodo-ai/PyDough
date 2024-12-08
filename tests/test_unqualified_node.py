@@ -276,7 +276,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q4,
-            "TPCH.PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1993, 7, 1):DateType()) & (TPCH.order_date < datetime.date(1993, 10, 1):DateType())) & HAS(TPCH.lines.WHERE((TPCH.commit_date < TPCH.receipt_date))))), name='o', by=(TPCH.order_priority))(order_priority=TPCH.order_priority, order_count=COUNT(TPCH.o)).ORDER_BY(TPCH.order_priority.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1993, 7, 1):DateType()) & (TPCH.order_date < datetime.date(1993, 10, 1):DateType())) & HAS(TPCH.lines.WHERE((TPCH.commit_date < TPCH.receipt_date))))), name='o', by=(TPCH.order_priority))(o_orderpriority=TPCH.order_priority, order_count=COUNT(TPCH.o)).ORDER_BY(TPCH.order_priority.ASC(na_pos='last'))",
             id="tpch_q4",
         ),
         pytest.param(
@@ -306,7 +306,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q10,
-            "TPCH.Customers(c_key=TPCH.key, c_name=TPCH.name, revenue=SUM(TPCH.orders.WHERE(((TPCH.order_date >= datetime.date(1993, 10, 1):DateType()) & (TPCH.order_date < datetime.date(1994, 1, 1):DateType()))).lines.WHERE((TPCH.return_flag == 'R':StringType()))(amt=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).amt), c_acctbal=TPCH.acctbal, n_name=TPCH.nation.name, c_address=TPCH.address, c_phone=TPCH.phone, c_comment=TPCH.comment).TOP_K(20, by=(TPCH.revenue.DESC(na_pos='last'), TPCH.c_key.ASC(na_pos='last')))",
+            "TPCH.Customers(c_custkey=TPCH.key, c_name=TPCH.name, revenue=SUM(TPCH.orders.WHERE(((TPCH.order_date >= datetime.date(1993, 10, 1):DateType()) & (TPCH.order_date < datetime.date(1994, 1, 1):DateType()))).lines.WHERE((TPCH.return_flag == 'R':StringType()))(amt=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).amt), c_acctbal=TPCH.acctbal, n_name=TPCH.nation.name, c_address=TPCH.address, c_phone=TPCH.phone, c_comment=TPCH.comment).TOP_K(20, by=(TPCH.revenue.DESC(na_pos='last'), TPCH.c_custkey.ASC(na_pos='last')))",
             id="tpch_q10",
         ),
         pytest.param(
@@ -316,7 +316,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q12,
-            "TPCH.PARTITION(TPCH.Lineitems.WHERE(((((((TPCH.ship_mode == 'MAIL':StringType()) | (TPCH.ship_mode == 'SHIP':StringType())) & (TPCH.ship_date < TPCH.commit_date)) & (TPCH.commit_date < TPCH.receipt_date)) & (TPCH.receipt_date >= datetime.date(1994, 1, 1):DateType())) & (TPCH.receipt_date < datetime.date(1995, 1, 1):DateType())))(is_high_priority=((TPCH.order.order_priority == '1-URGENT':StringType()) | (TPCH.order.order_priority == '2-HIGH':StringType()))), name='l', by=(TPCH.ship_mode))(ship_mode=TPCH.ship_mode, high_line_count=SUM(TPCH.l.is_high_priority), low_line_count=SUM(NOT(TPCH.l.is_high_priority))).ORDER_BY(TPCH.ship_mode.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Lineitems.WHERE(((((((TPCH.ship_mode == 'MAIL':StringType()) | (TPCH.ship_mode == 'SHIP':StringType())) & (TPCH.ship_date < TPCH.commit_date)) & (TPCH.commit_date < TPCH.receipt_date)) & (TPCH.receipt_date >= datetime.date(1994, 1, 1):DateType())) & (TPCH.receipt_date < datetime.date(1995, 1, 1):DateType())))(is_high_priority=((TPCH.order.order_priority == '1-URGENT':StringType()) | (TPCH.order.order_priority == '2-HIGH':StringType()))), name='l', by=(TPCH.ship_mode))(l_shipmode=TPCH.ship_mode, high_line_count=SUM(TPCH.l.is_high_priority), low_line_count=SUM(NOT(TPCH.l.is_high_priority))).ORDER_BY(TPCH.ship_mode.ASC(na_pos='last'))",
             id="tpch_q12",
         ),
         pytest.param(

@@ -118,7 +118,7 @@ def impl_tpch_q4():
         & HAS(selected_lines)
     )
     return PARTITION(selected_orders, name="o", by=order_priority)(
-        order_priority,
+        o_orderpriority=order_priority,
         order_count=COUNT(o),
     ).ORDER_BY(order_priority.ASC())
 
@@ -237,7 +237,7 @@ def impl_tpch_q10():
         & (order_date < datetime.date(1994, 1, 1))
     ).lines.WHERE(return_flag == "R")(amt=extended_price * (1 - discount))
     return Customers(
-        c_key=key,
+        c_custkey=key,
         c_name=name,
         revenue=SUM(selected_lines.amt),
         c_acctbal=acctbal,
@@ -245,7 +245,7 @@ def impl_tpch_q10():
         c_address=address,
         c_phone=phone,
         c_comment=comment,
-    ).TOP_K(20, by=(revenue.DESC(), c_key.ASC()))
+    ).TOP_K(20, by=(revenue.DESC(), c_custkey.ASC()))
 
 
 def impl_tpch_q11():
@@ -279,7 +279,7 @@ def impl_tpch_q12():
         | (order.order_priority == "2-HIGH"),
     )
     return PARTITION(selected_lines, "l", by=ship_mode)(
-        ship_mode,
+        l_shipmode=ship_mode,
         high_line_count=SUM(l.is_high_priority),
         low_line_count=SUM(~(l.is_high_priority)),
     ).ORDER_BY(ship_mode.ASC())

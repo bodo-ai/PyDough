@@ -1236,7 +1236,18 @@ class HybridTranslator:
         self, prefix: str, reserved_names: list[dict[str, Any]]
     ) -> str:
         """
-        TODO
+        Generates a name to be used in the terms of a HybridTree with a
+        specified prefix that does not overlap with certain names that have
+        already been taken in that context.
+
+        Args:
+            `prefix`: the prefix that the generated name should start with.
+            `reserved_names`: a list of mappings where the keys in each mapping
+            are names that cannot be used because they have already been taken.
+
+        Returns:
+            The string of the name chosen with the corresponding prefix that
+            does not overlap with the reserved name.
         """
         name = f"{prefix}_{self.alias_counter}"
         while any(name in s for s in reserved_names):
