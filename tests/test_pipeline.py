@@ -201,7 +201,7 @@ ROOT(columns=[('supp_nation', supp_nation), ('cust_nation', cust_nation), ('l_ye
  PROJECT(columns={'cust_nation': cust_nation, 'l_year': l_year, 'ordering_1': supp_nation, 'ordering_2': cust_nation, 'ordering_3': l_year, 'revenue': revenue, 'supp_nation': supp_nation})
   PROJECT(columns={'cust_nation': cust_nation, 'l_year': l_year, 'revenue': DEFAULT_TO(agg_0, 0:int64), 'supp_nation': supp_nation})
    AGGREGATE(keys={'cust_nation': cust_nation, 'l_year': l_year, 'supp_nation': supp_nation}, aggregations={'agg_0': SUM(volume)})
-    FILTER(condition=ship_date >= datetime.date(1995, 1, 1):date & ship_date <= datetime.date(1996, 12, 31):date & supp_nation == 'France':string & cust_nation == 'Germany':string | supp_nation == 'Germany':string & cust_nation == 'France':string, columns={'cust_nation': cust_nation, 'l_year': l_year, 'supp_nation': supp_nation, 'volume': volume})
+    FILTER(condition=ship_date >= datetime.date(1995, 1, 1):date & ship_date <= datetime.date(1996, 12, 31):date & supp_nation == 'FRANCE':string & cust_nation == 'GERMANY':string | supp_nation == 'GERMANY':string & cust_nation == 'FRANCE':string, columns={'cust_nation': cust_nation, 'l_year': l_year, 'supp_nation': supp_nation, 'volume': volume})
      PROJECT(columns={'cust_nation': name_8, 'l_year': YEAR(ship_date), 'ship_date': ship_date, 'supp_nation': name_3, 'volume': extended_price * 1:int64 - discount})
       JOIN(conditions=[t0.order_key == t1.key], types=['left'], columns={'discount': t0.discount, 'extended_price': t0.extended_price, 'name_3': t0.name_3, 'name_8': t1.name_8, 'ship_date': t0.ship_date})
        JOIN(conditions=[t0.supplier_key == t1.key], types=['left'], columns={'discount': t0.discount, 'extended_price': t0.extended_price, 'name_3': t1.name_3, 'order_key': t0.order_key, 'ship_date': t0.ship_date})
@@ -357,11 +357,11 @@ ROOT(columns=[('l_shipmode', l_shipmode), ('high_line_count', high_line_count), 
             (
                 pydough_impl_tpch_q13,
                 """
-ROOT(columns=[('c_count', c_count), ('custdist', custdist)], orderings=[(ordering_3):desc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'c_count': c_count, 'custdist': custdist, 'ordering_3': ordering_3}, orderings=[(ordering_3):desc_last])
-  PROJECT(columns={'c_count': c_count, 'custdist': custdist, 'ordering_3': custdist})
+ROOT(columns=[('c_count', c_count), ('custdist', custdist)], orderings=[(ordering_3):desc_last, (ordering_4):desc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'c_count': c_count, 'custdist': custdist, 'ordering_3': ordering_3, 'ordering_4': ordering_4}, orderings=[(ordering_3):desc_last, (ordering_4):desc_last])
+  PROJECT(columns={'c_count': c_count, 'custdist': custdist, 'ordering_3': custdist, 'ordering_4': c_count})
    PROJECT(columns={'c_count': num_non_special_orders, 'custdist': DEFAULT_TO(agg_2, 0:int64)})
-    JOIN(conditions=[True:bool], types=['left'], columns={'agg_2': t1.agg_2, 'num_non_special_orders': t0.num_non_special_orders})
+    JOIN(conditions=[t0.num_non_special_orders == t1.num_non_special_orders], types=['left'], columns={'agg_2': t1.agg_2, 'num_non_special_orders': t0.num_non_special_orders})
      AGGREGATE(keys={'num_non_special_orders': num_non_special_orders}, aggregations={})
       PROJECT(columns={'num_non_special_orders': DEFAULT_TO(agg_0, 0:int64)})
        JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_0': t1.agg_0})
@@ -604,4 +604,5 @@ def test_pydough_pipeline(
     expected_result: pd.DataFrame = answer_impl()
     result.columns = result.columns.str.lower()
     expected_result.columns = expected_result.columns.str.lower()
+    # breakpoint()
     pd.testing.assert_frame_equal(result, expected_result)

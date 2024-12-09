@@ -291,7 +291,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q7,
-            "TPCH.PARTITION(TPCH.Lineitems(supp_nation=TPCH.supplier.nation.name, cust_nation=TPCH.order.customer.nation.name, l_year=YEAR(TPCH.ship_date), volume=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).WHERE((((TPCH.ship_date >= datetime.date(1995, 1, 1):DateType()) & (TPCH.ship_date <= datetime.date(1996, 12, 31):DateType())) & (((TPCH.supp_nation == 'France':StringType()) & (TPCH.cust_nation == 'Germany':StringType())) | ((TPCH.supp_nation == 'Germany':StringType()) & (TPCH.cust_nation == 'France':StringType()))))), name='l', by=(TPCH.supp_nation, TPCH.cust_nation, TPCH.l_year))(supp_nation=TPCH.supp_nation, cust_nation=TPCH.cust_nation, l_year=TPCH.l_year, revenue=SUM(TPCH.l.volume)).ORDER_BY(TPCH.supp_nation.ASC(na_pos='last'), TPCH.cust_nation.ASC(na_pos='last'), TPCH.l_year.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Lineitems(supp_nation=TPCH.supplier.nation.name, cust_nation=TPCH.order.customer.nation.name, l_year=YEAR(TPCH.ship_date), volume=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).WHERE((((TPCH.ship_date >= datetime.date(1995, 1, 1):DateType()) & (TPCH.ship_date <= datetime.date(1996, 12, 31):DateType())) & (((TPCH.supp_nation == 'FRANCE':StringType()) & (TPCH.cust_nation == 'GERMANY':StringType())) | ((TPCH.supp_nation == 'GERMANY':StringType()) & (TPCH.cust_nation == 'FRANCE':StringType()))))), name='l', by=(TPCH.supp_nation, TPCH.cust_nation, TPCH.l_year))(supp_nation=TPCH.supp_nation, cust_nation=TPCH.cust_nation, l_year=TPCH.l_year, revenue=SUM(TPCH.l.volume)).ORDER_BY(TPCH.supp_nation.ASC(na_pos='last'), TPCH.cust_nation.ASC(na_pos='last'), TPCH.l_year.ASC(na_pos='last'))",
             id="tpch_q7",
         ),
         pytest.param(
@@ -321,7 +321,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q13,
-            "TPCH.PARTITION(TPCH.Customers(key=TPCH.key, num_non_special_orders=COUNT(TPCH.orders.WHERE(NOT(LIKE(TPCH.comment, '%special%requests%':StringType()))))), name='custs', by=(TPCH.num_non_special_orders))(c_count=TPCH.num_non_special_orders, custdist=COUNT(TPCH.custs)).TOP_K(10, by=(TPCH.custdist.DESC(na_pos='last')))",
+            "TPCH.PARTITION(TPCH.Customers(key=TPCH.key, num_non_special_orders=COUNT(TPCH.orders.WHERE(NOT(LIKE(TPCH.comment, '%special%requests%':StringType()))))), name='custs', by=(TPCH.num_non_special_orders))(c_count=TPCH.num_non_special_orders, custdist=COUNT(TPCH.custs)).TOP_K(10, by=(TPCH.custdist.DESC(na_pos='last'), TPCH.c_count.DESC(na_pos='last')))",
             id="tpch_q13",
         ),
         pytest.param(

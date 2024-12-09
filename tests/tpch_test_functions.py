@@ -165,8 +165,8 @@ def impl_tpch_q7():
         (ship_date >= datetime.date(1995, 1, 1))
         & (ship_date <= datetime.date(1996, 12, 31))
         & (
-            ((supp_nation == "France") & (cust_nation == "Germany"))
-            | ((supp_nation == "Germany") & (cust_nation == "France"))
+            ((supp_nation == "FRANCE") & (cust_nation == "GERMANY"))
+            | ((supp_nation == "GERMANY") & (cust_nation == "FRANCE"))
         )
     )
 
@@ -297,7 +297,7 @@ def impl_tpch_q13():
     )
     return PARTITION(customer_info, name="custs", by=num_non_special_orders)(
         c_count=num_non_special_orders, custdist=COUNT(custs)
-    ).TOP_K(10, by=custdist.DESC())
+    ).TOP_K(10, by=(custdist.DESC(), c_count.DESC()))
 
 
 def impl_tpch_q14():

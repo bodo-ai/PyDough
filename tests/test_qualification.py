@@ -217,8 +217,8 @@ def pydough_impl_tpch_q7(root: UnqualifiedNode) -> UnqualifiedNode:
         (root.ship_date >= datetime.date(1995, 1, 1))
         & (root.ship_date <= datetime.date(1996, 12, 31))
         & (
-            ((root.supp_nation == "France") & (root.cust_nation == "Germany"))
-            | ((root.supp_nation == "Germany") & (root.cust_nation == "France"))
+            ((root.supp_nation == "FRANCE") & (root.cust_nation == "GERMANY"))
+            | ((root.supp_nation == "GERMANY") & (root.cust_nation == "FRANCE"))
         )
     )
 
@@ -358,7 +358,7 @@ def pydough_impl_tpch_q13(root: UnqualifiedNode) -> UnqualifiedNode:
     )
     return root.PARTITION(customer_info, name="custs", by=root.num_non_special_orders)(
         c_count=root.num_non_special_orders, custdist=root.COUNT(root.custs)
-    ).TOP_K(10, by=root.custdist.DESC())
+    ).TOP_K(10, by=(root.custdist.DESC(), root.c_count.DESC()))
 
 
 def pydough_impl_tpch_q14(root: UnqualifiedNode) -> UnqualifiedNode:
@@ -722,7 +722,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│   │   └─┬─ SubCollection[order]\n"
             "│   │     └─┬─ SubCollection[customer]\n"
             "│   │       └─── SubCollection[nation]\n"
-            "│   └─── Where[(ship_date >= datetime.date(1995, 1, 1)) & (ship_date <= datetime.date(1996, 12, 31)) & (((supp_nation == 'France') & (cust_nation == 'Germany')) | ((supp_nation == 'Germany') & (cust_nation == 'France')))]\n"
+            "│   └─── Where[(ship_date >= datetime.date(1995, 1, 1)) & (ship_date <= datetime.date(1996, 12, 31)) & (((supp_nation == 'FRANCE') & (cust_nation == 'GERMANY')) | ((supp_nation == 'GERMANY') & (cust_nation == 'FRANCE')))]\n"
             "├─┬─ Calc[supp_nation=supp_nation, cust_nation=cust_nation, l_year=l_year, revenue=SUM($1.volume)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
@@ -846,7 +846,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[c_count=num_non_special_orders, custdist=COUNT($1)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[custs]\n"
-            "└─── TopK[10, custdist.DESC(na_pos='last')]",
+            "└─── TopK[10, custdist.DESC(na_pos='last'), c_count.DESC(na_pos='last')]",
             id="tpch-q13",
         ),
         pytest.param(
