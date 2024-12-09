@@ -6,13 +6,15 @@ of the code and depending on API being used, the final evaluated output
 is either SQL text or the actual result of the code execution.
 """
 
+import pandas as pd
+
 import pydough
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import PyDoughCollectionAST
 from pydough.relational import RelationalRoot
-from pydough.sqlglot import convert_relation_to_sql
+from pydough.sqlglot import convert_relation_to_sql, execute
 from pydough.unqualified import UnqualifiedNode, qualify_node
 
 from .relational_converter import convert_ast_to_relational
@@ -74,3 +76,28 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     qualified: PyDoughCollectionAST = qualify_node(node, graph)
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
     return convert_relation_to_sql(relational, database.dialect)
+
+
+def to_dataframe(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
+    """
+    Execute the given unqualified tree and return the results as a Pandas
+    DataFrame.
+
+    Args:
+        node (UnqualifiedNode): The node to convert to a DataFrame.
+        **kwargs: Additional arguments to pass to the conversion for testing.
+            From a user perspective these values should always be derived from
+            the active session, but to allow a simple + extensible testing
+            infrastructure in the future, any of these can be passed in using
+            the name of the field in session.py.
+
+    Returns:
+        pd.DataFrame: The DataFrame corresponding to the unqualified query.
+    """
+    graph: GraphMetadata
+    config: PyDoughConfigs
+    database: DatabaseContext
+    graph, config, database = _load_session_info(**kwargs)
+    qualified: PyDoughCollectionAST = qualify_node(node, graph)
+    relational: RelationalRoot = convert_ast_to_relational(qualified, config)
+    return execute(relational, database)
