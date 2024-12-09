@@ -302,7 +302,7 @@
         "Lineitems": {
           "type": "simple_table",
           "table_path": "tpch.LINEITEM",
-          "unique_properties": [["part_key", "supplier_key", "order_key"]],
+          "unique_properties": [["order_key", "line_number"], ["part_key", "supplier_key", "order_key"]],
           "properties": {
             "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
             "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
