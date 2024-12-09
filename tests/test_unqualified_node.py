@@ -34,6 +34,7 @@ from tpch_test_functions import (
 )
 
 from pydough import init_pydough_context
+from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
@@ -222,7 +223,6 @@ def test_unqualified_to_string(
     answer_str: str,
     global_ctx: dict[str, object],
     get_sample_graph: graph_fetcher,
-    sample_graph_path: str,
 ) -> None:
     """
     Tests that strings representing the setup of PyDough unqualified objects
@@ -232,7 +232,8 @@ def test_unqualified_to_string(
     a variable `answer` that is an `UnqualifiedNode` instance.
     """
     # Test with the strings that contain "_ROOT."
-    root: UnqualifiedNode = UnqualifiedRoot(get_sample_graph("TPCH"))
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    root: UnqualifiedNode = UnqualifiedRoot(graph)
     env: dict[str, object] = {"_ROOT": root}
     verify_pydough_code_exec_match_unqualified(pydough_str, global_ctx, env, answer_str)
 
@@ -247,12 +248,12 @@ def test_unqualified_to_string(
     new_code: str = ast.unparse(
         transform_code(
             "\n".join(altered_code),
-            sample_graph_path,
-            "TPCH",
+            graph,
             set(global_ctx) | {"init_pydough_context"},
         )
     )
     new_code += "\nanswer = PYDOUGH_FUNC()"
+    breakpoint()
     verify_pydough_code_exec_match_unqualified(new_code, global_ctx, {}, answer_str)
 
 
@@ -372,16 +373,17 @@ def test_unqualified_to_string(
     ],
 )
 def test_init_pydough_context(
-    func: Callable[[], UnqualifiedNode], as_string: str, sample_graph_path: str
+    func: Callable[[], UnqualifiedNode],
+    as_string: str,
+    get_sample_graph: graph_fetcher,
 ) -> None:
     """
     Tests that the `init_pydough_context` decorator correctly works on several
     PyDough functions, transforming them into the correct unqualified nodes,
     at least based on string representation.
     """
-    new_func: Callable[[], UnqualifiedNode] = init_pydough_context(
-        sample_graph_path, "TPCH"
-    )(func)
+    sample_graph: GraphMetadata = get_sample_graph("TPCH")
+    new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
     answer: UnqualifiedNode = new_func()
     assert (
         repr(answer) == as_string

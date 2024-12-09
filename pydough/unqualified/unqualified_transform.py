@@ -8,6 +8,10 @@ import ast
 import inspect
 import types
 
+from pydough.metadata import GraphMetadata
+
+from .unqualified_node import UnqualifiedNode, UnqualifiedRoot
+
 
 class AddRootVisitor(ast.NodeTransformer):
     """
@@ -15,16 +19,14 @@ class AddRootVisitor(ast.NodeTransformer):
     1. Whenever a variable is assigned, marks it as a known variable name
     (in addition to any `known_name` values passed in).
     2. Removes the `init_pydough_context` decorator from above any functions.
-    3. Adds `_ROOT = UnqualifiedRoot(parse_json_from_metadata(file_path, graph_name))`
-    to the start of each function body.
+    3. Adds `_ROOT = UnqualifiedRoot(graph)` to the start of each function body.
     4. Prepends any unknown variable names with `_ROOT.`
     """
 
-    def __init__(self, file_path: str, graph_name: str, known_names: set[str]):
-        self._file_path: str = file_path
-        self._graph_name: str = graph_name
+    def __init__(self, graph: GraphMetadata, known_names: set[str]):
+        self._unqualified_root: UnqualifiedNode = UnqualifiedRoot(graph)
         self._known_names: set[str] = known_names
-        self._known_names.update({"UnqualifiedRoot", "parse_json_metadata_from_file"})
+        self._known_names.add("_unqualified_root")
 
     def visit_Assign(self, node):
         for target in node.targets:
@@ -41,37 +43,16 @@ class AddRootVisitor(ast.NodeTransformer):
                 and deco.func.id == "init_pydough_context"
             ):
                 decorator_list.append(deco)
-        import_root: ast.AST = ast.ImportFrom(
-            module="pydough.unqualified", names=[ast.alias("UnqualifiedRoot")], level=0
-        )
-        import_parse: ast.AST = ast.ImportFrom(
-            module="pydough",
-            names=[ast.alias("parse_json_metadata_from_file")],
-            level=0,
-        )
         root_def: ast.AST = ast.Assign(
             targets=[ast.Name(id="_ROOT", ctx=ast.Store())],
-            value=ast.Call(
-                func=ast.Name(id="UnqualifiedRoot", ctx=ast.Load()),
-                args=[
-                    ast.Call(
-                        func=ast.Name("parse_json_metadata_from_file", ctx=ast.Load()),
-                        args=[
-                            ast.Constant(value=self._file_path),
-                            ast.Constant(value=self._graph_name),
-                        ],
-                        keywords=[],
-                    )
-                ],
-                keywords=[],
-            ),
+            value=ast.Name(id="_unqualified_root", ctx=ast.Load()),
         )
         result: ast.AST
         if hasattr(node, "type_params"):
             result = ast.FunctionDef(  # type: ignore
                 name=node.name,
                 args=node.args,
-                body=[import_root, import_parse, root_def] + node.body,
+                body=[root_def] + node.body,
                 decorator_list=node.decorator_list,
                 type_params=node.type_params,
                 returns=node.returns,
@@ -80,7 +61,7 @@ class AddRootVisitor(ast.NodeTransformer):
             result = ast.FunctionDef(  # type: ignore
                 name=node.name,
                 args=node.args,
-                body=[import_root, import_parse, root_def] + node.body,
+                body=[root_def] + node.body,
                 decorator_list=node.decorator_list,
                 returns=node.returns,
             )
@@ -103,9 +84,7 @@ class AddRootVisitor(ast.NodeTransformer):
             return node
 
 
-def transform_code(
-    source: str, file_path: str, graph_name: str, known_names: set[str]
-) -> ast.AST:
+def transform_code(source: str, graph: GraphMetadata, known_names: set[str]) -> ast.AST:
     """
     Transforms the source code into a new Python AST that has had the PyDough
     decorator removed, had the definition of `_ROOT` injected at the top of the
@@ -113,10 +92,7 @@ def transform_code(
 
     Args:
         `source`: the raw Python code string for the original function.
-        `file_path`: the path to the JSON file containing the metadata for
-        the PyDough graph that should be used.
-        `graph_name`: the name of the graph from the JSON file that should be
-        used.
+        `graph`: The graph used for transforming code.
         `known_names`: the set of strings representing names of variables that
         are known to be accessible by the function that are not defined within,
         such as global variables or module imports.
@@ -124,35 +100,31 @@ def transform_code(
     Returns:
         The Python AST for the transformed code.
     """
-    visitor: ast.NodeTransformer = AddRootVisitor(file_path, graph_name, known_names)
+    visitor: ast.NodeTransformer = AddRootVisitor(graph, known_names)
     source = source.lstrip("\n")
     n_strip = len(source) - len(source.lstrip())
     if n_strip > 0:
         source = "\n".join(line[n_strip:] for line in source.splitlines())
     tree = ast.parse(source)
+    breakpoint()
     assert isinstance(tree, ast.AST)
     new_tree = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
     return new_tree
 
 
-def init_pydough_context(file_path: str, graph_name: str):
+def init_pydough_context(graph: GraphMetadata):
     """
     Decorator that wraps around a PyDough function and transforms its body into
     UnqualifiedNodes by prepending unknown variables with `_ROOT.`
 
     Args:
-        `file_path`: the path to the JSON file containing the metadata for
-        the PyDough graph that should be used.
-        `graph_name`: the name of the graph from the JSON file that should be
-        used.
+        `graph`: The metadata graph to use.
     """
 
     def decorator(func):
         source: str = inspect.getsource(func)
-        new_tree: ast.AST = transform_code(
-            source, file_path, graph_name, set(func.__globals__)
-        )
+        new_tree: ast.AST = transform_code(source, graph, set(func.__globals__))
         assert isinstance(new_tree, ast.Module)
         file_name: str = func.__code__.co_filename
         new_code = compile(new_tree, file_name, "exec")
