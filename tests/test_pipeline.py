@@ -121,24 +121,15 @@ ROOT(columns=[('l_orderkey', l_orderkey), ('revenue', revenue), ('o_orderdate', 
             (
                 pydough_impl_tpch_q4,
                 """
-ROOT(columns=[('order_priority', order_priority), ('order_count', order_count)], orderings=[(ordering_3):asc_last])
- PROJECT(columns={'order_count': order_count, 'order_priority': order_priority, 'ordering_3': order_priority})
-  PROJECT(columns={'order_count': DEFAULT_TO(agg_2, 0:int64), 'order_priority': order_priority})
-   JOIN(conditions=[True:bool], types=['left'], columns={'agg_2': t1.agg_2, 'order_priority': t0.order_priority})
-    AGGREGATE(keys={'order_priority': order_priority}, aggregations={})
-     FILTER(condition=order_date >= datetime.date(1993, 7, 1):date & order_date < datetime.date(1993, 10, 1):date & DEFAULT_TO(agg_0, 0:int64) > 0:int64, columns={'order_priority': order_priority})
-      JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'order_date': t0.order_date, 'order_priority': t0.order_priority})
-       SCAN(table=tpch.ORDER, columns={'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority})
-       AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': COUNT()})
-        FILTER(condition=commit_date < receipt_date, columns={'order_key': order_key})
-         SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate})
-    AGGREGATE(keys={'order_priority': order_priority}, aggregations={'agg_2': COUNT()})
-     FILTER(condition=order_date >= datetime.date(1993, 7, 1):date & order_date < datetime.date(1993, 10, 1):date & DEFAULT_TO(agg_1, 0:int64) > 0:int64, columns={'order_priority': order_priority})
-      JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_1': t1.agg_1, 'order_date': t0.order_date, 'order_priority': t0.order_priority})
-       SCAN(table=tpch.ORDER, columns={'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority})
-       AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_1': COUNT()})
-        FILTER(condition=commit_date < receipt_date, columns={'order_key': order_key})
-         SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate})
+ROOT(columns=[('order_priority', order_priority), ('order_count', order_count)], orderings=[(ordering_1):asc_last])
+ PROJECT(columns={'order_count': order_count, 'order_priority': order_priority, 'ordering_1': order_priority})
+  PROJECT(columns={'order_count': DEFAULT_TO(agg_0, 0:int64), 'order_priority': order_priority})
+   AGGREGATE(keys={'order_priority': order_priority}, aggregations={'agg_0': COUNT()})
+    FILTER(condition=order_date >= datetime.date(1993, 7, 1):date & order_date < datetime.date(1993, 10, 1):date & True:bool, columns={'order_priority': order_priority})
+     JOIN(conditions=[t0.key == t1.order_key], types=['semi'], columns={'order_date': t0.order_date, 'order_priority': t0.order_priority})
+      SCAN(table=tpch.ORDER, columns={'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority})
+      FILTER(condition=commit_date < receipt_date, columns={'order_key': order_key})
+       SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate})
 """,
             ),
             id="tpch_q4",
@@ -449,9 +440,9 @@ ROOT(columns=[('c_name', c_name), ('c_custkey', c_custkey), ('o_orderkey', o_ord
 ROOT(columns=[('revenue', revenue)], orderings=[])
  PROJECT(columns={'revenue': DEFAULT_TO(agg_0, 0:int64)})
   AGGREGATE(keys={}, aggregations={'agg_0': SUM(extended_price * 1:int64 - discount)})
-   FILTER(condition=True:bool & ship_instruct == 'DELIVER IN PERSON':string & size >= 1:int64 & size < 5:int64 & quantity >= 1:int64 & quantity <= 11:int64 & ISIN(container, ['SM CASE':StringType(), 'SM BOX':StringType(), 'SM PACK':StringType(), 'SM PKG':StringType()]:array[unknown]) & brand == 'Brand#12':string | size < 10:int64 & quantity >= 10:int64 & quantity <= 21:int64 & ISIN(container, ['MED CASE':StringType(), 'MED BOX':StringType(), 'MED PACK':StringType(), 'MED PKG':StringType()]:array[unknown]) & brand == 'Brand#23':string | size < 15:int64 & quantity >= 20:int64 & quantity <= 31:int64 & ISIN(container, ['LG CASE':StringType(), 'LG BOX':StringType(), 'LG PACK':StringType(), 'LG PKG':StringType()]:array[unknown]) & brand == 'Brand#34':string, columns={'discount': discount, 'extended_price': extended_price})
-    JOIN(conditions=[t0.part_key == t1.key], types=['left'], columns={'brand': t1.brand, 'container': t1.container, 'discount': t0.discount, 'extended_price': t0.extended_price, 'quantity': t0.quantity, 'ship_instruct': t0.ship_instruct, 'size': t1.size})
-     SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'quantity': l_quantity, 'ship_instruct': l_shipinstruct})
+   FILTER(condition=ISIN(ship_mode, ['AIR':StringType(), 'AIR REG':StringType()]:array[unknown]) & ship_instruct == 'DELIVER IN PERSON':string & size >= 1:int64 & size < 5:int64 & quantity >= 1:int64 & quantity <= 11:int64 & ISIN(container, ['SM CASE':StringType(), 'SM BOX':StringType(), 'SM PACK':StringType(), 'SM PKG':StringType()]:array[unknown]) & brand == 'Brand#12':string | size < 10:int64 & quantity >= 10:int64 & quantity <= 21:int64 & ISIN(container, ['MED CASE':StringType(), 'MED BOX':StringType(), 'MED PACK':StringType(), 'MED PKG':StringType()]:array[unknown]) & brand == 'Brand#23':string | size < 15:int64 & quantity >= 20:int64 & quantity <= 31:int64 & ISIN(container, ['LG CASE':StringType(), 'LG BOX':StringType(), 'LG PACK':StringType(), 'LG PKG':StringType()]:array[unknown]) & brand == 'Brand#34':string, columns={'discount': discount, 'extended_price': extended_price})
+    JOIN(conditions=[t0.part_key == t1.key], types=['left'], columns={'brand': t1.brand, 'container': t1.container, 'discount': t0.discount, 'extended_price': t0.extended_price, 'quantity': t0.quantity, 'ship_instruct': t0.ship_instruct, 'ship_mode': t0.ship_mode, 'size': t1.size})
+     SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'quantity': l_quantity, 'ship_instruct': l_shipinstruct, 'ship_mode': l_mode})
      SCAN(table=tpch.PART, columns={'brand': p_brand, 'container': p_container, 'key': p_partkey, 'size': p_size})
 """,
             ),
@@ -462,21 +453,20 @@ ROOT(columns=[('revenue', revenue)], orderings=[])
                 pydough_impl_tpch_q20,
                 """
 ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[])
- FILTER(condition=name_3 == 'CANADA':string & DEFAULT_TO(agg_1, 0:int64) > 0:int64, columns={'s_address': s_address, 's_name': s_name})
-  JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_1': t1.agg_1, 'name_3': t0.name_3, 's_address': t0.s_address, 's_name': t0.s_name})
+ FILTER(condition=name_3 == 'CANADA':string & True:bool, columns={'s_address': s_address, 's_name': s_name})
+  JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={'name_3': t0.name_3, 's_address': t0.s_address, 's_name': t0.s_name})
    JOIN(conditions=[t0.nation_key == t1.key], types=['left'], columns={'key': t0.key, 'name_3': t1.name, 's_address': t0.s_address, 's_name': t0.s_name})
     PROJECT(columns={'key': key, 'nation_key': nation_key, 's_address': address, 's_name': name})
      SCAN(table=tpch.SUPPLIER, columns={'address': s_address, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey})
     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-   AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_1': COUNT()})
-    FILTER(condition=STARTSWITH(name, 'forest':string) & availqty > DEFAULT_TO(agg_0, 0:int64) * 0.5:float64, columns={'supplier_key': supplier_key})
-     JOIN(conditions=[t0.key == t1.part_key], types=['left'], columns={'agg_0': t1.agg_0, 'availqty': t0.availqty, 'name': t0.name, 'supplier_key': t0.supplier_key})
-      JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'availqty': t0.availqty, 'key': t1.key, 'name': t1.name, 'supplier_key': t0.supplier_key})
-       SCAN(table=tpch.PARTSUPP, columns={'availqty': ps_availqty, 'part_key': ps_partkey, 'supplier_key': ps_suppkey})
-       SCAN(table=tpch.PART, columns={'key': p_partkey, 'name': p_name})
-      AGGREGATE(keys={'part_key': part_key}, aggregations={'agg_0': SUM(quantity)})
-       FILTER(condition=ship_date >= datetime.date(1994, 1, 1):date & ship_date < datetime.date(1995, 1, 1):date, columns={'part_key': part_key, 'quantity': quantity})
-        SCAN(table=tpch.LINEITEM, columns={'part_key': l_partkey, 'quantity': l_quantity, 'ship_date': l_shipdate})
+   FILTER(condition=STARTSWITH(name, 'forest':string) & availqty > DEFAULT_TO(agg_0, 0:int64) * 0.5:float64, columns={'supplier_key': supplier_key})
+    JOIN(conditions=[t0.key == t1.part_key], types=['left'], columns={'agg_0': t1.agg_0, 'availqty': t0.availqty, 'name': t0.name, 'supplier_key': t0.supplier_key})
+     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'availqty': t0.availqty, 'key': t1.key, 'name': t1.name, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'availqty': ps_availqty, 'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.PART, columns={'key': p_partkey, 'name': p_name})
+     AGGREGATE(keys={'part_key': part_key}, aggregations={'agg_0': SUM(quantity)})
+      FILTER(condition=ship_date >= datetime.date(1994, 1, 1):date & ship_date < datetime.date(1995, 1, 1):date, columns={'part_key': part_key, 'quantity': quantity})
+       SCAN(table=tpch.LINEITEM, columns={'part_key': l_partkey, 'quantity': l_quantity, 'ship_date': l_shipdate})
 """,
             ),
             id="tpch_q20",

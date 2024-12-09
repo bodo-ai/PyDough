@@ -9,6 +9,7 @@ from collections.abc import MutableSequence
 
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from pydough.pydough_ast.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .child_operator import ChildOperator
 from .collection_ast import PyDoughCollectionAST
@@ -49,8 +50,8 @@ class Where(ChildOperator):
             raise PyDoughASTException(
                 "Cannot call `with_condition` more than once per Where node"
             )
-        self._condition = condition
-        self.verify_singular_terms([condition])
+        self._condition = has_hasnot_rewrite(condition, True)
+        self.verify_singular_terms([self._condition])
         return self
 
     @property
