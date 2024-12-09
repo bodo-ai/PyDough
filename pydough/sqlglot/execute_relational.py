@@ -74,6 +74,7 @@ def execute_df(
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
     sql: str = convert_relation_to_sql(relational, sqlglot_dialect)
+    # TODO: handle with a proper Python logger instead of just printing
     if display_sql:
         print("SQL query:\n", sql)
     return ctx.connection.execute_query_df(sql)
