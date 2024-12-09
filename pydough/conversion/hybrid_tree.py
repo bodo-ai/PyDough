@@ -61,7 +61,8 @@ from pydough.pydough_ast import (
     TopK,
     Where,
 )
-from pydough.types import Int64Type, PyDoughType
+from pydough.relational import JoinType
+from pydough.types import BooleanType, Int64Type, PyDoughType
 
 
 class HybridExpr(ABC):
@@ -460,12 +461,6 @@ class ConnectionType(Enum):
     The child should be 1:1 with regards to the parent, and can thus be
     accessed via a simple left join without having to worry about cardinality
     contamination.
-
-    If this overlaps with a `HAS` connection, then the left join becomes an
-    INNER join.
-
-    If this overlaps with a `HASNOT` connection, then this connection becomes
-    a `HASNOT` connection and all accesses to it are replaced with `NULL`.
     """
 
     AGGREGATION = 1
@@ -476,13 +471,6 @@ class ConnectionType(Enum):
     augmented after the left join, e.g. to coalesce with a default value if the
     left join was not used. The grouping keys for the aggregate are the keys
     used to join the parent tree output onto the subtree ouput.
-
-    If this overlaps with a `HAS` connection, then the left join becomes an
-    INNER join, and the post-processing is not required.
-
-    If this connection overlaps with a `HASNOT` connection, then this
-    connection becomes a `HASNOT` connection and all accesses to it are
-    replaced with `NULL` (augmented by the usual post-processing step).
 
     If this is used as a child access of a `PARTITION` node, there is no left
     join, though some of the post-processing steps may still occur.
@@ -496,30 +484,248 @@ class ConnectionType(Enum):
     subcollection without any aggregations, then having the `aggs` list contain
     a solitary `COUNT` term before being left-joined. The result is coalesced
     with 0, unless this is used as a child access of a `PARTITION` node.
-
-    If this overlaps with a `HAS` connection, then the left join becomes an
-    INNER join, and the coalescing is skipped.
-
-    If this connection overlaps with a `HASNOT` connection, then this
-    connection becomes a `HASNOT` connection and the `COUNT` is replaced with
-    a constant zero.
     """
 
-    HAS = 3
+    SEMI = 3
     """
-    The child is being used as a semi-join. NOTE: if there is ever an overlap
-    between this case & another usage (e.g. `Nations.WHERE(HAS(x))(res=x.y)` or
-    `Nations.WHERE(HAS(x))(res=SUM(x.y))`), see the other enums for
-    explanations of what happens in those overlap cases.
+    The child is being used as a semi-join.
     """
 
-    HASNOT = 4
+    SINGULAR_ONLY_MATCH = 4
     """
-    The child is being used as an anti-join. NOTE: if there is ever an overlap
-    between this case & another usage (e.g. `Nations.WHERE(HASNOT(x))(res=x.y)`
-    or `Nations.WHERE(HASNOT(x))(res=SUM(x.y))`, see the other enums for
-    explanations of what happens in those overlap cases.
+    If a SINGULAR connection overlaps with a SEMI connection, then they are
+    fused into a variant of SINGULAR that can use an INNER join instead of a
+    LEFT join.
     """
+
+    AGGREGATION_ONLY_MATCH = 5
+    """
+    If an AGGREGATION connection overlaps with a SEMI connection, then they are
+    fused into a variant of AGGREGATION that can use an INNER join instead of a
+    LEFT join.
+    """
+
+    NDISTINCT_ONLY_MATCH = 6
+    """
+    If a NDISTINCT connection overlaps with a SEMI connection, then they are
+    fused into a variant of NDISTINCT that can use an INNER join instead of a
+    LEFT join.
+    """
+
+    ANTI = 7
+    """
+    The child is being used as an anti-join.
+    """
+
+    NO_MATCH_SINGULAR = 8
+    """
+    If a SINGULAR connection overlaps with an ANTI connection, then it
+    becomes this connection which still functions as an ANTI but replaces
+    all of the child references with NULL.
+    """
+
+    NO_MATCH_AGGREGATION = 9
+    """
+    If an AGGREGATION connection overlaps with an ANTI connection, then it
+    becomes this connection which still functions as an ANTI but replaces
+    all of the aggregation outputs with NULL.
+    """
+
+    NO_MATCH_NDISTINCT = 10
+    """
+    If a NDISTINCT connection overlaps with an ANTI connection, then it
+    becomes this connection which still functions as an ANTI but replaces
+    the NDISTINCT output with 0.
+    """
+
+    @property
+    def is_singular(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 3 SINGULAR
+        cases.
+        """
+        return self in (
+            ConnectionType.SINGULAR,
+            ConnectionType.SINGULAR_ONLY_MATCH,
+            ConnectionType.NO_MATCH_SINGULAR,
+        )
+
+    @property
+    def is_aggregation(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 3 AGGREGATION
+        cases.
+        """
+        return self in (
+            ConnectionType.AGGREGATION,
+            ConnectionType.AGGREGATION_ONLY_MATCH,
+            ConnectionType.NO_MATCH_AGGREGATION,
+        )
+
+    @property
+    def is_ndistinct(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 3 NDISTINCT
+        cases.
+        """
+        return self in (
+            ConnectionType.NDISTINCT,
+            ConnectionType.NDISTINCT_ONLY_MATCH,
+            ConnectionType.NO_MATCH_NDISTINCT,
+        )
+
+    @property
+    def is_semi(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 4 SEMI cases.
+        """
+        return self in (
+            ConnectionType.SEMI,
+            ConnectionType.SINGULAR_ONLY_MATCH,
+            ConnectionType.AGGREGATION_ONLY_MATCH,
+            ConnectionType.NDISTINCT_ONLY_MATCH,
+        )
+
+    @property
+    def is_anti(self) -> bool:
+        """
+        Whether the connection type corresponds to one of the 4 ANTI cases.
+        """
+        return self in (
+            ConnectionType.ANTI,
+            ConnectionType.NO_MATCH_SINGULAR,
+            ConnectionType.NO_MATCH_AGGREGATION,
+            ConnectionType.NO_MATCH_AGGREGATION,
+        )
+
+    @property
+    def is_neutral_matching(self) -> bool:
+        """
+        Whether the connection type is neutral with regards to how it accesses
+        any child terms.
+        """
+        return self in (ConnectionType.SEMI, ConnectionType.ANTI)
+
+    @property
+    def is_singular_compatible(self) -> bool:
+        """
+        Whether the connection type can be reconciled with SINGULAR.
+        """
+        return self.is_singular or self.is_neutral_matching
+
+    @property
+    def is_aggregation_compatible(self) -> bool:
+        """
+        Whether the connection type can be reconciled with AGGREGATION.
+        """
+        return self.is_aggregation or self.is_neutral_matching
+
+    @property
+    def is_ndistinct_compatible(self) -> bool:
+        """
+        Whether the connection type can be reconciled with NDISTINCT.
+        """
+        return self.is_ndistinct or self.is_neutral_matching
+
+    @property
+    def join_type(self) -> JoinType:
+        """
+        The type of join that the connection type corresponds to.
+        """
+        match self:
+            case (
+                ConnectionType.SINGULAR
+                | ConnectionType.AGGREGATION
+                | ConnectionType.NDISTINCT
+            ):
+                # A regular connection without SEMI or ANTI has to be a LEFT
+                # join since parent records without subcollection instances
+                # must be maintained.
+                return JoinType.LEFT
+            case (
+                ConnectionType.SINGULAR_ONLY_MATCH
+                | ConnectionType.AGGREGATION_ONLY_MATCH
+                | ConnectionType.NDISTINCT_ONLY_MATCH
+            ):
+                # A regular connection combined with SEMI can be an INNER join
+                # since records without matches can be dropped.
+                return JoinType.INNER
+            case ConnectionType.SEMI:
+                # A standalone SEMI connection just becomes a SEMI join.
+                return JoinType.SEMI
+            case (
+                ConnectionType.ANTI
+                | ConnectionType.NO_MATCH_SINGULAR
+                | ConnectionType.NO_MATCH_AGGREGATION
+                | ConnectionType.NO_MATCH_NDISTINCT
+            ):
+                # Any type of ANTI connection just becomes an ANTI join; the
+                # relational conversion step is responsible for converting any
+                # references to the child expressions/aggregations to NULL
+                # since they do not exist.
+                return JoinType.ANTI
+            case _:
+                raise ValueError(f"Connection type {self} does not have a join type")
+
+    def reconcile_connection_types(self, other: "ConnectionType") -> "ConnectionType":
+        """
+        Combines two connection types and returns the resulting connection
+        type used when they overlap.
+
+        Args:
+            `other`: the other connection type that is to be reconciled
+            with `self`.
+
+        Returns:
+            The connection type produced when `self` and `other` overlap.
+        """
+        # For duplicates, the connection type is unmodified
+        if self == other:
+            return self
+
+        # Determine whether the connection types are being reconciled into
+        # a combination that keeps matches or drops matches (has to be
+        # exactly one of these).
+        either_semi: bool = self.is_semi or other.is_semi
+        either_anti: bool = self.is_anti or other.is_anti
+        only_match: bool
+        if either_semi and not either_anti:
+            only_match = True
+        elif either_anti and not either_semi:
+            only_match = False
+        else:
+            raise ValueError(
+                f"Malformed or unsupported combination of connection types: {self} and {other}"
+            )
+
+        # Determine if the connection types are being resolved into a SINGULAR
+        # combination.
+        if self.is_singular_compatible and other.is_singular_compatible:
+            if only_match:
+                return ConnectionType.SINGULAR_ONLY_MATCH
+            else:
+                return ConnectionType.NO_MATCH_SINGULAR
+
+        # Determine if the connection types are being resolved into an
+        # AGGREGATION combination.
+        if self.is_aggregation_compatible and other.is_aggregation_compatible:
+            if only_match:
+                return ConnectionType.AGGREGATION_ONLY_MATCH
+            else:
+                return ConnectionType.NO_MATCH_AGGREGATION
+
+        # Determine if the connection types are being resolved into a NDISTINCT
+        # combination.
+        if self.is_ndistinct_compatible and other.is_ndistinct_compatible:
+            if only_match:
+                return ConnectionType.NDISTINCT_ONLY_MATCH
+            else:
+                return ConnectionType.NO_MATCH_NDISTINCT
+
+        # Every other combination is malformed
+        raise ValueError(
+            f"Malformed combination of connection types: {self} and {other}"
+        )
 
 
 @dataclass
@@ -536,11 +742,6 @@ class HybridConnection:
        completed before the child can be defined.
     - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
-    - `only_keep_matches`: a boolean to indicate whether the parent subtree's
-       records can be discarded if they have no matches in the child subtree.
-       If this is True, it means any LEFT joins can be replaced with INNER
-       joins. This occurs if, for example, a `SINGULAR` connection overlaps
-       with a `HAS` connection.
     """
 
     parent: "HybridTree"
@@ -548,7 +749,6 @@ class HybridConnection:
     connection_type: ConnectionType
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
-    only_keep_matches: bool
 
 
 class HybridTree:
@@ -669,13 +869,14 @@ class HybridTree:
             child that matches it).
         """
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}, False
+            self, child, connection_type, len(self.pipeline) - 1, {}
         )
         for idx, existing_connection in enumerate(self.children):
-            if (
-                existing_connection.connection_type == connection_type
-                and child == existing_connection.subtree
-            ):
+            if child == existing_connection.subtree:
+                connection_type = connection_type.reconcile_connection_types(
+                    existing_connection.connection_type
+                )
+                existing_connection.connection_type = connection_type
                 return idx
         self._children.append(connection)
         return len(self.children) - 1
@@ -783,6 +984,78 @@ class HybridTranslator:
             )
         return join_keys
 
+    @staticmethod
+    def identify_connection_types(
+        expr: PyDoughExpressionAST,
+        child_idx: int,
+        reference_types: set[ConnectionType],
+        inside_aggregation: bool = False,
+    ) -> None:
+        """
+        Recursively identifies what types ways a child collection is referenced
+        by its parent context.
+
+        Args:
+            `expr`: the expression being recursively checked for references
+            to the child collection.
+            `child_idx`: the index of the child that is being searched for
+            references to it.
+            `reference_types`: the set of known connection types that the
+            are used when referencing the child; the function should mutate
+            this set if it finds any new connections.
+            `inside_aggregation`: True if `expr` is inside of a call to an
+            aggregation function.
+        """
+        match expr:
+            # If `expr` is a reference to the child in question, add
+            # a reference that is either singular or aggregation depending
+            # on the `inside_aggregation` argument
+            case ChildReferenceExpression() if expr.child_idx == child_idx:
+                reference_types.add(
+                    ConnectionType.AGGREGATION
+                    if inside_aggregation
+                    else ConnectionType.SINGULAR
+                )
+            case ExpressionFunctionCall():
+                # If `expr` is a `HAS` call on the child in question, add a
+                # semi-join connection.
+                if expr.operator == pydop.HAS:
+                    arg = expr.args[0]
+                    assert isinstance(arg, ChildReferenceCollection)
+                    if arg.child_idx == child_idx:
+                        reference_types.add(ConnectionType.SEMI)
+                # If `expr` is a `HASNOT` call on the child in question, add a
+                # anti-join connection.
+                elif expr.operator == pydop.HASNOT:
+                    arg = expr.args[0]
+                    assert isinstance(arg, ChildReferenceCollection)
+                    if arg.child_idx == child_idx:
+                        reference_types.add(ConnectionType.ANTI)
+                # Otherwise, mutate `reference_types` based on the arguments
+                # to the function call.
+                else:
+                    for arg in expr.args:
+                        if isinstance(arg, ChildReferenceCollection):
+                            # If the argument is a refernece to a child,
+                            # collection, e.g. `COUNT(X)`, treat as an
+                            # aggregation reference if it refers to the child
+                            # in question.
+                            if arg.child_idx == child_idx:
+                                reference_types.add(ConnectionType.AGGREGATION)
+                        else:
+                            # Otherwise, recursively check the arguments to the
+                            # function, promoting `inside_aggregation` to True
+                            # if the function is an aggfunc.
+                            assert isinstance(arg, PyDoughExpressionAST)
+                            inside_aggregation = (
+                                inside_aggregation or expr.operator.is_aggregation
+                            )
+                            HybridTranslator.identify_connection_types(
+                                arg, child_idx, reference_types, inside_aggregation
+                            )
+            case _:
+                return
+
     def populate_children(
         self,
         hybrid: HybridTree,
@@ -809,14 +1082,29 @@ class HybridTranslator:
         """
         for child_idx, child in enumerate(child_operator.children):
             subtree: HybridTree = self.make_hybrid_tree(child)
-            connection_type: ConnectionType
-            if child.is_singular(child_operator.starting_predecessor):
-                connection_type = ConnectionType.SINGULAR
-            else:
-                # TODO: parse out the finer differences in aggregation types
-                # for NDISTINCT, HAS, and HASNOT, versus just general
-                # aggregation.
-                connection_type = ConnectionType.AGGREGATION
+            reference_types: set[ConnectionType] = set()
+            match child_operator:
+                case Where():
+                    self.identify_connection_types(
+                        child_operator.condition, child_idx, reference_types
+                    )
+                case OrderBy():
+                    for col in child_operator.collation:
+                        self.identify_connection_types(
+                            col.expr, child_idx, reference_types
+                        )
+                case Calc():
+                    for expr in child_operator.calc_term_values.values():
+                        self.identify_connection_types(expr, child_idx, reference_types)
+                case PartitionBy():
+                    reference_types.add(ConnectionType.AGGREGATION)
+            if len(reference_types) == 0:
+                raise ValueError(
+                    f"Bad call to populate_children: child {child_idx} of {child_operator} is never used"
+                )
+            connection_type: ConnectionType = reference_types.pop()
+            for con_typ in reference_types:
+                connection_type = connection_type.reconcile_connection_types(con_typ)
             child_idx_mapping[child_idx] = hybrid.add_child(subtree, connection_type)
 
     def make_hybrid_agg_expr(
@@ -1030,6 +1318,40 @@ class HybridTranslator:
         joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
         return self.postprocess_agg_output(count_call, result_ref, joins_can_nullify)
 
+    def handle_has_hasnot(
+        self,
+        hybrid: HybridTree,
+        expr: ExpressionFunctionCall,
+        child_ref_mapping: dict[int, int],
+    ) -> HybridExpr:
+        """
+        Handler function for translating a `HAS` or `HASNOT` expression by
+        mutating the referenced HybridConnection so it enforces that predicate,
+        then returning an expression indicating that the condition has been
+        met.
+        """
+        assert expr.operator in (
+            pydop.HAS,
+            pydop.HASNOT,
+        ), f"Malformed call to handle_has_hasnot: {expr}"
+        assert len(expr.args) == 1, f"Malformed call to handle_has_hasnot: {expr}"
+        collection_arg = expr.args[0]
+        assert isinstance(
+            collection_arg, ChildReferenceCollection
+        ), f"Malformed call to handle_has_hasnot: {expr}"
+        # Reconcile the existing connection type with either SEMI or ANTI
+        child_idx: int = child_ref_mapping[collection_arg.child_idx]
+        child_connection: HybridConnection = hybrid.children[child_idx]
+        new_conn_type: ConnectionType = (
+            ConnectionType.SEMI if expr.operator == pydop.HAS else ConnectionType.ANTI
+        )
+        child_connection.connection_type = (
+            child_connection.connection_type.reconcile_connection_types(new_conn_type)
+        )
+        # Since the connection has been mutated to be a semi/anti join, the
+        # has / hasnot condition is now known to be true.
+        return HybridLiteralExpr(Literal(True, BooleanType()))
+
     def make_hybrid_expr(
         self,
         hybrid: HybridTree,
@@ -1139,6 +1461,10 @@ class HybridTranslator:
                         # TODO: handle NDISTINCT
                         if expr.operator == pydop.COUNT:
                             return self.handle_collection_count(
+                                hybrid, expr, child_ref_mapping
+                            )
+                        elif expr.operator in (pydop.HAS, pydop.HASNOT):
+                            return self.handle_has_hasnot(
                                 hybrid, expr, child_ref_mapping
                             )
                         else:

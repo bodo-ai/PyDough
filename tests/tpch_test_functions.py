@@ -115,7 +115,7 @@ def impl_tpch_q4():
     selected_orders = Orders.WHERE(
         (order_date >= datetime.date(1993, 7, 1))
         & (order_date < datetime.date(1993, 10, 1))
-        & (COUNT(selected_lines) > 0)
+        & HAS(selected_lines)
     )
     return PARTITION(selected_orders, name="o", by=order_priority)(
         order_priority,
@@ -462,7 +462,7 @@ def impl_tpch_q20():
     return Suppliers(
         s_name=name,
         s_address=address,
-    ).WHERE((nation.name == "CANADA") & (COUNT(selected_part_supplied) > 0))
+    ).WHERE((nation.name == "CANADA") & HAS(selected_part_supplied))
 
 
 def impl_tpch_q21():
@@ -473,8 +473,8 @@ def impl_tpch_q21():
     different_supplier = supplier_key != BACK(2).supplier_key
     waiting_entries = lines.WHERE(date_check).order.WHERE(
         (order_status == "F")
-        & (COUNT(lines.WHERE(different_supplier)) > 0)
-        & (COUNT(lines.WHERE(different_supplier & date_check)) == 0)
+        & HAS(lines.WHERE(different_supplier))
+        & HASNOT(lines.WHERE(different_supplier & date_check))
     )
     return Suppliers.WHERE(nation.name == "SAUDI ARABIA")(
         s_name=name,
@@ -489,17 +489,15 @@ def impl_tpch_q22():
     """
     PyDough implementation of TPCH Q22.
     """
-    cust_info = Customers(cntry_code=phone[:2]).WHERE(
-        ISIN(cntry_code, ("13", "31", "23", "29", "30", "18", "17"))
-        & (COUNT(orders) == 0)
-    )
     selected_customers = Customers(cntry_code=phone[:2]).WHERE(
-        ISIN(cntry_code, ("13", "31", "23", "29", "30", "18", "17"))
-        & (COUNT(orders) == 0)
-        & (acctbal > BACK(1).avg_balance)
+        ISIN(cntry_code, ("13", "31", "23", "29", "30", "18", "17")) & HASNOT(orders)
     )
-    return TPCH(avg_balance=AVG(cust_info.WHERE(acctbal > 0.0).acctbal)).PARTITION(
-        selected_customers, name="custs", by=cntry_code
+    return TPCH(
+        avg_balance=AVG(selected_customers.WHERE(acctbal > 0.0).acctbal)
+    ).PARTITION(
+        selected_customers.WHERE(acctbal > BACK(1).avg_balance),
+        name="custs",
+        by=cntry_code,
     )(
         cntry_code,
         num_custs=COUNT(custs),
