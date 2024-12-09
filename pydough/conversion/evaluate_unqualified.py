@@ -1,0 +1,76 @@
+"""
+This file maintains the relevant code that converts an unqualified tree
+into an actual "evaluated" format. This is effectively the "end-to-end"
+translation because the unqualified tree is the initial representation
+of the code and depending on API being used, the final evaluated output
+is either SQL text or the actual result of the code execution.
+"""
+
+import pydough
+from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseContext
+from pydough.metadata import GraphMetadata
+from pydough.pydough_ast import PyDoughCollectionAST
+from pydough.relational import RelationalRoot
+from pydough.sqlglot import convert_relation_to_sql
+from pydough.unqualified import UnqualifiedNode, qualify_node
+
+from .relational_converter import convert_ast_to_relational
+
+
+def _load_session_info(
+    **kwargs,
+) -> tuple[GraphMetadata, PyDoughConfigs, DatabaseContext]:
+    """
+    Load the session information from the active session unless it is found
+    in the keyword arguments.
+
+    Args:
+        **kwargs: The keyword arguments to load the session information from.
+
+    Returns:
+        tuple[PyDoughConfigs, DatabaseContext]: The configuration and Database
+            context to use for translations.
+    """
+    metadata: GraphMetadata
+    if "metadata" in kwargs:
+        metadata = kwargs.pop("metadata")
+    else:
+        assert pydough.active_session.metadata is not None
+        metadata = pydough.active_session.metadata
+    config: PyDoughConfigs
+    if "config" in kwargs:
+        config = kwargs.pop("config")
+    else:
+        config = pydough.active_session.config
+    database: DatabaseContext
+    if "database" in kwargs:
+        database = kwargs.pop("database")
+    else:
+        database = pydough.active_session.database
+    assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
+    return metadata, config, database
+
+
+def to_sql(node: UnqualifiedNode, **kwargs) -> str:
+    """
+    Convert the given unqualified tree to a SQL string.
+
+    Args:
+        node (UnqualifiedNode): The node to convert to SQL.
+        **kwargs: Additional arguments to pass to the conversion for testing.
+            From a user perspective these values should always be derived from
+            the active session, but to allow a simple + extensible testing
+            infrastructure in the future, any of these can be passed in using
+            the name of the field in session.py.
+
+    Returns:
+        str: The SQL string corresponding to the unqualified query.
+    """
+    graph: GraphMetadata
+    config: PyDoughConfigs
+    database: DatabaseContext
+    graph, config, database = _load_session_info(**kwargs)
+    qualified: PyDoughCollectionAST = qualify_node(node, graph)
+    relational: RelationalRoot = convert_ast_to_relational(qualified, config)
+    return convert_relation_to_sql(relational, database.dialect)
