@@ -244,11 +244,14 @@ def sqlite_tpch_db(sqlite_tpch_db_path: str) -> sqlite3.Connection:
     """
     Download the TPCH data and return a connection to the SQLite database.
     """
-    return sqlite3.connect(sqlite_tpch_db_path)
+    # Ensure that the database is attached as 'tpch` instead of `main`
+    connection: sqlite3.Connection = sqlite3.connect(":memory:")
+    connection.execute(f"attach database '{sqlite_tpch_db_path}' as tpch")
+    return connection
 
 
 @pytest.fixture
-def sqlite_tpch_db_context(sqlite_tpch_db):
+def sqlite_tpch_db_context(sqlite_tpch_db_path: str, sqlite_tpch_db) -> DatabaseContext:
     """
     Return a DatabaseContext for the SQLite TPCH database.
     """

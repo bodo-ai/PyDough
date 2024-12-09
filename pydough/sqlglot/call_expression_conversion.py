@@ -95,7 +95,7 @@ def convert_startswith(
     """
     column: SQLGlotExpression = arguments[0]
     pattern: SQLGlotExpression = convert_concat(
-        [sqlglot_expressions.convert("%"), arguments[1]],
+        [arguments[1], sqlglot_expressions.convert("%")],
         dialect,
     )
     return convert_like([column, pattern], dialect)
@@ -119,7 +119,7 @@ def convert_endswith(
     """
     column: SQLGlotExpression = arguments[0]
     pattern: SQLGlotExpression = convert_concat(
-        [arguments[1], sqlglot_expressions.convert("%")],
+        [sqlglot_expressions.convert("%"), arguments[1]],
         dialect,
     )
     return convert_like([column, pattern], dialect)
@@ -197,8 +197,28 @@ def convert_year(
     column: SQLGlotExpression = arguments[0]
     if isinstance(dialect, SQLiteDialect):
         return sqlglot_expressions.Cast(
-            this=sqlglot_expressions.TimeToStr(this=column, format="%Y"),
+            this=sqlglot_expressions.TimeToStr(this=column, format="'%Y'"),
             to=sqlglot_expressions.DataType(this=sqlglot_expressions.DataType.Type.INT),
         )
     else:
         return sqlglot_expressions.Year(this=column)
+
+
+def convert_ndistinct(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
+    """
+    Convert a NDISTINCT call expression to a SQLGlot expression.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality
+            of NDISTINCT.
+    """
+    column: SQLGlotExpression = arguments[0]
+    return sqlglot_expressions.Count(
+        this=sqlglot_expressions.Distinct(expressions=[column])
+    )
