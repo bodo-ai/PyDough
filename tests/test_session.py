@@ -13,11 +13,11 @@ we replace the active session with a new default session.
 """
 
 import pandas as pd
+import pytest
 
 import pydough
-from pydough.configs import PyDoughConfigs, PyDoughSession
+from pydough.configs import ConfigProperty, PyDoughConfigs, PyDoughSession
 from pydough.database_connectors import (
-    DatabaseConnection,
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
@@ -26,23 +26,28 @@ from pydough.database_connectors import (
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 
 
-def test_defaults() -> None:
+@pytest.mark.parametrize(
+    "session",
+    [
+        pytest.param(PyDoughSession(), id="newSession"),
+        pytest.param(pydough.active_session, id="activeSession"),
+    ],
+)
+def test_defaults(session: PyDoughSession) -> None:
     """
     Tests that a sessions defaults are set correctly.
     """
-    session: PyDoughSession = PyDoughSession()
-    sessions: list[PyDoughSession] = [session, pydough.active_session]
-    for session in sessions:
-        assert session.metadata is None
-        assert session.config is not None
-        default_config: PyDoughConfigs = PyDoughConfigs()
-        # TODO: Add an API to iterate and check all of the properties
-        # match the defaults.
-        assert session.config.sum_default_zero is default_config.sum_default_zero
-        assert session.config.avg_default_zero is default_config.avg_default_zero
-        assert session.database is not None
-        assert session.database.connection is empty_connection
-        assert session.database.dialect is DatabaseDialect.ANSI
+    assert session.metadata is None
+    assert session.config is not None
+    default_config: PyDoughConfigs = PyDoughConfigs()
+    for key, value in PyDoughConfigs.__dict__.items():
+        if isinstance(value, ConfigProperty):
+            assert getattr(session.config, key) == getattr(
+                default_config, key
+            ), f"Configuration value {key} doesn't match the default value."
+    assert session.database is not None
+    assert session.database.connection is empty_connection
+    assert session.database.dialect is DatabaseDialect.ANSI
 
 
 def test_setting_config() -> None:
@@ -96,8 +101,6 @@ def test_load_metadata_graph(sample_graph_path: str, sample_graph_names: str) ->
     )
     assert graph is session.metadata
     assert graph.name == sample_graph_names
-    assert graph.path == sample_graph_names
-    assert graph.components == [sample_graph_names]
 
 
 # TODO: Add a test that we can generate SQL using a session's default.
@@ -114,10 +117,5 @@ def test_connect_sqlite_database() -> None:
     assert database is session.database
     assert database.connection is not empty_connection
     assert database.dialect is DatabaseDialect.SQLITE
-    connection_paths: list[DatabaseConnection] = [
-        session.database.connection,
-        database.connection,
-    ]
-    for connection in connection_paths:
-        result: pd.DataFrame = connection.execute_query_df("Select 1 as A")
-        pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))
+    result: pd.DataFrame = session.database.connection.execute_query_df("Select 1 as A")
+    pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))

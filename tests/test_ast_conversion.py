@@ -12,6 +12,7 @@ from test_utils import (
     FunctionInfo,
     LiteralInfo,
     OrderInfo,
+    PartitionInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
@@ -900,6 +901,420 @@ ROOT(columns=[('part_name', part_name), ('is_above_avg', is_above_avg)], orderin
             ),
             id="aggregate_mixed_levels_advanced",
             marks=pytest.mark.skip("TODO"),
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("p")],
+                    part_type=ReferenceInfo("part_type"),
+                    num_parts=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                    avg_price=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('part_type', part_type), ('num_parts', num_parts), ('avg_price', avg_price)], orderings=[])
+ PROJECT(columns={'avg_price': agg_0, 'num_parts': DEFAULT_TO(agg_1, 0:int64), 'part_type': part_type})
+  AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
+   SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="agg_parts_by_type_simple",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Orders")
+                    ** CalcInfo(
+                        [],
+                        year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
+                        month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
+                    ),
+                    "o",
+                    [
+                        ChildReferenceExpressionInfo("year", 0),
+                        ChildReferenceExpressionInfo("month", 0),
+                    ],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("o")],
+                    year=ReferenceInfo("year"),
+                    month=ReferenceInfo("month"),
+                    total_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('year', year), ('month', month), ('total_orders', total_orders)], orderings=[])
+ PROJECT(columns={'month': month, 'total_orders': DEFAULT_TO(agg_0, 0:int64), 'year': year})
+  AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_0': COUNT()})
+   PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+    SCAN(table=tpch.ORDER, columns={'order_date': o_orderdate})
+""",
+            ),
+            id="agg_orders_by_year_month_basic",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Orders")
+                    ** CalcInfo(
+                        [],
+                        year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
+                        month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
+                    ),
+                    "o",
+                    [
+                        ChildReferenceExpressionInfo("year", 0),
+                        ChildReferenceExpressionInfo("month", 0),
+                    ],
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("o"),
+                        SubCollectionInfo("o")
+                        ** WhereInfo(
+                            [
+                                SubCollectionInfo("customer")
+                                ** SubCollectionInfo("nation")
+                                ** SubCollectionInfo("region")
+                            ],
+                            FunctionInfo(
+                                "EQU",
+                                [
+                                    ChildReferenceExpressionInfo("name", 0),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        ),
+                    ],
+                    year=ReferenceInfo("year"),
+                    month=ReferenceInfo("month"),
+                    num_european_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    total_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(1)]
+                    ),
+                ),
+                """
+ROOT(columns=[('year', year), ('month', month), ('num_european_orders', num_european_orders), ('total_orders', total_orders)], orderings=[])
+ PROJECT(columns={'month': month, 'num_european_orders': DEFAULT_TO(agg_0, 0:int64), 'total_orders': DEFAULT_TO(agg_1, 0:int64), 'year': year})
+  JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'month': t0.month, 'year': t0.year})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_0': COUNT()})
+    PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+     SCAN(table=tpch.ORDER, columns={'order_date': o_orderdate})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_1': COUNT()})
+    FILTER(condition=name_6 == 'ASIA':string, columns={'month': month, 'year': year})
+     JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'month': t0.month, 'name_6': t1.name_6, 'year': t0.year})
+      PROJECT(columns={'customer_key': customer_key, 'month': MONTH(order_date), 'year': YEAR(order_date)})
+       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'order_date': o_orderdate})
+      JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_6': t1.name})
+       JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="agg_orders_by_year_month_vs_europe",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Orders")
+                    ** CalcInfo(
+                        [],
+                        year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
+                        month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
+                    ),
+                    "o",
+                    [
+                        ChildReferenceExpressionInfo("year", 0),
+                        ChildReferenceExpressionInfo("month", 0),
+                    ],
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("o")
+                        ** WhereInfo(
+                            [
+                                SubCollectionInfo("customer")
+                                ** SubCollectionInfo("nation")
+                                ** SubCollectionInfo("region")
+                            ],
+                            FunctionInfo(
+                                "EQU",
+                                [
+                                    ChildReferenceExpressionInfo("name", 0),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        ),
+                    ],
+                    year=ReferenceInfo("year"),
+                    month=ReferenceInfo("month"),
+                    num_european_orders=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('year', year), ('month', month), ('num_european_orders', num_european_orders)], orderings=[])
+ PROJECT(columns={'month': month, 'num_european_orders': DEFAULT_TO(agg_0, 0:int64), 'year': year})
+  JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t1.agg_0, 'month': t0.month, 'year': t0.year})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={})
+    PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+     SCAN(table=tpch.ORDER, columns={'order_date': o_orderdate})
+   AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_0': COUNT()})
+    FILTER(condition=name_6 == 'ASIA':string, columns={'month': month, 'year': year})
+     JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'month': t0.month, 'name_6': t1.name_6, 'year': t0.year})
+      PROJECT(columns={'customer_key': customer_key, 'month': MONTH(order_date), 'year': YEAR(order_date)})
+       SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'order_date': o_orderdate})
+      JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_6': t1.name})
+       JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="agg_orders_by_year_month_jjust_europe",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Nations")
+                    ** SubCollectionInfo("customers")
+                    ** SubCollectionInfo("orders")
+                    ** SubCollectionInfo("lines")
+                    ** SubCollectionInfo("part_and_supplier")
+                    ** SubCollectionInfo("supplier")
+                    ** SubCollectionInfo("nation")
+                    ** CalcInfo(
+                        [],
+                        year=FunctionInfo(
+                            "YEAR", [BackReferenceExpressionInfo("order_date", 4)]
+                        ),
+                        customer_nation=BackReferenceExpressionInfo("name", 6),
+                        supplier_nation=ReferenceInfo("name"),
+                        value=BackReferenceExpressionInfo("extended_price", 3),
+                    ),
+                    "combos",
+                    [
+                        ChildReferenceExpressionInfo("year", 0),
+                        ChildReferenceExpressionInfo("customer_nation", 0),
+                        ChildReferenceExpressionInfo("supplier_nation", 0),
+                    ],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("combos")],
+                    year=ReferenceInfo("year"),
+                    customer_nation=ReferenceInfo("customer_nation"),
+                    supplier_nation=ReferenceInfo("supplier_nation"),
+                    num_occurrences=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    total_value=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("value", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('year', year), ('customer_nation', customer_nation), ('supplier_nation', supplier_nation), ('num_occurrences', num_occurrences), ('total_value', total_value)], orderings=[])
+ PROJECT(columns={'customer_nation': customer_nation, 'num_occurrences': DEFAULT_TO(agg_0, 0:int64), 'supplier_nation': supplier_nation, 'total_value': DEFAULT_TO(agg_1, 0:int64), 'year': year})
+  AGGREGATE(keys={'customer_nation': customer_nation, 'supplier_nation': supplier_nation, 'year': year}, aggregations={'agg_0': COUNT(), 'agg_1': SUM(value)})
+   PROJECT(columns={'customer_nation': name, 'supplier_nation': name_18, 'value': extended_price, 'year': YEAR(order_date)})
+    JOIN(conditions=[t0.nation_key_14 == t1.key], types=['inner'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'name_18': t1.name, 'order_date': t0.order_date})
+     JOIN(conditions=[t0.supplier_key_9 == t1.key], types=['inner'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'nation_key_14': t1.nation_key, 'order_date': t0.order_date})
+      JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['inner'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'order_date': t0.order_date, 'supplier_key_9': t1.supplier_key})
+       JOIN(conditions=[t0.key_5 == t1.order_key], types=['inner'], columns={'extended_price': t1.extended_price, 'name': t0.name, 'order_date': t0.order_date, 'part_key': t1.part_key, 'supplier_key': t1.supplier_key})
+        JOIN(conditions=[t0.key_2 == t1.customer_key], types=['inner'], columns={'key_5': t1.key, 'name': t0.name, 'order_date': t1.order_date})
+         JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name})
+          SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+         SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+        SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+""",
+            ),
+            id="count_cust_supplier_nation_combos",
+        ),
+        pytest.param(
+            (
+                CalcInfo(
+                    [TableCollectionInfo("Parts")],
+                    total_num_parts=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    global_avg_price=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("p")],
+                    part_type=ReferenceInfo("part_type"),
+                    percentage_of_parts=FunctionInfo(
+                        "DIV",
+                        [
+                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                            BackReferenceExpressionInfo("total_num_parts", 1),
+                        ],
+                    ),
+                    avg_price=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** WhereInfo(
+                    [],
+                    FunctionInfo(
+                        "GEQ",
+                        [
+                            ReferenceInfo("avg_price"),
+                            BackReferenceExpressionInfo("global_avg_price", 1),
+                        ],
+                    ),
+                ),
+                """
+ROOT(columns=[('part_type', part_type), ('percentage_of_parts', percentage_of_parts), ('avg_price', avg_price)], orderings=[])
+ FILTER(condition=avg_price >= global_avg_price, columns={'avg_price': avg_price, 'part_type': part_type, 'percentage_of_parts': percentage_of_parts})
+  PROJECT(columns={'avg_price': agg_2, 'global_avg_price': global_avg_price, 'part_type': part_type, 'percentage_of_parts': DEFAULT_TO(agg_3, 0:int64) / total_num_parts})
+   JOIN(conditions=[True:bool], types=['left'], columns={'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'global_avg_price': t0.global_avg_price, 'part_type': t1.part_type, 'total_num_parts': t0.total_num_parts})
+    PROJECT(columns={'global_avg_price': agg_0, 'total_num_parts': agg_1})
+     AGGREGATE(keys={}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
+      SCAN(table=tpch.PART, columns={'retail_price': p_retailprice})
+    AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_2': AVG(retail_price), 'agg_3': COUNT()})
+     SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="agg_parts_by_type_backref_global",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** WhereInfo(
+                    [SubCollectionInfo("p")],
+                    FunctionInfo(
+                        "GRT",
+                        [
+                            FunctionInfo(
+                                "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                            ),
+                            LiteralInfo(27.5, Float64Type()),
+                        ],
+                    ),
+                )
+                ** SubCollectionInfo("p")
+                ** CalcInfo(
+                    [],
+                    part_name=ReferenceInfo("name"),
+                    part_type=ReferenceInfo("part_type"),
+                    retail_price=ReferenceInfo("retail_price"),
+                ),
+                """
+ROOT(columns=[('part_name', part_name), ('part_type', part_type), ('retail_price', retail_price)], orderings=[])
+ PROJECT(columns={'part_name': name, 'part_type': part_type_1, 'retail_price': retail_price})
+  JOIN(conditions=[t0.part_type == t1.part_type], types=['inner'], columns={'name': t1.name, 'part_type_1': t1.part_type, 'retail_price': t1.retail_price})
+   FILTER(condition=agg_0 > 27.5:float64, columns={'part_type': part_type})
+    AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price)})
+     SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+   SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="access_partition_child_after_filter",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("p")],
+                    avg_price=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** SubCollectionInfo("p")
+                ** CalcInfo(
+                    [],
+                    part_name=ReferenceInfo("name"),
+                    part_type=ReferenceInfo("part_type"),
+                    retail_price_versus_avg=FunctionInfo(
+                        "SUB",
+                        [
+                            ReferenceInfo("retail_price"),
+                            BackReferenceExpressionInfo("avg_price", 1),
+                        ],
+                    ),
+                ),
+                """
+ROOT(columns=[('part_name', part_name), ('part_type', part_type), ('retail_price_versus_avg', retail_price_versus_avg)], orderings=[])
+ PROJECT(columns={'part_name': name, 'part_type': part_type_1, 'retail_price_versus_avg': retail_price - avg_price})
+  JOIN(conditions=[t0.part_type == t1.part_type], types=['inner'], columns={'avg_price': t0.avg_price, 'name': t1.name, 'part_type_1': t1.part_type, 'retail_price': t1.retail_price})
+   PROJECT(columns={'avg_price': agg_0, 'part_type': part_type})
+    AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price)})
+     SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+   SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="access_partition_child_backref_calc",
+        ),
+        pytest.param(
+            (
+                PartitionInfo(
+                    TableCollectionInfo("Parts"),
+                    "p",
+                    [ChildReferenceExpressionInfo("part_type", 0)],
+                )
+                ** CalcInfo(
+                    [SubCollectionInfo("p")],
+                    avg_price=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** SubCollectionInfo("p")
+                ** CalcInfo(
+                    [],
+                    part_name=ReferenceInfo("name"),
+                    part_type=ReferenceInfo("part_type"),
+                    retail_price=ReferenceInfo("retail_price"),
+                )
+                ** WhereInfo(
+                    [],
+                    FunctionInfo(
+                        "LET",
+                        [
+                            ReferenceInfo("retail_price"),
+                            BackReferenceExpressionInfo("avg_price", 1),
+                        ],
+                    ),
+                ),
+                """
+ROOT(columns=[('part_name', part_name), ('part_type', part_type), ('retail_price', retail_price)], orderings=[])
+ FILTER(condition=retail_price < avg_price, columns={'part_name': part_name, 'part_type': part_type, 'retail_price': retail_price})
+  PROJECT(columns={'avg_price': avg_price, 'part_name': name, 'part_type': part_type_1, 'retail_price': retail_price})
+   JOIN(conditions=[t0.part_type == t1.part_type], types=['inner'], columns={'avg_price': t0.avg_price, 'name': t1.name, 'part_type_1': t1.part_type, 'retail_price': t1.retail_price})
+    PROJECT(columns={'avg_price': agg_0, 'part_type': part_type})
+     AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price)})
+      SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
+    SCAN(table=tpch.PART, columns={'name': p_name, 'part_type': p_type, 'retail_price': p_retailprice})
+""",
+            ),
+            id="access_partition_child_filter_backref_filter",
         ),
         pytest.param(
             (

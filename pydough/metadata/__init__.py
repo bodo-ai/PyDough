@@ -13,6 +13,7 @@ __all__ = [
     "CartesianProductMetadata",
     "CompoundRelationshipMetadata",
     "SimpleTableMetadata",
+    "SubcollectionRelationshipMetadata",
 ]
 
 from .collections import CollectionMetadata, SimpleTableMetadata
@@ -24,5 +25,6 @@ from .properties import (
     CompoundRelationshipMetadata,
     PropertyMetadata,
     SimpleJoinMetadata,
+    SubcollectionRelationshipMetadata,
     TableColumnMetadata,
 )
