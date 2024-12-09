@@ -33,17 +33,45 @@ from test_qualification import (
 from test_utils import (
     graph_fetcher,
 )
+from tpch_outputs import (
+    tpch_q1_output,
+    tpch_q2_output,
+    tpch_q3_output,
+    tpch_q4_output,
+    tpch_q5_output,
+    tpch_q6_output,
+    tpch_q7_output,
+    tpch_q8_output,
+    tpch_q9_output,
+    tpch_q10_output,
+    tpch_q11_output,
+    tpch_q12_output,
+    tpch_q13_output,
+    tpch_q14_output,
+    tpch_q15_output,
+    tpch_q16_output,
+    tpch_q17_output,
+    tpch_q18_output,
+    tpch_q19_output,
+    tpch_q20_output,
+    tpch_q21_output,
+    tpch_q22_output,
+)
 
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
+from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import PyDoughCollectionAST
 from pydough.relational import RelationalRoot
+from pydough.sqlglot import execute_df
 from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
     qualify_node,
 )
+
+pytestmark = [pytest.mark.execute]
 
 
 @pytest.fixture(
@@ -59,6 +87,7 @@ ROOT(columns=[('l_returnflag', l_returnflag), ('l_linestatus', l_linestatus), ('
     FILTER(condition=ship_date <= datetime.date(1998, 12, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'quantity': quantity, 'return_flag': return_flag, 'status': status, 'tax': tax})
      SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'quantity': l_quantity, 'return_flag': l_returnflag, 'ship_date': l_shipdate, 'status': l_linestatus, 'tax': l_tax})
 """,
+                tpch_q1_output,
             ),
             id="tpch_q1",
         ),
@@ -98,6 +127,7 @@ ROOT(columns=[('s_acctbal', s_acctbal), ('s_name', s_name), ('n_name', n_name), 
           SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
          SCAN(table=tpch.PART, columns={'key': p_partkey, 'manufacturer': p_mfgr, 'part_type': p_type, 'size': p_size})
 """,
+                tpch_q2_output,
             ),
             id="tpch_q2",
         ),
@@ -118,6 +148,7 @@ ROOT(columns=[('l_orderkey', l_orderkey), ('revenue', revenue), ('o_orderdate', 
          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'mktsegment': c_mktsegment})
        SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'ship_date': l_shipdate})
 """,
+                tpch_q3_output,
             ),
             id="tpch_q3",
         ),
@@ -135,6 +166,7 @@ ROOT(columns=[('o_orderpriority', o_orderpriority), ('order_count', order_count)
       FILTER(condition=commit_date < receipt_date, columns={'order_key': order_key})
        SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate})
 """,
+                tpch_q4_output,
             ),
             id="tpch_q4",
         ),
@@ -143,6 +175,7 @@ ROOT(columns=[('o_orderpriority', o_orderpriority), ('order_count', order_count)
                 pydough_impl_tpch_q5,
                 """
 """,
+                tpch_q5_output,
             ),
             id="tpch_q5",
             marks=pytest.mark.skip("TODO: support correlated back references"),
@@ -158,6 +191,7 @@ ROOT(columns=[('revenue', revenue)], orderings=[])
     FILTER(condition=ship_date >= datetime.date(1994, 1, 1):date & ship_date < datetime.date(1995, 1, 1):date & discount >= 0.05:float64 & discount <= 0.07:float64 & quantity < 24:int64, columns={'discount': discount, 'extended_price': extended_price})
      SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'quantity': l_quantity, 'ship_date': l_shipdate})
 """,
+                tpch_q6_output,
             ),
             id="tpch_q6",
         ),
@@ -183,6 +217,7 @@ ROOT(columns=[('supp_nation', supp_nation), ('cust_nation', cust_nation), ('l_ye
          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
         SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
 """,
+                tpch_q7_output,
             ),
             id="tpch_q7",
         ),
@@ -215,6 +250,7 @@ ROOT(columns=[('o_year', o_year), ('mkt_share', mkt_share)], orderings=[])
        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
 """,
+                tpch_q8_output,
             ),
             id="tpch_q8",
         ),
@@ -241,6 +277,7 @@ ROOT(columns=[('nation', nation), ('o_year', o_year), ('amount', amount)], order
         SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'quantity': l_quantity, 'supplier_key': l_suppkey})
        SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_date': o_orderdate})
 """,
+                tpch_q9_output,
             ),
             id="tpch_q9",
         ),
@@ -264,6 +301,7 @@ ROOT(columns=[('c_custkey', c_custkey), ('c_name', c_name), ('revenue', revenue)
           SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'return_flag': l_returnflag})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
 """,
+                tpch_q10_output,
             ),
             id="tpch_q10",
         ),
@@ -295,6 +333,7 @@ ROOT(columns=[('ps_partkey', ps_partkey), ('value', value)], orderings=[(orderin
            SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
            SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
 """,
+                tpch_q11_output,
             ),
             id="tpch_q11",
         ),
@@ -312,6 +351,7 @@ ROOT(columns=[('l_shipmode', l_shipmode), ('high_line_count', high_line_count), 
        SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate, 'ship_date': l_shipdate, 'ship_mode': l_shipmode})
       SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_priority': o_orderpriority})
 """,
+                tpch_q12_output,
             ),
             id="tpch_q12",
         ),
@@ -339,6 +379,7 @@ ROOT(columns=[('c_count', c_count), ('custdist', custdist)], orderings=[(orderin
          FILTER(condition=NOT(LIKE(comment, '%special%requests%':string)), columns={'customer_key': customer_key})
           SCAN(table=tpch.ORDERS, columns={'comment': o_comment, 'customer_key': o_custkey})
 """,
+                tpch_q13_output,
             ),
             id="tpch_q13",
         ),
@@ -355,6 +396,7 @@ ROOT(columns=[('promo_revenue', promo_revenue)], orderings=[])
       SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'ship_date': l_shipdate})
      SCAN(table=tpch.PART, columns={'key': p_partkey, 'part_type': p_type})
 """,
+                tpch_q14_output,
             ),
             id="tpch_q14",
         ),
@@ -381,6 +423,7 @@ ROOT(columns=[('s_suppkey', s_suppkey), ('s_name', s_name), ('s_address', s_addr
       FILTER(condition=ship_date >= datetime.date(1996, 1, 1):date & ship_date < datetime.date(1996, 4, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'supplier_key': supplier_key})
        SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
 """,
+                tpch_q15_output,
             ),
             id="tpch_q15",
         ),
@@ -402,6 +445,7 @@ ROOT(columns=[('p_brand', p_brand), ('p_type', p_type), ('p_size', p_size), ('su
          SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
        SCAN(table=tpch.SUPPLIER, columns={'comment': s_comment, 'key': s_suppkey})
 """,
+                tpch_q16_output,
             ),
             id="tpch_q16",
         ),
@@ -422,6 +466,7 @@ ROOT(columns=[('avg_yearly', avg_yearly)], orderings=[])
         SCAN(table=tpch.LINEITEM, columns={'part_key': l_partkey, 'quantity': l_quantity})
      SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'part_key': l_partkey, 'quantity': l_quantity})
 """,
+                tpch_q17_output,
             ),
             id="tpch_q17",
         ),
@@ -441,6 +486,7 @@ ROOT(columns=[('c_name', c_name), ('c_custkey', c_custkey), ('o_orderkey', o_ord
       AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(quantity)})
        SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'quantity': l_quantity})
 """,
+                tpch_q18_output,
             ),
             id="tpch_q18",
         ),
@@ -456,6 +502,7 @@ ROOT(columns=[('revenue', revenue)], orderings=[])
      SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'quantity': l_quantity, 'ship_instruct': l_shipinstruct, 'ship_mode': l_shipmode})
      SCAN(table=tpch.PART, columns={'brand': p_brand, 'container': p_container, 'key': p_partkey, 'size': p_size})
 """,
+                tpch_q19_output,
             ),
             id="tpch_q19",
         ),
@@ -482,6 +529,7 @@ ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[(orderin
          FILTER(condition=ship_date >= datetime.date(1994, 1, 1):date & ship_date < datetime.date(1995, 1, 1):date, columns={'part_key': part_key, 'quantity': quantity})
           SCAN(table=tpch.LINEITEM, columns={'part_key': l_partkey, 'quantity': l_quantity, 'ship_date': l_shipdate})
 """,
+                tpch_q20_output,
             ),
             id="tpch_q20",
         ),
@@ -490,6 +538,7 @@ ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[(orderin
                 pydough_impl_tpch_q21,
                 """
 """,
+                tpch_q21_output,
             ),
             id="tpch_q21",
             marks=pytest.mark.skip("TODO: support correlated back references"),
@@ -499,6 +548,7 @@ ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[(orderin
                 pydough_impl_tpch_q22,
                 """
 """,
+                tpch_q22_output,
             ),
             id="tpch_q22",
             marks=pytest.mark.skip("TODO: support correlated back references"),
@@ -525,10 +575,11 @@ def pydough_pipeline_test_data(
 
 def test_pydough_pipeline(
     pydough_pipeline_test_data: tuple[
-        Callable[[UnqualifiedRoot], UnqualifiedNode], str
+        Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
     ],
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
+    sqlite_tpch_db_context: DatabaseContext,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
@@ -537,7 +588,7 @@ def test_pydough_pipeline(
     # Run the query through the stages from unqualified node to qualified node
     # to relational tree, and confirm the tree string matches the expected
     # structure.
-    unqualified_impl, relational_string = pydough_pipeline_test_data
+    unqualified_impl, relational_string, answer_impl = pydough_pipeline_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedRoot = UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = unqualified_impl(root)
@@ -546,3 +597,11 @@ def test_pydough_pipeline(
     assert (
         relational.to_tree_string() == relational_string.strip()
     ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+
+    # Run the relational tree through the execution and confirm that the output
+    # matches the expected DataFrame, without case sensitivity of column names.
+    result: pd.DataFrame = execute_df(relational, sqlite_tpch_db_context)
+    expected_result: pd.DataFrame = answer_impl()
+    result.columns = result.columns.str.lower()
+    expected_result.columns = expected_result.columns.str.lower()
+    pd.testing.assert_frame_equal(result, expected_result)

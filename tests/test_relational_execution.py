@@ -5,6 +5,7 @@ Simple tests to verify that SQL queries can be executed on a SQLite database.
 from typing import Any
 
 import pandas as pd
+import pytest
 from test_utils import make_relational_column_reference, make_relational_ordering
 
 from pydough.database_connectors import DatabaseContext
@@ -26,6 +27,8 @@ from pydough.relational import (
 )
 from pydough.sqlglot import execute_df
 from pydough.types import BooleanType, UnknownType
+
+pytestmark = [pytest.mark.execute]
 
 
 def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext) -> None:
