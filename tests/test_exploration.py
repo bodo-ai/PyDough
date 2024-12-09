@@ -9,48 +9,15 @@ from test_utils import graph_fetcher
 
 import pydough
 from pydough.metadata import (
-    CollectionMetadata,
     GraphMetadata,
-    PropertyMetadata,
 )
-
-
-def graph_info(
-    graph_name: str, collection_name: str, property_name: str, fetcher: graph_fetcher
-) -> str:
-    """ """
-    graph: GraphMetadata = fetcher(graph_name)
-    return pydough.explain_meta(graph)
-
-
-def collection_info(
-    graph_name: str, collection_name: str, property_name: str, fetcher: graph_fetcher
-) -> str:
-    """ """
-    graph: GraphMetadata = fetcher(graph_name)
-    collection = graph[collection_name]
-    assert isinstance(collection, CollectionMetadata)
-    return pydough.explain_meta(collection)
-
-
-def property_info(
-    graph_name: str, collection_name: str, property_name: str, fetcher: graph_fetcher
-) -> str:
-    """ """
-    graph: GraphMetadata = fetcher(graph_name)
-    collection = graph[collection_name]
-    assert isinstance(collection, CollectionMetadata)
-    property = collection[property_name]
-    assert isinstance(property, PropertyMetadata)
-    return pydough.explain_meta(property)
 
 
 @pytest.fixture(
     params=[
         pytest.param(
             (
-                ("Empty", "", ""),
-                graph_info,
+                ("Empty", None, None),
                 """
 PyDough graph: Empty
 Collections: graph contains no collections
@@ -60,8 +27,7 @@ Collections: graph contains no collections
         ),
         pytest.param(
             (
-                ("TPCH", "", ""),
-                graph_info,
+                ("TPCH", None, None),
                 """
 PyDough graph: TPCH
 Collections:
@@ -80,8 +46,7 @@ Call pydough.explain_meta(graph[collection_name]) to learn more about any of the
         ),
         pytest.param(
             (
-                ("TPCH", "Customers", ""),
-                collection_info,
+                ("TPCH", "Customers", None),
                 """
 PyDough collection: simple table collection 'Customers' in graph 'TPCH'
 Table path: tpch.CUSTOMER
@@ -106,8 +71,7 @@ Call pydough.explain_meta(graph['Customers'][property_name]) to learn more about
         ),
         pytest.param(
             (
-                ("TPCH", "Regions", ""),
-                collection_info,
+                ("TPCH", "Regions", None),
                 """
 PyDough collection: simple table collection 'Regions' in graph 'TPCH'
 Table path: tpch.REGION
@@ -129,8 +93,7 @@ Call pydough.explain_meta(graph['Regions'][property_name]) to learn more about a
         ),
         pytest.param(
             (
-                ("TPCH", "Lineitems", ""),
-                collection_info,
+                ("TPCH", "Lineitems", None),
                 """
 PyDough collection: simple table collection 'Lineitems' in graph 'TPCH'
 Table path: tpch.LINEITEM
@@ -165,8 +128,7 @@ Call pydough.explain_meta(graph['Lineitems'][property_name]) to learn more about
         ),
         pytest.param(
             (
-                ("TPCH", "PartSupp", ""),
-                collection_info,
+                ("TPCH", "PartSupp", None),
                 """
 PyDough collection: simple table collection 'PartSupp' in graph 'TPCH'
 Table path: tpch.PARTSUPP
@@ -189,7 +151,6 @@ Call pydough.explain_meta(graph['PartSupp'][property_name]) to learn more about 
         pytest.param(
             (
                 ("TPCH", "Regions", "key"),
-                property_info,
                 """
 PyDough property: table column property 'key' of simple table collection 'Regions' in graph 'TPCH'
 Column name: tpch.REGION.r_regionkey
@@ -201,7 +162,6 @@ Data type: int64
         pytest.param(
             (
                 ("TPCH", "Regions", "name"),
-                property_info,
                 """
 PyDough property: table column property 'name' of simple table collection 'Regions' in graph 'TPCH'
 Column name: tpch.REGION.r_name
@@ -213,7 +173,6 @@ Data type: string
         pytest.param(
             (
                 ("TPCH", "Regions", "comment"),
-                property_info,
                 """
 PyDough property: table column property 'comment' of simple table collection 'Regions' in graph 'TPCH'
 Column name: tpch.REGION.r_comment
@@ -225,7 +184,6 @@ Data type: string
         pytest.param(
             (
                 ("TPCH", "Regions", "nations"),
-                property_info,
                 """
 PyDough property: simple join property 'nations' of simple table collection 'Regions' in graph 'TPCH'
 Connects collection Regions to Nations
@@ -241,7 +199,6 @@ The subcollection relationship is defined by the following join conditions:
         pytest.param(
             (
                 ("TPCH", "Regions", "customers"),
-                property_info,
                 """
 PyDough property: compound property 'customers' of simple table collection 'Regions' in graph 'TPCH'
 Connects collection Regions to Customers
@@ -258,7 +215,6 @@ The following properties are inherited from Regions.nations:
         pytest.param(
             (
                 ("TPCH", "Regions", "suppliers"),
-                property_info,
                 """
 PyDough property: compound property 'suppliers' of simple table collection 'Regions' in graph 'TPCH'
 Connects collection Regions to Suppliers
@@ -275,7 +231,6 @@ The following properties are inherited from Regions.nations:
         pytest.param(
             (
                 ("TPCH", "Regions", "orders_shipped_to"),
-                property_info,
                 """
 PyDough property: compound property 'orders_shipped_to' of simple table collection 'Regions' in graph 'TPCH'
 Connects collection Regions to Orders
@@ -292,7 +247,6 @@ The following properties are inherited from Regions.customers:
         pytest.param(
             (
                 ("TPCH", "Regions", "lines_sourced_from"),
-                property_info,
                 """
 PyDough property: compound property 'lines_sourced_from' of simple table collection 'Regions' in graph 'TPCH'
 Connects collection Regions to Lineitems
@@ -312,7 +266,6 @@ The following properties are inherited from Regions.suppliers:
         pytest.param(
             (
                 ("TPCH", "PartSupp", "part"),
-                property_info,
                 """
 PyDough property: simple join property 'part' of simple table collection 'PartSupp' in graph 'TPCH'
 Connects collection PartSupp to Parts
@@ -328,7 +281,6 @@ The subcollection relationship is defined by the following join conditions:
         pytest.param(
             (
                 ("TPCH", "PartSupp", "supplier"),
-                property_info,
                 """
 PyDough property: simple join property 'supplier' of simple table collection 'PartSupp' in graph 'TPCH'
 Connects collection PartSupp to Suppliers
@@ -344,7 +296,6 @@ The subcollection relationship is defined by the following join conditions:
         pytest.param(
             (
                 ("TPCH", "PartSupp", "lines"),
-                property_info,
                 """
 PyDough property: simple join property 'lines' of simple table collection 'PartSupp' in graph 'TPCH'
 Connects collection PartSupp to Lineitems
@@ -361,7 +312,6 @@ The subcollection relationship is defined by the following join conditions:
         pytest.param(
             (
                 ("TPCH", "Suppliers", "nation"),
-                property_info,
                 """
 PyDough property: simple join property 'nation' of simple table collection 'Suppliers' in graph 'TPCH'
 Connects collection Suppliers to Nations
@@ -377,7 +327,6 @@ The subcollection relationship is defined by the following join conditions:
         pytest.param(
             (
                 ("TPCH", "Suppliers", "supply_records"),
-                property_info,
                 """
 PyDough property: simple join property 'supply_records' of simple table collection 'Suppliers' in graph 'TPCH'
 Connects collection Suppliers to PartSupp
@@ -393,7 +342,6 @@ The subcollection relationship is defined by the following join conditions:
         pytest.param(
             (
                 ("TPCH", "Suppliers", "parts_supplied"),
-                property_info,
                 """
 PyDough property: compound property 'parts_supplied' of simple table collection 'Suppliers' in graph 'TPCH'
 Connects collection Suppliers to Parts
@@ -413,7 +361,6 @@ The following properties are inherited from Suppliers.supply_records:
         pytest.param(
             (
                 ("TPCH", "Suppliers", "lines"),
-                property_info,
                 """
 PyDough property: simple join property 'lines' of simple table collection 'Suppliers' in graph 'TPCH'
 Connects collection Suppliers to Lineitems
@@ -429,7 +376,6 @@ The subcollection relationship is defined by the following join conditions:
         pytest.param(
             (
                 ("TPCH", "Suppliers", "region"),
-                property_info,
                 """
 PyDough property: compound property 'region' of simple table collection 'Suppliers' in graph 'TPCH'
 Connects collection Suppliers to Regions
@@ -445,28 +391,47 @@ The following properties are inherited from Suppliers.nation:
         ),
     ]
 )
-def graph_exploration_test_data(request) -> tuple[Callable[[graph_fetcher], str], str]:
+def metadata_exploration_test_data(
+    request,
+) -> tuple[Callable[[graph_fetcher], str], str]:
     """
-    TODO
+    Testing data used for `test_metadata_exploration`. Creates a function that
+    takes in a `graph_fetcher` instance and returns the result of calling
+    `pydough.explain_meta` on the requested information based on the input
+    tuple, as well as the expected output string. The input tuple is in one of
+    the following formats:
+    - `(graph_name, None, None)` -> get metadata for the graph
+    - `(graph_name, collection_name, None)` -> get metadata for a collection
+    - `(graph_name, collection_name, property_name)` -> get metadata for a
+    property
     """
-    args: tuple[str, str, str] = request.param[0]
-    test_impl: Callable[[str, str, str, graph_fetcher], str] = request.param[1]
-    refsol: str = request.param[2]
+    args: tuple[str, str | None, str | None] = request.param[0]
+    refsol: str = request.param[1]
+
+    graph_name: str = args[0]
+    collection_name: str | None = args[1]
+    property_name: str | None = args[2]
 
     def wrapped_test_impl(fetcher: graph_fetcher):
-        return test_impl(args[0], args[1], args[2], fetcher)
+        graph: GraphMetadata = fetcher(graph_name)
+        if collection_name is None:
+            return pydough.explain_meta(graph)
+        elif property_name is None:
+            return pydough.explain_meta(graph[collection_name])
+        else:
+            return pydough.explain_meta(graph[collection_name][property_name])
 
     return wrapped_test_impl, refsol.strip()
 
 
-def test_graph_exploration(
-    graph_exploration_test_data: tuple[Callable[[graph_fetcher], str], str],
+def test_metadata_exploration(
+    metadata_exploration_test_data: tuple[Callable[[graph_fetcher], str], str],
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
-    TODO
+    Verifies that `pydough.explain_meta` produces the expected strings.
     """
-    test_impl, answer = graph_exploration_test_data
+    test_impl, answer = metadata_exploration_test_data
     explanation_string: str = test_impl(get_sample_graph)
     assert (
         explanation_string == answer
