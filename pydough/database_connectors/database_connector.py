@@ -55,7 +55,11 @@ class DatabaseConnection:
             list[pt.Any]: A list of rows returned by the query.
         """
         cursor: sqlite3.Cursor = self._connection.cursor()
-        cursor.execute(sql)
+        try:
+            cursor.execute(sql)
+        except sqlite3.OperationalError as e:
+            print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
+            raise e
         column_names: list[str] = [description[0] for description in cursor.description]
         # No need to close the cursor, as its closed by del.
         # TODO: Cache the cursor?
