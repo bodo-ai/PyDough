@@ -915,6 +915,9 @@ class HybridTree:
         self._successor = successor
         successor._parent = self
         shifted_expr: HybridExpr | None
+        # Shift the aggregation keys and rhs of join keys back by 1 level to
+        # account for the fact that the successor must use the same aggregation
+        # and join keys as `self`, but they have now become backreferences.
         if self.agg_keys is not None:
             successor_agg_keys: list[HybridExpr] = []
             for key in self.agg_keys:
