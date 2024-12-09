@@ -232,8 +232,8 @@ def test_unqualified_to_string(
     a variable `answer` that is an `UnqualifiedNode` instance.
     """
     # Test with the strings that contain "_ROOT."
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    root: UnqualifiedNode = UnqualifiedRoot(graph)
+    graph_dict: dict[str, GraphMetadata] = {"_graph": get_sample_graph("TPCH")}
+    root: UnqualifiedNode = UnqualifiedRoot(graph_dict["_graph"])
     env: dict[str, object] = {"_ROOT": root}
     verify_pydough_code_exec_match_unqualified(pydough_str, global_ctx, env, answer_str)
 
@@ -248,13 +248,14 @@ def test_unqualified_to_string(
     new_code: str = ast.unparse(
         transform_code(
             "\n".join(altered_code),
-            graph,
+            graph_dict,
             set(global_ctx) | {"init_pydough_context"},
         )
     )
     new_code += "\nanswer = PYDOUGH_FUNC()"
-    breakpoint()
-    verify_pydough_code_exec_match_unqualified(new_code, global_ctx, {}, answer_str)
+    verify_pydough_code_exec_match_unqualified(
+        new_code, global_ctx | graph_dict, {}, answer_str
+    )
 
 
 @pytest.mark.parametrize(
