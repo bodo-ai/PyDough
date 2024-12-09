@@ -71,6 +71,8 @@ from pydough.unqualified import (
     qualify_node,
 )
 
+pytestmark = [pytest.mark.execute]
+
 
 @pytest.fixture(
     params=[

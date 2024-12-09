@@ -15,6 +15,8 @@ from pydough.database_connectors import DatabaseContext
 from pydough.relational import RelationalRoot
 from pydough.sqlglot import execute_df
 
+pytestmark = [pytest.mark.execute]
+
 
 @pytest.mark.parametrize(
     "root, output",
