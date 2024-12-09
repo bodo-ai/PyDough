@@ -44,6 +44,8 @@ __all__ = [
     "ISIN",
     "SLICE",
     "DEFAULT_TO",
+    "HAS",
+    "HASNOT",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -65,6 +67,8 @@ from .registered_expression_operators import (
     EQU,
     GEQ,
     GRT,
+    HAS,
+    HASNOT,
     IFF,
     ISIN,
     LENGTH,

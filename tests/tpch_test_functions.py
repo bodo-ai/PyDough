@@ -404,7 +404,7 @@ def impl_tpch_q19():
     PyDough implementation of TPCH Q19.
     """
     selected_lines = Lineitems.WHERE(
-        (shipmode in ("AIR", "AIR REG"))
+        (ISIN(ship_mode, ("AIR", "AIR REG")))
         & (ship_instruct == "DELIVER IN PERSON")
         & (part.size >= 1)
         & (

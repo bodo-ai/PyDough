@@ -470,7 +470,7 @@ def pydough_impl_tpch_q19(root: UnqualifiedNode) -> UnqualifiedNode:
     Creates an UnqualifiedNode for TPC-H query 19.
     """
     selected_lines = root.Lineitems.WHERE(
-        (root.shipmode in ("AIR", "AIR REG"))
+        (root.ISIN(root.ship_mode, ("AIR", "AIR REG")))
         & (root.ship_instruct == "DELIVER IN PERSON")
         & (root.part.size >= 1)
         & (
@@ -638,7 +638,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  ├─┬─ AccessChild\n"
             "  │ └─── PartitionChild[p]\n"
             "  ├─── PartitionChild[p]\n"
-            "  ├─── Where[((supplycost == BACK(1).best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15)]\n"
+            "  ├─── Where[(supplycost == BACK(1).best_cost) & ENDSWITH(part_type, 'BRASS') & (size == 15)]\n"
             "  ├─── Calc[s_acctbal=s_acctbal, s_name=s_name, n_name=n_name, p_partkey=key, p_mfgr=manufacturer, s_address=s_address, s_phone=s_phone, s_comment=s_comment]\n"
             "  └─── OrderBy[s_acctbal.DESC(na_pos='last'), n_name.ASC(na_pos='last'), s_name.ASC(na_pos='last'), p_partkey.ASC(na_pos='last')]",
             id="tpch-q2",
@@ -667,7 +667,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Partition[name='o', by=order_priority]\n"
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Orders]\n"
-            "│   └─┬─ Where[((order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1))) & (COUNT($1) > 0)]\n"
+            "│   └─┬─ Where[(order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1)) & (COUNT($1) > 0)]\n"
             "│     └─┬─ AccessChild\n"
             "│       ├─── SubCollection[lines]\n"
             "│       └─── Where[commit_date < receipt_date]\n"
@@ -704,7 +704,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "└─┬─ Calc[revenue=SUM($1.amt)]\n"
             "  └─┬─ AccessChild\n"
             "    ├─── TableCollection[Lineitems]\n"
-            "    ├─── Where[((((ship_date >= datetime.date(1994, 1, 1)) & (ship_date < datetime.date(1995, 1, 1))) & (discount > 0.05)) & (discount < 0.07)) & (quantity < 24)]\n"
+            "    ├─── Where[(ship_date >= datetime.date(1994, 1, 1)) & (ship_date < datetime.date(1995, 1, 1)) & (discount > 0.05) & (discount < 0.07) & (quantity < 24)]\n"
             "    └─── Calc[amt=extended_price * discount]",
             id="tpch-q6",
         ),
@@ -722,7 +722,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│   │   └─┬─ SubCollection[order]\n"
             "│   │     └─┬─ SubCollection[customer]\n"
             "│   │       └─── SubCollection[nation]\n"
-            "│   └─── Where[((ship_date >= datetime.date(1995, 1, 1)) & (ship_date <= datetime.date(1996, 12, 31))) & (((supp_nation == 'France') & (cust_nation == 'Germany')) | ((supp_nation == 'Germany') & (cust_nation == 'France')))]\n"
+            "│   └─── Where[(ship_date >= datetime.date(1995, 1, 1)) & (ship_date <= datetime.date(1996, 12, 31)) & (((supp_nation == 'France') & (cust_nation == 'Germany')) | ((supp_nation == 'Germany') & (cust_nation == 'France')))]\n"
             "├─┬─ Calc[supp_nation=supp_nation, cust_nation=cust_nation, l_year=l_year, revenue=SUM($1.volume)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
@@ -744,7 +744,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│         └─┬─ Calc[volume=extended_price * (1 - discount)]\n"
             "│           ├─── SubCollection[order]\n"
             "│           ├─── Calc[o_year=YEAR(order_date), volume=BACK(1).volume, brazil_volume=IFF(BACK(4).name == 'BRAZIL', BACK(1).volume, 0)]\n"
-            "│           └─┬─ Where[((order_date >= datetime.date(1995, 1, 1)) & (order_date <= datetime.date(1996, 12, 31))) & ($1.name == 'AMERICA')]\n"
+            "│           └─┬─ Where[(order_date >= datetime.date(1995, 1, 1)) & (order_date <= datetime.date(1996, 12, 31)) & ($1.name == 'AMERICA')]\n"
             "│             └─┬─ AccessChild\n"
             "│               └─┬─ SubCollection[customer]\n"
             "│                 └─┬─ SubCollection[nation]\n"
@@ -823,7 +823,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Partition[name='l', by=ship_mode]\n"
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Lineitems]\n"
-            "│   ├─── Where[(((((ship_mode == 'MAIL') | (ship_mode == 'SHIP')) & (ship_date < commit_date)) & (commit_date < receipt_date)) & (receipt_date >= datetime.date(1994, 1, 1))) & (receipt_date < datetime.date(1995, 1, 1))]\n"
+            "│   ├─── Where[((ship_mode == 'MAIL') | (ship_mode == 'SHIP')) & (ship_date < commit_date) & (commit_date < receipt_date) & (receipt_date >= datetime.date(1994, 1, 1)) & (receipt_date < datetime.date(1995, 1, 1))]\n"
             "│   └─┬─ Calc[is_high_priority=($1.order_priority == '1-URGENT') | ($1.order_priority == '2-HIGH')]\n"
             "│     └─┬─ AccessChild\n"
             "│       └─── SubCollection[order]\n"
@@ -885,7 +885,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Partition[name='ps', by=('p_brand', 'p_type', 'p_size')]\n"
             "│ └─┬─ AccessChild\n"
             "│   ├─── TableCollection[Parts]\n"
-            "│   └─┬─ Where[((brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%'))) & ISIN(size, [49:Int64Type(), 14:Int64Type(), 23:Int64Type(), 45:Int64Type(), 19:Int64Type(), 3:Int64Type(), 36:Int64Type(), 9:Int64Type()])]\n"
+            "│   └─┬─ Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49:Int64Type(), 14:Int64Type(), 23:Int64Type(), 45:Int64Type(), 19:Int64Type(), 3:Int64Type(), 36:Int64Type(), 9:Int64Type()])]\n"
             "│     ├─── SubCollection[supply_records]\n"
             "│     ├─── Calc[p_brand=BACK(1).brand, p_type=BACK(1).part_type, p_size=BACK(1).size, ps_suppkey=supplier_key]\n"
             "│     └─┬─ Where[NOT(LIKE($1.comment, '%Customer%Complaints%'))]\n"
@@ -929,7 +929,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "└─┬─ Calc[revenue=SUM($1.extended_price * (1 - $1.discount))]\n"
             "  └─┬─ AccessChild\n"
             "    ├─── TableCollection[Lineitems]\n"
-            "    └─┬─ Where[((True & (ship_instruct == 'DELIVER IN PERSON')) & ($1.size >= 1)) & ((((((($1.size < 5) & (quantity >= 1)) & (quantity <= 11)) & ISIN($1.container, ['SM CASE':StringType(), 'SM BOX':StringType(), 'SM PACK':StringType(), 'SM PKG':StringType()])) & ($1.brand == 'Brand#12')) | ((((($1.size < 10) & (quantity >= 10)) & (quantity <= 21)) & ISIN($1.container, ['MED CASE':StringType(), 'MED BOX':StringType(), 'MED PACK':StringType(), 'MED PKG':StringType()])) & ($1.brand == 'Brand#23'))) | ((((($1.size < 15) & (quantity >= 20)) & (quantity <= 31)) & ISIN($1.container, ['LG CASE':StringType(), 'LG BOX':StringType(), 'LG PACK':StringType(), 'LG PKG':StringType()])) & ($1.brand == 'Brand#34')))]\n"
+            "    └─┬─ Where[ISIN(ship_mode, ['AIR':StringType(), 'AIR REG':StringType()]) & (ship_instruct == 'DELIVER IN PERSON') & ($1.size >= 1) & (((($1.size < 5) & (quantity >= 1) & (quantity <= 11) & ISIN($1.container, ['SM CASE':StringType(), 'SM BOX':StringType(), 'SM PACK':StringType(), 'SM PKG':StringType()]) & ($1.brand == 'Brand#12')) | (($1.size < 10) & (quantity >= 10) & (quantity <= 21) & ISIN($1.container, ['MED CASE':StringType(), 'MED BOX':StringType(), 'MED PACK':StringType(), 'MED PKG':StringType()]) & ($1.brand == 'Brand#23'))) | (($1.size < 15) & (quantity >= 20) & (quantity <= 31) & ISIN($1.container, ['LG CASE':StringType(), 'LG BOX':StringType(), 'LG PACK':StringType(), 'LG PKG':StringType()]) & ($1.brand == 'Brand#34')))]\n"
             "      └─┬─ AccessChild\n"
             "        └─── SubCollection[part]",
             id="tpch-q19",
@@ -963,7 +963,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │   ├─── SubCollection[lines]\n"
             "  │   └─┬─ Where[receipt_date > commit_date]\n"
             "  │     ├─── SubCollection[order]\n"
-            "  │     └─┬─ Where[((order_status == 'F') & (COUNT($1) > 0)) & (COUNT($2) == 0)]\n"
+            "  │     └─┬─ Where[(order_status == 'F') & (COUNT($1) > 0) & (COUNT($2) == 0)]\n"
             "  │       ├─┬─ AccessChild\n"
             "  │       │ ├─── SubCollection[lines]\n"
             "  │       │ └─── Where[supplier_key != BACK(2).supplier_key]\n"
