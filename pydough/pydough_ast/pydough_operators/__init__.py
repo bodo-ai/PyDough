@@ -49,6 +49,8 @@ __all__ = [
     "BinOp",
     "BinaryOperator",
     "DEFAULT_TO",
+    "HAS",
+    "HASNOT",
 ]
 
 from .expression_operators import (
@@ -67,6 +69,8 @@ from .expression_operators import (
     EQU,
     GEQ,
     GRT,
+    HAS,
+    HASNOT,
     IFF,
     ISIN,
     LENGTH,

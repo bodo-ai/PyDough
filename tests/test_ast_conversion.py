@@ -2241,6 +2241,610 @@ ROOT(columns=[('ordering_0', ordering_0_0), ('ordering_1', ordering_1_0), ('orde
             ),
             id="ordering_name_overload",
         ),
+        pytest.param(
+            (
+                TableCollectionInfo("Customers")
+                ** WhereInfo(
+                    [SubCollectionInfo("orders")],
+                    FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [],
+                    name=ReferenceInfo("name"),
+                ),
+                """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool, columns={'name': name})
+  JOIN(conditions=[t0.key == t1.customer_key], types=['semi'], columns={'name': t0.name})
+   SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'name': c_name})
+   SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey})
+""",
+            ),
+            id="simple_semi_1",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "LET",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [],
+                    name=ReferenceInfo("name"),
+                ),
+                """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool, columns={'name': name})
+  JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={'name': t0.name})
+   SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+   FILTER(condition=size < 10:int64, columns={'supplier_key': supplier_key})
+    JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'size': t1.size, 'supplier_key': t0.supplier_key})
+     SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+     SCAN(table=tpch.PART, columns={'key': p_partkey, 'size': p_size})
+""",
+            ),
+            id="simple_semi_2",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Customers")
+                ** WhereInfo(
+                    [SubCollectionInfo("orders")],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [],
+                    name=ReferenceInfo("name"),
+                ),
+                """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool, columns={'name': name})
+  JOIN(conditions=[t0.key == t1.customer_key], types=['anti'], columns={'name': t0.name})
+   SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'name': c_name})
+   SCAN(table=tpch.ORDER, columns={'customer_key': o_custkey})
+""",
+            ),
+            id="simple_anti_1",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "LET",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [],
+                    name=ReferenceInfo("name"),
+                ),
+                """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool, columns={'name': name})
+  JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'name': t0.name})
+   SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+   FILTER(condition=size < 10:int64, columns={'supplier_key': supplier_key})
+    JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'size': t1.size, 'supplier_key': t0.supplier_key})
+     SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+     SCAN(table=tpch.PART, columns={'key': p_partkey, 'size': p_size})
+""",
+            ),
+            id="simple_anti_2",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    region_name=ChildReferenceExpressionInfo("name", 0),
+                ),
+                """
+ROOT(columns=[('name', name), ('region_name', region_name)], orderings=[])
+ PROJECT(columns={'name': name, 'region_name': name_3})
+  FILTER(condition=True:bool, columns={'name': name, 'name_3': name_3})
+   JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+    FILTER(condition=name != 'ASIA':string, columns={'key': key, 'name': name})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="semi_singular",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    region_name=ChildReferenceExpressionInfo("name", 0),
+                )
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
+                ),
+                """
+ROOT(columns=[('name', name), ('region_name', region_name)], orderings=[])
+ FILTER(condition=True:bool, columns={'name': name, 'region_name': region_name})
+  PROJECT(columns={'name': name, 'region_name': name_3})
+   JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'name': t0.name, 'name_3': t1.name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+    FILTER(condition=name != 'ASIA':string, columns={'key': key, 'name': name})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="singular_semi",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    num_10parts=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    avg_price_of_10parts=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ PROJECT(columns={'avg_price_of_10parts': agg_0, 'name': name, 'num_10parts': DEFAULT_TO(agg_1, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(agg_2, 0:int64)})
+  FILTER(condition=True:bool, columns={'agg_0': agg_0, 'agg_1': agg_1, 'agg_2': agg_2, 'name': name})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'name': t0.name})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+    AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT(), 'agg_2': SUM(retail_price)})
+     FILTER(condition=size == 10:int64, columns={'retail_price': retail_price, 'supplier_key': supplier_key})
+      JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'size': t1.size, 'supplier_key': t0.supplier_key})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+       SCAN(table=tpch.PART, columns={'key': p_partkey, 'retail_price': p_retailprice, 'size': p_size})
+""",
+            ),
+            id="semi_aggregate",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    num_10parts=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    avg_price_of_10parts=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
+                ),
+                """
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ FILTER(condition=True:bool, columns={'avg_price_of_10parts': avg_price_of_10parts, 'name': name, 'num_10parts': num_10parts, 'sum_price_of_10parts': sum_price_of_10parts})
+  PROJECT(columns={'avg_price_of_10parts': agg_0, 'name': name, 'num_10parts': DEFAULT_TO(agg_1, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(agg_2, 0:int64)})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'name': t0.name})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+    AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT(), 'agg_2': SUM(retail_price)})
+     FILTER(condition=size == 10:int64, columns={'retail_price': retail_price, 'supplier_key': supplier_key})
+      JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'size': t1.size, 'supplier_key': t0.supplier_key})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+       SCAN(table=tpch.PART, columns={'key': p_partkey, 'retail_price': p_retailprice, 'size': p_size})
+""",
+            ),
+            id="aggregate_semi",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    region_name=ChildReferenceExpressionInfo("name", 0),
+                ),
+                """
+ROOT(columns=[('name', name), ('region_name', region_name)], orderings=[])
+ PROJECT(columns={'name': name, 'region_name': NULL_1})
+  FILTER(condition=True:bool, columns={'NULL_1': NULL_1, 'name': name})
+   JOIN(conditions=[t0.region_key == t1.key], types=['anti'], columns={'NULL_1': None:unknown, 'name': t0.name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+    FILTER(condition=name != 'ASIA':string, columns={'key': key})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="anti_singular",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    region_name=ChildReferenceExpressionInfo("name", 0),
+                )
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("region")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "NEQ",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ASIA", StringType()),
+                                ],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                ),
+                """
+ROOT(columns=[('name', name), ('region_name', region_name)], orderings=[])
+ FILTER(condition=True:bool, columns={'name': name, 'region_name': region_name})
+  PROJECT(columns={'name': name, 'region_name': NULL_1})
+   JOIN(conditions=[t0.region_key == t1.key], types=['anti'], columns={'NULL_1': None:unknown, 'name': t0.name})
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+    FILTER(condition=name != 'ASIA':string, columns={'key': key})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+            ),
+            id="singular_anti",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    num_10parts=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    avg_price_of_10parts=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ PROJECT(columns={'avg_price_of_10parts': NULL_2, 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(NULL_2, 0:int64)})
+  FILTER(condition=True:bool, columns={'NULL_2': NULL_2, 'name': name})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+    FILTER(condition=size == 10:int64, columns={'supplier_key': supplier_key})
+     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'size': t1.size, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.PART, columns={'key': p_partkey, 'size': p_size})
+""",
+            ),
+            id="anti_aggregate",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    num_10parts=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    avg_price_of_10parts=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                )
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                ),
+                """
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ FILTER(condition=True:bool, columns={'avg_price_of_10parts': avg_price_of_10parts, 'name': name, 'num_10parts': num_10parts, 'sum_price_of_10parts': sum_price_of_10parts})
+  PROJECT(columns={'avg_price_of_10parts': NULL_2, 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(NULL_2, 0:int64)})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+    FILTER(condition=size == 10:int64, columns={'supplier_key': supplier_key})
+     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'size': t1.size, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.PART, columns={'key': p_partkey, 'size': p_size})
+""",
+            ),
+            id="aggregate_anti",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Parts")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("supplier")
+                        ** SubCollectionInfo("nation")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("GERMANY", StringType()),
+                                ],
+                            ),
+                        ),
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("supplier")
+                        ** SubCollectionInfo("nation")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("FRANCE", StringType()),
+                                ],
+                            ),
+                        ),
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("supplier")
+                        ** SubCollectionInfo("nation")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [
+                                    ReferenceInfo("name"),
+                                    LiteralInfo("ARGENTINA", StringType()),
+                                ],
+                            ),
+                        ),
+                    ],
+                    FunctionInfo(
+                        "BAN",
+                        [
+                            FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
+                            FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(1)]),
+                            FunctionInfo("HAS", [ChildReferenceCollectionInfo(2)]),
+                        ],
+                    ),
+                )
+                ** CalcInfo([], name=ReferenceInfo("name")),
+                """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool & True:bool & True:bool, columns={'name': name})
+  JOIN(conditions=[t0.key == t1.part_key], types=['semi'], columns={'name': t0.name})
+   JOIN(conditions=[t0.key == t1.part_key], types=['anti'], columns={'key': t0.key, 'name': t0.name})
+    JOIN(conditions=[t0.key == t1.part_key], types=['semi'], columns={'key': t0.key, 'name': t0.name})
+     SCAN(table=tpch.PART, columns={'key': p_partkey, 'name': p_name})
+     FILTER(condition=name_4 == 'GERMANY':string, columns={'part_key': part_key})
+      JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'name_4': t1.name, 'part_key': t0.part_key})
+       JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'nation_key': t1.nation_key, 'part_key': t0.part_key})
+        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+        SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+    FILTER(condition=name_8 == 'FRANCE':string, columns={'part_key': part_key})
+     JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'name_8': t1.name, 'part_key': t0.part_key})
+      JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'nation_key': t1.nation_key, 'part_key': t0.part_key})
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+       SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   FILTER(condition=name_12 == 'ARGENTINA':string, columns={'part_key': part_key})
+    JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'name_12': t1.name, 'part_key': t0.part_key})
+     JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'nation_key': t1.nation_key, 'part_key': t0.part_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+""",
+            ),
+            id="multiple_has_hasnot",
+        ),
     ],
 )
 def relational_test_data(request) -> tuple[CollectionTestInfo, str]:
@@ -2334,6 +2938,60 @@ ROOT(columns=[('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_ba
 """,
             ),
             id="various_aggfuncs_global",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Suppliers")
+                ** WhereInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
+                )
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("supply_records")
+                        ** SubCollectionInfo("part")
+                        ** WhereInfo(
+                            [],
+                            FunctionInfo(
+                                "EQU",
+                                [ReferenceInfo("size"), LiteralInfo(10, Int64Type())],
+                            ),
+                        )
+                    ],
+                    name=ReferenceInfo("name"),
+                    num_10parts=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                    avg_price_of_10parts=FunctionInfo(
+                        "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                    sum_price_of_10parts=FunctionInfo(
+                        "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
+ PROJECT(columns={'avg_price_of_10parts': DEFAULT_TO(NULL_2, 0:int64), 'name': name, 'num_10parts': DEFAULT_TO(NULL_2, 0:int64), 'sum_price_of_10parts': NULL_2})
+  FILTER(condition=True:bool, columns={'NULL_2': NULL_2, 'name': name})
+   JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+    FILTER(condition=size == 10:int64, columns={'supplier_key': supplier_key})
+     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'size': t1.size, 'supplier_key': t0.supplier_key})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+      SCAN(table=tpch.PART, columns={'key': p_partkey, 'size': p_size})
+""",
+            ),
+            id="anti_aggregate",
         ),
     ],
 )

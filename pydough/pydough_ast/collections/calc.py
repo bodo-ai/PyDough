@@ -10,6 +10,7 @@ from functools import cache
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import PyDoughExpressionAST
+from pydough.pydough_ast.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .child_operator import ChildOperator
 from .collection_ast import PyDoughCollectionAST
@@ -65,7 +66,7 @@ class Calc(ChildOperator):
         self._calc_term_values = {}
         for idx, (name, value) in enumerate(terms):
             self._calc_term_indices[name] = idx
-            self._calc_term_values[name] = value
+            self._calc_term_values[name] = has_hasnot_rewrite(value, False)
             self._all_term_names.add(name)
         self.all_terms.update(self.preceding_context.all_terms)
         self.verify_singular_terms(self._calc_term_values.values())

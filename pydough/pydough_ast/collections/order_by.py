@@ -9,6 +9,7 @@ from collections.abc import MutableSequence
 
 from pydough.pydough_ast.errors import PyDoughASTException
 from pydough.pydough_ast.expressions import CollationExpression
+from pydough.pydough_ast.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .child_operator import ChildOperator
 from .collection_ast import PyDoughCollectionAST
@@ -50,8 +51,13 @@ class OrderBy(ChildOperator):
             raise PyDoughASTException(
                 "Cannot call `with_collation` more than once per ORDERBY node"
             )
-        self._collation = collation
-        self.verify_singular_terms(collation)
+        self._collation = [
+            CollationExpression(
+                has_hasnot_rewrite(col.expr, False), col.asc, col.na_last
+            )
+            for col in collation
+        ]
+        self.verify_singular_terms(self._collation)
         return self
 
     @property
