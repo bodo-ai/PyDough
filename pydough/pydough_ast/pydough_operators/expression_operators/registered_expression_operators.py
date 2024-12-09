@@ -40,6 +40,8 @@ __all__ = [
     "ISIN",
     "SLICE",
     "DEFAULT_TO",
+    "HAS",
+    "HASNOT",
 ]
 
 from pydough.pydough_ast.pydough_operators.type_inference import (
@@ -99,6 +101,10 @@ AVG = ExpressionFunctionOperator(
     "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
 )
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
+HAS = ExpressionFunctionOperator("HAS", True, AllowAny(), ConstantType(BooleanType()))
+HASNOT = ExpressionFunctionOperator(
+    "HASNOT", True, AllowAny(), ConstantType(BooleanType())
+)
 NDISTINCT = ExpressionFunctionOperator(
     "NDISTINCT", True, AllowAny(), ConstantType(Int64Type())
 )
