@@ -599,10 +599,8 @@ def test_pydough_pipeline(
     ), "Mismatch between tree string representation of relational node and expected Relational tree string"
 
     # Run the relational tree through the execution and confirm that the output
-    # matches the expected DataFrame, without anything
-    result: pd.DataFrame = execute_df(
-        relational, sqlite_tpch_db_context, display_sql=True
-    )
+    # matches the expected DataFrame, without case sensitivity of column names.
+    result: pd.DataFrame = execute_df(relational, sqlite_tpch_db_context)
     expected_result: pd.DataFrame = answer_impl()
     result.columns = result.columns.str.lower()
     expected_result.columns = expected_result.columns.str.lower()
