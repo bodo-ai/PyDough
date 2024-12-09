@@ -1028,32 +1028,61 @@ class HybridTranslator:
         reference_types: set[ConnectionType],
         inside_aggregation: bool = False,
     ) -> None:
-        """ """
+        """
+        Recursively identifies what types ways a child collection is referenced
+        by its parent context.
+
+        Args:
+            `expr`: the expression being recursively checked for references
+            to the child collection.
+            `child_idx`: the index of the child that is being searched for
+            references to it.
+            `reference_types`: the set of known connection types that the
+            are used when referencing the child; the function should mutate
+            this set if it finds any new connections.
+            `inside_aggregation`: True if `expr` is inside of a call to an
+            aggregation function.
+        """
         match expr:
-            case ChildReferenceExpression():
-                if expr.child_idx == child_idx:
-                    reference_types.add(
-                        ConnectionType.AGGREGATION
-                        if inside_aggregation
-                        else ConnectionType.SINGULAR
-                    )
+            # If `expr` is a reference to the child in question, add
+            # a reference that is either singular or aggregation depending
+            # on the `inside_aggregation` argument
+            case ChildReferenceExpression() if expr.child_idx == child_idx:
+                reference_types.add(
+                    ConnectionType.AGGREGATION
+                    if inside_aggregation
+                    else ConnectionType.SINGULAR
+                )
             case ExpressionFunctionCall():
+                # If `expr` is a `HAS` call on the child in question, add a
+                # semi-join connection.
                 if expr.operator == pydop.HAS:
                     arg = expr.args[0]
                     assert isinstance(arg, ChildReferenceCollection)
                     if arg.child_idx == child_idx:
                         reference_types.add(ConnectionType.SEMI)
+                # If `expr` is a `HASNOT` call on the child in question, add a
+                # anti-join connection.
                 elif expr.operator == pydop.HASNOT:
                     arg = expr.args[0]
                     assert isinstance(arg, ChildReferenceCollection)
                     if arg.child_idx == child_idx:
                         reference_types.add(ConnectionType.ANTI)
+                # Otherwise, mutate `reference_types` based on the arguments
+                # to the function call.
                 else:
                     for arg in expr.args:
                         if isinstance(arg, ChildReferenceCollection):
+                            # If the argument is a refernece to a child,
+                            # collection, e.g. `COUNT(X)`, treat as an
+                            # aggregation reference if it refers to the child
+                            # in question.
                             if arg.child_idx == child_idx:
                                 reference_types.add(ConnectionType.AGGREGATION)
                         else:
+                            # Otherwise, recursively check the arguments to the
+                            # function, promoting `inside_aggregation` to True
+                            # if the function is an aggfunc.
                             assert isinstance(arg, PyDoughExpressionAST)
                             inside_aggregation = (
                                 inside_aggregation or expr.operator.is_aggregation
