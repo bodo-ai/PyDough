@@ -3,6 +3,7 @@ Handle the conversion from the Relation Tree to a single
 SQLGlot query.
 """
 
+import warnings
 from collections import defaultdict
 from collections.abc import MutableMapping, MutableSequence
 
@@ -206,10 +207,27 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
                 col.expr
             )
-            if col.ascending:
-                glot_expr = glot_expr.asc(nulls_first=col.nulls_first)
+            # Ignore non-default na first/last positions for SQLite dialect
+            na_first: bool
+            if self._expr_visitor._dialect.__class__.__name__ == "SQLite":
+                if col.ascending:
+                    if not col.nulls_first:
+                        warnings.warn(
+                            "PyDough when using SQLITE dialect does not support ascending ordering with nulls last (changed to nulls first)"
+                        )
+                    na_first = True
+                else:
+                    if col.nulls_first:
+                        warnings.warn(
+                            "PyDough when using SQLITE dialect does not support ascending ordering with nulls first (changed to nulls last)"
+                        )
+                    na_first = False
             else:
-                glot_expr = glot_expr.desc(nulls_first=col.nulls_first)
+                na_first = col.nulls_first
+            if col.ascending:
+                glot_expr = glot_expr.asc(nulls_first=na_first)
+            else:
+                glot_expr = glot_expr.desc(nulls_first=na_first)
             glot_exprs.append(glot_expr)
         return glot_exprs
 

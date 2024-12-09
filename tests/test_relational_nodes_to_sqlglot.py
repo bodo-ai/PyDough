@@ -519,7 +519,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         make_relational_ordering(
                             make_relational_column_reference("b"),
                             ascending=True,
-                            nulls_first=False,
+                            nulls_first=True,
                         ),
                     ],
                 ),
@@ -530,7 +530,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="a")],
-                order_by=[Ident(this="b").asc(nulls_first=False)],
+                order_by=[Ident(this="b").asc(nulls_first=True)],
                 limit=mk_literal(2, False),
                 _from=GlotFrom(Table(this=Ident(this="table"))),
             ),
@@ -825,7 +825,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     make_relational_ordering(
                         make_relational_column_reference("b"),
                         ascending=False,
-                        nulls_first=True,
+                        nulls_first=False,
                     )
                 ],
             ),
@@ -833,7 +833,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 expressions=[Ident(this="b")],
                 _from=GlotFrom(Table(this=Ident(this="table"))),
                 group_by=[Ident(this="b")],
-                order_by=[Ident(this="b").desc(nulls_first=True)],
+                order_by=[Ident(this="b").desc(nulls_first=False)],
                 limit=mk_literal(10, False),
             ),
             id="limit_after_aggregate",
