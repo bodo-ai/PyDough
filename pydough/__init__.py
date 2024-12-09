@@ -2,9 +2,16 @@
 TODO: add module-level docstring
 """
 
-__all__ = ["parse_json_metadata_from_file", "init_pydough_context", "active_session"]
+__all__ = [
+    "parse_json_metadata_from_file",
+    "init_pydough_context",
+    "active_session",
+    "to_sql",
+    "to_df",
+]
 
 from .configs import PyDoughSession
+from .conversion import to_df, to_sql
 from .metadata import parse_json_metadata_from_file
 from .unqualified import init_pydough_context
 

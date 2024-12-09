@@ -19,6 +19,8 @@ from pydough.unqualified import UnqualifiedNode, qualify_node
 
 from .relational_converter import convert_ast_to_relational
 
+__all__ = ["to_sql", "to_df"]
+
 
 def _load_session_info(
     **kwargs,
@@ -78,7 +80,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     return convert_relation_to_sql(relational, database.dialect)
 
 
-def to_dataframe(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
+def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     """
     Execute the given unqualified tree and return the results as a Pandas
     DataFrame.
