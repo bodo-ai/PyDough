@@ -1,14 +1,21 @@
 """
-Tests for the session module. This doesn't directly test the
-active session but instead unit tests the core functionality
+Tests for the session module. This unit tests the core functionality
 of any session.
 
 For each of these tests we create a new session so that we can
 manipulate the session without affecting other tests.
+
+In addition, we do some testing on the defaults/supported behavior
+for the active session to verify that it works. Importantly, in all
+tests anything that impacts the active session must be READ-ONLY to
+ensure that we don't affect other tests, or that in the teardown step
+we replace the active session with a new default session.
 """
 
 import pandas as pd
+import pytest
 
+import pydough
 from pydough.configs import ConfigProperty, PyDoughConfigs, PyDoughSession
 from pydough.database_connectors import (
     DatabaseContext,
@@ -19,11 +26,17 @@ from pydough.database_connectors import (
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 
 
-def test_defaults() -> None:
+@pytest.mark.parametrize(
+    "session",
+    [
+        pytest.param(PyDoughSession(), id="newSession"),
+        pytest.param(pydough.active_session, id="activeSession"),
+    ],
+)
+def test_defaults(session: PyDoughSession) -> None:
     """
     Tests that a sessions defaults are set correctly.
     """
-    session: PyDoughSession = PyDoughSession()
     assert session.metadata is None
     assert session.config is not None
     default_config: PyDoughConfigs = PyDoughConfigs()
