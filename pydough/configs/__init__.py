@@ -2,7 +2,7 @@
 TODO: add module-level docstring
 """
 
-__all__ = ["PyDoughConfigs", "PyDoughSession"]
+__all__ = ["ConfigProperty", "PyDoughConfigs", "PyDoughSession"]
 
-from .pydough_configs import PyDoughConfigs
+from .pydough_configs import ConfigProperty, PyDoughConfigs
 from .session import PyDoughSession
