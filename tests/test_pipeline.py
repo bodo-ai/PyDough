@@ -604,5 +604,4 @@ def test_pydough_pipeline(
     expected_result: pd.DataFrame = answer_impl()
     result.columns = result.columns.str.lower()
     expected_result.columns = expected_result.columns.str.lower()
-    # breakpoint()
     pd.testing.assert_frame_equal(result, expected_result)
