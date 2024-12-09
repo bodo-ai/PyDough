@@ -452,30 +452,6 @@ def test_simple_join_info(
     [
         pytest.param(
             "TPCH",
-            "Parts",
-            "lines",
-            "supply_records",
-            "lines",
-            "Lineitems",
-            "part",
-            False,
-            True,
-            {
-                "ps_supplier": "TPCH.PartSupp.supplier",
-                "ps_availqty": "TPCH.PartSupp.availqty",
-                "ps_supplycost": "TPCH.PartSupp.supplycost",
-                "ps_comment": "TPCH.PartSupp.comment",
-            },
-            {
-                "ps_supplier": "TPCH.PartSupp.supplier",
-                "ps_availqty": "TPCH.PartSupp.availqty",
-                "ps_supplycost": "TPCH.PartSupp.supplycost",
-                "ps_comment": "TPCH.PartSupp.comment",
-            },
-            id="tpch-part-lines",
-        ),
-        pytest.param(
-            "TPCH",
             "Suppliers",
             "parts_supplied",
             "supply_records",

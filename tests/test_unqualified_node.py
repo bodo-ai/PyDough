@@ -266,7 +266,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q2,
-            "TPCH.PARTITION(TPCH.Nations.WHERE((TPCH.region.name == 'EUROPE':StringType())).suppliers.parts_supplied(s_acctbal=BACK(1).account_balance, s_name=BACK(1).name, n_name=BACK(2).name, p_partkey=TPCH.key, p_mfgr=TPCH.manufacturer, s_address=BACK(1).address, s_phone=BACK(1).phone, s_comment=BACK(1).comment), name='p', by=(TPCH.key))(best_cost=MIN(TPCH.p.ps_supplycost)).p.WHERE((((TPCH.ps_supplycost == BACK(1).best_cost) & ENDSWITH(TPCH.part_type, 'BRASS':StringType())) & (TPCH.size == 15:Int64Type()))).ORDER_BY(TPCH.s_acctbal.DESC(na_pos='last'), TPCH.n_name.ASC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'), TPCH.p_partkey.ASC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Nations.WHERE((TPCH.region.name == 'EUROPE':StringType())).suppliers.supply_records.part(s_acctbal=BACK(2).account_balance, s_name=BACK(2).name, n_name=BACK(3).name, s_address=BACK(2).address, s_phone=BACK(2).phone, s_comment=BACK(2).comment, supplycost=BACK(1).supplycost), name='p', by=(TPCH.key))(best_cost=MIN(TPCH.p.supplycost)).p.WHERE((((TPCH.supplycost == BACK(1).best_cost) & ENDSWITH(TPCH.part_type, 'BRASS':StringType())) & (TPCH.size == 15:Int64Type())))(s_acctbal=TPCH.s_acctbal, s_name=TPCH.s_name, n_name=TPCH.n_name, p_partkey=TPCH.key, p_mfgr=TPCH.manufacturer, s_address=TPCH.s_address, s_phone=TPCH.s_phone, s_comment=TPCH.s_comment).ORDER_BY(TPCH.s_acctbal.DESC(na_pos='last'), TPCH.n_name.ASC(na_pos='last'), TPCH.s_name.ASC(na_pos='last'), TPCH.p_partkey.ASC(na_pos='last'))",
             id="tpch_q2",
         ),
         pytest.param(
@@ -296,12 +296,12 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q8,
-            "TPCH.PARTITION(TPCH.Orders.WHERE((((TPCH.order_date >= datetime.date(1995, 1, 1):DateType()) & (TPCH.order_date <= datetime.date(1996, 12, 31):DateType())) & (TPCH.customer.region.name == 'AMERICA':StringType()))).lines(volume=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).supplier.WHERE((TPCH.ps_part.part_type == 'ECONOMY ANODIZED STEEL':StringType()))(o_year=YEAR(BACK(2).order_date), volume=BACK(1).volume, brazil_volume=IFF((TPCH.nation.name == 'BRAZIL':StringType()), BACK(1).volume, 0:Int64Type())), name='v', by=(TPCH.o_year))(o_year=TPCH.o_year, mkt_share=(SUM(TPCH.v.brazil_volume) / SUM(TPCH.v.volume)))",
+            "TPCH.PARTITION(TPCH.Nations.suppliers.supply_records.WHERE((TPCH.part.part_type == 'ECONOMY ANODIZED STEEL':StringType())).lines(volume=(TPCH.extended_price * (1:Int64Type() - TPCH.discount))).order(o_year=YEAR(TPCH.order_date), volume=BACK(1).volume, brazil_volume=IFF((BACK(4).name == 'BRAZIL':StringType()), BACK(1).volume, 0:Int64Type())).WHERE((((TPCH.order_date >= datetime.date(1995, 1, 1):DateType()) & (TPCH.order_date <= datetime.date(1996, 12, 31):DateType())) & (TPCH.customer.nation.region.name == 'AMERICA':StringType()))), name='v', by=(TPCH.o_year))(o_year=TPCH.o_year, mkt_share=(SUM(TPCH.v.brazil_volume) / SUM(TPCH.v.volume)))",
             id="tpch_q8",
         ),
         pytest.param(
             impl_tpch_q9,
-            "TPCH.PARTITION(TPCH.Nations.suppliers.lines(nation=BACK(2).name, o_year=YEAR(TPCH.order.order_date), value=((TPCH.extended_price * (1:Int64Type() - TPCH.discount)) - (TPCH.ps_supplycost * TPCH.quantity))).WHERE(CONTAINS(TPCH.part.name, 'green':StringType())), name='l', by=(TPCH.nation, TPCH.o_year))(nation=TPCH.nation, o_year=TPCH.o_year, amount=SUM(TPCH.l.value)).ORDER_BY(TPCH.nation.ASC(na_pos='last'), TPCH.o_year.DESC(na_pos='last'))",
+            "TPCH.PARTITION(TPCH.Nations.suppliers.supply_records.WHERE(CONTAINS(TPCH.part.name, 'green':StringType())).lines(nation=BACK(3).name, o_year=YEAR(TPCH.order.order_date), value=((TPCH.extended_price * (1:Int64Type() - TPCH.discount)) - (BACK(1).ps_supplycost * TPCH.quantity))), name='l', by=(TPCH.nation, TPCH.o_year))(nation=TPCH.nation, o_year=TPCH.o_year, amount=SUM(TPCH.l.value)).ORDER_BY(TPCH.nation.ASC(na_pos='last'), TPCH.o_year.DESC(na_pos='last'))",
             id="tpch_q9",
         ),
         pytest.param(
@@ -311,7 +311,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q11,
-            "TPCH.TPCH(min_market_share=(SUM(TPCH.PartSupp.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType()))(metric=(TPCH.supplycost * TPCH.availqty)).metric) * 0.0001:Float64Type())).Parts(ps_partkey=TPCH.key, val=SUM(TPCH.supply_records.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType()))(metric=(TPCH.supplycost * TPCH.availqty)).metric)).WHERE((TPCH.val > BACK(1).min_market_share)).ORDER_BY(TPCH.val.DESC(na_pos='last'))",
+            "TPCH.TPCH(min_market_share=(SUM(TPCH.PartSupp.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType()))(metric=(TPCH.supplycost * TPCH.availqty)).metric) * 0.0001:Float64Type())).PARTITION(TPCH.PartSupp.WHERE((TPCH.supplier.nation.name == 'GERMANY':StringType()))(metric=(TPCH.supplycost * TPCH.availqty)), name='ps', by=(TPCH.part_key))(ps_partkey=TPCH.part_key, val=SUM(TPCH.ps.metric)).WHERE((TPCH.val > BACK(1).min_market_share)).ORDER_BY(TPCH.val.DESC(na_pos='last'))",
             id="tpch_q11",
         ),
         pytest.param(
@@ -356,7 +356,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q20,
-            "TPCH.Parts.WHERE(STARTSWITH(TPCH.name, 'forest':StringType()))(quantity_threshold=SUM(TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType()))).quantity)).suppliers_of_part.WHERE(((TPCH.ps_availqty > BACK(1).quantity_threshold) & (TPCH.nation.name == 'CANADA':StringType())))(s_name=TPCH.name, s_address=TPCH.address)",
+            "TPCH.Suppliers(s_name=TPCH.name, s_address=TPCH.address).WHERE(((TPCH.nation.name == 'CANADA':StringType()) & (COUNT(TPCH.supply_records.part.WHERE((STARTSWITH(TPCH.name, 'forest':StringType()) & (BACK(1).availqty > (SUM(TPCH.lines.WHERE(((TPCH.ship_date >= datetime.date(1994, 1, 1):DateType()) & (TPCH.ship_date < datetime.date(1995, 1, 1):DateType()))).quantity) * 0.5:Float64Type()))))) > 0:Int64Type())))",
             id="tpch_q20",
         ),
         pytest.param(

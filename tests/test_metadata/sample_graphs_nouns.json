@@ -157,33 +157,15 @@
         ],
         "ps_availqty": [
             "TPCH.Suppliers.parts_supplied.ps_availqty",
-            "TPCH.Parts.lines.ps_availqty",
-            "TPCH.Parts.suppliers_of_part.ps_availqty",
-            "TPCH.Suppliers.lines.ps_availqty",
-            "TPCH.Lineitems.part.ps_availqty",
-            "TPCH.Lineitems.supplier.ps_availqty",
-            "TPCH.Lineitems.supplier_region.ps_availqty",
-            "TPCH.Regions.lines_sourced_from.ps_availqty"
+            "TPCH.Parts.suppliers_of_part.ps_availqty"
         ],
         "ps_supplycost": [
-            "TPCH.Suppliers.parts_supplied.ps_supplycost",
-            "TPCH.Lineitems.part.ps_supplycost",
-            "TPCH.Suppliers.lines.ps_supplycost",
-            "TPCH.Lineitems.supplier.ps_supplycost",
-            "TPCH.Parts.lines.ps_supplycost",
             "TPCH.Parts.suppliers_of_part.ps_supplycost",
-            "TPCH.Lineitems.supplier_region.ps_supplycost",
-            "TPCH.Regions.lines_sourced_from.ps_supplycost"
+            "TPCH.Suppliers.parts_supplied.ps_supplycost"
         ],
         "ps_comment": [
-            "TPCH.Suppliers.lines.ps_comment",
             "TPCH.Suppliers.parts_supplied.ps_comment",
-            "TPCH.Lineitems.supplier.ps_comment",
-            "TPCH.Lineitems.part.ps_comment",
-            "TPCH.Parts.suppliers_of_part.ps_comment",
-            "TPCH.Parts.lines.ps_comment",
-            "TPCH.Lineitems.supplier_region.ps_comment",
-            "TPCH.Regions.lines_sourced_from.ps_comment"
+            "TPCH.Parts.suppliers_of_part.ps_comment"
         ],
         "part_key": ["TPCH.PartSupp.part_key", "TPCH.Lineitems.part_key"],
         "supplier_key": [
@@ -216,16 +198,6 @@
         "ship_instruct": ["TPCH.Lineitems.ship_instruct"],
         "ship_mode": ["TPCH.Lineitems.ship_mode"],
         "order": ["TPCH.Lineitems.order"],
-        "ps_supplier": [
-            "TPCH.Lineitems.part.ps_supplier",
-            "TPCH.Parts.lines.ps_supplier"
-        ],
-        "ps_part": [
-            "TPCH.Lineitems.supplier.ps_part",
-            "TPCH.Suppliers.lines.ps_part",
-            "TPCH.Lineitems.supplier_region.ps_part",
-            "TPCH.Regions.lines_sourced_from.ps_part"
-        ],
         "availqty": ["TPCH.PartSupp.availqty"],
         "supplycost": ["TPCH.PartSupp.supplycost"],
         "customer_key": ["TPCH.Orders.customer_key"],

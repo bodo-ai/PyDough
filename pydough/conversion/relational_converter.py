@@ -10,8 +10,6 @@ from dataclasses import dataclass
 import pydough.pydough_ast.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import (
-    CartesianProductMetadata,
-    SimpleJoinMetadata,
     SimpleTableMetadata,
 )
 from pydough.pydough_ast import (
@@ -58,6 +56,8 @@ from .hybrid_tree import (
     HybridLimit,
     HybridLiteralExpr,
     HybridOperation,
+    HybridPartition,
+    HybridPartitionChild,
     HybridRefExpr,
     HybridRoot,
     HybridTranslator,
@@ -329,7 +329,11 @@ class RelTranslation:
                     child, child.subtree, len(child.subtree.pipeline) - 1
                 )
                 join_keys: list[tuple[HybridExpr, HybridExpr]] = child_output.join_keys
-                agg_keys: list[HybridExpr] = [rhs_key for _, rhs_key in join_keys]
+                agg_keys: list[HybridExpr]
+                if child.subtree.agg_keys is None:
+                    agg_keys = [rhs_key for _, rhs_key in join_keys]
+                else:
+                    agg_keys = child.subtree.agg_keys
                 # Use INNER joins if the parent should only be kept if it has
                 # a match, otherwise use LEFT joins. Does not apply to SEMI or
                 # ANTI joins.
@@ -427,8 +431,7 @@ class RelTranslation:
             steps down from.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
-            preceding contexts. Can be omitted in certain contexts, such as
-            when deriving a table scan or literal.
+            preceding contexts.
 
         Returns:
             The TranslationOutput payload containing an INNER join of the
@@ -443,23 +446,13 @@ class RelTranslation:
         ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
-        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
-        if isinstance(collection_access.subcollection_property, SimpleJoinMetadata):
-            # If the subcollection is a simple join property, extract the keys
-            # and build the corresponding (lhs_key == rhs_key) conditions
-            for lhs_name in collection_access.subcollection_property.keys:
-                lhs_key: HybridExpr = (
-                    parent.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
-                )
-                for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
-                    rhs_key: HybridExpr = node.terms[rhs_name].make_into_ref(rhs_name)
-                    join_keys.append((lhs_key, rhs_key))
-        elif not isinstance(
-            collection_access.subcollection_property, CartesianProductMetadata
-        ):
-            raise NotImplementedError(
-                f"Unsupported subcollection property type used for accessing a subcollection: {collection_access.subcollection_property.__class__.__name__}"
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = (
+            HybridTranslator.get_subcollection_join_keys(
+                collection_access.subcollection_property,
+                parent.pipeline[-1],
+                node,
             )
+        )
 
         return self.join_outputs(
             context,
@@ -496,25 +489,56 @@ class RelTranslation:
         ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
         result: TranslationOutput = self.build_simple_table_scan(node)
 
-        if isinstance(collection_access.subcollection_property, SimpleJoinMetadata):
-            # If the subcollection is a simple join property, extract the keys
-            # and build the corresponding (lhs_key == rhs_key) conditions
-            for lhs_name in collection_access.subcollection_property.keys:
-                lhs_key: HybridExpr = (
-                    connection.parent.pipeline[-1]
-                    .terms[lhs_name]
-                    .make_into_ref(lhs_name)
-                )
-                for rhs_name in collection_access.subcollection_property.keys[lhs_name]:
-                    rhs_key: HybridExpr = node.terms[rhs_name].make_into_ref(rhs_name)
-                    result.join_keys.append((lhs_key, rhs_key))
-        elif not isinstance(
-            collection_access.subcollection_property, CartesianProductMetadata
-        ):
-            raise NotImplementedError(
-                f"Unsupported subcollection property type used for accessing a subcollection: {collection_access.subcollection_property.__class__.__name__}"
-            )
+        result.join_keys = HybridTranslator.get_subcollection_join_keys(
+            collection_access.subcollection_property,
+            connection.parent.pipeline[connection.required_steps],
+            node,
+        )
 
+        return result
+
+    def translate_partition(
+        self,
+        node: HybridPartition,
+        context: TranslationOutput,
+        hybrid: HybridTree,
+        pipeline_idx: int,
+    ) -> TranslationOutput:
+        """
+        Converts a partition into the correct context with access to the
+        aggregated child inputs.
+
+        Args:
+            `node`: the node corresponding to the partition being derived.
+            `context`: the data structure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts.
+            `hybrid`: the current level of the hybrid tree to be derived,
+            including all levels before it.
+            `pipeline_idx`: the index of the operation in the pipeline of the
+            current level that is to be derived, as well as all operations
+            preceding it in the pipeline.
+
+        Returns:
+            The TranslationOutput payload containing access to the aggregated
+            child corresponding tot he partition data.
+        """
+        expressions: dict[HybridExpr, ColumnReference] = {}
+        # Account for the fact that the PARTITION is stepping down a level,
+        # without actually joining.
+        for expr, ref in context.expressions.items():
+            shifted_expr: HybridExpr | None = expr.shift_back(1)
+            if shifted_expr is not None:
+                expressions[shifted_expr] = ref
+        result: TranslationOutput = TranslationOutput(context.relation, expressions, [])
+        result = self.handle_children(result, hybrid, pipeline_idx)
+        # Pull every aggregation key into the current context since it is now
+        # accessible as a normal ref instead of a child ref.
+        for key_name in node.key_names:
+            key_expr = node.terms[key_name]
+            assert isinstance(key_expr, HybridChildRefExpr)
+            hybrid_ref: HybridRefExpr = HybridRefExpr(key_expr.name, key_expr.typ)
+            result.expressions[hybrid_ref] = result.expressions[key_expr]
         return result
 
     def translate_filter(
@@ -529,8 +553,7 @@ class RelTranslation:
             `node`: the node corresponding to the filter being derived.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
-            preceding contexts. Can be omitted in certain contexts, such as
-            when deriving a table scan or literal.
+            preceding contexts.
 
         Returns:
             The TranslationOutput payload containing a FILTER on top of
@@ -626,6 +649,44 @@ class RelTranslation:
         )
         return TranslationOutput(out_rel, out_columns, join_keys)
 
+    def translate_partition_child(
+        self,
+        node: HybridPartitionChild,
+        context: TranslationOutput,
+    ) -> TranslationOutput:
+        """
+        Converts a step into the child of a PARTITION node into a join between
+        the aggregated partitions versus the data that was originally being
+        partitioned.
+
+        Args:
+            `node`: the node corresponding to the partition child access.
+            `parent`: the hybrid tree of the previous layer that the access
+            steps down from.
+            `context`: the data structure storing information used by the
+            conversion, such as bindings of already translated terms from
+            preceding contexts.
+
+        Returns:
+            The TranslationOutput payload containing expressions for both the
+            aggregated partitions and the original partitioned data.
+        """
+        child_output: TranslationOutput = self.rel_translation(
+            None, node.subtree, len(node.subtree.pipeline) - 1
+        )
+        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+        assert node.subtree.agg_keys is not None
+        for agg_key in node.subtree.agg_keys:
+            join_keys.append((agg_key, agg_key))
+
+        return self.join_outputs(
+            context,
+            child_output,
+            JoinType.INNER,
+            join_keys,
+            None,
+        )
+
     def rel_translation(
         self,
         connection: HybridConnection | None,
@@ -684,6 +745,7 @@ class RelTranslation:
 
         # Then, dispatch onto the logic to transform from the context into the
         # new translation output.
+        handled_children: bool = False
         match operation:
             case HybridCollectionAccess():
                 if isinstance(operation.collection, TableCollection):
@@ -710,12 +772,21 @@ class RelTranslation:
                         result = self.translate_child_sub_collection(
                             connection, operation
                         )
+            case HybridPartitionChild():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_partition_child(operation, context)
             case HybridCalc():
-                assert context is not None
+                assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_calc(operation, context)
             case HybridFilter():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
+            case HybridPartition():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_partition(
+                    operation, context, hybrid, pipeline_idx
+                )
+                handled_children = True
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
@@ -723,7 +794,9 @@ class RelTranslation:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
                 )
-        return self.handle_children(result, hybrid, pipeline_idx)
+        if not handled_children:
+            result = self.handle_children(result, hybrid, pipeline_idx)
+        return result
 
     @staticmethod
     def preprocess_root(
