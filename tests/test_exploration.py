@@ -393,7 +393,8 @@ The following properties are inherited from Suppliers.nation:
 )
 def metadata_exploration_test_data(
     request,
-) -> tuple[Callable[[graph_fetcher], str], str]:
+    get_sample_graph: graph_fetcher,
+) -> tuple[Callable[[], str], str]:
     """
     Testing data used for `test_metadata_exploration`. Creates a function that
     takes in a `graph_fetcher` instance and returns the result of calling
@@ -412,8 +413,9 @@ def metadata_exploration_test_data(
     collection_name: str | None = args[1]
     property_name: str | None = args[2]
 
-    def wrapped_test_impl(fetcher: graph_fetcher):
-        graph: GraphMetadata = fetcher(graph_name)
+    graph: GraphMetadata = get_sample_graph(graph_name)
+
+    def wrapped_test_impl():
         if collection_name is None:
             return pydough.explain_meta(graph)
         elif property_name is None:
@@ -425,14 +427,13 @@ def metadata_exploration_test_data(
 
 
 def test_metadata_exploration(
-    metadata_exploration_test_data: tuple[Callable[[graph_fetcher], str], str],
-    get_sample_graph: graph_fetcher,
+    metadata_exploration_test_data: tuple[Callable[[], str], str],
 ) -> None:
     """
     Verifies that `pydough.explain_meta` produces the expected strings.
     """
     test_impl, answer = metadata_exploration_test_data
-    explanation_string: str = test_impl(get_sample_graph)
+    explanation_string: str = test_impl()
     assert (
         explanation_string == answer
     ), "Mismatch between produced string and expected answer"
