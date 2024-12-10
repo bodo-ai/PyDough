@@ -37,6 +37,6 @@ class PyDoughMagic(Magics):
         # TODO: Consider a safer way to ensure pydough.active_session.metadata
         # exits
         new_cell: str = transform_cell(
-            "pydough.active_session.metadata", cell, set(local_ns.keys())
+            cell, "pydough.active_session.metadata", set(local_ns.keys())
         )
         self.shell.run_cell(new_cell)
