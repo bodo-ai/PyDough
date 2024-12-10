@@ -10,7 +10,8 @@ __all__ = [
 ]
 
 from .configs import PyDoughSession
-from .metadata import explain, parse_json_metadata_from_file
+from .exploration import explain
+from .metadata import parse_json_metadata_from_file
 from .unqualified import init_pydough_context
 
 # Create a default session for the user to interact with.

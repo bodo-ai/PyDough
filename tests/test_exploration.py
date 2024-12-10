@@ -5,12 +5,16 @@ TODO: add file-level docstring
 from collections.abc import Callable
 
 import pytest
+from exploration_examples import (
+    global_agg_calc_impl,
+    global_calc_impl,
+    global_impl,
+    nation_impl,
+)
 from test_utils import graph_fetcher
 
 import pydough
-from pydough.metadata import (
-    GraphMetadata,
-)
+from pydough.metadata import GraphMetadata
 
 
 @pytest.fixture(
@@ -40,6 +44,7 @@ Collections:
   Regions
   Suppliers
 Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
+Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected.
 """,
             ),
             id="explain_graph_tpch",
@@ -441,77 +446,189 @@ def test_metadata_exploration(
 
 @pytest.fixture(
     params=[
-        # pytest.param(
-        #     (
-        #         "TPCH",
-        #         "\n"
-        #         "\n"
-        #         "\n",
-        #         "",
-        #         "\n"
-        #         "\n"
-        #         "\n"
-        #     ),
-        #     id="collection-explain_collection"
-        # ),
-        # pytest.param(
-        #     (
-        #         "TPCH",
-        #         "\n"
-        #         "\n"
-        #         "\n",
-        #         "",
-        #         "\n"
-        #         "\n"
-        #         "\n"
-        #     ),
-        #     id="collection-explain_collection"
-        # ),
-        # pytest.param(
-        #     (
-        #         "TPCH",
-        #         "\n"
-        #         "\n"
-        #         "\n",
-        #         "",
-        #         "\n"
-        #         "\n"
-        #         "\n"
-        #     ),
-        #     id="collection-explain_collection"
-        # ),
+        pytest.param(
+            (
+                "TPCH",
+                nation_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── TableCollection[Nations]
+
+This node, specifically, accesses the collection Nations. Call pydough.explain(graph['Nations']) to learn more about this collection.
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name, region_key
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
+            ),
+            id="nation",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                global_impl,
+                """
+PyDough collection representing the following logic:
+  TPCH
+
+This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
+
+The collection does not have any terms that can be included in a result if it is executed.
+
+It is not possible to use BACK from this collection.
+
+The collection has access to the following collections:
+  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
+            ),
+            id="global",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                global_calc_impl,
+                """
+PyDough collection representing the following logic:
+  ┌─── TPCH
+  └─── Calc[x=42, y=13]
+
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  x <- 42
+  y <- 13
+
+The following terms will be included in the result if this collection is executed:
+  x, y
+
+It is not possible to use BACK from this collection.
+
+The collection has access to the following expressions:
+  x, y
+
+The collection has access to the following collections:
+  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
+            ),
+            id="global_calc",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                global_agg_calc_impl,
+                """
+PyDough collection representing the following logic:
+  ┌─── TPCH
+  └─┬─ Calc[n_customers=COUNT($1), avg_part_price=AVG($2.retail_price)]
+    ├─┬─ AccessChild
+    │ └─── TableCollection[Customers]
+    └─┬─ AccessChild
+      └─── TableCollection[Parts]
+
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── TableCollection[Customers]
+  child $2:
+    └─── TableCollection[Parts]
+
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  avg_part_price <- AVG($2.retail_price), aka AVG(Parts.retail_price)
+  n_customers <- COUNT($1), aka COUNT(Customers)
+
+The following terms will be included in the result if this collection is executed:
+  avg_part_price, n_customers
+
+It is not possible to use BACK from this collection.
+
+The collection has access to the following expressions:
+  avg_part_price, n_customers
+
+The collection has access to the following collections:
+  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
+            ),
+            id="global_agg_calc",
+        ),
+        #         pytest.param(
+        #             (
+        #                 "TPCH",
+        #                 nation_impl,
+        #                 """
+        # """,
+        #             ),
+        #             id="global_calc"
+        #         ),
+        #         pytest.param(
+        #             (
+        #                 "TPCH",
+        #                 nation_impl,
+        #                 """
+        # """,
+        #             ),
+        #             id="global_calc"
+        #         ),
+        #         pytest.param(
+        #             (
+        #                 "TPCH",
+        #                 nation_impl,
+        #                 """
+        # """,
+        #             ),
+        #             id="global_calc"
+        #         ),
+        #         pytest.param(
+        #             (
+        #                 "TPCH",
+        #                 nation_impl,
+        #                 """
+        # """,
+        #             ),
+        #             id="global_calc"
+        #         ),
     ]
 )
-def unqualified_exploration_test_data(request) -> tuple[str, str, str, str]:
+def unqualified_exploration_test_data(
+    request,
+) -> tuple[str, Callable[[GraphMetadata], Callable[[], str]], str]:
     """
     Testing data used for test_unqualified_node_exploration. Returns a tuple of
     the graph name to use, the func text for the PyDough code to use, the term
     that should be explained from the code, and the expected explanation
     string.
     """
-    return request.param
+    graph_name: str = request.param[0]
+    test_impl: Callable[[GraphMetadata], Callable[[], str]] = request.param[1]
+    refsol: str = request.param[2]
+    return graph_name, test_impl, refsol.strip()
 
 
 def test_unqualified_node_exploration(
-    unqualified_exploration_test_data: tuple[str, str, str, str],
+    unqualified_exploration_test_data: tuple[
+        str, Callable[[GraphMetadata], Callable[[], str]], str
+    ],
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
     Verifies that `pydough.explain` called on unqualified nodes produces the
     exepcted strings.
     """
-    graph_name, func_text_body, explain_term, answer = unqualified_exploration_test_data
+    graph_name, test_impl, expected_answer = unqualified_exploration_test_data
     graph: GraphMetadata = get_sample_graph(graph_name)
-    func_text = "@pydough.init_pydough_context(graph)\n"
-    func_text += "def impl():\n"
-    func_text += "\n".join([" " + line for line in func_text_body.splitlines()])
-    func_text += f" return pydough.explain({explain_term})\n"
-    func_text += "answer = impl()"
-
-    genv: dict[str, object] = {"pydough": pydough, "graph": graph}
-    lenv: dict[str, object] = {}
-    exec(func_text, genv, lenv)
-
+    answer: str = test_impl(graph)()
     assert (
-        lenv["answer"] == answer
+        answer == expected_answer
     ), "Mismatch between produced string and expected answer"

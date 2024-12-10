@@ -14,12 +14,10 @@ __all__ = [
     "CompoundRelationshipMetadata",
     "SimpleTableMetadata",
     "SubcollectionRelationshipMetadata",
-    "explain",
 ]
 
 from .collections import CollectionMetadata, SimpleTableMetadata
 from .errors import PyDoughMetadataException
-from .exploration import explain
 from .graphs import GraphMetadata
 from .parse import parse_json_metadata_from_file
 from .properties import (
