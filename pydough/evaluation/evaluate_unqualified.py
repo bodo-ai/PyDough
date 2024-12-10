@@ -10,6 +10,7 @@ import pandas as pd
 
 import pydough
 from pydough.configs import PyDoughConfigs
+from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import PyDoughCollectionAST
@@ -20,8 +21,6 @@ from pydough.sqlglot import (
     execute_df,
 )
 from pydough.unqualified import UnqualifiedNode, qualify_node
-
-from .relational_converter import convert_ast_to_relational
 
 __all__ = ["to_sql", "to_df"]
 

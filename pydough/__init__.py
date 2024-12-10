@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 from .configs import PyDoughSession
-from .conversion import to_df, to_sql
+from .evaluation import to_df, to_sql
 from .metadata import parse_json_metadata_from_file
 from .unqualified import init_pydough_context
 
