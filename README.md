@@ -9,6 +9,8 @@ commands after installing `uv`, run the following command:
 uv run pytest <pytest_arguments>
 ```
 
+If you want to skip tests that execute runtime results because they are slower, make sure to include `-m "not slow"` in the pytest arguments.
+
 Note: That some tests may require an additional setup to run successfully.
 Please refer to the TPC-H demo directory for more information on how to setup
 a default database for testing.

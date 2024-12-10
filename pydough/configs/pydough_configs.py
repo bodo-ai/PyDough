@@ -34,10 +34,15 @@ class ConfigProperty(Generic[T]):
         self._name = name
 
     def __get__(self, instance, owner) -> T:
+        if instance is None:
+            return self._default
         return instance.__dict__.get(self._name, self._default)
 
     def __set__(self, instance, value: T):
         instance.__dict__[self._name] = value
+
+    def __repr__(self) -> str:
+        return f"config:{self._name}"
 
 
 class PyDoughConfigs:

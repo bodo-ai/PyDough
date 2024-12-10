@@ -24,6 +24,7 @@ from .call_expression_conversion import (
     convert_endswith,
     convert_isin,
     convert_like,
+    convert_ndistinct,
     convert_startswith,
     convert_year,
 )
@@ -39,10 +40,12 @@ generic_func_map: dict[str, SQLGlotExpression] = {
     "AVG": sqlglot_expressions.Avg,
     "LOWER": sqlglot_expressions.Lower,
     "LENGTH": sqlglot_expressions.Length,
+    "MIN": sqlglot_expressions.Min,
     "MAX": sqlglot_expressions.Max,
     "SUM": sqlglot_expressions.Sum,
     "COUNT": sqlglot_expressions.Count,
     "IFF": sqlglot_expressions.If,
+    "DEFAULT_TO": sqlglot_expressions.Coalesce,
 }
 # These functions need an explicit constructor for binary.
 binary_func_map: dict[str, SQLGlotExpression] = {
@@ -57,6 +60,11 @@ binary_func_map: dict[str, SQLGlotExpression] = {
     "*": sqlglot_expressions.Mul,
     "/": sqlglot_expressions.Div,
     "&": sqlglot_expressions.And,
+    "|": sqlglot_expressions.Or,
+}
+# These functions need an explicit constructor for unary.
+unary_func_map: dict[str, SQLGlotExpression] = {
+    "NOT": sqlglot_expressions.Not,
 }
 
 
@@ -76,6 +84,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         "ISIN": convert_isin,
         "LIKE": convert_like,
         "YEAR": convert_year,
+        "NDISTINCT": convert_ndistinct,
     }
 
     def __init__(self, dialect: SQLGlotDialect) -> None:
@@ -103,6 +112,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             output_expr = self.special_func_map[key](input_exprs, self._dialect)
         elif key in generic_func_map:
             output_expr = generic_func_map[key].from_arg_list(input_exprs)
+        elif key in unary_func_map:
+            assert len(input_exprs) == 1, "Need exactly 1 unary input"
+            output_expr = unary_func_map[key](this=input_exprs[0])
         elif key in binary_func_map:
             assert len(input_exprs) >= 2, "Need at least 2 binary inputs"
             # Note: SQLGlot explicit inserts parentheses for binary operations
