@@ -1,5 +1,5 @@
 """
-Test that tests the fully conversion of a PyDough object to a SQL query.
+Test that tests the full conversion of a PyDough object to a SQL query.
 """
 
 from collections.abc import Callable
@@ -26,7 +26,7 @@ def simple_scan():
 
 def simple_filter():
     # Note: The SQL is non-deterministic once we add nested expressions.
-    return Orders(o_orderkey=key, o_totalprice=total_price).WHERE(o_totalprice < 10.0)
+    return Orders(o_orderkey=key, o_totalprice=total_price).WHERE(o_totalprice < 1000.0)
 
 
 @pytest.mark.parametrize(
@@ -42,7 +42,7 @@ def simple_filter():
         ),
         pytest.param(
             simple_filter,
-            "SELECT o_orderkey, o_totalprice FROM (SELECT o_orderkey AS o_orderkey, o_totalprice AS o_totalprice FROM tpch.ORDERS) WHERE o_totalprice < 10.0",
+            "SELECT o_orderkey, o_totalprice FROM (SELECT o_orderkey AS o_orderkey, o_totalprice AS o_totalprice FROM tpch.ORDERS) WHERE o_totalprice < 1000.0",
             id="simple_filter",
         ),
     ],
@@ -57,9 +57,7 @@ def test_pydough_to_sql(
     qualified AST version, with the correct string representation.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
-    t1 = init_pydough_context(graph)
-    t2 = t1(pydough_code)
-    root: UnqualifiedNode = t2()
+    root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
     actual_sql: str = to_sql(root, metadata=graph).strip()
     expected_sql = expected_sql.strip()
     assert actual_sql == expected_sql
