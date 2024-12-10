@@ -147,13 +147,14 @@ def init_pydough_context(graph: GraphMetadata):
         #######################################################################
         ###              FOR DEBUGGING: UNCOMMENT THIS SECTION              ###
         #######################################################################
-        # try:
-        #     new_func()
-        # except Exception as e:
-        #     import traceback
-        #     print(ast.unparse(new_tree))
-        #     print(e)
-        #     print(traceback.format_exc())
+        try:
+            new_func()
+        except Exception as e:
+            import traceback
+
+            print(ast.unparse(new_tree))
+            print(e)
+            print(traceback.format_exc())
         return new_func
 
     return decorator

@@ -267,6 +267,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             input_expr (Select): The from input, which should be
                 another select statement.
             column_exprs (list[SQLGlotExpression]): The columns to select.
+            alias (str | None): The alias to give the subquery.
 
         Returns:
             Select: A select statement representing the subquery.
