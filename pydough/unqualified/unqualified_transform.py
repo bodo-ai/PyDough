@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["init_pydough_context", "transform_code"]
+__all__ = ["init_pydough_context", "transform_code", "transform_cell"]
 
 import ast
 import inspect
@@ -21,9 +21,8 @@ class AddRootVisitor(ast.NodeTransformer):
     4. Prepends any unknown variable names with `_ROOT.`
     """
 
-    def __init__(self, graph_dict: dict[str, GraphMetadata], known_names: set[str]):
-        assert len(graph_dict) == 1, "Expected exactly one key in the graph_dict"
-        self._graph_name = list(graph_dict.keys())[0]
+    def __init__(self, graph_name: str, known_names: set[str]):
+        self._graph_name = graph_name
         self._known_names: set[str] = known_names
         self._known_names.update({"UnqualifiedRoot", self._graph_name})
 
@@ -110,6 +109,8 @@ def transform_code(
 
     Args:
         `source`: the raw Python code string for the original function.
+        `graph_dict`: a dictionary mapping the name of the graph to the
+            metadata graph.
         `known_names`: the set of strings representing names of variables that
         are known to be accessible by the function that are not defined within,
         such as global variables or module imports.
@@ -117,7 +118,10 @@ def transform_code(
     Returns:
         The Python AST for the transformed code.
     """
-    visitor: ast.NodeTransformer = AddRootVisitor(graph_dict, known_names)
+    assert len(graph_dict) == 1, "Expected exactly one key in the graph_dict"
+    visitor: ast.NodeTransformer = AddRootVisitor(
+        list(graph_dict.keys())[0], known_names
+    )
     source = source.lstrip("\n")
     n_strip = len(source) - len(source.lstrip())
     if n_strip > 0:
@@ -127,6 +131,29 @@ def transform_code(
     new_tree = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
     return new_tree
+
+
+def transform_cell(cell: str, graph_name: str, known_names: set[str]) -> str:
+    """
+    Transforms the source code from Juypter into an updated version with
+    resolved names.
+
+    Args:
+        `source`: the raw Python code string for the original function.
+        `graph_name`: The name of the graph to use as a variable.
+        `known_names`: the set of strings representing names of variables that
+        are known to be accessible by the function that are not defined within,
+        such as global variables or module imports.
+
+    Returns:
+        The updated unparsed source code.
+    """
+    visitor: ast.NodeTransformer = AddRootVisitor(graph_name, known_names)
+    tree = ast.parse(cell)
+    assert isinstance(tree, ast.AST)
+    new_tree = ast.fix_missing_locations(visitor.visit(tree))
+    assert isinstance(new_tree, ast.AST)
+    return ast.unparse(new_tree)
 
 
 def init_pydough_context(graph: GraphMetadata):

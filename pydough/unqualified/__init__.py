@@ -20,6 +20,7 @@ __all__ = [
     "init_pydough_context",
     "qualify_node",
     "transform_code",
+    "transform_cell",
 ]
 
 from .errors import PyDoughUnqualifiedException
@@ -38,4 +39,4 @@ from .unqualified_node import (
     UnqualifiedTopK,
     UnqualifiedWhere,
 )
-from .unqualified_transform import init_pydough_context, transform_code
+from .unqualified_transform import init_pydough_context, transform_cell, transform_code
