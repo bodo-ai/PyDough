@@ -322,7 +322,7 @@ class UnqualifiedRoot(UnqualifiedNode):
             return super().__getattribute__(name)
 
     def __repr__(self):
-        return self._parcel[0].name
+        return "?"
 
 
 class UnqualifiedBack(UnqualifiedNode):
@@ -349,7 +349,7 @@ class UnqualifiedLiteral(UnqualifiedNode):
         self._parcel: tuple[object, PyDoughType] = (literal, typ)
 
     def __repr__(self):
-        return f"{self._parcel[0]!r}:{self._parcel[1]!r}"
+        return f"{self._parcel[0]!r}"
 
 
 class UnqualifiedCollation(UnqualifiedNode):

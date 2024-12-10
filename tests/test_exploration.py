@@ -6,10 +6,23 @@ from collections.abc import Callable
 
 import pytest
 from exploration_examples import (
+    contextless_aggfunc_impl,
+    contextless_back_impl,
+    contextless_collections_impl,
+    contextless_expr_impl,
+    contextless_func_impl,
+    filter_impl,
     global_agg_calc_impl,
     global_calc_impl,
     global_impl,
+    nation_expr_impl,
     nation_impl,
+    order_impl,
+    partition_child_impl,
+    partition_impl,
+    subcollection_calc_backref_impl,
+    table_calc_impl,
+    top_k_impl,
 )
 from test_utils import graph_fetcher
 
@@ -620,6 +633,8 @@ The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
 Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
 """,
             ),
             id="nation",
@@ -650,6 +665,8 @@ The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
 Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
 """,
             ),
             id="global",
@@ -692,6 +709,8 @@ The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
 Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
 """,
             ),
             id="global_calc",
@@ -750,21 +769,491 @@ The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
 Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
 """,
             ),
             id="global_agg_calc",
         ),
-        # pytest.param(
-        #     (
-        #         "TPCH",
-        #         nation_impl,
-        #         """
-        #         """,
-        #         """
-        #         """,
-        #     ),
-        #     id="global_calc"
-        # ),
+        pytest.param(
+            (
+                "TPCH",
+                table_calc_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    ├─── TableCollection[Nations]
+    └─┬─ Calc[name=name, region_name=$1.name, num_customers=COUNT($2)]
+      ├─┬─ AccessChild
+      │ └─── SubCollection[region]
+      └─┬─ AccessChild
+        └─── SubCollection[customers]
+
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[region]
+  child $2:
+    └─── SubCollection[customers]
+
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  name <- name (propagated from previous collection)
+  num_customers <- COUNT($2), aka COUNT(customers)
+  region_name <- $1.name, aka region.name
+
+The following terms will be included in the result if this collection is executed:
+  name, num_customers, region_name
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  comment, key, name, num_customers, region_key, region_name
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+                """,
+                """
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[region]
+  child $2:
+    └─── SubCollection[customers]
+
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  name <- name (propagated from previous collection)
+  num_customers <- COUNT($2), aka COUNT(customers)
+  region_name <- $1.name, aka region.name
+
+The collection has access to the following expressions:
+  comment, key, name, num_customers, region_key, region_name
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="table_calc",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                subcollection_calc_backref_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─┬─ TableCollection[Regions]
+      └─┬─ SubCollection[nations]
+        ├─── SubCollection[customers]
+        └─── Calc[name=name, nation_name=BACK(1).name, region_name=BACK(2).name]
+
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  name <- name (propagated from previous collection)
+  nation_name <- BACK(1).name
+  region_name <- BACK(2).name
+
+The following terms will be included in the result if this collection is executed:
+  name, nation_name, region_name
+
+It is possible to use BACK to go up to 3 levels above this collection.
+
+The collection has access to the following expressions:
+  acctbal, address, comment, key, mktsegment, name, nation_key, nation_name, phone, region_name
+
+The collection has access to the following collections:
+  nation, orders, region
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+                """,
+                """
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  name <- name (propagated from previous collection)
+  nation_name <- BACK(1).name
+  region_name <- BACK(2).name
+
+The collection has access to the following expressions:
+  acctbal, address, comment, key, mktsegment, name, nation_key, nation_name, phone, region_name
+
+The collection has access to the following collections:
+  nation, orders, region
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="subcollection_calc_backref",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                filter_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    ├─── TableCollection[Nations]
+    ├─── Calc[name=name]
+    └─┬─ Where[($1.name == 'ASIA') & HAS($2) & (COUNT($3) > 100)]
+      ├─┬─ AccessChild
+      │ └─── SubCollection[region]
+      ├─┬─ AccessChild
+      │ └─┬─ SubCollection[customers]
+      │   └─┬─ SubCollection[orders]
+      │     ├─── SubCollection[lines]
+      │     └─┬─ Where[CONTAINS($1.name, 'STEEL')]
+      │       └─┬─ AccessChild
+      │         └─── SubCollection[part]
+      └─┬─ AccessChild
+        ├─── SubCollection[suppliers]
+        └─── Where[account_balance >= 0.0]
+
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[region]
+  child $2:
+    └─┬─ SubCollection[customers]
+      └─┬─ SubCollection[orders]
+        ├─── SubCollection[lines]
+        └─┬─ Where[CONTAINS($1.name, 'STEEL')]
+          └─┬─ AccessChild
+            └─── SubCollection[part]
+  child $3:
+    ├─── SubCollection[suppliers]
+    └─── Where[account_balance >= 0.0]
+
+The main task of this node is to filter on the following conditions:
+  $1.name == 'ASIA', aka region.name == 'ASIA'
+  HAS($2), aka HAS(customers.orders.lines.WHERE(CONTAINS(part.name, 'STEEL')))
+  COUNT($3) > 100, aka COUNT(suppliers.WHERE(account_balance >= 0.0)) > 100
+
+The following terms will be included in the result if this collection is executed:
+  name
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+                """,
+                """
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[region]
+  child $2:
+    └─┬─ SubCollection[customers]
+      └─┬─ SubCollection[orders]
+        ├─── SubCollection[lines]
+        └─┬─ Where[CONTAINS($1.name, 'STEEL')]
+          └─┬─ AccessChild
+            └─── SubCollection[part]
+  child $3:
+    ├─── SubCollection[suppliers]
+    └─── Where[account_balance >= 0.0]
+
+The main task of this node is to filter on the following conditions:
+  $1.name == 'ASIA', aka region.name == 'ASIA'
+  HAS($2), aka HAS(customers.orders.lines.WHERE(CONTAINS(part.name, 'STEEL')))
+  COUNT($3) > 100, aka COUNT(suppliers.WHERE(account_balance >= 0.0)) > 100
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="filter",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                order_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    ├─── TableCollection[Nations]
+    ├─── Calc[name=name]
+    └─┬─ OrderBy[COUNT($1).DESC(na_pos='last'), name.ASC(na_pos='last')]
+      └─┬─ AccessChild
+        └─── SubCollection[suppliers]
+
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[suppliers]
+
+The main task of this node is to sort the collection on the following:
+  COUNT($1), aka COUNT(suppliers), in descending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the end
+
+The following terms will be included in the result if this collection is executed:
+  name
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+                """,
+                """
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[suppliers]
+
+The main task of this node is to sort the collection on the following:
+  COUNT($1), aka COUNT(suppliers), in descending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the end
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="order",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                top_k_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    ├─── TableCollection[Parts]
+    ├─┬─ Calc[name=name, n_suppliers=COUNT($1)]
+    │ └─┬─ AccessChild
+    │   └─── SubCollection[suppliers_of_part]
+    └─── TopK[100, n_suppliers.DESC(na_pos='last'), name.ASC(na_pos='last')]
+
+The main task of this node is to sort the collection on the following and keep the first 100 records:
+  n_suppliers, in descending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the end
+
+The following terms will be included in the result if this collection is executed:
+  n_suppliers, name
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size
+
+The collection has access to the following collections:
+  lines, suppliers_of_part, supply_records
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+                """,
+                """
+The main task of this node is to sort the collection on the following and keep the first 100 records:
+  n_suppliers, in descending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the end
+
+The collection has access to the following expressions:
+  brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size
+
+The collection has access to the following collections:
+  lines, suppliers_of_part, supply_records
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="top_k",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                partition_impl,
+                """
+PyDough collection representing the following logic:
+  ┌─── TPCH
+  └─┬─ Partition[name='p', by=part_type]
+    └─┬─ AccessChild
+      └─── TableCollection[Parts]
+
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── TableCollection[Parts]
+
+The main task of this node is to partition the child data on the following keys:
+  $1.part_type
+Note: the subcollection of this collection containing records from the unpartitioned data is called 'p'.
+
+The following terms will be included in the result if this collection is executed:
+  part_type
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  part_type
+
+The collection has access to the following collections:
+  p
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+                """,
+                """
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── TableCollection[Parts]
+
+The main task of this node is to partition the child data on the following keys:
+  $1.part_type
+Note: the subcollection of this collection containing records from the unpartitioned data is called 'p'.
+
+The collection has access to the following expressions:
+  part_type
+
+The collection has access to the following collections:
+  p
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="partition",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                partition_child_impl,
+                """
+PyDough collection representing the following logic:
+  ┌─── TPCH
+  ├─┬─ Partition[name='p', by=part_type]
+  │ └─┬─ AccessChild
+  │   └─── TableCollection[Parts]
+  ├─┬─ Calc[part_type=part_type, avg_price=AVG($1.retail_price)]
+  │ └─┬─ AccessChild
+  │   └─── PartitionChild[p]
+  └─┬─ Where[avg_price >= 27.5]
+    └─── PartitionChild[p]
+
+This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
+Using BACK(1) will access the partitioned data.
+
+The following terms will be included in the result if this collection is executed:
+  brand, comment, container, key, manufacturer, name, part_type, retail_price, size
+
+It is possible to use BACK to go up to 2 levels above this collection.
+
+The collection has access to the following expressions:
+  brand, comment, container, key, manufacturer, name, part_type, retail_price, size
+
+The collection has access to the following collections:
+  lines, suppliers_of_part, supply_records
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+                """,
+                """
+This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
+Using BACK(1) will access the partitioned data.
+
+The collection has access to the following expressions:
+  brand, comment, container, key, manufacturer, name, part_type, retail_price, size
+
+The collection has access to the following collections:
+  lines, suppliers_of_part, supply_records
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="partition_child",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                nation_expr_impl,
+                """
+Property 'name' of TPCH.Nations is not a collection, therefore it cannot be an argument to pydough.explain.
+Did you mean to use pydough.explain_term?
+                """,
+                """
+Property 'name' of TPCH.Nations is not a collection, therefore it cannot be an argument to pydough.explain.
+Did you mean to use pydough.explain_term?
+                """,
+            ),
+            id="not_qualified_collection_a",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                contextless_collections_impl,
+                """
+Unrecognized term of graph 'TPCH': 'lines'
+This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+                """,
+                """
+Unrecognized term of graph 'TPCH': 'lines'
+This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+                """,
+            ),
+            id="not_qualified_collection_b",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                contextless_expr_impl,
+                """
+Unrecognized term of graph 'TPCH': 'name'
+This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+                """,
+                """
+Unrecognized term of graph 'TPCH': 'name'
+This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+                """,
+            ),
+            id="not_qualified_collection_c",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                contextless_back_impl,
+                "Cannot call pydough.explain on BACK(1).fizz",
+                "Cannot call pydough.explain on BACK(1).fizz",
+            ),
+            id="not_qualified_collection_d",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                contextless_aggfunc_impl,
+                "Cannot call pydough.explain on COUNT(?.customers)",
+                "Cannot call pydough.explain on COUNT(?.customers)",
+            ),
+            id="not_qualified_collection_e",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                contextless_func_impl,
+                "Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name))",
+                "Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name))",
+            ),
+            id="not_qualified_collection_f",
+        ),
         # pytest.param(
         #     (
         #         "TPCH",

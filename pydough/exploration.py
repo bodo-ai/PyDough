@@ -5,6 +5,8 @@ TODO: add file-level docstring
 __all__ = ["explain"]
 
 
+import pydough.pydough_ast.pydough_operators as pydop
+
 from .metadata.abstract_metadata import AbstractMetadata
 from .metadata.collections import CollectionMetadata, SimpleTableMetadata
 from .metadata.graphs import GraphMetadata
@@ -21,13 +23,20 @@ from .metadata.properties import (
 from .pydough_ast import (
     Calc,
     ChildOperator,
+    ExpressionFunctionCall,
     GlobalContext,
+    OrderBy,
+    PartitionBy,
+    PartitionChild,
     PyDoughAST,
+    PyDoughASTException,
     PyDoughCollectionAST,
     PyDoughExpressionAST,
     Reference,
     SubCollection,
     TableCollection,
+    TopK,
+    Where,
 )
 from .unqualified import (
     UnqualifiedAccess,
@@ -224,7 +233,7 @@ def explain_graph(graph: GraphMetadata, verbose: bool) -> str:
     return "\n".join(lines)
 
 
-def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot:
+def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
     """
     TODO
     """
@@ -242,9 +251,7 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot:
             predecessor: UnqualifiedNode = node._parcel[0]
             return find_unqualified_root(predecessor)
         case _:
-            raise ValueError(
-                f"Cannot call pydough.explain on argument of type {node.__class__.__name__}"
-            )
+            return None
 
 
 def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
@@ -252,126 +259,223 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     TODO
     """
     lines: list[str] = []
-    root: UnqualifiedRoot = find_unqualified_root(node)
-    qualified_node: PyDoughCollectionAST = qualify_node(node, root._parcel[0])
+    qualified_node: PyDoughCollectionAST | None = None
 
-    if verbose:
-        # Dump the structure of the collection
-        lines.append("PyDough collection representing the following logic:")
-        for line in qualified_node.to_tree_string().splitlines():
-            lines.append(f"  {line}")
-        lines.append("")
+    # Attempt to qualify the node, dumping an appropriate message if it could
+    # not be qualified
+    try:
+        root: UnqualifiedRoot | None = find_unqualified_root(node)
+        if root is not None:
+            qualified_node = qualify_node(node, root._parcel[0])
+        else:
+            # If the root is None, it means that the node was an expression
+            # without information about its context.
+            lines.append(f"Cannot call pydough.explain on {node}")
+    except PyDoughASTException as e:
+        # If the qualification failed, dump an appropriate message indicating
+        # why pydough_explain did not work on it.
+        if "Unrecognized term" in str(e):
+            lines.append(str(e))
+            lines.append(
+                "This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
+            )
+        elif "is not a collection" in str(e):
+            lines.append(f"{e}, therefore it cannot be an argument to pydough.explain.")
+            lines.append("Did you mean to use pydough.explain_term?")
+        else:
+            raise e
 
-    # Explain what the specific node does
-    collection_name: str
-    property_name: str
-    match qualified_node:
-        case GlobalContext():
-            lines.append(
-                "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed."
-            )
-        case TableCollection():
-            collection_name = qualified_node.collection.name
-            lines.append(
-                f"This node, specifically, accesses the collection {collection_name}. Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
-            )
-        case SubCollection():
-            collection_name = qualified_node.subcollection_property.collection.name
-            property_name = qualified_node.subcollection_property.name
-            lines.append(
-                f"This node, specifically, accesses the subcollection {collection_name}.{property_name}. Call pydough.explain(graph['{collection_name}']['{property_name}']) to learn more about this subcollection property."
-            )
-        case ChildOperator():
-            if len(qualified_node.children):
+    # If the qualification succeeded, dump info about the qualified node.
+    if qualified_node is not None:
+        if verbose:
+            # Dump the structure of the collection
+            lines.append("PyDough collection representing the following logic:")
+            for line in qualified_node.to_tree_string().splitlines():
+                lines.append(f"  {line}")
+            lines.append("")
+
+        # Explain what the specific node does
+        collection_name: str
+        property_name: str
+        tree_string: str
+        regular_string: str
+        expr_string: str
+        match qualified_node:
+            case GlobalContext():
                 lines.append(
-                    "This node first derives the following children before doing its main task:"
+                    "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed."
                 )
-                for idx, child in enumerate(qualified_node.children):
-                    lines.append(f"  child ${idx + 1}:")
-                    for line in child.to_tree_string().splitlines()[1:]:
-                        lines.append(f"  {line}")
-                lines.append("")
-            match qualified_node:
-                case Calc():
+            case TableCollection():
+                collection_name = qualified_node.collection.name
+                lines.append(
+                    f"This node, specifically, accesses the collection {collection_name}. Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
+                )
+            case SubCollection():
+                collection_name = qualified_node.subcollection_property.collection.name
+                property_name = qualified_node.subcollection_property.name
+                lines.append(
+                    f"This node, specifically, accesses the subcollection {collection_name}.{property_name}. Call pydough.explain(graph['{collection_name}']['{property_name}']) to learn more about this subcollection property."
+                )
+            case PartitionChild():
+                lines.append(
+                    f"This node, specifically, accesses the unpartitioned data of a partitioning (child name: {qualified_node.partition_child_name})."
+                )
+                lines.append("Using BACK(1) will access the partitioned data.")
+            case ChildOperator():
+                if len(qualified_node.children):
                     lines.append(
-                        "The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:"
+                        "This node first derives the following children before doing its main task:"
                     )
-                    for name in sorted(qualified_node.calc_terms):
-                        suffix: str = ""
-                        expr: PyDoughExpressionAST = qualified_node.get_expr(name)
-                        tree_string: str = expr.to_string(True)
-                        regular_string: str = expr.to_string(False)
-                        if tree_string != regular_string:
-                            suffix += f", aka {regular_string}"
-                        if name in qualified_node.preceding_context.all_terms:
-                            if isinstance(expr, Reference) and expr.term_name == name:
-                                suffix += " (propagated from previous collection)"
-                            else:
-                                suffix += f" (overwrites existing value of {name})"
-                        lines.append(f"  {name} <- {tree_string}{suffix}")
-                case _:
-                    raise NotImplementedError
-        case _:
-            raise NotImplementedError
+                    for idx, child in enumerate(qualified_node.children):
+                        lines.append(f"  child ${idx + 1}:")
+                        for line in child.to_tree_string().splitlines()[1:]:
+                            lines.append(f"  {line}")
+                    lines.append("")
+                match qualified_node:
+                    case Calc():
+                        lines.append(
+                            "The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:"
+                        )
+                        for name in sorted(qualified_node.calc_terms):
+                            suffix: str = ""
+                            expr: PyDoughExpressionAST = qualified_node.get_expr(name)
+                            tree_string = expr.to_string(True)
+                            regular_string = expr.to_string(False)
+                            if tree_string != regular_string:
+                                suffix += f", aka {regular_string}"
+                            if name in qualified_node.preceding_context.all_terms:
+                                if (
+                                    isinstance(expr, Reference)
+                                    and expr.term_name == name
+                                ):
+                                    suffix += " (propagated from previous collection)"
+                                else:
+                                    suffix += f" (overwrites existing value of {name})"
+                            lines.append(f"  {name} <- {tree_string}{suffix}")
+                    case Where():
+                        lines.append(
+                            "The main task of this node is to filter on the following conditions:"
+                        )
+                        conditions: list[PyDoughExpressionAST] = []
+                        if (
+                            isinstance(qualified_node.condition, ExpressionFunctionCall)
+                            and qualified_node.condition.operator == pydop.BAN
+                        ):
+                            for arg in qualified_node.condition.args:
+                                assert isinstance(arg, PyDoughExpressionAST)
+                                conditions.append(arg)
+                        else:
+                            conditions.append(qualified_node.condition)
+                        for condition in conditions:
+                            tree_string = condition.to_string(True)
+                            regular_string = condition.to_string(False)
+                            expr_string = tree_string
+                            if tree_string != regular_string:
+                                expr_string += f", aka {regular_string}"
+                            lines.append(f"  {expr_string}")
+                    case OrderBy():
+                        if isinstance(qualified_node, TopK):
+                            lines.append(
+                                f"The main task of this node is to sort the collection on the following and keep the first {qualified_node.records_to_keep} records:"
+                            )
+                        else:
+                            lines.append(
+                                "The main task of this node is to sort the collection on the following:"
+                            )
+                        for idx, order_term in enumerate(qualified_node.collation):
+                            expr_string = "  "
+                            if idx > 0:
+                                expr_string += "with ties broken by: "
+                            tree_string = order_term.expr.to_string(True)
+                            regular_string = order_term.expr.to_string(False)
+                            expr_string += tree_string
+                            if tree_string != regular_string:
+                                expr_string += f", aka {regular_string}"
+                            expr_string += ", in "
+                            expr_string += (
+                                "ascending" if order_term.asc else "descending"
+                            )
+                            expr_string += " order with nulls at the "
+                            expr_string += "end" if order_term.na_last else "start"
+                            lines.append(expr_string)
+                    case PartitionBy():
+                        lines.append(
+                            "The main task of this node is to partition the child data on the following keys:"
+                        )
+                        for key in qualified_node.keys:
+                            lines.append(f"  {key.expr.to_string(True)}")
+                        lines.append(
+                            f"Note: the subcollection of this collection containing records from the unpartitioned data is called '{qualified_node.child_name}'."
+                        )
+                    case _:
+                        raise NotImplementedError(qualified_node.__class__.__name__)
+            case _:
+                raise NotImplementedError(qualified_node.__class__.__name__)
 
-    if verbose:
-        # Dump the calc terms of the collection
-        lines.append("")
-        if len(qualified_node.calc_terms) > 0:
+        if verbose:
+            # Dump the calc terms of the collection
+            lines.append("")
+            if len(qualified_node.calc_terms) > 0:
+                lines.append(
+                    "The following terms will be included in the result if this collection is executed:"
+                )
+                lines.append(f"  {', '.join(sorted(qualified_node.calc_terms))}")
+            else:
+                lines.append(
+                    "The collection does not have any terms that can be included in a result if it is executed."
+                )
+
+            # Identify the number of BACK levels that are accessible
+            back_counter: int = 0
+            copy_node: PyDoughCollectionAST = qualified_node
+            lines.append("")
+            while copy_node.ancestor_context is not None:
+                back_counter += 1
+                copy_node = copy_node.ancestor_context
+            if back_counter == 0:
+                lines.append("It is not possible to use BACK from this collection.")
+            elif back_counter == 1:
+                lines.append(
+                    "It is possible to use BACK to go up to 1 level above this collection."
+                )
+            else:
+                lines.append(
+                    f"It is possible to use BACK to go up to {back_counter} levels above this collection."
+                )
+
+        # Dump the collection & expression terms of the collection
+        expr_names: list[str] = []
+        collection_names: list[str] = []
+        for name in qualified_node.all_terms:
+            term: PyDoughAST = qualified_node.get_term(name)
+            if isinstance(term, PyDoughExpressionAST):
+                expr_names.append(name)
+            else:
+                collection_names.append(name)
+        expr_names.sort()
+        collection_names.sort()
+
+        if len(expr_names) > 0:
+            lines.append("")
+            lines.append("The collection has access to the following expressions:")
+            lines.append(f"  {', '.join(expr_names)}")
+
+        if len(collection_names) > 0:
+            lines.append("")
+            lines.append("The collection has access to the following collections:")
+            lines.append(f"  {', '.join(collection_names)}")
+
+        if len(expr_names) > 0 or len(collection_names) > 0:
+            lines.append("")
             lines.append(
-                "The following terms will be included in the result if this collection is executed:"
+                "Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to."
             )
-            lines.append(f"  {', '.join(sorted(qualified_node.calc_terms))}")
-        else:
+
+        if not verbose:
+            lines.append("")
             lines.append(
-                "The collection does not have any terms that can be included in a result if it is executed."
+                "Call pydough.explain(collection, verbose=True) for more details."
             )
-
-        # Identify the number of BACK levels that are accessible
-        back_counter: int = 0
-        copy_node: PyDoughCollectionAST = qualified_node
-        lines.append("")
-        while copy_node.ancestor_context is not None:
-            back_counter += 1
-            copy_node = copy_node.ancestor_context
-        if back_counter == 0:
-            lines.append("It is not possible to use BACK from this collection.")
-        elif back_counter == 1:
-            lines.append(
-                "It is possible to use BACK to go up to 1 level above this collection."
-            )
-        else:
-            lines.append(
-                f"It is possible to use BACK to go up to {back_counter} levels above this collection."
-            )
-
-    # Dump the collection & expression terms of the collection
-    expr_names: list[str] = []
-    collection_names: list[str] = []
-    for name in qualified_node.all_terms:
-        term: PyDoughAST = qualified_node.get_term(name)
-        if isinstance(term, PyDoughExpressionAST):
-            expr_names.append(name)
-        else:
-            collection_names.append(name)
-    expr_names.sort()
-    collection_names.sort()
-
-    if len(expr_names) > 0:
-        lines.append("")
-        lines.append("The collection has access to the following expressions:")
-        lines.append(f"  {', '.join(expr_names)}")
-
-    if len(collection_names) > 0:
-        lines.append("")
-        lines.append("The collection has access to the following collections:")
-        lines.append(f"  {', '.join(collection_names)}")
-
-    if len(expr_names) > 0 or len(collection_names) > 0:
-        lines.append("")
-        lines.append(
-            "Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to."
-        )
 
     return "\n".join(lines)
 
