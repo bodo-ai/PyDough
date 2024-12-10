@@ -26,12 +26,30 @@ from pydough.metadata import GraphMetadata
 PyDough graph: Empty
 Collections: graph contains no collections
 """,
+                """
+PyDough graph: Empty
+Collections: graph contains no collections
+""",
             ),
             id="explain_graph_empty",
         ),
         pytest.param(
             (
                 ("TPCH", None, None),
+                """
+PyDough graph: TPCH
+Collections:
+  Customers
+  Lineitems
+  Nations
+  Orders
+  PartSupp
+  Parts
+  Regions
+  Suppliers
+Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
+Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected.
+""",
                 """
 PyDough graph: TPCH
 Collections:
@@ -53,7 +71,7 @@ Call pydough.explain_structure(graph) to see how all of the collections in the g
             (
                 ("TPCH", "Customers", None),
                 """
-PyDough collection: simple table collection 'Customers' in graph 'TPCH'
+PyDough collection: Customers
 Table path: tpch.CUSTOMER
 Unique properties of collection: ['key']
 Scalar properties:
@@ -71,6 +89,12 @@ Subcollection properties:
   region
 Call pydough.explain(graph['Customers'][property_name]) to learn more about any of these properties.
 """,
+                """
+PyDough collection: Customers
+Scalar properties: acctbal, address, comment, key, mktsegment, name, nation_key, phone
+Subcollection properties: nation, orders, region
+Call pydough.explain(graph['Customers'][property_name]) to learn more about any of these properties.
+""",
             ),
             id="explain_collection_tpch_customers",
         ),
@@ -78,7 +102,7 @@ Call pydough.explain(graph['Customers'][property_name]) to learn more about any 
             (
                 ("TPCH", "Regions", None),
                 """
-PyDough collection: simple table collection 'Regions' in graph 'TPCH'
+PyDough collection: Regions
 Table path: tpch.REGION
 Unique properties of collection: ['key']
 Scalar properties:
@@ -93,6 +117,12 @@ Subcollection properties:
   suppliers
 Call pydough.explain(graph['Regions'][property_name]) to learn more about any of these properties.
 """,
+                """
+PyDough collection: Regions
+Scalar properties: comment, key, name
+Subcollection properties: customers, lines_sourced_from, nations, orders_shipped_to, suppliers
+Call pydough.explain(graph['Regions'][property_name]) to learn more about any of these properties.
+""",
             ),
             id="explain_collection_tpch_regions",
         ),
@@ -100,7 +130,7 @@ Call pydough.explain(graph['Regions'][property_name]) to learn more about any of
             (
                 ("TPCH", "Lineitems", None),
                 """
-PyDough collection: simple table collection 'Lineitems' in graph 'TPCH'
+PyDough collection: Lineitems
 Table path: tpch.LINEITEM
 Unique properties of collection: [['order_key', 'line_number'], ['part_key', 'supplier_key', 'order_key']]
 Scalar properties:
@@ -128,6 +158,12 @@ Subcollection properties:
   supplier_region
 Call pydough.explain(graph['Lineitems'][property_name]) to learn more about any of these properties.
 """,
+                """
+PyDough collection: Lineitems
+Scalar properties: comment, commit_date, discount, extended_price, line_number, order_key, part_key, quantity, receipt_date, return_flag, ship_date, ship_instruct, ship_mode, status, supplier_key, tax
+Subcollection properties: order, part, part_and_supplier, supplier, supplier_region
+Call pydough.explain(graph['Lineitems'][property_name]) to learn more about any of these properties.
+""",
             ),
             id="explain_collection_tpch_lineitems",
         ),
@@ -135,7 +171,7 @@ Call pydough.explain(graph['Lineitems'][property_name]) to learn more about any 
             (
                 ("TPCH", "PartSupp", None),
                 """
-PyDough collection: simple table collection 'PartSupp' in graph 'TPCH'
+PyDough collection: PartSupp
 Table path: tpch.PARTSUPP
 Unique properties of collection: [['part_key', 'supplier_key']]
 Scalar properties:
@@ -150,6 +186,12 @@ Subcollection properties:
   supplier
 Call pydough.explain(graph['PartSupp'][property_name]) to learn more about any of these properties.
 """,
+                """
+PyDough collection: PartSupp
+Scalar properties: availqty, comment, part_key, supplier_key, supplycost
+Subcollection properties: lines, part, supplier
+Call pydough.explain(graph['PartSupp'][property_name]) to learn more about any of these properties.
+""",
             ),
             id="explain_collection_tpch_partsupp",
         ),
@@ -157,7 +199,12 @@ Call pydough.explain(graph['PartSupp'][property_name]) to learn more about any o
             (
                 ("TPCH", "Regions", "key"),
                 """
-PyDough property: table column property 'key' of simple table collection 'Regions' in graph 'TPCH'
+PyDough property: Regions.key
+Column name: tpch.REGION.r_regionkey
+Data type: int64
+""",
+                """
+PyDough property: Regions.key
 Column name: tpch.REGION.r_regionkey
 Data type: int64
 """,
@@ -168,7 +215,12 @@ Data type: int64
             (
                 ("TPCH", "Regions", "name"),
                 """
-PyDough property: table column property 'name' of simple table collection 'Regions' in graph 'TPCH'
+PyDough property: Regions.name
+Column name: tpch.REGION.r_name
+Data type: string
+""",
+                """
+PyDough property: Regions.name
 Column name: tpch.REGION.r_name
 Data type: string
 """,
@@ -179,7 +231,12 @@ Data type: string
             (
                 ("TPCH", "Regions", "comment"),
                 """
-PyDough property: table column property 'comment' of simple table collection 'Regions' in graph 'TPCH'
+PyDough property: Regions.comment
+Column name: tpch.REGION.r_comment
+Data type: string
+""",
+                """
+PyDough property: Regions.comment
 Column name: tpch.REGION.r_comment
 Data type: string
 """,
@@ -190,13 +247,18 @@ Data type: string
             (
                 ("TPCH", "Regions", "nations"),
                 """
-PyDough property: simple join property 'nations' of simple table collection 'Regions' in graph 'TPCH'
-Connects collection Regions to Nations
+PyDough property: Regions.nations
+This property connects collection Regions to Nations.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: Nations.region
 The subcollection relationship is defined by the following join conditions:
     Regions.key == Nations.region_key
+""",
+                """
+PyDough property: Regions.nations
+This property connects collection Regions to Nations.
+Use pydough.explain(graph['Regions']['nations'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_regions_nations",
@@ -205,14 +267,19 @@ The subcollection relationship is defined by the following join conditions:
             (
                 ("TPCH", "Regions", "customers"),
                 """
-PyDough property: compound property 'customers' of simple table collection 'Regions' in graph 'TPCH'
-Connects collection Regions to Customers
+PyDough property: Regions.customers
+This property connects collection Regions to Customers.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: Customers.region
 Note: this property is a compound property; it is an alias for Regions.nations.customers.
 The following properties are inherited from Regions.nations:
   nation_name is an alias for Regions.nations.nation_name
+""",
+                """
+PyDough property: Regions.customers
+This property connects collection Regions to Customers.
+Use pydough.explain(graph['Regions']['customers'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_regions_customers",
@@ -221,14 +288,19 @@ The following properties are inherited from Regions.nations:
             (
                 ("TPCH", "Regions", "suppliers"),
                 """
-PyDough property: compound property 'suppliers' of simple table collection 'Regions' in graph 'TPCH'
-Connects collection Regions to Suppliers
+PyDough property: Regions.suppliers
+This property connects collection Regions to Suppliers.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: Suppliers.region
 Note: this property is a compound property; it is an alias for Regions.nations.suppliers.
 The following properties are inherited from Regions.nations:
   nation_name is an alias for Regions.nations.nation_name
+""",
+                """
+PyDough property: Regions.suppliers
+This property connects collection Regions to Suppliers.
+Use pydough.explain(graph['Regions']['suppliers'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_regions_suppliers",
@@ -237,14 +309,19 @@ The following properties are inherited from Regions.nations:
             (
                 ("TPCH", "Regions", "orders_shipped_to"),
                 """
-PyDough property: compound property 'orders_shipped_to' of simple table collection 'Regions' in graph 'TPCH'
-Connects collection Regions to Orders
+PyDough property: Regions.orders_shipped_to
+This property connects collection Regions to Orders.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: Orders.shipping_region
 Note: this property is a compound property; it is an alias for Regions.customers.orders.
 The following properties are inherited from Regions.customers:
   nation_name is an alias for Regions.customers.nation_name
+""",
+                """
+PyDough property: Regions.orders_shipped_to
+This property connects collection Regions to Orders.
+Use pydough.explain(graph['Regions']['orders_shipped_to'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_regions_orders_shipped_to",
@@ -253,8 +330,8 @@ The following properties are inherited from Regions.customers:
             (
                 ("TPCH", "Regions", "lines_sourced_from"),
                 """
-PyDough property: compound property 'lines_sourced_from' of simple table collection 'Regions' in graph 'TPCH'
-Connects collection Regions to Lineitems
+PyDough property: Regions.lines_sourced_from
+This property connects collection Regions to Lineitems.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: Lineitems.supplier_region
@@ -265,6 +342,11 @@ The following properties are inherited from Regions.suppliers:
   supplier_address is an alias for Regions.suppliers.supplier_address
   supplier_name is an alias for Regions.suppliers.supplier_name
 """,
+                """
+PyDough property: Regions.lines_sourced_from
+This property connects collection Regions to Lineitems.
+Use pydough.explain(graph['Regions']['lines_sourced_from'], verbose=True) to learn more details.
+""",
             ),
             id="explain_property_tpch_regions_lines_sourced_from",
         ),
@@ -272,13 +354,18 @@ The following properties are inherited from Regions.suppliers:
             (
                 ("TPCH", "PartSupp", "part"),
                 """
-PyDough property: simple join property 'part' of simple table collection 'PartSupp' in graph 'TPCH'
-Connects collection PartSupp to Parts
+PyDough property: PartSupp.part
+This property connects collection PartSupp to Parts.
 Cardinality of connection: Many -> One
 Is reversible: yes
 Reverse property: Parts.supply_records
 The subcollection relationship is defined by the following join conditions:
     PartSupp.part_key == Parts.key
+""",
+                """
+PyDough property: PartSupp.part
+This property connects collection PartSupp to Parts.
+Use pydough.explain(graph['PartSupp']['part'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_partsupp_part",
@@ -287,13 +374,18 @@ The subcollection relationship is defined by the following join conditions:
             (
                 ("TPCH", "PartSupp", "supplier"),
                 """
-PyDough property: simple join property 'supplier' of simple table collection 'PartSupp' in graph 'TPCH'
-Connects collection PartSupp to Suppliers
+PyDough property: PartSupp.supplier
+This property connects collection PartSupp to Suppliers.
 Cardinality of connection: Many -> One
 Is reversible: yes
 Reverse property: Suppliers.supply_records
 The subcollection relationship is defined by the following join conditions:
     PartSupp.supplier_key == Suppliers.key
+""",
+                """
+PyDough property: PartSupp.supplier
+This property connects collection PartSupp to Suppliers.
+Use pydough.explain(graph['PartSupp']['supplier'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_partsupp_supplier",
@@ -302,14 +394,19 @@ The subcollection relationship is defined by the following join conditions:
             (
                 ("TPCH", "PartSupp", "lines"),
                 """
-PyDough property: simple join property 'lines' of simple table collection 'PartSupp' in graph 'TPCH'
-Connects collection PartSupp to Lineitems
+PyDough property: PartSupp.lines
+This property connects collection PartSupp to Lineitems.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: Lineitems.part_and_supplier
 The subcollection relationship is defined by the following join conditions:
     PartSupp.part_key == Lineitems.part_key
     PartSupp.supplier_key == Lineitems.supplier_key
+""",
+                """
+PyDough property: PartSupp.lines
+This property connects collection PartSupp to Lineitems.
+Use pydough.explain(graph['PartSupp']['lines'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_partsupp_lines",
@@ -318,13 +415,18 @@ The subcollection relationship is defined by the following join conditions:
             (
                 ("TPCH", "Suppliers", "nation"),
                 """
-PyDough property: simple join property 'nation' of simple table collection 'Suppliers' in graph 'TPCH'
-Connects collection Suppliers to Nations
+PyDough property: Suppliers.nation
+This property connects collection Suppliers to Nations.
 Cardinality of connection: Many -> One
 Is reversible: yes
 Reverse property: Nations.suppliers
 The subcollection relationship is defined by the following join conditions:
     Suppliers.nation_key == Nations.key
+""",
+                """
+PyDough property: Suppliers.nation
+This property connects collection Suppliers to Nations.
+Use pydough.explain(graph['Suppliers']['nation'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_suppliers_nation",
@@ -333,13 +435,18 @@ The subcollection relationship is defined by the following join conditions:
             (
                 ("TPCH", "Suppliers", "supply_records"),
                 """
-PyDough property: simple join property 'supply_records' of simple table collection 'Suppliers' in graph 'TPCH'
-Connects collection Suppliers to PartSupp
+PyDough property: Suppliers.supply_records
+This property connects collection Suppliers to PartSupp.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: PartSupp.supplier
 The subcollection relationship is defined by the following join conditions:
     Suppliers.key == PartSupp.supplier_key
+""",
+                """
+PyDough property: Suppliers.supply_records
+This property connects collection Suppliers to PartSupp.
+Use pydough.explain(graph['Suppliers']['supply_records'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_suppliers_supply_records",
@@ -348,8 +455,8 @@ The subcollection relationship is defined by the following join conditions:
             (
                 ("TPCH", "Suppliers", "parts_supplied"),
                 """
-PyDough property: compound property 'parts_supplied' of simple table collection 'Suppliers' in graph 'TPCH'
-Connects collection Suppliers to Parts
+PyDough property: Suppliers.parts_supplied
+This property connects collection Suppliers to Parts.
 Cardinality of connection: Many -> Many
 Is reversible: yes
 Reverse property: Parts.suppliers_of_part
@@ -360,6 +467,11 @@ The following properties are inherited from Suppliers.supply_records:
   ps_lines is an alias for Suppliers.supply_records.ps_lines
   ps_supplycost is an alias for Suppliers.supply_records.ps_supplycost
 """,
+                """
+PyDough property: Suppliers.parts_supplied
+This property connects collection Suppliers to Parts.
+Use pydough.explain(graph['Suppliers']['parts_supplied'], verbose=True) to learn more details.
+""",
             ),
             id="explain_property_tpch_suppliers_parts_supplied",
         ),
@@ -367,13 +479,18 @@ The following properties are inherited from Suppliers.supply_records:
             (
                 ("TPCH", "Suppliers", "lines"),
                 """
-PyDough property: simple join property 'lines' of simple table collection 'Suppliers' in graph 'TPCH'
-Connects collection Suppliers to Lineitems
+PyDough property: Suppliers.lines
+This property connects collection Suppliers to Lineitems.
 Cardinality of connection: One -> Many
 Is reversible: yes
 Reverse property: Lineitems.supplier
 The subcollection relationship is defined by the following join conditions:
     Suppliers.key == Lineitems.supplier_key
+""",
+                """
+PyDough property: Suppliers.lines
+This property connects collection Suppliers to Lineitems.
+Use pydough.explain(graph['Suppliers']['lines'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_suppliers_lines",
@@ -382,14 +499,19 @@ The subcollection relationship is defined by the following join conditions:
             (
                 ("TPCH", "Suppliers", "region"),
                 """
-PyDough property: compound property 'region' of simple table collection 'Suppliers' in graph 'TPCH'
-Connects collection Suppliers to Regions
+PyDough property: Suppliers.region
+This property connects collection Suppliers to Regions.
 Cardinality of connection: Many -> One
 Is reversible: yes
 Reverse property: Regions.suppliers
 Note: this property is a compound property; it is an alias for Suppliers.nation.region.
 The following properties are inherited from Suppliers.nation:
   nation_name is an alias for Suppliers.nation.nation_name
+""",
+                """
+PyDough property: Suppliers.region
+This property connects collection Suppliers to Regions.
+Use pydough.explain(graph['Suppliers']['region'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_suppliers_region",
@@ -398,7 +520,7 @@ The following properties are inherited from Suppliers.nation:
 )
 def metadata_exploration_test_data(
     request,
-) -> tuple[Callable[[graph_fetcher], str], str]:
+) -> tuple[Callable[[graph_fetcher, bool], str], str, str]:
     """
     Testing data used for `test_metadata_exploration`. Creates a function that
     takes in a `graph_fetcher` instance and returns the result of calling
@@ -409,36 +531,53 @@ def metadata_exploration_test_data(
     - `(graph_name, collection_name, None)` -> get metadata for a collection
     - `(graph_name, collection_name, property_name)` -> get metadata for a
     property
+
+    Returns both the string representations when verbose=True and when
+    verbose=False.
     """
     args: tuple[str, str | None, str | None] = request.param[0]
-    refsol: str = request.param[1]
+    verbose_refsol: str = request.param[1]
+    non_verbose_refsol: str = request.param[2]
 
     graph_name: str = args[0]
     collection_name: str | None = args[1]
     property_name: str | None = args[2]
 
-    def wrapped_test_impl(fetcher: graph_fetcher):
+    def wrapped_test_impl(fetcher: graph_fetcher, verbose: bool):
         graph: GraphMetadata = fetcher(graph_name)
         if collection_name is None:
-            return pydough.explain(graph)
+            return pydough.explain(graph, verbose=verbose)
         elif property_name is None:
-            return pydough.explain(graph[collection_name])
+            return pydough.explain(graph[collection_name], verbose=verbose)
         else:
-            return pydough.explain(graph[collection_name][property_name])
+            return pydough.explain(
+                graph[collection_name][property_name], verbose=verbose
+            )
 
-    return wrapped_test_impl, refsol.strip()
+    return wrapped_test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
 
 
+@pytest.mark.parametrize(
+    "verbose",
+    [
+        pytest.param(True, id="verbose"),
+        pytest.param(False, id="non_verbose"),
+    ],
+)
 def test_metadata_exploration(
-    metadata_exploration_test_data: tuple[Callable[[graph_fetcher], str], str],
+    metadata_exploration_test_data: tuple[
+        Callable[[graph_fetcher, bool], str], str, str
+    ],
+    verbose: bool,
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
     Verifies that `pydough.explain` called on metadata produces the exepcted
     strings.
     """
-    test_impl, answer = metadata_exploration_test_data
-    explanation_string: str = test_impl(get_sample_graph)
+    test_impl, verbose_answer, non_verbose_answer = metadata_exploration_test_data
+    explanation_string: str = test_impl(get_sample_graph, verbose)
+    answer: str = verbose_answer if verbose else non_verbose_answer
     assert (
         explanation_string == answer
     ), "Mismatch between produced string and expected answer"

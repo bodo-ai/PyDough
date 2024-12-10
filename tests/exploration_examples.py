@@ -27,7 +27,7 @@ def nation_impl(graph: GraphMetadata) -> Callable[[], str]:
 
     @pydough.init_pydough_context(graph)
     def impl():
-        return pydough.explain(Nations)
+        return Nations
 
     return impl
 
@@ -39,7 +39,7 @@ def global_impl(graph: GraphMetadata) -> Callable[[], str]:
 
     @pydough.init_pydough_context(graph)
     def impl():
-        return pydough.explain(TPCH)
+        return TPCH
 
     return impl
 
@@ -51,7 +51,7 @@ def global_calc_impl(graph: GraphMetadata) -> Callable[[], str]:
 
     @pydough.init_pydough_context(graph)
     def impl():
-        return pydough.explain(TPCH(x=42, y=13))
+        return TPCH(x=42, y=13)
 
     return impl
 
@@ -63,8 +63,8 @@ def global_agg_calc_impl(graph: GraphMetadata) -> Callable[[], str]:
 
     @pydough.init_pydough_context(graph)
     def impl():
-        return pydough.explain(
-            TPCH(n_customers=COUNT(Customers), avg_part_price=AVG(Parts.retail_price))
+        return TPCH(
+            n_customers=COUNT(Customers), avg_part_price=AVG(Parts.retail_price)
         )
 
     return impl
