@@ -270,7 +270,8 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         else:
             # If the root is None, it means that the node was an expression
             # without information about its context.
-            lines.append(f"Cannot call pydough.explain on {node}")
+            lines.append(f"Cannot call pydough.explain on {node}.")
+            lines.append("Did you mean to use pydough.explain_term?")
     except PyDoughASTException as e:
         # If the qualification failed, dump an appropriate message indicating
         # why pydough_explain did not work on it.
@@ -279,6 +280,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
             lines.append(
                 "This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
             )
+            lines.append("Did you mean to use pydough.explain_term?")
         elif "is not a collection" in str(e):
             lines.append(f"{e}, therefore it cannot be an argument to pydough.explain.")
             lines.append("Did you mean to use pydough.explain_term?")

@@ -1204,10 +1204,12 @@ Did you mean to use pydough.explain_term?
                 """
 Unrecognized term of graph 'TPCH': 'lines'
 This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+Did you mean to use pydough.explain_term?
                 """,
                 """
 Unrecognized term of graph 'TPCH': 'lines'
 This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+Did you mean to use pydough.explain_term?
                 """,
             ),
             id="not_qualified_collection_b",
@@ -1219,10 +1221,12 @@ This could mean you accessed a property using a name that does not exist, or tha
                 """
 Unrecognized term of graph 'TPCH': 'name'
 This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+Did you mean to use pydough.explain_term?
                 """,
                 """
 Unrecognized term of graph 'TPCH': 'name'
 This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense.
+Did you mean to use pydough.explain_term?
                 """,
             ),
             id="not_qualified_collection_c",
@@ -1231,8 +1235,14 @@ This could mean you accessed a property using a name that does not exist, or tha
             (
                 "TPCH",
                 contextless_back_impl,
-                "Cannot call pydough.explain on BACK(1).fizz",
-                "Cannot call pydough.explain on BACK(1).fizz",
+                """
+Cannot call pydough.explain on BACK(1).fizz.
+Did you mean to use pydough.explain_term?
+""",
+                """
+Cannot call pydough.explain on BACK(1).fizz.
+Did you mean to use pydough.explain_term?
+""",
             ),
             id="not_qualified_collection_d",
         ),
@@ -1240,8 +1250,14 @@ This could mean you accessed a property using a name that does not exist, or tha
             (
                 "TPCH",
                 contextless_aggfunc_impl,
-                "Cannot call pydough.explain on COUNT(?.customers)",
-                "Cannot call pydough.explain on COUNT(?.customers)",
+                """
+Cannot call pydough.explain on COUNT(?.customers).
+Did you mean to use pydough.explain_term?
+""",
+                """
+Cannot call pydough.explain on COUNT(?.customers).
+Did you mean to use pydough.explain_term?
+""",
             ),
             id="not_qualified_collection_e",
         ),
@@ -1249,22 +1265,17 @@ This could mean you accessed a property using a name that does not exist, or tha
             (
                 "TPCH",
                 contextless_func_impl,
-                "Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name))",
-                "Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name))",
+                """
+Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name)).
+Did you mean to use pydough.explain_term?
+""",
+                """
+Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name)).
+Did you mean to use pydough.explain_term?
+""",
             ),
             id="not_qualified_collection_f",
         ),
-        # pytest.param(
-        #     (
-        #         "TPCH",
-        #         nation_impl,
-        #         """
-        #         """,
-        #         """
-        #         """,
-        #     ),
-        #     id="global_calc"
-        # ),
     ]
 )
 def unqualified_exploration_test_data(
