@@ -468,7 +468,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         if len(expr_names) > 0 or len(collection_names) > 0:
             lines.append("")
             lines.append(
-                "Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to."
+                "Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to."
             )
 
         if not verbose:

@@ -621,7 +621,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 """,
                 """
 This node, specifically, accesses the collection Nations. Call pydough.explain(graph['Nations']) to learn more about this collection.
@@ -632,7 +632,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
 """,
@@ -656,7 +656,7 @@ It is not possible to use BACK from this collection.
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 """,
                 """
 This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
@@ -664,7 +664,7 @@ This node is a reference to the global context for the entire graph. An operatio
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
 """,
@@ -695,7 +695,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 """,
                 """
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
@@ -708,7 +708,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
 """,
@@ -749,7 +749,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 """,
                 """
 This node first derives the following children before doing its main task:
@@ -768,7 +768,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
 """,
@@ -811,7 +811,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
                 """,
                 """
 This node first derives the following children before doing its main task:
@@ -831,7 +831,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
                 """,
@@ -866,7 +866,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   nation, orders, region
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
                 """,
                 """
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
@@ -880,7 +880,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   nation, orders, region
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
                 """,
@@ -940,7 +940,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
                 """,
                 """
 This node first derives the following children before doing its main task:
@@ -968,7 +968,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
                 """,
@@ -1007,7 +1007,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
                 """,
                 """
 This node first derives the following children before doing its main task:
@@ -1024,7 +1024,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
                 """,
@@ -1059,7 +1059,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   lines, suppliers_of_part, supply_records
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
                 """,
                 """
 The main task of this node is to sort the collection on the following and keep the first 100 records:
@@ -1072,7 +1072,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   lines, suppliers_of_part, supply_records
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
                 """,
@@ -1109,7 +1109,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   p
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
                 """,
                 """
 This node first derives the following children before doing its main task:
@@ -1126,7 +1126,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   p
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
                 """,
@@ -1163,7 +1163,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   lines, suppliers_of_part, supply_records
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
                 """,
                 """
 This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
@@ -1175,7 +1175,7 @@ The collection has access to the following expressions:
 The collection has access to the following collections:
   lines, suppliers_of_part, supply_records
 
-Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to.
 
 Call pydough.explain(collection, verbose=True) for more details.
                 """,
