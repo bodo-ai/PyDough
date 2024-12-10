@@ -27,21 +27,19 @@ class AddRootVisitor(ast.NodeTransformer):
         self._known_names: set[str] = known_names
         self._known_names.update({"UnqualifiedRoot", self._graph_name})
 
+    def visit_Module(self, node):
+        """Visit the root node."""
+        # Create the root definition in the outermost body
+        node.body = self.create_root_def() + node.body
+        return self.generic_visit(node)
+
     def visit_Assign(self, node):
         for target in node.targets:
             assert isinstance(target, ast.Name)
             self._known_names.add(target.id)
         return self.generic_visit(node)
 
-    def visit_FunctionDef(self, node):
-        decorator_list: list[ast.AST] = []
-        for deco in node.decorator_list:
-            if not (
-                isinstance(deco, ast.Call)
-                and isinstance(deco.func, ast.Name)
-                and deco.func.id == "init_pydough_context"
-            ):
-                decorator_list.append(deco)
+    def create_root_def(self) -> list[ast.AST]:
         import_root: ast.AST = ast.ImportFrom(
             module="pydough.unqualified", names=[ast.alias("UnqualifiedRoot")], level=0
         )
@@ -53,12 +51,24 @@ class AddRootVisitor(ast.NodeTransformer):
                 keywords=[],
             ),
         )
+        return [import_root, root_def]
+
+    def visit_FunctionDef(self, node):
+        decorator_list: list[ast.AST] = []
+        for deco in node.decorator_list:
+            if not (
+                isinstance(deco, ast.Call)
+                and isinstance(deco.func, ast.Name)
+                and deco.func.id == "init_pydough_context"
+            ):
+                decorator_list.append(deco)
+        prefix: list[ast.AST] = self.create_root_def()
         result: ast.AST
         if hasattr(node, "type_params"):
             result = ast.FunctionDef(  # type: ignore
                 name=node.name,
                 args=node.args,
-                body=[import_root, root_def] + node.body,
+                body=prefix + node.body,
                 decorator_list=node.decorator_list,
                 type_params=node.type_params,
                 returns=node.returns,
@@ -67,7 +77,7 @@ class AddRootVisitor(ast.NodeTransformer):
             result = ast.FunctionDef(  # type: ignore
                 name=node.name,
                 args=node.args,
-                body=[import_root, root_def] + node.body,
+                body=prefix + node.body,
                 decorator_list=node.decorator_list,
                 returns=node.returns,
             )
