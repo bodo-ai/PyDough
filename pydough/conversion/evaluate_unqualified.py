@@ -14,7 +14,7 @@ from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import PyDoughCollectionAST
 from pydough.relational import RelationalRoot
-from pydough.sqlglot import convert_relation_to_sql, execute
+from pydough.sqlglot import convert_relation_to_sql, execute_df
 from pydough.unqualified import UnqualifiedNode, qualify_node
 
 from .relational_converter import convert_ast_to_relational
@@ -102,4 +102,4 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     graph, config, database = _load_session_info(**kwargs)
     qualified: PyDoughCollectionAST = qualify_node(node, graph)
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
-    return execute(relational, database)
+    return execute_df(relational, database)
