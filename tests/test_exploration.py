@@ -15,6 +15,7 @@ from test_utils import graph_fetcher
 
 import pydough
 from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
 
 
 @pytest.fixture(
@@ -609,6 +610,17 @@ The collection has access to the following collections:
 
 Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
 """,
+                """
+This node, specifically, accesses the collection Nations. Call pydough.explain(graph['Nations']) to learn more about this collection.
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, orders_shipped_to, region, suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
             ),
             id="nation",
         ),
@@ -625,6 +637,14 @@ This node is a reference to the global context for the entire graph. An operatio
 The collection does not have any terms that can be included in a result if it is executed.
 
 It is not possible to use BACK from this collection.
+
+The collection has access to the following collections:
+  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
+                """
+This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
 
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
@@ -651,6 +671,19 @@ The following terms will be included in the result if this collection is execute
   x, y
 
 It is not possible to use BACK from this collection.
+
+The collection has access to the following expressions:
+  x, y
+
+The collection has access to the following collections:
+  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
+                """
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  x <- 42
+  y <- 13
 
 The collection has access to the following expressions:
   x, y
@@ -699,50 +732,55 @@ The collection has access to the following collections:
 
 Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
 """,
+                """
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── TableCollection[Customers]
+  child $2:
+    └─── TableCollection[Parts]
+
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  avg_part_price <- AVG($2.retail_price), aka AVG(Parts.retail_price)
+  n_customers <- COUNT($1), aka COUNT(Customers)
+
+The collection has access to the following expressions:
+  avg_part_price, n_customers
+
+The collection has access to the following collections:
+  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+
+Call pydough.explain_term(collection, term_name) to learn more about any of these expressions or collections that the collection has access to.
+""",
             ),
             id="global_agg_calc",
         ),
-        #         pytest.param(
-        #             (
-        #                 "TPCH",
-        #                 nation_impl,
-        #                 """
-        # """,
-        #             ),
-        #             id="global_calc"
-        #         ),
-        #         pytest.param(
-        #             (
-        #                 "TPCH",
-        #                 nation_impl,
-        #                 """
-        # """,
-        #             ),
-        #             id="global_calc"
-        #         ),
-        #         pytest.param(
-        #             (
-        #                 "TPCH",
-        #                 nation_impl,
-        #                 """
-        # """,
-        #             ),
-        #             id="global_calc"
-        #         ),
-        #         pytest.param(
-        #             (
-        #                 "TPCH",
-        #                 nation_impl,
-        #                 """
-        # """,
-        #             ),
-        #             id="global_calc"
-        #         ),
+        # pytest.param(
+        #     (
+        #         "TPCH",
+        #         nation_impl,
+        #         """
+        #         """,
+        #         """
+        #         """,
+        #     ),
+        #     id="global_calc"
+        # ),
+        # pytest.param(
+        #     (
+        #         "TPCH",
+        #         nation_impl,
+        #         """
+        #         """,
+        #         """
+        #         """,
+        #     ),
+        #     id="global_calc"
+        # ),
     ]
 )
 def unqualified_exploration_test_data(
     request,
-) -> tuple[str, Callable[[GraphMetadata], Callable[[], str]], str]:
+) -> tuple[str, Callable[[GraphMetadata], Callable[[], UnqualifiedNode]], str, str]:
     """
     Testing data used for test_unqualified_node_exploration. Returns a tuple of
     the graph name to use, the func text for the PyDough code to use, the term
@@ -750,24 +788,38 @@ def unqualified_exploration_test_data(
     string.
     """
     graph_name: str = request.param[0]
-    test_impl: Callable[[GraphMetadata], Callable[[], str]] = request.param[1]
-    refsol: str = request.param[2]
-    return graph_name, test_impl, refsol.strip()
+    test_impl: Callable[[GraphMetadata], Callable[[], UnqualifiedNode]] = request.param[
+        1
+    ]
+    verbose_refsol: str = request.param[2]
+    non_verbose_refsol: str = request.param[3]
+    return graph_name, test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
 
 
+@pytest.mark.parametrize(
+    "verbose",
+    [
+        pytest.param(True, id="verbose"),
+        pytest.param(False, id="non_verbose"),
+    ],
+)
 def test_unqualified_node_exploration(
     unqualified_exploration_test_data: tuple[
-        str, Callable[[GraphMetadata], Callable[[], str]], str
+        str, Callable[[GraphMetadata], Callable[[], UnqualifiedNode]], str, str
     ],
+    verbose: bool,
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
     Verifies that `pydough.explain` called on unqualified nodes produces the
     exepcted strings.
     """
-    graph_name, test_impl, expected_answer = unqualified_exploration_test_data
+    graph_name, test_impl, verbose_answer, non_verbose_answer = (
+        unqualified_exploration_test_data
+    )
     graph: GraphMetadata = get_sample_graph(graph_name)
-    answer: str = test_impl(graph)()
+    answer: str = pydough.explain(test_impl(graph)(), verbose=verbose)
+    expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert (
         answer == expected_answer
     ), "Mismatch between produced string and expected answer"

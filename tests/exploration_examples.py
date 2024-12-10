@@ -13,6 +13,7 @@ from collections.abc import Callable
 
 import pydough
 from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
 
 
 # ruff: noqa
@@ -20,7 +21,7 @@ from pydough.metadata import GraphMetadata
 # ruff & mypy should not try to typecheck or verify any of this
 
 
-def nation_impl(graph: GraphMetadata) -> Callable[[], str]:
+def nation_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
     """
     TODO
     """
@@ -32,7 +33,7 @@ def nation_impl(graph: GraphMetadata) -> Callable[[], str]:
     return impl
 
 
-def global_impl(graph: GraphMetadata) -> Callable[[], str]:
+def global_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
     """
     TODO
     """
@@ -44,7 +45,7 @@ def global_impl(graph: GraphMetadata) -> Callable[[], str]:
     return impl
 
 
-def global_calc_impl(graph: GraphMetadata) -> Callable[[], str]:
+def global_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
     """
     TODO
     """
@@ -56,7 +57,7 @@ def global_calc_impl(graph: GraphMetadata) -> Callable[[], str]:
     return impl
 
 
-def global_agg_calc_impl(graph: GraphMetadata) -> Callable[[], str]:
+def global_agg_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
     """
     TODO
     """

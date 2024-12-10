@@ -260,11 +260,11 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         lines.append("PyDough collection representing the following logic:")
         for line in qualified_node.to_tree_string().splitlines():
             lines.append(f"  {line}")
+        lines.append("")
 
     # Explain what the specific node does
     collection_name: str
     property_name: str
-    lines.append("")
     match qualified_node:
         case GlobalContext():
             lines.append(
