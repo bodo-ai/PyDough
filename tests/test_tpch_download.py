@@ -7,7 +7,10 @@ import sqlite3
 import typing as pt
 
 import pandas as pd
+import pytest
 from tpch_outputs import tpch_q6_output
+
+pytestmark = [pytest.mark.execute]
 
 
 def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection) -> None:

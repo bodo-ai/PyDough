@@ -13,7 +13,9 @@ from tpch_relational_plans import (
 
 from pydough.database_connectors import DatabaseContext
 from pydough.relational import RelationalRoot
-from pydough.sqlglot import execute
+from pydough.sqlglot import execute_df
+
+pytestmark = [pytest.mark.execute]
 
 
 @pytest.mark.parametrize(
@@ -43,5 +45,5 @@ def test_tpch(
     Test the example TPC-H relational trees executed on a
     SQLite database.
     """
-    result = execute(root, sqlite_tpch_db_context)
+    result = execute_df(root, sqlite_tpch_db_context)
     pd.testing.assert_frame_equal(result, output)

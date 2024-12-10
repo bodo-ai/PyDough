@@ -5,6 +5,7 @@ Simple tests to verify that SQL queries can be executed on a SQLite database.
 from typing import Any
 
 import pandas as pd
+import pytest
 from test_utils import make_relational_column_reference, make_relational_ordering
 
 from pydough.database_connectors import DatabaseContext
@@ -24,8 +25,10 @@ from pydough.relational import (
     RelationalRoot,
     Scan,
 )
-from pydough.sqlglot import execute
+from pydough.sqlglot import execute_df
 from pydough.types import BooleanType, UnknownType
+
+pytestmark = [pytest.mark.execute]
 
 
 def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext) -> None:
@@ -86,7 +89,7 @@ def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext) -> Non
             join_types=[JoinType.LEFT],
         ),
     )
-    output: list[Any] = execute(result, sqlite_people_jobs_context)
+    output: list[Any] = execute_df(result, sqlite_people_jobs_context)
     people_results: list[str] = [f"Person {i}" for i in range(10)]
     salary_results: list[float] = [
         sum((i + j + 5.7) * 1000 for j in range(2)) for i in range(10)
@@ -187,7 +190,7 @@ def test_person_jobs_multi_join(sqlite_people_jobs_context: DatabaseContext) -> 
             join_types=[JoinType.INNER, JoinType.INNER],
         ),
     )
-    output: list[Any] = execute(result, sqlite_people_jobs_context)
+    output: pd.DataFrame = execute_df(result, sqlite_people_jobs_context)
     # By construction salaries are increasing with person_id so we
     # select the top half of the people.
     people_results: list[str] = [f"Person {i}" for i in range(5, 10)]

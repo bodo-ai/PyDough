@@ -259,10 +259,10 @@ def tpch_q7_output() -> pd.DataFrame:
     """
     columns = ["SUPP_NATION", "CUST_NATION", "L_YEAR", "REVENUE"]
     data = [
-        ("FRANCE", "GERMANY", "1995", 54639732.7336),
-        ("FRANCE", "GERMANY", "1996", 54633083.3076),
-        ("GERMANY", "FRANCE", "1995", 52531746.6697),
-        ("GERMANY", "FRANCE", "1996", 52520549.0224),
+        ("FRANCE", "GERMANY", 1995, 54639732.7336),
+        ("FRANCE", "GERMANY", 1996, 54633083.3076),
+        ("GERMANY", "FRANCE", 1995, 52531746.6697),
+        ("GERMANY", "FRANCE", 1996, 52520549.0224),
     ]
     return pd.DataFrame(data, columns=columns)
 
@@ -272,7 +272,7 @@ def tpch_q8_output() -> pd.DataFrame:
     Expected output for TPC-H query 8.
     """
     columns = ["O_YEAR", "MKT_SHARE"]
-    data = [("1995", 0.034435890406654804), ("1996", 0.04148552129353032)]
+    data = [(1995, 0.034435890406654804), (1996, 0.04148552129353032)]
     return pd.DataFrame(data, columns=columns)
 
 
@@ -283,16 +283,16 @@ def tpch_q9_output() -> pd.DataFrame:
     """
     columns = ["NATION", "O_YEAR", "AMOUNT"]
     data = [
-        ("ALGERIA", "1998", 27136900.1803),
-        ("ALGERIA", "1997", 48611833.496199995),
-        ("ALGERIA", "1996", 48285482.6782),
-        ("ALGERIA", "1995", 44402273.5999),
-        ("ALGERIA", "1994", 48694008.0668),
-        ("ALGERIA", "1993", 46044207.7838),
-        ("ALGERIA", "1992", 45636849.4881),
-        ("ARGENTINA", "1998", 28341663.7848),
-        ("ARGENTINA", "1997", 47143964.1176),
-        ("ARGENTINA", "1996", 45255278.6021),
+        ("ALGERIA", 1998, 27136900.1803),
+        ("ALGERIA", 1997, 48611833.496199995),
+        ("ALGERIA", 1996, 48285482.6782),
+        ("ALGERIA", 1995, 44402273.5999),
+        ("ALGERIA", 1994, 48694008.0668),
+        ("ALGERIA", 1993, 46044207.7838),
+        ("ALGERIA", 1992, 45636849.4881),
+        ("ARGENTINA", 1998, 28341663.7848),
+        ("ARGENTINA", 1997, 47143964.1176),
+        ("ARGENTINA", 1996, 45255278.6021),
     ]
     return pd.DataFrame(data, columns=columns)
 
