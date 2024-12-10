@@ -5,12 +5,12 @@ TODO: add module-level docstring
 __all__ = [
     "parse_json_metadata_from_file",
     "init_pydough_context",
-    "explain_meta",
+    "explain",
     "active_session",
 ]
 
 from .configs import PyDoughSession
-from .metadata import explain_meta, parse_json_metadata_from_file
+from .metadata import explain, parse_json_metadata_from_file
 from .unqualified import init_pydough_context
 
 # Create a default session for the user to interact with.

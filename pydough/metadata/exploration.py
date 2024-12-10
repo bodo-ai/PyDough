@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["explain_meta"]
+__all__ = ["explain"]
 
 
 from .abstract_metadata import AbstractMetadata
@@ -153,7 +153,7 @@ def explain_collection(collection: CollectionMetadata) -> str:
             lines.append(f"  {subcollection_property.name}")
     if len(scalar_properties) > 0 or len(subcollection_properties) > 0:
         lines.append(
-            f"Call pydough.explain_meta(graph['{collection.name}'][property_name]) to learn more about any of these properties."
+            f"Call pydough.explain(graph['{collection.name}'][property_name]) to learn more about any of these properties."
         )
     return "\n".join(lines)
 
@@ -172,12 +172,12 @@ def explain_graph(graph: GraphMetadata) -> str:
         for collection_name in collection_names:
             lines.append(f"  {collection_name}")
         lines.append(
-            "Call pydough.explain_meta(graph[collection_name]) to learn more about any of these collections."
+            "Call pydough.explain(graph[collection_name]) to learn more about any of these collections."
         )
     return "\n".join(lines)
 
 
-def explain_meta(metadata: AbstractMetadata) -> str:
+def explain(metadata: AbstractMetadata) -> str:
     """
     TODO
     """
@@ -190,5 +190,5 @@ def explain_meta(metadata: AbstractMetadata) -> str:
             return explain_property(metadata)
         case _:
             raise ValueError(
-                f"Cannot call pydough.explain_meta on argument of type {metadata.__class__.__name__}"
+                f"Cannot call pydough.explain on argument of type {metadata.__class__.__name__}"
             )

@@ -39,7 +39,7 @@ Collections:
   Parts
   Regions
   Suppliers
-Call pydough.explain_meta(graph[collection_name]) to learn more about any of these collections.
+Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
 """,
             ),
             id="explain_graph_tpch",
@@ -64,7 +64,7 @@ Subcollection properties:
   nation
   orders
   region
-Call pydough.explain_meta(graph['Customers'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['Customers'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_customers",
@@ -86,7 +86,7 @@ Subcollection properties:
   nations
   orders_shipped_to
   suppliers
-Call pydough.explain_meta(graph['Regions'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['Regions'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_regions",
@@ -121,7 +121,7 @@ Subcollection properties:
   part_and_supplier
   supplier
   supplier_region
-Call pydough.explain_meta(graph['Lineitems'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['Lineitems'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_lineitems",
@@ -143,7 +143,7 @@ Subcollection properties:
   lines
   part
   supplier
-Call pydough.explain_meta(graph['PartSupp'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['PartSupp'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_partsupp",
@@ -393,12 +393,11 @@ The following properties are inherited from Suppliers.nation:
 )
 def metadata_exploration_test_data(
     request,
-    get_sample_graph: graph_fetcher,
-) -> tuple[Callable[[], str], str]:
+) -> tuple[Callable[[graph_fetcher], str], str]:
     """
     Testing data used for `test_metadata_exploration`. Creates a function that
     takes in a `graph_fetcher` instance and returns the result of calling
-    `pydough.explain_meta` on the requested information based on the input
+    `pydough.explain` on the requested information based on the input
     tuple, as well as the expected output string. The input tuple is in one of
     the following formats:
     - `(graph_name, None, None)` -> get metadata for the graph
@@ -413,27 +412,106 @@ def metadata_exploration_test_data(
     collection_name: str | None = args[1]
     property_name: str | None = args[2]
 
-    graph: GraphMetadata = get_sample_graph(graph_name)
-
-    def wrapped_test_impl():
+    def wrapped_test_impl(fetcher: graph_fetcher):
+        graph: GraphMetadata = fetcher(graph_name)
         if collection_name is None:
-            return pydough.explain_meta(graph)
+            return pydough.explain(graph)
         elif property_name is None:
-            return pydough.explain_meta(graph[collection_name])
+            return pydough.explain(graph[collection_name])
         else:
-            return pydough.explain_meta(graph[collection_name][property_name])
+            return pydough.explain(graph[collection_name][property_name])
 
     return wrapped_test_impl, refsol.strip()
 
 
 def test_metadata_exploration(
-    metadata_exploration_test_data: tuple[Callable[[], str], str],
+    metadata_exploration_test_data: tuple[Callable[[graph_fetcher], str], str],
+    get_sample_graph: graph_fetcher,
 ) -> None:
     """
-    Verifies that `pydough.explain_meta` produces the expected strings.
+    Verifies that `pydough.explain` called on metadata produces the exepcted
+    strings.
     """
     test_impl, answer = metadata_exploration_test_data
-    explanation_string: str = test_impl()
+    explanation_string: str = test_impl(get_sample_graph)
     assert (
         explanation_string == answer
+    ), "Mismatch between produced string and expected answer"
+
+
+@pytest.fixture(
+    params=[
+        # pytest.param(
+        #     (
+        #         "TPCH",
+        #         "\n"
+        #         "\n"
+        #         "\n",
+        #         "",
+        #         "\n"
+        #         "\n"
+        #         "\n"
+        #     ),
+        #     id="collection-explain_collection"
+        # ),
+        # pytest.param(
+        #     (
+        #         "TPCH",
+        #         "\n"
+        #         "\n"
+        #         "\n",
+        #         "",
+        #         "\n"
+        #         "\n"
+        #         "\n"
+        #     ),
+        #     id="collection-explain_collection"
+        # ),
+        # pytest.param(
+        #     (
+        #         "TPCH",
+        #         "\n"
+        #         "\n"
+        #         "\n",
+        #         "",
+        #         "\n"
+        #         "\n"
+        #         "\n"
+        #     ),
+        #     id="collection-explain_collection"
+        # ),
+    ]
+)
+def unqualified_exploration_test_data(request) -> tuple[str, str, str, str]:
+    """
+    Testing data used for test_unqualified_node_exploration. Returns a tuple of
+    the graph name to use, the func text for the PyDough code to use, the term
+    that should be explained from the code, and the expected explanation
+    string.
+    """
+    return request.param
+
+
+def test_unqualified_node_exploration(
+    unqualified_exploration_test_data: tuple[str, str, str, str],
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """
+    Verifies that `pydough.explain` called on unqualified nodes produces the
+    exepcted strings.
+    """
+    graph_name, func_text_body, explain_term, answer = unqualified_exploration_test_data
+    graph: GraphMetadata = get_sample_graph(graph_name)
+    func_text = "@pydough.init_pydough_context(graph)\n"
+    func_text += "def impl():\n"
+    func_text += "\n".join([" " + line for line in func_text_body.splitlines()])
+    func_text += f" return pydough.explain({explain_term})\n"
+    func_text += "answer = impl()"
+
+    genv: dict[str, object] = {"pydough": pydough, "graph": graph}
+    lenv: dict[str, object] = {}
+    exec(func_text, genv, lenv)
+
+    assert (
+        lenv["answer"] == answer
     ), "Mismatch between produced string and expected answer"
