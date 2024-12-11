@@ -699,7 +699,26 @@ class Qualifier:
         is_child: bool,
     ) -> PyDoughAST:
         """
-        TODO
+        Transforms an UnqualifiedNode into a PyDoughAST node that can be either
+        a collection or an expression.
+
+        Args:
+            `unqualified`: the UnqualifiedNode instance to be transformed.
+            `context`: the collection AST whose context the expression is being
+            evaluated within.
+            `children`: the list where collection nodes that must be derived
+            as children of `context` should be appended.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified node. The result can be either
+            an expression or a collection.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
         """
         unqualified_str: str = display_raw(unqualified)
         lookup: PyDoughAST | None = self.lookup_if_already_qualified(

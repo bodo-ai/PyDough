@@ -520,6 +520,12 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     Prints an unqualified node in a human-readable manner that shows its
     structure before qualification.
+
+    Args:
+        `unqualified`: the unqualified node being converted to a string.
+
+    Returns:
+        The string representation of the unqualified node.
     """
     term_strings: list[str] = []
     match unqualified:
