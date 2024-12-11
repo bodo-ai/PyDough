@@ -62,7 +62,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import PyDoughCollectionAST
+from pydough.pydough_ast import PyDoughAST, PyDoughCollectionAST
 from pydough.relational import RelationalRoot
 from pydough.sqlglot import execute_df
 from pydough.unqualified import (
@@ -592,7 +592,10 @@ def test_pydough_pipeline(
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedRoot = UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = unqualified_impl(root)
-    qualified: PyDoughCollectionAST = qualify_node(unqualified, graph)
+    qualified: PyDoughAST = qualify_node(unqualified, graph)
+    assert isinstance(
+        qualified, PyDoughCollectionAST
+    ), "Expected qualified answer to be a collection, not an expression"
     relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
     assert (
         relational.to_tree_string() == relational_string.strip()

@@ -4,9 +4,7 @@ TODO: add file-level docstring
 
 __all__ = ["qualify_node"]
 
-import re
 from collections.abc import MutableSequence
-from functools import cache
 
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import (
@@ -46,14 +44,11 @@ from .unqualified_node import (
     UnqualifiedRoot,
     UnqualifiedTopK,
     UnqualifiedWhere,
+    display_raw,
 )
 
 
 class Qualifier:
-    not_expression_pattern: re.Pattern = re.compile(
-        r"Cannot qualify (\S*) as an expression"
-    )
-
     def __init__(self, graph: GraphMetadata):
         self._graph: GraphMetadata = graph
         self._builder: AstNodeBuilder = AstNodeBuilder(graph)
@@ -181,32 +176,28 @@ class Qualifier:
         # if that fails specifically because the result would be a collection,
         # then attempt to qualify it as a collection.
         for node in unqualified_operands:
-            try:
+            operand: PyDoughAST = self.qualify_node(node, context, children, True)
+            if isinstance(operand, PyDoughExpressionAST):
                 qualified_operands.append(
                     self.qualify_expression(node, context, children)
                 )
-            except PyDoughUnqualifiedException as e:
-                if self.not_expression_pattern.match(str(e)):
-                    child_collection: PyDoughCollectionAST = self.qualify_collection(
-                        node, context, True
-                    )
-                    # If the operand could be qualified as a collection, then
-                    # add it to the children list (if not already present) and
-                    # use a child reference collection as the argument.
-                    ref_num: int
-                    if child_collection in children:
-                        ref_num = children.index(child_collection)
-                    else:
-                        ref_num = len(children)
-                        children.append(child_collection)
-                    child_collection_ref: PyDoughCollectionAST = (
-                        self.builder.build_child_reference_collection(
-                            context, children, ref_num
-                        )
-                    )
-                    qualified_operands.append(child_collection_ref)
+            else:
+                assert isinstance(operand, PyDoughCollectionAST)
+                # If the operand could be qualified as a collection, then
+                # add it to the children list (if not already present) and
+                # use a child reference collection as the argument.
+                ref_num: int
+                if operand in children:
+                    ref_num = children.index(operand)
                 else:
-                    raise e
+                    ref_num = len(children)
+                    children.append(operand)
+                child_collection_ref: PyDoughCollectionAST = (
+                    self.builder.build_child_reference_collection(
+                        context, children, ref_num
+                    )
+                )
+                qualified_operands.append(child_collection_ref)
         return self.builder.build_expression_function_call(
             operation, qualified_operands
         )
@@ -289,144 +280,30 @@ class Qualifier:
         )
         return CollationExpression(qualified_expr, asc, na_last)
 
-    def qualify_expression_access(
+    def qualify_access(
         self,
         unqualified: UnqualifiedAccess,
         context: PyDoughCollectionAST,
         children: MutableSequence[PyDoughCollectionAST],
-    ) -> PyDoughExpressionAST:
-        """
-        Transforms an `UnqualifiedAccess` into a PyDoughExpressionAST node.
-
-        Args:
-            `unqualified`: the UnqualifiedAccess instance to be transformed.
-            `context`: the collection AST whose context the expression is being
-            evaluated within.
-            `children`: the list where collection nodes that must be derived
-            as children of `context` should be appended.
-
-        Returns:
-            The PyDough AST object for the qualified expression node.
-
-        Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
-            goes wrong during the qualification process, e.g. a term cannot be
-            qualified or is not recognized.
-        """
-        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        name: str = unqualified._parcel[1]
-        if isinstance(unqualified_parent, UnqualifiedBack):
-            # If the parent is an `UnqualifiedBack`, it means that this is an
-            # expression in the form "BACK(n).term_name".
-            levels: int = unqualified_parent._parcel[0]
-            return self.builder.build_back_reference_expression(context, name, levels)
-        else:
-            # First, qualify the parent and confirm that it has an expression
-            # property with the desired name.
-            qualified_parent: PyDoughCollectionAST = self.qualify_collection(
-                unqualified_parent, context, True
-            )
-            term: PyDoughAST = qualified_parent.get_term(name)
-            if not isinstance(term, PyDoughExpressionAST):
-                raise PyDoughUnqualifiedException(
-                    f"Cannot qualify {unqualified.__class__.__name__} as an expression: {unqualified!r}"
-                )
-            if isinstance(unqualified_parent, UnqualifiedRoot):
-                # If at the root, the access must be a reference to a scalar
-                # attribute accessible in the current context.
-                return self.builder.build_reference(context, name)
-            else:
-                # Otherwise, the access is a reference to a scalar attribute of
-                # a child collection node of the current context. Add this new
-                # child to the list of children, unless already present, then
-                # return the answer as a reference to a field of the child.
-                ref_num: int
-                if qualified_parent in children:
-                    ref_num = children.index(qualified_parent)
-                else:
-                    ref_num = len(children)
-                    children.append(qualified_parent)
-                return self.builder.build_child_reference_expression(
-                    children, ref_num, name
-                )
-
-    def qualify_expression(
-        self,
-        unqualified: UnqualifiedNode,
-        context: PyDoughCollectionAST,
-        children: MutableSequence[PyDoughCollectionAST],
-    ) -> PyDoughExpressionAST:
-        """
-        Transforms an `UnqualifiedNode` into a PyDoughExpressionAST node.
-
-        Args:
-            `unqualified`: the UnqualifiedNode instance to be transformed.
-            `context`: the collection AST whose context the expression is being
-            evaluated within.
-            `children`: the list where collection nodes that must be derived
-            as children of `context` should be appended.
-
-        Returns:
-            The PyDough AST object for the qualified expression node.
-
-        Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
-            goes wrong during the qualification process, e.g. a term cannot be
-            qualified or is not recognized.
-        """
-        # First, attempt to lookup a previously cached answer, if one exists
-        unqualified_str: str = str(unqualified)
-        lookup: PyDoughAST | None = self.lookup_if_already_qualified(
-            unqualified_str, context
-        )
-        if lookup is not None:
-            if not isinstance(lookup, PyDoughExpressionAST):
-                raise PyDoughUnqualifiedException(
-                    f"Cannot qualify {unqualified.__class__.__name__} as an expression: {unqualified!r}"
-                )
-            return lookup
-
-        # Dispatch onto the correct handler logic based on the type of
-        # unqualified node
-        answer: PyDoughExpressionAST
-        match unqualified:
-            case UnqualifiedLiteral():
-                answer = self.qualify_literal(unqualified)
-            case UnqualifiedOperation():
-                answer = self.qualify_operation(unqualified, context, children)
-            case UnqualifiedBinaryOperation():
-                answer = self.qualify_binary_operation(unqualified, context, children)
-            case UnqualifiedCollation():
-                answer = self.qualify_collation(unqualified, context, children)
-            case UnqualifiedAccess():
-                answer = self.qualify_expression_access(unqualified, context, children)
-            case _:
-                raise PyDoughUnqualifiedException(
-                    f"Cannot qualify {unqualified.__class__.__name__} as an expression: {unqualified!r}"
-                )
-        # Store the answer for cached lookup, then return it.
-        self.add_definition(unqualified_str, context, answer)
-        return answer
-
-    def qualify_collection_access(
-        self,
-        unqualified: UnqualifiedAccess,
-        context: PyDoughCollectionAST,
         is_child: bool,
-    ) -> PyDoughCollectionAST:
+    ) -> PyDoughAST:
         """
-        Transforms an `UnqualifiedAccess` into a PyDoughCollectionAST node.
+        Transforms an `UnqualifiedAccess` into a PyDough AST node, either as
+        accessing a subcollection or an expression from the current context.
 
         Args:
             `unqualified`: the UnqualifiedAccess instance to be transformed.
             `builder`: a builder object used to create new qualified nodes.
             `context`: the collection AST whose context the collection is being
             evaluated within.
+            `children`: the list where collection nodes that must be derived
+            as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALC or PARTITION.
 
         Returns:
-            The PyDough AST object for the qualified collection node.
+            The PyDough AST object for the qualified collection or expression
+            node.
 
         Raises:
             `PyDoughUnqualifiedException` or `PyDoughASTException` if something
@@ -435,11 +312,29 @@ class Qualifier:
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         name: str = unqualified._parcel[1]
+        term: PyDoughAST
         if isinstance(unqualified_parent, UnqualifiedBack):
-            # If the parent is an `UnqualifiedBack`, it means that this is a
-            # collection in the form "BACK(n).term_name".
+            # If the parent is an `UnqualifiedBack`, it means that this is an
+            # access in the form "BACK(n).term_name". First, fetch the ancestor
+            # context in question.
             levels: int = unqualified_parent._parcel[0]
-            return self.builder.build_back_reference_collection(context, name, levels)
+            ancestor: PyDoughCollectionAST = context
+            for _ in range(levels):
+                if ancestor.ancestor_context is None:
+                    raise PyDoughUnqualifiedException(
+                        f"Cannot back reference {levels} above {unqualified_parent}"
+                    )
+                ancestor = ancestor.ancestor_context
+            # Identify whether the access is an expression or a collection
+            term = ancestor.get_term(name)
+            if isinstance(term, PyDoughCollectionAST):
+                return self.builder.build_back_reference_collection(
+                    context, name, levels
+                )
+            else:
+                return self.builder.build_back_reference_expression(
+                    context, name, levels
+                )
         else:
             # First, qualify the parent collection.
             qualified_parent: PyDoughCollectionAST = self.qualify_collection(
@@ -454,14 +349,38 @@ class Qualifier:
                 # child is just a de-sugared invocation of the global context.
                 return qualified_parent
             else:
-                # Otherwise, access the child collection from the qualified
-                # parent collection
-                answer: PyDoughCollectionAST = self.builder.build_child_access(
-                    name, qualified_parent
-                )
-                if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
-                    answer = ChildOperatorChildAccess(answer)
-                return answer
+                # Identify whether the access is an expression or a collection
+                term = qualified_parent.get_term(name)
+                if isinstance(term, PyDoughCollectionAST):
+                    # If it is a collection that is not the special case,
+                    # access the child collection from the qualified parent
+                    # collection.
+                    answer: PyDoughCollectionAST = self.builder.build_child_access(
+                        name, qualified_parent
+                    )
+                    if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+                        answer = ChildOperatorChildAccess(answer)
+                    return answer
+                else:
+                    assert isinstance(term, PyDoughExpressionAST)
+                    if isinstance(unqualified_parent, UnqualifiedRoot):
+                        # If at the root, the access must be a reference to a scalar
+                        # attribute accessible in the current context.
+                        return self.builder.build_reference(context, name)
+                    else:
+                        # Otherwise, the access is a reference to a scalar attribute of
+                        # a child collection node of the current context. Add this new
+                        # child to the list of children, unless already present, then
+                        # return the answer as a reference to a field of the child.
+                        ref_num: int
+                        if qualified_parent in children:
+                            ref_num = children.index(qualified_parent)
+                        else:
+                            ref_num = len(children)
+                            children.append(qualified_parent)
+                        return self.builder.build_child_reference_expression(
+                            children, ref_num, name
+                        )
 
     def qualify_calc(
         self,
@@ -709,7 +628,6 @@ class Qualifier:
         )
         return partition.with_keys(child_references)
 
-    @cache
     def qualify_collection(
         self,
         unqualified: UnqualifiedNode,
@@ -735,27 +653,87 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        unqualified_str: str = str(unqualified)
+        answer: PyDoughAST = self.qualify_node(unqualified, context, [], is_child)
+        if not isinstance(answer, PyDoughCollectionAST):
+            raise PyDoughUnqualifiedException(
+                f"Expected a collection, but received an expression: {answer}"
+            )
+        return answer
+
+    def qualify_expression(
+        self,
+        unqualified: UnqualifiedNode,
+        context: PyDoughCollectionAST,
+        children: MutableSequence[PyDoughCollectionAST],
+    ) -> PyDoughExpressionAST:
+        """
+        Transforms an `UnqualifiedNode` into a PyDoughExpressionAST node.
+
+        Args:
+            `unqualified`: the UnqualifiedNode instance to be transformed.
+            `context`: the collection AST whose context the expression is being
+            evaluated within.
+            `children`: the list where collection nodes that must be derived
+            as children of `context` should be appended.
+
+        Returns:
+            The PyDough AST object for the qualified expression node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        answer: PyDoughAST = self.qualify_node(unqualified, context, children, True)
+        if not isinstance(answer, PyDoughExpressionAST):
+            raise PyDoughUnqualifiedException(
+                f"Expected an expression, but received a collection: {answer}"
+            )
+        return answer
+
+    def qualify_node(
+        self,
+        unqualified: UnqualifiedNode,
+        context: PyDoughCollectionAST,
+        children: MutableSequence[PyDoughCollectionAST],
+        is_child: bool,
+    ) -> PyDoughAST:
+        """
+        Transforms an UnqualifiedNode into a PyDoughAST node that can be either
+        a collection or an expression.
+
+        Args:
+            `unqualified`: the UnqualifiedNode instance to be transformed.
+            `context`: the collection AST whose context the expression is being
+            evaluated within.
+            `children`: the list where collection nodes that must be derived
+            as children of `context` should be appended.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough AST object for the qualified node. The result can be either
+            an expression or a collection.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_str: str = display_raw(unqualified)
         lookup: PyDoughAST | None = self.lookup_if_already_qualified(
             unqualified_str, context
         )
-        PyDoughUnqualifiedException(
-            f"Cannot qualify {unqualified.__class__.__name__} as a collection: {unqualified!r}"
-        )
         if lookup is not None:
-            if not isinstance(lookup, PyDoughCollectionAST):
-                raise PyDoughUnqualifiedException(
-                    f"Cannot qualify {unqualified.__class__.__name__} as a collection: {unqualified!r}"
-                )
             return lookup
-        answer: PyDoughCollectionAST
+        answer: PyDoughAST
         match unqualified:
             case UnqualifiedRoot():
                 # Special case: when the root has been reached, it is assumed
                 # to refer to the context variable that was passed in.
                 answer = context
             case UnqualifiedAccess():
-                answer = self.qualify_collection_access(unqualified, context, is_child)
+                answer = self.qualify_access(unqualified, context, children, is_child)
             case UnqualifiedCalc():
                 answer = self.qualify_calc(unqualified, context, is_child)
             case UnqualifiedWhere():
@@ -766,20 +744,26 @@ class Qualifier:
                 answer = self.qualify_top_k(unqualified, context, is_child)
             case UnqualifiedPartition():
                 answer = self.qualify_partition(unqualified, context, is_child)
+            case UnqualifiedLiteral():
+                answer = self.qualify_literal(unqualified)
+            case UnqualifiedOperation():
+                answer = self.qualify_operation(unqualified, context, children)
+            case UnqualifiedBinaryOperation():
+                answer = self.qualify_binary_operation(unqualified, context, children)
+            case UnqualifiedCollation():
+                answer = self.qualify_collation(unqualified, context, children)
             case _:
                 raise PyDoughUnqualifiedException(
-                    f"Cannot qualify {unqualified.__class__.__name__} as a collection: {unqualified!r}"
+                    f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"
                 )
         # Store the answer for cached lookup, then return it.
         self.add_definition(unqualified_str, context, answer)
         return answer
 
 
-def qualify_node(
-    unqualified: UnqualifiedNode, graph: GraphMetadata
-) -> PyDoughCollectionAST:
+def qualify_node(unqualified: UnqualifiedNode, graph: GraphMetadata) -> PyDoughAST:
     """
-    Transforms an `UnqualifiedNode` into a qualified node.
+    Transforms an UnqualifiedNode into a qualified node.
 
     Args:
         `unqualified`: the UnqualifiedNode instance to be transformed.
@@ -787,7 +771,8 @@ def qualify_node(
         are occurring within.
 
     Returns:
-        The PyDough AST object for the qualified node.
+        The PyDough AST object for the qualified node. The result can be either
+        an expression or a collection.
 
     Raises:
         `PyDoughUnqualifiedException` or `PyDoughASTException` if something
@@ -795,6 +780,6 @@ def qualify_node(
         qualified or is not recognized.
     """
     qual: Qualifier = Qualifier(graph)
-    return qual.qualify_collection(
-        unqualified, qual.builder.build_global_context(), False
+    return qual.qualify_node(
+        unqualified, qual.builder.build_global_context(), [], False
     )
