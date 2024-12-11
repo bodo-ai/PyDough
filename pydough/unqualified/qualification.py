@@ -798,3 +798,14 @@ def qualify_node(
     return qual.qualify_collection(
         unqualified, qual.builder.build_global_context(), False
     )
+
+
+def qualify_term(
+    collection: PyDoughCollectionAST, term: UnqualifiedNode, graph: GraphMetadata
+) -> PyDoughAST:
+    """
+    TODO
+    """
+    qual: Qualifier = Qualifier(graph)
+    children: list[PyDoughCollectionAST] = []
+    return qual.qualify_expression(term, collection, children)

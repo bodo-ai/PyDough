@@ -20,6 +20,7 @@ __all__ = [
     "contextless_back_impl",
     "contextless_aggfunc_impl",
     "contextless_func_impl",
+    "nation_name_impl",
 ]
 
 from collections.abc import Callable
@@ -253,5 +254,19 @@ def contextless_aggfunc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNo
     @pydough.init_pydough_context(graph)
     def impl():
         return COUNT(customers)
+
+    return impl
+
+
+def nation_name_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    """
+    TODO
+    """
+
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Nations, name
 
     return impl

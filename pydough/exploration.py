@@ -2,7 +2,7 @@
 TODO: add file-level docstring
 """
 
-__all__ = ["explain"]
+__all__ = ["explain", "explain_structure", "explain_graph"]
 
 
 import pydough.pydough_ast.pydough_operators as pydop
@@ -23,6 +23,7 @@ from .metadata.properties import (
 from .pydough_ast import (
     Calc,
     ChildOperator,
+    ColumnProperty,
     ExpressionFunctionCall,
     GlobalContext,
     OrderBy,
@@ -48,6 +49,7 @@ from .unqualified import (
     UnqualifiedTopK,
     UnqualifiedWhere,
     qualify_node,
+    qualify_term,
 )
 
 
@@ -499,3 +501,95 @@ def explain(data: AbstractMetadata | UnqualifiedNode, verbose: bool = False) -> 
             raise ValueError(
                 f"Cannot call pydough.explain on argument of type {data.__class__.__name__}"
             )
+
+
+def explain_structure(graph: GraphMetadata) -> str:
+    """
+    TODO
+    """
+    assert isinstance(graph, GraphMetadata)
+    lines: list[str] = []
+    lines.append(f"Structure of PyDough graph: {graph.name}")
+    collection_names: list[str] = sorted(graph.get_collection_names())
+    if len(collection_names) == 0:
+        lines.append("  Graph contains no collections")
+    else:
+        for collection_name in collection_names:
+            lines.append("")
+            lines.append(f"  {collection_name}")
+            collection = graph.get_collection(collection_name)
+            assert isinstance(collection, CollectionMetadata)
+            scalar_properties: list[str] = []
+            subcollection_properties: list[str] = []
+            for property_name in collection.get_property_names():
+                property = collection.get_property(property_name)
+                assert isinstance(property, PropertyMetadata)
+                if property.is_subcollection:
+                    assert isinstance(property, SubcollectionRelationshipMetadata)
+                    assert isinstance(property, ReversiblePropertyMetadata)
+                    card = "multiple" if property.is_plural else "one member of"
+                    subcollection_properties.append(
+                        f"{property.name} [{card} {property.other_collection.name}] (reverse of {property.other_collection.name}.{property.reverse_name})"
+                    )
+                else:
+                    assert isinstance(property, ScalarAttributeMetadata)
+                    scalar_properties.append(property.name)
+            scalar_properties.sort()
+            subcollection_properties.sort()
+            combined_lies = scalar_properties + subcollection_properties
+            for idx, line in enumerate(combined_lies):
+                prefix = "  └── " if idx == (len(combined_lies) - 1) else "  ├── "
+                lines.append(f"{prefix}{line}")
+    return "\n".join(lines)
+
+
+def explain_term(node: UnqualifiedNode, term: UnqualifiedNode, verbose: bool) -> str:
+    """
+    TODO
+    """
+
+    lines: list[str] = []
+    root: UnqualifiedRoot | None = find_unqualified_root(node)
+    qualified_node: PyDoughCollectionAST | None = None
+
+    try:
+        if root is None:
+            lines.append(f"Invalid first argument to pydough.explain_term: {node}")
+        else:
+            qualified_node = qualify_node(node, root._parcel[0])
+    except PyDoughASTException as e:
+        if "Unrecognized term" in str(e):
+            lines.append(f"Invalid first argument to pydough.explain_term: {node}")
+            lines.append(f"  {str(e)}")
+            lines.append(
+                "  This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
+            )
+        elif "is not a collection" in str(e):
+            lines.append(f"Invalid first argument to pydough.explain_term: {node}")
+            lines.append(
+                f"  {e}, therefore it cannot be the first argument to pydough.explain_term."
+            )
+        else:
+            raise e
+
+    if qualified_node is not None and root is not None:
+        qualified_term = qualify_term(qualified_node, term, root._parcel[0])
+        assert isinstance(qualified_term, PyDoughExpressionAST)
+        lines.append("Collection: ")
+        for line in qualified_node.to_tree_string().splitlines():
+            lines.append(f"  {line}")
+        lines.append("")
+        lines.append(f"Term: {qualified_term.to_string(True)}")
+        collection: PyDoughCollectionAST = qualified_node
+        expr: PyDoughExpressionAST = qualified_term
+        while True:
+            match expr:
+                case Reference():
+                    expr = collection.get_expr(expr.term_name)
+                case ColumnProperty():
+                    lines.append(f"  {expr.to_string(True)}")
+                    break
+                case _:
+                    raise NotImplementedError(expr.__class__.__name__)
+
+    return "\n".join(lines)

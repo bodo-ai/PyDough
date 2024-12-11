@@ -17,6 +17,7 @@ from exploration_examples import (
     global_impl,
     nation_expr_impl,
     nation_impl,
+    nation_name_impl,
     order_impl,
     partition_child_impl,
     partition_impl,
@@ -594,6 +595,151 @@ def test_metadata_exploration(
     answer: str = verbose_answer if verbose else non_verbose_answer
     assert (
         explanation_string == answer
+    ), "Mismatch between produced string and expected answer"
+
+
+@pytest.mark.parametrize(
+    "graph_name, answer",
+    [
+        pytest.param(
+            "Empty",
+            """
+Structure of PyDough graph: Empty
+  Graph contains no collections
+""",
+            id="empty",
+        ),
+        pytest.param(
+            "TPCH",
+            """
+Structure of PyDough graph: TPCH
+
+  Customers
+  ├── acctbal
+  ├── address
+  ├── comment
+  ├── key
+  ├── mktsegment
+  ├── name
+  ├── nation_key
+  ├── phone
+  ├── nation [one member of Nations] (reverse of Nations.customers)
+  ├── orders [multiple Orders] (reverse of Orders.customer)
+  └── region [one member of Regions] (reverse of Regions.customers)
+
+  Lineitems
+  ├── comment
+  ├── commit_date
+  ├── discount
+  ├── extended_price
+  ├── line_number
+  ├── order_key
+  ├── part_key
+  ├── quantity
+  ├── receipt_date
+  ├── return_flag
+  ├── ship_date
+  ├── ship_instruct
+  ├── ship_mode
+  ├── status
+  ├── supplier_key
+  ├── tax
+  ├── order [one member of Orders] (reverse of Orders.lines)
+  ├── part [one member of Parts] (reverse of Parts.lines)
+  ├── part_and_supplier [one member of PartSupp] (reverse of PartSupp.lines)
+  ├── supplier [one member of Suppliers] (reverse of Suppliers.lines)
+  └── supplier_region [one member of Regions] (reverse of Regions.lines_sourced_from)
+
+  Nations
+  ├── comment
+  ├── key
+  ├── name
+  ├── region_key
+  ├── customers [multiple Customers] (reverse of Customers.nation)
+  ├── orders_shipped_to [multiple Orders] (reverse of Orders.shipping_nation)
+  ├── region [one member of Regions] (reverse of Regions.nations)
+  └── suppliers [multiple Suppliers] (reverse of Suppliers.nation)
+
+  Orders
+  ├── clerk
+  ├── comment
+  ├── customer_key
+  ├── key
+  ├── order_date
+  ├── order_priority
+  ├── order_status
+  ├── ship_priority
+  ├── total_price
+  ├── customer [one member of Customers] (reverse of Customers.orders)
+  ├── lines [multiple Lineitems] (reverse of Lineitems.order)
+  ├── shipping_nation [one member of Nations] (reverse of Nations.orders_shipped_to)
+  └── shipping_region [one member of Regions] (reverse of Regions.orders_shipped_to)
+
+  PartSupp
+  ├── availqty
+  ├── comment
+  ├── part_key
+  ├── supplier_key
+  ├── supplycost
+  ├── lines [multiple Lineitems] (reverse of Lineitems.part_and_supplier)
+  ├── part [one member of Parts] (reverse of Parts.supply_records)
+  └── supplier [one member of Suppliers] (reverse of Suppliers.supply_records)
+
+  Parts
+  ├── brand
+  ├── comment
+  ├── container
+  ├── key
+  ├── manufacturer
+  ├── name
+  ├── part_type
+  ├── retail_price
+  ├── size
+  ├── lines [multiple Lineitems] (reverse of Lineitems.part)
+  ├── suppliers_of_part [multiple Suppliers] (reverse of Suppliers.parts_supplied)
+  └── supply_records [multiple PartSupp] (reverse of PartSupp.part)
+
+  Regions
+  ├── comment
+  ├── key
+  ├── name
+  ├── customers [multiple Customers] (reverse of Customers.region)
+  ├── lines_sourced_from [multiple Lineitems] (reverse of Lineitems.supplier_region)
+  ├── nations [multiple Nations] (reverse of Nations.region)
+  ├── orders_shipped_to [multiple Orders] (reverse of Orders.shipping_region)
+  └── suppliers [multiple Suppliers] (reverse of Suppliers.region)
+
+  Suppliers
+  ├── account_balance
+  ├── address
+  ├── comment
+  ├── key
+  ├── name
+  ├── nation_key
+  ├── phone
+  ├── lines [multiple Lineitems] (reverse of Lineitems.supplier)
+  ├── nation [one member of Nations] (reverse of Nations.suppliers)
+  ├── parts_supplied [multiple Parts] (reverse of Parts.suppliers_of_part)
+  ├── region [one member of Regions] (reverse of Regions.suppliers)
+  └── supply_records [multiple PartSupp] (reverse of PartSupp.supplier)
+""",
+            id="tpch",
+        ),
+    ],
+)
+def test_graph_structure(
+    graph_name: str,
+    answer: str,
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """
+    Verifies that `pydough.explain` called on metadata produces the expected
+    strings.
+    """
+    graph: GraphMetadata = get_sample_graph(graph_name)
+    structure_string: str = pydough.explain_structure(graph)
+    assert (
+        structure_string == answer.strip()
     ), "Mismatch between produced string and expected answer"
 
 
@@ -1283,9 +1429,10 @@ def unqualified_exploration_test_data(
 ) -> tuple[str, Callable[[GraphMetadata], Callable[[], UnqualifiedNode]], str, str]:
     """
     Testing data used for test_unqualified_node_exploration. Returns a tuple of
-    the graph name to use, the func text for the PyDough code to use, the term
-    that should be explained from the code, and the expected explanation
-    string.
+    the graph name to use, a function that takes in a graph and returns the
+    unqualified node for a collection, and the expected explanation strings
+    for when pydough.explain is called on the unqualified node, both with and
+    without verbose mode.
     """
     graph_name: str = request.param[0]
     test_impl: Callable[[GraphMetadata], Callable[[], UnqualifiedNode]] = request.param[
@@ -1318,7 +1465,83 @@ def test_unqualified_node_exploration(
         unqualified_exploration_test_data
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
-    answer: str = pydough.explain(test_impl(graph)(), verbose=verbose)
+    node: UnqualifiedNode = test_impl(graph)()
+    answer: str = pydough.explain(node, verbose=verbose)
+    expected_answer: str = verbose_answer if verbose else non_verbose_answer
+    assert (
+        answer == expected_answer
+    ), "Mismatch between produced string and expected answer"
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            (
+                "TPCH",
+                nation_name_impl,
+                """
+""",
+                """
+
+""",
+            ),
+            id="nation-name",
+        ),
+    ]
+)
+def unqualified_term_exploration_test_data(
+    request,
+) -> tuple[
+    str,
+    Callable[[GraphMetadata], Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]],
+    str,
+    str,
+]:
+    """
+    Testing data used for test_unqualified_term_exploration. Returns a tuple of
+    the graph name to use, a function that takes in a graph and returns the
+    tuple of the unqualified node for a collection and a term within it, and
+    the expected explanation strings for when pydough.explain is called on the
+    unqualified node, both with and without verbose mode.
+    """
+    graph_name: str = request.param[0]
+    test_impl: Callable[
+        [GraphMetadata], Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]
+    ] = request.param[1]
+    verbose_refsol: str = request.param[2]
+    non_verbose_refsol: str = request.param[3]
+    return graph_name, test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
+
+
+@pytest.mark.parametrize(
+    "verbose",
+    [
+        pytest.param(True, id="verbose"),
+        pytest.param(False, id="non_verbose"),
+    ],
+)
+def test_unqualified_term_exploration(
+    unqualified_term_exploration_test_data: tuple[
+        str,
+        Callable[
+            [GraphMetadata], Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]
+        ],
+        str,
+        str,
+    ],
+    verbose: bool,
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """
+    Verifies that `pydough.explain` called on unqualified nodes produces the
+    expected strings.
+    """
+    graph_name, test_impl, verbose_answer, non_verbose_answer = (
+        unqualified_term_exploration_test_data
+    )
+    graph: GraphMetadata = get_sample_graph(graph_name)
+    node, term = test_impl(graph)()
+    answer: str = pydough.explain_term(node, term, verbose=verbose)
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert (
         answer == expected_answer
