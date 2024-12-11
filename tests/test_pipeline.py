@@ -612,4 +612,4 @@ def test_pydough_to_df(
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
-    pd.testing.assert_frame_equal(result, answer_impl)
+    pd.testing.assert_frame_equal(result, answer_impl())
