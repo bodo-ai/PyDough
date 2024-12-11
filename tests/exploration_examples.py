@@ -28,6 +28,14 @@ __all__ = [
     "lps_back_supplier_impl",
     "lps_back_lines_price_impl",
     "lps_back_lines_impl",
+    "region_n_suppliers_in_red_impl",
+    "parts_avg_price_child_impl",
+    "parts_avg_price_impl",
+    "nations_lowercase_name_impl",
+    "lineitems_arithmetic_impl",
+    "suppliers_iff_balance_impl",
+    "parts_with_german_supplier",
+    "customers_without_orders_impl",
 ]
 
 from collections.abc import Callable
@@ -293,5 +301,87 @@ def lps_back_lines_impl(
     @pydough.init_pydough_context(graph)
     def impl():
         return PartSupp.part, BACK(1).lines
+
+    return impl
+
+
+def region_n_suppliers_in_red_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Regions, COUNT(nations.suppliers.WHERE(account_balance > 0))
+
+    return impl
+
+
+def parts_avg_price_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return PARTITION(Parts, name="p", by=part_type), AVG(p.retail_price)
+
+    return impl
+
+
+def parts_avg_price_child_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return PARTITION(Parts, name="p", by=part_type).WHERE(
+            AVG(p.retail_price) >= 27.5
+        ), p
+
+    return impl
+
+
+def nations_lowercase_name_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Nations, LOWER(name)
+
+    return impl
+
+
+def suppliers_iff_balance_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Suppliers, IFF(account_balance < 0, 0, account_balance)
+
+    return impl
+
+
+def lineitems_arithmetic_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Lineitems, extended_price * (1 - discount)
+
+    return impl
+
+
+def customers_without_orders_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Customers, HASNOT(orders)
+
+    return impl
+
+
+def parts_with_german_supplier(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Parts, HAS(supply_records.supplier.WHERE(nation.name == "GERMANY"))
 
     return impl

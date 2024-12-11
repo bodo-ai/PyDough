@@ -809,13 +809,61 @@ def explain_term(
                             f"This is column '{expr.column_property.name}' of collection '{expr.column_property.collection.name}'"
                         )
                         break
+                    case ExpressionFunctionCall():
+                        if isinstance(expr.operator, pydop.BinaryOperator):
+                            lines.append(
+                                f"This expression combines the following arguments with the '{expr.operator.function_name}' operator:"
+                            )
+                        elif (
+                            expr.operator in (pydop.COUNT, pydop.NDISTINCT)
+                            and len(expr.args) == 1
+                            and isinstance(expr.args[0], PyDoughCollectionAST)
+                        ):
+                            metric: str = (
+                                "records"
+                                if expr.operator == pydop.COUNT
+                                else "distinct records"
+                            )
+                            lines.append(
+                                f"This expression counts how many {metric} of the following subcollection exist for each record of the collection:"
+                            )
+                        elif (
+                            expr.operator in (pydop.HAS, pydop.HASNOT)
+                            and len(expr.args) == 1
+                            and isinstance(expr.args[0], PyDoughCollectionAST)
+                        ):
+                            predicate: str = (
+                                "has" if expr.operator == pydop.HAS else "does not have"
+                            )
+                            lines.append(
+                                f"This expression returns whether the collection {predicate} any records of the following subcollection:"
+                            )
+                        else:
+                            suffix = (
+                                ", aggregating them into a single value for each record of the collection"
+                                if expr.operator.is_aggregation
+                                else ""
+                            )
+                            lines.append(
+                                f"This expression calls the function '{expr.operator.function_name}' on the following arguments{suffix}:"
+                            )
+                        for arg in expr.args:
+                            assert isinstance(
+                                arg, (PyDoughCollectionAST, PyDoughExpressionAST)
+                            )
+                            lines.append(f"  {arg.to_string()}")
+                        lines.append("")
+                        lines.append(
+                            "Call pydough.explain_term with this collection and any of the arguments to learn more about them."
+                        )
+                        break
                     case _:
                         raise NotImplementedError(expr.__class__.__name__)
             if verbose:
                 lines.append("")
                 if qualified_term.is_singular(qualified_node.starting_predecessor):
                     lines.append(
-                        "This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection."
+                        "This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection."
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(

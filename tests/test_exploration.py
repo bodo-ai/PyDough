@@ -11,10 +11,12 @@ from exploration_examples import (
     contextless_collections_impl,
     contextless_expr_impl,
     contextless_func_impl,
+    customers_without_orders_impl,
     filter_impl,
     global_agg_calc_impl,
     global_calc_impl,
     global_impl,
+    lineitems_arithmetic_impl,
     lps_back_lines_impl,
     lps_back_lines_price_impl,
     lps_back_supplier_impl,
@@ -24,13 +26,19 @@ from exploration_examples import (
     nation_name_impl,
     nation_region_impl,
     nation_region_name_impl,
+    nations_lowercase_name_impl,
     order_impl,
     partition_child_impl,
     partition_impl,
+    parts_avg_price_child_impl,
+    parts_avg_price_impl,
+    parts_with_german_supplier,
+    region_n_suppliers_in_red_impl,
     region_nations_back_name,
     region_nations_suppliers_impl,
     region_nations_suppliers_name_impl,
     subcollection_calc_backref_impl,
+    suppliers_iff_balance_impl,
     table_calc_impl,
     top_k_impl,
 )
@@ -1478,7 +1486,7 @@ The term is the following expression: name
 
 This is column 'name' of collection 'Nations'
 
-This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
 For example, the following is valid:
   TPCH.Nations(name)
 """,
@@ -1509,7 +1517,7 @@ The term is the following expression: $1.name
 
 This is a reference to expression 'name' of child $1
 
-This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
 For example, the following is valid:
   TPCH.Nations(region.name)
 """,
@@ -1638,7 +1646,7 @@ This is a reference to expression 'name' of the 1st ancestor of the collection, 
   ──┬─ TPCH
     └─── TableCollection[Regions]
 
-This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
 For example, the following is valid:
   TPCH.Regions.nations(BACK(1).name)
 """,
@@ -1672,7 +1680,7 @@ The term is the following expression: $1.name
 
 This is a reference to expression 'name' of child $1
 
-This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
 For example, the following is valid:
   TPCH.Lineitems.part(BACK(1).supplier.name)
         """,
@@ -1789,17 +1797,315 @@ The term is the following child of the collection:
             ),
             id="partsupp_part-back_lines",
         ),
-        #         pytest.param(
-        #             (
-        #                 "TPCH",
-        #                 nation_region_name_impl,
-        #                 """
-        # """,
-        #                 """
-        # """,
-        #             ),
-        #             id="nation-region_name",
-        #         ),
+        pytest.param(
+            (
+                "TPCH",
+                region_n_suppliers_in_red_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Regions]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[suppliers]
+      └─── Where[account_balance > 0]
+
+The term is the following expression: COUNT($1)
+
+This expression counts how many records of the following subcollection exist for each record of the collection:
+  nations.suppliers.WHERE(account_balance > 0)
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Regions(COUNT(nations.suppliers.WHERE(account_balance > 0)))
+        """,
+                """
+Collection: TPCH.Regions
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: nations.suppliers.WHERE(account_balance > 0)
+
+The term is the following expression: COUNT($1)
+
+This expression counts how many records of the following subcollection exist for each record of the collection:
+  nations.suppliers.WHERE(account_balance > 0)
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+        """,
+            ),
+            id="region-n_suppliers_in_red",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                parts_avg_price_impl,
+                """
+Collection:
+  ┌─── TPCH
+  └─┬─ Partition[name='p', by=part_type]
+    └─┬─ AccessChild
+      └─── TableCollection[Parts]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─── PartitionChild[p]
+
+The term is the following expression: AVG($1.retail_price)
+
+This expression calls the function 'AVG' on the following arguments, aggregating them into a single value for each record of the collection:
+  p.retail_price
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Partition(Parts, name='p', by=part_type)(AVG(p.retail_price))
+        """,
+                """
+Collection: TPCH.Partition(Parts, name='p', by=part_type)
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: p
+
+The term is the following expression: AVG($1.retail_price)
+
+This expression calls the function 'AVG' on the following arguments, aggregating them into a single value for each record of the collection:
+  p.retail_price
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+        """,
+            ),
+            id="agg_parts-aggfunc",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                parts_avg_price_child_impl,
+                """
+Collection:
+  ┌─── TPCH
+  ├─┬─ Partition[name='p', by=part_type]
+  │ └─┬─ AccessChild
+  │   └─── TableCollection[Parts]
+  └─┬─ Where[AVG($1.retail_price) >= 27.5]
+    └─┬─ AccessChild
+      └─── PartitionChild[p]
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─── PartitionChild[p]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5)(COUNT(p.brand))
+  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).WHERE(HAS(p))
+  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).ORDER_BY(COUNT(p).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).p
+        """,
+                """
+Collection: TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5)
+
+The term is the following child of the collection:
+  p
+        """,
+            ),
+            id="agg_parts-child",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                nations_lowercase_name_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Nations]
+
+The term is the following expression: LOWER(name)
+
+This expression calls the function 'LOWER' on the following arguments:
+  name
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Nations(LOWER(name))
+        """,
+                """
+Collection: TPCH.Nations
+
+The term is the following expression: LOWER(name)
+
+This expression calls the function 'LOWER' on the following arguments:
+  name
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+        """,
+            ),
+            id="nations-lowercase_name",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                lineitems_arithmetic_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Lineitems]
+
+The term is the following expression: extended_price * (1 - discount)
+
+This expression combines the following arguments with the '*' operator:
+  extended_price
+  1 - discount
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Lineitems(extended_price * (1 - discount))
+        """,
+                """
+Collection: TPCH.Lineitems
+
+The term is the following expression: extended_price * (1 - discount)
+
+This expression combines the following arguments with the '*' operator:
+  extended_price
+  1 - discount
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+        """,
+            ),
+            id="lineitems-arithmetic",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                suppliers_iff_balance_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Suppliers]
+
+The term is the following expression: IFF(account_balance < 0, 0, account_balance)
+
+This expression calls the function 'IFF' on the following arguments:
+  account_balance < 0
+  0
+  account_balance
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Suppliers(IFF(account_balance < 0, 0, account_balance))
+        """,
+                """
+Collection: TPCH.Suppliers
+
+The term is the following expression: IFF(account_balance < 0, 0, account_balance)
+
+This expression calls the function 'IFF' on the following arguments:
+  account_balance < 0
+  0
+  account_balance
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+        """,
+            ),
+            id="suppliers-iff_balance",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                customers_without_orders_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Customers]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─── SubCollection[orders]
+
+The term is the following expression: HASNOT($1)
+
+This expression returns whether the collection does not have any records of the following subcollection:
+  orders
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Customers(HASNOT(orders))
+        """,
+                """
+Collection: TPCH.Customers
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: orders
+
+The term is the following expression: HASNOT($1)
+
+This expression returns whether the collection does not have any records of the following subcollection:
+  orders
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+        """,
+            ),
+            id="customers-without_orders",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                parts_with_german_supplier,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Parts]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─┬─ SubCollection[supply_records]
+      ├─── SubCollection[supplier]
+      └─┬─ Where[$1.name == 'GERMANY']
+        └─┬─ AccessChild
+          └─── SubCollection[nation]
+
+The term is the following expression: HAS($1)
+
+This expression returns whether the collection has any records of the following subcollection:
+  supply_records.supplier.WHERE(nation.name == 'GERMANY')
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Parts(HAS(supply_records.supplier.WHERE(nation.name == 'GERMANY')))
+        """,
+                """
+Collection: TPCH.Parts
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: supply_records.supplier.WHERE(nation.name == 'GERMANY')
+
+The term is the following expression: HAS($1)
+
+This expression returns whether the collection has any records of the following subcollection:
+  supply_records.supplier.WHERE(nation.name == 'GERMANY')
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+        """,
+            ),
+            id="customers-with_german_supplier",
+        ),
     ]
 )
 def unqualified_term_exploration_test_data(
