@@ -24,6 +24,10 @@ __all__ = [
     "region_nations_suppliers_impl",
     "region_nations_suppliers_name_impl",
     "region_nations_back_name",
+    "lps_back_supplier_name_impl",
+    "lps_back_supplier_impl",
+    "lps_back_lines_price_impl",
+    "lps_back_lines_impl",
 ]
 
 from collections.abc import Callable
@@ -249,5 +253,45 @@ def region_nations_back_name(
     @pydough.init_pydough_context(graph)
     def impl():
         return Regions.nations, BACK(1).name
+
+    return impl
+
+
+def lps_back_supplier_name_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Lineitems.part, BACK(1).supplier.name
+
+    return impl
+
+
+def lps_back_supplier_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Lineitems.part, BACK(1).supplier
+
+    return impl
+
+
+def lps_back_lines_price_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return PartSupp.part, BACK(1).lines.extended_price
+
+    return impl
+
+
+def lps_back_lines_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return PartSupp.part, BACK(1).lines
 
     return impl

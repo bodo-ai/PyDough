@@ -21,6 +21,7 @@ from .metadata.properties import (
     TableColumnMetadata,
 )
 from .pydough_ast import (
+    BackReferenceCollection,
     BackReferenceExpression,
     Calc,
     ChildOperator,
@@ -58,7 +59,15 @@ from .unqualified import (
 
 def property_cardinality_string(property: ReversiblePropertyMetadata) -> str:
     """
-    TODO
+    Converts a reversible subcollection property into a string representation
+    of its cardinality.
+
+    Args:
+        `property`: the metadata property whose cardinality is being requested.
+
+    Returns:
+        A string representation of the relationship between the two collections
+        that are connected by the relationship.
     """
     match (property.is_plural, property.reverse_property.is_plural):
         case (False, False):
@@ -75,7 +84,19 @@ def property_cardinality_string(property: ReversiblePropertyMetadata) -> str:
 
 def explain_property(property: PropertyMetadata, verbose: bool) -> str:
     """
-    TODO
+    Displays information about a PyDough metadata property, including:
+    - The name of the property
+    - For scalar properties, its type & the data it corresponds to
+    - For subcollection properties, the collection it connncts to and any
+      additional information about how they are connected.
+
+    Args:
+        `property`: the metadata property being examined.
+        `verbose`: if true, displays more detailed information about
+        `property` in a less compact format.
+
+    Returns:
+        A string explanation of `property`.
     """
     lines: list[str] = []
     collection_name: str = property.collection.name
@@ -157,7 +178,19 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
 
 def explain_collection(collection: CollectionMetadata, verbose: bool) -> str:
     """
-    TODO
+    Displays information about a PyDough metadata collection, including:
+    - The name of the collection
+    - The data that the collection corresponds to
+    - The names of unique properties of the collection
+    - The names of scalar & subcollection properties of the collection
+
+    Args:
+        `collection`: the metadata collection being examined.
+        `verbose`: if true, displays more detailed information about
+        `collection` in a less compact format.
+
+    Returns:
+        A string explanation of `collection`.
     """
     lines: list[str] = []
     lines.append(f"PyDough collection: {collection.name}")
@@ -218,7 +251,16 @@ def explain_collection(collection: CollectionMetadata, verbose: bool) -> str:
 
 def explain_graph(graph: GraphMetadata, verbose: bool) -> str:
     """
-    TODO
+    Displays information about a PyDough metadata graph, namely its name and
+    the names of the collections it contains.
+
+    Args:
+        `graph`: the metadata graph being examined.
+        `verbose`: if true, displays more detailed information about `graph` in
+        in a less compact format.
+
+    Returns:
+        A string explanation of `graph`.
     """
     lines: list[str] = []
     lines.append(f"PyDough graph: {graph.name}")
@@ -226,9 +268,12 @@ def explain_graph(graph: GraphMetadata, verbose: bool) -> str:
     if len(collection_names) == 0:
         lines.append("Collections: graph contains no collections")
     else:
-        lines.append("Collections:")
-        for collection_name in collection_names:
-            lines.append(f"  {collection_name}")
+        if verbose:
+            lines.append("Collections:")
+            for collection_name in collection_names:
+                lines.append(f"  {collection_name}")
+        else:
+            lines.append(f"Collections: {', '.join(collection_names)}")
         lines.append(
             "Call pydough.explain(graph[collection_name]) to learn more about any of these collections."
         )
@@ -240,7 +285,14 @@ def explain_graph(graph: GraphMetadata, verbose: bool) -> str:
 
 def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
     """
-    TODO
+    Recursively searches for the ancestor unqualified root of an unqualified
+    node.
+
+    Args:
+        `node`: the node being searched for its underlying root node.
+
+    Returns:
+        The underlying root node if one can be found, otherwise None.
     """
     match node:
         case UnqualifiedRoot():
@@ -261,7 +313,23 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
 
 def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     """
-    TODO
+    Displays information about an unqualified node, if it is possible to
+    qualify the node as a collection. If not, then `explain_term` may need to
+    be called. The information displayed may include:
+    - The structure of the collection, once qualified.
+    - What operation the most recent operation of the collection is doing.
+    - Any child collections that are derived by the collection.
+    - How many BACK levels can be accessed.
+    - The subcollections & expressions that are accessible from the collection.
+    - The expressions that would be included if the collection was executed.
+
+    Args:
+        `node`: the unqualified node object being examined.
+        `verbose`: if true, displays more detailed information about `node` and
+        in a less compact format.
+
+    Returns:
+        An explanation of `node`.
     """
     lines: list[str] = []
     qualified_node: PyDoughAST | None = None
@@ -499,7 +567,18 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
 
 def explain(data: AbstractMetadata | UnqualifiedNode, verbose: bool = False) -> str:
     """
-    TODO
+    Displays information about a PyDough metadata object or unqualified node.
+    The metadata could be for a graph, collection, or property. An unqualified
+    node can only be passed in if it is possible to qualify it as a PyDough
+    collection. If not, then `pydough.explain_term` may need to be used.
+
+    Args:
+        `data`: the metadata or unqualified node object being examined.
+        `verbose`: if true, displays more detailed information about `data` and
+        in a less compact format.
+
+    Returns:
+        An explanation of `data`.
     """
     match data:
         case GraphMetadata():
@@ -518,7 +597,21 @@ def explain(data: AbstractMetadata | UnqualifiedNode, verbose: bool = False) -> 
 
 def explain_structure(graph: GraphMetadata) -> str:
     """
-    TODO
+    Displays information about a PyDough metadata graph, including the
+    following:
+    - The names of each collection in the graph.
+    - For each collection, the names of all of it scalar and subcollection
+      properties.
+    - For each of those subcollection properties:
+        - The collection it maps to.
+        - The cardinality of the connection.
+        - The name of the reverse relationship.
+
+    Args:
+        `graph`: the metadata graph being examined.
+
+    Returns:
+        The string representation of the graph's structure.
     """
     assert isinstance(graph, GraphMetadata)
     lines: list[str] = []
@@ -556,9 +649,68 @@ def explain_structure(graph: GraphMetadata) -> str:
     return "\n".join(lines)
 
 
-def explain_term(node: UnqualifiedNode, term: UnqualifiedNode, verbose: bool) -> str:
+def collection_in_context_string(
+    context: PyDoughCollectionAST, collection: PyDoughCollectionAST
+) -> str:
     """
-    TODO
+    Converts a collection in the context of another collection into a single
+    string in a way that elides back collection references. For example,
+    if the context is A.B.C.D, and the collection is BACK(2).E.F, the result
+    would be "A.B.E.F".
+
+    Args:
+        `context`: the collection representing the context that `collection`
+        exists within.
+        `collection`: the collection that exists within `context`.
+
+    Returns:
+        The desired string representation of context and collection combined.
+    """
+    if isinstance(collection, BackReferenceCollection):
+        ancestor: PyDoughCollectionAST = context
+        for _ in range(collection.back_levels):
+            assert ancestor.ancestor_context is not None
+            ancestor = ancestor.ancestor_context
+        return f"{ancestor.to_string()}.{collection.term_name}"
+    elif (
+        collection.preceding_context is not None
+        and collection.preceding_context is not context
+    ):
+        return f"{collection_in_context_string(context, collection.preceding_context)}.{collection.standalone_string}"
+    elif collection.ancestor_context == context:
+        return f"{context.to_string()}.{collection.standalone_string}"
+    else:
+        assert collection.ancestor_context is not None
+        return f"{collection_in_context_string(context, collection.ancestor_context)}.{collection.standalone_string}"
+
+
+def explain_term(
+    node: UnqualifiedNode, term: UnqualifiedNode, verbose: bool = False
+) -> str:
+    """
+    Displays information about an unqualified node as it exists within
+    the context of an unqualified node. For example, if
+    `explain_terms(Nations, name)` is called, it will display information about
+    the `name` property of `Nations`. This information can include:
+    - The structure of the qualified `collection` and `term`
+    - Any additional children of the collection that must be derived in order
+      to derive `term`.
+    - The meaning of `term` within `collection`.
+    - The cardinality of `term` within `collection`.
+    - Examples of how to use `term` within `collection`.
+    - How to learn more about `term`.
+
+    Args:
+        `node`: the unqualified node that, when qualified, becomes a collection
+        that is used as the context through which `term` is derived.
+        `term`: the unqualified node that information is being sought about.
+        This term will only make sense if it is qualified within the context of
+        `node`. This term could be an expression or a collection.
+        `verbose`: if true, displays more detailed information about `node` and
+        `term` in a less compact format.
+
+    Returns:
+        An explanation of `term` as it exists within the context of `node`.
     """
 
     lines: list[str] = []
@@ -720,7 +872,7 @@ def explain_term(node: UnqualifiedNode, term: UnqualifiedNode, verbose: bool) ->
                     "To learn more about this child, you can try calling pydough.explain on the following:"
                 )
                 lines.append(
-                    f"  {qualified_node.to_string()}.{qualified_term.to_string()}"
+                    f"  {collection_in_context_string(qualified_node, qualified_term)}"
                 )
 
     return "\n".join(lines)
