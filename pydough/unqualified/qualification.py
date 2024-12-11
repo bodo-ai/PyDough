@@ -44,6 +44,7 @@ from .unqualified_node import (
     UnqualifiedRoot,
     UnqualifiedTopK,
     UnqualifiedWhere,
+    display_raw,
 )
 
 
@@ -700,7 +701,7 @@ class Qualifier:
         """
         TODO
         """
-        unqualified_str: str = str(unqualified)
+        unqualified_str: str = display_raw(unqualified)
         lookup: PyDoughAST | None = self.lookup_if_already_qualified(
             unqualified_str, context
         )
