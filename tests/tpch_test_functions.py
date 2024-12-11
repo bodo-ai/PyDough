@@ -60,7 +60,7 @@ def impl_tpch_q2():
             s_comment=BACK(2).comment,
             supplycost=BACK(1).supplycost,
         )
-        .WHERE(root.ENDSWITH(root.part_type, "BRASS") & (root.size == 15))
+        .WHERE(ENDSWITH(part_type, "BRASS") & (size == 15))
     )
 
     return (
@@ -218,7 +218,7 @@ def impl_tpch_q9():
     ).lines(
         nation=BACK(3).name,
         o_year=YEAR(order.order_date),
-        value=extended_price * (1 - discount) - BACK(1).ps_supplycost * quantity,
+        value=extended_price * (1 - discount) - BACK(1).supplycost * quantity,
     )
     return PARTITION(selected_lines, name="l", by=(nation, o_year))(
         nation=nation, o_year=o_year, amount=SUM(l.value)
@@ -334,8 +334,8 @@ def impl_tpch_q15():
             s_suppkey=key,
             s_name=name,
             s_address=address,
-            s_phone=phone_number,
-            total_revenue=total_revenue,
+            s_phone=phone,
+            total_revenue=total,
         )
         .WHERE(total_revenue == BACK(1).max_revenue)
         .ORDER_BY(s_suppkey.ASC())
@@ -365,7 +365,7 @@ def impl_tpch_q16():
         p_type,
         p_size,
         supplier_count=NDISTINCT(ps.supplier_key),
-    ).TOP_K(10, by=suppliner_cnt.DESC())
+    ).TOP_K(10, by=supplier_count.DESC())
 
 
 def impl_tpch_q17():

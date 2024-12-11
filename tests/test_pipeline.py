@@ -6,30 +6,6 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from test_qualification import (
-    pydough_impl_tpch_q1,
-    pydough_impl_tpch_q2,
-    pydough_impl_tpch_q3,
-    pydough_impl_tpch_q4,
-    pydough_impl_tpch_q5,
-    pydough_impl_tpch_q6,
-    pydough_impl_tpch_q7,
-    pydough_impl_tpch_q8,
-    pydough_impl_tpch_q9,
-    pydough_impl_tpch_q10,
-    pydough_impl_tpch_q11,
-    pydough_impl_tpch_q12,
-    pydough_impl_tpch_q13,
-    pydough_impl_tpch_q14,
-    pydough_impl_tpch_q15,
-    pydough_impl_tpch_q16,
-    pydough_impl_tpch_q17,
-    pydough_impl_tpch_q18,
-    pydough_impl_tpch_q19,
-    pydough_impl_tpch_q20,
-    pydough_impl_tpch_q21,
-    pydough_impl_tpch_q22,
-)
 from test_utils import (
     graph_fetcher,
 )
@@ -57,14 +33,38 @@ from tpch_outputs import (
     tpch_q21_output,
     tpch_q22_output,
 )
+from tpch_test_functions import (
+    impl_tpch_q1,
+    impl_tpch_q2,
+    impl_tpch_q3,
+    impl_tpch_q4,
+    impl_tpch_q5,
+    impl_tpch_q6,
+    impl_tpch_q7,
+    impl_tpch_q8,
+    impl_tpch_q9,
+    impl_tpch_q10,
+    impl_tpch_q11,
+    impl_tpch_q12,
+    impl_tpch_q13,
+    impl_tpch_q14,
+    impl_tpch_q15,
+    impl_tpch_q16,
+    impl_tpch_q17,
+    impl_tpch_q18,
+    impl_tpch_q19,
+    impl_tpch_q20,
+    impl_tpch_q21,
+    impl_tpch_q22,
+)
 
+from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.pydough_ast import PyDoughAST, PyDoughCollectionAST
 from pydough.relational import RelationalRoot
-from pydough.sqlglot import execute_df
 from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
@@ -78,29 +78,28 @@ pytestmark = [pytest.mark.execute]
     params=[
         pytest.param(
             (
-                pydough_impl_tpch_q1,
+                impl_tpch_q1,
                 """
 ROOT(columns=[('l_returnflag', l_returnflag), ('l_linestatus', l_linestatus), ('sum_qty', sum_qty), ('sum_base_price', sum_base_price), ('sum_disc_price', sum_disc_price), ('sum_charge', sum_charge), ('avg_qty', avg_qty), ('avg_price', avg_price), ('avg_disc', avg_disc), ('count_order', count_order)], orderings=[(ordering_8):asc_last, (ordering_9):asc_last])
- PROJECT(columns={'avg_disc': avg_disc, 'avg_price': avg_price, 'avg_qty': avg_qty, 'count_order': count_order, 'l_linestatus': l_linestatus, 'l_returnflag': l_returnflag, 'ordering_8': return_flag, 'ordering_9': status, 'sum_base_price': sum_base_price, 'sum_charge': sum_charge, 'sum_disc_price': sum_disc_price, 'sum_qty': sum_qty})
-  PROJECT(columns={'avg_disc': agg_0, 'avg_price': agg_1, 'avg_qty': agg_2, 'count_order': DEFAULT_TO(agg_3, 0:int64), 'l_linestatus': status, 'l_returnflag': return_flag, 'return_flag': return_flag, 'status': status, 'sum_base_price': DEFAULT_TO(agg_4, 0:int64), 'sum_charge': DEFAULT_TO(agg_5, 0:int64), 'sum_disc_price': DEFAULT_TO(agg_6, 0:int64), 'sum_qty': DEFAULT_TO(agg_7, 0:int64)})
+ PROJECT(columns={'avg_disc': avg_disc, 'avg_price': avg_price, 'avg_qty': avg_qty, 'count_order': count_order, 'l_linestatus': l_linestatus, 'l_returnflag': l_returnflag, 'ordering_8': l_returnflag, 'ordering_9': l_linestatus, 'sum_base_price': sum_base_price, 'sum_charge': sum_charge, 'sum_disc_price': sum_disc_price, 'sum_qty': sum_qty})
+  PROJECT(columns={'avg_disc': agg_0, 'avg_price': agg_1, 'avg_qty': agg_2, 'count_order': DEFAULT_TO(agg_3, 0:int64), 'l_linestatus': status, 'l_returnflag': return_flag, 'sum_base_price': DEFAULT_TO(agg_4, 0:int64), 'sum_charge': DEFAULT_TO(agg_5, 0:int64), 'sum_disc_price': DEFAULT_TO(agg_6, 0:int64), 'sum_qty': DEFAULT_TO(agg_7, 0:int64)})
    AGGREGATE(keys={'return_flag': return_flag, 'status': status}, aggregations={'agg_0': AVG(discount), 'agg_1': AVG(extended_price), 'agg_2': AVG(quantity), 'agg_3': COUNT(), 'agg_4': SUM(extended_price), 'agg_5': SUM(extended_price * 1:int64 - discount * 1:int64 + tax), 'agg_6': SUM(extended_price * 1:int64 - discount), 'agg_7': SUM(quantity)})
     FILTER(condition=ship_date <= datetime.date(1998, 12, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'quantity': quantity, 'return_flag': return_flag, 'status': status, 'tax': tax})
-     SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'quantity': l_quantity, 'return_flag': l_returnflag, 'ship_date': l_shipdate, 'status': l_linestatus, 'tax': l_tax})
-""",
+     SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'quantity': l_quantity, 'return_flag': l_returnflag, 'ship_date': l_shipdate, 'status': l_linestatus, 'tax': l_tax})""",
                 tpch_q1_output,
             ),
             id="tpch_q1",
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q2,
+                impl_tpch_q2,
                 """
 ROOT(columns=[('s_acctbal', s_acctbal), ('s_name', s_name), ('n_name', n_name), ('p_partkey', p_partkey), ('p_mfgr', p_mfgr), ('s_address', s_address), ('s_phone', s_phone), ('s_comment', s_comment)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'n_name': n_name, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'ordering_4': ordering_4, 'p_mfgr': p_mfgr, 'p_partkey': p_partkey, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
   PROJECT(columns={'n_name': n_name, 'ordering_1': s_acctbal, 'ordering_2': n_name, 'ordering_3': s_name, 'ordering_4': p_partkey, 'p_mfgr': p_mfgr, 'p_partkey': p_partkey, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
    PROJECT(columns={'n_name': n_name, 'p_mfgr': manufacturer, 'p_partkey': key_19, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
-    FILTER(condition=supplycost_21 == best_cost, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
-     JOIN(conditions=[t0.key_9 == t1.key_19], types=['inner'], columns={'best_cost': t0.best_cost, 'key_19': t1.key_19, 'manufacturer': t1.manufacturer, 'n_name': t1.n_name, 's_acctbal': t1.s_acctbal, 's_address': t1.s_address, 's_comment': t1.s_comment, 's_name': t1.s_name, 's_phone': t1.s_phone, 'supplycost_21': t1.supplycost})
+    FILTER(condition=supplycost_21 == best_cost & ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
+     JOIN(conditions=[t0.key_9 == t1.key_19], types=['inner'], columns={'best_cost': t0.best_cost, 'key_19': t1.key_19, 'manufacturer': t1.manufacturer, 'n_name': t1.n_name, 'part_type': t1.part_type, 's_acctbal': t1.s_acctbal, 's_address': t1.s_address, 's_comment': t1.s_comment, 's_name': t1.s_name, 's_phone': t1.s_phone, 'size': t1.size, 'supplycost_21': t1.supplycost})
       PROJECT(columns={'best_cost': agg_0, 'key_9': key_9})
        AGGREGATE(keys={'key_9': key_9}, aggregations={'agg_0': MIN(supplycost)})
         FILTER(condition=ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_9': key_9, 'supplycost': supplycost})
@@ -114,7 +113,7 @@ ROOT(columns=[('s_acctbal', s_acctbal), ('s_name', s_name), ('n_name', n_name), 
             SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
            SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
           SCAN(table=tpch.PART, columns={'key': p_partkey, 'part_type': p_type, 'size': p_size})
-      FILTER(condition=ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone, 'supplycost': supplycost})
+      FILTER(condition=ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 'part_type': part_type, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone, 'size': size, 'supplycost': supplycost})
        PROJECT(columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': name, 'part_type': part_type, 's_acctbal': account_balance, 's_address': address, 's_comment': comment_14, 's_name': name_16, 's_phone': phone, 'size': size, 'supplycost': supplycost})
         JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'key_19': t1.key, 'manufacturer': t1.manufacturer, 'name': t0.name, 'name_16': t0.name_16, 'part_type': t1.part_type, 'phone': t0.phone, 'size': t1.size, 'supplycost': t0.supplycost})
          JOIN(conditions=[t0.key_15 == t1.supplier_key], types=['inner'], columns={'account_balance': t0.account_balance, 'address': t0.address, 'comment_14': t0.comment_14, 'name': t0.name, 'name_16': t0.name_16, 'part_key': t1.part_key, 'phone': t0.phone, 'supplycost': t1.supplycost})
@@ -125,15 +124,14 @@ ROOT(columns=[('s_acctbal', s_acctbal), ('s_name', s_name), ('n_name', n_name), 
              SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
            SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'address': s_address, 'comment': s_comment, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey, 'phone': s_phone})
           SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
-         SCAN(table=tpch.PART, columns={'key': p_partkey, 'manufacturer': p_mfgr, 'part_type': p_type, 'size': p_size})
-""",
+         SCAN(table=tpch.PART, columns={'key': p_partkey, 'manufacturer': p_mfgr, 'part_type': p_type, 'size': p_size})""",
                 tpch_q2_output,
             ),
             id="tpch_q2",
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q3,
+                impl_tpch_q3,
                 """
 ROOT(columns=[('l_orderkey', l_orderkey), ('revenue', revenue), ('o_orderdate', o_orderdate), ('o_shippriority', o_shippriority)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'l_orderkey': l_orderkey, 'o_orderdate': o_orderdate, 'o_shippriority': o_shippriority, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'revenue': revenue}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
@@ -154,7 +152,7 @@ ROOT(columns=[('l_orderkey', l_orderkey), ('revenue', revenue), ('o_orderdate', 
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q4,
+                impl_tpch_q4,
                 """
 ROOT(columns=[('o_orderpriority', o_orderpriority), ('order_count', order_count)], orderings=[(ordering_1):asc_last])
  PROJECT(columns={'o_orderpriority': o_orderpriority, 'order_count': order_count, 'ordering_1': order_priority})
@@ -172,7 +170,7 @@ ROOT(columns=[('o_orderpriority', o_orderpriority), ('order_count', order_count)
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q5,
+                impl_tpch_q5,
                 """
 """,
                 tpch_q5_output,
@@ -182,7 +180,7 @@ ROOT(columns=[('o_orderpriority', o_orderpriority), ('order_count', order_count)
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q6,
+                impl_tpch_q6,
                 """
 ROOT(columns=[('revenue', revenue)], orderings=[])
  PROJECT(columns={'revenue': DEFAULT_TO(agg_0, 0:int64)})
@@ -197,7 +195,7 @@ ROOT(columns=[('revenue', revenue)], orderings=[])
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q7,
+                impl_tpch_q7,
                 """
 ROOT(columns=[('supp_nation', supp_nation), ('cust_nation', cust_nation), ('l_year', l_year), ('revenue', revenue)], orderings=[(ordering_1):asc_last, (ordering_2):asc_last, (ordering_3):asc_last])
  PROJECT(columns={'cust_nation': cust_nation, 'l_year': l_year, 'ordering_1': supp_nation, 'ordering_2': cust_nation, 'ordering_3': l_year, 'revenue': revenue, 'supp_nation': supp_nation})
@@ -223,7 +221,7 @@ ROOT(columns=[('supp_nation', supp_nation), ('cust_nation', cust_nation), ('l_ye
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q8,
+                impl_tpch_q8,
                 """
 ROOT(columns=[('o_year', o_year), ('mkt_share', mkt_share)], orderings=[])
  PROJECT(columns={'mkt_share': DEFAULT_TO(agg_0, 0:int64) / DEFAULT_TO(agg_1, 0:int64), 'o_year': o_year})
@@ -256,7 +254,7 @@ ROOT(columns=[('o_year', o_year), ('mkt_share', mkt_share)], orderings=[])
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q9,
+                impl_tpch_q9,
                 """
 ROOT(columns=[('nation', nation), ('o_year', o_year), ('amount', amount)], orderings=[(ordering_1):asc_last, (ordering_2):desc_last])
  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'amount': amount, 'nation': nation, 'o_year': o_year, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):asc_last, (ordering_2):desc_last])
@@ -283,7 +281,7 @@ ROOT(columns=[('nation', nation), ('o_year', o_year), ('amount', amount)], order
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q10,
+                impl_tpch_q10,
                 """
 ROOT(columns=[('c_custkey', c_custkey), ('c_name', c_name), ('revenue', revenue), ('c_acctbal', c_acctbal), ('n_name', n_name), ('c_address', c_address), ('c_phone', c_phone), ('c_comment', c_comment)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
  LIMIT(limit=Literal(value=20, type=Int64Type()), columns={'c_acctbal': c_acctbal, 'c_address': c_address, 'c_comment': c_comment, 'c_custkey': c_custkey, 'c_name': c_name, 'c_phone': c_phone, 'n_name': n_name, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'revenue': revenue}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
@@ -307,7 +305,7 @@ ROOT(columns=[('c_custkey', c_custkey), ('c_name', c_name), ('revenue', revenue)
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q11,
+                impl_tpch_q11,
                 """
 ROOT(columns=[('ps_partkey', ps_partkey), ('value', value)], orderings=[(ordering_2):desc_last])
  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'ordering_2': ordering_2, 'ps_partkey': ps_partkey, 'value': value}, orderings=[(ordering_2):desc_last])
@@ -339,7 +337,7 @@ ROOT(columns=[('ps_partkey', ps_partkey), ('value', value)], orderings=[(orderin
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q12,
+                impl_tpch_q12,
                 """
 ROOT(columns=[('l_shipmode', l_shipmode), ('high_line_count', high_line_count), ('low_line_count', low_line_count)], orderings=[(ordering_2):asc_last])
  PROJECT(columns={'high_line_count': high_line_count, 'l_shipmode': l_shipmode, 'low_line_count': low_line_count, 'ordering_2': ship_mode})
@@ -357,7 +355,7 @@ ROOT(columns=[('l_shipmode', l_shipmode), ('high_line_count', high_line_count), 
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q13,
+                impl_tpch_q13,
                 """
 ROOT(columns=[('c_count', c_count), ('custdist', custdist)], orderings=[(ordering_3):desc_last, (ordering_4):desc_last])
  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'c_count': c_count, 'custdist': custdist, 'ordering_3': ordering_3, 'ordering_4': ordering_4}, orderings=[(ordering_3):desc_last, (ordering_4):desc_last])
@@ -385,7 +383,7 @@ ROOT(columns=[('c_count', c_count), ('custdist', custdist)], orderings=[(orderin
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q14,
+                impl_tpch_q14,
                 """
 ROOT(columns=[('promo_revenue', promo_revenue)], orderings=[])
  PROJECT(columns={'promo_revenue': 100.0:float64 * DEFAULT_TO(agg_0, 0:int64) / DEFAULT_TO(agg_1, 0:int64)})
@@ -402,7 +400,7 @@ ROOT(columns=[('promo_revenue', promo_revenue)], orderings=[])
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q15,
+                impl_tpch_q15,
                 """
 ROOT(columns=[('s_suppkey', s_suppkey), ('s_name', s_name), ('s_address', s_address), ('s_phone', s_phone), ('total_revenue', total_revenue)], orderings=[(ordering_3):asc_last])
  PROJECT(columns={'ordering_3': s_suppkey, 's_address': s_address, 's_name': s_name, 's_phone': s_phone, 's_suppkey': s_suppkey, 'total_revenue': total_revenue})
@@ -429,11 +427,11 @@ ROOT(columns=[('s_suppkey', s_suppkey), ('s_name', s_name), ('s_address', s_addr
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q16,
+                impl_tpch_q16,
                 """
-ROOT(columns=[('p_brand', p_brand), ('p_type', p_type), ('p_size', p_size), ('supplier_count', supplier_count)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
-  PROJECT(columns={'ordering_1': supplier_count, 'ordering_2': p_brand, 'ordering_3': p_type, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count})
+ROOT(columns=[('p_brand', p_brand), ('p_type', p_type), ('p_size', p_size), ('supplier_count', supplier_count)], orderings=[(ordering_1):desc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'ordering_1': ordering_1, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count}, orderings=[(ordering_1):desc_last])
+  PROJECT(columns={'ordering_1': supplier_count, 'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': supplier_count})
    PROJECT(columns={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_count': agg_0})
     AGGREGATE(keys={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type}, aggregations={'agg_0': NDISTINCT(supplier_key)})
      FILTER(condition=NOT(LIKE(comment_2, '%Customer%Complaints%':string)), columns={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_key': supplier_key})
@@ -443,15 +441,14 @@ ROOT(columns=[('p_brand', p_brand), ('p_type', p_type), ('p_size', p_size), ('su
          FILTER(condition=brand != 'BRAND#45':string & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%':string)) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9]:array[unknown]), columns={'brand': brand, 'key': key, 'part_type': part_type, 'size': size})
           SCAN(table=tpch.PART, columns={'brand': p_brand, 'key': p_partkey, 'part_type': p_type, 'size': p_size})
          SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
-       SCAN(table=tpch.SUPPLIER, columns={'comment': s_comment, 'key': s_suppkey})
-""",
+       SCAN(table=tpch.SUPPLIER, columns={'comment': s_comment, 'key': s_suppkey})""",
                 tpch_q16_output,
             ),
             id="tpch_q16",
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q17,
+                impl_tpch_q17,
                 """
 ROOT(columns=[('avg_yearly', avg_yearly)], orderings=[])
  PROJECT(columns={'avg_yearly': DEFAULT_TO(agg_1, 0:int64) / 7.0:float64})
@@ -472,7 +469,7 @@ ROOT(columns=[('avg_yearly', avg_yearly)], orderings=[])
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q18,
+                impl_tpch_q18,
                 """
 ROOT(columns=[('c_name', c_name), ('c_custkey', c_custkey), ('o_orderkey', o_orderkey), ('o_orderdate', o_orderdate), ('o_totalprice', o_totalprice), ('total_quantity', total_quantity)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
  LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'c_custkey': c_custkey, 'c_name': c_name, 'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'total_quantity': total_quantity}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
@@ -492,7 +489,7 @@ ROOT(columns=[('c_name', c_name), ('c_custkey', c_custkey), ('o_orderkey', o_ord
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q19,
+                impl_tpch_q19,
                 """
 ROOT(columns=[('revenue', revenue)], orderings=[])
  PROJECT(columns={'revenue': DEFAULT_TO(agg_0, 0:int64)})
@@ -508,34 +505,32 @@ ROOT(columns=[('revenue', revenue)], orderings=[])
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q20,
+                impl_tpch_q20,
                 """
-ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[(ordering_2):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'ordering_2': ordering_2, 's_address': s_address, 's_name': s_name}, orderings=[(ordering_2):asc_last])
-  PROJECT(columns={'ordering_2': s_name, 's_address': s_address, 's_name': s_name})
-   FILTER(condition=name_3 == 'CANADA':string & DEFAULT_TO(agg_1, 0:int64) > 0:int64, columns={'s_address': s_address, 's_name': s_name})
-    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_1': t1.agg_1, 'name_3': t0.name_3, 's_address': t0.s_address, 's_name': t0.s_name})
+ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[(ordering_1):asc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'ordering_1': ordering_1, 's_address': s_address, 's_name': s_name}, orderings=[(ordering_1):asc_last])
+  PROJECT(columns={'ordering_1': s_name, 's_address': s_address, 's_name': s_name})
+   FILTER(condition=name_3 == 'CANADA':string & True:bool, columns={'s_address': s_address, 's_name': s_name})
+    JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={'name_3': t0.name_3, 's_address': t0.s_address, 's_name': t0.s_name})
      JOIN(conditions=[t0.nation_key == t1.key], types=['left'], columns={'key': t0.key, 'name_3': t1.name, 's_address': t0.s_address, 's_name': t0.s_name})
       PROJECT(columns={'key': key, 'nation_key': nation_key, 's_address': address, 's_name': name})
        SCAN(table=tpch.SUPPLIER, columns={'address': s_address, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey})
       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-     AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_1': COUNT()})
-      FILTER(condition=STARTSWITH(name, 'forest':string) & True:bool & availqty > DEFAULT_TO(agg_0, 0:int64) * 0.5:float64, columns={'supplier_key': supplier_key})
-       JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'agg_0': t1.agg_0, 'availqty': t0.availqty, 'name': t0.name, 'supplier_key': t0.supplier_key})
-        JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'availqty': t0.availqty, 'key': t1.key, 'name': t1.name, 'supplier_key': t0.supplier_key})
-         SCAN(table=tpch.PARTSUPP, columns={'availqty': ps_availqty, 'part_key': ps_partkey, 'supplier_key': ps_suppkey})
-         SCAN(table=tpch.PART, columns={'key': p_partkey, 'name': p_name})
-        AGGREGATE(keys={'part_key': part_key}, aggregations={'agg_0': SUM(quantity)})
-         FILTER(condition=ship_date >= datetime.date(1994, 1, 1):date & ship_date < datetime.date(1995, 1, 1):date, columns={'part_key': part_key, 'quantity': quantity})
-          SCAN(table=tpch.LINEITEM, columns={'part_key': l_partkey, 'quantity': l_quantity, 'ship_date': l_shipdate})
-""",
+     FILTER(condition=STARTSWITH(name, 'forest':string) & availqty > DEFAULT_TO(agg_0, 0:int64) * 0.5:float64, columns={'supplier_key': supplier_key})
+      JOIN(conditions=[t0.key == t1.part_key], types=['left'], columns={'agg_0': t1.agg_0, 'availqty': t0.availqty, 'name': t0.name, 'supplier_key': t0.supplier_key})
+       JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'availqty': t0.availqty, 'key': t1.key, 'name': t1.name, 'supplier_key': t0.supplier_key})
+        SCAN(table=tpch.PARTSUPP, columns={'availqty': ps_availqty, 'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+        SCAN(table=tpch.PART, columns={'key': p_partkey, 'name': p_name})
+       AGGREGATE(keys={'part_key': part_key}, aggregations={'agg_0': SUM(quantity)})
+        FILTER(condition=ship_date >= datetime.date(1994, 1, 1):date & ship_date < datetime.date(1995, 1, 1):date, columns={'part_key': part_key, 'quantity': quantity})
+         SCAN(table=tpch.LINEITEM, columns={'part_key': l_partkey, 'quantity': l_quantity, 'ship_date': l_shipdate})""",
                 tpch_q20_output,
             ),
             id="tpch_q20",
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q21,
+                impl_tpch_q21,
                 """
 """,
                 tpch_q21_output,
@@ -545,7 +540,7 @@ ROOT(columns=[('s_name', s_name), ('s_address', s_address)], orderings=[(orderin
         ),
         pytest.param(
             (
-                pydough_impl_tpch_q22,
+                impl_tpch_q22,
                 """
 """,
                 tpch_q22_output,
@@ -588,10 +583,10 @@ def test_pydough_pipeline(
     # Run the query through the stages from unqualified node to qualified node
     # to relational tree, and confirm the tree string matches the expected
     # structure.
-    unqualified_impl, relational_string, answer_impl = pydough_pipeline_test_data
+    unqualified_impl, relational_string, _ = pydough_pipeline_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
-    root: UnqualifiedRoot = UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = unqualified_impl(root)
+    UnqualifiedRoot(graph)
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     qualified: PyDoughAST = qualify_node(unqualified, graph)
     assert isinstance(
         qualified, PyDoughCollectionAST
@@ -601,10 +596,20 @@ def test_pydough_pipeline(
         relational.to_tree_string() == relational_string.strip()
     ), "Mismatch between tree string representation of relational node and expected Relational tree string"
 
-    # Run the relational tree through the execution and confirm that the output
-    # matches the expected DataFrame, without case sensitivity of column names.
-    result: pd.DataFrame = execute_df(relational, sqlite_tpch_db_context)
-    expected_result: pd.DataFrame = answer_impl()
-    result.columns = result.columns.str.lower()
-    expected_result.columns = expected_result.columns.str.lower()
-    pd.testing.assert_frame_equal(result, expected_result)
+
+def test_pydough_to_df(
+    pydough_pipeline_test_data: tuple[
+        Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
+    ],
+    get_sample_graph: graph_fetcher,
+    default_config: PyDoughConfigs,
+    sqlite_tpch_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H queries from the original code generation.
+    """
+    unqualified_impl, _, answer_impl = pydough_pipeline_test_data
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+    pd.testing.assert_frame_equal(result, answer_impl)

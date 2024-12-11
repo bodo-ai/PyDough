@@ -50,7 +50,7 @@ def simple_filter_top_five():
         ),
     ],
 )
-def test_pydough_to_sql(
+def test_pydough_to_df(
     pydough_code: Callable[[], UnqualifiedNode],
     expected_df: pd.DataFrame,
     get_sample_graph: graph_fetcher,
