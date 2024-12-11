@@ -19,12 +19,11 @@ __all__ = [
     "UnqualifiedBack",
     "init_pydough_context",
     "qualify_node",
-    "qualify_term",
     "transform_code",
 ]
 
 from .errors import PyDoughUnqualifiedException
-from .qualification import qualify_node, qualify_term
+from .qualification import qualify_node
 from .unqualified_node import (
     UnqualifiedAccess,
     UnqualifiedBack,

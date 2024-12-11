@@ -59,12 +59,12 @@ def bad_pydough_impl_04(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.Nations.name
+    TPCH.Nations.name.hello
     ```
-    The problem: Nations.name is an expression, so it cannot be the final
-    answer since that must be a collection.
+    The problem: Nations.name is an expression, so invoking `.hello` on it is
+    not valid.
     """
-    return root.Nations.name
+    return root.Nations.name.hello
 
 
 def bad_pydough_impl_05(root: UnqualifiedNode) -> UnqualifiedNode:
@@ -141,7 +141,7 @@ def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_02,
-            "?.FIZZBUZZ(name=?.name)",
+            "Unrecognized term of simple table collection 'Nations' in graph 'TPCH': 'FIZZBUZZ'",
             id="02",
         ),
         pytest.param(
@@ -151,12 +151,12 @@ def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_04,
-            "Property 'name' of TPCH.Nations is not a collection",
+            "Expected a collection, but received an expression: TPCH.Nations.name",
             id="04",
         ),
         pytest.param(
             bad_pydough_impl_05,
-            "Cannot qualify UnqualifiedAccess as an expression: ?.nation.region",
+            "Expected an expression, but received a collection: nation.region",
             id="05",
         ),
         pytest.param(
@@ -171,7 +171,7 @@ def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_08,
-            "Cannot qualify UnqualifiedCalc as an expression: ?.MUL(extended_price=?.extended_price, _expr0=?.SUB(_expr0=1, discount=?.discount))",
+            "Unrecognized term of simple table collection 'Lineitems' in graph 'TPCH': 'MUL'",
             id="08",
         ),
         pytest.param(
