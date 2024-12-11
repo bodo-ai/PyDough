@@ -8,12 +8,13 @@ __all__ = [
     "active_session",
     "to_sql",
     "to_df",
+    "display_raw",
 ]
 
 from .configs import PyDoughSession
 from .evaluation import to_df, to_sql
 from .metadata import parse_json_metadata_from_file
-from .unqualified import init_pydough_context
+from .unqualified import display_raw, init_pydough_context
 
 # Create a default session for the user to interact with.
 # In most situations users will just use this session and
