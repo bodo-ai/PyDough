@@ -128,7 +128,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_02,
-            "TPCH.FIZZBUZZ(name=TPCH.name)",
+            "?.FIZZBUZZ(name=?.name)",
             id="02",
         ),
         pytest.param(
@@ -143,7 +143,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_05,
-            "Cannot qualify UnqualifiedAccess as an expression: TPCH.nation.region",
+            "Cannot qualify UnqualifiedAccess as an expression: ?.nation.region",
             id="05",
         ),
         pytest.param(
@@ -158,7 +158,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_08,
-            "Cannot qualify UnqualifiedCalc as an expression: TPCH.MUL(extended_price=TPCH.extended_price, _expr0=TPCH.SUB(_expr0=1:Int64Type(), discount=TPCH.discount))",
+            "Cannot qualify UnqualifiedCalc as an expression: ?.MUL(extended_price=?.extended_price, _expr0=?.SUB(_expr0=1, discount=?.discount))",
             id="08",
         ),
     ],

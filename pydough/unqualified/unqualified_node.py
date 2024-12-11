@@ -100,6 +100,15 @@ class UnqualifiedNode(ABC):
         except AttributeError:
             return UnqualifiedAccess(self, name)
 
+    def __setattr__(self, name: str, value: object) -> None:
+        if name == "_parcel":
+            super().__setattr__(name, value)
+        else:
+            # TODO: support using setattr to add/mutate properties.
+            raise AttributeError(
+                "PyDough objects do not yet support writing properties to them."
+            )
+
     def __hash__(self):
         return hash(repr(self))
 
@@ -322,7 +331,7 @@ class UnqualifiedRoot(UnqualifiedNode):
             return super().__getattribute__(name)
 
     def __repr__(self):
-        return self._parcel[0].name
+        return "?"
 
 
 class UnqualifiedBack(UnqualifiedNode):
@@ -349,7 +358,7 @@ class UnqualifiedLiteral(UnqualifiedNode):
         self._parcel: tuple[object, PyDoughType] = (literal, typ)
 
     def __repr__(self):
-        return f"{self._parcel[0]!r}:{self._parcel[1]!r}"
+        return f"{self._parcel[0]!r}"
 
 
 class UnqualifiedCollation(UnqualifiedNode):
