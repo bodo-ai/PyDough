@@ -118,6 +118,19 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     return root.Lineitems(v=root.MUL(root.extended_price, root.SUB(1, root.discount)))
 
 
+def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    TPCH.Lineitems.tax = 0
+    TPCH.Lineitems(value=extended_price * tax)
+    ```
+    The problem: writing to an unqualified node is not yet supported.
+    """
+    root.Lineitems.tax = 0
+    return root.Lineitems(value=root.extended_price * root.tax)
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -161,6 +174,11 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
             "Cannot qualify UnqualifiedCalc as an expression: ?.MUL(extended_price=?.extended_price, _expr0=?.SUB(_expr0=1, discount=?.discount))",
             id="08",
         ),
+        pytest.param(
+            bad_pydough_impl_09,
+            "PyDough objects do not yet support writing properties to them.",
+            id="09",
+        ),
     ],
 )
 def test_qualify_error(
@@ -177,6 +195,6 @@ def test_qualify_error(
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = impl(root)
     with pytest.raises(Exception, match=re.escape(error_msg)):
+        unqualified: UnqualifiedNode = impl(root)
         qualify_node(unqualified, graph)
