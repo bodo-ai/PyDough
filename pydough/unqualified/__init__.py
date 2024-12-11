@@ -22,7 +22,6 @@ __all__ = [
     "qualify_term",
     "transform_code",
     "display_raw",
-    "unqualified_node_msg",
 ]
 
 from .errors import PyDoughUnqualifiedException
@@ -41,6 +40,5 @@ from .unqualified_node import (
     UnqualifiedTopK,
     UnqualifiedWhere,
     display_raw,
-    unqualified_node_msg,
 )
 from .unqualified_transform import init_pydough_context, transform_code

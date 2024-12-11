@@ -17,7 +17,6 @@ __all__ = [
     "UnqualifiedLiteral",
     "UnqualifiedBack",
     "display_raw",
-    "unqualified_node_msg",
 ]
 
 from abc import ABC
@@ -41,18 +40,6 @@ from pydough.types import (
 
 from .errors import PyDoughUnqualifiedException
 
-unqualified_node_msg: str = """\
-This is an unqualified PyDough object, and cannot be directly printed.
-Please try one of the following instead:
-- Call pydough.display_raw to see the structure of the unqualified PyDough object
-- Call pydough.explain to see the qualified structure of the PyDough object
-- Call pydough.to_sql to see what SQL code the PyDough logic becomes
-- Call pydough.to_df to execute the PyDough logic and see its results\
-"""
-"""
-The message that is displayed whenever an UnqualifiedNode is printed directly
-"""
-
 
 class UnqualifiedNode(ABC):
     """
@@ -63,7 +50,7 @@ class UnqualifiedNode(ABC):
     """
 
     def __repr__(self):
-        return unqualified_node_msg
+        return display_raw(self)
 
     @staticmethod
     def coerce_to_unqualified(obj: object) -> "UnqualifiedNode":

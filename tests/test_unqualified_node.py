@@ -40,7 +40,6 @@ from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
     transform_code,
-    unqualified_node_msg,
 )
 
 
@@ -83,7 +82,9 @@ def verify_pydough_code_exec_match_unqualified(
     assert isinstance(
         answer, UnqualifiedNode
     ), "Expected `pydough_str` to define `answer` as an UnqualifiedNode."
-    assert repr(answer) == unqualified_node_msg
+    assert (
+        repr(answer) == expected_str
+    ), "Mismatch between string representation of `answer` and expected value."
     assert (
         pydough.display_raw(answer) == expected_str
     ), "Mismatch between string representation of `answer` and expected value."
@@ -389,7 +390,9 @@ def test_init_pydough_context(
     sample_graph: GraphMetadata = get_sample_graph("TPCH")
     new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
     answer: UnqualifiedNode = new_func()
-    assert repr(answer) == unqualified_node_msg
+    assert (
+        repr(answer) == as_string
+    ), "Mismatch between string representation of unqualified nodes and expected output"
     assert (
         pydough.display_raw(answer) == as_string
     ), "Mismatch between string representation of unqualified nodes and expected output"
