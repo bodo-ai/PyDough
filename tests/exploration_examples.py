@@ -21,6 +21,9 @@ __all__ = [
     "contextless_aggfunc_impl",
     "contextless_func_impl",
     "nation_name_impl",
+    "region_nations_suppliers_impl",
+    "region_nations_suppliers_name_impl",
+    "region_nations_back_name",
 ]
 
 from collections.abc import Callable
@@ -36,10 +39,6 @@ from pydough.unqualified import UnqualifiedNode
 
 
 def nation_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Nations
@@ -48,10 +47,6 @@ def nation_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def global_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return TPCH
@@ -60,10 +55,6 @@ def global_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def global_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return TPCH(x=42, y=13)
@@ -72,10 +63,6 @@ def global_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def global_agg_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return TPCH(
@@ -86,10 +73,6 @@ def global_agg_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def table_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Nations(name, region_name=region.name, num_customers=COUNT(customers))
@@ -100,10 +83,6 @@ def table_calc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 def subcollection_calc_backref_impl(
     graph: GraphMetadata,
 ) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Regions.nations.customers(
@@ -114,10 +93,6 @@ def subcollection_calc_backref_impl(
 
 
 def filter_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Nations(name).WHERE(
@@ -130,10 +105,6 @@ def filter_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def order_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Nations(name).ORDER_BY(COUNT(suppliers).DESC(), name.ASC())
@@ -142,10 +113,6 @@ def order_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def top_k_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Parts(name, n_suppliers=COUNT(suppliers_of_part)).TOP_K(
@@ -156,10 +123,6 @@ def top_k_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def partition_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return PARTITION(Parts, name="p", by=part_type)
@@ -168,10 +131,6 @@ def partition_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def partition_child_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return (
@@ -187,10 +146,6 @@ def partition_child_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def nation_expr_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Nations.name
@@ -199,10 +154,6 @@ def nation_expr_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
 
 
 def contextless_expr_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return name
@@ -211,10 +162,6 @@ def contextless_expr_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]
 
 
 def contextless_collections_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return lines(extended_price, name=part.name)
@@ -223,10 +170,6 @@ def contextless_collections_impl(graph: GraphMetadata) -> Callable[[], Unqualifi
 
 
 def contextless_back_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return BACK(1).fizz
@@ -235,10 +178,6 @@ def contextless_back_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]
 
 
 def contextless_func_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return LOWER(first_name + " " + last_name)
@@ -247,10 +186,6 @@ def contextless_func_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]
 
 
 def contextless_aggfunc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNode]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return COUNT(customers)
@@ -261,12 +196,58 @@ def contextless_aggfunc_impl(graph: GraphMetadata) -> Callable[[], UnqualifiedNo
 def nation_name_impl(
     graph: GraphMetadata,
 ) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
-    """
-    TODO
-    """
-
     @pydough.init_pydough_context(graph)
     def impl():
         return Nations, name
+
+    return impl
+
+
+def nation_region_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Nations, region
+
+    return impl
+
+
+def nation_region_name_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Nations, region.name
+
+    return impl
+
+
+def region_nations_suppliers_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Regions, nations.suppliers
+
+    return impl
+
+
+def region_nations_suppliers_name_impl(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Regions, nations.suppliers.name
+
+    return impl
+
+
+def region_nations_back_name(
+    graph: GraphMetadata,
+) -> Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]:
+    @pydough.init_pydough_context(graph)
+    def impl():
+        return Regions.nations, BACK(1).name
 
     return impl

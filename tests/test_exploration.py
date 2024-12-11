@@ -18,9 +18,14 @@ from exploration_examples import (
     nation_expr_impl,
     nation_impl,
     nation_name_impl,
+    nation_region_impl,
+    nation_region_name_impl,
     order_impl,
     partition_child_impl,
     partition_impl,
+    region_nations_back_name,
+    region_nations_suppliers_impl,
+    region_nations_suppliers_name_impl,
     subcollection_calc_backref_impl,
     table_calc_impl,
     top_k_impl,
@@ -899,10 +904,8 @@ Call pydough.explain_term(collection, term) to learn more about any of these exp
 """,
                 """
 This node first derives the following children before doing its main task:
-  child $1:
-    └─── TableCollection[Customers]
-  child $2:
-    └─── TableCollection[Parts]
+  child $1: Customers
+  child $2: Parts
 
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
   avg_part_price <- AVG($2.retail_price), aka AVG(Parts.retail_price)
@@ -961,10 +964,8 @@ Call pydough.explain_term(collection, term) to learn more about any of these exp
                 """,
                 """
 This node first derives the following children before doing its main task:
-  child $1:
-    └─── SubCollection[region]
-  child $2:
-    └─── SubCollection[customers]
+  child $1: region
+  child $2: customers
 
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
   name <- name (propagated from previous collection)
@@ -1090,18 +1091,9 @@ Call pydough.explain_term(collection, term) to learn more about any of these exp
                 """,
                 """
 This node first derives the following children before doing its main task:
-  child $1:
-    └─── SubCollection[region]
-  child $2:
-    └─┬─ SubCollection[customers]
-      └─┬─ SubCollection[orders]
-        ├─── SubCollection[lines]
-        └─┬─ Where[CONTAINS($1.name, 'STEEL')]
-          └─┬─ AccessChild
-            └─── SubCollection[part]
-  child $3:
-    ├─── SubCollection[suppliers]
-    └─── Where[account_balance >= 0.0]
+  child $1: region
+  child $2: customers.orders.lines.WHERE(CONTAINS(part.name, 'STEEL'))
+  child $3: suppliers.WHERE(account_balance >= 0.0)
 
 The main task of this node is to filter on the following conditions:
   $1.name == 'ASIA', aka region.name == 'ASIA'
@@ -1157,8 +1149,7 @@ Call pydough.explain_term(collection, term) to learn more about any of these exp
                 """,
                 """
 This node first derives the following children before doing its main task:
-  child $1:
-    └─── SubCollection[suppliers]
+  child $1: suppliers
 
 The main task of this node is to sort the collection on the following:
   COUNT($1), aka COUNT(suppliers), in descending order with nulls at the end
@@ -1259,8 +1250,7 @@ Call pydough.explain_term(collection, term) to learn more about any of these exp
                 """,
                 """
 This node first derives the following children before doing its main task:
-  child $1:
-    └─── TableCollection[Parts]
+  child $1: Parts
 
 The main task of this node is to partition the child data on the following keys:
   $1.part_type
@@ -1333,11 +1323,15 @@ Call pydough.explain(collection, verbose=True) for more details.
                 "TPCH",
                 nation_expr_impl,
                 """
-Property 'name' of TPCH.Nations is not a collection, therefore it cannot be an argument to pydough.explain.
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ TPCH.Nations.name
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Property 'name' of TPCH.Nations is not a collection, therefore it cannot be an argument to pydough.explain.
+If pydough.explain is called on an unqualified PyDough code, it is expected to
+be a collection, but instead received the following expression:
+ TPCH.Nations.name
 Did you mean to use pydough.explain_term?
                 """,
             ),
@@ -1480,13 +1474,200 @@ def test_unqualified_node_exploration(
                 "TPCH",
                 nation_name_impl,
                 """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Nations]
+
+The term is the following expression: name
+
+This is column 'name' of collection 'Nations'
+
+This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Nations(name)
 """,
                 """
+Collection: TPCH.Nations
 
+The term is the following expression: name
+
+This is column 'name' of collection 'Nations'
 """,
             ),
             id="nation-name",
         ),
+        pytest.param(
+            (
+                "TPCH",
+                nation_region_name_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Nations]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─── SubCollection[region]
+
+The term is the following expression: $1.name
+
+This is a reference to expression 'name' of child $1
+
+This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Nations(region.name)
+""",
+                """
+Collection: TPCH.Nations
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: region
+
+The term is the following expression: $1.name
+
+This is a reference to expression 'name' of child $1
+""",
+            ),
+            id="nation-region_name",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                nation_region_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Nations]
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─── SubCollection[region]
+
+This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression.
+For example, the following is valid:
+  TPCH.Nations(region.comment)
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.Nations.region
+""",
+                """
+Collection: TPCH.Nations
+
+The term is the following child of the collection:
+  region
+""",
+            ),
+            id="nation-region",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                region_nations_suppliers_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Regions]
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─┬─ SubCollection[nations]
+      └─── SubCollection[suppliers]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.Regions(COUNT(nations.suppliers.account_balance))
+  TPCH.Regions.WHERE(HAS(nations.suppliers))
+  TPCH.Regions.ORDER_BY(COUNT(nations.suppliers).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.Regions.nations.suppliers
+""",
+                """
+Collection: TPCH.Regions
+
+The term is the following child of the collection:
+  nations.suppliers
+""",
+            ),
+            id="region-nations_suppliers",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                region_nations_suppliers_name_impl,
+                """
+Collection:
+  ──┬─ TPCH
+    └─── TableCollection[Regions]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─┬─ SubCollection[nations]
+      └─── SubCollection[suppliers]
+
+The term is the following expression: $1.name
+
+This is a reference to expression 'name' of child $1
+
+This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated.
+For example, the following is valid:
+  TPCH.Regions(COUNT(nations.suppliers.name))
+""",
+                """
+Collection: TPCH.Regions
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1: nations.suppliers
+
+The term is the following expression: $1.name
+
+This is a reference to expression 'name' of child $1
+""",
+            ),
+            id="region-nations_suppliers_name",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                region_nations_back_name,
+                """
+Collection:
+  ──┬─ TPCH
+    └─┬─ TableCollection[Regions]
+      └─── SubCollection[nations]
+
+The term is the following expression: BACK(1).name
+
+This is a reference to expression 'name' of the 1st ancestor of the collection, which is the following:
+  ──┬─ TPCH
+    └─── TableCollection[Regions]
+
+This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.Regions.nations(BACK(1).name)
+""",
+                """
+Collection: TPCH.Regions.nations
+
+The term is the following expression: BACK(1).name
+
+This is a reference to expression 'name' of the 1st ancestor of the collection, which is the following:
+  TPCH.Regions
+""",
+            ),
+            id="region_nations-back_name",
+        ),
+        #         pytest.param(
+        #             (
+        #                 "TPCH",
+        #                 nation_region_name_impl,
+        #                 """
+        # """,
+        #                 """
+        # """,
+        #             ),
+        #             id="nation-region_name",
+        #         ),
     ]
 )
 def unqualified_term_exploration_test_data(

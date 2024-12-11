@@ -21,8 +21,10 @@ from .metadata.properties import (
     TableColumnMetadata,
 )
 from .pydough_ast import (
+    BackReferenceExpression,
     Calc,
     ChildOperator,
+    ChildReferenceExpression,
     ColumnProperty,
     ExpressionFunctionCall,
     GlobalContext,
@@ -48,6 +50,7 @@ from .unqualified import (
     UnqualifiedRoot,
     UnqualifiedTopK,
     UnqualifiedWhere,
+    display_raw,
     qualify_node,
     qualify_term,
 )
@@ -261,7 +264,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     TODO
     """
     lines: list[str] = []
-    qualified_node: PyDoughCollectionAST | None = None
+    qualified_node: PyDoughAST | None = None
 
     # Attempt to qualify the node, dumping an appropriate message if it could
     # not be qualified
@@ -272,7 +275,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         else:
             # If the root is None, it means that the node was an expression
             # without information about its context.
-            lines.append(f"Cannot call pydough.explain on {node}.")
+            lines.append(f"Cannot call pydough.explain on {display_raw(node)}.")
             lines.append("Did you mean to use pydough.explain_term?")
     except PyDoughASTException as e:
         # If the qualification failed, dump an appropriate message indicating
@@ -283,19 +286,26 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                 "This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
             )
             lines.append("Did you mean to use pydough.explain_term?")
-        elif "is not a collection" in str(e):
-            lines.append(f"{e}, therefore it cannot be an argument to pydough.explain.")
-            lines.append("Did you mean to use pydough.explain_term?")
         else:
             raise e
 
     # If the qualification succeeded, dump info about the qualified node.
-    if qualified_node is not None:
+    if isinstance(qualified_node, PyDoughExpressionAST):
+        lines.append(
+            "If pydough.explain is called on an unqualified PyDough code, it is expected to"
+        )
+        lines.append("be a collection, but instead received the following expression:")
+        lines.append(f" {qualified_node.to_string()}")
+        lines.append("Did you mean to use pydough.explain_term?")
+    elif isinstance(qualified_node, PyDoughCollectionAST):
         if verbose:
             # Dump the structure of the collection
             lines.append("PyDough collection representing the following logic:")
-            for line in qualified_node.to_tree_string().splitlines():
-                lines.append(f"  {line}")
+            if verbose:
+                for line in qualified_node.to_tree_string().splitlines():
+                    lines.append(f"  {line}")
+            else:
+                lines.append(f"  {qualified_node.to_string()}")
             lines.append("")
 
         # Explain what the specific node does
@@ -331,9 +341,12 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                         "This node first derives the following children before doing its main task:"
                     )
                     for idx, child in enumerate(qualified_node.children):
-                        lines.append(f"  child ${idx + 1}:")
-                        for line in child.to_tree_string().splitlines()[1:]:
-                            lines.append(f"  {line}")
+                        if verbose:
+                            lines.append(f"  child ${idx + 1}:")
+                            for line in child.to_tree_string().splitlines()[1:]:
+                                lines.append(f"  {line}")
+                        else:
+                            lines.append(f"  child ${idx + 1}: {child.to_string()}")
                     lines.append("")
                 match qualified_node:
                     case Calc():
@@ -550,46 +563,164 @@ def explain_term(node: UnqualifiedNode, term: UnqualifiedNode, verbose: bool) ->
 
     lines: list[str] = []
     root: UnqualifiedRoot | None = find_unqualified_root(node)
-    qualified_node: PyDoughCollectionAST | None = None
+    qualified_node: PyDoughAST | None = None
 
     try:
         if root is None:
-            lines.append(f"Invalid first argument to pydough.explain_term: {node}")
+            lines.append(
+                f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
+            )
         else:
             qualified_node = qualify_node(node, root._parcel[0])
     except PyDoughASTException as e:
         if "Unrecognized term" in str(e):
-            lines.append(f"Invalid first argument to pydough.explain_term: {node}")
+            lines.append(
+                f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
+            )
             lines.append(f"  {str(e)}")
             lines.append(
-                "  This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
-            )
-        elif "is not a collection" in str(e):
-            lines.append(f"Invalid first argument to pydough.explain_term: {node}")
-            lines.append(
-                f"  {e}, therefore it cannot be the first argument to pydough.explain_term."
+                "This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
             )
         else:
             raise e
 
-    if qualified_node is not None and root is not None:
-        qualified_term = qualify_term(qualified_node, term, root._parcel[0])
-        assert isinstance(qualified_term, PyDoughExpressionAST)
-        lines.append("Collection: ")
-        for line in qualified_node.to_tree_string().splitlines():
-            lines.append(f"  {line}")
+    if isinstance(qualified_node, PyDoughExpressionAST):
+        lines.append(
+            "The first argument of pydough.explain_term is expected to be a collection, but"
+        )
+        lines.append("instead received the following expression:")
+        lines.append(f" {qualified_node.to_string()}")
+    elif qualified_node is not None and root is not None:
+        assert isinstance(qualified_node, PyDoughCollectionAST)
+        new_children, qualified_term = qualify_term(
+            qualified_node, term, root._parcel[0]
+        )
+        if verbose:
+            lines.append("Collection:")
+            for line in qualified_node.to_tree_string().splitlines():
+                lines.append(f"  {line}")
+        else:
+            lines.append(f"Collection: {qualified_node.to_string()}")
         lines.append("")
-        lines.append(f"Term: {qualified_term.to_string(True)}")
-        collection: PyDoughCollectionAST = qualified_node
-        expr: PyDoughExpressionAST = qualified_term
-        while True:
-            match expr:
-                case Reference():
-                    expr = collection.get_expr(expr.term_name)
-                case ColumnProperty():
-                    lines.append(f"  {expr.to_string(True)}")
-                    break
-                case _:
-                    raise NotImplementedError(expr.__class__.__name__)
+        if len(new_children) > 0:
+            lines.append(
+                "The evaluation of this term first derives the following additional children to the collection before doing its main task:"
+            )
+            for idx, child in enumerate(new_children):
+                if verbose:
+                    lines.append(f"  child ${idx + 1}:")
+                    for line in child.to_tree_string().splitlines()[1:]:
+                        lines.append(f"  {line}")
+                else:
+                    lines.append(f"  child ${idx + 1}: {child.to_string()}")
+            lines.append("")
+        # If the qualification succeeded, dump info about the qualified node,
+        # depending on what its nature is:
+        if isinstance(qualified_term, PyDoughExpressionAST):
+            lines.append(
+                f"The term is the following expression: {qualified_term.to_string(True)}"
+            )
+            lines.append("")
+            collection: PyDoughCollectionAST = qualified_node
+            expr: PyDoughExpressionAST = qualified_term
+            while True:
+                match expr:
+                    case ChildReferenceExpression():
+                        lines.append(
+                            f"This is a reference to expression '{expr.term_name}' of child ${expr.child_idx + 1}"
+                        )
+                        break
+                    case BackReferenceExpression():
+                        back_idx_str: str
+                        match expr.back_levels % 10:
+                            case 1:
+                                back_idx_str = f"{expr.back_levels}st"
+                            case 2:
+                                back_idx_str = f"{expr.back_levels}2nd"
+                            case 3:
+                                back_idx_str = f"{expr.back_levels}3rd"
+                            case _:
+                                back_idx_str = f"{expr.back_levels}th"
+                        lines.append(
+                            f"This is a reference to expression '{expr.term_name}' of the {back_idx_str} ancestor of the collection, which is the following:"
+                        )
+                        if verbose:
+                            for line in expr.ancestor.to_tree_string().splitlines():
+                                lines.append(f"  {line}")
+                        else:
+                            lines.append(f"  {expr.ancestor.to_string()}")
+                        break
+                    case Reference():
+                        expr = collection.get_expr(expr.term_name)
+                    case ColumnProperty():
+                        lines.append(
+                            f"This is column '{expr.column_property.name}' of collection '{expr.column_property.collection.name}'"
+                        )
+                        break
+                    case _:
+                        raise NotImplementedError(expr.__class__.__name__)
+            if verbose:
+                lines.append("")
+                if qualified_term.is_singular(qualified_node.starting_predecessor):
+                    lines.append(
+                        "This child is singular with regards to the collection, meaning it can be placed in a CALC of a collection."
+                    )
+                    lines.append("For example, the following is valid:")
+                    lines.append(
+                        f"  {qualified_node.to_string()}({qualified_term.to_string()})"
+                    )
+                else:
+                    lines.append(
+                        "This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated."
+                    )
+                    lines.append("For example, the following is valid:")
+                    lines.append(
+                        f"  {qualified_node.to_string()}(COUNT({qualified_term.to_string()}))"
+                    )
+        else:
+            assert isinstance(qualified_term, PyDoughCollectionAST)
+            lines.append("The term is the following child of the collection:")
+            if verbose:
+                for line in qualified_term.to_tree_string().splitlines():
+                    lines.append(f"  {line}")
+            else:
+                lines.append(f"  {qualified_term.to_string()}")
+            if verbose:
+                lines.append("")
+                assert (
+                    len(qualified_term.calc_terms) > 0
+                ), "Child collection has no expression terms"
+                chosen_term_name: str = min(qualified_term.calc_terms)
+                if qualified_term.starting_predecessor.is_singular(
+                    qualified_node.starting_predecessor
+                ):
+                    lines.append(
+                        "This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression."
+                    )
+                    lines.append("For example, the following is valid:")
+                    lines.append(
+                        f"  {qualified_node.to_string()}({qualified_term.to_string()}.{chosen_term_name})"
+                    )
+                else:
+                    lines.append(
+                        "This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated."
+                    )
+                    lines.append("For example, the following are valid:")
+                    lines.append(
+                        f"  {qualified_node.to_string()}(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
+                    )
+                    lines.append(
+                        f"  {qualified_node.to_string()}.WHERE(HAS({qualified_term.to_string()}))"
+                    )
+                    lines.append(
+                        f"  {qualified_node.to_string()}.ORDER_BY(COUNT({qualified_term.to_string()}).DESC())"
+                    )
+                lines.append("")
+                lines.append(
+                    "To learn more about this child, you can try calling pydough.explain on the following:"
+                )
+                lines.append(
+                    f"  {qualified_node.to_string()}.{qualified_term.to_string()}"
+                )
 
     return "\n".join(lines)
