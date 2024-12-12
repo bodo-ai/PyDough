@@ -365,7 +365,7 @@ def impl_tpch_q16():
         P_TYPE=p_type,
         P_SIZE=p_size,
         SUPPLIER_COUNT=NDISTINCT(ps.supplier_key),
-    ).TOP_K(10, by=SUPPLIER_COUNT.DESC())
+    ).TOP_K(10, by=(SUPPLIER_COUNT.DESC(), P_BRAND.ASC(), P_TYPE.ASC(), P_SIZE.ASC()))
 
 
 def impl_tpch_q17():
