@@ -27,7 +27,7 @@ from exploration_examples import (
     nation_region_impl,
     nation_region_name_impl,
     nations_lowercase_name_impl,
-    order_impl,
+    order_by_impl,
     partition_child_impl,
     partition_impl,
     parts_avg_price_child_impl,
@@ -1120,7 +1120,7 @@ Call pydough.explain(collection, verbose=True) for more details.
         pytest.param(
             (
                 "TPCH",
-                order_impl,
+                order_by_impl,
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
@@ -1424,7 +1424,7 @@ Did you mean to use pydough.explain_term?
 )
 def unqualified_exploration_test_data(
     request,
-) -> tuple[str, Callable[[GraphMetadata], Callable[[], UnqualifiedNode]], str, str]:
+) -> tuple[str, Callable[[], UnqualifiedNode], str, str]:
     """
     Testing data used for test_unqualified_node_exploration. Returns a tuple of
     the graph name to use, a function that takes in a graph and returns the
@@ -1433,9 +1433,7 @@ def unqualified_exploration_test_data(
     without verbose mode.
     """
     graph_name: str = request.param[0]
-    test_impl: Callable[[GraphMetadata], Callable[[], UnqualifiedNode]] = request.param[
-        1
-    ]
+    test_impl: Callable[[], UnqualifiedNode] = request.param[1]
     verbose_refsol: str = request.param[2]
     non_verbose_refsol: str = request.param[3]
     return graph_name, test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
@@ -1450,7 +1448,7 @@ def unqualified_exploration_test_data(
 )
 def test_unqualified_node_exploration(
     unqualified_exploration_test_data: tuple[
-        str, Callable[[GraphMetadata], Callable[[], UnqualifiedNode]], str, str
+        str, Callable[[], UnqualifiedNode], str, str
     ],
     verbose: bool,
     get_sample_graph: graph_fetcher,
@@ -1463,7 +1461,7 @@ def test_unqualified_node_exploration(
         unqualified_exploration_test_data
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
-    node: UnqualifiedNode = test_impl(graph)()
+    node: UnqualifiedNode = pydough.init_pydough_context(graph)(test_impl)()
     answer: str = pydough.explain(node, verbose=verbose)
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert (
@@ -2112,21 +2110,19 @@ def unqualified_term_exploration_test_data(
     request,
 ) -> tuple[
     str,
-    Callable[[GraphMetadata], Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]],
+    Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]],
     str,
     str,
 ]:
     """
     Testing data used for test_unqualified_term_exploration. Returns a tuple of
-    the graph name to use, a function that takes in a graph and returns the
+    the graph name to use, a function that, when decorated by pydough returns a
     tuple of the unqualified node for a collection and a term within it, and
     the expected explanation strings for when pydough.explain is called on the
     unqualified node, both with and without verbose mode.
     """
     graph_name: str = request.param[0]
-    test_impl: Callable[
-        [GraphMetadata], Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]
-    ] = request.param[1]
+    test_impl: Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]] = request.param[1]
     verbose_refsol: str = request.param[2]
     non_verbose_refsol: str = request.param[3]
     return graph_name, test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
@@ -2142,9 +2138,7 @@ def unqualified_term_exploration_test_data(
 def test_unqualified_term_exploration(
     unqualified_term_exploration_test_data: tuple[
         str,
-        Callable[
-            [GraphMetadata], Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]]
-        ],
+        Callable[[], tuple[UnqualifiedNode, UnqualifiedNode]],
         str,
         str,
     ],
@@ -2159,7 +2153,7 @@ def test_unqualified_term_exploration(
         unqualified_term_exploration_test_data
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
-    node, term = test_impl(graph)()
+    node, term = pydough.init_pydough_context(graph)(test_impl)()
     answer: str = pydough.explain_term(node, term, verbose=verbose)
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert (
