@@ -5,6 +5,7 @@ Test that tests the full conversion of a PyDough object to a SQL query.
 from collections.abc import Callable
 
 import pytest
+from simple_pydough_functions import simple_filter, simple_scan
 from test_utils import (
     graph_fetcher,
 )
@@ -14,19 +15,6 @@ from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
 )
-
-# ruff: noqa
-# mypy: ignore-errors
-# ruff & mypy should not try to typecheck or verify any of this
-
-
-def simple_scan():
-    return Orders(key)
-
-
-def simple_filter():
-    # Note: The SQL is non-deterministic once we add nested expressions.
-    return Orders(o_orderkey=key, o_totalprice=total_price).WHERE(o_totalprice < 1000.0)
 
 
 @pytest.mark.parametrize(
