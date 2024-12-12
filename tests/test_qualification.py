@@ -11,7 +11,7 @@ from test_utils import (
 )
 
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import PyDoughCollectionAST
+from pydough.pydough_ast import PyDoughAST, PyDoughCollectionAST
 from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
@@ -589,7 +589,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  └─┬─ Calc[nation_name=name, total_balance=SUM($1.acctbal)]\n"
             "    └─┬─ AccessChild\n"
             "      └─── SubCollection[customers]",
-            id="misc-01",
+            id="misc_01",
         ),
         pytest.param(
             pydough_impl_misc_02,
@@ -605,7 +605,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "        ├─── SubCollection[orders]\n"
             "        └─┬─ Where[(order_date >= datetime.date(1995, 1, 1)) & (order_date < datetime.date(1996, 1, 1))]\n"
             "          └─── SubCollection[lines]",
-            id="misc-02",
+            id="misc_02",
         ),
         pytest.param(
             pydough_impl_tpch_q1,
@@ -618,7 +618,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
             "└─── OrderBy[return_flag.ASC(na_pos='last'), status.ASC(na_pos='last')]",
-            id="tpch-q1",
+            id="tpch_q1",
         ),
         pytest.param(
             pydough_impl_tpch_q2,
@@ -641,7 +641,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  ├─── Where[supplycost == BACK(1).best_cost]\n"
             "  ├─── Calc[s_acctbal=s_acctbal, s_name=s_name, n_name=n_name, p_partkey=key, p_mfgr=manufacturer, s_address=s_address, s_phone=s_phone, s_comment=s_comment]\n"
             "  └─── TopK[10, s_acctbal.DESC(na_pos='last'), n_name.ASC(na_pos='last'), s_name.ASC(na_pos='last'), p_partkey.ASC(na_pos='last')]",
-            id="tpch-q2",
+            id="tpch_q2",
         ),
         pytest.param(
             pydough_impl_tpch_q3,
@@ -659,7 +659,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
             "└─── TopK[10, revenue.DESC(na_pos='last'), o_orderdate.ASC(na_pos='last'), l_orderkey.ASC(na_pos='last')]",
-            id="tpch-q3",
+            id="tpch_q3",
         ),
         pytest.param(
             pydough_impl_tpch_q4,
@@ -675,7 +675,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[o]\n"
             "└─── OrderBy[order_priority.ASC(na_pos='last')]",
-            id="tpch-q4",
+            id="tpch_q4",
         ),
         pytest.param(
             pydough_impl_tpch_q5,
@@ -696,7 +696,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │       │     └─── SubCollection[nation]\n"
             "  │       └─── Calc[value=extended_price * (1 - discount)]\n"
             "  └─── OrderBy[revenue.DESC(na_pos='last')]",
-            id="tpch-q5",
+            id="tpch_q5",
         ),
         pytest.param(
             pydough_impl_tpch_q6,
@@ -706,7 +706,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "    ├─── TableCollection[Lineitems]\n"
             "    ├─── Where[(ship_date >= datetime.date(1994, 1, 1)) & (ship_date < datetime.date(1995, 1, 1)) & (discount >= 0.05) & (discount <= 0.07) & (quantity < 24)]\n"
             "    └─── Calc[amt=extended_price * discount]",
-            id="tpch-q6",
+            id="tpch_q6",
         ),
         pytest.param(
             pydough_impl_tpch_q7,
@@ -727,7 +727,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
             "└─── OrderBy[supp_nation.ASC(na_pos='last'), cust_nation.ASC(na_pos='last'), l_year.ASC(na_pos='last')]",
-            id="tpch-q7",
+            id="tpch_q7",
         ),
         pytest.param(
             pydough_impl_tpch_q8,
@@ -752,7 +752,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "└─┬─ Calc[o_year=o_year, mkt_share=SUM($1.brazil_volume) / SUM($1.volume)]\n"
             "  └─┬─ AccessChild\n"
             "    └─── PartitionChild[v]",
-            id="tpch-q8",
+            id="tpch_q8",
         ),
         pytest.param(
             pydough_impl_tpch_q9,
@@ -773,7 +773,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
             "└─── TopK[10, nation.ASC(na_pos='last'), o_year.DESC(na_pos='last')]",
-            id="tpch-q9",
+            id="tpch_q9",
         ),
         pytest.param(
             pydough_impl_tpch_q10,
@@ -789,7 +789,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │ └─┬─ AccessChild\n"
             "  │   └─── SubCollection[nation]\n"
             "  └─── TopK[20, revenue.DESC(na_pos='last'), c_custkey.ASC(na_pos='last')]",
-            id="tpch-q10",
+            id="tpch_q10",
         ),
         pytest.param(
             pydough_impl_tpch_q11,
@@ -815,7 +815,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│   └─── PartitionChild[ps]\n"
             "├─── Where[value > BACK(1).min_market_share]\n"
             "└─── TopK[10, value.DESC(na_pos='last')]",
-            id="tpch-q11",
+            id="tpch_q11",
         ),
         pytest.param(
             pydough_impl_tpch_q12,
@@ -831,7 +831,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
             "└─── OrderBy[ship_mode.ASC(na_pos='last')]",
-            id="tpch-q12",
+            id="tpch_q12",
         ),
         pytest.param(
             pydough_impl_tpch_q13,
@@ -847,7 +847,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[custs]\n"
             "└─── TopK[10, custdist.DESC(na_pos='last'), c_count.DESC(na_pos='last')]",
-            id="tpch-q13",
+            id="tpch_q13",
         ),
         pytest.param(
             pydough_impl_tpch_q14,
@@ -859,7 +859,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "    └─┬─ Calc[value=extended_price * (1 - discount), promo_value=IFF(STARTSWITH($1.part_type, 'PROMO'), extended_price * (1 - discount), 0)]\n"
             "      └─┬─ AccessChild\n"
             "        └─── SubCollection[part]",
-            id="tpch-q14",
+            id="tpch_q14",
         ),
         pytest.param(
             pydough_impl_tpch_q15,
@@ -878,7 +878,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]\n"
             "  ├─── Where[total_revenue == BACK(1).max_revenue]\n"
             "  └─── OrderBy[s_suppkey.ASC(na_pos='last')]",
-            id="tpch-q15",
+            id="tpch_q15",
         ),
         pytest.param(
             pydough_impl_tpch_q16,
@@ -896,7 +896,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[ps]\n"
             "└─── TopK[10, supplier_count.DESC(na_pos='last'), p_brand.ASC(na_pos='last'), p_type.ASC(na_pos='last')]",
-            id="tpch-q16",
+            id="tpch_q16",
         ),
         pytest.param(
             pydough_impl_tpch_q17,
@@ -910,7 +910,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "      │ └─── SubCollection[lines]\n"
             "      ├─── SubCollection[lines]\n"
             "      └─── Where[quantity < (0.2 * BACK(1).avg_quantity)]",
-            id="tpch-q17",
+            id="tpch_q17",
         ),
         pytest.param(
             pydough_impl_tpch_q18,
@@ -923,7 +923,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │   └─── SubCollection[lines]\n"
             "  ├─── Where[total_quantity > 300]\n"
             "  └─── TopK[10, o_totalprice.DESC(na_pos='last'), o_orderdate.ASC(na_pos='last')]",
-            id="tpch-q18",
+            id="tpch_q18",
         ),
         pytest.param(
             pydough_impl_tpch_q19,
@@ -934,7 +934,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "    └─┬─ Where[ISIN(ship_mode, ['AIR', 'AIR REG']) & (ship_instruct == 'DELIVER IN PERSON') & ($1.size >= 1) & (((($1.size <= 5) & (quantity >= 1) & (quantity <= 11) & ISIN($1.container, ['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']) & ($1.brand == 'Brand#12')) | (($1.size <= 10) & (quantity >= 10) & (quantity <= 20) & ISIN($1.container, ['MED BAG', 'MED BOX', 'MED PACK', 'MED PKG']) & ($1.brand == 'Brand#23'))) | (($1.size <= 15) & (quantity >= 20) & (quantity <= 30) & ISIN($1.container, ['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']) & ($1.brand == 'Brand#34')))]\n"
             "      └─┬─ AccessChild\n"
             "        └─── SubCollection[part]",
-            id="tpch-q19",
+            id="tpch_q19",
         ),
         pytest.param(
             pydough_impl_tpch_q20,
@@ -952,7 +952,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │         ├─── SubCollection[lines]\n"
             "  │         └─── Where[(ship_date >= datetime.date(1994, 1, 1)) & (ship_date < datetime.date(1995, 1, 1))]\n"
             "  └─── TopK[10, s_name.ASC(na_pos='last')]",
-            id="tpch-q20",
+            id="tpch_q20",
         ),
         pytest.param(
             pydough_impl_tpch_q21,
@@ -974,7 +974,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │         ├─── SubCollection[lines]\n"
             "  │         └─── Where[(supplier_key != BACK(2).supplier_key) & (receipt_date > commit_date)]\n"
             "  └─── TopK[10, numwait.DESC(na_pos='last'), s_name.ASC(na_pos='last')]",
-            id="tpch-q21",
+            id="tpch_q21",
         ),
         pytest.param(
             pydough_impl_tpch_q22,
@@ -998,7 +998,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "└─┬─ Calc[cntry_code=cntry_code, num_custs=COUNT($1), totacctbal=SUM($1.acctbal)]\n"
             "  └─┬─ AccessChild\n"
             "    └─── PartitionChild[custs]",
-            id="tpch-q22",
+            id="tpch_q22",
         ),
     ],
 )
@@ -1014,7 +1014,10 @@ def test_qualify_node_to_ast_string(
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = impl(root)
-    qualified: PyDoughCollectionAST = qualify_node(unqualified, graph)
+    qualified: PyDoughAST = qualify_node(unqualified, graph)
+    assert isinstance(
+        qualified, PyDoughCollectionAST
+    ), "Expected qualified answer to be a collection, not an expression"
     assert (
         qualified.to_tree_string() == answer_tree_str
     ), "Mismatch between tree string representation of qualified node and expected AST tree string"

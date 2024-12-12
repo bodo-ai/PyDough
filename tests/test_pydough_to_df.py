@@ -3,27 +3,19 @@ Test that tests the full conversion of a PyDough object to evaluating
 SQL and returning a DataFrame.
 """
 
-# ruff: noqa
-# mypy: ignore-errors
-# ruff & mypy should not try to typecheck or verify any of this
 from collections.abc import Callable
-import pytest
+
 import pandas as pd
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import UnqualifiedNode
-from pydough import init_pydough_context, to_df
-from pydough.database_connectors import DatabaseContext
+import pytest
+from simple_pydough_functions import simple_filter_top_five, simple_scan_top_five
 from test_utils import graph_fetcher
 
+from pydough import init_pydough_context, to_df
+from pydough.database_connectors import DatabaseContext
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
+
 pytestmark = [pytest.mark.execute]
-
-
-def simple_scan_top_five():
-    return Orders(key).TOP_K(5, by=key.ASC())
-
-
-def simple_filter_top_five():
-    return Orders(key, total_price).WHERE(total_price < 1000.0).TOP_K(5, by=key.DESC())
 
 
 @pytest.mark.parametrize(
@@ -50,7 +42,7 @@ def simple_filter_top_five():
         ),
     ],
 )
-def test_pydough_to_sql(
+def test_pydough_to_df(
     pydough_code: Callable[[], UnqualifiedNode],
     expected_df: pd.DataFrame,
     get_sample_graph: graph_fetcher,
