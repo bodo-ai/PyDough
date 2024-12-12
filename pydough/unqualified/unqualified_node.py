@@ -16,6 +16,7 @@ __all__ = [
     "UnqualifiedWhere",
     "UnqualifiedLiteral",
     "UnqualifiedBack",
+    "display_raw",
 ]
 
 from abc import ABC
@@ -47,6 +48,9 @@ class UnqualifiedNode(ABC):
     a tuple of its core data fields. No properties should ever collide with
     this name.
     """
+
+    def __repr__(self):
+        return display_raw(self)
 
     @staticmethod
     def coerce_to_unqualified(obj: object) -> "UnqualifiedNode":
@@ -99,6 +103,15 @@ class UnqualifiedNode(ABC):
             return result
         except AttributeError:
             return UnqualifiedAccess(self, name)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        if name == "_parcel":
+            super().__setattr__(name, value)
+        else:
+            # TODO: support using setattr to add/mutate properties.
+            raise AttributeError(
+                "PyDough objects do not yet support writing properties to them."
+            )
 
     def __hash__(self):
         return hash(repr(self))
@@ -321,9 +334,6 @@ class UnqualifiedRoot(UnqualifiedNode):
         else:
             return super().__getattribute__(name)
 
-    def __repr__(self):
-        return self._parcel[0].name
-
 
 class UnqualifiedBack(UnqualifiedNode):
     """
@@ -335,9 +345,6 @@ class UnqualifiedBack(UnqualifiedNode):
     def __init__(self, levels: int):
         self._parcel: tuple[int] = (levels,)
 
-    def __repr__(self):
-        return f"BACK({self._parcel[0]})"
-
 
 class UnqualifiedLiteral(UnqualifiedNode):
     """
@@ -348,9 +355,6 @@ class UnqualifiedLiteral(UnqualifiedNode):
     def __init__(self, literal: object, typ: PyDoughType):
         self._parcel: tuple[object, PyDoughType] = (literal, typ)
 
-    def __repr__(self):
-        return f"{self._parcel[0]!r}:{self._parcel[1]!r}"
-
 
 class UnqualifiedCollation(UnqualifiedNode):
     """
@@ -359,10 +363,6 @@ class UnqualifiedCollation(UnqualifiedNode):
 
     def __init__(self, node: UnqualifiedNode, asc: bool, na_pos: bool):
         self._parcel: tuple[UnqualifiedNode, bool, bool] = (node, asc, na_pos)
-
-    def __repr__(self):
-        method = "ASC" if self._parcel[1] else "DESC"
-        return f"{self._parcel[0]!r}.{method}(na_pos={self._parcel[2]!r})"
 
 
 class UnqualifiedOperator(UnqualifiedNode):
@@ -373,9 +373,6 @@ class UnqualifiedOperator(UnqualifiedNode):
 
     def __init__(self, name: str):
         self._parcel: tuple[str] = (name,)
-
-    def __repr__(self):
-        return self._parcel[0]
 
     def __call__(self, *args, **kwargs):
         assert (
@@ -399,10 +396,6 @@ class UnqualifiedOperation(UnqualifiedNode):
             operands,
         )
 
-    def __repr__(self):
-        operands_str: str = ", ".join([repr(operand) for operand in self._parcel[1]])
-        return f"{self._parcel[0]}({operands_str})"
-
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
     """
@@ -416,9 +409,6 @@ class UnqualifiedBinaryOperation(UnqualifiedNode):
             rhs,
         )
 
-    def __repr__(self):
-        return f"({self._parcel[1]!r} {self._parcel[0]} {self._parcel[2]!r})"
-
 
 class UnqualifiedAccess(UnqualifiedNode):
     """
@@ -428,9 +418,6 @@ class UnqualifiedAccess(UnqualifiedNode):
 
     def __init__(self, predecessor: UnqualifiedNode, name: str):
         self._parcel: tuple[UnqualifiedNode, str] = (predecessor, name)
-
-    def __repr__(self):
-        return f"{self._parcel[0]!r}.{self._parcel[1]}"
 
 
 class UnqualifiedCalc(UnqualifiedNode):
@@ -447,12 +434,6 @@ class UnqualifiedCalc(UnqualifiedNode):
             terms,
         )
 
-    def __repr__(self):
-        calc_strings: list[str] = []
-        for name, node in self._parcel[1]:
-            calc_strings.append(f"{name}={node!r}")
-        return f"{self._parcel[0]!r}({', '.join(calc_strings)})"
-
 
 class UnqualifiedWhere(UnqualifiedNode):
     """
@@ -462,9 +443,6 @@ class UnqualifiedWhere(UnqualifiedNode):
 
     def __init__(self, predecessor: UnqualifiedNode, cond: UnqualifiedNode):
         self._parcel: tuple[UnqualifiedNode, UnqualifiedNode] = (predecessor, cond)
-
-    def __repr__(self):
-        return f"{self._parcel[0]!r}.WHERE({self._parcel[1]!r})"
 
 
 class UnqualifiedOrderBy(UnqualifiedNode):
@@ -480,12 +458,6 @@ class UnqualifiedOrderBy(UnqualifiedNode):
             predecessor,
             keys,
         )
-
-    def __repr__(self):
-        key_strings: list[str] = []
-        for node in self._parcel[1]:
-            key_strings.append(repr(node))
-        return f"{self._parcel[0]!r}.ORDER_BY({', '.join(key_strings)})"
 
 
 class UnqualifiedTopK(UnqualifiedNode):
@@ -507,14 +479,6 @@ class UnqualifiedTopK(UnqualifiedNode):
             k,
             keys,
         )
-
-    def __repr__(self):
-        if self._parcel[2] is None:
-            return f"{self._parcel[0]!r}.TOP_K({self._parcel[1]})"
-        key_strings: list[str] = []
-        for node in self._parcel[2]:
-            key_strings.append(f"{node!r}")
-        return f"{self._parcel[0]!r}.TOP_K({self._parcel[1]}, by=({', '.join(key_strings)}))"
 
 
 class UnqualifiedPartition(UnqualifiedNode):
@@ -538,8 +502,75 @@ class UnqualifiedPartition(UnqualifiedNode):
             keys,
         )
 
-    def __repr__(self):
-        key_strings: list[str] = []
-        for node in self._parcel[3]:
-            key_strings.append(f"{node!r}")
-        return f"{self._parcel[0]!r}.PARTITION({self._parcel[1]!r}, name={self._parcel[2]!r}, by=({', '.join(key_strings)}))"
+
+def display_raw(unqualified: UnqualifiedNode) -> str:
+    """
+    Prints an unqualified node in a human-readable manner that shows its
+    structure before qualification.
+
+    Args:
+        `unqualified`: the unqualified node being converted to a string.
+
+    Returns:
+        The string representation of the unqualified node.
+    """
+    term_strings: list[str] = []
+    match unqualified:
+        case UnqualifiedRoot():
+            return "?"
+        case UnqualifiedBack():
+            return f"BACK({unqualified._parcel[0]})"
+        case UnqualifiedLiteral():
+            literal_value: Any = unqualified._parcel[0]
+            match literal_value:
+                case list() | tuple():
+                    return f"[{', '.join(display_raw(elem) for elem in literal_value)}]"
+                case dict():
+                    return (
+                        "{"
+                        + ", ".join(
+                            f"{key}: {display_raw(value)}"
+                            for key, value in literal_value.items()
+                        )
+                        + "}"
+                    )
+                case _:
+                    return repr(literal_value)
+        case UnqualifiedOperator():
+            return unqualified._parcel[0]
+        case UnqualifiedOperation():
+            operands_str: str = ", ".join(
+                [display_raw(operand) for operand in unqualified._parcel[1]]
+            )
+            return f"{unqualified._parcel[0]}({operands_str})"
+        case UnqualifiedBinaryOperation():
+            return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0]} {display_raw(unqualified._parcel[2])})"
+        case UnqualifiedCollation():
+            method: str = "ASC" if unqualified._parcel[1] else "DESC"
+            return f"{display_raw(unqualified._parcel[0])}.{method}(na_pos={unqualified._parcel[2]!r})"
+        case UnqualifiedAccess():
+            return f"{display_raw(unqualified._parcel[0])}.{unqualified._parcel[1]}"
+        case UnqualifiedCalc():
+            for name, node in unqualified._parcel[1]:
+                term_strings.append(f"{name}={display_raw(node)}")
+            return f"{display_raw(unqualified._parcel[0])}({', '.join(term_strings)})"
+        case UnqualifiedWhere():
+            return f"{display_raw(unqualified._parcel[0])}.WHERE({display_raw(unqualified._parcel[1])})"
+        case UnqualifiedTopK():
+            if unqualified._parcel[2] is None:
+                return f"{display_raw(unqualified._parcel[0])}.TOP_K({unqualified._parcel[1]})"
+            for node in unqualified._parcel[2]:
+                term_strings.append(display_raw(node))
+            return f"{display_raw(unqualified._parcel[0])}.TOP_K({unqualified._parcel[1]}, by=({', '.join(term_strings)}))"
+        case UnqualifiedOrderBy():
+            for node in unqualified._parcel[1]:
+                term_strings.append(display_raw(node))
+            return f"{display_raw(unqualified._parcel[0])}.ORDER_BY({', '.join(term_strings)})"
+        case UnqualifiedPartition():
+            for node in unqualified._parcel[3]:
+                term_strings.append(display_raw(node))
+            return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
+        case _:
+            raise PyDoughUnqualifiedException(
+                f"Unsupported unqualified node: {unqualified.__class__.__name__}"
+            )
