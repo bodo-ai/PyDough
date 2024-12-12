@@ -32,17 +32,17 @@ def impl_tpch_q1():
     """
     selected_lines = Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1)))
     return PARTITION(selected_lines, name="l", by=(return_flag, status))(
-        l_returnflag=return_flag,
-        l_linestatus=status,
-        sum_qty=SUM(l.quantity),
-        sum_base_price=SUM(l.extended_price),
-        sum_disc_price=SUM(l.extended_price * (1 - l.discount)),
-        sum_charge=SUM(l.extended_price * (1 - l.discount) * (1 + l.tax)),
-        avg_qty=AVG(l.quantity),
-        avg_price=AVG(l.extended_price),
-        avg_disc=AVG(l.discount),
-        count_order=COUNT(l),
-    ).ORDER_BY(l_returnflag.ASC(), l_linestatus.ASC())
+        L_RETURNFLAG=return_flag,
+        L_LINESTATUS=status,
+        SUM_QTY=SUM(l.quantity),
+        SUM_BASE_PRICE=SUM(l.extended_price),
+        SUM_DISC_PRICE=SUM(l.extended_price * (1 - l.discount)),
+        SUM_CHARGE=SUM(l.extended_price * (1 - l.discount) * (1 + l.tax)),
+        AVG_QTY=AVG(l.quantity),
+        AVG_PRICE=AVG(l.extended_price),
+        AVG_DISC=AVG(l.discount),
+        COUNT_ORDER=COUNT(l),
+    ).ORDER_BY(L_RETURNFLAG.ASC(), L_LINESTATUS.ASC())
 
 
 def impl_tpch_q2():
@@ -70,18 +70,18 @@ def impl_tpch_q2():
             & ENDSWITH(part_type, "BRASS")
             & (size == 15)
         )(
-            s_acctbal=s_acctbal,
-            s_name=s_name,
-            n_name=n_name,
-            p_partkey=key,
-            p_mfgr=manufacturer,
-            s_address=s_address,
-            s_phone=s_phone,
-            s_comment=s_comment,
+            S_ACCTBAL=s_acctbal,
+            S_NAME=s_name,
+            N_NAME=n_name,
+            P_PARTKEY=key,
+            P_MFGR=manufacturer,
+            S_ADDRESS=s_address,
+            S_PHONE=s_phone,
+            S_COMMENT=s_comment,
         )
         .TOP_K(
             10,
-            by=(s_acctbal.DESC(), n_name.ASC(), s_name.ASC(), p_partkey.ASC()),
+            by=(S_ACCTBAL.DESC(), N_NAME.ASC(), S_NAME.ASC(), P_PARTKEY.ASC()),
         )
     )
 
@@ -100,11 +100,11 @@ def impl_tpch_q3():
     return PARTITION(
         selected_lines, name="l", by=(order_key, order_date, ship_priority)
     )(
-        l_orderkey=order_key,
-        revenue=SUM(l.extended_price * (1 - l.discount)),
-        o_orderdate=order_date,
-        o_shippriority=ship_priority,
-    ).TOP_K(10, by=(revenue.DESC(), o_orderdate.ASC(), l_orderkey.ASC()))
+        L_ORDERKEY=order_key,
+        REVENUE=SUM(l.extended_price * (1 - l.discount)),
+        O_ORDERDATE=order_date,
+        O_SHIPPRIORITY=ship_priority,
+    ).TOP_K(10, by=(REVENUE.DESC(), O_ORDERDATE.ASC(), L_ORDERKEY.ASC()))
 
 
 def impl_tpch_q4():
@@ -117,9 +117,9 @@ def impl_tpch_q4():
         & (order_date < datetime.date(1993, 10, 1))
         & HAS(selected_lines)
     )
-    return PARTITION(selected_orders, name="o", by=order_priority)(
-        o_orderpriority=order_priority,
-        order_count=COUNT(o),
+    return PARTITION(selected_orders, name="o", by=ORDER_PRIORITY)(
+        O_ORDERPRIORITY=order_priority,
+        ORDER_COUNT=COUNT(o),
     ).ORDER_BY(order_priority.ASC())
 
 
