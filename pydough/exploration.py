@@ -275,9 +275,7 @@ def explain_graph(graph: GraphMetadata, verbose: bool) -> str:
         else:
             lines.append(f"Collections: {', '.join(collection_names)}")
         lines.append(
-            "Call pydough.explain(graph[collection_name]) to learn more about any of these collections."
-        )
-        lines.append(
+            "Call pydough.explain(graph[collection_name]) to learn more about any of these collections.\n"
             "Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected."
         )
     return "\n".join(lines)
@@ -343,28 +341,31 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         else:
             # If the root is None, it means that the node was an expression
             # without information about its context.
-            lines.append(f"Cannot call pydough.explain on {display_raw(node)}.")
-            lines.append("Did you mean to use pydough.explain_term?")
+            lines.append(
+                f"Cannot call pydough.explain on {display_raw(node)}.\n"
+                "Did you mean to use pydough.explain_term?"
+            )
     except PyDoughASTException as e:
         # If the qualification failed, dump an appropriate message indicating
         # why pydough_explain did not work on it.
         if "Unrecognized term" in str(e):
-            lines.append(str(e))
             lines.append(
-                "This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
+                f"{str(e)}\n"
+                "This could mean you accessed a property using a name that does not exist, or\n"
+                "that you need to place your PyDough code into a context for it to make sense.\n"
+                "Did you mean to use pydough.explain_term?"
             )
-            lines.append("Did you mean to use pydough.explain_term?")
         else:
             raise e
 
     # If the qualification succeeded, dump info about the qualified node.
     if isinstance(qualified_node, PyDoughExpressionAST):
         lines.append(
-            "If pydough.explain is called on an unqualified PyDough code, it is expected to"
+            "If pydough.explain is called on an unqualified PyDough code, it is expected to\n"
+            "be a collection, but instead received the following expression:\n"
+            f" {qualified_node.to_string()}\n"
+            "Did you mean to use pydough.explain_term?"
         )
-        lines.append("be a collection, but instead received the following expression:")
-        lines.append(f" {qualified_node.to_string()}")
-        lines.append("Did you mean to use pydough.explain_term?")
     elif isinstance(qualified_node, PyDoughCollectionAST):
         if verbose:
             # Dump the structure of the collection
@@ -390,7 +391,8 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
             case TableCollection():
                 collection_name = qualified_node.collection.name
                 lines.append(
-                    f"This node, specifically, accesses the collection {collection_name}. Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
+                    f"This node, specifically, accesses the collection {collection_name}.\n"
+                    f"Call pydough.explain(graph['{collection_name}']) to learn more about this collection."
                 )
             case SubCollection():
                 collection_name = qualified_node.subcollection_property.collection.name
@@ -499,33 +501,31 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
 
         if verbose:
             # Dump the calc terms of the collection
-            lines.append("")
             if len(qualified_node.calc_terms) > 0:
                 lines.append(
-                    "The following terms will be included in the result if this collection is executed:"
+                    "\nThe following terms will be included in the result if this collection is executed:\n"
+                    f"  {', '.join(sorted(qualified_node.calc_terms))}"
                 )
-                lines.append(f"  {', '.join(sorted(qualified_node.calc_terms))}")
             else:
                 lines.append(
-                    "The collection does not have any terms that can be included in a result if it is executed."
+                    "\nThe collection does not have any terms that can be included in a result if it is executed."
                 )
 
             # Identify the number of BACK levels that are accessible
             back_counter: int = 0
             copy_node: PyDoughCollectionAST = qualified_node
-            lines.append("")
             while copy_node.ancestor_context is not None:
                 back_counter += 1
                 copy_node = copy_node.ancestor_context
             if back_counter == 0:
-                lines.append("It is not possible to use BACK from this collection.")
+                lines.append("\nIt is not possible to use BACK from this collection.")
             elif back_counter == 1:
                 lines.append(
-                    "It is possible to use BACK to go up to 1 level above this collection."
+                    "\nIt is possible to use BACK to go up to 1 level above this collection."
                 )
             else:
                 lines.append(
-                    f"It is possible to use BACK to go up to {back_counter} levels above this collection."
+                    f"\nIt is possible to use BACK to go up to {back_counter} levels above this collection."
                 )
 
         # Dump the collection & expression terms of the collection
@@ -541,25 +541,29 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         collection_names.sort()
 
         if len(expr_names) > 0:
-            lines.append("")
-            lines.append("The collection has access to the following expressions:")
-            lines.append(f"  {', '.join(expr_names)}")
+            lines.append(
+                "\n"
+                "The collection has access to the following expressions:\n"
+                f"  {', '.join(expr_names)}"
+            )
 
         if len(collection_names) > 0:
-            lines.append("")
-            lines.append("The collection has access to the following collections:")
-            lines.append(f"  {', '.join(collection_names)}")
+            lines.append(
+                "\n"
+                "The collection has access to the following collections:\n"
+                f"  {', '.join(collection_names)}"
+            )
 
         if len(expr_names) > 0 or len(collection_names) > 0:
-            lines.append("")
             lines.append(
-                "Call pydough.explain_term(collection, term) to learn more about any of these expressions or collections that the collection has access to."
+                "\n"
+                "Call pydough.explain_term(collection, term) to learn more about any of these\n"
+                "expressions or collections that the collection has access to."
             )
 
         if not verbose:
-            lines.append("")
             lines.append(
-                "Call pydough.explain(collection, verbose=True) for more details."
+                "\n" "Call pydough.explain(collection, verbose=True) for more details."
             )
 
     return "\n".join(lines)
@@ -621,8 +625,7 @@ def explain_structure(graph: GraphMetadata) -> str:
         lines.append("  Graph contains no collections")
     else:
         for collection_name in collection_names:
-            lines.append("")
-            lines.append(f"  {collection_name}")
+            lines.append(f"\n  {collection_name}")
             collection = graph.get_collection(collection_name)
             assert isinstance(collection, CollectionMetadata)
             scalar_properties: list[str] = []
@@ -728,10 +731,9 @@ def explain_term(
         if "Unrecognized term" in str(e):
             lines.append(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
-            )
-            lines.append(f"  {str(e)}")
-            lines.append(
-                "This could mean you accessed a property using a name that does not exist, or that you need to place your PyDough code into a context for it to make sense."
+                f"  {str(e)}"
+                "This could mean you accessed a property using a name that does not exist, or\n"
+                "that you need to place your PyDough code into a context for it to make sense."
             )
         else:
             raise e
