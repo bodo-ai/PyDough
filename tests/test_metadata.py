@@ -215,7 +215,7 @@ def test_get_sample_graph_nouns(
             "TPCH",
             "Lineitems",
             "tpch.LINEITEM",
-            [["part_key", "supplier_key", "order_key"]],
+            [["order_key", "line_number"], ["part_key", "supplier_key", "order_key"]],
             id="tpch-lineitem",
         ),
     ],
