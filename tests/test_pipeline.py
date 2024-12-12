@@ -592,6 +592,7 @@ def test_pydough_pipeline(
         qualified, PyDoughCollectionAST
     ), "Expected qualified answer to be a collection, not an expression"
     relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
+    breakpoint()
     assert (
         relational.to_tree_string() == relational_string.strip()
     ), "Mismatch between tree string representation of relational node and expected Relational tree string"
