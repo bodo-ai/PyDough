@@ -50,7 +50,7 @@ jobs:
           version: "0.4.23"
 
       - name: Download TPCH DB
-        run: ./tpch_demo/setup_tpch.sh ./tpch.db
+        run: ./demos/setup_tpch.sh ./tpch.db
 
       - name: Run Ruff
         run: uv run --python ${{ matrix.python-version }} ruff check .
