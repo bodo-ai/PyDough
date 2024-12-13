@@ -1,5 +1,9 @@
 """
-TODO: add file-level docstring
+The definitions of the hybrid classes used as an intermediary representation
+during AST to Relational conversion, as well as the conversion logic from AST
+nodes to said hybrid nodes.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = [
