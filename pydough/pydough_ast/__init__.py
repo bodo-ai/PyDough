@@ -31,10 +31,12 @@ __all__ = [
     "CollectionAccess",
     "BackReferenceExpression",
     "PartitionKey",
+    "BackReferenceCollection",
 ]
 
 from .abstract_pydough_ast import PyDoughAST
 from .collections import (
+    BackReferenceCollection,
     Calc,
     ChildAccess,
     ChildOperator,

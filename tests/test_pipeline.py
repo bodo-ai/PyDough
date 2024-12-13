@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
+from simple_pydough_functions import simple_filter_top_five, simple_scan_top_five
 from test_utils import (
     graph_fetcher,
 )
@@ -551,6 +552,42 @@ ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(orderin
             id="tpch_q22",
             marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
+        pytest.param(
+            (
+                simple_scan_top_five,
+                """
+ROOT(columns=[('key', key)], orderings=[(ordering_0):asc_last])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_last])
+  PROJECT(columns={'key': key, 'ordering_0': key})
+   SCAN(table=tpch.ORDERS, columns={'key': o_orderkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3, 4, 5],
+                    }
+                ),
+            ),
+            id="simple_scan_top_five",
+        ),
+        pytest.param(
+            (
+                simple_filter_top_five,
+                """
+ROOT(columns=[('key', key), ('total_price', total_price)], orderings=[(ordering_0):desc_last])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0, 'total_price': total_price}, orderings=[(ordering_0):desc_last])
+  PROJECT(columns={'key': key, 'ordering_0': key, 'total_price': total_price})
+   FILTER(condition=total_price < 1000.0:float64, columns={'key': key, 'total_price': total_price})
+    SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'total_price': o_totalprice})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [5989315, 5935174, 5881093, 5876066, 5866437],
+                        "total_price": [947.81, 974.01, 995.6, 967.55, 916.41],
+                    }
+                ),
+            ),
+            id="simple_filter_top_five",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -571,7 +608,7 @@ def pydough_pipeline_test_data(
     return request.param
 
 
-def test_pydough_pipeline(
+def test_pipeline_until_relational(
     pydough_pipeline_test_data: tuple[
         Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
     ],
@@ -600,7 +637,7 @@ def test_pydough_pipeline(
     ), "Mismatch between tree string representation of relational node and expected Relational tree string"
 
 
-def test_pydough_to_df(
+def test_pipeline_e2e(
     pydough_pipeline_test_data: tuple[
         Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
     ],
