@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring.
+Unit tests the PyDough types module.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import pytest

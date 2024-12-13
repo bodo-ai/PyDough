@@ -1,5 +1,8 @@
 """
-TODO: add file-level docstring
+Definition of PyDough metadata for a property that connects two collections by
+combining two other subcollection properties that share a middle collection.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["CompoundRelationshipMetadata"]

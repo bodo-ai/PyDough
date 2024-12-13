@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of the base class for PyDough metadata for a properties.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["PropertyMetadata"]

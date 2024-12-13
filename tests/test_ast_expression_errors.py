@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring.
+Error-handling unit tests for PyDough AST nodes for expressions.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import re

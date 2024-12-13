@@ -1,5 +1,8 @@
 """
-TODO: add file-level docstring
+Definition of PyDough metadata for properties that connect two collections by
+joining them on certain key columns.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["SimpleJoinMetadata"]

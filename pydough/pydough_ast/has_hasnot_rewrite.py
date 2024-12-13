@@ -1,5 +1,8 @@
 """
-TODO: add file-level docstring
+Definition of the PyDough AST expression rewrite step that handles HAS and
+HASNOT.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["has_hasnot_rewrite"]

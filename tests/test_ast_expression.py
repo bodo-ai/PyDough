@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring.
+Unit tests for PyDough AST nodes for expressions.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 from datetime import date

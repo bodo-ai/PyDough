@@ -1,6 +1,7 @@
 """
-Tests support for the DatabaseConnection class
-using a SQLite database backend.
+Tests support for the DatabaseConnection class using a SQLite database backend.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import sqlite3

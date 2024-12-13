@@ -1,5 +1,8 @@
 """
-TODO: add file-level docstring
+Definition of PyDough metadata for a collection that trivially corresponds to a
+table in a relational system.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 from collections.abc import MutableSequence

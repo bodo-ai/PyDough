@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough metadata for a graph.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 from collections import defaultdict
