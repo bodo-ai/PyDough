@@ -6,6 +6,8 @@ __all__ = [
     "parse_json_metadata_from_file",
     "init_pydough_context",
     "active_session",
+    "to_sql",
+    "to_df",
     "explain",
     "explain_structure",
     "explain_term",
@@ -13,6 +15,7 @@ __all__ = [
 ]
 
 from .configs import PyDoughSession
+from .evaluation import to_df, to_sql
 from .exploration import explain, explain_structure, explain_term
 from .metadata import parse_json_metadata_from_file
 from .unqualified import display_raw, init_pydough_context

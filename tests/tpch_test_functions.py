@@ -32,17 +32,17 @@ def impl_tpch_q1():
     """
     selected_lines = Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1)))
     return PARTITION(selected_lines, name="l", by=(return_flag, status))(
-        l_returnflag=return_flag,
-        l_linestatus=status,
-        sum_qty=SUM(l.quantity),
-        sum_base_price=SUM(l.extended_price),
-        sum_disc_price=SUM(l.extended_price * (1 - l.discount)),
-        sum_charge=SUM(l.extended_price * (1 - l.discount) * (1 + l.tax)),
-        avg_qty=AVG(l.quantity),
-        avg_price=AVG(l.extended_price),
-        avg_disc=AVG(l.discount),
-        count_order=COUNT(l),
-    ).ORDER_BY(l_returnflag.ASC(), l_linestatus.ASC())
+        L_RETURNFLAG=return_flag,
+        L_LINESTATUS=status,
+        SUM_QTY=SUM(l.quantity),
+        SUM_BASE_PRICE=SUM(l.extended_price),
+        SUM_DISC_PRICE=SUM(l.extended_price * (1 - l.discount)),
+        SUM_CHARGE=SUM(l.extended_price * (1 - l.discount) * (1 + l.tax)),
+        AVG_QTY=AVG(l.quantity),
+        AVG_PRICE=AVG(l.extended_price),
+        AVG_DISC=AVG(l.discount),
+        COUNT_ORDER=COUNT(l),
+    ).ORDER_BY(L_RETURNFLAG.ASC(), L_LINESTATUS.ASC())
 
 
 def impl_tpch_q2():
@@ -60,7 +60,7 @@ def impl_tpch_q2():
             s_comment=BACK(2).comment,
             supplycost=BACK(1).supplycost,
         )
-        .WHERE(root.ENDSWITH(root.part_type, "BRASS") & (root.size == 15))
+        .WHERE(ENDSWITH(part_type, "BRASS") & (size == 15))
     )
 
     return (
@@ -70,18 +70,18 @@ def impl_tpch_q2():
             & ENDSWITH(part_type, "BRASS")
             & (size == 15)
         )(
-            s_acctbal=s_acctbal,
-            s_name=s_name,
-            n_name=n_name,
-            p_partkey=key,
-            p_mfgr=manufacturer,
-            s_address=s_address,
-            s_phone=s_phone,
-            s_comment=s_comment,
+            S_ACCTBAL=s_acctbal,
+            S_NAME=s_name,
+            N_NAME=n_name,
+            P_PARTKEY=key,
+            P_MFGR=manufacturer,
+            S_ADDRESS=s_address,
+            S_PHONE=s_phone,
+            S_COMMENT=s_comment,
         )
         .TOP_K(
             10,
-            by=(s_acctbal.DESC(), n_name.ASC(), s_name.ASC(), p_partkey.ASC()),
+            by=(S_ACCTBAL.DESC(), N_NAME.ASC(), S_NAME.ASC(), P_PARTKEY.ASC()),
         )
     )
 
@@ -100,11 +100,11 @@ def impl_tpch_q3():
     return PARTITION(
         selected_lines, name="l", by=(order_key, order_date, ship_priority)
     )(
-        l_orderkey=order_key,
-        revenue=SUM(l.extended_price * (1 - l.discount)),
-        o_orderdate=order_date,
-        o_shippriority=ship_priority,
-    ).TOP_K(10, by=(revenue.DESC(), o_orderdate.ASC(), l_orderkey.ASC()))
+        L_ORDERKEY=order_key,
+        REVENUE=SUM(l.extended_price * (1 - l.discount)),
+        O_ORDERDATE=order_date,
+        O_SHIPPRIORITY=ship_priority,
+    ).TOP_K(10, by=(REVENUE.DESC(), O_ORDERDATE.ASC(), L_ORDERKEY.ASC()))
 
 
 def impl_tpch_q4():
@@ -118,9 +118,9 @@ def impl_tpch_q4():
         & HAS(selected_lines)
     )
     return PARTITION(selected_orders, name="o", by=order_priority)(
-        o_orderpriority=order_priority,
-        order_count=COUNT(o),
-    ).ORDER_BY(order_priority.ASC())
+        O_ORDERPRIORITY=order_priority,
+        ORDER_COUNT=COUNT(o),
+    ).ORDER_BY(O_ORDERPRIORITY.ASC())
 
 
 def impl_tpch_q5():
@@ -134,8 +134,8 @@ def impl_tpch_q5():
         value=extended_price * (1 - discount)
     )
     return Nations.WHERE(region.name == "ASIA")(
-        n_name=name, revenue=SUM(selected_lines.value)
-    ).ORDER_BY(revenue.DESC())
+        N_NAME=name, REVENUE=SUM(selected_lines.value)
+    ).ORDER_BY(REVENUE.DESC())
 
 
 def impl_tpch_q6():
@@ -149,7 +149,7 @@ def impl_tpch_q6():
         & (discount <= 0.07)
         & (quantity < 24)
     )(amt=extended_price * discount)
-    return TPCH(revenue=SUM(selected_lines.amt))
+    return TPCH(REVENUE=SUM(selected_lines.amt))
 
 
 def impl_tpch_q7():
@@ -171,14 +171,14 @@ def impl_tpch_q7():
     )
 
     return PARTITION(line_info, name="l", by=(supp_nation, cust_nation, l_year))(
-        supp_nation,
-        cust_nation,
-        l_year,
-        revenue=SUM(l.volume),
+        SUPP_NATION=supp_nation,
+        CUST_NATION=cust_nation,
+        L_YEAR=l_year,
+        REVENUE=SUM(l.volume),
     ).ORDER_BY(
-        supp_nation.ASC(),
-        cust_nation.ASC(),
-        l_year.ASC(),
+        SUPP_NATION.ASC(),
+        CUST_NATION.ASC(),
+        L_YEAR.ASC(),
     )
 
 
@@ -204,8 +204,8 @@ def impl_tpch_q8():
     )
 
     return PARTITION(volume_data, name="v", by=o_year)(
-        o_year=o_year,
-        mkt_share=SUM(v.brazil_volume) / SUM(v.volume),
+        O_YEAR=o_year,
+        MKT_SHARE=SUM(v.brazil_volume) / SUM(v.volume),
     )
 
 
@@ -218,13 +218,13 @@ def impl_tpch_q9():
     ).lines(
         nation=BACK(3).name,
         o_year=YEAR(order.order_date),
-        value=extended_price * (1 - discount) - BACK(1).ps_supplycost * quantity,
+        value=extended_price * (1 - discount) - BACK(1).supplycost * quantity,
     )
     return PARTITION(selected_lines, name="l", by=(nation, o_year))(
-        nation=nation, o_year=o_year, amount=SUM(l.value)
+        NATION=nation, O_YEAR=o_year, AMOUNT=SUM(l.value)
     ).TOP_K(
         10,
-        by=(nation.ASC(), o_year.DESC()),
+        by=(NATION.ASC(), O_YEAR.DESC()),
     )
 
 
@@ -237,15 +237,15 @@ def impl_tpch_q10():
         & (order_date < datetime.date(1994, 1, 1))
     ).lines.WHERE(return_flag == "R")(amt=extended_price * (1 - discount))
     return Customers(
-        c_custkey=key,
-        c_name=name,
-        revenue=SUM(selected_lines.amt),
-        c_acctbal=acctbal,
-        n_name=nation.name,
-        c_address=address,
-        c_phone=phone,
-        c_comment=comment,
-    ).TOP_K(20, by=(revenue.DESC(), c_custkey.ASC()))
+        C_CUSTKEY=key,
+        C_NAME=name,
+        REVENUE=SUM(selected_lines.amt),
+        C_ACCTBAL=acctbal,
+        N_NAME=nation.name,
+        C_ADDRESS=address,
+        C_PHONE=phone,
+        C_COMMENT=comment,
+    ).TOP_K(20, by=(REVENUE.DESC(), C_CUSTKEY.ASC()))
 
 
 def impl_tpch_q11():
@@ -257,10 +257,10 @@ def impl_tpch_q11():
     return (
         TPCH(min_market_share=SUM(selected_records.metric) * 0.0001)
         .PARTITION(selected_records, name="ps", by=part_key)(
-            ps_partkey=part_key, value=SUM(ps.metric)
+            PS_PARTKEY=part_key, VALUE=SUM(ps.metric)
         )
-        .WHERE(value > BACK(1).min_market_share)
-        .TOP_K(10, by=value.DESC())
+        .WHERE(VALUE > BACK(1).min_market_share)
+        .TOP_K(10, by=VALUE.DESC())
     )
 
 
@@ -279,10 +279,10 @@ def impl_tpch_q12():
         | (order.order_priority == "2-HIGH"),
     )
     return PARTITION(selected_lines, "l", by=ship_mode)(
-        l_shipmode=ship_mode,
-        high_line_count=SUM(l.is_high_priority),
-        low_line_count=SUM(~(l.is_high_priority)),
-    ).ORDER_BY(ship_mode.ASC())
+        L_SHIPMODE=ship_mode,
+        HIGH_LINE_COUNT=SUM(l.is_high_priority),
+        LOW_LINE_COUNT=SUM(~(l.is_high_priority)),
+    ).ORDER_BY(L_SHIPMODE.ASC())
 
 
 def impl_tpch_q13():
@@ -296,8 +296,8 @@ def impl_tpch_q13():
         ),
     )
     return PARTITION(customer_info, name="custs", by=num_non_special_orders)(
-        c_count=num_non_special_orders, custdist=COUNT(custs)
-    ).TOP_K(10, by=(custdist.DESC(), c_count.DESC()))
+        C_COUNT=num_non_special_orders, CUSTDIST=COUNT(custs)
+    ).TOP_K(10, by=(CUSTDIST.DESC(), C_COUNT.DESC()))
 
 
 def impl_tpch_q14():
@@ -313,7 +313,7 @@ def impl_tpch_q14():
         promo_value=IFF(STARTSWITH(part.part_type, "PROMO"), value, 0),
     )
     return TPCH(
-        promo_revenue=100.0
+        PROMO_REVENUE=100.0
         * SUM(selected_lines.promo_value)
         / SUM(selected_lines.value)
     )
@@ -331,14 +331,14 @@ def impl_tpch_q15():
     return (
         TPCH(max_revenue=MAX(Suppliers(total_revenue=total).total_revenue))
         .Suppliers(
-            s_suppkey=key,
-            s_name=name,
-            s_address=address,
-            s_phone=phone_number,
-            total_revenue=total_revenue,
+            S_SUPPKEY=key,
+            S_NAME=name,
+            S_ADDRESS=address,
+            S_PHONE=phone,
+            TOTAL_REVENUE=total,
         )
-        .WHERE(total_revenue == BACK(1).max_revenue)
-        .ORDER_BY(s_suppkey.ASC())
+        .WHERE(TOTAL_REVENUE == BACK(1).max_revenue)
+        .ORDER_BY(S_SUPPKEY.ASC())
     )
 
 
@@ -361,11 +361,11 @@ def impl_tpch_q16():
         .WHERE(~LIKE(supplier.comment, "%Customer%Complaints%"))
     )
     return PARTITION(selected_records, name="ps", by=(p_brand, p_type, p_size))(
-        p_brand,
-        p_type,
-        p_size,
-        supplier_count=NDISTINCT(ps.supplier_key),
-    ).TOP_K(10, by=suppliner_cnt.DESC())
+        P_BRAND=p_brand,
+        P_TYPE=p_type,
+        P_SIZE=p_size,
+        SUPPLIER_COUNT=NDISTINCT(ps.supplier_key),
+    ).TOP_K(10, by=(SUPPLIER_COUNT.DESC(), P_BRAND.ASC(), P_TYPE.ASC(), P_SIZE.ASC()))
 
 
 def impl_tpch_q17():
@@ -375,7 +375,7 @@ def impl_tpch_q17():
     selected_lines = Parts.WHERE((brand == "Brand#23") & (container == "MED BOX"))(
         avg_quantity=AVG(lines.quantity)
     ).lines.WHERE(quantity < 0.2 * BACK(1).avg_quantity)
-    return TPCH(avg_yearly=SUM(selected_lines.extended_price) / 7.0)
+    return TPCH(AVG_YEARLY=SUM(selected_lines.extended_price) / 7.0)
 
 
 def impl_tpch_q18():
@@ -384,17 +384,17 @@ def impl_tpch_q18():
     """
     return (
         Orders(
-            c_name=customer.name,
-            c_custkey=customer.key,
-            o_orderkey=key,
-            o_orderdate=order_date,
-            o_totalprice=total_price,
-            total_quantity=SUM(lines.quantity),
+            C_NAME=customer.name,
+            C_CUSTKEY=customer.key,
+            O_ORDERKEY=key,
+            O_ORDERDATE=order_date,
+            O_TOTALPRICE=total_price,
+            TOTAL_QUANTITY=SUM(lines.quantity),
         )
-        .WHERE(total_quantity > 300)
+        .WHERE(TOTAL_QUANTITY > 300)
         .TOP_K(
             10,
-            by=(o_totalprice.DESC(), o_orderdate.ASC()),
+            by=(O_TOTALPRICE.DESC(), O_ORDERDATE.ASC()),
         )
     )
 
@@ -441,7 +441,7 @@ def impl_tpch_q19():
         )
     )
     return TPCH(
-        revenue=SUM(selected_lines.extended_price * (1 - selected_lines.discount))
+        REVENUE=SUM(selected_lines.extended_price * (1 - selected_lines.discount))
     )
 
 
@@ -461,11 +461,11 @@ def impl_tpch_q20():
 
     return (
         Suppliers(
-            s_name=name,
-            s_address=address,
+            S_NAME=name,
+            S_ADDRESS=address,
         )
-        .WHERE((nation.name == "CANADA") & HAS(selected_part_supplied))
-        .TOP_K(10, by=s_name.ASC())
+        .WHERE((nation.name == "CANADA") & COUNT(selected_part_supplied) > 0)
+        .TOP_K(10, by=S_NAME.ASC())
     )
 
 
@@ -481,11 +481,11 @@ def impl_tpch_q21():
         & HASNOT(lines.WHERE(different_supplier & date_check))
     )
     return Suppliers.WHERE(nation.name == "SAUDI ARABIA")(
-        s_name=name,
-        numwait=COUNT(waiting_entries),
+        S_NAME=name,
+        NUMWAIT=COUNT(waiting_entries),
     ).TOP_K(
         10,
-        by=(numwait.DESC(), s_name.ASC()),
+        by=(NUMWAIT.DESC(), S_NAME.ASC()),
     )
 
 
@@ -503,7 +503,7 @@ def impl_tpch_q22():
         name="custs",
         by=cntry_code,
     )(
-        cntry_code,
-        num_custs=COUNT(custs),
-        totacctbal=SUM(custs.acctbal),
+        CNTRY_CODE=cntry_code,
+        NUM_CUSTS=COUNT(custs),
+        TOTACCTBAL=SUM(custs.acctbal),
     )

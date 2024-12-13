@@ -151,6 +151,7 @@ def init_pydough_context(graph: GraphMetadata):
         #     new_func()
         # except Exception as e:
         #     import traceback
+
         #     print(ast.unparse(new_tree))
         #     print(e)
         #     print(traceback.format_exc())
