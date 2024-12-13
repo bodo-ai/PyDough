@@ -320,6 +320,9 @@ class CollectionMetadata(AbstractMetadata):
                 )
         return self.properties[property_name]
 
+    def __getitem__(self, key: str):
+        return self.get_property(key)
+
     @staticmethod
     def get_class_for_collection_type(
         name: str, error_name: str

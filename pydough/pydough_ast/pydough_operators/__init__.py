@@ -51,6 +51,7 @@ __all__ = [
     "DEFAULT_TO",
     "HAS",
     "HASNOT",
+    "NDISTINCT",
 ]
 
 from .expression_operators import (
@@ -82,6 +83,7 @@ from .expression_operators import (
     MOD,
     MONTH,
     MUL,
+    NDISTINCT,
     NEQ,
     POW,
     SLICE,
