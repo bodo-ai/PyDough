@@ -43,7 +43,11 @@ def _load_session_info(
     if "metadata" in kwargs:
         metadata = kwargs.pop("metadata")
     else:
-        assert pydough.active_session.metadata is not None
+        if pydough.active_session.metadata is None:
+            raise ValueError(
+                "Cannot evaluate Pydough without a metadata graph. "
+                "Please call `pydough.active_session.load_metadata_graph()`."
+            )
         metadata = pydough.active_session.metadata
     config: PyDoughConfigs
     if "config" in kwargs:
@@ -81,7 +85,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     qualified: PyDoughAST = qualify_node(node, graph)
     if not isinstance(qualified, PyDoughCollectionAST):
         raise TypeError(
-            f"Final qualified expression must be a collection, found {type(qualified)}"
+            f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
     return convert_relation_to_sql(
@@ -112,7 +116,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     qualified: PyDoughAST = qualify_node(node, graph)
     if not isinstance(qualified, PyDoughCollectionAST):
         raise TypeError(
-            f"Final qualified expression must be a collection, found {type(qualified)}"
+            f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
     return execute_df(relational, database)
