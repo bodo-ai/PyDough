@@ -92,6 +92,9 @@ class GraphMetadata(AbstractMetadata):
             )
         return self.collections[collection_name]
 
+    def __getitem__(self, key: str):
+        return self.get_collection(key)
+
     def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
         nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = defaultdict(
             list

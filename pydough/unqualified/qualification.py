@@ -783,3 +783,35 @@ def qualify_node(unqualified: UnqualifiedNode, graph: GraphMetadata) -> PyDoughA
     return qual.qualify_node(
         unqualified, qual.builder.build_global_context(), [], False
     )
+
+
+def qualify_term(
+    collection: PyDoughCollectionAST, term: UnqualifiedNode, graph: GraphMetadata
+) -> tuple[list[PyDoughCollectionAST], PyDoughAST]:
+    """
+    Transforms an UnqualifiedNode into a qualified node within the context of
+    a collection, e.g. to learn about a subcollection or expression of a
+    qualified PyDough collection..
+
+    Args:
+        `collection`: the qualified collection instance corresponding to the
+        context in which the term is being qualified.
+        `term`: the UnqualifiedNode instance to be transformed into a qualified
+        node within the context of `collection`.
+        `graph`: the metadata for the graph that the PyDough computations
+        are occurring within.
+
+    Returns:
+        A tuple where the second entry is the PyDough AST object for the
+        qualified term. The result can be either an expression or a collection.
+        The first entry is a list of any additional children of `collection`
+        that must be derived in order to evaluate `term`.
+
+    Raises:
+        `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+        goes wrong during the qualification process, e.g. a term cannot be
+        qualified or is not recognized.
+    """
+    qual: Qualifier = Qualifier(graph)
+    children: list[PyDoughCollectionAST] = []
+    return children, qual.qualify_node(term, collection, children, True)

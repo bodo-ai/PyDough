@@ -8,11 +8,15 @@ __all__ = [
     "active_session",
     "to_sql",
     "to_df",
+    "explain",
+    "explain_structure",
+    "explain_term",
     "display_raw",
 ]
 
 from .configs import PyDoughSession
 from .evaluation import to_df, to_sql
+from .exploration import explain, explain_structure, explain_term
 from .metadata import parse_json_metadata_from_file
 from .unqualified import display_raw, init_pydough_context
 
