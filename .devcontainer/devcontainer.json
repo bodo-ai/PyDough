@@ -1,5 +1,20 @@
 {
+    "name": "PyDough",
+    "build": {
+      "dockerfile": "Dockerfile",
+      "context": ".."
+    },
     "customizations": {
+        "vscode": {
+            "settings": {},
+            "extensions": [
+                // Python
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                // Jupyter
+                "ms-toolsai.jupyter",
+            ]
+        },
         "codespaces": {
             "openFiles": [
                 "demos/README.md",
