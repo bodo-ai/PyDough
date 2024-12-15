@@ -1,0 +1,10 @@
+{
+    "customizations": {
+        "codespaces": {
+            "openFiles": [
+                "demos/README.md",
+                "demos/notebooks/Introduction.ipynb",
+            ]
+        }
+    }
+}
