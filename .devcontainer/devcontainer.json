@@ -7,7 +7,7 @@
     "customizations": {
         "vscode": {
             "settings": {
-                "workbench.startupEditor": "none",
+                "workbench.startupEditor": "readme",
                 "workbench.editorAssociations": {
                     "*.md": "vscode.markdown.preview.editor",
                     "*.ipynb": "jupyter-notebook"

@@ -10,7 +10,3 @@ python -m pip install .
 
 # Build the Juypter Extension
 cd pydough_jupyter_extensions && python -m pip install .
-
-# Open the readme file
-# TODO: FIXME. Code is not installed.
-# code -r demos/README.md --open-to-side
