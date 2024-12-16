@@ -30,6 +30,6 @@ The full list of dependencies can be found in the `pyproject.toml` file.
 
 ## Demo Notebooks
 
-The test PyDough the `demo` folder contains a series of example Jupyter Notebooks
+The `demo` folder contains a series of example Jupyter Notebooks
 that can be used to understand PyDough's capabilities. We recommend any new user start
 with the [demo readme](demos/README.md) and then walk through the example Juypter notebooks.
