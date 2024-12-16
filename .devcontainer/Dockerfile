@@ -2,4 +2,4 @@ FROM mcr.microsoft.com/devcontainers/universal:2
 
 COPY /demos/setup_tpch.sh setup_tpch.sh
 
-RUN ./setup_tpch.sh /tmp/tpch.db
+RUN ./setup_tpch.sh /workspaces/tpch.db
