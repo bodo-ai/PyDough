@@ -28,5 +28,5 @@
             ]
         }
     },
-    "postCreateCommand": "./demos/setup_tpch.sh ./demos/tpch.db && python -m pip install . && cd pydough_jupyter_extensions && python -m pip install . && cd .."
+    "postCreateCommand": "mv tpch.db /demos/tpch.db && python -m pip install . && cd pydough_jupyter_extensions && python -m pip install . && cd .."
 }
