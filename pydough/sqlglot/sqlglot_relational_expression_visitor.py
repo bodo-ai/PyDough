@@ -21,9 +21,11 @@ from pydough.relational import (
 from .call_expression_conversion import (
     apply_parens,
     convert_contains,
+    convert_day,
     convert_endswith,
     convert_isin,
     convert_like,
+    convert_month,
     convert_ndistinct,
     convert_startswith,
     convert_year,
@@ -39,6 +41,7 @@ generic_func_map: dict[str, SQLGlotExpression] = {
     "ABS": sqlglot_expressions.Abs,
     "AVG": sqlglot_expressions.Avg,
     "LOWER": sqlglot_expressions.Lower,
+    "UPPER": sqlglot_expressions.Upper,
     "LENGTH": sqlglot_expressions.Length,
     "MIN": sqlglot_expressions.Min,
     "MAX": sqlglot_expressions.Max,
@@ -84,6 +87,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         "ISIN": convert_isin,
         "LIKE": convert_like,
         "YEAR": convert_year,
+        "MONTH": convert_month,
+        "DAY": convert_day,
         "NDISTINCT": convert_ndistinct,
     }
 
