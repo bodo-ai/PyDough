@@ -1,0 +1,31 @@
+{
+    "name": "PyDough",
+    "build": {
+      "dockerfile": "Dockerfile",
+      "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "workbench.editorAssociations": {
+                    "*.md": "vscode.markdown.preview.editor",
+                    "*.ipynb": "jupyter-notebook"
+                }
+            },
+            "extensions": [
+                // Python
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                // Jupyter
+                "ms-toolsai.jupyter",
+                "ms-toolsai.vscode-jupyter-powertoys"
+            ]
+        },
+        "codespaces": {
+            "openFiles": [
+                "demos/README.md"
+            ]
+        }
+    },
+    "postCreateCommand": "./demos/setup_tpch.sh ./demos/tpch.db && python -m pip install . && cd pydough_jupyter_extensions && python -m pip install . && cd .."
+}
