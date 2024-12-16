@@ -12,4 +12,5 @@ python -m pip install .
 cd pydough_jupyter_extensions && python -m pip install .
 
 # Open the readme file
-code -r demos/README.md --open-to-side
+# TODO: FIXME. Code is not installed.
+# code -r demos/README.md --open-to-side

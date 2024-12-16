@@ -7,10 +7,11 @@
     "customizations": {
         "vscode": {
             "settings": {
+                "workbench.startupEditor": "none",
                 "workbench.editorAssociations": {
                     "*.md": "vscode.markdown.preview.editor",
                     "*.ipynb": "jupyter-notebook"
-                }
+                },
             },
             "extensions": [
                 // Python
