@@ -12,13 +12,13 @@
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 // Jupyter
-                "ms-toolsai.jupyter",
+                "ms-toolsai.jupyter"
             ]
         },
         "codespaces": {
             "openFiles": [
                 "demos/README.md",
-                "demos/notebooks/Introduction.ipynb",
+                "demos/notebooks/Introduction.ipynb"
             ]
         }
     }
