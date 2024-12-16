@@ -1,0 +1,27 @@
+{
+    "name": "PyDough",
+    "build": {
+      "dockerfile": "Dockerfile",
+      "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "workbench.startupEditor": "readme",
+                "workbench.editorAssociations": {
+                    "*.md": "vscode.markdown.preview.editor",
+                    "*.ipynb": "jupyter-notebook"
+                },
+            },
+            "extensions": [
+                // Python
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                // Jupyter
+                "ms-toolsai.jupyter",
+                "ms-toolsai.vscode-jupyter-powertoys"
+            ]
+        }
+    },
+    "postCreateCommand": "./.devcontainer/demo_startup.sh"
+}

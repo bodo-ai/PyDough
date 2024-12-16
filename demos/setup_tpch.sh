@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -eo pipefail
 
 if [ -e $1 ]; then
