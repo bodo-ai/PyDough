@@ -20,6 +20,7 @@
                 "demos/README.md",
                 "demos/notebooks/Introduction.ipynb"
             ]
-        }
+        },
+        "postCreateCommand": "python -m pip install . && ./demos/setup_tpch.sh ./demos/tpch.db"
     }
 }
