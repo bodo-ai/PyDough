@@ -22,5 +22,5 @@
             ]
         }
     },
-    "postCreateCommand": "./demos/setup_tpch.sh ./demos/tpch.db && python -m pip install . && cd pydough_jupyter_extensions && python -m pip install . && cd .. && code -r demos/README.md --open-to-side"
+    "postCreateCommand": "./.devcontainer/demo_startup.sh"
 }
