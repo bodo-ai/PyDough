@@ -23,10 +23,9 @@
         },
         "codespaces": {
             "openFiles": [
-                "demos/README.md",
-                "demos/notebooks/Introduction.ipynb"
+                "demos/README.md"
             ]
         }
     },
-    "postCreateCommand": "mv /workspaces/tpch.db demos/tpch.db && python -m pip install . && cd pydough_jupyter_extensions && python -m pip install . && cd .."
+    "postCreateCommand": "./demos/setup_tpch.sh ./demos/tpch.db && python -m pip install . && cd pydough_jupyter_extensions && python -m pip install . && cd .."
 }
