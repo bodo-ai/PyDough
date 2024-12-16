@@ -7,10 +7,11 @@
     "customizations": {
         "vscode": {
             "settings": {
+                "workbench.startupEditor": "readme",
                 "workbench.editorAssociations": {
                     "*.md": "vscode.markdown.preview.editor",
                     "*.ipynb": "jupyter-notebook"
-                }
+                },
             },
             "extensions": [
                 // Python
@@ -20,12 +21,7 @@
                 "ms-toolsai.jupyter",
                 "ms-toolsai.vscode-jupyter-powertoys"
             ]
-        },
-        "codespaces": {
-            "openFiles": [
-                "demos/README.md"
-            ]
         }
     },
-    "postCreateCommand": "./demos/setup_tpch.sh ./demos/tpch.db && python -m pip install . && cd pydough_jupyter_extensions && python -m pip install . && cd .."
+    "postCreateCommand": "./.devcontainer/demo_startup.sh"
 }
