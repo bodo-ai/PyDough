@@ -28,6 +28,5 @@
             ]
         }
     },
-    "onCreateCommand": "./demos/setup_tpch.sh ./demos/tpch.db",
-    "postCreateCommand": "python -m pip install ."
+    "postCreateCommand": "./demos/setup_tpch.sh ./demos/tpch.db && python -m pip install ."
 }
