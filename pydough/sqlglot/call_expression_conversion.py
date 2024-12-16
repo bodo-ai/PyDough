@@ -178,6 +178,23 @@ def convert_isin(
     return sqlglot_expressions.In(this=column, expressions=values)
 
 
+def _convert_sqlite_datetime(
+    column: SQLGlotExpression, format_str: str
+) -> SQLGlotExpression:
+    """
+    Generate a SQLite-compatible datetime conversion expression for the given
+    format string.
+
+    Args:
+        column (SQLGlotExpression): The column to convert.
+        format_str (str): The format string.
+    """
+    return sqlglot_expressions.Cast(
+        this=sqlglot_expressions.TimeToStr(this=column, format=format_str),
+        to=sqlglot_expressions.DataType(this=sqlglot_expressions.DataType.Type.INT),
+    )
+
+
 def convert_year(
     arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
 ) -> SQLGlotExpression:
@@ -196,10 +213,53 @@ def convert_year(
     """
     column: SQLGlotExpression = arguments[0]
     if isinstance(dialect, SQLiteDialect):
-        return sqlglot_expressions.Cast(
-            this=sqlglot_expressions.TimeToStr(this=column, format="'%Y'"),
-            to=sqlglot_expressions.DataType(this=sqlglot_expressions.DataType.Type.INT),
-        )
+        return _convert_sqlite_datetime(column, "'%Y'")
+    else:
+        return sqlglot_expressions.Year(this=column)
+
+
+def convert_month(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
+    """
+    Convert a MONTH call expression to a SQLGlot expression. This
+    is done because SQLGlot does not automatically convert MONTH
+    to equivalent SQL operation in SQLite.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality
+            of month.
+    """
+    column: SQLGlotExpression = arguments[0]
+    if isinstance(dialect, SQLiteDialect):
+        return _convert_sqlite_datetime(column, "'%m'")
+    else:
+        return sqlglot_expressions.Year(this=column)
+
+
+def convert_day(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
+    """
+    Convert a DAY call expression to a SQLGlot expression. This
+    is done because SQLGlot does not automatically convert DAY
+    to equivalent SQL operation in SQLite.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality
+            of day.
+    """
+    column: SQLGlotExpression = arguments[0]
+    if isinstance(dialect, SQLiteDialect):
+        return _convert_sqlite_datetime(column, "'%d'")
     else:
         return sqlglot_expressions.Year(this=column)
 
