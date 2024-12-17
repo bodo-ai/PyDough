@@ -1,5 +1,8 @@
 """
-TODO: add file-level docstring
+Logic for transforming raw Python code into PyDough code by replacing undefined
+variables with unqualified nodes by prepending with with `_ROOT.`.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["init_pydough_context", "transform_code", "transform_cell"]

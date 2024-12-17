@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Logic for converting JSON strings to PyDough types.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["parse_type_from_string"]
@@ -25,7 +27,18 @@ from .unknown_type import UnknownType
 
 def parse_type_from_string(type_string: str) -> PyDoughType:
     """
-    TODO: add function docstring
+    Converts a string from a JSON file representing a PyDough type and
+    converts it to that PyDough type.
+
+    Args:
+        `type_string`: the string to be converted.
+
+    Returns:
+        The PyDough type object.
+
+    Raises:
+        `PyDoughTypeException` if the string does not correspond to any
+        PyDough type.s
     """
     type_classes: MutableSequence[type[PyDoughType]] = [
         BinaryType,

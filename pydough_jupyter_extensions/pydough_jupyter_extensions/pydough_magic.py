@@ -1,3 +1,9 @@
+"""
+Defines the %%pydough magic used to run PyDough in Jupyter cells.
+
+Copyright (C) 2024 Bodo Inc. All rights reserved.
+"""
+
 from IPython.core.magic import (
     Magics,
     cell_magic,
