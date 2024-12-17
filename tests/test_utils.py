@@ -98,7 +98,7 @@ class AstNodeTestInfo(ABC):
             objects.
             `context`: an optional collection QDAG used as the context within
             which the QDAG is created.
-            `children_contexts`: an optional list of collection ASTs of
+            `children_contexts`: an optional list of collection QDAGs of
             child nodes of a CALC that are accessible for ChildReferenceExpression usage.
 
         Returns:
@@ -329,7 +329,7 @@ class CollectionTestInfo(AstNodeTestInfo):
             objects.
             `context`: an optional collection QDAG used as the context within
             which the QDAG is created.
-            `children_contexts`: an optional list of collection ASTs of child
+            `children_contexts`: an optional list of collection QDAG of child
             nodes of a CALC that are accessible for ChildReferenceExpression usage.
 
         Returns:

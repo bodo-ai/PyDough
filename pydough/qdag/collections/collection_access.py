@@ -16,7 +16,7 @@ from pydough.metadata import (
 )
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression, ColumnProperty
 
 from .child_access import ChildAccess
@@ -75,7 +75,7 @@ class CollectionAccess(ChildAccess):
 
     def get_expression_position(self, expr_name: str) -> int:
         if expr_name not in self.calc_terms:
-            raise PyDoughASTException(f"Unrecognized term of {self!r}: {expr_name!r}")
+            raise PyDoughQDAGException(f"Unrecognized term of {self!r}: {expr_name!r}")
         return self._calc_property_order[expr_name]
 
     @cache
@@ -84,7 +84,7 @@ class CollectionAccess(ChildAccess):
         from .sub_collection import SubCollection
 
         if term_name not in self.all_terms:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Unrecognized term of {self.collection.error_name}: {term_name!r}"
             )
 
@@ -97,7 +97,7 @@ class CollectionAccess(ChildAccess):
         elif isinstance(property, TableColumnMetadata):
             return ColumnProperty(property)
         else:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Unsupported property type for collection access: {property.__class__.name}"
             )
 

@@ -10,7 +10,7 @@ from collections.abc import MutableMapping, MutableSequence
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import PyDoughExpressionQDAG
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
@@ -55,11 +55,11 @@ class Calc(ChildOperator):
             The mutated CALC node (which has also been modified in-place).
 
         Raises:
-            `PyDoughASTException` if the terms have already been added to the
+            `PyDoughQDAGException` if the terms have already been added to the
             CALC node.
         """
         if self._calc_term_indices is not None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot call `with_terms` on a CALC node more than once"
             )
         # Include terms from the predecessor, with the terms from this CALC
@@ -83,7 +83,7 @@ class Calc(ChildOperator):
         ordinal position of the property when included in a CALC.
         """
         if self._calc_term_indices is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot access `calc_term_indices` of a Calc node before adding calc terms with `with_terms`"
             )
         return self._calc_term_indices
@@ -97,7 +97,7 @@ class Calc(ChildOperator):
         that expression.
         """
         if self._calc_term_values is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot access `_calc_term_values` of a Calc node before adding calc terms with `with_terms`"
             )
         return self._calc_term_values
@@ -116,7 +116,7 @@ class Calc(ChildOperator):
 
     def get_expression_position(self, expr_name: str) -> int:
         if expr_name not in self.calc_terms:
-            raise PyDoughASTException(f"Unrecognized CALC term: {expr_name!r}")
+            raise PyDoughQDAGException(f"Unrecognized CALC term: {expr_name!r}")
         return self.calc_term_indices[expr_name]
 
     @cache
@@ -160,7 +160,7 @@ class Calc(ChildOperator):
 
     def equals(self, other: object) -> bool:
         if self._calc_term_indices is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot invoke `equals` before calling `with_terms`"
             )
         return (

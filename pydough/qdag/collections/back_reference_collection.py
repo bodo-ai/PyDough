@@ -8,7 +8,7 @@ __all__ = ["BackReferenceCollection"]
 
 from functools import cache
 
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 
 from .child_access import ChildAccess
 from .collection_access import CollectionAccess
@@ -28,7 +28,7 @@ class BackReferenceCollection(CollectionAccess):
         back_levels: int,
     ):
         if not (isinstance(back_levels, int) and back_levels > 0):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Expected number of levels in BACK to be a positive integer, received {back_levels!r}"
             )
         self._term_name: str = term_name
@@ -37,7 +37,7 @@ class BackReferenceCollection(CollectionAccess):
         for _ in range(back_levels):
             if ancestor.ancestor_context is None:
                 msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
-                raise PyDoughASTException(
+                raise PyDoughQDAGException(
                     f"Cannot reference back {msg} above {parent!r}"
                 )
             ancestor = ancestor.ancestor_context

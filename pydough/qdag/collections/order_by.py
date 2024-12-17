@@ -8,7 +8,7 @@ __all__ = ["OrderBy"]
 
 from collections.abc import MutableSequence
 
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
@@ -45,11 +45,11 @@ class OrderBy(ChildOperator):
             The mutated ORDERBY node (which has also been modified in-place).
 
         Raises:
-            `PyDoughASTException` if the condition has already been added to
+            `PyDoughQDAGException` if the condition has already been added to
             the WHERE node.
         """
         if self._collation is not None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot call `with_collation` more than once per ORDERBY node"
             )
         self._collation = [
@@ -67,7 +67,7 @@ class OrderBy(ChildOperator):
         The ordering keys for the ORDERBY clause.
         """
         if self._collation is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot access `collation` of an ORDERBY node before calling `with_collation`"
             )
         return self._collation
@@ -106,7 +106,7 @@ class OrderBy(ChildOperator):
 
     def equals(self, other: object) -> bool:
         if self._collation is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot invoke `equals` before calling `with_collation`"
             )
         return (

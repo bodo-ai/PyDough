@@ -8,7 +8,7 @@ __all__ = ["Where"]
 
 from collections.abc import MutableSequence
 
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import PyDoughExpressionQDAG
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
@@ -44,11 +44,11 @@ class Where(ChildOperator):
             The mutated WHERE node (which has also been modified in-place).
 
         Raises:
-            `PyDoughASTException` if the condition has already been added to
+            `PyDoughQDAGException` if the condition has already been added to
             the WHERE node.
         """
         if self._condition is not None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot call `with_condition` more than once per Where node"
             )
         self._condition = has_hasnot_rewrite(condition, True)
@@ -61,7 +61,7 @@ class Where(ChildOperator):
         The predicate expression for the WHERE clause.
         """
         if self._condition is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot access `condition` of a Calc node before adding calc terms with `with_condition`"
             )
         return self._condition
@@ -92,7 +92,7 @@ class Where(ChildOperator):
 
     def equals(self, other: object) -> bool:
         if self._condition is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot invoke `equals` before calling `with_condition`"
             )
         return (

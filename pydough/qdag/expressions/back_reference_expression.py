@@ -5,7 +5,7 @@ context.
 
 __all__ = ["BackReferenceExpression"]
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG
@@ -22,7 +22,7 @@ class BackReferenceExpression(Reference):
         self, collection: PyDoughCollectionQDAG, term_name: str, back_levels: int
     ):
         if not (isinstance(back_levels, int) and back_levels > 0):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Expected number of levels in BACK to be a positive integer, received {back_levels!r}"
             )
         self._collection: PyDoughCollectionQDAG = collection
@@ -33,7 +33,7 @@ class BackReferenceExpression(Reference):
             ancestor = self._ancestor.ancestor_context
             if ancestor is None:
                 msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
-                raise PyDoughASTException(
+                raise PyDoughQDAGException(
                     f"Cannot reference back {msg} above {collection!r}"
                 )
             self._ancestor = ancestor

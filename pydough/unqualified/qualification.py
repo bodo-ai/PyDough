@@ -129,7 +129,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified expression node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -165,7 +165,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified expression node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -223,7 +223,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified expression node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -268,7 +268,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified expression node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -307,7 +307,7 @@ class Qualifier:
             node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -404,7 +404,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified collection node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -447,7 +447,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified collection node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -487,7 +487,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified collection node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -535,7 +535,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified collection node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -590,7 +590,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified collection node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -650,7 +650,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified collection node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -681,7 +681,7 @@ class Qualifier:
             The PyDough QDAG object for the qualified expression node.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -717,7 +717,7 @@ class Qualifier:
             an expression or a collection.
 
         Raises:
-            `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
@@ -776,7 +776,7 @@ def qualify_node(unqualified: UnqualifiedNode, graph: GraphMetadata) -> PyDoughQ
         an expression or a collection.
 
     Raises:
-        `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+        `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
@@ -809,7 +809,7 @@ def qualify_term(
         that must be derived in order to evaluate `term`.
 
     Raises:
-        `PyDoughUnqualifiedException` or `PyDoughASTException` if something
+        `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """

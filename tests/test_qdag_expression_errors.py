@@ -10,7 +10,7 @@ from test_utils import AstNodeTestInfo, FunctionInfo, graph_fetcher
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
     AstNodeBuilder,
-    PyDoughASTException,
+    PyDoughQDAGException,
 )
 
 
@@ -24,7 +24,7 @@ def test_binop_wrong_num_args(binary_operators: pydop.BinaryOperator) -> None:
         msg = f"Invalid operator invocation '? {binary_operators.binop.value} ?': Expected at least 2 arguments, received 0"
     else:
         msg = f"Invalid operator invocation '? {binary_operators.binop.value} ?': Expected 2 arguments, received 0"
-    with pytest.raises(PyDoughASTException, match=re.escape(msg)):
+    with pytest.raises(PyDoughQDAGException, match=re.escape(msg)):
         binary_operators.verify_allows_args([])
 
 
@@ -63,5 +63,5 @@ def test_function_wrong_num_args(
     """
     builder: AstNodeBuilder = AstNodeBuilder(get_sample_graph(graph_name))
     msg: str = f"Invalid operator invocation {error_string}"
-    with pytest.raises(PyDoughASTException, match=re.escape(msg)):
+    with pytest.raises(PyDoughQDAGException, match=re.escape(msg)):
         call_info.build(builder)

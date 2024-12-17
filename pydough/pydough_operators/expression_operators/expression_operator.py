@@ -73,6 +73,6 @@ class PyDoughExpressionOperator(PyDoughOperator):
             The type of the returned expression as a PyDoughType.
 
         Raises:
-            `PyDoughASTException` if `args` is invalid for this operator.
+            `PyDoughQDAGException` if `args` is invalid for this operator.
         """
         return self.deducer.infer_return_type(args)

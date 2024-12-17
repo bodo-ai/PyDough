@@ -7,7 +7,7 @@ __all__ = ["ColumnProperty"]
 
 from pydough.metadata.properties import TableColumnMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG
@@ -47,7 +47,7 @@ class ColumnProperty(PyDoughExpressionQDAG):
 
     def to_string(self, tree_form: bool = False) -> str:
         if not hasattr(self.column_property.collection, "table_path"):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"collection of {self.column_property.error_name} does not have a 'table_path' field"
             )
         table_path: str = self.column_property.collection.table_path

@@ -14,7 +14,7 @@ from pydough.metadata import (
     GraphMetadata,
 )
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression
 
 from .collection_qdag import PyDoughCollectionQDAG
@@ -76,14 +76,14 @@ class GlobalContext(PyDoughCollectionQDAG):
         return None
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
-        raise PyDoughASTException(f"Cannot call is_singular on {self!r}")
+        raise PyDoughQDAGException(f"Cannot call is_singular on {self!r}")
 
     def get_expression_position(self, expr_name: str) -> int:
-        raise PyDoughASTException(f"Cannot call get_expression_position on {self!r}")
+        raise PyDoughQDAGException(f"Cannot call get_expression_position on {self!r}")
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name not in self.collections:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Unrecognized term of {self.graph.error_name}: {term_name!r}"
             )
         return self.collections[term_name]

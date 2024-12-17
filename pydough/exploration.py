@@ -32,10 +32,10 @@ from .qdag import (
     OrderBy,
     PartitionBy,
     PartitionChild,
-    PyDoughASTException,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
+    PyDoughQDAGException,
     Reference,
     SubCollection,
     TableCollection,
@@ -345,7 +345,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                 f"Cannot call pydough.explain on {display_raw(node)}.\n"
                 "Did you mean to use pydough.explain_term?"
             )
-    except PyDoughASTException as e:
+    except PyDoughQDAGException as e:
         # If the qualification failed, dump an appropriate message indicating
         # why pydough_explain did not work on it.
         if "Unrecognized term" in str(e):
@@ -727,7 +727,7 @@ def explain_term(
             )
         else:
             qualified_node = qualify_node(node, root._parcel[0])
-    except PyDoughASTException as e:
+    except PyDoughQDAGException as e:
         if "Unrecognized term" in str(e):
             lines.append(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"

@@ -8,7 +8,7 @@ __all__ = ["Reference"]
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG
@@ -25,7 +25,7 @@ class Reference(PyDoughExpressionQDAG):
         self._term_name: str = term_name
         self._expression: PyDoughExpressionQDAG = collection.get_expr(term_name)
         if not self.expression.is_singular(collection.starting_predecessor):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Cannot reference plural expression {self.expression} from {self.collection}"
             )
 

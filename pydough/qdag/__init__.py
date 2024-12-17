@@ -11,7 +11,7 @@ __all__ = [
     "ColumnProperty",
     "Literal",
     "ExpressionFunctionCall",
-    "PyDoughASTException",
+    "PyDoughQDAGException",
     "PyDoughCollectionQDAG",
     "TableCollection",
     "SubCollection",
@@ -56,7 +56,7 @@ from .collections import (
     TopK,
     Where,
 )
-from .errors import PyDoughASTException
+from .errors import PyDoughQDAGException
 from .expressions import (
     BackReferenceExpression,
     ChildReferenceExpression,

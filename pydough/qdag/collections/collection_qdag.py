@@ -11,7 +11,7 @@ from functools import cached_property
 from typing import Union
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions.collation_expression import CollationExpression
 from pydough.qdag.expressions.expression_qdag import PyDoughExpressionQDAG
 
@@ -104,13 +104,13 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             `exprs`: the list of expression to be checked.
 
         Raises:
-            `PyDoughASTException` if any element of `exprs` is not singular with
+            `PyDoughQDAGException` if any element of `exprs` is not singular with
             regards to the current collection.
         """
         relative_context: PyDoughCollectionQDAG = self.starting_predecessor
         for expr in exprs:
             if not expr.is_singular(relative_context):
-                raise PyDoughASTException(
+                raise PyDoughQDAGException(
                     f"Expected all terms in {self.standalone_string} to be singular, but encountered a plural expression: {expr.to_string()}"
                 )
 
@@ -129,7 +129,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             were printed.
 
         Raises:
-            `PyDoughASTException` if `expr_name` is not a name of one of the
+            `PyDoughQDAGException` if `expr_name` is not a name of one of the
             expressions in `calc_terms`.
         """
 
@@ -144,7 +144,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
 
         Returns:
-            `PyDoughASTException` if `term_name` is not a name of one of the
+            `PyDoughQDAGException` if `term_name` is not a name of one of the
             terms accessible in the context.
         """
 
@@ -157,12 +157,12 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
 
         Returns:
-            `PyDoughASTException` if `term_name` is not a name of one of the
+            `PyDoughQDAGException` if `term_name` is not a name of one of the
             terms accessible in the context, or is not an expression.
         """
         term = self.get_term(term_name)
         if not isinstance(term, PyDoughExpressionQDAG):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Property {term_name!r} of {self} is not an expression"
             )
         return term
@@ -176,12 +176,12 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
 
         Returns:
-            `PyDoughASTException` if `term_name` is not a name of one of the
+            `PyDoughQDAGException` if `term_name` is not a name of one of the
             terms accessible in the context, or is not a collection.
         """
         term = self.get_term(term_name)
         if not isinstance(term, PyDoughCollectionQDAG):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Property {term_name!r} of {self} is not a collection"
             )
         return term

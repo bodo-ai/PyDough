@@ -11,8 +11,8 @@ from test_utils import AstNodeTestInfo, LiteralInfo
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
     AstNodeBuilder,
-    PyDoughASTException,
     PyDoughQDAG,
+    PyDoughQDAGException,
 )
 from pydough.types import StringType
 
@@ -51,5 +51,5 @@ def test_invalid_deduction(
     QDAG objects should raise an exception
     """
     args: list[PyDoughQDAG] = [info.build(tpch_node_builder) for info in args_info]
-    with pytest.raises(PyDoughASTException, match=re.escape(error_message)):
+    with pytest.raises(PyDoughQDAGException, match=re.escape(error_message)):
         deducer.infer_return_type(args)

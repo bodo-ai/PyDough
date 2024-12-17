@@ -12,7 +12,7 @@ from functools import cache
 from pydough.metadata import CompoundRelationshipMetadata
 from pydough.metadata.properties import InheritedPropertyMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions.hidden_back_reference_expression import (
     HiddenBackReferenceExpression,
 )
@@ -54,7 +54,7 @@ class CompoundSubCollection(SubCollection):
             self._inheritance_source_name
         )
         if len(undefined_inherited) > 0:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Undefined inherited properties: {undefined_inherited}"
             )
 

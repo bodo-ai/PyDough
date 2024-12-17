@@ -10,7 +10,7 @@ __all__ = ["PartitionBy"]
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     ChildReferenceExpression,
     CollationExpression,
@@ -51,11 +51,11 @@ class PartitionBy(ChildOperator):
             The mutated PARTITION BY node (which has also been modified in-place).
 
         Raises:
-            `PyDoughASTException` if the keys have already been added to
+            `PyDoughQDAGException` if the keys have already been added to
             the PARTITION BY node.
         """
         if self._keys is not None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot call `with_keys` more than once per PARTITION BY node"
             )
         self._keys = [PartitionKey(self, key) for key in keys]
@@ -81,7 +81,7 @@ class PartitionBy(ChildOperator):
         The partitioning keys for the PARTITION BY clause.
         """
         if self._keys is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot access `keys` of an PARTITION BY node before calling `with_keys`"
             )
         return self._keys
@@ -93,7 +93,7 @@ class PartitionBy(ChildOperator):
         index they have in a CALC.
         """
         if self._keys is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot access `keys` of an PARTITION BY node before calling `with_keys`"
             )
         return self._key_name_indices
@@ -167,11 +167,11 @@ class PartitionBy(ChildOperator):
         elif term_name == self.child_name:
             return PartitionChild(self.child, self.child_name, self)
         else:
-            raise PyDoughASTException(f"Unrecognized term: {term_name!r}")
+            raise PyDoughQDAGException(f"Unrecognized term: {term_name!r}")
 
     def equals(self, other: object) -> bool:
         if self._keys is None:
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 "Cannot invoke `equals` before calling `with_keys`"
             )
         return (

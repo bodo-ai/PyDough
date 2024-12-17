@@ -7,7 +7,7 @@ is from a compound subcollection access.
 __all__ = ["HiddenBackReferenceCollection"]
 
 
-from pydough.qdag.errors import PyDoughASTException
+from pydough.qdag.errors import PyDoughQDAGException
 
 from .back_reference_collection import BackReferenceCollection
 from .collection_access import CollectionAccess
@@ -37,7 +37,7 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
         while compound.preceding_context is not None:
             compound = compound.preceding_context
         if not isinstance(compound, CompoundSubCollection):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Malformed hidden backreference expression: {self.to_string()}"
             )
         self._compound: CompoundSubCollection = compound

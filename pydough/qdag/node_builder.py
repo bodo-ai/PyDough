@@ -33,7 +33,7 @@ from .collections import (
     TopK,
     Where,
 )
-from .errors import PyDoughASTException
+from .errors import PyDoughQDAGException
 from .expressions import (
     BackReferenceExpression,
     ChildReferenceExpression,
@@ -82,7 +82,7 @@ class AstNodeBuilder:
             The newly created PyDough literal.
 
         Raises:
-            `PyDoughASTException`: if the literal cannot be created.
+            `PyDoughQDAGException`: if the literal cannot be created.
         """
         return Literal(value, data_type)
 
@@ -128,11 +128,11 @@ class AstNodeBuilder:
             The newly created PyDough literal.
 
         Raises:
-            `PyDoughASTException`: if the operator does not exist or cannot be
+            `PyDoughQDAGException`: if the operator does not exist or cannot be
             called on the arguments.
         """
         if function_name not in self.operators:
-            raise PyDoughASTException(f"Unrecognized operator name {function_name!r}")
+            raise PyDoughQDAGException(f"Unrecognized operator name {function_name!r}")
         operator = self.operators[function_name]
         assert isinstance(operator, PyDoughExpressionOperator)
         return ExpressionFunctionCall(operator, args)
@@ -151,7 +151,7 @@ class AstNodeBuilder:
             The newly created PyDough Reference.
 
         Raises:
-            `PyDoughASTException`: if `name` does not refer to an expression in
+            `PyDoughQDAGException`: if `name` does not refer to an expression in
             the collection.
         """
         return Reference(collection, name)
@@ -175,11 +175,11 @@ class AstNodeBuilder:
             The newly created PyDough Child Reference.
 
         Raises:
-            `PyDoughASTException`: if `name` does not refer to an expression in
+            `PyDoughQDAGException`: if `name` does not refer to an expression in
             the collection, or `child_idx` is not a valid index for `children`.
         """
         if child_idx not in range(len(children)):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Invalid child reference index {child_idx} with {len(children)} children"
             )
         return ChildReferenceExpression(children[child_idx], child_idx, name)
@@ -200,7 +200,7 @@ class AstNodeBuilder:
             The newly created PyDough Back Reference.
 
         Raises:
-            `PyDoughASTException`: if `name` does not refer to an expression in
+            `PyDoughQDAGException`: if `name` does not refer to an expression in
             the ancestor collection, or the collection does not have `levels`
             many ancestors.
         """
@@ -349,7 +349,7 @@ class AstNodeBuilder:
             The newly created PyDough CALC term.
 
         Raises:
-            `PyDoughASTException`: if the terms are invalid for the CALC term.
+            `PyDoughQDAGException`: if the terms are invalid for the CALC term.
         """
         return BackReferenceCollection(collection, term_name, back_levels)
 
@@ -372,10 +372,10 @@ class AstNodeBuilder:
             The newly created PyDough Child Reference.
 
         Raises:
-            `PyDoughASTException`: if `child_idx` is not a valid index for `children`.
+            `PyDoughQDAGException`: if `child_idx` is not a valid index for `children`.
         """
         if child_idx not in range(len(children)):
-            raise PyDoughASTException(
+            raise PyDoughQDAGException(
                 f"Invalid child reference index {child_idx} with {len(children)} children"
             )
         return ChildReferenceCollection(
