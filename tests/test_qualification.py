@@ -1,6 +1,6 @@
 """
 Unit tests the PyDough qualification process that transforms unqualified nodes
-into qualified QDAG nodes.
+into qualified DAG nodes.
 """
 
 import datetime
@@ -1010,7 +1010,7 @@ def test_qualify_node_to_ast_string(
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
-    qualified QDAG version, with the correct string representation.
+    qualified DAG version, with the correct string representation.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = UnqualifiedRoot(graph)

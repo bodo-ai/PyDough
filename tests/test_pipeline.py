@@ -614,11 +614,10 @@ def test_pipeline_until_relational(
     ],
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
-    sqlite_tpch_db_context: DatabaseContext,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
-    qualified QDAG version, with the correct string representation.
+    qualified DAG version, with the correct string representation.
     """
     # Run the query through the stages from unqualified node to qualified node
     # to relational tree, and confirm the tree string matches the expected
@@ -642,7 +641,6 @@ def test_pipeline_e2e(
         Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
     ],
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     sqlite_tpch_db_context: DatabaseContext,
 ):
     """

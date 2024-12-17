@@ -1,5 +1,5 @@
 """
-Logic for converting qualified QDAG nodes to Relational nodes, using hybrid
+Logic for converting qualified DAG nodes to Relational nodes, using hybrid
 nodes as an intermediary representation.
 """
 

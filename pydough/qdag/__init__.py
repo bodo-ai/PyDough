@@ -1,7 +1,7 @@
 """
-Module of PyDough dealing with the qualified QDAG structure used as an
-intermediary representation after unqualified nodes and before the relational
-tree.
+Module of PyDough dealing with the qualified DAG structure (aka QDAG) used as
+an intermediary representation after unqualified nodes and before the
+relational tree.
 """
 
 __all__ = [
