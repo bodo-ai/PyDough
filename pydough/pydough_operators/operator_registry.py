@@ -9,7 +9,7 @@ from collections.abc import MutableMapping
 
 import pydough.pydough_operators.expression_operators.registered_expression_operators as REP
 
-from .operator_ast import PyDoughOperator
+from .base_operator import PyDoughOperator
 
 
 def builtin_registered_operators() -> MutableMapping[str, PyDoughOperator]:

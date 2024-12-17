@@ -7,7 +7,7 @@ __all__ = ["PyDoughExpressionOperator"]
 from abc import abstractmethod
 from typing import Any
 
-from pydough.pydough_operators.operator_ast import PyDoughOperator
+from pydough.pydough_operators.base_operator import PyDoughOperator
 from pydough.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,

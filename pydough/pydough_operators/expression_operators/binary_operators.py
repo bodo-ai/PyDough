@@ -11,7 +11,7 @@ from pydough.pydough_operators.type_inference import (
     TypeVerifier,
 )
 
-from .expression_operator_ast import PyDoughExpressionOperator
+from .expression_operator import PyDoughExpressionOperator
 
 
 class BinOp(Enum):

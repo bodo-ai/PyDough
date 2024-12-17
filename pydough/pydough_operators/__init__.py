@@ -55,6 +55,7 @@ __all__ = [
     "NDISTINCT",
 ]
 
+from .base_operator import PyDoughOperator
 from .expression_operators import (
     ABS,
     ADD,
@@ -97,7 +98,6 @@ from .expression_operators import (
     ExpressionFunctionOperator,
     PyDoughExpressionOperator,
 )
-from .operator_ast import PyDoughOperator
 from .operator_registry import builtin_registered_operators
 from .type_inference import (
     AllowAny,

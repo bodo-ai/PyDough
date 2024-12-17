@@ -8,7 +8,7 @@ from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
-from pydough.pydough_operators.expression_operators.expression_operator_ast import (
+from pydough.pydough_operators.expression_operators.expression_operator import (
     PyDoughExpressionOperator,
 )
 from pydough.types import PyDoughType

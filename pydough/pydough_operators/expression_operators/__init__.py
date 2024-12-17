@@ -51,7 +51,7 @@ __all__ = [
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
-from .expression_operator_ast import PyDoughExpressionOperator
+from .expression_operator import PyDoughExpressionOperator
 from .registered_expression_operators import (
     ABS,
     ADD,
