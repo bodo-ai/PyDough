@@ -20,7 +20,7 @@ from pydough.database_connectors import (
     DatabaseDialect,
 )
 from pydough.metadata.graphs import GraphMetadata
-from pydough.pydough_ast import AstNodeBuilder
+from pydough.qdag import AstNodeBuilder
 
 
 @pytest.fixture

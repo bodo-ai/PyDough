@@ -8,7 +8,10 @@ __all__ = ["qualify_node"]
 from collections.abc import MutableSequence
 
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import (
+from pydough.pydough_operators.expression_operators.binary_operators import (
+    BinOp,
+)
+from pydough.qdag import (
     AstNodeBuilder,
     Calc,
     ChildOperatorChildAccess,
@@ -24,9 +27,6 @@ from pydough.pydough_ast import (
     Reference,
     TopK,
     Where,
-)
-from pydough.pydough_operators.expression_operators.binary_operators import (
-    BinOp,
 )
 from pydough.types import PyDoughType
 

@@ -64,7 +64,7 @@ class RequireNumArgs(TypeVerifier):
         return self._num_args
 
     def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
-        from pydough.pydough_ast.errors import PyDoughASTException
+        from pydough.qdag.errors import PyDoughASTException
 
         if len(args) != self.num_args:
             if error_on_fail:
@@ -93,7 +93,7 @@ class RequireMinArgs(TypeVerifier):
         return self._min_args
 
     def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
-        from pydough.pydough_ast import PyDoughASTException
+        from pydough.qdag import PyDoughASTException
 
         if len(args) < self.min_args:
             if error_on_fail:

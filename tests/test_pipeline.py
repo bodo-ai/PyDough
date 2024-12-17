@@ -64,7 +64,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import PyDoughAST, PyDoughCollectionAST
+from pydough.qdag import PyDoughAST, PyDoughCollectionAST
 from pydough.relational import RelationalRoot
 from pydough.unqualified import (
     UnqualifiedNode,

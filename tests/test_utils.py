@@ -27,7 +27,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import Any
 
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import (
+from pydough.qdag import (
     AstNodeBuilder,
     Calc,
     ChildOperatorChildAccess,

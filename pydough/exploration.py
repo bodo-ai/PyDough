@@ -20,7 +20,7 @@ from .metadata.properties import (
     SubcollectionRelationshipMetadata,
     TableColumnMetadata,
 )
-from .pydough_ast import (
+from .qdag import (
     BackReferenceCollection,
     BackReferenceExpression,
     Calc,

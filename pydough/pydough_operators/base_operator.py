@@ -55,7 +55,7 @@ class PyDoughOperator:
             `PyDoughASTException` if the operator does not accept the
             provided arguments.
         """
-        from pydough.pydough_ast.errors import PyDoughASTException
+        from pydough.qdag.errors import PyDoughASTException
 
         try:
             self.verifier.accepts(args)

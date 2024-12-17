@@ -13,7 +13,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.metadata import (
     SimpleTableMetadata,
 )
-from pydough.pydough_ast import (
+from pydough.qdag import (
     Calc,
     CollectionAccess,
     PyDoughCollectionAST,

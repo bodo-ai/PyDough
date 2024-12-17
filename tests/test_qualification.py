@@ -12,7 +12,7 @@ from test_utils import (
 )
 
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import PyDoughAST, PyDoughCollectionAST
+from pydough.qdag import PyDoughAST, PyDoughCollectionAST
 from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,

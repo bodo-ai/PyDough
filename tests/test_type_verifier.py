@@ -8,7 +8,7 @@ import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
 
 import pydough.pydough_operators as pydop
-from pydough.pydough_ast import AstNodeBuilder, PyDoughAST
+from pydough.qdag import AstNodeBuilder, PyDoughAST
 from pydough.types import Int64Type
 
 

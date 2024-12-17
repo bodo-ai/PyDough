@@ -44,7 +44,7 @@ class SelectArgumentType(ExpressionTypeDeducer):
         return self._index
 
     def infer_return_type(self, args: list[Any]) -> PyDoughType:
-        from pydough.pydough_ast import PyDoughASTException, PyDoughExpressionAST
+        from pydough.qdag import PyDoughASTException, PyDoughExpressionAST
 
         msg: str = f"Cannot select type of argument {self.index!r} out of {args!r}"
         if self.index not in range(len(args)):

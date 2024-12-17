@@ -37,7 +37,7 @@ from pydough.metadata import (
     SimpleJoinMetadata,
     SubcollectionRelationshipMetadata,
 )
-from pydough.pydough_ast import (
+from pydough.qdag import (
     BackReferenceExpression,
     Calc,
     ChildOperator,
