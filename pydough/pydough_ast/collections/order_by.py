@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for ordering the current collection
+by certain collation keys.
 """
 
 __all__ = ["OrderBy"]

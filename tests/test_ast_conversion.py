@@ -1,8 +1,6 @@
 """
 Unit tests for the process of converting qualified PyDough AST nodes into the
 relational tree.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import pytest

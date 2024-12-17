@@ -1,8 +1,6 @@
 """
 Unit tests the PyDough qualification process that transforms unqualified nodes
 into qualified AST nodes.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import datetime

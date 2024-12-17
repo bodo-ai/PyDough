@@ -1,7 +1,5 @@
 """
 Unit tests for PyDough AST nodes for collections.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import pytest

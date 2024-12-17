@@ -1,7 +1,5 @@
 """
 Module of PyDough dealing with definitions and parsing of PyDough metadata.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = [

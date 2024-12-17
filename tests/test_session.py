@@ -10,8 +10,6 @@ for the active session to verify that it works. Importantly, in all
 tests anything that impacts the active session must be READ-ONLY to
 ensure that we don't affect other tests, or that in the teardown step
 we replace the active session with a new default session.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import pandas as pd

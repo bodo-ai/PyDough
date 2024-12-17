@@ -1,7 +1,5 @@
 """
 Unit tests the PyDough Relational tree nodes.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 import pytest

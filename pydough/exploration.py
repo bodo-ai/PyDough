@@ -1,7 +1,5 @@
 """
 APIs used for user explanation & exploration of PyDough metadata and code.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["explain", "explain_structure", "explain_graph"]

@@ -1,7 +1,5 @@
 """
 Error-handling definitions for the types module.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["PyDoughTypeException"]

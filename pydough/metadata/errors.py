@@ -1,7 +1,5 @@
 """
 The definitions of error-handling utilities for the PyDough metadata module.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = [

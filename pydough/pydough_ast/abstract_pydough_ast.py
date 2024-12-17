@@ -1,7 +1,5 @@
 """
 Base class for all PyDough AST nodes, collection or expression.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["PyDoughAST"]

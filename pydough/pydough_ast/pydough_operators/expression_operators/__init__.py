@@ -1,5 +1,6 @@
 """
-TODO: add module-level docstring
+Module of PyDough dealing with operators used for function calls, including
+binary operations.
 """
 
 __all__ = [

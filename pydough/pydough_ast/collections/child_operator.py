@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Base definition of PyDough AST collection types that can contain child
+collections that are referenced instead of stepped into.
 """
 
 __all__ = ["ChildOperator"]

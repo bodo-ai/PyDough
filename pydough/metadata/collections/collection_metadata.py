@@ -1,7 +1,5 @@
 """
 Base definition of PyDough metadaata for collections.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 from abc import abstractmethod

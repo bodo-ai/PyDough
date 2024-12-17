@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for a CALC, which defines new
+expressions of the current context (or overrides existing definitions) that are
+all singular with regards to it.
 """
 
 __all__ = ["Calc"]

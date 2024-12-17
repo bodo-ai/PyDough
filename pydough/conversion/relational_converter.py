@@ -1,8 +1,6 @@
 """
 Logic for converting qualified AST nodes to Relational nodes, using hybrid
 nodes as an intermediary representation.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["convert_ast_to_relational"]

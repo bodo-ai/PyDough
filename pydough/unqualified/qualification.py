@@ -1,8 +1,6 @@
 """
 Implementations of the process for transforming unqualified nodes to PyDough
 AST nodes.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["qualify_node"]

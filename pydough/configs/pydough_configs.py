@@ -1,7 +1,5 @@
 """
 Definitions of configuration settings for PyDough.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["PyDoughConfigs"]

@@ -1,7 +1,5 @@
 """
 Error handling definitions used for the unqualified module.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["PyDoughUnqualifiedException"]

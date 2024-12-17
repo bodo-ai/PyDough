@@ -1,7 +1,5 @@
 """
 Definitions of functions used in unit tests in `test_exploration.py`.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = [

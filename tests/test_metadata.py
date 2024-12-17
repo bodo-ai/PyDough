@@ -1,7 +1,5 @@
 """
 Unit tests for the PyDough metadata module.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 from collections import defaultdict

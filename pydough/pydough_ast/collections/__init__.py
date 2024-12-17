@@ -1,8 +1,6 @@
 """
 Submodule of the PyDough AST module defining AST nodes representing
 collections, including operators that transform collections.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = [

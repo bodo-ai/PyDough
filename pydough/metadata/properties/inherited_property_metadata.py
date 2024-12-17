@@ -2,8 +2,6 @@
 Definition of PyDough metadata for a property that exists in the collection
 accessed by a compound edge by being inherited from one of the skipped middle
 collections.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["InheritedPropertyMetadata"]

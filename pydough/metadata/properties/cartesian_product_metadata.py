@@ -1,8 +1,6 @@
 """
 Definition of PyDough metadata for a property that connects two collections via
 a cartesian product of their records.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["CartesianProductMetadata"]

@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for ordering the current collection
+by certain collation keys and picking the top records according to the
+ordering.
 """
 
 __all__ = ["TopK"]

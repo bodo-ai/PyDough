@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition bindings of builtin PyDough operators that reutrn an expression.
 """
 
 __all__ = [

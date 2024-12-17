@@ -1,7 +1,5 @@
 """
 Unit tests the PyDough type verifiers.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 from collections.abc import MutableSequence

@@ -1,8 +1,6 @@
 """
 Utilities used by PyDough test files, such as the TestInfo classes used to
 build AST nodes for unit tests.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = [

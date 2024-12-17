@@ -1,8 +1,6 @@
 """
 Module of PyDough dealing with definitions of data types that are propagated
 throughout PyDough to help identify what each data column is.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = [

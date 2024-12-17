@@ -1,7 +1,5 @@
 """
 Logic for converting JSON strings to PyDough types.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["parse_type_from_string"]

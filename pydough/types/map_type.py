@@ -1,7 +1,5 @@
 """
 Definition of the PyDough type for map types.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 __all__ = ["MapType"]

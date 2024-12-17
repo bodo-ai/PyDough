@@ -1,7 +1,5 @@
 """
 Unit tests for the PyDough exploration APIs.
-
-Copyright (C) 2024 Bodo Inc. All rights reserved.
 """
 
 from collections.abc import Callable
