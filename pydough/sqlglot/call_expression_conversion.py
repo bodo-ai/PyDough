@@ -309,4 +309,4 @@ def convert_if(
                 .when(arguments[0], arguments[1])
                 .else_(arguments[2])
             )
-    return sqlglot_expressions.If(*arguments)
+    return sqlglot_expressions.If.from_arg_list(arguments)
