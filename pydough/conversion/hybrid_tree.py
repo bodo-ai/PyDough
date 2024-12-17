@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional
 
-import pydough.pydough_ast.pydough_operators as pydop
+import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import (
     CartesianProductMetadata,
@@ -254,12 +254,12 @@ class HybridFunctionExpr(HybridExpr):
 
     def __init__(
         self,
-        operator: pydop.PyDoughExpressionOperatorAST,
+        operator: pydop.PyDoughExpressionOperator,
         args: list[HybridExpr],
         typ: PyDoughType,
     ):
         super().__init__(typ)
-        self.operator: pydop.PyDoughExpressionOperatorAST = operator
+        self.operator: pydop.PyDoughExpressionOperator = operator
         self.args: list[HybridExpr] = args
 
     def __repr__(self):

@@ -7,8 +7,8 @@ from collections.abc import MutableSequence
 import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
 
+import pydough.pydough_operators as pydop
 from pydough.pydough_ast import AstNodeBuilder, PyDoughAST
-from pydough.pydough_ast import pydough_operators as pydop
 from pydough.types import Int64Type
 
 
@@ -38,9 +38,7 @@ def test_verification(
     Checks that verifiers accept certain arguments without raising an exception
     and also returns True.
     """
-    args: MutableSequence[PyDoughAST] = [
-        info.build(tpch_node_builder) for info in args_info
-    ]
+    args: list[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
     assert verifier.accepts(
         args, error_on_fail=False
     ), "expected verifier to accept argument"

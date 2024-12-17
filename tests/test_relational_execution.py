@@ -9,7 +9,7 @@ import pytest
 from test_utils import make_relational_column_reference, make_relational_ordering
 
 from pydough.database_connectors import DatabaseContext
-from pydough.pydough_ast.pydough_operators import (
+from pydough.pydough_operators import (
     AVG,
     EQU,
     GRT,

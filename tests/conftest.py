@@ -12,6 +12,7 @@ import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
 
 import pydough
+import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseConnection,
@@ -20,7 +21,6 @@ from pydough.database_connectors import (
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.pydough_ast import AstNodeBuilder
-from pydough.pydough_ast import pydough_operators as pydop
 
 
 @pytest.fixture

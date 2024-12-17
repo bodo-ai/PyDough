@@ -7,8 +7,8 @@ from collections.abc import MutableSequence
 import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
 
+import pydough.pydough_operators as pydop
 from pydough.pydough_ast import AstNodeBuilder, PyDoughAST
-from pydough.pydough_ast import pydough_operators as pydop
 from pydough.types import Int64Type, PyDoughType, StringType
 
 
@@ -50,9 +50,7 @@ def test_returned_type(
     """
     Checks that expression ttype deducers produce the correct type.
     """
-    args: MutableSequence[PyDoughAST] = [
-        info.build(tpch_node_builder) for info in args_info
-    ]
+    args: list[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
     assert (
         deducer.infer_return_type(args) == expected_type
     ), "mismatch between inferred return type and expected type"

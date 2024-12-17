@@ -6,13 +6,12 @@ __all__ = ["BinOp", "BinaryOperator"]
 
 from enum import Enum
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-from pydough.pydough_ast.pydough_operators.type_inference import (
+from pydough.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
 )
 
-from .expression_operator_ast import PyDoughExpressionOperatorAST
+from .expression_operator_ast import PyDoughExpressionOperator
 
 
 class BinOp(Enum):
@@ -37,7 +36,7 @@ class BinOp(Enum):
     BXR = "^"
 
 
-class BinaryOperator(PyDoughExpressionOperatorAST):
+class BinaryOperator(PyDoughExpressionOperator):
     """
     Implementation class for PyDough operators that return an expression
     and represent a binary operation, such as addition.
@@ -72,7 +71,7 @@ class BinaryOperator(PyDoughExpressionOperatorAST):
     def standalone_string(self) -> str:
         return f"BinaryOperator[{self.binop.value}]"
 
-    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+    def requires_enclosing_parens(self, parent) -> bool:
         # For now, until proper precedence is handled, always enclose binary
         # operations in parenthesis if the parent is also a binary operation.
 

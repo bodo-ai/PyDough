@@ -25,7 +25,7 @@ from pydough.pydough_ast import (
     TopK,
     Where,
 )
-from pydough.pydough_ast.pydough_operators.expression_operators.binary_operators import (
+from pydough.pydough_operators.expression_operators.binary_operators import (
     BinOp,
 )
 from pydough.types import PyDoughType
@@ -171,7 +171,7 @@ class Qualifier:
         """
         operation: str = unqualified._parcel[0]
         unqualified_operands: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
-        qualified_operands: MutableSequence[PyDoughAST] = []
+        qualified_operands: list[PyDoughAST] = []
         # Iterate across every operand to generate its qualified variant.
         # First, attempt to qualify it as an expression (the common case), but
         # if that fails specifically because the result would be a collection,

@@ -25,8 +25,8 @@ from collections.abc import Iterable, MutableSequence
 from datetime import date
 from typing import Any, Union
 
+import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import pydough_operators as pydop
 from pydough.types import (
     ArrayType,
     BinaryType,

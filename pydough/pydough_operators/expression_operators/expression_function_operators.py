@@ -5,16 +5,15 @@ Definition of PyDough operator class for functions that return an expression.
 __all__ = ["ExpressionFunctionOperator"]
 
 
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-from pydough.pydough_ast.pydough_operators.type_inference import (
+from pydough.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
 )
 
-from .expression_operator_ast import PyDoughExpressionOperatorAST
+from .expression_operator_ast import PyDoughExpressionOperator
 
 
-class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
+class ExpressionFunctionOperator(PyDoughExpressionOperator):
     """
     Implementation class for PyDough operators that return an expression
     and represent a function call, such as `LOWER` or `SUM`.
@@ -47,7 +46,7 @@ class ExpressionFunctionOperator(PyDoughExpressionOperatorAST):
     def standalone_string(self) -> str:
         return f"Function[{self.function_name}]"
 
-    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+    def requires_enclosing_parens(self, parent) -> bool:
         return False
 
     def to_string(self, arg_strings: list[str]) -> str:

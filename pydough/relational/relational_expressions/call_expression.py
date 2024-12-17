@@ -6,7 +6,7 @@ __all__ = ["CallExpression"]
 
 from collections.abc import MutableSequence
 
-from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
+from pydough.pydough_operators import PyDoughExpressionOperator
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
@@ -22,17 +22,17 @@ class CallExpression(RelationalExpression):
 
     def __init__(
         self,
-        op: PyDoughExpressionOperatorAST,
+        op: PyDoughExpressionOperator,
         return_type: PyDoughType,
         inputs: MutableSequence[RelationalExpression],
     ) -> None:
         super().__init__(return_type)
         # TODO: Should we move this op to a different type?
-        self._op: PyDoughExpressionOperatorAST = op
+        self._op: PyDoughExpressionOperator = op
         self._inputs: MutableSequence[RelationalExpression] = inputs
 
     @property
-    def op(self) -> PyDoughExpressionOperatorAST:
+    def op(self) -> PyDoughExpressionOperator:
         """
         The operation this call expression represents.
         """
