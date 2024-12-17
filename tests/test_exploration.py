@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Unit tests for the PyDough exploration APIs.
 """
 
 from collections.abc import Callable

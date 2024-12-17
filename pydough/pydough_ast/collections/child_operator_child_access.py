@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for an access to a child context done
+by a child operator, as opposed to stepping down into the child access.
 """
 
 __all__ = ["ChildOperatorChildAccess"]

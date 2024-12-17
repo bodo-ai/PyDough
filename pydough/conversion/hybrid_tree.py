@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+The definitions of the hybrid classes used as an intermediary representation
+during AST to Relational conversion, as well as the conversion logic from AST
+nodes to said hybrid nodes.
 """
 
 __all__ = [

@@ -1,5 +1,5 @@
 """
-TODO: add module-level docstring
+Submodule of the PyDough metadata module defining metadata for collections.
 """
 
 __all__ = ["CollectionMetadata", "SimpleTableMetadata"]

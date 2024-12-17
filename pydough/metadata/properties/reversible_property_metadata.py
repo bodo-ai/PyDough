@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of the base class for PyDough metadata for properties that
+access a subcollection and are reversible.
 """
 
 __all__ = ["ReversiblePropertyMetadata"]

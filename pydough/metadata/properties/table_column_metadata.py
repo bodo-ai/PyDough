@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of the class for PyDough metadata for properties that access a
+column of a table from a relational system.
 """
 
 __all__ = ["TableColumnMetadata"]

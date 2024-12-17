@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Base definition of PyDough collection AST classes that access a child context.
 """
 
 __all__ = ["ChildAccess"]

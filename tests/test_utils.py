@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Utilities used by PyDough test files, such as the TestInfo classes used to
+build AST nodes for unit tests.
 """
 
 __all__ = [

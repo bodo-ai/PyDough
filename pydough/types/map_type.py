@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of the PyDough type for map types.
 """
 
 __all__ = ["MapType"]

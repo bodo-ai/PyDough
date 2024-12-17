@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough metadata for a collection that trivially corresponds to a
+table in a relational system.
 """
 
 from collections.abc import MutableSequence

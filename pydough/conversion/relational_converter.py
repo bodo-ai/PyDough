@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Logic for converting qualified AST nodes to Relational nodes, using hybrid
+nodes as an intermediary representation.
 """
 
 __all__ = ["convert_ast_to_relational"]

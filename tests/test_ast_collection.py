@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring.
+Unit tests for PyDough AST nodes for collections.
 """
 
 import pytest

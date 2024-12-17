@@ -1,5 +1,5 @@
 """
-TODO: add module-level docstring
+Module of PyDough dealing with configurations and sessions.
 """
 
 __all__ = ["ConfigProperty", "PyDoughConfigs", "PyDoughSession"]

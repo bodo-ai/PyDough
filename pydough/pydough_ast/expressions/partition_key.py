@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST nodes used to wrap certain expressions to denote them
+as keys of a PARTITION BY clause.
 """
 
 __all__ = ["PartitionKey"]

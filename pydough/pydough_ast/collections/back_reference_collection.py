@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for accesses to a subcollection of an
+ancestor of the current context.
 """
 
 __all__ = ["BackReferenceCollection"]

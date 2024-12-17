@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for the basic context that has one
+record, no expressions, and access to all the top-level collections in the
+graph.
 """
 
 __all__ = ["TableCollection"]

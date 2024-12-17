@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring.
+Integration tests for the PyDough workflow on the TPC-H queries.
 """
 
 from collections.abc import Callable

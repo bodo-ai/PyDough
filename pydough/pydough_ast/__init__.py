@@ -1,5 +1,7 @@
 """
-TODO: add module-level docstring
+Module of PyDough dealing with the qualified AST structure used as an
+intermediary representation after unqualified nodes and before the relational
+tree.
 """
 
 __all__ = [

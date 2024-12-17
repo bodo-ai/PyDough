@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Base definition of all PyDough AST collection types.
 """
 
 __all__ = ["PyDoughCollectionAST"]

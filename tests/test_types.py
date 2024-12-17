@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring.
+Unit tests the PyDough types module.
 """
 
 import pytest

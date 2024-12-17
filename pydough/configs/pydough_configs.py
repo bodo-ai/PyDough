@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definitions of configuration settings for PyDough.
 """
 
 __all__ = ["PyDoughConfigs"]

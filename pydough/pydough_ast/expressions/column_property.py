@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST nodes for expressions that are columns of a table
+collection.
 """
 
 __all__ = ["ColumnProperty"]

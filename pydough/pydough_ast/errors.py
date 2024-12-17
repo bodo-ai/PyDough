@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definitions of the exception type used in the PyDough AST module.
 """
 
 __all__ = ["PyDoughASTException"]

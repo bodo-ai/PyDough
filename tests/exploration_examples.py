@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definitions of functions used in unit tests in `test_exploration.py`.
 """
 
 __all__ = [

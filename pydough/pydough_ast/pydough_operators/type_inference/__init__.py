@@ -1,5 +1,6 @@
 """
-TODO: add module-level docstring
+Submodule of PyDough operators module dealing with type checking and return
+type inference.
 """
 
 __all__ = [

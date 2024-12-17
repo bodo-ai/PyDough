@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of the PyDough type for a string type.
 """
 
 __all__ = ["StringType"]

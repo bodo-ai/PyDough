@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Unit tests for the PyDough metadata module.
 """
 
 from collections import defaultdict

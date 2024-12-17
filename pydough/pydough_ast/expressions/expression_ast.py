@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Base definition of PyDough expression AST nodes.
 """
 
 __all__ = ["PyDoughExpressionAST"]

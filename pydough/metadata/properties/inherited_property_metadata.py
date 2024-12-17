@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough metadata for a property that exists in the collection
+accessed by a compound edge by being inherited from one of the skipped middle
+collections.
 """
 
 __all__ = ["InheritedPropertyMetadata"]

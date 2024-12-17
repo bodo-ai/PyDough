@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Base definition of PyDough metadaata for collections.
 """
 
 from abc import abstractmethod

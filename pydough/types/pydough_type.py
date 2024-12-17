@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of the base class for all PyDough types.
 """
 
 __all__ = ["PyDoughType"]

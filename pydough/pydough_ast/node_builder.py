@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definitions of utilities used to build PyDough AST nodes.
 """
 
 __all__ = ["AstNodeBuilder"]

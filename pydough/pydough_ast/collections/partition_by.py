@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for a PARTITION operation that
+buckets its input data on certain keys, creating a new parent collection whose
+child is the input data.
 """
 
 __all__ = ["PartitionBy"]

@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of a helper utility class used to describe PyDough AST collections
+in a tree-like form so they can be converted into tree-like strings.
 """
 
 __all__ = ["CollectionTreeForm"]

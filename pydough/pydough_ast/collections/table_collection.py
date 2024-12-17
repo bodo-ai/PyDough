@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for accessing a table collection
+directly.
 """
 
 __all__ = ["TableCollection"]

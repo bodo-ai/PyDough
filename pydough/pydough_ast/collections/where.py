@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for filtering the current collection
+by certain expression criteria.
 """
 
 __all__ = ["Where"]

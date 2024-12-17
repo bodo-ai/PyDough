@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of the PyDough types for floating point types.
 """
 
 __all__ = ["FloatType"]

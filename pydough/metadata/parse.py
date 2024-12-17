@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+The logic used to parse PyDough metadata from a JSON file.
 """
 
 __all__ = ["parse_json_metadata_from_file"]

@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Error-handling definitions for the types module.
 """
 
 __all__ = ["PyDoughTypeException"]

@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for a reference to a child collection
+of a child operator, e.g. `nations` in `regions(n_nations=COUNT(nations))`.
 """
 
 __all__ = ["ChildReferenceCollection"]

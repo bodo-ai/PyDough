@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of the PyDough types for integer types.
 """
 
 __all__ = ["IntegerType", "Int8Type", "Int16Type", "Int32Type", "Int64Type"]

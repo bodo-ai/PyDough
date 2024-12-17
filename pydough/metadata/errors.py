@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+The definitions of error-handling utilities for the PyDough metadata module.
 """
 
 __all__ = [

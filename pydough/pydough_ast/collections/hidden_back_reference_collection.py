@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for accesses to a subcollection of an
+ancestor of the current context in a manner that is hidden because the ancestor
+is from a compound subcollection access.
 """
 
 __all__ = ["HiddenBackReferenceCollection"]

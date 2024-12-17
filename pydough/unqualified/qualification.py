@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Implementations of the process for transforming unqualified nodes to PyDough
+AST nodes.
 """
 
 __all__ = ["qualify_node"]

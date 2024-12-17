@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring.
+Error-handling unit tests the PyDough type verifiers.
 """
 
 from collections.abc import MutableSequence

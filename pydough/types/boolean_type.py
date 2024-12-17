@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of the PyDough type for booleans.
 """
 
 __all__ = ["BooleanType"]

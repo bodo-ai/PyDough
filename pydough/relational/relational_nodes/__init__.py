@@ -1,5 +1,6 @@
 """
-TODO: add module-level docstring
+Submodule of PyDough relational module dealing with the nodes of the relational
+tree, which largely correspond to the operators in relational algebra.
 """
 
 __all__ = [

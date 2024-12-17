@@ -1,5 +1,6 @@
 """
-TODO: add module-level docstring
+Module of PyDough dealing with converting the qualified PyDough AST nodes into
+Relational nodes.
 """
 
 __all__ = ["convert_ast_to_relational"]

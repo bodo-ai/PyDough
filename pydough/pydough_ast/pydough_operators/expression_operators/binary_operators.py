@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of PyDough operator class for binary operations.
 """
 
 __all__ = ["BinOp", "BinaryOperator"]

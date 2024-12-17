@@ -1,5 +1,6 @@
 """
-TODO: add module-level docstring
+Module of PyDough dealing with definitions of data types that are propagated
+throughout PyDough to help identify what each data column is.
 """
 
 __all__ = [

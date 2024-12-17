@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definitions of UnqualifiedNode classes that are used as the first IR created by
+PyDough whenever a user writes PyDough code.
 """
 
 __all__ = [

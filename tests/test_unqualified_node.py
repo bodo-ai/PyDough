@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring.
+Unit tests the PyDough unqualified nodes and the logic that transforms raw
+Python code into them.
 """
 
 import ast

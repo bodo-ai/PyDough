@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Error handling definitions used for the unqualified module.
 """
 
 __all__ = ["PyDoughUnqualifiedException"]

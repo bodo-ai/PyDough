@@ -1,5 +1,5 @@
 """
-TODO: add module-level docstring
+Top-level init file for PyDough package.
 """
 
 __all__ = [

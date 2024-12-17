@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Base class for all PyDough AST nodes, collection or expression.
 """
 
 __all__ = ["PyDoughAST"]

@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+APIs used for user explanation & exploration of PyDough metadata and code.
 """
 
 __all__ = ["explain", "explain_structure", "explain_graph"]

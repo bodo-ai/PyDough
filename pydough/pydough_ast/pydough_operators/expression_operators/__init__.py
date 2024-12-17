@@ -1,5 +1,6 @@
 """
-TODO: add module-level docstring
+Submodule of PyDough operator module dealing with operators that return
+expressions.
 """
 
 __all__ = [

@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring.
+Error-handling unit tests the PyDough qualification process that transforms
+unqualified nodes into qualified AST nodes.
 """
 
 import re

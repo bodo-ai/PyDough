@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring.
+Unit tests for the PyDough expression type inference utilities.
 """
 
 from collections.abc import MutableSequence

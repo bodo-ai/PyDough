@@ -1,5 +1,5 @@
 """
-TODO: add module-level docstring
+Module of PyDough dealing with definitions and parsing of PyDough metadata.
 """
 
 __all__ = [

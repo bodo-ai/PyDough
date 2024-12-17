@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST collection type for accesses to the data that was
+partitioned in a PARTITION clause.
 """
 
 __all__ = ["PartitionChild"]

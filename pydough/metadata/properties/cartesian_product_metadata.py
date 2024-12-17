@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough metadata for a property that connects two collections via
+a cartesian product of their records.
 """
 
 __all__ = ["CartesianProductMetadata"]

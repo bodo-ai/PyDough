@@ -1,5 +1,6 @@
 """
-TODO: add module-level docstring
+Submodule of the PyDough AST module defining AST nodes representing
+collections, including operators that transform collections.
 """
 
 __all__ = [

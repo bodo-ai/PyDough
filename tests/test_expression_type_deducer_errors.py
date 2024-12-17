@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring.
+Error-handling unit tests for the PyDough expression type inference utilities.
 """
 
 import re

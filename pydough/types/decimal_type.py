@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of the PyDough type for fixed point decimals.
 """
 
 __all__ = ["DecimalType"]

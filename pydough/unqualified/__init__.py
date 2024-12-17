@@ -1,5 +1,7 @@
 """
-TODO: add module-level docstring
+Module of PyDough dealing with the definitions of unqualified nodes, the
+transformation of raw code into unqualified nodes, and the conversion from them
+into PyDough AST nodes.
 """
 
 __all__ = [

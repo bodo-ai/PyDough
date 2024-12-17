@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring.
+Unit tests for the process of converting qualified PyDough AST nodes into the
+relational tree.
 """
 
 import pytest
