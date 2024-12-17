@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring.
+Definitions of various fixtures used in PyDough tests that are automatically
+available.
 """
 
 import json

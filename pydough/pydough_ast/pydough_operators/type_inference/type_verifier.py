@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Utilities used for PyDough type checking.
 """
 
 __all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny", "RequireMinArgs"]

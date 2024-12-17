@@ -1,5 +1,7 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST nodes that reference an expression of an ancestor
+context that is hidden because the ancestor comes from a compound
+subcollection.
 """
 
 __all__ = ["HiddenBackReferenceExpression"]

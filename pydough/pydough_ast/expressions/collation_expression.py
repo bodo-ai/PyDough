@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST nodes used to wrap another expression node in
+ordering information so the expression can be used as an ordering key.
 """
 
 __all__ = ["CollationExpression"]

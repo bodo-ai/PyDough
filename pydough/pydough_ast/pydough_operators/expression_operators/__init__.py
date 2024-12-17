@@ -1,6 +1,6 @@
 """
-Module of PyDough dealing with operators used for function calls, including
-binary operations.
+Submodule of PyDough operator module dealing with operators that return
+expressions.
 """
 
 __all__ = [

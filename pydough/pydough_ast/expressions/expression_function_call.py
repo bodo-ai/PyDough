@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST nodes for function calls that return expressions.
 """
 
 __all__ = ["ExpressionFunctionCall"]

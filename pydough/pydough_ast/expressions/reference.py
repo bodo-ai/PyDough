@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of PyDough AST nodes for expression references to another expression
+in a preceding context.
 """
 
 __all__ = ["Reference"]

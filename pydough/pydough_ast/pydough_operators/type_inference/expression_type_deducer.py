@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Utilities used for PyDough return type inference.
 """
 
 __all__ = ["ExpressionTypeDeducer", "ConstantType", "SelectArgumentType"]

@@ -1,5 +1,6 @@
 """
-TODO: add file-level docstring
+Definition of a relational tree visitor used to convert relational trees into
+a multiline string of their full tree-like representation.
 """
 
 __all__ = ["RelationalVisitor"]
@@ -10,7 +11,8 @@ from .relational_visitor import RelationalVisitor
 
 class TreeStringVisitor(RelationalVisitor):
     """
-    TODO
+    RelationalVisitor implementation that converts relational nodes into a tree
+    string.
     """
 
     def __init__(self):
@@ -19,7 +21,7 @@ class TreeStringVisitor(RelationalVisitor):
 
     def visit_node(self, node) -> None:
         """
-        TODO: add function docstring
+        Generic visitor implementation used by visit_xxx methods.
         """
         self.lines.append(f"{' '*self.depth}{node.to_string(compact=True)}")
         self.depth += 1
@@ -28,7 +30,8 @@ class TreeStringVisitor(RelationalVisitor):
 
     def make_tree_string(self) -> str:
         """
-        TODO: add function docstring
+        Method called after the visitor is run on the entire relational tree to
+        convert the entire tree to a single tree-like string.
         """
         return "\n".join(self.lines)
 

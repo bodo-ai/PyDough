@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Suite where all registered operators are accessible as a combined unit.
 """
 
 __all__ = ["builtin_registered_operators"]

@@ -1,5 +1,5 @@
 """
-TODO: add file-level docstring
+Base definition of PyDough operators.
 """
 
 __all__ = ["PyDoughOperatorAST"]
