@@ -14,7 +14,7 @@ from pydough.metadata import GraphMetadata
 
 class AddRootVisitor(ast.NodeTransformer):
     """
-    AST visitor class that transforms nodes in the following ways:
+    QDAG visitor class that transforms nodes in the following ways:
     1. Whenever a variable is assigned, marks it as a known variable name
     (in addition to any `known_name` values passed in).
     2. Removes the `init_pydough_context` decorator from above any functions.
@@ -104,7 +104,7 @@ def transform_code(
     source: str, graph_dict: dict[str, GraphMetadata], known_names: set[str]
 ) -> ast.AST:
     """
-    Transforms the source code into a new Python AST that has had the PyDough
+    Transforms the source code into a new Python QDAG that has had the PyDough
     decorator removed, had the definition of `_ROOT` injected at the top of the
     function body, and prepend unknown variables with `_ROOT.`
 
@@ -117,7 +117,7 @@ def transform_code(
         such as global variables or module imports.
 
     Returns:
-        The Python AST for the transformed code.
+        The Python QDAG for the transformed code.
     """
     assert len(graph_dict) == 1, "Expected exactly one key in the graph_dict"
     visitor: ast.NodeTransformer = AddRootVisitor(

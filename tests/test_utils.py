@@ -1,6 +1,6 @@
 """
 Utilities used by PyDough test files, such as the TestInfo classes used to
-build AST nodes for unit tests.
+build QDAG nodes for unit tests.
 """
 
 __all__ = [
@@ -27,7 +27,7 @@ from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import Any
 
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import (
+from pydough.qdag import (
     AstNodeBuilder,
     Calc,
     ChildOperatorChildAccess,
@@ -35,9 +35,9 @@ from pydough.pydough_ast import (
     CollationExpression,
     OrderBy,
     PartitionBy,
-    PyDoughAST,
-    PyDoughCollectionAST,
-    PyDoughExpressionAST,
+    PyDoughCollectionQDAG,
+    PyDoughExpressionQDAG,
+    PyDoughQDAG,
     TopK,
     Where,
 )
@@ -78,7 +78,7 @@ def map_over_dict_values(
 
 class AstNodeTestInfo(ABC):
     """
-    Base class used in tests to specify information about an AST node
+    Base class used in tests to specify information about a QDAG node
     before it can be created, e.g. describing column properties or
     function calls by name before a builder can be used to create them.
     """
@@ -87,22 +87,22 @@ class AstNodeTestInfo(ABC):
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
         """
-        Uses a passed-in AST node builder to construct the node.
+        Uses a passed-in QDAG node builder to construct the node.
 
         Args:
-            `builder`: the builder that should be used to create the AST
+            `builder`: the builder that should be used to create the QDAG
             objects.
-            `context`: an optional collection AST used as the context within
-            which the AST is created.
-            `children_contexts`: an optional list of collection ASTs of
+            `context`: an optional collection QDAG used as the context within
+            which the QDAG is created.
+            `children_contexts`: an optional list of collection QDAGs of
             child nodes of a CALC that are accessible for ChildReferenceExpression usage.
 
         Returns:
-            The new instance of the AST object.
+            The new instance of the QDAG object.
         """
 
     def __repr__(self):
@@ -111,7 +111,7 @@ class AstNodeTestInfo(ABC):
     @abstractmethod
     def to_string(self) -> str:
         """
-        String representation of the TestInfo before it is built into an AST node.
+        String representation of the TestInfo before it is built into a QDAG node.
         """
 
 
@@ -133,9 +133,9 @@ class LiteralInfo(AstNodeTestInfo):
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
         return builder.build_literal(self.value, self.data_type)
 
 
@@ -157,9 +157,9 @@ class ColumnInfo(AstNodeTestInfo):
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
         return builder.build_column(self.collection_name, self.property_name)
 
 
@@ -182,10 +182,10 @@ class FunctionInfo(AstNodeTestInfo):
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
-        args: list[PyDoughAST] = [
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
+        args: list[PyDoughQDAG] = [
             info.build(builder, context, children_contexts) for info in self.args_info
         ]
         return builder.build_expression_function_call(self.function_name, args)
@@ -207,9 +207,9 @@ class ReferenceInfo(AstNodeTestInfo):
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
@@ -234,9 +234,9 @@ class BackReferenceExpressionInfo(AstNodeTestInfo):
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
         assert (
             context is not None
         ), "Cannot call .build() on BackReferenceExpressionInfo without providing a context"
@@ -261,9 +261,9 @@ class ChildReferenceExpressionInfo(AstNodeTestInfo):
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
         assert (
             children_contexts is not None
         ), "Cannot call .build() on ChildReferenceExpressionInfo without providing a list of child contexts"
@@ -305,7 +305,7 @@ class CollectionTestInfo(AstNodeTestInfo):
     @abstractmethod
     def local_string(self) -> str:
         """
-        String representation of the TestInfo before it is built into an AST node.
+        String representation of the TestInfo before it is built into a QDAG node.
         """
 
     def to_string(self) -> str:
@@ -318,31 +318,31 @@ class CollectionTestInfo(AstNodeTestInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         """
-        Uses a passed-in AST node builder to construct the collection node.
+        Uses a passed-in QDAG node builder to construct the collection node.
 
         Args:
-            `builder`: the builder that should be used to create the AST
+            `builder`: the builder that should be used to create the QDAG
             objects.
-            `context`: an optional collection AST used as the context within
-            which the AST is created.
-            `children_contexts`: an optional list of collection ASTs of child
+            `context`: an optional collection QDAG used as the context within
+            which the QDAG is created.
+            `children_contexts`: an optional list of collection QDAG of child
             nodes of a CALC that are accessible for ChildReferenceExpression usage.
 
         Returns:
-            The new instance of the collection AST object.
+            The new instance of the collection QDAG object.
         """
 
     def build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
-        local_result: PyDoughCollectionAST = self.local_build(
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
+        local_result: PyDoughCollectionQDAG = self.local_build(
             builder, context, children_contexts
         )
         if self.successor is None:
@@ -367,9 +367,9 @@ class TableCollectionInfo(CollectionTestInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         if context is None:
             context = builder.build_global_context()
         return builder.build_child_access(self.name, context)
@@ -391,9 +391,9 @@ class SubCollectionInfo(TableCollectionInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
@@ -419,13 +419,13 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         assert (
             context is not None
         ), "Cannot call .build() on ReferenceInfo without providing a context"
-        access: PyDoughCollectionAST = self.child_info.local_build(
+        access: PyDoughCollectionQDAG = self.child_info.local_build(
             builder, context, children_contexts
         )
         return ChildOperatorChildAccess(access)
@@ -452,9 +452,9 @@ class BackReferenceCollectionInfo(CollectionTestInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         assert (
             context is not None
         ), "Cannot call .build() on BackReferenceCollectionInfo without providing a context"
@@ -480,9 +480,9 @@ class ChildReferenceCollectionInfo(CollectionTestInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         assert (
             context is not None
         ), "Cannot call .build() on ChildReferenceCollection without providing a context"
@@ -519,24 +519,24 @@ class ChildOperatorInfo(CollectionTestInfo):
         return "\n" + "\n".join(child_strings) + "\n"
 
     def build_children(
-        self, builder: AstNodeBuilder, context: PyDoughCollectionAST | None = None
-    ) -> MutableSequence[PyDoughCollectionAST]:
+        self, builder: AstNodeBuilder, context: PyDoughCollectionQDAG | None = None
+    ) -> MutableSequence[PyDoughCollectionQDAG]:
         """
         Builds all of the child infos into the children of the operator.
 
         Args:
-            `builder`: the builder that should be used to create the AST
+            `builder`: the builder that should be used to create the QDAG
             objects.
-            `context`: an optional collection AST used as the context within
-            which the AST is created.
+            `context`: an optional collection QDAG used as the context within
+            which the QDAG is created.
 
         Returns:
             The list of built child collections.
         """
-        children: MutableSequence[PyDoughCollectionAST] = []
+        children: MutableSequence[PyDoughCollectionQDAG] = []
         for idx, child_info in enumerate(self.children_info):
             child = ChildOperatorChildAccessInfo(child_info).build(builder, context)
-            assert isinstance(child, PyDoughCollectionAST)
+            assert isinstance(child, PyDoughCollectionQDAG)
             children.append(child)
         return children
 
@@ -566,21 +566,21 @@ class CalcInfo(ChildOperatorInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         if context is None:
             context = builder.build_global_context()
-        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+        children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder,
             context,
         )
         raw_calc = builder.build_calc(context, children)
         assert isinstance(raw_calc, Calc)
-        args: MutableSequence[tuple[str, PyDoughExpressionAST]] = []
+        args: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
-            assert isinstance(expr, PyDoughExpressionAST)
+            assert isinstance(expr, PyDoughExpressionQDAG)
             args.append((name, expr))
         return raw_calc.with_terms(args)
 
@@ -606,18 +606,18 @@ class WhereInfo(ChildOperatorInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         if context is None:
             raise Exception("Must provide a context when building a WHERE clause.")
-        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+        children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
         raw_where = builder.build_where(context, children)
         assert isinstance(raw_where, Where)
         cond = self.condition.build(builder, context, children)
-        assert isinstance(cond, PyDoughExpressionAST)
+        assert isinstance(cond, PyDoughExpressionQDAG)
         return raw_where.with_condition(cond)
 
 
@@ -650,14 +650,14 @@ class OrderInfo(ChildOperatorInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         if context is None:
             raise Exception(
                 "Must provide context and children_contexts when building an ORDER BY clause."
             )
-        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+        children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
         raw_order = builder.build_order(context, children)
@@ -665,7 +665,7 @@ class OrderInfo(ChildOperatorInfo):
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
-            assert isinstance(expr, PyDoughExpressionAST)
+            assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
         return raw_order.with_collation(collation)
 
@@ -702,14 +702,14 @@ class TopKInfo(ChildOperatorInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         if context is None:
             raise Exception(
                 "Must provide context and children_contexts when building a TOPK clause."
             )
-        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+        children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
         raw_top_k = builder.build_top_k(context, children, self.records_to_keep)
@@ -717,7 +717,7 @@ class TopKInfo(ChildOperatorInfo):
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
-            assert isinstance(expr, PyDoughExpressionAST)
+            assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
         return raw_top_k.with_collation(collation)
 
@@ -747,12 +747,12 @@ class PartitionInfo(ChildOperatorInfo):
     def local_build(
         self,
         builder: AstNodeBuilder,
-        context: PyDoughCollectionAST | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
-    ) -> PyDoughCollectionAST:
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
         if context is None:
             context = builder.build_global_context()
-        children: MutableSequence[PyDoughCollectionAST] = self.build_children(
+        children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
         assert len(children) == 1

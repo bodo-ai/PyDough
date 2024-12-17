@@ -13,7 +13,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import PyDoughAST, PyDoughCollectionAST
+from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
 from pydough.sqlglot import (
     convert_dialect_to_sqlglot,
@@ -82,8 +82,8 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     config: PyDoughConfigs
     database: DatabaseContext
     graph, config, database = _load_session_info(**kwargs)
-    qualified: PyDoughAST = qualify_node(node, graph)
-    if not isinstance(qualified, PyDoughCollectionAST):
+    qualified: PyDoughQDAG = qualify_node(node, graph)
+    if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
@@ -113,8 +113,8 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     config: PyDoughConfigs
     database: DatabaseContext
     graph, config, database = _load_session_info(**kwargs)
-    qualified: PyDoughAST = qualify_node(node, graph)
-    if not isinstance(qualified, PyDoughCollectionAST):
+    qualified: PyDoughQDAG = qualify_node(node, graph)
+    if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )

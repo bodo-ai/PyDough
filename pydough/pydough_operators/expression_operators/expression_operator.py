@@ -52,8 +52,8 @@ class PyDoughExpressionOperator(PyDoughOperator):
         string representation. This depends on what exactly the parent is.
 
         Args:
-            `parent`: the parent expression AST that contains this expression
-            AST as a child.
+            `parent`: the parent expression QDAG that contains this expression
+            QDAG as a child.
 
         Returns:
             True if the string representation of `parent` should enclose
@@ -73,6 +73,6 @@ class PyDoughExpressionOperator(PyDoughOperator):
             The type of the returned expression as a PyDoughType.
 
         Raises:
-            `PyDoughASTException` if `args` is invalid for this operator.
+            `PyDoughQDAGException` if `args` is invalid for this operator.
         """
         return self.deducer.infer_return_type(args)

@@ -64,7 +64,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
-from pydough.pydough_ast import PyDoughAST, PyDoughCollectionAST
+from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -614,11 +614,10 @@ def test_pipeline_until_relational(
     ],
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
-    sqlite_tpch_db_context: DatabaseContext,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
-    qualified AST version, with the correct string representation.
+    qualified DAG version, with the correct string representation.
     """
     # Run the query through the stages from unqualified node to qualified node
     # to relational tree, and confirm the tree string matches the expected
@@ -627,9 +626,9 @@ def test_pipeline_until_relational(
     graph: GraphMetadata = get_sample_graph("TPCH")
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughAST = qualify_node(unqualified, graph)
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
     assert isinstance(
-        qualified, PyDoughCollectionAST
+        qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
     relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
     assert (
@@ -642,7 +641,6 @@ def test_pipeline_e2e(
         Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
     ],
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     sqlite_tpch_db_context: DatabaseContext,
 ):
     """

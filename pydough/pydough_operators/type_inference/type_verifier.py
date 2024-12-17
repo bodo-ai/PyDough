@@ -10,7 +10,7 @@ from typing import Any
 
 class TypeVerifier(ABC):
     """
-    Base class for verifiers that take in a list of PyDough AST objects and
+    Base class for verifiers that take in a list of PyDough QDAG objects and
     either silently accepts them or rejects them by raising an exception.
 
     Each implementation class is expected to implement the `accepts` method.
@@ -31,7 +31,7 @@ class TypeVerifier(ABC):
             Whether the verifier accepts or rejects the arguments.
 
         Raises:
-            `PyDoughASTException`: if the arguments are rejected and
+            `PyDoughQDAGException`: if the arguments are rejected and
             `error_on_fail` is True.
         """
 
@@ -64,12 +64,12 @@ class RequireNumArgs(TypeVerifier):
         return self._num_args
 
     def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
-        from pydough.pydough_ast.errors import PyDoughASTException
+        from pydough.qdag.errors import PyDoughQDAGException
 
         if len(args) != self.num_args:
             if error_on_fail:
                 suffix = "argument" if self._num_args == 1 else "arguments"
-                raise PyDoughASTException(
+                raise PyDoughQDAGException(
                     f"Expected {self.num_args} {suffix}, received {len(args)}"
                 )
             return False
@@ -93,12 +93,12 @@ class RequireMinArgs(TypeVerifier):
         return self._min_args
 
     def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
-        from pydough.pydough_ast import PyDoughASTException
+        from pydough.qdag import PyDoughQDAGException
 
         if len(args) < self.min_args:
             if error_on_fail:
                 suffix = "argument" if self._min_args == 1 else "arguments"
-                raise PyDoughASTException(
+                raise PyDoughQDAGException(
                     f"Expected at least {self.min_args} {suffix}, received {len(args)}"
                 )
             return False

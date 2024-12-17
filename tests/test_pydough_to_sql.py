@@ -42,7 +42,7 @@ def test_pydough_to_sql(
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
-    qualified AST version, with the correct string representation.
+    qualified DAG version, with the correct string representation.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()

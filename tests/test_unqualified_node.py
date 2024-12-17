@@ -48,7 +48,7 @@ from pydough.unqualified import (
 def global_ctx() -> dict[str, object]:
     """
     A fresh global variable context including the various global variables
-    accessible within one of the unqualified AST tests, including PyDough
+    accessible within one of the unqualified node tests, including PyDough
     operator bindings and certain modules.
     """
     extra_vars: dict[str, object] = {}

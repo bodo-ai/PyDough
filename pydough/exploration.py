@@ -20,7 +20,7 @@ from .metadata.properties import (
     SubcollectionRelationshipMetadata,
     TableColumnMetadata,
 )
-from .pydough_ast import (
+from .qdag import (
     BackReferenceCollection,
     BackReferenceExpression,
     Calc,
@@ -32,10 +32,10 @@ from .pydough_ast import (
     OrderBy,
     PartitionBy,
     PartitionChild,
-    PyDoughAST,
-    PyDoughASTException,
-    PyDoughCollectionAST,
-    PyDoughExpressionAST,
+    PyDoughCollectionQDAG,
+    PyDoughExpressionQDAG,
+    PyDoughQDAG,
+    PyDoughQDAGException,
     Reference,
     SubCollection,
     TableCollection,
@@ -330,7 +330,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         An explanation of `node`.
     """
     lines: list[str] = []
-    qualified_node: PyDoughAST | None = None
+    qualified_node: PyDoughQDAG | None = None
 
     # Attempt to qualify the node, dumping an appropriate message if it could
     # not be qualified
@@ -345,7 +345,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                 f"Cannot call pydough.explain on {display_raw(node)}.\n"
                 "Did you mean to use pydough.explain_term?"
             )
-    except PyDoughASTException as e:
+    except PyDoughQDAGException as e:
         # If the qualification failed, dump an appropriate message indicating
         # why pydough_explain did not work on it.
         if "Unrecognized term" in str(e):
@@ -359,14 +359,14 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
             raise e
 
     # If the qualification succeeded, dump info about the qualified node.
-    if isinstance(qualified_node, PyDoughExpressionAST):
+    if isinstance(qualified_node, PyDoughExpressionQDAG):
         lines.append(
             "If pydough.explain is called on an unqualified PyDough code, it is expected to\n"
             "be a collection, but instead received the following expression:\n"
             f" {qualified_node.to_string()}\n"
             "Did you mean to use pydough.explain_term?"
         )
-    elif isinstance(qualified_node, PyDoughCollectionAST):
+    elif isinstance(qualified_node, PyDoughCollectionQDAG):
         if verbose:
             # Dump the structure of the collection
             lines.append("PyDough collection representing the following logic:")
@@ -425,7 +425,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                         )
                         for name in sorted(qualified_node.calc_terms):
                             suffix: str = ""
-                            expr: PyDoughExpressionAST = qualified_node.get_expr(name)
+                            expr: PyDoughExpressionQDAG = qualified_node.get_expr(name)
                             tree_string = expr.to_string(True)
                             regular_string = expr.to_string(False)
                             if tree_string != regular_string:
@@ -443,13 +443,13 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                         lines.append(
                             "The main task of this node is to filter on the following conditions:"
                         )
-                        conditions: list[PyDoughExpressionAST] = []
+                        conditions: list[PyDoughExpressionQDAG] = []
                         if (
                             isinstance(qualified_node.condition, ExpressionFunctionCall)
                             and qualified_node.condition.operator == pydop.BAN
                         ):
                             for arg in qualified_node.condition.args:
-                                assert isinstance(arg, PyDoughExpressionAST)
+                                assert isinstance(arg, PyDoughExpressionQDAG)
                                 conditions.append(arg)
                         else:
                             conditions.append(qualified_node.condition)
@@ -513,7 +513,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
 
             # Identify the number of BACK levels that are accessible
             back_counter: int = 0
-            copy_node: PyDoughCollectionAST = qualified_node
+            copy_node: PyDoughCollectionQDAG = qualified_node
             while copy_node.ancestor_context is not None:
                 back_counter += 1
                 copy_node = copy_node.ancestor_context
@@ -532,8 +532,8 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         expr_names: list[str] = []
         collection_names: list[str] = []
         for name in qualified_node.all_terms:
-            term: PyDoughAST = qualified_node.get_term(name)
-            if isinstance(term, PyDoughExpressionAST):
+            term: PyDoughQDAG = qualified_node.get_term(name)
+            if isinstance(term, PyDoughExpressionQDAG):
                 expr_names.append(name)
             else:
                 collection_names.append(name)
@@ -653,7 +653,7 @@ def explain_structure(graph: GraphMetadata) -> str:
 
 
 def collection_in_context_string(
-    context: PyDoughCollectionAST, collection: PyDoughCollectionAST
+    context: PyDoughCollectionQDAG, collection: PyDoughCollectionQDAG
 ) -> str:
     """
     Converts a collection in the context of another collection into a single
@@ -670,7 +670,7 @@ def collection_in_context_string(
         The desired string representation of context and collection combined.
     """
     if isinstance(collection, BackReferenceCollection):
-        ancestor: PyDoughCollectionAST = context
+        ancestor: PyDoughCollectionQDAG = context
         for _ in range(collection.back_levels):
             assert ancestor.ancestor_context is not None
             ancestor = ancestor.ancestor_context
@@ -718,7 +718,7 @@ def explain_term(
 
     lines: list[str] = []
     root: UnqualifiedRoot | None = find_unqualified_root(node)
-    qualified_node: PyDoughAST | None = None
+    qualified_node: PyDoughQDAG | None = None
 
     try:
         if root is None:
@@ -727,7 +727,7 @@ def explain_term(
             )
         else:
             qualified_node = qualify_node(node, root._parcel[0])
-    except PyDoughASTException as e:
+    except PyDoughQDAGException as e:
         if "Unrecognized term" in str(e):
             lines.append(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
@@ -738,14 +738,14 @@ def explain_term(
         else:
             raise e
 
-    if isinstance(qualified_node, PyDoughExpressionAST):
+    if isinstance(qualified_node, PyDoughExpressionQDAG):
         lines.append(
             "The first argument of pydough.explain_term is expected to be a collection, but"
         )
         lines.append("instead received the following expression:")
         lines.append(f" {qualified_node.to_string()}")
     elif qualified_node is not None and root is not None:
-        assert isinstance(qualified_node, PyDoughCollectionAST)
+        assert isinstance(qualified_node, PyDoughCollectionQDAG)
         new_children, qualified_term = qualify_term(
             qualified_node, term, root._parcel[0]
         )
@@ -770,13 +770,13 @@ def explain_term(
             lines.append("")
         # If the qualification succeeded, dump info about the qualified node,
         # depending on what its nature is:
-        if isinstance(qualified_term, PyDoughExpressionAST):
+        if isinstance(qualified_term, PyDoughExpressionQDAG):
             lines.append(
                 f"The term is the following expression: {qualified_term.to_string(True)}"
             )
             lines.append("")
-            collection: PyDoughCollectionAST = qualified_node
-            expr: PyDoughExpressionAST = qualified_term
+            collection: PyDoughCollectionQDAG = qualified_node
+            expr: PyDoughExpressionQDAG = qualified_term
             while True:
                 match expr:
                     case ChildReferenceExpression():
@@ -824,7 +824,7 @@ def explain_term(
                         elif (
                             expr.operator in (pydop.COUNT, pydop.NDISTINCT)
                             and len(expr.args) == 1
-                            and isinstance(expr.args[0], PyDoughCollectionAST)
+                            and isinstance(expr.args[0], PyDoughCollectionQDAG)
                         ):
                             metric: str = (
                                 "records"
@@ -837,7 +837,7 @@ def explain_term(
                         elif (
                             expr.operator in (pydop.HAS, pydop.HASNOT)
                             and len(expr.args) == 1
-                            and isinstance(expr.args[0], PyDoughCollectionAST)
+                            and isinstance(expr.args[0], PyDoughCollectionQDAG)
                         ):
                             predicate: str = (
                                 "has" if expr.operator == pydop.HAS else "does not have"
@@ -856,7 +856,7 @@ def explain_term(
                             )
                         for arg in expr.args:
                             assert isinstance(
-                                arg, (PyDoughCollectionAST, PyDoughExpressionAST)
+                                arg, (PyDoughCollectionQDAG, PyDoughExpressionQDAG)
                             )
                             lines.append(f"  {arg.to_string()}")
                         lines.append("")
@@ -885,7 +885,7 @@ def explain_term(
                         f"  {qualified_node.to_string()}(COUNT({qualified_term.to_string()}))"
                     )
         else:
-            assert isinstance(qualified_term, PyDoughCollectionAST)
+            assert isinstance(qualified_term, PyDoughCollectionQDAG)
             lines.append("The term is the following child of the collection:")
             if verbose:
                 for line in qualified_term.to_tree_string().splitlines():

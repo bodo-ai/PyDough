@@ -23,7 +23,7 @@ class ExpressionTypeDeducer(ABC):
         Returns the inferred expression type based on the input arguments.
 
         Raises:
-            `PyDoughASTException` if the arguments are invalid.
+            `PyDoughQDAGException` if the arguments are invalid.
         """
 
 
@@ -44,16 +44,16 @@ class SelectArgumentType(ExpressionTypeDeducer):
         return self._index
 
     def infer_return_type(self, args: list[Any]) -> PyDoughType:
-        from pydough.pydough_ast import PyDoughASTException, PyDoughExpressionAST
+        from pydough.qdag import PyDoughExpressionQDAG, PyDoughQDAGException
 
         msg: str = f"Cannot select type of argument {self.index!r} out of {args!r}"
         if self.index not in range(len(args)):
-            raise PyDoughASTException(msg)
+            raise PyDoughQDAGException(msg)
         arg = args[self.index]
-        if isinstance(arg, PyDoughExpressionAST):
+        if isinstance(arg, PyDoughExpressionQDAG):
             return arg.pydough_type
         else:
-            raise PyDoughASTException(msg)
+            raise PyDoughQDAGException(msg)
 
 
 class ConstantType(ExpressionTypeDeducer):

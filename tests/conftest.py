@@ -20,7 +20,7 @@ from pydough.database_connectors import (
     DatabaseDialect,
 )
 from pydough.metadata.graphs import GraphMetadata
-from pydough.pydough_ast import AstNodeBuilder
+from pydough.qdag import AstNodeBuilder
 
 
 @pytest.fixture
@@ -133,7 +133,7 @@ def sample_graphs(
 @pytest.fixture
 def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
     """
-    Builds an AST node builder using the TPCH graoh.
+    Builds a QDAG node builder using the TPCH graoh.
     """
     return AstNodeBuilder(get_sample_graph("TPCH"))
 

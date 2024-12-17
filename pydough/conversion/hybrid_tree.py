@@ -1,6 +1,6 @@
 """
 The definitions of the hybrid classes used as an intermediary representation
-during AST to Relational conversion, as well as the conversion logic from AST
+during QDAG to Relational conversion, as well as the conversion logic from QDAG
 nodes to said hybrid nodes.
 """
 
@@ -37,7 +37,7 @@ from pydough.metadata import (
     SimpleJoinMetadata,
     SubcollectionRelationshipMetadata,
 )
-from pydough.pydough_ast import (
+from pydough.qdag import (
     BackReferenceExpression,
     Calc,
     ChildOperator,
@@ -55,8 +55,8 @@ from pydough.pydough_ast import (
     PartitionBy,
     PartitionChild,
     PartitionKey,
-    PyDoughCollectionAST,
-    PyDoughExpressionAST,
+    PyDoughCollectionQDAG,
+    PyDoughExpressionQDAG,
     Reference,
     SubCollection,
     TableCollection,
@@ -831,7 +831,7 @@ class HybridTree:
     def is_hidden_level(self) -> bool:
         """
         True if the current level should be disregarded when converting
-        PyDoughAST BACK terms to HybridExpr BACK terms.
+        PyDoughQDAG BACK terms to HybridExpr BACK terms.
         """
         return self._is_hidden_level
 
@@ -938,7 +938,7 @@ class HybridTree:
 
 class HybridTranslator:
     """
-    Class used to translate PyDough AST nodes into the HybridTree structure.
+    Class used to translate PyDough QDAG nodes into the HybridTree structure.
     """
 
     def __init__(self, configs: PyDoughConfigs):
@@ -1028,7 +1028,7 @@ class HybridTranslator:
 
     @staticmethod
     def identify_connection_types(
-        expr: PyDoughExpressionAST,
+        expr: PyDoughExpressionQDAG,
         child_idx: int,
         reference_types: set[ConnectionType],
         inside_aggregation: bool = False,
@@ -1088,7 +1088,7 @@ class HybridTranslator:
                             # Otherwise, recursively check the arguments to the
                             # function, promoting `inside_aggregation` to True
                             # if the function is an aggfunc.
-                            assert isinstance(arg, PyDoughExpressionAST)
+                            assert isinstance(arg, PyDoughExpressionQDAG)
                             inside_aggregation = (
                                 inside_aggregation or expr.operator.is_aggregation
                             )
@@ -1112,7 +1112,7 @@ class HybridTranslator:
 
         Args:
             `hybrid`: the HybridTree having children added to it.
-            `child_operator`: the collection AST node (CALC, WHERE, etc.)
+            `child_operator`: the collection QDAG node (CALC, WHERE, etc.)
             containing the children.
             `child_idx_mapping`: a mapping of indices of children of the
             original `child_operator` to the indices of children of the hybrid
@@ -1152,11 +1152,11 @@ class HybridTranslator:
     def make_hybrid_agg_expr(
         self,
         hybrid: HybridTree,
-        expr: PyDoughExpressionAST,
+        expr: PyDoughExpressionQDAG,
         child_ref_mapping: dict[int, int],
     ) -> tuple[HybridExpr, int | None]:
         """
-        Converts an AST expression into a HybridExpr specifically with the
+        Converts a QDAG expression into a HybridExpr specifically with the
         intent of making it the input to an aggregation call. Returns the
         converted function argument, as well as an index indicating what child
         subtree the aggregation's arguments belong to. NOTE: the HybridExpr is
@@ -1167,7 +1167,7 @@ class HybridTranslator:
             `hybrid`: the hybrid tree that should be used to derive the
             translation of `expr`, as it is the context in which the `expr`
             will live.
-            `expr`: the AST expression to be converted.
+            `expr`: the QDAG expression to be converted.
             `child_ref_mapping`: mapping of indices used by child references
             in the original expressions to the index of the child hybrid tree
             relative to the current level.
@@ -1209,7 +1209,7 @@ class HybridTranslator:
                 # accumulated so far.
                 args: list[HybridExpr] = []
                 for arg in expr.args:
-                    if not isinstance(arg, PyDoughExpressionAST):
+                    if not isinstance(arg, PyDoughExpressionQDAG):
                         raise NotImplementedError(
                             f"TODO: support converting {arg.__class__.__name__} as a function argument"
                         )
@@ -1341,7 +1341,7 @@ class HybridTranslator:
             `hybrid`: the hybrid tree that should be used to derive the
             translation of `expr`, as it is the context in which the `expr`
             will live.
-            `expr`: the AST expression to be converted.
+            `expr`: the QDAG expression to be converted.
             `child_ref_mapping`: mapping of indices used by child references in
             the original expressions to the index of the child hybrid tree
             relative to the current level.
@@ -1411,17 +1411,17 @@ class HybridTranslator:
     def make_hybrid_expr(
         self,
         hybrid: HybridTree,
-        expr: PyDoughExpressionAST,
+        expr: PyDoughExpressionQDAG,
         child_ref_mapping: dict[int, int],
     ) -> HybridExpr:
         """
-        Converts an AST expression into a HybridExpr.
+        Converts a QDAG expression into a HybridExpr.
 
         Args:
             `hybrid`: the hybrid tree that should be used to derive the
             translation of `expr`, as it is the context in which the `expr`
             will live.
-            `expr`: the AST expression to be converted.
+            `expr`: the QDAG expression to be converted.
             `child_ref_mapping`: mapping of indices used by child references in
             the original expressions to the index of the child hybrid tree
             relative to the current level.
@@ -1488,7 +1488,7 @@ class HybridTranslator:
                 # such function that takes in a collection, as none currently
                 # exist that are not aggregations.
                 for arg in expr.args:
-                    if not isinstance(arg, PyDoughExpressionAST):
+                    if not isinstance(arg, PyDoughExpressionQDAG):
                         raise NotImplementedError(
                             "PyDough does not yet support converting collections as function arguments to a non-aggregation function"
                         )
@@ -1507,7 +1507,7 @@ class HybridTranslator:
                 child_idx: int | None = None
                 arg_child_idx: int | None = None
                 for arg in expr.args:
-                    if isinstance(arg, PyDoughExpressionAST):
+                    if isinstance(arg, PyDoughExpressionQDAG):
                         hybrid_arg, arg_child_idx = self.make_hybrid_agg_expr(
                             hybrid, arg, child_ref_mapping
                         )
@@ -1596,13 +1596,13 @@ class HybridTranslator:
         return new_expressions, hybrid_orderings
 
     def make_hybrid_tree(
-        self, node: PyDoughCollectionAST, parent: HybridTree | None = None
+        self, node: PyDoughCollectionQDAG, parent: HybridTree | None = None
     ) -> HybridTree:
         """
-        Converts a collection AST into the HybridTree format.
+        Converts a collection QDAG into the HybridTree format.
 
         Args:
-            `node`: the collection AST to be converted.
+            `node`: the collection QDAG to be converted.
             `parent`: optional hybrid tree of the parent context that `node` is
             a child of.
 

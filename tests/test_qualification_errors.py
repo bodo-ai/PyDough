@@ -1,6 +1,6 @@
 """
 Error-handling unit tests the PyDough qualification process that transforms
-unqualified nodes into qualified AST nodes.
+unqualified nodes into qualified DAG nodes.
 """
 
 import re
