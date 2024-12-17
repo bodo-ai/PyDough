@@ -282,3 +282,31 @@ def convert_ndistinct(
     return sqlglot_expressions.Count(
         this=sqlglot_expressions.Distinct(expressions=[column])
     )
+
+
+def convert_if(
+    arguments: list[SQLGlotExpression], dialect: SQLGlotDialect
+) -> SQLGlotExpression:
+    """
+    Converts an IFF call expression to a SQLGlot expression. This is done
+    because older versions of SQLite (such as those in github codespaces)
+    require the use of the CASE statement.
+
+    Args:
+        arguments (list[SQLGlotExpression]): The list of arguments.
+        dialect (SQLGlotDialect): The dialect to use for the conversion.
+
+    Returns:
+        SQLGlotExpression: The SQLGlot expression matching the functionality.
+    """
+    if isinstance(dialect, SQLiteDialect):
+        import sqlite3
+
+        if sqlite3.sqlite_version < "3.32":
+            # TODO: Enable an explicit test via an environment variable.
+            return (
+                sqlglot_expressions.Case()
+                .when(arguments[0], arguments[1])
+                .else_(arguments[2])
+            )
+    return sqlglot_expressions.If(*arguments)
