@@ -36,7 +36,7 @@ def parse_type_from_string(type_string: str) -> PyDoughType:
 
     Raises:
         `PyDoughTypeException` if the string does not correspond to any
-        PyDough type.s
+        PyDough type.
     """
     type_classes: MutableSequence[type[PyDoughType]] = [
         BinaryType,
