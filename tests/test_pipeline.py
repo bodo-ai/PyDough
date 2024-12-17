@@ -83,7 +83,7 @@ pytestmark = [pytest.mark.execute]
             (
                 impl_tpch_q1,
                 """
-ROOT(columns=[('L_RETURNFLAG', L_RETURNFLAG), ('L_LINESTATUS', L_LINESTATUS), ('SUM_QTY', SUM_QTY), ('SUM_BASE_PRICE', SUM_BASE_PRICE), ('SUM_DISC_PRICE', SUM_DISC_PRICE), ('SUM_CHARGE', SUM_CHARGE), ('AVG_QTY', AVG_QTY), ('AVG_PRICE', AVG_PRICE), ('AVG_DISC', AVG_DISC), ('COUNT_ORDER', COUNT_ORDER)], orderings=[(ordering_8):asc_last, (ordering_9):asc_last])
+ROOT(columns=[('L_RETURNFLAG', L_RETURNFLAG), ('L_LINESTATUS', L_LINESTATUS), ('SUM_QTY', SUM_QTY), ('SUM_BASE_PRICE', SUM_BASE_PRICE), ('SUM_DISC_PRICE', SUM_DISC_PRICE), ('SUM_CHARGE', SUM_CHARGE), ('AVG_QTY', AVG_QTY), ('AVG_PRICE', AVG_PRICE), ('AVG_DISC', AVG_DISC), ('COUNT_ORDER', COUNT_ORDER)], orderings=[(ordering_8):asc_first, (ordering_9):asc_first])
  PROJECT(columns={'AVG_DISC': AVG_DISC, 'AVG_PRICE': AVG_PRICE, 'AVG_QTY': AVG_QTY, 'COUNT_ORDER': COUNT_ORDER, 'L_LINESTATUS': L_LINESTATUS, 'L_RETURNFLAG': L_RETURNFLAG, 'SUM_BASE_PRICE': SUM_BASE_PRICE, 'SUM_CHARGE': SUM_CHARGE, 'SUM_DISC_PRICE': SUM_DISC_PRICE, 'SUM_QTY': SUM_QTY, 'ordering_8': L_RETURNFLAG, 'ordering_9': L_LINESTATUS})
   PROJECT(columns={'AVG_DISC': agg_0, 'AVG_PRICE': agg_1, 'AVG_QTY': agg_2, 'COUNT_ORDER': DEFAULT_TO(agg_3, 0:int64), 'L_LINESTATUS': status, 'L_RETURNFLAG': return_flag, 'SUM_BASE_PRICE': DEFAULT_TO(agg_4, 0:int64), 'SUM_CHARGE': DEFAULT_TO(agg_5, 0:int64), 'SUM_DISC_PRICE': DEFAULT_TO(agg_6, 0:int64), 'SUM_QTY': DEFAULT_TO(agg_7, 0:int64)})
    AGGREGATE(keys={'return_flag': return_flag, 'status': status}, aggregations={'agg_0': AVG(discount), 'agg_1': AVG(extended_price), 'agg_2': AVG(quantity), 'agg_3': COUNT(), 'agg_4': SUM(extended_price), 'agg_5': SUM(extended_price * 1:int64 - discount * 1:int64 + tax), 'agg_6': SUM(extended_price * 1:int64 - discount), 'agg_7': SUM(quantity)})
@@ -97,8 +97,8 @@ ROOT(columns=[('L_RETURNFLAG', L_RETURNFLAG), ('L_LINESTATUS', L_LINESTATUS), ('
             (
                 impl_tpch_q2,
                 """
-ROOT(columns=[('S_ACCTBAL', S_ACCTBAL), ('S_NAME', S_NAME), ('N_NAME', N_NAME), ('P_PARTKEY', P_PARTKEY), ('P_MFGR', P_MFGR), ('S_ADDRESS', S_ADDRESS), ('S_PHONE', S_PHONE), ('S_COMMENT', S_COMMENT)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'N_NAME': N_NAME, 'P_MFGR': P_MFGR, 'P_PARTKEY': P_PARTKEY, 'S_ACCTBAL': S_ACCTBAL, 'S_ADDRESS': S_ADDRESS, 'S_COMMENT': S_COMMENT, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'ordering_4': ordering_4}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
+ROOT(columns=[('S_ACCTBAL', S_ACCTBAL), ('S_NAME', S_NAME), ('N_NAME', N_NAME), ('P_PARTKEY', P_PARTKEY), ('P_MFGR', P_MFGR), ('S_ADDRESS', S_ADDRESS), ('S_PHONE', S_PHONE), ('S_COMMENT', S_COMMENT)], orderings=[(ordering_1):desc_last, (ordering_2):asc_first, (ordering_3):asc_first, (ordering_4):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'N_NAME': N_NAME, 'P_MFGR': P_MFGR, 'P_PARTKEY': P_PARTKEY, 'S_ACCTBAL': S_ACCTBAL, 'S_ADDRESS': S_ADDRESS, 'S_COMMENT': S_COMMENT, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'ordering_4': ordering_4}, orderings=[(ordering_1):desc_last, (ordering_2):asc_first, (ordering_3):asc_first, (ordering_4):asc_first])
   PROJECT(columns={'N_NAME': N_NAME, 'P_MFGR': P_MFGR, 'P_PARTKEY': P_PARTKEY, 'S_ACCTBAL': S_ACCTBAL, 'S_ADDRESS': S_ADDRESS, 'S_COMMENT': S_COMMENT, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'ordering_1': S_ACCTBAL, 'ordering_2': N_NAME, 'ordering_3': S_NAME, 'ordering_4': P_PARTKEY})
    PROJECT(columns={'N_NAME': n_name, 'P_MFGR': manufacturer, 'P_PARTKEY': key_19, 'S_ACCTBAL': s_acctbal, 'S_ADDRESS': s_address, 'S_COMMENT': s_comment, 'S_NAME': s_name, 'S_PHONE': s_phone})
     FILTER(condition=supplycost_21 == best_cost & ENDSWITH(part_type, 'BRASS':string) & size == 15:int64, columns={'key_19': key_19, 'manufacturer': manufacturer, 'n_name': n_name, 's_acctbal': s_acctbal, 's_address': s_address, 's_comment': s_comment, 's_name': s_name, 's_phone': s_phone})
@@ -136,8 +136,8 @@ ROOT(columns=[('S_ACCTBAL', S_ACCTBAL), ('S_NAME', S_NAME), ('N_NAME', N_NAME), 
             (
                 impl_tpch_q3,
                 """
-ROOT(columns=[('L_ORDERKEY', L_ORDERKEY), ('REVENUE', REVENUE), ('O_ORDERDATE', O_ORDERDATE), ('O_SHIPPRIORITY', O_SHIPPRIORITY)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'L_ORDERKEY': L_ORDERKEY, 'O_ORDERDATE': O_ORDERDATE, 'O_SHIPPRIORITY': O_SHIPPRIORITY, 'REVENUE': REVENUE, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last])
+ROOT(columns=[('L_ORDERKEY', L_ORDERKEY), ('REVENUE', REVENUE), ('O_ORDERDATE', O_ORDERDATE), ('O_SHIPPRIORITY', O_SHIPPRIORITY)], orderings=[(ordering_1):desc_last, (ordering_2):asc_first, (ordering_3):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'L_ORDERKEY': L_ORDERKEY, 'O_ORDERDATE': O_ORDERDATE, 'O_SHIPPRIORITY': O_SHIPPRIORITY, 'REVENUE': REVENUE, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3}, orderings=[(ordering_1):desc_last, (ordering_2):asc_first, (ordering_3):asc_first])
   PROJECT(columns={'L_ORDERKEY': L_ORDERKEY, 'O_ORDERDATE': O_ORDERDATE, 'O_SHIPPRIORITY': O_SHIPPRIORITY, 'REVENUE': REVENUE, 'ordering_1': REVENUE, 'ordering_2': O_ORDERDATE, 'ordering_3': L_ORDERKEY})
    PROJECT(columns={'L_ORDERKEY': order_key, 'O_ORDERDATE': order_date, 'O_SHIPPRIORITY': ship_priority, 'REVENUE': DEFAULT_TO(agg_0, 0:int64)})
     AGGREGATE(keys={'order_date': order_date, 'order_key': order_key, 'ship_priority': ship_priority}, aggregations={'agg_0': SUM(extended_price * 1:int64 - discount)})
@@ -157,7 +157,7 @@ ROOT(columns=[('L_ORDERKEY', L_ORDERKEY), ('REVENUE', REVENUE), ('O_ORDERDATE', 
             (
                 impl_tpch_q4,
                 """
-ROOT(columns=[('O_ORDERPRIORITY', O_ORDERPRIORITY), ('ORDER_COUNT', ORDER_COUNT)], orderings=[(ordering_1):asc_last])
+ROOT(columns=[('O_ORDERPRIORITY', O_ORDERPRIORITY), ('ORDER_COUNT', ORDER_COUNT)], orderings=[(ordering_1):asc_first])
  PROJECT(columns={'ORDER_COUNT': ORDER_COUNT, 'O_ORDERPRIORITY': O_ORDERPRIORITY, 'ordering_1': O_ORDERPRIORITY})
   PROJECT(columns={'ORDER_COUNT': DEFAULT_TO(agg_0, 0:int64), 'O_ORDERPRIORITY': order_priority})
    AGGREGATE(keys={'order_priority': order_priority}, aggregations={'agg_0': COUNT()})
@@ -200,7 +200,7 @@ ROOT(columns=[('REVENUE', REVENUE)], orderings=[])
             (
                 impl_tpch_q7,
                 """
-ROOT(columns=[('SUPP_NATION', SUPP_NATION), ('CUST_NATION', CUST_NATION), ('L_YEAR', L_YEAR), ('REVENUE', REVENUE)], orderings=[(ordering_1):asc_last, (ordering_2):asc_last, (ordering_3):asc_last])
+ROOT(columns=[('SUPP_NATION', SUPP_NATION), ('CUST_NATION', CUST_NATION), ('L_YEAR', L_YEAR), ('REVENUE', REVENUE)], orderings=[(ordering_1):asc_first, (ordering_2):asc_first, (ordering_3):asc_first])
  PROJECT(columns={'CUST_NATION': CUST_NATION, 'L_YEAR': L_YEAR, 'REVENUE': REVENUE, 'SUPP_NATION': SUPP_NATION, 'ordering_1': SUPP_NATION, 'ordering_2': CUST_NATION, 'ordering_3': L_YEAR})
   PROJECT(columns={'CUST_NATION': cust_nation, 'L_YEAR': l_year, 'REVENUE': DEFAULT_TO(agg_0, 0:int64), 'SUPP_NATION': supp_nation})
    AGGREGATE(keys={'cust_nation': cust_nation, 'l_year': l_year, 'supp_nation': supp_nation}, aggregations={'agg_0': SUM(volume)})
@@ -259,8 +259,8 @@ ROOT(columns=[('O_YEAR', O_YEAR), ('MKT_SHARE', MKT_SHARE)], orderings=[])
             (
                 impl_tpch_q9,
                 """
-ROOT(columns=[('NATION', NATION), ('O_YEAR', O_YEAR), ('AMOUNT', AMOUNT)], orderings=[(ordering_1):asc_last, (ordering_2):desc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'AMOUNT': AMOUNT, 'NATION': NATION, 'O_YEAR': O_YEAR, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):asc_last, (ordering_2):desc_last])
+ROOT(columns=[('NATION', NATION), ('O_YEAR', O_YEAR), ('AMOUNT', AMOUNT)], orderings=[(ordering_1):asc_first, (ordering_2):desc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'AMOUNT': AMOUNT, 'NATION': NATION, 'O_YEAR': O_YEAR, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):asc_first, (ordering_2):desc_last])
   PROJECT(columns={'AMOUNT': AMOUNT, 'NATION': NATION, 'O_YEAR': O_YEAR, 'ordering_1': NATION, 'ordering_2': O_YEAR})
    PROJECT(columns={'AMOUNT': DEFAULT_TO(agg_0, 0:int64), 'NATION': nation, 'O_YEAR': o_year})
     AGGREGATE(keys={'nation': nation, 'o_year': o_year}, aggregations={'agg_0': SUM(value)})
@@ -286,8 +286,8 @@ ROOT(columns=[('NATION', NATION), ('O_YEAR', O_YEAR), ('AMOUNT', AMOUNT)], order
             (
                 impl_tpch_q10,
                 """
-ROOT(columns=[('C_CUSTKEY', C_CUSTKEY), ('C_NAME', C_NAME), ('REVENUE', REVENUE), ('C_ACCTBAL', C_ACCTBAL), ('N_NAME', N_NAME), ('C_ADDRESS', C_ADDRESS), ('C_PHONE', C_PHONE), ('C_COMMENT', C_COMMENT)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
- LIMIT(limit=Literal(value=20, type=Int64Type()), columns={'C_ACCTBAL': C_ACCTBAL, 'C_ADDRESS': C_ADDRESS, 'C_COMMENT': C_COMMENT, 'C_CUSTKEY': C_CUSTKEY, 'C_NAME': C_NAME, 'C_PHONE': C_PHONE, 'N_NAME': N_NAME, 'REVENUE': REVENUE, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
+ROOT(columns=[('C_CUSTKEY', C_CUSTKEY), ('C_NAME', C_NAME), ('REVENUE', REVENUE), ('C_ACCTBAL', C_ACCTBAL), ('N_NAME', N_NAME), ('C_ADDRESS', C_ADDRESS), ('C_PHONE', C_PHONE), ('C_COMMENT', C_COMMENT)], orderings=[(ordering_1):desc_last, (ordering_2):asc_first])
+ LIMIT(limit=Literal(value=20, type=Int64Type()), columns={'C_ACCTBAL': C_ACCTBAL, 'C_ADDRESS': C_ADDRESS, 'C_COMMENT': C_COMMENT, 'C_CUSTKEY': C_CUSTKEY, 'C_NAME': C_NAME, 'C_PHONE': C_PHONE, 'N_NAME': N_NAME, 'REVENUE': REVENUE, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):desc_last, (ordering_2):asc_first])
   PROJECT(columns={'C_ACCTBAL': C_ACCTBAL, 'C_ADDRESS': C_ADDRESS, 'C_COMMENT': C_COMMENT, 'C_CUSTKEY': C_CUSTKEY, 'C_NAME': C_NAME, 'C_PHONE': C_PHONE, 'N_NAME': N_NAME, 'REVENUE': REVENUE, 'ordering_1': REVENUE, 'ordering_2': C_CUSTKEY})
    PROJECT(columns={'C_ACCTBAL': acctbal, 'C_ADDRESS': address, 'C_COMMENT': comment, 'C_CUSTKEY': key, 'C_NAME': name, 'C_PHONE': phone, 'N_NAME': name_4, 'REVENUE': DEFAULT_TO(agg_0, 0:int64)})
     JOIN(conditions=[t0.nation_key == t1.key], types=['left'], columns={'acctbal': t0.acctbal, 'address': t0.address, 'agg_0': t0.agg_0, 'comment': t0.comment, 'key': t0.key, 'name': t0.name, 'name_4': t1.name, 'phone': t0.phone})
@@ -342,7 +342,7 @@ ROOT(columns=[('PS_PARTKEY', PS_PARTKEY), ('VALUE', VALUE)], orderings=[(orderin
             (
                 impl_tpch_q12,
                 """
-ROOT(columns=[('L_SHIPMODE', L_SHIPMODE), ('HIGH_LINE_COUNT', HIGH_LINE_COUNT), ('LOW_LINE_COUNT', LOW_LINE_COUNT)], orderings=[(ordering_2):asc_last])
+ROOT(columns=[('L_SHIPMODE', L_SHIPMODE), ('HIGH_LINE_COUNT', HIGH_LINE_COUNT), ('LOW_LINE_COUNT', LOW_LINE_COUNT)], orderings=[(ordering_2):asc_first])
  PROJECT(columns={'HIGH_LINE_COUNT': HIGH_LINE_COUNT, 'LOW_LINE_COUNT': LOW_LINE_COUNT, 'L_SHIPMODE': L_SHIPMODE, 'ordering_2': L_SHIPMODE})
   PROJECT(columns={'HIGH_LINE_COUNT': DEFAULT_TO(agg_0, 0:int64), 'LOW_LINE_COUNT': DEFAULT_TO(agg_1, 0:int64), 'L_SHIPMODE': ship_mode})
    AGGREGATE(keys={'ship_mode': ship_mode}, aggregations={'agg_0': SUM(is_high_priority), 'agg_1': SUM(NOT(is_high_priority))})
@@ -405,7 +405,7 @@ ROOT(columns=[('PROMO_REVENUE', PROMO_REVENUE)], orderings=[])
             (
                 impl_tpch_q15,
                 """
-ROOT(columns=[('S_SUPPKEY', S_SUPPKEY), ('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS), ('S_PHONE', S_PHONE), ('TOTAL_REVENUE', TOTAL_REVENUE)], orderings=[(ordering_3):asc_last])
+ROOT(columns=[('S_SUPPKEY', S_SUPPKEY), ('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS), ('S_PHONE', S_PHONE), ('TOTAL_REVENUE', TOTAL_REVENUE)], orderings=[(ordering_3):asc_first])
  PROJECT(columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'S_SUPPKEY': S_SUPPKEY, 'TOTAL_REVENUE': TOTAL_REVENUE, 'ordering_3': S_SUPPKEY})
   FILTER(condition=TOTAL_REVENUE == max_revenue, columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'S_SUPPKEY': S_SUPPKEY, 'TOTAL_REVENUE': TOTAL_REVENUE})
    PROJECT(columns={'S_ADDRESS': address, 'S_NAME': name, 'S_PHONE': phone, 'S_SUPPKEY': key, 'TOTAL_REVENUE': DEFAULT_TO(agg_2, 0:int64), 'max_revenue': max_revenue})
@@ -432,8 +432,8 @@ ROOT(columns=[('S_SUPPKEY', S_SUPPKEY), ('S_NAME', S_NAME), ('S_ADDRESS', S_ADDR
             (
                 impl_tpch_q16,
                 """
-ROOT(columns=[('P_BRAND', P_BRAND), ('P_TYPE', P_TYPE), ('P_SIZE', P_SIZE), ('SUPPLIER_COUNT', SUPPLIER_COUNT)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'P_BRAND': P_BRAND, 'P_SIZE': P_SIZE, 'P_TYPE': P_TYPE, 'SUPPLIER_COUNT': SUPPLIER_COUNT, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'ordering_4': ordering_4}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last, (ordering_3):asc_last, (ordering_4):asc_last])
+ROOT(columns=[('P_BRAND', P_BRAND), ('P_TYPE', P_TYPE), ('P_SIZE', P_SIZE), ('SUPPLIER_COUNT', SUPPLIER_COUNT)], orderings=[(ordering_1):desc_last, (ordering_2):asc_first, (ordering_3):asc_first, (ordering_4):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'P_BRAND': P_BRAND, 'P_SIZE': P_SIZE, 'P_TYPE': P_TYPE, 'SUPPLIER_COUNT': SUPPLIER_COUNT, 'ordering_1': ordering_1, 'ordering_2': ordering_2, 'ordering_3': ordering_3, 'ordering_4': ordering_4}, orderings=[(ordering_1):desc_last, (ordering_2):asc_first, (ordering_3):asc_first, (ordering_4):asc_first])
   PROJECT(columns={'P_BRAND': P_BRAND, 'P_SIZE': P_SIZE, 'P_TYPE': P_TYPE, 'SUPPLIER_COUNT': SUPPLIER_COUNT, 'ordering_1': SUPPLIER_COUNT, 'ordering_2': P_BRAND, 'ordering_3': P_TYPE, 'ordering_4': P_SIZE})
    PROJECT(columns={'P_BRAND': p_brand, 'P_SIZE': p_size, 'P_TYPE': p_type, 'SUPPLIER_COUNT': agg_0})
     AGGREGATE(keys={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type}, aggregations={'agg_0': NDISTINCT(supplier_key)})
@@ -475,8 +475,8 @@ ROOT(columns=[('AVG_YEARLY', AVG_YEARLY)], orderings=[])
             (
                 impl_tpch_q18,
                 """
-ROOT(columns=[('C_NAME', C_NAME), ('C_CUSTKEY', C_CUSTKEY), ('O_ORDERKEY', O_ORDERKEY), ('O_ORDERDATE', O_ORDERDATE), ('O_TOTALPRICE', O_TOTALPRICE), ('TOTAL_QUANTITY', TOTAL_QUANTITY)], orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'C_CUSTKEY': C_CUSTKEY, 'C_NAME': C_NAME, 'O_ORDERDATE': O_ORDERDATE, 'O_ORDERKEY': O_ORDERKEY, 'O_TOTALPRICE': O_TOTALPRICE, 'TOTAL_QUANTITY': TOTAL_QUANTITY, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):desc_last, (ordering_2):asc_last])
+ROOT(columns=[('C_NAME', C_NAME), ('C_CUSTKEY', C_CUSTKEY), ('O_ORDERKEY', O_ORDERKEY), ('O_ORDERDATE', O_ORDERDATE), ('O_TOTALPRICE', O_TOTALPRICE), ('TOTAL_QUANTITY', TOTAL_QUANTITY)], orderings=[(ordering_1):desc_last, (ordering_2):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'C_CUSTKEY': C_CUSTKEY, 'C_NAME': C_NAME, 'O_ORDERDATE': O_ORDERDATE, 'O_ORDERKEY': O_ORDERKEY, 'O_TOTALPRICE': O_TOTALPRICE, 'TOTAL_QUANTITY': TOTAL_QUANTITY, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):desc_last, (ordering_2):asc_first])
   PROJECT(columns={'C_CUSTKEY': C_CUSTKEY, 'C_NAME': C_NAME, 'O_ORDERDATE': O_ORDERDATE, 'O_ORDERKEY': O_ORDERKEY, 'O_TOTALPRICE': O_TOTALPRICE, 'TOTAL_QUANTITY': TOTAL_QUANTITY, 'ordering_1': O_TOTALPRICE, 'ordering_2': O_ORDERDATE})
    FILTER(condition=TOTAL_QUANTITY > 300:int64, columns={'C_CUSTKEY': C_CUSTKEY, 'C_NAME': C_NAME, 'O_ORDERDATE': O_ORDERDATE, 'O_ORDERKEY': O_ORDERKEY, 'O_TOTALPRICE': O_TOTALPRICE, 'TOTAL_QUANTITY': TOTAL_QUANTITY})
     PROJECT(columns={'C_CUSTKEY': key_2, 'C_NAME': name, 'O_ORDERDATE': order_date, 'O_ORDERKEY': key, 'O_TOTALPRICE': total_price, 'TOTAL_QUANTITY': DEFAULT_TO(agg_0, 0:int64)})
@@ -511,8 +511,8 @@ ROOT(columns=[('REVENUE', REVENUE)], orderings=[])
             (
                 impl_tpch_q20,
                 """
-ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(ordering_2):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'ordering_2': ordering_2}, orderings=[(ordering_2):asc_last])
+ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(ordering_2):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'ordering_2': ordering_2}, orderings=[(ordering_2):asc_first])
   PROJECT(columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'ordering_2': S_NAME})
    FILTER(condition=name_3 == 'CANADA':string & DEFAULT_TO(agg_1, 0:int64) > 0:int64, columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME})
     JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'S_ADDRESS': t0.S_ADDRESS, 'S_NAME': t0.S_NAME, 'agg_1': t1.agg_1, 'name_3': t0.name_3})
@@ -558,8 +558,8 @@ ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(orderin
             (
                 simple_scan_top_five,
                 """
-ROOT(columns=[('key', key)], orderings=[(ordering_0):asc_last])
- LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_last])
+ROOT(columns=[('key', key)], orderings=[(ordering_0):asc_first])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_first])
   PROJECT(columns={'key': key, 'ordering_0': key})
    SCAN(table=tpch.ORDERS, columns={'key': o_orderkey})
 """,

@@ -1144,7 +1144,7 @@ PyDough collection representing the following logic:
   ──┬─ TPCH
     ├─── TableCollection[Nations]
     ├─── Calc[name=name]
-    └─┬─ OrderBy[COUNT($1).DESC(na_pos='last'), name.ASC(na_pos='last')]
+    └─┬─ OrderBy[COUNT($1).DESC(na_pos='last'), name.ASC(na_pos='first')]
       └─┬─ AccessChild
         └─── SubCollection[suppliers]
 
@@ -1154,7 +1154,7 @@ This node first derives the following children before doing its main task:
 
 The main task of this node is to sort the collection on the following:
   COUNT($1), aka COUNT(suppliers), in descending order with nulls at the end
-  with ties broken by: name, in ascending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the start
 
 The following terms will be included in the result if this collection is executed:
   name
@@ -1176,7 +1176,7 @@ This node first derives the following children before doing its main task:
 
 The main task of this node is to sort the collection on the following:
   COUNT($1), aka COUNT(suppliers), in descending order with nulls at the end
-  with ties broken by: name, in ascending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the start
 
 The collection has access to the following expressions:
   comment, key, name, region_key
@@ -1203,11 +1203,11 @@ PyDough collection representing the following logic:
     ├─┬─ Calc[name=name, n_suppliers=COUNT($1)]
     │ └─┬─ AccessChild
     │   └─── SubCollection[suppliers_of_part]
-    └─── TopK[100, n_suppliers.DESC(na_pos='last'), name.ASC(na_pos='last')]
+    └─── TopK[100, n_suppliers.DESC(na_pos='last'), name.ASC(na_pos='first')]
 
 The main task of this node is to sort the collection on the following and keep the first 100 records:
   n_suppliers, in descending order with nulls at the end
-  with ties broken by: name, in ascending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the start
 
 The following terms will be included in the result if this collection is executed:
   n_suppliers, name
@@ -1226,7 +1226,7 @@ expressions or collections that the collection has access to.
                 """
 The main task of this node is to sort the collection on the following and keep the first 100 records:
   n_suppliers, in descending order with nulls at the end
-  with ties broken by: name, in ascending order with nulls at the end
+  with ties broken by: name, in ascending order with nulls at the start
 
 The collection has access to the following expressions:
   brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size

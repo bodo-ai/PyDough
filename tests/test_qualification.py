@@ -620,7 +620,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[l_returnflag=return_flag, l_linestatus=status, sum_qty=SUM($1.quantity), sum_base_price=SUM($1.extended_price), sum_disc_price=SUM($1.extended_price * (1 - $1.discount)), sum_charge=SUM(($1.extended_price * (1 - $1.discount)) * (1 + $1.tax)), avg_qty=AVG($1.quantity), avg_price=AVG($1.extended_price), avg_disc=AVG($1.discount), count_order=COUNT($1)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
-            "└─── OrderBy[return_flag.ASC(na_pos='last'), status.ASC(na_pos='last')]",
+            "└─── OrderBy[return_flag.ASC(na_pos='first'), status.ASC(na_pos='first')]",
             id="tpch_q1",
         ),
         pytest.param(
@@ -643,7 +643,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  ├─── PartitionChild[p]\n"
             "  ├─── Where[supplycost == BACK(1).best_cost]\n"
             "  ├─── Calc[s_acctbal=s_acctbal, s_name=s_name, n_name=n_name, p_partkey=key, p_mfgr=manufacturer, s_address=s_address, s_phone=s_phone, s_comment=s_comment]\n"
-            "  └─── TopK[10, s_acctbal.DESC(na_pos='last'), n_name.ASC(na_pos='last'), s_name.ASC(na_pos='last'), p_partkey.ASC(na_pos='last')]",
+            "  └─── TopK[10, s_acctbal.DESC(na_pos='last'), n_name.ASC(na_pos='first'), s_name.ASC(na_pos='first'), p_partkey.ASC(na_pos='first')]",
             id="tpch_q2",
         ),
         pytest.param(
@@ -661,7 +661,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[l_orderkey=order_key, revenue=SUM($1.extended_price * (1 - $1.discount)), o_orderdate=order_date, o_shippriority=ship_priority]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
-            "└─── TopK[10, revenue.DESC(na_pos='last'), o_orderdate.ASC(na_pos='last'), l_orderkey.ASC(na_pos='last')]",
+            "└─── TopK[10, revenue.DESC(na_pos='last'), o_orderdate.ASC(na_pos='first'), l_orderkey.ASC(na_pos='first')]",
             id="tpch_q3",
         ),
         pytest.param(
@@ -677,7 +677,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[o_orderpriority=order_priority, order_count=COUNT($1)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[o]\n"
-            "└─── OrderBy[order_priority.ASC(na_pos='last')]",
+            "└─── OrderBy[order_priority.ASC(na_pos='first')]",
             id="tpch_q4",
         ),
         pytest.param(
@@ -729,7 +729,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[supp_nation=supp_nation, cust_nation=cust_nation, l_year=l_year, revenue=SUM($1.volume)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
-            "└─── OrderBy[supp_nation.ASC(na_pos='last'), cust_nation.ASC(na_pos='last'), l_year.ASC(na_pos='last')]",
+            "└─── OrderBy[supp_nation.ASC(na_pos='first'), cust_nation.ASC(na_pos='first'), l_year.ASC(na_pos='first')]",
             id="tpch_q7",
         ),
         pytest.param(
@@ -775,7 +775,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[nation=nation, o_year=o_year, amount=SUM($1.value)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
-            "└─── TopK[10, nation.ASC(na_pos='last'), o_year.DESC(na_pos='last')]",
+            "└─── TopK[10, nation.ASC(na_pos='first'), o_year.DESC(na_pos='last')]",
             id="tpch_q9",
         ),
         pytest.param(
@@ -791,7 +791,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │ │   └─── Calc[amt=extended_price * (1 - discount)]\n"
             "  │ └─┬─ AccessChild\n"
             "  │   └─── SubCollection[nation]\n"
-            "  └─── TopK[20, revenue.DESC(na_pos='last'), c_custkey.ASC(na_pos='last')]",
+            "  └─── TopK[20, revenue.DESC(na_pos='last'), c_custkey.ASC(na_pos='first')]",
             id="tpch_q10",
         ),
         pytest.param(
@@ -833,7 +833,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[l_shipmode=ship_mode, high_line_count=SUM($1.is_high_priority), low_line_count=SUM(NOT($1.is_high_priority))]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[l]\n"
-            "└─── OrderBy[ship_mode.ASC(na_pos='last')]",
+            "└─── OrderBy[ship_mode.ASC(na_pos='first')]",
             id="tpch_q12",
         ),
         pytest.param(
@@ -880,7 +880,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │   ├─── SubCollection[lines]\n"
             "  │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]\n"
             "  ├─── Where[total_revenue == BACK(1).max_revenue]\n"
-            "  └─── OrderBy[s_suppkey.ASC(na_pos='last')]",
+            "  └─── OrderBy[s_suppkey.ASC(na_pos='first')]",
             id="tpch_q15",
         ),
         pytest.param(
@@ -898,7 +898,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "├─┬─ Calc[p_brand=p_brand, p_type=p_type, p_size=p_size, supplier_count=NDISTINCT($1.supplier_key)]\n"
             "│ └─┬─ AccessChild\n"
             "│   └─── PartitionChild[ps]\n"
-            "└─── TopK[10, supplier_count.DESC(na_pos='last'), p_brand.ASC(na_pos='last'), p_type.ASC(na_pos='last')]",
+            "└─── TopK[10, supplier_count.DESC(na_pos='last'), p_brand.ASC(na_pos='first'), p_type.ASC(na_pos='first')]",
             id="tpch_q16",
         ),
         pytest.param(
@@ -925,7 +925,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │ └─┬─ AccessChild\n"
             "  │   └─── SubCollection[lines]\n"
             "  ├─── Where[total_quantity > 300]\n"
-            "  └─── TopK[10, o_totalprice.DESC(na_pos='last'), o_orderdate.ASC(na_pos='last')]",
+            "  └─── TopK[10, o_totalprice.DESC(na_pos='last'), o_orderdate.ASC(na_pos='first')]",
             id="tpch_q18",
         ),
         pytest.param(
@@ -954,7 +954,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │       └─┬─ AccessChild\n"
             "  │         ├─── SubCollection[lines]\n"
             "  │         └─── Where[(ship_date >= datetime.date(1994, 1, 1)) & (ship_date < datetime.date(1995, 1, 1))]\n"
-            "  └─── TopK[10, s_name.ASC(na_pos='last')]",
+            "  └─── TopK[10, s_name.ASC(na_pos='first')]",
             id="tpch_q20",
         ),
         pytest.param(
@@ -976,7 +976,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             "  │       └─┬─ AccessChild\n"
             "  │         ├─── SubCollection[lines]\n"
             "  │         └─── Where[(supplier_key != BACK(2).supplier_key) & (receipt_date > commit_date)]\n"
-            "  └─── TopK[10, numwait.DESC(na_pos='last'), s_name.ASC(na_pos='last')]",
+            "  └─── TopK[10, numwait.DESC(na_pos='last'), s_name.ASC(na_pos='first')]",
             id="tpch_q21",
         ),
         pytest.param(

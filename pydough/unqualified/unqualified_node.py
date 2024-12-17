@@ -275,19 +275,19 @@ class UnqualifiedNode(ABC):
                 keys_unqualified = [self.coerce_to_unqualified(by)]
             return UnqualifiedTopK(self, k, keys_unqualified)
 
-    def ASC(self, na_pos="last") -> "UnqualifiedCollation":
+    def ASC(self, na_pos: str = "first") -> "UnqualifiedCollation":
         assert na_pos in (
             "first",
             "last",
         ), f"Unrecognized `na_pos` value for `ASC`: {na_pos!r}"
-        return UnqualifiedCollation(self, True, na_pos)
+        return UnqualifiedCollation(self, True, na_pos == "last")
 
-    def DESC(self, na_pos="last") -> "UnqualifiedCollation":
+    def DESC(self, na_pos: str = "last") -> "UnqualifiedCollation":
         assert na_pos in (
             "first",
             "last",
         ), f"Unrecognized `na_pos` value for `DESC`: {na_pos!r}"
-        return UnqualifiedCollation(self, False, na_pos)
+        return UnqualifiedCollation(self, False, na_pos == "last")
 
     def PARTITION(
         self,
@@ -547,7 +547,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0]} {display_raw(unqualified._parcel[2])})"
         case UnqualifiedCollation():
             method: str = "ASC" if unqualified._parcel[1] else "DESC"
-            return f"{display_raw(unqualified._parcel[0])}.{method}(na_pos={unqualified._parcel[2]!r})"
+            pos: str = "'last'" if unqualified._parcel[2] else "'first'"
+            return f"{display_raw(unqualified._parcel[0])}.{method}(na_pos={pos})"
         case UnqualifiedAccess():
             return f"{display_raw(unqualified._parcel[0])}.{unqualified._parcel[1]}"
         case UnqualifiedCalc():

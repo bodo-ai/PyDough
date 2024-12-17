@@ -808,6 +808,11 @@ def explain_term(
                         break
                     case Reference():
                         expr = collection.get_expr(expr.term_name)
+                        if (
+                            isinstance(expr, Reference)
+                            and collection.preceding_context is not None
+                        ):
+                            collection = collection.preceding_context
                     case ColumnProperty():
                         lines.append(
                             f"This is column '{expr.column_property.name}' of collection '{expr.column_property.collection.name}'"
