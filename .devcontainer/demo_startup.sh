@@ -3,7 +3,7 @@
 set -eo pipefail
 
 # Download the TPC-H database
-./demos/setup_tpch.sh ./demos/tpch.db
+cp /usr/local/share/tpch.db demos/tpch.db
 
 # Build the PyDough project
 python -m pip install .
