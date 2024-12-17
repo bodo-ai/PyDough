@@ -23,6 +23,7 @@ from .call_expression_conversion import (
     convert_contains,
     convert_day,
     convert_endswith,
+    convert_if,
     convert_isin,
     convert_like,
     convert_month,
@@ -90,6 +91,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         "MONTH": convert_month,
         "DAY": convert_day,
         "NDISTINCT": convert_ndistinct,
+        "IFF": convert_if,
     }
 
     def __init__(self, dialect: SQLGlotDialect) -> None:
