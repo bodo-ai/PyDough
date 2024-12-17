@@ -13,7 +13,7 @@ from .relational_expression_visitor import RelationalExpressionVisitor
 
 __all__ = ["RelationalExpression"]
 
-import pydough.pydough_ast.pydough_operators as pydop
+import pydough.pydough_operators as pydop
 from pydough.types import BooleanType, PyDoughType
 
 

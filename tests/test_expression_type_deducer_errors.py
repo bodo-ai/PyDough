@@ -8,13 +8,11 @@ from collections.abc import MutableSequence
 import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
 
+import pydough.pydough_operators as pydop
 from pydough.pydough_ast import (
     AstNodeBuilder,
     PyDoughAST,
     PyDoughASTException,
-)
-from pydough.pydough_ast import (
-    pydough_operators as pydop,
 )
 from pydough.types import StringType
 
@@ -52,8 +50,6 @@ def test_invalid_deduction(
     Checks cases where calling an expression type deducer on a list of PyDough
     AST objects should raise an exception
     """
-    args: MutableSequence[PyDoughAST] = [
-        info.build(tpch_node_builder) for info in args_info
-    ]
+    args: list[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
     with pytest.raises(PyDoughASTException, match=re.escape(error_message)):
         deducer.infer_return_type(args)

@@ -13,7 +13,7 @@ from test_utils import (
     make_relational_ordering,
 )
 
-from pydough.pydough_ast.pydough_operators import (
+from pydough.pydough_operators import (
     ADD,
     BAN,
     COUNT,

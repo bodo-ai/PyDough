@@ -185,7 +185,7 @@ class FunctionInfo(AstNodeTestInfo):
         context: PyDoughCollectionAST | None = None,
         children_contexts: MutableSequence[PyDoughCollectionAST] | None = None,
     ) -> PyDoughAST:
-        args: MutableSequence[PyDoughAST] = [
+        args: list[PyDoughAST] = [
             info.build(builder, context, children_contexts) for info in self.args_info
         ]
         return builder.build_expression_function_call(self.function_name, args)

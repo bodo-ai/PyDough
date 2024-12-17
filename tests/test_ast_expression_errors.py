@@ -7,12 +7,10 @@ import re
 import pytest
 from test_utils import AstNodeTestInfo, FunctionInfo, graph_fetcher
 
+import pydough.pydough_operators as pydop
 from pydough.pydough_ast import (
     AstNodeBuilder,
     PyDoughASTException,
-)
-from pydough.pydough_ast import (
-    pydough_operators as pydop,
 )
 
 

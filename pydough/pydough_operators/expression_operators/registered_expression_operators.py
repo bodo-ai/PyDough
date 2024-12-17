@@ -44,7 +44,7 @@ __all__ = [
     "HASNOT",
 ]
 
-from pydough.pydough_ast.pydough_operators.type_inference import (
+from pydough.pydough_operators.type_inference import (
     AllowAny,
     ConstantType,
     RequireMinArgs,

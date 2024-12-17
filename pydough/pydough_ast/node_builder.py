@@ -13,6 +13,11 @@ from pydough.metadata import (
     PyDoughMetadataException,
     TableColumnMetadata,
 )
+from pydough.pydough_operators import (
+    PyDoughExpressionOperator,
+    PyDoughOperator,
+    builtin_registered_operators,
+)
 from pydough.types import PyDoughType
 
 from .abstract_pydough_ast import PyDoughAST
@@ -37,11 +42,6 @@ from .expressions import (
     Literal,
     Reference,
 )
-from .pydough_operators import (
-    PyDoughExpressionOperatorAST,
-    PyDoughOperatorAST,
-    builtin_registered_operators,
-)
 
 
 class AstNodeBuilder:
@@ -51,7 +51,7 @@ class AstNodeBuilder:
 
     def __init__(self, graph: GraphMetadata):
         self._graph: GraphMetadata = graph
-        self._operators: MutableMapping[str, PyDoughOperatorAST] = (
+        self._operators: MutableMapping[str, PyDoughOperator] = (
             builtin_registered_operators()
         )
 
@@ -63,7 +63,7 @@ class AstNodeBuilder:
         return self._graph
 
     @property
-    def operators(self) -> MutableMapping[str, PyDoughOperatorAST]:
+    def operators(self) -> MutableMapping[str, PyDoughOperator]:
         """
         The operators that the builder has access to.
         """
@@ -113,7 +113,7 @@ class AstNodeBuilder:
         return ColumnProperty(property)
 
     def build_expression_function_call(
-        self, function_name: str, args: MutableSequence[PyDoughAST]
+        self, function_name: str, args: list[PyDoughAST]
     ) -> ExpressionFunctionCall:
         """
         Creates a new expression function call by accessing a builtin
@@ -134,7 +134,7 @@ class AstNodeBuilder:
         if function_name not in self.operators:
             raise PyDoughASTException(f"Unrecognized operator name {function_name!r}")
         operator = self.operators[function_name]
-        assert isinstance(operator, PyDoughExpressionOperatorAST)
+        assert isinstance(operator, PyDoughExpressionOperator)
         return ExpressionFunctionCall(operator, args)
 
     def build_reference(self, collection: PyDoughCollectionAST, name: str) -> Reference:

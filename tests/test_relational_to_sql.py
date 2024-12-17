@@ -17,7 +17,7 @@ from tpch_relational_plans import (
     tpch_query_6_plan,
 )
 
-from pydough.pydough_ast.pydough_operators import (
+from pydough.pydough_operators import (
     ABS,
     ADD,
     BAN,

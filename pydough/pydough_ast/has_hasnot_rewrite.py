@@ -14,14 +14,6 @@ from .expressions import (
     Literal,
     PyDoughExpressionAST,
 )
-from .pydough_operators import (
-    BAN,
-    COUNT,
-    EQU,
-    GRT,
-    HAS,
-    HASNOT,
-)
 
 
 def has_hasnot_rewrite(
@@ -46,6 +38,15 @@ def has_hasnot_rewrite(
     Returns:
         The transformed PyDough expression AST node.
     """
+    from pydough.pydough_operators import (
+        BAN,
+        COUNT,
+        EQU,
+        GRT,
+        HAS,
+        HASNOT,
+    )
+
     if isinstance(exp, ExpressionFunctionCall):
         new_args: list[PyDoughAST] = []
         if exp.operator in (HAS, HASNOT) and not allow_has_hasnot:

@@ -10,9 +10,9 @@ __all__ = [
     "ExpressionTypeDeducer",
     "SelectArgumentType",
     "builtin_registered_operators",
-    "PyDoughOperatorAST",
+    "PyDoughOperator",
     "ConstantType",
-    "PyDoughExpressionOperatorAST",
+    "PyDoughExpressionOperator",
     "ABS",
     "ADD",
     "AVG",
@@ -55,6 +55,7 @@ __all__ = [
     "NDISTINCT",
 ]
 
+from .base_operator import PyDoughOperator
 from .expression_operators import (
     ABS,
     ADD,
@@ -95,9 +96,8 @@ from .expression_operators import (
     BinaryOperator,
     BinOp,
     ExpressionFunctionOperator,
-    PyDoughExpressionOperatorAST,
+    PyDoughExpressionOperator,
 )
-from .operator_ast import PyDoughOperatorAST
 from .operator_registry import builtin_registered_operators
 from .type_inference import (
     AllowAny,

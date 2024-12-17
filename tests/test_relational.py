@@ -10,7 +10,7 @@ from test_utils import (
     make_relational_ordering,
 )
 
-from pydough.pydough_ast.pydough_operators import EQU, LOWER, SUM
+from pydough.pydough_operators import EQU, LOWER, SUM
 from pydough.relational import (
     Aggregate,
     CallExpression,

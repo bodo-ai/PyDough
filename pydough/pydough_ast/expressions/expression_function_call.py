@@ -4,12 +4,13 @@ Definition of PyDough AST nodes for function calls that return expressions.
 
 __all__ = ["ExpressionFunctionCall"]
 
-from collections.abc import MutableSequence
 from functools import cache
 
 from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
 from pydough.pydough_ast.collections.collection_ast import PyDoughCollectionAST
-from pydough.pydough_ast.pydough_operators import PyDoughExpressionOperatorAST
+from pydough.pydough_operators.expression_operators.expression_operator import (
+    PyDoughExpressionOperator,
+)
 from pydough.types import PyDoughType
 
 from .expression_ast import PyDoughExpressionAST
@@ -23,16 +24,16 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
 
     def __init__(
         self,
-        operator: PyDoughExpressionOperatorAST,
-        args: MutableSequence[PyDoughAST],
+        operator: PyDoughExpressionOperator,
+        args: list[PyDoughAST],
     ):
         operator.verify_allows_args(args)
-        self._operator: PyDoughExpressionOperatorAST = operator
-        self._args: MutableSequence[PyDoughAST] = args
+        self._operator: PyDoughExpressionOperator = operator
+        self._args: list[PyDoughAST] = args
         self._data_type: PyDoughType = operator.infer_return_type(args)
 
     @property
-    def operator(self) -> PyDoughExpressionOperatorAST:
+    def operator(self) -> PyDoughExpressionOperator:
         """
         The expression-returning PyDough operator corresponding to the
         function call.
@@ -40,7 +41,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self._operator
 
     @property
-    def args(self) -> MutableSequence[PyDoughAST]:
+    def args(self) -> list[PyDoughAST]:
         """
         The list of arguments to the function call.
         """

@@ -5,11 +5,8 @@ Utilities used for PyDough return type inference.
 __all__ = ["ExpressionTypeDeducer", "ConstantType", "SelectArgumentType"]
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableSequence
+from typing import Any
 
-from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from pydough.pydough_ast.errors import PyDoughASTException
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
 from pydough.types import PyDoughType
 
 
@@ -21,7 +18,7 @@ class ExpressionTypeDeducer(ABC):
     """
 
     @abstractmethod
-    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: list[Any]) -> PyDoughType:
         """
         Returns the inferred expression type based on the input arguments.
 
@@ -46,11 +43,13 @@ class SelectArgumentType(ExpressionTypeDeducer):
         """
         return self._index
 
-    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: list[Any]) -> PyDoughType:
+        from pydough.pydough_ast import PyDoughASTException, PyDoughExpressionAST
+
         msg: str = f"Cannot select type of argument {self.index!r} out of {args!r}"
         if self.index not in range(len(args)):
             raise PyDoughASTException(msg)
-        arg: PyDoughAST = args[self.index]
+        arg = args[self.index]
         if isinstance(arg, PyDoughExpressionAST):
             return arg.pydough_type
         else:
@@ -73,5 +72,5 @@ class ConstantType(ExpressionTypeDeducer):
         """
         return self._data_type
 
-    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: list[Any]) -> PyDoughType:
         return self.data_type

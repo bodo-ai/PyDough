@@ -2,18 +2,15 @@
 Base definition of PyDough operators.
 """
 
-__all__ = ["PyDoughOperatorAST"]
+__all__ = ["PyDoughOperator"]
 
 from abc import abstractmethod
-from collections.abc import MutableSequence
-
-from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from pydough.pydough_ast.errors import PyDoughASTException
+from typing import Any
 
 from .type_inference import TypeVerifier
 
 
-class PyDoughOperatorAST(PyDoughAST):
+class PyDoughOperator:
     """
     The abstract base class for all PyDough operators used to describe
     operations such as arithmetic or function calls, whether they return
@@ -49,7 +46,7 @@ class PyDoughOperatorAST(PyDoughAST):
         of any arguments.
         """
 
-    def verify_allows_args(self, args: MutableSequence[PyDoughAST]) -> None:
+    def verify_allows_args(self, args: list[Any]) -> None:
         """
         Verifies that an operator is allowed to be called with a certain
         set of arguments.
@@ -58,6 +55,8 @@ class PyDoughOperatorAST(PyDoughAST):
             `PyDoughASTException` if the operator does not accept the
             provided arguments.
         """
+        from pydough.pydough_ast.errors import PyDoughASTException
+
         try:
             self.verifier.accepts(args)
         except PyDoughASTException as e:

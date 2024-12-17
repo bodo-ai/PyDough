@@ -2,22 +2,20 @@
 Base definition of PyDough operators that return an expression.
 """
 
-__all__ = ["PyDoughExpressionOperatorAST"]
+__all__ = ["PyDoughExpressionOperator"]
 
 from abc import abstractmethod
-from collections.abc import MutableSequence
+from typing import Any
 
-from pydough.pydough_ast.abstract_pydough_ast import PyDoughAST
-from pydough.pydough_ast.expressions import PyDoughExpressionAST
-from pydough.pydough_ast.pydough_operators.operator_ast import PyDoughOperatorAST
-from pydough.pydough_ast.pydough_operators.type_inference import (
+from pydough.pydough_operators.base_operator import PyDoughOperator
+from pydough.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
 )
 from pydough.types import PyDoughType
 
 
-class PyDoughExpressionOperatorAST(PyDoughOperatorAST):
+class PyDoughExpressionOperator(PyDoughOperator):
     """
     The base class for PyDough operators that return an expression. In addition
     to having a verifier, all such classes have a deducer to infer the type
@@ -47,7 +45,7 @@ class PyDoughExpressionOperatorAST(PyDoughOperatorAST):
         """
 
     @abstractmethod
-    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+    def requires_enclosing_parens(self, parent) -> bool:
         """
         Identifies whether an invocation of an operator converted to a string
         must be wrapped  in parenthesis before being inserted into it's parent's
@@ -63,7 +61,7 @@ class PyDoughExpressionOperatorAST(PyDoughOperatorAST):
             `self`.
         """
 
-    def infer_return_type(self, args: MutableSequence[PyDoughAST]) -> PyDoughType:
+    def infer_return_type(self, args: list[Any]) -> PyDoughType:
         """
         Returns the expected PyDough type of the operator when called on
         the provided arguments.

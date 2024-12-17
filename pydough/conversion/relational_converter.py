@@ -8,7 +8,7 @@ __all__ = ["convert_ast_to_relational"]
 
 from dataclasses import dataclass
 
-import pydough.pydough_ast.pydough_operators as pydop
+import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import (
     SimpleTableMetadata,
