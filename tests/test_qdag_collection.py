@@ -1,5 +1,5 @@
 """
-Unit tests for PyDough AST nodes for collections.
+Unit tests for PyDough QDAG nodes for collections.
 """
 
 import pytest
@@ -21,7 +21,7 @@ from test_utils import (
     WhereInfo,
 )
 
-from pydough.qdag import AstNodeBuilder, PyDoughCollectionAST
+from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
 from pydough.types import (
     Float64Type,
     Int64Type,
@@ -32,7 +32,7 @@ from pydough.types import (
 @pytest.fixture
 def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
     """
-    The AST node info for a query that calculates the ratio for each region
+    The QDAG node info for a query that calculates the ratio for each region
     between the of all part sale values (retail price of the part times the
     quantity purchased for each time it was purchased) that were sold to a
     customer in the same region vs all part sale values from that region, only
@@ -731,10 +731,10 @@ def test_collections_calc_terms(
     tpch_node_builder: AstNodeBuilder,
 ) -> None:
     """
-    Tests that a sequence of collection-producing AST nodes results in the
+    Tests that a sequence of collection-producing QDAG nodes results in the
     correct calc terms & total set of available terms.
     """
-    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     assert collection.calc_terms == set(
         expected_calcs
     ), "Mismatch between set of calc terms and expected value"
@@ -2141,10 +2141,10 @@ def test_collections_to_string(
     tpch_node_builder: AstNodeBuilder,
 ) -> None:
     """
-    Verifies that various AST collection node structures produce the expected
+    Verifies that various QDAG collection node structures produce the expected
     non-tree string representation.
     """
-    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     assert (
         collection.to_string() == expected_string
     ), "Mismatch between non-tree string representation and expected value"
@@ -2362,10 +2362,10 @@ def test_collections_ordering(
     tpch_node_builder: AstNodeBuilder,
 ) -> None:
     """
-    Verifies that various AST collection node structures have the expected
+    Verifies that various QDAG collection node structures have the expected
     collation nodes to order by.
     """
-    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     if expected_collation_strings is None:
         assert (
             collection.ordering is None
@@ -2391,7 +2391,7 @@ def test_regions_intra_ratio_string_order(
     specifically on the structure from the `region_intra_ratio` fixture.
     """
     calc_pipeline, expected_string, expected_tree_string = region_intra_ratio
-    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     assert collection.to_string() == expected_string
     assert collection.to_tree_string() == expected_tree_string.strip()
     assert collection.ordering is None

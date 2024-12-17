@@ -10,8 +10,8 @@ from test_utils import AstNodeTestInfo, LiteralInfo
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
     AstNodeBuilder,
-    PyDoughAST,
     PyDoughASTException,
+    PyDoughQDAG,
 )
 from pydough.types import Int64Type
 
@@ -77,7 +77,7 @@ def test_verification(
     Checks that verifiers accept reject by raising an exception
     and also returns False.
     """
-    args: list[PyDoughAST] = [info.build(tpch_node_builder) for info in args_info]
+    args: list[PyDoughQDAG] = [info.build(tpch_node_builder) for info in args_info]
     assert not verifier.accepts(
         args, error_on_fail=False
     ), "expected verifier to reject argument"

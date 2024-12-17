@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for filtering the current collection
+Definition of PyDough QDAG collection type for filtering the current collection
 by certain expression criteria.
 """
 
@@ -9,27 +9,27 @@ __all__ = ["Where"]
 from collections.abc import MutableSequence
 
 from pydough.qdag.errors import PyDoughASTException
-from pydough.qdag.expressions import PyDoughExpressionAST
+from pydough.qdag.expressions import PyDoughExpressionQDAG
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .child_operator import ChildOperator
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 
 
 class Where(ChildOperator):
     """
-    The AST node implementation class representing a WHERE filter.
+    The QDAG node implementation class representing a WHERE filter.
     """
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionAST,
-        children: MutableSequence[PyDoughCollectionAST],
+        predecessor: PyDoughCollectionQDAG,
+        children: MutableSequence[PyDoughCollectionQDAG],
     ):
         super().__init__(predecessor, children)
-        self._condition: PyDoughExpressionAST | None = None
+        self._condition: PyDoughExpressionQDAG | None = None
 
-    def with_condition(self, condition: PyDoughExpressionAST) -> "Where":
+    def with_condition(self, condition: PyDoughExpressionQDAG) -> "Where":
         """
         Specifies the condition that should be used by the WHERE node. This is
         called after the WHERE node is created so that the condition can be an
@@ -56,7 +56,7 @@ class Where(ChildOperator):
         return self
 
     @property
-    def condition(self) -> PyDoughExpressionAST:
+    def condition(self) -> PyDoughExpressionQDAG:
         """
         The predicate expression for the WHERE clause.
         """

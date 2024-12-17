@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for the basic context that has one
+Definition of PyDough QDAG collection type for the basic context that has one
 record, no expressions, and access to all the top-level collections in the
 graph.
 """
@@ -13,24 +13,24 @@ from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
 )
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughASTException
 from pydough.qdag.expressions import CollationExpression
 
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
 from .table_collection import TableCollection
 
 
-class GlobalContext(PyDoughCollectionAST):
+class GlobalContext(PyDoughCollectionQDAG):
     """
-    The AST node implementation class representing the graph-level context
+    The QDAG node implementation class representing the graph-level context
     containing all of the collections.
     """
 
     def __init__(self, graph: GraphMetadata):
         self._graph = graph
-        self._collections: MutableMapping[str, PyDoughCollectionAST] = {}
+        self._collections: MutableMapping[str, PyDoughCollectionQDAG] = {}
         for collection_name in graph.get_collection_names():
             meta = graph.get_collection(collection_name)
             assert isinstance(meta, CollectionMetadata)
@@ -44,7 +44,7 @@ class GlobalContext(PyDoughCollectionAST):
         return self._graph
 
     @property
-    def collections(self) -> MutableMapping[str, PyDoughCollectionAST]:
+    def collections(self) -> MutableMapping[str, PyDoughCollectionQDAG]:
         """
         The collections that the context has access to.
         """
@@ -55,11 +55,11 @@ class GlobalContext(PyDoughCollectionAST):
         return f"{self.graph.name}"
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
+    def ancestor_context(self) -> PyDoughCollectionQDAG | None:
         return None
 
     @property
-    def preceding_context(self) -> PyDoughCollectionAST | None:
+    def preceding_context(self) -> PyDoughCollectionQDAG | None:
         return None
 
     @property
@@ -75,13 +75,13 @@ class GlobalContext(PyDoughCollectionAST):
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         raise PyDoughASTException(f"Cannot call is_singular on {self!r}")
 
     def get_expression_position(self, expr_name: str) -> int:
         raise PyDoughASTException(f"Cannot call get_expression_position on {self!r}")
 
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name not in self.collections:
             raise PyDoughASTException(
                 f"Unrecognized term of {self.graph.error_name}: {term_name!r}"

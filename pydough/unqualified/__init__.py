@@ -1,7 +1,7 @@
 """
 Module of PyDough dealing with the definitions of unqualified nodes, the
 transformation of raw code into unqualified nodes, and the conversion from them
-into PyDough AST nodes.
+into PyDough QDAG nodes.
 """
 
 __all__ = [

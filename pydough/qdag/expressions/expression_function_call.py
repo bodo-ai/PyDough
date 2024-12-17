@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST nodes for function calls that return expressions.
+Definition of PyDough QDAG nodes for function calls that return expressions.
 """
 
 __all__ = ["ExpressionFunctionCall"]
@@ -9,27 +9,27 @@ from functools import cache
 from pydough.pydough_operators.expression_operators.expression_operator import (
     PyDoughExpressionOperator,
 )
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
-from pydough.qdag.collections.collection_qdag import PyDoughCollectionAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
+from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
 from pydough.types import PyDoughType
 
-from .expression_qdag import PyDoughExpressionAST
+from .expression_qdag import PyDoughExpressionQDAG
 
 
-class ExpressionFunctionCall(PyDoughExpressionAST):
+class ExpressionFunctionCall(PyDoughExpressionQDAG):
     """
-    The AST node implementation class representing a call to a function
+    The QDAG node implementation class representing a call to a function
     that returns an expression.
     """
 
     def __init__(
         self,
         operator: PyDoughExpressionOperator,
-        args: list[PyDoughAST],
+        args: list[PyDoughQDAG],
     ):
         operator.verify_allows_args(args)
         self._operator: PyDoughExpressionOperator = operator
-        self._args: list[PyDoughAST] = args
+        self._args: list[PyDoughQDAG] = args
         self._data_type: PyDoughType = operator.infer_return_type(args)
 
     @property
@@ -41,7 +41,7 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self._operator
 
     @property
-    def args(self) -> list[PyDoughAST]:
+    def args(self) -> list[PyDoughQDAG]:
         """
         The list of arguments to the function call.
         """
@@ -56,20 +56,20 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         return self.operator.is_aggregation
 
     @cache
-    def is_singular(self, context: PyDoughAST) -> bool:
+    def is_singular(self, context: PyDoughQDAG) -> bool:
         # Function calls are singular if they are aggregations or if all of
         # their operands are also singular.
-        assert isinstance(context, PyDoughCollectionAST)
+        assert isinstance(context, PyDoughCollectionQDAG)
         if self.is_aggregation:
             return True
         for arg in self.args:
             if isinstance(
-                arg, (PyDoughExpressionAST, PyDoughCollectionAST)
+                arg, (PyDoughExpressionQDAG, PyDoughCollectionQDAG)
             ) and not arg.is_singular(context):
                 return False
         return True
 
-    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+    def requires_enclosing_parens(self, parent: PyDoughExpressionQDAG) -> bool:
         return self.operator.requires_enclosing_parens(parent)
 
     def to_string(self, tree_form: bool = False) -> str:
@@ -83,11 +83,11 @@ class ExpressionFunctionCall(PyDoughExpressionAST):
         arg_strings: list[str] = []
         for arg in self.args:
             arg_string: str
-            if isinstance(arg, PyDoughExpressionAST):
+            if isinstance(arg, PyDoughExpressionQDAG):
                 arg_string = arg.to_string(tree_form)
                 if arg.requires_enclosing_parens(self):
                     arg_string = f"({arg_string})"
-            elif isinstance(arg, PyDoughCollectionAST):
+            elif isinstance(arg, PyDoughCollectionQDAG):
                 if tree_form:
                     assert isinstance(
                         arg, (ChildReferenceCollection, BackReferenceCollection)

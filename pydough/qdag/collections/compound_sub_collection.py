@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for accesses to a subcollection of the
+Definition of PyDough QDAG collection type for accesses to a subcollection of the
 current context where teh subcollection is a compound relationship.
 """
 
@@ -11,27 +11,27 @@ from functools import cache
 
 from pydough.metadata import CompoundRelationshipMetadata
 from pydough.metadata.properties import InheritedPropertyMetadata
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughASTException
 from pydough.qdag.expressions.hidden_back_reference_expression import (
     HiddenBackReferenceExpression,
 )
 
 from .collection_access import CollectionAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .sub_collection import SubCollection
 
 
 class CompoundSubCollection(SubCollection):
     """
-    The AST node implementation class representing a subcollection accessed
+    The QDAG node implementation class representing a subcollection accessed
     from its parent collection which is via a compound relationship.
     """
 
     def __init__(
         self,
         compound: CompoundRelationshipMetadata,
-        ancestor: PyDoughCollectionAST,
+        ancestor: PyDoughCollectionQDAG,
     ):
         super().__init__(compound, ancestor)
         self._subcollection_chain: MutableSequence[SubCollection] = []
@@ -58,19 +58,21 @@ class CompoundSubCollection(SubCollection):
                 f"Undefined inherited properties: {undefined_inherited}"
             )
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+    def clone_with_parent(
+        self, new_ancestor: PyDoughCollectionQDAG
+    ) -> CollectionAccess:
         assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
         return CompoundSubCollection(self.subcollection_property, new_ancestor)
 
     def populate_subcollection_chain(
         self,
-        source: PyDoughCollectionAST,
+        source: PyDoughCollectionQDAG,
         compound: CompoundRelationshipMetadata,
         inherited_properties: dict[str, str],
     ) -> SubCollection:
         """
         Recursive procedure used to define the `subcollection_chain` and
-        `inheritance_sources` fields of a compound subcollection AST node. In
+        `inheritance_sources` fields of a compound subcollection QDAG node. In
         the end, results in the compound relationship being fully flattened
         into a sequence of regular subcollection accesses.
 
@@ -85,7 +87,7 @@ class CompoundSubCollection(SubCollection):
             components.
 
         Returns:
-            The subcollection AST object corresponding to the last component
+            The subcollection QDAG object corresponding to the last component
             of `compound`, once flattened.
         """
         # Invoke the procedure for the primary and secondary property.
@@ -169,15 +171,15 @@ class CompoundSubCollection(SubCollection):
         return self._inheritance_source_idx
 
     @cache
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         assert isinstance(self.subcollection_property, CompoundRelationshipMetadata)
         if term_name in self.subcollection_property.inherited_properties:
             source_idx: int = self.inheritance_source_idx[term_name]
             back_levels: int = len(self.subcollection_chain) - source_idx
-            ancestor: PyDoughCollectionAST = self._subcollection_chain[source_idx]
+            ancestor: PyDoughCollectionQDAG = self._subcollection_chain[source_idx]
             original_name: str = self._inheritance_source_name[term_name]
             expr = ancestor.get_term(original_name)
-            if isinstance(expr, PyDoughCollectionAST):
+            if isinstance(expr, PyDoughCollectionQDAG):
                 from .hidden_back_reference_collection import (
                     HiddenBackReferenceCollection,
                 )

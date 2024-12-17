@@ -1,5 +1,5 @@
 """
-Definition of a helper utility class used to describe PyDough AST collections
+Definition of a helper utility class used to describe PyDough QDAG collections
 in a tree-like form so they can be converted into tree-like strings.
 """
 
@@ -60,7 +60,7 @@ class CollectionTreeForm:
     def to_string_rows(self) -> MutableSequence[str]:
         """
         Converts the tree form into the string representation in the format
-        specified by `PyDoughCollectionAST.to_string`, but as a list where each
+        specified by `PyDoughCollectionQDAG.to_string`, but as a list where each
         element is one line of the string.
 
         Returns:

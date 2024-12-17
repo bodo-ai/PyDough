@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for a PARTITION operation that
+Definition of PyDough QDAG collection type for a PARTITION operation that
 buckets its input data on certain keys, creating a new parent collection whose
 child is the input data.
 """
@@ -9,7 +9,7 @@ __all__ = ["PartitionBy"]
 
 from functools import cache
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughASTException
 from pydough.qdag.expressions import (
     ChildReferenceExpression,
@@ -18,23 +18,23 @@ from pydough.qdag.expressions import (
 )
 
 from .child_operator import ChildOperator
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .partition_child import PartitionChild
 
 
 class PartitionBy(ChildOperator):
     """
-    The AST node implementation class representing a PARTITION BY clause.
+    The QDAG node implementation class representing a PARTITION BY clause.
     """
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionAST,
-        child: PyDoughCollectionAST,
+        predecessor: PyDoughCollectionQDAG,
+        child: PyDoughCollectionQDAG,
         child_name: str,
     ):
         super().__init__(predecessor, [child])
-        self._child: PyDoughCollectionAST = child
+        self._child: PyDoughCollectionQDAG = child
         self._child_name: str = child_name
         self._keys: list[PartitionKey] | None = None
         self._key_name_indices: dict[str, int] = {}
@@ -65,14 +65,14 @@ class PartitionBy(ChildOperator):
         return self
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
+    def ancestor_context(self) -> PyDoughCollectionQDAG | None:
         # For PARTITION_BY, the "preceding context" is actually the ancestor
         # context, but has been referred to as the preceding context so that
         # it can inherit from ChildOperator and behave correctly.
         return self.preceding_context
 
     @property
-    def starting_predecessor(self) -> PyDoughCollectionAST:
+    def starting_predecessor(self) -> PyDoughCollectionQDAG:
         return self
 
     @property
@@ -99,7 +99,7 @@ class PartitionBy(ChildOperator):
         return self._key_name_indices
 
     @property
-    def child(self) -> PyDoughCollectionAST:
+    def child(self) -> PyDoughCollectionQDAG:
         """
         The input collection that is being partitioned.
         """
@@ -129,7 +129,7 @@ class PartitionBy(ChildOperator):
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # It is presumed that PARTITION BY always creates a plural
         # subcollection of the ancestor context containing 1+ bins of data
         # from the child collection.
@@ -160,7 +160,7 @@ class PartitionBy(ChildOperator):
         return self.preceding_context.get_expression_position(expr_name)
 
     @cache
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name in self._key_name_indices:
             term: PartitionKey = self.keys[self._key_name_indices[term_name]]
             return term

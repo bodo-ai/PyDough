@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for a reference to a child collection
+Definition of PyDough QDAG collection type for a reference to a child collection
 of a child operator, e.g. `nations` in `regions(n_nations=COUNT(nations))`.
 """
 
@@ -8,35 +8,35 @@ __all__ = ["ChildReferenceCollection"]
 
 from functools import cache
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions.collation_expression import CollationExpression
 
 from .child_access import ChildAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
 
 
 class ChildReferenceCollection(ChildAccess):
     """
-    The AST node implementation class representing a reference to a collection
+    The QDAG node implementation class representing a reference to a collection
     term in a child collection of a CALC or other child operator.
     """
 
     def __init__(
         self,
-        ancestor: PyDoughCollectionAST,
-        collection: PyDoughCollectionAST,
+        ancestor: PyDoughCollectionQDAG,
+        collection: PyDoughCollectionQDAG,
         child_idx: int,
     ):
-        self._collection: PyDoughCollectionAST = collection
+        self._collection: PyDoughCollectionQDAG = collection
         self._child_idx: int = child_idx
         super().__init__(ancestor)
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         return ChildReferenceCollection(new_ancestor, self.collection, self.child_idx)
 
     @property
-    def collection(self) -> PyDoughCollectionAST:
+    def collection(self) -> PyDoughCollectionQDAG:
         """
         The collection that the ChildReferenceCollection collection comes from.
         """
@@ -67,7 +67,7 @@ class ChildReferenceCollection(ChildAccess):
         return self.collection.ordering
 
     @cache
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # A child reference collection is singular with regards to a context
         # if and only if the collection it refers to is singular with regard
         # to that context.
@@ -76,7 +76,7 @@ class ChildReferenceCollection(ChildAccess):
     def get_expression_position(self, expr_name: str) -> int:
         return self.collection.get_expression_position(expr_name)
 
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         return self.collection.get_term(term_name)
 
     @property

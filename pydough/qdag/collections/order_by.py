@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for ordering the current collection
+Definition of PyDough QDAG collection type for ordering the current collection
 by certain collation keys.
 """
 
@@ -13,18 +13,18 @@ from pydough.qdag.expressions import CollationExpression
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .child_operator import ChildOperator
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 
 
 class OrderBy(ChildOperator):
     """
-    The AST node implementation class representing an ORDER BY clause.
+    The QDAG node implementation class representing an ORDER BY clause.
     """
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionAST,
-        children: MutableSequence[PyDoughCollectionAST],
+        predecessor: PyDoughCollectionQDAG,
+        children: MutableSequence[PyDoughCollectionQDAG],
     ):
         super().__init__(predecessor, children)
         self._collation: list[CollationExpression] | None = None

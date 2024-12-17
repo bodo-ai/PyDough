@@ -1,18 +1,18 @@
 """
-Module of PyDough dealing with the qualified AST structure used as an
+Module of PyDough dealing with the qualified QDAG structure used as an
 intermediary representation after unqualified nodes and before the relational
 tree.
 """
 
 __all__ = [
-    "PyDoughAST",
-    "PyDoughExpressionAST",
+    "PyDoughQDAG",
+    "PyDoughExpressionQDAG",
     "AstNodeBuilder",
     "ColumnProperty",
     "Literal",
     "ExpressionFunctionCall",
     "PyDoughASTException",
-    "PyDoughCollectionAST",
+    "PyDoughCollectionQDAG",
     "TableCollection",
     "SubCollection",
     "Calc",
@@ -36,7 +36,7 @@ __all__ = [
     "BackReferenceCollection",
 ]
 
-from .abstract_pydough_qdag import PyDoughAST
+from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
     BackReferenceCollection,
     Calc,
@@ -50,7 +50,7 @@ from .collections import (
     OrderBy,
     PartitionBy,
     PartitionChild,
-    PyDoughCollectionAST,
+    PyDoughCollectionQDAG,
     SubCollection,
     TableCollection,
     TopK,
@@ -65,7 +65,7 @@ from .expressions import (
     ExpressionFunctionCall,
     Literal,
     PartitionKey,
-    PyDoughExpressionAST,
+    PyDoughExpressionQDAG,
     Reference,
 )
 from .node_builder import AstNodeBuilder

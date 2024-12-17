@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for accessing a table collection
+Definition of PyDough QDAG collection type for accessing a table collection
 directly.
 """
 
@@ -9,22 +9,24 @@ __all__ = ["TableCollection"]
 from pydough.metadata import CollectionMetadata
 
 from .collection_access import CollectionAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 
 
 class TableCollection(CollectionAccess):
     """
-    The AST node implementation class representing a table collection accessed
+    The QDAG node implementation class representing a table collection accessed
     as a root.
     """
 
-    def __init__(self, collection: CollectionMetadata, ancestor: PyDoughCollectionAST):
+    def __init__(self, collection: CollectionMetadata, ancestor: PyDoughCollectionQDAG):
         super().__init__(collection, ancestor)
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+    def clone_with_parent(
+        self, new_ancestor: PyDoughCollectionQDAG
+    ) -> CollectionAccess:
         return TableCollection(self.collection, new_ancestor)
 
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # A table collection is always a plural subcollection of the global
         # context since PyDough does not know how many rows it contains.
         return False

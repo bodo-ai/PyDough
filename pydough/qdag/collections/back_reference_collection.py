@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for accesses to a subcollection of an
+Definition of PyDough QDAG collection type for accesses to a subcollection of an
 ancestor of the current context.
 """
 
@@ -12,18 +12,18 @@ from pydough.qdag.errors import PyDoughASTException
 
 from .child_access import ChildAccess
 from .collection_access import CollectionAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 
 
 class BackReferenceCollection(CollectionAccess):
     """
-    The AST node implementation class representing a subcollection of an
+    The QDAG node implementation class representing a subcollection of an
     ancestor collection.
     """
 
     def __init__(
         self,
-        parent: PyDoughCollectionAST,
+        parent: PyDoughCollectionQDAG,
         term_name: str,
         back_levels: int,
     ):
@@ -33,7 +33,7 @@ class BackReferenceCollection(CollectionAccess):
             )
         self._term_name: str = term_name
         self._back_levels: int = back_levels
-        ancestor: PyDoughCollectionAST = parent
+        ancestor: PyDoughCollectionQDAG = parent
         for _ in range(back_levels):
             if ancestor.ancestor_context is None:
                 msg: str = "1 level" if back_levels == 1 else f"{back_levels} levels"
@@ -46,7 +46,7 @@ class BackReferenceCollection(CollectionAccess):
         self._collection_access: CollectionAccess = access
         super().__init__(self._collection_access.collection, ancestor)
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         return BackReferenceCollection(new_ancestor, self.term_name, self.back_levels)
 
     @property
@@ -71,7 +71,7 @@ class BackReferenceCollection(CollectionAccess):
         return self._collection_access
 
     @cache
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         return self.collection_access.is_singular(
             self.collection_access.ancestor_context.starting_predecessor
         )

@@ -1,18 +1,18 @@
 """
-Base definition of PyDough expression AST nodes.
+Base definition of PyDough expression QDAG nodes.
 """
 
-__all__ = ["PyDoughExpressionAST"]
+__all__ = ["PyDoughExpressionQDAG"]
 
 from abc import abstractmethod
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.types import PyDoughType
 
 
-class PyDoughExpressionAST(PyDoughAST):
+class PyDoughExpressionQDAG(PyDoughQDAG):
     """
-    The base class for AST nodes that represent expressions.
+    The base class for QDAG nodes that represent expressions.
     """
 
     def __repr__(self):
@@ -34,7 +34,7 @@ class PyDoughExpressionAST(PyDoughAST):
         """
 
     @abstractmethod
-    def is_singular(self, context: PyDoughAST) -> bool:
+    def is_singular(self, context: PyDoughQDAG) -> bool:
         """
         Returns whether the expression is singular with regards to a
         context collection.
@@ -56,9 +56,9 @@ class PyDoughExpressionAST(PyDoughAST):
     @abstractmethod
     def to_string(self, tree_form: bool = False) -> str:
         """
-        Returns a PyDough expression AST converted into a single-line string
+        Returns a PyDough expression QDAG converted into a single-line string
         structured so it can be placed in the tree-like string representation
-        of a collection AST.
+        of a collection QDAG.
 
         Args:
             `tree_form`: indicates that the string conversion is happening
@@ -69,15 +69,15 @@ class PyDoughExpressionAST(PyDoughAST):
         """
 
     @abstractmethod
-    def requires_enclosing_parens(self, parent: "PyDoughExpressionAST") -> bool:
+    def requires_enclosing_parens(self, parent: "PyDoughExpressionQDAG") -> bool:
         """
         Identifies whether an expression converted to a string must be wrapped
         in parenthesis before being inserted into it's parent's string
         representation. This depends on what exactly the parent is.
 
         Args:
-            `parent`: the parent expression AST that contains this expression
-            AST as a child.
+            `parent`: the parent expression QDAG that contains this expression
+            QDAG as a child.
 
         Returns:
             True if the string representation of `parent` should enclose

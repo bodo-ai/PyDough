@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for accesses to the data that was
+Definition of PyDough QDAG collection type for accesses to the data that was
 partitioned in a PARTITION clause.
 """
 
@@ -10,7 +10,7 @@ from pydough.qdag.expressions.collation_expression import CollationExpression
 
 from .child_access import ChildAccess
 from .child_operator_child_access import ChildOperatorChildAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
 
 
@@ -23,17 +23,17 @@ class PartitionChild(ChildOperatorChildAccess):
 
     def __init__(
         self,
-        child_access: PyDoughCollectionAST,
+        child_access: PyDoughCollectionQDAG,
         partition_child_name: str,
-        ancestor: PyDoughCollectionAST,
+        ancestor: PyDoughCollectionQDAG,
     ):
         super(ChildOperatorChildAccess, self).__init__(ancestor)
         self._child_access = child_access
         self._is_last = True
         self._partition_child_name: str = partition_child_name
-        self._ancestor: PyDoughCollectionAST = ancestor
+        self._ancestor: PyDoughCollectionQDAG = ancestor
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         return PartitionChild(
             self.child_access, self.partition_child_name, new_ancestor
         )
@@ -53,7 +53,7 @@ class PartitionChild(ChildOperatorChildAccess):
     def ordering(self) -> list[CollationExpression] | None:
         return self._child_access.ordering
 
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # The child of a PARTITION BY clause is always presumed to be plural
         # since PyDough must assume that multiple records can be grouped
         # together into the same bucket.

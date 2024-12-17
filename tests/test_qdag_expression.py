@@ -1,5 +1,5 @@
 """
-Unit tests for PyDough AST nodes for expressions.
+Unit tests for PyDough QDAG nodes for expressions.
 """
 
 from datetime import date
@@ -18,8 +18,8 @@ from pydough.qdag import (
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
-    PyDoughAST,
-    PyDoughExpressionAST,
+    PyDoughExpressionQDAG,
+    PyDoughQDAG,
 )
 from pydough.types import (
     BooleanType,
@@ -65,7 +65,7 @@ def test_column_property_type(
     Tests that column properties have the correct return type.
     """
     builder: AstNodeBuilder = AstNodeBuilder(get_sample_graph(graph_name))
-    property: PyDoughAST = property_info.build(builder)
+    property: PyDoughQDAG = property_info.build(builder)
     assert isinstance(property, ColumnProperty)
     assert (
         property.pydough_type == expected_type
@@ -342,7 +342,7 @@ def test_expression_strings(
     representations since they will be replaced with references to the columns.
     """
     expr = expr_info.build(tpch_node_builder)
-    assert isinstance(expr, PyDoughExpressionAST)
+    assert isinstance(expr, PyDoughExpressionQDAG)
     assert (
         expr.to_string() == expected_string
     ), "Mismatch between string representation and expected value"

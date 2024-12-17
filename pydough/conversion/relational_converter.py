@@ -1,5 +1,5 @@
 """
-Logic for converting qualified AST nodes to Relational nodes, using hybrid
+Logic for converting qualified QDAG nodes to Relational nodes, using hybrid
 nodes as an intermediary representation.
 """
 
@@ -16,8 +16,8 @@ from pydough.metadata import (
 from pydough.qdag import (
     Calc,
     CollectionAccess,
-    PyDoughCollectionAST,
-    PyDoughExpressionAST,
+    PyDoughCollectionQDAG,
+    PyDoughExpressionQDAG,
     Reference,
     SubCollection,
     TableCollection,
@@ -811,21 +811,21 @@ class RelTranslation:
 
     @staticmethod
     def preprocess_root(
-        node: PyDoughCollectionAST,
-    ) -> PyDoughCollectionAST:
+        node: PyDoughCollectionQDAG,
+    ) -> PyDoughCollectionQDAG:
         """
         Transforms the final PyDough collection by appending it with an extra CALC
         containing all of the columns that are output.
         """
         # Fetch all of the expressions that should be kept in the final output
         original_calc_terms: set[str] = node.calc_terms
-        final_terms: list[tuple[str, PyDoughExpressionAST]] = []
+        final_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
         all_names: set[str] = set()
         for name in original_calc_terms:
             final_terms.append((name, Reference(node, name)))
             all_names.add(name)
         final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
-        children: list[PyDoughCollectionAST] = []
+        children: list[PyDoughCollectionQDAG] = []
         final_calc: Calc = Calc(node, children).with_terms(final_terms)
         return final_calc
 
@@ -858,14 +858,14 @@ def make_relational_ordering(
 
 
 def convert_ast_to_relational(
-    node: PyDoughCollectionAST, configs: PyDoughConfigs
+    node: PyDoughCollectionQDAG, configs: PyDoughConfigs
 ) -> RelationalRoot:
     """
-    Main API for converting from the collection AST form into relational
+    Main API for converting from the collection QDAG form into relational
     nodes.
 
     Args:
-        `node`: the PyDough AST collection node to be translated.
+        `node`: the PyDough QDAG collection node to be translated.
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
@@ -873,13 +873,13 @@ def convert_ast_to_relational(
         `node` are included in the root in the correct order, and if it
         has an ordering then the relational root stores that information.
     """
-    # Pre-process the AST node so the final CALC term includes any ordering
+    # Pre-process the QDAG node so the final CALC term includes any ordering
     # keys.
     translator: RelTranslation = RelTranslation()
     final_terms: set[str] = node.calc_terms
     node = translator.preprocess_root(node)
 
-    # Convert the AST node to the hybrid form, then invoke the relational
+    # Convert the QDAG node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the
     # final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node)

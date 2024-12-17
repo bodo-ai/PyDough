@@ -1,6 +1,6 @@
 """
 Unit tests the PyDough qualification process that transforms unqualified nodes
-into qualified AST nodes.
+into qualified QDAG nodes.
 """
 
 import datetime
@@ -12,7 +12,7 @@ from test_utils import (
 )
 
 from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughAST, PyDoughCollectionAST
+from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
@@ -1010,15 +1010,15 @@ def test_qualify_node_to_ast_string(
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
-    qualified AST version, with the correct string representation.
+    qualified QDAG version, with the correct string representation.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = impl(root)
-    qualified: PyDoughAST = qualify_node(unqualified, graph)
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
     assert isinstance(
-        qualified, PyDoughCollectionAST
+        qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
     assert (
         qualified.to_tree_string() == answer_tree_str
-    ), "Mismatch between tree string representation of qualified node and expected AST tree string"
+    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"

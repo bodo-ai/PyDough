@@ -52,8 +52,8 @@ class PyDoughExpressionOperator(PyDoughOperator):
         string representation. This depends on what exactly the parent is.
 
         Args:
-            `parent`: the parent expression AST that contains this expression
-            AST as a child.
+            `parent`: the parent expression QDAG that contains this expression
+            QDAG as a child.
 
         Returns:
             True if the string representation of `parent` should enclose

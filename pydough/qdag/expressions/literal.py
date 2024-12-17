@@ -1,18 +1,18 @@
 """
-Definition of PyDough AST nodes for literals.
+Definition of PyDough QDAG nodes for literals.
 """
 
 __all__ = ["Literal"]
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.types import PyDoughType
 
-from .expression_qdag import PyDoughExpressionAST
+from .expression_qdag import PyDoughExpressionQDAG
 
 
-class Literal(PyDoughExpressionAST):
+class Literal(PyDoughExpressionQDAG):
     """
-    The AST node implementation class representing a literal term which is of
+    The QDAG node implementation class representing a literal term which is of
     a certain PyDough type, stored as a Python object.
     """
 
@@ -37,11 +37,11 @@ class Literal(PyDoughExpressionAST):
     def is_aggregation(self) -> bool:
         return False
 
-    def is_singular(self, context: PyDoughAST) -> bool:
+    def is_singular(self, context: PyDoughQDAG) -> bool:
         # Literals are always singular.
         return True
 
-    def requires_enclosing_parens(self, parent: PyDoughExpressionAST) -> bool:
+    def requires_enclosing_parens(self, parent: PyDoughExpressionQDAG) -> bool:
         return False
 
     def to_string(self, tree_form: bool = False) -> str:

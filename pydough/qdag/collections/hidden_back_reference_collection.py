@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for accesses to a subcollection of an
+Definition of PyDough QDAG collection type for accesses to a subcollection of an
 ancestor of the current context in a manner that is hidden because the ancestor
 is from a compound subcollection access.
 """
@@ -11,29 +11,29 @@ from pydough.qdag.errors import PyDoughASTException
 
 from .back_reference_collection import BackReferenceCollection
 from .collection_access import CollectionAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .compound_sub_collection import CompoundSubCollection
 
 
 class HiddenBackReferenceCollection(BackReferenceCollection):
     """
-    The AST node implementation class representing a subcollection of an
+    The QDAG node implementation class representing a subcollection of an
     ancestor collection.
     """
 
     def __init__(
         self,
-        context: PyDoughCollectionAST,
+        context: PyDoughCollectionQDAG,
         alias: str,
         term_name: str,
         back_levels: int,
     ):
-        self._context: PyDoughCollectionAST = context
+        self._context: PyDoughCollectionQDAG = context
         self._term_name: str = term_name
         self._back_levels: int = back_levels
         self._alias: str = alias
 
-        compound: PyDoughCollectionAST = context
+        compound: PyDoughCollectionQDAG = context
         while compound.preceding_context is not None:
             compound = compound.preceding_context
         if not isinstance(compound, CompoundSubCollection):
@@ -49,13 +49,15 @@ class HiddenBackReferenceCollection(BackReferenceCollection):
             collection_access.collection, context
         )
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> CollectionAccess:
+    def clone_with_parent(
+        self, new_ancestor: PyDoughCollectionQDAG
+    ) -> CollectionAccess:
         return HiddenBackReferenceCollection(
             new_ancestor, self.alias, self.term_name, self.back_levels
         )
 
     @property
-    def context(self) -> PyDoughCollectionAST:
+    def context(self) -> PyDoughCollectionQDAG:
         """
         The collection context the hidden backreference operates within.
         """

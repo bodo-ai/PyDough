@@ -10,7 +10,7 @@ from typing import Any
 
 class TypeVerifier(ABC):
     """
-    Base class for verifiers that take in a list of PyDough AST objects and
+    Base class for verifiers that take in a list of PyDough QDAG objects and
     either silently accepts them or rejects them by raising an exception.
 
     Each implementation class is expected to implement the `accepts` method.

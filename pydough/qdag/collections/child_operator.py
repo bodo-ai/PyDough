@@ -1,5 +1,5 @@
 """
-Base definition of PyDough AST collection types that can contain child
+Base definition of PyDough QDAG collection types that can contain child
 collections that are referenced instead of stepped into.
 """
 
@@ -8,30 +8,30 @@ __all__ = ["ChildOperator"]
 from collections.abc import MutableSequence
 from functools import cache
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions import CollationExpression
 
 from .child_access import ChildAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
 
 
-class ChildOperator(PyDoughCollectionAST):
+class ChildOperator(PyDoughCollectionQDAG):
     """
-    Base class for PyDough collection AST nodes that have access to
+    Base class for PyDough collection QDAG nodes that have access to
     child collections, such as CALC or WHERE.
     """
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionAST,
-        children: MutableSequence[PyDoughCollectionAST],
+        predecessor: PyDoughCollectionQDAG,
+        children: MutableSequence[PyDoughCollectionQDAG],
     ):
-        self._preceding_context: PyDoughCollectionAST = predecessor
-        self._children: MutableSequence[PyDoughCollectionAST] = children
+        self._preceding_context: PyDoughCollectionQDAG = predecessor
+        self._children: MutableSequence[PyDoughCollectionQDAG] = children
 
     @property
-    def children(self) -> MutableSequence[PyDoughCollectionAST]:
+    def children(self) -> MutableSequence[PyDoughCollectionQDAG]:
         """
         The child collections accessible from the operator used to derive
         expressions in terms of a subcollection.
@@ -39,18 +39,18 @@ class ChildOperator(PyDoughCollectionAST):
         return self._children
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST | None:
+    def ancestor_context(self) -> PyDoughCollectionQDAG | None:
         return self._preceding_context.ancestor_context
 
     @property
-    def preceding_context(self) -> PyDoughCollectionAST:
+    def preceding_context(self) -> PyDoughCollectionQDAG:
         return self._preceding_context
 
     @property
     def ordering(self) -> list[CollationExpression] | None:
         return self.preceding_context.ordering
 
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # A child operator, by default, inherits singular/plural relationships
         # from its predecessor.
         return self.preceding_context.is_singular(context)
@@ -59,13 +59,13 @@ class ChildOperator(PyDoughCollectionAST):
         return self.preceding_context.get_expression_position(expr_name)
 
     @cache
-    def get_term(self, term_name: str) -> PyDoughAST:
-        from pydough.qdag.expressions import PyDoughExpressionAST, Reference
+    def get_term(self, term_name: str) -> PyDoughQDAG:
+        from pydough.qdag.expressions import PyDoughExpressionQDAG, Reference
 
-        term: PyDoughAST = self.preceding_context.get_term(term_name)
+        term: PyDoughQDAG = self.preceding_context.get_term(term_name)
         if isinstance(term, ChildAccess):
             term = term.clone_with_parent(self)
-        elif isinstance(term, PyDoughExpressionAST):
+        elif isinstance(term, PyDoughExpressionQDAG):
             term = Reference(self.preceding_context, term_name)
         return term
 

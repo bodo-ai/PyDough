@@ -1,5 +1,5 @@
 """
-Base definition of PyDough collection AST classes that access a child context.
+Base definition of PyDough collection QDAG classes that access a child context.
 """
 
 __all__ = ["ChildAccess"]
@@ -9,23 +9,23 @@ from abc import abstractmethod
 
 from pydough.qdag.expressions.collation_expression import CollationExpression
 
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 
 
-class ChildAccess(PyDoughCollectionAST):
+class ChildAccess(PyDoughCollectionQDAG):
     """
-    The AST node implementation class representing an access to a child node.
+    The QDAG node implementation class representing an access to a child node.
     either directly or as a subcollection of another collection.
     """
 
     def __init__(
         self,
-        ancestor: PyDoughCollectionAST,
+        ancestor: PyDoughCollectionQDAG,
     ):
-        self._ancestor: PyDoughCollectionAST = ancestor
+        self._ancestor: PyDoughCollectionQDAG = ancestor
 
     @abstractmethod
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> "ChildAccess":
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> "ChildAccess":
         """
         Copies `self` but with a new ancestor node that presumably has the
         original ancestor in its predecessor chain.
@@ -38,11 +38,11 @@ class ChildAccess(PyDoughCollectionAST):
         """
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionAST:
+    def ancestor_context(self) -> PyDoughCollectionQDAG:
         return self._ancestor
 
     @property
-    def preceding_context(self) -> PyDoughCollectionAST | None:
+    def preceding_context(self) -> PyDoughCollectionQDAG | None:
         return None
 
     @property

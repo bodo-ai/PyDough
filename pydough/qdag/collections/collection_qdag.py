@@ -1,8 +1,8 @@
 """
-Base definition of all PyDough AST collection types.
+Base definition of all PyDough QDAG collection types.
 """
 
-__all__ = ["PyDoughCollectionAST"]
+__all__ = ["PyDoughCollectionQDAG"]
 
 
 from abc import abstractmethod
@@ -10,17 +10,17 @@ from collections.abc import Iterable
 from functools import cached_property
 from typing import Union
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughASTException
 from pydough.qdag.expressions.collation_expression import CollationExpression
-from pydough.qdag.expressions.expression_qdag import PyDoughExpressionAST
+from pydough.qdag.expressions.expression_qdag import PyDoughExpressionQDAG
 
 from .collection_tree_form import CollectionTreeForm
 
 
-class PyDoughCollectionAST(PyDoughAST):
+class PyDoughCollectionQDAG(PyDoughQDAG):
     """
-    The base class for AST nodes that represent a table collection accessed
+    The base class for QDAG nodes that represent a table collection accessed
     as a root.
     """
 
@@ -28,7 +28,7 @@ class PyDoughCollectionAST(PyDoughAST):
         return self.to_string()
 
     @property
-    def ancestor_context(self) -> Union["PyDoughCollectionAST", None]:
+    def ancestor_context(self) -> Union["PyDoughCollectionQDAG", None]:
         """
         The ancestor context from which this collection is derived, e.g. what
         is accessed by `BACK(1)`. Returns None if there is no ancestor context,
@@ -37,7 +37,7 @@ class PyDoughCollectionAST(PyDoughAST):
 
     @property
     @abstractmethod
-    def preceding_context(self) -> Union["PyDoughCollectionAST", None]:
+    def preceding_context(self) -> Union["PyDoughCollectionQDAG", None]:
         """
         The preceding context from which this collection is derived, e.g. an
         ORDER BY term before a CALC. Returns None if there is no preceding
@@ -62,7 +62,7 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @abstractmethod
-    def is_singular(self, context: "PyDoughCollectionAST") -> bool:
+    def is_singular(self, context: "PyDoughCollectionQDAG") -> bool:
         """
         Returns whether the collection is singular with regards to a
         context collection.
@@ -77,7 +77,7 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @cached_property
-    def starting_predecessor(self) -> "PyDoughCollectionAST":
+    def starting_predecessor(self) -> "PyDoughCollectionQDAG":
         """
         Returns the predecessor at the start of the current chain of preceding
         collections, or `self` if this is the start of that chain. The process
@@ -85,8 +85,8 @@ class PyDoughCollectionAST(PyDoughAST):
         """
         from pydough.qdag.collections import ChildOperatorChildAccess
 
-        predecessor: PyDoughCollectionAST | None = self.preceding_context
-        result: PyDoughCollectionAST
+        predecessor: PyDoughCollectionQDAG | None = self.preceding_context
+        result: PyDoughCollectionQDAG
         if predecessor is None:
             result = self
         else:
@@ -95,7 +95,7 @@ class PyDoughCollectionAST(PyDoughAST):
             result = result.child_access.starting_predecessor
         return result
 
-    def verify_singular_terms(self, exprs: Iterable[PyDoughExpressionAST]) -> None:
+    def verify_singular_terms(self, exprs: Iterable[PyDoughExpressionQDAG]) -> None:
         """
         Verifies that a list of expressions is singular with regards to the
         current collection, e.g. they can used as CALC terms.
@@ -107,7 +107,7 @@ class PyDoughCollectionAST(PyDoughAST):
             `PyDoughASTException` if any element of `exprs` is not singular with
             regards to the current collection.
         """
-        relative_context: PyDoughCollectionAST = self.starting_predecessor
+        relative_context: PyDoughCollectionQDAG = self.starting_predecessor
         for expr in exprs:
             if not expr.is_singular(relative_context):
                 raise PyDoughASTException(
@@ -134,7 +134,7 @@ class PyDoughCollectionAST(PyDoughAST):
         """
 
     @abstractmethod
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         """
         Obtains an expression or collection accessible from the current context
         by name.
@@ -148,7 +148,7 @@ class PyDoughCollectionAST(PyDoughAST):
             terms accessible in the context.
         """
 
-    def get_expr(self, term_name: str) -> PyDoughExpressionAST:
+    def get_expr(self, term_name: str) -> PyDoughExpressionQDAG:
         """
         Obtains an expression accessible from the current context by name.
 
@@ -161,13 +161,13 @@ class PyDoughCollectionAST(PyDoughAST):
             terms accessible in the context, or is not an expression.
         """
         term = self.get_term(term_name)
-        if not isinstance(term, PyDoughExpressionAST):
+        if not isinstance(term, PyDoughExpressionQDAG):
             raise PyDoughASTException(
                 f"Property {term_name!r} of {self} is not an expression"
             )
         return term
 
-    def get_collection(self, term_name: str) -> "PyDoughCollectionAST":
+    def get_collection(self, term_name: str) -> "PyDoughCollectionQDAG":
         """
         Obtains a collection accessible from the current context by name.
 
@@ -180,7 +180,7 @@ class PyDoughCollectionAST(PyDoughAST):
             terms accessible in the context, or is not a collection.
         """
         term = self.get_term(term_name)
-        if not isinstance(term, PyDoughCollectionAST):
+        if not isinstance(term, PyDoughCollectionQDAG):
             raise PyDoughASTException(
                 f"Property {term_name!r} of {self} is not a collection"
             )
@@ -205,7 +205,7 @@ class PyDoughCollectionAST(PyDoughAST):
     @abstractmethod
     def to_string(self) -> str:
         """
-        Returns a PyDough collection AST converted to a simple string
+        Returns a PyDough collection QDAG converted to a simple string
         reminiscent of the original PyDough code.
         """
 
@@ -242,7 +242,7 @@ class PyDoughCollectionAST(PyDoughAST):
 
     def to_tree_string(self) -> str:
         """
-        Returns a PyDough collection AST converted into a tree-like string,
+        Returns a PyDough collection QDAG converted into a tree-like string,
         structured. For example, consider the following PyDough snippet:
 
         ```

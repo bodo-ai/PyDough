@@ -1,5 +1,5 @@
 """
-Module of PyDough dealing with converting the qualified PyDough AST nodes into
+Module of PyDough dealing with converting the qualified PyDough QDAG nodes into
 Relational nodes.
 """
 

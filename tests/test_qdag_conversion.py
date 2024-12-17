@@ -1,5 +1,5 @@
 """
-Unit tests for the process of converting qualified PyDough AST nodes into the
+Unit tests for the process of converting qualified PyDough QDAG nodes into the
 relational tree.
 """
 
@@ -23,7 +23,7 @@ from test_utils import (
 
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.qdag import AstNodeBuilder, PyDoughCollectionAST
+from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
 from pydough.types import (
     BooleanType,
     Float64Type,
@@ -2851,7 +2851,7 @@ ROOT(columns=[('name', name)], orderings=[])
 def relational_test_data(request) -> tuple[CollectionTestInfo, str]:
     """
     Input data for `test_ast_to_relational`. Parameters are the info to build
-    the input AST nodes, and the expected output string after converting to a
+    the input QDAG nodes, and the expected output string after converting to a
     relational tree.
     """
     return request.param
@@ -2863,11 +2863,11 @@ def test_ast_to_relational(
     default_config: PyDoughConfigs,
 ) -> None:
     """
-    Tests whether the AST nodes are correctly translated into Relational nodes
+    Tests whether the QDAG nodes are correctly translated into Relational nodes
     with the expected string representation.
     """
     calc_pipeline, expected_relational_string = relational_test_data
-    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
     assert (
         relational.to_tree_string() == expected_relational_string.strip()
@@ -2999,7 +2999,7 @@ ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10par
 def relational_alternative_config_test_data(request) -> tuple[CollectionTestInfo, str]:
     """
     Input data for `test_ast_to_relational_alternative_aggregation_configs`.
-    Parameters are the info to build the input AST nodes, and the expected
+    Parameters are the info to build the input QDAG nodes, and the expected
     output string after converting to a relational tree.
     """
     return request.param
@@ -3019,7 +3019,7 @@ def test_ast_to_relational_alternative_aggregation_configs(
     calc_pipeline, expected_relational_string = relational_alternative_config_test_data
     default_config.sum_default_zero = False
     default_config.avg_default_zero = True
-    collection: PyDoughCollectionAST = calc_pipeline.build(tpch_node_builder)
+    collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
     assert (
         relational.to_tree_string() == expected_relational_string.strip()

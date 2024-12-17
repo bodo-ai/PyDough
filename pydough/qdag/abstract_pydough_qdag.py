@@ -1,16 +1,16 @@
 """
-Base class for all PyDough AST nodes, collection or expression.
+Base class for all PyDough QDAG nodes, collection or expression.
 """
 
-__all__ = ["PyDoughAST"]
+__all__ = ["PyDoughQDAG"]
 
 from abc import ABC, abstractmethod
 from hashlib import sha256
 
 
-class PyDoughAST(ABC):
+class PyDoughQDAG(ABC):
     """
-    Base class used for PyDough collection, expression, and opertor AST
+    Base class used for PyDough collection, expression, and opertor QDAG
     nodes. Mostly exists for isinstance checks & type annotation.
     """
 
@@ -27,7 +27,7 @@ class PyDoughAST(ABC):
     @abstractmethod
     def key(self) -> str:
         """
-        An string used to distinguish `self` to hash on so that AST nodes can
+        An string used to distinguish `self` to hash on so that QDAG nodes can
         have cached methods. This key string is not necessarily unique for
         objects even if they are not equal.
         """
@@ -35,7 +35,7 @@ class PyDoughAST(ABC):
     @abstractmethod
     def equals(self, other: object) -> bool:
         """
-        Returns true if two PyDoughAST objects are equal.
+        Returns true if two PyDoughQDAG objects are equal.
 
         Args:
             `other`: the candidate object being compared to `self`.

@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for ordering the current collection
+Definition of PyDough QDAG collection type for ordering the current collection
 by certain collation keys and picking the top records according to the
 ordering.
 """
@@ -9,19 +9,19 @@ __all__ = ["TopK"]
 
 from collections.abc import MutableSequence
 
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .order_by import OrderBy
 
 
 class TopK(OrderBy):
     """
-    The AST node implementation class representing a TOP K clause.
+    The QDAG node implementation class representing a TOP K clause.
     """
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionAST,
-        children: MutableSequence[PyDoughCollectionAST],
+        predecessor: PyDoughCollectionQDAG,
+        children: MutableSequence[PyDoughCollectionQDAG],
         records_to_keep: int,
     ):
         super().__init__(predecessor, children)

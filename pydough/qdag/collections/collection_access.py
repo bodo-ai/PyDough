@@ -1,5 +1,5 @@
 """
-Base definition of PyDough AST collection type for accesses to a subcollection
+Base definition of PyDough QDAG collection type for accesses to a subcollection
 of the current context.
 """
 
@@ -15,25 +15,25 @@ from pydough.metadata import (
     TableColumnMetadata,
 )
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughASTException
 from pydough.qdag.expressions import CollationExpression, ColumnProperty
 
 from .child_access import ChildAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
 
 
 class CollectionAccess(ChildAccess):
     """
-    The AST node implementation class representing a table collection accessed
+    The QDAG node implementation class representing a table collection accessed
     either directly or as a subcollection of another collection.
     """
 
     def __init__(
         self,
         collection: CollectionMetadata,
-        ancestor: PyDoughCollectionAST,
+        ancestor: PyDoughCollectionQDAG,
     ):
         super().__init__(ancestor)
         self._collection: CollectionMetadata = collection
@@ -79,7 +79,7 @@ class CollectionAccess(ChildAccess):
         return self._calc_property_order[expr_name]
 
     @cache
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         from .compound_sub_collection import CompoundSubCollection
         from .sub_collection import SubCollection
 

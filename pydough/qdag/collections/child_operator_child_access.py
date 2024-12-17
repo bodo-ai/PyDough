@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for an access to a child context done
+Definition of PyDough QDAG collection type for an access to a child context done
 by a child operator, as opposed to stepping down into the child access.
 """
 
@@ -8,11 +8,11 @@ __all__ = ["ChildOperatorChildAccess"]
 
 from functools import cache
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 
 from .back_reference_collection import BackReferenceCollection
 from .child_access import ChildAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
 
 
@@ -24,18 +24,18 @@ class ChildOperatorChildAccess(ChildAccess):
 
     def __init__(
         self,
-        child_access: PyDoughCollectionAST,
+        child_access: PyDoughCollectionQDAG,
     ):
         ancestor = child_access.ancestor_context
         assert ancestor is not None
         super().__init__(ancestor)
-        self._child_access: PyDoughCollectionAST = child_access
+        self._child_access: PyDoughCollectionQDAG = child_access
 
-    def clone_with_parent(self, new_ancestor: PyDoughCollectionAST) -> ChildAccess:
+    def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         raise NotImplementedError
 
     @property
-    def child_access(self) -> PyDoughCollectionAST:
+    def child_access(self) -> PyDoughCollectionQDAG:
         """
         The collection node that is being wrapped.
         """
@@ -57,22 +57,22 @@ class ChildOperatorChildAccess(ChildAccess):
         return self.child_access.get_expression_position(expr_name)
 
     @cache
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         term = self.child_access.get_term(term_name)
         if isinstance(term, ChildAccess):
             term = term.clone_with_parent(self)
         return term
 
-    def is_singular(self, context: PyDoughCollectionAST) -> bool:
+    def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # When a child operator acceses a child collection, the child is
         # singular with regards to a context if the child is singular
         # relative to its own parent, and one of 3 other conditions is true:
         # 1. The child access is a BACK node (automatically singular)
         # 2. The parent of the child access is the context
         # 3. The parent of the child access is singular relative to the context
-        ancestor: PyDoughCollectionAST | None = self.child_access.ancestor_context
+        ancestor: PyDoughCollectionQDAG | None = self.child_access.ancestor_context
         assert ancestor is not None
-        relative_context: PyDoughCollectionAST = ancestor.starting_predecessor
+        relative_context: PyDoughCollectionQDAG = ancestor.starting_predecessor
         return self.child_access.is_singular(relative_context) and (
             isinstance(self.child_access, BackReferenceCollection)
             or (context == relative_context)

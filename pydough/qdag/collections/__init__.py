@@ -1,10 +1,10 @@
 """
-Submodule of the PyDough AST module defining AST nodes representing
+Submodule of the PyDough QDAG module defining QDAG nodes representing
 collections, including operators that transform collections.
 """
 
 __all__ = [
-    "PyDoughCollectionAST",
+    "PyDoughCollectionQDAG",
     "TableCollection",
     "Calc",
     "GlobalContext",
@@ -30,7 +30,7 @@ from .child_operator import ChildOperator
 from .child_operator_child_access import ChildOperatorChildAccess
 from .child_reference_collection import ChildReferenceCollection
 from .collection_access import CollectionAccess
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 from .compound_sub_collection import CompoundSubCollection
 from .global_context import GlobalContext
 from .order_by import OrderBy

@@ -1,5 +1,5 @@
 """
-Error-handling unit tests for PyDough AST nodes for expressions.
+Error-handling unit tests for PyDough QDAG nodes for expressions.
 """
 
 import re

@@ -1,5 +1,5 @@
 """
-Definition of PyDough AST collection type for a CALC, which defines new
+Definition of PyDough QDAG collection type for a CALC, which defines new
 expressions of the current context (or overrides existing definitions) that are
 all singular with regards to it.
 """
@@ -9,33 +9,33 @@ __all__ = ["Calc"]
 from collections.abc import MutableMapping, MutableSequence
 from functools import cache
 
-from pydough.qdag.abstract_pydough_qdag import PyDoughAST
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughASTException
-from pydough.qdag.expressions import PyDoughExpressionAST
+from pydough.qdag.expressions import PyDoughExpressionQDAG
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .child_operator import ChildOperator
-from .collection_qdag import PyDoughCollectionAST
+from .collection_qdag import PyDoughCollectionQDAG
 
 
 class Calc(ChildOperator):
     """
-    The AST node implementation class representing a CALC expression.
+    The QDAG node implementation class representing a CALC expression.
     """
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionAST,
-        children: MutableSequence[PyDoughCollectionAST],
+        predecessor: PyDoughCollectionQDAG,
+        children: MutableSequence[PyDoughCollectionQDAG],
     ):
         super().__init__(predecessor, children)
         # Not initialized until with_terms is called
         self._calc_term_indices: dict[str, int] | None = None
-        self._calc_term_values: MutableMapping[str, PyDoughExpressionAST] | None = None
+        self._calc_term_values: MutableMapping[str, PyDoughExpressionQDAG] | None = None
         self._all_term_names: set[str] = set()
 
     def with_terms(
-        self, terms: MutableSequence[tuple[str, PyDoughExpressionAST]]
+        self, terms: MutableSequence[tuple[str, PyDoughExpressionQDAG]]
     ) -> "Calc":
         """
         Specifies the terms that are calculated inside of a CALC node,
@@ -91,9 +91,9 @@ class Calc(ChildOperator):
     @property
     def calc_term_values(
         self,
-    ) -> MutableMapping[str, PyDoughExpressionAST]:
+    ) -> MutableMapping[str, PyDoughExpressionQDAG]:
         """
-        Mapping of each named expression of the CALC to the AST node for
+        Mapping of each named expression of the CALC to the QDAG node for
         that expression.
         """
         if self._calc_term_values is None:
@@ -120,7 +120,7 @@ class Calc(ChildOperator):
         return self.calc_term_indices[expr_name]
 
     @cache
-    def get_term(self, term_name: str) -> PyDoughAST:
+    def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name in self.calc_term_values:
             return self.calc_term_values[term_name]
         else:
@@ -142,7 +142,7 @@ class Calc(ChildOperator):
         for name in sorted(
             self.calc_terms, key=lambda name: self.get_expression_position(name)
         ):
-            expr: PyDoughExpressionAST = self.get_expr(name)
+            expr: PyDoughExpressionQDAG = self.get_expr(name)
             kwarg_strings.append(f"{name}={expr.to_string(tree_form)}")
         return ", ".join(kwarg_strings)
 
