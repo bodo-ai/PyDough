@@ -25,13 +25,16 @@ from pydough.relational import (
     RelationalRoot,
     Scan,
 )
-from pydough.sqlglot import execute_df
+from pydough.sqlglot import SqlGlotTransformBindings, execute_df
 from pydough.types import BooleanType, UnknownType
 
 pytestmark = [pytest.mark.execute]
 
 
-def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext) -> None:
+def test_person_total_salary(
+    sqlite_people_jobs_context: DatabaseContext,
+    sqlite_bindings: SqlGlotTransformBindings,
+) -> None:
     """
     Tests a simple join and aggregate to compute the total salary for each
     person in the PEOPLE table.
@@ -89,7 +92,7 @@ def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext) -> Non
             join_types=[JoinType.LEFT],
         ),
     )
-    output: list[Any] = execute_df(result, sqlite_people_jobs_context)
+    output: list[Any] = execute_df(result, sqlite_people_jobs_context, sqlite_bindings)
     people_results: list[str] = [f"Person {i}" for i in range(10)]
     salary_results: list[float] = [
         sum((i + j + 5.7) * 1000 for j in range(2)) for i in range(10)
@@ -100,7 +103,10 @@ def test_person_total_salary(sqlite_people_jobs_context: DatabaseContext) -> Non
     pd.testing.assert_frame_equal(output, expected_output)
 
 
-def test_person_jobs_multi_join(sqlite_people_jobs_context: DatabaseContext) -> None:
+def test_person_jobs_multi_join(
+    sqlite_people_jobs_context: DatabaseContext,
+    sqlite_bindings: SqlGlotTransformBindings,
+) -> None:
     """
     Tests an example of a query that uses a join relational node to
     represent multiple joins. It should be noted that this may not be optimal
@@ -190,7 +196,9 @@ def test_person_jobs_multi_join(sqlite_people_jobs_context: DatabaseContext) -> 
             join_types=[JoinType.INNER, JoinType.INNER],
         ),
     )
-    output: pd.DataFrame = execute_df(result, sqlite_people_jobs_context)
+    output: pd.DataFrame = execute_df(
+        result, sqlite_people_jobs_context, sqlite_bindings
+    )
     # By construction salaries are increasing with person_id so we
     # select the top half of the people.
     people_results: list[str] = [f"Person {i}" for i in range(5, 10)]

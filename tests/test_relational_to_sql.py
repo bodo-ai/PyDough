@@ -45,7 +45,7 @@ from pydough.relational import (
     Project,
     RelationalRoot,
 )
-from pydough.sqlglot import convert_relation_to_sql
+from pydough.sqlglot import SqlGlotTransformBindings, convert_relation_to_sql
 from pydough.types import BooleanType, Int64Type, StringType, UnknownType
 
 
@@ -680,12 +680,15 @@ def sqlite_dialect() -> SQLiteDialect:
     ],
 )
 def test_convert_relation_to_sql(
-    root: RelationalRoot, sql_text: str, sqlite_dialect: SQLiteDialect
+    root: RelationalRoot,
+    sql_text: str,
+    sqlite_dialect: SQLiteDialect,
+    sqlite_bindings: SqlGlotTransformBindings,
 ) -> None:
     """
     Test converting a relational tree to SQL text in the SQLite dialect.
     """
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect)
+    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
     assert created_sql == sql_text
 
 
@@ -710,7 +713,10 @@ def test_convert_relation_to_sql(
     ],
 )
 def test_tpch_relational_to_sql(
-    root: RelationalRoot, sql_text: str, sqlite_dialect: SQLiteDialect
+    root: RelationalRoot,
+    sql_text: str,
+    sqlite_dialect: SQLiteDialect,
+    sqlite_bindings: SqlGlotTransformBindings,
 ) -> None:
     """
     Test that we can take possible relational trees from select TPCH queries
@@ -720,7 +726,7 @@ def test_tpch_relational_to_sql(
     These plans are generated from a couple simple plans we built with
     Apache Calcite in Bodo's SQL optimizer.
     """
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect)
+    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
     assert created_sql == sql_text
 
 
@@ -922,11 +928,14 @@ def test_tpch_relational_to_sql(
     ],
 )
 def test_function_to_sql(
-    root: RelationalRoot, sql_text: str, sqlite_dialect: SQLiteDialect
+    root: RelationalRoot,
+    sql_text: str,
+    sqlite_dialect: SQLiteDialect,
+    sqlite_bindings: SqlGlotTransformBindings,
 ) -> None:
     """
     Tests that should be small as we need to just test converting a function
     to SQL.
     """
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect)
+    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
     assert created_sql == sql_text

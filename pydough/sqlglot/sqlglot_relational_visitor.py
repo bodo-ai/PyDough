@@ -33,6 +33,7 @@ from pydough.relational import (
 from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
 from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
+from .transform_bindings import SqlGlotTransformBindings
 
 __all__ = ["SQLGlotRelationalVisitor"]
 
@@ -43,12 +44,14 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     the relational tree 1 node at a time.
     """
 
-    def __init__(self, dialect: SQLGlotDialect) -> None:
+    def __init__(
+        self, dialect: SQLGlotDialect, bindings: SqlGlotTransformBindings
+    ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(dialect)
+            SQLGlotRelationalExpressionVisitor(dialect, bindings)
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()

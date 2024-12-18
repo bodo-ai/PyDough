@@ -3,8 +3,6 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
-from collections.abc import Callable
-
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -18,58 +16,10 @@ from pydough.relational import (
     RelationalExpressionVisitor,
 )
 
-from .call_expression_conversion import (
-    apply_parens,
-    convert_contains,
-    convert_day,
-    convert_endswith,
-    convert_if,
-    convert_isin,
-    convert_like,
-    convert_month,
-    convert_ndistinct,
-    convert_startswith,
-    convert_year,
-)
 from .sqlglot_helpers import set_glot_alias
+from .transform_bindings import SqlGlotTransformBindings
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
-
-# SQLGlot doesn't have a clean interface for functional calls without
-# going through the parser. As a result, we generate our own map for now.
-# These functions can be generated with from_arg_list.
-generic_func_map: dict[str, SQLGlotExpression] = {
-    "ABS": sqlglot_expressions.Abs,
-    "AVG": sqlglot_expressions.Avg,
-    "LOWER": sqlglot_expressions.Lower,
-    "UPPER": sqlglot_expressions.Upper,
-    "LENGTH": sqlglot_expressions.Length,
-    "MIN": sqlglot_expressions.Min,
-    "MAX": sqlglot_expressions.Max,
-    "SUM": sqlglot_expressions.Sum,
-    "COUNT": sqlglot_expressions.Count,
-    "IFF": sqlglot_expressions.If,
-    "DEFAULT_TO": sqlglot_expressions.Coalesce,
-}
-# These functions need an explicit constructor for binary.
-binary_func_map: dict[str, SQLGlotExpression] = {
-    "==": sqlglot_expressions.EQ,
-    ">=": sqlglot_expressions.GTE,
-    ">": sqlglot_expressions.GT,
-    "<=": sqlglot_expressions.LTE,
-    "<": sqlglot_expressions.LT,
-    "!=": sqlglot_expressions.NEQ,
-    "+": sqlglot_expressions.Add,
-    "-": sqlglot_expressions.Sub,
-    "*": sqlglot_expressions.Mul,
-    "/": sqlglot_expressions.Div,
-    "&": sqlglot_expressions.And,
-    "|": sqlglot_expressions.Or,
-}
-# These functions need an explicit constructor for unary.
-unary_func_map: dict[str, SQLGlotExpression] = {
-    "NOT": sqlglot_expressions.Not,
-}
 
 
 class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
@@ -78,27 +28,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     the relational tree 1 node at a time.
     """
 
-    # Mapping for builtin functions that require complex conversions.
-    special_func_map: dict[
-        str, Callable[[list[SQLGlotExpression], SQLGlotDialect], SQLGlotExpression]
-    ] = {
-        "STARTSWITH": convert_startswith,
-        "CONTAINS": convert_contains,
-        "ENDSWITH": convert_endswith,
-        "ISIN": convert_isin,
-        "LIKE": convert_like,
-        "YEAR": convert_year,
-        "MONTH": convert_month,
-        "DAY": convert_day,
-        "NDISTINCT": convert_ndistinct,
-        "IFF": convert_if,
-    }
-
-    def __init__(self, dialect: SQLGlotDialect) -> None:
+    def __init__(
+        self, dialect: SQLGlotDialect, bindings: SqlGlotTransformBindings
+    ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
         self._dialect: SQLGlotDialect = dialect
+        self._bindings: SqlGlotTransformBindings = bindings
 
     def reset(self) -> None:
         """
@@ -113,28 +50,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         input_exprs: list[SQLGlotExpression] = [
             self._stack.pop() for _ in range(len(call_expression.inputs))
         ]
-        key: str = call_expression.op.function_name.upper()
-        output_expr: SQLGlotExpression
-        if key in self.special_func_map:
-            output_expr = self.special_func_map[key](input_exprs, self._dialect)
-        elif key in generic_func_map:
-            output_expr = generic_func_map[key].from_arg_list(input_exprs)
-        elif key in unary_func_map:
-            assert len(input_exprs) == 1, "Need exactly 1 unary input"
-            output_expr = unary_func_map[key](this=input_exprs[0])
-        elif key in binary_func_map:
-            assert len(input_exprs) >= 2, "Need at least 2 binary inputs"
-            # Note: SQLGlot explicit inserts parentheses for binary operations
-            # during parsing.
-            output_expr = apply_parens(input_exprs[0])
-            for expr in input_exprs[1:]:
-                other_expr: SQLGlotExpression = apply_parens(expr)
-                # Build the expressions on the left since the operator is left-associative.
-                output_expr = binary_func_map[key](
-                    this=output_expr, expression=other_expr
-                )
-        else:
-            raise ValueError(f"Unsupported function {key}")
+        output_expr: SQLGlotExpression = self._bindings.call(
+            call_expression.op, call_expression.inputs, input_exprs
+        )
         self._stack.append(output_expr)
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:

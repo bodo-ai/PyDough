@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
+from sqlglot.dialects import Dialect
 from sqlglot.dialects.sqlite import SQLite as SQLiteDialect
 from sqlglot.expressions import (
     EQ,
@@ -34,6 +35,7 @@ from test_utils import (
     make_relational_ordering,
 )
 
+from pydough.database_connectors import DatabaseDialect
 from pydough.pydough_operators import (
     ABS,
     ADD,
@@ -57,13 +59,22 @@ from pydough.relational import (
     RelationalRoot,
     Scan,
 )
-from pydough.sqlglot import SQLGlotRelationalVisitor, find_identifiers, set_glot_alias
+from pydough.sqlglot import (
+    SQLGlotRelationalVisitor,
+    SqlGlotTransformBindings,
+    find_identifiers,
+    set_glot_alias,
+)
 from pydough.types import BooleanType, Int64Type, StringType
 
 
 @pytest.fixture(scope="module")
 def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
-    return SQLGlotRelationalVisitor(SQLiteDialect())
+    dialect: Dialect = SQLiteDialect()
+    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings(
+        DatabaseDialect.SQLITE
+    )
+    return SQLGlotRelationalVisitor(dialect, bindings)
 
 
 @dataclass

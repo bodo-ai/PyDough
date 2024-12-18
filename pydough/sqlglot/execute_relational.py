@@ -16,11 +16,16 @@ from pydough.database_connectors import (
 from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
+from .transform_bindings import SqlGlotTransformBindings
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
 
 
-def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect) -> str:
+def convert_relation_to_sql(
+    relational: RelationalRoot,
+    dialect: SQLGlotDialect,
+    bindings: SqlGlotTransformBindings,
+) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
 
@@ -32,7 +37,7 @@ def convert_relation_to_sql(relational: RelationalRoot, dialect: SQLGlotDialect)
         str: The SQL string representing the relational tree.
     """
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
-        dialect
+        dialect, bindings
     ).relational_to_sqlglot(relational)
     return glot_expr.sql(dialect)
 
@@ -57,7 +62,10 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
 
 
 def execute_df(
-    relational: RelationalRoot, ctx: DatabaseContext, display_sql: bool = False
+    relational: RelationalRoot,
+    ctx: DatabaseContext,
+    bindings: SqlGlotTransformBindings,
+    display_sql: bool = False,
 ) -> pd.DataFrame:
     """
     Execute the given relational tree on the given database access
@@ -66,6 +74,8 @@ def execute_df(
     Args:
         `relational`: The relational tree to execute.
         `ctx`: The database context to execute the query in.
+        `bindings`: The function transformation bindings used to convert
+        PyDough operators into SQLGlot expressions.
         `display_sql`: if True, prints out the SQL that will be run before
         it is executed.
 
@@ -73,7 +83,7 @@ def execute_df(
         The result of the query as a Pandas DataFrame
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
-    sql: str = convert_relation_to_sql(relational, sqlglot_dialect)
+    sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings)
     # TODO: handle with a proper Python logger instead of just printing
     if display_sql:
         print("SQL query:\n", sql)
