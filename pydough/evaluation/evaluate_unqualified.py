@@ -62,6 +62,7 @@ def _load_session_info(
         database = pydough.active_session.database
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
     bindings: SqlGlotTransformBindings = pydough.active_session.bindings
+    bindings.set_dialect(database.dialect)
     return metadata, config, database, bindings
 
 
