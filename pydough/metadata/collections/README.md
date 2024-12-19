@@ -7,6 +7,7 @@ A collection in PyDough is a group of properties that are logically related and 
 ## Available APIs
 
 The collection metadata has the following notable APIs available for use:
+
 - `name`: a property of the collection metadata storing the name of the collection.
 - `graph`: a property that returns the graph to which the collection belongs.
 - `properties`: returns a dictionary mapping the names of each property of the collection to the property metadata.
