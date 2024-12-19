@@ -71,9 +71,8 @@ from pydough.types import BooleanType, Int64Type, StringType
 @pytest.fixture(scope="module")
 def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
     dialect: Dialect = SQLiteDialect()
-    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings(
-        DatabaseDialect.SQLITE
-    )
+    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
+    bindings.set_dialect(DatabaseDialect.SQLITE)
     return SQLGlotRelationalVisitor(dialect, bindings)
 
 

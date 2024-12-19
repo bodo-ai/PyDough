@@ -9,7 +9,6 @@ import sqlite3
 from collections.abc import Callable, Sequence
 
 import sqlglot.expressions as sqlglot_expressions
-from sqlglot.dialects import Dialect
 from sqlglot.expressions import Binary, Concat, Paren
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Func as SQLGlotFunction
@@ -32,11 +31,11 @@ def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
     expression to avoid operator precedence issues.
 
     Args:
-        expression (SQLGlotExpression): The expression to check.
+        `expression`: The expression to check and potentially wrap in
+        parentheses.
 
     Returns:
-        SQLGlotExpression: The expression with parentheses applied if
-            necessary.
+        The expression, wrapped in parentheses if necessary.
     """
     if isinstance(expression, (Binary, Concat)):
         return Paren(this=expression)
@@ -47,10 +46,17 @@ def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
 def convert_sqlite_datetime_extract(format_str: str) -> transform_binding:
     """
     Generate a SQLite-compatible datetime conversion expression for the given
-    format string.
+    format string. This is used when a dialect does not support extraction
+    functions, so `YEAR(x)` becomes `STRFTIME('%Y', x) :: INT`, etc.
 
     Args:
-        format_str (str): The format string.
+        `format_str`: The format string corresponding that should be used
+        in the `STRFTIME` call to extract a portion of the date/time of the
+        operands.
+
+    Returns:
+        A new transform binding that corresponds to an extraction operation
+        using the specified `format_str` to do so.
     """
 
     def impl(
@@ -72,7 +78,17 @@ def convert_iff_case(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    TODO: add function docstring
+    Support for converting the expression `IFF(a, b, c)` to the expression
+    `CASE WHEN a THEN b ELSE c END`, since not every dialect supports IFF.
+
+    Args:
+        `raw_args`: The operands to `IFF`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `IFF`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        A `CASE` expression equivalent to the input `IFF` call.
     """
     assert len(sql_glot_args) == 3
     return (
@@ -87,15 +103,18 @@ def convert_concat(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Support for generating a CONCAT expression from a list of arguments.
+    Support for generating a `CONCAT` expression from a list of arguments.
     This is optimized for the case where all arguments are string literals
     because it impacts the quality of the generated SQL for common cases.
 
     Args:
-        sql_glot_args: The list of arguments to concatenate.
+        `raw_args`: The operands to `CONCAT`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `CONCAT`, after they were
+        converted to SQLGlot expressions.
 
     Returns:
-        SQLGlotExpression: A CONCAT expression or equivalent string literal.
+        A `CONCAT` expression, or equivalent string literal.
     """
     # Fast path for all arguments as string literals.
     if all(
@@ -113,15 +132,17 @@ def convert_like(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Support for generating a LIKE expression from a list of arguments.
+    Support for generating a `LIKE` expression from a list of arguments.
     This is given a function because it is a conversion target.
 
     Args:
-        sql_glot_args: The list of arguments.
+        `raw_args`: The operands to `LIKE`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `LIKE`, after they were
+        converted to SQLGlot expressions.
 
     Returns:
-        SQLGlotExpression: The SQLGlot expression matching the functionality
-            of like.
+        The SQLGlot expression matching the functionality of `LIKE`.
     """
     column: SQLGlotExpression = apply_parens(sql_glot_args[0])
     pattern: SQLGlotExpression = apply_parens(sql_glot_args[1])
@@ -133,16 +154,20 @@ def convert_startswith(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Convert a STARTSWITH call expression to a SQLGlot expression. This
-    is done because SQLGlot does not automatically convert STARTSWITH
+    Convert a `STARTSWITH` call expression to a SQLGlot expression. This
+    is done because SQLGlot does not automatically convert `STARTSWITH`
     to a LIKE expression for SQLite.
 
     Args:
-        sql_glot_args: The list of arguments.
+        `raw_args`: The operands to `STARTSWITH`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `STARTSWITH`, after they were
+        converted to SQLGlot expressions.
 
     Returns:
-        SQLGlotExpression: The SQLGlot expression matching the functionality
-            of startswith.
+        The SQLGlot expression matching the functionality of `STARTSWITH`
+        by using `LIKE` where the pattern is the original STARTSWITH string,
+        prepended with `'%'`.
     """
     column: SQLGlotExpression = sql_glot_args[0]
     pattern: SQLGlotExpression = convert_concat(
@@ -157,16 +182,20 @@ def convert_endswith(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Convert a ENDSWITH call expression to a SQLGlot expression. This
-    is done because SQLGlot does not automatically convert ENDSWITH
+    Convert a `ENDSWITH` call expression to a SQLGlot expression. This
+    is done because SQLGlot does not automatically convert `ENDSWITH`
     to a LIKE expression for SQLite.
 
     Args:
-        sql_glot_args: The list of arguments.
+        `raw_args`: The operands to `ENDSWITH`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `ENDSWITH`, after they were
+        converted to SQLGlot expressions.
 
     Returns:
-        SQLGlotExpression: The SQLGlot expression matching the functionality
-            of endswith.
+        The SQLGlot expression matching the functionality of `ENDSWITH`
+        by using `LIKE` where the pattern is the original ENDSWITH string,
+        prepended with `'%'`.
     """
     column: SQLGlotExpression = sql_glot_args[0]
     pattern: SQLGlotExpression = convert_concat(
@@ -181,18 +210,22 @@ def convert_contains(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Convert a CONTAINS call expression to a SQLGlot expression. This
-    is done because SQLGlot does not automatically convert CONTAINS
+    Convert a `CONTAINS` call expression to a SQLGlot expression. This
+    is done because SQLGlot does not automatically convert `CONTAINS`
     to a LIKE expression for SQLite.
 
     Args:
-        sql_glot_args: The list of arguments.
+        `raw_args`: The operands to `CONTAINS`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `CONTAINS`, after they were
+        converted to SQLGlot expressions.
 
     Returns:
-        SQLGlotExpression: The SQLGlot expression matching the functionality
-            of contains.
+        The SQLGlot expression matching the functionality of `CONTAINS`
+        by using `LIKE` where the pattern is the original contains string,
+        sandwiched between `'%'` on either side.
     """
-    # TODO: Update when contains maps to multiple functions (e.g. ARRAY_CONTAINS).
+    # TODO: update to a different transformation for array/map containment
     column: SQLGlotExpression = sql_glot_args[0]
     pattern: SQLGlotExpression = convert_concat(
         None,
@@ -210,15 +243,18 @@ def convert_isin(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Convert a ISIN call expression to a SQLGlot expression. This
-    is done because converting to IN is non-standard.
+    Convert an `ISIN` call expression to a SQLGlot expression. This is done
+    because converting to IN is non-standard.
 
     Args:
-        sql_glot_args: The list of arguments.
+        `raw_args`: The operands to `ISIN`, before they were converted to
+        SQLGlot expressions.
+        `sql_glot_args`: The operands to `ISIN`, after they were converted to
+        SQLGlot expressions.
 
     Returns:
-        SQLGlotExpression: The SQLGlot expression matching the functionality
-            of isin.
+        The SQLGlot expression matching the functionality of `ISIN`
+        by doing `x IN y` on its operands.
     """
     column: SQLGlotExpression = apply_parens(sql_glot_args[0])
     # Note: We only handle the case with multiple literals where all
@@ -234,14 +270,17 @@ def convert_ndistinct(
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Convert a NDISTINCT call expression to a SQLGlot expression.
+    Converts a `NDISTINCT` call expression to a SQLGlot expression.
 
     Args:
-        sql_glot_args: The list of arguments.
+        `raw_args`: The operands to `NDISTINCT`, before they were converted to
+        SQLGlot expressions.
+        `sql_glot_args`: The operands to `NDISTINCT`, after they were converted
+        to SQLGlot expressions.
 
     Returns:
-        SQLGlotExpression: The SQLGlot expression matching the functionality
-            of NDISTINCT.
+        The SQLGlot expression matching the functionality of `NDISTINCT`
+        by calling `COUNT(DISTINCT)` on its operand.
     """
     column: SQLGlotExpression = sql_glot_args[0]
     return sqlglot_expressions.Count(
@@ -251,23 +290,26 @@ def convert_ndistinct(
 
 class SqlGlotTransformBindings:
     """
-    TODO: add class docstring
+    Binding infrastructure used to associate PyDough operators with a procedure
+    that transforms an invocation of the operator onto certain arguments into a
+    SQLGlot expression in a manner that is consistent with the dialect being
+    used.
     """
 
-    def __init__(self, dialect: DatabaseDialect):
-        self.dialect: Dialect = dialect
+    def __init__(self):
+        self.dialect: DatabaseDialect = DatabaseDialect.ANSI
         self.bindings: dict[pydop.PyDoughOperator, transform_binding] = {}
-        self.add_builtin_bindings()
-        self.set_dialect(dialect)
+        self.set_dialect(DatabaseDialect.ANSI)
 
-    def set_dialect(self, dialect: Dialect):
+    def set_dialect(self, dialect: DatabaseDialect):
         """
-        TODO: add function docstring
+        Switches the dialect used by the function bindings, and changing the
+        bindings however necessary.
         """
         self.dialect = dialect
         match dialect:
             case DatabaseDialect.ANSI:
-                pass
+                self.add_builtin_bindings()
             case DatabaseDialect.SQLITE:
                 self.add_sqlite_bindings()
             case _:
@@ -278,11 +320,25 @@ class SqlGlotTransformBindings:
     def call(
         self,
         operator: pydop.PyDoughOperator,
-        raw_args: Sequence[RelationalExpression] | None,
+        raw_args: Sequence[RelationalExpression],
         sql_glot_args: Sequence[SQLGlotExpression],
     ) -> SQLGlotExpression:
         """
-        TODO: add function docstring
+        Converts an invocation of a PyDough operator into a SQLGlot expression
+        in terms of its operands in a manner consistent with the function
+        bindings.
+
+        Args:
+            `operator`: the PyDough operator corresponding to the function call
+            being converted to SQLGlot.
+            `raw_args`: the operands to the function, before they were
+            converted to SQLGlot expressions.
+            `sql_glot_args`: the operands to the function, after they were
+            converted to SQLGlot expressions.
+
+        Returns:
+            The SQLGlot expression corresponding to the operator invocation on
+            the specified operands.
         """
         if operator not in self.bindings:
             # TODO: add support for UDFs
@@ -294,7 +350,12 @@ class SqlGlotTransformBindings:
         self, operator: pydop.PyDoughOperator, func: SQLGlotFunction
     ) -> None:
         """
-        TODO: add function docstring
+        Adds a function binding for a basic function call.
+
+        Args:
+            `operator`: the PyDough operator for the function operation being
+            bound.
+            `func`: the SQLGlot function for the function it is being bound to.
         """
 
         def impl(
@@ -309,7 +370,13 @@ class SqlGlotTransformBindings:
         self, operator: pydop.PyDoughOperator, func: SQLGlotFunction
     ) -> None:
         """
-        TODO: add function docstring
+        Adds a function binding for a binary operator.
+
+        Args:
+            `operator`: the PyDough operator for the binary operator being
+            bound.
+            `func`: the SQLGlot function for the binary operator it is being
+            bound to.
         """
 
         def impl(
@@ -330,7 +397,13 @@ class SqlGlotTransformBindings:
 
     def bind_unop(self, operator: pydop.PyDoughOperator, func: SQLGlotFunction) -> None:
         """
-        TODO: add function docstring
+        Adds a function binding for a unary operator.
+
+        Args:
+            `operator`: the PyDough operator for the unary operator being
+            bound.
+            `func`: the SQLGlot function for the unary operator it is being
+            bound to.
         """
 
         def impl(
@@ -344,7 +417,8 @@ class SqlGlotTransformBindings:
 
     def add_builtin_bindings(self) -> None:
         """
-        TODO: add function docstring
+        Adds all of the bindings that are when converting to ANSI SQL, or are
+        standard across dialects.
         """
         # Aggregation functions
         self.bind_simple_function(pydop.SUM, sqlglot_expressions.Sum)
@@ -395,7 +469,7 @@ class SqlGlotTransformBindings:
 
     def add_sqlite_bindings(self) -> None:
         """
-        TODO: add function docstring
+        Adds the bindings & overrides that are specific to SQLite.
         """
         # Use IF function instead of CASE if the SQLite version is recent
         # enough.

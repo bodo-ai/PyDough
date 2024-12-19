@@ -48,9 +48,7 @@ class PyDoughSession:
         self._database: DatabaseContext = DatabaseContext(
             connection=empty_connection, dialect=DatabaseDialect.ANSI
         )
-        self._bindings: SqlGlotTransformBindings = SqlGlotTransformBindings(
-            DatabaseDialect.ANSI
-        )
+        self._bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
 
     @property
     def metadata(self) -> GraphMetadata | None:

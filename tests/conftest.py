@@ -261,10 +261,10 @@ def sqlite_tpch_db_context(sqlite_tpch_db_path: str, sqlite_tpch_db) -> Database
 
 
 @pytest.fixture
-def sqlite_bindings(
-    sqlite_tpch_db_path: str, sqlite_tpch_db
-) -> SqlGlotTransformBindings:
+def sqlite_bindings() -> SqlGlotTransformBindings:
     """
-    Return a DatabaseContext for the SQLite TPCH database.
+    Return a function transformation bindings instance for SQLite.
     """
-    return SqlGlotTransformBindings(DatabaseDialect.SQLITE)
+    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
+    bindings.set_dialect(DatabaseDialect.SQLITE)
+    return bindings
