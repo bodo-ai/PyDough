@@ -18,12 +18,12 @@ The properties metadata has the following notable APIs available for use:
 
 The properties classes in PyDough follow a hierarchy that includes both abstract and concrete classes. Below is a hierarchical list where nesting implies inheritance:
 
-- `PropertyMetadata` (abstract): Base class for all property metadata. [property_metadata.py](property_metadata.py)
-    - `ScalarAttributeMetadata` (abstract): Base class for properties that are scalars within each record of a collection. [scalar_attribute_metadata.py](scalar_attribute_metadata.py)
-        - `TableColumnMetadata` (concrete): Represents a column of data from a relational table. [table_column_metadata.py](table_column_metadata.py)
-    - `SubcollectionRelationshipMetadata` (abstract): Base class for properties that map to a subcollection of a collection. [subcollection_relationship_metadata.py](subcollection_relationship_metadata.py)
-        - `ReversiblePropertyMetadata` (abstract): Base class for properties that map to a subcollection and have a corresponding reverse relationship. [reversible_property_metadata.py](reversible_property_metadata.py)
-            - `SimpleJoinMetadata` (concrete): Represents a join between a collection and its subcollection based on equi-join keys. [simple_join_metadata.py](simple_join_metadata.py)
-            - `CartesianProductMetadata` (concrete): Represents a cartesian product between a collection and its subcollection. [cartesian_product_metadata.py](cartesian_product_metadata.py)
-        - `CompoundRelationshipMetadata` (concrete): Represents a property created by combining two reversible properties that share a middle collection. [compound_relationship_metadata.py](compound_relationship_metadata.py)
-    - `InheritedPropertyMetadata` (concrete): Represents a property that is inherited from one of the skipped middle collections in a compound relationship. [inherited_property_metadata.py](inherited_property_metadata.py)
+- [`PropertyMetadata`](property_metadata.py) (abstract): Base class for all property metadata.
+    - [`ScalarAttributeMetadata`](scalar_attribute_metadata.py) (abstract): Base class for properties that are scalars within each record of a collection.
+        - [`TableColumnMetadata`](table_column_metadata.py) (concrete): Represents a column of data from a relational table.
+    - [`SubcollectionRelationshipMetadata`](subcollection_relationship_metadata.py) (abstract): Base class for properties that map to a subcollection of a collection.
+        - [`ReversiblePropertyMetadata`](reversible_property_metadata.py) (abstract): Base class for properties that map to a subcollection and have a corresponding reverse relationship.
+            - [`SimpleJoinMetadata`](simple_join_metadata.py) (concrete): Represents a join between a collection and its subcollection based on equi-join keys.
+            - [`CartesianProductMetadata`](cartesian_product_metadata.py) (concrete): Represents a cartesian product between a collection and its subcollection.
+        - [`CompoundRelationshipMetadata`](compound_relationship_metadata.py) (concrete): Represents a property created by combining two reversible properties that share a middle collection.
+    - [`InheritedPropertyMetadata`](inherited_property_metadata.py) (concrete): Represents a property that is inherited from one of the skipped middle collections in a compound relationship.

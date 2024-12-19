@@ -21,5 +21,5 @@ The collection metadata has the following notable APIs available for use:
 
 The collection classes in PyDough follow a hierarchy that includes both abstract and concrete classes. Below is a hierarchical list where nesting implies inheritance:
 
-- `CollectionMetadata` (abstract): The base abstract class for all collection metadata. It defines the core APIs and properties that all collections must implement. [collection_metadata.py](collection_metadata.py)
-  - `SimpleTableMetadata` (concrete): A concrete implementation of `CollectionMetadata` that represents a simple table collection. This class includes additional logic specific to handling simple table structures within a graph. [simple_table_metadata.py](simple_table_metadata.py)
+- [`CollectionMetadata`](collection_metadata.py) (abstract): The base abstract class for all collection metadata. It defines the core APIs and properties that all collections must implement.
+  - [`SimpleTableMetadata`](simple_table_metadata.py) (concrete): A concrete implementation of `CollectionMetadata` that represents a simple table collection. This class includes additional logic specific to handling simple table structures within a graph.
