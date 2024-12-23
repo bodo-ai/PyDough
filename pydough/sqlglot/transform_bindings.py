@@ -307,9 +307,12 @@ class SqlGlotTransformBindings:
         bindings however necessary.
         """
         self.dialect = dialect
+        # Always refresh the default bindings in case the previous dialect
+        # overwrote any of them.
+        self.add_builtin_bindings()
         match dialect:
             case DatabaseDialect.ANSI:
-                self.add_builtin_bindings()
+                pass
             case DatabaseDialect.SQLITE:
                 self.add_sqlite_bindings()
             case _:
