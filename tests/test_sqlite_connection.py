@@ -2,8 +2,6 @@
 Tests support for the DatabaseConnection class using a SQLite database backend.
 """
 
-import sqlite3
-
 import pandas as pd
 import pytest
 
@@ -33,25 +31,6 @@ def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
     data = [(i, 2) for i in range(10)]
     expected = pd.DataFrame(data, columns=columns)
     pd.testing.assert_frame_equal(result, expected)
-
-
-@pytest.mark.skip("__del__ is disabled while we decide on the right behavior.")
-def test_unusable_after_del() -> None:
-    """
-    Test that the underlying connection is closed when the DatabaseConnection
-    object is deleted. This ensures the semantics of the DatabaseConnection
-    are to assume ownership of the connection.
-
-    Args:
-        sqlite_database (sqlite3.Connection): The connection for building the
-        database connection..
-    """
-    # Create a standalone connection to the database so we can inspect the garbage count.
-    db: DatabaseConnection = DatabaseConnection(sqlite3.connect(":memory:"))
-    connection = db._connection
-    del db
-    with pytest.raises(sqlite3.ProgrammingError):
-        connection.execute("SELECT 1")
 
 
 @pytest.mark.parametrize(

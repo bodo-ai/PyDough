@@ -29,24 +29,12 @@ class DatabaseConnection:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
 
-    def __del__(self) -> None:
-        """
-        Close the connection when the DatabaseConnection object is deleted.
-        The connection should close automatically when __del__ is called
-        on it, but this enforces our model of transferring ownership
-        of the connection to the DatabaseConnection object.
-        """
-        # self._connection.close()
-        # Note: This causes errors in testing and we should probably
-        # investigate if this is the right thing to do.
-        pass
-
     def execute_query_df(self, sql: str) -> pd.DataFrame:
         """Create a cursor object using the connection and execute the query,
         returning the entire result as a Pandas DataFrame.
 
-        TODO: Support parameters. Dependent on knowing which Python types
-        are in scope and how we need to test them.
+        TODO: (gh #173) Support parameters. Dependent on knowing which Python
+        types are in scope and how we need to test them.
 
         Args:
             sql (str): The SQL query to execute.
@@ -62,8 +50,8 @@ class DatabaseConnection:
             raise e
         column_names: list[str] = [description[0] for description in cursor.description]
         # No need to close the cursor, as its closed by del.
-        # TODO: Cache the cursor?
-        # TODO: enable typed DataFrames.
+        # TODO: (gh #174) Cache the cursor?
+        # TODO: (gh #175) enable typed DataFrames.
         data = cursor.fetchall()
         return pd.DataFrame(data, columns=column_names)
 
