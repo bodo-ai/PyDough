@@ -25,6 +25,7 @@ from pydough.database_connectors import (
     load_database_context,
 )
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
+from pydough.sqlglot import SqlGlotTransformBindings
 
 from .pydough_configs import PyDoughConfigs
 
@@ -47,6 +48,7 @@ class PyDoughSession:
         self._database: DatabaseContext = DatabaseContext(
             connection=empty_connection, dialect=DatabaseDialect.ANSI
         )
+        self._bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
 
     @property
     def metadata(self) -> GraphMetadata | None:
@@ -107,6 +109,18 @@ class PyDoughSession:
             context (DatabaseContext): The database context to set.
         """
         self._database = context
+        self._bindings.set_dialect(context.dialect)
+
+    @property
+    def bindings(self) -> SqlGlotTransformBindings:
+        """
+        Get the function bindings used for transforming PyDough operators into
+        SQLGlot expressions.
+
+        Returns:
+            SqlGlotTransformBindings: The active transform bindings.
+        """
+        return self._bindings
 
     def connect_database(self, database_name: str, **kwargs) -> DatabaseContext:
         """

@@ -13,7 +13,7 @@ from tpch_relational_plans import (
 
 from pydough.database_connectors import DatabaseContext
 from pydough.relational import RelationalRoot
-from pydough.sqlglot import execute_df
+from pydough.sqlglot import SqlGlotTransformBindings, execute_df
 
 pytestmark = [pytest.mark.execute]
 
@@ -39,11 +39,14 @@ pytestmark = [pytest.mark.execute]
     ],
 )
 def test_tpch(
-    root: RelationalRoot, output: pd.DataFrame, sqlite_tpch_db_context: DatabaseContext
+    root: RelationalRoot,
+    output: pd.DataFrame,
+    sqlite_tpch_db_context: DatabaseContext,
+    sqlite_bindings: SqlGlotTransformBindings,
 ) -> None:
     """
     Test the example TPC-H relational trees executed on a
     SQLite database.
     """
-    result = execute_df(root, sqlite_tpch_db_context)
+    result = execute_df(root, sqlite_tpch_db_context, sqlite_bindings)
     pd.testing.assert_frame_equal(result, output)

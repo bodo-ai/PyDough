@@ -21,6 +21,7 @@ from pydough.database_connectors import (
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
+from pydough.sqlglot import SqlGlotTransformBindings
 
 
 @pytest.fixture
@@ -257,3 +258,13 @@ def sqlite_tpch_db_context(sqlite_tpch_db_path: str, sqlite_tpch_db) -> Database
     Return a DatabaseContext for the SQLite TPCH database.
     """
     return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture
+def sqlite_bindings() -> SqlGlotTransformBindings:
+    """
+    Return a function transformation bindings instance for SQLite.
+    """
+    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
+    bindings.set_dialect(DatabaseDialect.SQLITE)
+    return bindings
