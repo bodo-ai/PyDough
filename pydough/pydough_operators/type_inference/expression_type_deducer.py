@@ -13,7 +13,7 @@ from pydough.types import PyDoughType
 class ExpressionTypeDeducer(ABC):
     """
     Abstract base class for type-inferring classes that take in a list of
-    PyDough expression ASTs and returns a PyDough type. Each implementation
+    PyDough expression QDAGs and returns a PyDough type. Each implementation
     class must implement the `infer_return_type` API.
     """
 
