@@ -9,7 +9,7 @@ The conversion module provides functionality to convert qualified DAG (QDAG) nod
 The `HybridTree` is an intermediate representation used to bridge the gap between QDAG nodes and relational nodes. The components of this structure, and the process to convert QDAG nodes into it, are defined in [hybrid_tree.py](hybrid_tree.py)
 
 
-Hybrid tree instances are structured as a linear chain linked to one another as predecessors/successors, and each hybrid tree instance is composed of a pipeline of hybrid operation instances. Each hybrid operation builds on the previous one, and the first one in the pipeline builds on the result from the last  element in the pipeline of the predecessor. Steps from one hybrid tree down to its successor correspond to moving into a child context, whereas operations in the same pipeline operate on the same context by augmenting it.
+Hybrid tree instances are structured as a linear chain linked to one another as predecessors/successors, and each hybrid tree instance is composed of a pipeline of hybrid operation instances. Each hybrid operation builds on the previous one, and the first one in the pipeline builds on the result from the last element in the pipeline of the predecessor. Steps from one hybrid tree down to its successor correspond to moving into a child context, whereas operations in the same pipeline operate on the same context by augmenting it.
 
 ### Hybrid Expressions
 
