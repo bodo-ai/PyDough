@@ -24,7 +24,9 @@ commit message.
 PyDough requires having the following Python modules installed to use
 the library:
 
-- pytz, pandas, sqlglot
+- pytz
+- pandas
+- sqlglot
 
 The full list of dependencies can be found in the `pyproject.toml` file.
 
