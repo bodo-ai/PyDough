@@ -88,7 +88,7 @@ The types module provides a comprehensive set of data types that can be used to 
 To use the types module, you can import the necessary classes and call them with the appropriate arguments. For example:
 
 ```python
-from pydough.types import Int64Type, StringType, StructType
+from pydough.types import Int64Type, StringType, StructType, parse_type_from_string
 
 # Create an integer type
 int_type = Int64Type()
@@ -104,4 +104,8 @@ json_string = struct_type.json_string
 
 # Parse the struct type from a JSON string
 parsed_type = StructType.parse_from_string(json_string)
+
+# Parse a map type from a json string (the keys are strings and the values are
+# arrays of int64 values)
+map_str_arr_int64 = parse_type_from_string("map[string,array[int64]]")
 ```
