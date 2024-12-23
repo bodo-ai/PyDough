@@ -112,13 +112,7 @@ def set_alias(expr: Expression, alias: str) -> Expression:
     Returns:
         Expression: The updated expression.
     """
-    if isinstance(expr, Select):
-        # TODO: Replace with set_glot_alias when we confirm
-        # the correct behavior for Select objects.
-        expr.set("alias", alias)
-    else:
-        expr = set_glot_alias(expr, alias)
-    return expr
+    return set_glot_alias(expr, alias)
 
 
 def mk_literal(value: Any, is_string: bool = False) -> Literal:
