@@ -14,6 +14,7 @@ we replace the active session with a new default session.
 
 import pandas as pd
 import pytest
+from simple_pydough_functions import simple_scan
 
 import pydough
 from pydough.configs import ConfigProperty, PyDoughConfigs, PyDoughSession
@@ -24,6 +25,7 @@ from pydough.database_connectors import (
     load_database_context,
 )
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
+from pydough.unqualified import UnqualifiedNode
 
 
 @pytest.mark.parametrize(
@@ -103,10 +105,6 @@ def test_load_metadata_graph(sample_graph_path: str, sample_graph_names: str) ->
     assert graph.name == sample_graph_names
 
 
-# TODO: Add a test that we can generate SQL using a session's default.
-# This is not possible until we have the to_sql() APIs working.
-
-
 def test_connect_sqlite_database() -> None:
     """
     Tests that we can connect to a SQLite database,
@@ -119,3 +117,21 @@ def test_connect_sqlite_database() -> None:
     assert database.dialect is DatabaseDialect.SQLITE
     result: pd.DataFrame = session.database.connection.execute_query_df("Select 1 as A")
     pd.testing.assert_frame_equal(result, pd.DataFrame({"A": [1]}))
+
+
+def test_active_session_to_sql(sample_graph_path: str) -> None:
+    """
+    Verify that the active session can generate SQL by default
+    without any configuration.
+    """
+    try:
+        # Load metadata for the session
+        old_metadata: GraphMetadata | None = pydough.active_session.metadata
+        graph: GraphMetadata = pydough.active_session.load_metadata_graph(
+            sample_graph_path, "TPCH"
+        )
+        root: UnqualifiedNode = pydough.init_pydough_context(graph)(simple_scan)()
+        output = pydough.to_sql(root)
+        assert output == "SELECT o_orderkey AS key FROM tpch.ORDERS"
+    finally:
+        pydough.active_session.metadata = old_metadata

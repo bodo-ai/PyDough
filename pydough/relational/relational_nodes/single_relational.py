@@ -43,5 +43,5 @@ class SingleRelational(Relational):
         Returns:
             bool: Are the two relational nodes equal.
         """
-        # TODO: Do we need a fast path for caching the inputs?
+        # TODO: (gh #171) Do we need a fast path for caching the inputs?
         return isinstance(other, SingleRelational) and self.input.equals(other.input)
