@@ -1,5 +1,7 @@
 """
-APIs used for user explanation & exploration of PyDough metadata and code.
+Implementation of the `pydough.explain` function, which provides detailed
+explanations of PyDough unqualified nodes within the context of another PyDough
+unqualified node.
 """
 
 __all__ = ["explain_term", "find_unqualified_root"]

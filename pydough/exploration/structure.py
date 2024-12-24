@@ -1,4 +1,7 @@
-""" """
+"""
+Implementation of the `pydough.explain_structure` function, which provides
+detailed explanations about the overall structure of a PyDough metadata graph.
+"""
 
 __all__ = ["explain_structure"]
 

@@ -1,5 +1,6 @@
 """
-APIs used for user explanation & exploration of PyDough metadata and code.
+Implementation of the `pydough.explain` function, which provides detailed
+explanations of PyDough metadata objects and unqualified nodes.
 """
 
 __all__ = ["explain"]
