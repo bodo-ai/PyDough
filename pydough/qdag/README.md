@@ -10,7 +10,7 @@ The QDAG module provides the following notable APIs:
 
 - `PyDoughQDAG`: Base class for all QDAG nodes, including collections and expressions.
 
-### Expression Nodes
+### [Expression Nodes](expressions/README.md)
 
 - `PyDoughExpressionQDAG`: Base class for all expression QDAG nodes.
 - `Literal`: Represents a literal value in the QDAG.
@@ -21,7 +21,7 @@ The QDAG module provides the following notable APIs:
 - `BackReferenceExpression`: Represents a reference to an expression in an ancestor collection.
 - `CollationExpression`: Represents a collation expression.
 
-### Collection Nodes
+### [Collection Nodes](collections/README.md)
 
 - `PyDoughCollectionQDAG`: Base class for all collection QDAG nodes.
 - `GlobalContext`: Represents the global context of the graph.
@@ -49,7 +49,9 @@ The QDAG module provides the following notable APIs:
 
 ### Building QDAG Nodes
 
-To build QDAG nodes, use the `AstNodeBuilder` class. For example:
+To build QDAG nodes, use the `AstNodeBuilder` class. These APIs are only intended for internal use when the qualifier converts unqualified nodes into QDAG nodes.
+
+Examples of how to use the node builder to construct QDAG nodes:
 
 ```python
 from pydough.qdag import AstNodeBuilder, ChildOperatorChildAccess
