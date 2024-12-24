@@ -45,24 +45,6 @@ The QDAG module provides the following notable APIs:
 
 - `AstNodeBuilder`: Utility class for building QDAG nodes.
 
-#### Methods
-
-- `build_literal(value: object, data_type: PyDoughType) -> Literal`: Creates a new literal of the specified PyDough type using a passed-in literal value.
-- `build_column(collection_name: str, property_name: str) -> ColumnProperty`: Creates a new column property node by accessing a specific property of a collection in the graph by name.
-- `build_expression_function_call(function_name: str, args: list[PyDoughQDAG]) -> ExpressionFunctionCall`: Creates a new expression function call by accessing a builtin expression function operator by name and calling it on the passed-in arguments.
-- `build_reference(collection: PyDoughCollectionQDAG, name: str) -> Reference`: Creates a new reference to an expression from a preceding collection.
-- `build_child_reference_expression(children: MutableSequence[PyDoughCollectionQDAG], child_idx: int, name: str) -> Reference`: Creates a new reference to an expression from a child collection of a CALC.
-- `build_back_reference_expression(collection: PyDoughCollectionQDAG, name: str, levels: int) -> Reference`: Creates a new reference to an expression from an ancestor collection.
-- `build_global_context() -> GlobalContext`: Creates a new global context for the graph.
-- `build_child_access(name: str, preceding_context: PyDoughCollectionQDAG) -> ChildAccess`: Creates a new child access QDAG node.
-- `build_calc(preceding_context: PyDoughCollectionQDAG, children: MutableSequence[PyDoughCollectionQDAG]) -> Calc`: Creates a CALC instance, but `with_terms` still needs to be called on the output.
-- `build_where(preceding_context: PyDoughCollectionQDAG, children: MutableSequence[PyDoughCollectionQDAG]) -> Where`: Creates a WHERE instance, but `with_condition` still needs to be called on the output.
-- `build_order(preceding_context: PyDoughCollectionQDAG, children: MutableSequence[PyDoughCollectionQDAG]) -> OrderBy`: Creates an ORDERBY instance, but `with_collation` still needs to be called on the output.
-- `build_top_k(preceding_context: PyDoughCollectionQDAG, children: MutableSequence[PyDoughCollectionQDAG], records_to_keep: int) -> TopK`: Creates a TOP K instance, but `with_collation` still needs to be called on the output.
-- `build_partition(preceding_context: PyDoughCollectionQDAG, child: PyDoughCollectionQDAG, child_name: str) -> PartitionBy`: Creates a PARTITION BY instance, but `with_keys` still needs to be called on the output.
-- `build_back_reference_collection(collection: PyDoughCollectionQDAG, term_name: str, back_levels: int) -> BackReferenceCollection`: Creates a reference to a subcollection of an ancestor.
-- `build_child_reference_collection(preceding_context: PyDoughCollectionQDAG, children: MutableSequence[PyDoughCollectionQDAG], child_idx: int) -> ChildReferenceCollection`: Creates a new reference to a collection from a child collection of a CALC or other child operator.
-
 ## Usage
 
 ### Building QDAG Nodes
@@ -70,158 +52,127 @@ The QDAG module provides the following notable APIs:
 To build QDAG nodes, use the `AstNodeBuilder` class. For example:
 
 ```python
-from pydough.qdag import AstNodeBuilder, Literal, Calc
-from pydough.metadata import GraphMetadata
-from pydough.types import Int64Type
+from pydough.qdag import AstNodeBuilder, ChildOperatorChildAccess
+from pydough.metadata import parse_json_metadata_from_file
+from pydough.types import Int64Type, StringType
 
-# Define the graph metadata
-graph = GraphMetadata(...)
-
-# Create a node builder
+# Define the graph metadata & create a node builder
+graph = parse_json_metadata_from_file(...)
 builder = AstNodeBuilder(graph)
 
 # Build a literal node
-literal_node = builder.build_literal(42, Int64Type())
+# Equivalent PyDough code: `1`
+literal_node = builder.build_literal(1, Int64Type())
 
 # Build a column property node
+# Equivalent PyDough code: `TPCH.Orders.order_date`
 column_node = builder.build_column("Orders", "order_date")
 
-# Build an expression function call node
-function_call_node = builder.build_expression_function_call("SUM", [literal_node, column_node])
-
-# Build a reference node
-reference_node = builder.build_reference(table_collection, "region")
-
-# Build a child reference expression node
-child_reference_node = builder.build_child_reference_expression([table_collection], 0, "name")
-
 # Build a back reference expression node
+# Equivalent PyDough code: `BACK(1).region_key`
 back_reference_node = builder.build_back_reference_expression(table_collection, "region_key", 1)
 
 # Build a global context node
+# Equivalent PyDough code: `TCPH`
 global_context_node = builder.build_global_context()
 
-# Build a child access node
-child_access_node = builder.build_child_access("Orders", global_context_node)
+# Build a table collection access
+# Equivalent PyDough code: `TPCH.Nations`
+table_collection = builder.build_child_access("Nations", global_context_node)
+
+# Build a reference node
+# Equivalent PyDough code: `TPCH.Nations.name`
+reference_node = builder.build_reference(table_collection, "name")
+
+# Build an expression function call node
+# Equivalent PyDough code: `LOWER(TPCH.Nations.name)`
+function_call_node = builder.build_expression_function_call("LOWER", [reference_node])
+
+# Build a child reference expression node
+# Equivalent PyDough code: `TPCH.Nations.region.name`
+sub_collection = builder.build_child_access("region", table_collection)
+child_collection = ChildOperatorChildAccess(sub_collection)
+child_reference_node = builder.build_child_reference_expression([child_collection], 0, "name")
 
 # Build a CALC node
-calc_node = builder.build_calc(preceding_context, [])
-calc_node = calc_node.with_terms([("result", literal_node)])
+# Equivalent PyDough code: `TPCH.Nations(region_name=region.name)`
+calc_node = builder.build_calc(table_collection, [child_collection])
+calc_node = calc_node.with_terms([("region_name", child_reference_node)])
 
 # Build a WHERE node
-where_node = builder.build_where(table_collection, [])
+# Equivalent PyDough code: `TPCH.Nations.WHERE(region.name == "ASIA")`
+condition = builder.build_expression_function_call(
+    "EQU",
+    [child_reference_node, builder.build_literal("ASIA", StringType())]
+)
+where_node = builder.build_where(table_collection, [child_collection])
 where_node = where_node.with_condition(condition)
 
 # Build an ORDER BY node
+# Equivalent PyDough code: `TPCH.Nations.ORDER_BY(name.ASC(na_pos='first'))`
+collation_expression = builder.build_collation_expression(
+    reference_node, True, False
+)
 order_by_node = builder.build_order(table_collection, [])
 order_by_node = order_by_node.with_collation([collation_expression])
 
 # Build a TOP K node
+# Equivalent PyDough code: `TPCH.Nations.TOP_K(5, by=name.ASC(na_pos='first'))`
 top_k_node = builder.build_top_k(table_collection, [], 5)
 top_k_node = top_k_node.with_collation([collation_expression])
 
 # Build a PARTITION BY node
-partition_by_node = builder.build_partition(preceding_context, child_collection, "child_name")
-partition_by_node = partition_by_node.with_keys([child_reference_node])
+# Equivalent PyDough code: `TPCH.PARTITION(Parts, name="p", by=part_type)`
+part_collection = builder.build_child_access("Parts", global_context_node)
+partition_key = builder.build_reference(part_collection, "part_type")
+partition_by_node = builder.build_partition(part_collection, child_collection, "p")
+partition_by_node = partition_by_node.with_keys([partition_key])
 
 # Build a back reference collection node
+# Equivalent PyDough code: `BACK(1).subcollection`
 back_reference_collection_node = builder.build_back_reference_collection(table_collection, "subcollection", 1)
 
 # Build a child reference collection node
-child_reference_collection_node = builder.build_child_reference_collection(preceding_context, [child_collection], 0)
-```
-
-### Working with Collection Nodes
-
-Collection nodes represent collections in the QDAG. For example:
-
-```python
-from pydough.qdag import AstNodeBuilder, Where, OrderBy, Reference
-from pydough.metadata import GraphMetadata
-
-# Define the graph metadata
-graph = GraphMetadata(...)
-
-# Create a node builder
-builder = AstNodeBuilder(graph)
-
-# Create a table collection node
-table_collection = builder.build_child_access("Orders", builder.build_global_context())
-
-# Create a WHERE clause
-condition = builder.build_expression_function_call(
-    "EQU",
-    [Reference(table_collection, "region"), builder.build_literal("ASIA", StringType())]
+# Equivalent PyDough code: `Nations(n_customers=COUNT(customers))`
+customers_sub_collection = builder.build_child_access("customers", table_collection)
+customers_child = ChildOperatorChildAccess(customers_sub_collection)
+child_reference_collection_node = builder.build_child_reference_collection(
+    table_collection, [customers_subcollection], 0
 )
-where_clause = builder.build_where(table_collection, [])
-where_clause = where_clause.with_condition(condition)
-
-# Create an ORDER BY clause
-collation_expression = builder.build_collation_expression(
-    Reference(table_collection, "order_date"), True, True
+child_collection = 
+count_call = builder.build_expression_function_call(
+    "COUNT",
+    [child_reference_collection_node]
 )
-order_by_clause = builder.build_order(table_collection, [])
-order_by_clause = order_by_clause.with_collation([collation_expression])
-```
-
-### Example with Child References
-
-To create a QDAG node with child references, use the `AstNodeBuilder` class. For example:
-
-```python
-from pydough.qdag import AstNodeBuilder, Where, ChildReferenceExpression
-from pydough.metadata import GraphMetadata
-from pydough.types import StringType
-
-# Define the graph metadata
-graph = GraphMetadata(...)
-
-# Create a node builder
-builder = AstNodeBuilder(graph)
-
-# Create a table collection node
-table_collection = builder.build_child_access("Nations", builder.build_global_context())
-
-# Create a WHERE clause with a child reference
-region_collection = builder.build_child_access("region", table_collection)
-condition = builder.build_expression_function_call(
-    "EQU",
-    [ChildReferenceExpression(region_collection, 0, "name"), builder.build_literal("ASIA", StringType())]
-)
-where_clause = builder.build_where(table_collection, [region_collection])
-where_clause = where_clause.with_condition(condition)
+calc_node = builder.build_calc(table_collection, [customers_child])
+calc_node = calc_node.with_terms([("n_customers", count_call)])
 ```
 
 ### HAS/HASNOT Rewrite
 
-The `has_hasnot_rewrite` function is used to transform `HAS` and `HASNOT` expressions in the QDAG. It is used in the `with_terms`, `with_condition`, and `with_collation` calls of the various child operator classes to rewrite all `HAS`/`HASNOT` terms unless they meet the criteria.
+The `has_hasnot_rewrite` function is used to transform `HAS` and `HASNOT` expressions in the QDAG. It is used in the `with_terms`, `with_condition`, and `with_collation` calls of the various child operator classes to rewrite all `HAS(x)` into `COUNT(X) > 0` and all `HASNOT(X)` into `COUNT(X) == 0` unless they are in the conjunction of a `WHERE` clause.
 
-#### Example
+Below are some examples of PyDough snippets that are/aren't affected by the rewrite.
+
 
 ```python
-from pydough.qdag import AstNodeBuilder, Where, ChildReferenceExpression, has_hasnot_rewrite
-from pydough.metadata import GraphMetadata
-from pydough.types import StringType
+# Will be rewritten to `Customers(name, has_orders=COUNT(orders) > 0)`
+Customers(name, has_orders=HAS(orders))
 
-# Define the graph metadata
-graph = GraphMetadata(...)
+# Will be rewritten to `Customers(name, never_made_order=COUNT(orders) == 0)`
+Customers(name, never_made_order=HASNOT(orders))
 
-# Create a node builder
-builder = AstNodeBuilder(graph)
+# Will not be rewritten
+Customers.WHERE(HAS(orders) & (nation.region.name == "EUROPE"))
 
-# Create a table collection node
-table_collection = builder.build_child_access("Nations", builder.build_global_context())
+# Will not be rewritten
+Customers.WHERE(HASNOT(orders))
 
-# Create a WHERE clause with a HAS expression
-condition = builder.build_expression_function_call(
-    "HAS",
-    [ChildReferenceExpression(table_collection, 0, "region")]
-)
-where_clause = builder.build_where(table_collection, [])
+# Will be rewritten to
+# `Customers.WHERE((COUNT(orders) > 0) | (nation.region.name == "EUROPE"))`
+Customers.WHERE(HAS(orders) | (nation.region.name == "EUROPE"))
 
-# In this case, call `HAS(region)` will be replaced with `COUNT(region) > 0`
-# because the `allow_has_hasnot` argument is False.
-where_clause = where_clause.with_condition(has_hasnot_rewrite(condition, False))
+# Will be rewritten to
+# `Customers.WHERE((COUNT(orders) == 0) | (acct_bal < 0))`
+Customers.WHERE(HASNOT(orders) | (acct_bal < 0))
 ```
-
-By using these APIs, the QDAG module provides a comprehensive set of tools for building and working with qualified DAG nodes in PyDough.
