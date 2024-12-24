@@ -154,4 +154,4 @@ The qualified string form of the `qualified_node` will look like this:
 Nations.WHERE(region.name == "ASIA")
 ```
 
-The qualified string form of the `qualified_term` will just be `name`.
+The qualified string form of the `qualified_term` will just be `name` because it is an expression.
