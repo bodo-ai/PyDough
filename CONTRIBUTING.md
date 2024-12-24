@@ -49,7 +49,6 @@ To submit a pull request:
 
 We believe in fostering a collaborative and welcoming community! If you have questions or need help:
 - Join our Slack workspace: [Slack Invite Link](https://bodocommunity.slack.com/join/shared_invite/zt-qwdc8fad-6rZ8a1RmkkJ6eOX1X__knA#/shared-invite/email)
-- Participate in discussions on our Discourse forum: [Discourse Link](https://discourse.bodo.ai/)
 - Send an email directly to [contact@bodo.ai](mailto:contact@bodo.ai)
 Feel free to ask questions, share ideas, or discuss potential contributions. We're here to support you!
 
