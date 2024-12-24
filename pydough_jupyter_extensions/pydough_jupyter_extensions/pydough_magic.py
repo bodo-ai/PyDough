@@ -38,8 +38,6 @@ class PyDoughMagic(Magics):
                 " Please set a graph using"
                 " pydough.active_session.load_metadata_graph(...)"
             )
-        # TODO: Consider a safer way to ensure pydough.active_session.metadata
-        # exits
         new_cell: str = transform_cell(
             cell, "pydough.active_session.metadata", set(local_ns.keys())
         )

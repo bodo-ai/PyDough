@@ -225,7 +225,7 @@ def convert_contains(
         by using `LIKE` where the pattern is the original contains string,
         sandwiched between `'%'` on either side.
     """
-    # TODO: update to a different transformation for array/map containment
+    # TODO: (gh #170) update to a different transformation for array/map containment
     column: SQLGlotExpression = sql_glot_args[0]
     pattern: SQLGlotExpression = convert_concat(
         None,
@@ -344,7 +344,7 @@ class SqlGlotTransformBindings:
             the specified operands.
         """
         if operator not in self.bindings:
-            # TODO: add support for UDFs
+            # TODO: (gh #169) add support for UDFs
             raise ValueError(f"Unsupported function {operator}")
         binding: transform_binding = self.bindings[operator]
         return binding(raw_args, sql_glot_args)

@@ -27,7 +27,6 @@ class CallExpression(RelationalExpression):
         inputs: MutableSequence[RelationalExpression],
     ) -> None:
         super().__init__(return_type)
-        # TODO: Should we move this op to a different type?
         self._op: PyDoughExpressionOperator = op
         self._inputs: MutableSequence[RelationalExpression] = inputs
 

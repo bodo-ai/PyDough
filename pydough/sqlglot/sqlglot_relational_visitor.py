@@ -130,8 +130,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # Only support fusing columns that are simple renames or literals for
         # now. If we see just column references or literals though we can
         # always merge.
-        # TODO: Enable merging more complex expressions for example we can
-        # merge a + b if a and b are both just simple columns in the input.
+        # TODO: (gh #151) Enable merging more complex expressions for example
+        # we can merge a + b if a and b are both just simple columns in the
+        # input.
         can_merge: bool = all(
             SQLGlotRelationalVisitor._is_mergeable_column(c) for c in new_columns
         )
@@ -366,7 +367,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in filter.columns.items()
         ]
         query: Select
-        # TODO: Refactor a simpler way to check dependent expressions.
+        # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
         if (
             "group_by" in input_expr.args
             or "where" in input_expr.args
@@ -375,8 +376,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ):
             # Check if we already have a where clause or limit. We
             # cannot merge these yet.
-            # TODO: Consider allowing combining where if limit isn't
-            # present?
+            # TODO: (gh #151) Consider allowing combining where if
+            # limit isn't present?
             query = self._build_subquery(input_expr, exprs)
         else:
             # Try merge the column sections

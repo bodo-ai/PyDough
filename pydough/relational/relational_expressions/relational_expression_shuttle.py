@@ -3,7 +3,7 @@ Specialized form of the visitor pattern that returns a RelationalExpression.
 This is used to handle the common case where we need to modify a type of
 input. Shuttles are defined to be stateless by default.
 
-TODO: Fix type annotations. Disabled due to circular imports
+TODO: (gh #172) Fix type annotations. Disabled due to circular imports
 """
 
 from abc import ABC, abstractmethod
