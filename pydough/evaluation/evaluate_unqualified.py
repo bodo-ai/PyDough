@@ -121,10 +121,10 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
     print("hi from to_df")
-    print(to_tree_string(qualified))
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
+    print(RelationalRoot.to_tree_string())
     return execute_df(relational, database, bindings)
