@@ -87,7 +87,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     database: DatabaseContext
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
-    print("hi from to_sql")
+    print("hi from to_sql number 2")
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
