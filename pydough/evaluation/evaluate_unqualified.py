@@ -22,6 +22,7 @@ from pydough.sqlglot import (
     execute_df,
 )
 from pydough.unqualified import UnqualifiedNode, qualify_node
+from pydough.relational.relational_nodes.abstract_node import to_tree_string
 
 __all__ = ["to_sql", "to_df"]
 
