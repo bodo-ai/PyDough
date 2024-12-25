@@ -67,6 +67,7 @@ def _load_session_info(
 
 
 def to_sql(node: UnqualifiedNode, **kwargs) -> str:
+    
     """
     Convert the given unqualified tree to a SQL string.
 
@@ -86,6 +87,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     database: DatabaseContext
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
+    print("hi from to_sql")
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
@@ -117,7 +119,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     database: DatabaseContext
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
-    print("hi")
+    print("hi from to_df")
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
