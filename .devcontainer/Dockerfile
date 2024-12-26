@@ -11,7 +11,9 @@ ENV HOME=/usr/local/share
 
 RUN sh /usr/local/share/uv-installer.sh && rm /usr/local/share/uv-installer.sh
 
-ENV PATH="$HOME/.local/bin/:$PATH"
+ENV PATH="/usr/local/share/.local/bin/:$PATH"
+
+ENV HOME=/root
 
 # Download the TPC-H database.
 RUN ./setup_tpch.sh /usr/local/share/tpch.db
