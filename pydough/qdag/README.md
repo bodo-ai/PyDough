@@ -8,34 +8,15 @@ The QDAG module provides the following notable APIs:
 
 ### Base Classes
 
-- `PyDoughQDAG`: Base class for all QDAG nodes, including collections and expressions.
-
-### [Expression Nodes](expressions/README.md)
-
-- `PyDoughExpressionQDAG`: Base class for all expression QDAG nodes.
-- `Literal`: Represents a literal value in the QDAG.
-- `ColumnProperty`: Represents a column property in a table.
-- `ExpressionFunctionCall`: Represents a function call expression.
-- `Reference`: Represents a reference to an expression in a collection.
-- `ChildReferenceExpression`: Represents a reference to an expression in a child collection.
-- `BackReferenceExpression`: Represents a reference to an expression in an ancestor collection.
-- `CollationExpression`: Represents a collation expression.
+- `PyDoughQDAG`: Base class for all QDAG nodes, including collections and expressions. Contains information about how to compare QDAG nodes for equality & place them in hash sets.
 
 ### [Collection Nodes](collections/README.md)
 
-- `PyDoughCollectionQDAG`: Base class for all collection QDAG nodes.
-- `GlobalContext`: Represents the global context of the graph.
-- `TableCollection`: Represents a table collection.
-- `SubCollection`: Represents a subcollection.
-- `Calc`: Represents a CALC node.
-- `Where`: Represents a WHERE clause.
-- `OrderBy`: Represents an ORDER BY clause.
-- `TopK`: Represents a TOP K clause.
-- `PartitionBy`: Represents a PARTITION BY clause.
-- `ChildAccess`: Represents accessing a child collection.
-- `ChildReferenceCollection`: Represents a reference to a child collection.
-- `BackReferenceCollection`: Represents a reference to an ancestor collection.
-- `ChildOperatorChildAccess`: Represents accessing a child collection within a child operator context.
+The sub-module of the PyDough QDAG module class definitions for collections.
+
+### [Expression Nodes](expressions/README.md)
+
+The sub-module of the PyDough QDAG module class definitions for expressions.
 
 ### Errors
 
