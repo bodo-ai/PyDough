@@ -1,2 +1,73 @@
-TODO: COMPLETE THIS README FOR THE PYDOUGH TESTS
-Should include mentions of the `AstNodeTestInfo` classes, and pipelining them with `**`.
+# PyDough Testing Module
+
+This module contains the tests for PyDough, including unit tests, integration tests, and utility functions used in testing.
+
+## TestInfo Classes
+
+The `TestInfo` classes are used to specify information about a QDAG (Qualified Directed Acyclic Graph) node before it can be created. These classes help in building and testing QDAG nodes for unit tests.
+
+### Available TestInfo Classes
+
+- `AstNodeTestInfo`: Base class for specifying information about a QDAG node.
+- `LiteralInfo`: Class for building a PyDough literal.
+- `ColumnInfo`: Class for building a table column.
+- `FunctionInfo`: Class for building a function call.
+- `ReferenceInfo`: Class for building a reference.
+- `BackReferenceExpressionInfo`: Class for building a back reference expression.
+- `ChildReferenceExpressionInfo`: Class for building a child reference expression.
+- `TableCollectionInfo`: Class for building a table collection.
+- `SubCollectionInfo`: Class for creating a subcollection access.
+- `ChildOperatorChildAccessInfo`: Class for wrapping around a subcollection info within a Calc context.
+- `BackReferenceCollectionInfo`: Class for building a reference to an ancestor collection.
+- `ChildReferenceCollectionInfo`: Class for building a reference to a child collection.
+- `ChildOperatorInfo`: Base class for types of CollectionTestInfo that have child nodes.
+- `CalcInfo`: Class for building a CALC node.
+- `WhereInfo`: Class for building a WHERE clause.
+- `OrderInfo`: Class for building an ORDER BY clause.
+- `TopKInfo`: Class for building a TOP K clause.
+- `PartitionInfo`: Class for building a PARTITION BY clause.
+
+### Using the `**` Operator
+
+The `**` operator is used to pipeline `CollectionTestInfo` objects into one another. This allows for chaining multiple collection test infos to build complex QDAG nodes. For example:
+
+```python
+collection_info = TableCollectionInfo("Orders") ** WhereInfo(condition=condition_info)
+```
+
+This will create a QDAG node representing a `WHERE` clause applied to the `Orders` collection with the specified condition.
+
+## Interactions with `pytest`
+
+The testing module uses `pytest` for running tests. The `conftest.py` file defines various fixtures that are automatically available in the tests. These fixtures include configurations, sample graphs, database connections, and more.
+
+### Important Fixtures
+
+- `default_config`: Provides the default configuration of `PyDoughConfigs` used in testing.
+- `sample_graph_path`: Path to the JSON file containing the sample graphs.
+- `sample_graph_nouns_path`: Path to the JSON file containing the nouns for each of the sample graphs.
+- `invalid_graph_path`: Path to the JSON file containing the invalid graphs.
+- `valid_sample_graph_names`: Set of valid names to use to access a sample graph.
+- `sample_graph_names`: Fixture for the names that each of the sample graphs can be accessed.
+- `get_sample_graph`: Function that takes in the name of a graph and returns the metadata for that PyDough graph.
+- `get_sample_graph_nouns`: Function that takes in the name of a graph and returns the metadata for the nouns in that PyDough graph.
+- `sample_graphs`: Retrieves the PyDough metadata for each graph in the `sample_graphs` JSON file.
+- `tpch_node_builder`: Builds a QDAG node builder using the TPCH graph.
+- `binary_operators`: Returns every PyDough expression operator for a BinOp.
+- `sqlite_dialects`: Returns the SQLite dialect.
+- `sqlite_people_jobs`: Returns a SQLite database connection with the PEOPLE and JOBS tables.
+- `sqlite_people_jobs_context`: Returns a DatabaseContext for the SQLite PEOPLE and JOBS tables.
+- `sqlite_tpch_db_path`: Path to the TPCH database.
+- `sqlite_tpch_db`: Returns a connection to the SQLite TPCH database.
+- `sqlite_tpch_db_context`: Returns a DatabaseContext for the SQLite TPCH database.
+- `sqlite_bindings`: Returns a function transformation bindings instance for SQLite.
+
+### Common Testing Utilities
+
+The `test_utils.py` file contains various utilities used by PyDough test files, such as the `TestInfo` classes used to build QDAG nodes for unit tests. Some important utilities include:
+
+- `graph_fetcher`: Type alias for a function that takes in a string and generates metadata for a graph based on it.
+- `noun_fetcher`: Type alias for a function that takes in a string and generates the representation of all the nouns in a metadata graph based on it.
+- `map_over_dict_values`: Applies a lambda function to the values of a dictionary, returning a new dictionary with the transformation applied.
+
+By using these utilities and fixtures, the testing module ensures comprehensive and efficient testing of PyDough's functionality.
