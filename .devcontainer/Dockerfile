@@ -5,7 +5,7 @@ COPY /demos/setup_tpch.sh setup_tpch.sh
 # Install uv for command line editing.
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 
-ADD https://astral.sh/uv/install.sh /usr/local/share/uv-installer.sh
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
 
 ENV HOME=/root
 
