@@ -4,7 +4,7 @@ This subdirectory of the PyDough directory deals with the representation and man
 
 The relational module is divided into two main submodules: relational expressions and relational nodes.
 
-## Relational Expressions
+## [Relational Expressions](relational_expressions/README.md)
 
 The relational_expressions submodule provides functionality to define and manage various relational expressions that can be used within PyDough.
 
@@ -61,7 +61,7 @@ modifier = ColumnReferenceInputNameModifier({"old_input_name": "new_input_name"}
 modified_call_expr = call_expr.accept_shuttle(modifier)
 ```
 
-## Relational Nodes
+## [Relational Nodes](relational_nodes/README.md)
 
 The relational_nodes submodule provides functionality to define and manage various relational nodes that can be used within PyDough.
 

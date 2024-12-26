@@ -4,7 +4,7 @@ This module contains the tests for PyDough, including unit tests, integration te
 
 ## TestInfo Classes
 
-The `TestInfo` classes are used to specify information about a QDAG (Query Directed Acyclic Graph) node before it can be created. These classes help in building and testing QDAG nodes for unit tests.
+The `TestInfo` classes are used to specify information about a QDAG (Qualified Directed Acyclic Graph) node before it can be created. These classes help in building and testing QDAG nodes for unit tests.
 
 ### Available TestInfo Classes
 
