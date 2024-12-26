@@ -7,9 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 
 ADD https://astral.sh/uv/install.sh /usr/local/share/uv-installer.sh
 
+ENV HOME=/usr/local/share
+
 RUN sh /usr/local/share/uv-installer.sh && rm /usr/local/share/uv-installer.sh
 
-ENV PATH="/root/.local/bin/:$PATH"
+ENV PATH="$HOME/.local/bin/:$PATH"
 
 # Download the TPC-H database.
 RUN ./setup_tpch.sh /usr/local/share/tpch.db
