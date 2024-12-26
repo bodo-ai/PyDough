@@ -910,7 +910,7 @@ def test_tpch_relational_to_sql(
             "SELECT IIF(b >= 0, 'Positive', 'Negative') AS a FROM (SELECT a, b FROM table)",
             id="iff-iif",
             marks=pytest.mark.skipif(
-                sqlite3.version < "3.32.0",
+                sqlite3.sqlite_version < "3.32.0",
                 reason="SQLite 3.32.0 generates case statements for IFF",
             ),
         ),
@@ -942,7 +942,7 @@ def test_tpch_relational_to_sql(
             "SELECT CASE WHEN b >= 0 THEN 'Positive' ELSE 'Negative' END AS a FROM (SELECT a, b FROM table)",
             id="iff-case",
             marks=pytest.mark.skipif(
-                sqlite3.version >= "3.32.0", reason="SQLite 3.32.0 generates IFF"
+                sqlite3.sqlite_version >= "3.32.0", reason="SQLite 3.32.0 generates IFF"
             ),
         ),
         pytest.param(
