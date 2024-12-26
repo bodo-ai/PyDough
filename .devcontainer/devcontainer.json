@@ -23,5 +23,6 @@
             ]
         }
     },
+    "remoteUser": "root",
     "postCreateCommand": "./.devcontainer/demo_startup.sh"
 }
