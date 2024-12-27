@@ -19,6 +19,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
+[project.urls]
+# TODO: Add homepage + documentation when docs are live.
+Repository = "https://github.com/bodo-ai/PyDough"
+
 # Note: sqlite is included in the standard library, so it doesn't need to be listed here.
 dependencies = ["pytz", "sqlglot", "pandas>=2.0.0", "jupyterlab"]
 
