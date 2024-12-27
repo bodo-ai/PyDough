@@ -1022,3 +1022,49 @@ def test_qualify_node_to_ast_string(
     assert (
         qualified.to_tree_string() == answer_tree_str
     ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+
+
+def test_qualify_node_multiple(
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """
+    Tests that several PyDough unqualified nodes be correctly translated to
+    their qualified DAG versions in the same context without causing issues.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    root: UnqualifiedNode = UnqualifiedRoot(graph)
+    unqualified_a: UnqualifiedNode = root.TPCH(
+        value=root.SUM(root.Lineitems(abc=root.extended_price).abc)
+    )
+    qualified_a: PyDoughQDAG = qualify_node(unqualified_a, graph)
+    answer_tree_str_a: str = """
+┌─── TPCH
+└─┬─ Calc[value=SUM($1.abc)]
+  └─┬─ AccessChild
+    ├─── TableCollection[Lineitems]
+    └─── Calc[abc=extended_price]
+"""
+    unqualified_b: UnqualifiedNode = root.TPCH(
+        value=root.SUM(root.Lineitems(xyz=root.extended_price).xyz)
+    )
+    qualified_b: PyDoughQDAG = qualify_node(unqualified_b, graph)
+    answer_tree_str_b: str = """
+┌─── TPCH
+└─┬─ Calc[value=SUM($1.xyz)]
+  └─┬─ AccessChild
+    ├─── TableCollection[Lineitems]
+    └─── Calc[xyz=extended_price]
+"""
+
+    assert isinstance(
+        qualified_a, PyDoughCollectionQDAG
+    ), "Expected qualified answer to be a collection, not an expression"
+    assert (
+        qualified_a.to_tree_string() == answer_tree_str_a.strip()
+    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    assert isinstance(
+        qualified_b, PyDoughCollectionQDAG
+    ), "Expected qualified answer to be a collection, not an expression"
+    assert (
+        qualified_b.to_tree_string() == answer_tree_str_b.strip()
+    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
