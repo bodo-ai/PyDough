@@ -30,8 +30,11 @@ Repository = "https://github.com/bodo-ai/PyDough"
 dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff]
 unsafe-fixes = true

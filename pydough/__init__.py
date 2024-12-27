@@ -20,15 +20,6 @@ from .exploration import explain, explain_structure, explain_term
 from .metadata import parse_json_metadata_from_file
 from .unqualified import display_raw, init_pydough_context
 
-# # ------------------------------ Version Import ------------------------------
-# from importlib.metadata import version, PackageNotFoundError
-
-# try:
-#     __version__ = version("pydough")
-# except PackageNotFoundError:
-#     # package is not installed
-#     pass
-
 # Create a default session for the user to interact with.
 # In most situations users will just use this session and
 # modify the components, but strictly speaking they are allowed
