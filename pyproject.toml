@@ -1,6 +1,5 @@
 [project]
 name = "pydough"
-# TODO: Add the versioneer information.
 dynamic = ["version"]
 keywords = ["analytics"]
 description = "Analytics DSL for Python"
