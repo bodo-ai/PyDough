@@ -1,0 +1,41 @@
+name: Build PyDough Pip Wheel
+
+on:
+  workflow_call:
+    inputs:
+      pydough_version:
+        description: 'PyDough Version to Build'
+        type: string
+        required: true
+
+
+jobs:
+  build_pydough_wheels:
+    permissions:
+      id-token: write
+      contents: read
+    name: Build PyDough Wheels
+
+    steps:
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     # TODO: FIXME
+      #     aws-region: TODO
+      #     role-to-assume: TODO
+      #     role-session-name: TODO
+      #     role-skip-session-tagging: true
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Build Wheels
+        uses: pypa/cibuildwheel@v2.21.3
+
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: cibw-wheels-${{ inputs.os }}
+      #     path: ./wheelhouse/*.whl
