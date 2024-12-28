@@ -1,6 +1,7 @@
 name: Build PyDough Pip Wheel
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       pydough_version:
