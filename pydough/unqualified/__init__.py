@@ -16,6 +16,7 @@ __all__ = [
     "UnqualifiedTopK",
     "UnqualifiedWhere",
     "UnqualifiedLiteral",
+    "UnqualifiedBest",
     "PyDoughUnqualifiedException",
     "UnqualifiedOperator",
     "UnqualifiedBack",
@@ -32,6 +33,7 @@ from .qualification import qualify_node, qualify_term
 from .unqualified_node import (
     UnqualifiedAccess,
     UnqualifiedBack,
+    UnqualifiedBest,
     UnqualifiedBinaryOperation,
     UnqualifiedCalc,
     UnqualifiedLiteral,
