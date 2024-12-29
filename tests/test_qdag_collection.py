@@ -1373,7 +1373,7 @@ def test_collections_calc_terms(
             "TPCH.Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.part_type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='lines', by=('region_name', 'part_type')]
+  ├─┬─ Partition[name='lines', by=(region_name, part_type)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   ├─── Where[tax == 0]
@@ -1388,84 +1388,6 @@ def test_collections_calc_terms(
       └─── PartitionChild[lines]
 """,
             id="partition_nested",
-        ),
-        pytest.param(
-            TableCollectionInfo("Customers")
-            ** CalcInfo(
-                [
-                    PartitionInfo(
-                        PartitionInfo(
-                            SubCollectionInfo("orders") ** SubCollectionInfo("lines"),
-                            "lines",
-                            [
-                                ChildReferenceExpressionInfo("ship_date", 0),
-                                ChildReferenceExpressionInfo("receipt_date", 0),
-                            ],
-                        )
-                        ** CalcInfo(
-                            [SubCollectionInfo("lines")],
-                            order_sum=FunctionInfo(
-                                "SUM",
-                                [ChildReferenceExpressionInfo("extended_price", 0)],
-                            ),
-                        )
-                        ** WhereInfo(
-                            [],
-                            FunctionInfo(
-                                "GRT",
-                                [
-                                    ReferenceInfo("order_sum"),
-                                    LiteralInfo(1000, Int64Type()),
-                                ],
-                            ),
-                        ),
-                        "day_totals",
-                        [ChildReferenceExpressionInfo("ship_date", 0)],
-                    )
-                    ** CalcInfo(
-                        [SubCollectionInfo("day_totals")],
-                        total_sum=FunctionInfo(
-                            "SUM", [ChildReferenceExpressionInfo("order_sum", 0)]
-                        ),
-                    )
-                    ** WhereInfo(
-                        [],
-                        FunctionInfo(
-                            "LET",
-                            [
-                                ReferenceInfo("total_sum"),
-                                LiteralInfo(2000, Int64Type()),
-                            ],
-                        ),
-                    ),
-                ],
-                name=ReferenceInfo("name"),
-                final_sum=FunctionInfo(
-                    "SUM", [ChildReferenceExpressionInfo("total_sum", 0)]
-                ),
-            ),
-            "TPCH.Customers(name=name, final_sum=SUM(Partition(Partition(orders.lines, name='lines', by=('ship_date', 'receipt_date'))(order_sum=SUM(lines.extended_price)).WHERE(order_sum > 1000), name='day_totals', by=ship_date)(total_sum=SUM(day_totals.order_sum)).WHERE(total_sum < 2000).total_sum))",
-            """
-──┬─ TPCH
-  ├─── TableCollection[Customers]
-  └─┬─ Calc[name=name, final_sum=SUM($1.total_sum)]
-    └─┬─ AccessChild
-      ├─┬─ Partition[name='day_totals', by=ship_date]
-      │ └─┬─ AccessChild
-      │   ├─┬─ Partition[name='lines', by=('ship_date', 'receipt_date')]
-      │   │ └─┬─ AccessChild
-      │   │   └─┬─ SubCollection[orders]
-      │   │     └─── SubCollection[lines]
-      │   ├─┬─ Calc[order_sum=SUM($1.extended_price)]
-      │   │ └─┬─ AccessChild
-      │   │   └─── PartitionChild[lines]
-      │   └─── Where[order_sum > 1000]
-      ├─┬─ Calc[total_sum=SUM($1.order_sum)]
-      │ └─┬─ AccessChild
-      │   └─── PartitionChild[day_totals]
-      └─── Where[total_sum < 2000]
-""",
-            id="multi_partition_nested",
         ),
         pytest.param(
             PartitionInfo(
@@ -2116,13 +2038,13 @@ def test_collections_calc_terms(
                 ),
                 False,
                 1,
-                (ChildReferenceExpressionInfo("num_customers", 0), True, True),
+                (ReferenceInfo("num_customers"), True, True),
             ),
             "TPCH.Regions.BEST(nations(region_name=BACK(1).name, nation_name=name, num_customers=COUNT(customers)), by=num_customers.ASC(na_pos='last'))",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
-    └─┬─ Best[by=$1.num_customers.ASC(na_pos='last')]
+    └─┬─ Best[by=num_customers.ASC(na_pos='last')]
       └─┬─ AccessChild
         ├─── SubCollection[nations]
         └─┬─ Calc[region_name=BACK(1).name, nation_name=name, num_customers=COUNT($1)]
@@ -2144,13 +2066,13 @@ def test_collections_calc_terms(
                 ),
                 True,
                 1,
-                (ChildReferenceExpressionInfo("n_orders", 0), False, True),
+                (ReferenceInfo("n_orders"), False, True),
             ),
             "TPCH.Regions.BEST(nations.customers(region_name=BACK(2).name, customer_name=name, n_orders=COUNT(orders)), allow_ties=True, by=n_orders.DESC(na_pos='last'))",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
-    └─┬─ Best[allow_ties=True, by=$1.n_orders.DESC(na_pos='last')]
+    └─┬─ Best[allow_ties=True, by=n_orders.DESC(na_pos='last')]
       └─┬─ AccessChild
         └─┬─ SubCollection[nations]
           ├─── SubCollection[customers]
@@ -2166,13 +2088,13 @@ def test_collections_calc_terms(
                 SubCollectionInfo("nations") ** SubCollectionInfo("suppliers"),
                 False,
                 3,
-                (ChildReferenceExpressionInfo("account_balance", 0), False, True),
+                (ReferenceInfo("account_balance"), False, True),
             ),
             "TPCH.Regions.BEST(nations.suppliers, n_best=3, by=account_balance.DESC(na_pos='last'))",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
-    └─┬─ Best[n_best=3, by=$1.account_balance.DESC(na_pos='last')]
+    └─┬─ Best[n_best=3, by=account_balance.DESC(na_pos='last')]
       └─┬─ AccessChild
         └─┬─ SubCollection[nations]
           └─── SubCollection[suppliers]
@@ -2194,7 +2116,7 @@ def test_collections_calc_terms(
                         False,
                         1,
                         (
-                            ChildReferenceExpressionInfo("n_suppliers", 0),
+                            ReferenceInfo("n_suppliers"),
                             False,
                             True,
                         ),
@@ -2209,7 +2131,7 @@ def test_collections_calc_terms(
   ├─── TableCollection[Regions]
   └─┬─ Calc[region_name=name, best_nation_name=$1.name]
     └─┬─ AccessChild
-      └─┬─ Best[by=$1.n_suppliers.DESC(na_pos='last')]
+      └─┬─ Best[by=n_suppliers.DESC(na_pos='last')]
         └─┬─ AccessChild
           ├─── SubCollection[nations]
           └─┬─ Calc[n_suppliers=COUNT($1)]

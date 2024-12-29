@@ -779,7 +779,8 @@ class BestInfo(ChildOperatorInfo):
         assert isinstance(raw_best, Best)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
-            expr = info.build(builder, context, children)
+            assert isinstance(info, ReferenceInfo)
+            expr = info.build(builder, children[0], [])
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
         return raw_best.with_collation(collation)

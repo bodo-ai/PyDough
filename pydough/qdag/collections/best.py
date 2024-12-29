@@ -11,7 +11,6 @@ from functools import cache
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
-    ChildReferenceExpression,
     CollationExpression,
     Reference,
 )
@@ -117,7 +116,7 @@ class Best(ChildOperator):
             for col in collation
         ]
         for col in self._collation:
-            if not isinstance(col.expr, ChildReferenceExpression):
+            if not isinstance(col.expr, Reference):
                 raise PyDoughQDAGException(
                     "Collation expressions inside of a BEST clause must be references"
                 )
@@ -212,19 +211,8 @@ class Best(ChildOperator):
             middle = f"n_best={self.n_best}, "
         elif self.allow_ties:
             middle = f"allow_ties={self.allow_ties}, "
-        collation_strings: list[str] = []
-        for col in self.collation:
-            assert isinstance(col.expr, ChildReferenceExpression)
-            collation_strings.append(
-                CollationExpression(
-                    Reference(col.expr.collection, col.expr.term_name),
-                    col.asc,
-                    col.na_last,
-                ).to_string()
-            )
-        return (
-            f"BEST({self.node.to_string()}, {middle}by={', '.join(collation_strings)})"
-        )
+        collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
+        return f"BEST({self.node.to_string()}, {middle}by={collation_str})"
 
     def to_string(self) -> str:
         return f"{self.best_ancestor.to_string()}.{self.standalone_string}"

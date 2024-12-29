@@ -68,6 +68,31 @@ def pydough_impl_misc_02(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
+def pydough_impl_misc_03(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following PyDough snippet:
+    ```
+    TPCH.Nations(nation_name=name, richest_customer_name=BEST(customers, by=acct_bal.DESC()).name)
+    ```
+    """
+    return root.Nations(
+        nation_name=root.name,
+        richest_customer_name=root.BEST(root.customers, by=root.acctbal.DESC()).name,
+    )
+
+
+def pydough_impl_misc_04(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following PyDough snippet:
+    ```
+    TPCH.Regions.BEST(nations.customers, by=acct_bal.DESC())(region_name=BACK(1), richest_customer_name=name)
+    ```
+    """
+    return root.Regions.BEST(root.nations.customers, by=root.acctbal.DESC())(
+        region_name=root.BACK(1).name, richest_customer_name=root.name
+    )
+
+
 def pydough_impl_tpch_q1(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for TPC-H query 1.
@@ -613,10 +638,37 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             id="misc_02",
         ),
         pytest.param(
+            pydough_impl_misc_03,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─┬─ Calc[nation_name=name, richest_customer_name=$1.name]
+    ──┬─ TPCH
+      └─┬─ TableCollection[Nations]
+        └─┬─ Best[by=acctbal.DESC(na_pos='last')]
+          └─┬─ AccessChild
+            └─── SubCollection[customers]
+""",
+            id="misc_03",
+        ),
+        pytest.param(
+            pydough_impl_misc_04,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    ├─┬─ Best[by=acctbal.DESC(na_pos='last')]
+    │ └─┬─ AccessChild
+    │   └─┬─ SubCollection[nations]
+    │     └─── SubCollection[customers]
+    └─── Calc[region_name=BACK(1).name, richest_customer_name=name]
+""",
+            id="misc_04",
+        ),
+        pytest.param(
             pydough_impl_tpch_q1,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=('return_flag', 'status')]
+  ├─┬─ Partition[name='l', by=(return_flag, status)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   └─── Where[ship_date <= datetime.date(1998, 12, 1)]
@@ -656,7 +708,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             pydough_impl_tpch_q3,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=('order_key', 'order_date', 'ship_priority')]
+  ├─┬─ Partition[name='l', by=(order_key, order_date, ship_priority)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Orders]
   │   └─┬─ Where[($1.mktsegment == 'BUILDING') & (order_date < datetime.date(1995, 3, 15))]
@@ -729,7 +781,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             pydough_impl_tpch_q7,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=('supp_nation', 'cust_nation', 'l_year')]
+  ├─┬─ Partition[name='l', by=(supp_nation, cust_nation, l_year)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   ├─┬─ Calc[supp_nation=$1.name, cust_nation=$2.name, l_year=YEAR(ship_date), volume=extended_price * (1 - discount)]
@@ -779,7 +831,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             pydough_impl_tpch_q9,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=('nation', 'o_year')]
+  ├─┬─ Partition[name='l', by=(nation, o_year)]
   │ └─┬─ AccessChild
   │   └─┬─ TableCollection[Nations]
   │     └─┬─ SubCollection[suppliers]
@@ -919,7 +971,7 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
             pydough_impl_tpch_q16,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='ps', by=('p_brand', 'p_type', 'p_size')]
+  ├─┬─ Partition[name='ps', by=(p_brand, p_type, p_size)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Parts]
   │   └─┬─ Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])]
@@ -1068,5 +1120,5 @@ def test_qualify_node_to_ast_string(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
     assert (
-        qualified.to_tree_string() == answer_tree_str
+        qualified.to_tree_string() == answer_tree_str.strip()
     ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"

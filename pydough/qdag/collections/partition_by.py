@@ -152,7 +152,7 @@ class PartitionBy(ChildOperator):
         if len(self.keys) == 1:
             keys_str = self.keys[0].expr.term_name
         else:
-            keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
+            keys_str = f"({', '.join([expr.expr.term_name for expr in self.keys])})"
         return f"Partition[name={self.child_name!r}, by={keys_str}]"
 
     def get_expression_position(self, expr_name: str) -> int:

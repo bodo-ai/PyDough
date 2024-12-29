@@ -218,7 +218,7 @@ from pydough.qdag import AstNodeBuilder
                         SubCollectionInfo("nations"),
                         False,
                         1,
-                        (ChildReferenceExpressionInfo("name", 0), False, True),
+                        (ReferenceInfo("name"), False, True),
                     )
                     ** SubCollectionInfo("customers")
                 ],
@@ -236,7 +236,7 @@ from pydough.qdag import AstNodeBuilder
                         SubCollectionInfo("nations"),
                         False,
                         2,
-                        (ChildReferenceExpressionInfo("name", 0), False, True),
+                        (ReferenceInfo("name"), False, True),
                     )
                 ],
                 region_name=ReferenceInfo("name"),
@@ -253,7 +253,7 @@ from pydough.qdag import AstNodeBuilder
                         SubCollectionInfo("nations"),
                         True,
                         1,
-                        (ChildReferenceExpressionInfo("name", 0), False, True),
+                        (ReferenceInfo("name"), False, True),
                     )
                 ],
                 region_name=ReferenceInfo("name"),
