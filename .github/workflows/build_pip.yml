@@ -37,3 +37,15 @@ jobs:
         with:
           name: upload-wheels
           path: ./dist/*.whl
+
+  test_pydough_wheels:
+    needs: [build_pydough_wheels]
+    runs-on: ubuntu-latest
+    name: Test PyDough Wheels
+
+  upload_pydough_wheels:
+    needs: [build_pydough_wheels]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    name: Upload PyDough Wheels
