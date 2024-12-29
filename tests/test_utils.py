@@ -742,14 +742,12 @@ class BestInfo(ChildOperatorInfo):
 
     def __init__(
         self,
-        children: MutableSequence[CollectionTestInfo],
-        ancestor_levels: int,
+        node: CollectionTestInfo,
         allow_ties: bool,
         n_best: int,
         *args,
     ):
-        super().__init__(children)
-        self.ancestor_levels: int = ancestor_levels
+        super().__init__([node])
         self.allow_ties: bool = allow_ties
         self.n_best: int = n_best
         self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
@@ -760,7 +758,7 @@ class BestInfo(ChildOperatorInfo):
             suffix = "ASC" if asc else "DESC"
             kwarg = "'last'" if na_last else "'first'"
             collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
-        return f"Best[{self.child_strings()}levels={self.ancestor_levels}, allow_ties={self.allow_ties}, n_best={self.n_best}, {', '.join(collation_strings)}]"
+        return f"Best[{self.child_strings()}, allow_ties={self.allow_ties}, n_best={self.n_best}, {', '.join(collation_strings)}]"
 
     def local_build(
         self,
@@ -776,7 +774,7 @@ class BestInfo(ChildOperatorInfo):
             builder, context
         )
         raw_best = builder.build_best(
-            context, children, self.ancestor_levels, self.allow_ties, self.n_best
+            context, children[0], self.allow_ties, self.n_best
         )
         assert isinstance(raw_best, Best)
         collation: list[CollationExpression] = []

@@ -314,9 +314,8 @@ class AstNodeBuilder:
 
     def build_best(
         self,
-        preceding_context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
-        ancestor_levels: int,
+        ancestor: PyDoughCollectionQDAG,
+        node: PyDoughCollectionQDAG,
         allow_ties: bool,
         n_best: int,
     ) -> Best:
@@ -325,16 +324,15 @@ class AstNodeBuilder:
         the output.
 
         Args:
-            `preceding_context`: the preceding collection.
-            `children`: the child collections accessed by the ORDERBY term.
-            `ancestor_levels`: TODO
+            `ancestor`: the ancestor collection.
+            `node`: TODO
             `allow_ties`: TODO
             `n_best`: TODO
 
         Returns:
             The newly created PyDough BEST instance.
         """
-        return Best(preceding_context, children, ancestor_levels, allow_ties, n_best)
+        return Best(ancestor, node, allow_ties, n_best)
 
     def build_partition(
         self,

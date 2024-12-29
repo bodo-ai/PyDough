@@ -214,70 +214,52 @@ from pydough.qdag import AstNodeBuilder
             TableCollectionInfo("Regions")
             ** CalcInfo(
                 [
-                    SubCollectionInfo("nations")
-                    ** BestInfo(
-                        [SubCollectionInfo("suppliers")],
-                        2,
-                        True,
+                    BestInfo(
+                        SubCollectionInfo("nations"),
+                        False,
                         1,
-                        (
-                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
-                            False,
-                            True,
-                        ),
+                        (ChildReferenceExpressionInfo("name", 0), False, True),
                     )
                     ** SubCollectionInfo("customers")
                 ],
                 region_name=ReferenceInfo("name"),
                 best_customer_name=ChildReferenceExpressionInfo("name", 0),
             ),
-            "xyz",
+            "Expected all terms in (region_name=name, best_customer_name=BEST(nations, by=name.DESC(na_pos='last')).customers.name) to be singular, but encountered a plural expression: BEST(nations, by=name.DESC(na_pos='last')).customers.name",
             id="bad_plural_k",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** CalcInfo(
                 [
-                    SubCollectionInfo("nations")
-                    ** BestInfo(
-                        [SubCollectionInfo("suppliers")],
+                    BestInfo(
+                        SubCollectionInfo("nations"),
+                        False,
                         2,
-                        True,
-                        1,
-                        (
-                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
-                            False,
-                            True,
-                        ),
+                        (ChildReferenceExpressionInfo("name", 0), False, True),
                     )
                 ],
                 region_name=ReferenceInfo("name"),
                 best_nation_name=ChildReferenceExpressionInfo("name", 0),
             ),
-            "xyz",
+            "Expected all terms in (region_name=name, best_nation_name=BEST(nations, n_best=2, by=name.DESC(na_pos='last')).name) to be singular, but encountered a plural expression: BEST(nations, n_best=2, by=name.DESC(na_pos='last')).name",
             id="bad_plural_l",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** CalcInfo(
                 [
-                    SubCollectionInfo("nations")
-                    ** BestInfo(
-                        [SubCollectionInfo("suppliers")],
-                        2,
-                        False,
-                        2,
-                        (
-                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
-                            False,
-                            True,
-                        ),
+                    BestInfo(
+                        SubCollectionInfo("nations"),
+                        True,
+                        1,
+                        (ChildReferenceExpressionInfo("name", 0), False, True),
                     )
                 ],
                 region_name=ReferenceInfo("name"),
                 best_nation_name=ChildReferenceExpressionInfo("name", 0),
             ),
-            "xyz",
+            "Expected all terms in (region_name=name, best_nation_name=BEST(nations, n_best=2, by=name.DESC(na_pos='last')).name) to be singular, but encountered a plural expression: BEST(nations, allow_ties=True, by=name.DESC(na_pos='last')).name",
             id="bad_plural_m",
         ),
     ],
