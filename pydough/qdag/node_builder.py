@@ -23,6 +23,7 @@ from pydough.types import PyDoughType
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
     BackReferenceCollection,
+    Best,
     Calc,
     ChildAccess,
     ChildReferenceCollection,
@@ -310,6 +311,30 @@ class AstNodeBuilder:
             The newly created PyDough TOP K instance.
         """
         return TopK(preceding_context, children, records_to_keep)
+
+    def build_best(
+        self,
+        preceding_context: PyDoughCollectionQDAG,
+        children: MutableSequence[PyDoughCollectionQDAG],
+        ancestor_levels: int,
+        allow_ties: bool,
+        n_best: int,
+    ) -> Best:
+        """
+        Creates a BEST instance, but `with_collation` still needs to be called on
+        the output.
+
+        Args:
+            `preceding_context`: the preceding collection.
+            `children`: the child collections accessed by the ORDERBY term.
+            `ancestor_levels`: TODO
+            `allow_ties`: TODO
+            `n_best`: TODO
+
+        Returns:
+            The newly created PyDough BEST instance.
+        """
+        return Best(preceding_context, children, ancestor_levels, allow_ties, n_best)
 
     def build_partition(
         self,

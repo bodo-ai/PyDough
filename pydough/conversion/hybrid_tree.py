@@ -1656,7 +1656,7 @@ class HybridTranslator:
                 hybrid.pipeline.append(HybridFilter(hybrid.pipeline[-1], expr))
                 return hybrid
             case PartitionBy():
-                hybrid = self.make_hybrid_tree(node.preceding_context, parent)
+                hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
                 partition: HybridPartition = HybridPartition()
                 successor_hybrid = HybridTree(partition)
                 hybrid.add_successor(successor_hybrid)

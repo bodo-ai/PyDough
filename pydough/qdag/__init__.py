@@ -34,11 +34,15 @@ __all__ = [
     "BackReferenceExpression",
     "PartitionKey",
     "BackReferenceCollection",
+    "Best",
+    "AugmentingChildOperator",
 ]
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
+    AugmentingChildOperator,
     BackReferenceCollection,
+    Best,
     Calc,
     ChildAccess,
     ChildOperator,

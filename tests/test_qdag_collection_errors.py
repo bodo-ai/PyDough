@@ -9,6 +9,7 @@ from test_utils import (
     AstNodeTestInfo,
     BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
+    BestInfo,
     CalcInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
@@ -208,6 +209,76 @@ from pydough.qdag import AstNodeBuilder
             ),
             "Expected all terms in (part_type=part_type, num_parts=COUNT(parts.suppliers_of_part), cust_name=BACK(2).customers.name) to be singular, but encountered a plural expression: BACK(2).customers.name",
             id="bad_plural_j",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("nations")
+                    ** BestInfo(
+                        [SubCollectionInfo("suppliers")],
+                        2,
+                        True,
+                        1,
+                        (
+                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                            False,
+                            True,
+                        ),
+                    )
+                    ** SubCollectionInfo("customers")
+                ],
+                region_name=ReferenceInfo("name"),
+                best_customer_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "xyz",
+            id="bad_plural_k",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("nations")
+                    ** BestInfo(
+                        [SubCollectionInfo("suppliers")],
+                        2,
+                        True,
+                        1,
+                        (
+                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                            False,
+                            True,
+                        ),
+                    )
+                ],
+                region_name=ReferenceInfo("name"),
+                best_nation_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "xyz",
+            id="bad_plural_l",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("nations")
+                    ** BestInfo(
+                        [SubCollectionInfo("suppliers")],
+                        2,
+                        False,
+                        2,
+                        (
+                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                            False,
+                            True,
+                        ),
+                    )
+                ],
+                region_name=ReferenceInfo("name"),
+                best_nation_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "xyz",
+            id="bad_plural_m",
         ),
     ],
 )

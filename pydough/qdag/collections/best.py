@@ -8,13 +8,18 @@ __all__ = ["Best"]
 from collections.abc import MutableSequence
 from functools import cache
 
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
+from pydough.qdag.expressions import CollationExpression
+from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
+from .child_access import ChildAccess
+from .child_operator import ChildOperator
 from .collection_qdag import PyDoughCollectionQDAG
-from .order_by import OrderBy
+from .collection_tree_form import CollectionTreeForm
 
 
-class Best(OrderBy):
+class Best(ChildOperator):
     """
     The QDAG node implementation class representing the BEST operator, which
     finds the optimal instance of the current context with regards to an
@@ -25,14 +30,15 @@ class Best(OrderBy):
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionQDAG,
+        node: PyDoughCollectionQDAG,
         children: MutableSequence[PyDoughCollectionQDAG],
         ancestor_levels: int,
-        best_ancestor: PyDoughCollectionQDAG,
         allow_ties: bool = False,
         n_best: int = 1,
     ):
-        super().__init__(predecessor, children)
+        self._node: PyDoughCollectionQDAG = node
+        self._children: MutableSequence[PyDoughCollectionQDAG] = children
+        self._collation: list[CollationExpression] | None = None
         if n_best < 1:
             raise PyDoughQDAGException(f"Invalid n_best value: {n_best}")
         if n_best > 1 and allow_ties:
@@ -40,9 +46,23 @@ class Best(OrderBy):
                 "Cannot allow ties when multiple best values are requested"
             )
         self._ancestor_levels: int = ancestor_levels
-        self._best_ancestor: PyDoughCollectionQDAG = best_ancestor
+        self._best_ancestor: PyDoughCollectionQDAG = self
+        for _ in range(ancestor_levels):
+            if self._best_ancestor.ancestor_context is None:
+                raise PyDoughQDAGException(
+                    f"Cannot find ancestor at level {ancestor_levels} for BEST operator"
+                )
+            self._best_ancestor = self._best_ancestor.ancestor_context
         self._allow_ties: bool = allow_ties
         self._n_best: int = n_best
+
+    @property
+    def node(self) -> PyDoughCollectionQDAG:
+        """
+        The node that the BEST operator is filtering with regards to an
+        ancestor.
+        """
+        return self._node
 
     @property
     def best_ancestor(self) -> PyDoughCollectionQDAG:
@@ -78,6 +98,59 @@ class Best(OrderBy):
         """
         return self._n_best
 
+    def with_collation(self, collation: list[CollationExpression]) -> "Best":
+        """
+        Specifies the expressions that are used to do the ordering in an
+        BEST node returning the mutated BEST node afterwards. This is
+        called after the BEST node is created so that the terms can be
+        expressions that reference child nodes of the BEST. However, this
+        must be called on the BEST node before any properties are accessed
+        by `calc_terms`, `all_terms`, `to_string`, etc.
+
+        Args:
+            `collation`: the list of collation nodes to order by.
+
+        Returns:
+            The mutated BEST node (which has also been modified in-place).
+
+        Raises:
+            `PyDoughQDAGException` if the condition has already been added to
+            the WHERE node.
+        """
+        if self._collation is not None:
+            raise PyDoughQDAGException(
+                "Cannot call `with_collation` more than once per BEST node"
+            )
+        self._collation = [
+            CollationExpression(
+                has_hasnot_rewrite(col.expr, False), col.asc, col.na_last
+            )
+            for col in collation
+        ]
+        self.verify_singular_terms(self._collation)
+        return self
+
+    @property
+    def collation(self) -> list[CollationExpression]:
+        """
+        The ordering keys for the BEST clause.
+        """
+        if self._collation is None:
+            raise PyDoughQDAGException(
+                "Cannot access `collation` of an BEST node before calling `with_collation`"
+            )
+        return self._collation
+
+    @property
+    def ancestor_context(self) -> PyDoughCollectionQDAG:
+        ancestor = self.node.ancestor_context
+        assert ancestor is not None
+        return ancestor
+
+    @property
+    def preceding_context(self) -> PyDoughCollectionQDAG | None:
+        return None
+
     @cache
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # The BEST operator is always if its parent is singular with
@@ -112,8 +185,34 @@ class Best(OrderBy):
         )
 
     @property
+    def calc_terms(self) -> set[str]:
+        return self.node.calc_terms
+
+    @property
+    def all_terms(self) -> set[str]:
+        return self.node.all_terms
+
+    @property
     def key(self) -> str:
-        return f"{self.preceding_context.key}.BEST"
+        return f"{self.best_ancestor.key}.BEST"
+
+    @property
+    def ordering(self) -> list[CollationExpression] | None:
+        return self.collation
+
+    def get_expression_position(self, expr_name: str) -> int:
+        return self.node.get_expression_position(expr_name)
+
+    @cache
+    def get_term(self, term_name: str) -> PyDoughQDAG:
+        from pydough.qdag.expressions import PyDoughExpressionQDAG, Reference
+
+        term: PyDoughQDAG = self.node.get_term(term_name)
+        if isinstance(term, ChildAccess):
+            term = term.clone_with_parent(self)
+        elif isinstance(term, PyDoughExpressionQDAG):
+            term = Reference(self.node, term_name)
+        return term
 
     @property
     def standalone_string(self) -> str:
@@ -121,9 +220,13 @@ class Best(OrderBy):
         if self.n_best > 1:
             middle = f"n_best={self.n_best}, "
         elif self.allow_ties:
-            middle = f"allow_ties={self.allow_ties}), "
+            middle = f"allow_ties={self.allow_ties}, "
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
-        return f"BEST({middle}levels={self.ancestor_levels}, by={collation_str})"
+        return f"BEST({self.node.to_string()}, {middle}by={collation_str})"
+
+    def to_string(self) -> str:
+        assert self.preceding_context is not None
+        return f"{self.best_ancestor.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:
@@ -131,16 +234,23 @@ class Best(OrderBy):
         if self.n_best > 1:
             middle = f"n_best={self.n_best}, "
         elif self.allow_ties:
-            middle = f"allow_ties={self.allow_ties}), "
+            middle = f"allow_ties={self.allow_ties}, "
         collation_str: str = ", ".join(
             [expr.to_string(True) for expr in self.collation]
         )
-        return f"BEST[{middle}levels={self.ancestor_levels}, by={collation_str}]"
+        return f"Best[{middle}levels={self.ancestor_levels}, by={collation_str}]"
+
+    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(is_last)
+        predecessor.has_children = True
+        tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
+        tree_form.depth = predecessor.depth + 1
+        tree_form.predecessor = predecessor
+        return tree_form
 
     def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
-            and isinstance(other, Best)
+            isinstance(other, Best)
             and self.preceding_context == other.preceding_context
             and self.ancestor_levels == other.ancestor_levels
             and self.allow_ties == other.allow_ties

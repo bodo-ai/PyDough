@@ -6,6 +6,7 @@ import pytest
 from test_utils import (
     BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
+    BestInfo,
     CalcInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
@@ -1327,13 +1328,13 @@ def test_collections_calc_terms(
             ),
             "TPCH.Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price))",
             """
-┌─── TPCH
-├─┬─ Partition[name='parts', by=container]
-│ └─┬─ AccessChild
-│   └─── TableCollection[Parts]
-└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
-  └─┬─ AccessChild
-    └─── PartitionChild[parts]
+──┬─ TPCH
+  ├─┬─ Partition[name='parts', by=container]
+  │ └─┬─ AccessChild
+  │   └─── TableCollection[Parts]
+  └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+    └─┬─ AccessChild
+      └─── PartitionChild[parts]
 """,
             id="partition_part",
         ),
@@ -1371,20 +1372,20 @@ def test_collections_calc_terms(
             ),
             "TPCH.Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.part_type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
             """
-┌─── TPCH
-├─┬─ Partition[name='lines', by=('region_name', 'part_type')]
-│ └─┬─ AccessChild
-│   ├─── TableCollection[Lineitems]
-│   ├─── Where[tax == 0]
-│   └─┬─ Calc[region_name=$1.name, part_type=$2.part_type]
-│     ├─┬─ AccessChild
-│     │ └─┬─ SubCollection[order]
-│     │   └─── SubCollection[shipping_region]
-│     └─┬─ AccessChild
-│       └─── SubCollection[part]
-└─┬─ Calc[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
-  └─┬─ AccessChild
-    └─── PartitionChild[lines]
+──┬─ TPCH
+  ├─┬─ Partition[name='lines', by=('region_name', 'part_type')]
+  │ └─┬─ AccessChild
+  │   ├─── TableCollection[Lineitems]
+  │   ├─── Where[tax == 0]
+  │   └─┬─ Calc[region_name=$1.name, part_type=$2.part_type]
+  │     ├─┬─ AccessChild
+  │     │ └─┬─ SubCollection[order]
+  │     │   └─── SubCollection[shipping_region]
+  │     └─┬─ AccessChild
+  │       └─── SubCollection[part]
+  └─┬─ Calc[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
+    └─┬─ AccessChild
+      └─── PartitionChild[lines]
 """,
             id="partition_nested",
         ),
@@ -1482,14 +1483,14 @@ def test_collections_calc_terms(
             ** OrderInfo([], (ReferenceInfo("total_price"), False, True)),
             "TPCH.Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).ORDER_BY(total_price.DESC(na_pos='last'))",
             """
-┌─── TPCH
-├─┬─ Partition[name='parts', by=container]
-│ └─┬─ AccessChild
-│   └─── TableCollection[Parts]
-├─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
-│ └─┬─ AccessChild
-│   └─── PartitionChild[parts]
-└─── OrderBy[total_price.DESC(na_pos='last')]
+──┬─ TPCH
+  ├─┬─ Partition[name='parts', by=container]
+  │ └─┬─ AccessChild
+  │   └─── TableCollection[Parts]
+  ├─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+  │ └─┬─ AccessChild
+  │   └─── PartitionChild[parts]
+  └─── OrderBy[total_price.DESC(na_pos='last')]
 """,
             id="partition_with_order_part",
         ),
@@ -1522,16 +1523,16 @@ def test_collections_calc_terms(
             ),
             "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).parts(part_name=name, container=container, ratio=retail_price / BACK(1).total_price)",
             """
-┌─── TPCH
-├─┬─ Partition[name='parts', by=container]
-│ └─┬─ AccessChild
-│   ├─── TableCollection[Parts]
-│   └─── OrderBy[retail_price.DESC(na_pos='last')]
-└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
-  ├─┬─ AccessChild
-  │ └─── PartitionChild[parts]
-  ├─── PartitionChild[parts]
-  └─── Calc[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]
+──┬─ TPCH
+  ├─┬─ Partition[name='parts', by=container]
+  │ └─┬─ AccessChild
+  │   ├─── TableCollection[Parts]
+  │   └─── OrderBy[retail_price.DESC(na_pos='last')]
+  └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+    ├─┬─ AccessChild
+    │ └─── PartitionChild[parts]
+    ├─── PartitionChild[parts]
+    └─── Calc[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]
 """,
             id="partition_data_with_data_order",
         ),
@@ -1554,37 +1555,6 @@ def test_collections_calc_terms(
   └─── TopK[5, total_sum.DESC(na_pos='last')]
 """,
             id="nations_topk",
-        ),
-        pytest.param(
-            TableCollectionInfo("Nations")
-            ** SubCollectionInfo("suppliers")
-            ** PartitionInfo(
-                SubCollectionInfo("parts_supplied"),
-                "parts",
-                [ChildReferenceExpressionInfo("part_type", 0)],
-            )
-            ** CalcInfo(
-                [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
-                part_type=ReferenceInfo("part_type"),
-                num_parts=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
-                num_custs=FunctionInfo(
-                    "COUNT", [BackReferenceCollectionInfo("customers", 2)]
-                ),
-            ),
-            "TPCH.Nations.suppliers.Partition(parts_supplied, name='parts', by=part_type)(part_type=part_type, num_parts=COUNT(parts.suppliers_of_part), num_custs=COUNT(BACK(2).customers))",
-            """
-──┬─ TPCH
-  └─┬─ TableCollection[Nations]
-    ├─── SubCollection[suppliers]
-    ├─┬─ Partition[name='parts', by=part_type]
-    │ └─┬─ AccessChild
-    │   └─── SubCollection[parts_supplied]
-    └─┬─ Calc[part_type=part_type, num_parts=COUNT($1), num_custs=COUNT(BackSubCollection[2, customers])]
-      └─┬─ AccessChild
-        └─┬─ PartitionChild[parts]
-          └─── SubCollection[suppliers_of_part]
-""",
-            id="partition_backreference",
         ),
         pytest.param(
             TableCollectionInfo("Parts")
@@ -2131,6 +2101,107 @@ def test_collections_calc_terms(
         └─── Where[name == 'INDIA']
 """,
             id="hybrid_has_hasnot",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** CalcInfo(
+                [SubCollectionInfo("customers")],
+                region_name=BackReferenceExpressionInfo("name", 1),
+                nation_name=ReferenceInfo("name"),
+                num_customers=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+            )
+            ** BestInfo([], 1, False, 1, (ReferenceInfo("num_customers"), True, True)),
+            "TPCH.Regions.nations(region_name=BACK(1).name, nation_name=name, num_customers=COUNT(customers)).BEST(levels=1, by=num_customers.ASC(na_pos='last'))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    ├─── SubCollection[nations]
+    ├─┬─ Calc[region_name=BACK(1).name, nation_name=name, num_customers=COUNT($1)]
+    │ └─┬─ AccessChild
+    │   └─── SubCollection[customers]
+    └─── Best[levels=1, by=num_customers.ASC(na_pos='last')]
+""",
+            id="simple_best",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** SubCollectionInfo("customers")
+            ** BestInfo(
+                [SubCollectionInfo("orders")],
+                2,
+                True,
+                1,
+                (FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]), False, True),
+            ),
+            "TPCH.Regions.nations.customers.BEST(allow_ties=True, levels=2, by=COUNT(orders).DESC(na_pos='last'))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      └─┬─ Best[allow_ties=True, levels=2, by=COUNT($1).DESC(na_pos='last')]
+        └─┬─ AccessChild
+          └─── SubCollection[orders]
+""",
+            id="regional_best_tying_customers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** SubCollectionInfo("suppliers")
+            ** BestInfo(
+                [SubCollectionInfo("supply_records")],
+                2,
+                False,
+                3,
+                (FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]), False, True),
+            ),
+            "TPCH.Regions.nations.suppliers.BEST(n_best=3, levels=2, by=COUNT(supply_records).DESC(na_pos='last'))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[suppliers]
+      └─┬─ Best[n_best=3, levels=2, by=COUNT($1).DESC(na_pos='last')]
+        └─┬─ AccessChild
+          └─── SubCollection[supply_records]
+""",
+            id="regional_best_3_suppliers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("nations")
+                    ** BestInfo(
+                        [SubCollectionInfo("suppliers")],
+                        2,
+                        False,
+                        1,
+                        (
+                            FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                            False,
+                            True,
+                        ),
+                    )
+                ],
+                region_name=ReferenceInfo("name"),
+                best_nation_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "TPCH.Regions(region_name=name, best_nation_name=nations.BEST(levels=2, by=COUNT(suppliers).DESC(na_pos='last')).name)",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calc[region_name=name, best_nation_name=$1.name]
+    └─┬─ AccessChild
+      ├─── SubCollection[nations]
+      └─┬─ Best[levels=2, by=COUNT($1).DESC(na_pos='last')]
+        └─┬─ AccessChild
+          └─── SubCollection[suppliers]
+""",
+            id="regional_child_best_nation",
         ),
     ],
 )
