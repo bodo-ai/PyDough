@@ -16,14 +16,14 @@ jobs:
     name: Build PyDough Wheels
 
     steps:
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     # TODO: FIXME
-      #     aws-region: TODO
-      #     role-to-assume: TODO
-      #     role-session-name: TODO
-      #     role-skip-session-tagging: true
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-2
+          role-to-assume: arn:aws:iam::427443013497:role/PyDoughBuildWheelRole
+          role-session-name: PyDoughBuildWheelSession
+          role-skip-session-tagging: true
+
       - uses: actions/checkout@v4
 
       - name: Install uv
