@@ -87,4 +87,3 @@ jobs:
           merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
-        repository_url: https://test.pypi.org/simple/pydough/
