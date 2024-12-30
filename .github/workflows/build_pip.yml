@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   release:
     types: [published]
-  pull_request:
 
 jobs:
   build_pydough_wheels:
