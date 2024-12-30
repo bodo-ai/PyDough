@@ -72,13 +72,13 @@ jobs:
 
 
   upload_pydough_wheels:
-    needs: [build_pydough_wheels]
+    needs: [build_pydough_wheels, test_pydough_wheels]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     name: Upload PyDough Wheels
 
-    # if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v4
         with:
