@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: upload-wheels
+          name: pydough-wheel
           path: ./dist/*.whl
 
   test_pydough_wheels:
@@ -43,9 +43,47 @@ jobs:
     runs-on: ubuntu-latest
     name: Test PyDough Wheels
 
+    strategy:
+      matrix:
+        python_version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/download-artifact@v4
+        id: download-artifact
+        with:
+          pattern: pydough-wheel*
+          path: .
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Install
+        run: |
+          # Install pydough from the local wheel
+          pip install pydough --find-links "$(find . -name "pydough-wheel*" -print)" --no-index --no-deps
+          # Install dependencies from pypi
+          pip install pydough
+      - name: Test Import
+        run: |
+          python -c "import pydough; assert pydough.active_session is not None"
+      # TODO: Consider a more detailed test of functionality.
+
+
   upload_pydough_wheels:
     needs: [build_pydough_wheels]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     name: Upload PyDough Wheels
+        runs-on: ubuntu-latest
+    # if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pydough-wheel*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        repository-url: https://test.pypi.org/simple/pydough/
