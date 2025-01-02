@@ -1157,6 +1157,13 @@ class HybridTranslator:
                     if inside_aggregation
                     else ConnectionType.SINGULAR
                 )
+            case WindowCall():
+                # Otherwise, mutate `reference_types` based on the arguments
+                # to the window call.
+                for col in expr.collation_args:
+                    HybridTranslator.identify_connection_types(
+                        col.expr, child_idx, reference_types, inside_aggregation
+                    )
             case ExpressionFunctionCall():
                 # If `expr` is a `HAS` call on the child in question, add a
                 # semi-join connection.
