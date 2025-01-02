@@ -19,6 +19,7 @@ from test_utils import (
     TableCollectionInfo,
     TopKInfo,
     WhereInfo,
+    WindowInfo,
 )
 
 from pydough.configs import PyDoughConfigs
@@ -2845,6 +2846,65 @@ ROOT(columns=[('name', name)], orderings=[])
 """,
             ),
             id="multiple_has_hasnot",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Customers")
+                ** CalcInfo(
+                    [],
+                    name=ReferenceInfo("name"),
+                    cust_rank=WindowInfo(
+                        "RANKING",
+                        (ReferenceInfo("acctbal"), False, True),
+                    ),
+                ),
+                """
+
+""",
+            ),
+            id="rank_customers",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** SubCollectionInfo("customers")
+                ** CalcInfo(
+                    [],
+                    nation_name=BackReferenceExpressionInfo("name", 1),
+                    name=ReferenceInfo("name"),
+                    cust_rank=WindowInfo(
+                        "RANKING",
+                        (ReferenceInfo("acctbal"), False, True),
+                        levels=1,
+                        allow_ties=True,
+                    ),
+                ),
+                """
+""",
+            ),
+            id="rank_customers_per_nation",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** SubCollectionInfo("customers")
+                ** CalcInfo(
+                    [],
+                    nation_name=BackReferenceExpressionInfo("name", 1),
+                    name=ReferenceInfo("name"),
+                    cust_rank=WindowInfo(
+                        "RANKING",
+                        (ReferenceInfo("acctbal"), False, True),
+                        levels=2,
+                        allow_ties=True,
+                        dense=True,
+                    ),
+                ),
+                """
+""",
+            ),
+            id="rank_customers_per_region",
         ),
     ],
 )
