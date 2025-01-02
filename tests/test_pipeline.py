@@ -665,7 +665,19 @@ ROOT(columns=[('name', name), ('rank', rank)], orderings=[(ordering_1):asc_first
             (
                 rank_parts_per_supplier_region_by_size,
                 """
-
+ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ordering_0):asc_first])
+ LIMIT(limit=Literal(value=15, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0, 'rank': rank, 'region': region}, orderings=[(ordering_0):asc_first])
+  PROJECT(columns={'key': key, 'ordering_0': key, 'rank': rank, 'region': region})
+   PROJECT(columns={'key': key_9, 'rank': RANKING(by=[], partition=['key'], order=['(size):desc_first', '(container):desc_first', '(part_type):desc_first']), 'region': name})
+    JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'container': t1.container, 'key': t0.key, 'key_9': t1.key, 'name': t0.name, 'part_type': t1.part_type, 'size': t1.size})
+     JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'key': t0.key, 'name': t0.name, 'part_key': t1.part_key})
+      JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name': t0.name})
+       JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name': t0.name})
+        SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+     SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'part_type': p_type, 'size': p_size}
 """,
                 lambda: pd.DataFrame(
                     {
