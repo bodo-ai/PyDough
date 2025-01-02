@@ -62,6 +62,7 @@ from pydough.qdag import (
     TableCollection,
     TopK,
     Where,
+    WindowCall,
 )
 from pydough.relational import JoinType
 from pydough.types import BooleanType, Int64Type, PyDoughType
@@ -277,14 +278,96 @@ class HybridFunctionExpr(HybridExpr):
         renamed_args: list[HybridExpr] = [
             arg.apply_renamings(renamings) for arg in self.args
         ]
-        if all(
-            expr is renamed_expr for expr, renamed_expr in zip(self.args, renamed_args)
-        ):
+        if all_same(self.args, renamed_args):
             return self
         return HybridFunctionExpr(self.operator, renamed_args, self.typ)
 
     def shift_back(self, levels: int) -> HybridExpr | None:
         return None
+
+
+class HybridWindowExpr(HybridExpr):
+    """
+    Class for HybridExpr terms that are window function calls.
+    """
+
+    def __init__(
+        self,
+        window_func: pydop.ExpressionWindowOperator,
+        args: list[HybridExpr],
+        partition_args: list[HybridExpr],
+        order_args: list[HybridCollation],
+        typ: PyDoughType,
+        kwargs: dict[str, object],
+    ):
+        super().__init__(typ)
+        self.window_func: pydop.ExpressionWindowOperator = window_func
+        self.args: list[HybridExpr] = args
+        self.partition_args: list[HybridExpr] = partition_args
+        self.order_args: list[HybridCollation] = order_args
+        self.kwargs: dict[str, object] = kwargs
+
+    def __repr__(self):
+        args_str = ""
+        args_str += f"by=[{', '.join([str(arg) for arg in self.args])}]"
+        args_str += (
+            f", partition=[{', '.join([str(arg) for arg in self.partition_args])}]"
+        )
+        args_str += f", order=[{', '.join([str(arg) for arg in self.order_args])}]"
+        if "allow_ties" in self.kwargs:
+            args_str += f", allow_ties={self.kwargs['allow_ties']}"
+            if "dense" in self.kwargs:
+                args_str += f", dense={self.kwargs["dense"]}"
+        return f"{self.window_func.function_name}({args_str})"
+
+    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
+        renamed_args: list[HybridExpr] = [
+            arg.apply_renamings(renamings) for arg in self.args
+        ]
+        renamed_partition_args: list[HybridExpr] = [
+            arg.apply_renamings(renamings) for arg in self.partition_args
+        ]
+        renamed_order_args: list[HybridCollation] = []
+        for col_arg in self.order_args:
+            collation_expr: HybridRefExpr = col_arg.expr
+            renamed_expr: HybridExpr = collation_expr.apply_renamings(renamings)
+            assert isinstance(renamed_expr, HybridRefExpr)
+            if renamed_expr is collation_expr:
+                renamed_order_args.append(col_arg)
+            else:
+                renamed_order_args.append(
+                    HybridCollation(renamed_expr, col_arg.asc, col_arg.na_first)
+                )
+        if (
+            all_same(self.args, renamed_args)
+            and all_same(self.partition_args, renamed_partition_args)
+            and all_same(
+                [arg.expr for arg in self.order_args],
+                [arg.expr for arg in renamed_order_args],
+            )
+        ):
+            return self
+        return HybridWindowExpr(
+            self.window_func,
+            renamed_args,
+            renamed_partition_args,
+            renamed_order_args,
+            self.typ,
+            self.kwargs,
+        )
+
+    def shift_back(self, levels: int) -> HybridExpr | None:
+        return None
+
+
+def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
+    """
+    Returns whether two lists of hybrid expressions are identical, down to
+    identity.
+    """
+    return len(exprs) == len(renamed_exprs) and all(
+        expr is renamed_expr for expr, renamed_expr in zip(exprs, renamed_exprs)
+    )
 
 
 class HybridOperation:
@@ -299,6 +382,10 @@ class HybridOperation:
                term name so that future invocations of the term name use the
                renamed version, while key operations like joins can still
                access the original version.
+    - `orderings`: list of collation expressions that specify the order
+               that a hybrid operation is sorted by.
+    - `unique_exprs`: list of expressions that are used to uniquely identify
+               records within the current level of the hybrid tree.
     """
 
     def __init__(
@@ -306,10 +393,12 @@ class HybridOperation:
         terms: dict[str, HybridExpr],
         renamings: dict[str, str],
         orderings: list[HybridCollation],
+        unique_exprs: list[HybridExpr],
     ):
         self.terms: dict[str, HybridExpr] = terms
         self.renamings: dict[str, str] = renamings
         self.orderings: list[HybridCollation] = orderings
+        self.unique_exprs: list[HybridExpr] = unique_exprs
 
 
 class HybridRoot(HybridOperation):
@@ -318,7 +407,7 @@ class HybridRoot(HybridOperation):
     """
 
     def __init__(self):
-        super().__init__({}, {}, [])
+        super().__init__({}, {}, [], [])
 
     def __repr__(self):
         return "ROOT"
@@ -331,13 +420,18 @@ class HybridCollectionAccess(HybridOperation):
     """
 
     def __init__(self, collection: CollectionAccess):
+        expr: PyDoughExpressionQDAG
         self.collection: CollectionAccess = collection
         terms: dict[str, HybridExpr] = {}
         for name in collection.calc_terms:
             expr = collection.get_expr(name)
             assert isinstance(expr, ColumnProperty)
             terms[name] = HybridColumnExpr(expr)
-        super().__init__(terms, {}, [])
+        unique_exprs: list[HybridExpr] = []
+        for name in collection.unique_terms:
+            expr = collection.get_expr(name)
+            unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
+        super().__init__(terms, {}, [], unique_exprs)
 
     def __repr__(self):
         return f"COLLECTION[{self.collection.collection.name}]"
@@ -355,6 +449,7 @@ class HybridPartitionChild(HybridOperation):
             subtree.pipeline[-1].terms,
             subtree.pipeline[-1].renamings,
             subtree.pipeline[-1].orderings,
+            subtree.pipeline[-1].unique_exprs,
         )
 
     def __repr__(self):
@@ -388,7 +483,7 @@ class HybridCalc(HybridOperation):
                 idx += 1
             terms[used_name] = expr
             renamings[name] = used_name
-        super().__init__(terms, renamings, orderings)
+        super().__init__(terms, renamings, orderings, predecessor.unique_exprs)
         self.calc = Calc
         self.new_expressions = new_expressions
 
@@ -402,7 +497,9 @@ class HybridFilter(HybridOperation):
     """
 
     def __init__(self, predecessor: HybridOperation, condition: HybridExpr):
-        super().__init__(predecessor.terms, {}, predecessor.orderings)
+        super().__init__(
+            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+        )
         self.predecessor: HybridOperation = predecessor
         self.condition: HybridExpr = condition
 
@@ -416,7 +513,7 @@ class HybridPartition(HybridOperation):
     """
 
     def __init__(self):
-        super().__init__({}, {}, [])
+        super().__init__({}, {}, [], [])
         self.key_names: list[str] = []
 
     def __repr__(self):
@@ -433,6 +530,7 @@ class HybridPartition(HybridOperation):
         """
         self.key_names.append(key_name)
         self.terms[key_name] = key_expr
+        self.unique_exprs.append(key_expr)
 
 
 class HybridLimit(HybridOperation):
@@ -445,7 +543,9 @@ class HybridLimit(HybridOperation):
         predecessor: HybridOperation,
         records_to_keep: int,
     ):
-        super().__init__(predecessor.terms, {}, predecessor.orderings)
+        super().__init__(
+            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+        )
         self.predecessor: HybridOperation = predecessor
         self.records_to_keep: int = records_to_keep
 
@@ -1241,6 +1341,10 @@ class HybridTranslator:
                 raise NotImplementedError(
                     "PyDough does yet support aggregations whose arguments mix between subcollection data of the current context and fields of the context itself"
                 )
+            case WindowCall():
+                raise NotImplementedError(
+                    "PyDough does yet support aggregations whose arguments mix between subcollection data of the current context and window functions"
+                )
             case _:
                 raise NotImplementedError(
                     f"TODO: support converting {expr.__class__.__name__} in aggregations"
@@ -1432,6 +1536,8 @@ class HybridTranslator:
         expr_name: str
         child_connection: HybridConnection
         args: list[HybridExpr] = []
+        hybrid_arg: HybridExpr
+        ancestor_tree: HybridTree
         match expr:
             case PartitionKey():
                 return self.make_hybrid_expr(hybrid, expr.expr, child_ref_mapping)
@@ -1458,7 +1564,7 @@ class HybridTranslator:
                 # reference steps outside of a child subtree and back into its
                 # parent subtree, since that breaks the independence between
                 # the parent and child.
-                ancestor_tree: HybridTree = hybrid
+                ancestor_tree = hybrid
                 back_idx: int = 0
                 true_steps_back: int = 0
                 # Keep stepping backward until `expr.back_levels` non-hidden
@@ -1503,7 +1609,6 @@ class HybridTranslator:
                 # a child reference (referring to the aggs list), since after
                 # translation, an aggregated child subtree only has the grouping
                 # keys & the aggregation calls as opposed to its other terms.
-                hybrid_arg: HybridExpr
                 child_idx: int | None = None
                 arg_child_idx: int | None = None
                 for arg in expr.args:
@@ -1556,6 +1661,40 @@ class HybridTranslator:
                 joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
                 return self.postprocess_agg_output(
                     hybrid_call, result_ref, joins_can_nullify
+                )
+            case WindowCall():
+                partition_args: list[HybridExpr] = []
+                order_args: list[HybridCollation] = []
+                if expr.levels is not None:
+                    ancestor_tree = hybrid
+                    for _ in range(expr.levels):
+                        if ancestor_tree.parent is None:
+                            raise ValueError("Window function references too far back")
+                        ancestor_tree = ancestor_tree.parent
+                    for unique_term in ancestor_tree.pipeline[-1].unique_exprs:
+                        shifted_arg: HybridExpr | None = unique_term.shift_back(
+                            expr.levels
+                        )
+                        assert shifted_arg is not None
+                        partition_args.append(shifted_arg)
+                for arg in expr.collation_args:
+                    hybrid_arg = self.make_hybrid_expr(
+                        hybrid, arg.expr, child_ref_mapping
+                    )
+                    assert isinstance(hybrid_arg, HybridRefExpr)
+                    order_args.append(HybridCollation(hybrid_arg, arg.asc, arg.na_last))
+                kwargs: dict[str, object] = {}
+                if expr.allow_ties:
+                    kwargs["allow_ties"] = expr.allow_ties
+                if expr.dense:
+                    kwargs["dense"] = expr.dense
+                return HybridWindowExpr(
+                    expr.window_operator,
+                    [],
+                    partition_args,
+                    order_args,
+                    expr.pydough_type,
+                    kwargs,
                 )
             case _:
                 raise NotImplementedError(

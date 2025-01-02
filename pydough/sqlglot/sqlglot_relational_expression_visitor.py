@@ -14,6 +14,7 @@ from pydough.relational import (
     LiteralExpression,
     RelationalExpression,
     RelationalExpressionVisitor,
+    WindowCallExpression,
 )
 
 from .sqlglot_helpers import set_glot_alias
@@ -54,6 +55,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             call_expression.op, call_expression.inputs, input_exprs
         )
         self._stack.append(output_expr)
+
+    def visit_window_expression(self, window_expression: WindowCallExpression) -> None:
+        raise NotImplementedError()
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed

@@ -35,6 +35,16 @@ class RelationalExpressionVisitor(ABC):
         """
 
     @abstractmethod
+    def visit_window_expression(self, window_expression) -> None:
+        """
+        Visit a WindowCallExpression node.
+
+        Args:
+            window_expression (WindowCallExpression): The window call
+            expression node to visit.
+        """
+
+    @abstractmethod
     def visit_literal_expression(self, literal_expression) -> None:
         """
         Visit a LiteralExpression node.
