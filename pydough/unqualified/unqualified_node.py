@@ -367,6 +367,21 @@ class UnqualifiedCollation(UnqualifiedNode):
         self._parcel: tuple[UnqualifiedNode, bool, bool] = (node, asc, na_pos)
 
 
+def get_by_arg(
+    kwargs: dict[str, object],
+) -> UnqualifiedNode | Iterable[UnqualifiedNode]:
+    by = kwargs.get("by")
+    if isinstance(by, UnqualifiedNode):
+        by = [by]
+    elif not (
+        isinstance(by, Iterable) and all(isinstance(arg, UnqualifiedNode) for arg in by)
+    ):
+        raise PyDoughUnqualifiedException(
+            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
+        )
+    return by
+
+
 class UnqualifiedOperator(UnqualifiedNode):
     """
     Implementation of UnqualifiedNode used to refer to a function that has
@@ -378,27 +393,26 @@ class UnqualifiedOperator(UnqualifiedNode):
 
     def __call__(self, *args, **kwargs):
         if len(kwargs) > 0:
+            by: UnqualifiedNode | Iterable[UnqualifiedNode]
+            window_operator: pydop.ExpressionWindowOperator
             match self._parcel[0]:
+                case "PERCENTILE":
+                    by = get_by_arg(kwargs)
+                    window_operator = pydop.PERCENTILE
                 case "RANKING":
-                    by = kwargs.get("by")
-                    if isinstance(by, UnqualifiedNode):
-                        by = [by]
-                    elif not (
-                        isinstance(by, Iterable)
-                        and all(isinstance(arg, UnqualifiedNode) for arg in by)
-                    ):
-                        raise PyDoughUnqualifiedException(
-                            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
-                        )
-                    return UnqualifiedWindow(
-                        pydop.RANKING,
-                        by,
-                        kwargs.get("levels", None),
-                        kwargs.get("allow_ties", False),
-                        kwargs.get("dense", False),
+                    by = get_by_arg(kwargs)
+                    window_operator = pydop.RANKING
+                case _:
+                    raise PyDoughUnqualifiedException(
+                        "PyDough function calls do not support keyword arguments at this time"
                     )
-            raise PyDoughUnqualifiedException(
-                "PyDough function calls do not support keyword arguments at this time"
+            return UnqualifiedWindow(
+                window_operator,
+                by,
+                levels=kwargs.get("levels", None),
+                allow_ties=kwargs.get("allow_ties", False),
+                dense=kwargs.get("dense", False),
+                n_buckets=kwargs.get("n_buckets", False),
             )
         operands: MutableSequence[UnqualifiedNode] = []
         for arg in args:
@@ -431,6 +445,7 @@ class UnqualifiedWindow(UnqualifiedNode):
         levels: int | None,
         allow_ties: bool,
         dense: bool,
+        n_buckets: int | None,
     ):
         self._parcel: tuple[
             pydop.ExpressionWindowOperator,
@@ -438,7 +453,8 @@ class UnqualifiedWindow(UnqualifiedNode):
             int | None,
             bool,
             bool,
-        ] = (operator, by, levels, allow_ties, dense)
+            int | None,
+        ] = (operator, by, levels, allow_ties, dense, n_buckets)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -596,6 +612,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 operands_str += ", allow_ties=True"
                 if unqualified._parcel[4]:
                     operands_str += ", dense=True"
+            if unqualified._parcel[5]:
+                operands_str += f", n_buckets={unqualified._parcel[5]}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"
         case UnqualifiedBinaryOperation():
             return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0]} {display_raw(unqualified._parcel[2])})"

@@ -96,9 +96,18 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             else:
                 glot_expr = glot_expr.desc(nulls_first=na_first)
             order_exprs.append(glot_expr)
+        this: SQLGlotExpression
         match window_expression.op.function_name:
+            case "PERCENTILE":
+                n_buckets = window_expression.kwargs.get("n_buckets", 100)
+                assert isinstance(n_buckets, int)
+                this = sqlglot_expressions.Anonymous(
+                    this="DENSE_RANK",
+                    expressions=[
+                        sqlglot_expressions.Literal(value=n_buckets, is_string=False)
+                    ],
+                )
             case "RANKING":
-                this: SQLGlotExpression
                 if window_expression.kwargs.get("allow_ties", False):
                     if window_expression.kwargs.get("dense", False):
                         this = sqlglot_expressions.Anonymous(

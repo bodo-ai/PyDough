@@ -57,6 +57,7 @@ __all__ = [
     "UPPER",
     "MIN",
     "RANKING",
+    "PERCENTILE",
     "ExpressionWindowOperator",
 ]
 
@@ -94,6 +95,7 @@ from .expression_operators import (
     NDISTINCT,
     NEQ,
     NOT,
+    PERCENTILE,
     POW,
     RANKING,
     SLICE,

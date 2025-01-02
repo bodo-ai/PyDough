@@ -49,6 +49,7 @@ __all__ = [
     "HASNOT",
     "RANKING",
     "ExpressionWindowOperator",
+    "PERCENTILE",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -88,6 +89,7 @@ from .registered_expression_operators import (
     NDISTINCT,
     NEQ,
     NOT,
+    PERCENTILE,
     POW,
     RANKING,
     SLICE,

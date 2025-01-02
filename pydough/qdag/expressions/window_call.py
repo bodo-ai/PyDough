@@ -30,6 +30,7 @@ class WindowCall(PyDoughExpressionQDAG):
         levels: int | None,
         allow_ties: bool,
         dense: bool,
+        n_buckets: int | None,
     ):
         self._window_operator: ExpressionWindowOperator = window_operator
         self._collation_args: list[CollationExpression] = collation_args
@@ -58,6 +59,13 @@ class WindowCall(PyDoughExpressionQDAG):
         relative to. None indicates that the computation is global.
         """
         return self._levels
+
+    @property
+    def n_buckets(self) -> int | None:
+        """
+        If the window function is PERCENTILE, how many buckets to use.
+        """
+        return self.n_buckets
 
     @property
     def allow_ties(self) -> bool:

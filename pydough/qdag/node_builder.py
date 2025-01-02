@@ -147,11 +147,14 @@ class AstNodeBuilder:
         levels: int | None,
         allow_ties: bool,
         dense: bool,
+        n_buckets: int | None,
     ) -> WindowCall:
         """
         TODO: write docstring for this method
         """
-        return WindowCall(window_operator, collation_args, levels, allow_ties, dense)
+        return WindowCall(
+            window_operator, collation_args, levels, allow_ties, dense, n_buckets
+        )
 
     def build_reference(
         self, collection: PyDoughCollectionQDAG, name: str
