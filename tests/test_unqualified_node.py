@@ -223,7 +223,7 @@ answer = x.TOP_K(100)\
         ),
         pytest.param(
             "answer = _ROOT.Parts(_ROOT.name, rank=_ROOT.RANKING(by=_ROOT.retail_price.DESC(), levels=1))",
-            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last'), levels=[?.retail_price.DESC(na_pos='last')]))",
+            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last'), levels=1))",
             id="ranking_2",
         ),
         pytest.param(
@@ -233,7 +233,7 @@ answer = x.TOP_K(100)\
         ),
         pytest.param(
             "answer = _ROOT.Parts(_ROOT.name, rank=_ROOT.RANKING(by=_ROOT.retail_price.DESC(), levels=2, allow_ties=True, dense=True))",
-            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last'), levels=[?.retail_price.DESC(na_pos='last')], allow_ties=True, dense=True))",
+            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last'), levels=2, allow_ties=True, dense=True))",
             id="ranking_4",
         ),
     ],
