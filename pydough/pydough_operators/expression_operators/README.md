@@ -104,6 +104,12 @@ These functions can be called on plural data to aggregate it into a singular exp
 - `HAS`: called on a subcollection and returns whether any records of the subcollection for each record of the current collection. Equivalent to `COUNT(X) > 0`.
 - `HASNOT`: called on a subcollection and returns whether there are no records of the subcollection for each record of the current collection. Equivalent to `COUNT(X) == 0`.
 
+#### Window Functions
+
+These functions return an expression and use logic that produces a value that depends on other records in the collection. Each of these functions has an optional `levels` argument. If it is absent, it means that the operation is done by examining all records globally. If `levels` is provided, it must be a positive integer, and if so it indicates that the operation is only done comparing the record against other records that are subcollection entries of teh same ancestor collection, where the `levels` argument indicates how many `BACK` levels to find that ancestor.
+
+- `RANKING(by=..., levels=None, allow_ties=False, dense=False)`: returns the ordinal position of the current record when all records are sorted by the collation expressions in the `by` argument. By default, uses the same semantics as `ROW_NUMBER`. If `allow_ties=True`, instead uses `RANK`. If `allow_ties=True` and `dense=True`, instead uses `DENSE_RANK`.
+
 ## Interaction with Type Inference
 
 Expression operators interact with the type inference module to ensure that the arguments passed to them are valid and to infer the return types of those expressions. This helps maintain type safety and correctness in PyDough operations. Every operator has a type verifier object and a type deducer object.

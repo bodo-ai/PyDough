@@ -16,6 +16,7 @@ __all__ = [
     "UnqualifiedTopK",
     "UnqualifiedWhere",
     "UnqualifiedLiteral",
+    "UnqualifiedWindow",
     "PyDoughUnqualifiedException",
     "UnqualifiedOperator",
     "UnqualifiedBack",
@@ -42,6 +43,7 @@ from .unqualified_node import (
     UnqualifiedRoot,
     UnqualifiedTopK,
     UnqualifiedWhere,
+    UnqualifiedWindow,
     display_raw,
 )
 from .unqualified_transform import init_pydough_context, transform_cell, transform_code

@@ -19,6 +19,7 @@ from test_utils import (
     TableCollectionInfo,
     TopKInfo,
     WhereInfo,
+    WindowInfo,
 )
 
 from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
@@ -2022,6 +2023,107 @@ def test_collections_calc_terms(
         └─── Where[name == 'INDIA']
 """,
             id="hybrid_has_hasnot",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [],
+                name=ReferenceInfo("name"),
+                cust_rank=WindowInfo(
+                    "RANKING", (ReferenceInfo("acctbal"), False, True)
+                ),
+            ),
+            "TPCH.Customers(name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last'))))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  └─── Calc[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')))]
+""",
+            id="rank_customers_a",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [],
+                name=ReferenceInfo("name"),
+                cust_rank=WindowInfo(
+                    "RANKING", (ReferenceInfo("acctbal"), False, True), allow_ties=True
+                ),
+            ),
+            "TPCH.Customers(name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  └─── Calc[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True)]
+""",
+            id="rank_customers_b",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [],
+                name=ReferenceInfo("name"),
+                cust_rank=WindowInfo(
+                    "RANKING",
+                    (ReferenceInfo("acctbal"), False, True),
+                    allow_ties=True,
+                    dense=True,
+                ),
+            ),
+            "TPCH.Customers(name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True, dense=True))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  └─── Calc[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True, dense=True)]
+""",
+            id="rank_customers_c",
+        ),
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** SubCollectionInfo("customers")
+            ** CalcInfo(
+                [],
+                nation_name=BackReferenceExpressionInfo("name", 1),
+                name=ReferenceInfo("name"),
+                cust_rank=WindowInfo(
+                    "RANKING", (ReferenceInfo("acctbal"), False, True), levels=1
+                ),
+            ),
+            "TPCH.Nations.customers(nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Nations]
+    ├─── SubCollection[customers]
+    └─── Calc[nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1)]
+""",
+            id="rank_customers_per_nation",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** SubCollectionInfo("nations")
+            ** SubCollectionInfo("customers")
+            ** CalcInfo(
+                [],
+                region_name=BackReferenceExpressionInfo("name", 2),
+                nation_name=BackReferenceExpressionInfo("name", 1),
+                name=ReferenceInfo("name"),
+                cust_rank=WindowInfo(
+                    "RANKING",
+                    (ReferenceInfo("acctbal"), False, True),
+                    levels=2,
+                    allow_ties=True,
+                    dense=True,
+                ),
+            ),
+            "TPCH.Regions.nations.customers(region_name=BACK(2).name, nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      └─── Calc[region_name=BACK(2).name, nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True)]
+""",
+            id="rank_customers_per_region",
         ),
     ],
 )

@@ -14,6 +14,7 @@ from pydough.metadata import (
     TableColumnMetadata,
 )
 from pydough.pydough_operators import (
+    ExpressionWindowOperator,
     PyDoughExpressionOperator,
     PyDoughOperator,
     builtin_registered_operators,
@@ -37,10 +38,12 @@ from .errors import PyDoughQDAGException
 from .expressions import (
     BackReferenceExpression,
     ChildReferenceExpression,
+    CollationExpression,
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
     Reference,
+    WindowCall,
 )
 
 
@@ -136,6 +139,19 @@ class AstNodeBuilder:
         operator = self.operators[function_name]
         assert isinstance(operator, PyDoughExpressionOperator)
         return ExpressionFunctionCall(operator, args)
+
+    def build_window_call(
+        self,
+        window_operator: ExpressionWindowOperator,
+        collation_args: list[CollationExpression],
+        levels: int | None,
+        allow_ties: bool,
+        dense: bool,
+    ) -> WindowCall:
+        """
+        TODO: write docstring for this method
+        """
+        return WindowCall(window_operator, collation_args, levels, allow_ties, dense)
 
     def build_reference(
         self, collection: PyDoughCollectionQDAG, name: str

@@ -28,6 +28,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import Any
 
+import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
 from pydough.qdag import (
     AstNodeBuilder,
@@ -191,6 +192,66 @@ class FunctionInfo(AstNodeTestInfo):
             info.build(builder, context, children_contexts) for info in self.args_info
         ]
         return builder.build_expression_function_call(self.function_name, args)
+
+
+class WindowInfo(AstNodeTestInfo):
+    """
+    TestInfo implementation class to build a window call. Contains the
+    following fields:
+    - `function_name`: the name of the window function to be invoked.
+    - `collation`: a list of TestInfo objects used to build the collation
+        arguments (passed in via *args).
+    - `levels`: the number of levels upward to reference (passed in via
+        kwargs).
+    - `allow_ties`: whether to allow ties in the ranking (passed in via
+        kwargs).
+    - `dense`: whether to compute dense ranks (passed in via kwargs).
+    """
+
+    def __init__(self, name: str, *args, **kwargs):
+        self.name: str = name
+        self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
+        self.levels: int | None = kwargs.get("levels", None)
+        self.allow_ties: bool = kwargs.get("allow_ties", False)
+        self.dense: bool = kwargs.get("dense", False)
+
+    def to_string(self) -> str:
+        collation_strings: list[str] = []
+        for info, asc, na_last in self.collation:
+            suffix = "ASC" if asc else "DESC"
+            kwarg = "'last'" if na_last else "'first'"
+            collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        match self.name:
+            case "RANKING":
+                return f"{self.name}(by=({', '.join(collation_strings)}), levels={self.levels}, allow_ties={self.allow_ties}, dense={self.dense})"
+            case _:
+                raise Exception(f"Unsupported window function {self.name}")
+
+    def build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughQDAG:
+        assert (
+            context is not None
+        ), "Cannot call .build() on RankingInfo without providing a context"
+        collation_args: list[CollationExpression] = []
+        for arg in self.collation:
+            expr = arg[0].build(builder, context, children_contexts)
+            assert isinstance(expr, PyDoughExpressionQDAG)
+            collation_args.append(CollationExpression(expr, arg[1], arg[2]))
+        match self.name:
+            case "RANKING":
+                return builder.build_window_call(
+                    pydop.RANKING,
+                    collation_args,
+                    self.levels,
+                    self.allow_ties,
+                    self.dense,
+                )
+            case _:
+                raise Exception(f"Unsupported window function {self.name}")
 
 
 class ReferenceInfo(AstNodeTestInfo):

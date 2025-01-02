@@ -5,11 +5,12 @@ QDAG nodes.
 
 __all__ = ["qualify_node"]
 
-from collections.abc import MutableSequence
+from collections.abc import Iterable, MutableSequence
 
 from pydough.metadata import GraphMetadata
-from pydough.pydough_operators.expression_operators.binary_operators import (
+from pydough.pydough_operators.expression_operators import (
     BinOp,
+    ExpressionWindowOperator,
 )
 from pydough.qdag import (
     AstNodeBuilder,
@@ -45,6 +46,7 @@ from .unqualified_node import (
     UnqualifiedRoot,
     UnqualifiedTopK,
     UnqualifiedWhere,
+    UnqualifiedWindow,
     display_raw,
 )
 
@@ -246,6 +248,53 @@ class Qualifier:
         )
         return self.builder.build_expression_function_call(
             operation, [qualified_lhs, qualified_rhs]
+        )
+
+    def qualify_window(
+        self,
+        unqualified: UnqualifiedWindow,
+        context: PyDoughCollectionQDAG,
+        children: MutableSequence[PyDoughCollectionQDAG],
+    ) -> PyDoughExpressionQDAG:
+        """
+        Transforms an `UnqualifiedWindow` into a PyDoughExpressionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedWindow instance to be transformed.
+            `context`: the collection QDAG whose context the expression is being
+            evaluated within.
+            `children`: the list where collection nodes that must be derived
+            as children of `context` should be appended.
+
+        Returns:
+            The PyDough QDAG object for the qualified window node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        window_operator: ExpressionWindowOperator = unqualified._parcel[0]
+        unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[1]
+        levels: int | None = unqualified._parcel[2]
+        allow_ties: bool = unqualified._parcel[3]
+        dense: bool = unqualified._parcel[4]
+        # Qualify all of the collation terms, storing the children built along
+        # the way.
+        qualified_collations: list[CollationExpression] = []
+        for term in unqualified_by:
+            qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
+                term, context, children
+            )
+            assert isinstance(qualified_term, CollationExpression)
+            qualified_collations.append(qualified_term)
+        # Use the qualified children & collation to create a new ORDER BY node.
+        if not qualified_collations:
+            raise PyDoughUnqualifiedException(
+                "Window calls require a non-empty 'by' clause to be specified."
+            )
+        return self.builder.build_window_call(
+            window_operator, qualified_collations, levels, allow_ties, dense
         )
 
     def qualify_collation(
@@ -749,6 +798,8 @@ class Qualifier:
                 answer = self.qualify_literal(unqualified)
             case UnqualifiedOperation():
                 answer = self.qualify_operation(unqualified, context, children)
+            case UnqualifiedWindow():
+                answer = self.qualify_window(unqualified, context, children)
             case UnqualifiedBinaryOperation():
                 answer = self.qualify_binary_operation(unqualified, context, children)
             case UnqualifiedCollation():
