@@ -121,5 +121,11 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
+    print()
+    print(qualified.to_tree_string())
+    breakpoint()
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
+    print()
+    print(relational.to_tree_string())
+    breakpoint()
     return execute_df(relational, database, bindings)

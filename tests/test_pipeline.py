@@ -651,3 +651,28 @@ def test_pipeline_e2e(
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
     pd.testing.assert_frame_equal(result, answer_impl())
+
+
+def test_demo(get_sample_graph: graph_fetcher, sqlite_tpch_db_context: DatabaseContext):
+    """
+    Test executing the TPC-H queries from the original code generation.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+
+    @init_pydough_context(graph)
+    def impl():
+        european_customers = Nations.WHERE(region.name == "EUROPE").customers.WHERE(
+            acctbal > 0
+        )
+        return european_customers(
+            name, nation_name=BACK(1).name, n_orders=COUNT(orders)
+        ).TOP_K(10, by=n_orders.DESC())
+
+    root: UnqualifiedNode = impl()
+    print()
+    print()
+    print(root)
+    breakpoint()
+    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+    print()
+    print(result.to_string())

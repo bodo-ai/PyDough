@@ -757,6 +757,11 @@ class RelTranslation:
         else:
             context = self.rel_translation(connection, *preceding_hybrid)
 
+        if context is not None:
+            print()
+            print(context.relation.to_tree_string())
+        #     breakpoint()
+
         # Then, dispatch onto the logic to transform from the context into the
         # new translation output.
         handled_children: bool = False
@@ -883,6 +888,9 @@ def convert_ast_to_relational(
     # conversion procedure. The first element in the returned list is the
     # final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node)
+    print()
+    print(hybrid)
+    breakpoint()
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
