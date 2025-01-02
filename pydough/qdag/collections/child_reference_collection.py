@@ -66,6 +66,10 @@ class ChildReferenceCollection(ChildAccess):
     def ordering(self) -> list[CollationExpression] | None:
         return self.collection.ordering
 
+    @property
+    def unique_terms(self) -> list[str]:
+        return self.collection.unique_terms
+
     @cache
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # A child reference collection is singular with regards to a context

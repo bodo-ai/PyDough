@@ -12,11 +12,11 @@ from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
-from .child_operator import ChildOperator
+from .augmenting_child_operator import AugmentingChildOperator
 from .collection_qdag import PyDoughCollectionQDAG
 
 
-class OrderBy(ChildOperator):
+class OrderBy(AugmentingChildOperator):
     """
     The QDAG node implementation class representing an ORDER BY clause.
     """

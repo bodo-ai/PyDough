@@ -1246,10 +1246,10 @@ Call pydough.explain(collection, verbose=True) for more details.
                 partition_impl,
                 """
 PyDough collection representing the following logic:
-  ┌─── TPCH
-  └─┬─ Partition[name='p', by=part_type]
-    └─┬─ AccessChild
-      └─── TableCollection[Parts]
+  ──┬─ TPCH
+    └─┬─ Partition[name='p', by=part_type]
+      └─┬─ AccessChild
+        └─── TableCollection[Parts]
 
 This node first derives the following children before doing its main task:
   child $1:
@@ -1301,15 +1301,15 @@ Call pydough.explain(collection, verbose=True) for more details.
                 partition_child_impl,
                 """
 PyDough collection representing the following logic:
-  ┌─── TPCH
-  ├─┬─ Partition[name='p', by=part_type]
-  │ └─┬─ AccessChild
-  │   └─── TableCollection[Parts]
-  ├─┬─ Calc[part_type=part_type, avg_price=AVG($1.retail_price)]
-  │ └─┬─ AccessChild
-  │   └─── PartitionChild[p]
-  └─┬─ Where[avg_price >= 27.5]
-    └─── PartitionChild[p]
+  ──┬─ TPCH
+    ├─┬─ Partition[name='p', by=part_type]
+    │ └─┬─ AccessChild
+    │   └─── TableCollection[Parts]
+    ├─┬─ Calc[part_type=part_type, avg_price=AVG($1.retail_price)]
+    │ └─┬─ AccessChild
+    │   └─── PartitionChild[p]
+    └─┬─ Where[avg_price >= 27.5]
+      └─── PartitionChild[p]
 
 This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
 Using BACK(1) will access the partitioned data.
@@ -1871,10 +1871,10 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 parts_avg_price_impl,
                 """
 Collection:
-  ┌─── TPCH
-  └─┬─ Partition[name='p', by=part_type]
-    └─┬─ AccessChild
-      └─── TableCollection[Parts]
+  ──┬─ TPCH
+    └─┬─ Partition[name='p', by=part_type]
+      └─┬─ AccessChild
+        └─── TableCollection[Parts]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
@@ -1913,13 +1913,13 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 parts_avg_price_child_impl,
                 """
 Collection:
-  ┌─── TPCH
-  ├─┬─ Partition[name='p', by=part_type]
-  │ └─┬─ AccessChild
-  │   └─── TableCollection[Parts]
-  └─┬─ Where[AVG($1.retail_price) >= 27.5]
-    └─┬─ AccessChild
-      └─── PartitionChild[p]
+  ──┬─ TPCH
+    ├─┬─ Partition[name='p', by=part_type]
+    │ └─┬─ AccessChild
+    │   └─── TableCollection[Parts]
+    └─┬─ Where[AVG($1.retail_price) >= 27.5]
+      └─┬─ AccessChild
+        └─── PartitionChild[p]
 
 The term is the following child of the collection:
   └─┬─ AccessChild

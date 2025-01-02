@@ -20,6 +20,8 @@ __all__ = [
     "BackReferenceCollectionInfo",
     "WhereInfo",
     "OrderInfo",
+    "TopKInfo",
+    "PartitionInfo",
 ]
 
 from abc import ABC, abstractmethod

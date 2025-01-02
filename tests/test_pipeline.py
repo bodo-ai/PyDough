@@ -72,8 +72,6 @@ from pydough.unqualified import (
     qualify_node,
 )
 
-pytestmark = [pytest.mark.execute]
-
 
 @pytest.fixture(
     params=[
@@ -636,6 +634,7 @@ def test_pipeline_until_relational(
     ), "Mismatch between tree string representation of relational node and expected Relational tree string"
 
 
+@pytest.mark.execute
 def test_pipeline_e2e(
     pydough_pipeline_test_data: tuple[
         Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]

@@ -19,6 +19,7 @@ from pydough.qdag.expressions import (
 
 from .child_operator import ChildOperator
 from .collection_qdag import PyDoughCollectionQDAG
+from .collection_tree_form import CollectionTreeForm
 from .partition_child import PartitionChild
 
 
@@ -29,11 +30,12 @@ class PartitionBy(ChildOperator):
 
     def __init__(
         self,
-        predecessor: PyDoughCollectionQDAG,
+        ancestor: PyDoughCollectionQDAG,
         child: PyDoughCollectionQDAG,
         child_name: str,
     ):
-        super().__init__(predecessor, [child])
+        super().__init__([child])
+        self._ancestor_context: PyDoughCollectionQDAG = ancestor
         self._child: PyDoughCollectionQDAG = child
         self._child_name: str = child_name
         self._keys: list[PartitionKey] | None = None
@@ -65,15 +67,12 @@ class PartitionBy(ChildOperator):
         return self
 
     @property
-    def ancestor_context(self) -> PyDoughCollectionQDAG | None:
-        # For PARTITION_BY, the "preceding context" is actually the ancestor
-        # context, but has been referred to as the preceding context so that
-        # it can inherit from ChildOperator and behave correctly.
-        return self.preceding_context
+    def ancestor_context(self) -> PyDoughCollectionQDAG:
+        return self._ancestor_context
 
     @property
-    def starting_predecessor(self) -> PyDoughCollectionQDAG:
-        return self
+    def preceding_context(self) -> PyDoughCollectionQDAG | None:
+        return None
 
     @property
     def keys(self) -> list[PartitionKey]:
@@ -115,7 +114,7 @@ class PartitionBy(ChildOperator):
 
     @property
     def key(self) -> str:
-        return f"{self.preceding_context.key}.PARTITION({self.child.key})"
+        return f"{self.ancestor_context.key}.PARTITION({self.child.key})"
 
     @property
     def calc_terms(self) -> set[str]:
@@ -128,6 +127,10 @@ class PartitionBy(ChildOperator):
     @property
     def ordering(self) -> list[CollationExpression] | None:
         return None
+
+    @property
+    def unique_terms(self) -> list[str]:
+        return [key.expr.term_name for key in self.keys]
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # It is presumed that PARTITION BY always creates a plural
@@ -145,7 +148,7 @@ class PartitionBy(ChildOperator):
         return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
 
     def to_string(self) -> str:
-        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
+        return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:
@@ -153,11 +156,11 @@ class PartitionBy(ChildOperator):
         if len(self.keys) == 1:
             keys_str = self.keys[0].expr.term_name
         else:
-            keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
+            keys_str = f"({', '.join([expr.expr.term_name for expr in self.keys])})"
         return f"Partition[name={self.child_name!r}, by={keys_str}]"
 
     def get_expression_position(self, expr_name: str) -> int:
-        return self.preceding_context.get_expression_position(expr_name)
+        return self.key_name_indices[expr_name]
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
@@ -169,13 +172,17 @@ class PartitionBy(ChildOperator):
         else:
             raise PyDoughQDAGException(f"Unrecognized term: {term_name!r}")
 
+    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(is_last)
+        predecessor.has_children = True
+        tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
+        tree_form.depth = predecessor.depth + 1
+        tree_form.predecessor = predecessor
+        return tree_form
+
     def equals(self, other: object) -> bool:
         if self._keys is None:
             raise PyDoughQDAGException(
                 "Cannot invoke `equals` before calling `with_keys`"
             )
-        return (
-            super().equals(other)
-            and isinstance(other, PartitionBy)
-            and self._keys == other._keys
-        )
+        return isinstance(other, PartitionBy) and self._keys == other._keys
