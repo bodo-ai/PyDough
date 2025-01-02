@@ -317,7 +317,7 @@ class HybridWindowExpr(HybridExpr):
         if "allow_ties" in self.kwargs:
             args_str += f", allow_ties={self.kwargs['allow_ties']}"
             if "dense" in self.kwargs:
-                args_str += f", dense={self.kwargs["dense"]}"
+                args_str += f", dense={self.kwargs['dense']}"
         return f"{self.window_func.function_name}({args_str})"
 
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
