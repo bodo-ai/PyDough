@@ -134,8 +134,8 @@ class HybridCollation:
     information about how to sort by them.
     """
 
-    def __init__(self, expr: "HybridRefExpr", asc: bool, na_first: bool):
-        self.expr: HybridRefExpr = expr
+    def __init__(self, expr: "HybridExpr", asc: bool, na_first: bool):
+        self.expr: HybridExpr = expr
         self.asc: bool = asc
         self.na_first: bool = na_first
 
@@ -329,9 +329,8 @@ class HybridWindowExpr(HybridExpr):
         ]
         renamed_order_args: list[HybridCollation] = []
         for col_arg in self.order_args:
-            collation_expr: HybridRefExpr = col_arg.expr
+            collation_expr: HybridExpr = col_arg.expr
             renamed_expr: HybridExpr = collation_expr.apply_renamings(renamings)
-            assert isinstance(renamed_expr, HybridRefExpr)
             if renamed_expr is collation_expr:
                 renamed_order_args.append(col_arg)
             else:
@@ -1681,7 +1680,6 @@ class HybridTranslator:
                     hybrid_arg = self.make_hybrid_expr(
                         hybrid, arg.expr, child_ref_mapping
                     )
-                    assert isinstance(hybrid_arg, HybridRefExpr)
                     order_args.append(HybridCollation(hybrid_arg, arg.asc, arg.na_last))
                 kwargs: dict[str, object] = {}
                 if expr.allow_ties:
