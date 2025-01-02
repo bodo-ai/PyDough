@@ -677,7 +677,7 @@ ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ord
         SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
        SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
-     SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'part_type': p_type, 'size': p_size}
+     SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'part_type': p_type, 'size': p_size})
 """,
                 lambda: pd.DataFrame(
                     {
