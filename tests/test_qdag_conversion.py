@@ -6,6 +6,7 @@ relational tree.
 import pytest
 from test_utils import (
     BackReferenceExpressionInfo,
+    BestInfo,
     CalcInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
@@ -2845,6 +2846,117 @@ ROOT(columns=[('name', name)], orderings=[])
 """,
             ),
             id="multiple_has_hasnot",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** BestInfo(
+                    SubCollectionInfo("customers"),
+                    False,
+                    1,
+                    (ReferenceInfo("acctbal"), False, True),
+                )
+                ** CalcInfo(
+                    [],
+                    nation_name=BackReferenceExpressionInfo("name", 1),
+                    best_customer_name=ReferenceInfo("name"),
+                ),
+                """
+            """,
+            ),
+            id="simple_best-no_child",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** BestInfo(
+                    SubCollectionInfo("nations")
+                    ** CalcInfo(
+                        [SubCollectionInfo("customers")],
+                        region_name=BackReferenceExpressionInfo("name", 1),
+                        nation_name=ReferenceInfo("name"),
+                        num_customers=FunctionInfo(
+                            "COUNT", [ChildReferenceCollectionInfo(0)]
+                        ),
+                    ),
+                    False,
+                    1,
+                    (ReferenceInfo("num_customers"), True, True),
+                ),
+                """
+""",
+            ),
+            id="simple_best-agg_child",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** BestInfo(
+                    SubCollectionInfo("nations")
+                    ** SubCollectionInfo("customers")
+                    ** CalcInfo(
+                        [SubCollectionInfo("orders")],
+                        region_name=BackReferenceExpressionInfo("name", 2),
+                        customer_name=ReferenceInfo("name"),
+                        n_orders=FunctionInfo(
+                            "COUNT", [ChildReferenceCollectionInfo(0)]
+                        ),
+                    ),
+                    True,
+                    1,
+                    (ReferenceInfo("n_orders"), False, True),
+                ),
+                """
+
+""",
+            ),
+            id="regional_best_tying_customers",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** BestInfo(
+                    SubCollectionInfo("nations") ** SubCollectionInfo("suppliers"),
+                    False,
+                    3,
+                    (ReferenceInfo("account_balance"), False, True),
+                ),
+                """
+
+""",
+            ),
+            id="regional_best_3_suppliers",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** CalcInfo(
+                    [
+                        BestInfo(
+                            SubCollectionInfo("nations")
+                            ** CalcInfo(
+                                [SubCollectionInfo("suppliers")],
+                                n_suppliers=FunctionInfo(
+                                    "COUNT", [ChildReferenceCollectionInfo(0)]
+                                ),
+                            ),
+                            False,
+                            1,
+                            (
+                                ReferenceInfo("n_suppliers"),
+                                False,
+                                True,
+                            ),
+                        )
+                    ],
+                    region_name=ReferenceInfo("name"),
+                    best_nation_name=ChildReferenceExpressionInfo("name", 0),
+                ),
+                """
+
+""",
+            ),
+            id="regional_child_best_nation",
         ),
     ],
 )

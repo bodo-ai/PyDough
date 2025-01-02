@@ -141,6 +141,10 @@ class Best(ChildOperator):
     def preceding_context(self) -> PyDoughCollectionQDAG | None:
         return None
 
+    @property
+    def unique_terms(self) -> list[str]:
+        return self.node.unique_terms
+
     @cache
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # The BEST operator is always if its parent is singular with

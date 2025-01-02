@@ -75,6 +75,10 @@ class GlobalContext(PyDoughCollectionQDAG):
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
+    @property
+    def unique_terms(self) -> list[str]:
+        return []
+
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         raise PyDoughQDAGException(f"Cannot call is_singular on {self!r}")
 

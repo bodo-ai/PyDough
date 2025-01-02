@@ -3,8 +3,6 @@ Definition of PyDough metadata for a collection that trivially corresponds to a
 table in a relational system.
 """
 
-from collections.abc import MutableSequence
-
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.errors import (
     HasPropertyWith,
@@ -45,7 +43,7 @@ class SimpleTableMetadata(CollectionMetadata):
         name: str,
         graph,
         table_path: str,
-        unique_properties: MutableSequence[str | MutableSequence[str]],
+        unique_properties: list[str | list[str]],
     ):
         super().__init__(name, graph)
         is_string.verify(table_path, f"Property 'table_path' of {self.error_name}")
@@ -53,9 +51,7 @@ class SimpleTableMetadata(CollectionMetadata):
             unique_properties, f"property 'unique_properties' of {self.error_name}"
         )
         self._table_path: str = table_path
-        self._unique_properties: MutableSequence[str | MutableSequence[str]] = (
-            unique_properties
-        )
+        self._unique_properties: list[str | list[str]] = unique_properties
 
     @property
     def table_path(self) -> str:
@@ -66,7 +62,7 @@ class SimpleTableMetadata(CollectionMetadata):
         return self._table_path
 
     @property
-    def unique_properties(self) -> MutableSequence[str | MutableSequence[str]]:
+    def unique_properties(self) -> list[str | list[str]]:
         """
         The list of all names of properties of the collection that are
         guaranteed to be unique within the collection. Entries that are a
@@ -222,9 +218,7 @@ class SimpleTableMetadata(CollectionMetadata):
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
         table_path: str = collection_json["table_path"]
-        unique_properties: MutableSequence[str | MutableSequence[str]] = (
-            collection_json["unique_properties"]
-        )
+        unique_properties: list[str | list[str]] = collection_json["unique_properties"]
         new_collection: SimpleTableMetadata = SimpleTableMetadata(
             collection_name, graph, table_path, unique_properties
         )

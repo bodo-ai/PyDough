@@ -128,6 +128,10 @@ class PartitionBy(ChildOperator):
     def ordering(self) -> list[CollationExpression] | None:
         return None
 
+    @property
+    def unique_terms(self) -> list[str]:
+        return [key.expr.term_name for key in self.keys]
+
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # It is presumed that PARTITION BY always creates a plural
         # subcollection of the ancestor context containing 1+ bins of data

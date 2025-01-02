@@ -44,6 +44,10 @@ class AugmentingChildOperator(ChildOperator):
     def ordering(self) -> list[CollationExpression] | None:
         return self.preceding_context.ordering
 
+    @property
+    def unique_terms(self) -> list[str]:
+        return self.preceding_context.unique_terms
+
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # A child operator, by default, inherits singular/plural relationships
         # from its predecessor.
