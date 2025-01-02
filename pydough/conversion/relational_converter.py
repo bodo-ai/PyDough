@@ -61,8 +61,10 @@ from .hybrid_tree import (
     HybridPartitionChild,
     HybridRefExpr,
     HybridRoot,
+    HybridStepdown,
     HybridTranslator,
     HybridTree,
+    HybridWindowExpr,
 )
 
 
@@ -130,6 +132,7 @@ class RelTranslation:
         Returns:
             The converted relational expression.
         """
+        inputs: list[RelationalExpression]
         match expr:
             case HybridColumnExpr():
                 return ColumnReference(
@@ -141,10 +144,19 @@ class RelTranslation:
                 assert context is not None
                 return context.expressions[expr]
             case HybridFunctionExpr():
-                inputs: list[RelationalExpression] = [
-                    self.translate_expression(arg, context) for arg in expr.args
-                ]
+                inputs = [self.translate_expression(arg, context) for arg in expr.args]
                 return CallExpression(expr.operator, expr.typ, inputs)
+            case HybridWindowExpr():
+                inputs = [self.translate_expression(arg, context) for arg in expr.args]
+                [self.translate_expression(arg, context) for arg in expr.partition_args]
+                [
+                    self.translate_expression(arg.expr, context)
+                    for arg in expr.order_args
+                ]
+                raise NotImplementedError
+                # return WindowCallExpression(
+                #     expr.window_func, expr.typ, inputs, partition_inputs, order_inputs
+                # )
             case _:
                 raise NotImplementedError(expr.__class__.__name__)
 
@@ -701,6 +713,47 @@ class RelTranslation:
             None,
         )
 
+    def translate_stepdown(
+        self,
+        node: HybridStepdown,
+        connection: HybridConnection | None,
+    ) -> TranslationOutput:
+        """
+        Converts a hybrid stepdown into the correct context.
+
+        Args:
+            `node`: the node corresponding to the stepdown being derived.
+            `connection`: the HybridConnection instance that defines the
+            parent-child relationship containing the subtree being defined
+            (as the child), or None if this is the main path.
+
+        Returns:
+            The TranslationOutput payload containing access to the sequence of
+            operations described by the stepdown, with the terms of `context`
+            accessible as a 1-step ancestor.
+        """
+        stepdown_result: TranslationOutput = self.rel_translation(
+            connection, node.child, len(node.child.pipeline) - 1
+        )
+        tree_offset: int = 0
+        tree: HybridTree = node.child
+        while tree.parent is not None and tree.parent.successor is tree:
+            tree = tree.parent
+            tree_offset += 1
+        expressions: dict[HybridExpr, ColumnReference] = {}
+        for expr, ref in stepdown_result.expressions.items():
+            if isinstance(expr, HybridRefExpr):
+                expressions[expr] = ref
+            elif isinstance(expr, HybridBackRefExpr) and expr.back_idx > tree_offset:
+                back_ref_expr: HybridExpr = HybridBackRefExpr(
+                    expr.name, expr.back_idx - tree_offset, expr.typ
+                )
+                expressions[back_ref_expr] = ref
+        result: TranslationOutput = TranslationOutput(
+            stepdown_result.relation, expressions
+        )
+        return result
+
     def rel_translation(
         self,
         connection: HybridConnection | None,
@@ -743,6 +796,10 @@ class RelTranslation:
             preceding_hybrid = (hybrid, pipeline_idx - 1)
         elif hybrid.parent is not None:
             preceding_hybrid = (hybrid.parent, len(hybrid.parent.pipeline) - 1)
+
+        # Special case: handle stepdowns separately
+        if isinstance(operation, HybridStepdown):
+            return self.translate_stepdown(operation, connection)
 
         # First, recursively fetch the TranslationOutput of the preceding
         # stage, if valid.
@@ -884,6 +941,7 @@ def convert_ast_to_relational(
     # final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
+    print(hybrid)
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
     )

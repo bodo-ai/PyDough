@@ -21,6 +21,7 @@ __all__ = [
     "WhereInfo",
     "OrderInfo",
     "TopKInfo",
+    "BestInfo",
     "PartitionInfo",
 ]
 
@@ -31,6 +32,7 @@ from typing import Any
 from pydough.metadata import GraphMetadata
 from pydough.qdag import (
     AstNodeBuilder,
+    Best,
     Calc,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
@@ -722,6 +724,66 @@ class TopKInfo(ChildOperatorInfo):
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
         return raw_top_k.with_collation(collation)
+
+
+class BestInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a BEST clause.
+    Contains the following fields:
+
+    - `ancestor_levels`: TODO
+    - `allow_ties`: whether ties are allowed
+    - `n_best`: the number of best records to keep
+    - `collations`: a list of tuples in the form `(test_info, asc, na_last)`
+      ordering keys for the ORDER BY clause. Passed in via variadic arguments.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+        node: CollectionTestInfo,
+        allow_ties: bool,
+        n_best: int,
+        *args,
+    ):
+        super().__init__([node])
+        self.allow_ties: bool = allow_ties
+        self.n_best: int = n_best
+        self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
+
+    def local_string(self) -> str:
+        collation_strings: list[str] = []
+        for info, asc, na_last in self.collation:
+            suffix = "ASC" if asc else "DESC"
+            kwarg = "'last'" if na_last else "'first'"
+            collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        return f"Best[{self.child_strings()}, allow_ties={self.allow_ties}, n_best={self.n_best}, {', '.join(collation_strings)}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
+        if context is None:
+            raise Exception(
+                "Must provide context and children_contexts when building a TOPK clause."
+            )
+        children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
+            builder, context
+        )
+        raw_best = builder.build_best(
+            context, children[0], self.allow_ties, self.n_best
+        )
+        assert isinstance(raw_best, Best)
+        collation: list[CollationExpression] = []
+        for info, asc, na_last in self.collation:
+            assert isinstance(info, ReferenceInfo)
+            expr = info.build(builder, children[0], [])
+            assert isinstance(expr, PyDoughExpressionQDAG)
+            collation.append(CollationExpression(expr, asc, na_last))
+        return raw_best.with_collation(collation)
 
 
 class PartitionInfo(ChildOperatorInfo):

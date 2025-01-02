@@ -5,7 +5,7 @@ QDAG nodes.
 
 __all__ = ["qualify_node"]
 
-from collections.abc import MutableSequence
+from collections.abc import Iterable, MutableSequence
 
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators.expression_operators.binary_operators import (
@@ -13,6 +13,7 @@ from pydough.pydough_operators.expression_operators.binary_operators import (
 )
 from pydough.qdag import (
     AstNodeBuilder,
+    Best,
     Calc,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
@@ -34,6 +35,7 @@ from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
     UnqualifiedAccess,
     UnqualifiedBack,
+    UnqualifiedBest,
     UnqualifiedBinaryOperation,
     UnqualifiedCalc,
     UnqualifiedCollation,
@@ -629,6 +631,66 @@ class Qualifier:
         )
         return partition.with_keys(child_references)
 
+    def qualify_best(
+        self,
+        unqualified: UnqualifiedBest,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+    ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedBest` into a PyDoughCollectionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedBest instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection QDAG whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough QDAG object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        unqualified_child: UnqualifiedNode = unqualified._parcel[1]
+        unqualified_terms: Iterable[UnqualifiedNode] = unqualified._parcel[2]
+        allow_ties: bool = unqualified._parcel[3]
+        n_best: int = unqualified._parcel[4]
+        # Qualify all both the parent collection and the child that is being
+        # partitioned, using the qualified parent as the context for the
+        # child.
+        qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_child, qualified_parent, True
+        )
+        # Qualify all of the collation terms (which, for now, can only be
+        # references to expressions in the child), storing the children built
+        # along the way (which should just be the child input).
+        collation: list[CollationExpression] = []
+        children: MutableSequence[PyDoughCollectionQDAG] = []
+        for term in unqualified_terms:
+            qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
+                term, qualified_child, children
+            )
+            assert isinstance(qualified_term, CollationExpression)
+            assert isinstance(
+                qualified_term.expr,
+                Reference,
+            ), "BEST currently only supports collation terms that are references to a scalar property of the collection that the best record of is being found"
+            collation.append(qualified_term)
+        # Use the qualified child & collation terms to create a new BEST node.
+        best: Best = self.builder.build_best(
+            qualified_parent, qualified_child, allow_ties, n_best
+        )
+        return best.with_collation(collation)
+
     def qualify_collection(
         self,
         unqualified: UnqualifiedNode,
@@ -745,6 +807,8 @@ class Qualifier:
                 answer = self.qualify_top_k(unqualified, context, is_child)
             case UnqualifiedPartition():
                 answer = self.qualify_partition(unqualified, context, is_child)
+            case UnqualifiedBest():
+                answer = self.qualify_best(unqualified, context, is_child)
             case UnqualifiedLiteral():
                 answer = self.qualify_literal(unqualified)
             case UnqualifiedOperation():

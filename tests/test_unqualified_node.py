@@ -216,6 +216,29 @@ answer = x.TOP_K(100)\
             "?.Parts.ORDER_BY(?.retail_price.ASC(na_pos='first')).TOP_K(100)",
             id="order_topk_empty",
         ),
+        pytest.param(
+            "answer = _ROOT.PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.part_type, total_price=_ROOT.SUM(_ROOT.data.retail_price), n_orders=_ROOT.COUNT(_ROOT.data.lines))",
+            "?.PARTITION(?.Parts, name='parts', by=(?.part_type))(type=?.part_type, total_price=SUM(?.data.retail_price), n_orders=COUNT(?.data.lines))",
+            id="partition",
+        ),
+        pytest.param(
+            "answer = _ROOT.BEST(_ROOT.Nations(name=_ROOT.name, num_customers=_ROOT.COUNT(_ROOT.customers)), by=_ROOT.num_customers.DESC())",
+            "?.BEST(?.Nations(name=?.name, num_customers=COUNT(?.customers)), by=(?.num_customers.DESC(na_pos='last')), allow_ties=False, n_best=1)",
+            id="best_global",
+        ),
+        pytest.param(
+            "answer = _ROOT.Nations.BEST(_ROOT.Suppliers, by=_ROOT.account_balance.DESC())(nation_name=_ROOT.BACK(1).name, supplier_name=_ROOT.name, supplier_balance=_ROOT.account_balance)",
+            "?.Nations.BEST(?.Suppliers, by=(?.account_balance.DESC(na_pos='last')), allow_ties=False, n_best=1)(nation_name=BACK(1).name, supplier_name=?.name, supplier_balance=?.account_balance)",
+            id="best_access",
+        ),
+        pytest.param(
+            """\
+richest_customer = _ROOT.BEST(_ROOT.customers, by=_ROOT.acct_bal.DESC())
+answer = _ROOT.Nations(name=_ROOT.name, richest_customer_name=richest_customer.name)
+""",
+            "?.Nations(name=?.name, richest_customer_name=?.BEST(?.customers, by=(?.acct_bal.DESC(na_pos='last')), allow_ties=False, n_best=1).name)",
+            id="best_child",
+        ),
     ],
 )
 def test_unqualified_to_string(

@@ -13,6 +13,7 @@ __all__ = [
     "HybridChildRefExpr",
     "HybridLiteralExpr",
     "HybridFunctionExpr",
+    "HybridWindowExpr",
     "HybridOperation",
     "HybridRoot",
     "HybridCollectionAccess",
@@ -23,6 +24,7 @@ __all__ = [
     "HybridTranslator",
     "HybridPartition",
     "HybridPartitionChild",
+    "WindowExprType",
 ]
 
 from abc import ABC, abstractmethod
@@ -39,6 +41,7 @@ from pydough.metadata import (
 )
 from pydough.qdag import (
     BackReferenceExpression,
+    Best,
     Calc,
     ChildOperator,
     ChildOperatorChildAccess,
@@ -65,6 +68,22 @@ from pydough.qdag import (
 )
 from pydough.relational import JoinType
 from pydough.types import BooleanType, Int64Type, PyDoughType
+
+
+class WindowExprType(Enum):
+    """
+    An enum describing window function calls in a Hybrid expression.
+    """
+
+    ROW_NUMBER = 0
+    """
+    A call to the ROW_NUMBER function.
+    """
+
+    RANK = 0
+    """
+    A call to the RANK function.
+    """
 
 
 class HybridExpr(ABC):
@@ -277,14 +296,86 @@ class HybridFunctionExpr(HybridExpr):
         renamed_args: list[HybridExpr] = [
             arg.apply_renamings(renamings) for arg in self.args
         ]
-        if all(
-            expr is renamed_expr for expr, renamed_expr in zip(self.args, renamed_args)
-        ):
+        if all_same(self.args, renamed_args):
             return self
         return HybridFunctionExpr(self.operator, renamed_args, self.typ)
 
     def shift_back(self, levels: int) -> HybridExpr | None:
         return None
+
+
+class HybridWindowExpr(HybridExpr):
+    """
+    Class for HybridExpr terms that are window function calls.
+    """
+
+    def __init__(
+        self,
+        window_func: WindowExprType,
+        args: list[HybridExpr],
+        partition_args: list[HybridExpr],
+        order_args: list[HybridCollation],
+        typ: PyDoughType,
+    ):
+        super().__init__(typ)
+        self.window_func: WindowExprType = window_func
+        self.args: list[HybridExpr] = args
+        self.partition_args: list[HybridExpr] = partition_args
+        self.order_args: list[HybridCollation] = order_args
+
+    def __repr__(self):
+        args_str: str = ", ".join([str(arg) for arg in self.args])
+        partition_args_str: str = ", ".join([str(arg) for arg in self.partition_args])
+        order_args_str: str = ", ".join([str(arg) for arg in self.order_args])
+        return f"{self.window_func}(args=[{args_str}], partition=[{partition_args_str}], order=[{order_args_str}])"
+
+    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
+        renamed_args: list[HybridExpr] = [
+            arg.apply_renamings(renamings) for arg in self.args
+        ]
+        renamed_partition_args: list[HybridExpr] = [
+            arg.apply_renamings(renamings) for arg in self.partition_args
+        ]
+        renamed_order_args: list[HybridCollation] = []
+        for col_arg in self.order_args:
+            collation_expr: HybridRefExpr = col_arg.expr
+            renamed_expr: HybridExpr = collation_expr.apply_renamings(renamings)
+            assert isinstance(renamed_expr, HybridRefExpr)
+            if renamed_expr is collation_expr:
+                renamed_order_args.append(col_arg)
+            else:
+                renamed_order_args.append(
+                    HybridCollation(renamed_expr, col_arg.asc, col_arg.na_first)
+                )
+        if (
+            all_same(self.args, renamed_args)
+            and all_same(self.partition_args, renamed_partition_args)
+            and all_same(
+                [arg.expr for arg in self.order_args],
+                [arg.expr for arg in renamed_order_args],
+            )
+        ):
+            return self
+        return HybridWindowExpr(
+            self.window_func,
+            renamed_args,
+            renamed_partition_args,
+            renamed_order_args,
+            self.typ,
+        )
+
+    def shift_back(self, levels: int) -> HybridExpr | None:
+        return None
+
+
+def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
+    """
+    Returns whether two lists of hybrid expressions are identical, down to
+    identity.
+    """
+    return len(exprs) == len(renamed_exprs) and all(
+        expr is renamed_expr for expr, renamed_expr in zip(exprs, renamed_exprs)
+    )
 
 
 class HybridOperation:
@@ -299,6 +390,10 @@ class HybridOperation:
                term name so that future invocations of the term name use the
                renamed version, while key operations like joins can still
                access the original version.
+    - `orderings`: list of collation expressions that specify the order that a
+               hybrid operation is sorted by.
+    - `unique_exprs`: list of expressions that are used to uniquely identify
+               records within the current level of the hybrid tree.
     """
 
     def __init__(
@@ -306,10 +401,12 @@ class HybridOperation:
         terms: dict[str, HybridExpr],
         renamings: dict[str, str],
         orderings: list[HybridCollation],
+        unique_exprs: list[HybridExpr],
     ):
         self.terms: dict[str, HybridExpr] = terms
         self.renamings: dict[str, str] = renamings
         self.orderings: list[HybridCollation] = orderings
+        self.unique_exprs: list[HybridExpr] = unique_exprs
 
 
 class HybridRoot(HybridOperation):
@@ -318,7 +415,7 @@ class HybridRoot(HybridOperation):
     """
 
     def __init__(self):
-        super().__init__({}, {}, [])
+        super().__init__({}, {}, [], [])
 
     def __repr__(self):
         return "ROOT"
@@ -331,16 +428,39 @@ class HybridCollectionAccess(HybridOperation):
     """
 
     def __init__(self, collection: CollectionAccess):
+        expr: PyDoughExpressionQDAG
         self.collection: CollectionAccess = collection
         terms: dict[str, HybridExpr] = {}
         for name in collection.calc_terms:
             expr = collection.get_expr(name)
             assert isinstance(expr, ColumnProperty)
             terms[name] = HybridColumnExpr(expr)
-        super().__init__(terms, {}, [])
+        unique_exprs: list[HybridExpr] = []
+        for name in collection.unique_terms:
+            expr = collection.get_expr(name)
+            unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
+        super().__init__(terms, {}, [], unique_exprs)
 
     def __repr__(self):
         return f"COLLECTION[{self.collection.collection.name}]"
+
+
+class HybridStepdown(HybridOperation):
+    """
+    TODO: add docstring
+    """
+
+    def __init__(self, child: "HybridTree"):
+        self.child: HybridTree = child
+        super().__init__(
+            self.child.pipeline[-1].terms,
+            self.child.pipeline[-1].renamings,
+            self.child.pipeline[-1].orderings,
+            self.child.pipeline[-1].unique_exprs,
+        )
+
+    def __repr__(self):
+        return f"STEPDOWN[\n{self.child}\n]"
 
 
 class HybridPartitionChild(HybridOperation):
@@ -355,6 +475,7 @@ class HybridPartitionChild(HybridOperation):
             subtree.pipeline[-1].terms,
             subtree.pipeline[-1].renamings,
             subtree.pipeline[-1].orderings,
+            subtree.pipeline[-1].unique_exprs,
         )
 
     def __repr__(self):
@@ -388,7 +509,7 @@ class HybridCalc(HybridOperation):
                 idx += 1
             terms[used_name] = expr
             renamings[name] = used_name
-        super().__init__(terms, renamings, orderings)
+        super().__init__(terms, renamings, orderings, predecessor.unique_exprs)
         self.calc = Calc
         self.new_expressions = new_expressions
 
@@ -402,7 +523,9 @@ class HybridFilter(HybridOperation):
     """
 
     def __init__(self, predecessor: HybridOperation, condition: HybridExpr):
-        super().__init__(predecessor.terms, {}, predecessor.orderings)
+        super().__init__(
+            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+        )
         self.predecessor: HybridOperation = predecessor
         self.condition: HybridExpr = condition
 
@@ -416,7 +539,7 @@ class HybridPartition(HybridOperation):
     """
 
     def __init__(self):
-        super().__init__({}, {}, [])
+        super().__init__({}, {}, [], [])
         self.key_names: list[str] = []
 
     def __repr__(self):
@@ -433,6 +556,7 @@ class HybridPartition(HybridOperation):
         """
         self.key_names.append(key_name)
         self.terms[key_name] = key_expr
+        self.unique_exprs.append(key_expr)
 
 
 class HybridLimit(HybridOperation):
@@ -445,7 +569,9 @@ class HybridLimit(HybridOperation):
         predecessor: HybridOperation,
         records_to_keep: int,
     ):
-        super().__init__(predecessor.terms, {}, predecessor.orderings)
+        super().__init__(
+            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+        )
         self.predecessor: HybridOperation = predecessor
         self.records_to_keep: int = records_to_keep
 
@@ -778,7 +904,7 @@ class HybridTree:
 
     def __repr__(self):
         lines = []
-        if self.parent is not None:
+        if self.parent is not None and self.parent.successor is self:
             lines.extend(repr(self.parent).splitlines())
         lines.append(" -> ".join(repr(operation) for operation in self.pipeline))
         prefix = " " if self.successor is None else "↓"
@@ -1595,8 +1721,40 @@ class HybridTranslator:
             hybrid_orderings.append(new_collation)
         return new_expressions, hybrid_orderings
 
+    def make_best_cond(
+        self, best: Best, parent: HybridTree, hybrid: HybridTree
+    ) -> HybridExpr:
+        """
+        TODO
+        """
+        win_type: WindowExprType = (
+            WindowExprType.RANK if best.allow_ties else WindowExprType.ROW_NUMBER
+        )
+        cmp: pydop.PyDoughExpressionOperator = (
+            pydop.EQU if best.n_best == 1 else pydop.LET
+        )
+        lit: HybridLiteralExpr = HybridLiteralExpr(Literal(best.n_best, Int64Type()))
+        partition_args: list[HybridExpr] = []
+        for unique_term in parent.pipeline[-1].unique_exprs:
+            shifted_expr: HybridExpr | None = unique_term.shift_back(1)
+            assert shifted_expr is not None
+            partition_args.append(shifted_expr)
+        new_nodes, hybrid_orderings = self.process_hybrid_collations(
+            hybrid, best.collation, {}
+        )
+        hybrid.pipeline.append(
+            HybridCalc(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
+        )
+        win_call: HybridWindowExpr = HybridWindowExpr(
+            win_type, [], partition_args, hybrid_orderings, Int64Type()
+        )
+        return HybridFunctionExpr(cmp, [win_call, lit], BooleanType())
+
     def make_hybrid_tree(
-        self, node: PyDoughCollectionQDAG, parent: HybridTree | None = None
+        self,
+        node: PyDoughCollectionQDAG,
+        parent: HybridTree | None = None,
+        stepdown: bool = False,
     ) -> HybridTree:
         """
         Converts a collection QDAG into the HybridTree format.
@@ -1605,6 +1763,7 @@ class HybridTranslator:
             `node`: the collection QDAG to be converted.
             `parent`: optional hybrid tree of the parent context that `node` is
             a child of.
+            `stepdown: TODO.
 
         Returns:
             The HybridTree representation of `node`.
@@ -1622,18 +1781,24 @@ class HybridTranslator:
                 raise NotImplementedError(f"{node.__class__.__name__}")
             case TableCollection() | SubCollection():
                 successor_hybrid = HybridTree(HybridCollectionAccess(node))
-                hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, stepdown=stepdown
+                )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case PartitionChild():
-                hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, stepdown=stepdown
+                )
                 successor_hybrid = HybridTree(
                     HybridPartitionChild(hybrid.children[0].subtree)
                 )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case Calc():
-                hybrid = self.make_hybrid_tree(node.preceding_context, parent)
+                hybrid = self.make_hybrid_tree(
+                    node.preceding_context, parent, stepdown=stepdown
+                )
                 self.populate_children(hybrid, node, child_ref_mapping)
                 new_expressions: dict[str, HybridExpr] = {}
                 for name in sorted(node.calc_terms):
@@ -1650,13 +1815,17 @@ class HybridTranslator:
                 )
                 return hybrid
             case Where():
-                hybrid = self.make_hybrid_tree(node.preceding_context, parent)
+                hybrid = self.make_hybrid_tree(
+                    node.preceding_context, parent, stepdown=stepdown
+                )
                 self.populate_children(hybrid, node, child_ref_mapping)
                 expr = self.make_hybrid_expr(hybrid, node.condition, child_ref_mapping)
                 hybrid.pipeline.append(HybridFilter(hybrid.pipeline[-1], expr))
                 return hybrid
             case PartitionBy():
-                hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, stepdown=stepdown
+                )
                 partition: HybridPartition = HybridPartition()
                 successor_hybrid = HybridTree(partition)
                 hybrid.add_successor(successor_hybrid)
@@ -1674,7 +1843,9 @@ class HybridTranslator:
                 ].subtree.agg_keys = key_exprs
                 return successor_hybrid
             case OrderBy() | TopK():
-                hybrid = self.make_hybrid_tree(node.preceding_context, parent)
+                hybrid = self.make_hybrid_tree(
+                    node.preceding_context, parent, stepdown=stepdown
+                )
                 self.populate_children(hybrid, node, child_ref_mapping)
                 new_nodes: dict[str, HybridExpr]
                 hybrid_orderings: list[HybridCollation]
@@ -1689,6 +1860,22 @@ class HybridTranslator:
                         HybridLimit(hybrid.pipeline[-1], node.records_to_keep)
                     )
                 return hybrid
+            case Best():
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, stepdown=stepdown
+                )
+                child_stepdown: HybridStepdown = HybridStepdown(
+                    self.make_hybrid_tree(node.node, hybrid, stepdown=True)
+                )
+                successor_hybrid = HybridTree(child_stepdown)
+                hybrid.add_successor(successor_hybrid)
+                successor_hybrid.pipeline.append(
+                    HybridFilter(
+                        successor_hybrid.pipeline[-1],
+                        self.make_best_cond(node, hybrid, successor_hybrid),
+                    )
+                )
+                return successor_hybrid
             case ChildOperatorChildAccess():
                 assert parent is not None
                 match node.child_access:
@@ -1706,7 +1893,7 @@ class HybridTranslator:
                             )
                     case PartitionChild():
                         successor_hybrid = self.make_hybrid_tree(
-                            node.child_access.child_access, parent
+                            node.child_access.child_access, parent, stepdown=stepdown
                         )
                         partition_by = node.child_access.ancestor_context
                         assert isinstance(partition_by, PartitionBy)
@@ -1725,8 +1912,13 @@ class HybridTranslator:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
                         )
-                successor_hybrid.agg_keys = [rhs_key for _, rhs_key in join_key_exprs]
-                successor_hybrid.join_keys = join_key_exprs
+                if stepdown:
+                    successor_hybrid._parent = parent
+                else:
+                    successor_hybrid.agg_keys = [
+                        rhs_key for _, rhs_key in join_key_exprs
+                    ]
+                    successor_hybrid.join_keys = join_key_exprs
                 return successor_hybrid
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")

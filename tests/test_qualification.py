@@ -68,6 +68,31 @@ def pydough_impl_misc_02(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
+def pydough_impl_misc_03(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following PyDough snippet:
+    ```
+    TPCH.Nations(nation_name=name, richest_customer_name=BEST(customers, by=acct_bal.DESC()).name)
+    ```
+    """
+    return root.Nations(
+        nation_name=root.name,
+        richest_customer_name=root.BEST(root.customers, by=root.acctbal.DESC()).name,
+    )
+
+
+def pydough_impl_misc_04(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following PyDough snippet:
+    ```
+    TPCH.Regions.BEST(nations.customers, by=acct_bal.DESC())(region_name=BACK(1), richest_customer_name=name)
+    ```
+    """
+    return root.Regions.BEST(root.nations.customers, by=root.acctbal.DESC())(
+        region_name=root.BACK(1).name, richest_customer_name=root.name
+    )
+
+
 def pydough_impl_tpch_q1(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for TPC-H query 1.
@@ -611,6 +636,33 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
           └─── SubCollection[lines]
 """,
             id="misc_02",
+        ),
+        pytest.param(
+            pydough_impl_misc_03,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─┬─ Calc[nation_name=name, richest_customer_name=$1.name]
+    ──┬─ TPCH
+      └─┬─ TableCollection[Nations]
+        └─┬─ Best[by=acctbal.DESC(na_pos='last')]
+          └─┬─ AccessChild
+            └─── SubCollection[customers]
+""",
+            id="misc_03",
+        ),
+        pytest.param(
+            pydough_impl_misc_04,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    ├─┬─ Best[by=acctbal.DESC(na_pos='last')]
+    │ └─┬─ AccessChild
+    │   └─┬─ SubCollection[nations]
+    │     └─── SubCollection[customers]
+    └─── Calc[region_name=BACK(1).name, richest_customer_name=name]
+""",
+            id="misc_04",
         ),
         pytest.param(
             pydough_impl_tpch_q1,

@@ -17,6 +17,7 @@ __all__ = [
     "UnqualifiedWhere",
     "UnqualifiedLiteral",
     "UnqualifiedBack",
+    "UnqualifiedBest",
     "display_raw",
 ]
 
@@ -310,6 +311,21 @@ class UnqualifiedNode(ABC):
         """
         return UnqualifiedBack(levels)
 
+    def BEST(
+        self,
+        node: "UnqualifiedNode",
+        by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+        allow_ties: bool = False,
+        n_best: int = 1,
+    ) -> "UnqualifiedBest":
+        """
+        Method used to create a BEST node.
+        """
+        if isinstance(by, UnqualifiedNode):
+            return UnqualifiedBest(self, node, [by], allow_ties, n_best)
+        else:
+            return UnqualifiedBest(self, node, by, allow_ties, n_best)
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -504,6 +520,32 @@ class UnqualifiedPartition(UnqualifiedNode):
         )
 
 
+class UnqualifiedBest(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a BEST clause.
+    """
+
+    def __init__(
+        self,
+        ancestor: UnqualifiedNode,
+        node: UnqualifiedNode,
+        by: Iterable[UnqualifiedNode] | UnqualifiedNode,
+        allow_ties: bool = False,
+        n_best: int = 1,
+    ):
+        if isinstance(by, UnqualifiedNode):
+            by = [by]
+        self._parcel: tuple[
+            UnqualifiedNode, UnqualifiedNode, Iterable[UnqualifiedNode], bool, int
+        ] = (
+            ancestor,
+            node,
+            by,
+            allow_ties,
+            n_best,
+        )
+
+
 def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     Prints an unqualified node in a human-readable manner that shows its
@@ -572,6 +614,10 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             for node in unqualified._parcel[3]:
                 term_strings.append(display_raw(node))
             return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
+        case UnqualifiedBest():
+            for node in unqualified._parcel[2]:
+                term_strings.append(display_raw(node))
+            return f"{display_raw(unqualified._parcel[0])}.BEST({display_raw(unqualified._parcel[1])}, by=({', '.join(term_strings)}), allow_ties={unqualified._parcel[3]}, n_best={unqualified._parcel[4]})"
         case _:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node: {unqualified.__class__.__name__}"

@@ -21,11 +21,13 @@ __all__ = [
     "ChildOperator",
     "CompoundSubCollection",
     "PartitionChild",
+    "Best",
     "AugmentingChildOperator",
 ]
 
 from .augmenting_child_operator import AugmentingChildOperator
 from .back_reference_collection import BackReferenceCollection
+from .best import Best
 from .calc import Calc
 from .child_access import ChildAccess
 from .child_operator import ChildOperator

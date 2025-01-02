@@ -21,6 +21,7 @@ __all__ = [
     "RelationalExpression",
     "RelationalExpressionVisitor",
     "EmptySingleton",
+    "WindowCallExpression",
 ]
 
 from .relational_expressions import (
@@ -33,6 +34,7 @@ from .relational_expressions import (
     LiteralExpression,
     RelationalExpression,
     RelationalExpressionVisitor,
+    WindowCallExpression,
 )
 from .relational_nodes import (
     Aggregate,

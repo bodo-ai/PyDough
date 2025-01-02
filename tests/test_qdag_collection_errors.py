@@ -9,6 +9,7 @@ from test_utils import (
     AstNodeTestInfo,
     BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
+    BestInfo,
     CalcInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
@@ -208,6 +209,58 @@ from pydough.qdag import AstNodeBuilder
             ),
             "Expected all terms in (part_type=part_type, num_parts=COUNT(parts.suppliers_of_part), cust_name=BACK(2).customers.name) to be singular, but encountered a plural expression: BACK(2).customers.name",
             id="bad_plural_j",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    BestInfo(
+                        SubCollectionInfo("nations"),
+                        False,
+                        1,
+                        (ReferenceInfo("name"), False, True),
+                    )
+                    ** SubCollectionInfo("customers")
+                ],
+                region_name=ReferenceInfo("name"),
+                best_customer_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "Expected all terms in (region_name=name, best_customer_name=BEST(nations, by=name.DESC(na_pos='last')).customers.name) to be singular, but encountered a plural expression: BEST(nations, by=name.DESC(na_pos='last')).customers.name",
+            id="bad_plural_k",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    BestInfo(
+                        SubCollectionInfo("nations"),
+                        False,
+                        2,
+                        (ReferenceInfo("name"), False, True),
+                    )
+                ],
+                region_name=ReferenceInfo("name"),
+                best_nation_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "Expected all terms in (region_name=name, best_nation_name=BEST(nations, n_best=2, by=name.DESC(na_pos='last')).name) to be singular, but encountered a plural expression: BEST(nations, n_best=2, by=name.DESC(na_pos='last')).name",
+            id="bad_plural_l",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    BestInfo(
+                        SubCollectionInfo("nations"),
+                        True,
+                        1,
+                        (ReferenceInfo("name"), False, True),
+                    )
+                ],
+                region_name=ReferenceInfo("name"),
+                best_nation_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "Expected all terms in (region_name=name, best_nation_name=BEST(nations, n_best=2, by=name.DESC(na_pos='last')).name) to be singular, but encountered a plural expression: BEST(nations, allow_ties=True, by=name.DESC(na_pos='last')).name",
+            id="bad_plural_m",
         ),
     ],
 )

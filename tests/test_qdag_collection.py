@@ -6,6 +6,7 @@ import pytest
 from test_utils import (
     BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
+    BestInfo,
     CalcInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
@@ -2022,6 +2023,122 @@ def test_collections_calc_terms(
         └─── Where[name == 'INDIA']
 """,
             id="hybrid_has_hasnot",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** BestInfo(
+                SubCollectionInfo("nations")
+                ** CalcInfo(
+                    [SubCollectionInfo("customers")],
+                    region_name=BackReferenceExpressionInfo("name", 1),
+                    nation_name=ReferenceInfo("name"),
+                    num_customers=FunctionInfo(
+                        "COUNT", [ChildReferenceCollectionInfo(0)]
+                    ),
+                ),
+                False,
+                1,
+                (ReferenceInfo("num_customers"), True, True),
+            ),
+            "TPCH.Regions.BEST(nations(region_name=BACK(1).name, nation_name=name, num_customers=COUNT(customers)), by=num_customers.ASC(na_pos='last'))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ Best[by=num_customers.ASC(na_pos='last')]
+      └─┬─ AccessChild
+        ├─── SubCollection[nations]
+        └─┬─ Calc[region_name=BACK(1).name, nation_name=name, num_customers=COUNT($1)]
+          └─┬─ AccessChild
+            └─── SubCollection[customers]
+""",
+            id="simple_best",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** BestInfo(
+                SubCollectionInfo("nations")
+                ** SubCollectionInfo("customers")
+                ** CalcInfo(
+                    [SubCollectionInfo("orders")],
+                    region_name=BackReferenceExpressionInfo("name", 2),
+                    customer_name=ReferenceInfo("name"),
+                    n_orders=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
+                ),
+                True,
+                1,
+                (ReferenceInfo("n_orders"), False, True),
+            ),
+            "TPCH.Regions.BEST(nations.customers(region_name=BACK(2).name, customer_name=name, n_orders=COUNT(orders)), allow_ties=True, by=n_orders.DESC(na_pos='last'))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ Best[allow_ties=True, by=n_orders.DESC(na_pos='last')]
+      └─┬─ AccessChild
+        └─┬─ SubCollection[nations]
+          ├─── SubCollection[customers]
+          └─┬─ Calc[region_name=BACK(2).name, customer_name=name, n_orders=COUNT($1)]
+            └─┬─ AccessChild
+              └─── SubCollection[orders]
+""",
+            id="regional_best_tying_customers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** BestInfo(
+                SubCollectionInfo("nations") ** SubCollectionInfo("suppliers"),
+                False,
+                3,
+                (ReferenceInfo("account_balance"), False, True),
+            ),
+            "TPCH.Regions.BEST(nations.suppliers, n_best=3, by=account_balance.DESC(na_pos='last'))",
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ Best[n_best=3, by=account_balance.DESC(na_pos='last')]
+      └─┬─ AccessChild
+        └─┬─ SubCollection[nations]
+          └─── SubCollection[suppliers]
+""",
+            id="regional_best_3_suppliers",
+        ),
+        pytest.param(
+            TableCollectionInfo("Regions")
+            ** CalcInfo(
+                [
+                    BestInfo(
+                        SubCollectionInfo("nations")
+                        ** CalcInfo(
+                            [SubCollectionInfo("suppliers")],
+                            n_suppliers=FunctionInfo(
+                                "COUNT", [ChildReferenceCollectionInfo(0)]
+                            ),
+                        ),
+                        False,
+                        1,
+                        (
+                            ReferenceInfo("n_suppliers"),
+                            False,
+                            True,
+                        ),
+                    )
+                ],
+                region_name=ReferenceInfo("name"),
+                best_nation_name=ChildReferenceExpressionInfo("name", 0),
+            ),
+            "TPCH.Regions(region_name=name, best_nation_name=BEST(nations(n_suppliers=COUNT(suppliers)), by=n_suppliers.DESC(na_pos='last')).name)",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calc[region_name=name, best_nation_name=$1.name]
+    └─┬─ AccessChild
+      └─┬─ Best[by=n_suppliers.DESC(na_pos='last')]
+        └─┬─ AccessChild
+          ├─── SubCollection[nations]
+          └─┬─ Calc[n_suppliers=COUNT($1)]
+            └─┬─ AccessChild
+              └─── SubCollection[suppliers]
+""",
+            id="regional_child_best_nation",
         ),
     ],
 )
