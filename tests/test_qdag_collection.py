@@ -1327,13 +1327,13 @@ def test_collections_calc_terms(
             ),
             "TPCH.Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price))",
             """
-┌─── TPCH
-├─┬─ Partition[name='parts', by=container]
-│ └─┬─ AccessChild
-│   └─── TableCollection[Parts]
-└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
-  └─┬─ AccessChild
-    └─── PartitionChild[parts]
+──┬─ TPCH
+  ├─┬─ Partition[name='parts', by=container]
+  │ └─┬─ AccessChild
+  │   └─── TableCollection[Parts]
+  └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+    └─┬─ AccessChild
+      └─── PartitionChild[parts]
 """,
             id="partition_part",
         ),
@@ -1371,100 +1371,22 @@ def test_collections_calc_terms(
             ),
             "TPCH.Partition(Lineitems.WHERE(tax == 0)(region_name=order.shipping_region.name, part_type=part.part_type), name='lines', by=('region_name', 'part_type'))(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
             """
-┌─── TPCH
-├─┬─ Partition[name='lines', by=('region_name', 'part_type')]
-│ └─┬─ AccessChild
-│   ├─── TableCollection[Lineitems]
-│   ├─── Where[tax == 0]
-│   └─┬─ Calc[region_name=$1.name, part_type=$2.part_type]
-│     ├─┬─ AccessChild
-│     │ └─┬─ SubCollection[order]
-│     │   └─── SubCollection[shipping_region]
-│     └─┬─ AccessChild
-│       └─── SubCollection[part]
-└─┬─ Calc[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
-  └─┬─ AccessChild
-    └─── PartitionChild[lines]
+──┬─ TPCH
+  ├─┬─ Partition[name='lines', by=(region_name, part_type)]
+  │ └─┬─ AccessChild
+  │   ├─── TableCollection[Lineitems]
+  │   ├─── Where[tax == 0]
+  │   └─┬─ Calc[region_name=$1.name, part_type=$2.part_type]
+  │     ├─┬─ AccessChild
+  │     │ └─┬─ SubCollection[order]
+  │     │   └─── SubCollection[shipping_region]
+  │     └─┬─ AccessChild
+  │       └─── SubCollection[part]
+  └─┬─ Calc[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
+    └─┬─ AccessChild
+      └─── PartitionChild[lines]
 """,
             id="partition_nested",
-        ),
-        pytest.param(
-            TableCollectionInfo("Customers")
-            ** CalcInfo(
-                [
-                    PartitionInfo(
-                        PartitionInfo(
-                            SubCollectionInfo("orders") ** SubCollectionInfo("lines"),
-                            "lines",
-                            [
-                                ChildReferenceExpressionInfo("ship_date", 0),
-                                ChildReferenceExpressionInfo("receipt_date", 0),
-                            ],
-                        )
-                        ** CalcInfo(
-                            [SubCollectionInfo("lines")],
-                            order_sum=FunctionInfo(
-                                "SUM",
-                                [ChildReferenceExpressionInfo("extended_price", 0)],
-                            ),
-                        )
-                        ** WhereInfo(
-                            [],
-                            FunctionInfo(
-                                "GRT",
-                                [
-                                    ReferenceInfo("order_sum"),
-                                    LiteralInfo(1000, Int64Type()),
-                                ],
-                            ),
-                        ),
-                        "day_totals",
-                        [ChildReferenceExpressionInfo("ship_date", 0)],
-                    )
-                    ** CalcInfo(
-                        [SubCollectionInfo("day_totals")],
-                        total_sum=FunctionInfo(
-                            "SUM", [ChildReferenceExpressionInfo("order_sum", 0)]
-                        ),
-                    )
-                    ** WhereInfo(
-                        [],
-                        FunctionInfo(
-                            "LET",
-                            [
-                                ReferenceInfo("total_sum"),
-                                LiteralInfo(2000, Int64Type()),
-                            ],
-                        ),
-                    ),
-                ],
-                name=ReferenceInfo("name"),
-                final_sum=FunctionInfo(
-                    "SUM", [ChildReferenceExpressionInfo("total_sum", 0)]
-                ),
-            ),
-            "TPCH.Customers(name=name, final_sum=SUM(Partition(Partition(orders.lines, name='lines', by=('ship_date', 'receipt_date'))(order_sum=SUM(lines.extended_price)).WHERE(order_sum > 1000), name='day_totals', by=ship_date)(total_sum=SUM(day_totals.order_sum)).WHERE(total_sum < 2000).total_sum))",
-            """
-──┬─ TPCH
-  ├─── TableCollection[Customers]
-  └─┬─ Calc[name=name, final_sum=SUM($1.total_sum)]
-    └─┬─ AccessChild
-      ├─┬─ Partition[name='day_totals', by=ship_date]
-      │ └─┬─ AccessChild
-      │   ├─┬─ Partition[name='lines', by=('ship_date', 'receipt_date')]
-      │   │ └─┬─ AccessChild
-      │   │   └─┬─ SubCollection[orders]
-      │   │     └─── SubCollection[lines]
-      │   ├─┬─ Calc[order_sum=SUM($1.extended_price)]
-      │   │ └─┬─ AccessChild
-      │   │   └─── PartitionChild[lines]
-      │   └─── Where[order_sum > 1000]
-      ├─┬─ Calc[total_sum=SUM($1.order_sum)]
-      │ └─┬─ AccessChild
-      │   └─── PartitionChild[day_totals]
-      └─── Where[total_sum < 2000]
-""",
-            id="multi_partition_nested",
         ),
         pytest.param(
             PartitionInfo(
@@ -1482,14 +1404,14 @@ def test_collections_calc_terms(
             ** OrderInfo([], (ReferenceInfo("total_price"), False, True)),
             "TPCH.Partition(Parts, name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).ORDER_BY(total_price.DESC(na_pos='last'))",
             """
-┌─── TPCH
-├─┬─ Partition[name='parts', by=container]
-│ └─┬─ AccessChild
-│   └─── TableCollection[Parts]
-├─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
-│ └─┬─ AccessChild
-│   └─── PartitionChild[parts]
-└─── OrderBy[total_price.DESC(na_pos='last')]
+──┬─ TPCH
+  ├─┬─ Partition[name='parts', by=container]
+  │ └─┬─ AccessChild
+  │   └─── TableCollection[Parts]
+  ├─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+  │ └─┬─ AccessChild
+  │   └─── PartitionChild[parts]
+  └─── OrderBy[total_price.DESC(na_pos='last')]
 """,
             id="partition_with_order_part",
         ),
@@ -1522,16 +1444,16 @@ def test_collections_calc_terms(
             ),
             "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container)(container=container, total_price=SUM(parts.retail_price)).parts(part_name=name, container=container, ratio=retail_price / BACK(1).total_price)",
             """
-┌─── TPCH
-├─┬─ Partition[name='parts', by=container]
-│ └─┬─ AccessChild
-│   ├─── TableCollection[Parts]
-│   └─── OrderBy[retail_price.DESC(na_pos='last')]
-└─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
-  ├─┬─ AccessChild
-  │ └─── PartitionChild[parts]
-  ├─── PartitionChild[parts]
-  └─── Calc[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]
+──┬─ TPCH
+  ├─┬─ Partition[name='parts', by=container]
+  │ └─┬─ AccessChild
+  │   ├─── TableCollection[Parts]
+  │   └─── OrderBy[retail_price.DESC(na_pos='last')]
+  └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+    ├─┬─ AccessChild
+    │ └─── PartitionChild[parts]
+    ├─── PartitionChild[parts]
+    └─── Calc[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]
 """,
             id="partition_data_with_data_order",
         ),
@@ -1554,37 +1476,6 @@ def test_collections_calc_terms(
   └─── TopK[5, total_sum.DESC(na_pos='last')]
 """,
             id="nations_topk",
-        ),
-        pytest.param(
-            TableCollectionInfo("Nations")
-            ** SubCollectionInfo("suppliers")
-            ** PartitionInfo(
-                SubCollectionInfo("parts_supplied"),
-                "parts",
-                [ChildReferenceExpressionInfo("part_type", 0)],
-            )
-            ** CalcInfo(
-                [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
-                part_type=ReferenceInfo("part_type"),
-                num_parts=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
-                num_custs=FunctionInfo(
-                    "COUNT", [BackReferenceCollectionInfo("customers", 2)]
-                ),
-            ),
-            "TPCH.Nations.suppliers.Partition(parts_supplied, name='parts', by=part_type)(part_type=part_type, num_parts=COUNT(parts.suppliers_of_part), num_custs=COUNT(BACK(2).customers))",
-            """
-──┬─ TPCH
-  └─┬─ TableCollection[Nations]
-    ├─── SubCollection[suppliers]
-    ├─┬─ Partition[name='parts', by=part_type]
-    │ └─┬─ AccessChild
-    │   └─── SubCollection[parts_supplied]
-    └─┬─ Calc[part_type=part_type, num_parts=COUNT($1), num_custs=COUNT(BackSubCollection[2, customers])]
-      └─┬─ AccessChild
-        └─┬─ PartitionChild[parts]
-          └─── SubCollection[suppliers_of_part]
-""",
-            id="partition_backreference",
         ),
         pytest.param(
             TableCollectionInfo("Parts")

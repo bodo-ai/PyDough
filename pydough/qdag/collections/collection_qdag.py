@@ -196,6 +196,14 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
     @property
     @abstractmethod
+    def unique_terms(self) -> list[str]:
+        """
+        Returns the list of names of terms that cause records of the collection
+        to be uniquely identifiable.
+        """
+
+    @property
+    @abstractmethod
     def standalone_string(self) -> str:
         """
         The string representation of the node within `to_string` without any

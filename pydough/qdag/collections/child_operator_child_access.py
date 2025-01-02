@@ -53,6 +53,10 @@ class ChildOperatorChildAccess(ChildAccess):
     def all_terms(self) -> set[str]:
         return self.child_access.all_terms
 
+    @property
+    def unique_terms(self) -> list[str]:
+        return self.child_access.unique_terms
+
     def get_expression_position(self, expr_name: str) -> int:
         return self.child_access.get_expression_position(expr_name)
 

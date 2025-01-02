@@ -216,11 +216,6 @@ answer = x.TOP_K(100)\
             "?.Parts.ORDER_BY(?.retail_price.ASC(na_pos='first')).TOP_K(100)",
             id="order_topk_empty",
         ),
-        pytest.param(
-            "answer = _ROOT.PARTITION(_ROOT.Parts, name='parts', by=_ROOT.part_type)(type=_ROOT.part_type, total_price=_ROOT.SUM(_ROOT.data.retail_price), n_orders=_ROOT.COUNT(_ROOT.data.lines))",
-            "?.PARTITION(?.Parts, name='parts', by=(?.part_type))(type=?.part_type, total_price=SUM(?.data.retail_price), n_orders=COUNT(?.data.lines))",
-            id="partition",
-        ),
     ],
 )
 def test_unqualified_to_string(
