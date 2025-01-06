@@ -268,3 +268,29 @@ def sqlite_bindings() -> SqlGlotTransformBindings:
     bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
     bindings.set_dialect(DatabaseDialect.SQLITE)
     return bindings
+
+
+@pytest.fixture
+def sqlite_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database.
+    """
+    # Setup the directory to be the main PyDough directory.
+
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/defog_graphs.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture
+def sqlite_defog_connection() -> DatabaseContext:
+    """
+    Returns the SQLITE database connection for the defog database.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    path: str = os.path.join(base_dir, "defog.db")
+    connection: sqlite3.Connection = sqlite3.connect(path)
+    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)

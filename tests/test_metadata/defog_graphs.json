@@ -3,9 +3,9 @@
     "Customers": {
       "type": "simple_table",
       "table_path": "main.sbCustomer",
-      "unique_properties": ["id"],
+      "unique_properties": ["_id"],
       "properties": {
-        "id": {
+        "_id": {
           "type": "table_column",
           "column_name": "sbCustId",
           "data_type": "string"
@@ -71,7 +71,7 @@
           "singular": false,
           "no_collisions": true,
           "keys": {
-            "id": [
+            "_id": [
               "customer_id"
             ]
           },
@@ -82,9 +82,9 @@
     "Tickers": {
       "type": "simple_table",
       "table_path": "main.sbTicker",
-      "unique_properties": ["id"],
+      "unique_properties": ["_id"],
       "properties": {
-        "id": {
+        "_id": {
           "type": "table_column",
           "column_name": "sbTickerId",
           "data_type": "string"
@@ -99,7 +99,7 @@
           "column_name": "sbTickerName",
           "data_type": "string"
         },
-        "type": {
+        "ticker_type": {
           "type": "table_column",
           "column_name": "sbTickerType",
           "data_type": "string"
@@ -124,23 +124,13 @@
           "column_name": "sbTickerIsActive",
           "data_type": "bool"
         },
-         "historical_prices": {
-            "type": "simple_join",
-            "other_collection_name": "DailyPrices",
-            "singular": false,
-            "no_collisions": true,
-            "keys": {
-               "id": ["ticker_id"]
-            },
-            "reverse_relationship_name": "ticker"
-         },
          "transactions_of": {
           "type": "simple_join",
           "other_collection_name": "Transactions",
           "singular": false,
           "no_collisions": true,
           "keys": {
-            "id": [
+            "_id": [
               "ticker_id"
             ]
           },
@@ -204,7 +194,7 @@
             "singular": true,
             "no_collisions": false,
             "keys": {
-              "ticker_id": ["id"]
+              "ticker_id": ["_id"]
             },
            "reverse_relationship_name": "historical_prices"
          }
@@ -233,9 +223,9 @@
         "date_time": {
           "type": "table_column",
           "column_name": "sbTxDateTime",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
-        "type": {
+        "transaction_type": {
           "type": "table_column",
           "column_name": "sbTxType",
           "data_type": "string"
@@ -284,31 +274,7 @@
           "type": "table_column",
           "column_name": "sbTxStatus",
           "data_type": "string"
-        },
-        "customer": {
-          "type": "simple_join",
-          "other_collection_name": "Customers",
-          "singular": true,
-          "no_collisions": false,
-          "keys": {
-            "customer_id": [
-              "id"
-            ]
-          },
-          "reverse_relationship_name": "transactions_made"
-        },
-          "ticker": {
-            "type": "simple_join",
-            "other_collection_name": "Tickers",
-            "singular": true,
-            "no_collisions": false,
-             "keys": {
-               "ticker_id": [
-                 "id"
-               ]
-            },
-           "reverse_relationship_name": "transactions_of"
-          }
+        }
       }
     }
   },
@@ -316,11 +282,11 @@
     "Cars": {
       "type": "simple_table",
       "table_path": "main.cars",
-      "unique_properties": ["id"],
+      "unique_properties": ["_id"],
       "properties": {
-        "id": {
+        "_id": {
           "type": "table_column",
-          "column_name": "id",
+          "column_name": "_id",
           "data_type": "int32"
         },
         "make": {
@@ -366,7 +332,7 @@
         "crtd_ts": {
             "type": "table_column",
           "column_name": "crtd_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "sale_records": {
           "type": "simple_join",
@@ -374,7 +340,7 @@
           "singular": false,
           "no_collisions": true,
             "keys": {
-              "id": ["car_id"]
+              "_id": ["car_id"]
             },
           "reverse_relationship_name": "car"
         },
@@ -384,7 +350,7 @@
           "singular": false,
           "no_collisions": true,
             "keys": {
-              "id": ["car_id"]
+              "_id": ["car_id"]
             },
           "reverse_relationship_name": "car"
         }
@@ -393,11 +359,11 @@
     "Salespersons": {
       "type": "simple_table",
       "table_path": "main.salespersons",
-      "unique_properties": ["id"],
+      "unique_properties": ["_id"],
         "properties": {
-        "id": {
+        "_id": {
           "type": "table_column",
-          "column_name": "id",
+          "column_name": "_id",
           "data_type": "int32"
         },
           "first_name": {
@@ -433,7 +399,7 @@
         "crtd_ts": {
           "type": "table_column",
           "column_name": "crtd_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "sales_made": {
           "type": "simple_join",
@@ -441,7 +407,7 @@
           "singular": false,
           "no_collisions": true,
             "keys": {
-              "id": ["salesperson_id"]
+              "_id": ["salesperson_id"]
             },
             "reverse_relationship_name": "salesperson"
         }
@@ -450,11 +416,11 @@
     "Customers": {
       "type": "simple_table",
       "table_path": "main.customers",
-      "unique_properties": ["id"],
+      "unique_properties": ["_id"],
         "properties": {
-        "id": {
+        "_id": {
             "type": "table_column",
-          "column_name": "id",
+          "column_name": "_id",
           "data_type": "int32"
         },
           "first_name": {
@@ -500,7 +466,7 @@
           "crtd_ts": {
           "type": "table_column",
           "column_name": "crtd_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "car_purchases": {
             "type": "simple_join",
@@ -508,7 +474,7 @@
             "singular": false,
             "no_collisions": true,
             "keys": {
-              "id": ["customer_id"]
+              "_id": ["customer_id"]
               },
               "reverse_relationship_name": "customer"
           }
@@ -517,11 +483,11 @@
       "PaymentsReceived": {
       "type": "simple_table",
       "table_path": "main.payments_received",
-      "unique_properties": ["id"],
+      "unique_properties": ["_id"],
       "properties": {
-          "id": {
+          "_id": {
           "type": "table_column",
-            "column_name": "id",
+            "column_name": "_id",
             "data_type": "int32"
         },
         "sale_id": {
@@ -547,7 +513,7 @@
           "crtd_ts": {
             "type": "table_column",
             "column_name": "crtd_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
           "sale_record": {
             "type": "simple_join",
@@ -555,7 +521,7 @@
             "singular": true,
             "no_collisions": false,
             "keys": {
-              "sale_id": ["id"]
+              "sale_id": ["_id"]
               },
               "reverse_relationship_name": "payment"
           }
@@ -564,11 +530,11 @@
       "Sales": {
       "type": "simple_table",
         "table_path": "main.sales",
-        "unique_properties": ["id"],
+        "unique_properties": ["_id"],
         "properties": {
-          "id": {
+          "_id": {
           "type": "table_column",
-            "column_name": "id",
+            "column_name": "_id",
             "data_type": "int32"
           },
           "car_id": {
@@ -599,7 +565,7 @@
         "crtd_ts": {
           "type": "table_column",
           "column_name": "crtd_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "car": {
           "type": "simple_join",
@@ -608,7 +574,7 @@
           "no_collisions": false,
           "keys": {
             "car_id": [
-              "id"
+              "_id"
             ]
           },
           "reverse_relationship_name": "sale_records"
@@ -620,7 +586,7 @@
           "no_collisions": false,
           "keys": {
             "customer_id": [
-              "id"
+              "_id"
             ]
           },
           "reverse_relationship_name": "car_purchases"
@@ -632,7 +598,7 @@
           "no_collisions": false,
           "keys": {
             "salesperson_id": [
-              "id"
+              "_id"
             ]
           },
           "reverse_relationship_name": "sales_made"
@@ -643,7 +609,7 @@
           "singular": false,
           "no_collisions": true,
           "keys": {
-            "id": ["sale_id"]
+            "_id": ["sale_id"]
           },
           "reverse_relationship_name": "sale_record"
           }
@@ -652,11 +618,11 @@
       "InventorySnapshots": {
         "type": "simple_table",
         "table_path": "main.inventory_snapshots",
-        "unique_properties": ["id"],
+        "unique_properties": ["_id"],
         "properties": {
-          "id": {
+          "_id": {
             "type": "table_column",
-            "column_name": "id",
+            "column_name": "_id",
             "data_type": "int32"
           },
           "snapshot_date": {
@@ -677,7 +643,7 @@
           "crtd_ts": {
           "type": "table_column",
             "column_name": "crtd_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
           },
           "car": {
               "type": "simple_join",
@@ -685,7 +651,7 @@
               "singular": true,
               "no_collisions": false,
               "keys": {
-              "car_id": ["id"]
+              "car_id": ["_id"]
             },
               "reverse_relationship_name": "inventory_snapshots"
             }
@@ -1206,11 +1172,11 @@
     "ConcomitantMeds": {
       "type": "simple_table",
       "table_path": "main.concomitant_meds",
-      "unique_properties": ["id"],
+      "unique_properties": ["_id"],
       "properties": {
-          "id": {
+          "_id": {
           "type": "table_column",
-          "column_name": "id",
+          "column_name": "_id",
           "data_type": "int32"
         },
         "treatment_id": {
@@ -1263,11 +1229,11 @@
       "AdverseEvents": {
         "type": "simple_table",
         "table_path": "main.adverse_events",
-        "unique_properties": ["id"],
+        "unique_properties": ["_id"],
         "properties": {
-          "id": {
+          "_id": {
             "type": "table_column",
-            "column_name": "id",
+            "column_name": "_id",
             "data_type": "int32"
           },
           "treatment_id": {
@@ -1327,12 +1293,12 @@
         "created_at": {
           "type": "table_column",
           "column_name": "created_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "last_login_at": {
           "type": "table_column",
           "column_name": "last_login_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "user_type": {
           "type": "table_column",
@@ -1367,7 +1333,7 @@
         "kyc_verified_at": {
             "type": "table_column",
           "column_name": "kyc_verified_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "transactions_sent": {
           "type": "simple_join",
@@ -1464,7 +1430,7 @@
           "created_at": {
             "type": "table_column",
             "column_name": "created_at",
-            "data_type": "timestamp"
+            "data_type": "timestamp[3]"
         },
           "country": {
             "type": "table_column",
@@ -1636,12 +1602,12 @@
           "created_at": {
             "type": "table_column",
           "column_name": "created_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
           "updated_at": {
           "type": "table_column",
           "column_name": "updated_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
           "merchant": {
           "type": "simple_join",
@@ -1705,7 +1671,7 @@
             "column_name": "status",
           "data_type": "string"
         },
-          "type": {
+        "transaction_type": {
           "type": "table_column",
             "column_name": "type",
           "data_type": "string"
@@ -1723,12 +1689,12 @@
           "created_at": {
           "type": "table_column",
           "column_name": "created_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "completed_at": {
             "type": "table_column",
           "column_name": "completed_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "transaction_ref": {
             "type": "table_column",
@@ -1825,7 +1791,7 @@
         "updated_at": {
             "type": "table_column",
           "column_name": "updated_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
           "user": {
             "type": "simple_join",
@@ -1857,7 +1823,7 @@
         "updated_at": {
             "type": "table_column",
           "column_name": "updated_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "merchant": {
             "type": "simple_join",
@@ -1874,11 +1840,11 @@
     "Notifications": {
       "type": "simple_table",
       "table_path": "main.notifications",
-        "unique_properties": ["id"],
+        "unique_properties": ["_id"],
       "properties": {
-          "id": {
+          "_id": {
           "type": "table_column",
-            "column_name": "id",
+            "column_name": "_id",
             "data_type": "int32"
         },
           "user_id": {
@@ -1891,7 +1857,7 @@
             "column_name": "message",
           "data_type": "string"
         },
-        "type": {
+        "notification_type": {
             "type": "table_column",
             "column_name": "type",
             "data_type": "string"
@@ -1904,12 +1870,12 @@
         "created_at": {
             "type": "table_column",
             "column_name": "created_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "read_at": {
             "type": "table_column",
           "column_name": "read_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
           "device_type": {
             "type": "table_column",
@@ -1951,12 +1917,12 @@
           "session_start_ts": {
             "type": "table_column",
           "column_name": "session_start_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
           },
           "session_end_ts": {
           "type": "table_column",
           "column_name": "session_end_ts",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
           "device_type": {
             "type": "table_column",
@@ -2043,7 +2009,7 @@
           "created_at": {
             "type": "table_column",
             "column_name": "created_at",
-          "data_type": "timestamp"
+          "data_type": "timestamp[3]"
         },
         "user": {
             "type": "simple_join",
