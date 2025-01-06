@@ -291,6 +291,6 @@ def sqlite_defog_connection() -> DatabaseContext:
     """
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    path: str = os.path.join(base_dir, "defog.db")
+    path: str = os.path.join(base_dir, "tests/defog.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)

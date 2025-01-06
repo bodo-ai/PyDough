@@ -28,7 +28,6 @@ from pydough.unqualified import (
 )
 
 
-@pytest.mark.execute
 @pytest.fixture(
     params=[
         pytest.param(
