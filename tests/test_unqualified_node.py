@@ -216,6 +216,26 @@ answer = x.TOP_K(100)\
             "?.Parts.ORDER_BY(?.retail_price.ASC(na_pos='first')).TOP_K(100)",
             id="order_topk_empty",
         ),
+        pytest.param(
+            "answer = _ROOT.Parts(_ROOT.name, rank=_ROOT.RANKING(by=_ROOT.retail_price.DESC()))",
+            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last')))",
+            id="ranking_1",
+        ),
+        pytest.param(
+            "answer = _ROOT.Parts(_ROOT.name, rank=_ROOT.RANKING(by=_ROOT.retail_price.DESC(), levels=1))",
+            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last'), levels=1))",
+            id="ranking_2",
+        ),
+        pytest.param(
+            "answer = _ROOT.Parts(_ROOT.name, rank=_ROOT.RANKING(by=_ROOT.retail_price.DESC(), allow_ties=True))",
+            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last'), allow_ties=True))",
+            id="ranking_3",
+        ),
+        pytest.param(
+            "answer = _ROOT.Parts(_ROOT.name, rank=_ROOT.RANKING(by=_ROOT.retail_price.DESC(), levels=2, allow_ties=True, dense=True))",
+            "?.Parts(name=?.name, rank=RANKING(by=(?.retail_price.DESC(na_pos='last'), levels=2, allow_ties=True, dense=True))",
+            id="ranking_4",
+        ),
     ],
 )
 def test_unqualified_to_string(

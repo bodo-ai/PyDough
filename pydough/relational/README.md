@@ -11,8 +11,9 @@ The relational_expressions submodule provides functionality to define and manage
 ### Available APIs
 
 - `RelationalExpression`: The abstract base class for all relational expressions.
-- `CallExpression`: The expression implementation for calling a function on a relational node.
 - `ColumnReference`: The expression implementation for accessing a column in a relational node.
+- `CallExpression`: The expression implementation for calling a function on a relational node.
+- `WindowCallExpression`: The expression implementation for calling a window function on relational nodes.
 - `LiteralExpression`: The expression implementation for a literal value in a relational node.
 - `ExpressionSortInfo`: The representation of ordering for an expression within a relational node.
 - `RelationalExpressionVisitor`: The basic Visitor pattern to perform operations across the expression components of a relational tree.
@@ -32,8 +33,9 @@ from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     ColumnReferenceFinder,
     ColumnReferenceInputNameModifier,
+    WindowCallExpression,
 )
-from pydough.pydough_operators import ADD
+from pydough.pydough_operators import ADD, RANKING
 from pydough.types import Int64Type
 
 # Create a column reference
@@ -47,6 +49,9 @@ call_expr = CallExpression(ADD, Int64Type(), [column_ref, literal_expr])
 
 # Create an expression sort info
 sort_info = ExpressionSortInfo(call_expr, ascending=True, nulls_first=False)
+
+# Create a call to a window function
+window_call = WindowCallExpression(RANKING, Int64Type(), [], [], [sort_info], {})
 
 # Convert the call expression to a string
 call_expr_str = call_expr.to_string()

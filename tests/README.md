@@ -12,6 +12,7 @@ The `TestInfo` classes are used to specify information about a QDAG (Qualified D
 - `LiteralInfo`: Class for building a PyDough literal.
 - `ColumnInfo`: Class for building a table column.
 - `FunctionInfo`: Class for building a function call.
+- `WindowInfo`: Class for building a window function call.
 - `ReferenceInfo`: Class for building a reference.
 - `BackReferenceExpressionInfo`: Class for building a back reference expression.
 - `ChildReferenceExpressionInfo`: Class for building a child reference expression.

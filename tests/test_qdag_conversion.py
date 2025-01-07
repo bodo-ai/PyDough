@@ -19,6 +19,7 @@ from test_utils import (
     TableCollectionInfo,
     TopKInfo,
     WhereInfo,
+    WindowInfo,
 )
 
 from pydough.configs import PyDoughConfigs
@@ -2845,6 +2846,111 @@ ROOT(columns=[('name', name)], orderings=[])
 """,
             ),
             id="multiple_has_hasnot",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Customers")
+                ** CalcInfo(
+                    [],
+                    name=ReferenceInfo("name"),
+                    cust_rank=WindowInfo(
+                        "RANKING",
+                        (ReferenceInfo("acctbal"), False, True),
+                    ),
+                ),
+                """
+ROOT(columns=[('name', name), ('cust_rank', cust_rank)], orderings=[])
+ PROJECT(columns={'cust_rank': RANKING(by=[], partition=[], order=['(acctbal):desc_first']), 'name': name})
+  SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
+""",
+            ),
+            id="rank_customers",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** SubCollectionInfo("customers")
+                ** CalcInfo(
+                    [],
+                    nation_name=BackReferenceExpressionInfo("name", 1),
+                    name=ReferenceInfo("name"),
+                    cust_rank=WindowInfo(
+                        "RANKING",
+                        (ReferenceInfo("acctbal"), False, True),
+                        levels=1,
+                        allow_ties=True,
+                    ),
+                ),
+                """
+ROOT(columns=[('nation_name', nation_name), ('name', name), ('cust_rank', cust_rank)], orderings=[])
+ PROJECT(columns={'cust_rank': RANKING(by=[], partition=['key'], order=['(acctbal):desc_first']), 'name': name_3, 'nation_name': name})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'name': t0.name, 'name_3': t1.name})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey})
+""",
+            ),
+            id="rank_customers_per_nation",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Regions")
+                ** SubCollectionInfo("nations")
+                ** SubCollectionInfo("customers")
+                ** CalcInfo(
+                    [],
+                    nation_name=BackReferenceExpressionInfo("name", 1),
+                    name=ReferenceInfo("name"),
+                    cust_rank=WindowInfo(
+                        "RANKING",
+                        (ReferenceInfo("acctbal"), False, True),
+                        levels=2,
+                        allow_ties=True,
+                        dense=True,
+                    ),
+                ),
+                """
+ROOT(columns=[('nation_name', nation_name), ('name', name), ('cust_rank', cust_rank)], orderings=[])
+ PROJECT(columns={'cust_rank': RANKING(by=[], partition=['key'], order=['(acctbal):desc_first']), 'name': name_6, 'nation_name': name_3})
+  JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'name_3': t0.name_3, 'name_6': t1.name})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name_3': t1.name})
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey})
+""",
+            ),
+            id="rank_customers_per_region",
+        ),
+        pytest.param(
+            (
+                TableCollectionInfo("Nations")
+                ** CalcInfo(
+                    [
+                        SubCollectionInfo("customers")
+                        ** CalcInfo(
+                            [],
+                            cust_rank=WindowInfo(
+                                "RANKING",
+                                (ReferenceInfo("acctbal"), False, True),
+                                allow_ties=True,
+                            ),
+                        )
+                    ],
+                    nation_name=ReferenceInfo("name"),
+                    highest_rank=FunctionInfo(
+                        "MAX", [ChildReferenceExpressionInfo("cust_rank", 0)]
+                    ),
+                ),
+                """
+ROOT(columns=[('nation_name', nation_name), ('highest_rank', highest_rank)], orderings=[])
+ PROJECT(columns={'highest_rank': agg_0, 'nation_name': name})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': MAX(cust_rank)})
+    PROJECT(columns={'cust_rank': RANKING(by=[], partition=[], order=['(acctbal):desc_first']), 'nation_key': nation_key})
+     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
+""",
+            ),
+            id="agg_max_ranking",
         ),
     ],
 )

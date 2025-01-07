@@ -17,7 +17,8 @@ Hybrid expressions are used to represent various types of expressions within the
 
 - `HybridLiteralExpr`: Represents a literal value.
 - `HybridColumnExpr`: Represents a column reference.
-- `HybridFunctionExpr`: Represents a function call.
+- `HybridFunctionExpr`: Represents a regular or aggregate function call.
+- `HybridWindowExpr`: represents a window function call.
 - `HybridRefExpr`: Represents a reference to another expression.
 - `HybridBackRefExpr`: Represents a reference to another hybrid expression that exists in one of the successors of the current hybrid tree.
 - `HybridChildRefExpr`: Represents a reference to another hybrid expression that exists in one of the child connections of the current hybrid tree.

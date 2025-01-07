@@ -33,6 +33,27 @@ class RelationalExpressionShuttle(ABC):
         args = [args.accept_shuttle(self) for args in call_expression.inputs]
         return CallExpression(call_expression.op, call_expression.data_type, args)
 
+    def visit_window_expression(self, window_expression):
+        from .expression_sort_info import ExpressionSortInfo
+        from .window_call_expression import WindowCallExpression
+
+        args = [arg.accept(self) for arg in window_expression.inputs]
+        partition_args = [
+            arg.accept(self) for arg in window_expression.partition_inputs
+        ]
+        order_args = [
+            ExpressionSortInfo(arg.expr.accept(self), arg.ascending, arg.nulls_first)
+            for arg in window_expression.order_inputs
+        ]
+        return WindowCallExpression(
+            window_expression.op,
+            window_expression.data_type,
+            args,
+            partition_args,
+            order_args,
+            window_expression.kwargs,
+        )
+
     @abstractmethod
     def visit_literal_expression(self, literal_expression):
         """

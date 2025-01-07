@@ -1,0 +1,88 @@
+name: Build PyDough Pip Wheel
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build_pydough_wheels:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    name: Build PyDough Wheels
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-2
+          role-to-assume: arn:aws:iam::427443013497:role/PyDoughBuildWheelRole
+          role-session-name: PyDoughBuildWheelSession
+          role-skip-session-tagging: true
+
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Build Wheels
+        run: |
+          uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pydough-wheel
+          path: ./dist/*.whl
+
+  test_pydough_wheels:
+    needs: [build_pydough_wheels]
+    runs-on: ubuntu-latest
+    name: Test PyDough Wheels
+
+    strategy:
+      matrix:
+        python_version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/download-artifact@v4
+        id: download-artifact
+        with:
+          pattern: pydough-wheel*
+          path: .
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Install
+        run: |
+          # Install pydough from the local wheel
+          pip install pydough --find-links "$(find . -name "pydough-wheel*" -print)" --no-index --no-deps
+          # Install dependencies from pypi
+          pip install pydough
+      - name: Test Import
+        run: |
+          python -c "import pydough; assert pydough.active_session is not None"
+      # TODO: Consider a more detailed test of functionality.
+
+
+  upload_pydough_wheels:
+    needs: [build_pydough_wheels, test_pydough_wheels]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    name: Upload PyDough Wheels
+
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pydough-wheel*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

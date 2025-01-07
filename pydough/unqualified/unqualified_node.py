@@ -17,6 +17,7 @@ __all__ = [
     "UnqualifiedWhere",
     "UnqualifiedLiteral",
     "UnqualifiedBack",
+    "UnqualifiedWindow",
     "display_raw",
 ]
 
@@ -376,9 +377,35 @@ class UnqualifiedOperator(UnqualifiedNode):
         self._parcel: tuple[str] = (name,)
 
     def __call__(self, *args, **kwargs):
-        assert (
-            len(kwargs) == 0
-        ), "PyDough function calls do not support keyword arguments at this time"
+        levels: int | None = None
+        if len(kwargs) > 0:
+            match self._parcel[0]:
+                case "RANKING":
+                    if "by" not in kwargs:
+                        raise PyDoughUnqualifiedException(
+                            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
+                        )
+                    by = kwargs.pop("by")
+                    if isinstance(by, UnqualifiedNode):
+                        by = [by]
+                    elif not (
+                        isinstance(by, Iterable)
+                        and all(isinstance(arg, UnqualifiedNode) for arg in by)
+                    ):
+                        raise PyDoughUnqualifiedException(
+                            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
+                        )
+                    if "levels" in kwargs:
+                        levels = kwargs.pop("levels")
+                    return UnqualifiedWindow(
+                        pydop.RANKING,
+                        by,
+                        levels,
+                        kwargs,
+                    )
+            raise PyDoughUnqualifiedException(
+                "PyDough function calls do not support keyword arguments at this time"
+            )
         operands: MutableSequence[UnqualifiedNode] = []
         for arg in args:
             operands.append(self.coerce_to_unqualified(arg))
@@ -396,6 +423,26 @@ class UnqualifiedOperation(UnqualifiedNode):
             operation_name,
             operands,
         )
+
+
+class UnqualifiedWindow(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a WINDOW call.
+    """
+
+    def __init__(
+        self,
+        operator: pydop.ExpressionWindowOperator,
+        by: Iterable[UnqualifiedNode],
+        levels: int | None,
+        kwargs: dict[str, object],
+    ):
+        self._parcel: tuple[
+            pydop.ExpressionWindowOperator,
+            Iterable[UnqualifiedNode],
+            int | None,
+            dict[str, object],
+        ] = (operator, by, levels, kwargs)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -516,6 +563,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         The string representation of the unqualified node.
     """
     term_strings: list[str] = []
+    operands_str: str
     match unqualified:
         case UnqualifiedRoot():
             return "?"
@@ -540,10 +588,17 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         case UnqualifiedOperator():
             return unqualified._parcel[0]
         case UnqualifiedOperation():
-            operands_str: str = ", ".join(
+            operands_str = ", ".join(
                 [display_raw(operand) for operand in unqualified._parcel[1]]
             )
             return f"{unqualified._parcel[0]}({operands_str})"
+        case UnqualifiedWindow():
+            operands_str = f'by=({", ".join([display_raw(operand) for operand in unqualified._parcel[1]])}'
+            if unqualified._parcel[2] is not None:
+                operands_str += ", levels=" + str(unqualified._parcel[2])
+            for kwarg, val in unqualified._parcel[3].items():
+                operands_str += f", {kwarg}={val!r}"
+            return f"{unqualified._parcel[0].function_name}({operands_str})"
         case UnqualifiedBinaryOperation():
             return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0]} {display_raw(unqualified._parcel[2])})"
         case UnqualifiedCollation():

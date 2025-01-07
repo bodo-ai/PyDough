@@ -39,6 +39,7 @@ from pydough.relational import (
     RelationalExpression,
     RelationalRoot,
     Scan,
+    WindowCallExpression,
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
@@ -63,6 +64,7 @@ from .hybrid_tree import (
     HybridRoot,
     HybridTranslator,
     HybridTree,
+    HybridWindowExpr,
 )
 
 
@@ -130,6 +132,7 @@ class RelTranslation:
         Returns:
             The converted relational expression.
         """
+        inputs: list[RelationalExpression] = []
         match expr:
             case HybridColumnExpr():
                 return ColumnReference(
@@ -141,10 +144,30 @@ class RelTranslation:
                 assert context is not None
                 return context.expressions[expr]
             case HybridFunctionExpr():
-                inputs: list[RelationalExpression] = [
-                    self.translate_expression(arg, context) for arg in expr.args
-                ]
+                inputs = [self.translate_expression(arg, context) for arg in expr.args]
                 return CallExpression(expr.operator, expr.typ, inputs)
+            case HybridWindowExpr():
+                inputs = [self.translate_expression(arg, context) for arg in expr.args]
+                partition_inputs = [
+                    self.translate_expression(arg, context)
+                    for arg in expr.partition_args
+                ]
+                order_inputs = [
+                    ExpressionSortInfo(
+                        self.translate_expression(arg.expr, context),
+                        arg.asc,
+                        arg.na_first,
+                    )
+                    for arg in expr.order_args
+                ]
+                return WindowCallExpression(
+                    expr.window_func,
+                    expr.typ,
+                    inputs,
+                    partition_inputs,
+                    order_inputs,
+                    expr.kwargs,
+                )
             case _:
                 raise NotImplementedError(expr.__class__.__name__)
 

@@ -42,6 +42,7 @@ __all__ = [
     "DEFAULT_TO",
     "HAS",
     "HASNOT",
+    "RANKING",
 ]
 
 from pydough.pydough_operators.type_inference import (
@@ -55,6 +56,7 @@ from pydough.types import BooleanType, Float64Type, Int64Type
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
+from .expression_window_operators import ExpressionWindowOperator
 
 # TODO: replace with full argument verifiers & deducers
 ADD = BinaryOperator(BinOp.ADD, RequireNumArgs(2), SelectArgumentType(0))
@@ -130,3 +132,6 @@ ISIN = ExpressionFunctionOperator(
     "ISIN", False, RequireNumArgs(2), ConstantType(BooleanType())
 )
 ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))
+RANKING = ExpressionWindowOperator(
+    "RANKING", RequireNumArgs(0), ConstantType(Int64Type())
+)

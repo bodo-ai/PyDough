@@ -56,6 +56,8 @@ __all__ = [
     "NOT",
     "UPPER",
     "MIN",
+    "RANKING",
+    "ExpressionWindowOperator",
 ]
 
 from .base_operator import PyDoughOperator
@@ -93,6 +95,7 @@ from .expression_operators import (
     NEQ,
     NOT,
     POW,
+    RANKING,
     SLICE,
     STARTSWITH,
     SUB,
@@ -102,6 +105,7 @@ from .expression_operators import (
     BinaryOperator,
     BinOp,
     ExpressionFunctionOperator,
+    ExpressionWindowOperator,
     PyDoughExpressionOperator,
 )
 from .operator_registry import builtin_registered_operators
