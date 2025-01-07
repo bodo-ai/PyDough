@@ -137,5 +137,5 @@ RANKING = ExpressionWindowOperator(
     "RANKING", RequireNumArgs(0), ConstantType(Int64Type())
 )
 PERCENTILE = ExpressionWindowOperator(
-    "PERCENTILE", RequireNumArgs(1), ConstantType(Int64Type())
+    "PERCENTILE", RequireNumArgs(0), ConstantType(Int64Type())
 )
