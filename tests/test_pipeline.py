@@ -602,7 +602,7 @@ ROOT(columns=[('key', key), ('total_price', total_price)], orderings=[(ordering_
                 rank_nations_by_region,
                 """
 ROOT(columns=[('name', name), ('rank', rank)], orderings=[])
- PROJECT(columns={'name': name, 'rank': RANKING(by=[], partition=[], order=['(name_3):asc_last'])})
+ PROJECT(columns={'name': name, 'rank': RANKING(by=[], partition=[], order=['(name_3):asc_last'], allow_ties=True)})
   JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'name': t0.name, 'name_3': t1.name})
    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
@@ -673,7 +673,7 @@ ROOT(columns=[('name', name), ('rank', rank)], orderings=[(ordering_1):asc_first
 ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ordering_0):asc_first])
  LIMIT(limit=Literal(value=15, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0, 'rank': rank, 'region': region}, orderings=[(ordering_0):asc_first])
   PROJECT(columns={'key': key, 'ordering_0': key, 'rank': rank, 'region': region})
-   PROJECT(columns={'key': key_9, 'rank': RANKING(by=[], partition=['key'], order=['(size):desc_first', '(container):desc_first', '(part_type):desc_first']), 'region': name})
+   PROJECT(columns={'key': key_9, 'rank': RANKING(by=[], partition=['key'], order=['(size):desc_first', '(container):desc_first', '(part_type):desc_first'], allow_ties=True, dense=True), 'region': name})
     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'container': t1.container, 'key': t0.key, 'key_9': t1.key, 'name': t0.name, 'part_type': t1.part_type, 'size': t1.size})
      JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'key': t0.key, 'name': t0.name, 'part_key': t1.part_key})
       JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name': t0.name})
@@ -806,7 +806,7 @@ ROOT(columns=[('size', size), ('name', name)], orderings=[])
                 percentile_nations,
                 """
 ROOT(columns=[('name', name), ('p', p)], orderings=[])
- PROJECT(columns={'name': name, 'p': PERCENTILE(by=[], partition=[], order=['(name):asc_last'])})
+ PROJECT(columns={'name': name, 'p': PERCENTILE(by=[], partition=[], order=['(name):asc_last'], n_buckets=5)})
   SCAN(table=tpch.NATION, columns={'name': n_name})
                 """,
                 lambda: pd.DataFrame(
@@ -848,25 +848,30 @@ ROOT(columns=[('name', name), ('p', p)], orderings=[])
             (
                 percentile_customers_per_region,
                 """
-ROOT(columns=[('name', name)], orderings=[])
- FILTER(condition=PERCENTILE(by=[], partition=['key_2'], order=['(acctbal):desc_first']) == 5:int64 & ENDSWITH(phone, '00':string), columns={'name': name})
-  PROJECT(columns={'acctbal': acctbal, 'key_2': key_2, 'name': name_6, 'phone': phone})
-   JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key_2': t0.key_2, 'name_6': t1.name, 'phone': t1.phone})
-    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
-     SCAN(table=tpch.REGION, columns={'key': r_regionkey})
-     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
-    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
+ROOT(columns=[('name', name)], orderings=[(ordering_0):asc_first])
+ PROJECT(columns={'name': name, 'ordering_0': name})
+  FILTER(condition=PERCENTILE(by=[], partition=['key_2'], order=['(acctbal):asc_last']) == 95:int64 & ENDSWITH(phone, '00':string), columns={'name': name})
+   PROJECT(columns={'acctbal': acctbal, 'key_2': key_2, 'name': name_6, 'phone': phone})
+    JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key_2': t0.key_2, 'name_6': t1.name, 'phone': t1.phone})
+     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
                 """,
                 lambda: pd.DataFrame(
                     {
                         "name": [
                             "Customer#000052832",
-                            "Customer#000020004",
-                            "Customer#000018231",
-                            "Customer#000111625",
-                            "Customer#000118328",
-                            "Customer#000043749",
-                            "Customer#000147802",
+                            "Customer#000059661",
+                            "Customer#000063999",
+                            "Customer#000071528",
+                            "Customer#000074375",
+                            "Customer#000089686",
+                            "Customer#000098778",
+                            "Customer#000100935",
+                            "Customer#000102081",
+                            "Customer#000110285",
+                            "Customer#000136477",
                         ],
                     }
                 ),

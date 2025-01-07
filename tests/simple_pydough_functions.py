@@ -87,6 +87,8 @@ def percentile_nations():
 
 
 def percentile_customers_per_region():
-    return Regions.nations.customers(name).WHERE(
-        (PERCENTILE(by=acctbal.DESC(), levels=1) == 5) & (ENDSWITH(phone, "00"))
+    return (
+        Regions.nations.customers(name)
+        .WHERE((PERCENTILE(by=acctbal.ASC(), levels=1) == 95) & ENDSWITH(phone, "00"))
+        .ORDER_BY(name.ASC())
     )
