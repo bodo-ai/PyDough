@@ -984,7 +984,7 @@ class HybridTree:
         Args:
             `child`: the subtree to be connected to `self` as a child
             (starting at the bottom of the subtree).
-            `connection_type`: enum indcating what kind of connection is to be
+            `connection_type`: enum indicating what kind of connection is to be
             used to link `self` to `child`.
 
         Returns:

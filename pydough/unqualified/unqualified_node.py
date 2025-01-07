@@ -370,7 +370,24 @@ class UnqualifiedCollation(UnqualifiedNode):
 def get_by_arg(
     kwargs: dict[str, object],
     func_name: str,
-) -> UnqualifiedNode | Iterable[UnqualifiedNode]:
+) -> Iterable[UnqualifiedNode]:
+    """
+    Extracts the `by` argument from the keyword arguments to a window function,
+    verifying that it exists, removing it from the kwargs, and converting it to
+    an iterable if it was a single unqualified node.
+
+    Args:
+        `kwargs`: the keyword arguments.
+        `func_name`: the function whose `by` argument being extracted.
+
+    Returns:
+        The list of unqualified nodes represented by the `by` argument, which
+        is removed from `kwargs`.
+
+    Raises:
+        `PyDoughUnqualifiedException` if the `by` argument is missing or the
+        wrong type.
+    """
     if "by" not in kwargs:
         raise PyDoughUnqualifiedException(
             f"The `by` argument to `{func_name}` must be provided"
@@ -399,7 +416,6 @@ class UnqualifiedOperator(UnqualifiedNode):
     def __call__(self, *args, **kwargs):
         levels: int | None = None
         if len(kwargs) > 0:
-            by: UnqualifiedNode | Iterable[UnqualifiedNode]
             window_operator: pydop.ExpressionWindowOperator
             match self._parcel[0]:
                 case "PERCENTILE":
@@ -410,7 +426,7 @@ class UnqualifiedOperator(UnqualifiedNode):
                     raise PyDoughUnqualifiedException(
                         f"PyDough function call {func} does not support keyword arguments at this time"
                     )
-            by = get_by_arg(kwargs, self._parcel[0])
+            by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, self._parcel[0])
             if "levels" in kwargs:
                 levels = kwargs.pop("levels")
             return UnqualifiedWindow(
