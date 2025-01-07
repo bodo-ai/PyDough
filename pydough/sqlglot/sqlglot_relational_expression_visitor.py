@@ -102,7 +102,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 n_buckets = window_expression.kwargs.get("n_buckets", 100)
                 assert isinstance(n_buckets, int)
                 this = sqlglot_expressions.Anonymous(
-                    this="DENSE_RANK",
+                    this="NTILE",
                     expressions=[
                         sqlglot_expressions.Literal(value=n_buckets, is_string=False)
                     ],
