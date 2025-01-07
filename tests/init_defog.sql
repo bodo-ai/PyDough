@@ -1,3 +1,7 @@
+-- Modified version of the defog.ai schema setup for the broker schema:
+-- https://github.com/defog-ai/defog-data/blob/main/defog_data/broker/broker.sql
+-- changed slightly to use SQLite dialect instead of postgress.
+
 -- Dimension tables
 CREATE TABLE sbCustomer (
   sbCustId varchar(20) PRIMARY KEY,
