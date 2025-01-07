@@ -850,10 +850,10 @@ ROOT(columns=[('name', name), ('p', p)], orderings=[])
                 """
 ROOT(columns=[('name', name)], orderings=[(ordering_0):asc_first])
  PROJECT(columns={'name': name, 'ordering_0': name})
-  FILTER(condition=PERCENTILE(args=[], partition=[key_2], order=[(acctbal):asc_last, (name):asc_last]) == 95:int64 & ENDSWITH(phone, '00':string), columns={'name': name})
-   PROJECT(columns={'acctbal': acctbal, 'key_2': key_2, 'name': name_6, 'phone': phone})
-    JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key_2': t0.key_2, 'name_6': t1.name, 'phone': t1.phone})
-     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
+  FILTER(condition=PERCENTILE(args=[], partition=[key], order=[(acctbal):asc_last]) == 95:int64 & ENDSWITH(phone, '00':string), columns={'name': name})
+   PROJECT(columns={'acctbal': acctbal, 'key': key, 'name': name_6, 'phone': phone})
+    JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'name_6': t1.name, 'phone': t1.phone})
+     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key})
       SCAN(table=tpch.REGION, columns={'key': r_regionkey})
       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
      SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
@@ -861,7 +861,6 @@ ROOT(columns=[('name', name)], orderings=[(ordering_0):asc_first])
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000052832",
                             "Customer#000059661",
                             "Customer#000063999",
                             "Customer#000071528",
