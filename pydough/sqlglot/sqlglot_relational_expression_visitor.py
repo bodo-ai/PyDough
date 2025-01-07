@@ -99,6 +99,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         this: SQLGlotExpression
         match window_expression.op.function_name:
             case "PERCENTILE":
+                # Extract the number of buckets to use for the percentile
+                # operation (default is 100).
                 n_buckets = window_expression.kwargs.get("n_buckets", 100)
                 assert isinstance(n_buckets, int)
                 this = sqlglot_expressions.Anonymous(
