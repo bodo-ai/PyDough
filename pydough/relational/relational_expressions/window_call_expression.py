@@ -86,9 +86,9 @@ class WindowCallExpression(RelationalExpression):
                 arg.to_string(compact) for arg in self.order_inputs
             ]
             arg_string_lists: list[str] = [
-                f"by={arg_strings}",
-                f"partition={partition_strings}",
-                f"order={order_strings}",
+                f"args=[{', '.join(arg_strings)}]",
+                f"partition=[{', '.join(partition_strings)}]",
+                f"order=[{', '.join(order_strings)}]",
             ]
             for kwarg in self.kwargs:
                 arg_string_lists.append(f"{kwarg}={self.kwargs[kwarg]}")

@@ -2860,7 +2860,7 @@ ROOT(columns=[('name', name)], orderings=[])
                 ),
                 """
 ROOT(columns=[('name', name), ('cust_rank', cust_rank)], orderings=[])
- PROJECT(columns={'cust_rank': RANKING(by=[], partition=[], order=['(acctbal):desc_first']), 'name': name})
+ PROJECT(columns={'cust_rank': RANKING(args=[], partition=[], order=[(acctbal):desc_first]), 'name': name})
   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
 """,
             ),
@@ -2883,7 +2883,7 @@ ROOT(columns=[('name', name), ('cust_rank', cust_rank)], orderings=[])
                 ),
                 """
 ROOT(columns=[('nation_name', nation_name), ('name', name), ('cust_rank', cust_rank)], orderings=[])
- PROJECT(columns={'cust_rank': RANKING(by=[], partition=['key'], order=['(acctbal):desc_first'], allow_ties=True), 'name': name_3, 'nation_name': name})
+ PROJECT(columns={'cust_rank': RANKING(args=[], partition=[key], order=[(acctbal):desc_first], allow_ties=True), 'name': name_3, 'nation_name': name})
   JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'name': t0.name, 'name_3': t1.name})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey})
@@ -2910,7 +2910,7 @@ ROOT(columns=[('nation_name', nation_name), ('name', name), ('cust_rank', cust_r
                 ),
                 """
 ROOT(columns=[('nation_name', nation_name), ('name', name), ('cust_rank', cust_rank)], orderings=[])
- PROJECT(columns={'cust_rank': RANKING(by=[], partition=['key'], order=['(acctbal):desc_first'], allow_ties=True, dense=True), 'name': name_6, 'nation_name': name_3})
+ PROJECT(columns={'cust_rank': RANKING(args=[], partition=[key], order=[(acctbal):desc_first], allow_ties=True, dense=True), 'name': name_6, 'nation_name': name_3})
   JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'name_3': t0.name_3, 'name_6': t1.name})
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name_3': t1.name})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey})
@@ -2946,7 +2946,7 @@ ROOT(columns=[('nation_name', nation_name), ('highest_rank', highest_rank)], ord
   JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': MAX(cust_rank)})
-    PROJECT(columns={'cust_rank': RANKING(by=[], partition=[], order=['(acctbal):desc_first'], allow_ties=True), 'nation_key': nation_key})
+    PROJECT(columns={'cust_rank': RANKING(args=[], partition=[], order=[(acctbal):desc_first], allow_ties=True), 'nation_key': nation_key})
      SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
 """,
             ),

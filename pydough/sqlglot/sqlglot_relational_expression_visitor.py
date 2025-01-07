@@ -71,7 +71,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         ]
         # Do the same with the order
         order_exprs: list[SQLGlotExpression] = []
-        for order_arg in reversed(window_expression.order_inputs):
+        for order_arg in window_expression.order_inputs:
             order_arg.expr.accept(self)
             glot_expr: SQLGlotExpression = self._stack.pop()
             # Ignore non-default na first/last positions for SQLite dialect

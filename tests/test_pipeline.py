@@ -602,7 +602,7 @@ ROOT(columns=[('key', key), ('total_price', total_price)], orderings=[(ordering_
                 rank_nations_by_region,
                 """
 ROOT(columns=[('name', name), ('rank', rank)], orderings=[])
- PROJECT(columns={'name': name, 'rank': RANKING(by=[], partition=[], order=['(name_3):asc_last'], allow_ties=True)})
+ PROJECT(columns={'name': name, 'rank': RANKING(args=[], partition=[], order=[(name_3):asc_last], allow_ties=True)})
   JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'name': t0.name, 'name_3': t1.name})
    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
@@ -649,7 +649,7 @@ ROOT(columns=[('name', name), ('rank', rank)], orderings=[])
 ROOT(columns=[('name', name), ('rank', rank)], orderings=[(ordering_1):asc_first])
  LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'name': name, 'ordering_1': ordering_1, 'rank': rank}, orderings=[(ordering_1):asc_first])
   PROJECT(columns={'name': name, 'ordering_1': rank, 'rank': rank})
-   PROJECT(columns={'name': name_3, 'rank': RANKING(by=[], partition=['key'], order=['(DEFAULT_TO(agg_0, 0:int64)):desc_first'])})
+   PROJECT(columns={'name': name_3, 'rank': RANKING(args=[], partition=[key], order=[(DEFAULT_TO(agg_0, 0:int64)):desc_first])})
     JOIN(conditions=[t0.key_2 == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name_3': t0.name_3})
      JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name_3': t1.name})
       SCAN(table=tpch.REGION, columns={'key': r_regionkey})
@@ -673,7 +673,7 @@ ROOT(columns=[('name', name), ('rank', rank)], orderings=[(ordering_1):asc_first
 ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ordering_0):asc_first])
  LIMIT(limit=Literal(value=15, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0, 'rank': rank, 'region': region}, orderings=[(ordering_0):asc_first])
   PROJECT(columns={'key': key, 'ordering_0': key, 'rank': rank, 'region': region})
-   PROJECT(columns={'key': key_9, 'rank': RANKING(by=[], partition=['key'], order=['(size):desc_first', '(container):desc_first', '(part_type):desc_first'], allow_ties=True, dense=True), 'region': name})
+   PROJECT(columns={'key': key_9, 'rank': RANKING(args=[], partition=[key], order=[(size):desc_first, (container):desc_first, (part_type):desc_first], allow_ties=True, dense=True), 'region': name})
     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'container': t1.container, 'key': t0.key, 'key_9': t1.key, 'name': t0.name, 'part_type': t1.part_type, 'size': t1.size})
      JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'key': t0.key, 'name': t0.name, 'part_key': t1.part_key})
       JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name': t0.name})
@@ -705,21 +705,21 @@ ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ord
                             "ASIA",
                         ],
                         "rank": [
-                            41069,
-                            42125,
-                            42125,
-                            41612,
-                            76766,
-                            78621,
-                            78621,
-                            77311,
-                            2588,
-                            2641,
-                            2569,
-                            2569,
-                            22061,
-                            22061,
-                            22393,
+                            84220,
+                            86395,
+                            86395,
+                            85307,
+                            95711,
+                            98092,
+                            98092,
+                            96476,
+                            55909,
+                            56227,
+                            57062,
+                            57062,
+                            69954,
+                            69954,
+                            70899,
                         ],
                     }
                 ),
@@ -733,7 +733,7 @@ ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ord
 ROOT(columns=[('n', n), ('r', r)], orderings=[])
  FILTER(condition=r <= 30:int64, columns={'n': n, 'r': r})
   FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
-   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(args=[], partition=[], order=[(acctbal):desc_first])})
     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
             """,
                 lambda: pd.DataFrame(
@@ -756,7 +756,7 @@ ROOT(columns=[('n', n), ('r', r)], orderings=[])
 ROOT(columns=[('n', n), ('r', r)], orderings=[])
  FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
   FILTER(condition=r <= 30:int64, columns={'n': n, 'name': name, 'r': r})
-   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(args=[], partition=[], order=[(acctbal):desc_first])})
     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
             """,
                 lambda: pd.DataFrame(
@@ -777,7 +777,7 @@ ROOT(columns=[('n', n), ('r', r)], orderings=[])
                 rank_with_filters_c,
                 """  
 ROOT(columns=[('size', size), ('name', name)], orderings=[])
- FILTER(condition=RANKING(by=[], partition=['size'], order=['(retail_price):desc_first']) == 1:int64, columns={'name': name, 'size': size})
+ FILTER(condition=RANKING(args=[], partition=[size], order=[(retail_price):desc_first]) == 1:int64, columns={'name': name, 'size': size})
   PROJECT(columns={'name': name, 'retail_price': retail_price, 'size': size_1})
    JOIN(conditions=[t0.size == t1.size], types=['inner'], columns={'name': t1.name, 'retail_price': t1.retail_price, 'size_1': t1.size})
     LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'size': size}, orderings=[(ordering_0):desc_last])
@@ -806,7 +806,7 @@ ROOT(columns=[('size', size), ('name', name)], orderings=[])
                 percentile_nations,
                 """
 ROOT(columns=[('name', name), ('p', p)], orderings=[])
- PROJECT(columns={'name': name, 'p': PERCENTILE(by=[], partition=[], order=['(name):asc_last'], n_buckets=5)})
+ PROJECT(columns={'name': name, 'p': PERCENTILE(args=[], partition=[], order=[(name):asc_last], n_buckets=5)})
   SCAN(table=tpch.NATION, columns={'name': n_name})
                 """,
                 lambda: pd.DataFrame(
@@ -850,7 +850,7 @@ ROOT(columns=[('name', name), ('p', p)], orderings=[])
                 """
 ROOT(columns=[('name', name)], orderings=[(ordering_0):asc_first])
  PROJECT(columns={'name': name, 'ordering_0': name})
-  FILTER(condition=PERCENTILE(by=[], partition=['key_2'], order=['(acctbal):asc_last']) == 95:int64 & ENDSWITH(phone, '00':string), columns={'name': name})
+  FILTER(condition=PERCENTILE(args=[], partition=[key_2], order=[(acctbal):asc_last, (name):asc_last]) == 95:int64 & ENDSWITH(phone, '00':string), columns={'name': name})
    PROJECT(columns={'acctbal': acctbal, 'key_2': key_2, 'name': name_6, 'phone': phone})
     JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key_2': t0.key_2, 'name_6': t1.name, 'phone': t1.phone})
      JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
