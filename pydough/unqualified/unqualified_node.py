@@ -377,10 +377,15 @@ class UnqualifiedOperator(UnqualifiedNode):
         self._parcel: tuple[str] = (name,)
 
     def __call__(self, *args, **kwargs):
+        levels: int | None = None
         if len(kwargs) > 0:
             match self._parcel[0]:
                 case "RANKING":
-                    by = kwargs.get("by")
+                    if "by" not in kwargs:
+                        raise PyDoughUnqualifiedException(
+                            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
+                        )
+                    by = kwargs.pop("by")
                     if isinstance(by, UnqualifiedNode):
                         by = [by]
                     elif not (
@@ -390,12 +395,13 @@ class UnqualifiedOperator(UnqualifiedNode):
                         raise PyDoughUnqualifiedException(
                             "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
                         )
+                    if "levels" in kwargs:
+                        levels = kwargs.pop("levels")
                     return UnqualifiedWindow(
                         pydop.RANKING,
                         by,
-                        kwargs.get("levels", None),
-                        kwargs.get("allow_ties", False),
-                        kwargs.get("dense", False),
+                        levels,
+                        kwargs,
                     )
             raise PyDoughUnqualifiedException(
                 "PyDough function calls do not support keyword arguments at this time"
@@ -429,16 +435,14 @@ class UnqualifiedWindow(UnqualifiedNode):
         operator: pydop.ExpressionWindowOperator,
         by: Iterable[UnqualifiedNode],
         levels: int | None,
-        allow_ties: bool,
-        dense: bool,
+        kwargs: dict[str, object],
     ):
         self._parcel: tuple[
             pydop.ExpressionWindowOperator,
             Iterable[UnqualifiedNode],
             int | None,
-            bool,
-            bool,
-        ] = (operator, by, levels, allow_ties, dense)
+            dict[str, object],
+        ] = (operator, by, levels, kwargs)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -592,10 +596,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             operands_str = f'by=({", ".join([display_raw(operand) for operand in unqualified._parcel[1]])}'
             if unqualified._parcel[2] is not None:
                 operands_str += ", levels=" + str(unqualified._parcel[2])
-            if unqualified._parcel[3]:
-                operands_str += ", allow_ties=True"
-                if unqualified._parcel[4]:
-                    operands_str += ", dense=True"
+            for kwarg, val in unqualified._parcel[3].items():
+                operands_str += f", {kwarg}={val!r}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"
         case UnqualifiedBinaryOperation():
             return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0]} {display_raw(unqualified._parcel[2])})"

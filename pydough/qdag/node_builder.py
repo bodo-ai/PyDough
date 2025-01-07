@@ -145,8 +145,7 @@ class AstNodeBuilder:
         window_operator: ExpressionWindowOperator,
         collation_args: list[CollationExpression],
         levels: int | None,
-        allow_ties: bool,
-        dense: bool,
+        kwargs: dict[str, object],
     ) -> WindowCall:
         """
         Creates a new window function call that returns an expression.
@@ -156,14 +155,14 @@ class AstNodeBuilder:
             `collation_args`: the orderings used by the window function.
             `levels`: which ancestor the window function partitions relative to
             (None is the same thing as the furthest ancestor).
-            `allow_ties`: (for `RANKING`) whether to allow ties.
-            `dense`: (for `RANKING`) whether to do a dense ranking if there
+            `kwargs`: any additional arguments to the function, such as whether
+            ranking allows ties or is dense.
             are ties.
 
         Returns:
             The window function call as a QDAG expression node.
         """
-        return WindowCall(window_operator, collation_args, levels, allow_ties, dense)
+        return WindowCall(window_operator, collation_args, levels, kwargs)
 
     def build_reference(
         self, collection: PyDoughCollectionQDAG, name: str

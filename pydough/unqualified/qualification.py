@@ -277,8 +277,7 @@ class Qualifier:
         window_operator: ExpressionWindowOperator = unqualified._parcel[0]
         unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[1]
         levels: int | None = unqualified._parcel[2]
-        allow_ties: bool = unqualified._parcel[3]
-        dense: bool = unqualified._parcel[4]
+        kwargs: dict[str, object] = unqualified._parcel[3]
         # Qualify all of the collation terms, storing the children built along
         # the way.
         qualified_collations: list[CollationExpression] = []
@@ -294,7 +293,7 @@ class Qualifier:
                 "Window calls require a non-empty 'by' clause to be specified."
             )
         return self.builder.build_window_call(
-            window_operator, qualified_collations, levels, allow_ties, dense
+            window_operator, qualified_collations, levels, kwargs
         )
 
     def qualify_collation(
