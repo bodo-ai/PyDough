@@ -1,5 +1,5 @@
 {
-  "BROKER": {
+  "Broker": {
     "Customers": {
       "type": "simple_table",
       "table_path": "main.sbCustomer",

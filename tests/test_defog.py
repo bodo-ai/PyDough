@@ -33,7 +33,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_defog_broker_adv1,
-                "BROKER",
+                "Broker",
                 defog_sql_text_broker_adv1,
             ),
             id="broker_adv1",
@@ -41,7 +41,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_defog_broker_basic3,
-                "BROKER",
+                "Broker",
                 defog_sql_text_broker_basic3,
             ),
             id="broker_basic3",
@@ -49,7 +49,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_defog_broker_basic4,
-                "BROKER",
+                "Broker",
                 defog_sql_text_broker_basic4,
             ),
             id="broker_basic4",
