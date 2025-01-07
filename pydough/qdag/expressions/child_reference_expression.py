@@ -37,7 +37,7 @@ class ChildReferenceExpression(Reference):
     @property
     def child_idx(self) -> int:
         """
-        The integer index of the child from the CALC that hte ChildReferenceExpression
+        The integer index of the child from the CALC that the ChildReferenceExpression
         refers to.
         """
         return self._child_idx

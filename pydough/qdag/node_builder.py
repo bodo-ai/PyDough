@@ -149,7 +149,19 @@ class AstNodeBuilder:
         dense: bool,
     ) -> WindowCall:
         """
-        TODO: write docstring for this method
+        Creates a new window function call that returns an expression.
+
+        Args:
+            `window_operator`: the operator for the window function called.
+            `collation_args`: the orderings used by the window function.
+            `levels`: which ancestor the window function partitions relative to
+            (None is the same thing as the furthest ancestor).
+            `allow_ties`: (for `RANKING`) whether to allow ties.
+            `dense`: (for `RANKING`) whether to do a dense ranking if there
+            are ties.
+
+        Returns:
+            The window function call as a QDAG expression node.
         """
         return WindowCall(window_operator, collation_args, levels, allow_ties, dense)
 

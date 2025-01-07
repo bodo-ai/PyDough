@@ -590,7 +590,8 @@ class Qualifier:
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         records_to_keep: int = unqualified._parcel[1]
-        # TODO: add ability to infer the "by" clause from a predecessor
+        # TODO: (gh #164) add ability to infer the "by" clause from a
+        # predecessor
         assert (
             unqualified._parcel[2] is not None
         ), "TopK does not currently support an implied 'by' clause."

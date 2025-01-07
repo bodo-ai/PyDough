@@ -55,3 +55,19 @@ def rank_parts_per_supplier_region_by_size():
             dense=True,
         ),
     ).TOP_K(15, by=key.ASC())
+
+
+def rank_with_filters_a():
+    return (
+        Customers(n=name, r=RANKING(by=acctbal.DESC()))
+        .WHERE(ENDSWITH(name, "0"))
+        .WHERE(r <= 30)
+    )
+
+
+def rank_with_filters_b():
+    return (
+        Customers(n=name, r=RANKING(by=acctbal.DESC()))
+        .WHERE(r <= 30)
+        .WHERE(ENDSWITH(name, "0"))
+    )

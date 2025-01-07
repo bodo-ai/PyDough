@@ -10,6 +10,8 @@ from simple_pydough_functions import (
     rank_nations_by_region,
     rank_nations_per_region_by_customers,
     rank_parts_per_supplier_region_by_size,
+    rank_with_filters_a,
+    rank_with_filters_b,
     simple_filter_top_five,
     simple_scan_top_five,
 )
@@ -720,6 +722,52 @@ ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ord
                 ),
             ),
             id="rank_parts_per_supplier_region_by_size",
+        ),
+        pytest.param(
+            (
+                rank_with_filters_a,
+                """
+ROOT(columns=[('n', n), ('r', r)], orderings=[])
+ FILTER(condition=r <= 30:int64, columns={'n': n, 'r': r})
+  FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
+            """,
+                lambda: pd.DataFrame(
+                    {
+                        "n": [
+                            "Customer#000015980",
+                            "Customer#000025320",
+                            "Customer#000089900",
+                        ],
+                        "r": [9, 25, 29],
+                    }
+                ),
+            ),
+            id="rank_with_filters_a",
+        ),
+        pytest.param(
+            (
+                rank_with_filters_b,
+                """
+ROOT(columns=[('n', n), ('r', r)], orderings=[])
+ FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
+  FILTER(condition=r <= 30:int64, columns={'n': n, 'name': name, 'r': r})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
+            """,
+                lambda: pd.DataFrame(
+                    {
+                        "n": [
+                            "Customer#000015980",
+                            "Customer#000025320",
+                            "Customer#000089900",
+                        ],
+                        "r": [9, 25, 29],
+                    }
+                ),
+            ),
+            id="rank_with_filters_b",
         ),
     ],
 )
