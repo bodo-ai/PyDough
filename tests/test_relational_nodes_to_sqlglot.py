@@ -21,11 +21,14 @@ from sqlglot.expressions import (
     Length,
     Literal,
     Lower,
+    Order,
+    RowNumber,
     Select,
     Sub,
     Subquery,
     Sum,
     Table,
+    Window,
 )
 from sqlglot.expressions import Identifier as Ident
 from test_utils import (
@@ -43,6 +46,7 @@ from pydough.pydough_operators import (
     GEQ,
     LENGTH,
     LOWER,
+    RANKING,
     SUB,
     SUM,
 )
@@ -58,6 +62,7 @@ from pydough.relational import (
     Relational,
     RelationalRoot,
     Scan,
+    WindowCallExpression,
 )
 from pydough.sqlglot import (
     SQLGlotRelationalVisitor,
@@ -1506,6 +1511,52 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=GlotFrom(Table(this=Ident(this="table"))),
             ),
             id="root_with_expr_ordering",
+        ),
+        pytest.param(
+            Filter(
+                input=build_simple_scan(),
+                condition=CallExpression(
+                    GEQ,
+                    BooleanType(),
+                    [
+                        WindowCallExpression(
+                            RANKING,
+                            Int64Type(),
+                            [],
+                            [],
+                            [
+                                make_relational_ordering(
+                                    make_relational_column_reference("a"),
+                                    ascending=True,
+                                    nulls_first=True,
+                                )
+                            ],
+                            {},
+                        ),
+                        make_relational_literal(3, Int64Type()),
+                    ],
+                ),
+                columns={
+                    "a": make_relational_column_reference("a"),
+                    "b": make_relational_column_reference("b"),
+                },
+            ),
+            mkglot(
+                expressions=[Ident(this="a"), Ident(this="b")],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                where=GTE(
+                    this=Window(
+                        this=RowNumber(),
+                        partition=[],
+                        order=Order(
+                            this=None,
+                            expressions=[Ident(this="a").asc(nulls_first=True)],
+                        ),
+                    ),
+                    expression=mk_literal(3, False),
+                ),
+            ),
+            id="ranking_no_partiion",
         ),
     ],
 )

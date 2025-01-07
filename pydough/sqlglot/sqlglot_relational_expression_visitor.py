@@ -3,6 +3,8 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+import warnings
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -14,6 +16,7 @@ from pydough.relational import (
     LiteralExpression,
     RelationalExpression,
     RelationalExpressionVisitor,
+    WindowCallExpression,
 )
 
 from .sqlglot_helpers import set_glot_alias
@@ -54,6 +57,72 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             call_expression.op, call_expression.inputs, input_exprs
         )
         self._stack.append(output_expr)
+
+    def visit_window_expression(self, window_expression: WindowCallExpression) -> None:
+        # Visit the inputs in reverse order so we can pop them off in order.
+        for arg in reversed(window_expression.inputs):
+            arg.accept(self)
+        [self._stack.pop() for _ in range(len(window_expression.inputs))]
+        # Do the same with the partition expressions.
+        for arg in reversed(window_expression.partition_inputs):
+            arg.accept(self)
+        partition_exprs: list[SQLGlotExpression] = [
+            self._stack.pop() for _ in range(len(window_expression.partition_inputs))
+        ]
+        # Do the same with the order
+        order_exprs: list[SQLGlotExpression] = []
+        for order_arg in reversed(window_expression.order_inputs):
+            order_arg.expr.accept(self)
+            glot_expr: SQLGlotExpression = self._stack.pop()
+            # Ignore non-default na first/last positions for SQLite dialect
+            na_first: bool
+            if self._dialect.__class__.__name__ == "SQLite":
+                if order_arg.ascending:
+                    if not order_arg.nulls_first:
+                        warnings.warn(
+                            "PyDough when using SQLITE dialect does not support ascending ordering with nulls last (changed to nulls first)"
+                        )
+                    na_first = True
+                else:
+                    if order_arg.nulls_first:
+                        warnings.warn(
+                            "PyDough when using SQLITE dialect does not support ascending ordering with nulls first (changed to nulls last)"
+                        )
+                    na_first = False
+            else:
+                na_first = order_arg.nulls_first
+            if order_arg.ascending:
+                glot_expr = glot_expr.asc(nulls_first=na_first)
+            else:
+                glot_expr = glot_expr.desc(nulls_first=na_first)
+            order_exprs.append(glot_expr)
+        match window_expression.op.function_name:
+            case "RANKING":
+                this: SQLGlotExpression
+                if window_expression.kwargs.get("allow_ties", False):
+                    if window_expression.kwargs.get("dense", False):
+                        this = sqlglot_expressions.Anonymous(
+                            this="DENSE_RANK", expressions=[]
+                        )
+                    else:
+                        this = sqlglot_expressions.Anonymous(
+                            this="RANK", expressions=[]
+                        )
+                else:
+                    this = sqlglot_expressions.RowNumber()
+                self._stack.append(
+                    sqlglot_expressions.Window(
+                        this=this,
+                        partition_by=partition_exprs,
+                        order=sqlglot_expressions.Order(
+                            this=None, expressions=order_exprs
+                        ),
+                    )
+                )
+            case _:
+                raise NotImplementedError(
+                    f"Window operator {window_expression.op.function_name} not supported"
+                )
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed

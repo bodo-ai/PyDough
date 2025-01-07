@@ -34,6 +34,7 @@ __all__ = [
     "BackReferenceExpression",
     "PartitionKey",
     "BackReferenceCollection",
+    "WindowCall",
 ]
 
 from .abstract_pydough_qdag import PyDoughQDAG
@@ -67,5 +68,6 @@ from .expressions import (
     PartitionKey,
     PyDoughExpressionQDAG,
     Reference,
+    WindowCall,
 )
 from .node_builder import AstNodeBuilder

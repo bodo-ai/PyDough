@@ -6,7 +6,15 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from simple_pydough_functions import simple_filter_top_five, simple_scan_top_five
+from simple_pydough_functions import (
+    rank_nations_by_region,
+    rank_nations_per_region_by_customers,
+    rank_parts_per_supplier_region_by_size,
+    rank_with_filters_a,
+    rank_with_filters_b,
+    simple_filter_top_five,
+    simple_scan_top_five,
+)
 from test_utils import (
     graph_fetcher,
 )
@@ -585,6 +593,181 @@ ROOT(columns=[('key', key), ('total_price', total_price)], orderings=[(ordering_
                 ),
             ),
             id="simple_filter_top_five",
+        ),
+        pytest.param(
+            (
+                rank_nations_by_region,
+                """
+ROOT(columns=[('name', name), ('rank', rank)], orderings=[])
+ PROJECT(columns={'name': name, 'rank': RANKING(by=[], partition=[], order=['(name_3):asc_last'])})
+  JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'name': t0.name, 'name_3': t1.name})
+   SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ETHIOPIA",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "CHINA",
+                            "VIETNAM",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                            "EGYPT",
+                            "IRAN",
+                            "IRAQ",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                        "rank": [1] * 5 + [6] * 5 + [11] * 5 + [16] * 5 + [21] * 5,
+                    }
+                ),
+            ),
+            id="rank_nations_by_region",
+        ),
+        pytest.param(
+            (
+                rank_nations_per_region_by_customers,
+                """
+ROOT(columns=[('name', name), ('rank', rank)], orderings=[(ordering_1):asc_first])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'name': name, 'ordering_1': ordering_1, 'rank': rank}, orderings=[(ordering_1):asc_first])
+  PROJECT(columns={'name': name, 'ordering_1': rank, 'rank': rank})
+   PROJECT(columns={'name': name_3, 'rank': RANKING(by=[], partition=['key'], order=['(DEFAULT_TO(agg_0, 0:int64)):desc_first'])})
+    JOIN(conditions=[t0.key_2 == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name_3': t0.name_3})
+     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name_3': t1.name})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+     AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT()})
+      SCAN(table=tpch.CUSTOMER, columns={'nation_key': c_nationkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["KENYA", "CANADA", "INDONESIA", "FRANCE", "JORDAN"],
+                        "rank": [1] * 5,
+                    }
+                ),
+            ),
+            id="rank_nations_per_region_by_customers",
+        ),
+        pytest.param(
+            (
+                rank_parts_per_supplier_region_by_size,
+                """
+ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ordering_0):asc_first])
+ LIMIT(limit=Literal(value=15, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0, 'rank': rank, 'region': region}, orderings=[(ordering_0):asc_first])
+  PROJECT(columns={'key': key, 'ordering_0': key, 'rank': rank, 'region': region})
+   PROJECT(columns={'key': key_9, 'rank': RANKING(by=[], partition=['key'], order=['(size):desc_first', '(container):desc_first', '(part_type):desc_first']), 'region': name})
+    JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'container': t1.container, 'key': t0.key, 'key_9': t1.key, 'name': t0.name, 'part_type': t1.part_type, 'size': t1.size})
+     JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'key': t0.key, 'name': t0.name, 'part_key': t1.part_key})
+      JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name': t0.name})
+       JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name': t0.name})
+        SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+        SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+       SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+     SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'part_type': p_type, 'size': p_size})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4],
+                        "region": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "EUROPE",
+                            "AFRICA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                            "AFRICA",
+                            "AFRICA",
+                            "ASIA",
+                        ],
+                        "rank": [
+                            41069,
+                            42125,
+                            42125,
+                            41612,
+                            76766,
+                            78621,
+                            78621,
+                            77311,
+                            2588,
+                            2641,
+                            2569,
+                            2569,
+                            22061,
+                            22061,
+                            22393,
+                        ],
+                    }
+                ),
+            ),
+            id="rank_parts_per_supplier_region_by_size",
+        ),
+        pytest.param(
+            (
+                rank_with_filters_a,
+                """
+ROOT(columns=[('n', n), ('r', r)], orderings=[])
+ FILTER(condition=r <= 30:int64, columns={'n': n, 'r': r})
+  FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
+            """,
+                lambda: pd.DataFrame(
+                    {
+                        "n": [
+                            "Customer#000015980",
+                            "Customer#000025320",
+                            "Customer#000089900",
+                        ],
+                        "r": [9, 25, 29],
+                    }
+                ),
+            ),
+            id="rank_with_filters_a",
+        ),
+        pytest.param(
+            (
+                rank_with_filters_b,
+                """
+ROOT(columns=[('n', n), ('r', r)], orderings=[])
+ FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
+  FILTER(condition=r <= 30:int64, columns={'n': n, 'name': name, 'r': r})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
+            """,
+                lambda: pd.DataFrame(
+                    {
+                        "n": [
+                            "Customer#000015980",
+                            "Customer#000025320",
+                            "Customer#000089900",
+                        ],
+                        "r": [9, 25, 29],
+                    }
+                ),
+            ),
+            id="rank_with_filters_b",
         ),
     ],
 )

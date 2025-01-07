@@ -47,11 +47,14 @@ __all__ = [
     "DEFAULT_TO",
     "HAS",
     "HASNOT",
+    "RANKING",
+    "ExpressionWindowOperator",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
 from .expression_operator import PyDoughExpressionOperator
+from .expression_window_operators import ExpressionWindowOperator
 from .registered_expression_operators import (
     ABS,
     ADD,
@@ -86,6 +89,7 @@ from .registered_expression_operators import (
     NEQ,
     NOT,
     POW,
+    RANKING,
     SLICE,
     STARTSWITH,
     SUB,

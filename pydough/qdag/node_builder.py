@@ -14,6 +14,7 @@ from pydough.metadata import (
     TableColumnMetadata,
 )
 from pydough.pydough_operators import (
+    ExpressionWindowOperator,
     PyDoughExpressionOperator,
     PyDoughOperator,
     builtin_registered_operators,
@@ -37,10 +38,12 @@ from .errors import PyDoughQDAGException
 from .expressions import (
     BackReferenceExpression,
     ChildReferenceExpression,
+    CollationExpression,
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
     Reference,
+    WindowCall,
 )
 
 
@@ -136,6 +139,30 @@ class AstNodeBuilder:
         operator = self.operators[function_name]
         assert isinstance(operator, PyDoughExpressionOperator)
         return ExpressionFunctionCall(operator, args)
+
+    def build_window_call(
+        self,
+        window_operator: ExpressionWindowOperator,
+        collation_args: list[CollationExpression],
+        levels: int | None,
+        kwargs: dict[str, object],
+    ) -> WindowCall:
+        """
+        Creates a new window function call that returns an expression.
+
+        Args:
+            `window_operator`: the operator for the window function called.
+            `collation_args`: the orderings used by the window function.
+            `levels`: which ancestor the window function partitions relative to
+            (None is the same thing as the furthest ancestor).
+            `kwargs`: any additional arguments to the function, such as whether
+            ranking allows ties or is dense.
+            are ties.
+
+        Returns:
+            The window function call as a QDAG expression node.
+        """
+        return WindowCall(window_operator, collation_args, levels, kwargs)
 
     def build_reference(
         self, collection: PyDoughCollectionQDAG, name: str

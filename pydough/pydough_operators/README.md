@@ -44,6 +44,14 @@ You can use other functions such as `LOWER`, `UPPER`, `IFF`, and `CONTAINS` dire
 result = LOWER(name)
 ```
 
+### Window Functions
+
+A window function returns information about the current record relative to its place amongst other records. This could include its ordinal position when sorted globally (or within other subcollection records of a parent collection).
+
+```python
+result = RANKING(by=account_balance.DESC())
+```
+
 ## Detailed Explanation
 
 The PyDough operators module defines various operators used in PyDough for different types of operations. These operators are registered and made available for use in PyDough code through the `builtin_registered_operators` function. This function returns a dictionary of all built-in registered operators, which are then automatically available for use in PyDough expressions.

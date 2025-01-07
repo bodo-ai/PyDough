@@ -31,6 +31,7 @@ from pydough.pydough_operators import (
     ISIN,
     LIKE,
     MUL,
+    RANKING,
     STARTSWITH,
     SUM,
     YEAR,
@@ -46,6 +47,7 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalRoot,
+    WindowCallExpression,
 )
 from pydough.sqlglot import SqlGlotTransformBindings, convert_relation_to_sql
 from pydough.types import BooleanType, Int64Type, StringType, UnknownType
@@ -961,6 +963,130 @@ def test_tpch_relational_to_sql(
             ),
             "SELECT CAST(STRFTIME('%Y', a) AS INTEGER) AS a FROM (SELECT a, b FROM table)",
             id="year",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                    ("r", make_relational_column_reference("r")),
+                ],
+                input=Filter(
+                    input=Filter(
+                        input=Project(
+                            input=build_simple_scan(),
+                            columns={
+                                "a": make_relational_column_reference("a"),
+                                "b": make_relational_column_reference("b"),
+                                "r": WindowCallExpression(
+                                    RANKING,
+                                    Int64Type(),
+                                    [],
+                                    [],
+                                    [
+                                        make_relational_ordering(
+                                            make_relational_column_reference("a"),
+                                            ascending=True,
+                                            nulls_first=True,
+                                        )
+                                    ],
+                                    {"allow_ties": True},
+                                ),
+                            },
+                        ),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                            "r": make_relational_column_reference("r"),
+                        },
+                        condition=CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("b"),
+                                LiteralExpression(0, Int64Type()),
+                            ],
+                        ),
+                    ),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                        "r": make_relational_column_reference("r"),
+                    },
+                    condition=CallExpression(
+                        GEQ,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("r"),
+                            LiteralExpression(3, Int64Type()),
+                        ],
+                    ),
+                ),
+            ),
+            "SELECT a, b, r FROM (SELECT a, b, RANK() OVER (ORDER BY a) AS r FROM (SELECT a, b FROM table) WHERE b = 0) WHERE r >= 3",
+            id="rank_with_filters_a",
+        ),
+        pytest.param(
+            RelationalRoot(
+                ordered_columns=[
+                    ("a", make_relational_column_reference("a")),
+                    ("b", make_relational_column_reference("b")),
+                    ("r", make_relational_column_reference("r")),
+                ],
+                input=Filter(
+                    input=Filter(
+                        input=Project(
+                            input=build_simple_scan(),
+                            columns={
+                                "a": make_relational_column_reference("a"),
+                                "b": make_relational_column_reference("b"),
+                                "r": WindowCallExpression(
+                                    RANKING,
+                                    Int64Type(),
+                                    [],
+                                    [],
+                                    [
+                                        make_relational_ordering(
+                                            make_relational_column_reference("a"),
+                                            ascending=True,
+                                            nulls_first=True,
+                                        )
+                                    ],
+                                    {"allow_ties": True},
+                                ),
+                            },
+                        ),
+                        columns={
+                            "a": make_relational_column_reference("a"),
+                            "b": make_relational_column_reference("b"),
+                            "r": make_relational_column_reference("r"),
+                        },
+                        condition=CallExpression(
+                            GEQ,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("r"),
+                                LiteralExpression(3, Int64Type()),
+                            ],
+                        ),
+                    ),
+                    columns={
+                        "a": make_relational_column_reference("a"),
+                        "b": make_relational_column_reference("b"),
+                        "r": make_relational_column_reference("r"),
+                    },
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("b"),
+                            LiteralExpression(0, Int64Type()),
+                        ],
+                    ),
+                ),
+            ),
+            "SELECT a, b, r FROM (SELECT a, b, r FROM (SELECT a, b, RANK() OVER (ORDER BY a) AS r FROM (SELECT a, b FROM table)) WHERE r >= 3) WHERE b = 0",
+            id="rank_with_filters_b",
         ),
     ],
 )

@@ -1,6 +1,6 @@
 """
 Definition of PyDough QDAG collection type for accesses to a subcollection of the
-current context where teh subcollection is a compound relationship.
+current context where the subcollection is a compound relationship.
 """
 
 __all__ = ["CompoundSubCollection"]
