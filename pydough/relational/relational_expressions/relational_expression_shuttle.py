@@ -45,7 +45,6 @@ class RelationalExpressionShuttle(ABC):
             ExpressionSortInfo(arg.expr.accept(self), arg.ascending, arg.nulls_first)
             for arg in window_expression.order_inputs
         ]
-        breakpoint()
         return WindowCallExpression(
             window_expression.op,
             window_expression.data_type,
