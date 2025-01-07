@@ -131,8 +131,9 @@ calc_node = builder.build_calc(table_collection, [customers_child])
 calc_node = calc_node.with_terms([("n_customers", count_call)])
 
 # Build a window function call node
-# Equivalent PyDough code: `LOWER(TPCH.Nations.name)`
-window_call_node = builder.build_window_call("LOWER", [reference_node])
+# Equivalent PyDough code: `RANKING(by=TPCH.Nations.name, levels=1, allow_ties=True)`
+from pydough.operators import RANKING
+window_call_node = builder.build_window_call(RANKING, [reference_node], 1, {"allow_ties": True})
 ```
 
 ### HAS/HASNOT Rewrite

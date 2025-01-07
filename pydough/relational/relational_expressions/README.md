@@ -16,9 +16,6 @@ The relational_expressions module provides functionality to define and manage va
     - `accept`: Visits the relational expression with the provided visitor.
     - `accept_shuttle`: Visits the relational expression with the provided shuttle and returns the new expression.
 
-### [call_expression.py](call_expression.py)
-
-- `CallExpression`: The expression implementation for calling a function on a relational node.
 
 ### [column_reference.py](column_reference.py)
 
@@ -27,6 +24,14 @@ The relational_expressions module provides functionality to define and manage va
 ### [literal_expression.py](literal_expression.py)
 
 - `LiteralExpression`: The expression implementation for a literal value in a relational node.
+
+### [call_expression.py](call_expression.py)
+
+- `CallExpression`: The expression implementation for calling a function on a relational node.
+
+### [window_call_expression.py](call_expression.py)
+
+- `WindowCallExpression`: The expression implementation for calling a window function on relational nodes.
 
 ### [expression_sort_info.py](expression_sort_info.py)
 
