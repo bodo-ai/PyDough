@@ -529,7 +529,8 @@ class HybridPartition(HybridOperation):
         """
         self.key_names.append(key_name)
         self.terms[key_name] = key_expr
-        self.unique_exprs.append(key_expr)
+        self.unique_exprs.append(HybridRefExpr(key_name, key_expr.typ))
+        # breakpoint()
 
 
 class HybridLimit(HybridOperation):

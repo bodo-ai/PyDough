@@ -71,3 +71,22 @@ def rank_with_filters_b():
         .WHERE(r <= 30)
         .WHERE(ENDSWITH(name, "0"))
     )
+
+
+def rank_with_filters_c():
+    return (
+        PARTITION(Parts, name="p", by=size)
+        .TOP_K(5, by=size.DESC())
+        .p(size, name)
+        .WHERE(RANKING(by=retail_price.DESC(), levels=1) == 1)
+    )
+
+
+def percentile_nations():
+    return Nations(name, p=PERCENTILE(by=name.ASC(), n_buckets=5))
+
+
+def percentile_customers_per_region():
+    return Regions.nations.customers(name).WHERE(
+        (PERCENTILE(by=acctbal.DESC(), levels=1) == 5) & (ENDSWITH(phone, "00"))
+    )

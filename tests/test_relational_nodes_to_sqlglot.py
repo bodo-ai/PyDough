@@ -24,6 +24,7 @@ from sqlglot.expressions import (
     Order,
     RowNumber,
     Select,
+    Star,
     Sub,
     Subquery,
     Sum,
@@ -151,6 +152,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
         query = query.where(kwargs.pop("where"))
     if "group_by" in kwargs:
         query = query.group_by(*kwargs.pop("group_by"))
+    if "qualify" in kwargs:
+        query = query.qualify(kwargs.pop("qualify"))
     if "order_by" in kwargs:
         query = query.order_by(*kwargs.pop("order_by"))
     if "limit" in kwargs:
@@ -1543,17 +1546,29 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
-                where=GTE(
-                    this=Window(
-                        this=RowNumber(),
-                        partition=[],
-                        order=Order(
-                            this=None,
-                            expressions=[Ident(this="a").asc(nulls_first=True)],
+                _from=GlotFrom(
+                    mkglot(
+                        [Star()],
+                        _from=GlotFrom(
+                            mkglot(
+                                [Ident(this="a"), Ident(this="b")],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
+                            )
                         ),
-                    ),
-                    expression=mk_literal(3, False),
+                        qualify=GTE(
+                            this=Window(
+                                this=RowNumber(),
+                                partition=[],
+                                order=Order(
+                                    this=None,
+                                    expressions=[Ident(this="a").asc(nulls_first=True)],
+                                ),
+                            ),
+                            expression=mk_literal(3, False),
+                        ),
+                    )
                 ),
             ),
             id="ranking_no_partiion",
