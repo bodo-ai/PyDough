@@ -1579,7 +1579,7 @@ class HybridTranslator:
                 while true_steps_back < expr.back_levels:
                     if ancestor_tree.parent is None:
                         raise NotImplementedError(
-                            "TODO: support BACK references that step from a child subtree back into a parent context."
+                            "TODO: (gh #141) support BACK references that step from a child subtree back into a parent context."
                         )
                     ancestor_tree = ancestor_tree.parent
                     back_idx += true_steps_back
@@ -1625,7 +1625,7 @@ class HybridTranslator:
                     else:
                         if not isinstance(arg, ChildReferenceCollection):
                             raise NotImplementedError("Cannot process argument")
-                        # TODO: handle NDISTINCT
+                        # TODO: (gh #148) handle collection-level NDISTINCT
                         if expr.operator == pydop.COUNT:
                             return self.handle_collection_count(
                                 hybrid, expr, child_ref_mapping
@@ -1688,18 +1688,13 @@ class HybridTranslator:
                         hybrid, arg.expr, child_ref_mapping
                     )
                     order_args.append(HybridCollation(hybrid_arg, arg.asc, arg.na_last))
-                kwargs: dict[str, object] = {}
-                if expr.allow_ties:
-                    kwargs["allow_ties"] = expr.allow_ties
-                if expr.dense:
-                    kwargs["dense"] = expr.dense
                 return HybridWindowExpr(
                     expr.window_operator,
                     [],
                     partition_args,
                     order_args,
                     expr.pydough_type,
-                    kwargs,
+                    expr.kwargs,
                 )
             case _:
                 raise NotImplementedError(

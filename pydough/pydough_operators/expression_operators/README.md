@@ -106,10 +106,18 @@ These functions can be called on plural data to aggregate it into a singular exp
 
 #### Window Functions
 
-These functions return an expression and use logic that produces a value that depends on other records in the collection. Each of these functions has an optional `levels` argument. If it is absent, it means that the operation is done by examining all records globally. If `levels` is provided, it must be a positive integer, and if so it indicates that the operation is only done comparing the record against other records that are subcollection entries of teh same ancestor collection, where the `levels` argument indicates how many `BACK` levels to find that ancestor.
+These functions return an expression and use logic that produces a value that depends on other records in the collection. Each of these functions has an optional `levels` argument. If it is absent, it means that the operation is done by examining all records globally. If `levels` is provided, it must be a valid argument to `BACK`, and if so it indicates that the operation is only done comparing the record against other records that are subcollection entries of the same ancestor collection, where the `levels` argument indicates how many `BACK` levels to find that ancestor. 
 
 - `RANKING(by=..., levels=None, allow_ties=False, dense=False)`: returns the ordinal position of the current record when all records are sorted by the collation expressions in the `by` argument. By default, uses the same semantics as `ROW_NUMBER`. If `allow_ties=True`, instead uses `RANK`. If `allow_ties=True` and `dense=True`, instead uses `DENSE_RANK`.
 - `PERCENTILE(n_buckets=100, by=..., levels=None)`: returns the index of the bucket that the current record is placed into if all of the data is sorted by the collation expressions in the `by` argument then divided into `n` buckets from 1 to `n`.
+
+For an example of how `levels` works, when doing `Regions.nations.customers(r=RANKING(by=...))`:
+
+- If `levels=None` or `levels=3`, `r` is the ranking across all `customers`.
+- If `levels=1`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).
+- If `levels=2`, `r` is the ranking of customers per-region (meaning the ranking resets to 1 within each region).
+
+Note: this feature is still experimental, and the `levels` argument may be renamed. 
 
 ## Interaction with Type Inference
 

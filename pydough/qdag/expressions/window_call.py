@@ -28,15 +28,12 @@ class WindowCall(PyDoughExpressionQDAG):
         window_operator: ExpressionWindowOperator,
         collation_args: list[CollationExpression],
         levels: int | None,
-        allow_ties: bool,
-        dense: bool,
-        n_buckets: int | None,
+        kwargs: dict[str, object],
     ):
         self._window_operator: ExpressionWindowOperator = window_operator
         self._collation_args: list[CollationExpression] = collation_args
         self._levels: int | None = levels
-        self._allow_ties: bool = allow_ties
-        self._dense: bool = dense
+        self._kwargs: dict[str, object] = kwargs
 
     @property
     def window_operator(self) -> ExpressionWindowOperator:
@@ -61,25 +58,12 @@ class WindowCall(PyDoughExpressionQDAG):
         return self._levels
 
     @property
-    def n_buckets(self) -> int | None:
+    def kwargs(self) -> dict[str, object]:
         """
-        If the window function is PERCENTILE, how many buckets to use.
+        Any additional keyword arguments to window functions. For example, for
+        `RANKING`, whether to allow ties in the ranking (True) or not (False).
         """
-        return self.n_buckets
-
-    @property
-    def allow_ties(self) -> bool:
-        """
-        Whether to allow ties in the ranking (True) or not (False).
-        """
-        return self._allow_ties
-
-    @property
-    def dense(self) -> bool:
-        """
-        Whether to compute dense ranks (True) or standard ranks (False).
-        """
-        return self._dense
+        return self._kwargs
 
     @property
     def pydough_type(self) -> PyDoughType:
@@ -108,10 +92,8 @@ class WindowCall(PyDoughExpressionQDAG):
         suffix: str = ""
         if self.levels is not None:
             suffix += f", levels={self.levels}"
-        if self.allow_ties:
-            suffix += ", allow_ties=True"
-            if self.dense:
-                suffix += ", dense=True"
+        for kwarg in self.kwargs:
+            suffix += f", {kwarg}={self.kwargs.get(kwarg)!r}"
         return f"{self.window_operator.function_name}(by=({', '.join(arg_strings)}){suffix})"
 
     def equals(self, other: object) -> bool:
@@ -120,6 +102,5 @@ class WindowCall(PyDoughExpressionQDAG):
             and (self.window_operator == other.window_operator)
             and (self.collation_args == other.collation_args)
             and (self.levels == other.levels)
-            and (self.allow_ties == other.allow_ties)
-            and (self.dense == other.dense)
+            and (self.kwargs == other.kwargs)
         )

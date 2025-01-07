@@ -203,17 +203,16 @@ class WindowInfo(AstNodeTestInfo):
         arguments (passed in via *args).
     - `levels`: the number of levels upward to reference (passed in via
         kwargs).
-    - `allow_ties`: whether to allow ties in the ranking (passed in via
-        kwargs).
-    - `dense`: whether to compute dense ranks (passed in via kwargs).
+    - `kwargs`: any additional keyword arguments to the window function call.
     """
 
     def __init__(self, name: str, *args, **kwargs):
         self.name: str = name
         self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
-        self.levels: int | None = kwargs.get("levels", None)
-        self.allow_ties: bool = kwargs.get("allow_ties", False)
-        self.dense: bool = kwargs.get("dense", False)
+        self.levels: int | None = None
+        if "levels" in kwargs:
+            self.levels = kwargs.pop("levels")
+        self.kwargs: dict[str, object] = kwargs
 
     def to_string(self) -> str:
         collation_strings: list[str] = []
@@ -221,9 +220,12 @@ class WindowInfo(AstNodeTestInfo):
             suffix = "ASC" if asc else "DESC"
             kwarg = "'last'" if na_last else "'first'"
             collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        kwargs_str: str = ""
+        for kwarg, val in self.kwargs.items():
+            kwargs_str += f", {kwarg}={val!r}"
         match self.name:
             case "RANKING":
-                return f"{self.name}(by=({', '.join(collation_strings)}), levels={self.levels}, allow_ties={self.allow_ties}, dense={self.dense})"
+                return f"{self.name}(by=({', '.join(collation_strings)}), levels={self.levels}{kwargs_str})"
             case _:
                 raise Exception(f"Unsupported window function {self.name}")
 
@@ -247,8 +249,7 @@ class WindowInfo(AstNodeTestInfo):
                     pydop.RANKING,
                     collation_args,
                     self.levels,
-                    self.allow_ties,
-                    self.dense,
+                    self.kwargs,
                 )
             case _:
                 raise Exception(f"Unsupported window function {self.name}")

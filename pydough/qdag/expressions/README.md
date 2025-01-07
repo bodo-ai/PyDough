@@ -19,6 +19,7 @@ This module defines the various expression types used in the QDAG (Qualified Dir
 - `Literal`: Represents a literal value in the QDAG.
 - `ColumnProperty`: Represents a column property of a collection.
 - `ExpressionFunctionCall`: Represents a function call expression. Contains a PyDough operator that returns an expression, as well as a list of QDAG nodes (collections or expressions).
+- `WindowCall`: Represents a window function call expression. Contains a PyDough operator for a window function that returns an expression, as well as the QDAG nodes for the window ordering, the number of ancestor levels that the window is relative to, and any additional keyword arguments.
 - `Reference`: Represents a reference to an expression in a preceding context.
 - `ChildReferenceExpression`: Represents a reference to an expression in a child collection.
 - `BackReferenceExpression`: Represents a reference to an expression in an ancestor collection.

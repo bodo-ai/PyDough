@@ -369,15 +369,20 @@ class UnqualifiedCollation(UnqualifiedNode):
 
 def get_by_arg(
     kwargs: dict[str, object],
+    func_name: str,
 ) -> UnqualifiedNode | Iterable[UnqualifiedNode]:
-    by = kwargs.get("by")
+    if "by" not in kwargs:
+        raise PyDoughUnqualifiedException(
+            f"The `by` argument to `{func_name}` must be provided"
+        )
+    by = kwargs.pop("by")
     if isinstance(by, UnqualifiedNode):
         by = [by]
     elif not (
         isinstance(by, Iterable) and all(isinstance(arg, UnqualifiedNode) for arg in by)
     ):
         raise PyDoughUnqualifiedException(
-            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
+            f"The `by` argument to `{func_name}` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
         )
     return by
 
@@ -392,27 +397,27 @@ class UnqualifiedOperator(UnqualifiedNode):
         self._parcel: tuple[str] = (name,)
 
     def __call__(self, *args, **kwargs):
+        levels: int | None = None
         if len(kwargs) > 0:
             by: UnqualifiedNode | Iterable[UnqualifiedNode]
             window_operator: pydop.ExpressionWindowOperator
             match self._parcel[0]:
                 case "PERCENTILE":
-                    by = get_by_arg(kwargs)
                     window_operator = pydop.PERCENTILE
                 case "RANKING":
-                    by = get_by_arg(kwargs)
                     window_operator = pydop.RANKING
-                case _:
+                case func:
                     raise PyDoughUnqualifiedException(
-                        "PyDough function calls do not support keyword arguments at this time"
+                        f"PyDough function call {func} does not support keyword arguments at this time"
                     )
+            by = get_by_arg(kwargs, self._parcel[0])
+            if "levels" in kwargs:
+                levels = kwargs.pop("levels")
             return UnqualifiedWindow(
                 window_operator,
                 by,
-                levels=kwargs.get("levels", None),
-                allow_ties=kwargs.get("allow_ties", False),
-                dense=kwargs.get("dense", False),
-                n_buckets=kwargs.get("n_buckets", False),
+                levels,
+                kwargs,
             )
         operands: MutableSequence[UnqualifiedNode] = []
         for arg in args:
@@ -443,18 +448,14 @@ class UnqualifiedWindow(UnqualifiedNode):
         operator: pydop.ExpressionWindowOperator,
         by: Iterable[UnqualifiedNode],
         levels: int | None,
-        allow_ties: bool,
-        dense: bool,
-        n_buckets: int | None,
+        kwargs: dict[str, object],
     ):
         self._parcel: tuple[
             pydop.ExpressionWindowOperator,
             Iterable[UnqualifiedNode],
             int | None,
-            bool,
-            bool,
-            int | None,
-        ] = (operator, by, levels, allow_ties, dense, n_buckets)
+            dict[str, object],
+        ] = (operator, by, levels, kwargs)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -608,12 +609,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             operands_str = f'by=({", ".join([display_raw(operand) for operand in unqualified._parcel[1]])}'
             if unqualified._parcel[2] is not None:
                 operands_str += ", levels=" + str(unqualified._parcel[2])
-            if unqualified._parcel[3]:
-                operands_str += ", allow_ties=True"
-                if unqualified._parcel[4]:
-                    operands_str += ", dense=True"
-            if unqualified._parcel[5]:
-                operands_str += f", n_buckets={unqualified._parcel[5]}"
+            for kwarg, val in unqualified._parcel[3].items():
+                operands_str += f", {kwarg}={val!r}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"
         case UnqualifiedBinaryOperation():
             return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0]} {display_raw(unqualified._parcel[2])})"
