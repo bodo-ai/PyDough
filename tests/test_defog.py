@@ -1,0 +1,219 @@
+"""
+Integration tests for the PyDough workflow on the defog.ai queries.
+"""
+
+from collections.abc import Callable
+
+import pandas as pd
+import pytest
+from defog_outputs import (
+    defog_sql_text_broker_adv1,
+    defog_sql_text_broker_adv3,
+    defog_sql_text_broker_adv6,
+    defog_sql_text_broker_adv11,
+    defog_sql_text_broker_adv12,
+    defog_sql_text_broker_adv15,
+    defog_sql_text_broker_basic3,
+    defog_sql_text_broker_basic4,
+    defog_sql_text_broker_basic5,
+    defog_sql_text_broker_basic7,
+    defog_sql_text_broker_basic8,
+    defog_sql_text_broker_basic9,
+    defog_sql_text_broker_basic10,
+)
+from defog_test_functions import (
+    impl_defog_broker_adv1,
+    impl_defog_broker_adv3,
+    impl_defog_broker_adv6,
+    impl_defog_broker_adv11,
+    impl_defog_broker_adv12,
+    impl_defog_broker_adv15,
+    impl_defog_broker_basic3,
+    impl_defog_broker_basic4,
+    impl_defog_broker_basic5,
+    impl_defog_broker_basic7,
+    impl_defog_broker_basic8,
+    impl_defog_broker_basic9,
+    impl_defog_broker_basic10,
+)
+from test_utils import (
+    graph_fetcher,
+)
+
+from pydough import init_pydough_context, to_df
+from pydough.database_connectors import DatabaseContext
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
+
+
+@pytest.mark.parametrize(
+    "graph_name",
+    [
+        "Broker",
+        "Dealership",
+        "DermTreatment",
+        "Ewallet",
+    ],
+)
+def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> None:
+    """
+    Testing that the metadata for the defog graphs is parsed correctly.
+    """
+    graph = defog_graphs(graph_name)
+    assert isinstance(
+        graph, GraphMetadata
+    ), "Expected to be metadata for a PyDough graph"
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            (
+                impl_defog_broker_adv1,
+                "Broker",
+                defog_sql_text_broker_adv1,
+            ),
+            id="broker_adv1",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv3,
+                "Broker",
+                defog_sql_text_broker_adv3,
+            ),
+            id="broker_adv3",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv6,
+                "Broker",
+                defog_sql_text_broker_adv6,
+            ),
+            id="broker_adv6",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv11,
+                "Broker",
+                defog_sql_text_broker_adv11,
+            ),
+            id="broker_adv11",
+            marks=pytest.mark.skip(
+                reason="TODO: (gh #187) fix column pruning in queries that only have COUNT(*)"
+            ),
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv12,
+                "Broker",
+                defog_sql_text_broker_adv12,
+            ),
+            id="broker_adv12",
+            marks=pytest.mark.skip(
+                reason="TODO: (gh #187) fix column pruning in queries that only have COUNT(*)"
+            ),
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv15,
+                "Broker",
+                defog_sql_text_broker_adv15,
+            ),
+            id="broker_adv15",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic3,
+                "Broker",
+                defog_sql_text_broker_basic3,
+            ),
+            id="broker_basic3",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic4,
+                "Broker",
+                defog_sql_text_broker_basic4,
+            ),
+            id="broker_basic4",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic5,
+                "Broker",
+                defog_sql_text_broker_basic5,
+            ),
+            id="broker_basic5",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic7,
+                "Broker",
+                defog_sql_text_broker_basic7,
+            ),
+            id="broker_basic7",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic8,
+                "Broker",
+                defog_sql_text_broker_basic8,
+            ),
+            id="broker_basic8",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic9,
+                "Broker",
+                defog_sql_text_broker_basic9,
+            ),
+            id="broker_basic9",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic10,
+                "Broker",
+                defog_sql_text_broker_basic10,
+            ),
+            id="broker_basic10",
+        ),
+    ],
+)
+def defog_test_data(
+    request,
+) -> tuple[Callable[[], UnqualifiedNode], Callable[[], str]]:
+    """
+    Test data for test_defog_e2e. Returns a tuple of the following
+    arguments:
+    1. `unqualified_impl`: a PyDough implementation function.
+    2. `graph_name`: the name of the graph from the defog database to use.
+    3. `query`: a function that takes in nothing and returns the sqlite query
+    text for a defog query.
+    """
+    return request.param
+
+
+@pytest.mark.execute
+def test_defog_e2e(
+    defog_test_data: tuple[Callable[[], UnqualifiedNode], str, Callable[[], str]],
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+):
+    """
+    Test executing the defog analytical questions on the sqlite database,
+    comparing against the result of running the reference SQL query text on the
+    same database connector.
+    """
+    unqualified_impl, graph_name, query_impl = defog_test_data
+    graph: GraphMetadata = defog_graphs(graph_name)
+    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
+    sqlite_query: str = query_impl()
+    refsol: pd.DataFrame = sqlite_defog_connection.connection.execute_query_df(
+        sqlite_query
+    )
+    assert len(result.columns) == len(refsol.columns)
+    refsol.columns = result.columns
+    pd.testing.assert_frame_equal(result, refsol)
