@@ -1,5 +1,5 @@
 """
-Integration tests for the PyDough workflow on the TPC-H queries.
+Integration tests for the PyDough workflow on the defog.ai queries.
 """
 
 from collections.abc import Callable
@@ -96,7 +96,9 @@ def test_defog_e2e(
     sqlite_defog_connection: DatabaseContext,
 ):
     """
-    Test executing the TPC-H queries from the original code generation.
+    Test executing the defog analytical questions on the sqlite database,
+    comparing against the result of running the reference SQL query text on the
+    same database connector.
     """
     unqualified_impl, graph_name, query_impl = defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
