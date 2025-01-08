@@ -49,6 +49,9 @@ jobs:
           # Install a specific version of uv.
           version: "0.4.23"
 
+      - name: Setup Defog DB
+        run: cd tests; ./setup_defog.sh; cd ..
+
       - name: Download TPCH DB
         run: ./demos/setup_tpch.sh ./tpch.db
 
