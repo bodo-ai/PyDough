@@ -1,5 +1,7 @@
 __all__ = [
     "impl_defog_broker_adv1",
+    "impl_defog_broker_adv3",
+    "impl_defog_broker_adv6",
     "impl_defog_broker_adv11",
     "impl_defog_broker_adv12",
     "impl_defog_broker_basic3",
@@ -20,6 +22,36 @@ def impl_defog_broker_adv1():
     """
     return Customers(name, total_amount=SUM(transactions_made.amount)).TOP_K(
         5, by=total_amount.DESC()
+    )
+
+
+def impl_defog_broker_adv3():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    For customers with at least 5 total transactions, what is their transaction success rate? Return the customer name and success rate, ordered from lowest to highest success rate.
+    """
+    n_transactions = COUNT(transactions_made)
+    n_success = SUM(transactions_made.status == "success")
+    return Customers.WHERE(n_transactions >= 5)(
+        name, success_rate=100.0 * n_success / n_transactions
+    ).ORDER_BY(success_rate.ASC(na_pos="first"))
+
+
+def impl_defog_broker_adv6():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    Return the customer name, number of transactions, total transaction amount,
+    and CR for all customers. CR = customer rank by total transaction amount,
+    with rank 1 being the customer with the highest total transaction amount.
+    """
+    total_amount = SUM(transactions_made.amount)
+    return Customers.WHERE(HAS(transactions_made))(
+        name,
+        num_tx=COUNT(transactions_made),
+        total_amount=total_amount,
+        cust_rank=RANKING(by=total_amount.DESC(na_pos="last"), allow_ties=True),
     )
 
 
