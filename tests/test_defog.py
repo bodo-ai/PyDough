@@ -28,6 +28,25 @@ from pydough.unqualified import (
 )
 
 
+@pytest.mark.parametrize(
+    "graph_name",
+    [
+        "Broker",
+        "Dealership",
+        "DermTreatment",
+        "Ewallet",
+    ],
+)
+def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> None:
+    """
+    Testing that the metadata for the defog graphs is parsed correctly.
+    """
+    graph = defog_graphs(graph_name)
+    assert isinstance(
+        graph, GraphMetadata
+    ), "Expected to be metadata for a PyDough graph"
+
+
 @pytest.fixture(
     params=[
         pytest.param(
@@ -73,14 +92,14 @@ def defog_test_data(
 @pytest.mark.execute
 def test_defog_e2e(
     defog_test_data: tuple[Callable[[], UnqualifiedNode], str, Callable[[], str]],
-    sqlite_defog_graphs: graph_fetcher,
+    defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
     """
     Test executing the TPC-H queries from the original code generation.
     """
     unqualified_impl, graph_name, query_impl = defog_test_data
-    graph: GraphMetadata = sqlite_defog_graphs(graph_name)
+    graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
     sqlite_query: str = query_impl()

@@ -271,7 +271,7 @@ def sqlite_bindings() -> SqlGlotTransformBindings:
 
 
 @pytest.fixture
-def sqlite_defog_graphs() -> graph_fetcher:
+def defog_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database.
     """

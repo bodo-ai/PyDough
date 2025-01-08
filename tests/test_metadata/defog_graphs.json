@@ -188,16 +188,16 @@
           "column_name": "sbDpSource",
           "data_type": "string"
         },
-          "ticker": {
-            "type": "simple_join",
-             "other_collection_name": "Tickers",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "ticker_id": ["_id"]
-            },
-           "reverse_relationship_name": "historical_prices"
-         }
+        "ticker": {
+          "type": "simple_join",
+            "other_collection_name": "Tickers",
+          "singular": true,
+          "no_collisions": false,
+          "keys": {
+            "ticker_id": ["_id"]
+          },
+          "reverse_relationship_name": "historical_prices"
+        }
       }
     },
      "Transactions": {
@@ -404,8 +404,8 @@
         "sales_made": {
           "type": "simple_join",
             "other_collection_name": "Sales",
-          "singular": false,
-          "no_collisions": true,
+            "singular": false,
+            "no_collisions": true,
             "keys": {
               "_id": ["salesperson_id"]
             },
@@ -514,17 +514,7 @@
             "type": "table_column",
             "column_name": "crtd_ts",
           "data_type": "timestamp[3]"
-        },
-          "sale_record": {
-            "type": "simple_join",
-            "other_collection_name": "Sales",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "sale_id": ["_id"]
-              },
-              "reverse_relationship_name": "payment"
-          }
+        }
       }
     },
       "Sales": {
@@ -567,42 +557,6 @@
           "column_name": "crtd_ts",
           "data_type": "timestamp[3]"
         },
-        "car": {
-          "type": "simple_join",
-          "other_collection_name": "Cars",
-          "singular": true,
-          "no_collisions": false,
-          "keys": {
-            "car_id": [
-              "_id"
-            ]
-          },
-          "reverse_relationship_name": "sale_records"
-        },
-          "customer": {
-          "type": "simple_join",
-          "other_collection_name": "Customers",
-          "singular": true,
-          "no_collisions": false,
-          "keys": {
-            "customer_id": [
-              "_id"
-            ]
-          },
-          "reverse_relationship_name": "car_purchases"
-        },
-          "salesperson": {
-          "type": "simple_join",
-          "other_collection_name": "Salespersons",
-          "singular": true,
-          "no_collisions": false,
-          "keys": {
-            "salesperson_id": [
-              "_id"
-            ]
-          },
-          "reverse_relationship_name": "sales_made"
-        },
         "payment": {
             "type": "simple_join",
           "other_collection_name": "PaymentsReceived",
@@ -644,17 +598,7 @@
           "type": "table_column",
             "column_name": "crtd_ts",
           "data_type": "timestamp[3]"
-          },
-          "car": {
-              "type": "simple_join",
-              "other_collection_name": "Cars",
-              "singular": true,
-              "no_collisions": false,
-              "keys": {
-              "car_id": ["_id"]
-            },
-              "reverse_relationship_name": "inventory_snapshots"
-            }
+          }
         }
       }
   },
@@ -713,16 +657,6 @@
           "type": "table_column",
           "column_name": "bd_cert_num",
           "data_type": "string"
-        },
-        "prescribed_treatments": {
-          "type": "simple_join",
-          "other_collection_name": "Treatments",
-          "singular": false,
-          "no_collisions": true,
-          "keys": {
-            "doc_id": ["doc_id"]
-          },
-          "reverse_relationship_name": "doctor"
         }
       }
     },
@@ -805,16 +739,6 @@
           "type": "table_column",
           "column_name": "weight_kg",
           "data_type": "float64"
-        },
-        "treatments_received": {
-          "type": "simple_join",
-          "other_collection_name": "Treatments",
-          "singular": false,
-          "no_collisions": true,
-          "keys": {
-            "patient_id": ["patient_id"]
-          },
-          "reverse_relationship_name": "patient"
         }
       }
     },
@@ -860,7 +784,7 @@
         },
           "dos_amt": {
             "type": "table_column",
-          "column_name": "dos_amt",
+            "column_name": "dos_amt",
             "data_type": "decimal[10,2]"
           },
           "dos_unit": {
@@ -877,16 +801,6 @@
           "type": "table_column",
           "column_name": "ndc",
           "data_type": "string"
-        },
-        "treatments_used_in": {
-          "type": "simple_join",
-          "other_collection_name": "Treatments",
-          "singular": false,
-          "no_collisions": true,
-          "keys": {
-            "drug_id": ["drug_id"]
-          },
-          "reverse_relationship_name": "drug"
         }
       }
     },
@@ -914,16 +828,6 @@
             "type": "table_column",
             "column_name": "diag_desc",
           "data_type": "string"
-        },
-          "treatments_for": {
-            "type": "simple_join",
-            "other_collection_name": "Treatments",
-            "singular": false,
-            "no_collisions": true,
-            "keys": {
-              "diag_id": ["diag_id"]
-            },
-            "reverse_relationship_name": "diagnosis"
         }
       }
     },
@@ -1156,16 +1060,6 @@
           "type": "table_column",
           "column_name": "day100_hfg",
             "data_type": "decimal[4,1]"
-          },
-          "treatment": {
-            "type": "simple_join",
-            "other_collection_name": "Treatments",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-            "treatment_id": ["treatment_id"]
-            },
-            "reverse_relationship_name": "outcome_records"
           }
       }
     },
@@ -1213,17 +1107,7 @@
           "type": "table_column",
           "column_name": "freq_hrs",
           "data_type": "int32"
-        },
-            "treatment": {
-            "type": "simple_join",
-            "other_collection_name": "Treatments",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "treatment_id": ["treatment_id"]
-            },
-            "reverse_relationship_name": "concomitant_meds"
-          }
+        }
       }
     },
       "AdverseEvents": {
@@ -1250,16 +1134,6 @@
             "type": "table_column",
             "column_name": "description",
             "data_type": "string"
-          },
-          "treatment": {
-            "type": "simple_join",
-            "other_collection_name": "Treatments",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "treatment_id": ["treatment_id"]
-            },
-            "reverse_relationship_name": "adverse_events"
           }
         }
       }
@@ -1609,16 +1483,6 @@
           "column_name": "updated_at",
           "data_type": "timestamp[3]"
         },
-          "merchant": {
-          "type": "simple_join",
-          "other_collection_name": "Merchants",
-          "singular": true,
-          "no_collisions": false,
-            "keys": {
-            "merchant_id": ["mid"]
-            },
-          "reverse_relationship_name": "coupons"
-        },
         "transaction_used_in": {
             "type": "simple_join",
             "other_collection_name": "Transactions",
@@ -1626,8 +1490,8 @@
             "no_collisions": true,
             "keys": {
               "cid": ["coupon_id"]
-              }
-            
+            },
+            "reverse_relationship_name": "coupon"
           }
       }
     },
@@ -1725,52 +1589,7 @@
             "type": "table_column",
             "column_name": "user_agent",
             "data_type": "string"
-        },
-        "sending_user": {
-          "type": "simple_join",
-            "other_collection_name": "Users",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-            "sender_id": ["uid"]
-            }
-          },
-        "sending_merchant": {
-          "type": "simple_join",
-          "other_collection_name": "Merchants",
-          "singular": true,
-          "no_collisions": false,
-          "keys": {
-            "sender_id": ["mid"]
-            }
-        },
-        "receiving_user": {
-            "type": "simple_join",
-            "other_collection_name": "Users",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "receiver_id": ["uid"]
-            }
-          },
-        "receiving_merchant": {
-            "type": "simple_join",
-            "other_collection_name": "Merchants",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "receiver_id": ["mid"]
-              }
-          },
-        "coupon": {
-          "type": "simple_join",
-            "other_collection_name": "Coupons",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "coupon_id": ["cid"]
-              }
-          }
+        }
       }
     },
     "UserBalances": {
@@ -1792,17 +1611,7 @@
             "type": "table_column",
           "column_name": "updated_at",
           "data_type": "timestamp[3]"
-        },
-          "user": {
-            "type": "simple_join",
-            "other_collection_name": "Users",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "user_id": ["uid"]
-            },
-            "reverse_relationship_name": "balances"
-          }
+        }
       }
     },
     "MerchantBalances": {
@@ -1824,17 +1633,7 @@
             "type": "table_column",
           "column_name": "updated_at",
           "data_type": "timestamp[3]"
-        },
-        "merchant": {
-            "type": "simple_join",
-            "other_collection_name": "Merchants",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "merchant_id": ["mid"]
-              },
-            "reverse_relationship_name": "balances"
-          }
+        }
       }
     },
     "Notifications": {
@@ -1891,17 +1690,7 @@
             "type": "table_column",
             "column_name": "action_url",
           "data_type": "string"
-        },
-          "user": {
-            "type": "simple_join",
-          "other_collection_name": "Users",
-            "singular": true,
-            "no_collisions": false,
-          "keys": {
-            "user_id": ["uid"]
-            },
-            "reverse_relationship_name": "notifications"
-          }
+        }
       }
     },
     "UserSessions": {
@@ -1933,16 +1722,6 @@
           "type": "table_column",
           "column_name": "device_id",
           "data_type": "string"
-          },
-          "user": {
-            "type": "simple_join",
-            "other_collection_name": "Users",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "user_id": ["uid"]
-              },
-            "reverse_relationship_name": "sessions"
           }
       }
     },
@@ -2010,17 +1789,7 @@
             "type": "table_column",
             "column_name": "created_at",
           "data_type": "timestamp[3]"
-        },
-        "user": {
-            "type": "simple_join",
-            "other_collection_name": "Users",
-            "singular": true,
-            "no_collisions": false,
-            "keys": {
-              "user_id": ["uid"]
-            },
-            "reverse_relationship_name": "setting_snapshots"
-          }
+        }
       }
     }
   }
