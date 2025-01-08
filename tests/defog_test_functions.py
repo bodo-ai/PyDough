@@ -4,6 +4,7 @@ __all__ = [
     "impl_defog_broker_adv6",
     "impl_defog_broker_adv11",
     "impl_defog_broker_adv12",
+    "impl_defog_broker_adv15",
     "impl_defog_broker_basic3",
     "impl_defog_broker_basic4",
 ]
@@ -87,6 +88,24 @@ def impl_defog_broker_adv12():
     return Broker(n_customers=COUNT(selected_customers))
 
 
+def impl_defog_broker_adv15():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What is the AR for each country for customers who joined in 2022? Return the country and AR. AR (Activity Ratio) = (Number of Active Customers with Transactions / Total Number of Customers with Transactions) * 100.
+    """
+    selected_customers = Customers.WHERE(
+        (join_date >= "2022-01-01") & (join_date <= "2022-12-31")
+    )
+    countries = PARTITION(selected_customers, name="custs", by=country)
+    n_active = SUM(custs.status == "active")
+    n_custs = COUNT(custs)
+    return countries(
+        country,
+        ar=100 * DEFAULT_TO(n_active / n_custs, 0.0),
+    )
+
+
 def impl_defog_broker_basic3():
     """
     PyDough implementation of the following question for the Broker graph:
@@ -110,8 +129,8 @@ def impl_defog_broker_basic4():
     of transactions.
     """
     data = Customers.transactions_made.ticker(state=BACK(2).state)
-    return PARTITION(data, name="entries", by=(state, ticker_type))(
+    return PARTITION(data, name="combo", by=(state, ticker_type))(
         state,
         ticker_type,
-        num_transactions=COUNT(entries),
+        num_transactions=COUNT(combo),
     ).TOP_K(5, by=num_transactions.DESC())

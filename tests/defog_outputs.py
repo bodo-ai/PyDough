@@ -8,6 +8,7 @@ __all__ = [
     "defog_sql_text_broker_adv6",
     "defog_sql_text_broker_adv11",
     "defog_sql_text_broker_adv12",
+    "defog_sql_text_broker_adv15",
     "defog_sql_text_broker_basic3",
     "defog_sql_text_broker_basic4",
 ]
@@ -110,6 +111,25 @@ def defog_sql_text_broker_adv12() -> str:
     """
 
 
+def defog_sql_text_broker_adv15() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the AR for each country for customers who joined in 2022? Return the country and AR. AR (Activity Ratio) = (Number of Active Customers with Transactions / Total Number of Customers with Transactions) * 100.
+    """
+    return """
+    SELECT
+        c.sbCustCountry,
+        COALESCE(100.0 * COUNT(DISTINCT CASE WHEN c.sbCustStatus = 'active' THEN c.sbCustId END) / NULLIF(COUNT(DISTINCT t.sbTxCustId), 0), 0) AS AR
+    FROM sbCustomer AS c
+    JOIN sbTransaction AS t
+    ON c.sbCustId = t.sbTxCustId
+    WHERE c.sbCustJoinDate BETWEEN '2022-01-01' AND '2022-12-31'
+    GROUP BY c.sbCustCountry
+    ;
+    """
+
+
 def defog_sql_text_broker_basic3() -> str:
     """
     SQLite query text for the following question for the Broker graph:
@@ -134,9 +154,9 @@ def defog_sql_text_broker_basic4() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    Question: What are the top 10 ticker symbols by total transaction amount?
-    Return the ticker symbol, number of transactions and total transaction
-    amount.
+    What are the top 5 combinations of customer state and ticker type by
+    number of transactions? Return the customer state, ticker type and
+    number of transactions.
     """
     return """
     SELECT c.sbCustState, t.sbTickerType, COUNT(*) AS num_transactions

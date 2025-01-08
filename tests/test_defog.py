@@ -12,6 +12,7 @@ from defog_outputs import (
     defog_sql_text_broker_adv6,
     defog_sql_text_broker_adv11,
     defog_sql_text_broker_adv12,
+    defog_sql_text_broker_adv15,
     defog_sql_text_broker_basic3,
     defog_sql_text_broker_basic4,
 )
@@ -21,6 +22,7 @@ from defog_test_functions import (
     impl_defog_broker_adv6,
     impl_defog_broker_adv11,
     impl_defog_broker_adv12,
+    impl_defog_broker_adv15,
     impl_defog_broker_basic3,
     impl_defog_broker_basic4,
 )
@@ -89,7 +91,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="broker_adv11",
             marks=pytest.mark.skip(
-                reason="(gh #187) fix column pruning in queries that only have COUNT(*)"
+                reason="TODO: (gh #187) fix column pruning in queries that only have COUNT(*)"
             ),
         ),
         pytest.param(
@@ -100,8 +102,16 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="broker_adv12",
             marks=pytest.mark.skip(
-                reason="(gh #187) fix column pruning in queries that only have COUNT(*)"
+                reason="TODO: (gh #187) fix column pruning in queries that only have COUNT(*)"
             ),
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv15,
+                "Broker",
+                defog_sql_text_broker_adv15,
+            ),
+            id="broker_adv15",
         ),
         pytest.param(
             (
