@@ -15,6 +15,11 @@ from defog_outputs import (
     defog_sql_text_broker_adv15,
     defog_sql_text_broker_basic3,
     defog_sql_text_broker_basic4,
+    defog_sql_text_broker_basic5,
+    defog_sql_text_broker_basic7,
+    defog_sql_text_broker_basic8,
+    defog_sql_text_broker_basic9,
+    defog_sql_text_broker_basic10,
 )
 from defog_test_functions import (
     impl_defog_broker_adv1,
@@ -25,6 +30,11 @@ from defog_test_functions import (
     impl_defog_broker_adv15,
     impl_defog_broker_basic3,
     impl_defog_broker_basic4,
+    impl_defog_broker_basic5,
+    impl_defog_broker_basic7,
+    impl_defog_broker_basic8,
+    impl_defog_broker_basic9,
+    impl_defog_broker_basic10,
 )
 from test_utils import (
     graph_fetcher,
@@ -128,6 +138,46 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_basic4,
             ),
             id="broker_basic4",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic5,
+                "Broker",
+                defog_sql_text_broker_basic5,
+            ),
+            id="broker_basic5",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic7,
+                "Broker",
+                defog_sql_text_broker_basic7,
+            ),
+            id="broker_basic7",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic8,
+                "Broker",
+                defog_sql_text_broker_basic8,
+            ),
+            id="broker_basic8",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic9,
+                "Broker",
+                defog_sql_text_broker_basic9,
+            ),
+            id="broker_basic9",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_basic10,
+                "Broker",
+                defog_sql_text_broker_basic10,
+            ),
+            id="broker_basic10",
         ),
     ],
 )

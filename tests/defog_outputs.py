@@ -11,6 +11,11 @@ __all__ = [
     "defog_sql_text_broker_adv15",
     "defog_sql_text_broker_basic3",
     "defog_sql_text_broker_basic4",
+    "defog_sql_text_broker_basic5",
+    "defog_sql_text_broker_basic7",
+    "defog_sql_text_broker_basic8",
+    "defog_sql_text_broker_basic9",
+    "defog_sql_text_broker_basic10",
 ]
 
 
@@ -168,5 +173,93 @@ def defog_sql_text_broker_basic4() -> str:
     GROUP BY c.sbCustState, t.sbTickerType
     ORDER BY CASE WHEN num_transactions IS NULL THEN 1 ELSE 0 END DESC, num_transactions DESC
     LIMIT 5
+    ;
+    """
+
+
+def defog_sql_text_broker_basic5() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the average transaction amount for each customer? Return the
+    customer name and average transaction amount.
+
+    NOTE: added an ORDER BY clause at the end to ensure the results were
+    deterministic.
+    """
+    return """
+    SELECT DISTINCT c.sbCustId
+    FROM sbCustomer AS c JOIN sbTransaction AS t
+    ON c.sbCustId = t.sbTxCustId
+    WHERE t.sbTxType = 'buy'
+    ORDER BY sbCustId
+    ;
+    """
+
+
+def defog_sql_text_broker_basic7() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the total transaction amount for each ticker symbol? Return the
+    ticker symbol and total transaction amount.
+    """
+    return """
+    SELECT sbTxStatus, COUNT(*) AS num_transactions
+    FROM sbTransaction
+    GROUP BY sbTxStatus
+    ORDER BY CASE WHEN num_transactions IS NULL THEN 1 ELSE 0 END DESC, num_transactions DESC
+    LIMIT 3
+    ;
+    """
+
+
+def defog_sql_text_broker_basic8() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the number of transactions for each customer? Return the customer
+    name and number of transactions.
+    """
+    return """
+    SELECT sbCustCountry, COUNT(*) AS num_customers
+    FROM sbCustomer
+    GROUP BY sbCustCountry
+    ORDER BY CASE WHEN num_customers IS NULL THEN 1 ELSE 0 END DESC, num_customers DESC
+    LIMIT 5
+    ;
+    """
+
+
+def defog_sql_text_broker_basic9() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the total transaction amount for each customer state? Return the
+    customer state and total transaction amount.
+    """
+    return """
+    SELECT c.sbCustId, c.sbCustName
+    FROM sbCustomer AS c
+    LEFT JOIN sbTransaction AS t
+    ON c.sbCustId = t.sbTxCustId
+    WHERE t.sbTxCustId IS NULL
+    ;
+    """
+
+
+def defog_sql_text_broker_basic10() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the number of transactions for each ticker type? Return the ticker
+    type and number of transactions.
+    """
+    return """
+    SELECT tk.sbTickerId, tk.sbTickerSymbol
+    FROM sbTicker AS tk
+    LEFT JOIN sbDailyPrice AS dp
+    ON tk.sbTickerId = dp.sbDpTickerId
+    WHERE dp.sbDpTickerId IS NULL
     ;
     """

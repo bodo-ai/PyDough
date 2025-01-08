@@ -7,6 +7,11 @@ __all__ = [
     "impl_defog_broker_adv15",
     "impl_defog_broker_basic3",
     "impl_defog_broker_basic4",
+    "impl_defog_broker_basic5",
+    "impl_defog_broker_basic7",
+    "impl_defog_broker_basic8",
+    "impl_defog_broker_basic9",
+    "impl_defog_broker_basic10",
 ]
 
 # ruff: noqa
@@ -125,8 +130,7 @@ def impl_defog_broker_basic4():
     PyDough implementation of the following question for the Broker graph:
 
     What are the top 5 combinations of customer state and ticker type by
-    number of transactions? Return the customer state, ticker type and number
-    of transactions.
+    number of transactions? Return the customer state, ticker type and number of transactions.
     """
     data = Customers.transactions_made.ticker(state=BACK(2).state)
     return PARTITION(data, name="combo", by=(state, ticker_type))(
@@ -134,3 +138,52 @@ def impl_defog_broker_basic4():
         ticker_type,
         num_transactions=COUNT(combo),
     ).TOP_K(5, by=num_transactions.DESC())
+
+
+def impl_defog_broker_basic5():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    Return the distinct list of customer IDs who have made a 'buy' transaction.
+    """
+    return Customers.WHERE(HAS(transactions_made.WHERE(transaction_type == "buy")))(_id)
+
+
+def impl_defog_broker_basic7():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What are the top 3 transaction statuses by number of transactions? Return the status and number of transactions.
+    """
+    return PARTITION(Transactions, name="status_group", by=status)(
+        status, num_transactions=COUNT(status_group)
+    ).TOP_K(3, by=num_transactions.DESC())
+
+
+def impl_defog_broker_basic8():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What are the top 5 countries by number of customers? Return the country name and number of customers.
+    """
+    return PARTITION(Customers, name="custs", by=country)(
+        country, num_customers=COUNT(custs)
+    ).TOP_K(5, by=num_customers.DESC())
+
+
+def impl_defog_broker_basic9():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    Return the customer ID and name of customers who have not made any transactions.
+    """
+    return Customers.WHERE(HASNOT(transactions_made))(_id, name)
+
+
+def impl_defog_broker_basic10():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    Return the ticker ID and symbol of tickers that do not have any daily price records.
+    """
+    return Tickers.WHERE(HASNOT(historical_prices))(_id, symbol)
