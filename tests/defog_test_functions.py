@@ -1,5 +1,7 @@
 __all__ = [
     "impl_defog_broker_adv1",
+    "impl_defog_broker_adv11",
+    "impl_defog_broker_adv12",
     "impl_defog_broker_basic3",
     "impl_defog_broker_basic4",
 ]
@@ -19,6 +21,38 @@ def impl_defog_broker_adv1():
     return Customers(name, total_amount=SUM(transactions_made.amount)).TOP_K(
         5, by=total_amount.DESC()
     )
+
+
+def impl_defog_broker_adv11():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    How many distinct customers with a .com email address bought stocks of
+    FAANG companies (Amazon, Apple, Google, Meta or Netflix)?
+    """
+    faang = ("AMZN", "AAPL", "GOOGL", "META", "NFLX")
+    return Broker(
+        n_customers=COUNT(
+            Customers.WHERE(
+                ENDSWITH(email, ".com")
+                & HAS(transactions_made.WHERE(ISIN(ticker.symbol, faang)))
+            )
+        )
+    )
+
+
+def impl_defog_broker_adv12():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What is the number of customers whose name starts with J or ends with
+    'ez', and who live in a state ending with the letter 'a'?
+    """
+    selected_customers = Customers.WHERE(
+        (STARTSWITH(LOWER(name), "j") | ENDSWITH(LOWER(name), "ez"))
+        & ENDSWITH(LOWER(state), "a")
+    )
+    return Broker(n_customers=COUNT(selected_customers))
 
 
 def impl_defog_broker_basic3():

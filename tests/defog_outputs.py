@@ -4,6 +4,8 @@ File that holds expected outputs for the defog queries.
 
 __all__ = [
     "defog_sql_text_broker_adv1",
+    "defog_sql_text_broker_adv11",
+    "defog_sql_text_broker_adv12",
     "defog_sql_text_broker_basic3",
     "defog_sql_text_broker_basic4",
 ]
@@ -26,6 +28,42 @@ def defog_sql_text_broker_adv1() -> str:
     FROM cust_tx
     ORDER BY CASE WHEN total_amount IS NULL THEN 1 ELSE 0 END DESC, total_amount DESC
     LIMIT 5
+    ;
+    """
+
+
+def defog_sql_text_broker_adv11() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    How many distinct customers with a .com email address bought stocks of
+    FAANG companies (Amazon, Apple, Google, Meta or Netflix)?
+    """
+    return """
+    SELECT COUNT(DISTINCT t.sbTxCustId)
+    FROM sbTransaction AS t
+    JOIN sbCustomer AS c
+    ON t.sbTxCustId = c.sbCustId
+    JOIN sbTicker AS tk
+    ON t.sbTxTickerId = tk.sbTickerId
+    WHERE c.sbCustEmail LIKE '%.com'
+    AND (tk.sbTickerSymbol LIKE 'AMZN' OR tk.sbTickerSymbol LIKE 'AAPL' OR tk.sbTickerSymbol LIKE 'GOOGL' OR tk.sbTickerSymbol LIKE 'META' OR tk.sbTickerSymbol LIKE 'NFLX')
+    ;
+    """
+
+
+def defog_sql_text_broker_adv12() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the number of customers whose name starts with J or ends with
+    'ez', and who live in a state ending with the letter 'a'?
+    """
+    return """
+    SELECT COUNT(sbCustId)
+    FROM sbCustomer
+    WHERE (LOWER(sbCustName) LIKE 'j%' OR LOWER(sbCustName) LIKE '%ez')
+    AND LOWER(sbCustState) LIKE '%a'
     ;
     """
 
