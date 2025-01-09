@@ -78,7 +78,7 @@ class ColumnPruner:
         )
         # If the node is an aggregate but doesn't use any of the inputs
         # (e.g. a COUNT(*)), arbitrarily mark one of them as used.
-        # TODO: (gh #xxx) optimize this functionality so it doesn't keep an
+        # TODO: (gh #196) optimize this functionality so it doesn't keep an
         # unnecessary column.
         if isinstance(node, Aggregate) and len(found_identifiers) == 0:
             arbitrary_column_name: str = min(node.input.columns)
