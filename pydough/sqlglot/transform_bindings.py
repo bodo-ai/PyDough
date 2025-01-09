@@ -9,7 +9,7 @@ import sqlite3
 from collections.abc import Callable, Sequence
 
 import sqlglot.expressions as sqlglot_expressions
-from sqlglot.expressions import Binary, Concat, Paren
+from sqlglot.expressions import Binary, Case, Concat, Is, Paren
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Func as SQLGlotFunction
 
@@ -37,7 +37,7 @@ def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
     Returns:
         The expression, wrapped in parentheses if necessary.
     """
-    if isinstance(expression, (Binary, Concat)):
+    if isinstance(expression, (Binary, Concat, Is, Case)):
         return Paren(this=expression)
     else:
         return expression
@@ -98,6 +98,102 @@ def convert_iff_case(
     )
 
 
+def convert_is_null(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for converting the expression `ABSENT(X)` to the expression
+    `X IS NULL`
+
+    Args:
+        `raw_args`: The operands to `ABSENT`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `ABSENT`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The `IS NULL` call corresponding to the `ABSENT` call.
+    """
+    return sqlglot_expressions.Is(
+        this=apply_parens(sql_glot_args[0]), expression=sqlglot_expressions.Null()
+    )
+
+
+def convert_not_null(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for converting the expression `PRESENT(X)` to the expression
+    `X IS NOT NULL`
+
+    Args:
+        `raw_args`: The operands to `PRESENT`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `PRESENT`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The `IS NOT NULL` call corresponding to the `PRESENT` call.
+    """
+    return sqlglot_expressions.Not(
+        this=apply_parens(convert_is_null(raw_args, sql_glot_args))
+    )
+
+
+def convert_keep_if(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for converting the expression `KEEP_IF(X, Y)` to the expression
+    `CASE IF Y THEN X END`.
+    Args:
+        `raw_args`: The operands to `KEEP_IF`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `KEEP_IF`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot case expression equivalent to the `KEEP_IF` call.
+    """
+    return sqlglot_expressions.Case().when(sql_glot_args[1], sql_glot_args[0])
+
+
+def convert_monotonic(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for converting the expression `MONOTONIC(A, B, C, ...)` to an
+    expression equivalent of `(A <= B) AND (B <= C) AND ...`.
+
+    Args:
+        `raw_args`: The operands to `MONOTONIC`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `MONOTONIC`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression equivalent to the `MONOTONIC` call.
+    """
+
+    if len(sql_glot_args) < 2:
+        return sqlglot_expressions.convert(True)
+
+    exprs: list[SQLGlotExpression] = [apply_parens(expr) for expr in sql_glot_args]
+    output_expr: SQLGlotExpression = apply_parens(
+        sqlglot_expressions.LTE(this=exprs[0], expression=exprs[1])
+    )
+    for i in range(2, len(exprs)):
+        new_expr: SQLGlotExpression = apply_parens(
+            sqlglot_expressions.LTE(this=exprs[i - 1], expression=exprs[i])
+        )
+        output_expr = sqlglot_expressions.And(this=output_expr, expression=new_expr)
+    return output_expr
+
+
 def convert_concat(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
@@ -125,6 +221,95 @@ def convert_concat(
     else:
         inputs: list[SQLGlotExpression] = [apply_parens(arg) for arg in sql_glot_args]
         return Concat(expressions=inputs)
+
+
+def convert_slice(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for generating a `SLICE` expression from a list of arguments.
+
+    Args:
+        `raw_args`: The operands to `SLICE`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `SLICE`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `SUBSTRING`.
+    """
+    assert len(sql_glot_args) == 4
+
+    for arg in sql_glot_args[1:]:
+        if not isinstance(arg, (sqlglot_expressions.Literal, sqlglot_expressions.Null)):
+            raise NotImplementedError(
+                "SLICE function currently only supports the slicing arguments being integer literals or absent"
+            )
+
+    _, start, stop, step = sql_glot_args
+    start_idx: int | None = None
+    stop_idx: int | None = None
+    if isinstance(start, sqlglot_expressions.Literal):
+        if int(start.this) < 0:
+            raise NotImplementedError(
+                "SLICE function currently only supports non-negative start indices"
+            )
+        start_idx = int(start.this)
+    if isinstance(stop, sqlglot_expressions.Literal):
+        if int(stop.this) < 0:
+            raise NotImplementedError(
+                "SLICE function currently only supports non-negative stop indices"
+            )
+        stop_idx = int(stop.this)
+    if isinstance(step, sqlglot_expressions.Literal):
+        if int(step.this) != 1:
+            raise NotImplementedError(
+                "SLICE function currently only supports a step of 1"
+            )
+
+    match (start_idx, stop_idx):
+        case (None, None):
+            raise sql_glot_args[0]
+        case (_, None):
+            assert start_idx is not None
+            return sqlglot_expressions.Substring(
+                this=sql_glot_args[0], start=sqlglot_expressions.convert(start_idx + 1)
+            )
+        case (None, _):
+            assert stop_idx is not None
+            return sqlglot_expressions.Substring(
+                this=sql_glot_args[0],
+                start=sqlglot_expressions.convert(1),
+                length=sqlglot_expressions.convert(stop_idx),
+            )
+        case _:
+            assert start_idx is not None
+            assert stop_idx is not None
+            return sqlglot_expressions.Substring(
+                this=sql_glot_args[0],
+                start=sqlglot_expressions.convert(start_idx + 1),
+                length=sqlglot_expressions.convert(stop_idx - start_idx),
+            )
+
+
+def convert_concat_ws(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for generating a `CONCAT_WS` expression from a list of arguments.
+
+    Args:
+        `raw_args`: The operands to `CONCAT_WS`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `CONCAT_WS`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `CONCAT_WS`.
+    """
+    return sqlglot_expressions.ConcatWs(expressions=sql_glot_args)
 
 
 def convert_like(
@@ -439,14 +624,21 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.ENDSWITH] = convert_endswith
         self.bindings[pydop.CONTAINS] = convert_contains
         self.bindings[pydop.LIKE] = convert_like
+        self.bindings[pydop.SLICE] = convert_slice
+        self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws
 
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)
+        self.bind_simple_function(pydop.ROUND, sqlglot_expressions.Round)
 
         # Conditional functions
         self.bind_simple_function(pydop.DEFAULT_TO, sqlglot_expressions.Coalesce)
         self.bindings[pydop.ISIN] = convert_isin
         self.bindings[pydop.IFF] = convert_iff_case
+        self.bindings[pydop.PRESENT] = convert_not_null
+        self.bindings[pydop.ABSENT] = convert_is_null
+        self.bindings[pydop.KEEP_IF] = convert_keep_if
+        self.bindings[pydop.MONOTONIC] = convert_monotonic
 
         # Datetime functions
         self.bind_unop(pydop.YEAR, sqlglot_expressions.Year)

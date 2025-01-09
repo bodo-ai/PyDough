@@ -50,6 +50,12 @@ __all__ = [
     "RANKING",
     "ExpressionWindowOperator",
     "PERCENTILE",
+    "ABSENT",
+    "PRESENT",
+    "ROUND",
+    "JOIN_STRINGS",
+    "KEEP_IF",
+    "MONOTONIC",
 ]
 
 from .binary_operators import BinaryOperator, BinOp
@@ -58,6 +64,7 @@ from .expression_operator import PyDoughExpressionOperator
 from .expression_window_operators import ExpressionWindowOperator
 from .registered_expression_operators import (
     ABS,
+    ABSENT,
     ADD,
     AVG,
     BAN,
@@ -76,6 +83,8 @@ from .registered_expression_operators import (
     HASNOT,
     IFF,
     ISIN,
+    JOIN_STRINGS,
+    KEEP_IF,
     LENGTH,
     LEQ,
     LET,
@@ -84,6 +93,7 @@ from .registered_expression_operators import (
     MAX,
     MIN,
     MOD,
+    MONOTONIC,
     MONTH,
     MUL,
     NDISTINCT,
@@ -91,7 +101,9 @@ from .registered_expression_operators import (
     NOT,
     PERCENTILE,
     POW,
+    PRESENT,
     RANKING,
+    ROUND,
     SLICE,
     STARTSWITH,
     SUB,

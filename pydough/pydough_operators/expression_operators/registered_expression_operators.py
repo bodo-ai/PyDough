@@ -44,6 +44,12 @@ __all__ = [
     "HASNOT",
     "RANKING",
     "PERCENTILE",
+    "ABSENT",
+    "PRESENT",
+    "ROUND",
+    "JOIN_STRINGS",
+    "KEEP_IF",
+    "MONOTONIC",
 ]
 
 from pydough.pydough_operators.type_inference import (
@@ -53,7 +59,7 @@ from pydough.pydough_operators.type_inference import (
     RequireNumArgs,
     SelectArgumentType,
 )
-from pydough.types import BooleanType, Float64Type, Int64Type
+from pydough.types import BooleanType, Float64Type, Int64Type, StringType
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
@@ -131,6 +137,24 @@ NOT = ExpressionFunctionOperator(
 )
 ISIN = ExpressionFunctionOperator(
     "ISIN", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+ABSENT = ExpressionFunctionOperator(
+    "ABSENT", False, RequireNumArgs(1), ConstantType(BooleanType())
+)
+PRESENT = ExpressionFunctionOperator(
+    "PRESENT", False, RequireNumArgs(1), ConstantType(BooleanType())
+)
+ROUND = ExpressionFunctionOperator(
+    "ROUND", False, RequireNumArgs(2), SelectArgumentType(0)
+)
+MONOTONIC = ExpressionFunctionOperator(
+    "MONOTONIC", False, RequireMinArgs(1), ConstantType(BooleanType())
+)
+KEEP_IF = ExpressionFunctionOperator(
+    "KEEP_IF", False, RequireNumArgs(2), SelectArgumentType(0)
+)
+JOIN_STRINGS = ExpressionFunctionOperator(
+    "JOIN_STRINGS", False, RequireMinArgs(1), ConstantType(StringType())
 )
 ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))
 RANKING = ExpressionWindowOperator(
