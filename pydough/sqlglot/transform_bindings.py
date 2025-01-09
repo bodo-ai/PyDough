@@ -312,6 +312,31 @@ def convert_concat_ws(
     return sqlglot_expressions.ConcatWs(expressions=sql_glot_args)
 
 
+def convert_concat_ws_to_concat(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Converts an expression equivalent to a `CONCAT_WS` call into a chain of
+    `CONCAT` calls.
+
+    Args:
+        `raw_args`: The operands to `CONCAT_WS`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `CONCAT_WS`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `CONCAT_WS`.
+    """
+    args: list[SQLGlotExpression] = []
+    for i in range(1, len(sql_glot_args)):
+        if i > 1:
+            args.append(sql_glot_args[0])
+        args.append(sql_glot_args[i])
+    return sqlglot_expressions.Concat(expressions=args)
+
+
 def convert_like(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
@@ -633,8 +658,8 @@ class SqlGlotTransformBindings:
 
         # Conditional functions
         self.bind_simple_function(pydop.DEFAULT_TO, sqlglot_expressions.Coalesce)
+        self.bind_simple_function(pydop.IFF, sqlglot_expressions.If)
         self.bindings[pydop.ISIN] = convert_isin
-        self.bindings[pydop.IFF] = convert_iff_case
         self.bindings[pydop.PRESENT] = convert_not_null
         self.bindings[pydop.ABSENT] = convert_is_null
         self.bindings[pydop.KEEP_IF] = convert_keep_if
@@ -668,10 +693,14 @@ class SqlGlotTransformBindings:
         """
         # Use IF function instead of CASE if the SQLite version is recent
         # enough.
-        if sqlite3.sqlite_version >= "3.32":
-            self.bind_simple_function(pydop.IFF, sqlglot_expressions.If)
+        if sqlite3.sqlite_version < "3.32":
+            self.bindings[pydop.IFF] = convert_iff_case
 
         # Datetime function overrides
         self.bindings[pydop.YEAR] = convert_sqlite_datetime_extract("'%Y'")
         self.bindings[pydop.MONTH] = convert_sqlite_datetime_extract("'%m'")
         self.bindings[pydop.DAY] = convert_sqlite_datetime_extract("'%d'")
+
+        # String function overrides
+        if sqlite3.sqlite_version < "3.44.1":
+            self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws_to_concat
