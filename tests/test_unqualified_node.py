@@ -8,6 +8,15 @@ import datetime
 from collections.abc import Callable
 
 import pytest
+from bad_pydough_functions import (
+    bad_window_1,
+    bad_window_2,
+    bad_window_3,
+    bad_window_4,
+    bad_window_5,
+    bad_window_6,
+    bad_window_7,
+)
 from test_utils import graph_fetcher
 from tpch_test_functions import (
     impl_tpch_q1,
@@ -412,3 +421,58 @@ def test_init_pydough_context(
     assert (
         pydough.display_raw(answer) == as_string
     ), "Mismatch between string representation of unqualified nodes and expected output"
+
+
+@pytest.mark.parametrize(
+    "func, error_msg",
+    [
+        pytest.param(
+            bad_window_1,
+            "The `by` argument to `RANKING` must be provided",
+            id="bad_window_1",
+        ),
+        pytest.param(
+            bad_window_2,
+            "The `by` argument to `PERCENTILE` must be a single collation expression or a non-empty iterable of collation expressions",
+            id="bad_window_2",
+        ),
+        pytest.param(
+            bad_window_3,
+            "The `by` argument to `RANKING` must be a single collation expression or a non-empty iterable of collation expressions",
+            id="bad_window_3",
+        ),
+        pytest.param(
+            bad_window_4,
+            "`levels` argument must be a positive integer",
+            id="bad_window_4",
+        ),
+        pytest.param(
+            bad_window_5,
+            "`levels` argument must be a positive integer",
+            id="bad_window_5",
+        ),
+        pytest.param(
+            bad_window_6,
+            "`n_buckets` argument must be a positive integer",
+            id="bad_window_6",
+        ),
+        pytest.param(
+            bad_window_7,
+            "`n_buckets` argument must be a positive integer",
+            id="bad_window_7",
+        ),
+    ],
+)
+def test_unqualified_errors(
+    func: Callable[[], UnqualifiedNode],
+    error_msg: str,
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """
+    Same as `test_init_pydough_context` except for cases that should raise an
+    exception during the conversion to unqualified nodes.
+    """
+    sample_graph: GraphMetadata = get_sample_graph("TPCH")
+    new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
+    with pytest.raises(Exception, match=error_msg):
+        new_func()

@@ -153,7 +153,8 @@ def impl_defog_broker_basic7():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    What are the top 3 transaction statuses by number of transactions? Return the status and number of transactions.
+    What are the top 3 transaction statuses by number of transactions? Return
+    the status and number of transactions.
     """
     return PARTITION(Transactions, name="status_group", by=status)(
         status, num_transactions=COUNT(status_group)
@@ -164,7 +165,8 @@ def impl_defog_broker_basic8():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    What are the top 5 countries by number of customers? Return the country name and number of customers.
+    What are the top 5 countries by number of customers? Return the country
+    name and number of customers.
     """
     return PARTITION(Customers, name="custs", by=country)(
         country, num_customers=COUNT(custs)
@@ -175,7 +177,8 @@ def impl_defog_broker_basic9():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    Return the customer ID and name of customers who have not made any transactions.
+    Return the customer ID and name of customers who have not made any
+    transactions.
     """
     return Customers.WHERE(HASNOT(transactions_made))(_id, name)
 
@@ -184,6 +187,7 @@ def impl_defog_broker_basic10():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    Return the ticker ID and symbol of tickers that do not have any daily price records.
+    Return the ticker ID and symbol of tickers that do not have any daily
+    price records.
     """
     return Tickers.WHERE(HASNOT(historical_prices))(_id, symbol)

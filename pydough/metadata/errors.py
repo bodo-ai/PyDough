@@ -8,6 +8,7 @@ __all__ = [
     "is_valid_name",
     "is_string",
     "is_bool",
+    "is_positive_int",
     "unique_properties_predicate",
     "compound_relationship_inherited_predicate",
     "simple_join_keys_predicate",
@@ -285,6 +286,16 @@ class OrCondition(PyDoughPredicate):
         return f"{error_name}{combined_messages}"
 
 
+class PositiveInteger(PyDoughPredicate):
+    """Predicate class to check that an object is a positive integer."""
+
+    def accept(self, obj: object) -> bool:
+        return isinstance(obj, int) and obj > 0
+
+    def error_message(self, error_name: str) -> str:
+        return f"{error_name} must be a positive integer"
+
+
 ###############################################################################
 # Specific predicates
 ###############################################################################
@@ -292,6 +303,7 @@ class OrCondition(PyDoughPredicate):
 is_valid_name: PyDoughPredicate = ValidName()
 is_string = HasType(str, "string")
 is_bool = HasType(bool, "boolean")
+is_positive_int = PositiveInteger()
 unique_properties_predicate: PyDoughPredicate = NonEmptyListOf(
     OrCondition([is_string, NonEmptyListOf(is_string)])
 )

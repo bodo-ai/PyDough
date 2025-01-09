@@ -83,12 +83,27 @@ def rank_with_filters_c():
 
 
 def percentile_nations():
+    # For every nation, give its name & its bucket from 1-5 ordered by name
+    # alphabetically
     return Nations(name, p=PERCENTILE(by=name.ASC(), n_buckets=5))
 
 
 def percentile_customers_per_region():
+    # For each region, give the name of all customers in that region that are
+    # in the 95th percentile in terms of account balance (larger percentile
+    # means more money) and whose phone number ends in two zeros, sorted by the
+    # name of the customers
     return (
         Regions.nations.customers(name)
         .WHERE((PERCENTILE(by=(acctbal.ASC()), levels=2) == 95) & ENDSWITH(phone, "00"))
         .ORDER_BY(name.ASC())
     )
+
+
+def regional_suppliers_percentile():
+    # For each region, find the suppliers in the top 0.1% by number of parts
+    # they supply, breaking ties by name, only keeping the suppliers in the top
+    pct = PERCENTILE(
+        by=(COUNT(supply_records).ASC(), name.ASC()), levels=2, n_buckets=1000
+    )
+    return Regions.nations.suppliers(name).WHERE(HAS(supply_records) & (pct == 1000))

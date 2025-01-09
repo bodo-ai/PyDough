@@ -22,12 +22,13 @@ __all__ = [
 ]
 
 from abc import ABC
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Iterable, MutableSequence, Sequence
 from datetime import date
 from typing import Any, Union
 
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
+from pydough.metadata.errors import is_bool, is_positive_int
 from pydough.types import (
     ArrayType,
     BinaryType,
@@ -370,7 +371,7 @@ class UnqualifiedCollation(UnqualifiedNode):
 def get_by_arg(
     kwargs: dict[str, object],
     func_name: str,
-) -> Iterable[UnqualifiedNode]:
+) -> Sequence[UnqualifiedNode]:
     """
     Extracts the `by` argument from the keyword arguments to a window function,
     verifying that it exists, removing it from the kwargs, and converting it to
@@ -393,13 +394,15 @@ def get_by_arg(
             f"The `by` argument to `{func_name}` must be provided"
         )
     by = kwargs.pop("by")
-    if isinstance(by, UnqualifiedNode):
+    if isinstance(by, UnqualifiedCollation):
         by = [by]
     elif not (
-        isinstance(by, Iterable) and all(isinstance(arg, UnqualifiedNode) for arg in by)
+        isinstance(by, Sequence)
+        and all(isinstance(arg, UnqualifiedCollation) for arg in by)
+        and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{func_name}` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
+            f"The `by` argument to `{func_name}` must be a single collation expression or a non-empty iterable of collation expressions"
         )
     return by
 
@@ -415,20 +418,30 @@ class UnqualifiedOperator(UnqualifiedNode):
 
     def __call__(self, *args, **kwargs):
         levels: int | None = None
-        if len(kwargs) > 0:
-            window_operator: pydop.ExpressionWindowOperator
-            match self._parcel[0]:
-                case "PERCENTILE":
-                    window_operator = pydop.PERCENTILE
-                case "RANKING":
-                    window_operator = pydop.RANKING
-                case func:
+        window_operator: pydop.ExpressionWindowOperator
+        is_window: bool = True
+        match self._parcel[0]:
+            case "PERCENTILE":
+                window_operator = pydop.PERCENTILE
+                is_positive_int.verify(
+                    kwargs.get("n_buckets", 100), "`n_buckets` argument"
+                )
+            case "RANKING":
+                window_operator = pydop.RANKING
+                is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
+                is_bool.verify(kwargs.get("dense", False), "`dense` argument")
+            case func:
+                is_window = False
+                if len(kwargs) > 0:
                     raise PyDoughUnqualifiedException(
                         f"PyDough function call {func} does not support keyword arguments at this time"
                     )
+        if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, self._parcel[0])
             if "levels" in kwargs:
-                levels = kwargs.pop("levels")
+                levels_arg = kwargs.pop("levels")
+                is_positive_int.verify(levels_arg, "`levels` argument")
+                levels = levels_arg
             return UnqualifiedWindow(
                 window_operator,
                 by,

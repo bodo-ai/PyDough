@@ -15,6 +15,7 @@ from simple_pydough_functions import (
     rank_with_filters_a,
     rank_with_filters_b,
     rank_with_filters_c,
+    regional_suppliers_percentile,
     simple_filter_top_five,
     simple_scan_top_five,
 )
@@ -876,6 +877,39 @@ ROOT(columns=[('name', name)], orderings=[(ordering_0):asc_first])
                 ),
             ),
             id="percentile_customers_per_region",
+        ),
+        pytest.param(
+            (
+                regional_suppliers_percentile,
+                """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool & PERCENTILE(args=[], partition=[key], order=[(DEFAULT_TO(agg_0, 0:int64)):asc_last, (name):asc_last], n_buckets=1000) == 1000:int64, columns={'name': name})
+  JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
+   PROJECT(columns={'key': key, 'key_5': key_5, 'name': name_6})
+    JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name_6': t1.name})
+     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey})
+   AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': COUNT()})
+    SCAN(table=tpch.PARTSUPP, columns={'supplier_key': ps_suppkey})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Supplier#000009997",
+                            "Supplier#000009978",
+                            "Supplier#000009998",
+                            "Supplier#000009995",
+                            "Supplier#000009999",
+                            "Supplier#000010000",
+                            "Supplier#000009991",
+                            "Supplier#000009996",
+                        ]
+                    }
+                ),
+            ),
+            id="regional_suppliers_percentile",
         ),
     ],
 )
