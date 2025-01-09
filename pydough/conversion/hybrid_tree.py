@@ -529,7 +529,7 @@ class HybridPartition(HybridOperation):
         """
         self.key_names.append(key_name)
         self.terms[key_name] = key_expr
-        self.unique_exprs.append(key_expr)
+        self.unique_exprs.append(HybridRefExpr(key_name, key_expr.typ))
 
 
 class HybridLimit(HybridOperation):
@@ -984,7 +984,7 @@ class HybridTree:
         Args:
             `child`: the subtree to be connected to `self` as a child
             (starting at the bottom of the subtree).
-            `connection_type`: enum indcating what kind of connection is to be
+            `connection_type`: enum indicating what kind of connection is to be
             used to link `self` to `child`.
 
         Returns:

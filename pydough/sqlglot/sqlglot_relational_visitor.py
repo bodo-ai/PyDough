@@ -12,9 +12,12 @@ from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Star as SQLGlotStar
 
 from pydough.relational import (
     Aggregate,
+    CallExpression,
+    ColumnReference,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
     EmptySingleton,
@@ -28,6 +31,7 @@ from pydough.relational import (
     RelationalRoot,
     RelationalVisitor,
     Scan,
+    WindowCallExpression,
 )
 
 from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
@@ -280,6 +284,20 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
         )
 
+    def contains_window(self, exp: RelationalExpression) -> bool:
+        """
+        Returns whether a relational expression contains a window call.
+        """
+        match exp:
+            case CallExpression():
+                return any(self.contains_window(arg) for arg in exp.inputs)
+            case ColumnReference() | LiteralExpression():
+                return False
+            case WindowCallExpression():
+                return True
+            case _:
+                raise NotImplementedError(f"{exp.__class__.__name__}")
+
     def reset(self) -> None:
         """
         Reset returns or resets all of the state associated with this
@@ -367,22 +385,33 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in filter.columns.items()
         ]
         query: Select
-        # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
-        if (
-            "group_by" in input_expr.args
-            or "where" in input_expr.args
-            or "order" in input_expr.args
-            or "limit" in input_expr.args
-        ):
-            # Check if we already have a where clause or limit. We
-            # cannot merge these yet.
-            # TODO: (gh #151) Consider allowing combining where if
-            # limit isn't present?
-            query = self._build_subquery(input_expr, exprs)
+        if self.contains_window(filter.condition):
+            # If there is a window function in the condition, use QUALIFY
+            # instead of WHERE.
+            query = self._build_subquery(input_expr, [SQLGlotStar()])
+            query = query.qualify(cond)
+            # Apply `_build_subquery` with `exprs` after qualification in case
+            # the SELECT clause would remove any of the columns used by the
+            # QUALIFY.
+            query = self._build_subquery(query, exprs)
         else:
-            # Try merge the column sections
-            query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
-        query = query.where(cond)
+            # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
+            if (
+                "group_by" in input_expr.args
+                or "where" in input_expr.args
+                or "qualify" in input_expr.args
+                or "order" in input_expr.args
+                or "limit" in input_expr.args
+            ):
+                # Check if we already have a where clause or limit. We
+                # cannot merge these yet.
+                # TODO: (gh #151) Consider allowing combining where if
+                # limit isn't present?
+                query = self._build_subquery(input_expr, exprs)
+            else:
+                # Try merge the column sections
+                query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
+            query = query.where(cond)
         self._stack.append(query)
 
     def visit_aggregate(self, aggregate: Aggregate) -> None:
@@ -400,6 +429,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         query: Select
         if (
             "group_by" in input_expr.args
+            or "qualify" in input_expr.args
             or "order" in input_expr.args
             or "limit" in input_expr.args
         ):

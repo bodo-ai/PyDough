@@ -109,6 +109,7 @@ These functions can be called on plural data to aggregate it into a singular exp
 These functions return an expression and use logic that produces a value that depends on other records in the collection. Each of these functions has an optional `levels` argument. If it is absent, it means that the operation is done by examining all records globally. If `levels` is provided, it must be a valid argument to `BACK`, and if so it indicates that the operation is only done comparing the record against other records that are subcollection entries of the same ancestor collection, where the `levels` argument indicates how many `BACK` levels to find that ancestor. 
 
 - `RANKING(by=..., levels=None, allow_ties=False, dense=False)`: returns the ordinal position of the current record when all records are sorted by the collation expressions in the `by` argument. By default, uses the same semantics as `ROW_NUMBER`. If `allow_ties=True`, instead uses `RANK`. If `allow_ties=True` and `dense=True`, instead uses `DENSE_RANK`.
+- `PERCENTILE(by=..., levels=None, n_buckets=100)`: splits the data into `n_buckets` equal sized sections by ordering the data by the `by` arguments, where bucket `1` is the smallest data and bucket `n_buckets` is the largest. This is useful for understanding the relative position of a value within a group, like finding the top 10% of performers in a class.
 
 For an example of how `levels` works, when doing `Regions.nations.customers(r=RANKING(by=...))`:
 

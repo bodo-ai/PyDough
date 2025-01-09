@@ -22,12 +22,13 @@ __all__ = [
 ]
 
 from abc import ABC
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Iterable, MutableSequence, Sequence
 from datetime import date
 from typing import Any, Union
 
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
+from pydough.metadata.errors import is_bool, is_positive_int
 from pydough.types import (
     ArrayType,
     BinaryType,
@@ -367,6 +368,45 @@ class UnqualifiedCollation(UnqualifiedNode):
         self._parcel: tuple[UnqualifiedNode, bool, bool] = (node, asc, na_pos)
 
 
+def get_by_arg(
+    kwargs: dict[str, object],
+    func_name: str,
+) -> Sequence[UnqualifiedNode]:
+    """
+    Extracts the `by` argument from the keyword arguments to a window function,
+    verifying that it exists, removing it from the kwargs, and converting it to
+    an iterable if it was a single unqualified node.
+
+    Args:
+        `kwargs`: the keyword arguments.
+        `func_name`: the function whose `by` argument being extracted.
+
+    Returns:
+        The list of unqualified nodes represented by the `by` argument, which
+        is removed from `kwargs`.
+
+    Raises:
+        `PyDoughUnqualifiedException` if the `by` argument is missing or the
+        wrong type.
+    """
+    if "by" not in kwargs:
+        raise PyDoughUnqualifiedException(
+            f"The `by` argument to `{func_name}` must be provided"
+        )
+    by = kwargs.pop("by")
+    if isinstance(by, UnqualifiedCollation):
+        by = [by]
+    elif not (
+        isinstance(by, Sequence)
+        and all(isinstance(arg, UnqualifiedCollation) for arg in by)
+        and len(by) > 0
+    ):
+        raise PyDoughUnqualifiedException(
+            f"The `by` argument to `{func_name}` must be a single collation expression or a non-empty iterable of collation expressions"
+        )
+    return by
+
+
 class UnqualifiedOperator(UnqualifiedNode):
     """
     Implementation of UnqualifiedNode used to refer to a function that has
@@ -378,33 +418,35 @@ class UnqualifiedOperator(UnqualifiedNode):
 
     def __call__(self, *args, **kwargs):
         levels: int | None = None
-        if len(kwargs) > 0:
-            match self._parcel[0]:
-                case "RANKING":
-                    if "by" not in kwargs:
-                        raise PyDoughUnqualifiedException(
-                            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
-                        )
-                    by = kwargs.pop("by")
-                    if isinstance(by, UnqualifiedNode):
-                        by = [by]
-                    elif not (
-                        isinstance(by, Iterable)
-                        and all(isinstance(arg, UnqualifiedNode) for arg in by)
-                    ):
-                        raise PyDoughUnqualifiedException(
-                            "The `by` argument to `RANKING` must be a single UnqualifiedNode or an iterable of UnqualifiedNodes"
-                        )
-                    if "levels" in kwargs:
-                        levels = kwargs.pop("levels")
-                    return UnqualifiedWindow(
-                        pydop.RANKING,
-                        by,
-                        levels,
-                        kwargs,
+        window_operator: pydop.ExpressionWindowOperator
+        is_window: bool = True
+        match self._parcel[0]:
+            case "PERCENTILE":
+                window_operator = pydop.PERCENTILE
+                is_positive_int.verify(
+                    kwargs.get("n_buckets", 100), "`n_buckets` argument"
+                )
+            case "RANKING":
+                window_operator = pydop.RANKING
+                is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
+                is_bool.verify(kwargs.get("dense", False), "`dense` argument")
+            case func:
+                is_window = False
+                if len(kwargs) > 0:
+                    raise PyDoughUnqualifiedException(
+                        f"PyDough function call {func} does not support keyword arguments at this time"
                     )
-            raise PyDoughUnqualifiedException(
-                "PyDough function calls do not support keyword arguments at this time"
+        if is_window:
+            by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, self._parcel[0])
+            if "levels" in kwargs:
+                levels_arg = kwargs.pop("levels")
+                is_positive_int.verify(levels_arg, "`levels` argument")
+                levels = levels_arg
+            return UnqualifiedWindow(
+                window_operator,
+                by,
+                levels,
+                kwargs,
             )
         operands: MutableSequence[UnqualifiedNode] = []
         for arg in args:

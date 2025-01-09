@@ -71,7 +71,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         ]
         # Do the same with the order
         order_exprs: list[SQLGlotExpression] = []
-        for order_arg in reversed(window_expression.order_inputs):
+        for order_arg in window_expression.order_inputs:
             order_arg.expr.accept(self)
             glot_expr: SQLGlotExpression = self._stack.pop()
             # Ignore non-default na first/last positions for SQLite dialect
@@ -96,33 +96,34 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             else:
                 glot_expr = glot_expr.desc(nulls_first=na_first)
             order_exprs.append(glot_expr)
+        this: SQLGlotExpression
         match window_expression.op.function_name:
+            case "PERCENTILE":
+                # Extract the number of buckets to use for the percentile
+                # operation (default is 100).
+                n_buckets = window_expression.kwargs.get("n_buckets", 100)
+                assert isinstance(n_buckets, int)
+                this = sqlglot_expressions.Anonymous(
+                    this="NTILE", expressions=[sqlglot_expressions.convert(n_buckets)]
+                )
             case "RANKING":
-                this: SQLGlotExpression
                 if window_expression.kwargs.get("allow_ties", False):
                     if window_expression.kwargs.get("dense", False):
-                        this = sqlglot_expressions.Anonymous(
-                            this="DENSE_RANK", expressions=[]
-                        )
+                        this = sqlglot_expressions.Anonymous(this="DENSE_RANK")
                     else:
-                        this = sqlglot_expressions.Anonymous(
-                            this="RANK", expressions=[]
-                        )
+                        this = sqlglot_expressions.Anonymous(this="RANK")
                 else:
                     this = sqlglot_expressions.RowNumber()
-                self._stack.append(
-                    sqlglot_expressions.Window(
-                        this=this,
-                        partition_by=partition_exprs,
-                        order=sqlglot_expressions.Order(
-                            this=None, expressions=order_exprs
-                        ),
-                    )
-                )
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"
                 )
+        window_call: sqlglot_expressions.Window = sqlglot_expressions.Window(
+            this=this,
+            partition_by=partition_exprs,
+            order=sqlglot_expressions.Order(this=None, expressions=order_exprs),
+        )
+        self._stack.append(window_call)
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed

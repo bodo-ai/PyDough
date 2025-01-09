@@ -7,11 +7,15 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 from simple_pydough_functions import (
+    percentile_customers_per_region,
+    percentile_nations,
     rank_nations_by_region,
     rank_nations_per_region_by_customers,
     rank_parts_per_supplier_region_by_size,
     rank_with_filters_a,
     rank_with_filters_b,
+    rank_with_filters_c,
+    regional_suppliers_percentile,
     simple_filter_top_five,
     simple_scan_top_five,
 )
@@ -599,7 +603,7 @@ ROOT(columns=[('key', key), ('total_price', total_price)], orderings=[(ordering_
                 rank_nations_by_region,
                 """
 ROOT(columns=[('name', name), ('rank', rank)], orderings=[])
- PROJECT(columns={'name': name, 'rank': RANKING(by=[], partition=[], order=['(name_3):asc_last'])})
+ PROJECT(columns={'name': name, 'rank': RANKING(args=[], partition=[], order=[(name_3):asc_last], allow_ties=True)})
   JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'name': t0.name, 'name_3': t1.name})
    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
@@ -646,7 +650,7 @@ ROOT(columns=[('name', name), ('rank', rank)], orderings=[])
 ROOT(columns=[('name', name), ('rank', rank)], orderings=[(ordering_1):asc_first])
  LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'name': name, 'ordering_1': ordering_1, 'rank': rank}, orderings=[(ordering_1):asc_first])
   PROJECT(columns={'name': name, 'ordering_1': rank, 'rank': rank})
-   PROJECT(columns={'name': name_3, 'rank': RANKING(by=[], partition=['key'], order=['(DEFAULT_TO(agg_0, 0:int64)):desc_first'])})
+   PROJECT(columns={'name': name_3, 'rank': RANKING(args=[], partition=[key], order=[(DEFAULT_TO(agg_0, 0:int64)):desc_first])})
     JOIN(conditions=[t0.key_2 == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name_3': t0.name_3})
      JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name_3': t1.name})
       SCAN(table=tpch.REGION, columns={'key': r_regionkey})
@@ -670,7 +674,7 @@ ROOT(columns=[('name', name), ('rank', rank)], orderings=[(ordering_1):asc_first
 ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ordering_0):asc_first])
  LIMIT(limit=Literal(value=15, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0, 'rank': rank, 'region': region}, orderings=[(ordering_0):asc_first])
   PROJECT(columns={'key': key, 'ordering_0': key, 'rank': rank, 'region': region})
-   PROJECT(columns={'key': key_9, 'rank': RANKING(by=[], partition=['key'], order=['(size):desc_first', '(container):desc_first', '(part_type):desc_first']), 'region': name})
+   PROJECT(columns={'key': key_9, 'rank': RANKING(args=[], partition=[key], order=[(size):desc_first, (container):desc_first, (part_type):desc_first], allow_ties=True, dense=True), 'region': name})
     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'container': t1.container, 'key': t0.key, 'key_9': t1.key, 'name': t0.name, 'part_type': t1.part_type, 'size': t1.size})
      JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'key': t0.key, 'name': t0.name, 'part_key': t1.part_key})
       JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name': t0.name})
@@ -702,21 +706,21 @@ ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ord
                             "ASIA",
                         ],
                         "rank": [
-                            41069,
-                            42125,
-                            42125,
-                            41612,
-                            76766,
-                            78621,
-                            78621,
-                            77311,
-                            2588,
-                            2641,
-                            2569,
-                            2569,
-                            22061,
-                            22061,
-                            22393,
+                            84220,
+                            86395,
+                            86395,
+                            85307,
+                            95711,
+                            98092,
+                            98092,
+                            96476,
+                            55909,
+                            56227,
+                            57062,
+                            57062,
+                            69954,
+                            69954,
+                            70899,
                         ],
                     }
                 ),
@@ -730,7 +734,7 @@ ROOT(columns=[('key', key), ('region', region), ('rank', rank)], orderings=[(ord
 ROOT(columns=[('n', n), ('r', r)], orderings=[])
  FILTER(condition=r <= 30:int64, columns={'n': n, 'r': r})
   FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
-   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(args=[], partition=[], order=[(acctbal):desc_first])})
     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
             """,
                 lambda: pd.DataFrame(
@@ -753,7 +757,7 @@ ROOT(columns=[('n', n), ('r', r)], orderings=[])
 ROOT(columns=[('n', n), ('r', r)], orderings=[])
  FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
   FILTER(condition=r <= 30:int64, columns={'n': n, 'name': name, 'r': r})
-   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(by=[], partition=[], order=['(acctbal):desc_first'])})
+   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(args=[], partition=[], order=[(acctbal):desc_first])})
     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
             """,
                 lambda: pd.DataFrame(
@@ -768,6 +772,144 @@ ROOT(columns=[('n', n), ('r', r)], orderings=[])
                 ),
             ),
             id="rank_with_filters_b",
+        ),
+        pytest.param(
+            (
+                rank_with_filters_c,
+                """  
+ROOT(columns=[('size', size), ('name', name)], orderings=[])
+ FILTER(condition=RANKING(args=[], partition=[size], order=[(retail_price):desc_first]) == 1:int64, columns={'name': name, 'size': size})
+  PROJECT(columns={'name': name, 'retail_price': retail_price, 'size': size_1})
+   JOIN(conditions=[t0.size == t1.size], types=['inner'], columns={'name': t1.name, 'retail_price': t1.retail_price, 'size_1': t1.size})
+    LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'size': size}, orderings=[(ordering_0):desc_last])
+     PROJECT(columns={'ordering_0': size, 'size': size})
+      AGGREGATE(keys={'size': size}, aggregations={})
+       SCAN(table=tpch.PART, columns={'size': p_size})
+    SCAN(table=tpch.PART, columns={'name': p_name, 'retail_price': p_retailprice, 'size': p_size})
+            """,
+                lambda: pd.DataFrame(
+                    {
+                        "size": [46, 47, 48, 49, 50],
+                        "name": [
+                            "frosted powder drab burnished grey",
+                            "lace khaki orange bisque beige",
+                            "steel chartreuse navy ivory brown",
+                            "forest azure almond antique violet",
+                            "blanched floral red maroon papaya",
+                        ],
+                    }
+                ),
+            ),
+            id="rank_with_filters_c",
+        ),
+        pytest.param(
+            (
+                percentile_nations,
+                """
+ROOT(columns=[('name', name), ('p', p)], orderings=[])
+ PROJECT(columns={'name': name, 'p': PERCENTILE(args=[], partition=[], order=[(name):asc_last], n_buckets=5)})
+  SCAN(table=tpch.NATION, columns={'name': n_name})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                            "INDONESIA",
+                            "IRAN",
+                            "IRAQ",
+                            "JAPAN",
+                            "JORDAN",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "PERU",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "SAUDI ARABIA",
+                            "UNITED KINGDOM",
+                            "UNITED STATES",
+                            "VIETNAM",
+                        ],
+                        "p": [1] * 5 + [2] * 5 + [3] * 5 + [4] * 5 + [5] * 5,
+                    }
+                ),
+            ),
+            id="percentile_nations",
+        ),
+        pytest.param(
+            (
+                percentile_customers_per_region,
+                """
+ROOT(columns=[('name', name)], orderings=[(ordering_0):asc_first])
+ PROJECT(columns={'name': name, 'ordering_0': name})
+  FILTER(condition=PERCENTILE(args=[], partition=[key], order=[(acctbal):asc_last]) == 95:int64 & ENDSWITH(phone, '00':string), columns={'name': name})
+   PROJECT(columns={'acctbal': acctbal, 'key': key, 'name': name_6, 'phone': phone})
+    JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'name_6': t1.name, 'phone': t1.phone})
+     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000059661",
+                            "Customer#000063999",
+                            "Customer#000071528",
+                            "Customer#000074375",
+                            "Customer#000089686",
+                            "Customer#000098778",
+                            "Customer#000100935",
+                            "Customer#000102081",
+                            "Customer#000110285",
+                            "Customer#000136477",
+                        ],
+                    }
+                ),
+            ),
+            id="percentile_customers_per_region",
+        ),
+        pytest.param(
+            (
+                regional_suppliers_percentile,
+                """
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool & PERCENTILE(args=[], partition=[key], order=[(DEFAULT_TO(agg_0, 0:int64)):asc_last, (name):asc_last], n_buckets=1000) == 1000:int64, columns={'name': name})
+  JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name': t0.name})
+   PROJECT(columns={'key': key, 'key_5': key_5, 'name': name_6})
+    JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name_6': t1.name})
+     JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey})
+   AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': COUNT()})
+    SCAN(table=tpch.PARTSUPP, columns={'supplier_key': ps_suppkey})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Supplier#000009997",
+                            "Supplier#000009978",
+                            "Supplier#000009998",
+                            "Supplier#000009995",
+                            "Supplier#000009999",
+                            "Supplier#000010000",
+                            "Supplier#000009991",
+                            "Supplier#000009996",
+                        ]
+                    }
+                ),
+            ),
+            id="regional_suppliers_percentile",
         ),
     ],
 )

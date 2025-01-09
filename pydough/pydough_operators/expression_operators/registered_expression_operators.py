@@ -43,6 +43,7 @@ __all__ = [
     "HAS",
     "HASNOT",
     "RANKING",
+    "PERCENTILE",
 ]
 
 from pydough.pydough_operators.type_inference import (
@@ -134,4 +135,7 @@ ISIN = ExpressionFunctionOperator(
 ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))
 RANKING = ExpressionWindowOperator(
     "RANKING", RequireNumArgs(0), ConstantType(Int64Type())
+)
+PERCENTILE = ExpressionWindowOperator(
+    "PERCENTILE", RequireNumArgs(0), ConstantType(Int64Type())
 )

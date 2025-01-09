@@ -86,21 +86,15 @@ class WindowCallExpression(RelationalExpression):
                 arg.to_string(compact) for arg in self.order_inputs
             ]
             arg_string_lists: list[str] = [
-                f"by={arg_strings}",
-                f"partition={partition_strings}",
-                f"order={order_strings}",
+                f"args=[{', '.join(arg_strings)}]",
+                f"partition=[{', '.join(partition_strings)}]",
+                f"order=[{', '.join(order_strings)}]",
             ]
             for kwarg in self.kwargs:
                 arg_string_lists.append(f"{kwarg}={self.kwargs[kwarg]}")
-            return self.op.to_string(
-                [
-                    f"by={arg_strings}",
-                    f"partition={partition_strings}",
-                    f"order={order_strings}",
-                ]
-            )
+            return self.op.to_string(arg_string_lists)
         else:
-            return f"WindowCall(op={self.op}, inputs={self.inputs}, partition={self.partition_inputs}, order={self.order_inputs}, return_type={self.data_type})"
+            return f"WindowCall(op={self.op}, inputs={self.inputs}, partition={self.partition_inputs}, order={self.order_inputs}, return_type={self.data_type}, kwargs={self.kwargs})"
 
     def equals(self, other: object) -> bool:
         return (
