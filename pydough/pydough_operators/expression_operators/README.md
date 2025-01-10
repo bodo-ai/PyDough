@@ -55,6 +55,12 @@ These are created with a prefix operator syntax instead of called as a function.
 
 - `NOT` (`~`): unary operator for a logical NOT.
 
+#### Other Operators
+
+These are other PyDough operators that are not necessarily used as functions:
+
+- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Currently, PyDough does not support negative indices or providing step values other than 1.
+
 #### Scalar Functions
 
 These functions must be called on singular data as a function.

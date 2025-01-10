@@ -98,7 +98,7 @@ def convert_iff_case(
     )
 
 
-def convert_is_null(
+def convert_absent(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
@@ -120,7 +120,7 @@ def convert_is_null(
     )
 
 
-def convert_not_null(
+def convert_present(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
@@ -138,7 +138,7 @@ def convert_not_null(
         The `IS NOT NULL` call corresponding to the `PRESENT` call.
     """
     return sqlglot_expressions.Not(
-        this=apply_parens(convert_is_null(raw_args, sql_glot_args))
+        this=apply_parens(convert_absent(raw_args, sql_glot_args))
     )
 
 
@@ -658,10 +658,10 @@ class SqlGlotTransformBindings:
 
         # Conditional functions
         self.bind_simple_function(pydop.DEFAULT_TO, sqlglot_expressions.Coalesce)
-        self.bind_simple_function(pydop.IFF, sqlglot_expressions.If)
+        self.bindings[pydop.IFF] = convert_iff_case
         self.bindings[pydop.ISIN] = convert_isin
-        self.bindings[pydop.PRESENT] = convert_not_null
-        self.bindings[pydop.ABSENT] = convert_is_null
+        self.bindings[pydop.PRESENT] = convert_present
+        self.bindings[pydop.ABSENT] = convert_absent
         self.bindings[pydop.KEEP_IF] = convert_keep_if
         self.bindings[pydop.MONOTONIC] = convert_monotonic
 
@@ -693,8 +693,8 @@ class SqlGlotTransformBindings:
         """
         # Use IF function instead of CASE if the SQLite version is recent
         # enough.
-        if sqlite3.sqlite_version < "3.32":
-            self.bindings[pydop.IFF] = convert_iff_case
+        if sqlite3.sqlite_version >= "3.32":
+            self.bind_simple_function(pydop.IFF, sqlglot_expressions.If)
 
         # Datetime function overrides
         self.bindings[pydop.YEAR] = convert_sqlite_datetime_extract("'%Y'")

@@ -6,6 +6,12 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
+from bad_pydough_functions import (
+    bad_slice_1,
+    bad_slice_2,
+    bad_slice_3,
+    bad_slice_4,
+)
 from simple_pydough_functions import (
     function_sampler,
     percentile_customers_per_region,
@@ -1028,3 +1034,45 @@ def test_pipeline_e2e(
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
     pd.testing.assert_frame_equal(result, answer_impl())
+
+
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "impl, error_msg",
+    [
+        pytest.param(
+            bad_slice_1,
+            "SLICE function currently only supports non-negative stop indices",
+            id="bad_slice_1",
+        ),
+        pytest.param(
+            bad_slice_2,
+            "SLICE function currently only supports non-negative start indices",
+            id="bad_slice_2",
+        ),
+        pytest.param(
+            bad_slice_3,
+            "SLICE function currently only supports a step of 1",
+            id="bad_slice_3",
+        ),
+        pytest.param(
+            bad_slice_4,
+            "SLICE function currently only supports a step of 1",
+            id="bad_slice_4",
+        ),
+    ],
+)
+def test_pipeline_e2e_errors(
+    impl: Callable[[UnqualifiedRoot], UnqualifiedNode],
+    error_msg: str,
+    get_sample_graph: graph_fetcher,
+    sqlite_tpch_db_context: DatabaseContext,
+):
+    """
+    Tests running bad PyDough code through the entire pipeline to verify that
+    a certain error is raised.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    with pytest.raises(Exception, match=error_msg):
+        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
+        to_df(root, metadata=graph, database=sqlite_tpch_db_context)
