@@ -3,15 +3,15 @@ Submodule of the PyDough metadata module defining metadata for properties.
 """
 
 __all__ = [
-    "PropertyMetadata",
-    "ReversiblePropertyMetadata",
-    "TableColumnMetadata",
-    "SimpleJoinMetadata",
     "CartesianProductMetadata",
     "CompoundRelationshipMetadata",
     "InheritedPropertyMetadata",
-    "SubcollectionRelationshipMetadata",
+    "PropertyMetadata",
+    "ReversiblePropertyMetadata",
     "ScalarAttributeMetadata",
+    "SimpleJoinMetadata",
+    "SubcollectionRelationshipMetadata",
+    "TableColumnMetadata",
 ]
 
 from .cartesian_product_metadata import CartesianProductMetadata

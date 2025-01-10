@@ -11,3 +11,7 @@ repos:
       - id: mypy
         args: [--check-untyped-defs, --ignore-missing-imports]
         additional_dependencies: [types-pytz]
+  - repo: https://github.com/aio-libs/sort-all
+    rev: 'v1.3.0'
+    hooks:
+      - id: sort-all

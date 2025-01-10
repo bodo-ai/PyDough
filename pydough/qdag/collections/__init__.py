@@ -4,24 +4,24 @@ collections, including operators that transform collections.
 """
 
 __all__ = [
-    "PyDoughCollectionQDAG",
-    "TableCollection",
-    "Calc",
-    "GlobalContext",
-    "CollectionAccess",
-    "SubCollection",
-    "ChildOperatorChildAccess",
+    "AugmentingChildOperator",
     "BackReferenceCollection",
-    "Where",
+    "Calc",
+    "ChildAccess",
+    "ChildOperator",
+    "ChildOperatorChildAccess",
+    "ChildReferenceCollection",
+    "CollectionAccess",
+    "CompoundSubCollection",
+    "GlobalContext",
     "OrderBy",
     "PartitionBy",
-    "ChildAccess",
-    "TopK",
-    "ChildReferenceCollection",
-    "ChildOperator",
-    "CompoundSubCollection",
     "PartitionChild",
-    "AugmentingChildOperator",
+    "PyDoughCollectionQDAG",
+    "SubCollection",
+    "TableCollection",
+    "TopK",
+    "Where",
 ]
 
 from .augmenting_child_operator import AugmentingChildOperator

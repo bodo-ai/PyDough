@@ -2,7 +2,7 @@
 Definition of the PyDough types for integer types.
 """
 
-__all__ = ["IntegerType", "Int8Type", "Int16Type", "Int32Type", "Int64Type"]
+__all__ = ["Int16Type", "Int32Type", "Int64Type", "Int8Type", "IntegerType"]
 
 
 from .errors import PyDoughTypeException

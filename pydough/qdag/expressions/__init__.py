@@ -4,15 +4,15 @@ expressions.
 """
 
 __all__ = [
-    "PyDoughExpressionQDAG",
-    "ColumnProperty",
-    "Literal",
-    "ExpressionFunctionCall",
-    "Reference",
     "BackReferenceExpression",
     "ChildReferenceExpression",
     "CollationExpression",
+    "ColumnProperty",
+    "ExpressionFunctionCall",
+    "Literal",
     "PartitionKey",
+    "PyDoughExpressionQDAG",
+    "Reference",
     "WindowCall",
 ]
 
