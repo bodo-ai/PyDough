@@ -100,9 +100,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv11,
             ),
             id="broker_adv11",
-            marks=pytest.mark.skip(
-                reason="TODO: (gh #187) fix column pruning in queries that only have COUNT(*)"
-            ),
         ),
         pytest.param(
             (
@@ -111,9 +108,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv12,
             ),
             id="broker_adv12",
-            marks=pytest.mark.skip(
-                reason="TODO: (gh #187) fix column pruning in queries that only have COUNT(*)"
-            ),
         ),
         pytest.param(
             (

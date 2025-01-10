@@ -76,6 +76,18 @@ class ColumnPruner:
         found_identifiers: set[ColumnReference] = (
             self._column_finder.get_column_references()
         )
+        # If the node is an aggregate but doesn't use any of the inputs
+        # (e.g. a COUNT(*)), arbitrarily mark one of them as used.
+        # TODO: (gh #196) optimize this functionality so it doesn't keep an
+        # unnecessary column.
+        if isinstance(node, Aggregate) and len(found_identifiers) == 0:
+            arbitrary_column_name: str = min(node.input.columns)
+            found_identifiers.add(
+                ColumnReference(
+                    arbitrary_column_name,
+                    node.input.columns[arbitrary_column_name].data_type,
+                )
+            )
         # Determine which identifiers to pass to each input.
         new_inputs: list[Relational] = []
         # Note: The ColumnPruner should only be run when all input names are

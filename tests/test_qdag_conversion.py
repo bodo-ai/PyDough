@@ -801,11 +801,11 @@ ROOT(columns=[('num_cust', num_cust), ('num_supp', num_supp), ('num_part', num_p
   JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'agg_2': t0.agg_2})
    JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t0.agg_0, 'agg_2': t1.agg_2})
     AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
-     SCAN(table=tpch.CUSTOMER, columns={})
+     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal})
     AGGREGATE(keys={}, aggregations={'agg_2': COUNT()})
-     SCAN(table=tpch.SUPPLIER, columns={})
+     SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal})
    AGGREGATE(keys={}, aggregations={'agg_1': COUNT()})
-    SCAN(table=tpch.PART, columns={})
+    SCAN(table=tpch.PART, columns={'brand': p_brand})
 """,
             ),
             id="global_aggfuncs_multiple_children",
