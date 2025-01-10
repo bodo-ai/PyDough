@@ -5,8 +5,10 @@ PyDough whenever a user writes PyDough code.
 
 __all__ = [
     "UnqualifiedAccess",
+    "UnqualifiedBack",
     "UnqualifiedBinaryOperation",
     "UnqualifiedCalc",
+    "UnqualifiedLiteral",
     "UnqualifiedNode",
     "UnqualifiedOperation",
     "UnqualifiedOperator",
@@ -15,8 +17,6 @@ __all__ = [
     "UnqualifiedRoot",
     "UnqualifiedTopK",
     "UnqualifiedWhere",
-    "UnqualifiedLiteral",
-    "UnqualifiedBack",
     "UnqualifiedWindow",
     "display_raw",
 ]

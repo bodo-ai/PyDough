@@ -2,7 +2,7 @@
 Utilities used for PyDough return type inference.
 """
 
-__all__ = ["ExpressionTypeDeducer", "ConstantType", "SelectArgumentType"]
+__all__ = ["ConstantType", "ExpressionTypeDeducer", "SelectArgumentType"]
 
 from abc import ABC, abstractmethod
 from typing import Any

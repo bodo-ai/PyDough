@@ -3,7 +3,7 @@ Logic for transforming raw Python code into PyDough code by replacing undefined
 variables with unqualified nodes by prepending with with `_ROOT.`.
 """
 
-__all__ = ["init_pydough_context", "transform_code", "transform_cell"]
+__all__ = ["init_pydough_context", "transform_cell", "transform_code"]
 
 import ast
 import inspect

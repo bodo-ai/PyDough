@@ -23,7 +23,7 @@ from pydough.sqlglot import (
 )
 from pydough.unqualified import UnqualifiedNode, qualify_node
 
-__all__ = ["to_sql", "to_df"]
+__all__ = ["to_df", "to_sql"]
 
 
 def _load_session_info(

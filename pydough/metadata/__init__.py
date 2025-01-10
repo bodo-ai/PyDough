@@ -3,17 +3,17 @@ Module of PyDough dealing with definitions and parsing of PyDough metadata.
 """
 
 __all__ = [
-    "parse_json_metadata_from_file",
-    "GraphMetadata",
+    "CartesianProductMetadata",
     "CollectionMetadata",
+    "CompoundRelationshipMetadata",
+    "GraphMetadata",
     "PropertyMetadata",
-    "TableColumnMetadata",
     "PyDoughMetadataException",
     "SimpleJoinMetadata",
-    "CartesianProductMetadata",
-    "CompoundRelationshipMetadata",
     "SimpleTableMetadata",
     "SubcollectionRelationshipMetadata",
+    "TableColumnMetadata",
+    "parse_json_metadata_from_file",
 ]
 
 from .collections import CollectionMetadata, SimpleTableMetadata

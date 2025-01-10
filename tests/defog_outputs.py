@@ -4,18 +4,18 @@ File that holds expected outputs for the defog queries.
 
 __all__ = [
     "defog_sql_text_broker_adv1",
-    "defog_sql_text_broker_adv3",
-    "defog_sql_text_broker_adv6",
     "defog_sql_text_broker_adv11",
     "defog_sql_text_broker_adv12",
     "defog_sql_text_broker_adv15",
+    "defog_sql_text_broker_adv3",
+    "defog_sql_text_broker_adv6",
+    "defog_sql_text_broker_basic10",
     "defog_sql_text_broker_basic3",
     "defog_sql_text_broker_basic4",
     "defog_sql_text_broker_basic5",
     "defog_sql_text_broker_basic7",
     "defog_sql_text_broker_basic8",
     "defog_sql_text_broker_basic9",
-    "defog_sql_text_broker_basic10",
 ]
 
 

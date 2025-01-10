@@ -11,7 +11,7 @@ from enum import Enum
 
 import pandas as pd
 
-__all__ = ["DatabaseConnection", "DatabaseDialect", "DatabaseContext"]
+__all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
 
 class DatabaseConnection:
