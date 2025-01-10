@@ -1,4 +1,7 @@
 __all__ = [
+    "SQLGlotRelationalExpressionVisitor",
+    "SQLGlotRelationalVisitor",
+    "SqlGlotTransformBindings",
     "convert_dialect_to_sqlglot",
     "convert_relation_to_sql",
     "execute_df",
@@ -6,10 +9,7 @@ __all__ = [
     "find_identifiers_in_list",
     "get_glot_name",
     "set_glot_alias",
-    "SQLGlotRelationalExpressionVisitor",
-    "SQLGlotRelationalVisitor",
     "unwrap_alias",
-    "SqlGlotTransformBindings",
 ]
 from .execute_relational import (
     convert_dialect_to_sqlglot,

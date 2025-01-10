@@ -5,11 +5,11 @@ the relational tree.
 
 __all__ = [
     "CallExpression",
-    "ExpressionSortInfo",
     "ColumnReference",
     "ColumnReferenceFinder",
     "ColumnReferenceInputNameModifier",
     "ColumnReferenceInputNameRemover",
+    "ExpressionSortInfo",
     "LiteralExpression",
     "RelationalExpression",
     "RelationalExpressionVisitor",

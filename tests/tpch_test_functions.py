@@ -1,13 +1,5 @@
 __all__ = [
     "impl_tpch_q1",
-    "impl_tpch_q2",
-    "impl_tpch_q3",
-    "impl_tpch_q4",
-    "impl_tpch_q5",
-    "impl_tpch_q6",
-    "impl_tpch_q7",
-    "impl_tpch_q8",
-    "impl_tpch_q9",
     "impl_tpch_q10",
     "impl_tpch_q11",
     "impl_tpch_q12",
@@ -17,6 +9,14 @@ __all__ = [
     "impl_tpch_q16",
     "impl_tpch_q17",
     "impl_tpch_q18",
+    "impl_tpch_q2",
+    "impl_tpch_q3",
+    "impl_tpch_q4",
+    "impl_tpch_q5",
+    "impl_tpch_q6",
+    "impl_tpch_q7",
+    "impl_tpch_q8",
+    "impl_tpch_q9",
 ]
 
 import datetime

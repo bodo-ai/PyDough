@@ -3,15 +3,15 @@ Top-level init file for PyDough package.
 """
 
 __all__ = [
-    "parse_json_metadata_from_file",
-    "init_pydough_context",
     "active_session",
-    "to_sql",
-    "to_df",
+    "display_raw",
     "explain",
     "explain_structure",
     "explain_term",
-    "display_raw",
+    "init_pydough_context",
+    "parse_json_metadata_from_file",
+    "to_df",
+    "to_sql",
 ]
 
 from .configs import PyDoughSession

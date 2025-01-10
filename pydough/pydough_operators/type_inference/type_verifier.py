@@ -2,7 +2,7 @@
 Utilities used for PyDough type checking.
 """
 
-__all__ = ["TypeVerifier", "RequireNumArgs", "AllowAny", "RequireMinArgs"]
+__all__ = ["AllowAny", "RequireMinArgs", "RequireNumArgs", "TypeVerifier"]
 
 from abc import ABC, abstractmethod
 from typing import Any

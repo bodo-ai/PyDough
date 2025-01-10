@@ -4,13 +4,13 @@ type inference.
 """
 
 __all__ = [
-    "TypeVerifier",
     "AllowAny",
-    "ExpressionTypeDeducer",
-    "SelectArgumentType",
     "ConstantType",
-    "RequireNumArgs",
+    "ExpressionTypeDeducer",
     "RequireMinArgs",
+    "RequireNumArgs",
+    "SelectArgumentType",
+    "TypeVerifier",
 ]
 
 from .expression_type_deducer import (
