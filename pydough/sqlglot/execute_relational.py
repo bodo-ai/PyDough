@@ -30,12 +30,15 @@ def convert_relation_to_sql(
     Convert the given relational tree to a SQL string using the given dialect.
 
     Args:
-        relational (RelationalRoot): The relational tree to convert.
-        dialect (SQLGlotDialect): The dialect to use for the conversion.
+        `relational`: The relational tree to convert.
+        `dialect`: The dialect to use for the conversion.
+        `bindings`: The function bindings used for conversion.
 
     Returns:
         str: The SQL string representing the relational tree.
     """
+    # TODO (gh #205): use simplify/optimize from sqlglo to rewrite the
+    # generated SQL.
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings
     ).relational_to_sqlglot(relational)

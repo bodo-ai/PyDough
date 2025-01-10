@@ -6,7 +6,14 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
+from bad_pydough_functions import (
+    bad_slice_1,
+    bad_slice_2,
+    bad_slice_3,
+    bad_slice_4,
+)
 from simple_pydough_functions import (
+    function_sampler,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -911,6 +918,58 @@ ROOT(columns=[('name', name)], orderings=[])
             ),
             id="regional_suppliers_percentile",
         ),
+        pytest.param(
+            (
+                function_sampler,
+                """
+ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d), ('e', e)], orderings=[(ordering_0):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': a, 'b': b, 'c': c, 'd': d, 'e': e, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_first])
+  PROJECT(columns={'a': a, 'b': b, 'c': c, 'd': d, 'e': e, 'ordering_0': address})
+   FILTER(condition=MONOTONIC(0.0:float64, acctbal, 100.0:float64), columns={'a': a, 'address': address, 'b': b, 'c': c, 'd': d, 'e': e})
+    PROJECT(columns={'a': JOIN_STRINGS('-':string, name, name_3, SLICE(name_6, 16:int64, None:unknown, None:unknown)), 'acctbal': acctbal, 'address': address, 'b': ROUND(acctbal, 1:int64), 'c': KEEP_IF(name_6, SLICE(phone, None:unknown, 1:int64, None:unknown) == '3':string), 'd': PRESENT(KEEP_IF(name_6, SLICE(phone, 1:int64, 2:int64, None:unknown) == '1':string)), 'e': ABSENT(KEEP_IF(name_6, SLICE(phone, 14:int64, None:unknown, None:unknown) == '7':string))})
+     JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'name': t0.name, 'name_3': t0.name_3, 'name_6': t1.name, 'phone': t1.phone})
+      JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name, 'name_3': t1.name})
+       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+      SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'address': c_address, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "a": [
+                            "ASIA-INDIA-74",
+                            "AMERICA-CANADA-51",
+                            "EUROPE-GERMANY-40",
+                            "AMERICA-ARGENTINA-60",
+                            "AMERICA-UNITED STATES-76",
+                            "MIDDLE EAST-IRAN-80",
+                            "MIDDLE EAST-IRAQ-12",
+                            "AMERICA-ARGENTINA-69",
+                            "AFRICA-MOROCCO-48",
+                            "EUROPE-UNITED KINGDOM-17",
+                        ],
+                        "b": [
+                            15.6,
+                            61.5,
+                            39.2,
+                            27.5,
+                            35.1,
+                            56.4,
+                            40.2,
+                            38.0,
+                            58.4,
+                            70.4,
+                        ],
+                        "c": [None] * 4
+                        + ["Customer#000122476"]
+                        + [None] * 4
+                        + ["Customer#000057817"],
+                        "d": [0, 0, 0, 1, 0, 0, 1, 1, 0, 0],
+                        "e": [1] * 9 + [0],
+                    }
+                ),
+            ),
+            id="function_sampler",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -975,3 +1034,45 @@ def test_pipeline_e2e(
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
     pd.testing.assert_frame_equal(result, answer_impl())
+
+
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "impl, error_msg",
+    [
+        pytest.param(
+            bad_slice_1,
+            "SLICE function currently only supports non-negative stop indices",
+            id="bad_slice_1",
+        ),
+        pytest.param(
+            bad_slice_2,
+            "SLICE function currently only supports non-negative start indices",
+            id="bad_slice_2",
+        ),
+        pytest.param(
+            bad_slice_3,
+            "SLICE function currently only supports a step of 1",
+            id="bad_slice_3",
+        ),
+        pytest.param(
+            bad_slice_4,
+            "SLICE function currently only supports a step of 1",
+            id="bad_slice_4",
+        ),
+    ],
+)
+def test_pipeline_e2e_errors(
+    impl: Callable[[UnqualifiedRoot], UnqualifiedNode],
+    error_msg: str,
+    get_sample_graph: graph_fetcher,
+    sqlite_tpch_db_context: DatabaseContext,
+):
+    """
+    Tests running bad PyDough code through the entire pipeline to verify that
+    a certain error is raised.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    with pytest.raises(Exception, match=error_msg):
+        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
+        to_df(root, metadata=graph, database=sqlite_tpch_db_context)
