@@ -1,5 +1,16 @@
 # PyDough
 
+PyDough is an alternative DSL that can be used to solve analytical problems by phrasing questions in terms of a logical document model instead of translating to relational SQL logic.
+
+## Learning About PyDough
+
+Refer to these documents to learn how to use PyDough:
+
+- [Spec for the PyDough DSL](documentation/dsl.md)
+- [Spec for the PyDough metadata](documentation/metadata.md)
+- [List of builtin PyDough functions](documentation/functions.md)
+- [Usage guide for PyDough](documentation/usage.md)
+
 ## Developing PyDough
 PyDough uses `uv` as a package manager. Please refer to their docs for
 [installation](https://docs.astral.sh/uv/getting-started/). To run testing

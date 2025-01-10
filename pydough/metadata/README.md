@@ -17,4 +17,4 @@ Currently, the only way to create metadata is to store it in a JSON file that is
 
 The logic for how `parse_json_metadata_from_file` is implemented can be found in [parse.py](abstract_metadata.py).
 
-TODO (gh #167): add link to documentation for the specification of the JSON file format for PyDough metadata.
+To see the specification of the JSON file format for PyDough, [see here](../../documentation/metadata.md).
