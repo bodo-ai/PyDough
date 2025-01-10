@@ -9,7 +9,7 @@ import sqlite3
 from collections.abc import Callable, Sequence
 
 import sqlglot.expressions as sqlglot_expressions
-from sqlglot.expressions import Binary, Case, Concat, Is, Paren
+from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Func as SQLGlotFunction
 
@@ -22,6 +22,12 @@ transform_binding = Callable[
     [Sequence[RelationalExpression] | None, Sequence[SQLGlotExpression]],
     SQLGlotExpression,
 ]
+
+PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
+"""
+The types of SQLGlot expressions that need to be wrapped in parenthesis for the
+sake of precedence.
+"""
 
 
 def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
@@ -37,7 +43,7 @@ def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
     Returns:
         The expression, wrapped in parentheses if necessary.
     """
-    if isinstance(expression, (Binary, Concat, Is, Case)):
+    if isinstance(expression, PAREN_EXPRESSIONS):
         return Paren(this=expression)
     else:
         return expression
@@ -158,7 +164,9 @@ def convert_keep_if(
     Returns:
         The SQLGlot case expression equivalent to the `KEEP_IF` call.
     """
-    return sqlglot_expressions.Case().when(sql_glot_args[1], sql_glot_args[0])
+    return convert_iff_case(
+        None, [sql_glot_args[1], sql_glot_args[0], sqlglot_expressions.Null()]
+    )
 
 
 def convert_monotonic(
