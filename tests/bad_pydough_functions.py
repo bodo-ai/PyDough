@@ -53,3 +53,23 @@ def bad_window_6():
 def bad_window_7():
     # Non-integer n_buckets
     return Orders(PERCENTILE(by=order_key.ASC(), n_buckets=[1, 2, 3]))
+
+
+def bad_slice_1():
+    # Unsupported slicing: negative stop
+    return Customers(name[:-1])
+
+
+def bad_slice_2():
+    # Unsupported slicing: negative start
+    return Customers(name[-5:])
+
+
+def bad_slice_3():
+    # Unsupported slicing: skipping
+    return Customers(name[1:10:2])
+
+
+def bad_slice_4():
+    # Unsupported slicing: reversed
+    return Customers(name[::-1])

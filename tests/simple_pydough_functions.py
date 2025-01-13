@@ -107,3 +107,17 @@ def regional_suppliers_percentile():
         by=(COUNT(supply_records).ASC(), name.ASC()), levels=2, n_buckets=1000
     )
     return Regions.nations.suppliers(name).WHERE(HAS(supply_records) & (pct == 1000))
+
+
+def function_sampler():
+    return (
+        Regions.nations.customers(
+            a=JOIN_STRINGS("-", BACK(2).name, BACK(1).name, name[16:]),
+            b=ROUND(acctbal, 1),
+            c=KEEP_IF(name, phone[:1] == "3"),
+            d=PRESENT(KEEP_IF(name, phone[1:2] == "1")),
+            e=ABSENT(KEEP_IF(name, phone[14:] == "7")),
+        )
+        .WHERE(MONOTONIC(0.0, acctbal, 100.0))
+        .TOP_K(10, by=address.ASC())
+    )

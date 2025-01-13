@@ -55,6 +55,12 @@ These are created with a prefix operator syntax instead of called as a function.
 
 - `NOT` (`~`): unary operator for a logical NOT.
 
+#### Other Operators
+
+These are other PyDough operators that are not necessarily used as functions:
+
+- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Currently, PyDough does not support negative indices or providing step values other than 1.
+
 #### Scalar Functions
 
 These functions must be called on singular data as a function.
@@ -68,6 +74,7 @@ These functions must be called on singular data as a function.
 - `ENDSWITH`: returns whether the first argument string ends with the second argument string.
 - `CONTAINS`: returns whether the first argument string contains the second argument string.
 - `LIKES`: returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
+- `JOIN_STRINGS`: equivalent to the Python string join method, where the first argument is used as a delimiter to concatenate the remaining arguments.
 
 ##### Datetime Functions
 
@@ -79,10 +86,15 @@ These functions must be called on singular data as a function.
 
 - `IFF`: if the first argument is true returns the second argument, otherwise returns the third argument.
 - `DEFAULT_TO`: returns the first of its arguments that is non-null.
+- `PRESENT`: returns True if the argument is non-null.
+- `ABSENT`: returns True if the argument is null.
+- `KEEP_IF`: returns the first argument if the second argument is True, otherwise returns null.
+- `MONOTONIC`: returns True if each argument is `<=` the next argument.
 
 ##### Numeric Functions
 
 - `ABS`: returns the absolute value of the input.
+- `ROUND`: rounds the first argument to a number of digits equal to the second argument.
 
 #### Aggregation Functions
 
