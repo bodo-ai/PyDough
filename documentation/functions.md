@@ -144,6 +144,18 @@ Below are some examples of how to interpret these patterns:
 - `"%a%z%"` returns True for any string that contains an `"a"`, and also contains a `"z"` at some later point in the string.
 - `"_e%"` returns True for any string where the second character is `"e"`.
 
+### JOIN_STRINGS
+
+The `JOIN_STRINGS` function combines all of its string arguments by concatenating every argument after the first argument, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
+
+```py
+Regions.nations.customers(
+    fully_qualified_name = JOIN_STRINGS("-", BACK(2).name, BACK(1).name, name)
+)
+```
+
+For instance, `JOIN_STRINGS("; ", "Alpha", "Beta", "Gamma)` returns `"Alpha; Beta; Gamma"`.
+
 ## Datetime Functions
 
 Below is each function currently supported in PyDough that operates on date/time/timestamp values.
@@ -170,4 +182,204 @@ Calling `DAY` on a date/timestamp extracts the day of the month it belongs to:
 
 ```py
 Orders(is_first_of_month = DAY(order_date) == 1)
+```
+
+## Conditional Functions
+
+Below is each function currently supported in PyDough that handles conditional logic.
+
+### IFF
+
+The `IFF` function cases on the True/False value of its first argument. If it is True, it returns the second argument, otherwise it returns the third argument. In this way, the PyDough code `IFF(a, b, c)` is semantically the same as the SQL expression `CASE WHEN a THEN b ELSE c END`.
+
+```py
+qty_from_germany = IFF(supplier.nation.name == "GERMANY", quantity, 0)
+Customers(
+    total_quantity_shipped_from_germany = SUM(lines(q=qty_from_germany).q)
+)
+```
+
+### DEFAULT_TO
+
+The `DEFAULT_TO` function returns the first of its arguments that is non-null (e.g. the same as the `COALESCE` function in SQL):
+
+```py
+Lineitems(adj_tax = DEFAULT_TO(tax, 0))
+```
+
+### PRESENT
+
+The `PRESENT` function returns whether its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
+
+```py
+Lineitems(has_tax = PRESENT(tax))
+```
+
+### ABSENT
+
+The `ABSENT` function returns whether its argument is non-null (e.g. the same as `IS NULL` in SQL):
+
+```py
+Lineitems(no_tax = ABSENT(tax))
+```
+
+### KEEP_IF
+
+The `KEEP_IF` function returns the first function if the second arguments is True, otherwise it returns a null value. In other words, `KEEP_IF(a, b)` is equivalent to the SQL expression `CASE WHEN b THEN a END`.
+
+```py
+TPCH(avg_non_debt_balance = AVG(Customers(no_debt_bal = KEEP_IF(acctbal, acctbal > 0)).no_debt_bal))
+```
+
+### MONOTONIC
+
+The `MONOTONIC` function returns whether all of its arguments are in ascending order (e.g. `MONOTONIC(a, b, c, d)` is equivalent to `(a <= b) & (b <= c) & (c <= d)`):
+
+```py
+Lineitems.WHERE(MONOTONIC(10, quantity, 20) & MONOTONIC(5, part.size, 13))
+```
+
+## Numerical Functions
+
+Below is each numerical function currently supported in PyDough.
+
+### ABS
+
+The `ABS` function returns the absolute value of its input.
+
+```py
+Customers(acct_magnitude = ABS(acctbal))
+```
+
+### ROUND
+
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function.
+
+```py
+Parts(rounded_price = ROUND(retail_price, 1))
+```
+
+## Aggregation Functions
+
+Normally, functions in PyDough maintain the cardinality of their inputs. Aggregation functions instead take in an argument that can be plural and aggregates it into a singular value with regards to the current context. Below is each function currently supported in PyDough that can aggregate plural values into a singular value.
+
+### SUM
+
+The `SUM` function returns the sum of the plural set of numerical values it is called on.
+
+```py
+Nations(total_consumer_wealth = SUM(customers.acctbal))
+```
+
+### MIN
+
+The `MIN` function returns the smallest value from the set of numerical values it is called on.
+
+```py
+Suppliers(cheapest_part_supplied = MIN(supply_records.supply_cost))
+```
+
+### MAX
+
+The `MAX` function returns the largest value from the set of numerical values it is called on.
+
+```py
+Suppliers(most_expensive_part_supplied = MIN(supply_records.supply_cost))
+```
+
+### COUNT
+
+The `COUNT` function returns how many non-null records exist on the set of plural values it is called on.
+
+```py
+Customers(num_taxed_purchases = COUNT(orders.lines.tax))
+```
+
+The `COUNT` function can also be called on a sub-collection, in which case it will return how many records from that sub-collection exist.
+
+```py
+Nations(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
+```
+
+### NDISTINCT
+
+The `NDISTINCT` function returns how many distinct values of its argument exist.
+
+```py
+Customers(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
+```
+
+### HAS
+
+The `HAS` function is called on a sub-collection and returns True if at least one record of the sub-collection exists. In other words, `HAS(x)` is equivalent to `COUNT(x) > 0`.
+
+```py
+Parts.WHERE(HAS(supply_records.supplier.WHERE(nation.name == "GERMANY")))
+```
+
+### HASNOT
+
+The `HASNOT` function is called on a sub-collection and returns True if no records of the sub-collection exist. In other words, `HASNOT(x)` is equivalent to `COUNT(x) == 0`.
+
+```py
+Customers.WHERE(HASNOT(orders))
+```
+
+## Window Functions
+
+Window functions are special functions that return a value for each record in the current context that depends on other records in the same context. A common example of this is ordering all values within the current context to return a value that depends on the current record's ordinal position relative to all the other records in the context.
+
+Window functions in PyDough have an optional `levels` argument. If this argument is not provided, it means that the window function applies to all records of the current collection without any boundaries between records. If it is provided, it should be a value that can be used as an  argument to `BACK`, and in that case it means that the window function should be used on records of the current collection grouped by that particular ancestor.
+
+For example, if using the `RANKING` window function, consider the following examples:
+
+```py
+# (no levels) rank every customer relative to all other customers
+Regions.nations.customers(r=RANKING(...))
+
+# (levels=1) rank every customer relative to other customers in the same nation
+Regions.nations.customers(r=RANKING(..., levels=1))
+
+# (levels=2) rank every customer relative to other customers in the same region
+Regions.nations.customers(r=RANKING(..., levels=2))
+
+# (levels=3) rank every customer relative to other customers in the same nation
+Regions.nations.customers(r=RANKING(..., levels=3))
+```
+
+Below is each window function currently supported in PyDough.
+
+### RANKING
+
+The `RANKING` function returns ordinal position of the current record when all records in the current context are sorted by certain ordering keys. The arguments:
+
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `levels`: same `levels` argument as all other window functions.
+- `allow_ties`: optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
+- `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after hte ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
+
+```py
+# Rank customers per-nation by their account balance
+# (highest = rank #1, no ties)
+Nations.customers(r = RANKING(by=acctbal.DESC(), levels=1))
+
+# For every customer, finds their most recent order
+# (ties allowed)
+Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) == 1)
+```
+
+### PERCENTILE
+
+The `PERCENTILE` function returns what index the current record belongs to if all records in the current context are ordered then split into evenly sized buckets. The arguments:
+
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `levels`: same `levels` argument as all other window functions.
+- `n_buckets`: optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
+
+```py
+# Keep the top 0.1% of customers with the highest account balances.
+Customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
+
+# For every region, find the top 5% of customers with the highest account balances.
+Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), levels=2) > 95)
 ```
