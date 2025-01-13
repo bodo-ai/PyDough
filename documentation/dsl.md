@@ -44,28 +44,28 @@ There are also the following sub-collection relationships:
 
 The simplest PyDough code is scanning an entire collection. This is done by providing the name of the collection in the metadata. However, if that name is already used as a variable, then PyDough will not know to replace the name with the corresponding PyDough object.
 
-Good Example #1: obtains every record of the `People` collection. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output.
+**Good Example #1**: obtains every record of the `People` collection. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output.
 
 ```py
 %%pydough
 People
 ```
 
-Good Example #2: obtains every record of the `Addresses` collection. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output.
+**Good Example #2**: obtains every record of the `Addresses` collection. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output.
 
 ```py
 %%pydough
 GRAPH.Addresses
 ```
 
-Bad Example #1: obtains every record of the `Products` collection (there is no `Products` collection).
+**Bad Example #1**: obtains every record of the `Products` collection (there is no `Products` collection).
 
 ```py
 %%pydough
 Addresses
 ```
 
-Bad Example #2: obtains every record of the `Addresses` collection (but the name `Addresses` has been reassigned to a variable).
+**Bad Example #2**: obtains every record of the `Addresses` collection (but the name `Addresses` has been reassigned to a variable).
 
 ```py
 %%pydough
@@ -73,7 +73,7 @@ Addresses = 42
 Addresses
 ```
 
-Bad Example #3: obtains every record of the `Addresses` collection (but the graph name `HELLO` is the wrong graph name for this example).
+**Bad Example #3**: obtains every record of the `Addresses` collection (but the graph name `HELLO` is the wrong graph name for this example).
 
 ```py
 %%pydough
@@ -85,28 +85,28 @@ HELLO.Addresses
 
 The next step in PyDough after accessing a collection is accessing any of its sub-collections. The syntax `collection.subcollection` steps into every record of `subcollection` for each record of `collection`. This can result in changes of cardinality if records of `collection` can have multiple records of `subcollection`, and can result in duplicate records in the output if records of `subcollection` can be sourced from different records of `collection`.
 
-Good Example #1: for every person, obtains their current address. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output. A record from `Addresses` can be included multiple times if multiple different `People` records have it as their current address, or it could be missing entirely if no person has it as their current address.
+**Good Example #1**: for every person, obtains their current address. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output. A record from `Addresses` can be included multiple times if multiple different `People` records have it as their current address, or it could be missing entirely if no person has it as their current address.
 
 ```py
 %%pydough
 People.current_addresses
 ```
 
-Good Example #2: for every package, obtains the person who shipped it address. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output. A record from `People` can be included multiple times if multiple packages were ordered by that person, or it could be missing entirely if that person is not the customer who ordered any package.
+**Good Example #2**: for every package, obtains the person who shipped it address. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output. A record from `People` can be included multiple times if multiple packages were ordered by that person, or it could be missing entirely if that person is not the customer who ordered any package.
 
 ```py
 %%pydough
 GRAPH.Packages.customer
 ```
 
-Good Example #3: for every address, obtains all packages that someone who lives at that address has ordered. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`). Every record from `Packages` should be included at most once since every current occupant has a single address it maps back to, and every package has a single customer it maps back to.
+**Good Example #3**: for every address, obtains all packages that someone who lives at that address has ordered. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`). Every record from `Packages` should be included at most once since every current occupant has a single address it maps back to, and every package has a single customer it maps back to.
 
 ```py
 %%pydough
 Addresses.current_occupants.packages
 ```
 
-Bad Example #1: for every address, obtains all people who used to live there. This is invalid because the `Addresses` collection does not have a `former_occupants` property.
+**Bad Example #1**: for every address, obtains all people who used to live there. This is invalid because the `Addresses` collection does not have a `former_occupants` property.
 
 ```py
 %%pydough
@@ -131,14 +131,14 @@ Once a CALC term is created, all terms of the current collection still exist eve
 
 A CALC can also be done on the graph itself to create a collection with 1 row and columns corresponding to the properties inside the CALC. This is useful when aggregating an entire collection globally instead of with regards to a parent collection.
 
-Good Example #1: For every person, fetches just their first name & last name.
+**Good Example #1**: For every person, fetches just their first name & last name.
 
 ```py
 %%pydough
 People(first_name, last_name)
 ```
 
-Good Example #2: For every package, fetches the package id, the first & last name of the person who ordered it, and the state that it was shipped to. Also includes a field named `secret_key` that is always equal to the string `"alphabet soup"`.
+**Good Example #2**: For every package, fetches the package id, the first & last name of the person who ordered it, and the state that it was shipped to. Also includes a field named `secret_key` that is always equal to the string `"alphabet soup"`.
 
 ```py
 %%pydough
@@ -151,7 +151,7 @@ Packages(
 )
 ```
 
-Good Example #3: For every person, finds their full name (without the middle name) and counts how many packages they purchased.
+**Good Example #3**: For every person, finds their full name (without the middle name) and counts how many packages they purchased.
 
 ```py
 %%pydough
@@ -161,7 +161,7 @@ People(
 )
 ```
 
-Good Example #4: For every person, finds their full name including the middle name if one exists, as well as their email. Notice that two CALCs are present, but only the terms from the second one are part of the answer.
+**Good Example #4**: For every person, finds their full name including the middle name if one exists, as well as their email. Notice that two CALCs are present, but only the terms from the second one are part of the answer.
 
 ```py
 %%pydough
@@ -175,7 +175,7 @@ People(
 )
 ```
 
-Good Example #4: For every person, finds the year from the most recent package they purchased, and from the first package they ever purchased.
+**Good Example #4**: For every person, finds the year from the most recent package they purchased, and from the first package they ever purchased.
 
 ```py
 %%pydough
@@ -185,7 +185,7 @@ People(
 )
 ```
 
-Good Example #5: Count how many people, packages, and addresses are known in the system.
+**Good Example #5**: Count how many people, packages, and addresses are known in the system.
 
 ```py
 %%pydough
@@ -196,7 +196,7 @@ GRAPH(
 )
 ```
 
-Good Example #6: For each package, lists the package id and whether the package was shipped to the current address of the person who ordered it.
+**Good Example #6**: For each package, lists the package id and whether the package was shipped to the current address of the person who ordered it.
 
 ```py
 %%pydough
@@ -206,14 +206,14 @@ Packages(
 )
 ```
 
-Bad Example #1: For each person, lists their first name, last name, and phone number. This is invalid because `People` does not have a property named `phone_number`.
+**Bad Example #1**: For each person, lists their first name, last name, and phone number. This is invalid because `People` does not have a property named `phone_number`.
 
 ```py
 %%pydough
 People(first_name, last_name, phone_number)
 ```
 
-Bad Example #2: For each person, lists their combined first & last name followed by their email. This is invalid because a positional argument is included after a keyword argument.
+**Bad Example #2**: For each person, lists their combined first & last name followed by their email. This is invalid because a positional argument is included after a keyword argument.
 
 ```py
 %%pydough
@@ -223,14 +223,14 @@ People(
 )
 ```
 
-Bad Example #3: For each person, lists the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #3**: For each person, lists the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
 
 ```py
 %%pydough
 People(packages.address_id)
 ```
 
-Bad Example #4: For each person, lists their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #4**: For each person, lists their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
 
 ```py
 %%pydough
@@ -241,28 +241,28 @@ People(
 )
 ```
 
-Bad Example #5: For each address, finds whether the state name starts with `"C"`. This is invalid because it calls the builtin Python `.startswith` string method, which is not supported in PyDough (should have instead used a defined PyDough behavior, like the `STARTSWITH` function).
+**Bad Example #5**: For each address, finds whether the state name starts with `"C"`. This is invalid because it calls the builtin Python `.startswith` string method, which is not supported in PyDough (should have instead used a defined PyDough behavior, like the `STARTSWITH` function).
 
 ```py
 %%pydough
 Addresses(is_c_state=state.startswith("c"))
 ```
 
-Bad Example #6: For each address, finds the state bird of the state it is in. This is invalid because the `state` property of each record of `Addresses` is a scalar expression, not a subcolleciton, so it does not have any properties that can be accessed with `.` syntax.
+**Bad Example #6**: For each address, finds the state bird of the state it is in. This is invalid because the `state` property of each record of `Addresses` is a scalar expression, not a subcolleciton, so it does not have any properties that can be accessed with `.` syntax.
 
 ```py
 %%pydough
 Addresses(state_bird=state.bird)
 ```
 
-Bad Example #7: For each current occupant of each address, lists their first name, last name, and city/state they live in. This is invalid because `city` and `state` are not properties of the current collection (`People`, accessed via `current_occupants` of each record of `Addresses`).
+**Bad Example #7**: For each current occupant of each address, lists their first name, last name, and city/state they live in. This is invalid because `city` and `state` are not properties of the current collection (`People`, accessed via `current_occupants` of each record of `Addresses`).
 
 ```py
 %%pydough
 Addresses.current_occupants(first_name, last_name, city, state)
 ```
 
-Bad Example #8: For each person include their ssn and current address. This is invalid because a collection cannot be a CALC term, and `current_address` is a sub-collection property of `People`. Instead, properties of `current_address` can be accessed.
+**Bad Example #8**: For each person include their ssn and current address. This is invalid because a collection cannot be a CALC term, and `current_address` is a sub-collection property of `People`. Instead, properties of `current_address` can be accessed.
 
 ```py
 %%pydough
@@ -275,7 +275,7 @@ People(ssn, current_address)
 
 PyDough allows defining snippets of PyDough code out of context that do not make sense until they are later placed within a context. This can be done by writing a contextless expression, binding it to a variable as if it were any other Python expression, then later using it inside of PyDough code. This should always have the same effect as if the PyDough code was written fully in-context, but allows re-using common snippets.
 
-Good Example #1: Same as good example #4 from the CALC section, but written with contextless expressions.
+**Good Example #1**: Same as good example #4 from the CALC section, but written with contextless expressions.
 
 ```py
 %%pydough
@@ -288,7 +288,7 @@ People(
 )
 ```
 
-Good Example #2: for every person, finds the total value of all packages they ordered in February of any year, as well as the number of all such packages, the largest value of any such package, and the percentage of those packages that were specifically on valentine's day
+**Good Example #2**: for every person, finds the total value of all packages they ordered in February of any year, as well as the number of all such packages, the largest value of any such package, and the percentage of those packages that were specifically on valentine's day
 
 ```py
 %%pydough
@@ -309,21 +309,21 @@ People(
 )
 ```
 
-Bad Example #1: Just a contextless expression for a collection without the necessary context for it to make sense.
+**Bad Example #1**: Just a contextless expression for a collection without the necessary context for it to make sense.
 
 ```py
 %%pydough
 current_addresses(city, state)
 ```
 
-Bad Example #2: Just a contextless expression for a scalar expression that has not been placed into a collection for it to make sense.
+**Bad Example #2**: Just a contextless expression for a scalar expression that has not been placed into a collection for it to make sense.
 
 ```py
 %%pydough
 LOWER(current_occupants.first_name)
 ```
 
-Bad Example #3: A contextless expression that does not make sense when placed into its context (`People` does not have a property named `package_cost`, so substituting it when `value` is referenced does not make sense).
+**Bad Example #3**: A contextless expression that does not make sense when placed into its context (`People` does not have a property named `package_cost`, so substituting it when `value` is referenced does not make sense).
 
 ```py
 %%pydough
@@ -336,7 +336,7 @@ People(x=ssn + value)
 
 Part of the benefit of doing `collection.subcollection` accesses is that properties from the ancestor collection can be accessed from the current collection. This is done via a `BACK` call. Accessing properties from `BACK(n)` can be done to access properties from the n-th ancestor of the current collection. The simplest recommended way to do this is to just access a scalar property of an ancestor in order to include it in the final answer.
 
-Good Example #1: For every address' current occupants, lists their first name last name, and the city/state of the current address they belong to.
+**Good Example #1**: For every address' current occupants, lists their first name last name, and the city/state of the current address they belong to.
 
 ```py
 %%pydough
@@ -348,7 +348,7 @@ Addresses.current_occupants(
 )
 ```
 
-Good Example #2: Count the total number of cases where a package is shipped to the current address of the customer who ordered it.
+**Good Example #2**: Count the total number of cases where a package is shipped to the current address of the customer who ordered it.
 
 ```py
 %%pydough
@@ -358,7 +358,7 @@ package_info = Addresses.current_occupants.packages(
 GRAPH(n_cases=SUM(package_info.is_shipped_to_current_addr))
 ```
 
-Good Example #3: Indicate whether a package is above the average cost for all packages ordered by that customer.
+**Good Example #3**: Indicate whether a package is above the average cost for all packages ordered by that customer.
 
 ```py
 %%pydough
@@ -369,7 +369,7 @@ Customers(
 )
 ```
 
-Good Example #4: For every customer, indicate what percentage of all packages billed to their current address were purchased by that same customer.
+**Good Example #4**: For every customer, indicate what percentage of all packages billed to their current address were purchased by that same customer.
 
 ```py
 %%pydough
@@ -384,35 +384,35 @@ Addresses(
 )
 ```
 
-Bad Example #1: The `GRAPH` does not have any ancestors, so `BACK(1)` is invalid.
+**Bad Example #1**: The `GRAPH` does not have any ancestors, so `BACK(1)` is invalid.
 
 ```py
 %%pydough
 GRAPH(x=BACK(1).foo)
 ```
 
-Bad Example #2: The 1st ancestor of `People` is `GRAPH` which does not have a term named `bar`.
+**Bad Example #2**: The 1st ancestor of `People` is `GRAPH` which does not have a term named `bar`.
 
 ```py
 %%pydough
 People(y=BACK(1).bar)
 ```
 
-Bad Example #3: The 1st ancestor of `People` is `GRAPH` which does not have an ancestor, so there can be no 2nd ancestor of `People`.
+**Bad Example #3**: The 1st ancestor of `People` is `GRAPH` which does not have an ancestor, so there can be no 2nd ancestor of `People`.
 
 ```py
 %%pydough
 People(z=BACK(2).fizz)
 ```
 
-Bad Example #4: The 1st ancestor of `current_address` is `People` which does not have a term named `phone`.
+**Bad Example #4**: The 1st ancestor of `current_address` is `People` which does not have a term named `phone`.
 
 ```py
 %%pydough
 People.current_address(a=BACK(1).phone)
 ```
 
-Bad Example #5: Even though `cust_info` has defined `avg_package_cost`, the final expression `Customers.packages(...)` does not have `cust_info` as an ancestor, so it cannot access `BACK(1).avg_package_cost` since its 1st ancestor (`Customers`) does not have any term named `avg_package_cost`.
+**Bad Example #5**: Even though `cust_info` has defined `avg_package_cost`, the final expression `Customers.packages(...)` does not have `cust_info` as an ancestor, so it cannot access `BACK(1).avg_package_cost` since its 1st ancestor (`Customers`) does not have any term named `avg_package_cost`.
 
 ```py
 %%pydough
