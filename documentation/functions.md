@@ -143,3 +143,31 @@ Below are some examples of how to interpret these patterns:
 - `"a%z"` returns True for any string that starts with `"a"` and ends with `"z"`.
 - `"%a%z%"` returns True for any string that contains an `"a"`, and also contains a `"z"` at some later point in the string.
 - `"_e%"` returns True for any string where the second character is `"e"`.
+
+## Datetime Functions
+
+Below is each function currently supported in PyDough that operates on date/time/timestamp values.
+
+### YEAR
+
+Calling `YEAR` on a date/timestamp extracts the year it belongs to:
+
+```py
+Orders.WHERE(YEAR(order_date) == 1995)
+```
+
+### MONTH
+
+Calling `MONTH` on a date/timestamp extracts the month of the year it belongs to:
+
+```py
+Orders(is_summer = (MONTH(order_date) >= 6) & (MONTH(order_date) <= 8))
+```
+
+### DAY
+
+Calling `DAY` on a date/timestamp extracts the day of the month it belongs to:
+
+```py
+Orders(is_first_of_month = DAY(order_date) == 1)
+```

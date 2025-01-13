@@ -3,6 +3,23 @@
 # ruff & mypy should not try to typecheck or verify any of this
 
 
+def bad_bool_1():
+    # Using `or`
+    return Customer(
+        is_eurasian=(nation.region.name == "EUROPE") or (nation.region.name == "ASIA")
+    )
+
+
+def bad_bool_2():
+    # Using `and`
+    return Parts.WHERE((size == 38) and CONTAINS(name, "green"))
+
+
+def bad_bool_3():
+    # Using `not`
+    return Parts.WHERE(not STARTSWITH(size, "LG"))
+
+
 def bad_window_1():
     # Missing `by`
     return Orders(RANKING())
