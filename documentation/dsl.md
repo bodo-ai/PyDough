@@ -58,6 +58,13 @@ People
 GRAPH.Addresses
 ```
 
+**Good Example #3**: obtains every record of the `Packages` collection. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`) is automatically included in the output.
+
+```py
+%%pydough
+Packages
+```
+
 **Bad Example #1**: obtains every record of the `Products` collection (there is no `Products` collection).
 
 ```py
@@ -78,6 +85,14 @@ Addresses
 ```py
 %%pydough
 HELLO.Addresses
+```
+
+**Bad Example #4**: obtains every record of the `People` collection (but the name `People` has been reassigned to a variable).
+
+```py
+%%pydough
+People = "not a collection"
+People
 ```
 
 <!-- TOC --><a name="sub-collections"></a>
@@ -106,11 +121,25 @@ GRAPH.Packages.customer
 Addresses.current_occupants.packages
 ```
 
+**Good Example #4**: for every person, obtains all packages they have ordered. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`). Every record from `Packages` should be included at most once since every package has a single customer it maps back to.
+
+```py
+%%pydough
+People.packages
+```
+
 **Bad Example #1**: for every address, obtains all people who used to live there. This is invalid because the `Addresses` collection does not have a `former_occupants` property.
 
 ```py
 %%pydough
 Addresses.former_occupants
+```
+
+**Bad Example #2**: for every package, obtains all addresses it was shipped to. This is invalid because the `Packages` collection does not have a `shipping_addresses` property (it does have a `shipping_address` property).
+
+```py
+%%pydough
+Packages.shipping_addresses
 ```
 
 <!-- TOC --><a name="calc"></a>
@@ -175,7 +204,7 @@ People(
 )
 ```
 
-**Good Example #4**: For every person, finds the year from the most recent package they purchased, and from the first package they ever purchased.
+**Good Example #5**: For every person, finds the year from the most recent package they purchased, and from the first package they ever purchased.
 
 ```py
 %%pydough
@@ -185,7 +214,7 @@ People(
 )
 ```
 
-**Good Example #5**: Count how many people, packages, and addresses are known in the system.
+**Good Example #6**: Count how many people, packages, and addresses are known in the system.
 
 ```py
 %%pydough
@@ -196,7 +225,7 @@ GRAPH(
 )
 ```
 
-**Good Example #6**: For each package, lists the package id and whether the package was shipped to the current address of the person who ordered it.
+**Good Example #7**: For each package, lists the package id and whether the package was shipped to the current address of the person who ordered it.
 
 ```py
 %%pydough
@@ -269,6 +298,12 @@ Addresses.current_occupants(first_name, last_name, city, state)
 People(ssn, current_address)
 ```
 
+**Bad Example #9**: For each person, lists their first name, last name, and the sum of the package costs. This is invalid because `SUM` is an aggregation function and cannot be used in a CALC term without specifying the sub-collection it should be applied to.
+
+```py
+%%pydough
+People(first_name, last_name, total_cost=SUM(package_cost))
+```
 
 <!-- TOC --><a name="contextless-expressions"></a>
 ### Contextless Expressions
@@ -329,6 +364,14 @@ LOWER(current_occupants.first_name)
 %%pydough
 value = package_cost
 People(x=ssn + value)
+```
+
+**Bad Example #4**: A contextless expression that does not make sense when placed into its context (`People` does not have a property named `order_date`, so substituting it when `is_february` is referenced does not make sense).
+
+```py
+%%pydough
+is_february = MONTH(order_date) == 2
+People(february=is_february)
 ```
 
 <!-- TOC --><a name="back"></a>
@@ -422,6 +465,13 @@ cust_info = Customers(
 Customers.packages(
     is_above_avg=cost > BACK(1).avg_package_cost
 )
+```
+
+**Bad Example #6**: The 1st ancestor of `current_occupants` is `Addresses` which does not have a term named `phone`.
+
+```py
+%%pydough
+Addresses.current_occupants(a=BACK(1).phone)
 ```
 
 <!-- TOC --><a name="collection-operators"></a>
