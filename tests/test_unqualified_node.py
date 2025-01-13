@@ -9,6 +9,9 @@ from collections.abc import Callable
 
 import pytest
 from bad_pydough_functions import (
+    bad_bool_1,
+    bad_bool_2,
+    bad_bool_3,
     bad_window_1,
     bad_window_2,
     bad_window_3,
@@ -426,6 +429,21 @@ def test_init_pydough_context(
 @pytest.mark.parametrize(
     "func, error_msg",
     [
+        pytest.param(
+            bad_bool_1,
+            "PyDough code cannot be treated as a boolean. If you intend to do a logical operation, use `|`, `&` or `~` instead of `or`, `and` and `not`.",
+            id="bad_bool_1",
+        ),
+        pytest.param(
+            bad_bool_2,
+            "PyDough code cannot be treated as a boolean. If you intend to do a logical operation, use `|`, `&` or `~` instead of `or`, `and` and `not`.",
+            id="bad_bool_2",
+        ),
+        pytest.param(
+            bad_bool_3,
+            "PyDough code cannot be treated as a boolean. If you intend to do a logical operation, use `|`, `&` or `~` instead of `or`, `and` and `not`.",
+            id="bad_bool_3",
+        ),
         pytest.param(
             bad_window_1,
             "The `by` argument to `RANKING` must be provided",
