@@ -428,7 +428,7 @@ Regions.nations.customers(r=RANKING(..., levels=1))
 # (levels=2) rank every customer relative to other customers in the same region
 Regions.nations.customers(r=RANKING(..., levels=2))
 
-# (levels=3) rank every customer relative to other customers in the same nation
+# (levels=3) rank every customer relative to all other customers
 Regions.nations.customers(r=RANKING(..., levels=3))
 ```
 
