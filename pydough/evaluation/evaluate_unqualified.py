@@ -81,6 +81,9 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     Returns:
         str: The SQL string corresponding to the unqualified query.
     """
+    display_sql = kwargs.pop("display_sql", False)
+    assert isinstance(display_sql, bool)
+
     graph: GraphMetadata
     config: PyDoughConfigs
     database: DatabaseContext
@@ -92,7 +95,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
         )
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
     return convert_relation_to_sql(
-        relational, convert_dialect_to_sqlglot(database.dialect), bindings
+        relational, convert_dialect_to_sqlglot(database.dialect), bindings, display_sql
     )
 
 
@@ -112,6 +115,12 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The DataFrame corresponding to the unqualified query.
     """
+    display_sql = kwargs.pop("display_sql", False)
+    assert isinstance(display_sql, bool)
+
+    run_optimizer = kwargs.pop("run_optimizer", True)
+    assert isinstance(run_optimizer, bool)
+
     graph: GraphMetadata
     config: PyDoughConfigs
     database: DatabaseContext
@@ -122,4 +131,10 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
-    return execute_df(relational, database, bindings)
+    return execute_df(
+        relational,
+        database,
+        bindings,
+        display_sql=display_sql,
+        run_optimizer=run_optimizer,
+    )

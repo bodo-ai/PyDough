@@ -692,7 +692,9 @@ def test_convert_relation_to_sql(
     """
     Test converting a relational tree to SQL text in the SQLite dialect.
     """
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, sqlite_dialect, sqlite_bindings, True
+    )
     assert created_sql == sql_text
 
 
@@ -730,7 +732,9 @@ def test_tpch_relational_to_sql(
     These plans are generated from a couple simple plans we built with
     Apache Calcite in Bodo's SQL optimizer.
     """
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, sqlite_dialect, sqlite_bindings, True
+    )
     assert created_sql == sql_text
 
 
@@ -1100,5 +1104,7 @@ def test_function_to_sql(
     Tests that should be small as we need to just test converting a function
     to SQL.
     """
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, sqlite_dialect, sqlite_bindings, True
+    )
     assert created_sql == sql_text

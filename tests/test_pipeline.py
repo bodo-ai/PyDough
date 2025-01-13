@@ -1032,7 +1032,9 @@ def test_pipeline_e2e(
     unqualified_impl, _, answer_impl = pydough_pipeline_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+    result: pd.DataFrame = to_df(
+        root, metadata=graph, database=sqlite_tpch_db_context, display_sql=True
+    )
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

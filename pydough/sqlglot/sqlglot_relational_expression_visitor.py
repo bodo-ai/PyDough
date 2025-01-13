@@ -39,6 +39,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._stack: list[SQLGlotExpression] = []
         self._dialect: SQLGlotDialect = dialect
         self._bindings: SqlGlotTransformBindings = bindings
+        self._table_name: str | None = None
 
     def reset(self) -> None:
         """
@@ -133,8 +134,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         )
         self._stack.append(literal)
 
-    @staticmethod
     def generate_column_reference_identifier(
+        self,
         column_reference: ColumnReference,
     ) -> Identifier:
         """
@@ -150,6 +151,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         """
         if column_reference.input_name is not None:
             full_name = f"{column_reference.input_name}.{column_reference.name}"
+        elif self.table_name is not None:
+            full_name = f"{self.table_name}.{column_reference.name}"
         else:
             full_name = column_reference.name
         return Identifier(this=full_name)
@@ -158,7 +161,10 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._stack.append(self.generate_column_reference_identifier(column_reference))
 
     def relational_to_sqlglot(
-        self, expr: RelationalExpression, output_name: str | None = None
+        self,
+        expr: RelationalExpression,
+        table_name: str | None,
+        output_name: str | None = None,
     ) -> SQLGlotExpression:
         """
         Interface to convert an entire relational expression to a SQLGlot expression
@@ -166,6 +172,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
         Args:
             expr (RelationalExpression): The relational expression to convert.
+            table_name (str | None): The name of the table input to use for fetching
+            columns.
             output_name (str | None): The name to assign to the final SQLGlot expression
                 or None if we should omit any alias.
 
@@ -174,6 +182,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 relational tree.
         """
         self.reset()
+        self.table_name = table_name
         expr.accept(self)
         result = self.get_sqlglot_result()
         return set_glot_alias(result, output_name)

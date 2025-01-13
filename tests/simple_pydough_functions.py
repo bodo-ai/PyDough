@@ -54,7 +54,7 @@ def rank_parts_per_supplier_region_by_size():
             allow_ties=True,
             dense=True,
         ),
-    ).TOP_K(15, by=key.ASC())
+    ).TOP_K(15, by=(key.ASC(), region.ASC()))
 
 
 def rank_with_filters_a():

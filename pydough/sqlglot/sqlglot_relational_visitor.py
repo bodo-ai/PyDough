@@ -8,11 +8,10 @@ from collections import defaultdict
 from collections.abc import MutableMapping, MutableSequence
 
 from sqlglot.dialects import Dialect as SQLGlotDialect
-from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier, Select, Subquery, values
-from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Select, Subquery, values
 from sqlglot.expressions import Star as SQLGlotStar
+from sqlglot.expressions import TableAlias as SQLGlotTableAlias
 
 from pydough.relational import (
     Aggregate,
@@ -34,8 +33,6 @@ from pydough.relational import (
     WindowCallExpression,
 )
 
-from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
-from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 from .transform_bindings import SqlGlotTransformBindings
 
@@ -79,126 +76,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._alias_counter += 1
         return alias
 
-    @staticmethod
-    def _is_mergeable_column(expr: SQLGlotExpression) -> bool:
-        """
-        Determine if a given SQLGlot expression is a candidate
-        for merging with other columns.
-
-        Args:
-            expr (SQLGlotExpression): The expression to check.
-
-        Returns:
-            bool: Can we potentially merge this column.
-        """
-        if isinstance(expr, SQLGlotAlias):
-            return SQLGlotRelationalVisitor._is_mergeable_column(expr.this)
-        else:
-            return isinstance(expr, (SQLGlotLiteral, Identifier))
-
-    @staticmethod
-    def _try_merge_columns(
-        new_columns: list[SQLGlotExpression],
-        old_columns: list[SQLGlotExpression],
-        old_column_deps: set[Identifier],
-    ) -> tuple[list[SQLGlotExpression] | None, list[SQLGlotExpression]]:
-        """
-        Attempt to merge the new_columns with the old_columns whenever
-        possible  to reduce the amount of SQL that needs to be generated
-        for the given output columns. In addition to the columns themselves,
-        the old_columns could also produce dependencies for the new expression
-        since it logically occurs before the new columns, so we need to
-        determine those for tracking.
-
-        The final result is presented as a tuple of two lists, the first
-        list is the new columns that need to be produced in a separate
-        query and the second list is the list of columns that can be
-        placed in the original query. The new columns will be None if we
-        can generate the SQL entirely in the original query.
-
-        Args:
-            new_columns (list[SQLGlotExpression]): The new columns that
-                need to be the output of the current Relational node.
-            old_columns (list[SQLGlotExpression]): The old columns that
-                were the output of the previous Relational node.
-            deps (set[str]): A set of column names that are dependencies
-                of the old columns in some operator other than the
-                "SELECT" component. For example a filter will need to
-                include the column names of any WHERE conditions.
-        Returns:
-            tuple[list[SQLGlotExpression] | None, list[SQLGlotExpression]]:
-                The columns that should be generated in a separate new
-                select statement and the columns that can be placed in
-                the original query.
-        """
-        # Only support fusing columns that are simple renames or literals for
-        # now. If we see just column references or literals though we can
-        # always merge.
-        # TODO: (gh #151) Enable merging more complex expressions for example
-        # we can merge a + b if a and b are both just simple columns in the
-        # input.
-        can_merge: bool = all(
-            SQLGlotRelationalVisitor._is_mergeable_column(c) for c in new_columns
-        )
-        if can_merge:
-            modified_new_columns = None
-            modified_old_columns = []
-            # Create a mapping for the old columns so we can replace column
-            # references.
-            old_column_map = {get_glot_name(c): c for c in old_columns}
-            seen_cols: set[Identifier] = set()
-            for new_column in new_columns:
-                new_name = get_glot_name(new_column)
-                new_column = unwrap_alias(new_column)
-                if isinstance(new_column, SQLGlotLiteral):
-                    # If the new column is a literal, we can just add it to the old
-                    # columns.
-                    modified_old_columns.append(set_glot_alias(new_column, new_name))
-                else:
-                    expr = set_glot_alias(old_column_map[new_column.this], new_name)
-                    modified_old_columns.append(expr)
-                    if isinstance(expr, Identifier):
-                        seen_cols.add(expr)
-            # Check that there are no missing dependencies in the old columns.
-            if old_column_deps - seen_cols:
-                return new_columns, old_columns
-            return modified_new_columns, modified_old_columns
-        else:
-            return new_columns, old_columns
-
-    def _merge_selects(
-        self,
-        new_columns: list[SQLGlotExpression],
-        orig_select: Select,
-        deps: set[Identifier],
-    ) -> Select:
-        """
-        Attempt to merge a new select statement with an existing one.
-        This is used to reduce the unnecessary generation of nested
-        queries. Currently this only supports merging the SELECT columns.
-
-        Args:
-            new_columns (list[SQLGlotExpression]): The new columns to attempt to merge.
-            orig_select (Select): The original select statement to merge with.
-            deps (set[str]): A set of column names that are dependencies
-                of the old columns in some operator other than the
-                "SELECT" component. For example a filter will need to
-                include the column names of any WHERE conditions.
-
-        Returns:
-            Select: A final select statement that may contain the merged columns.
-        """
-        new_exprs, old_exprs = self._try_merge_columns(
-            new_columns, orig_select.expressions, deps
-        )
-        orig_select.set("expressions", old_exprs)
-        if new_exprs is None:
-            return orig_select
-        else:
-            return self._build_subquery(orig_select, new_exprs)
-
     def _convert_ordering(
-        self, ordering: MutableSequence[ExpressionSortInfo]
+        self, ordering: MutableSequence[ExpressionSortInfo], input_alias: str
     ) -> list[SQLGlotExpression]:
         """
         Convert the orderings from the a relational operator into a variant
@@ -213,7 +92,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         glot_exprs: list[SQLGlotExpression] = []
         for col in ordering:
             glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
-                col.expr
+                col.expr, input_alias
             )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
@@ -261,27 +140,31 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         else:
             return ordering == input_expr.args["order"].expressions
 
-    @staticmethod
     def _build_subquery(
+        self,
         input_expr: Select,
         column_exprs: list[SQLGlotExpression],
-        alias: str | None = None,
+        alias: str,
     ) -> Select:
         """
         Generate a subquery select statement with the given
         input from and the given columns.
 
         Args:
-            input_expr (Select): The from input, which should be
+            `input_expr`: The from input, which should be
                 another select statement.
-            column_exprs (list[SQLGlotExpression]): The columns to select.
-            alias (str | None): The alias to give the subquery.
+            `column_exprs`: The columns to select.
+            `alias`: The alias to give the subquery.
 
         Returns:
             Select: A select statement representing the subquery.
         """
+        if alias is None:
+            alias = self._generate_table_alias()
         return (
-            Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
+            Select()
+            .select(*column_exprs)
+            .from_(Subquery(this=input_expr, alias=SQLGlotTableAlias(this=alias)))
         )
 
     def contains_window(self, exp: RelationalExpression) -> bool:
@@ -310,10 +193,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def visit_scan(self, scan: Scan) -> None:
         exprs: list[SQLGlotExpression] = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, scan.table_name, alias)
             for alias, col in scan.columns.items()
         ]
         query: Select = Select().select(*exprs).from_(scan.table_name)
+        query = Subquery(
+            this=query, alias=SQLGlotTableAlias(this=self._generate_table_alias())
+        )
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
@@ -328,7 +214,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # Only keep duplicate names.
         kept_names = {key for key, value in seen_names.items() if value > 1}
         alias_map = {
-            join.default_input_aliases[i]: self._generate_table_alias()
+            join.default_input_aliases[i]: SQLGlotTableAlias(
+                this=self._generate_table_alias()
+            )
             for i in range(len(join.inputs))
             if kept_names.intersection(join.inputs[i].columns.keys())
         }
@@ -341,7 +229,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in join.columns.items()
         }
         column_exprs = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, None, alias)
             for alias, col in columns.items()
         ]
         query: Select = self._build_subquery(
@@ -358,7 +246,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 .accept_shuttle(self._alias_modifier)
             )
             cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
-                cond
+                cond, None
             )
             join_type: str = join.join_types[i - 1].value
             joins.append((subquery, cond_expr, join_type))
@@ -368,76 +256,59 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def visit_project(self, project: Project) -> None:
         self.visit_inputs(project)
+        input_expr: Select = self._stack.pop()
+        in_alias = self._generate_table_alias()
+
         exprs: list[SQLGlotExpression] = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, in_alias, alias)
             for alias, col in project.columns.items()
         ]
-        input_expr: Select = self._stack.pop()
-        query: Select = self._merge_selects(exprs, input_expr, set())
+        query: Select = self._build_subquery(input_expr, exprs, in_alias)
         self._stack.append(query)
 
     def visit_filter(self, filter: Filter) -> None:
         self.visit_inputs(filter)
         input_expr: Select = self._stack.pop()
-        cond = self._expr_visitor.relational_to_sqlglot(filter.condition)
+        in_alias = self._generate_table_alias()
         exprs: list[SQLGlotExpression] = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, in_alias, alias)
             for alias, col in filter.columns.items()
         ]
         query: Select
         if self.contains_window(filter.condition):
             # If there is a window function in the condition, use QUALIFY
             # instead of WHERE.
-            query = self._build_subquery(input_expr, [SQLGlotStar()])
+            cond = self._expr_visitor.relational_to_sqlglot(
+                filter.condition, input_expr.alias
+            )
+            query = self._build_subquery(input_expr, [SQLGlotStar()], in_alias)
             query = query.qualify(cond)
             # Apply `_build_subquery` with `exprs` after qualification in case
             # the SELECT clause would remove any of the columns used by the
             # QUALIFY.
-            query = self._build_subquery(query, exprs)
+            query = self._build_subquery(query, exprs, in_alias)
         else:
-            # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
-            if (
-                "group_by" in input_expr.args
-                or "where" in input_expr.args
-                or "qualify" in input_expr.args
-                or "order" in input_expr.args
-                or "limit" in input_expr.args
-            ):
-                # Check if we already have a where clause or limit. We
-                # cannot merge these yet.
-                # TODO: (gh #151) Consider allowing combining where if
-                # limit isn't present?
-                query = self._build_subquery(input_expr, exprs)
-            else:
-                # Try merge the column sections
-                query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
+            cond = self._expr_visitor.relational_to_sqlglot(filter.condition, in_alias)
+            # TODO: (gh #151) Consider allowing combining where if
+            # limit isn't present?
+            query = self._build_subquery(input_expr, exprs, in_alias)
             query = query.where(cond)
         self._stack.append(query)
 
     def visit_aggregate(self, aggregate: Aggregate) -> None:
         self.visit_inputs(aggregate)
         input_expr: Select = self._stack.pop()
+        in_alias = self._generate_table_alias()
         keys: list[SQLGlotExpression] = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, in_alias, alias)
             for alias, col in aggregate.keys.items()
         ]
         aggregations: list[SQLGlotExpression] = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, in_alias, alias)
             for alias, col in aggregate.aggregations.items()
         ]
         select_cols = keys + aggregations
-        query: Select
-        if (
-            "group_by" in input_expr.args
-            or "qualify" in input_expr.args
-            or "order" in input_expr.args
-            or "limit" in input_expr.args
-        ):
-            query = self._build_subquery(input_expr, select_cols)
-        else:
-            query = self._merge_selects(
-                select_cols, input_expr, find_identifiers_in_list(select_cols)
-            )
+        query: Select = self._build_subquery(input_expr, select_cols, in_alias)
         if keys:
             query = query.group_by(*keys)
         self._stack.append(query)
@@ -445,61 +316,46 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     def visit_limit(self, limit: Limit) -> None:
         self.visit_inputs(limit)
         input_expr: Select = self._stack.pop()
+        in_alias = self._generate_table_alias()
         assert isinstance(
             limit.limit, LiteralExpression
         ), "Limit currently only supports literals"
         limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
-            limit.limit
+            limit.limit, in_alias
         )
         exprs: list[SQLGlotExpression] = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, in_alias, alias)
             for alias, col in limit.columns.items()
         ]
         ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(
-            limit.orderings
+            limit.orderings, in_alias
         )
-        query: Select
-        if self._is_mergeable_ordering(ordering_exprs, input_expr):
-            query = self._merge_selects(
-                exprs, input_expr, find_identifiers_in_list(ordering_exprs)
-            )
-            if "order" in query.args:
-                # avoid repeating the order by clause
-                ordering_exprs = []
-            if "limit" in input_expr.args:
-                existing_limit = input_expr.args.pop("limit").expression
-                # Note: We only allow literal limits now.
-                limit_expr = min(limit_expr, existing_limit, key=lambda x: x.this)
-        else:
-            query = self._build_subquery(input_expr, exprs)
+        query: Select = self._build_subquery(input_expr, exprs, in_alias)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
         query = query.limit(limit_expr)
         self._stack.append(query)
 
     def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
-        self._stack.append(Select().from_(values([()])))
+        query: Select = Select().from_(values([()]))
+        query = Subquery(
+            this=query, alias=SQLGlotTableAlias(self._generate_table_alias())
+        )
+        self._stack.append(query)
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_inputs(root)
         input_expr: Select = self._stack.pop()
+        in_alias = self._generate_table_alias()
         # Pop the expressions in order.
         exprs: list[SQLGlotExpression] = [
-            self._expr_visitor.relational_to_sqlglot(col, alias)
+            self._expr_visitor.relational_to_sqlglot(col, in_alias, alias)
             for alias, col in root.ordered_columns
         ]
-        ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(root.orderings)
-        query: Select
-
-        if self._is_mergeable_ordering(ordering_exprs, input_expr):
-            query = self._merge_selects(
-                exprs, input_expr, find_identifiers_in_list(ordering_exprs)
-            )
-            if "order" in query.args:
-                # avoid repeating the order by clause
-                ordering_exprs = []
-        else:
-            query = self._build_subquery(input_expr, exprs)
+        ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(
+            root.orderings, in_alias
+        )
+        query: Select = self._build_subquery(input_expr, exprs, in_alias)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
         self._stack.append(query)
