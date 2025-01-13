@@ -1,31 +1,29 @@
-<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
-
-- [PyDough DSL Spec](#pydough-dsl-spec)
-   * [Example Graph](#example-graph)
-   * [Collections](#collections)
-      + [Sub-Collections](#sub-collections)
-      + [CALC](#calc)
-      + [Contextless Expressions](#contextless-expressions)
-      + [BACK](#back)
-   * [Collection Operators](#collection-operators)
-      + [WHERE](#where)
-      + [ORDER_BY](#order_by)
-      + [TOP_K](#top_k)
-      + [PARTITION](#partition)
-      + [SINGULAR](#singular)
-      + [BEST](#best)
-      + [NEXT / PREV](#next-prev)
-   * [Induced Properties](#induced-properties)
-      + [Induced Scalar Properties](#induced-scalar-properties)
-      + [Induced Subcollection Properties](#induced-subcollection-properties)
-      + [Induced Arbitrary Joins](#induced-arbitrary-joins)
-
-<!-- TOC end -->
-
-<!-- TOC --><a name="pydough-dsl-spec"></a>
 # PyDough DSL Spec
 
 This page describes the specification of the PyDough DSL. The specification includes rules of how PyDough code should be structured and the semantics that are used when evaluating PyDough code. Not every feature in the spec is implemented in PyDough as of this time.
+
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
+
+- [Example Graph](#example-graph)
+- [Collections](#collections)
+   * [Sub-Collections](#sub-collections)
+   * [CALC](#calc)
+   * [Contextless Expressions](#contextless-expressions)
+   * [BACK](#back)
+- [Collection Operators](#collection-operators)
+   * [WHERE](#where)
+   * [ORDER_BY](#order_by)
+   * [TOP_K](#top_k)
+   * [PARTITION](#partition)
+   * [SINGULAR](#singular)
+   * [BEST](#best)
+   * [NEXT / PREV](#next-prev)
+- [Induced Properties](#induced-properties)
+   * [Induced Scalar Properties](#induced-scalar-properties)
+   * [Induced Subcollection Properties](#induced-subcollection-properties)
+   * [Induced Arbitrary Joins](#induced-arbitrary-joins)
+
+<!-- TOC end -->
 
 <!-- TOC --><a name="example-graph"></a>
 ## Example Graph
