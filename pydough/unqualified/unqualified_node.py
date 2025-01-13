@@ -131,6 +131,11 @@ class UnqualifiedNode(ABC):
                 f"Cannot index into PyDough object {self} with {key!r}"
             )
 
+    def __bool__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough code cannot be treated as a boolean. If you intend to do a logical operation, use `|`, `&` or `~` instead of `or`, `and` and `not`."
+        )
+
     def __add__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
         return UnqualifiedBinaryOperation("+", self, other_unqualified)
