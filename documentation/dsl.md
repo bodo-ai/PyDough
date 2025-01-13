@@ -1,7 +1,33 @@
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
+
+- [PyDough DSL Spec](#pydough-dsl-spec)
+   * [Example Graph](#example-graph)
+   * [Collections](#collections)
+      + [Sub-Collections](#sub-collections)
+      + [CALC](#calc)
+      + [Contextless Expressions](#contextless-expressions)
+      + [BACK](#back)
+   * [Collection Operators](#collection-operators)
+      + [WHERE](#where)
+      + [ORDER_BY](#order_by)
+      + [TOP_K](#top_k)
+      + [PARTITION](#partition)
+      + [SINGULAR](#singular)
+      + [BEST](#best)
+      + [NEXT / PREV](#next-prev)
+   * [Induced Properties](#induced-properties)
+      + [Induced Scalar Properties](#induced-scalar-properties)
+      + [Induced Subcollection Properties](#induced-subcollection-properties)
+      + [Induced Arbitrary Joins](#induced-arbitrary-joins)
+
+<!-- TOC end -->
+
+<!-- TOC --><a name="pydough-dsl-spec"></a>
 # PyDough DSL Spec
 
 This page describes the specification of the PyDough DSL. The specification includes rules of how PyDough code should be structured and the semantics that are used when evaluating PyDough code. Not every feature in the spec is implemented in PyDough as of this time.
 
+<!-- TOC --><a name="example-graph"></a>
 ## Example Graph
 
 The examples in this document use a metadata graph (named `GRAPH`) with the following collections:
@@ -15,6 +41,7 @@ There are also the following sub-collection relationships:
 - `Packages.shipping_address`: the address that the package is shipped to (reverse is `Addresses.packages_shipped`). Every package has exactly one shipping address, but each address can have 0, 1 or multiple packages shipped to it.
 - `Packages.billing_address`: the address that the package is billed to (reverse is `Addresses.packages_billed`).  Every package has exactly one billing address, but each address can have 0, 1 or multiple packages billed to it.
 
+<!-- TOC --><a name="collections"></a>
 ## Collections
 
 The simplest PyDough code is scanning an entire collection. This is done by providing the name of the collection in the metadata. However, if that name is already used as a variable, then PyDough will not know to replace the name with the corresponding PyDough object.
@@ -55,6 +82,7 @@ Bad Example #3: obtains every record of the `Addresses` collection (but the grap
 HELLO.Addresses
 ```
 
+<!-- TOC --><a name="sub-collections"></a>
 ### Sub-Collections
 
 The next step in PyDough after accessing a collection is accessing any of its sub-collections. The syntax `collection.subcollection` steps into every record of `subcollection` for each record of `collection`. This can result in changes of cardinality if records of `collection` can have multiple records of `subcollection`, and can result in duplicate records in the output if records of `subcollection` can be sourced from different records of `collection`.
@@ -87,6 +115,7 @@ Bad Example #1: for every address, obtains all people who used to live there. Th
 Addresses.former_occupants
 ```
 
+<!-- TOC --><a name="calc"></a>
 ### CALC
 
 The examples so far just show selecting all properties from records of a collection. Most of the time, an analytical question will only want a subset of the properties, may want to rename them, and may want to derive new properties via calculated expressions. The way to do this with a CALC term, which is done by following a PyDough collection with parenthesis containing the expressions that should be included.
@@ -243,6 +272,7 @@ People(ssn, current_address)
 ```
 
 
+<!-- TOC --><a name="contextless-expressions"></a>
 ### Contextless Expressions
 
 PyDough allows defining snippets of PyDough code out of context that do not make sense until they are later placed within a context. This can be done by writing a contextless expression, binding it to a variable as if it were any other Python expression, then later using it inside of PyDough code. This should always have the same effect as if the PyDough code was written fully in-context, but allows re-using common snippets.
@@ -303,6 +333,7 @@ value = package_cost
 People(x=ssn + value)
 ```
 
+<!-- TOC --><a name="back"></a>
 ### BACK
 
 Part of the benefit of doing `collection.subcollection` accesses is that properties from the ancestor collection can be accessed from the current collection. This is done via a `BACK` call. Accessing properties from `BACK(n)` can be done to access properties from the n-th ancestor of the current collection. The simplest recommended way to do this is to just access a scalar property of an ancestor in order to include it in the final answer.
@@ -395,51 +426,63 @@ Customers.packages(
 )
 ```
 
+<!-- TOC --><a name="collection-operators"></a>
 ## Collection Operators
 
 TODO
 
+<!-- TOC --><a name="where"></a>
 ### WHERE
 
 TODO
 
+<!-- TOC --><a name="order_by"></a>
 ### ORDER_BY
 
 TODO
 
+<!-- TOC --><a name="top_k"></a>
 ### TOP_K
 
 TODO
 
+<!-- TOC --><a name="partition"></a>
 ### PARTITION
 
 TODO
 
+<!-- TOC --><a name="singular"></a>
 ### SINGULAR
 
 TODO
 
+<!-- TOC --><a name="best"></a>
 ### BEST
 
 TODO
 
+<!-- TOC --><a name="next-prev"></a>
 ### NEXT / PREV
 
 TODO
 
+<!-- TOC --><a name="induced-properties"></a>
 ## Induced Properties
 
-TODO
+This section of the PyDough spec has not yet been defined.
 
+<!-- TOC --><a name="induced-scalar-properties"></a>
 ### Induced Scalar Properties
 
-TODO
+This section of the PyDough spec has not yet been defined.
 
+<!-- TOC --><a name="induced-subcollection-properties"></a>
 ### Induced Subcollection Properties
 
-TODO
+This section of the PyDough spec has not yet been defined.
 
+<!-- TOC --><a name="induced-arbitrary-joins"></a>
 ### Induced Arbitrary Joins
 
-TODO
+This section of the PyDough spec has not yet been defined.
 
