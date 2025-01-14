@@ -164,7 +164,7 @@ Customers(uppercase_name = UPPER(name))
 <!-- TOC --><a name="startswith"></a>
 ### STARTSWITH
 
-The `STARTSWITH` function returns whether its first argument begins with its second argument as a string prefix:
+The `STARTSWITH` function checks if its first argument begins with its second argument as a string prefix:
 
 ```py
 Parts(begins_with_yellow = STARTSWITH(name, "yellow"))
