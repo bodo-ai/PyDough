@@ -17,8 +17,8 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [TOP_K](#top_k)
    * [PARTITION](#partition)
    * [SINGULAR](#singular)
-   * [BEST](#best)
    * [NEXT / PREV](#next-prev)
+   * [BEST](#best)
 - [Induced Properties](#induced-properties)
    * [Induced Scalar Properties](#induced-scalar-properties)
    * [Induced Subcollection Properties](#induced-subcollection-properties)
@@ -1122,14 +1122,6 @@ Addresses(
 )
 ```
 
-<!-- TOC --><a name="best"></a>
-### BEST
-
-> [!IMPORTANT]
-> This feature has not yet been implemented in PyDough
-
-TODO
-
 <!-- TOC --><a name="next-prev"></a>
 ### NEXT / PREV
 
@@ -1247,6 +1239,148 @@ TODO
 ```py
 %%pydough
 TODO
+```
+
+<!-- TOC --><a name="best"></a>
+### BEST
+
+> [!IMPORTANT]
+> This feature has not yet been implemented in PyDough
+
+PyDough supports identifying a specific record from a sub-collection that is optimal with regards to some metric, per-record of the current collection. This is done by using `BEST` instead of directly accessing the sub-collection. The first argument to `BEST` is the sub-collection to be accessed, and the second is a `by` argument used to find the optimal record of the sub-collection. The rules for the `by` argument are the same as `PREV`, `NEXT`, `TOP_K`, etc.: it must be either a single collation term, or an iterable of 1+ collation terms.
+
+A call to `BEST` can either be done with `.` syntax, to step from a parent collection to a child collection, or can be a freestanding accessor used inside of a collection operator, just like `BACK`, `PREV` or `NEXT`. For example, both `Parent.BEST(child, by=...)` and `Parent(x=BEST(child, by=...).y)` are allowed.
+
+The original ancestry of the sub-collection is intact. So, if doing `A.BEST(b.c.d, by=...)`, `BACK(1)` revers to `c`, `BACK(2)` refers to `b` and `BACK(3)` refers to `A`.
+
+Additional keyword arguments can be supplied to `BEST` that change its behavior:
+- `allow_ties` (default=False): if True, changes the behavior to keep all records of the sub-collection that share the optimal values of the collation terms. If `allow_ties` is True, the `BEST` clause is no longer singular.
+- `n_best=True`(defaults=1): if an integer greater than 1, changes the behavior to keep the top `n_best` values of the sub-collection for each record of the parent collection (fewer if `n_best` records of the sub-collection do not exist). If `n_best` is greater than 1, the `BEST` clause is no longer singular. NOTE: `n_best` cannot be greater than 1 at the same time that `allow_ties` is True.
+
+**Good Example #1**: Finds the package id & zip code the package was shipped to for every package that was the first-ever purchase for the customer.
+
+```py
+%%pydough
+Customers.BEST(packages, by=order_date.ASC())(
+    package_id,
+    shipping_address.zip_code
+)
+```
+
+**Good Example #2**: For each customer, lists their ssn and the cost of the most recent package they have purchased.
+
+```py
+%%pydough
+Customers(
+    ssn,
+    most_recent_cost=BEST(packages, by=order_date.DESC()).package_cost
+)
+```
+
+**Good Example #3**: Finds the address in the state of New York with the most occupants, ties broken by address id. Note: the `GRAPH.` prefix is optional in this case, since it is implied if there is no prefix to the `BEST` call.
+
+```py
+%%pydough
+addr_info = Addresses.WHERE(
+    state == "NY"
+)(address_id, n_occupants=COUNT(current_occupants))
+GRAPH.BEST(addr_info, by=(n_occupants.DESC(), address_id.ASC()))
+```
+
+**Good Example #4**: For each customer, finds the number of people currently living in the address that they most recently shipped a package to.
+
+```py
+%%pydough
+most_recent_package = BEST(packages, by=order_date.DESC())
+Customers(
+    ssn,
+    n_occ_most_recent_addr=COUNT(most_recent_package.shipping_address.current_occupants)
+)
+```
+
+**Good Example #5**: For each address that has occupants, lists out the first/last name of the person living in that address who has ordered the most packages, breaking ties in favor of the person with the smaller social security number. Also includes the city/state of the address, the number of people who live there, and the number of packages that person ordered.
+
+```py
+%%pydough
+Addresses.WHERE(HAS(current_occupants))(
+    n_occupants=COUNT(current_occupants)
+).BEST(
+    current_occupants(n_orders=COUNT(packages)),
+    by=(n_orders.DESC(), ssn.ASC())
+)(
+    first_name,
+    last_name,
+    n_orders,
+    n_living_in_same_addr=BACK(1).n_occupants,
+    city=BACK(1).city,
+    state=BACK(1).state,
+)
+```
+
+**Good Example #6**: For each person, finds the total value of the 5 most recent packages they ordered.
+
+```py
+%%pydough
+five_most_recent=BEST(packages, by=order_date.DESC(), n_best=5)
+People(
+    ssn,
+    value_most_recent_5=SUM(five_most_recent.package_cost)
+)
+```
+
+**Good Example #7**: TODO: example with multiple back levels.
+
+```py
+%%pydough
+
+```
+
+**Bad Example #1**: TODO: bad sub-colleciton argument to `BEST`
+
+```py
+%%pydough
+```
+
+**Bad Example #2**: TODO: `by` argument is missing
+
+```py
+%%pydough
+```
+
+**Bad Example #3**: TODO: `by` argument is not a collation
+
+```py
+%%pydough
+```
+
+**Bad Example #4**: TODO: `by` argument is empty
+
+```py
+%%pydough
+```
+
+**Bad Example #5**: TODO: bad combination of `n_best` and `allow_ties`
+
+```py
+%%pydough
+```
+
+**Bad Example #6**: TODO: treating as singular when `n_best` is greater than 1
+
+```py
+%%pydough
+```
+
+**Bad Example #7**: TODO: treating as singular when `allow_ties` is True
+
+```py
+%%pydough
+```
+
+**Bad Example #8**: TODO: incorrect usage of `BACK`
+
+```py
+%%pydough
 ```
 
 <!-- TOC --><a name="induced-properties"></a>
