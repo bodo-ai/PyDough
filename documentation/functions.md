@@ -288,7 +288,7 @@ Lineitems(has_tax = PRESENT(tax))
 <!-- TOC --><a name="absent"></a>
 ### ABSENT
 
-The `ABSENT` function returns whether its argument is non-null (e.g. the same as `IS NULL` in SQL):
+The `ABSENT` function checks if its argument is null (e.g. the same as `IS NULL` in SQL):
 
 ```py
 Lineitems(no_tax = ABSENT(tax))
