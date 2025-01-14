@@ -10,6 +10,7 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [CALC](#calc)
    * [Contextless Expressions](#contextless-expressions)
    * [BACK](#back)
+   * [Expressions](#expressions)
 - [Collection Operators](#collection-operators)
    * [WHERE](#where)
    * [ORDER_BY](#order_by)
@@ -474,6 +475,81 @@ Customers.packages(
 Addresses.current_occupants(a=BACK(1).phone)
 ```
 
+<!-- TOC --><a name="expressions"></a>
+### Expressions
+
+So far, many different kinds of expressions have been noted in the examples for CALC, BACK, and contextless expressions. The following are examples & explanations of the various types of valid expressions:
+
+```py
+# Referencing scalar properties of the current collection
+People(
+    first_name,
+    last_name
+)
+
+# Referencing scalar properties of a singular sub-collection
+People(
+    current_state=current_address.state,
+    current_state=current_address.state,
+)
+
+# Referencing scalar properties of an ancestor collection
+Addresses.current_occupants.packages(
+    customer_email=BACK(1).email,
+    customer_zip_code=BACK(2).zip_code,
+)
+
+# Invoking normal functions/operations on other singular data
+Customers(
+    lowered_name=LOWER(name),
+    normalized_birth_month=MONTH(birth_date) - 1,
+    lives_in_c_state=STARTSWITH(current_address.state, "C"),
+)
+
+# Supported Python literals:
+# - integers
+# - floats
+# - strings
+# - booleans
+# - None
+# - decimal.Decimal
+# - pandas.Timestamp
+# - datetime.date
+# - lists/tuples of literals
+from pandas import Timestamp
+from datetime import date
+from decimal import Decimal
+Customers(
+    a=0,
+    b=3.14,
+    c="hello world",
+    d=True,
+    e=None,
+    f=decimal.Decimal("2.718281828"),
+    g=Timestamp("now"),
+    h=date(2024, 1, 1),
+    i=[1, 2, 4, 8, 10],
+    j=("SMALL", "LARGE"),
+)
+
+# Invoking aggregation functions on plural data
+Customers(
+    n_packages=COUNT(packages),
+    home_has_had_packages_billed=HAS(current_address.billed_packages),
+    avg_package_cost=AVG(packages.package_cost),
+    n_states_shipped_to=NDISTINCT(packages.shipping_address.state),
+    most_recent_package_ordered=MAX(packages.order_date),
+)
+
+# Invoking window functions on singular
+Customers(
+    cust_ranking=RANKING(by=COUNT(packages).DESC()),
+    cust_percentile=PERCENTILE(by=COUNT(packages).DESC()),
+)
+```
+
+See [the list of PyDough functions](funcitons.md) to see all of the builtin functions & operators that can be called in PyDough.
+
 <!-- TOC --><a name="collection-operators"></a>
 ## Collection Operators
 
@@ -613,6 +689,13 @@ Addresses.WHERE(
     BACK(1).city.ASC(),
     ssn.ASC(),
 )
+```
+
+**Good Example #6**: Finds all people who are in the top 1% of customers according to number of packages ordered.
+
+```py
+%%pydough
+People.WHERE(PERCENTILE(by=COUNT(packages).ASC()) == 100)
 ```
 
 **Bad Example #1**: Sorts each person by their account balance in descending order. This is invalid because the `People` collection does not have an `account_balance` property.
@@ -845,7 +928,7 @@ PARTITION(Addresses, name="addrs", by=(city, state))(
 )
 ```
 
-**Good Example #6**: Identifies which states' current occupants account for at least 1% of all packages purchased. Lists the state and the percentage.
+**Good Example #6**: Identifies the states whose current occupants account for at least 1% of all packages purchased. Lists the state and the percentage.
 
 ```py
 %%pydough
@@ -963,44 +1046,226 @@ PARTITION(People(birth_year=YEAR(birth_date)), name="ppl", by=birth_year)(
 )
 ```
 
-<!-- TODO: MORE BAD EXAMPLES OF PARTITION!!!
- * Using X.PARTITION illegally
- * Using BACK bad because the ancestor doesn't exist
- * Using BACK bad because the original ancestor is lost
--->
+**Bad Example #7**: For each person & year, counts how many times that person ordered a packaged in that year. This is invalid because doing `.PARTITION` after `People` is unsupported, since `People` is not a graph-level collection like `GRAPH(...)`.
+
+```py
+%%pydough
+People.PARTITION(packages(year=YEAR(order_date)), name="p", by=year)(
+    ssn=BACK(1).ssn,
+    year=year,
+    n_packs=COUNT(p)
+)
+```
+
+**Bad Example #8**: Partitions each address' current occupants by their birth year to get the number of people per birth year. This is invalid because the example includes a field `BACK(2).bar` which does not exist because the first ancestor of the partition is `GRAPH`, which does not have a second ancestor.
+
+```py
+%%pydough
+people_info = Addresses.current_occupants(birth_year=YEAR(birth_date))
+GRAPH.PARTITION(people_info, name="p", by=birth_year)(
+    birth_year,
+    n_people=COUNT(p),
+    foo=BACK(2).bar,
+)
+```
+
+**Bad Example #9**: Partitions each address' current occupants by their birth year and filters to only include people born in years where at least 10000 people were born, then gets more information of people from those years. This is invalid because after accessing `.ppl`, the term `BACK(1).state` is used. This is not valid because even though the data that `.ppl` refers to (`people_info`) has access to `BACK(1).state`, that ancestry information was lost after partitioning `people_info`. Instead, `BACK(1)` refers to the `PARTITION` clause, which does not have a `state` field.
+
+```py
+%%pydough
+people_info = Addresses.current_occupants(birth_year=YEAR(birth_date))
+GRAPH.PARTITION(people_info, name="ppl", by=birth_year).WHERE(
+    COUNT(p) >= 10000
+).ppl(
+    first_name,
+    last_name,
+    state=BACK(1).state,
+)
+```
 
 <!-- TOC --><a name="singular"></a>
 ### SINGULAR
 
-TODO
+> [!IMPORTANT]
+> This feature has not yet been implemented in PyDough
+
+Certain PyDough operations, such as specific filters, can cause plural data to become singular. In this case, PyDough will still ban the plural data from being treated as singular unless the `.SINGULAR()` modifier is used to tell PyDough that the data should be treated as singular. It is very important that this only be used if the user is certain that the data will be singular, since otherwise it can result in undefined behavior when the PyDough code is executed.
+
+**Good Example #1**: Accesses the package cost of the most recent package ordered by each person. This is valid because even though `.packages` is plural, the filter done on it will ensure that there is only one record for each record of `People`, so `.SINGULAR()` is valid.
+
+```py
+%%pydough
+most_recent_package = packages.WHERE(
+    RANKING(by=order_date.DESC(), levels=1) == 1
+).SINGULAR()
+People(
+    ssn,
+    first_name,
+    middle_name,
+    last_name,
+    most_recent_package_cost=most_recent_package.package_cost
+)
+```
+
+**Good Example #2**: Accesses the email of the current occupant of each address that has the name `"John Smith"` (no middle name). This is valid if it is safe to assume that each address only has one current occupant named `"John Smith"` without a middle name.
+
+```py
+%%pydough
+js = current_occupants.WHERE(
+    (first_name == "John") &  
+    (last_name == "Smith") & 
+    ABSENT(middle_name)
+).SINGULAR()
+Addresses(
+    address_id,
+    john_smith_email=DEFAULT_TO(js.email, "NO JOHN SMITH LIVING HERE")
+)
+```
 
 <!-- TOC --><a name="best"></a>
 ### BEST
+
+> [!IMPORTANT]
+> This feature has not yet been implemented in PyDough
 
 TODO
 
 <!-- TOC --><a name="next-prev"></a>
 ### NEXT / PREV
 
+> [!IMPORTANT]
+> This feature has not yet been implemented in PyDough
+
+In PyDough, it is also possible to access data from other records in the same collection that occur before or after the current record, when all the records are sorted. Similar to how `BACK(n)` can be used as a collection to access terms from an ancestor context, `PREV(n, by=...)` can be used to access terms from another record of the same context, specifically the record obtained by ordering by the `by` terms then looking for the record `n` entries before the current record. Similarly, `NEXT(n, ...)` is the same as `PREV(-n, ...)`.
+
+The arguments to `NEXT` and `PREV` are as follows:
+- `n` (optional): how many records before/after the current record to look. The default value is 1.
+- `by` (required): the collation terms used to sort the data. Must be either a single collation term, or an iterable of 1+ collation terms.
+- `levels` (optional): same as window functions such as `RANKING` or `PERCENTILE`, documented in the [functions list](functions.md).
+
+If the entry `n` records before/after the current entry does not exist, then accessing anything from it returns null. Anything that can be done to the current context can also be done to the `PREV`/`NEXT` call (e.g. aggregating data from a plural sub-collection).
+
+**Good Example #1**: For each package, finds whether it was ordered by the same customer as the most recently ordered package before it.
+
+```py
+%%pydough
+Packages(
+    package_id,
+    same_customer_as_prev_package=customer_ssn == PREV(by=order_date.ASC()).ssn
+)
+```
+
+**Good Example #2**: Finds the average number of hours between every package ordered by every customer.
+
+```py
+%%pydough
+prev_package = PREV(by=order_date.ASC(), levels=1)
+package_deltas = packages(
+    hour_difference=DATEDIFF('hours', order_date, prev_package.order_date)
+)
+Customers(
+    ssn,
+    avg_hours_between_purchases=AVG(package_deltas.hour_difference)
+)
+```
+
+**Good Example #3**: Finds out for each customer whether, if they were sorted by number of packages ordered, whether they live in the same state as any of the 3 people below them on the list.
+
+```py
+%%pydough
+first_after = NEXT(1, by=COUNT(packages).DESC())
+second_after = NEXT(2, by=COUNT(packages).DESC())
+third_after = NEXT(3, by=COUNT(packages).DESC())
+Customers(
+    ssn,
+    same_state_as_order_neighbors=(
+        DEFAULT_TO(current_address.state == first_after.current_address.state, False) | 
+        DEFAULT_TO(current_address.state == second_after.current_address.state, False) | 
+        DEFAULT_TO(current_address.state == third_after.current_address.state, False) 
+    )
+)
+```
+
+**Bad Example #1**: TODO: add bad example where `by` is missing
+
+```py
+%%pydough
 TODO
+```
+
+**Bad Example #2**: TODO: add bad example where `by` is empty
+
+```py
+%%pydough
+TODO
+```
+
+**Bad Example #3**: TODO: add bad example where `by` is not a collation
+
+```py
+%%pydough
+TODO
+```
+
+**Bad Example #4**: TODO: add bad example where `n` is malformed
+
+```py
+%%pydough
+TODO
+```
+
+**Bad Example #5**: TODO: add bad example where `NEXT` is used as-is without accessing
+
+```py
+%%pydough
+TODO
+```
+
+**Bad Example #6**: TODO: add bad example where a term is accessed from `PREV` that does not
+
+```py
+%%pydough
+TODO
+```
+
+**Bad Example #7**: TODO: add bad example where `PREV` is access with `.` syntax.
+
+```py
+%%pydough
+TODO
+```
+
+**Bad Example #8**: TODO: add bad example where `levels` goes too far up.
+
+```py
+%%pydough
+TODO
+```
+
+**Bad Example #9**: TODO: add bad example where an aggfunc is called directly on `NEXT`.
+
+```py
+%%pydough
+TODO
+```
 
 <!-- TOC --><a name="induced-properties"></a>
 ## Induced Properties
 
-This section of the PyDough spec has not yet been defined.
+This section of the PyDough specification has not yet been defined.
 
 <!-- TOC --><a name="induced-scalar-properties"></a>
 ### Induced Scalar Properties
 
-This section of the PyDough spec has not yet been defined.
+This section of the PyDough specification has not yet been defined.
 
 <!-- TOC --><a name="induced-subcollection-properties"></a>
 ### Induced Subcollection Properties
 
-This section of the PyDough spec has not yet been defined.
+This section of the PyDough specification has not yet been defined.
 
 <!-- TOC --><a name="induced-arbitrary-joins"></a>
 ### Induced Arbitrary Joins
 
-This section of the PyDough spec has not yet been defined.
+This section of the PyDough specification has not yet been defined.
 
