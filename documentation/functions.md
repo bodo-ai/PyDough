@@ -136,7 +136,7 @@ Customers(
 ```
 
 > [!WARNING]
-> PyDough currently only supports combinations of `string[start:stop:step]` where `step` is either 1 or missing, and where both `start` and `stop` are either non-negative values or are missing.
+> PyDough currently only supports combinations of `string[start:stop:step]` where `step` is either 1 or omitted, and both `start` and `stop` are either non-negative values or omitted.
 
 <!-- TOC --><a name="string-functions"></a>
 ## String Functions
