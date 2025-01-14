@@ -279,7 +279,7 @@ Lineitems(adj_tax = DEFAULT_TO(tax, 0))
 <!-- TOC --><a name="present"></a>
 ### PRESENT
 
-The `PRESENT` function returns whether its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
+The `PRESENT` function checks if its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
 
 ```py
 Lineitems(has_tax = PRESENT(tax))
