@@ -208,7 +208,7 @@ Below are some examples of how to interpret these patterns:
 <!-- TOC --><a name="join_strings"></a>
 ### JOIN_STRINGS
 
-The `JOIN_STRINGS` function combines all of its string arguments by concatenating every argument after the first argument, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
+The `JOIN_STRINGS` function concatenates all its string arguments, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
 
 ```py
 Regions.nations.customers(
