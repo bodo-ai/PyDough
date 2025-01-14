@@ -766,7 +766,208 @@ People.TOP_K(1000, by=birth_date)
 <!-- TOC --><a name="partition"></a>
 ### PARTITION
 
-TODO
+The `PARTITION` operation is used to create a new collection by partitioning the records of another collection based on 1+ partitioning terms. Every unique combination values of those partitioning terms corresponds to a single record in the new collection. The terms of the new collection are the partitioning terms, and a single sub-collection mapping back to the bucketed terms of the original data.
+
+The syntax for this is `PARTITION(data, name="...", by=...)`. The `data` argument is the PyDough collection that is to be partitioned. The `name` argument is a string indicating the name that is to be used when accessing the partitioned data, and the `by` argument is either a single partitioning key, or an iterable of 1+ partitioning keys.
+
+> [!WARNING]
+> PyDough currently only supports using references to scalar expressions from the `data` collection itself as partition keys, not an ancestor term, or a term from a child collection, or the result of a function call.
+
+If the partitioned data is accessed, its original ancestry is lost. Instead, it inherits the ancestry of the `PARTITION` clause, so `BACK(1)` is the `PARTITION` clause, and `BACK(2)` is the ancestor of the partition clause (the default is the entire graph, just like collections).
+
+The ancestry of the `PARTITION` clause can be changed by prepending it with another collection, separated by a dot. However, this is currently only supported in PyDough when the collection before the dot is just an augmented version of the graph context, as opposed to another collection (e.g. `GRAPH(x=42).PARTITION(...)` is supported, but `People.PARTITION(...)` is not).
+
+**Good Example #1**: Finds every unique state.
+
+```py
+%%pydough
+PARTITION(Addresses, name="addrs", by=state)(state)
+```
+
+**Good Example #2**: For every state, counts how many addresses are in that state.
+
+```py
+%%pydough
+PARTITION(Addresses, name="addrs", by=state)(
+    state,
+    n_addr=COUNT(addrs)
+)
+```
+
+**Good Example #3**: For every city/state, counts how many people live in that city/state.
+
+```py
+%%pydough
+PARTITION(Addresses, name="addrs", by=(city, state))(
+    state,
+    city,
+    n_people=COUNT(addrs.current_occupants)
+)
+```
+
+**Good Example #4**: Finds the top 5 years with the most people born in that year who have yahoo email accounts, listing the year and the number of people.
+
+```py
+%%pydough
+yahoo_people = People(
+    birth_year=YEAR(birth_date)
+).WHERE(ENDSWITH(email, "@yahoo.com"))
+PARTITION(yahoo_people, name="yah_ppl", by=birth_year)(
+    birth_year,
+    n_people=COUNT(yah_ppl)
+).TOP_K(5, by=n_people.DESC())
+```
+
+**Good Example #4**: For every year/month, finds all packages that were below the average cost of all packages ordered in that year/month.
+
+```py
+%%pydough
+package_info = Packages(order_year=YEAR(order_date), order_month=MONTH(order_date))
+PARTITION(package_info, name="packs", by=(order_year, order_month))(
+    avg_package_cost=AVG(packs.package_cost)
+).packs.WHERE(
+    package_cost < BACK(1).avg_package_cost
+)
+```
+
+**Good Example #5**: For every customer, finds the percentage of all orders made by current occupants of that city/state made by that specific customer. Includes the first/last name of the person, the city/state they live in, and the percentage.
+
+```py
+%%pydough
+PARTITION(Addresses, name="addrs", by=(city, state))(
+    total_packages=COUNT(addrs.current_occupants.packages)
+).addrs.current_occupants(
+    first_name,
+    last_name,
+    city=BACK(1).city,
+    state=BACK(1).state,
+    pct_of_packages=100.0 * COUNT(packages) / BACK(2).total_packages,
+)
+```
+
+**Good Example #6**: Identifies which states' current occupants account for at least 1% of all packages purchased. Lists the state and the percentage.
+
+```py
+%%pydough
+GRAPH(
+    total_packages=COUNT(Packages)
+).PARTITION(Addresses, name="addrs", by=state)(
+    state,
+    pct_of_packages=100.0 * COUNT(addrs.current_occupants.package) / BACK(1).packages
+).WHERE(pct_of_packages >= 1.0)
+```
+
+**Good Example #7**: Identifies which months of the year have numbers of packages shipped in that month that are above the average for all months.
+
+```py
+%%pydough
+pack_info = Packages(order_month=MONTH(order_date))
+month_info = PARTITION(pack_info, name="packs", by=order_month)(
+    n_packages=COUNT(packs)
+)
+GRAPH(
+    avg_packages_per_month=AVG(month_info.n_packages)
+).PARTITION(pack_info, name="packs", by=order_month)(
+    month,
+).WHERE(COUNT(packs) > BACK(1).avg_packages_per_month)
+```
+
+**Good Example #8**: Finds the 10 most frequent combinations of the state that the person lives in and the first letter of that person's name.
+
+```py
+%%pydough
+people_info = Addresses.current_occupants(
+    state=BACK(1).state,
+    first_letter=first_name[:1],
+)
+PARTITION(people_info, name="ppl", by=(state, first_letter))(
+    state,
+    first_letter,
+    n_people=COUNT(ppl),
+).TOP_K(10, by=n_people.DESC())
+```
+
+**Good Example #9**: Same as good example #8, but written differently so it will include people without a current address (their state is listed as `"N/A"`).
+
+```py
+%%pydough
+people_info = People(
+    state=DEFALT_TO(current_address.state, "N/A"),
+    first_letter=first_name[:1],
+)
+PARTITION(people_info, name="ppl", by=(state, first_letter))(
+    state,
+    first_letter,
+    n_people=COUNT(ppl),
+).TOP_K(10, by=n_people.DESC())
+```
+
+**Bad Example #1**: Partitions a collection `Products` that does not exist in the graph.
+
+```py
+%%pydough
+PARTITION(Products, name="p", by=product_type)
+```
+
+**Bad Example #2**: Does not provide a valid `name` when partitioning `Addresses` by the state.
+
+```py
+%%pydough
+PARTITION(Addresses, by=state)
+```
+
+**Bad Example #3**: Does not provide a `by` argument to partition `People`.
+
+```py
+%%pydough
+PARTITION(People, name="ppl")
+```
+
+**Bad Example #4**: Counts how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed ot be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+
+```py
+%%pydough
+PARTITION(Packages, name="packs", by=YEAR(order_date))(
+    n_packages=COUNT(packages)
+)
+```
+
+**Bad Example #5**: Counts how many people live in each state. Invalid because `current_address.state` is not allowed to be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+
+```py
+%%pydough
+PARTITION(People, name="ppl", by=current_address.state)(
+    n_packages=COUNT(packages)
+)
+```
+
+**Bad Example #6**: Invalid version of good example #8 that did not use a CALC to get rid of the `BACK` or `first_name[:1]`, which cannot be used as partition terms.
+
+```py
+%%pydough
+PARTITION(Addresses.current_occupants, name="ppl", by=(BACK(1).state, first_name[:1]))(
+    BACK(1).state,
+    first_name[:1],
+    n_people=COUNT(ppl),
+).TOP_K(10, by=n_people.DESC())
+```
+
+**Bad Example #7**: Partitions people by their birth year to find the number of people born in each year. Invalid because the `email` property is referenced, which is not one of the properties accessible by the partition.
+
+```py
+%%pydough
+PARTITION(People(birth_year=YEAR(birth_date)), name="ppl", by=birth_year)(
+    birth_year,
+    email,
+    n_people=COUNT(ppl)
+)
+```
+
+<!-- TODO: MORE BAD EXAMPLES OF PARTITION!!!
+ * Using X.PARTITION illegally
+ * Using BACK bad because the ancestor doesn't exist
+ * Using BACK bad because the original ancestor is lost
+-->
 
 <!-- TOC --><a name="singular"></a>
 ### SINGULAR
