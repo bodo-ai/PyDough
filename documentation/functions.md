@@ -442,7 +442,7 @@ The `RANKING` function returns ordinal position of the current record when all r
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
 - `levels`: same `levels` argument as all other window functions.
 - `allow_ties`: optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
-- `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after hte ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
+- `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
 
 ```py
 # Rank customers per-nation by their account balance
