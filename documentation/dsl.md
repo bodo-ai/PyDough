@@ -512,7 +512,7 @@ People(first_name, last_name, email).WHERE(COUNT(packages) > 5)
 People.WHERE(YEAR(MAX(packages.order_date)) == 2023)
 ```
 
-**Good Example #4**: Counts how many packages were ordered in January of 2018.
+**Good Example #5**: Counts how many packages were ordered in January of 2018.
 
 ```py
 %%pydough
