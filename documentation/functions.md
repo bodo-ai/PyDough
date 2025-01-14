@@ -112,7 +112,7 @@ Below is each unary operator currently supported in PyDough.
 <!-- TOC --><a name="negation"></a>
 ### Negation
 
-A numerical expression can have its sign flipped by prefixing it with the `-` operator:
+A numerical expression's sign can be flipped by prefixing it with the `-` operator:
 
 ```py
 Lineitems(lost_value = extended_price * (-discount))
