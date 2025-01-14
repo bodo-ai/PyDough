@@ -394,7 +394,7 @@ Customers(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
 <!-- TOC --><a name="has"></a>
 ### HAS
 
-The `HAS` function is called on a sub-collection and returns True if at least one record of the sub-collection exists. In other words, `HAS(x)` is equivalent to `COUNT(x) > 0`.
+The `HAS` function is called on a sub-collection and returns `True` if at least one record of the sub-collection exists. In other words, `HAS(x)` is equivalent to `COUNT(x) > 0`.
 
 ```py
 Parts.WHERE(HAS(supply_records.supplier.WHERE(nation.name == "GERMANY")))
