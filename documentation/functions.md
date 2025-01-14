@@ -191,7 +191,7 @@ Parts(is_green = CONTAINS(name, "green"))
 <!-- TOC --><a name="like"></a>
 ### LIKE
 
-The `LIKE` function returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
+The `LIKE` function checks if the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
 
 ```py
 Orders(is_special_request = LIKE(comment, "%special%requests%"))
