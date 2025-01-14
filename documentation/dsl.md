@@ -477,22 +477,281 @@ Addresses.current_occupants(a=BACK(1).phone)
 <!-- TOC --><a name="collection-operators"></a>
 ## Collection Operators
 
-TODO
+So far all of the examples shown have been about accessing collections/sub-collections and deriving expression in terms of the current context, child contexts, and ancestor context. PyDough has other operations that access/create/augment collections.
 
 <!-- TOC --><a name="where"></a>
 ### WHERE
 
-TODO
+A core PyDough operation is the ability to filter the records of a collection. This is done by appending a PyDough collection with `.WHERE(cond)` where `cond` is any expression that could have been placed in a `CALC` term and should have a True/False value. Every record where `cond` evaluates to True will be preserved, and the rest will be dropped from the answer. The terms in the collection are unchanged by the `WHERE` clause, since the only change is which records are kept/dropped.
+
+**Good Example #1**: For every person who has a middle name and and email that ends with `"gmail.com"`, fetches their first name and last name.
+
+```py
+%%pydough
+People.WHERE(PRESENT(middle_name) & ENDSWITH(email, "gmail.com"))(first_name, last_name)
+```
+
+**Good Example #2**: For every package where the package cost is greater than 100, fetches the package id and the state it was shipped to.
+
+```py
+%%pydough
+Packages.WHERE(package_cost > 100)(package_id, shipping_state=shipping_address.state)
+```
+
+**Good Example #3**: For every person who has ordered more than 5 packages, fetches their first name, last name, and email.
+
+```py
+%%pydough
+People(first_name, last_name, email).WHERE(COUNT(packages) > 5)
+```
+
+**Good Example #4**: Finds every person whose most recent order was shipped in the year 2023, and lists all properties of that person.
+
+```py
+%%pydough
+People.WHERE(YEAR(MAX(packages.order_date)) == 2023)
+```
+
+**Good Example #4**: Counts how many packages were ordered in January of 2018.
+
+```py
+%%pydough
+packages_jan_2018 = Packages.WHERE(
+    (YEAR(order_date) == 2018) & (MONTH(order_date) == 1)
+)
+GRAPH(n_jan_2018=COUNT(selected_packages))
+```
+
+**Bad Example #1**: For every person, fetches their first name and last name only if they have a phone number. This is invalid because `People` does not have a property named `phone_number`.
+
+```py
+%%pydough
+People.WHERE(PRESENT(phone_number))(first_name, last_name)
+```
+
+**Bad Example #2**: For every package, fetches the package id only if the package cost is greater than 100 and the shipping state is Texas. This is invalid because `shipping_state` is not a property of `Packages`.
+
+```py
+%%pydough
+Packages.WHERE((package_cost > 100) & (shipping_state == "TX"))(package_id)
+```
+
+**Bad Example #3**: For every package, fetches the package id only if the package cost is greater than 100 and the shipping state is Texas. This is invalid because `and` is used instead of `&`.
+
+```py
+%%pydough
+Packages.WHERE((package_cost > 100) and (shipping_address.state == "TX"))(package_id)
+```
+
+**Bad Example #4**: Obtain every person whose packages were shipped in the month of June. This is invalid because `packages` is a plural property of `People`, so `MONTH(packages.order_date) == 6` is a plural expression with regards to `People` that cannot be used as a filtering condition. 
+
+```py
+%%pydough
+People.WHERE(MONTH(packages.order_date) == 6)
+```
 
 <!-- TOC --><a name="order_by"></a>
 ### ORDER_BY
 
-TODO
+Another operation that can be done onto PyDough collections is sorting them. This is done by appending a collection with `.ORDER_BY(...)` which will order the collection by the collation terms between the parenthesis. The collation terms must be 1+ expressions that can be inside of a CALC term (singular expressions with regards to the current context), each decorated with information making it usable as a collation.
+
+An expression becomes a collation expression when it is appended with `.ASC()` (indicating that the expression should be used to sort in ascending order) or `.DESC()` (indicating that the expression should be used to sort in descending order). Both `.ASC()` and `.DESC()` take in an optional argument `na_pos` indicating where to place null values. This keyword argument can be either `"first"` or `"last"`, and the default is `"first"` for `.ASC()` and `"last"` for `.DESC()`. The way the sorting works is that it orders by hte first collation term provided, and in cases of ties it moves on to the second collation term, and if there are ties in that it moves on to the third, and so on until there are no more terms to sort by, at which point the ties are broken arbitrarily.
+
+If there are multiple `ORDER_BY` terms, the last one is the one that takes precedence. The terms in the collection are unchanged by the `ORDER_BY` clause, since the only change is the order of the records.
+
+> [!WARNING]
+> In the current version of PyDough, the behavior when the expressions inside an `ORDER_BY` clause are not collation expressions with `.ASC()` or `.DESC()` is undefined/unsupported.
+
+**Good Example #1**: Orders every person alphabetically by last name, then first name, then middle name (people with no middle name going last).
+
+```py
+%%pydough
+People.ORDER_BY(last_name.ASC(), first_name.ASC(), middle_name.ASC(na_pos="last"))
+```
+
+**Good Example #2**: For every person lists their ssn & how many packages they have ordered, and orders them from highest number of orders to lowest, breaking ties in favor of whoever is oldest. 
+
+```py
+%%pydough
+People(
+    ssn, n_packages=COUNT(packages).DESC()
+).ORDER_BY(
+    n_packages.DESC(), birth_date.ASC()
+)
+```
+
+**Good Example #3**: Finds every address that has at least 1 person living in it and sorts them highest-to-lowest by number of occupants, with ties broken by address id in ascending order. 
+
+```py
+%%pydough
+Addresses.WHERE(
+    HAS(current_occupants)
+).ORDER_BY(
+    COUNT(current_occupants).DESC(), address_id.ASC()
+)
+```
+
+**Good Example #4**: Sorts every person alphabetically by the state they live in, then the city they live in, then by their ssn. People without a current address should go last.
+
+```py
+%%pydough
+People.ORDER_BY(
+    current_address.state.ASC(na_pos="last"),
+    current_address.city.ASC(na_pos="last"),
+    ssn.ASC(),
+)
+```
+
+**Good Example #5**: Same as good example #4, but written so it only includes people who are current occupants of an address in Ohio.
+
+```py
+%%pydough
+Addresses.WHERE(
+    state == "OHIO"
+).current_occupants.ORDER_BY(
+    BACK(1).state.ASC(),
+    BACK(1).city.ASC(),
+    ssn.ASC(),
+)
+```
+
+**Bad Example #1**: Sorts each person by their account balance in descending order. This is invalid because the `People` collection does not have an `account_balance` property.
+
+```py
+%%pydough
+People.ORDER_BY(account_balance.DESC())
+```
+
+**Bad Example #2**: Sorts each address by the birth date date of the people who live there. This is invalid because `current_occupants` is a plural property of `Addresses`, so `current_occupants.birth_date` is plural and cannot be used as an ordering term unless aggregated.
+
+```py
+%%pydough
+Addresses.ORDER_BY(current_occupants.ASC())
+```
+
+**Bad Example #3**: Same as good example #5, but incorrect because `BACK(2)` is used, and `BACK(2)` refers to the 2nd ancestor of `current_occupants` which is `GRAPH`, which does not have any properties named `state` or `city`.
+
+```py
+%%pydough
+Addresses.WHERE(
+    state == "OHIO"
+).current_occupants.ORDER_BY(
+    BACK(2).state.ASC(),
+    BACK(2).city.ASC(),
+    ssn.ASC(),
+)
+```
+
+**Bad Example #4**: Same as bad example #3, but incorrect because `BACK(3)` is used, and `BACK(3)` refers to the 3rd ancestor of `current_occupants` which does not exist because the 2nd ancestor is `GRAPH`, which does not have any ancestors.
+
+```py
+%%pydough
+Addresses.WHERE(
+    state == "OHIO"
+).current_occupants.ORDER_BY(
+    BACK(2).state.ASC(),
+    BACK(2).city.ASC(),
+    ssn.ASC(),
+)
+```
+
+**Bad Example #5**: Sorts every person by their first name. This is invalid because no `.ASC()` or `.DESC()` term is provided.
+
+```py
+%%pydough
+People.ORDER_BY(first_name)
+```
+
+**Bad Example #6**: Sorts every person. This is invalid because no collation terms are provided.
+
+```py
+%%pydough
+People.ORDER_BY()
+```
 
 <!-- TOC --><a name="top_k"></a>
 ### TOP_K
 
-TODO
+A similar operation to `ORDER_BY` is `TOP_K`. The `TOP_K` operation also sorts a collection, but then uses the ordered results in order to pick the first `k`, values, where `k` is a provided constant.
+
+The syntax for this is `.TOP_K(k, by=...)` where `k` is a positive integer and the `by` clause is either a single collation term (as seen in `ORDER_BY`) or an iterable of collation terms (e.g. a list or tuple). The same restrictions as `ORDER_BY` apply to `TOP_K` regarding their collation terms.
+
+The terms in the collection are unchanged by the `TOP_K` clause, since the only change is the order of the records and which ones are kept/dropped.
+
+**Good Example #1**: Finds the 10 people who have ordered the most packages, including their first/last name, birth date, and the number of packages. If there is a tie, break it by the lowest ssn.
+
+```py
+%%pydough
+People(
+    first_name,
+    last_name,
+    birth_date,
+    n_packages=COUNT(packages)
+).TOP_K(10, by=(n_packages.DESC(), ssn.ASC()))
+```
+
+**Good Example #2**: Finds the 5 most recently shipped packages, with ties broken arbitrarily.
+
+```py
+%%pydough
+Packages.TOP_K(5, by=order_date.DESC())
+```
+
+**Good Example #3**: Finds the 100 addresses that have most recently had packages either shipped or billed to them, breaking ties arbitrarily.
+
+```py
+%%pydough
+default_date = datetime.date(1970, 1, 1)
+most_recent_ship = DEFAULT_TO(MAX(packages_shipped.order_date), default_date)
+most_recent_bill = DEFAULT_TO(MAX(packages_billed.order_date), default_date)
+most_recent_package = IFF(most_recent_ship < most_recent_bill, most_recent_ship, most_recent_bill)
+Addresses.TOP_K(10, by=most_recent_package.DESC())
+```
+
+**Bad Example #1**: Finds the 5 people with the lowest GPA. This is invalid because the `People` collection does not have a `gpa` property.
+
+```py
+%%pydough
+People.TOP_K(5, by=gpa.ASC())
+```
+
+**Bad Example #2**: Finds the 25 addresses with the earliest packages billed to them, by arrival date. This is invalid because `packages_billed` is a plural property of `Addresses`, so `packages_billed.arrival_date` cannot be used as a collation expression for `Addresses`.
+
+```py
+%%pydough
+Addresses.packages_billed(25, by=gpa.packages_billed.arrival_date())
+```
+
+**Bad Example #3**: Finds the top 100 people currently living in the city of San Francisco. This is invalid because the `by` clause is absent.
+
+```py
+%%pydough
+People.WHERE(
+    current_address.city == "San Francisco"
+).TOP_K(100)
+```
+
+**Bad Example #4**: Finds the top packages by highest value. This is invalid because there is no `k` value.
+
+```py
+%%pydough
+Packages.TOP_K(by=package_cost.DESC())
+```
+
+**Bad Example #5**: Finds the top 300 addresses. This is invalid because the `by` clause is empty
+
+```py
+%%pydough
+Addresses.TOP_K(300, by=())
+```
+
+**Bad Example #6**: Finds the 1000 people by birth date. This is invalid because the collation term does not have `.ASC()` or `.DESC()`.
+
+```py
+%%pydough
+People.TOP_K(1000, by=birth_date)
+```
+
 
 <!-- TOC --><a name="partition"></a>
 ### PARTITION
