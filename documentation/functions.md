@@ -69,7 +69,7 @@ Lineitems(value = (extended_price * (1 - discount) + 1.0) / part.retail_price)
 <!-- TOC --><a name="comparisons"></a>
 ### Comparisons
 
-Expression values can be compared to one another with the standard comparison operators `<=`, `<`, `==`, `!=`, `>` and `>=`:
+Expression values can be compared using standard comparison operators: `<=`, `<`, `==`, `!=`, `>` and `>=`:
 
 ```py
 Customers(
