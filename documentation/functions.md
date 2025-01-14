@@ -56,11 +56,10 @@ Below is each binary operator currently supported in PyDough.
 <!-- TOC --><a name="arithmetic"></a>
 ### Arithmetic
 
-Numerical expression values can be:
-- Added together with the `+` operator
-- Subtracted from one another with the `-` operator
-- Multiplied by one another with the `*` operator
-- divided by one another with the `/` operator (note: the behavior when the denominator is `0` depends on the database being used to evaluate the expression)
+Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`).
+
+> [!NOTE]
+> The behavior when the denominator is `0` depends on the database being used to evaluate the expression.
 
 ```py
 Lineitems(value = (extended_price * (1 - discount) + 1.0) / part.retail_price)
@@ -197,13 +196,7 @@ The `LIKE` function checks if the first argument matches the SQL pattern text of
 Orders(is_special_request = LIKE(comment, "%special%requests%"))
 ```
 
-Below are some examples of how to interpret these patterns:
-- `"a_c"` returns True for any 3-letter string where the first character is `"a"` and the third is `"c"`.
-- `"_q__"` returns True for any 4-letter string where the second character is `"q"`.
-- `"%_s"` returns True for any 2+-letter string where the last character is `"s"`.
-- `"a%z"` returns True for any string that starts with `"a"` and ends with `"z"`.
-- `"%a%z%"` returns True for any string that contains an `"a"`, and also contains a `"z"` at some later point in the string.
-- `"_e%"` returns True for any string where the second character is `"e"`.
+[This link](https://www.w3schools.com/sql/sql_like.asp) explains how these SQL pattern strings work and provides some examples.
 
 <!-- TOC --><a name="join_strings"></a>
 ### JOIN_STRINGS
