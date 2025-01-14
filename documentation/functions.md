@@ -352,7 +352,9 @@ Parts(rounded_price = ROUND(retail_price, 1))
 <!-- TOC --><a name="aggregation-functions"></a>
 ## Aggregation Functions
 
-Normally, functions in PyDough maintain the cardinality of their inputs. Aggregation functions instead take in an argument that can be plural and aggregates it into a singular value with regards to the current context. Below is each function currently supported in PyDough that can aggregate plural values into a singular value.
+When terms of a plural sub-collection are accessed, those terms are plural with regards to the current collection. For example, if each nation in `Nations` has multiple `customers`, and each customer has a single `acctbal`, then `customers.acctbal` is plural with regards to `Nations` and cannot be used in any calculations when the current context is `Nations`. The exception to this is when `customers.acctbal` is made singular with regards to `Nations` by aggregating it.
+
+Aggregation functions are a special set of functions that, when called on their inputs, convert them from plural to singular. Below is each aggregation function currently supported in PyDough.
 
 <!-- TOC --><a name="sum"></a>
 ### SUM
@@ -435,9 +437,9 @@ Customers.WHERE(HASNOT(orders))
 <!-- TOC --><a name="window-functions"></a>
 ## Window Functions
 
-Window functions are special functions that return a value for each record in the current context that depends on other records in the same context. A common example of this is ordering all values within the current context to return a value that depends on the current record's ordinal position relative to all the other records in the context.
+Window functions are special functions whose output depends on other records in the same context.A common example of this is finding the ranking of each record if all of the records were to be sorted.
 
-Window functions in PyDough have an optional `levels` argument. If this argument is not provided, it means that the window function applies to all records of the current collection without any boundaries between records. If it is provided, it should be a value that can be used as an  argument to `BACK`, and in that case it means that the window function should be used on records of the current collection grouped by that particular ancestor.
+Window functions in PyDough have an optional `levels` argument. If this argument is omitted, it means that the window function applies to all records of the current collection (e.g. rank all customers). If it is provided, it should be a value that can be used as an  argument to `BACK`, and in that case it means that the set of values used by the window function should be per-record of the correspond ancestor (e.g. rank all customers within each nation).
 
 For example, if using the `RANKING` window function, consider the following examples:
 
