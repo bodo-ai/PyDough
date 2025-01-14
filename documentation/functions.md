@@ -173,7 +173,7 @@ Parts(begins_with_yellow = STARTSWITH(name, "yellow"))
 <!-- TOC --><a name="endswith"></a>
 ### ENDSWITH
 
-The `ENDSWITH` function returns whether its first argument ends with its second argument as a string suffix:
+The `ENDSWITH` function checks if its first argument ends with its second argument as a string suffix:
 
 ```py
 Parts(ends_with_chocolate = ENDSWITH(name, "chocolate"))
