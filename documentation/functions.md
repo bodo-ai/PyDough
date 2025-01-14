@@ -364,7 +364,7 @@ Suppliers(cheapest_part_supplied = MIN(supply_records.supply_cost))
 The `MAX` function returns the largest value from the set of numerical values it is called on.
 
 ```py
-Suppliers(most_expensive_part_supplied = MIN(supply_records.supply_cost))
+Suppliers(most_expensive_part_supplied = MAX(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="count"></a>
