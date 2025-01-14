@@ -182,7 +182,7 @@ Parts(ends_with_chocolate = ENDSWITH(name, "chocolate"))
 <!-- TOC --><a name="contains"></a>
 ### CONTAINS
 
-The `CONTAINS` function returns whether its first argument contains with its second argument as a substring:
+The `CONTAINS` function checks if its first argument contains its second argument as a substring:
 
 ```py
 Parts(is_green = CONTAINS(name, "green"))
