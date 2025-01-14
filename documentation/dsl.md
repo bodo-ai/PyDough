@@ -708,6 +708,17 @@ most_recent_package = IFF(most_recent_ship < most_recent_bill, most_recent_ship,
 Addresses.TOP_K(10, by=most_recent_package.DESC())
 ```
 
+**Good Example #4**: Finds the top 3 people who have spent the most money on packages, including their first/last name, and the total cost of all of their packages.
+
+```py
+%%pydough
+People(
+    first_name,
+    last_name,
+    total_package_cost=SUM(packages.package_cost)
+).TOP_K(3, by=total_package_cost.DESC())
+```
+
 **Bad Example #1**: Finds the 5 people with the lowest GPA. This is invalid because the `People` collection does not have a `gpa` property.
 
 ```py
@@ -751,7 +762,6 @@ Addresses.TOP_K(300, by=())
 %%pydough
 People.TOP_K(1000, by=birth_date)
 ```
-
 
 <!-- TOC --><a name="partition"></a>
 ### PARTITION
