@@ -15,6 +15,7 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [String Functions](#string-functions)
    * [LOWER](#lower)
    * [UPPER](#upper)
+   * [LENGTH](#length)
    * [STARTSWITH](#startswith)
    * [ENDSWITH](#endswith)
    * [CONTAINS](#contains)
@@ -26,6 +27,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [DAY](#day)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
+   * [ISIN](#isin)
    * [DEFAULT_TO](#default_to)
    * [PRESENT](#present)
    * [ABSENT](#absent)
@@ -36,6 +38,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [ROUND](#round)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
+   * [AVG](#avg)
    * [MIN](#min)
    * [MAX](#max)
    * [COUNT](#count)
@@ -160,6 +163,15 @@ Calling `UPPER` on a string converts its characters to uppercase:
 Customers(uppercase_name = UPPER(name))
 ```
 
+<!-- TOC --><a name="length"></a>
+### LENGTH
+
+Calling `length` on a string returns the number of characters it contains:
+
+```py
+Suppliers(n_chars_in_comment = LENGTH(comment))
+```
+
 <!-- TOC --><a name="startswith"></a>
 ### STARTSWITH
 
@@ -260,6 +272,15 @@ Customers(
 )
 ```
 
+<!-- TOC --><a name="isin"></a>
+### ISIN
+
+The `ISIN` function takes in an expression and an iterable of literals and returns whether the expression is a member of provided literals.
+
+```py
+Parts.WHERE(ISIN(size, (10, 11, 17, 19, 45)))
+```
+
 <!-- TOC --><a name="default_to"></a>
 ### DEFAULT_TO
 
@@ -340,6 +361,15 @@ The `SUM` function returns the sum of the plural set of numerical values it is c
 
 ```py
 Nations(total_consumer_wealth = SUM(customers.acctbal))
+```
+
+<!-- TOC --><a name="avg"></a>
+### AVG
+
+The `AVG` function takes the average of the plural set of numerical values it is called on.
+
+```py
+Parts(average_shipment_size = AVG(lines.quantity))
 ```
 
 <!-- TOC --><a name="min"></a>
