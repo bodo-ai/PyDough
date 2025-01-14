@@ -15,6 +15,7 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [String Functions](#string-functions)
    * [LOWER](#lower)
    * [UPPER](#upper)
+   * [LENGTH](#length)
    * [STARTSWITH](#startswith)
    * [ENDSWITH](#endswith)
    * [CONTAINS](#contains)
@@ -26,6 +27,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [DAY](#day)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
+   * [ISIN](#isin)
    * [DEFAULT_TO](#default_to)
    * [PRESENT](#present)
    * [ABSENT](#absent)
@@ -36,6 +38,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [ROUND](#round)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
+   * [AVG](#avg)
    * [MIN](#min)
    * [MAX](#max)
    * [COUNT](#count)
@@ -56,20 +59,19 @@ Below is each binary operator currently supported in PyDough.
 <!-- TOC --><a name="arithmetic"></a>
 ### Arithmetic
 
-Numerical expression values can be:
-- Added together with the `+` operator
-- Subtracted from one another with the `-` operator
-- Multiplied by one another with the `*` operator
-- divided by one another with the `/` operator (note: the behavior when the denominator is `0` depends on the database being used to evaluate the expression)
+Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`).
 
 ```py
 Lineitems(value = (extended_price * (1 - discount) + 1.0) / part.retail_price)
 ```
 
+> [!WARNING]
+> The behavior when the denominator is `0` depends on the database being used to evaluate the expression.
+
 <!-- TOC --><a name="comparisons"></a>
 ### Comparisons
 
-Expression values can be compared to one another with the standard comparison operators `<=`, `<`, `==`, `!=`, `>` and `>=`:
+Expression values can be compared using standard comparison operators: `<=`, `<`, `==`, `!=`, `>` and `>=`:
 
 ```py
 Customers(
@@ -83,7 +85,7 @@ Customers(
 ```
 
 > [!WARNING]
-> Do **NOT** use use chained inequalities like `a <= b <= c`, as this can cause undefined incorrect behavior in PyDough. Instead, use expressions like `(a <= b) & (b <= c)`.
+> Chained inequalities, like `a <= b <= c`, can cause undefined/incorrect behavior in PyDough. Instead, use expressions like `(a <= b) & (b <= c)`.
 
 <!-- TOC --><a name="logical"></a>
 ### Logical
@@ -112,7 +114,7 @@ Below is each unary operator currently supported in PyDough.
 <!-- TOC --><a name="negation"></a>
 ### Negation
 
-A numerical expression can have its sign flipped by prefixing it with the `-` operator:
+A numerical expression's sign can be flipped by prefixing it with the `-` operator:
 
 ```py
 Lineitems(lost_value = extended_price * (-discount))
@@ -136,7 +138,7 @@ Customers(
 ```
 
 > [!WARNING]
-> PyDough currently only supports combinations of `string[start:stop:step]` where `step` is either 1 or missing, and where both `start` and `stop` are either non-negative values or are missing.
+> PyDough currently only supports combinations of `string[start:stop:step]` where `step` is either 1 or omitted, and both `start` and `stop` are either non-negative values or omitted.
 
 <!-- TOC --><a name="string-functions"></a>
 ## String Functions
@@ -161,10 +163,19 @@ Calling `UPPER` on a string converts its characters to uppercase:
 Customers(uppercase_name = UPPER(name))
 ```
 
+<!-- TOC --><a name="length"></a>
+### LENGTH
+
+Calling `length` on a string returns the number of characters it contains:
+
+```py
+Suppliers(n_chars_in_comment = LENGTH(comment))
+```
+
 <!-- TOC --><a name="startswith"></a>
 ### STARTSWITH
 
-The `STARTSWITH` function returns whether its first argument begins with its second argument as a string prefix:
+The `STARTSWITH` function checks if its first argument begins with its second argument as a string prefix:
 
 ```py
 Parts(begins_with_yellow = STARTSWITH(name, "yellow"))
@@ -173,7 +184,7 @@ Parts(begins_with_yellow = STARTSWITH(name, "yellow"))
 <!-- TOC --><a name="endswith"></a>
 ### ENDSWITH
 
-The `ENDSWITH` function returns whether its first argument ends with its second argument as a string suffix:
+The `ENDSWITH` function checks if its first argument ends with its second argument as a string suffix:
 
 ```py
 Parts(ends_with_chocolate = ENDSWITH(name, "chocolate"))
@@ -182,7 +193,7 @@ Parts(ends_with_chocolate = ENDSWITH(name, "chocolate"))
 <!-- TOC --><a name="contains"></a>
 ### CONTAINS
 
-The `CONTAINS` function returns whether its first argument contains with its second argument as a substring:
+The `CONTAINS` function checks if its first argument contains its second argument as a substring:
 
 ```py
 Parts(is_green = CONTAINS(name, "green"))
@@ -191,24 +202,18 @@ Parts(is_green = CONTAINS(name, "green"))
 <!-- TOC --><a name="like"></a>
 ### LIKE
 
-The `LIKE` function returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
+The `LIKE` function checks if the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
 
 ```py
 Orders(is_special_request = LIKE(comment, "%special%requests%"))
 ```
 
-Below are some examples of how to interpret these patterns:
-- `"a_c"` returns True for any 3-letter string where the first character is `"a"` and the third is `"c"`.
-- `"_q__"` returns True for any 4-letter string where the second character is `"q"`.
-- `"%_s"` returns True for any 2+-letter string where the last character is `"s"`.
-- `"a%z"` returns True for any string that starts with `"a"` and ends with `"z"`.
-- `"%a%z%"` returns True for any string that contains an `"a"`, and also contains a `"z"` at some later point in the string.
-- `"_e%"` returns True for any string where the second character is `"e"`.
+[This link](https://www.w3schools.com/sql/sql_like.asp) explains how these SQL pattern strings work and provides some examples.
 
 <!-- TOC --><a name="join_strings"></a>
 ### JOIN_STRINGS
 
-The `JOIN_STRINGS` function combines all of its string arguments by concatenating every argument after the first argument, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
+The `JOIN_STRINGS` function concatenates all its string arguments, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
 
 ```py
 Regions.nations.customers(
@@ -267,6 +272,15 @@ Customers(
 )
 ```
 
+<!-- TOC --><a name="isin"></a>
+### ISIN
+
+The `ISIN` function takes in an expression and an iterable of literals and returns whether the expression is a member of provided literals.
+
+```py
+Parts.WHERE(ISIN(size, (10, 11, 17, 19, 45)))
+```
+
 <!-- TOC --><a name="default_to"></a>
 ### DEFAULT_TO
 
@@ -279,7 +293,7 @@ Lineitems(adj_tax = DEFAULT_TO(tax, 0))
 <!-- TOC --><a name="present"></a>
 ### PRESENT
 
-The `PRESENT` function returns whether its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
+The `PRESENT` function checks if its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
 
 ```py
 Lineitems(has_tax = PRESENT(tax))
@@ -288,7 +302,7 @@ Lineitems(has_tax = PRESENT(tax))
 <!-- TOC --><a name="absent"></a>
 ### ABSENT
 
-The `ABSENT` function returns whether its argument is non-null (e.g. the same as `IS NULL` in SQL):
+The `ABSENT` function checks if its argument is null (e.g. the same as `IS NULL` in SQL):
 
 ```py
 Lineitems(no_tax = ABSENT(tax))
@@ -306,7 +320,7 @@ TPCH(avg_non_debt_balance = AVG(Customers(no_debt_bal = KEEP_IF(acctbal, acctbal
 <!-- TOC --><a name="monotonic"></a>
 ### MONOTONIC
 
-The `MONOTONIC` function returns whether all of its arguments are in ascending order (e.g. `MONOTONIC(a, b, c, d)` is equivalent to `(a <= b) & (b <= c) & (c <= d)`):
+The `MONOTONIC` function checks if all of its arguments are in ascending order (e.g. `MONOTONIC(a, b, c, d)` is equivalent to `(a <= b) & (b <= c) & (c <= d)`):
 
 ```py
 Lineitems.WHERE(MONOTONIC(10, quantity, 20) & MONOTONIC(5, part.size, 13))
@@ -338,7 +352,9 @@ Parts(rounded_price = ROUND(retail_price, 1))
 <!-- TOC --><a name="aggregation-functions"></a>
 ## Aggregation Functions
 
-Normally, functions in PyDough maintain the cardinality of their inputs. Aggregation functions instead take in an argument that can be plural and aggregates it into a singular value with regards to the current context. Below is each function currently supported in PyDough that can aggregate plural values into a singular value.
+When terms of a plural sub-collection are accessed, those terms are plural with regards to the current collection. For example, if each nation in `Nations` has multiple `customers`, and each customer has a single `acctbal`, then `customers.acctbal` is plural with regards to `Nations` and cannot be used in any calculations when the current context is `Nations`. The exception to this is when `customers.acctbal` is made singular with regards to `Nations` by aggregating it.
+
+Aggregation functions are a special set of functions that, when called on their inputs, convert them from plural to singular. Below is each aggregation function currently supported in PyDough.
 
 <!-- TOC --><a name="sum"></a>
 ### SUM
@@ -347,6 +363,15 @@ The `SUM` function returns the sum of the plural set of numerical values it is c
 
 ```py
 Nations(total_consumer_wealth = SUM(customers.acctbal))
+```
+
+<!-- TOC --><a name="avg"></a>
+### AVG
+
+The `AVG` function takes the average of the plural set of numerical values it is called on.
+
+```py
+Parts(average_shipment_size = AVG(lines.quantity))
 ```
 
 <!-- TOC --><a name="min"></a>
@@ -364,7 +389,7 @@ Suppliers(cheapest_part_supplied = MIN(supply_records.supply_cost))
 The `MAX` function returns the largest value from the set of numerical values it is called on.
 
 ```py
-Suppliers(most_expensive_part_supplied = MIN(supply_records.supply_cost))
+Suppliers(most_expensive_part_supplied = MAX(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="count"></a>
@@ -394,7 +419,7 @@ Customers(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
 <!-- TOC --><a name="has"></a>
 ### HAS
 
-The `HAS` function is called on a sub-collection and returns True if at least one record of the sub-collection exists. In other words, `HAS(x)` is equivalent to `COUNT(x) > 0`.
+The `HAS` function is called on a sub-collection and returns `True` if at least one record of the sub-collection exists. In other words, `HAS(x)` is equivalent to `COUNT(x) > 0`.
 
 ```py
 Parts.WHERE(HAS(supply_records.supplier.WHERE(nation.name == "GERMANY")))
@@ -403,7 +428,7 @@ Parts.WHERE(HAS(supply_records.supplier.WHERE(nation.name == "GERMANY")))
 <!-- TOC --><a name="hasnot"></a>
 ### HASNOT
 
-The `HASNOT` function is called on a sub-collection and returns True if no records of the sub-collection exist. In other words, `HASNOT(x)` is equivalent to `COUNT(x) == 0`.
+The `HASNOT` function is called on a sub-collection and returns `True` if no records of the sub-collection exist. In other words, `HASNOT(x)` is equivalent to `COUNT(x) == 0`.
 
 ```py
 Customers.WHERE(HASNOT(orders))
@@ -412,9 +437,9 @@ Customers.WHERE(HASNOT(orders))
 <!-- TOC --><a name="window-functions"></a>
 ## Window Functions
 
-Window functions are special functions that return a value for each record in the current context that depends on other records in the same context. A common example of this is ordering all values within the current context to return a value that depends on the current record's ordinal position relative to all the other records in the context.
+Window functions are special functions whose output depends on other records in the same context.A common example of this is finding the ranking of each record if all of the records were to be sorted.
 
-Window functions in PyDough have an optional `levels` argument. If this argument is not provided, it means that the window function applies to all records of the current collection without any boundaries between records. If it is provided, it should be a value that can be used as an  argument to `BACK`, and in that case it means that the window function should be used on records of the current collection grouped by that particular ancestor.
+Window functions in PyDough have an optional `levels` argument. If this argument is omitted, it means that the window function applies to all records of the current collection (e.g. rank all customers). If it is provided, it should be a value that can be used as an  argument to `BACK`, and in that case it means that the set of values used by the window function should be per-record of the correspond ancestor (e.g. rank all customers within each nation).
 
 For example, if using the `RANKING` window function, consider the following examples:
 
@@ -442,7 +467,7 @@ The `RANKING` function returns ordinal position of the current record when all r
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
 - `levels`: same `levels` argument as all other window functions.
 - `allow_ties`: optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
-- `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after hte ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
+- `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
 
 ```py
 # Rank customers per-nation by their account balance
