@@ -403,7 +403,7 @@ Parts.WHERE(HAS(supply_records.supplier.WHERE(nation.name == "GERMANY")))
 <!-- TOC --><a name="hasnot"></a>
 ### HASNOT
 
-The `HASNOT` function is called on a sub-collection and returns True if no records of the sub-collection exist. In other words, `HASNOT(x)` is equivalent to `COUNT(x) == 0`.
+The `HASNOT` function is called on a sub-collection and returns `True` if no records of the sub-collection exist. In other words, `HASNOT(x)` is equivalent to `COUNT(x) == 0`.
 
 ```py
 Customers.WHERE(HASNOT(orders))
