@@ -14,7 +14,8 @@ This page document the exact format that the JSON files containing PyDough metad
    * [Property Type: Compound Relationship](#property-type-compound-relationship)
 - [PyDough Type Strings](#pydough-type-strings)
 - [Metadata Samples](#metadata-samples)
-   * [Example 1: Education](#example-1-education)
+   * [Example: Education](#example-education)
+   * [Example: Shipping](#example-shipping)
 
 <!-- TOC end -->
 
@@ -119,8 +120,8 @@ The strings used in the type field for certain properties must be one of the fol
 ## Metadata Samples
 
 
-<!-- TOC --><a name="example-1-education"></a>
-### Example 1: Education
+<!-- TOC --><a name="example-education"></a>
+### Example: Education
 
 The knowledge graph is for the following information about tables in a schema called `education`:
 - `PEOPLE` is a table referring to each known person. Each row in this table has the following information:
@@ -129,7 +130,7 @@ The knowledge graph is for the following information about tables in a schema ca
 - `SCHOOLS` is a table referring to each known school. Each row in this table has the following information:
     - `s_id`: the identifying number used to uniquely identify the school.
     - `s_name`: the name of the school.
-- `ATTENDANCE` is a table referring to every known instance of a person attending a school (assuming a person could have attended multiple schools, but attended each school at most once).
+- `ATTENDANCE` is a table referring to every known instance of a person attending a school (assuming a person could have attended multiple schools, but attended each school at most once). Each row in this table has the following information:
     - `a_ssn`: the social security number of the person attending the school.
     - `a_id`: the id of the school being attended.
     - `a_gpa`: the GPA that the person had while attending the school.
@@ -184,7 +185,7 @@ The knowledge graph is for the following information about tables in a schema ca
     "Schools": {
       "type": "simple_table",
       "table_path": "education.SCHOOLS",
-      "unique_properties": ["s_id"],
+      "unique_properties": ["school_id"],
       "properties": {
         "school_id": {
           "type": "table_column",
@@ -245,17 +246,17 @@ The knowledge graph is for the following information about tables in a schema ca
 ```
 
 The PyDough metadata representation shown in this JSON file corresponds to the following set of collections:
-- `People` (corresponds to `education.PEOPLE`; records are unique per unique value of `ssn`). Has the following collections:
+- `People` (corresponds to `education.PEOPLE`; records are unique per unique value of `ssn`). Has the following properties:
     - `ssn` (scalar property)
     - `name` (scalar property)
     - `attendances` (sub-collection connecting to `Attendances`)
     - `schools` (sub-collection connecting to `Schools` by going through `Attendances`)
-- `Schools` (corresponds to `education.SCHOOLS`; records are unique per unique value of `school_id`). Has the following collections:
+- `Schools` (corresponds to `education.SCHOOLS`; records are unique per unique value of `school_id`). Has the following properties:
     - `school_id` (scalar property)
     - `school_name` (scalar property)
     - `attendances` (sub-collection connecting to `Attendances`)
     - `students` (sub-collection connecting to `People` by going through `Attendances`, reverse of `People.schools`)
-- `Attendances` (corresponds to `education.ATTENDANCES`; records are unique per unique combination of `person_ssn` & `school_id`). Has the following collections:
+- `Attendances` (corresponds to `education.ATTENDANCES`; records are unique per unique combination of `person_ssn` & `school_id`). Has the following properties:
     - `person_ssn` (scalar property)
     - `school_id` (scalar property)
     - `gpa` (scalar property)
@@ -263,3 +264,241 @@ The PyDough metadata representation shown in this JSON file corresponds to the f
     - `degree` (scalar property)
     - `person` (sub-collection connecting to `People`, reverse of `People.attendances`)
     - `school` (sub-collection connecting to `School`, reverse of `Schools.attendances`)
+
+<!-- TOC --><a name="example-shipping"></a>
+### Example: Shipping
+
+The knowledge graph is for the following information about tables in a schema called `shipping`:
+- `PEOPLE` is a table referring to each known person. Each row in this table has the following information:
+    - `ssn`: the social security number used to uniquely identify the person.
+    - `first`: the first name of the person.
+    - `middle`: the middle name of the person, if they have one.
+    - `last`: the last name of the person.
+    - `bdate`: the date that the person was born.
+    - `email`: the email of the person.
+    - `ca_id`: the id of the person's current address, if they have one.
+- `PACKAGES` is a table referring to each known package. Each row in this table has the following information:
+    - `pid`: the identifying number used to uniquely identify the package.
+    - `cust_ssn`: the social security number of the person who ordered the package.
+    - `ship_id`: the address id of the address the package was shipped to.
+    - `bill_id`: the address id of the address the package was billed to.
+    - `order_date`: the date that the package was ordered.
+    - `arrival_date`: the date that the package arrived, if it has.
+    - `cost`: the total cost of the package.
+- `ADDRESSES` is a table referring to every known address. Each row in this table has the following information:
+    - `aid`: the identifying number used to uniquely identify the address.
+    - `number`: the street number of the address.
+    - `street`: the name of the street of the the address.
+    - `apartment`: the name of the apartment, if the address has one.
+    - `zip`: the zip code of the address.
+    - `city`: the city containing the address.
+    - `state`: the state containing the address.
+- Records in `PEOPLE` and `PACKAGES` can be joined on the social security number.
+- Records in `PEOPLE` and `ADDRESSES` can be joined on the address id.
+- Records in `PACKAGES` and `ADDRESSES` can be joined on either the shipping address id or the billing address id.
+
+```json
+{
+  "Shipping": {
+    "People": {
+      "type": "simple_table",
+      "table_path": "shipping.PEOPLE",
+      "unique_properties": ["ssn"],
+      "properties": {
+        "ssn": {
+          "type": "table_column",
+          "column_name": "ssn",
+          "data_type": "string"
+        },
+        "first_name": {
+          "type": "table_column",
+          "column_name": "first",
+          "data_type": "string"
+        },
+        "middle_name": {
+          "type": "table_column",
+          "column_name": "middle",
+          "data_type": "string"
+        },
+        "last_name": {
+          "type": "table_column",
+          "column_name": "last",
+          "data_type": "string"
+        },
+        "birth_date": {
+          "type": "table_column",
+          "column_name": "bdate",
+          "data_type": "date"
+        },
+        "email": {
+          "type": "table_column",
+          "column_name": "email",
+          "data_type": "string"
+        },
+        "ca_id": {
+          "type": "table_column",
+          "column_name": "email",
+          "data_type": "int64"
+        },
+        "current_address": {
+          "type": "simple_join",
+          "other_collection_name": "Addresses",
+          "singular": true,
+          "no_collisions": false,
+          "keys": {
+            "ca_id": ["aid"]
+          },
+          "reverse_relationship_name": "current_occupants"
+        },
+        "packages_ordered": {
+          "type": "simple_join",
+          "other_collection_name": "Packages",
+          "singular": false,
+          "no_collisions": true,
+          "keys": {
+            "ssn": ["cust_ssn"]
+          },
+          "reverse_relationship_name": "customer"
+        }
+      }
+    },
+    "Packages": {
+      "type": "simple_table",
+      "table_path": "shipping.PACKAGES",
+      "unique_properties": ["pid"],
+      "properties": {
+        "package_id": {
+          "type": "table_column",
+          "column_name": "pid",
+          "data_type": "int64"
+        },
+        "customer_ssn": {
+          "type": "table_column",
+          "column_name": "cust_ssn",
+          "data_type": "string"
+        },
+        "shipping_address_id": {
+          "type": "table_column",
+          "column_name": "ship_id",
+          "data_type": "int64"
+        },
+        "billing_address_id": {
+          "type": "table_column",
+          "column_name": "ship_id",
+          "data_type": "int64"
+        },
+        "order_date": {
+          "type": "table_column",
+          "column_name": "order_date",
+          "data_type": "date"
+        },
+        "arrival_date": {
+          "type": "table_column",
+          "column_name": "arrival_date",
+          "data_type": "date"
+        },
+        "cost": {
+          "type": "table_column",
+          "column_name": "cost",
+          "data_type": "decimal[10,2]"
+        },
+        "shipping_address": {
+          "type": "simple_join",
+          "other_collection_name": "Addresses",
+          "singular": true,
+          "no_collisions": false,
+          "keys": {
+            "shipping_address_id": ["aid"]
+          },
+          "reverse_relationship_name": "shipped_packages"
+        },
+        "billing_address": {
+          "type": "simple_join",
+          "other_collection_name": "Addresses",
+          "singular": true,
+          "no_collisions": false,
+          "keys": {
+            "billing_address_id": ["aid"]
+          },
+          "reverse_relationship_name": "billed_packages"
+        }
+      }
+    },
+    "Addresses": {
+      "type": "simple_table",
+      "table_path": "shipping.ADDRESSES",
+      "unique_properties": ["aid"],
+      "properties": {
+        "address_id": {
+          "type": "table_column",
+          "column_name": "aid",
+          "data_type": "string"
+        },
+        "street_number": {
+          "type": "table_column",
+          "column_name": "street_number",
+          "data_type": "string"
+        },
+        "street_name": {
+          "type": "table_column",
+          "column_name": "street_name",
+          "data_type": "string"
+        },
+        "apartment": {
+          "type": "table_column",
+          "column_name": "apartment",
+          "data_type": "string"
+        },
+        "zip_code": {
+          "type": "table_column",
+          "column_name": "zip",
+          "data_type": "string"
+        },
+        "city": {
+          "type": "table_column",
+          "column_name": "city",
+          "data_type": "string"
+        },
+        "state": {
+          "type": "table_column",
+          "column_name": "state",
+          "data_type": "string"
+        }
+      }
+    }
+  }
+}
+```
+
+The PyDough metadata representation shown in this JSON file corresponds to the following set of collections:
+- `People` (corresponds to `shipping.PEOPLE`; records are unique per unique value of `ssn`). Has the following properties:
+    - `ssn` (scalar property)
+    - `first_name` (scalar property)
+    - `middle_name` (scalar property)
+    - `last_name` (scalar property)
+    - `birth_date` (scalar property)
+    - `email` (scalar property)
+    - `current_address_id` (scalar property)
+    - `current_address` (sub-collection connecting to `Addresses`)
+    - `packages_ordered` (sub-collection connecting to `Packages`)
+- `Packages` (corresponds to `shipping.PACKAGES`; records are unique per unique value of `pid`). Has the following properties:
+    - `package_id` (scalar property)
+    - `customer_ssn` (scalar property)
+    - `shipping_address_id` (scalar property)
+    - `billing_address_id` (scalar property)
+    - `order_date` (scalar property)
+    - `arrival_date` (scalar property)
+    - `cost` (scalar property)
+    - `shipping_address` (sub-collection connecting to `Addresses`)
+    - `billing_address` (sub-collection connecting to `Addresses`)
+- `Addresses` (corresponds to `shipping.ADDRESSES`; records are unique per unique value of `aid`). Has the following properties:
+    - `address_id` (scalar property)
+    - `street_number` (scalar property)
+    - `street_name` (scalar property)
+    - `apartment` (scalar property)
+    - `zip_code` (scalar property)
+    - `city` (scalar property)
+    - `state` (scalar property)
+    - `current_occupants` (sub-collection connecting to `People`)
+    - `shipped_packages` (sub-collection connecting to `Packages`)
+    - `billed_packages` (sub-collection connecting to `Packages`)
