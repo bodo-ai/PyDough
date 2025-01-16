@@ -73,7 +73,7 @@ These functions must be called on singular data as a function.
 - `STARTSWITH`: returns whether the first argument string starts with the second argument string.
 - `ENDSWITH`: returns whether the first argument string ends with the second argument string.
 - `CONTAINS`: returns whether the first argument string contains the second argument string.
-- `LIKES`: returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
+- `LIKE`: returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
 - `JOIN_STRINGS`: equivalent to the Python string join method, where the first argument is used as a delimiter to concatenate the remaining arguments.
 
 ##### Datetime Functions
