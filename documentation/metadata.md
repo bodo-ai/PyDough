@@ -58,7 +58,7 @@ The following types of properties are supported on this type of collection:
 
 A property with this type is essentially just a view of a column in a table stored in whatever database is being used to execute the queries. Properties of this type are scalar expression attributes of the collection, as opposed to subcollections. Properties of this type have a type string of "table_column" and have the following additional key-value pairs in their metadata JSON object:
 
-- `column_name`: a string indicating the name of the column within the table it comes from, which is can be different from the name of the property itself.
+- `column_name`: a string indicating the name of the column within the table it comes from, which it can be different from the name of the property itself.
 - `data_type`: a string indicating the PyDough type that this column corresponds to.
 
 <!-- TOC --><a name="property-type-simple-join"></a>
