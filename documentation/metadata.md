@@ -103,7 +103,7 @@ The strings used in the type field for certain properties must be one of the fol
 - `int64`: a 64-bit integer.
 - `float32`: a 32-bit float.
 - `float64`: a 64-bit float.
-- `decimal[p,s]`: a fixed-point number with precision p (integer between 1 and 38) indicating the number of digits and scale s (integer between 0 and p, exclusive of p) indicating. thenumber of digits to the right hand side of the decimal point.
+- `decimal[p,s]`: a fixed-point number with precision p (integer between 1 and 38) indicating the number of digits and scale s (integer between 0 and p, exclusive of p) indicating the number of digits to the right hand side of the decimal point.
 - `bool`: a boolean.
 - `string`: a string.
 - `binary`: a bytes format.
