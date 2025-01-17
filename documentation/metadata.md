@@ -32,6 +32,23 @@ The core components of the JSON file structure are as follows:
 - Each properties JSON object can adhere to one of several different types of Properties, but all of these types have one required key-value pair: 
     * `type`: a string indicating what kind of property this is. The value of this string must be one of the known names of types of collections, and informs what additional key-value pairs the JSON object must have.
 
+Example of the structure of the metadata for the entire file:
+
+```json
+{
+    "BankerGraph": {
+        "Accounts": {...},
+        "Clients": {...},
+        "Transactions": {...}
+    },
+    "GroceryGraph": {
+        "FoodItems": {...},
+        "Inventories": {...},
+        "Stores": {...}
+    }
+}
+```
+
 <!-- TOC --><a name="collections"></a>
 ## Collections
 
@@ -50,6 +67,22 @@ The following types of properties are supported on this type of collection:
 - `cartesian_product`
 - `compound`
 
+Example of the structure of the metadata for a simple table collection:
+
+```json
+"Accounts": {
+    "type": "simple_table",
+    "table_path": "bank_schema.ACCOUNTS",
+    "unique_properties": ["account_id"],
+    "properties": {
+        "client_id": {...},
+        "account_type": {...},
+        "account_balance": {...},
+        "date_opened": {...}
+    }
+}
+```
+
 <!-- TOC --><a name="properties"></a>
 ## Properties
 
@@ -60,6 +93,16 @@ A property with this type is essentially just a view of a column in a table stor
 
 - `column_name`: a string indicating the name of the column within the table it comes from, which it can be different from the name of the property itself.
 - `data_type`: a string indicating the PyDough type that this column corresponds to.
+
+Example of the structure of the metadata for a table column property:
+
+```json
+"first_name": {
+    "type": "table_column",
+    "column_name": "firstname",
+    "data_type": "string"
+}
+```
 
 <!-- TOC --><a name="property-type-simple-join"></a>
 ### Property Type: Simple Join
@@ -72,6 +115,19 @@ A property with this type describes a subcollection of the current collection th
 - `keys`: a JSON object indicating the combinations of properties from this collection and the other collection that are compared for equality in order to determine join matches. The keys to this JSON object are the names of properties in the current collection, and the values are a list of 1+ strings that. are the names of properties in the other collection that they must be equal to in order to produce a match. All property names invoked in the keys object must correspond to scalar attributes of the collection, as opposed to being names of its subcollections. This object must be non-empty.
 - `reverse_relationship_name`: the name of the property that is to be added to the other collection to describe the reverse version of this relationship. This string must be a valid property name but cannot be equal to another existing property name in the other collection.
 
+Example of the structure of the metadata for a simple join property (connects a collection `Clients` to a collection `Accounts` by joining `Clients.id` on `Accounts.client_id`):
+
+```json
+"accounts_held": {
+    "type": "simple_join",
+    "other_collection_name": "Accounts",
+    "singular": false,
+    "no_collisions": true,
+    "keys": {"id": ["client_id"]},
+    "reverse_relationship_name": "account_holder"
+}
+```
+
 <!-- TOC --><a name="property-type-cartesian-product"></a>
 ### Property Type: Cartesian Product
 
@@ -79,6 +135,16 @@ A property with this type describes a subcollection of the current collection th
 
 - `other_collection_name`: a string indicating the name of the other collection that this property connects the current collection to. This must be another collection in the same graph that supports cartesian_product properties.
 - `reverse_relationship_name`: the name of the property that is to be added to the other collection to describe the reverse version of this relationship. This string must be a valid property name but cannot be equal to another existing property name in the other collection.
+
+Example of the structure of the metadata for a cartesian product property (connects every record of a collection `CalendarDates` to every record of collection `InventorySnapshots`):
+
+```json
+"snapshots": {
+    "type": "cartesian_product",
+    "other_collection_name": "InventorySnapshots",
+    "reverse_relationship_name": "calendar_dates"
+}
+```
 
 <!-- TOC --><a name="property-type-compound-relationship"></a>
 ### Property Type: Compound Relationship
@@ -90,7 +156,23 @@ A property with this type describes a subcollection of the current collection th
 - `singular`: a boolean that is true if each record in the current collection has at most 1 matching record of the subcollection’s subcollection, and false otherwise.
 - `no_collisions`: a boolean that is true if multiple records from this collection can match onto the same record from the subcollection’s subcollection, and false otherwise (true if-and-only-if the reverse relationship is singular).
 - `reverse_relationship_name`: the name of the property that is to be added to the other collection to describe the reverse version of this relationship. This string must be a valid property name but cannot be equal to another existing property name in the other collection.
-- `inherited_properties`: a JSON object indicating any properties of the primary subcollection that should be accessible from the secondary subcollection. The keys are the string names that the inherited properties are referred to by, which can be a new alias or the original name, and the values are names of the properties of the collectio accessed by the primary property. The names used for the inherited properties cannot overlap with any other names of properties of the secondary subcollection, including other inherited properties it could have from other compound relationships. This JSON object can be empty if there are no inherited properties.
+- `inherited_properties`: a JSON object indicating any properties of the primary subcollection that should be accessible from the secondary subcollection. The keys are the string names that the inherited properties are referred to by, which can be a new alias or the original name, and the values are names of the properties of the collection accessed by the primary property. The names used for the inherited properties cannot overlap with any other names of properties of the secondary subcollection, including other inherited properties it could have from other compound relationships. This JSON object can be empty if there are no inherited properties.
+
+Example of the structure of the metadata for a compound relationship property (connects a collection `Regions` to a collection `Customers` by combining `Regions.nations.customers` into a single property, skipping over a middle collection `Nations` but picking up its property `name` under a new name `nation_name):
+
+```json
+"customers": {
+    "type": "compound",
+    "primary_property": "nations",
+    "secondary_property": "customers",
+    "singular": false,
+    "no_collisions": true,
+    "inherited_properties": {
+        "nation_name": "name"
+    },
+    "reverse_relationship_name": "region"
+}
+```
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
@@ -114,7 +196,7 @@ The strings used in the type field for certain properties must be one of the fol
 - `array[t]`: an array of values of type t (where t is another PyDough type). For example: `array[int32]` or `array[array[string]]`.
 - `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,int64]` or `map[string,array[date]]`.
 - `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:date,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
-- `unkown`: an unknown type.
+- `unknown`: an unknown type.
 
 <!-- TOC --><a name="metadata-samples"></a>
 ## Metadata Samples
