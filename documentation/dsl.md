@@ -1178,60 +1178,74 @@ Customers(
 )
 ```
 
-**Bad Example #1**: TODO: add bad example where `by` is missing
+**Bad Example #1**: Finds the number of hours between each package and the previous package. This is invalid because the `by` argument is missing
 
 ```py
 %%pydough
-TODO
+Packages(
+    hour_difference=DATEDIFF('hours', order_date, PREV().order_date)
+)
 ```
 
-**Bad Example #2**: TODO: add bad example where `by` is empty
+**Bad Example #2**: Finds the number of hours between each package and the next package. This is invalid because the `by` argument is empty.
 
 ```py
 %%pydough
-TODO
+Packages(
+    hour_difference=DATEDIFF('hours', order_date, NEXT(by=()).order_date)
+)
 ```
 
-**Bad Example #3**: TODO: add bad example where `by` is not a collation
+**Bad Example #3**: Finds the number of hours between each package and the 5th-previous package. This is invalid because the `by` argument is not a collation.
 
 ```py
 %%pydough
-TODO
+Packages(
+    hour_difference=DATEDIFF('hours', order_date, PREV(5, by=order_date).order_date)
+)
 ```
 
-**Bad Example #4**: TODO: add bad example where `n` is malformed
+**Bad Example #4**: Finds the number of hours between each package and a subsequent package. This is invalid because the `n` argument is not an integer.
 
 ```py
 %%pydough
-TODO
+Packages(
+    hour_difference=DATEDIFF('hours', order_date, NEXT("ten", by=order_date.ASC()).order_date)
+)
 ```
 
-**Bad Example #5**: TODO: add bad example where `NEXT` is used as-is without accessing
+**Bad Example #5**: Invalid usage of `PREV` that is used as-is without accessing any of its fields.
 
 ```py
 %%pydough
-TODO
+Packages(
+    hour_difference=DATEDIFF('hours', order_date, PREV(1, by=order_date.ASC()))
+)
 ```
 
-**Bad Example #6**: TODO: add bad example where a term is accessed from `PREV` that does not
+**Bad Example #6**: Finds the number of hours between each package and the previous package. This invalid because a property `.odate` is accessed that does not exist in the collection, therefore it doesn't exist in `PREV` either.
 
 ```py
 %%pydough
-TODO
+Packages(
+    hour_difference=DATEDIFF('hours', order_date, PREV(1, by=order_date.ASC()).odate)
+)
 ```
 
-**Bad Example #7**: TODO: add bad example where `PREV` is access with `.` syntax.
+**Bad Example #7**: Invalid use of `PREV` that is invoked with `.` syntax, like a subcollection.
 
 ```py
 %%pydough
-TODO
+Packages.PREV(order_date.ASC())
 ```
 
-**Bad Example #8**: TODO: add bad example where `levels` goes too far up.
+**Bad Example #8**: Finds the number of hours between each package and the previous package ordered by the customer. This invalid because the `levels` value is too large, since only 2 ancestor levels exist in `Customers.packages` (the graph, and `Customers`):
 
 ```py
 %%pydough
-TODO
+Customers.packages(
+    hour_difference=DATEDIFF('hours', order_date, PREV(1, by=order_date.ASC(), levels=5).order_date)
+)
 ```
 
 **Bad Example #9**: TODO: add bad example where an aggfunc is called directly on `NEXT`.
