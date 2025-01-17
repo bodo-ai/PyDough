@@ -1248,13 +1248,6 @@ Customers.packages(
 )
 ```
 
-**Bad Example #9**: TODO: add bad example where an aggfunc is called directly on `NEXT`.
-
-```py
-%%pydough
-TODO
-```
-
 <!-- TOC --><a name="best"></a>
 ### BEST
 
