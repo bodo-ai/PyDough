@@ -109,7 +109,6 @@ from pydough import parse_json_metadata_from_file
 my_graph = parse_json_metadata_from_file("hello/world/graphs.json", "Food")
 pydough.active_session.graph = my_graph
 
-
 # Second approach
 my_graph = pydough.active_session.load_metadata_graph("hello/world/graphs.json", "Food")
 ```
@@ -168,22 +167,173 @@ configs.sum_default_zero = False
 <!-- TOC --><a name="session-database"></a>
 ### Session Database
 
-TODO (include accessing, loading, and swapping the database)
+The final core piece encapsulated by the session is the database context. A database context currently includes a connection to an actual database and an enum indicating which dialect to use.
+
+By default, the database context contains an empty connection (which cannot be used to execute queries, but can be used to translate to SQL) and the ANSI dialect.
+
+Just like the knowledge graph & miscellaneous configurations, the database context can also be accessed from the session and/or swapped out for another value. The APIs for creating a new database context currently take in the name of which database to use, as well as keyword arguments used by that database connector API's connection method.
+
+Below is a list of all supported values for the database name:
+- `sqlite`: uses a SQLite database. [See here](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect) for details on the connection API and what keyword arguments can be passed in.
+
+Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
+
+```py
+import pydough
+from pydough.database_connectors import load_database_context
+
+# Capture the original context of the active session (empty)
+old_context = pydough.active_session.database
+
+# Create a new sqlite context & set it as the database of the active session
+education_context = load_database_context("sqlite", database="db_files/education.db")
+pydough.active_session.database = education_context
+
+# Same but for another database & with a different method
+shakespeare_context  = pydough.active_session.load_database("sqlite", database="db_files/education.db")
+```
+
+Notice that both APIs `load_database_context` and `sesion.load_database` take in the name of the databse type first and all the connection keyword arguments, and also return the context object.
+
+It is important to ensure that the correct database context is being used for several reasons:
+- It controls what SQL dialect is used when translating from PyDough to SQL.
+- The context's database connection is used to execute queries once translated to SQL.
 
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 
-This sections describes various APIs you can use to have PyDough execute
+This sections describes various APIs you can use to execute PyDough code. 
 
 <!-- TOC --><a name="pydoughto_sql"></a>
 ### `pydough.to_sql`
 
-TODO
+The `to_sql` API takes in PyDough code and transforms it into SQL query text without executing it on a database. The first argument it takes in is the PyDough node for the collection being converted to SQL. It can optionally take in the following keyword arguments:
+
+- `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
+- `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
+- `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+
+Below is an example of using `pydough.to_sql` and the output (the SQL output may be outdated if PyDough's SQL conversion process has been updated):
+
+```py
+%%pydough
+european_countries = nations.WHERE(region.name == "EUROPE")
+result = european_countries(name, n_custs=COUNT(customers))
+pydough.to_sql(result)
+```
+
+```sql
+SELECT name, n_custs FROM (
+    SELECT name, n_custs, ordering_1
+    FROM (
+        SELECT name, COALESCE(agg_0, 0) AS n_custs, COALESCE(agg_0, 0) AS ordering_1
+        FROM (
+            SELECT name, agg_0
+            FROM (
+                SELECT name, key
+                FROM (
+                    SELECT _table_alias_0.name AS name, _table_alias_0.key AS key, _table_alias_1.name AS name_3
+                    FROM (
+                        SELECT n_name AS name, n_nationkey AS key, n_regionkey AS region_key
+                        FROM main.NATION
+                    ) AS _table_alias_0
+                    LEFT JOIN (
+                        SELECT r_name AS name, r_regionkey AS key
+                        FROM main.REGION
+                    ) AS _table_alias_1
+                    ON region_key = _table_alias_1.key
+                )
+                WHERE name_3 = 'EUROPE'
+            )
+            LEFT JOIN (
+                SELECT nation_key, COUNT() AS agg_0
+                FROM (
+                    SELECT c_nationkey AS nation_key
+                    FROM main.CUSTOMER
+                )
+                GROUP BY nation_key
+            )
+            ON key = nation_key
+        )
+    )
+    ORDER BY ordering_1 DESC LIMIT 5
+)
+ORDER BY ordering_1 DESC
+```
+
+See the [demo notebooks](../demos/README.md) for more instances of how to use the `to_sql` API.
 
 <!-- TOC --><a name="pydoughto_df"></a>
 ### `pydough.to_df`
 
-TODO
+The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), but goes a step further and executes the query using the provided database connection, returning the result as a pandas DataFrame.  The first argument it takes in is the PyDough node for the collection being converted to SQL. It can optionally take in the following keyword arguments:
+
+- `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
+- `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
+- `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+
+Below is an example of using `pydough.to_df` and the output, attached to a sqlite database containing data for the TPC-H schema:
+
+```py
+%%pydough
+european_countries = nations.WHERE(region.name == "EUROPE")
+result = european_countries(name, n_custs=COUNT(customers))
+pydough.to_df(result)
+```
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>name</th>
+      <th>n_custs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>FRANCE</td>
+      <td>6100</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ROMANIA</td>
+      <td>6100</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>RUSSIA</td>
+      <td>6078</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>UNITED KINGDOM</td>
+      <td>6011</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>GERMANY</td>
+      <td>5908</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+See the [demo notebooks](../demos/README.md) for more instances of how to use the `to_df` API.
 
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
