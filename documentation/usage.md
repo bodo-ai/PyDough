@@ -23,7 +23,9 @@ This document describes how to set up & interact with PyDough. For instructions 
 <!-- TOC --><a name="setting-up-in-jupyter-notebooks"></a>
 ## Setting Up in Jupyter Notebooks
 
-Once you have uv set up, you can run the command `uv run jupyter lab` from the PyDough directory to boot up a Jupyter lab process that will have access to PyDough. Once you do so, navigate to your desired notebook file, or create a new one. In that file, you will need to do the following steps in your notebook cells in order to work with PyDough:
+Once you have uv set up, you can run the command `uv run jupyter lab` from the PyDough directory to boot up a Jupyter lab process that will have access to PyDough. 
+
+Once JupyterLab is running, you can either navigate to an existing notebook file or create a new one. In that notebook file, follow these steps in the notebook cells to work with PyDough:
 
 1. Run `import pydough` to import the PyDough module.
 2. Run `%load_ext pydough.jupyter_extensions` to load the PyDough Jupyter extension.
