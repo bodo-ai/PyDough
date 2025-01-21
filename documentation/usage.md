@@ -367,12 +367,364 @@ Structure of PyDough graph: TPCH
 ...
 ```
 
+Notice how for each collection, the scalar properties are listed first without any information, followed by the sub-collections which include information about the sub-collection they connect to, the cardinality of the connection, and the reverse property.
+
 <!-- TOC --><a name="pydoughexplain"></a>
 ### `pydough.explain`
 
-TODO (on a metadata or unqualified node)
+The `explain` API is a more generic explanation interface that can be called on different things to display different information:
+
+- A metadata graph object
+- A specific collection within a metadata graph object (can be accessed as `graph["collection_name"]`)
+- A specific property within a specific collection within a metadata graph object (can be accessed as `graph["collection_name"]["property_name"]`)
+- The PyDough code for a collection that could have `to_sql` or `to_df` called on it.
+
+The `explain` API also has an optional `verbose` argument (default=False) that enables displaying additional information.
+
+Below are examples of each of these behaviors, using a knowledge graph for the TPCH schema.
+
+1. Calling `explain` on the graph metadata.
+
+```py
+import pydough
+graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
+pydough.explain(graph, verbose=True)
+```
+
+```
+PyDough graph: TPCH
+Collections:
+  customers
+  lines
+  nations
+  orders
+  parts
+  regions
+  suppliers
+  supply_records
+Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
+Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected.
+```
+
+2. Calling `explain` on a collection's metadata.
+
+```py
+import pydough
+graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
+pydough.explain(graph["nations"], verbose=True)
+```
+
+```
+PyDough collection: nations
+Table path: main.NATION
+Unique properties of collection: ['key']
+Scalar properties:
+  comment
+  key
+  name
+  region_key
+Subcollection properties:
+  customers
+  region
+  suppliers
+Call pydough.explain(graph['nations'][property_name]) to learn more about any of these properties
+```
+
+3a. Calling `explain` on a property's metadata (scalar attribute).
+
+```py
+import pydough
+graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
+pydough.explain(graph["nations"]["name"], verbose=True)
+```
+
+```
+PyDough property: nations.name
+Column name: main.NATION.n_name
+Data type: string
+```
+
+3b. Calling `explain` on a property's metadata (sub-collection).
+
+```py
+import pydough
+graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
+pydough.explain(graph["nations"]["customers"], verbose=True)
+```
+
+```
+PyDough property: nations.customers
+This property connects collection nations to customers.
+Cardinality of connection: One -> Many
+Is reversible: yes
+Reverse property: customers.nation
+The subcollection relationship is defined by the following join conditions:
+    nations.key == customers.nation_key
+```
+
+4a. Calling `explain` on PyDough code for a collection (example 1: entire graph).
+
+```py
+%%pydough
+result = TPCH
+pydough.explain(result, verbose=True)
+```
+
+```
+PyDough collection representing the following logic:
+  TPCH
+
+This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
+
+The collection does not have any terms that can be included in a result if it is executed.
+
+It is not possible to use BACK from this collection.
+
+The collection has access to the following collections:
+  customers, lines, nations, orders, parts, regions, suppliers, supply_records
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+```
+
+4b. Calling `explain` on PyDough code for a collection (example 2: single collection).
+
+```py
+%%pydough
+result = nations
+pydough.explain(result, verbose=True)
+```
+
+```
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    └─── TableCollection[nations]
+
+This node, specifically, accesses the collection nations.
+Call pydough.explain(graph['nations']) to learn more about this collection.
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name, region_key
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, region, suppliers
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+```
+
+4c. Calling `explain` on PyDough code for a collection (example 3: filtering).
+
+```py
+%%pydough
+result = nations.WHERE(region.name == "EUROPE")
+pydough.explain(result, verbose=True)
+```
+
+```
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    ├─── TableCollection[nations]
+    └─┬─ Where[$1.name == 'EUROPE']
+      └─┬─ AccessChild
+        └─── SubCollection[region]
+
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[region]
+
+The main task of this node is to filter on the following conditions:
+  $1.name == 'EUROPE', aka region.name == 'EUROPE'
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name, region_key
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  comment, key, name, region_key
+
+The collection has access to the following collections:
+  customers, region, suppliers
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+```
+
+4d. Calling `explain` on PyDough code for a collection (example 4: calc).
+
+```py
+%%pydough
+result = nations.WHERE(region.name == "EUROPE")(name, n_custs=COUNT(customers))
+pydough.explain(result, verbose=True)
+```
+
+```
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    ├─── TableCollection[nations]
+    ├─┬─ Where[$1.name == 'EUROPE']
+    │ └─┬─ AccessChild
+    │   └─── SubCollection[region]
+    └─┬─ Calc[name=name, n_custs=COUNT($1)]
+      └─┬─ AccessChild
+        └─── SubCollection[customers]
+
+This node first derives the following children before doing its main task:
+  child $1:
+    └─── SubCollection[customers]
+
+The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
+  n_custs <- COUNT($1), aka COUNT(customers)
+  name <- name (propagated from previous collection)
+
+The following terms will be included in the result if this collection is executed:
+  n_custs, name
+
+It is possible to use BACK to go up to 1 level above this collection.
+
+The collection has access to the following expressions:
+  comment, key, n_custs, name, region_key
+
+The collection has access to the following collections:
+  customers, region, suppliers
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+```
 
 <!-- TOC --><a name="pydoughexplain_term"></a>
 ### `pydough.explain_term`
 
-TODO
+The `explain` API is limited in that it can only be called on complete PyDough collections that can be passed to `to_sql` or `to_df`. For example, it would be illegal to call `explain_term` on `name` or `nations.name` because neither is a collection, unlike `nations` or `nations.customers` which are collections.
+
+To handle cases where you need to learn about a term within a collection, you can use the `explain_term` API. The first argument to `explain_term` is PyDough code for a collection, which can have `explain` called on it, and the second is PyDough code for a term that can be evaluated within the context of that collection (e.g. a scalar term of the collection, or one of its sub-collections).
+
+The `explain_term` API also has a `verbose` keyword argument (default False) to specify whether to include a more detailed explanation, as opposed to a more compact summary.
+
+Below are examples of using `explain_term`, using a knowledge graph for the TPCH schema.
+
+1. Calling `explain_term` on a scalar attribute of a collection.
+
+```py
+%%pydough
+european_countries = nations.WHERE(region.name == "EUROPE")
+term = name
+pydough.explain_term(european_countries, term, verbose=True)
+```
+
+```
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[nations]
+    └─┬─ Where[$1.name == 'EUROPE']
+      └─┬─ AccessChild
+        └─── SubCollection[region]
+
+The term is the following expression: name
+
+This is column 'name' of collection 'nations'
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.nations.WHERE(region.name == 'EUROPE')(name)
+```
+
+2. Calling `explain_term` on a sub-collection of a collection.
+
+```py
+%%pydough
+european_countries = nations.WHERE(region.name == "EUROPE")
+term = customers
+pydough.explain_term(european_countries, term, verbose=True)
+```
+
+```
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[nations]
+    └─┬─ Where[$1.name == 'EUROPE']
+      └─┬─ AccessChild
+        └─── SubCollection[region]
+
+The term is the following child of the collection:
+  └─┬─ AccessChild
+    └─── SubCollection[customers]
+
+This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
+For example, the following are valid:
+  TPCH.nations.WHERE(region.name == 'EUROPE')(COUNT(customers.acctbal))
+  TPCH.nations.WHERE(region.name == 'EUROPE').WHERE(HAS(customers))
+  TPCH.nations.WHERE(region.name == 'EUROPE').ORDER_BY(COUNT(customers).DESC())
+
+To learn more about this child, you can try calling pydough.explain on the following:
+  TPCH.nations.WHERE(region.name == 'EUROPE').customers
+```
+
+3. Calling `explain_term` on a plural expression.
+
+```py
+%%pydough
+european_countries = nations.WHERE(region.name == "EUROPE")
+term = customers.acctbal
+pydough.explain_term(european_countries, term, verbose=True)
+```
+
+```
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[nations]
+    └─┬─ Where[$1.name == 'EUROPE']
+      └─┬─ AccessChild
+        └─── SubCollection[region]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─── SubCollection[customers]
+
+The term is the following expression: $1.acctbal
+
+This is a reference to expression 'acctbal' of child $1
+
+This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated.
+For example, the following is valid:
+  TPCH.nations.WHERE(region.name == 'EUROPE')(COUNT(customers.acctbal))
+```
+
+4. Calling `explain_term` on an aggregation function call.
+
+```py
+%%pydough
+european_countries = nations.WHERE(region.name == "EUROPE")
+term = AVG(customers.acctbal)
+pydough.explain_term(european_countries, term, verbose=True)
+```
+
+```
+Collection:
+  ──┬─ TPCH
+    ├─── TableCollection[nations]
+    └─┬─ Where[$1.name == 'EUROPE']
+      └─┬─ AccessChild
+        └─── SubCollection[region]
+
+The evaluation of this term first derives the following additional children to the collection before doing its main task:
+  child $1:
+    └─── SubCollection[customers]
+
+The term is the following expression: AVG($1.acctbal)
+
+This expression calls the function 'AVG' on the following arguments, aggregating them into a single value for each record of the collection:
+  customers.acctbal
+
+Call pydough.explain_term with this collection and any of the arguments to learn more about them.
+
+This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+For example, the following is valid:
+  TPCH.nations.WHERE(region.name == 'EUROPE')(AVG(customers.acctbal))
+```
