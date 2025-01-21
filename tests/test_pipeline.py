@@ -13,6 +13,8 @@ from bad_pydough_functions import (
     bad_slice_4,
 )
 from simple_pydough_functions import (
+    agg_partition,
+    double_partition,
     function_sampler,
     percentile_customers_per_region,
     percentile_nations,
@@ -969,6 +971,52 @@ ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d), ('e', e)], orderings=[(ord
                 ),
             ),
             id="function_sampler",
+        ),
+        pytest.param(
+            (
+                agg_partition,
+                """
+ROOT(columns=[('best_year', best_year)], orderings=[])
+ PROJECT(columns={'best_year': agg_1})
+  AGGREGATE(keys={}, aggregations={'agg_1': MAX(n_orders)})
+   PROJECT(columns={'n_orders': DEFAULT_TO(agg_0, 0:int64)})
+    AGGREGATE(keys={'year': year}, aggregations={'agg_0': COUNT()})
+     PROJECT(columns={'year': YEAR(order_date)})
+      SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "best_year": [228637],
+                    }
+                ),
+            ),
+            id="agg_partition",
+        ),
+        pytest.param(
+            (
+                double_partition,
+                """
+ROOT(columns=[('year', year), ('best_month', best_month)], orderings=[])
+ PROJECT(columns={'best_month': agg_2, 'year': year})
+  JOIN(conditions=[t0.year == t1.year], types=['left'], columns={'agg_2': t1.agg_2, 'year': t0.year})
+   AGGREGATE(keys={'year': year}, aggregations={})
+    AGGREGATE(keys={'month': month, 'year': year}, aggregations={})
+     PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+      SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
+   AGGREGATE(keys={'year': year}, aggregations={'agg_2': MAX(n_orders)})
+    PROJECT(columns={'n_orders': DEFAULT_TO(agg_1, 0:int64), 'year': year})
+     AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_1': COUNT()})
+      PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
+       SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1992, 1993, 1994, 1995, 1996, 1997, 1998],
+                        "best_month": [19439, 19319, 19546, 19502, 19724, 19519, 19462],
+                    }
+                ),
+            ),
+            id="double_partition",
         ),
     ],
 )

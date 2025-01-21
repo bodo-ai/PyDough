@@ -426,18 +426,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             for alias, col in aggregate.aggregations.items()
         ]
         select_cols = keys + aggregations
-        query: Select
-        if (
-            "group_by" in input_expr.args
-            or "qualify" in input_expr.args
-            or "order" in input_expr.args
-            or "limit" in input_expr.args
-        ):
-            query = self._build_subquery(input_expr, select_cols)
-        else:
-            query = self._merge_selects(
-                select_cols, input_expr, find_identifiers_in_list(select_cols)
-            )
+        query: Select = self._build_subquery(input_expr, select_cols)
         if keys:
             query = query.group_by(*keys)
         self._stack.append(query)
