@@ -1640,7 +1640,8 @@ last_year = BEST(packs, by=year.DESC())
 # Use a loop to derive a pair of terms for each of the 3 next years:
 # 1. The year itself
 # 2. The predicted number of orders (should be the last year's orders + slope * number of years)
-# This is allowed since calcs can operate via keyword arguments.
+# This is allowed since calcs can operate via keyword arguments, whether real
+# or passed in via a dictionary with ** syntax.
 results = {}
 for n in range(1, 4):
     results[f"year_{n}"] = last_year.year + n
