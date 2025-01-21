@@ -312,17 +312,60 @@ pydough.to_df(result)
 </table>
 </div>
 
-See the [demo notebooks](../demos/README.md) for more instances of how to use the `to_df` API.
+See the [demo notebooks](../demos/notebooks/Introduction.ipynb) for more instances of how to use the `to_df` API.
 
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
 This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it.
 
+See the [demo notebooks](../demos/notebooks/Exploration.ipynb) for more instances of how to use the exploration APIs.
+
 <!-- TOC --><a name="pydoughexplain_structure"></a>
 ### `pydough.explain_structure`
 
-TODO
+The `explain_structure` API can be called on a PyDough knowledge graph object returned from `load_metadata_graph` or `parse_json_metadata_from_file`. It function displays information about a the metadata graph, including the names of each collection in the graph, the names of all scalar and sub-collection properties for each collection, and some details of the sub-collection properties.
+
+Below is an example that displays information about the TPC-H schema, truncated to only include nations, regions and customers.
+
+```py
+import pydough
+graph = pydough.parse_json_metadata_from_file("insert_path_here.json", "TPCH")
+pydough.explain_structure(graph)
+```
+
+```
+Structure of PyDough graph: TPCH
+
+  customers
+  ├── acctbal
+  ├── address
+  ├── comment
+  ├── key
+  ├── mktsegment
+  ├── name
+  ├── nation_key
+  ├── phone
+  ├── nation [one member of nations] (reverse of nations.customers)
+  └── orders [multiple orders] (reverse of orders.customer)
+
+  nations
+  ├── comment
+  ├── key
+  ├── name
+  ├── region_key
+  ├── customers [multiple customers] (reverse of customers.nation)
+  ├── region [one member of regions] (reverse of regions.nations)
+  └── suppliers [multiple suppliers] (reverse of suppliers.nation)
+
+  regions
+  ├── comment
+  ├── key
+  ├── name
+  └── nations [multiple nations] (reverse of nations.region)
+
+...
+```
 
 <!-- TOC --><a name="pydoughexplain"></a>
 ### `pydough.explain`
