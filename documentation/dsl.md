@@ -1457,18 +1457,22 @@ The rest of the document are examples of questions asked about the data in the p
 **Answer**:
 ```py
 %%pydough
+# For each address, identify how many current occupants it has
 addr_info = Addresses(n_occupants=COUNT(current_occupants))
-result = PARTITION(
+
+# Partition the addresses by the state, and for each state calculate the
+# average value of `n_occupants` for all addresses in that state
+states = PARTITION(
     addr_info,
     name="addrs",
     by=state
 )(
     state,
     average_occupants=AVG(addrs.n_occupants)
-).TOP_K(
-    5,
-    by=average_occupants.DESC()
 )
+
+# Obtain the top-5 states with the highest average
+result = states.TOP_K(5, by=average_occupants.DESC())
 ```
 
 <!-- TOC --><a name="example-2-yearly-trans-coastal-shipments"></a>
@@ -1479,26 +1483,36 @@ result = PARTITION(
 **Answer**:
 ```py
 %%pydough
+# Contextless expression: identifies if a package comes from the west coast
 west_coast_states = ("CA", "OR", "WA", "AK")
-east_coast_states = ("FL", "GA", "SC", "NC", "VA", "MD", "DE", "NJ", "NY", "CT", "RI", "MA", "NH", "MA")
 from_west_coast = ISIN(customer.current_address.state, west_coast_states)
+
+# Contextless expression: identifies if a pcakge is shipped to the east coast
+east_coast_states = ("FL", "GA", "SC", "NC", "VA", "MD", "DE", "NJ", "NY", "CT", "RI", "MA", "NH", "MA")
 to_east_coast = ISIN(shipping_address.state, east_coast_states)
+
+# Filter packages to only include ones that have arrived, and derive additional
+# terms for if they are trans-coastal + the year they were ordered
 package_info = Packages.WHERE(
     PRESENT(arrival_date)
 )(
     is_trans_coastal=from_west_coast & to_east_coast,
     year=YEAR(order_date),
 )
-result = PARTITION(
+
+# Partition the packages by the order year & count how many have a True value
+# for is_trans_coastal, vs the total number in that year
+year_info = PARTITION(
     package_info,
     name="packs",
     by=year,
 )(
     year,
     pct_trans_coastal=100.0 * SUM(packs.is_trans_coastal) / COUNT(packs),
-).ORDER_BY(
-    year.ASC()
 )
+
+# Output the results ordered by year
+result = year_info.ORDER_BY(year.ASC())
 ```
 
 <!-- TOC --><a name="example-3-email-of-oldest-non-customer-resident"></a>
@@ -1509,11 +1523,17 @@ result = PARTITION(
 **Answer**:
 ```py
 %%pydough
+
+# Partition every address by the city/state
 cities = PARTITION(
     Addresses,
     name="addrs",
     by=(city, state)
-).BEST(
+)
+
+# For each city, find the oldest occupant out of any address in that city
+# and include the desired information about that occupant.
+oldest_occupants = cities.BEST(
     addrs.current_occupants.WHERE(HASNOT(packages)),
     by=(birth_date.ASC(), ssn.ASC()),
 )(
@@ -1521,7 +1541,10 @@ cities = PARTITION(
     city=BACK(2).city,
     email=email,
     zip_code=BACK(1).zip_code,
-).ORDER_BY(
+)
+
+# Sort the output by state, followed by city
+result = oldest_occupants.ORDER_BY(
     state.ASC(),
     city.ASC(),
 )
@@ -1535,25 +1558,40 @@ cities = PARTITION(
 **Answer**:
 ```py
 %%pydough
+# Contextless expression: identifies is a package was ordered in 2017
 is_2017 = YEAR(order_date) == 2017
-package_info = GRAPH(
+
+# Identify the average package cost of all packages ordered in 2017
+global_info = GRAPH(
     avg_package_cost=AVG(Packages.WHERE(is_2017).package_cost)
-).Packages.WHERE(
-    is_2017
-)(
+)
+
+# Identify all packages ordered in 2017, but where BACK(1) is global_info
+# instead of GRAPH, so we have access to global_info's terms.
+selected_package = global_info.Packages.WHERE(is_2017)
+
+# For each such package, identify the month it was ordered, and add a term to
+# indicate if the cost of the package is at least 10x the average for all such
+# packages.
+packages = selected_packages(
     month=MONTH(order_date),
     is_10x_avg=package_cost >= (10.0 * BACK(1).avg_package_cost)
 )
-result = PARTITION(
+
+# Partition the packages by the month they were ordered, and for each month
+# calculate the ratio between the number of packages where is_10x_avg is True
+# versus all packages ordered that month, multiplied by 100 to get a percentage.
+months = PARTITION(
     package_info,
     name="packs",
     by=month
 )(
     month,
     pct_outliers=100.0 * SUM(packs.is_10x_avg) / COUNT(packs)
-).ORDER_BY(
-    month.ASC()
 )
+
+# Order the output by month
+result = months.ORDER_BY(month.ASC())
 ```
 
 <!-- TOC --><a name="example-5-regression-prediction-of-packages-quantity"></a>
@@ -1561,9 +1599,12 @@ result = PARTITION(
 
 **Question**: Using linear regression of the number of packages ordered per-year, what is the predicted number of packages for the next three years?
 
+Note: uses the formula [discussed here](https://medium.com/swlh/linear-regression-in-sql-is-it-possible-b9cc787d622f) to identify the slope via linear regression.
+
 **Answer**:
 ```py
 %%pydough
+# Identify every year & how many packages were ordered that year
 yearly_data = PARTITION(
     Packages(year=YEAR(order_date)),
     name="packs",
@@ -1572,19 +1613,37 @@ yearly_data = PARTITION(
     year,
     n_orders = COUNT(packs),
 )
+
+# Obtain the global average of the year (x-coordinate) and
+# n_orders (y-coordinate). These correspond to `x-bar` and `y-bar`.
 global_info = GRAPH(
     avg_x = AVG(yearly_data.year),
     avg_y = AVG(yearly_data.n_orders),
 )
+
+# Contextless expression: corresponds to `x - x-bar` with regards to yearly_data
+# inside of global_info
 dx = n_orders - BACK(1).avg_x
+
+# Contextless expression: corresponds to `y - y-bar` with regards to yearly_data
+# inside of global_info
 dy = year - BACK(1).avg_y
+
+# Contextless expression: derive the slope with regards to global_info
 regression_data = yearly_data(value=(dx * dy) / (dx * dx))
 slope = SUM(regression_data.value)
+
+# Identify the (chronologically) last record from yearly_data.
 # Could also write as `last_year = packs.WHERE(RANKING(by=year.DESC()) == 1).SINGULAR()`
 last_year = BEST(packs, by=year.DESC())
+
+# Use a loop to derive a pair of terms for each of the 3 next years:
+# 1. The year itself
+# 2. The predicted number of orders (should be the last year's orders + slope * number of years)
+# This is allowed since calcs can operate via keyword arguments.
 results = {}
 for n in range(1, 4):
-    results[f"year_{n}"] = last_year.year+n
-    results[f"year_{n}_prediction"] = last_year.n_orders+n*slope
+    results[f"year_{n}"] = last_year.year + n
+    results[f"year_{n}_prediction"] = last_year.n_orders + (n * slope)
 result = global_info(**results)
 ```
