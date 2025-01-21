@@ -24,11 +24,11 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [Induced Subcollection Properties](#induced-subcollection-properties)
    * [Induced Arbitrary Joins](#induced-arbitrary-joins)
 - [Larger Examples](#larger-examples)
-   * [Example 1: Highest Residency Density States](#example-1)
-   * [Example 2: TODO](#example-2)
-   * [Example 3: TODO](#example-3)
-   * [Example 4: TODO](#example-4)
-   * [Example 5: TODO](#example-5)
+   * [Example 1: Highest Residency Density States](#example-1-highest-residency-density-states)
+   * [Example 2: Yearly Trans-Coastal Shipments](#example-2-yearly-trans-coastal-shipments)
+   * [Example 3: Email of Oldest Non-Customer Resident](#example-3-email-of-oldest-non-customer-resident)
+   * [Example 4: Outlier Packages Per Month Of 2017](#example-4-outlier-packages-per-month-of-2017)
+   * [Example 5: Regression Prediction Of Packages Quantity](#example-5-regression-prediction-of-packages-quantity)
 
 <!-- TOC end -->
 
@@ -1449,7 +1449,7 @@ This section of the PyDough specification has not yet been defined.
 
 The rest of the document are examples of questions asked about the data in the people/addresses/packages graph and the corresponding PyDough code, which uses several of the features described in this document.
 
-<!-- TOC --><a name="example-1"></a>
+<!-- TOC --><a name="example-1-highest-residency-density-states"></a>
 ### Example 1: Highest Residency Density States
 
 **Question**: Find the 5 states with the highest average number of occupants per address.
@@ -1471,7 +1471,7 @@ result = PARTITION(
 )
 ```
 
-<!-- TOC --><a name="example-2"></a>
+<!-- TOC --><a name="example-2-yearly-trans-coastal-shipments"></a>
 ### Example 2: Yearly Trans-Coastal Shipments
 
 **Question**: For every calendar year, what percentage of all packages are from a customer living in the west coast to an address on the east coast? Only include packages that have already arrived, and order by the year.
@@ -1501,7 +1501,7 @@ result = PARTITION(
 )
 ```
 
-<!-- TOC --><a name="example-3"></a>
+<!-- TOC --><a name="example-3-email-of-oldest-non-customer-resident"></a>
 ### Example 3: Email of Oldest Non-Customer Resident
 
 **Question**: For every city/state, find the email of the oldest resident of that city/state who has never ordered a package (break ties in favor of the lower social security number). Also include the zip code of that occupant. Order alphabetically by state, followed by city.
@@ -1527,7 +1527,7 @@ cities = PARTITION(
 )
 ```
 
-<!-- TOC --><a name="example-4"></a>
+<!-- TOC --><a name="example-4-outlier-packages-per-month-of-2017"></a>
 ### Example 4: Outlier Packages Per Month Of 2017
 
 **Question**: For every month of the year 2017, identify the percentage of packages ordered in that month that are at least 10x the average value of all packages ordered in 2017. Order the results by month.
@@ -1556,7 +1556,7 @@ result = PARTITION(
 )
 ```
 
-<!-- TOC --><a name="example-5"></a>
+<!-- TOC --><a name="example-5-regression-prediction-of-packages-quantity"></a>
 ### Example 5: Regression Prediction Of Packages Quantity
 
 **Question**: Using linear regression of the number of packages ordered per-year, what is the predicted number of packages for the next three years?
