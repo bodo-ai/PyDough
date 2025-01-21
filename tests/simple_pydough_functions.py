@@ -121,3 +121,74 @@ def function_sampler():
         .WHERE(MONOTONIC(0.0, acctbal, 100.0))
         .TOP_K(10, by=address.ASC())
     )
+
+
+def loop_generated_terms():
+    terms = {"name": name}
+    for i in range(3):
+        terms[f"interval_{i}"] = COUNT(
+            customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))
+        )
+    return Nations(**terms)
+
+
+def function_defined_terms():
+    def interval_n(n):
+        return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
+
+    return Nations(
+        name,
+        interval_7=interval_n(7),
+        interval_4=interval_n(4),
+        interval_13=interval_n(13),
+    )
+
+
+def dict_comp_terms():
+    terms = {"name": name}
+    terms.update(
+        {
+            f"interval_{i}": COUNT(
+                customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))
+            )
+            for i in range(3)
+        }
+    )
+    return Nations(**terms)
+
+
+def list_comp_terms():
+    terms = [name]
+    terms.extend(
+        [
+            COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+            for i in range(3)
+        ]
+    )
+    return Nations(**terms)
+
+
+def set_comp_terms():
+    terms = [name]
+    terms.extend(
+        set(
+            {
+                COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+                for i in range(3)
+            }
+        )
+    )
+    return Nations(**terms)
+
+
+def generator_comp_terms():
+    terms = {"name": name}
+    for term, value in (
+        (
+            f"interval_{i}",
+            COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))),
+        )
+        for i in range(3)
+    ):
+        terms[term] = value
+    return Nations(**terms)

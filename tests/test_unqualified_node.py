@@ -20,6 +20,14 @@ from bad_pydough_functions import (
     bad_window_6,
     bad_window_7,
 )
+from simple_pydough_functions import (
+    dict_comp_terms,
+    function_defined_terms,
+    generator_comp_terms,
+    list_comp_terms,
+    loop_generated_terms,
+    set_comp_terms,
+)
 from test_utils import graph_fetcher
 from tpch_test_functions import (
     impl_tpch_q1,
@@ -402,6 +410,51 @@ def test_unqualified_to_string(
             impl_tpch_q22,
             "?.TPCH(avg_balance=AVG(?.Customers(cntry_code=SLICE(?.phone, None, 2, None)).WHERE((ISIN(?.cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT(?.orders))).WHERE((?.acctbal > 0.0)).acctbal)).PARTITION(?.Customers(cntry_code=SLICE(?.phone, None, 2, None)).WHERE((ISIN(?.cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT(?.orders))).WHERE((?.acctbal > BACK(1).avg_balance)), name='custs', by=(?.cntry_code))(CNTRY_CODE=?.cntry_code, NUM_CUSTS=COUNT(?.custs), TOTACCTBAL=SUM(?.custs.acctbal))",
             id="tpch_q22",
+        ),
+        pytest.param(
+            loop_generated_terms,
+            "?.Nations(name=?.name, interval_0=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), interval_1=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), interval_2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
+            id="loop_generated_terms",
+        ),
+        pytest.param(
+            function_defined_terms,
+            "",
+            id="function_defined_terms",
+            marks=pytest.mark.skip(
+                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            ),
+        ),
+        pytest.param(
+            dict_comp_terms,
+            "",
+            id="dict_comp_terms",
+            marks=pytest.mark.skip(
+                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            ),
+        ),
+        pytest.param(
+            list_comp_terms,
+            "",
+            id="list_comp_terms",
+            marks=pytest.mark.skip(
+                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            ),
+        ),
+        pytest.param(
+            set_comp_terms,
+            "",
+            id="set_comp_terms",
+            marks=pytest.mark.skip(
+                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            ),
+        ),
+        pytest.param(
+            generator_comp_terms,
+            "",
+            id="generator_comp_terms",
+            marks=pytest.mark.skip(
+                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            ),
         ),
     ],
 )

@@ -23,6 +23,12 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [Induced Scalar Properties](#induced-scalar-properties)
    * [Induced Subcollection Properties](#induced-subcollection-properties)
    * [Induced Arbitrary Joins](#induced-arbitrary-joins)
+- [Larger Examples](#larger-examples)
+   * [Example 1: Highest Residency Density States](#example-1)
+   * [Example 2: TODO](#example-2)
+   * [Example 3: TODO](#example-3)
+   * [Example 4: TODO](#example-4)
+   * [Example 5: TODO](#example-5)
 
 <!-- TOC end -->
 
@@ -1328,66 +1334,94 @@ Addresses.WHERE(HAS(current_occupants))(
 
 ```py
 %%pydough
-five_most_recent=BEST(packages, by=order_date.DESC(), n_best=5)
+five_most_recent = BEST(packages, by=order_date.DESC(), n_best=5)
 People(
     ssn,
     value_most_recent_5=SUM(five_most_recent.package_cost)
 )
 ```
 
-**Good Example #7**: TODO: example with multiple back levels.
+**Good Example #7**: For each address, finds the package most recently ordered by one of the current occupants of that address, including the email of the occupant who ordered it and the address' id. Notice that `BACK(1)` refers to `current_occupants` and `BACK(2)` refers to `Addresses` as if the packages were accessed as `Addresses.current_occupants.packages` instead of using `BEST`.
 
 ```py
 %%pydough
-
+most_recent_package = BEST(current_occupants.packages, by=order_date.DESC())
+Addresses.most_recent_package(
+    address_id=BACK(2).address_id,
+    cust_email=BACK(1).email,
+    package_id=package_id,
+    order_date=order_date,
+)
 ```
 
-**Bad Example #1**: TODO: bad sub-colleciton argument to `BEST`
+**Bad Example #1**: For each person finds their best email. This is invalid because `email` is not a sub-collection of `People` (it is a scalar attribute, so there is only 1 `email` per-person).
 
 ```py
 %%pydough
+People(first_name, BEST(email, by=birth_date.DESC()))
 ```
 
-**Bad Example #2**: TODO: `by` argument is missing
+**Bad Example #2**: For each person finds their best package. This is invalid because the `by` argument is missing.
 
 ```py
 %%pydough
+People.BEST(packages)
 ```
 
-**Bad Example #3**: TODO: `by` argument is not a collation
+**Bad Example #3**: For each person finds their best package. This is invalid because the: `by` argument is not a collation
 
 ```py
 %%pydough
+People.BEST(packages, by=order_date)
 ```
 
-**Bad Example #4**: TODO: `by` argument is empty
+**Bad Example #4**: For each person finds their best package. This is invalid because the `by` argument is empty
 
 ```py
 %%pydough
+People.BEST(packages, by=())
 ```
 
-**Bad Example #5**: TODO: bad combination of `n_best` and `allow_ties`
+**Bad Example #5**: For each person finds the 5 most recent packages they have ordered, allowing ties. This is invalid because `n_best` is greater than 1 at the same time that `allow_ties` is True.
 
 ```py
 %%pydough
+People.BEST(packages, by=order_date.DESC(), n_best=5, allow_ties=True)
 ```
 
-**Bad Example #6**: TODO: treating as singular when `n_best` is greater than 1
+**Bad Example #6**: For each person, finds the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
 
 ```py
 %%pydough
+best_packages = BEST(packages, by=order_date.DESC(), n_best=10)
+People(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #7**: TODO: treating as singular when `allow_ties` is True
+**Bad Example #7**: For each person, finds the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
 
 ```py
 %%pydough
+best_packages = BEST(packages, by=package_cost.DESC(), allow_ties=True)
+People(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #8**: TODO: incorrect usage of `BACK`
+**Bad Example #8**: For each address, finds the package most recently ordered by one of the current occupants of that address, including the address id of the address. This is invalid because `BACK(1)` refers to `current_occupants`, which does not have a field called `address_id`.
 
 ```py
 %%pydough
+most_recent_package = BEST(current_occupants.packages, by=order_date.DESC())
+Addresses.most_recent_package(
+    address_id=BACK(1).address_id,
+    package_id=package_id,
+    order_date=order_date,
+)
+```
+
+**Bad Example #9**: For each address finds the oldest occupant. This is invalid because the `BEST` clause is placed in the calc without accessing any of its attributes.
+
+```py
+%%pydough
+Addresses(address_id, oldest_occupant=BEST(current_occupants, by=birth_date.ASC()))
 ```
 
 <!-- TOC --><a name="induced-properties"></a>
@@ -1410,3 +1444,147 @@ This section of the PyDough specification has not yet been defined.
 
 This section of the PyDough specification has not yet been defined.
 
+<!-- TOC --><a name="larger-examples"></a>
+## Larger Examples
+
+The rest of the document are examples of questions asked about the data in the people/addresses/packages graph and the corresponding PyDough code, which uses several of the features described in this document.
+
+<!-- TOC --><a name="example-1"></a>
+### Example 1: Highest Residency Density States
+
+**Question**: Find the 5 states with the highest average number of occupants per address.
+
+**Answer**:
+```py
+%%pydough
+addr_info = Addresses(n_occupants=COUNT(current_occupants))
+result = PARTITION(
+    addr_info,
+    name="addrs",
+    by=state
+)(
+    state,
+    average_occupants=AVG(addrs.n_occupants)
+).TOP_K(
+    5,
+    by=average_occupants.DESC()
+)
+```
+
+<!-- TOC --><a name="example-2"></a>
+### Example 2: Yearly Trans-Coastal Shipments
+
+**Question**: For every calendar year, what percentage of all packages are from a customer living in the west coast to an address on the east coast? Only include packages that have already arrived, and order by the year.
+
+**Answer**:
+```py
+%%pydough
+west_coast_states = ("CA", "OR", "WA", "AK")
+east_coast_states = ("FL", "GA", "SC", "NC", "VA", "MD", "DE", "NJ", "NY", "CT", "RI", "MA", "NH", "MA")
+from_west_coast = ISIN(customer.current_address.state, west_coast_states)
+to_east_coast = ISIN(shipping_address.state, east_coast_states)
+package_info = Packages.WHERE(
+    PRESENT(arrival_date)
+)(
+    is_trans_coastal=from_west_coast & to_east_coast,
+    year=YEAR(order_date),
+)
+result = PARTITION(
+    package_info,
+    name="packs",
+    by=year,
+)(
+    year,
+    pct_trans_coastal=100.0 * SUM(packs.is_trans_coastal) / COUNT(packs),
+).ORDER_BY(
+    year.ASC()
+)
+```
+
+<!-- TOC --><a name="example-3"></a>
+### Example 3: Email of Oldest Non-Customer Resident
+
+**Question**: For every city/state, find the email of the oldest resident of that city/state who has never ordered a package (break ties in favor of the lower social security number). Also include the zip code of that occupant. Order alphabetically by state, followed by city.
+
+**Answer**:
+```py
+%%pydough
+cities = PARTITION(
+    Addresses,
+    name="addrs",
+    by=(city, state)
+).BEST(
+    addrs.current_occupants.WHERE(HASNOT(packages)),
+    by=(birth_date.ASC(), ssn.ASC()),
+)(
+    state=BACK(2).state,
+    city=BACK(2).city,
+    email=email,
+    zip_code=BACK(1).zip_code,
+).ORDER_BY(
+    state.ASC(),
+    city.ASC(),
+)
+```
+
+<!-- TOC --><a name="example-4"></a>
+### Example 4: Outlier Packages Per Month Of 2017
+
+**Question**: For every month of the year 2017, identify the percentage of packages ordered in that month that are at least 10x the average value of all packages ordered in 2017. Order the results by month.
+
+**Answer**:
+```py
+%%pydough
+is_2017 = YEAR(order_date) == 2017
+package_info = GRAPH(
+    avg_package_cost=AVG(Packages.WHERE(is_2017).package_cost)
+).Packages.WHERE(
+    is_2017
+)(
+    month=MONTH(order_date),
+    is_10x_avg=package_cost >= (10.0 * BACK(1).avg_package_cost)
+)
+result = PARTITION(
+    package_info,
+    name="packs",
+    by=month
+)(
+    month,
+    pct_outliers=100.0 * SUM(packs.is_10x_avg) / COUNT(packs)
+).ORDER_BY(
+    month.ASC()
+)
+```
+
+<!-- TOC --><a name="example-5"></a>
+### Example 5: Regression Prediction Of Packages Quantity
+
+**Question**: Using linear regression of the number of packages ordered per-year, what is the predicted number of packages for the next three years?
+
+**Answer**:
+```py
+%%pydough
+yearly_data = PARTITION(
+    Packages(year=YEAR(order_date)),
+    name="packs",
+    by=year,
+)(
+    year,
+    n_orders = COUNT(packs),
+)
+global_info = GRAPH(
+    avg_x = AVG(yearly_data.year),
+    avg_y = AVG(yearly_data.n_orders),
+)
+dx = n_orders - BACK(1).avg_x
+dy = year - BACK(1).avg_y
+regression_data = yearly_data(value=(dx * dy) / (dx * dx))
+slope = SUM(regression_data.value)
+# Could also write as `last_year = packs.WHERE(RANKING(by=year.DESC()) == 1).SINGULAR()`
+last_year = BEST(packs, by=year.DESC())
+results = {}
+for n in range(1, 4):
+    results[f"year_{n}"] = last_year.year+n
+    results[f"year_{n}_prediction"] = last_year.n_orders+n*slope
+result = global_info(**results)
+```
