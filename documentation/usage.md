@@ -90,7 +90,7 @@ pydough.active_session = session_b
 Each `PyDoughSession` has the following notable fields, each of which can be accessed or switched out:
 - `metadata`: the knowledge graph used by PyDough to identify collections/properties. By default, there is no knowledge graph until one is attached to the session. [See here](#session-knowledge-graph) for more details.
 - `config`: the miscellaneous configurations used by the PyDough session. By default, each configuration is set to its default value. [See here](#session-configs) for more details.
-- `database`: the database context used by PyDough to determine which version of SQL to translate into and used to execute queries in a database. By default, this is no database connection until one is attached to the session. [See here](#session-database) for more details.
+- `database`: the database context used by PyDough to determine which version of SQL to translate into and used to execute queries in a database. By default, there is no database connection until one is attached to the session. [See here](#session-database) for more details.
 
 <!-- TOC --><a name="session-knowledge-graph"></a>
 ### Session Knowledge Graph
