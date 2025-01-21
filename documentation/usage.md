@@ -30,7 +30,7 @@ Once you have uv set up, you can run the command `uv run jupyter lab` from the P
 3. Connect to the metadata graph you wish to use. The metadata should be in a JSON file that can be accessed from the notebook. If the file is located at `<path>`, and the name of the graph within the file that you wish to use is `<graphname>`, then the connection command is `pydough.active_session.load_metadata_graph(<path>, <graphname>)`.
 4. (optional) Connect to the database you wish to use to evaluate your analytical questions. If your database is sqlite and is located at `<path>`, the connection command is `pydough.active_session.connect_database("sqlite", database=<path>)`
 
-So to recap, your notebook may start with a cell like this one that you will need to run before doing anything else:
+To summarize, your notebook should start with a cell like this, which you need to run before proceeding with any other tasks:
 
 ```py
 import pydough
