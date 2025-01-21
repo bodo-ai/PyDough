@@ -326,7 +326,7 @@ See the [demo notebooks](../demos/notebooks/Exploration.ipynb) for more instance
 <!-- TOC --><a name="pydoughexplain_structure"></a>
 ### `pydough.explain_structure`
 
-The `explain_structure` API can be called on a PyDough knowledge graph object returned from `load_metadata_graph` or `parse_json_metadata_from_file`. It function displays information about a the metadata graph, including the names of each collection in the graph, the names of all scalar and sub-collection properties for each collection, and some details of the sub-collection properties.
+The `explain_structure` API can be called on a PyDough knowledge graph object returned from `load_metadata_graph` or `parse_json_metadata_from_file`. It displays information about a the metadata graph, including the names of each collection in the graph, the names of all scalar and sub-collection properties for each collection, and some details of the sub-collection properties.
 
 Below is an example that displays information about the TPC-H schema, truncated to only include nations, regions and customers.
 
