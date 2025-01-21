@@ -51,7 +51,7 @@ pydough.to_df(result)
 
 Within the contents of a PyDough cell, the following is True:
 - Any undefined variable is presumed to be either a function or an access to a collection/property described within the knowledge graph. This presumption is not checked until the code is fully evaluated by calling `pydough.to_df`.
-    - For instance, in the example above, the following are all undefined variables that the PyDough cell resolves: `orders`, `CONTAINS`, `part`, `customers`, `name`, `SUM`, `yellow_quant`.
+    - For instance, in the example above, the following are all undefined variables that the PyDough cell resolves: `nations`, `region`, `name`, `COUNT`, `customers`.
 - Any variables defined outside the current cell are still accessible inside the current cell.
 - Any variables defined inside the cell are usable outside the cell.
 
@@ -101,7 +101,7 @@ There are two ways to load a knowledge graph into a session:
 1. Parse the graph with `parse_json_metadata_from_file` then set `session.graph` to the returned value.
 2. Use `session.load_metadata_graph`.
 
-Both examples are shown below. These examples assume that the JSON file is located at `hello/world/graphs.json` and that the specific graph desired is called `Food` (since the file can contain multiple graphs).
+Both examples are shown below. For these examples, assume there is a made-up JSON file located at `hello/world/graphs.json` and that the specific graph that should be used from this file is called `Food` (since the file could contain multiple graphs).
 
 ```py
 import pydough
@@ -609,7 +609,7 @@ To handle cases where you need to learn about a term within a collection, you ca
 
 The `explain_term` API also has a `verbose` keyword argument (default False) to specify whether to include a more detailed explanation, as opposed to a more compact summary.
 
-Below are examples of using `explain_term`, using a knowledge graph for the TPCH schema.
+Below are examples of using `explain_term`, using a knowledge graph for the TPCH schema. For each of these examples, `european_countries` is the "context" collection, which could have `to_sql` or `to_df` called on it, and `term` is the term being explained with regards to `european_countries`.
 
 1. Calling `explain_term` on a scalar attribute of a collection.
 
