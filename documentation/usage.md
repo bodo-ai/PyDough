@@ -223,42 +223,34 @@ pydough.to_sql(result)
 ```
 
 ```sql
-SELECT name, n_custs FROM (
-    SELECT name, n_custs, ordering_1
+SELECT name, COALESCE(agg_0, 0) AS n_custs
+FROM (
+    SELECT name, agg_0
     FROM (
-        SELECT name, COALESCE(agg_0, 0) AS n_custs, COALESCE(agg_0, 0) AS ordering_1
+        SELECT name, key
         FROM (
-            SELECT name, agg_0
+            SELECT _table_alias_0.name AS name, _table_alias_0.key AS key, _table_alias_1.name AS name_3
             FROM (
-                SELECT name, key
-                FROM (
-                    SELECT _table_alias_0.name AS name, _table_alias_0.key AS key, _table_alias_1.name AS name_3
-                    FROM (
-                        SELECT n_name AS name, n_nationkey AS key, n_regionkey AS region_key
-                        FROM main.NATION
-                    ) AS _table_alias_0
-                    LEFT JOIN (
-                        SELECT r_name AS name, r_regionkey AS key
-                        FROM main.REGION
-                    ) AS _table_alias_1
-                    ON region_key = _table_alias_1.key
-                )
-                WHERE name_3 = 'EUROPE'
-            )
+                SELECT n_name AS name, n_nationkey AS key, n_regionkey AS region_key FROM main.NATION
+            ) AS _table_alias_0
             LEFT JOIN (
-                SELECT nation_key, COUNT() AS agg_0
-                FROM (
-                    SELECT c_nationkey AS nation_key
-                    FROM main.CUSTOMER
-                )
-                GROUP BY nation_key
-            )
-            ON key = nation_key
+                SELECT r_name AS name, r_regionkey AS key
+                FROM main.REGION
+            ) AS _table_alias_1
+            ON region_key = _table_alias_1.key
         )
+        WHERE name_3 = 'EUROPE'
     )
-    ORDER BY ordering_1 DESC LIMIT 5
+    LEFT JOIN (
+        SELECT nation_key, COUNT() AS agg_0
+        FROM (
+            SELECT c_nationkey AS nation_key
+            FROM main.CUSTOMER
+        )
+        GROUP BY nation_key
+    )
+    ON key = nation_key
 )
-ORDER BY ordering_1 DESC
 ```
 
 See the [demo notebooks](../demos/README.md) for more instances of how to use the `to_sql` API.
