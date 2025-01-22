@@ -105,7 +105,7 @@ People
 <!-- TOC --><a name="sub-collections"></a>
 ### Sub-Collections
 
-The next step in PyDough after accessing a collection is accessing any of its sub-collections. The syntax `collection.subcollection` steps into every record of `subcollection` for each record of `collection`. This can result in changes of cardinality if records of `collection` can have multiple records of `subcollection`, and can result in duplicate records in the output if records of `subcollection` can be sourced from different records of `collection`.
+The next step in PyDough after accessing a collection is to access its sub-collections. Using the syntax `collection.subcollection`, you can traverse into every record of `subcollection` for each record in `collection`. This operation may change the cardinality if records of `collection` have multiple associated records in `subcollection`. Additionally, duplicate records may appear in the output if records in `subcollection` are linked to multiple records in `collection`.
 
 **Good Example #1**: for every person, obtains their current address. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output. A record from `Addresses` can be included multiple times if multiple different `People` records have it as their current address, or it could be missing entirely if no person has it as their current address.
 
