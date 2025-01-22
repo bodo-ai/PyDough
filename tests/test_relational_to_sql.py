@@ -323,7 +323,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     aggregations={},
                 ),
             ),
-            "SELECT b FROM table GROUP BY b",
+            "SELECT b FROM (SELECT a, b FROM table) GROUP BY b",
             id="simple_distinct",
         ),
         pytest.param(

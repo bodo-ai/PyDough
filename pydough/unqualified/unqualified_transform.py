@@ -35,8 +35,8 @@ class AddRootVisitor(ast.NodeTransformer):
 
     def visit_Assign(self, node):
         for target in node.targets:
-            assert isinstance(target, ast.Name)
-            self._known_names.add(target.id)
+            if isinstance(target, ast.Name):
+                self._known_names.add(target.id)
         return self.generic_visit(node)
 
     def create_root_def(self) -> list[ast.AST]:
@@ -83,6 +83,27 @@ class AddRootVisitor(ast.NodeTransformer):
             )
         answer: ast.AST = self.generic_visit(result)
         return answer
+
+    def visit_expression(self, node) -> ast.expr:
+        result = self.generic_visit(node)
+        assert isinstance(result, ast.expr)
+        return result
+
+    def visit_statement(self, node) -> ast.stmt:
+        result = self.generic_visit(node)
+        assert isinstance(result, ast.stmt)
+        return result
+
+    def visit_For(self, node):
+        if isinstance(node.target, ast.Name):
+            self._known_names.add(node.target.id)
+        return ast.For(  # type: ignore
+            target=node.target,
+            iter=self.visit_expression(node.iter),
+            body=[self.visit_statement(elem) for elem in node.body],
+            orelse=[self.visit_statement(elem) for elem in node.orelse],
+            type_comment=node.type_comment,
+        )
 
     def visit_Name(self, node):
         unrecognized_var: bool = False
