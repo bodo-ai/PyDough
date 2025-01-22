@@ -251,7 +251,7 @@ def triple_partition():
         .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))(
             supp_region=supplier.nation.region.name,
         )
-        .order(
+        .order.WHERE(YEAR(order_date) == 1992)(
             supp_region=BACK(1).supp_region,
             part_type=BACK(2).part_type,
             cust_region=customer.nation.region.name,
