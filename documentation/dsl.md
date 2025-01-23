@@ -76,7 +76,7 @@ Packages
 
 ```py
 %%pydough
-Addresses
+Products
 ```
 
 **Bad Example #2**: obtains every record of the `Addresses` collection (but the name `Addresses` has been reassigned to a variable).
@@ -92,14 +92,6 @@ Addresses
 ```py
 %%pydough
 HELLO.Addresses
-```
-
-**Bad Example #4**: obtains every record of the `People` collection (but the name `People` has been reassigned to a variable).
-
-```py
-%%pydough
-People = "not a collection"
-People
 ```
 
 <!-- TOC --><a name="sub-collections"></a>
@@ -187,7 +179,7 @@ Packages(
 )
 ```
 
-**Good Example #3**: For every person, finds their full name (without the middle name) and counts how many packages they purchased.
+**Good Example #3**: For every person, find their full name (without the middle name) and count how many packages they purchased.
 
 ```py
 %%pydough
@@ -197,7 +189,7 @@ People(
 )
 ```
 
-**Good Example #4**: For every person, finds their full name including the middle name if one exists, as well as their email. Notice that two CALCs are present, but only the terms from the second one are part of the answer.
+**Good Example #4**: For every person, find their full name including the middle name if one exists, as well as their email. Notice that two CALCs are present, but only the terms from the second one are part of the answer.
 
 ```py
 %%pydough
@@ -211,7 +203,7 @@ People(
 )
 ```
 
-**Good Example #5**: For every person, finds the year from the most recent package they purchased, and from the first package they ever purchased.
+**Good Example #5**: For every person, find the year from the most recent package they purchased, and from the first package they ever purchased.
 
 ```py
 %%pydough
@@ -232,7 +224,7 @@ GRAPH(
 )
 ```
 
-**Good Example #7**: For each package, lists the package id and whether the package was shipped to the current address of the person who ordered it.
+**Good Example #7**: For each package, list the package id and whether the package was shipped to the current address of the person who ordered it.
 
 ```py
 %%pydough
@@ -242,14 +234,14 @@ Packages(
 )
 ```
 
-**Bad Example #1**: For each person, lists their first name, last name, and phone number. This is invalid because `People` does not have a property named `phone_number`.
+**Bad Example #1**: For each person, list their first name, last name, and phone number. This is invalid because `People` does not have a property named `phone_number`.
 
 ```py
 %%pydough
 People(first_name, last_name, phone_number)
 ```
 
-**Bad Example #2**: For each person, lists their combined first & last name followed by their email. This is invalid because a positional argument is included after a keyword argument.
+**Bad Example #2**: For each person, list their combined first & last name followed by their email. This is invalid because a positional argument is included after a keyword argument.
 
 ```py
 %%pydough
@@ -259,14 +251,14 @@ People(
 )
 ```
 
-**Bad Example #3**: For each person, lists the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #3**: For each person, list the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
 
 ```py
 %%pydough
 People(packages.address_id)
 ```
 
-**Bad Example #4**: For each person, lists their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #4**: For each person, list their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
 
 ```py
 %%pydough
@@ -277,21 +269,21 @@ People(
 )
 ```
 
-**Bad Example #5**: For each address, finds whether the state name starts with `"C"`. This is invalid because it calls the builtin Python `.startswith` string method, which is not supported in PyDough (should have instead used a defined PyDough behavior, like the `STARTSWITH` function).
+**Bad Example #5**: For each address, find whether the state name starts with `"C"`. This is invalid because it calls the builtin Python `.startswith` string method, which is not supported in PyDough (should have instead used a defined PyDough behavior, like the `STARTSWITH` function).
 
 ```py
 %%pydough
 Addresses(is_c_state=state.startswith("c"))
 ```
 
-**Bad Example #6**: For each address, finds the state bird of the state it is in. This is invalid because the `state` property of each record of `Addresses` is a scalar expression, not a subcolleciton, so it does not have any properties that can be accessed with `.` syntax.
+**Bad Example #6**: For each address, find the state bird of the state it is in. This is invalid because the `state` property of each record of `Addresses` is a scalar expression, not a subcolleciton, so it does not have any properties that can be accessed with `.` syntax.
 
 ```py
 %%pydough
 Addresses(state_bird=state.bird)
 ```
 
-**Bad Example #7**: For each current occupant of each address, lists their first name, last name, and city/state they live in. This is invalid because `city` and `state` are not properties of the current collection (`People`, accessed via `current_occupants` of each record of `Addresses`).
+**Bad Example #7**: For each current occupant of each address, list their first name, last name, and city/state they live in. This is invalid because `city` and `state` are not properties of the current collection (`People`, accessed via `current_occupants` of each record of `Addresses`).
 
 ```py
 %%pydough
@@ -305,7 +297,7 @@ Addresses.current_occupants(first_name, last_name, city, state)
 People(ssn, current_address)
 ```
 
-**Bad Example #9**: For each person, lists their first name, last name, and the sum of the package costs. This is invalid because `SUM` is an aggregation function and cannot be used in a CALC term without specifying the sub-collection it should be applied to.
+**Bad Example #9**: For each person, list their first name, last name, and the sum of the package costs. This is invalid because `SUM` is an aggregation function and cannot be used in a CALC term without specifying the sub-collection it should be applied to.
 
 ```py
 %%pydough
@@ -330,7 +322,7 @@ People(
 )
 ```
 
-**Good Example #2**: for every person, finds the total value of all packages they ordered in February of any year, as well as the number of all such packages, the largest value of any such package, and the percentage of those packages that were specifically on valentine's day
+**Good Example #2**: for every person, find the total value of all packages they ordered in February of any year, as well as the number of all such packages, the largest value of any such package, and the percentage of those packages that were specifically on Valentine's day
 
 ```py
 %%pydough
@@ -386,7 +378,7 @@ People(february=is_february)
 
 Part of the benefit of doing `collection.subcollection` accesses is that properties from the ancestor collection can be accessed from the current collection. This is done via a `BACK` call. Accessing properties from `BACK(n)` can be done to access properties from the n-th ancestor of the current collection. The simplest recommended way to do this is to just access a scalar property of an ancestor in order to include it in the final answer.
 
-**Good Example #1**: For every address' current occupants, lists their first name last name, and the city/state of the current address they belong to.
+**Good Example #1**: For each address's current occupants, list their first name last name, and the city/state of the current address they belong to.
 
 ```py
 %%pydough
@@ -472,13 +464,6 @@ cust_info = Customers(
 Customers.packages(
     is_above_avg=cost > BACK(1).avg_package_cost
 )
-```
-
-**Bad Example #6**: The 1st ancestor of `current_occupants` is `Addresses` which does not have a term named `phone`.
-
-```py
-%%pydough
-Addresses.current_occupants(a=BACK(1).phone)
 ```
 
 <!-- TOC --><a name="expressions"></a>
@@ -587,14 +572,14 @@ Packages.WHERE(package_cost > 100)(package_id, shipping_state=shipping_address.s
 People(first_name, last_name, email).WHERE(COUNT(packages) > 5)
 ```
 
-**Good Example #4**: Finds every person whose most recent order was shipped in the year 2023, and lists all properties of that person.
+**Good Example #4**: Find every person whose most recent order was shipped in the year 2023, and list all properties of that person. 
 
 ```py
 %%pydough
 People.WHERE(YEAR(MAX(packages.order_date)) == 2023)
 ```
 
-**Good Example #5**: Counts how many packages were ordered in January of 2018.
+**Good Example #5**: Count how many packages were ordered in January of 2018. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
@@ -604,6 +589,50 @@ packages_jan_2018 = Packages.WHERE(
 GRAPH(n_jan_2018=COUNT(selected_packages))
 ```
 
+**Good Example #6**: Counts how many people have don't have a first or last name that starts with A. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
+
+```py
+%%pydough
+selected_people = People.WHERE(
+    ~STARTSWITH(first_name, "A") & ~STARTSWITH(first_name, "B") 
+)
+GRAPH(n_people=COUNT(selected_people))
+```
+
+**Good Example #7**: Counts how many people have a gmail or yahoo account. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
+
+```py
+%%pydough
+gmail_or_yahoo = People.WHERE(
+    ENDSWITH(email, "@gmail.com") | ENDSWITH(email, "@yahoo.com") 
+)
+GRAPH(n_gmail_or_yahoo=COUNT(gmail_or_yahoo))
+```
+
+**Good Example #8**: Counts how many people were born in the 1980s. [See here](functions.md#comparisons) for more details on the valid/invalid use of comparisons in Python.
+
+```py
+%%pydough
+eighties_babies = People.WHERE(
+    (1980 <= YEAR(birth_date)) & (YEAR(birth_date) < 1990)
+)
+GRAPH(n_eighties_babies=COUNT(eighties_babies))
+```
+
+**Good Example #9**: Find every person whose has sent a package to Idaho.
+
+```py
+%%pydough
+People.WHERE(HAS(packages.WHERE(shipping_address.state == "ID")))
+```
+
+**Good Example #10**: Find every person whose did not order a package in 2024.
+
+```py
+%%pydough
+People.WHERE(HASNOT(packages.WHERE(YEAR(order_date) == 2024)))
+```
+
 **Bad Example #1**: For every person, fetches their first name and last name only if they have a phone number. This is invalid because `People` does not have a property named `phone_number`.
 
 ```py
@@ -611,21 +640,35 @@ GRAPH(n_jan_2018=COUNT(selected_packages))
 People.WHERE(PRESENT(phone_number))(first_name, last_name)
 ```
 
-**Bad Example #2**: For every package, fetches the package id only if the package cost is greater than 100 and the shipping state is Texas. This is invalid because `shipping_state` is not a property of `Packages`.
-
-```py
-%%pydough
-Packages.WHERE((package_cost > 100) & (shipping_state == "TX"))(package_id)
-```
-
-**Bad Example #3**: For every package, fetches the package id only if the package cost is greater than 100 and the shipping state is Texas. This is invalid because `and` is used instead of `&`.
+**Bad Example #2**: For every package, fetches the package id only if the package cost is greater than 100 and the shipping state is Texas. This is invalid because `and` is used instead of `&`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
 Packages.WHERE((package_cost > 100) and (shipping_address.state == "TX"))(package_id)
 ```
 
-**Bad Example #4**: Obtain every person whose packages were shipped in the month of June. This is invalid because `packages` is a plural property of `People`, so `MONTH(packages.order_date) == 6` is a plural expression with regards to `People` that cannot be used as a filtering condition. 
+**Bad Example #3**: For every package, fetches the package id only if the package is either being shipped from Pennsylvania or to Pennsylvania. This is invalid because `or` is used instead of `|`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
+
+```py
+%%pydough
+Packages.WHERE((customer.current_address.state == "PA") or (shipping_address.state == "PA"))(package_id)
+```
+
+**Bad Example #4**: For every package, fetches the package id only if the customer's first name does not start with a J. This is invalid because `not` is used instead of `~`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
+
+```py
+%%pydough
+Packages.WHERE(not STARTSWITH(customer.first_name, "J"))(package_id)
+```
+
+**Bad Example #5**: For every package, fetches the package id only if the package was ordered between February and May. [See here](functions.md#comparisons) for more details on the valid/invalid use of comparisons in Python.
+
+```py
+%%pydough
+Packages.WHERE(2 <= MONTH(arrival_date) <= 5)(package_id)
+```
+
+**Bad Example #6**: Obtain every person whose packages were shipped in the month of June. This is invalid because `packages` is a plural property of `People`, so `MONTH(packages.order_date) == 6` is a plural expression with regards to `People` that cannot be used as a filtering condition. 
 
 ```py
 %%pydough
@@ -651,7 +694,7 @@ If there are multiple `ORDER_BY` terms, the last one is the one that takes prece
 People.ORDER_BY(last_name.ASC(), first_name.ASC(), middle_name.ASC(na_pos="last"))
 ```
 
-**Good Example #2**: For every person lists their ssn & how many packages they have ordered, and orders them from highest number of orders to lowest, breaking ties in favor of whoever is oldest. 
+**Good Example #2**: For every person list their ssn & how many packages they have ordered, and orders them from highest number of orders to lowest, breaking ties in favor of whoever is oldest. 
 
 ```py
 %%pydough
@@ -662,7 +705,7 @@ People(
 )
 ```
 
-**Good Example #3**: Finds every address that has at least 1 person living in it and sorts them highest-to-lowest by number of occupants, with ties broken by address id in ascending order. 
+**Good Example #3**: Find every address that has at least 1 person living in it and sorts them highest-to-lowest by number of occupants, with ties broken by address id in ascending order. 
 
 ```py
 %%pydough
@@ -697,7 +740,7 @@ Addresses.WHERE(
 )
 ```
 
-**Good Example #6**: Finds all people who are in the top 1% of customers according to number of packages ordered.
+**Good Example #6**: Find all people who are in the top 1% of customers according to number of packages ordered.
 
 ```py
 %%pydough
@@ -767,7 +810,7 @@ The syntax for this is `.TOP_K(k, by=...)` where `k` is a positive integer and t
 
 The terms in the collection are unchanged by the `TOP_K` clause, since the only change is the order of the records and which ones are kept/dropped.
 
-**Good Example #1**: Finds the 10 people who have ordered the most packages, including their first/last name, birth date, and the number of packages. If there is a tie, break it by the lowest ssn.
+**Good Example #1**: Find the 10 people who have ordered the most packages, including their first/last name, birth date, and the number of packages. If there is a tie, break it by the lowest ssn.
 
 ```py
 %%pydough
@@ -779,14 +822,14 @@ People(
 ).TOP_K(10, by=(n_packages.DESC(), ssn.ASC()))
 ```
 
-**Good Example #2**: Finds the 5 most recently shipped packages, with ties broken arbitrarily.
+**Good Example #2**: Find the 5 most recently shipped packages, with ties broken arbitrarily.
 
 ```py
 %%pydough
 Packages.TOP_K(5, by=order_date.DESC())
 ```
 
-**Good Example #3**: Finds the 100 addresses that have most recently had packages either shipped or billed to them, breaking ties arbitrarily.
+**Good Example #3**: Find the 100 addresses that have most recently had packages either shipped or billed to them, breaking ties arbitrarily.
 
 ```py
 %%pydough
@@ -797,7 +840,7 @@ most_recent_package = IFF(most_recent_ship < most_recent_bill, most_recent_ship,
 Addresses.TOP_K(10, by=most_recent_package.DESC())
 ```
 
-**Good Example #4**: Finds the top 3 people who have spent the most money on packages, including their first/last name, and the total cost of all of their packages.
+**Good Example #4**: Find the top 3 people who have spent the most money on packages, including their first/last name, and the total cost of all of their packages.
 
 ```py
 %%pydough
@@ -808,21 +851,21 @@ People(
 ).TOP_K(3, by=total_package_cost.DESC())
 ```
 
-**Bad Example #1**: Finds the 5 people with the lowest GPA. This is invalid because the `People` collection does not have a `gpa` property.
+**Bad Example #1**: Find the 5 people with the lowest GPA. This is invalid because the `People` collection does not have a `gpa` property.
 
 ```py
 %%pydough
 People.TOP_K(5, by=gpa.ASC())
 ```
 
-**Bad Example #2**: Finds the 25 addresses with the earliest packages billed to them, by arrival date. This is invalid because `packages_billed` is a plural property of `Addresses`, so `packages_billed.arrival_date` cannot be used as a collation expression for `Addresses`.
+**Bad Example #2**: Find the 25 addresses with the earliest packages billed to them, by arrival date. This is invalid because `packages_billed` is a plural property of `Addresses`, so `packages_billed.arrival_date` cannot be used as a collation expression for `Addresses`.
 
 ```py
 %%pydough
 Addresses.packages_billed(25, by=gpa.packages_billed.arrival_date())
 ```
 
-**Bad Example #3**: Finds the top 100 people currently living in the city of San Francisco. This is invalid because the `by` clause is absent.
+**Bad Example #3**: Find the top 100 people currently living in the city of San Francisco. This is invalid because the `by` clause is absent.
 
 ```py
 %%pydough
@@ -831,21 +874,21 @@ People.WHERE(
 ).TOP_K(100)
 ```
 
-**Bad Example #4**: Finds the top packages by highest value. This is invalid because there is no `k` value.
+**Bad Example #4**: Find the top packages by highest value. This is invalid because there is no `k` value.
 
 ```py
 %%pydough
 Packages.TOP_K(by=package_cost.DESC())
 ```
 
-**Bad Example #5**: Finds the top 300 addresses. This is invalid because the `by` clause is empty
+**Bad Example #5**: Find the top 300 addresses. This is invalid because the `by` clause is empty
 
 ```py
 %%pydough
 Addresses.TOP_K(300, by=())
 ```
 
-**Bad Example #6**: Finds the 1000 people by birth date. This is invalid because the collation term does not have `.ASC()` or `.DESC()`.
+**Bad Example #6**: Find the 1000 people by birth date. This is invalid because the collation term does not have `.ASC()` or `.DESC()`.
 
 ```py
 %%pydough
@@ -866,14 +909,14 @@ If the partitioned data is accessed, its original ancestry is lost. Instead, it 
 
 The ancestry of the `PARTITION` clause can be changed by prepending it with another collection, separated by a dot. However, this is currently only supported in PyDough when the collection before the dot is just an augmented version of the graph context, as opposed to another collection (e.g. `GRAPH(x=42).PARTITION(...)` is supported, but `People.PARTITION(...)` is not).
 
-**Good Example #1**: Finds every unique state.
+**Good Example #1**: Find every unique state.
 
 ```py
 %%pydough
 PARTITION(Addresses, name="addrs", by=state)(state)
 ```
 
-**Good Example #2**: For every state, counts how many addresses are in that state.
+**Good Example #2**: For every state, count how many addresses are in that state.
 
 ```py
 %%pydough
@@ -883,7 +926,7 @@ PARTITION(Addresses, name="addrs", by=state)(
 )
 ```
 
-**Good Example #3**: For every city/state, counts how many people live in that city/state.
+**Good Example #3**: For every city/state, count how many people live in that city/state.
 
 ```py
 %%pydough
@@ -894,7 +937,7 @@ PARTITION(Addresses, name="addrs", by=(city, state))(
 )
 ```
 
-**Good Example #4**: Finds the top 5 years with the most people born in that year who have yahoo email accounts, listing the year and the number of people.
+**Good Example #4**: Find the top 5 years with the most people born in that year who have yahoo email accounts, listing the year and the number of people.
 
 ```py
 %%pydough
@@ -907,7 +950,7 @@ PARTITION(yahoo_people, name="yah_ppl", by=birth_year)(
 ).TOP_K(5, by=n_people.DESC())
 ```
 
-**Good Example #4**: For every year/month, finds all packages that were below the average cost of all packages ordered in that year/month.
+**Good Example #4**: For every year/month, find all packages that were below the average cost of all packages ordered in that year/month.
 
 ```py
 %%pydough
@@ -919,7 +962,7 @@ PARTITION(package_info, name="packs", by=(order_year, order_month))(
 )
 ```
 
-**Good Example #5**: For every customer, finds the percentage of all orders made by current occupants of that city/state made by that specific customer. Includes the first/last name of the person, the city/state they live in, and the percentage.
+**Good Example #5**: For every customer, find the percentage of all orders made by current occupants of that city/state made by that specific customer. Includes the first/last name of the person, the city/state they live in, and the percentage.
 
 ```py
 %%pydough
@@ -934,7 +977,7 @@ PARTITION(Addresses, name="addrs", by=(city, state))(
 )
 ```
 
-**Good Example #6**: Identifies the states whose current occupants account for at least 1% of all packages purchased. Lists the state and the percentage.
+**Good Example #6**: Identifies the states whose current occupants account for at least 1% of all packages purchased. List the state and the percentage.
 
 ```py
 %%pydough
@@ -961,7 +1004,7 @@ GRAPH(
 ).WHERE(COUNT(packs) > BACK(1).avg_packages_per_month)
 ```
 
-**Good Example #8**: Finds the 10 most frequent combinations of the state that the person lives in and the first letter of that person's name.
+**Good Example #8**: Find the 10 most frequent combinations of the state that the person lives in and the first letter of that person's name.
 
 ```py
 %%pydough
@@ -1012,7 +1055,7 @@ PARTITION(Addresses, by=state)
 PARTITION(People, name="ppl")
 ```
 
-**Bad Example #4**: Counts how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed ot be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+**Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed ot be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
 
 ```py
 %%pydough
@@ -1021,7 +1064,7 @@ PARTITION(Packages, name="packs", by=YEAR(order_date))(
 )
 ```
 
-**Bad Example #5**: Counts how many people live in each state. Invalid because `current_address.state` is not allowed to be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+**Bad Example #5**: Count how many people live in each state. Invalid because `current_address.state` is not allowed to be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
 
 ```py
 %%pydough
@@ -1052,7 +1095,7 @@ PARTITION(People(birth_year=YEAR(birth_date)), name="ppl", by=birth_year)(
 )
 ```
 
-**Bad Example #7**: For each person & year, counts how many times that person ordered a packaged in that year. This is invalid because doing `.PARTITION` after `People` is unsupported, since `People` is not a graph-level collection like `GRAPH(...)`.
+**Bad Example #7**: For each person & year, count how many times that person ordered a packaged in that year. This is invalid because doing `.PARTITION` after `People` is unsupported, since `People` is not a graph-level collection like `GRAPH(...)`.
 
 ```py
 %%pydough
@@ -1143,7 +1186,7 @@ The arguments to `NEXT` and `PREV` are as follows:
 
 If the entry `n` records before/after the current entry does not exist, then accessing anything from it returns null. Anything that can be done to the current context can also be done to the `PREV`/`NEXT` call (e.g. aggregating data from a plural sub-collection).
 
-**Good Example #1**: For each package, finds whether it was ordered by the same customer as the most recently ordered package before it.
+**Good Example #1**: For each package, find whether it was ordered by the same customer as the most recently ordered package before it.
 
 ```py
 %%pydough
@@ -1153,7 +1196,7 @@ Packages(
 )
 ```
 
-**Good Example #2**: Finds the average number of hours between every package ordered by every customer.
+**Good Example #2**: Find the average number of hours between every package ordered by every customer.
 
 ```py
 %%pydough
@@ -1167,7 +1210,7 @@ Customers(
 )
 ```
 
-**Good Example #3**: Finds out for each customer whether, if they were sorted by number of packages ordered, whether they live in the same state as any of the 3 people below them on the list.
+**Good Example #3**: Find out for each customer whether, if they were sorted by number of packages ordered, whether they live in the same state as any of the 3 people below them on the list.
 
 ```py
 %%pydough
@@ -1184,7 +1227,7 @@ Customers(
 )
 ```
 
-**Bad Example #1**: Finds the number of hours between each package and the previous package. This is invalid because the `by` argument is missing
+**Bad Example #1**: Find the number of hours between each package and the previous package. This is invalid because the `by` argument is missing
 
 ```py
 %%pydough
@@ -1193,7 +1236,7 @@ Packages(
 )
 ```
 
-**Bad Example #2**: Finds the number of hours between each package and the next package. This is invalid because the `by` argument is empty.
+**Bad Example #2**: Find the number of hours between each package and the next package. This is invalid because the `by` argument is empty.
 
 ```py
 %%pydough
@@ -1202,7 +1245,7 @@ Packages(
 )
 ```
 
-**Bad Example #3**: Finds the number of hours between each package and the 5th-previous package. This is invalid because the `by` argument is not a collation.
+**Bad Example #3**: Find the number of hours between each package and the 5th-previous package. This is invalid because the `by` argument is not a collation.
 
 ```py
 %%pydough
@@ -1211,7 +1254,7 @@ Packages(
 )
 ```
 
-**Bad Example #4**: Finds the number of hours between each package and a subsequent package. This is invalid because the `n` argument is not an integer.
+**Bad Example #4**: Find the number of hours between each package and a subsequent package. This is invalid because the `n` argument is not an integer.
 
 ```py
 %%pydough
@@ -1229,7 +1272,7 @@ Packages(
 )
 ```
 
-**Bad Example #6**: Finds the number of hours between each package and the previous package. This invalid because a property `.odate` is accessed that does not exist in the collection, therefore it doesn't exist in `PREV` either.
+**Bad Example #6**: Find the number of hours between each package and the previous package. This invalid because a property `.odate` is accessed that does not exist in the collection, therefore it doesn't exist in `PREV` either.
 
 ```py
 %%pydough
@@ -1245,7 +1288,7 @@ Packages(
 Packages.PREV(order_date.ASC())
 ```
 
-**Bad Example #8**: Finds the number of hours between each package and the previous package ordered by the customer. This invalid because the `levels` value is too large, since only 2 ancestor levels exist in `Customers.packages` (the graph, and `Customers`):
+**Bad Example #8**: Find the number of hours between each package and the previous package ordered by the customer. This invalid because the `levels` value is too large, since only 2 ancestor levels exist in `Customers.packages` (the graph, and `Customers`):
 
 ```py
 %%pydough
@@ -1270,7 +1313,7 @@ Additional keyword arguments can be supplied to `BEST` that change its behavior:
 - `allow_ties` (default=False): if True, changes the behavior to keep all records of the sub-collection that share the optimal values of the collation terms. If `allow_ties` is True, the `BEST` clause is no longer singular.
 - `n_best=True`(defaults=1): if an integer greater than 1, changes the behavior to keep the top `n_best` values of the sub-collection for each record of the parent collection (fewer if `n_best` records of the sub-collection do not exist). If `n_best` is greater than 1, the `BEST` clause is no longer singular. NOTE: `n_best` cannot be greater than 1 at the same time that `allow_ties` is True.
 
-**Good Example #1**: Finds the package id & zip code the package was shipped to for every package that was the first-ever purchase for the customer.
+**Good Example #1**: Find the package id & zip code the package was shipped to for every package that was the first-ever purchase for the customer.
 
 ```py
 %%pydough
@@ -1280,7 +1323,7 @@ Customers.BEST(packages, by=order_date.ASC())(
 )
 ```
 
-**Good Example #2**: For each customer, lists their ssn and the cost of the most recent package they have purchased.
+**Good Example #2**: For each customer, list their ssn and the cost of the most recent package they have purchased.
 
 ```py
 %%pydough
@@ -1290,7 +1333,7 @@ Customers(
 )
 ```
 
-**Good Example #3**: Finds the address in the state of New York with the most occupants, ties broken by address id. Note: the `GRAPH.` prefix is optional in this case, since it is implied if there is no prefix to the `BEST` call.
+**Good Example #3**: Find the address in the state of New York with the most occupants, ties broken by address id. Note: the `GRAPH.` prefix is optional in this case, since it is implied if there is no prefix to the `BEST` call.
 
 ```py
 %%pydough
@@ -1300,7 +1343,7 @@ addr_info = Addresses.WHERE(
 GRAPH.BEST(addr_info, by=(n_occupants.DESC(), address_id.ASC()))
 ```
 
-**Good Example #4**: For each customer, finds the number of people currently living in the address that they most recently shipped a package to.
+**Good Example #4**: For each customer, find the number of people currently living in the address that they most recently shipped a package to.
 
 ```py
 %%pydough
@@ -1311,7 +1354,7 @@ Customers(
 )
 ```
 
-**Good Example #5**: For each address that has occupants, lists out the first/last name of the person living in that address who has ordered the most packages, breaking ties in favor of the person with the smaller social security number. Also includes the city/state of the address, the number of people who live there, and the number of packages that person ordered.
+**Good Example #5**: For each address that has occupants, list out the first/last name of the person living in that address who has ordered the most packages, breaking ties in favor of the person with the smaller social security number. Also includes the city/state of the address, the number of people who live there, and the number of packages that person ordered.
 
 ```py
 %%pydough
@@ -1330,7 +1373,7 @@ Addresses.WHERE(HAS(current_occupants))(
 )
 ```
 
-**Good Example #6**: For each person, finds the total value of the 5 most recent packages they ordered.
+**Good Example #6**: For each person, find the total value of the 5 most recent packages they ordered.
 
 ```py
 %%pydough
@@ -1341,7 +1384,7 @@ People(
 )
 ```
 
-**Good Example #7**: For each address, finds the package most recently ordered by one of the current occupants of that address, including the email of the occupant who ordered it and the address' id. Notice that `BACK(1)` refers to `current_occupants` and `BACK(2)` refers to `Addresses` as if the packages were accessed as `Addresses.current_occupants.packages` instead of using `BEST`.
+**Good Example #7**: For each address, find the package most recently ordered by one of the current occupants of that address, including the email of the occupant who ordered it and the address' id. Notice that `BACK(1)` refers to `current_occupants` and `BACK(2)` refers to `Addresses` as if the packages were accessed as `Addresses.current_occupants.packages` instead of using `BEST`.
 
 ```py
 %%pydough
@@ -1354,42 +1397,42 @@ Addresses.most_recent_package(
 )
 ```
 
-**Bad Example #1**: For each person finds their best email. This is invalid because `email` is not a sub-collection of `People` (it is a scalar attribute, so there is only 1 `email` per-person).
+**Bad Example #1**: For each person find their best email. This is invalid because `email` is not a sub-collection of `People` (it is a scalar attribute, so there is only 1 `email` per-person).
 
 ```py
 %%pydough
 People(first_name, BEST(email, by=birth_date.DESC()))
 ```
 
-**Bad Example #2**: For each person finds their best package. This is invalid because the `by` argument is missing.
+**Bad Example #2**: For each person find their best package. This is invalid because the `by` argument is missing.
 
 ```py
 %%pydough
 People.BEST(packages)
 ```
 
-**Bad Example #3**: For each person finds their best package. This is invalid because the: `by` argument is not a collation
+**Bad Example #3**: For each person find their best package. This is invalid because the: `by` argument is not a collation
 
 ```py
 %%pydough
 People.BEST(packages, by=order_date)
 ```
 
-**Bad Example #4**: For each person finds their best package. This is invalid because the `by` argument is empty
+**Bad Example #4**: For each person find their best package. This is invalid because the `by` argument is empty
 
 ```py
 %%pydough
 People.BEST(packages, by=())
 ```
 
-**Bad Example #5**: For each person finds the 5 most recent packages they have ordered, allowing ties. This is invalid because `n_best` is greater than 1 at the same time that `allow_ties` is True.
+**Bad Example #5**: For each person find the 5 most recent packages they have ordered, allowing ties. This is invalid because `n_best` is greater than 1 at the same time that `allow_ties` is True.
 
 ```py
 %%pydough
 People.BEST(packages, by=order_date.DESC(), n_best=5, allow_ties=True)
 ```
 
-**Bad Example #6**: For each person, finds the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
+**Bad Example #6**: For each person, find the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
 
 ```py
 %%pydough
@@ -1397,7 +1440,7 @@ best_packages = BEST(packages, by=order_date.DESC(), n_best=10)
 People(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #7**: For each person, finds the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
+**Bad Example #7**: For each person, find the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
 
 ```py
 %%pydough
@@ -1405,7 +1448,7 @@ best_packages = BEST(packages, by=package_cost.DESC(), allow_ties=True)
 People(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #8**: For each address, finds the package most recently ordered by one of the current occupants of that address, including the address id of the address. This is invalid because `BACK(1)` refers to `current_occupants`, which does not have a field called `address_id`.
+**Bad Example #8**: For each address, find the package most recently ordered by one of the current occupants of that address, including the address id of the address. This is invalid because `BACK(1)` refers to `current_occupants`, which does not have a field called `address_id`.
 
 ```py
 %%pydough
@@ -1417,7 +1460,7 @@ Addresses.most_recent_package(
 )
 ```
 
-**Bad Example #9**: For each address finds the oldest occupant. This is invalid because the `BEST` clause is placed in the calc without accessing any of its attributes.
+**Bad Example #9**: For each address find the oldest occupant. This is invalid because the `BEST` clause is placed in the calc without accessing any of its attributes.
 
 ```py
 %%pydough
