@@ -51,35 +51,35 @@ There are also the following sub-collection relationships:
 
 The simplest PyDough code is scanning an entire collection. This is done by providing the name of the collection in the metadata. However, if that name is already used as a variable, then PyDough will not know to replace the name with the corresponding PyDough object.
 
-**Good Example #1**: Obtains every record of the `People` collection. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output.
+**Good Example #1**: Obtain every record of the `People` collection. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output.
 
 ```py
 %%pydough
 People
 ```
 
-**Good Example #2**: Obtains every record of the `Addresses` collection. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output.
+**Good Example #2**: Obtain every record of the `Addresses` collection. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output.
 
 ```py
 %%pydough
 GRAPH.Addresses
 ```
 
-**Good Example #3**: Obtains every record of the `Packages` collection. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`) is automatically included in the output.
+**Good Example #3**: Obtain every record of the `Packages` collection. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`) is automatically included in the output.
 
 ```py
 %%pydough
 Packages
 ```
 
-**Bad Example #1**: Obtains every record of the `Products` collection (there is no `Products` collection).
+**Bad Example #1**: Obtain every record of the `Products` collection (there is no `Products` collection).
 
 ```py
 %%pydough
 Products
 ```
 
-**Bad Example #2**: Obtains every record of the `Addresses` collection (but the name `Addresses` has been reassigned to a variable).
+**Bad Example #2**: Obtain every record of the `Addresses` collection (but the name `Addresses` has been reassigned to a variable).
 
 ```py
 %%pydough
@@ -87,7 +87,7 @@ Addresses = 42
 Addresses
 ```
 
-**Bad Example #3**: Obtains every record of the `Addresses` collection (but the graph name `HELLO` is the wrong graph name for this example).
+**Bad Example #3**: Obtain every record of the `Addresses` collection (but the graph name `HELLO` is the wrong graph name for this example).
 
 ```py
 %%pydough
@@ -589,7 +589,7 @@ packages_jan_2018 = Packages.WHERE(
 GRAPH(n_jan_2018=COUNT(selected_packages))
 ```
 
-**Good Example #6**: Counts how many people have don't have a first or last name that starts with A. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
+**Good Example #6**: Count how many people have don't have a first or last name that starts with A. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
@@ -599,7 +599,7 @@ selected_people = People.WHERE(
 GRAPH(n_people=COUNT(selected_people))
 ```
 
-**Good Example #7**: Counts how many people have a gmail or yahoo account. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
+**Good Example #7**: Count how many people have a gmail or yahoo account. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
@@ -609,7 +609,7 @@ gmail_or_yahoo = People.WHERE(
 GRAPH(n_gmail_or_yahoo=COUNT(gmail_or_yahoo))
 ```
 
-**Good Example #8**: Counts how many people were born in the 1980s. [See here](functions.md#comparisons) for more details on the valid/invalid use of comparisons in Python.
+**Good Example #8**: Count how many people were born in the 1980s. [See here](functions.md#comparisons) for more details on the valid/invalid use of comparisons in Python.
 
 ```py
 %%pydough
@@ -977,7 +977,7 @@ PARTITION(Addresses, name="addrs", by=(city, state))(
 )
 ```
 
-**Good Example #6**: Identifies the states whose current occupants account for at least 1% of all packages purchased. List the state and the percentage.
+**Good Example #6**: Identify the states whose current occupants account for at least 1% of all packages purchased. List the state and the percentage.
 
 ```py
 %%pydough
@@ -989,7 +989,7 @@ GRAPH(
 ).WHERE(pct_of_packages >= 1.0)
 ```
 
-**Good Example #7**: Identifies which months of the year have numbers of packages shipped in that month that are above the average for all months.
+**Good Example #7**: Identify which months of the year have numbers of packages shipped in that month that are above the average for all months.
 
 ```py
 %%pydough
@@ -1034,7 +1034,7 @@ PARTITION(people_info, name="ppl", by=(state, first_letter))(
 ).TOP_K(10, by=n_people.DESC())
 ```
 
-**Bad Example #1**: Partitions a collection `Products` that does not exist in the graph.
+**Bad Example #1**: Partition a collection `Products` that does not exist in the graph.
 
 ```py
 %%pydough
@@ -1084,7 +1084,7 @@ PARTITION(Addresses.current_occupants, name="ppl", by=(BACK(1).state, first_name
 ).TOP_K(10, by=n_people.DESC())
 ```
 
-**Bad Example #7**: Partitions people by their birth year to find the number of people born in each year. Invalid because the `email` property is referenced, which is not one of the properties accessible by the partition.
+**Bad Example #7**: Partition people by their birth year to find the number of people born in each year. Invalid because the `email` property is referenced, which is not one of the properties accessible by the partition.
 
 ```py
 %%pydough
@@ -1106,7 +1106,7 @@ People.PARTITION(packages(year=YEAR(order_date)), name="p", by=year)(
 )
 ```
 
-**Bad Example #8**: Partitions each address' current occupants by their birth year to get the number of people per birth year. This is invalid because the example includes a field `BACK(2).bar` which does not exist because the first ancestor of the partition is `GRAPH`, which does not have a second ancestor.
+**Bad Example #8**: Partition each address' current occupants by their birth year to get the number of people per birth year. This is invalid because the example includes a field `BACK(2).bar` which does not exist because the first ancestor of the partition is `GRAPH`, which does not have a second ancestor.
 
 ```py
 %%pydough
@@ -1118,7 +1118,7 @@ GRAPH.PARTITION(people_info, name="p", by=birth_year)(
 )
 ```
 
-**Bad Example #9**: Partitions the current occupants of each address by their birth year and filters to include only those born in years with at least 10,000 births. It then gets more information about people from those years. This query is invalid because, after accessing `.ppl`, the term `BACK(1).state` is used. This is not valid because, although the data that `.ppl` refers to (`people_info`) originally had access to `BACK(1).state`, that ancestry information was lost after partitioning `people_info`. Instead, `BACK(1)` now refers to the `PARTITION` clause, which does not have a state field.
+**Bad Example #9**: Partition the current occupants of each address by their birth year and filters to include only those born in years with at least 10,000 births. It then gets more information about people from those years. This query is invalid because, after accessing `.ppl`, the term `BACK(1).state` is used. This is not valid because, although the data that `.ppl` refers to (`people_info`) originally had access to `BACK(1).state`, that ancestry information was lost after partitioning `people_info`. Instead, `BACK(1)` now refers to the `PARTITION` clause, which does not have a state field.
 
 ```py
 %%pydough
@@ -1140,7 +1140,7 @@ GRAPH.PARTITION(people_info, name="ppl", by=birth_year).WHERE(
 
 Certain PyDough operations, such as specific filters, can cause plural data to become singular. In this case, PyDough will still ban the plural data from being treated as singular unless the `.SINGULAR()` modifier is used to tell PyDough that the data should be treated as singular. It is very important that this only be used if the user is certain that the data will be singular, since otherwise it can result in undefined behavior when the PyDough code is executed.
 
-**Good Example #1**: Accesses the package cost of the most recent package ordered by each person. This is valid because even though `.packages` is plural, the filter done on it will ensure that there is only one record for each record of `People`, so `.SINGULAR()` is valid.
+**Good Example #1**: Access the package cost of the most recent package ordered by each person. This is valid because even though `.packages` is plural, the filter done on it will ensure that there is only one record for each record of `People`, so `.SINGULAR()` is valid.
 
 ```py
 %%pydough
@@ -1156,7 +1156,7 @@ People(
 )
 ```
 
-**Good Example #2**: Accesses the email of the current occupant of each address that has the name `"John Smith"` (no middle name). This is valid if it is safe to assume that each address only has one current occupant named `"John Smith"` without a middle name.
+**Good Example #2**: Access the email of the current occupant of each address that has the name `"John Smith"` (no middle name). This is valid if it is safe to assume that each address only has one current occupant named `"John Smith"` without a middle name.
 
 ```py
 %%pydough
