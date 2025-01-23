@@ -197,7 +197,6 @@ ROOT(columns=[('O_ORDERPRIORITY', O_ORDERPRIORITY), ('ORDER_COUNT', ORDER_COUNT)
                 tpch_q5_output,
             ),
             id="tpch_q5",
-            marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
         pytest.param(
             (
@@ -552,7 +551,6 @@ ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(orderin
                 tpch_q21_output,
             ),
             id="tpch_q21",
-            marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
         pytest.param(
             (
@@ -562,7 +560,6 @@ ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(orderin
                 tpch_q22_output,
             ),
             id="tpch_q22",
-            marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
         pytest.param(
             (
