@@ -633,12 +633,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                _from=GlotFrom(
-                    mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
-                    )
-                ),
+                _from=GlotFrom(Table(this=Ident(this="table"))),
                 group_by=[Ident(this="b")],
             ),
             id="simple_distinct",
@@ -722,19 +717,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
+                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                group_by=[Ident(this="b")],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="b")],
-                        _from=GlotFrom(
-                            mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
-                            )
-                        ),
-                        where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=GlotFrom(Table(this=Ident(this="table"))),
                     )
                 ),
-                group_by=[Ident(this="b")],
             ),
             id="filter_before_aggregate",
         ),
@@ -838,12 +828,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                _from=GlotFrom(
-                    mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
-                    )
-                ),
+                _from=GlotFrom(Table(this=Ident(this="table"))),
                 group_by=[Ident(this="b")],
                 order_by=[Ident(this="b").desc(nulls_first=False)],
                 limit=mk_literal(10, False),
@@ -881,12 +866,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     mkglot(
                         expressions=[Ident(this="b")],
                         group_by=[Ident(this="b")],
-                        _from=GlotFrom(
-                            mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
-                            )
-                        ),
+                        _from=GlotFrom(Table(this=Ident(this="table"))),
                     )
                 ),
             ),
