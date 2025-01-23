@@ -51,35 +51,35 @@ There are also the following sub-collection relationships:
 
 The simplest PyDough code is scanning an entire collection. This is done by providing the name of the collection in the metadata. However, if that name is already used as a variable, then PyDough will not know to replace the name with the corresponding PyDough object.
 
-**Good Example #1**: obtains every record of the `People` collection. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output.
+**Good Example #1**: Obtains every record of the `People` collection. Every scalar property of `People` (`first_name`, `middle_name`, `last_name`, `ssn`, `birth_date`, `email`, `current_address_id`) is automatically included in the output.
 
 ```py
 %%pydough
 People
 ```
 
-**Good Example #2**: obtains every record of the `Addresses` collection. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output.
+**Good Example #2**: Obtains every record of the `Addresses` collection. The `GRAPH.` prefix is optional and implied when the term is a collection name in the graph. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output.
 
 ```py
 %%pydough
 GRAPH.Addresses
 ```
 
-**Good Example #3**: obtains every record of the `Packages` collection. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`) is automatically included in the output.
+**Good Example #3**: Obtains every record of the `Packages` collection. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`) is automatically included in the output.
 
 ```py
 %%pydough
 Packages
 ```
 
-**Bad Example #1**: obtains every record of the `Products` collection (there is no `Products` collection).
+**Bad Example #1**: Obtains every record of the `Products` collection (there is no `Products` collection).
 
 ```py
 %%pydough
 Products
 ```
 
-**Bad Example #2**: obtains every record of the `Addresses` collection (but the name `Addresses` has been reassigned to a variable).
+**Bad Example #2**: Obtains every record of the `Addresses` collection (but the name `Addresses` has been reassigned to a variable).
 
 ```py
 %%pydough
@@ -87,7 +87,7 @@ Addresses = 42
 Addresses
 ```
 
-**Bad Example #3**: obtains every record of the `Addresses` collection (but the graph name `HELLO` is the wrong graph name for this example).
+**Bad Example #3**: Obtains every record of the `Addresses` collection (but the graph name `HELLO` is the wrong graph name for this example).
 
 ```py
 %%pydough
@@ -99,7 +99,7 @@ HELLO.Addresses
 
 The next step in PyDough after accessing a collection is to access its sub-collections. Using the syntax `collection.subcollection`, you can traverse into every record of `subcollection` for each record in `collection`. This operation may change the cardinality if records of `collection` have multiple associated records in `subcollection`. Additionally, duplicate records may appear in the output if records in `subcollection` are linked to multiple records in `collection`.
 
-**Good Example #1**: for every person, obtains their current address. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output. A record from `Addresses` can be included multiple times if multiple different `People` records have it as their current address, or it could be missing entirely if no person has it as their current address.
+**Good Example #1**: For every person, obtains their current address. Every scalar property of `Addresses` (`address_id`, `street_number`, `street_name`, `apartment`, `zip_code`, `city`, `state`) is automatically included in the output. A record from `Addresses` can be included multiple times if multiple different `People` records have it as their current address, or it could be missing entirely if no person has it as their current address.
 
 ```py
 %%pydough
@@ -113,28 +113,28 @@ People.current_addresses
 GRAPH.Packages.customer
 ```
 
-**Good Example #3**: for every address, obtains all packages that someone who lives at that address has ordered. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`). Every record from `Packages` should be included at most once since every current occupant has a single address it maps back to, and every package has a single customer it maps back to.
+**Good Example #3**: For every address, obtains all packages that someone who lives at that address has ordered. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`). Every record from `Packages` should be included at most once since every current occupant has a single address it maps back to, and every package has a single customer it maps back to.
 
 ```py
 %%pydough
 Addresses.current_occupants.packages
 ```
 
-**Good Example #4**: for every person, obtains all packages they have ordered. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`). Every record from `Packages` should be included at most once since every package has a single customer it maps back to.
+**Good Example #4**: For every person, obtains all packages they have ordered. Every scalar property of `Packages` (`package_id`, `customer_ssn`, `shipping_address_id`, `billing_address_id`, `order_date`, `arrival_date`, `package_cost`). Every record from `Packages` should be included at most once since every package has a single customer it maps back to.
 
 ```py
 %%pydough
 People.packages
 ```
 
-**Bad Example #1**: for every address, obtains all people who used to live there. This is invalid because the `Addresses` collection does not have a `former_occupants` property.
+**Bad Example #1**: For every address, obtains all people who used to live there. This is invalid because the `Addresses` collection does not have a `former_occupants` property.
 
 ```py
 %%pydough
 Addresses.former_occupants
 ```
 
-**Bad Example #2**: for every package, obtains all addresses it was shipped to. This is invalid because the `Packages` collection does not have a `shipping_addresses` property (it does have a `shipping_address` property).
+**Bad Example #2**: For every package, obtains all addresses it was shipped to. This is invalid because the `Packages` collection does not have a `shipping_addresses` property (it does have a `shipping_address` property).
 
 ```py
 %%pydough
@@ -322,7 +322,7 @@ People(
 )
 ```
 
-**Good Example #2**: for every person, find the total value of all packages they ordered in February of any year, as well as the number of all such packages, the largest value of any such package, and the percentage of those packages that were specifically on Valentine's day
+**Good Example #2**: For every person, find the total value of all packages they ordered in February of any year, as well as the number of all such packages, the largest value of any such package, and the percentage of those packages that were specifically on Valentine's day
 
 ```py
 %%pydough
