@@ -687,14 +687,14 @@ If there are multiple `ORDER_BY` terms, the last one is the one that takes prece
 > [!WARNING]
 > In the current version of PyDough, the behavior when the expressions inside an `ORDER_BY` clause are not collation expressions with `.ASC()` or `.DESC()` is undefined/unsupported.
 
-**Good Example #1**: Orders every person alphabetically by last name, then first name, then middle name (people with no middle name going last).
+**Good Example #1**: Order every person alphabetically by last name, then first name, then middle name (people with no middle name going last).
 
 ```py
 %%pydough
 People.ORDER_BY(last_name.ASC(), first_name.ASC(), middle_name.ASC(na_pos="last"))
 ```
 
-**Good Example #2**: For every person list their ssn & how many packages they have ordered, and orders them from highest number of orders to lowest, breaking ties in favor of whoever is oldest. 
+**Good Example #2**: For every person list their SSN & how many packages they have ordered, and order them from highest number of orders to lowest, breaking ties in favor of whoever is oldest. 
 
 ```py
 %%pydough
@@ -705,7 +705,7 @@ People(
 )
 ```
 
-**Good Example #3**: Find every address that has at least 1 person living in it and sorts them highest-to-lowest by number of occupants, with ties broken by address id in ascending order. 
+**Good Example #3**: Find every address that has at least 1 person living in it and sort them highest-to-lowest by number of occupants, with ties broken by address id in ascending order. 
 
 ```py
 %%pydough
@@ -716,7 +716,7 @@ Addresses.WHERE(
 )
 ```
 
-**Good Example #4**: Sorts every person alphabetically by the state they live in, then the city they live in, then by their ssn. People without a current address should go last.
+**Good Example #4**: Sort every person alphabetically by the state they live in, then the city they live in, then by their ssn. People without a current address should go last.
 
 ```py
 %%pydough
@@ -747,14 +747,14 @@ Addresses.WHERE(
 People.WHERE(PERCENTILE(by=COUNT(packages).ASC()) == 100)
 ```
 
-**Bad Example #1**: Sorts each person by their account balance in descending order. This is invalid because the `People` collection does not have an `account_balance` property.
+**Bad Example #1**: Sort each person by their account balance in descending order. This is invalid because the `People` collection does not have an `account_balance` property.
 
 ```py
 %%pydough
 People.ORDER_BY(account_balance.DESC())
 ```
 
-**Bad Example #2**: Sorts each address by the birth date date of the people who live there. This is invalid because `current_occupants` is a plural property of `Addresses`, so `current_occupants.birth_date` is plural and cannot be used as an ordering term unless aggregated.
+**Bad Example #2**: Sort each address by the birth date of the people who live there. This is invalid because `current_occupants` is a plural property of `Addresses`, so `current_occupants.birth_date` is plural and cannot be used as an ordering term unless aggregated.
 
 ```py
 %%pydough
@@ -787,14 +787,14 @@ Addresses.WHERE(
 )
 ```
 
-**Bad Example #5**: Sorts every person by their first name. This is invalid because no `.ASC()` or `.DESC()` term is provided.
+**Bad Example #5**: Sort every person by their first name. This is invalid because no `.ASC()` or `.DESC()` term is provided.
 
 ```py
 %%pydough
 People.ORDER_BY(first_name)
 ```
 
-**Bad Example #6**: Sorts every person. This is invalid because no collation terms are provided.
+**Bad Example #6**: Sort every person. This is invalid because no collation terms are provided.
 
 ```py
 %%pydough
@@ -851,7 +851,7 @@ People(
 ).TOP_K(3, by=total_package_cost.DESC())
 ```
 
-**Bad Example #1**: Find the 5 people with the lowest GPA. This is invalid because the `People` collection does not have a `gpa` property.
+**Bad Example #1**: Find the 5 people with the lowest GPAs. This is invalid because the `People` collection does not have a `gpa` property.
 
 ```py
 %%pydough
