@@ -144,7 +144,7 @@ Packages.shipping_addresses
 <!-- TOC --><a name="calc"></a>
 ### CALC
 
-The examples so far just show selecting all properties from records of a collection. Most of the time, an analytical question will only want a subset of the properties, may want to rename them, and may want to derive new properties via calculated expressions. The way to do this with a CALC term, which is done by following a PyDough collection with parenthesis containing the expressions that should be included.
+The examples so far just show selecting all properties from records of a collection. Most of the time, an analytical question will only want a subset of the properties, may want to rename them, and may want to derive new properties via calculated expressions. The way to do this is with a `CALC` term, which is done by following a PyDough collection with parenthesis containing the expressions that should be included.
 
 These expressions can be positional arguments or keyword arguments. Keyword arguments use the name of the keyword as the name of the output expression. Positional arguments use the name of the expression, if one exists, otherwise an arbitrary name is chosen.
 
@@ -159,14 +159,14 @@ Once a CALC term is created, all terms of the current collection still exist eve
 
 A CALC can also be done on the graph itself to create a collection with 1 row and columns corresponding to the properties inside the CALC. This is useful when aggregating an entire collection globally instead of with regards to a parent collection.
 
-**Good Example #1**: For every person, fetches just their first name & last name.
+**Good Example #1**: For every person, fetch just their first name and last name.
 
 ```py
 %%pydough
 People(first_name, last_name)
 ```
 
-**Good Example #2**: For every package, fetches the package id, the first & last name of the person who ordered it, and the state that it was shipped to. Also includes a field named `secret_key` that is always equal to the string `"alphabet soup"`.
+**Good Example #2**: For every package, fetch the package id, the first and last name of the person who ordered it, and the state that it was shipped to. Also, include a field named `secret_key` that is always equal to the string `"alphabet soup"`.
 
 ```py
 %%pydough
@@ -440,7 +440,7 @@ GRAPH(x=BACK(1).foo)
 People(y=BACK(1).bar)
 ```
 
-**Bad Example #3**: The 1st ancestor of `People` is `GRAPH` which does not have an ancestor, so there can be no 2nd ancestor of `People`.
+**Bad Example #3**: The 1st ancestor of `People` is `GRAPH` which does not have an ancestor. Therefore, `People` cannot have a 2nd ancestor.
 
 ```py
 %%pydough
@@ -680,7 +680,7 @@ People.WHERE(MONTH(packages.order_date) == 6)
 
 Another operation that can be done onto PyDough collections is sorting them. This is done by appending a collection with `.ORDER_BY(...)` which will order the collection by the collation terms between the parenthesis. The collation terms must be 1+ expressions that can be inside of a CALC term (singular expressions with regards to the current context), each decorated with information making it usable as a collation.
 
-An expression becomes a collation expression when it is appended with `.ASC()` (indicating that the expression should be used to sort in ascending order) or `.DESC()` (indicating that the expression should be used to sort in descending order). Both `.ASC()` and `.DESC()` take in an optional argument `na_pos` indicating where to place null values. This keyword argument can be either `"first"` or `"last"`, and the default is `"first"` for `.ASC()` and `"last"` for `.DESC()`. The way the sorting works is that it orders by hte first collation term provided, and in cases of ties it moves on to the second collation term, and if there are ties in that it moves on to the third, and so on until there are no more terms to sort by, at which point the ties are broken arbitrarily.
+An expression becomes a collation expression when it is appended with `.ASC()` (indicating that the expression should be used to sort in ascending order) or `.DESC()` (indicating that the expression should be used to sort in descending order). Both `.ASC()` and `.DESC()` take in an optional argument `na_pos` indicating where to place null values. This keyword argument can be either `"first"` or `"last"`, and the default is `"first"` for `.ASC()` and `"last"` for `.DESC()`. The way the sorting works is that it orders by the first collation term provided, and in cases of ties it moves on to the second collation term, and if there are ties in that it moves on to the third, and so on until there are no more terms to sort by, at which point the ties are broken arbitrarily.
 
 If there are multiple `ORDER_BY` terms, the last one is the one that takes precedence. The terms in the collection are unchanged by the `ORDER_BY` clause, since the only change is the order of the records.
 
@@ -1118,7 +1118,7 @@ GRAPH.PARTITION(people_info, name="p", by=birth_year)(
 )
 ```
 
-**Bad Example #9**: Partitions each address' current occupants by their birth year and filters to only include people born in years where at least 10000 people were born, then gets more information of people from those years. This is invalid because after accessing `.ppl`, the term `BACK(1).state` is used. This is not valid because even though the data that `.ppl` refers to (`people_info`) has access to `BACK(1).state`, that ancestry information was lost after partitioning `people_info`. Instead, `BACK(1)` refers to the `PARTITION` clause, which does not have a `state` field.
+**Bad Example #9**: Partitions the current occupants of each address by their birth year and filters to include only those born in years with at least 10,000 births. It then gets more information about people from those years. This query is invalid because, after accessing `.ppl`, the term `BACK(1).state` is used. This is not valid because, although the data that `.ppl` refers to (`people_info`) originally had access to `BACK(1).state`, that ancestry information was lost after partitioning `people_info`. Instead, `BACK(1)` now refers to the `PARTITION` clause, which does not have a state field.
 
 ```py
 %%pydough
