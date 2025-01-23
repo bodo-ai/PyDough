@@ -203,7 +203,7 @@ People(
 )
 ```
 
-**Good Example #5**: For every person, find the year from the most recent package they purchased, and from the first package they ever purchased.
+**Good Example #5**: For every person, find the year of the most recent package they purchased and the year of their first package purchase.
 
 ```py
 %%pydough
