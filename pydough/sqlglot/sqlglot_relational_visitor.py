@@ -397,7 +397,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         else:
             # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
             if (
-                "group_by" in input_expr.args
+                "group" in input_expr.args
                 or "where" in input_expr.args
                 or "qualify" in input_expr.args
                 or "order" in input_expr.args
@@ -428,7 +428,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         select_cols = keys + aggregations
         query: Select
         if (
-            "group_by" in input_expr.args
+            "group" in input_expr.args
             or "qualify" in input_expr.args
             or "order" in input_expr.args
             or "limit" in input_expr.args

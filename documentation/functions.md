@@ -85,7 +85,7 @@ Customers(
 ```
 
 > [!WARNING]
-> Chained inequalities, like `a <= b <= c`, can cause undefined/incorrect behavior in PyDough. Instead, use expressions like `(a <= b) & (b <= c)`.
+> Chained inequalities, like `a <= b <= c`, can cause undefined/incorrect behavior in PyDough. Instead, use expressions like `(a <= b) & (b <= c)`, or the [MONOTONIC](#monotonic) function.
 
 <!-- TOC --><a name="logical"></a>
 ### Logical

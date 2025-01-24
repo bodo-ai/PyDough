@@ -110,6 +110,7 @@ def regional_suppliers_percentile():
 
 
 def function_sampler():
+    # Examples of using different functions
     return (
         Regions.nations.customers(
             a=JOIN_STRINGS("-", BACK(2).name, BACK(1).name, name[16:]),
@@ -121,3 +122,116 @@ def function_sampler():
         .WHERE(MONOTONIC(0.0, acctbal, 100.0))
         .TOP_K(10, by=address.ASC())
     )
+
+
+def loop_generated_terms():
+    # Using a loop & dictionary to generate PyDough calc terms
+    terms = {"name": name}
+    for i in range(3):
+        terms[f"interval_{i}"] = COUNT(
+            customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))
+        )
+    return Nations(**terms)
+
+
+def function_defined_terms():
+    # Using a regular function to generate PyDough calc terms
+    def interval_n(n):
+        return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
+
+    return Nations(
+        name,
+        interval_7=interval_n(7),
+        interval_4=interval_n(4),
+        interval_13=interval_n(13),
+    )
+
+
+def lambda_defined_terms():
+    # Using a lambda function to generate PyDough calc terms
+    interval_n = lambda n: COUNT(
+        customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000))
+    )
+
+    return Nations(
+        name,
+        interval_7=interval_n(7),
+        interval_4=interval_n(4),
+        interval_13=interval_n(13),
+    )
+
+
+def dict_comp_terms():
+    # Using a dictionary comprehension to generate PyDough calc terms
+    terms = {"name": name}
+    terms.update(
+        {
+            f"interval_{i}": COUNT(
+                customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))
+            )
+            for i in range(3)
+        }
+    )
+    return Nations(**terms)
+
+
+def list_comp_terms():
+    # Using a list comprehension to generate PyDough calc terms
+    terms = [name]
+    terms.extend(
+        [
+            COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+            for i in range(3)
+        ]
+    )
+    return Nations(**terms)
+
+
+def set_comp_terms():
+    # Using a set comprehension to generate PyDough calc terms
+    terms = [name]
+    terms.extend(
+        set(
+            {
+                COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+                for i in range(3)
+            }
+        )
+    )
+    return Nations(**terms)
+
+
+def generator_comp_terms():
+    # Using a generator comprehension to generate PyDough calc terms
+    terms = {"name": name}
+    for term, value in (
+        (
+            f"interval_{i}",
+            COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))),
+        )
+        for i in range(3)
+    ):
+        terms[term] = value
+    return Nations(**terms)
+
+
+def agg_partition():
+    # Doing a global aggregation on the output of a partition aggregation
+    yearly_data = PARTITION(Orders(year=YEAR(order_date)), name="orders", by=year)(
+        n_orders=COUNT(orders)
+    )
+    return TPCH(best_year=MAX(yearly_data.n_orders))
+
+
+def double_partition():
+    # Doing a partition aggregation on the output of a partition aggregation
+    year_month_data = PARTITION(
+        Orders(year=YEAR(order_date), month=MONTH(order_date)),
+        name="orders",
+        by=(year, month),
+    )(n_orders=COUNT(orders))
+    return PARTITION(
+        year_month_data,
+        name="months",
+        by=year,
+    )(year, best_month=MAX(months.n_orders))

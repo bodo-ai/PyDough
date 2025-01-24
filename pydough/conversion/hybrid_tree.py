@@ -874,6 +874,8 @@ class HybridTree:
         self._is_connection_root: bool = is_connection_root
         self._agg_keys: list[HybridExpr] | None = None
         self._join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
+        if isinstance(root_operation, HybridPartition):
+            self._join_keys = []
 
     def __repr__(self):
         lines = []
