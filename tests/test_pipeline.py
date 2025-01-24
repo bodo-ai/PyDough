@@ -27,6 +27,7 @@ from simple_pydough_functions import (
     regional_suppliers_percentile,
     simple_filter_top_five,
     simple_scan_top_five,
+    triple_partition,
 )
 from test_utils import (
     graph_fetcher,
@@ -377,25 +378,17 @@ ROOT(columns=[('L_SHIPMODE', L_SHIPMODE), ('HIGH_LINE_COUNT', HIGH_LINE_COUNT), 
             (
                 impl_tpch_q13,
                 """
-ROOT(columns=[('C_COUNT', C_COUNT), ('CUSTDIST', CUSTDIST)], orderings=[(ordering_3):desc_last, (ordering_4):desc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'CUSTDIST': CUSTDIST, 'C_COUNT': C_COUNT, 'ordering_3': ordering_3, 'ordering_4': ordering_4}, orderings=[(ordering_3):desc_last, (ordering_4):desc_last])
-  PROJECT(columns={'CUSTDIST': CUSTDIST, 'C_COUNT': C_COUNT, 'ordering_3': CUSTDIST, 'ordering_4': C_COUNT})
-   PROJECT(columns={'CUSTDIST': DEFAULT_TO(agg_2, 0:int64), 'C_COUNT': num_non_special_orders})
-    JOIN(conditions=[t0.num_non_special_orders == t1.num_non_special_orders], types=['left'], columns={'agg_2': t1.agg_2, 'num_non_special_orders': t0.num_non_special_orders})
-     AGGREGATE(keys={'num_non_special_orders': num_non_special_orders}, aggregations={})
-      PROJECT(columns={'num_non_special_orders': DEFAULT_TO(agg_0, 0:int64)})
-       JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_0': t1.agg_0})
-        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
-        AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': COUNT()})
-         FILTER(condition=NOT(LIKE(comment, '%special%requests%':string)), columns={'customer_key': customer_key})
-          SCAN(table=tpch.ORDERS, columns={'comment': o_comment, 'customer_key': o_custkey})
-     AGGREGATE(keys={'num_non_special_orders': num_non_special_orders}, aggregations={'agg_2': COUNT()})
-      PROJECT(columns={'num_non_special_orders': DEFAULT_TO(agg_1, 0:int64)})
-       JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_1': t1.agg_1})
-        SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
-        AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_1': COUNT()})
-         FILTER(condition=NOT(LIKE(comment, '%special%requests%':string)), columns={'customer_key': customer_key})
-          SCAN(table=tpch.ORDERS, columns={'comment': o_comment, 'customer_key': o_custkey})
+ROOT(columns=[('C_COUNT', C_COUNT), ('CUSTDIST', CUSTDIST)], orderings=[(ordering_1):desc_last, (ordering_2):desc_last])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'CUSTDIST': CUSTDIST, 'C_COUNT': C_COUNT, 'ordering_1': ordering_1, 'ordering_2': ordering_2}, orderings=[(ordering_1):desc_last, (ordering_2):desc_last])
+  PROJECT(columns={'CUSTDIST': CUSTDIST, 'C_COUNT': C_COUNT, 'ordering_1': CUSTDIST, 'ordering_2': C_COUNT})
+   PROJECT(columns={'CUSTDIST': DEFAULT_TO(agg_0, 0:int64), 'C_COUNT': num_non_special_orders})
+    AGGREGATE(keys={'num_non_special_orders': num_non_special_orders}, aggregations={'agg_0': COUNT()})
+     PROJECT(columns={'num_non_special_orders': DEFAULT_TO(agg_0, 0:int64)})
+      JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_0': t1.agg_0})
+       SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
+       AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': COUNT()})
+        FILTER(condition=NOT(LIKE(comment, '%special%requests%':string)), columns={'customer_key': customer_key})
+         SCAN(table=tpch.ORDERS, columns={'comment': o_comment, 'customer_key': o_custkey})
 """,
                 tpch_q13_output,
             ),
@@ -422,14 +415,14 @@ ROOT(columns=[('PROMO_REVENUE', PROMO_REVENUE)], orderings=[])
             (
                 impl_tpch_q15,
                 """
-ROOT(columns=[('S_SUPPKEY', S_SUPPKEY), ('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS), ('S_PHONE', S_PHONE), ('TOTAL_REVENUE', TOTAL_REVENUE)], orderings=[(ordering_3):asc_first])
- PROJECT(columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'S_SUPPKEY': S_SUPPKEY, 'TOTAL_REVENUE': TOTAL_REVENUE, 'ordering_3': S_SUPPKEY})
+ROOT(columns=[('S_SUPPKEY', S_SUPPKEY), ('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS), ('S_PHONE', S_PHONE), ('TOTAL_REVENUE', TOTAL_REVENUE)], orderings=[(ordering_2):asc_first])
+ PROJECT(columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'S_SUPPKEY': S_SUPPKEY, 'TOTAL_REVENUE': TOTAL_REVENUE, 'ordering_2': S_SUPPKEY})
   FILTER(condition=TOTAL_REVENUE == max_revenue, columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'S_PHONE': S_PHONE, 'S_SUPPKEY': S_SUPPKEY, 'TOTAL_REVENUE': TOTAL_REVENUE})
-   PROJECT(columns={'S_ADDRESS': address, 'S_NAME': name, 'S_PHONE': phone, 'S_SUPPKEY': key, 'TOTAL_REVENUE': DEFAULT_TO(agg_2, 0:int64), 'max_revenue': max_revenue})
-    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'address': t0.address, 'agg_2': t1.agg_2, 'key': t0.key, 'max_revenue': t0.max_revenue, 'name': t0.name, 'phone': t0.phone})
+   PROJECT(columns={'S_ADDRESS': address, 'S_NAME': name, 'S_PHONE': phone, 'S_SUPPKEY': key, 'TOTAL_REVENUE': DEFAULT_TO(agg_1, 0:int64), 'max_revenue': max_revenue})
+    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'address': t0.address, 'agg_1': t1.agg_1, 'key': t0.key, 'max_revenue': t0.max_revenue, 'name': t0.name, 'phone': t0.phone})
      JOIN(conditions=[True:bool], types=['inner'], columns={'address': t1.address, 'key': t1.key, 'max_revenue': t0.max_revenue, 'name': t1.name, 'phone': t1.phone})
-      PROJECT(columns={'max_revenue': agg_1})
-       AGGREGATE(keys={}, aggregations={'agg_1': MAX(total_revenue)})
+      PROJECT(columns={'max_revenue': agg_0})
+       AGGREGATE(keys={}, aggregations={'agg_0': MAX(total_revenue)})
         PROJECT(columns={'total_revenue': DEFAULT_TO(agg_0, 0:int64)})
          JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_0': t1.agg_0})
           SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey})
@@ -437,7 +430,7 @@ ROOT(columns=[('S_SUPPKEY', S_SUPPKEY), ('S_NAME', S_NAME), ('S_ADDRESS', S_ADDR
            FILTER(condition=ship_date >= datetime.date(1996, 1, 1):date & ship_date < datetime.date(1996, 4, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'supplier_key': supplier_key})
             SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
       SCAN(table=tpch.SUPPLIER, columns={'address': s_address, 'key': s_suppkey, 'name': s_name, 'phone': s_phone})
-     AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_2': SUM(extended_price * 1:int64 - discount)})
+     AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_1': SUM(extended_price * 1:int64 - discount)})
       FILTER(condition=ship_date >= datetime.date(1996, 1, 1):date & ship_date < datetime.date(1996, 4, 1):date, columns={'discount': discount, 'extended_price': extended_price, 'supplier_key': supplier_key})
        SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
 """,
@@ -472,8 +465,8 @@ ROOT(columns=[('P_BRAND', P_BRAND), ('P_TYPE', P_TYPE), ('P_SIZE', P_SIZE), ('SU
                 impl_tpch_q17,
                 """
 ROOT(columns=[('AVG_YEARLY', AVG_YEARLY)], orderings=[])
- PROJECT(columns={'AVG_YEARLY': DEFAULT_TO(agg_1, 0:int64) / 7.0:float64})
-  AGGREGATE(keys={}, aggregations={'agg_1': SUM(extended_price)})
+ PROJECT(columns={'AVG_YEARLY': DEFAULT_TO(agg_0, 0:int64) / 7.0:float64})
+  AGGREGATE(keys={}, aggregations={'agg_0': SUM(extended_price)})
    FILTER(condition=quantity < 0.2:float64 * avg_quantity, columns={'extended_price': extended_price})
     JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'avg_quantity': t0.avg_quantity, 'extended_price': t1.extended_price, 'quantity': t1.quantity})
      PROJECT(columns={'avg_quantity': agg_0, 'key': key})
@@ -528,16 +521,16 @@ ROOT(columns=[('REVENUE', REVENUE)], orderings=[])
             (
                 impl_tpch_q20,
                 """
-ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(ordering_2):asc_first])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'ordering_2': ordering_2}, orderings=[(ordering_2):asc_first])
-  PROJECT(columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'ordering_2': S_NAME})
-   FILTER(condition=name_3 == 'CANADA':string & DEFAULT_TO(agg_1, 0:int64) > 0:int64, columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME})
-    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'S_ADDRESS': t0.S_ADDRESS, 'S_NAME': t0.S_NAME, 'agg_1': t1.agg_1, 'name_3': t0.name_3})
+ROOT(columns=[('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS)], orderings=[(ordering_1):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'ordering_1': ordering_1}, orderings=[(ordering_1):asc_first])
+  PROJECT(columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME, 'ordering_1': S_NAME})
+   FILTER(condition=name_3 == 'CANADA':string & DEFAULT_TO(agg_0, 0:int64) > 0:int64, columns={'S_ADDRESS': S_ADDRESS, 'S_NAME': S_NAME})
+    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'S_ADDRESS': t0.S_ADDRESS, 'S_NAME': t0.S_NAME, 'agg_0': t1.agg_0, 'name_3': t0.name_3})
      JOIN(conditions=[t0.nation_key == t1.key], types=['left'], columns={'S_ADDRESS': t0.S_ADDRESS, 'S_NAME': t0.S_NAME, 'key': t0.key, 'name_3': t1.name})
       PROJECT(columns={'S_ADDRESS': address, 'S_NAME': name, 'key': key, 'nation_key': nation_key})
        SCAN(table=tpch.SUPPLIER, columns={'address': s_address, 'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey})
       SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-     AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_1': COUNT()})
+     AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': COUNT()})
       FILTER(condition=STARTSWITH(name, 'forest':string) & availqty > DEFAULT_TO(agg_0, 0:int64) * 0.5:float64, columns={'supplier_key': supplier_key})
        JOIN(conditions=[t0.key == t1.part_key], types=['left'], columns={'agg_0': t1.agg_0, 'availqty': t0.availqty, 'name': t0.name, 'supplier_key': t0.supplier_key})
         JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'availqty': t0.availqty, 'key': t1.key, 'name': t1.name, 'supplier_key': t0.supplier_key})
@@ -977,8 +970,8 @@ ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d), ('e', e)], orderings=[(ord
                 agg_partition,
                 """
 ROOT(columns=[('best_year', best_year)], orderings=[])
- PROJECT(columns={'best_year': agg_1})
-  AGGREGATE(keys={}, aggregations={'agg_1': MAX(n_orders)})
+ PROJECT(columns={'best_year': agg_0})
+  AGGREGATE(keys={}, aggregations={'agg_0': MAX(n_orders)})
    PROJECT(columns={'n_orders': DEFAULT_TO(agg_0, 0:int64)})
     AGGREGATE(keys={'year': year}, aggregations={'agg_0': COUNT()})
      PROJECT(columns={'year': YEAR(order_date)})
@@ -997,17 +990,12 @@ ROOT(columns=[('best_year', best_year)], orderings=[])
                 double_partition,
                 """
 ROOT(columns=[('year', year), ('best_month', best_month)], orderings=[])
- PROJECT(columns={'best_month': agg_2, 'year': year})
-  JOIN(conditions=[t0.year == t1.year], types=['left'], columns={'agg_2': t1.agg_2, 'year': t0.year})
-   AGGREGATE(keys={'year': year}, aggregations={})
-    AGGREGATE(keys={'month': month, 'year': year}, aggregations={})
+ PROJECT(columns={'best_month': agg_0, 'year': year})
+  AGGREGATE(keys={'year': year}, aggregations={'agg_0': MAX(n_orders)})
+   PROJECT(columns={'n_orders': DEFAULT_TO(agg_0, 0:int64), 'year': year})
+    AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_0': COUNT()})
      PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
       SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
-   AGGREGATE(keys={'year': year}, aggregations={'agg_2': MAX(n_orders)})
-    PROJECT(columns={'n_orders': DEFAULT_TO(agg_1, 0:int64), 'year': year})
-     AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_1': COUNT()})
-      PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})
-       SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
                 """,
                 lambda: pd.DataFrame(
                     {
@@ -1017,6 +1005,62 @@ ROOT(columns=[('year', year), ('best_month', best_month)], orderings=[])
                 ),
             ),
             id="double_partition",
+        ),
+        pytest.param(
+            (
+                triple_partition,
+                """
+ROOT(columns=[('supp_region', supp_region), ('avg_percentage', avg_percentage)], orderings=[(ordering_1):asc_first])
+ PROJECT(columns={'avg_percentage': avg_percentage, 'ordering_1': supp_region, 'supp_region': supp_region})
+  PROJECT(columns={'avg_percentage': agg_0, 'supp_region': supp_region})
+   AGGREGATE(keys={'supp_region': supp_region}, aggregations={'agg_0': AVG(percentage)})
+    PROJECT(columns={'percentage': 100.0:float64 * agg_0 / DEFAULT_TO(agg_1, 0:int64), 'supp_region': supp_region})
+     AGGREGATE(keys={'cust_region': cust_region, 'supp_region': supp_region}, aggregations={'agg_0': MAX(n_instances), 'agg_1': SUM(n_instances)})
+      PROJECT(columns={'cust_region': cust_region, 'n_instances': DEFAULT_TO(agg_0, 0:int64), 'supp_region': supp_region})
+       AGGREGATE(keys={'cust_region': cust_region, 'part_type': part_type, 'supp_region': supp_region}, aggregations={'agg_0': COUNT()})
+        PROJECT(columns={'cust_region': name_15, 'part_type': part_type, 'supp_region': supp_region})
+         JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'name_15': t1.name_15, 'part_type': t0.part_type, 'supp_region': t0.supp_region})
+          FILTER(condition=YEAR(order_date) == 1992:int64, columns={'customer_key': customer_key, 'part_type': part_type, 'supp_region': supp_region})
+           JOIN(conditions=[t0.order_key == t1.key], types=['inner'], columns={'customer_key': t1.customer_key, 'order_date': t1.order_date, 'part_type': t0.part_type, 'supp_region': t0.supp_region})
+            PROJECT(columns={'order_key': order_key, 'part_type': part_type, 'supp_region': name_7})
+             JOIN(conditions=[t0.supplier_key == t1.key], types=['left'], columns={'name_7': t1.name_7, 'order_key': t0.order_key, 'part_type': t0.part_type})
+              FILTER(condition=MONTH(ship_date) == 6:int64 & YEAR(ship_date) == 1992:int64, columns={'order_key': order_key, 'part_type': part_type, 'supplier_key': supplier_key})
+               JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'order_key': t1.order_key, 'part_type': t0.part_type, 'ship_date': t1.ship_date, 'supplier_key': t1.supplier_key})
+                FILTER(condition=STARTSWITH(container, 'SM':string), columns={'key': key, 'part_type': part_type})
+                 SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'part_type': p_type})
+                SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'ship_date': l_shipdate, 'supplier_key': l_suppkey})
+              JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_7': t1.name})
+               JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+                SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+                SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+               SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+            SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+          JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_15': t1.name})
+           JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})
+            SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
+            SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+           SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+                """,
+                lambda: pd.DataFrame(
+                    {
+                        "supp_region": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "avg_percentage": [
+                            1.8038152,
+                            1.9968418,
+                            1.6850716,
+                            1.7673618,
+                            1.7373118,
+                        ],
+                    }
+                ),
+            ),
+            id="triple_partition",
         ),
     ],
 )

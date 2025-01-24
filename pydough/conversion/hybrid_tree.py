@@ -1231,7 +1231,16 @@ class HybridTranslator:
             connection index to use.
         """
         for child_idx, child in enumerate(child_operator.children):
+            # Build the hybrid tree for the child. Before doing so, reset the
+            # alias counter to 0 to ensure that identical subtrees are named
+            # in the same manner. Afterwards, reset the alias counter to its
+            # value within this context.
+            snapshot: int = self.alias_counter
+            self.alias_counter = 0
             subtree: HybridTree = self.make_hybrid_tree(child, hybrid)
+            self.alias_counter = snapshot
+            # Infer how the child is used by the current operation based on
+            # the expressions that the operator uses.
             reference_types: set[ConnectionType] = set()
             match child_operator:
                 case Where():
@@ -1248,6 +1257,10 @@ class HybridTranslator:
                         self.identify_connection_types(expr, child_idx, reference_types)
                 case PartitionBy():
                     reference_types.add(ConnectionType.AGGREGATION)
+            # Combine the various references to the child to identify the type
+            # of connection and add the child. If it already exists, the index
+            # of the existing child will be used instead, but the connection
+            # type will be updated to reflect the new invocation of the child.
             if len(reference_types) == 0:
                 raise ValueError(
                     f"Bad call to populate_children: child {child_idx} of {child_operator} is never used"

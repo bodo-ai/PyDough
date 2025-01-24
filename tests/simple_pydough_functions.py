@@ -235,3 +235,38 @@ def double_partition():
         name="months",
         by=year,
     )(year, best_month=MAX(months.n_orders))
+
+
+def triple_partition():
+    # Doing three layers of partitioned aggregation. Goal of the question:
+    # for each region, calculate the average percentage of purchases made from
+    # suppliers in that region belonging to the most common part type shipped
+    # from the supplier region to the customer region, averaging across all
+    # customer region. Only considers lineitems from June of 1992 where the
+    # container is small.
+    line_info = (
+        Parts.WHERE(
+            STARTSWITH(container, "SM"),
+        )
+        .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))(
+            supp_region=supplier.nation.region.name,
+        )
+        .order.WHERE(YEAR(order_date) == 1992)(
+            supp_region=BACK(1).supp_region,
+            part_type=BACK(2).part_type,
+            cust_region=customer.nation.region.name,
+        )
+    )
+    rrt_combos = PARTITION(
+        line_info, name="lines", by=(supp_region, cust_region, part_type)
+    )(n_instances=COUNT(lines))
+    rr_combos = PARTITION(rrt_combos, name="part_types", by=(supp_region, cust_region))(
+        percentage=100.0 * MAX(part_types.n_instances) / SUM(part_types.n_instances)
+    )
+    return PARTITION(
+        rr_combos,
+        name="cust_regions",
+        by=supp_region,
+    )(supp_region, avg_percentage=AVG(cust_regions.percentage)).ORDER_BY(
+        supp_region.ASC()
+    )
