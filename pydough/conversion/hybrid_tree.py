@@ -229,6 +229,27 @@ class HybridBackRefExpr(HybridExpr):
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
 
+class HybridCorrelExpr(HybridExpr):
+    """
+    Class for HybridExpr terms that are expressions from a parent hybrid tree
+    rather than an ancestor, which requires a correlated reference.
+    """
+
+    def __init__(self, hybrid: "HybridTree", expr: HybridExpr):
+        super().__init__(expr.typ)
+        self.hybrid = hybrid
+        self.expr: HybridExpr = expr
+
+    def __repr__(self):
+        return f"CORREL({self.expr})"
+
+    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
+        return self
+
+    def shift_back(self, levels: int) -> HybridExpr | None:
+        return self
+
+
 class HybridLiteralExpr(HybridExpr):
     """
     Class for HybridExpr terms that are literals.
@@ -1046,6 +1067,10 @@ class HybridTranslator:
         self.configs = configs
         # An index used for creating fake column names for aliases
         self.alias_counter: int = 0
+        # A stack where each element is a hybrid tree being derived
+        # as as subtree of the previous element, and the current tree is
+        # being derived as the subtree of the last element.
+        self.stack: list[HybridTree] = []
 
     @staticmethod
     def get_join_keys(
@@ -1230,6 +1255,7 @@ class HybridTranslator:
             accordingly so expressions using the child indices know what hybrid
             connection index to use.
         """
+        self.stack.append(hybrid)
         for child_idx, child in enumerate(child_operator.children):
             # Build the hybrid tree for the child. Before doing so, reset the
             # alias counter to 0 to ensure that identical subtrees are named
@@ -1269,6 +1295,7 @@ class HybridTranslator:
             for con_typ in reference_types:
                 connection_type = connection_type.reconcile_connection_types(con_typ)
             child_idx_mapping[child_idx] = hybrid.add_child(subtree, connection_type)
+        self.stack.pop()
 
     def postprocess_agg_output(
         self, agg_call: HybridFunctionExpr, agg_ref: HybridExpr, joins_can_nullify: bool
@@ -1591,11 +1618,44 @@ class HybridTranslator:
                 # Keep stepping backward until `expr.back_levels` non-hidden
                 # steps have been taken (to ignore steps that are part of a
                 # compound).
+                collection: PyDoughCollectionQDAG = expr.collection
                 while true_steps_back < expr.back_levels:
+                    assert collection.ancestor_context is not None
+                    collection = collection.ancestor_context
                     if ancestor_tree.parent is None:
-                        raise NotImplementedError(
-                            "TODO: (gh #141) support BACK references that step from a child subtree back into a parent context."
+                        if len(self.stack) == 0:
+                            raise ValueError("Back reference steps too far back")
+                        parent_tree = self.stack.pop()
+                        remaining_steps_back: int = (
+                            expr.back_levels - true_steps_back - 1
                         )
+                        # TODO: deal with case where the ancestor is PARTITION
+                        # if len(parent_tree.pipeline) == 1 and isinstance(parent_tree.pipeline[0], HybridPartition):
+                        #     remaining_steps_back += 1
+                        parent_result: HybridExpr
+                        if remaining_steps_back == 0:
+                            if expr.term_name not in parent_tree.pipeline[-1].terms:
+                                raise ValueError(
+                                    f"Back reference to {expr.term_name} not found in parent"
+                                )
+                            parent_name: str = parent_tree.pipeline[-1].renamings.get(
+                                expr.term_name, expr.term_name
+                            )
+                            parent_result = HybridRefExpr(
+                                parent_name, expr.pydough_type
+                            )
+                        else:
+                            new_expr: PyDoughExpressionQDAG = BackReferenceExpression(
+                                collection, expr.term_name, remaining_steps_back
+                            )
+                            parent_result = self.make_hybrid_expr(
+                                parent_tree, new_expr, {}, False
+                            )
+                        self.stack.append(parent_tree)
+                        return HybridCorrelExpr(parent_tree, parent_result)
+                        # raise NotImplementedError(
+                        #     "TODO: (gh #141) support BACK references that step from a child subtree back into a parent context."
+                        # )
                     ancestor_tree = ancestor_tree.parent
                     back_idx += true_steps_back
                     if not ancestor_tree.is_hidden_level:
@@ -1723,7 +1783,7 @@ class HybridTranslator:
         return new_expressions, hybrid_orderings
 
     def make_hybrid_tree(
-        self, node: PyDoughCollectionQDAG, parent: HybridTree | None = None
+        self, node: PyDoughCollectionQDAG, parent: HybridTree | None
     ) -> HybridTree:
         """
         Converts a collection QDAG into the HybridTree format.

@@ -9,6 +9,7 @@ from collections.abc import MutableMapping, MutableSequence
 
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Alias as SQLGlotAlias
+from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
@@ -94,7 +95,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if isinstance(expr, SQLGlotAlias):
             return SQLGlotRelationalVisitor._is_mergeable_column(expr.this)
         else:
-            return isinstance(expr, (SQLGlotLiteral, Identifier))
+            return isinstance(expr, (SQLGlotLiteral, Identifier, SQLGlotColumn))
 
     @staticmethod
     def _try_merge_columns(
@@ -154,11 +155,22 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                     # If the new column is a literal, we can just add it to the old
                     # columns.
                     modified_old_columns.append(set_glot_alias(new_column, new_name))
-                else:
+                elif isinstance(new_column, Identifier):
                     expr = set_glot_alias(old_column_map[new_column.this], new_name)
                     modified_old_columns.append(expr)
                     if isinstance(expr, Identifier):
                         seen_cols.add(expr)
+                elif isinstance(new_column, SQLGlotColumn):
+                    expr = set_glot_alias(
+                        old_column_map[new_column.this.this], new_name
+                    )
+                    modified_old_columns.append(expr)
+                    if isinstance(expr, Identifier):
+                        seen_cols.add(expr)
+                else:
+                    raise ValueError(
+                        f"Unsupported expression type for column merging: {new_column.__class__.__name__}"
+                    )
             # Check that there are no missing dependencies in the old columns.
             if old_column_deps - seen_cols:
                 return new_columns, old_columns

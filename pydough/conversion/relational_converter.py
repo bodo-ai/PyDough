@@ -52,6 +52,7 @@ from .hybrid_tree import (
     HybridCollectionAccess,
     HybridColumnExpr,
     HybridConnection,
+    HybridCorrelExpr,
     HybridExpr,
     HybridFilter,
     HybridFunctionExpr,
@@ -78,13 +79,32 @@ class TranslationOutput:
     """
 
     relation: Relational
+    """
+    The relational tree describing the way to compute the answer for the
+    logic originally in the hybrid tree.
+    """
+
     expressions: dict[HybridExpr, ColumnReference]
+    """
+    A mapping of each expression that was accessible in the hybrid tree to the
+    corresponding column reference in the relational tree that contains the
+    value of that expression.
+    """
+
+    correlated_name: str | None = None
+    """
+    The name that can be used to refer to the relational output in correlated
+    references.
+    """
 
 
 class RelTranslation:
     def __init__(self):
         # An index used for creating fake column names
         self.dummy_idx = 1
+        # A stack of contexts used to point to ancestors for correlated
+        # references.
+        self.stack: list[TranslationOutput] = []
 
     def make_null_column(self, relation: Relational) -> ColumnReference:
         """
@@ -113,6 +133,24 @@ class RelTranslation:
             name = f"NULL_{self.dummy_idx}"
         relation.columns[name] = LiteralExpression(None, UnknownType())
         return ColumnReference(name, UnknownType())
+
+    def get_correlated_name(self, context: TranslationOutput) -> str:
+        """
+        Finds the name used to refer to a context for correlated variable
+        access. If the context does not have a correlated name, a new one is
+        generated for it.
+
+        Args:
+            `context`: the context containing the relational subtree being
+            referrenced in a correlated variable access.
+
+        Returns:
+            The name used to refer to the context in a correlated reference.
+        """
+        if context.correlated_name is None:
+            context.correlated_name = f"corr{self.dummy_idx}"
+            self.dummy_idx += 1
+        return context.correlated_name
 
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
@@ -167,6 +205,15 @@ class RelTranslation:
                     partition_inputs,
                     order_inputs,
                     expr.kwargs,
+                )
+            case HybridCorrelExpr():
+                ancestor_context: TranslationOutput = self.stack.pop()
+                ancestor_expr: RelationalExpression = self.translate_expression(
+                    expr.expr, ancestor_context
+                )
+                self.stack.append(ancestor_context)
+                return CorrelatedReference(
+                    ancestor_expr, self.get_correlated_name(ancestor_context)
                 )
             case _:
                 raise NotImplementedError(expr.__class__.__name__)
@@ -366,9 +413,11 @@ class RelTranslation:
         """
         for child_idx, child in enumerate(hybrid.children):
             if child.required_steps == pipeline_idx:
+                self.stack.append(context)
                 child_output = self.rel_translation(
                     child, child.subtree, len(child.subtree.pipeline) - 1
                 )
+                self.stack.pop()
                 assert child.subtree.join_keys is not None
                 join_keys: list[tuple[HybridExpr, HybridExpr]] = child.subtree.join_keys
                 agg_keys: list[HybridExpr]
@@ -905,7 +954,7 @@ def convert_ast_to_relational(
     # Convert the QDAG node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the
     # final rel node.
-    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node)
+    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
