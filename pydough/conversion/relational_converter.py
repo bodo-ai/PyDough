@@ -27,6 +27,7 @@ from pydough.relational import (
     CallExpression,
     ColumnPruner,
     ColumnReference,
+    CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
@@ -211,9 +212,12 @@ class RelTranslation:
                 ancestor_expr: RelationalExpression = self.translate_expression(
                     expr.expr, ancestor_context
                 )
+                assert isinstance(ancestor_expr, ColumnReference)
                 self.stack.append(ancestor_context)
                 return CorrelatedReference(
-                    ancestor_expr, self.get_correlated_name(ancestor_context)
+                    ancestor_expr.name,
+                    self.get_correlated_name(ancestor_context),
+                    expr.typ,
                 )
             case _:
                 raise NotImplementedError(expr.__class__.__name__)
@@ -273,6 +277,7 @@ class RelTranslation:
             [LiteralExpression(True, BooleanType())],
             [join_type],
             join_columns,
+            correl_name=self.get_correlated_name(lhs_result),
         )
         input_aliases: list[str | None] = out_rel.default_input_aliases
 

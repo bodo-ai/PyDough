@@ -37,3 +37,6 @@ class ColumnReferenceInputNameRemover(RelationalExpressionShuttle):
                 column_reference.data_type,
                 None,
             )
+
+    def visit_correlated_reference(self, correlated_reference) -> RelationalExpression:
+        return correlated_reference

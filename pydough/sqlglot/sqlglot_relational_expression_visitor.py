@@ -13,6 +13,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from pydough.relational import (
     CallExpression,
     ColumnReference,
+    CorrelatedReference,
     LiteralExpression,
     RelationalExpression,
     RelationalExpressionVisitor,
@@ -132,6 +133,13 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             literal_expression.value
         )
         self._stack.append(literal)
+
+    def visit_correlated_reference(
+        self, correlated_reference: CorrelatedReference
+    ) -> None:
+        raise NotImplementedError(
+            "TODO: support SQL conversion for correlated references"
+        )
 
     @staticmethod
     def make_sqlglot_column(

@@ -5,10 +5,12 @@ Module responsible for pruning columns from relational expressions.
 from pydough.relational.relational_expressions import (
     ColumnReference,
     ColumnReferenceFinder,
+    CorrelatedReference,
 )
 
 from .abstract_node import Relational
 from .aggregate import Aggregate
+from .join import Join
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher
 from .relational_root import RelationalRoot
@@ -43,7 +45,7 @@ class ColumnPruner:
 
     def _prune_node_columns(
         self, node: Relational, kept_columns: set[str]
-    ) -> Relational:
+    ) -> tuple[Relational, set[CorrelatedReference]]:
         """
         Prune the columns for a subtree starting at this node.
 
@@ -92,15 +94,28 @@ class ColumnPruner:
         new_inputs: list[Relational] = []
         # Note: The ColumnPruner should only be run when all input names are
         # still present in the columns.
-        for i, default_input_name in enumerate(new_node.default_input_aliases):
+        # Iterate over the inputs in reverse order so that the source of
+        # correlated data is pruned last.
+        correl_refs: set[CorrelatedReference] = set()
+        for i, default_input_name in reversed(
+            list(enumerate(new_node.default_input_aliases))
+        ):
             s: set[str] = set()
+            input_node: Relational = node.inputs[i]
             for identifier in found_identifiers:
                 if identifier.input_name == default_input_name:
                     s.add(identifier.name)
-            new_inputs.append(self._prune_node_columns(node.inputs[i], s))
+            if isinstance(input_node, Join) and i == 0:
+                for correl_ref in correl_refs:
+                    if correl_ref.correl_name == input_node.correl_name:
+                        s.add(correl_ref.name)
+            new_input_node, new_correl_refs = self._prune_node_columns(input_node, s)
+            correl_refs.update(new_correl_refs)
+            new_inputs.append(new_input_node)
+        new_inputs.reverse()
         # Determine the new node.
         output = new_node.copy(inputs=new_inputs)
-        return self._prune_identity_project(output)
+        return self._prune_identity_project(output), correl_refs
 
     def prune_unused_columns(self, root: RelationalRoot) -> RelationalRoot:
         """
@@ -112,6 +127,6 @@ class ColumnPruner:
         Returns:
             RelationalRoot: The root after updating all inputs.
         """
-        new_root: Relational = self._prune_node_columns(root, set(root.columns.keys()))
+        new_root, _ = self._prune_node_columns(root, set(root.columns.keys()))
         assert isinstance(new_root, RelationalRoot), "Expected a root node."
         return new_root
