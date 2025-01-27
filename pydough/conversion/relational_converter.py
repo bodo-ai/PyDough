@@ -212,13 +212,20 @@ class RelTranslation:
                 ancestor_expr: RelationalExpression = self.translate_expression(
                     expr.expr, ancestor_context
                 )
-                assert isinstance(ancestor_expr, ColumnReference)
                 self.stack.append(ancestor_context)
-                return CorrelatedReference(
-                    ancestor_expr.name,
-                    self.get_correlated_name(ancestor_context),
-                    expr.typ,
-                )
+                match ancestor_expr:
+                    case ColumnReference():
+                        return CorrelatedReference(
+                            ancestor_expr.name,
+                            self.get_correlated_name(ancestor_context),
+                            expr.typ,
+                        )
+                    case CorrelatedReference():
+                        return ancestor_expr
+                    case _:
+                        raise ValueError(
+                            f"Unsupported expression to reference in a correlated reference: {ancestor_expr}"
+                        )
             case _:
                 raise NotImplementedError(expr.__class__.__name__)
 

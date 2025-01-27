@@ -14,6 +14,16 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    correl_1,
+    correl_2,
+    correl_3,
+    correl_4,
+    correl_5,
+    correl_6,
+    correl_7,
+    correl_8,
+    correl_9,
+    correl_10,
     double_partition,
     function_sampler,
     percentile_customers_per_region,
@@ -1118,6 +1128,284 @@ ROOT(columns=[('supp_region', supp_region), ('avg_percentage', avg_percentage)],
                 ),
             ),
             id="triple_partition",
+        ),
+        pytest.param(
+            (
+                correl_1,
+                """
+ROOT(columns=[('name', name), ('n_prefix_nations', n_prefix_nations)], orderings=[])
+ PROJECT(columns={'n_prefix_nations': DEFAULT_TO(agg_0, 0:int64), 'name': name})
+  JOIN(conditions=[t0.key == t1.region_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name}, correl_name='corr1')
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+   AGGREGATE(keys={'region_key': region_key}, aggregations={'agg_0': COUNT()})
+    FILTER(condition=SLICE(name, None:unknown, 1:int64, None:unknown) == SLICE(corr1.name, None:unknown, 1:int64, None:unknown), columns={'region_key': region_key})
+     SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA" "AMERICA" "MIDDLE EAST" "EUROPE" "ASIA"],
+                        "n_prefix_nations": [1, 1, 0, 0, 0],
+                    }
+                ),
+            ),
+            id="correl_1",
+        ),
+        pytest.param(
+            (
+                correl_2,
+                """
+ROOT(columns=[('name', name), ('n_selected_custs', n_selected_custs)], orderings=[])
+ PROJECT(columns={'n_selected_custs': DEFAULT_TO(agg_0, 0:int64), 'name': name_3})
+  JOIN(conditions=[t0.key_2 == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name_3': t0.name_3}, correl_name='corr4')
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key, 'name': t0.name, 'name_3': t1.name})
+    FILTER(condition=NOT(STARTSWITH(name, 'A':string)), columns={'key': key, 'name': name})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT()})
+    FILTER(condition=SLICE(comment, None:unknown, 1:int64, None:unknown) == LOWER(SLICE(corr4.name, None:unknown, 1:int64, None:unknown)), columns={'nation_key': nation_key})
+     SCAN(table=tpch.CUSTOMER, columns={'comment': c_comment, 'nation_key': c_nationkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["A"] * 5,
+                    }
+                ),
+            ),
+            id="correl_2",
+        ),
+        pytest.param(
+            (
+                correl_3,
+                """
+ROOT(columns=[('name', name), ('n_nations', n_nations)], orderings=[])
+ PROJECT(columns={'n_nations': DEFAULT_TO(agg_0, 0:int64), 'name': name})
+  JOIN(conditions=[t0.key == t1.region_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name}, correl_name='corr1')
+   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+   AGGREGATE(keys={'region_key': region_key}, aggregations={'agg_0': COUNT()})
+    FILTER(condition=True:bool, columns={'region_key': region_key})
+     JOIN(conditions=[t0.key == t1.nation_key], types=['semi'], columns={'region_key': t0.region_key})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+      FILTER(condition=SLICE(comment, None:unknown, 1:int64, None:unknown) == LOWER(SLICE(corr1.name, None:unknown, 1:int64, None:unknown)), columns={'nation_key': nation_key})
+       SCAN(table=tpch.CUSTOMER, columns={'comment': c_comment, 'nation_key': c_nationkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["A"] * 5,
+                    }
+                ),
+            ),
+            id="correl_3",
+        ),
+        pytest.param(
+            (
+                correl_4,
+                """
+ROOT(columns=[('name', name)], orderings=[(ordering_1):asc_first])
+ PROJECT(columns={'name': name, 'ordering_1': name})
+  FILTER(condition=True:bool, columns={'name': name})
+   JOIN(conditions=[t0.key == t1.nation_key], types=['anti'], columns={'name': t0.name}, correl_name='corr1')
+    JOIN(conditions=[True:bool], types=['inner'], columns={'key': t1.key, 'name': t1.name, 'smallest_bal': t0.smallest_bal})
+     PROJECT(columns={'smallest_bal': agg_0})
+      AGGREGATE(keys={}, aggregations={'agg_0': MIN(acctbal)})
+       SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+    FILTER(condition=acctbal <= corr1.smallest_bal + 5.0:float64, columns={'nation_key': nation_key})
+     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["ARGENTINA", "KENYA", "UNITED KINGDOM"],
+                    }
+                ),
+            ),
+            id="correl_4",
+        ),
+        pytest.param(
+            (
+                correl_5,
+                """
+ROOT(columns=[('name', name)], orderings=[(ordering_1):asc_first])
+ PROJECT(columns={'name': name, 'ordering_1': name})
+  FILTER(condition=True:bool, columns={'name': name})
+   JOIN(conditions=[t0.key == t1.region_key], types=['semi'], columns={'name': t0.name}, correl_name='corr4')
+    JOIN(conditions=[True:bool], types=['inner'], columns={'key': t1.key, 'name': t1.name, 'smallest_bal': t0.smallest_bal})
+     PROJECT(columns={'smallest_bal': agg_0})
+      AGGREGATE(keys={}, aggregations={'agg_0': MIN(account_balance)})
+       SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    FILTER(condition=account_balance <= corr4.smallest_bal + 4.0:float64, columns={'region_key': region_key})
+     JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'region_key': t0.region_key})
+      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "ASIA", "MIDDLE EAST"],
+                    }
+                ),
+            ),
+            id="correl_5",
+        ),
+        pytest.param(
+            (
+                correl_6,
+                """
+ROOT(columns=[('name', name), ('n_prefix_nations', n_prefix_nations)], orderings=[])
+ PROJECT(columns={'n_prefix_nations': DEFAULT_TO(agg_0, 0:int64), 'name': name})
+  FILTER(condition=True:bool, columns={'agg_0': agg_0, 'name': name})
+   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'agg_0': t1.agg_0, 'name': t0.name}, correl_name='corr1')
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    AGGREGATE(keys={'region_key': region_key}, aggregations={'agg_0': COUNT()})
+     FILTER(condition=SLICE(name, None:unknown, 1:int64, None:unknown) == SLICE(corr1.name, None:unknown, 1:int64, None:unknown), columns={'region_key': region_key})
+      SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA"],
+                        "n_prefix_nations": [1, 1],
+                    }
+                ),
+            ),
+            id="correl_6",
+        ),
+        pytest.param(
+            (
+                correl_7,
+                """
+ROOT(columns=[('name', name), ('n_prefix_nations', n_prefix_nations)], orderings=[])
+ PROJECT(columns={'n_prefix_nations': DEFAULT_TO(NULL_2, 0:int64), 'name': name})
+  FILTER(condition=True:bool, columns={'NULL_2': NULL_2, 'name': name})
+   JOIN(conditions=[t0.key == t1.region_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name}, correl_name='corr1')
+    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+    FILTER(condition=SLICE(name, None:unknown, 1:int64, None:unknown) == SLICE(corr1.name, None:unknown, 1:int64, None:unknown), columns={'region_key': region_key})
+     SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_prefix_nations": [0] * 3,
+                    }
+                ),
+            ),
+            id="correl_7",
+        ),
+        pytest.param(
+            (
+                correl_8,
+                """
+ROOT(columns=[('name', name), ('rname', rname)], orderings=[(ordering_0):asc_first])
+ PROJECT(columns={'name': name, 'ordering_0': name, 'rname': rname})
+  PROJECT(columns={'name': name, 'rname': name_4})
+   JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'name': t0.name, 'name_4': t1.name}, correl_name='corr1')
+    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+    FILTER(condition=SLICE(name, None:unknown, 1:int64, None:unknown) == SLICE(corr1.name, None:unknown, 1:int64, None:unknown), columns={'key': key, 'name': name})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                            "INDONESIA",
+                            "IRAN",
+                            "IRAQ",
+                            "JAPAN",
+                            "JORDAN",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "PERU",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "SAUDI ARABIA",
+                            "UNITED KINGDOM",
+                            "UNITED STATES",
+                            "VIETNAM",
+                        ],
+                        "rname": ["AFRICA", "AMERICA"] + [None] * 23,
+                    }
+                ),
+            ),
+            id="correl_8",
+        ),
+        pytest.param(
+            (
+                correl_9,
+                """
+ROOT(columns=[('name', name), ('rname', rname)], orderings=[(ordering_0):asc_first])
+ PROJECT(columns={'name': name, 'ordering_0': name, 'rname': rname})
+  PROJECT(columns={'name': name, 'rname': name_4})
+   FILTER(condition=True:bool, columns={'name': name, 'name_4': name_4})
+    JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'name': t0.name, 'name_4': t1.name}, correl_name='corr1')
+     SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+     FILTER(condition=SLICE(name, None:unknown, 1:int64, None:unknown) == SLICE(corr1.name, None:unknown, 1:int64, None:unknown), columns={'key': key, 'name': name})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                        ],
+                        "rname": ["AFRICA", "AMERICA"],
+                    }
+                ),
+            ),
+            id="correl_9",
+        ),
+        pytest.param(
+            (
+                correl_10,
+                """
+ROOT(columns=[('name', name), ('rname', rname)], orderings=[(ordering_0):asc_first])
+ PROJECT(columns={'name': name, 'ordering_0': name, 'rname': rname})
+  PROJECT(columns={'name': name, 'rname': NULL_2})
+   FILTER(condition=True:bool, columns={'NULL_2': NULL_2, 'name': name})
+    JOIN(conditions=[t0.region_key == t1.key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name}, correl_name='corr1')
+     SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+     FILTER(condition=SLICE(name, None:unknown, 1:int64, None:unknown) == SLICE(corr1.name, None:unknown, 1:int64, None:unknown), columns={'key': key})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                            "INDONESIA",
+                            "IRAN",
+                            "IRAQ",
+                            "JAPAN",
+                            "JORDAN",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "PERU",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "SAUDI ARABIA",
+                            "UNITED KINGDOM",
+                            "UNITED STATES",
+                            "VIETNAM",
+                        ],
+                        "rname": [None] * 23,
+                    }
+                ),
+            ),
+            id="correl_10",
         ),
     ],
 )
