@@ -1555,6 +1555,62 @@ class HybridTranslator:
         joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
         return self.postprocess_agg_output(hybrid_call, result_ref, joins_can_nullify)
 
+    def make_hybrid_correl_expr(
+        self,
+        back_expr: BackReferenceExpression,
+        collection: PyDoughCollectionQDAG,
+        steps_taken_so_far: int,
+    ) -> HybridCorrelExpr:
+        """
+        TODO
+        """
+        if len(self.stack) == 0:
+            raise ValueError("Back reference steps too far back")
+        parent_tree = self.stack.pop()
+        remaining_steps_back: int = back_expr.back_levels - steps_taken_so_far - 1
+        parent_result: HybridExpr
+        if len(parent_tree.pipeline) == 1 and isinstance(
+            parent_tree.pipeline[0], HybridPartition
+        ):
+            assert parent_tree.parent is not None
+            self.stack.append(parent_tree.parent)
+            parent_result = self.make_hybrid_correl_expr(
+                back_expr, collection, steps_taken_so_far
+            )
+            self.stack.pop()
+            self.stack.append(parent_tree)
+            match parent_result.expr:
+                case HybridRefExpr():
+                    parent_result = HybridBackRefExpr(
+                        parent_result.expr.name, 1, parent_result.typ
+                    )
+                case HybridBackRefExpr():
+                    parent_result = HybridBackRefExpr(
+                        parent_result.expr.name,
+                        parent_result.expr.back_idx + 1,
+                        parent_result.typ,
+                    )
+                case _:
+                    raise ValueError(
+                        f"Malformed expression for correlated reference: {parent_result}"
+                    )
+        elif remaining_steps_back == 0:
+            if back_expr.term_name not in parent_tree.pipeline[-1].terms:
+                raise ValueError(
+                    f"Back reference to {back_expr.term_name} not found in parent"
+                )
+            parent_name: str = parent_tree.pipeline[-1].renamings.get(
+                back_expr.term_name, back_expr.term_name
+            )
+            parent_result = HybridRefExpr(parent_name, back_expr.pydough_type)
+        else:
+            new_expr: PyDoughExpressionQDAG = BackReferenceExpression(
+                collection, back_expr.term_name, remaining_steps_back
+            )
+            parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
+        self.stack.append(parent_tree)
+        return HybridCorrelExpr(parent_tree, parent_result)
+
     def make_hybrid_expr(
         self,
         hybrid: HybridTree,
@@ -1608,10 +1664,9 @@ class HybridTranslator:
             case BackReferenceExpression():
                 # A reference to an expression from an ancestor becomes a
                 # reference to one of the terms of a parent level of the hybrid
-                # tree. This does not yet support cases where the back
-                # reference steps outside of a child subtree and back into its
-                # parent subtree, since that breaks the independence between
-                # the parent and child.
+                # tree. If the BACK goes far enough that it must step outside
+                # a child subtree into the parent, a correlated reference is
+                # created.
                 ancestor_tree = hybrid
                 back_idx: int = 0
                 true_steps_back: int = 0
@@ -1623,39 +1678,9 @@ class HybridTranslator:
                     assert collection.ancestor_context is not None
                     collection = collection.ancestor_context
                     if ancestor_tree.parent is None:
-                        if len(self.stack) == 0:
-                            raise ValueError("Back reference steps too far back")
-                        parent_tree = self.stack.pop()
-                        remaining_steps_back: int = (
-                            expr.back_levels - true_steps_back - 1
+                        return self.make_hybrid_correl_expr(
+                            expr, collection, true_steps_back
                         )
-                        # TODO: deal with case where the ancestor is PARTITION
-                        # if len(parent_tree.pipeline) == 1 and isinstance(parent_tree.pipeline[0], HybridPartition):
-                        #     remaining_steps_back += 1
-                        parent_result: HybridExpr
-                        if remaining_steps_back == 0:
-                            if expr.term_name not in parent_tree.pipeline[-1].terms:
-                                raise ValueError(
-                                    f"Back reference to {expr.term_name} not found in parent"
-                                )
-                            parent_name: str = parent_tree.pipeline[-1].renamings.get(
-                                expr.term_name, expr.term_name
-                            )
-                            parent_result = HybridRefExpr(
-                                parent_name, expr.pydough_type
-                            )
-                        else:
-                            new_expr: PyDoughExpressionQDAG = BackReferenceExpression(
-                                collection, expr.term_name, remaining_steps_back
-                            )
-                            parent_result = self.make_hybrid_expr(
-                                parent_tree, new_expr, {}, False
-                            )
-                        self.stack.append(parent_tree)
-                        return HybridCorrelExpr(parent_tree, parent_result)
-                        # raise NotImplementedError(
-                        #     "TODO: (gh #141) support BACK references that step from a child subtree back into a parent context."
-                        # )
                     ancestor_tree = ancestor_tree.parent
                     back_idx += true_steps_back
                     if not ancestor_tree.is_hidden_level:

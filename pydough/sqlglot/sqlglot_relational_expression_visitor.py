@@ -33,13 +33,17 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     """
 
     def __init__(
-        self, dialect: SQLGlotDialect, bindings: SqlGlotTransformBindings
+        self,
+        dialect: SQLGlotDialect,
+        bindings: SqlGlotTransformBindings,
+        correlated_names: dict[str, str],
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
         self._dialect: SQLGlotDialect = dialect
         self._bindings: SqlGlotTransformBindings = bindings
+        self._correlated_names: dict[str, str] = correlated_names
 
     def reset(self) -> None:
         """
@@ -137,9 +141,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     def visit_correlated_reference(
         self, correlated_reference: CorrelatedReference
     ) -> None:
-        raise NotImplementedError(
-            "TODO: support SQL conversion for correlated references"
-        )
+        full_name: str = f"{self._correlated_names[correlated_reference.correl_name]}.{correlated_reference.name}"
+        self._stack.append(Identifier(this=full_name))
 
     # TODO: implement the column-based version of make_sqlglot_column, with table sources
     # @staticmethod

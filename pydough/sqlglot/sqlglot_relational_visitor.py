@@ -21,6 +21,7 @@ from pydough.relational import (
     ColumnReference,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
+    CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
@@ -55,8 +56,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
+        self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(dialect, bindings)
+            SQLGlotRelationalExpressionVisitor(
+                dialect, bindings, self._correlated_names
+            )
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
@@ -303,7 +307,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         match exp:
             case CallExpression():
                 return any(self.contains_window(arg) for arg in exp.inputs)
-            case ColumnReference() | LiteralExpression():
+            case ColumnReference() | LiteralExpression() | CorrelatedReference():
                 return False
             case WindowCallExpression():
                 return True
@@ -329,6 +333,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
+        alias_map: dict[str | None, str] = {}
+        if join.correl_name is not None:
+            input_name = join.default_input_aliases[0]
+            alias = self._generate_table_alias()
+            alias_map[input_name] = alias
+            self._correlated_names[join.correl_name] = alias
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
@@ -339,11 +349,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 seen_names[column] += 1
         # Only keep duplicate names.
         kept_names = {key for key, value in seen_names.items() if value > 1}
-        alias_map = {
-            join.default_input_aliases[i]: self._generate_table_alias()
-            for i in range(len(join.inputs))
-            if kept_names.intersection(join.inputs[i].columns.keys())
-        }
+        for i in range(len(join.inputs)):
+            input_name = join.default_input_aliases[i]
+            if input_name not in alias_map and kept_names.intersection(
+                join.inputs[i].columns.keys()
+            ):
+                alias_map[input_name] = self._generate_table_alias()
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
