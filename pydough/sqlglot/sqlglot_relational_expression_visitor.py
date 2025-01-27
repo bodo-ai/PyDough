@@ -7,8 +7,8 @@ import warnings
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.dialects import Dialect as SQLGlotDialect
-from sqlglot.expressions import Column, Identifier
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import Identifier
 
 from pydough.relational import (
     CallExpression,
@@ -141,25 +141,45 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             "TODO: support SQL conversion for correlated references"
         )
 
+    # TODO: implement the column-based version of make_sqlglot_column, with table sources
+    # @staticmethod
+    # def make_sqlglot_column(
+    #     column_reference: ColumnReference,
+    # ) -> Column:
+    #     """
+    #     Convert a column reference to a SQLGlot column. This is split into a
+    #     separate static method to ensure consistency across multiple visitors.
+
+    #     Args:
+    #         column_reference (ColumnReference): The column reference to generate
+    #             an identifier for.
+
+    #     Returns:
+    #         Identifier: The output column reference containing an identifier.
+    #     """
+    #     result: SQLGlotExpression = Column(this=Identifier(this=column_reference.name))
+    #     if column_reference.input_name is not None:
+    #         result.set("table", Identifier(this=column_reference.input_name))
+    #     return result
+
     @staticmethod
     def make_sqlglot_column(
         column_reference: ColumnReference,
-    ) -> Column:
+    ) -> Identifier:
         """
-        Convert a column reference to a SQLGlot column. This is split into a
+        Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
-
         Args:
             column_reference (ColumnReference): The column reference to generate
                 an identifier for.
-
         Returns:
-            Identifier: The output column reference containing an identifier.
+            Identifier: The output identifier.
         """
-        result: SQLGlotExpression = Column(this=Identifier(this=column_reference.name))
         if column_reference.input_name is not None:
-            result.set("table", Identifier(this=column_reference.input_name))
-        return result
+            full_name = f"{column_reference.input_name}.{column_reference.name}"
+        else:
+            full_name = column_reference.name
+        return Identifier(this=full_name)
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         self._stack.append(self.make_sqlglot_column(column_reference))

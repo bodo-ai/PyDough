@@ -277,7 +277,7 @@ class RelTranslation:
             [LiteralExpression(True, BooleanType())],
             [join_type],
             join_columns,
-            correl_name=self.get_correlated_name(lhs_result),
+            correl_name=lhs_result.correlated_name,
         )
         input_aliases: list[str | None] = out_rel.default_input_aliases
 
