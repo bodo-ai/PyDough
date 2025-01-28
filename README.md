@@ -30,14 +30,13 @@ SELECT
 FROM PEOPLE AS P
 LEFT JOIN (
     SELECT person_ssn, SUM(income_earned) AS total_income_earned
-    FROM JOBS
+    FROM EMPLOYMENT_RECORDS
     GROUP BY person_ssn
 ) AS J
 ON P.ssn = J.person_ssn
 LEFT JOIN (
     SELECT person_ssn, SUM(tuition_paid) AS total_tuition_paid
-    FROM SCHOOLS
-    GROUP BY person_ssn
+    FROM EDUCATION_RECORDS
 ) AS S
 ON P.ssn = S.person_ssn
 ```
