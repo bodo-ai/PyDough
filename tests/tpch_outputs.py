@@ -692,7 +692,7 @@ def tpch_q21_output() -> pd.DataFrame:
     Expected output for TPC-H query 21. Note: This is truncated to
     the first 10 rows.
     """
-    columns = ["S_NAME", "NUM_WAIT"]
+    columns = ["S_NAME", "NUMWAIT"]
     data = [
         ("Supplier#000002829", 20),
         ("Supplier#000005808", 18),

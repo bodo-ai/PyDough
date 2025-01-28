@@ -270,3 +270,129 @@ def triple_partition():
     )(supp_region, avg_percentage=AVG(cust_regions.percentage)).ORDER_BY(
         supp_region.ASC()
     )
+
+
+def correl_1():
+    # Correlated back reference example #1: simple 1-step correlated reference
+    # For each region, count how many of its its nations start with the same
+    # letter as the region. This is a true correlated join doing an aggregated
+    # access without requiring the RHS be present.
+    return Regions(
+        name, n_prefix_nations=COUNT(nations.WHERE(name[:1] == BACK(1).name[:1]))
+    )
+
+
+def correl_2():
+    # Correlated back reference example #2: simple 2-step correlated reference
+    # For each region's nations, count how many customers have a comment
+    # starting with the same letter as the region. Exclude regions that start
+    # with the letter a. This is a true correlated join doing an aggregated
+    # access without requiring the RHS be present.
+    selected_custs = customers.WHERE(comment[:1] == LOWER(BACK(2).name[:1]))
+    return Regions.WHERE(~STARTSWITH(name, "A")).nations(
+        name,
+        n_selected_custs=COUNT(selected_custs),
+    )
+
+
+def correl_3():
+    # Correlated back reference example #3: double-layer correlated reference
+    # For every every region, count how many of its nations have a customer
+    # whose comment starts with the same letter as the region. This is a true
+    # correlated join doing an aggregated access without requiring the RHS be
+    # present.
+    selected_custs = customers.WHERE(comment[:1] == LOWER(BACK(2).name[:1]))
+    return Regions(name, n_nations=COUNT(nations.WHERE(HAS(selected_custs))))
+
+
+def correl_4():
+    # Correlated back reference example #4: 2-step correlated HASNOT
+    # Find every nation that does not have a customer whose account balance is
+    # within $5 of the smallest known account balance globally.
+    # (This is a correlated ANTI-join)
+    selected_customers = customers.WHERE(acctbal <= (BACK(2).smallest_bal + 5.0))
+    return (
+        TPCH(
+            smallest_bal=MIN(Customers.acctbal),
+        )
+        .Nations(name)
+        .WHERE(HASNOT(selected_customers))
+        .ORDER_BY(name.ASC())
+    )
+
+
+def correl_5():
+    # Correlated back reference example #5: 2-step correlated HAS
+    # Find every region that has at least 1 supplier whose account balance is
+    # within $4 of the smallest known account balance globally
+    # (This is a correlated SEMI-join)
+    selected_suppliers = nations.suppliers.WHERE(
+        account_balance <= (BACK(3).smallest_bal + 4.0)
+    )
+    return (
+        TPCH(
+            smallest_bal=MIN(Suppliers.account_balance),
+        )
+        .Regions(name)
+        .WHERE(HAS(selected_suppliers))
+        .ORDER_BY(name.ASC())
+    )
+
+
+def correl_6():
+    # Correlated back reference example #6: simple 1-step correlated reference
+    # For each region, count how many of its its nations start with the same
+    # letter as the region, but only keep regions with at least one such nation.
+    # This is a true correlated join doing an aggregated access that does NOT
+    # require that records without the RHS be kept.
+    selected_nations = nations.WHERE(name[:1] == BACK(1).name[:1])
+    return Regions.WHERE(HAS(selected_nations))(
+        name, n_prefix_nations=COUNT(selected_nations)
+    )
+
+
+def correl_7():
+    # Correlated back reference example #6: deleted correlated reference
+    # For each region, count how many of its its nations start with the same
+    # letter as the region, but only keep regions without at least one such
+    # nation. The true correlated join is trumped by the correlated ANTI-join.
+    selected_nations = nations.WHERE(name[:1] == BACK(1).name[:1])
+    return Regions.WHERE(HASNOT(selected_nations))(
+        name, n_prefix_nations=COUNT(selected_nations)
+    )
+
+
+def correl_8():
+    # Correlated back reference example #8: non-agg correlated reference
+    # For each nation, fetch the name of its region, but filter the reigon
+    # so it only keeps it if it starts with the same letter as the nation
+    # (otherwise, returns NULL). This is a true correlated join doing an
+    # access without aggregation without requiring the RHS be
+    # present.
+    aug_region = region.WHERE(name[:1] == BACK(1).name[:1])
+    return Nations(name, rname=aug_region.name).ORDER_BY(name.ASC())
+
+
+def correl_9():
+    # Correlated back reference example #9: non-agg correlated reference
+    # For each nation, fetch the name of its region, but filter the reigon
+    # so it only keeps it if it starts with the same letter as the nation
+    # (otherwise, omit the nation). This is a true correlated join doing an
+    # access that also requires the RHS records be present.
+    aug_region = region.WHERE(name[:1] == BACK(1).name[:1])
+    return Nations.WHERE(HAS(aug_region))(name, rname=aug_region.name).ORDER_BY(
+        name.ASC()
+    )
+
+
+def correl_10():
+    # Correlated back reference example #10: deleted correlated reference
+    # For each nation, fetch the name of its region, but filter the reigon
+    # so it only keeps it if it starts with the same letter as the nation
+    # (otherwise, returns NULL), and also filter the nations to only keep
+    # records where the region is NULL. The true correlated join is trumped by
+    # the correlated ANTI-join.
+    aug_region = region.WHERE(name[:1] == BACK(1).name[:1])
+    return Nations.WHERE(HASNOT(aug_region))(name, rname=aug_region.name).ORDER_BY(
+        name.ASC()
+    )

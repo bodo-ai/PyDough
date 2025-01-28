@@ -9,6 +9,7 @@ from collections.abc import MutableMapping, MutableSequence
 
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Alias as SQLGlotAlias
+from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
@@ -20,6 +21,7 @@ from pydough.relational import (
     ColumnReference,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
+    CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
@@ -54,8 +56,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
+        self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(dialect, bindings)
+            SQLGlotRelationalExpressionVisitor(
+                dialect, bindings, self._correlated_names
+            )
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
@@ -94,7 +99,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if isinstance(expr, SQLGlotAlias):
             return SQLGlotRelationalVisitor._is_mergeable_column(expr.this)
         else:
-            return isinstance(expr, (SQLGlotLiteral, Identifier))
+            return isinstance(expr, (SQLGlotLiteral, Identifier, SQLGlotColumn))
 
     @staticmethod
     def _try_merge_columns(
@@ -154,11 +159,22 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                     # If the new column is a literal, we can just add it to the old
                     # columns.
                     modified_old_columns.append(set_glot_alias(new_column, new_name))
-                else:
+                elif isinstance(new_column, Identifier):
                     expr = set_glot_alias(old_column_map[new_column.this], new_name)
                     modified_old_columns.append(expr)
                     if isinstance(expr, Identifier):
                         seen_cols.add(expr)
+                elif isinstance(new_column, SQLGlotColumn):
+                    expr = set_glot_alias(
+                        old_column_map[new_column.this.this], new_name
+                    )
+                    modified_old_columns.append(expr)
+                    if isinstance(expr, Identifier):
+                        seen_cols.add(expr)
+                else:
+                    raise ValueError(
+                        f"Unsupported expression type for column merging: {new_column.__class__.__name__}"
+                    )
             # Check that there are no missing dependencies in the old columns.
             if old_column_deps - seen_cols:
                 return new_columns, old_columns
@@ -291,7 +307,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         match exp:
             case CallExpression():
                 return any(self.contains_window(arg) for arg in exp.inputs)
-            case ColumnReference() | LiteralExpression():
+            case ColumnReference() | LiteralExpression() | CorrelatedReference():
                 return False
             case WindowCallExpression():
                 return True
@@ -317,6 +333,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
+        alias_map: dict[str | None, str] = {}
+        if join.correl_name is not None:
+            input_name = join.default_input_aliases[0]
+            alias = self._generate_table_alias()
+            alias_map[input_name] = alias
+            self._correlated_names[join.correl_name] = alias
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
@@ -327,11 +349,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 seen_names[column] += 1
         # Only keep duplicate names.
         kept_names = {key for key, value in seen_names.items() if value > 1}
-        alias_map = {
-            join.default_input_aliases[i]: self._generate_table_alias()
-            for i in range(len(join.inputs))
-            if kept_names.intersection(join.inputs[i].columns.keys())
-        }
+        for i in range(len(join.inputs)):
+            input_name = join.default_input_aliases[i]
+            if input_name not in alias_map and kept_names.intersection(
+                join.inputs[i].columns.keys()
+            ):
+                alias_map[input_name] = self._generate_table_alias()
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
