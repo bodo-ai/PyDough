@@ -11,7 +11,7 @@ PyDough simplicity will also be advantageous for LLM analytics generation.
 
 The `notebooks` folder provides a series of Demos that one can engage with to understand PyDough's
 capabilities and ultimately the experience of using PyDough. We strongly recommend starting with
-[1_introduction.ipynb](notebooks/1_ntroduction.ipynb), as this notebook is intended to explain a high-level overview of the components
+[1_introduction.ipynb](notebooks/1_introduction.ipynb), as this notebook is intended to explain a high-level overview of the components
 of a PyDough notebook and what each step is doing. This notebook will then also explain how each
 subsequent demo notebook is structured to provide insight into some aspect of PyDough.
 
