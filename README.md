@@ -6,10 +6,10 @@ PyDough is an alternative DSL that can be used to solve analytical problems by p
 
 PyDough allows expressing analytical questions with hierarchical thinking, as seen in models such as Mongo, since that mental model is closer to human linguistics than a relational model. PyDough code can be written in and interleaved with Python code, and practices a lazy evaluation scheme that does not qualify or execute any logic until requested.
 
-Consider the following information represented by a database:
-- There are people; each person has a name, ssn, birth date, records of jobs they have had, and records of schools they attended
-- There are employment records; each job record has the ssn of the person being employed, the name of the company, and the total income they made from the job
-- There are education records have; each education record has the ssn of the person attending the school, the name of the school, and the total tuition they paid from the job
+Consider the following information represented by the tables in a database:
+- There are people; each person has a name, ssn, birth date, records of jobs they have had, and records of schools they attended.
+- There are employment records; each job record has the ssn of the person being employed, the name of the company, and the total income they made from the job.
+- There are education records; each education record has the ssn of the person attending the school, the name of the school, and the total tuition they paid from the job.
 
 Suppose I want to know for every person their name & the total income they've made from all jobs minus the total tuition paid to all schools, including people who have never had a job or never attended any schools, and accounting for people who could have had multiple jobs or schools attended. The following PyDough snippet solves this problem:
 
