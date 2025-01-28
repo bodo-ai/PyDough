@@ -10,7 +10,7 @@ PyDough code can be written in and interleaved with Python code, and practices a
 PyDough executes by translating its logic into SQL which it can directly executing in a arbitrary database.
 
 Consider the following information represented by the tables in a database:
-- There are people; each person has a name, ssn, birth date, records of jobs they have had, and records of schools they attended.
+- There are people; each person has a name, ssn, birth date, records of jobs they have had, and records of schools they have attended.
 - There are employment records; each job record has the ssn of the person being employed, the name of the company, and the total income they made from the job.
 - There are education records; each education record has the ssn of the person attending the school, the name of the school, and the total tuition they paid to that school.
 
