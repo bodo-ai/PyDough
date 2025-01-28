@@ -14,3 +14,10 @@ capabilities and ultimately the experience of using PyDough. We strongly recomme
 [Introduction.ipynb](notebooks/Introduction.ipynb), as this notebook is intended to explain a high-level overview of the components
 of a PyDough notebook and what each step is doing. This notebook will then also explain how each
 subsequent demo notebook is structured to provide insight into some aspect of PyDough.
+
+From there, you can explore the other notebooks:
+- [pydough_operations.ipynb](notebooks/pydough_operations.ipynb) demonstrates all the core operations in PyDough
+- [Exploration.ipynb](notebooks/Exploration.ipynb) shows how to use several user APIs for exploring PyDough.
+- [tpch.ipynb](notebooks/tpch.ipynb) provides PyDough translations for most of the TPC-H benchmark queries.
+- [what_if.ipynb](notebooks/what_if.ipynb) demonstrates how to do WHAT-IF analysis with PyDough.
+
