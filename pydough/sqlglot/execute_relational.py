@@ -13,6 +13,7 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
 )
+from pydough.logger import get_logger
 from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
@@ -87,8 +88,7 @@ def execute_df(
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
     sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings)
-    # TODO: (gh #163) handle with a proper Python logger instead of
-    # just printing
     if display_sql:
-        print("SQL query:\n", sql)
+        pyd_logger = get_logger(__name__)
+        pyd_logger.info(f"SQL query:\n, {sql}")
     return ctx.connection.execute_query_df(sql)
