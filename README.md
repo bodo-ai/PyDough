@@ -75,17 +75,23 @@ pip install pydough
 
 For local development, PyDough uses `uv` as a package manager.
 Please refer to their docs for [installation](https://docs.astral.sh/uv/getting-started/).
+
+
 To run testing commands after installing `uv`, run the following command:
 
 ```bash
 uv run pytest <pytest_arguments>
 ```
 
-If you want to skip tests that execute runtime results because they are slower, make sure to include `-m "not slow"` in the pytest arguments.
+If you want to skip tests that execute runtime results because they are slower,
+make sure to include `-m "not execute"` in the pytest arguments.
 
-Note: That some tests may require an additional setup to run successfully.
-Please refer to the TPC-H demo directory for more information on how to setup
-a default database for testing.
+Note: some tests may require an additional setup to run successfully.
+The [demos](https://github.com/bodo-ai/PyDough/blob/main/demos/README.md) directory 
+contains for more information on how to setup the TPC-H sqlite database. For
+testing, the `tpch.db` file must be located in the `tests` directory.
+Additionally, the [`setup_defog.sh`](https://github.com/bodo-ai/PyDough/blob/main/tests/setup_defog.sh)
+script must be run so that the `defog.db` file is located in the `tests` directory.
 
 ## Running CI Tests
 
