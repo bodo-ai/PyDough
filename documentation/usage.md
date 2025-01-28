@@ -314,14 +314,14 @@ pydough.to_df(result)
 </table>
 </div>
 
-See the [demo notebooks](../demos/notebooks/Introduction.ipynb) for more instances of how to use the `to_df` API.
+See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
 
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
 This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it.
 
-See the [demo notebooks](../demos/notebooks/Exploration.ipynb) for more instances of how to use the exploration APIs.
+See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 
 <!-- TOC --><a name="pydoughexplain_structure"></a>
 ### `pydough.explain_structure`
