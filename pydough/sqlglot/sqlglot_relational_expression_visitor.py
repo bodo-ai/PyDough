@@ -33,17 +33,13 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     """
 
     def __init__(
-        self,
-        dialect: SQLGlotDialect,
-        bindings: SqlGlotTransformBindings,
-        correlated_names: dict[str, str],
+        self, dialect: SQLGlotDialect, bindings: SqlGlotTransformBindings
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
         self._dialect: SQLGlotDialect = dialect
         self._bindings: SqlGlotTransformBindings = bindings
-        self._correlated_names: dict[str, str] = correlated_names
 
     def reset(self) -> None:
         """
@@ -141,40 +137,20 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     def visit_correlated_reference(
         self, correlated_reference: CorrelatedReference
     ) -> None:
-        full_name: str = f"{self._correlated_names[correlated_reference.correl_name]}.{correlated_reference.name}"
-        self._stack.append(Identifier(this=full_name))
-
-    # TODO: implement the column-based version of make_sqlglot_column, with table sources
-    # @staticmethod
-    # def make_sqlglot_column(
-    #     column_reference: ColumnReference,
-    # ) -> Column:
-    #     """
-    #     Convert a column reference to a SQLGlot column. This is split into a
-    #     separate static method to ensure consistency across multiple visitors.
-
-    #     Args:
-    #         column_reference (ColumnReference): The column reference to generate
-    #             an identifier for.
-
-    #     Returns:
-    #         Identifier: The output column reference containing an identifier.
-    #     """
-    #     result: SQLGlotExpression = Column(this=Identifier(this=column_reference.name))
-    #     if column_reference.input_name is not None:
-    #         result.set("table", Identifier(this=column_reference.input_name))
-    #     return result
+        raise NotImplementedError("TODO")
 
     @staticmethod
-    def make_sqlglot_column(
+    def generate_column_reference_identifier(
         column_reference: ColumnReference,
     ) -> Identifier:
         """
         Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
+
         Args:
             column_reference (ColumnReference): The column reference to generate
                 an identifier for.
+
         Returns:
             Identifier: The output identifier.
         """
@@ -185,7 +161,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         return Identifier(this=full_name)
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
-        self._stack.append(self.make_sqlglot_column(column_reference))
+        self._stack.append(self.generate_column_reference_identifier(column_reference))
 
     def relational_to_sqlglot(
         self, expr: RelationalExpression, output_name: str | None = None
