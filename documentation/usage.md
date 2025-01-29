@@ -17,6 +17,7 @@ This document describes how to set up & interact with PyDough. For instructions 
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
    * [`pydough.explain_term`](#pydoughexplain_term)
+- [Logging] (#logging)
 
 <!-- TOC end -->
 
@@ -265,6 +266,7 @@ The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), b
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+- `display_sql`: displays the sql before executing in a logger.
 
 Below is an example of using `pydough.to_df` and the output, attached to a sqlite database containing data for the TPC-H schema:
 
@@ -729,4 +731,55 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE')(AVG(customers.acctbal))
+```
+## Logging
+
+Logging is enabled and set to INFO level by default. We can change the log level by setting the environment variable `PYDOUGH_LOG_LEVEL` to the standard levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+
+A new `logger` object can be created using `get_logger`.
+This function configures and returns a logger instance. It takes the following arguments:
+
+- `name` : The logger's name, typically the module name (`__name__`).
+- `default_level` : The default logging level if not set externally via environment variable `PYDOUGH_LOG_LEVEL`. Defaults to `logging.INFO`.
+- `fmt` : An optional log message format compatible with Python's logging. The default format is `"%(asctime)s [%(levelname)s] %(name)s: %(message)s"`.
+- `handlers` : An optional list of logging handlers to attach to the logger.
+
+It returns a configured `logging.Logger` instance.
+Here is an example of basic usage. We have not set the environment variable, hence the default level of logging is INFO.
+
+```py
+from pydough import get_logger
+pyd_logger = get_logger(__name__)
+
+logger.info("This is an info message.")
+logger.error("This is an error message.")
+```
+
+We can also set the level of logging via a function argument. Note that if `PYDOUGH_LOG_LEVEL` is available, the default_level argument is overriden. 
+
+```python
+# Import the function
+from pydough import get_logger
+
+# Get logger with a custom name and level
+logger = get_logger(name="custom_logger", default_level=logging.DEBUG)
+
+# Log messages
+logger.debug("This is a debug message.")
+logger.warning("This is a warning message.")
+```
+We can also attach other handlers in addition to the default handler(`logging.StreamHandler(sys.stdout)`), by sending a list of handlers.
+
+```python
+import logging
+from pydough import get_logger
+
+# Create a file handler
+file_handler = logging.FileHandler("logfile.log")
+
+# Get logger with custom file handler
+logger = get_logger(handlers=[file_handler])
+
+# Log messages
+logger.info("This message will go to the console and the file.")
 ```
