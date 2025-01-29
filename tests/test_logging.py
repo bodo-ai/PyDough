@@ -155,5 +155,81 @@ def test_execute_df_logging(
         execute_df(root, sqlite_tpch_db_context, sqlite_bindings, display_sql=True)
     # Retrieve the output from the buffer
     captured_output = output_capture.getvalue()
-    required_op = "[INFO] pydough.sqlglot.execute_relational: SQL query:\n SELECT\n  L_RETURNFLAG,\n  L_LINESTATUS,\n  SUM_QTY,\n  SUM_BASE_PRICE,\n  SUM_DISC_PRICE,\n  SUM_CHARGE,\n  CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY,\n  CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE,\n  CAST(SUM_DISCOUNT AS REAL) / COUNT_ORDER AS AVG_DISC,\n  COUNT_ORDER\nFROM (\n  SELECT\n    L_RETURNFLAG,\n    L_LINESTATUS,\n    SUM(L_QUANTITY) AS SUM_QTY,\n    SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE,\n    SUM(L_DISCOUNT) AS SUM_DISCOUNT,\n    SUM(TEMP_COL0) AS SUM_DISC_PRICE,\n    SUM(TEMP_COL1) AS SUM_CHARGE,\n    COUNT() AS COUNT_ORDER\n  FROM (\n    SELECT\n      L_QUANTITY,\n      L_EXTENDEDPRICE,\n      L_DISCOUNT,\n      L_RETURNFLAG,\n      L_LINESTATUS,\n      TEMP_COL0,\n      TEMP_COL0 * (\n        1 + L_TAX\n      ) AS TEMP_COL1\n    FROM (\n      SELECT\n        L_QUANTITY,\n        L_EXTENDEDPRICE,\n        L_DISCOUNT,\n        L_TAX,\n        L_RETURNFLAG,\n        L_LINESTATUS,\n        L_EXTENDEDPRICE * (\n          1 - L_DISCOUNT\n        ) AS TEMP_COL0\n      FROM (\n        SELECT\n          L_QUANTITY,\n          L_EXTENDEDPRICE,\n          L_DISCOUNT,\n          L_TAX,\n          L_RETURNFLAG,\n          L_LINESTATUS\n        FROM (\n          SELECT\n            L_QUANTITY,\n            L_EXTENDEDPRICE,\n            L_DISCOUNT,\n            L_TAX,\n            L_RETURNFLAG,\n            L_LINESTATUS,\n            L_SHIPDATE\n          FROM LINEITEM\n        )\n        WHERE\n          L_SHIPDATE <= '1998-12-01'\n      )\n    )\n  )\n  GROUP BY\n    L_RETURNFLAG,\n    L_LINESTATUS\n)\nORDER BY\n  L_RETURNFLAG,\n  L_LINESTATUS\n"
+    required_op = """\
+[INFO] pydough.sqlglot.execute_relational: SQL query:
+ SELECT
+  L_RETURNFLAG,
+  L_LINESTATUS,
+  SUM_QTY,
+  SUM_BASE_PRICE,
+  SUM_DISC_PRICE,
+  SUM_CHARGE,
+  CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY,
+  CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE,
+  CAST(SUM_DISCOUNT AS REAL) / COUNT_ORDER AS AVG_DISC,
+  COUNT_ORDER
+FROM (
+  SELECT
+    L_RETURNFLAG,
+    L_LINESTATUS,
+    SUM(L_QUANTITY) AS SUM_QTY,
+    SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE,
+    SUM(L_DISCOUNT) AS SUM_DISCOUNT,
+    SUM(TEMP_COL0) AS SUM_DISC_PRICE,
+    SUM(TEMP_COL1) AS SUM_CHARGE,
+    COUNT() AS COUNT_ORDER
+  FROM (
+    SELECT
+      L_QUANTITY,
+      L_EXTENDEDPRICE,
+      L_DISCOUNT,
+      L_RETURNFLAG,
+      L_LINESTATUS,
+      TEMP_COL0,
+      TEMP_COL0 * (
+        1 + L_TAX
+      ) AS TEMP_COL1
+    FROM (
+      SELECT
+        L_QUANTITY,
+        L_EXTENDEDPRICE,
+        L_DISCOUNT,
+        L_TAX,
+        L_RETURNFLAG,
+        L_LINESTATUS,
+        L_EXTENDEDPRICE * (
+          1 - L_DISCOUNT
+        ) AS TEMP_COL0
+      FROM (
+        SELECT
+          L_QUANTITY,
+          L_EXTENDEDPRICE,
+          L_DISCOUNT,
+          L_TAX,
+          L_RETURNFLAG,
+          L_LINESTATUS
+        FROM (
+          SELECT
+            L_QUANTITY,
+            L_EXTENDEDPRICE,
+            L_DISCOUNT,
+            L_TAX,
+            L_RETURNFLAG,
+            L_LINESTATUS,
+            L_SHIPDATE
+          FROM LINEITEM
+        )
+        WHERE
+          L_SHIPDATE <= '1998-12-01'
+      )
+    )
+  )
+  GROUP BY
+    L_RETURNFLAG,
+    L_LINESTATUS
+)
+ORDER BY
+  L_RETURNFLAG,
+  L_LINESTATUS
+"""
     assert required_op.strip() in captured_output.strip(), f"'{required_op.strip()}' not found in captured output: {captured_output.strip()}"
