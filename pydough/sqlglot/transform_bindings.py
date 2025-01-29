@@ -509,7 +509,7 @@ def convert_hour(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],        
 ) -> SQLGlotExpression:
-    pass
+    return sqlglot_expressions.Extract(this=sqlglot_expressions.Var(this="HOUR"),expression=sql_glot_args[0])
 
 
 class SqlGlotTransformBindings:
