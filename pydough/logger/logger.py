@@ -1,26 +1,32 @@
+"""
+Module of PyDough dealing with logging across the library
+"""
+
 import logging
 import os
 import sys
 
 
 def get_logger(
-    name=__name__, 
-    default_level=logging.INFO, 
+    name: str = __name__,
+    default_level: int = logging.INFO,
     fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=None,
-    level_env_var="PYDOUGH_LOG_LEVEL"
-):
+    handlers: list[logging.Handler] | None = None,
+) -> logging.Logger:
     """
     Returns a logger with specified handlers, allowing the logging level to be set externally.
+    The default handler redirects to standard output.
 
-    :param name: Logger name, usually __name__ from the calling module
-    :param default_level: Default logging level if not set externally
-    :param fmt: Log message format string
-    :param handlers: A list of logging.Handler instances to add to the logger
-    :param level_env_var: Environment variable to override the logging level
-    :return: Configured logger instance
+    Args:
+        name (str): Logger name, usually the `__name__` from the calling module.
+        default_level (int): Default logging level if not set externally.
+        fmt (str): The format of the string compatible with python's logging library.
+        handlers (Optional[List[logging.Handler]]): A list of `logging.Handler` instances to add to the logger.
+    Returns:
+        logging.Logger: Configured logger instance.
     """
     logger = logging.getLogger(name)
+    level_env_var = "PYDOUGH_LOG_LEVEL"
     level = os.getenv(level_env_var, default_level)
     if isinstance(level, str):
         # Convert string level (e.g., "DEBUG", "INFO") to a logging constant

@@ -17,6 +17,7 @@ This document describes how to set up & interact with PyDough. For instructions 
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
    * [`pydough.explain_term`](#pydoughexplain_term)
+- [Logging] (#logging)
 
 <!-- TOC end -->
 
@@ -730,3 +731,6 @@ This term is singular with regards to the collection, meaning it can be placed i
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE')(AVG(customers.acctbal))
 ```
+## Logging
+
+Logging is enabled and set to INFO level by default. We can change the log level by setting the environment variable `PYDOUGH_LOG_LEVEL` to the standard levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
