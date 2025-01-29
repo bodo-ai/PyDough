@@ -88,7 +88,7 @@ def execute_df(
         The result of the query as a Pandas DataFrame
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
-    pretty_print_sql = False
+    pretty_print_sql: bool = False
     if display_sql:
         pretty_print_sql = True
     sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings,pretty_print_sql)
