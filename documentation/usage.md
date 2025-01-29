@@ -266,6 +266,7 @@ The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), b
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+- `display_sql`: displays the sql before executing in a logger.
 
 Below is an example of using `pydough.to_df` and the output, attached to a sqlite database containing data for the TPC-H schema:
 
@@ -758,7 +759,7 @@ We can also set the level of logging via a function argument. Note that if `PYDO
 
 ```python
 # Import the function
-from your_module import get_logger
+from pydough import get_logger
 
 # Get logger with a custom name and level
 logger = get_logger(name="custom_logger", default_level=logging.DEBUG)
@@ -771,7 +772,7 @@ We can also attach other handlers in addition to the default handler(`logging.St
 
 ```python
 import logging
-from your_module import get_logger
+from pydough import get_logger
 
 # Create a file handler
 file_handler = logging.FileHandler("logfile.log")
