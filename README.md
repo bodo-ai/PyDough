@@ -5,16 +5,16 @@ PyDough is an alternative DSL that can be used to solve analytical problems by p
 ## What Is PyDough
 
 PyDough allows expressing analytical questions with hierarchical thinking, as seen in models such as [MongoDB](https://www.mongodb.com/docs/manual/data-modeling/), since that mental model is closer to human linguistics than a relational model.
-Unlike MongoDB, PyDough only uses the a logical document model for abstractly explaining & interacting with data, rather than a physical document model to store the data.
+Unlike MongoDB, PyDough only uses a logical document model for abstractly explaining & interacting with data, rather than a physical document model to store the data.
 PyDough code can be written in and interleaved with Python code, and practices a lazy evaluation scheme that does not qualify or execute any logic until requested.
-PyDough executes by translating its logic into SQL which it can directly executing in a arbitrary database.
+PyDough executes by translating its logic into SQL which it can directly executing in an arbitrary database.
 
 Consider the following information represented by the tables in a database:
 - There are people; each person has a name, ssn, birth date, records of jobs they have had, and records of schools they have attended.
 - There are employment records; each job record has the ssn of the person being employed, the name of the company, and the total income they made from the job.
 - There are education records; each education record has the ssn of the person attending the school, the name of the school, and the total tuition they paid to that school.
 
-Suppose I want to know for every person their name & the total income they've made from all jobs minus the total tuition paid to all schools. However, I want to include people who have never had a job or never attended any schools, and I need to account for people who could have had multiple jobs or attended multiple schools attended.
+Suppose I want to know for every person their name & the total income they've made from all jobs minus the total tuition paid to all schools. However, I want to include people who have never had a job or never attended any schools, and I need to account for people who could have had multiple jobs or attended multiple schools.
 The following PyDough snippet solves this problem:
 
 ```py
@@ -90,7 +90,7 @@ make sure to include `-m "not execute"` in the pytest arguments.
 
 Note: some tests may require an additional setup to run successfully.
 The [demos](https://github.com/bodo-ai/PyDough/blob/main/demos/README.md) directory 
-contains for more information on how to setup the TPC-H sqlite database. For
+contains more information on how to setup the TPC-H sqlite database. For
 testing, the `tpch.db` file must be located in the `tests` directory.
 Additionally, the [`setup_defog.sh`](https://github.com/bodo-ai/PyDough/blob/main/tests/setup_defog.sh)
 script must be run so that the `defog.db` file is located in the `tests` directory.
