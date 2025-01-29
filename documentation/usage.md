@@ -734,3 +734,19 @@ For example, the following is valid:
 ## Logging
 
 Logging is enabled and set to INFO level by default. We can change the log level by setting the environment variable `PYDOUGH_LOG_LEVEL` to the standard levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+
+A new `logger` object can be created using `get_logger`.
+This function configures and returns a logger instance. It takes the following arguments:
+
+- `name` : The logger's name, typically the module name (`__name__`).
+- `default_level` : The default logging level if not set externally via environment variable `PYDOUGH_LOG_LEVEL`.
+- `fmt` : An optional log message format compatible with Python's logging.
+- `handlers` : An optional list of logging handlers to attach to the logger.
+
+It returns a configured `logging.Logger` instance.
+
+```py
+from pydough import get_logger
+pyd_logger = get_logger(__name__)
+#add examples of using the logger
+```
