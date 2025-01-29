@@ -505,6 +505,12 @@ def convert_ndistinct(
         this=sqlglot_expressions.Distinct(expressions=[column])
     )
 
+def convert_hour(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],        
+) -> SQLGlotExpression:
+    pass
+
 
 class SqlGlotTransformBindings:
     """
@@ -677,6 +683,7 @@ class SqlGlotTransformBindings:
         self.bind_unop(pydop.YEAR, sqlglot_expressions.Year)
         self.bind_unop(pydop.MONTH, sqlglot_expressions.Month)
         self.bind_unop(pydop.DAY, sqlglot_expressions.Day)
+        self.bindings[pydop.HOUR] = convert_hour
 
         # Binary operators
         self.bind_binop(pydop.ADD, sqlglot_expressions.Add)
