@@ -739,14 +739,46 @@ A new `logger` object can be created using `get_logger`.
 This function configures and returns a logger instance. It takes the following arguments:
 
 - `name` : The logger's name, typically the module name (`__name__`).
-- `default_level` : The default logging level if not set externally via environment variable `PYDOUGH_LOG_LEVEL`.
-- `fmt` : An optional log message format compatible with Python's logging.
+- `default_level` : The default logging level if not set externally via environment variable `PYDOUGH_LOG_LEVEL`. Defaults to `logging.INFO`.
+- `fmt` : An optional log message format compatible with Python's logging. The default format is `"%(asctime)s [%(levelname)s] %(name)s: %(message)s"`.
 - `handlers` : An optional list of logging handlers to attach to the logger.
 
 It returns a configured `logging.Logger` instance.
+Here is an example of basic usage. We have not set the environment variable, hence the default level of logging is INFO.
 
 ```py
 from pydough import get_logger
 pyd_logger = get_logger(__name__)
-#add examples of using the logger
+
+logger.info("This is an info message.")
+logger.error("This is an error message.")
+```
+
+We can also set the level of logging via a function argument. Note that if `PYDOUGH_LOG_LEVEL` is available, the default_level argument is overriden. 
+
+```python
+# Import the function
+from your_module import get_logger
+
+# Get logger with a custom name and level
+logger = get_logger(name="custom_logger", default_level=logging.DEBUG)
+
+# Log messages
+logger.debug("This is a debug message.")
+logger.warning("This is a warning message.")
+```
+We can also attach other handlers in addition to the default handler(`logging.StreamHandler(sys.stdout)`), by sending a list of handlers.
+
+```python
+import logging
+from your_module import get_logger
+
+# Create a file handler
+file_handler = logging.FileHandler("logfile.log")
+
+# Get logger with custom file handler
+logger = get_logger(handlers=[file_handler])
+
+# Log messages
+logger.info("This message will go to the console and the file.")
 ```

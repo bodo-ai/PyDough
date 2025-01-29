@@ -1,3 +1,7 @@
+"""
+Module of PyDough dealing with logging across the library
+"""
+
 __all__ = [
     "get_logger"
 ]

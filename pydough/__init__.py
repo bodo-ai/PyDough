@@ -18,9 +18,9 @@ __all__ = [
 from .configs import PyDoughSession
 from .evaluation import to_df, to_sql
 from .exploration import explain, explain_structure, explain_term
+from .logger import get_logger
 from .metadata import parse_json_metadata_from_file
 from .unqualified import display_raw, init_pydough_context
-from .logger import get_logger
 
 # Create a default session for the user to interact with.
 # In most situations users will just use this session and

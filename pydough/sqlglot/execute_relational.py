@@ -92,7 +92,6 @@ def execute_df(
     if display_sql:
         pretty_print_sql = True
     sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings,pretty_print_sql)
-    print(sql)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")

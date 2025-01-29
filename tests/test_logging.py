@@ -80,6 +80,66 @@ def test_get_logger_format(capsys):
     assert "ERROR - Test format" in captured.out
 
 
+def test_get_logger_env_level_overriding_default_value(monkeypatch,capsys):
+    """
+    Test if the logger picks up level from env variable when given default_value in the arguments
+    """
+    # Set the environment variable to override the log level
+    monkeypatch.setenv("PYDOUGH_LOG_LEVEL", "DEBUG")
+    logger = get_logger(name="env_level_overriding_default_value_test_logger",default_level="INFO")
+    logger.debug("This is a DEBUG message")
+    captured = capsys.readouterr()
+
+    assert "DEBUG" in captured.out
+    assert "This is a DEBUG message" in captured.out
+
+
+@pytest.mark.parametrize("level_str, expected_level", [
+    ("DEBUG", logging.DEBUG),
+    ("INFO", logging.INFO),
+    ("WARNING", logging.WARNING),
+    ("ERROR", logging.ERROR),
+    ("CRITICAL", logging.CRITICAL)
+])
+def test_get_logger_with_env_variable(level_str, expected_level,monkeypatch):
+    """
+    Test the logger configuration when the `PYDOUGH_LOG_LEVEL` environment variable is set.
+    """
+    monkeypatch.setenv("PYDOUGH_LOG_LEVEL", level_str)
+    logger = get_logger(name="get_logger_with_env_variable_test_logger")
+    
+    # Assert that the logger level matches the expected level
+    assert logger.level == expected_level, f"Expected level {expected_level}, but got {logger.level}"
+
+
+@pytest.mark.parametrize("expected_level", [
+    (logging.DEBUG),
+    (logging.INFO),
+    (logging.WARNING),
+    (logging.ERROR),
+    (logging.CRITICAL)
+])
+def test_get_logger_with_default_level_variable(expected_level):
+    """
+    Test the logger configuration when the default_level is set.
+    """
+    logger = get_logger(name="get_logger_with_default_level_variable_test_logger",default_level=expected_level)
+    
+    # Assert that the logger level matches the expected level
+    assert logger.level == expected_level, f"Expected level {expected_level}, but got {logger.level}"
+
+
+def test_get_logger_invalid_env_level(monkeypatch):
+    """
+    Test the logger when an invalid `PYDOUGH_LOG_LEVEL` environment variable is set.
+    """
+    # Set an invalid level
+    monkeypatch.setenv("PYDOUGH_LOG_LEVEL", "INVALID")
+    
+    with pytest.raises(AssertionError):
+        get_logger(name="logger_invalid_env_level_test_logger")
+
+
 def test_execute_df_logging(
         sqlite_tpch_db_context: DatabaseContext,
         sqlite_bindings: SqlGlotTransformBindings) -> None:

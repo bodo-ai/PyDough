@@ -1,5 +1,5 @@
 """
-Module of PyDough dealing with logging across the library
+Configures and returns a logger.
 """
 
 import logging
@@ -14,28 +14,36 @@ def get_logger(
     handlers: list[logging.Handler] | None = None,
 ) -> logging.Logger:
     """
-    Returns a logger with specified handlers, allowing the logging level to be set externally.
-    The default handler redirects to standard output.
+    Returns a logger with specified handlers, allowing the logging level to be set externally via an environment variable `PYDOUGH_LOG_LEVEL`.
+    The default handler redirects to standard output. Additional handlers can be sent as a list.
 
     Args:
-        name (str): Logger name, usually the `__name__` from the calling module.
-        default_level (int): Default logging level if not set externally.
-        fmt (str): The format of the string compatible with python's logging library.
-        handlers (Optional[List[logging.Handler]]): A list of `logging.Handler` instances to add to the logger.
+        `name` : Logger name, usually the `__name__` from the calling module.
+        `default_level` : Default logging level if not set externally.
+        `fmt` : The format of the string compatible with python's logging library.
+        `handlers` : A list of `logging.Handler` instances to add to the logger.
     Returns:
-        logging.Logger: Configured logger instance.
+        `logging.Logger` : Configured logger instance.
     """
-    logger = logging.getLogger(name)
-    level_env_var = "PYDOUGH_LOG_LEVEL"
-    level = os.getenv(level_env_var, default_level)
-    if isinstance(level, str):
+    logger: logging.Logger = logging.getLogger(name)
+    level_env: str = os.getenv("PYDOUGH_LOG_LEVEL")
+    level: int
+
+    if level_env is not None:
+        assert isinstance(level_env, str), f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be a string, found {level_env.__class__.__name__}"
+        allowed_levels: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        assert level_env in allowed_levels, f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be one of {', '.join(allowed_levels)}, found {level_env}"
         # Convert string level (e.g., "DEBUG", "INFO") to a logging constant
-        level = getattr(logging, level.upper(), default_level)
+        level = getattr(logging, level_env.upper(), default_level)
+    else:
+        assert default_level in [logging.DEBUG,logging.INFO,logging.WARNING,logging.ERROR,logging.CRITICAL], f"expected arguement default_value to be one of logging.DEBUG,logging.INFO,logging.WARNING,logging.ERROR,logging.CRITICAL, found {default_level}"
+        level = default_level
+
     # Create default console handler
-    default_handler = logging.StreamHandler(sys.stdout)
+    default_handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
     default_handler.setLevel(level)
     # Create formatter
-    formatter = logging.Formatter(fmt)
+    formatter: logging.Formatter = logging.Formatter(fmt)
     # Attach formatter to the default handler
     default_handler.setFormatter(formatter)
     # Avoid adding duplicate handlers
