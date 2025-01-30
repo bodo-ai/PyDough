@@ -24,7 +24,7 @@ This document describes how to set up & interact with PyDough. For instructions 
 <!-- TOC --><a name="setting-up-in-jupyter-notebooks"></a>
 ## Setting Up in Jupyter Notebooks
 
-Once you have uv set up, you can run the command `uv run jupyter lab` from the PyDough directory to boot up a Jupyter lab process that will have access to PyDough. 
+Once you have uv set up, you can run the command `uv run jupyter lab` from the PyDough directory to boot up a Jupyter lab process that will have access to PyDough. If you have installed PyDough via pip, you should be able to directly boot up a Jupyter lab process and it will have access to the PyDough module.
 
 Once JupyterLab is running, you can either navigate to an existing notebook file or create a new one. In that notebook file, follow these steps in the notebook cells to work with PyDough:
 
@@ -316,14 +316,14 @@ pydough.to_df(result)
 </table>
 </div>
 
-See the [demo notebooks](../demos/notebooks/Introduction.ipynb) for more instances of how to use the `to_df` API.
+See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
 
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
 This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it.
 
-See the [demo notebooks](../demos/notebooks/Exploration.ipynb) for more instances of how to use the exploration APIs.
+See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 
 <!-- TOC --><a name="pydoughexplain_structure"></a>
 ### `pydough.explain_structure`
