@@ -324,7 +324,7 @@ def correl_4():
 def correl_5():
     # Correlated back reference example #5: 2-step correlated HAS
     # Find every region that has at least 1 supplier whose account balance is
-    # within $4 of the smallest known account balance globally
+    # within $4 of the smallest known account balance globally.
     # (This is a correlated SEMI-join)
     selected_suppliers = nations.suppliers.WHERE(
         account_balance <= (BACK(3).smallest_bal + 4.0)
@@ -396,3 +396,33 @@ def correl_10():
     return Nations.WHERE(HASNOT(aug_region))(name, rname=aug_region.name).ORDER_BY(
         name.ASC()
     )
+
+
+def correl_11():
+    # Correlated back reference example #11: backref out of partition child.
+    # Which part brands have at least 1 part that more than 40% above the
+    # average retail price for all parts from that brand.
+    # (This is a correlated SEMI-join)
+    brands = PARTITION(Parts, name="p", by=brand)(avg_price=AVG(p.retail_price))
+    outlier_parts = p.WHERE(retail_price > 1.4 * BACK(1).avg_price)
+    selected_brands = brands.WHERE(HAS(outlier_parts))
+    return selected_brands(brand).ORDER_BY(brand.ASC())
+
+
+def correl_12():
+    # Correlated back reference example #12: backref out of partition child.
+    # Which part brands have at least 1 part that is above the average retail
+    # price for parts of that brand, below the average retail price for all
+    # parts, and has a size below 3.
+    # (This is a correlated SEMI-join)
+    global_info = TPCH(avg_price=AVG(Parts.retail_price))
+    brands = global_info.PARTITION(Parts, name="p", by=brand)(
+        avg_price=AVG(p.retail_price)
+    )
+    selected_parts = p.WHERE(
+        (retail_price > BACK(1).avg_price)
+        & (retail_price < BACK(2).avg_price)
+        & (size < 3)
+    )
+    selected_brands = brands.WHERE(HAS(selected_parts))
+    return selected_brands(brand).ORDER_BY(brand.ASC())
