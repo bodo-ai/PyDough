@@ -1219,7 +1219,7 @@ def test_defog_e2e_with_custom_data(
     comparing against the result of running the reference SQL query text on the
     same database connector.
     """
-    unqualified_impl, graph_name, _ ,answer_impl = custom_defog_test_data
+    unqualified_impl, graph_name ,answer_impl = custom_defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
