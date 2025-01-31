@@ -1922,7 +1922,9 @@ class HybridTranslator:
                         successor_hybrid = self.make_hybrid_tree(
                             node.child_access.child_access, parent
                         )
-                        partition_by = node.child_access.ancestor_context
+                        partition_by = (
+                            node.child_access.ancestor_context.starting_predecessor
+                        )
                         assert isinstance(partition_by, PartitionBy)
                         for key in partition_by.keys:
                             rhs_expr: HybridExpr = self.make_hybrid_expr(

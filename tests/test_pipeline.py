@@ -24,6 +24,8 @@ from simple_pydough_functions import (
     correl_8,
     correl_9,
     correl_10,
+    correl_11,
+    correl_12,
     double_partition,
     function_sampler,
     percentile_customers_per_region,
@@ -1406,6 +1408,62 @@ ROOT(columns=[('name', name), ('rname', rname)], orderings=[(ordering_0):asc_fir
                 ),
             ),
             id="correl_10",
+        ),
+        pytest.param(
+            (
+                correl_11,
+                """
+ROOT(columns=[('brand', brand)], orderings=[(ordering_1):asc_first])
+ PROJECT(columns={'brand': brand, 'ordering_1': brand})
+  FILTER(condition=True:bool, columns={'brand': brand})
+   JOIN(conditions=[t0.brand == t1.brand], types=['semi'], columns={'brand': t0.brand}, correl_name='corr1')
+    PROJECT(columns={'avg_price': agg_0, 'brand': brand})
+     AGGREGATE(keys={'brand': brand}, aggregations={'agg_0': AVG(retail_price)})
+      SCAN(table=tpch.PART, columns={'brand': p_brand, 'retail_price': p_retailprice})
+    FILTER(condition=retail_price > 1.4:float64 * corr1.avg_price, columns={'brand': brand})
+     SCAN(table=tpch.PART, columns={'brand': p_brand, 'retail_price': p_retailprice})
+""",
+                lambda: pd.DataFrame(
+                    {"brand": ["Brand#33", "Brand#43", "Brand#45", "Brand#55"]}
+                ),
+            ),
+            id="correl_11",
+        ),
+        pytest.param(
+            (
+                correl_12,
+                """
+ROOT(columns=[('brand', brand_5)], orderings=[(ordering_2):asc_first])
+ PROJECT(columns={'brand_5': brand_4, 'ordering_2': ordering_2})
+  PROJECT(columns={'brand_4': brand_4, 'ordering_2': brand_4})
+   PROJECT(columns={'brand_4': brand})
+    FILTER(condition=True:bool, columns={'brand': brand})
+     JOIN(conditions=[t0.brand == t1.brand], types=['semi'], columns={'brand': t0.brand}, correl_name='corr2')
+      PROJECT(columns={'avg_price': avg_price, 'avg_price_2': agg_1, 'brand': brand})
+       JOIN(conditions=[True:bool], types=['left'], columns={'agg_1': t1.agg_1, 'avg_price': t0.avg_price, 'brand': t1.brand})
+        PROJECT(columns={'avg_price': agg_0})
+         AGGREGATE(keys={}, aggregations={'agg_0': AVG(retail_price)})
+          SCAN(table=tpch.PART, columns={'retail_price': p_retailprice})
+        AGGREGATE(keys={'brand': brand}, aggregations={'agg_1': AVG(retail_price)})
+         SCAN(table=tpch.PART, columns={'brand': p_brand, 'retail_price': p_retailprice})
+      FILTER(condition=retail_price > corr2.avg_price_2 & retail_price < corr2.avg_price & size < 3:int64, columns={'brand': brand})
+       SCAN(table=tpch.PART, columns={'brand': p_brand, 'retail_price': p_retailprice, 'size': p_size})
+""",
+                lambda: pd.DataFrame(
+                    {
+                        "brand": [
+                            "Brand#14",
+                            "Brand#31",
+                            "Brand#33",
+                            "Brand#33",
+                            "Brand#43",
+                            "Brand#43",
+                            "Brand#55",
+                        ]
+                    }
+                ),
+            ),
+            id="correl_12",
         ),
     ],
 )
