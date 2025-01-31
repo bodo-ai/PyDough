@@ -26,6 +26,7 @@ from simple_pydough_functions import (
     correl_10,
     correl_11,
     correl_12,
+    correl_13,
     double_partition,
     function_sampler,
     percentile_customers_per_region,
@@ -1455,8 +1456,6 @@ ROOT(columns=[('brand', brand_5)], orderings=[(ordering_2):asc_first])
                             "Brand#14",
                             "Brand#31",
                             "Brand#33",
-                            "Brand#33",
-                            "Brand#43",
                             "Brand#43",
                             "Brand#55",
                         ]
@@ -1464,6 +1463,36 @@ ROOT(columns=[('brand', brand_5)], orderings=[(ordering_2):asc_first])
                 ),
             ),
             id="correl_12",
+        ),
+        pytest.param(
+            (
+                correl_13,
+                """
+ROOT(columns=[('n', n)], orderings=[])
+ PROJECT(columns={'n': agg_1})
+  JOIN(conditions=[True:bool], types=['left'], columns={'agg_1': t1.agg_1}, correl_name='corr4')
+   PROJECT(columns={'avg_price': agg_0})
+    AGGREGATE(keys={}, aggregations={'agg_0': AVG(retail_price)})
+     SCAN(table=tpch.PART, columns={'retail_price': p_retailprice})
+   AGGREGATE(keys={}, aggregations={'agg_1': COUNT()})
+    FILTER(condition=True:bool, columns={'account_balance': account_balance})
+     JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={'account_balance': t0.account_balance}, correl_name='corr3')
+      PROJECT(columns={'account_balance': account_balance, 'avg_price': agg_0, 'key': key})
+       JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'account_balance': t0.account_balance, 'agg_0': t1.agg_0, 'key': t0.key})
+        SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey})
+        AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price)})
+         JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'supplier_key': t0.supplier_key})
+          SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+          SCAN(table=tpch.PART, columns={'key': p_partkey, 'retail_price': p_retailprice})
+      FILTER(condition=True:bool, columns={'supplier_key': supplier_key})
+       JOIN(conditions=[t0.part_key == t1.key], types=['semi'], columns={'supplier_key': t0.supplier_key}, correl_name='corr2')
+        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
+        FILTER(condition=retail_price < corr2.supplycost * 1.5:float64 & retail_price < corr3.avg_price & retail_price < corr4.avg_price, columns={'key': key})
+         SCAN(table=tpch.PART, columns={'key': p_partkey, 'retail_price': p_retailprice})
+""",
+                lambda: pd.DataFrame({"n": [516]}),
+            ),
+            id="correl_13",
         ),
     ],
 )

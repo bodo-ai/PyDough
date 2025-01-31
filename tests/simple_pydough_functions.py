@@ -426,3 +426,22 @@ def correl_12():
     )
     selected_brands = brands.WHERE(HAS(selected_parts))
     return selected_brands(brand).ORDER_BY(brand.ASC())
+
+
+def correl_13():
+    # Correlated back reference example #13: multiple correlation.
+    # Count how many suppliers sell at least one part where the retail price
+    # is less than a 50% markup over the supply cost, and the retail price of
+    # the part is below the average of the retail price for all parts globally
+    # and the average for all parts from the supplier.
+    # (This is multiple correlated SEMI-joins)
+    selected_part = part.WHERE(
+        (retail_price < (BACK(1).supplycost * 1.5))
+        & (retail_price < BACK(2).avg_price)
+        & (retail_price < BACK(3).avg_price)
+    )
+    selected_supply_records = supply_records.WHERE(HAS(selected_part))
+    supplier_info = Suppliers(avg_price=AVG(supply_records.part.retail_price))
+    selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
+    global_info = TPCH(avg_price=AVG(Parts.retail_price))
+    return global_info(n=COUNT(selected_suppliers))
