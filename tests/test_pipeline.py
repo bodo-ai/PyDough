@@ -1455,8 +1455,6 @@ ROOT(columns=[('brand', brand_5)], orderings=[(ordering_2):asc_first])
                             "Brand#14",
                             "Brand#31",
                             "Brand#33",
-                            "Brand#33",
-                            "Brand#43",
                             "Brand#43",
                             "Brand#55",
                         ]
