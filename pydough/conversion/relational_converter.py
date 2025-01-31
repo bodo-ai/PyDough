@@ -135,6 +135,18 @@ class RelTranslation:
         relation.columns[name] = LiteralExpression(None, UnknownType())
         return ColumnReference(name, UnknownType())
 
+    def get_column_name(
+        self, name: str, existing_names: dict[str, RelationalExpression]
+    ) -> str:
+        """
+        TODO
+        """
+        new_name: str = name
+        while new_name in existing_names:
+            self.dummy_idx += 1
+            new_name = f"{name}_{self.dummy_idx}"
+        return new_name
+
     def get_correlated_name(self, context: TranslationOutput) -> str:
         """
         Finds the name used to refer to a context for correlated variable
@@ -742,6 +754,8 @@ class RelTranslation:
             rel_expr: RelationalExpression = self.translate_expression(
                 hybrid_expr, context
             )
+            if name in proj_columns and proj_columns[name] != rel_expr:
+                name = self.get_column_name(name, proj_columns)
             proj_columns[name] = rel_expr
             out_columns[ref_expr] = ColumnReference(name, rel_expr.data_type)
         out_rel: Project = Project(context.relation, proj_columns)
