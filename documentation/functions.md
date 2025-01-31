@@ -25,6 +25,9 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [YEAR](#year)
    * [MONTH](#month)
    * [DAY](#day)
+   * [HOUR](#hour)
+   * [MINUTE](#minute)
+   * [SECOND](#second)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
    * [ISIN](#isin)
@@ -253,6 +256,33 @@ Calling `DAY` on a date/timestamp extracts the day of the month it belongs to:
 
 ```py
 Orders(is_first_of_month = DAY(order_date) == 1)
+```
+
+<!-- TOC --><a name="hour"></a>
+### HOUR
+
+Calling `HOUR` on a date/timestamp extracts the hour it belongs to:
+
+```py
+Orders(is_12pm = HOUR(order_date) == 12)
+```
+
+<!-- TOC --><a name="minute"></a>
+### MINUTE
+
+Calling `MINUTE` on a date/timestamp extracts the minute:
+
+```py
+Orders(is_half_hour = MINUTE(order_date) == 30)
+```
+
+<!-- TOC --><a name="second"></a>
+### SECOND
+
+Calling `SECOND` on a date/timestamp extracts the second:
+
+```py
+Orders(is_lt_30_seconds = SECOND(order_date) < 30)
 ```
 
 <!-- TOC --><a name="conditional-functions"></a>

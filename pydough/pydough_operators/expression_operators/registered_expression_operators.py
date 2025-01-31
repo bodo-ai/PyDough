@@ -33,6 +33,7 @@ __all__ = [
     "LOWER",
     "MAX",
     "MIN",
+    "MINUTE",
     "MOD",
     "MONOTONIC",
     "MONTH",
@@ -45,6 +46,7 @@ __all__ = [
     "PRESENT",
     "RANKING",
     "ROUND",
+    "SECOND",
     "SLICE",
     "STARTSWITH",
     "SUB",
@@ -132,6 +134,12 @@ DAY = ExpressionFunctionOperator(
 )
 HOUR = ExpressionFunctionOperator(
     "HOUR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+MINUTE = ExpressionFunctionOperator(
+    "MINUTE", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+SECOND = ExpressionFunctionOperator(
+    "SECOND", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)

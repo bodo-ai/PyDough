@@ -28,6 +28,7 @@ from simple_pydough_functions import (
     simple_filter_top_five,
     simple_scan_top_five,
     triple_partition,
+    hour_minute_day,
 )
 from test_utils import (
     graph_fetcher,
@@ -1168,3 +1169,62 @@ def test_pipeline_e2e_errors(
     with pytest.raises(Exception, match=error_msg):
         root: UnqualifiedNode = init_pydough_context(graph)(impl)()
         to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            (
+                hour_minute_day,
+                "Broker",
+                lambda: """SELECT sbTxId,strftime('%H', sbTxDateTime),strftime('%M', sbTxDateTime),strftime('%S', sbTxDateTime) FROM sbTransaction AS t JOIN sbTicker AS tk ON t.sbTxTickerId = tk.sbTickerId
+                WHERE tk.sbTickerSymbol IN ("AAPL", "GOOGL", "NFLX") ORDER BY sbTxId ASC;""",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            "TX001", "TX005", "TX011", "TX015", "TX021", "TX025", 
+                            "TX031", "TX033", "TX035", "TX044", "TX045", "TX049", 
+                            "TX051", "TX055"
+                        ],
+                        "_expr0": [9, 12, 9, 12, 9, 12, 0, 0, 0, 10, 10, 16, 0, 0],
+                        "_expr1": [30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 30, 0, 0, 0],
+                        "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    }
+                )
+            ),
+            id="broker_basic1",
+        ),
+  ],
+)
+def custom_defog_test_data(
+    request,
+) -> tuple[Callable[[], UnqualifiedNode], Callable[[], str],pd.DataFrame]:
+    """
+    Test data for test_defog_e2e. Returns a tuple of the following
+    arguments:
+    1. `unqualified_impl`: a PyDough implementation function.
+    2. `graph_name`: the name of the graph from the defog database to use.
+    3. `query`: a function that takes in nothing and returns the sqlite query
+    text for a defog query.
+    4. `answer_impl`: a function that takes in nothing and returns the answer
+    to a defog query as a Pandas DataFrame.
+    """
+    return request.param
+
+
+@pytest.mark.execute
+def test_defog_e2e_with_custom_data(
+    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode], str, Callable[[], str],pd.DataFrame],
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+):
+    """
+    Test executing the defog analytical questions on the sqlite database,
+    comparing against the result of running the reference SQL query text on the
+    same database connector.
+    """
+    unqualified_impl, graph_name, _ ,answer_impl = custom_defog_test_data
+    graph: GraphMetadata = defog_graphs(graph_name)
+    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
+    pd.testing.assert_frame_equal(result, answer_impl())

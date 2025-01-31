@@ -270,3 +270,18 @@ def triple_partition():
     )(supp_region, avg_percentage=AVG(cust_regions.percentage)).ORDER_BY(
         supp_region.ASC()
     )
+
+
+def hour_minute_day():
+    """
+    Return the transaction IDs with the hour, minute, and second extracted from transaction
+    timestamps for specific ticker symbols ("AAPL," "GOOGL," "NFLX"),
+    ordered by transaction ID in ascending order.
+    """
+    return Transactions(
+        transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
+        ).WHERE(
+         ISIN(ticker.symbol,("AAPL", "GOOGL", "NFLX"))
+        ).ORDER_BY(
+        transaction_id.ASC()
+    )
