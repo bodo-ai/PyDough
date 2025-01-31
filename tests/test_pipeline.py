@@ -1177,8 +1177,6 @@ def test_pipeline_e2e_errors(
             (
                 hour_minute_day,
                 "Broker",
-                lambda: """SELECT sbTxId,strftime('%H', sbTxDateTime),strftime('%M', sbTxDateTime),strftime('%S', sbTxDateTime) FROM sbTransaction AS t JOIN sbTicker AS tk ON t.sbTxTickerId = tk.sbTickerId
-                WHERE tk.sbTickerSymbol IN ("AAPL", "GOOGL", "NFLX") ORDER BY sbTxId ASC;""",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -1198,15 +1196,13 @@ def test_pipeline_e2e_errors(
 )
 def custom_defog_test_data(
     request,
-) -> tuple[Callable[[], UnqualifiedNode], Callable[[], str],pd.DataFrame]:
+) -> tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame]:
     """
     Test data for test_defog_e2e. Returns a tuple of the following
     arguments:
     1. `unqualified_impl`: a PyDough implementation function.
     2. `graph_name`: the name of the graph from the defog database to use.
-    3. `query`: a function that takes in nothing and returns the sqlite query
-    text for a defog query.
-    4. `answer_impl`: a function that takes in nothing and returns the answer
+    3. `answer_impl`: a function that takes in nothing and returns the answer
     to a defog query as a Pandas DataFrame.
     """
     return request.param
@@ -1214,7 +1210,7 @@ def custom_defog_test_data(
 
 @pytest.mark.execute
 def test_defog_e2e_with_custom_data(
-    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode], str, Callable[[], str],pd.DataFrame],
+    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame],
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):

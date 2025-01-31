@@ -274,8 +274,8 @@ def triple_partition():
 
 def hour_minute_day():
     """
-    Return the transaction IDs with the hour, minute, and second extracted from transaction
-    timestamps for specific ticker symbols ("AAPL," "GOOGL," "NFLX"),
+    Return the transaction IDs with the hour, minute, and second extracted from
+    transaction timestamps for specific ticker symbols ("AAPL","GOOGL","NFLX"),
     ordered by transaction ID in ascending order.
     """
     return Transactions(

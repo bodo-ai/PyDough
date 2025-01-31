@@ -507,15 +507,15 @@ def convert_ndistinct(
 
 def create_convert_time_unit_function(unit: str):
     """
-    Creates a function that extracts a specific time unit (e.g., HOUR, MINUTE, SECOND)
-    from a SQLGlot expression.
+    Creates a function that extracts a specific time unit
+    (e.g., HOUR, MINUTE, SECOND) from a SQLGlot expression.
 
     Args:
-        `unit`: The time unit to extract. Must be one of 'HOUR', 'MINUTE', or 'SECOND'.
-
+        `unit`: The time unit to extract. Must be one of 'HOUR', 'MINUTE',
+                or 'SECOND'.
     Returns:
-        A function that can convert operands into a SQLGlot expression matching the
-        functionality of `EXTRACT(unit FROM expression)`.
+        A function that can convert operands into a SQLGlot expression matching
+        the functionality of `EXTRACT(unit FROM expression)`.
     """
     def convert_time_unit(
         raw_args: Sequence[RelationalExpression] | None,
@@ -528,11 +528,13 @@ def create_convert_time_unit_function(unit: str):
             `raw_args`: The operands passed to the function before they were converted to
             SQLGlot expressions. (Not actively used in this implementation.)
             `sql_glot_args`: The operands passed to the function after they were converted
-            to SQLGlot expressions. The first operand is expected to be a timestamp or datetime.
+            to SQLGlot expressions. The first operand is expected to be a timestamp or
+                                    datetime.
 
         Returns:
-            The SQLGlot expression matching the functionality of `EXTRACT(unit FROM expression)`
-            by extracting the specified time unit from the first operand.
+            The SQLGlot expression matching the functionality of
+            `EXTRACT(unit FROM expression)` by extracting the specified time unit
+            from the first operand.
         """
         return sqlglot_expressions.Extract(
             this=sqlglot_expressions.Var(this=unit),
