@@ -52,7 +52,7 @@ __all__ = [
     "PyDoughExpressionOperator",
     "RANKING",
     "ROUND",
-    "SECOND"
+    "SECOND",
     "SLICE",
     "STARTSWITH",
     "SUB",

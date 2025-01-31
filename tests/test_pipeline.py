@@ -16,6 +16,7 @@ from simple_pydough_functions import (
     agg_partition,
     double_partition,
     function_sampler,
+    hour_minute_day,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -28,7 +29,6 @@ from simple_pydough_functions import (
     simple_filter_top_five,
     simple_scan_top_five,
     triple_partition,
-    hour_minute_day,
 )
 from test_utils import (
     graph_fetcher,

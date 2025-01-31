@@ -57,7 +57,7 @@ __all__ = [
     "RANKING",
     "ROUND",
     "RequireNumArgs",
-    "SECOND"
+    "SECOND",
     "SLICE",
     "STARTSWITH",
     "SUB",
