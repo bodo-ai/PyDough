@@ -2189,8 +2189,8 @@ from pydough.types import (
 def relational_test_data(request) -> tuple[CollectionTestInfo, str]:
     """
     Input data for `test_ast_to_relational`. Parameters are the info to build
-    the input QDAG nodes, and the expected output string after converting to a
-    relational tree.
+    the input QDAG nodes, and the name of the file containing the expected
+    output string after converting to a relational tree.
     """
     return request.param
 
@@ -2324,8 +2324,9 @@ def test_ast_to_relational(
 def relational_alternative_config_test_data(request) -> tuple[CollectionTestInfo, str]:
     """
     Input data for `test_ast_to_relational_alternative_aggregation_configs`.
-    Parameters are the info to build the input QDAG nodes, and the expected
-    output string after converting to a relational tree.
+    Parameters are the info to build the input QDAG nodes, and the name of the
+    file containing the expected output string after converting to a relational
+    tree.
     """
     return request.param
 
