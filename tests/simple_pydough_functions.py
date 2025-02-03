@@ -431,17 +431,55 @@ def correl_12():
 def correl_13():
     # Correlated back reference example #13: multiple correlation.
     # Count how many suppliers sell at least one part where the retail price
-    # is less than a 50% markup over the supply cost, and the retail price of
-    # the part is below the average of the retail price for all parts globally
-    # and the average for all parts from the supplier.
-    # (This is multiple correlated SEMI-joins)
-    selected_part = part.WHERE(
-        (retail_price < (BACK(1).supplycost * 1.5))
-        & (retail_price < BACK(2).avg_price)
-        & (retail_price < BACK(3).avg_price)
+    # is less than a 50% markup over the supply cost. Only considers suppliers
+    # from nations #1/#2/#3, and small parts.
+    # (This is a correlated SEMI-joins)
+    selected_part = part.WHERE(STARTSWITH(container, "SM")).WHERE(
+        retail_price < (BACK(1).supplycost * 1.5)
     )
     selected_supply_records = supply_records.WHERE(HAS(selected_part))
-    supplier_info = Suppliers(avg_price=AVG(supply_records.part.retail_price))
+    supplier_info = Suppliers.WHERE(nation_key <= 3)(
+        avg_price=AVG(supply_records.part.retail_price)
+    )
+    selected_suppliers = supplier_info.WHERE(COUNT(selected_supply_records) > 0)
+    return TPCH(n=COUNT(selected_suppliers))
+
+
+def correl_14():
+    # Correlated back reference example #14: multiple correlation.
+    # Count how many suppliers sell at least one part where the retail price
+    # is less than a 50% markup over the supply cost, and the retail price of
+    # the part is below the average for all parts from the supplier. Only
+    # considers suppliers from nations #19, and LG DRUM parts.
+    # (This is multiple correlated SEMI-joins)
+    selected_part = part.WHERE(container == "LG DRUM").WHERE(
+        (retail_price < (BACK(1).supplycost * 1.5)) & (retail_price < BACK(2).avg_price)
+    )
+    selected_supply_records = supply_records.WHERE(HAS(selected_part))
+    supplier_info = Suppliers.WHERE(nation_key == 19)(
+        avg_price=AVG(supply_records.part.retail_price)
+    )
+    selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
+    return TPCH(n=COUNT(selected_suppliers))
+
+
+def correl_15():
+    # Correlated back reference example #15: multiple correlation.
+    # Count how many suppliers sell at least one part where the retail price
+    # is less than a 50% markup over the supply cost, and the retail price of
+    # the part is below the 90% of the average of the retail price for all
+    # parts globally and below the average for all parts from the supplier.
+    # Only considers suppliers from nations #19, and LG DRUM parts.
+    # (This is multiple correlated SEMI-joins & a correlated aggregate)
+    selected_part = part.WHERE(container == "LG DRUM").WHERE(
+        (retail_price < (BACK(1).supplycost * 1.5))
+        & (retail_price < BACK(2).avg_price)
+        & (retail_price < BACK(3).avg_price * 0.9)
+    )
+    selected_supply_records = supply_records.WHERE(HAS(selected_part))
+    supplier_info = Suppliers.WHERE(nation_key == 19)(
+        avg_price=AVG(supply_records.part.retail_price)
+    )
     selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
     global_info = TPCH(avg_price=AVG(Parts.retail_price))
     return global_info(n=COUNT(selected_suppliers))

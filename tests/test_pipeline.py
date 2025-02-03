@@ -27,6 +27,8 @@ from simple_pydough_functions import (
     correl_11,
     correl_12,
     correl_13,
+    correl_14,
+    correl_15,
     double_partition,
     function_sampler,
     percentile_customers_per_region,
@@ -1469,6 +1471,62 @@ ROOT(columns=[('brand', brand_5)], orderings=[(ordering_2):asc_first])
                 correl_13,
                 """
 ROOT(columns=[('n', n)], orderings=[])
+ PROJECT(columns={'n': agg_0})
+  AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+   FILTER(condition=DEFAULT_TO(agg_1, 0:int64) > 0:int64, columns={'account_balance': account_balance})
+    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'account_balance': t0.account_balance, 'agg_1': t1.agg_1})
+     JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'account_balance': t0.account_balance, 'key': t0.key})
+      FILTER(condition=nation_key <= 3:int64, columns={'account_balance': account_balance, 'key': key})
+       SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
+      AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={})
+       JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'supplier_key': t0.supplier_key})
+        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+        SCAN(table=tpch.PART, columns={'key': p_partkey})
+     AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_1': COUNT()})
+      FILTER(condition=True:bool, columns={'supplier_key': supplier_key})
+       JOIN(conditions=[t0.part_key == t1.key], types=['semi'], columns={'supplier_key': t0.supplier_key}, correl_name='corr2')
+        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
+        FILTER(condition=retail_price < corr2.supplycost * 1.5:float64, columns={'key': key})
+         FILTER(condition=STARTSWITH(container, 'SM':string), columns={'key': key, 'retail_price': retail_price})
+          SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'retail_price': p_retailprice})
+""",
+                lambda: pd.DataFrame({"n": [1129]}),
+            ),
+            id="correl_13",
+        ),
+        pytest.param(
+            (
+                correl_14,
+                """
+ROOT(columns=[('n', n)], orderings=[])
+ PROJECT(columns={'n': agg_0})
+  AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+   FILTER(condition=True:bool, columns={'account_balance': account_balance})
+    JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={'account_balance': t0.account_balance}, correl_name='corr3')
+     PROJECT(columns={'account_balance': account_balance, 'avg_price': agg_0, 'key': key})
+      JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'account_balance': t0.account_balance, 'agg_0': t1.agg_0, 'key': t0.key})
+       FILTER(condition=nation_key == 19:int64, columns={'account_balance': account_balance, 'key': key})
+        SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
+       AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price)})
+        JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'supplier_key': t0.supplier_key})
+         SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+         SCAN(table=tpch.PART, columns={'key': p_partkey, 'retail_price': p_retailprice})
+     FILTER(condition=True:bool, columns={'supplier_key': supplier_key})
+      JOIN(conditions=[t0.part_key == t1.key], types=['semi'], columns={'supplier_key': t0.supplier_key}, correl_name='corr2')
+       SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
+       FILTER(condition=retail_price < corr2.supplycost * 1.5:float64 & retail_price < corr3.avg_price, columns={'key': key})
+        FILTER(condition=container == 'LG DRUM':string, columns={'key': key, 'retail_price': retail_price})
+         SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'retail_price': p_retailprice})
+""",
+                lambda: pd.DataFrame({"n": [66]}),
+            ),
+            id="correl_14",
+        ),
+        pytest.param(
+            (
+                correl_15,
+                """
+ROOT(columns=[('n', n)], orderings=[])
  PROJECT(columns={'n': agg_1})
   JOIN(conditions=[True:bool], types=['left'], columns={'agg_1': t1.agg_1}, correl_name='corr4')
    PROJECT(columns={'avg_price': agg_0})
@@ -1479,7 +1537,8 @@ ROOT(columns=[('n', n)], orderings=[])
      JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={'account_balance': t0.account_balance}, correl_name='corr3')
       PROJECT(columns={'account_balance': account_balance, 'avg_price': agg_0, 'key': key})
        JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'account_balance': t0.account_balance, 'agg_0': t1.agg_0, 'key': t0.key})
-        SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey})
+        FILTER(condition=nation_key <= 3:int64, columns={'account_balance': account_balance, 'key': key})
+         SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
         AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price)})
          JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'supplier_key': t0.supplier_key})
           SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
@@ -1487,12 +1546,13 @@ ROOT(columns=[('n', n)], orderings=[])
       FILTER(condition=True:bool, columns={'supplier_key': supplier_key})
        JOIN(conditions=[t0.part_key == t1.key], types=['semi'], columns={'supplier_key': t0.supplier_key}, correl_name='corr2')
         SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplycost': ps_supplycost})
-        FILTER(condition=retail_price < corr2.supplycost * 1.5:float64 & retail_price < corr3.avg_price & retail_price < corr4.avg_price, columns={'key': key})
-         SCAN(table=tpch.PART, columns={'key': p_partkey, 'retail_price': p_retailprice})
+        FILTER(condition=retail_price < corr2.supplycost * 1.5:float64 & retail_price < corr3.avg_price & retail_price < corr4.avg_price * 0.9:float64, columns={'key': key})
+         FILTER(condition=STARTSWITH(container, 'SM':string), columns={'key': key, 'retail_price': retail_price})
+          SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey, 'retail_price': p_retailprice})
 """,
-                lambda: pd.DataFrame({"n": [516]}),
+                lambda: pd.DataFrame({"n": [212]}),
             ),
-            id="correl_13",
+            id="correl_15",
         ),
     ],
 )
@@ -1520,6 +1580,7 @@ def test_pipeline_until_relational(
     ],
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
+    sqlite_bindings,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
