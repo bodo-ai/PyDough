@@ -78,7 +78,17 @@ class TranslationOutput:
     """
 
     relation: Relational
+    """
+    The relational tree describing the way to compute the answer for the
+    logic originally in the hybrid tree.
+    """
+
     expressions: dict[HybridExpr, ColumnReference]
+    """
+    A mapping of each expression that was accessible in the hybrid tree to the
+    corresponding column reference in the relational tree that contains the
+    value of that expression.
+    """
 
 
 class RelTranslation:
@@ -113,6 +123,18 @@ class RelTranslation:
             name = f"NULL_{self.dummy_idx}"
         relation.columns[name] = LiteralExpression(None, UnknownType())
         return ColumnReference(name, UnknownType())
+
+    def get_column_name(
+        self, name: str, existing_names: dict[str, RelationalExpression]
+    ) -> str:
+        """
+        TODO
+        """
+        new_name: str = name
+        while new_name in existing_names:
+            self.dummy_idx += 1
+            new_name = f"{name}_{self.dummy_idx}"
+        return new_name
 
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
@@ -681,6 +703,8 @@ class RelTranslation:
             rel_expr: RelationalExpression = self.translate_expression(
                 hybrid_expr, context
             )
+            if name in proj_columns and proj_columns[name] != rel_expr:
+                name = self.get_column_name(name, proj_columns)
             proj_columns[name] = rel_expr
             out_columns[ref_expr] = ColumnReference(name, rel_expr.data_type)
         out_rel: Project = Project(context.relation, proj_columns)
@@ -905,7 +929,7 @@ def convert_ast_to_relational(
     # Convert the QDAG node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the
     # final rel node.
-    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node)
+    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1

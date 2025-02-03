@@ -89,8 +89,8 @@ ROOT(columns=[('fizz', fizz), ('buzz', buzz)], orderings=[])
             (
                 TableCollectionInfo("Regions") ** SubCollectionInfo("nations"),
                 """
-ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('comment', comment)], orderings=[])
- PROJECT(columns={'comment': comment_1, 'key': key_2, 'name': name_3, 'region_key': region_key})
+ROOT(columns=[('key', key_6), ('name', name_7), ('region_key', region_key), ('comment', comment_5)], orderings=[])
+ PROJECT(columns={'comment_5': comment_1, 'key_6': key_2, 'name_7': name_3, 'region_key': region_key})
   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
@@ -104,8 +104,8 @@ ROOT(columns=[('key', key), ('name', name), ('region_key', region_key), ('commen
                 ** SubCollectionInfo("nations")
                 ** SubCollectionInfo("customers"),
                 """
-ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment)], orderings=[])
- PROJECT(columns={'acctbal': acctbal, 'address': address, 'comment': comment_4, 'key': key_5, 'mktsegment': mktsegment, 'name': name_6, 'nation_key': nation_key, 'phone': phone})
+ROOT(columns=[('key', key_9), ('name', name_10), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment_8)], orderings=[])
+ PROJECT(columns={'acctbal': acctbal, 'address': address, 'comment_8': comment_4, 'key_9': key_5, 'mktsegment': mktsegment, 'name_10': name_6, 'nation_key': nation_key, 'phone': phone})
   JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment_4': t1.comment, 'key_5': t1.key, 'mktsegment': t1.mktsegment, 'name_6': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone})
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey})
@@ -242,13 +242,14 @@ ROOT(columns=[('ship_year', ship_year), ('supplier_nation', supplier_nation), ('
                     mktsegment=ReferenceInfo("mktsegment"),
                 ),
                 """
-ROOT(columns=[('key', key_0), ('name', name), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
- PROJECT(columns={'key_0': -3:int64, 'mktsegment': mktsegment, 'name': name_6, 'phone': phone})
-  JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_6': t1.name, 'phone': t1.phone})
-   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
-    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
-    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
-   SCAN(table=tpch.CUSTOMER, columns={'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
+ROOT(columns=[('key', key_0_9), ('name', name_11), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
+ PROJECT(columns={'key_0_9': key_0_9, 'mktsegment': mktsegment, 'name_11': name_10, 'phone': phone})
+  PROJECT(columns={'key_0_9': -3:int64, 'mktsegment': mktsegment, 'name_10': name_7, 'phone': phone})
+   JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_7': t1.name, 'phone': t1.phone})
+    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+    SCAN(table=tpch.CUSTOMER, columns={'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})
 """,
             ),
             id="join_regions_nations_calc_override",
@@ -700,15 +701,16 @@ ROOT(columns=[('order_key', order_key), ('max_ratio', max_ratio)], orderings=[])
                     ),
                 ),
                 """
-ROOT(columns=[('part_key', part_key), ('supplier_key', supplier_key), ('order_key', order_key), ('order_quantity_ratio', order_quantity_ratio)], orderings=[])
- PROJECT(columns={'order_key': order_key_2, 'order_quantity_ratio': quantity / total_quantity, 'part_key': part_key, 'supplier_key': supplier_key})
-  JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'order_key_2': t1.order_key, 'part_key': t1.part_key, 'quantity': t1.quantity, 'supplier_key': t1.supplier_key, 'total_quantity': t0.total_quantity})
-   PROJECT(columns={'key': key, 'total_quantity': DEFAULT_TO(agg_0, 0:int64)})
-    JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
-     SCAN(table=tpch.ORDERS, columns={'key': o_orderkey})
-     AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(quantity)})
-      SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'quantity': l_quantity})
-   SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'quantity': l_quantity, 'supplier_key': l_suppkey})
+ROOT(columns=[('part_key', part_key), ('supplier_key', supplier_key), ('order_key', order_key_5), ('order_quantity_ratio', order_quantity_ratio)], orderings=[])
+ PROJECT(columns={'order_key_5': order_key_4, 'order_quantity_ratio': order_quantity_ratio, 'part_key': part_key, 'supplier_key': supplier_key})
+  PROJECT(columns={'order_key_4': order_key_2, 'order_quantity_ratio': quantity / total_quantity, 'part_key': part_key, 'supplier_key': supplier_key})
+   JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'order_key_2': t1.order_key, 'part_key': t1.part_key, 'quantity': t1.quantity, 'supplier_key': t1.supplier_key, 'total_quantity': t0.total_quantity})
+    PROJECT(columns={'key': key, 'total_quantity': DEFAULT_TO(agg_0, 0:int64)})
+     JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+      SCAN(table=tpch.ORDERS, columns={'key': o_orderkey})
+      AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(quantity)})
+       SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'quantity': l_quantity})
+    SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'quantity': l_quantity, 'supplier_key': l_suppkey})
 """,
             ),
             id="aggregate_then_backref",
