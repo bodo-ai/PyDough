@@ -29,6 +29,8 @@ from simple_pydough_functions import (
     correl_13,
     correl_14,
     correl_15,
+    correl_16,
+    correl_17,
     double_partition,
     function_sampler,
     percentile_customers_per_region,
@@ -1553,6 +1555,47 @@ ROOT(columns=[('n', n)], orderings=[])
                 lambda: pd.DataFrame({"n": [212]}),
             ),
             id="correl_15",
+        ),
+        pytest.param(
+            (
+                correl_16,
+                """
+ROOT(columns=[('n', n)], orderings=[])
+ PROJECT(columns={'n': agg_0})
+  AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+   FILTER(condition=True:bool, columns={'account_balance': account_balance})
+    JOIN(conditions=[t0.nation_key == t1.key], types=['semi'], columns={'account_balance': t0.account_balance}, correl_name='corr7')
+     PROJECT(columns={'account_balance': account_balance, 'nation_key': nation_key, 'tile': PERCENTILE(args=[], partition=[], order=[(account_balance):asc_last], n_buckets=10000)})
+      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
+     FILTER(condition=PERCENTILE(args=[], partition=[], order=[(acctbal):asc_last], n_buckets=10000) == corr7.tile & rname == 'EUROPE':string, columns={'key': key})
+      JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'rname': t0.rname})
+       PROJECT(columns={'key': key, 'rname': name_3})
+        JOIN(conditions=[t0.region_key == t1.key], types=['left'], columns={'key': t0.key, 'name_3': t1.name})
+         SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+         SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+       SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
+""",
+                lambda: pd.DataFrame({"n": [925]}),
+            ),
+            id="correl_16",
+        ),
+        pytest.param(
+            (
+                correl_17,
+                """
+ROOT(columns=[('fullname', fullname)], orderings=[(ordering_0):asc_first])
+ PROJECT(columns={'fullname': fullname, 'ordering_0': fullname})
+  PROJECT(columns={'fullname': fname})
+   FILTER(condition=True:bool, columns={'fname': fname})
+    JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'fname': t1.fname}, correl_name='corr1')
+     PROJECT(columns={'lname': LOWER(name), 'region_key': region_key})
+      SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+     PROJECT(columns={'fname': JOIN_STRINGS('-':string, LOWER(name), corr1.lname), 'key': key})
+      SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+""",
+                lambda: pd.DataFrame({"fullname": [925]}),
+            ),
+            id="correl_17",
         ),
     ],
 )
