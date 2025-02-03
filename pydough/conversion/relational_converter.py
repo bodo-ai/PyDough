@@ -139,7 +139,16 @@ class RelTranslation:
         self, name: str, existing_names: dict[str, RelationalExpression]
     ) -> str:
         """
-        TODO
+        Replaces a name for a new column with another name if the name is
+        already being used.
+
+        Args:
+            `name`: the name of the column to be replaced.
+            `existing_names`: the dictionary of existing column names that
+            are already being used in the current relational tree.
+
+        Returns:
+            A string based on `name` that is not part of `existing_names`.
         """
         new_name: str = name
         while new_name in existing_names:
@@ -754,6 +763,8 @@ class RelTranslation:
             rel_expr: RelationalExpression = self.translate_expression(
                 hybrid_expr, context
             )
+            # Ensure the name of the new column is not already being used. If
+            # it is, choose a new name.
             if name in proj_columns and proj_columns[name] != rel_expr:
                 name = self.get_column_name(name, proj_columns)
             proj_columns[name] = rel_expr

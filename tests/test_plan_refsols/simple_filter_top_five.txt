@@ -1,0 +1,5 @@
+ROOT(columns=[('key', key), ('total_price', total_price)], orderings=[(ordering_0):desc_last])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0, 'total_price': total_price}, orderings=[(ordering_0):desc_last])
+  PROJECT(columns={'key': key, 'ordering_0': key, 'total_price': total_price})
+   FILTER(condition=total_price < 1000.0:float64, columns={'key': key, 'total_price': total_price})
+    SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'total_price': o_totalprice})
