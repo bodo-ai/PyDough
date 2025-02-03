@@ -1575,7 +1575,7 @@ ROOT(columns=[('n', n)], orderings=[])
          SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
        SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})
 """,
-                lambda: pd.DataFrame({"n": [925]}),
+                lambda: pd.DataFrame({"n": [929]}),
             ),
             id="correl_16",
         ),
