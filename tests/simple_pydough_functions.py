@@ -493,11 +493,11 @@ def correl_16():
     # customers. Percentile should be measured down to increments of 0.01%.
     # (This is a correlated SEMI-joins)
     selected_customers = nation(rname=region.name).customers.WHERE(
-        (PERCENTILE(by=acctbal.ASC(), n_buckets=10000) == BACK(2).tile)
+        (PERCENTILE(by=(acctbal.ASC(), key.ASC()), n_buckets=10000) == BACK(2).tile)
         & (BACK(1).rname == "EUROPE")
     )
     supplier_info = Suppliers(
-        tile=PERCENTILE(by=account_balance.ASC(), n_buckets=10000)
+        tile=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000)
     )
     selected_suppliers = supplier_info.WHERE(HAS(selected_customers))
     return TPCH(n=COUNT(selected_suppliers))
