@@ -210,13 +210,13 @@ FROM (
           L_LINESTATUS
         FROM (
           SELECT
-            L_QUANTITY,
-            L_EXTENDEDPRICE,
             L_DISCOUNT,
-            L_TAX,
-            L_RETURNFLAG,
+            L_EXTENDEDPRICE,
             L_LINESTATUS,
-            L_SHIPDATE
+            L_QUANTITY,
+            L_RETURNFLAG,
+            L_SHIPDATE,
+            L_TAX
           FROM LINEITEM
         )
         WHERE

@@ -4,8 +4,12 @@ Test that tests the full conversion of a PyDough object to a SQL query.
 
 from collections.abc import Callable
 
+from pydough.conversion.relational_converter import convert_ast_to_relational
+from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
+from pydough.relational.relational_nodes.relational_root import RelationalRoot
+from pydough.unqualified.qualification import qualify_node
 import pytest
-from simple_pydough_functions import rank_a, rank_b, rank_c, simple_filter, simple_scan
+from simple_pydough_functions import hour_minute_day, rank_a, rank_b, rank_c, simple_filter, simple_scan
 from test_utils import (
     graph_fetcher,
 )
@@ -15,6 +19,7 @@ from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
 )
+from tests.conftest import default_config
 
 
 @pytest.mark.parametrize(
