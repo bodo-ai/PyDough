@@ -249,9 +249,9 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
+                    set_glot_alias(mk_literal(1, False), "c"),
                     Ident(this="a"),
                     Ident(this="b"),
-                    set_glot_alias(mk_literal(1, False), "c"),
                 ],
                 _from=GlotFrom(Table(this=Ident(this="table"))),
             ),
@@ -1588,6 +1588,7 @@ def test_node_to_sqlglot(
     sqlglot_relational_visitor.reset()
     node.accept(sqlglot_relational_visitor)
     actual = sqlglot_relational_visitor.get_sqlglot_result()
+    breakpoint()
     assert actual == sqlglot_expr
 
 

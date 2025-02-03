@@ -200,7 +200,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if new_exprs is None:
             return orig_select
         else:
-            return self._build_subquery(orig_select, new_exprs, sort=True)
+            return self._build_subquery(orig_select, new_exprs, sort=sort)
 
     def _convert_ordering(
         self, ordering: MutableSequence[ExpressionSortInfo]

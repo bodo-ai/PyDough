@@ -209,6 +209,5 @@ def test_defog_e2e(
         sqlite_query
     )
     assert len(result.columns) == len(refsol.columns)
-    breakpoint()
     refsol.columns = result.columns
     pd.testing.assert_frame_equal(result, refsol)
