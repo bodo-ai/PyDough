@@ -483,3 +483,31 @@ def correl_15():
     selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
     global_info = TPCH(avg_price=AVG(Parts.retail_price))
     return global_info(n=COUNT(selected_suppliers))
+
+
+def correl_16():
+    # Correlated back reference example #15: hybrid tree order of operations.
+    # Count how many european suppliers have the exact same percentile value
+    # of account balance (relative to all other suppliers) as at least one
+    # customer's percentile value of account balance relative to all other
+    # customers. Percentile should be measured down to increments of 0.01%.
+    # (This is a correlated SEMI-joins)
+    selected_customers = nation(rname=region.name).customers.WHERE(
+        (PERCENTILE(by=acctbal.ASC(), n_buckets=10000) == BACK(2).tile)
+        & (BACK(1).rname == "EUROPE")
+    )
+    supplier_info = Suppliers(
+        tile=PERCENTILE(by=account_balance.ASC(), n_buckets=10000)
+    )
+    selected_suppliers = supplier_info.WHERE(HAS(selected_customers))
+    return TPCH(n=COUNT(selected_suppliers))
+
+
+def correl_17():
+    # Correlated back reference example #15: hybrid tree order of operations.
+    # An extremely roundabout way of getting each region_name-nation_name
+    # pair as a string.
+    # (This is a correlated singular/semi access)
+    region_info = region(fname=JOIN_STRINGS("-", LOWER(name), BACK(1).lname))
+    nation_info = Nations(lname=LOWER(name)).WHERE(HAS(region_info))
+    return nation_info(fullname=region_info.fname).ORDER_BY(fullname.ASC())
