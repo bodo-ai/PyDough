@@ -1,0 +1,6 @@
+ROOT(columns=[('nation_name', nation_name), ('num_customers', num_customers)], orderings=[])
+ PROJECT(columns={'nation_name': key, 'num_customers': DEFAULT_TO(agg_0, 0:int64)})
+  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT()})
+    SCAN(table=tpch.CUSTOMER, columns={'nation_key': c_nationkey})

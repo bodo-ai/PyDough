@@ -1,0 +1,3 @@
+ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d)], orderings=[])
+ PROJECT(columns={'a': 0:int64, 'b': 'X':string, 'c': 3.14:float64, 'd': True:bool})
+  EMPTYSINGLETON()

@@ -9,7 +9,7 @@ from pydough.relational.relational_expressions import (
     CorrelatedReferenceFinder,
 )
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .join import Join
 from .project import Project
@@ -32,7 +32,7 @@ class ColumnPruner:
             self._correl_finder, recurse=False
         )
 
-    def _prune_identity_project(self, node: Relational) -> Relational:
+    def _prune_identity_project(self, node: RelationalNode) -> RelationalNode:
         """
         Remove a projection and return the input if it is an
         identity projection.
@@ -49,8 +49,8 @@ class ColumnPruner:
             return node
 
     def _prune_node_columns(
-        self, node: Relational, kept_columns: set[str]
-    ) -> tuple[Relational, set[CorrelatedReference]]:
+        self, node: RelationalNode, kept_columns: set[str]
+    ) -> tuple[RelationalNode, set[CorrelatedReference]]:
         """
         Prune the columns for a subtree starting at this node.
 
@@ -100,7 +100,7 @@ class ColumnPruner:
             )
 
         # Determine which identifiers to pass to each input.
-        new_inputs: list[Relational] = []
+        new_inputs: list[RelationalNode] = []
         # Note: The ColumnPruner should only be run when all input names are
         # still present in the columns.
         # Iterate over the inputs in reverse order so that the source of
@@ -111,7 +111,7 @@ class ColumnPruner:
             list(enumerate(new_node.default_input_aliases))
         ):
             s: set[str] = set()
-            input_node: Relational = node.inputs[i]
+            input_node: RelationalNode = node.inputs[i]
             for identifier in found_identifiers:
                 if identifier.input_name == default_input_name:
                     s.add(identifier.name)
