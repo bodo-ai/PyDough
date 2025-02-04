@@ -11,11 +11,11 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .relational_visitor import RelationalVisitor
 
 
-class Scan(Relational):
+class Scan(RelationalNode):
     """
     The Scan node in the relational tree. Right now these refer to tables
     stored within a provided database connection with is assumed to be singular
@@ -29,11 +29,11 @@ class Scan(Relational):
         self.table_name: str = table_name
 
     @property
-    def inputs(self) -> MutableSequence[Relational]:
+    def inputs(self) -> MutableSequence[RelationalNode]:
         # A scan is required to be the leaf node of the relational tree.
         return []
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
 
     def accept(self, visitor: RelationalVisitor) -> None:
@@ -45,7 +45,7 @@ class Scan(Relational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[Relational],
-    ) -> Relational:
+        inputs: MutableSequence[RelationalNode],
+    ) -> RelationalNode:
         assert not inputs, "Scan node should have 0 inputs"
         return Scan(self.table_name, columns)

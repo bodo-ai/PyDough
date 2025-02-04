@@ -7,31 +7,31 @@ from collections.abc import MutableMapping, MutableSequence
 
 from pydough.relational.relational_expressions import RelationalExpression
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 
 
-class SingleRelational(Relational):
+class SingleRelational(RelationalNode):
     """
     Base abstract class for relational nodes that have a single input.
     """
 
     def __init__(
         self,
-        input: Relational,
+        input: RelationalNode,
         columns: MutableMapping[str, RelationalExpression],
     ) -> None:
         super().__init__(columns)
-        self._input: Relational = input
+        self._input: RelationalNode = input
 
     @property
-    def inputs(self) -> MutableSequence[Relational]:
+    def inputs(self) -> MutableSequence[RelationalNode]:
         return [self._input]
 
     @property
-    def input(self) -> Relational:
+    def input(self) -> RelationalNode:
         return self._input
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         """
         Determine if two relational nodes are exactly identical,
         excluding column ordering. This should be extended to avoid

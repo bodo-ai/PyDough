@@ -7,7 +7,7 @@ from pydough.relational.relational_expressions import (
     ColumnReferenceFinder,
 )
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher
@@ -25,7 +25,7 @@ class ColumnPruner:
             self._column_finder, recurse=False
         )
 
-    def _prune_identity_project(self, node: Relational) -> Relational:
+    def _prune_identity_project(self, node: RelationalNode) -> RelationalNode:
         """
         Remove a projection and return the input if it is an
         identity projection.
@@ -42,8 +42,8 @@ class ColumnPruner:
             return node
 
     def _prune_node_columns(
-        self, node: Relational, kept_columns: set[str]
-    ) -> Relational:
+        self, node: RelationalNode, kept_columns: set[str]
+    ) -> RelationalNode:
         """
         Prune the columns for a subtree starting at this node.
 
@@ -89,7 +89,7 @@ class ColumnPruner:
                 )
             )
         # Determine which identifiers to pass to each input.
-        new_inputs: list[Relational] = []
+        new_inputs: list[RelationalNode] = []
         # Note: The ColumnPruner should only be run when all input names are
         # still present in the columns.
         for i, default_input_name in enumerate(new_node.default_input_aliases):
@@ -112,6 +112,8 @@ class ColumnPruner:
         Returns:
             RelationalRoot: The root after updating all inputs.
         """
-        new_root: Relational = self._prune_node_columns(root, set(root.columns.keys()))
+        new_root: RelationalNode = self._prune_node_columns(
+            root, set(root.columns.keys())
+        )
         assert isinstance(new_root, RelationalRoot), "Expected a root node."
         return new_root

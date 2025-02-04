@@ -12,13 +12,13 @@ __all__ = [
     "JoinType",
     "Limit",
     "Project",
-    "Relational",
     "RelationalExpressionDispatcher",
+    "RelationalNode",
     "RelationalRoot",
     "RelationalVisitor",
     "Scan",
 ]
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .column_pruner import ColumnPruner
 from .empty_singleton import EmptySingleton
