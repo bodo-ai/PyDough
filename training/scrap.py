@@ -7,35 +7,34 @@ import os
 
 import pandas as pd
 
-from pydough import parse_json_metadata_from_file
-from pydough.metadata import GraphMetadata
 
+def get_graphs() -> dict[str, dict]:
+    """
+    Returns a mapping of each graph name within any graph file in the graphs
+    directory to the raw JSON metadata for that graph.
+    """
+    result: dict[str, dict] = {}
 
-def get_graphs() -> dict[tuple[str, str], GraphMetadata]:
-    """
-    Returns a mapping of each graph file name & graph within those files to the
-    metadata for that graph.
-    """
-    # First identify every such combination
-    combinations: list[tuple[str, str]] = []
+    # Loop over every json file in the graphs folder
     for file_name in os.listdir("graphs"):
-        with open(f"graphs/{file_name}") as f:
-            json_graph: dict = json.load(f)
-        graph_names = json_graph.keys()
-        combinations.extend([(file_name, graph_name) for graph_name in graph_names])
+        if file_name.endswith(".json"):
+            # Load the JSON, then dump every top-level key-value pair into
+            # the result.
+            fpath: str = f"{os.path.dirname(__file__)}/graphs/{file_name}"
+            with open(fpath) as f:
+                result.update(json.load(f))
 
-    # Then parse all of the combinations
-    return {
-        (file_name, graph_name): parse_json_metadata_from_file(file_name, graph_name)
-        for file_name, graph_name in combinations
-    }
+    return result
 
 
-def run():
-    pd.read_csv("pydough_corpus.tsv", quotechar="`")
-    breakpoint()
+def run(training_data: pd.DataFrame, graphs_json: dict[str, dict]):
+    """
+    TODO: implement logic using the training data & the available graphs
+    """
     pass
 
 
 if __name__ == "__main__":
-    run()
+    training_data: pd.DataFrame = pd.read_csv("pydough_corpus.csv")
+    graphs_json: dict[str, dict] = get_graphs()
+    run(training_data, graphs_json)
