@@ -89,7 +89,8 @@ def test_get_logger_env_level_overriding_default_value(monkeypatch, capsys):
     # Set the environment variable to override the log level
     monkeypatch.setenv("PYDOUGH_LOG_LEVEL", "DEBUG")
     logger = get_logger(
-        name="env_level_overriding_default_value_test_logger", default_level="INFO"
+        name="env_level_overriding_default_value_test_logger",
+        default_level=logging.INFO,
     )
     logger.debug("This is a DEBUG message")
     captured = capsys.readouterr()
