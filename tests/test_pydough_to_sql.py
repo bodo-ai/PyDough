@@ -4,12 +4,15 @@ Test that tests the full conversion of a PyDough object to a SQL query.
 
 from collections.abc import Callable
 
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.relational.relational_nodes.relational_root import RelationalRoot
-from pydough.unqualified.qualification import qualify_node
 import pytest
-from simple_pydough_functions import hour_minute_day, rank_a, rank_b, rank_c, simple_filter, simple_scan
+from simple_pydough_functions import (
+    hour_minute_day,
+    rank_a,
+    rank_b,
+    rank_c,
+    simple_filter,
+    simple_scan,
+)
 from test_utils import (
     graph_fetcher,
 )
@@ -19,7 +22,6 @@ from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
 )
-from tests.conftest import default_config
 
 
 @pytest.mark.parametrize(
@@ -75,7 +77,7 @@ def test_pydough_to_sql(
     [
         pytest.param(
             hour_minute_day,
-            """SELECT transaction_id, _expr0, _expr1, _expr2 FROM (SELECT transaction_id, _expr0, _expr1, _expr2, transaction_id AS ordering_0 FROM (SELECT transaction_id, _expr0, _expr1, _expr2, symbol FROM (SELECT transaction_id, ticker_id, EXTRACT(HOUR FROM date_time) AS _expr0, EXTRACT(MINUTE FROM date_time) AS _expr1, EXTRACT(SECOND FROM date_time) AS _expr2 FROM (SELECT sbTxId AS transaction_id, sbTxTickerId AS ticker_id, sbTxDateTime AS date_time FROM main.sbTransaction)) LEFT JOIN (SELECT sbTickerId AS _id, sbTickerSymbol AS symbol FROM main.sbTicker) ON ticker_id = _id) WHERE symbol IN ('AAPL', 'GOOGL', 'NFLX')) ORDER BY ordering_0""",
+            """SELECT transaction_id, _expr0, _expr1, _expr2 FROM (SELECT transaction_id AS ordering_0, _expr0, _expr1, _expr2, transaction_id FROM (SELECT _expr0, _expr1, _expr2, symbol, transaction_id FROM (SELECT EXTRACT(HOUR FROM date_time) AS _expr0, EXTRACT(MINUTE FROM date_time) AS _expr1, EXTRACT(SECOND FROM date_time) AS _expr2, ticker_id, transaction_id FROM (SELECT sbTxDateTime AS date_time, sbTxId AS transaction_id, sbTxTickerId AS ticker_id FROM main.sbTransaction)) LEFT JOIN (SELECT sbTickerId AS _id, sbTickerSymbol AS symbol FROM main.sbTicker) ON ticker_id = _id) WHERE symbol IN ('AAPL', 'GOOGL', 'NFLX')) ORDER BY ordering_0""",
             "Broker",
             id="hour_minute_day",
         ),
@@ -89,19 +91,10 @@ def test_pydough_to_sql_defog(
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
-    qualified DAG version, with the correct string representation.
+    sql, with the correct string representation.
     """
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
-    ##
-    qualified: PyDoughQDAG = qualify_node(root, graph)
-    # assert isinstance(
-    #     qualified, PyDoughCollectionQDAG
-    # ), "Expected qualified answer to be a collection, not an expression"
-    relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
-    # breakpoint()
-    ##
     actual_sql: str = to_sql(root, metadata=graph).strip()
     expected_sql = expected_sql.strip()
-    breakpoint()
     assert actual_sql == expected_sql
