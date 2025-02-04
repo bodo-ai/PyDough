@@ -1,3 +1,0 @@
-ROOT(columns=[('name', name), ('p', p)], orderings=[])
- PROJECT(columns={'name': name, 'p': PERCENTILE(args=[], partition=[], order=[(name):asc_last], n_buckets=5)})
-  SCAN(table=tpch.NATION, columns={'name': n_name})

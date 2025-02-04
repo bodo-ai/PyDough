@@ -1,8 +1,0 @@
-ROOT(columns=[('name', name), ('n_top_suppliers', n_top_suppliers)], orderings=[])
- PROJECT(columns={'n_top_suppliers': DEFAULT_TO(agg_0, 0:int64), 'name': name})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
-   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
-    LIMIT(limit=Literal(value=100, type=Int64Type()), columns={'key': key, 'nation_key': nation_key}, orderings=[(ordering_0):asc_last])
-     PROJECT(columns={'key': key, 'nation_key': nation_key, 'ordering_0': account_balance})
-      SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})

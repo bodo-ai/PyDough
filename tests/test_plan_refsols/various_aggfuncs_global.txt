@@ -1,4 +1,0 @@
-ROOT(columns=[('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal), ('num_cust', num_cust)], orderings=[])
- PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:int64), 'max_bal': agg_1, 'min_bal': agg_2, 'num_bal': agg_3, 'num_cust': agg_4, 'total_bal': agg_5})
-  AGGREGATE(keys={}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': COUNT(), 'agg_5': SUM(acctbal)})
-   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal})

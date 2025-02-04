@@ -1,7 +1,0 @@
-ROOT(columns=[('nation_name', nation_name), ('highest_rank', highest_rank)], orderings=[])
- PROJECT(columns={'highest_rank': agg_0, 'nation_name': name})
-  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
-   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': MAX(cust_rank)})
-    PROJECT(columns={'cust_rank': RANKING(args=[], partition=[], order=[(acctbal):desc_first], allow_ties=True), 'nation_key': nation_key})
-     SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'nation_key': c_nationkey})

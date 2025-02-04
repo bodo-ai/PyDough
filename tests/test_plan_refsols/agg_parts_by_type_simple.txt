@@ -1,4 +1,0 @@
-ROOT(columns=[('part_type', part_type), ('num_parts', num_parts), ('avg_price', avg_price)], orderings=[])
- PROJECT(columns={'avg_price': agg_0, 'num_parts': DEFAULT_TO(agg_1, 0:int64), 'part_type': part_type})
-  AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
-   SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})
