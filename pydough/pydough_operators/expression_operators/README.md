@@ -81,6 +81,9 @@ These functions must be called on singular data as a function.
 - `YEAR`: returns the year component of a datetime.
 - `MONTH`: returns the month component of a datetime.
 - `DAY`: returns the day component of a datetime.
+- `HOUR`: Returns the hour component of a datetime.
+- `MINUTE`: Returns the minute component of a datetime.
+- `SECOND`: Returns the second component of a datetime.
 
 ##### Conditional Functions
 

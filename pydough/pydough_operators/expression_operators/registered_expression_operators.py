@@ -21,6 +21,7 @@ __all__ = [
     "GRT",
     "HAS",
     "HASNOT",
+    "HOUR",
     "IFF",
     "ISIN",
     "JOIN_STRINGS",
@@ -32,6 +33,7 @@ __all__ = [
     "LOWER",
     "MAX",
     "MIN",
+    "MINUTE",
     "MOD",
     "MONOTONIC",
     "MONTH",
@@ -44,6 +46,7 @@ __all__ = [
     "PRESENT",
     "RANKING",
     "ROUND",
+    "SECOND",
     "SLICE",
     "STARTSWITH",
     "SUB",
@@ -128,6 +131,15 @@ MONTH = ExpressionFunctionOperator(
 )
 DAY = ExpressionFunctionOperator(
     "DAY", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+HOUR = ExpressionFunctionOperator(
+    "HOUR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+MINUTE = ExpressionFunctionOperator(
+    "MINUTE", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+SECOND = ExpressionFunctionOperator(
+    "SECOND", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)
