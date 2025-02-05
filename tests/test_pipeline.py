@@ -15,6 +15,7 @@ from bad_pydough_functions import (
 from simple_pydough_functions import (
     agg_partition,
     double_partition,
+    exponentiation,
     function_sampler,
     hour_minute_day,
     percentile_customers_per_region,
@@ -1191,6 +1192,23 @@ def test_pipeline_e2e_errors(
                 )
             ),
             id="broker_basic1",
+        ),
+        pytest.param(
+            (
+                exponentiation,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "low_square" : [6642.2500, 6740.4100, 6839.2900, 6938.8900, 7039.2100, 
+                                7140.2500, 7242.0100, 16576.5625, 16900.0000, 17292.2500],
+                        "low_sqrt" : [9.027735, 9.060905, 9.093954, 9.126883, 9.159694, 
+                                9.192388, 9.224966, 11.346806, 11.401754, 11.467345],
+                        "low_cbrt" : [4.335633, 4.346247, 4.356809, 4.367320, 4.377781, 
+                                4.388191, 4.398553, 5.049508, 5.065797, 5.085206]
+                    }
+                )
+            ),
+            id="exponentiation",
         ),
   ],
 )

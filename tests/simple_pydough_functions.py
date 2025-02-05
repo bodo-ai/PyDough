@@ -285,3 +285,7 @@ def hour_minute_day():
         ).ORDER_BY(
         transaction_id.ASC()
     )
+
+def exponentiation():
+    return DailyPrices(low_square = low ** 2, low_sqrt = SQRT(low),
+                        low_cbrt = POWER(low, 1/3), ).TOP_K(10, by=low_square.ASC())

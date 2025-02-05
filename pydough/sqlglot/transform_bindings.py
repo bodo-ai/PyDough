@@ -543,6 +543,28 @@ def create_convert_time_unit_function(unit: str):
 
     return convert_time_unit
 
+def convert_sqrt(
+        raw_args: Sequence[RelationalExpression] | None,
+        sql_glot_args: Sequence[SQLGlotExpression],
+    ) -> SQLGlotExpression:
+    """
+        Support for getting the square root of the operand.
+
+        Args:
+            `raw_args`: The operands passed to the function before they were converted to
+            SQLGlot expressions. (Not actively used in this implementation.)
+            `sql_glot_args`: The operands passed to the function after they were converted
+            to SQLGlot expressions.
+
+        Returns:
+            The SQLGlot expression matching the functionality of
+            `POWER(x,0.5)`,i.e the square root.
+    """
+
+    return sqlglot_expressions.Pow(
+        this=sql_glot_args[0],
+        expression=sqlglot_expressions.Literal.number(0.5)
+    )
 
 class SqlGlotTransformBindings:
     """
@@ -732,6 +754,9 @@ class SqlGlotTransformBindings:
         self.bind_binop(pydop.NEQ, sqlglot_expressions.NEQ)
         self.bind_binop(pydop.BAN, sqlglot_expressions.And)
         self.bind_binop(pydop.BOR, sqlglot_expressions.Or)
+        self.bind_binop(pydop.POW,sqlglot_expressions.Pow)
+        self.bind_binop(pydop.POWER,sqlglot_expressions.Pow)
+        self.bindings[pydop.SQRT] = convert_sqrt
 
         # Unary operators
         self.bind_unop(pydop.NOT, sqlglot_expressions.Not)
