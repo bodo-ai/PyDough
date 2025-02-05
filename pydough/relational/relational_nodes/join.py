@@ -9,7 +9,7 @@ from enum import Enum
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .relational_visitor import RelationalVisitor
 
 
@@ -22,7 +22,7 @@ class JoinType(Enum):
     SEMI = "semi"
 
 
-class Join(Relational):
+class Join(RelationalNode):
     """
     Relational representation of all join operations. This single
     node can represent multiple joins at once, similar to a multi-join
@@ -45,7 +45,7 @@ class Join(Relational):
 
     def __init__(
         self,
-        inputs: MutableSequence[Relational],
+        inputs: MutableSequence[RelationalNode],
         conditions: list[RelationalExpression],
         join_types: list[JoinType],
         columns: MutableMapping[str, RelationalExpression],
@@ -81,7 +81,7 @@ class Join(Relational):
         return self._join_types
 
     @property
-    def inputs(self) -> MutableSequence[Relational]:
+    def inputs(self) -> MutableSequence[RelationalNode]:
         return self._inputs
 
     @property
@@ -96,7 +96,7 @@ class Join(Relational):
         """
         return [f"t{i}" for i in range(len(self.inputs))]
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Join)
             and self.conditions == other.conditions
@@ -117,6 +117,6 @@ class Join(Relational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[Relational],
-    ) -> Relational:
+        inputs: MutableSequence[RelationalNode],
+    ) -> RelationalNode:
         return Join(inputs, self.conditions, self.join_types, columns)

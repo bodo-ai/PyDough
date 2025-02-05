@@ -1,5 +1,5 @@
-ROOT(columns=[('key', key), ('name', name), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment)], orderings=[])
- PROJECT(columns={'acctbal': acctbal, 'address': address, 'comment': comment_4, 'key': key_5, 'mktsegment': mktsegment, 'name': name_6, 'nation_key': nation_key, 'phone': phone})
+ROOT(columns=[('key', key_9), ('name', name_10), ('address', address), ('nation_key', nation_key), ('phone', phone), ('acctbal', acctbal), ('mktsegment', mktsegment), ('comment', comment_8)], orderings=[])
+ PROJECT(columns={'acctbal': acctbal, 'address': address, 'comment_8': comment_4, 'key_9': key_5, 'mktsegment': mktsegment, 'name_10': name_6, 'nation_key': nation_key, 'phone': phone})
   JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'address': t1.address, 'comment_4': t1.comment, 'key_5': t1.key, 'mktsegment': t1.mktsegment, 'name_6': t1.name, 'nation_key': t1.nation_key, 'phone': t1.phone})
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey})

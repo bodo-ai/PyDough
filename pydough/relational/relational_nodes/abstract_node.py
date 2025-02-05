@@ -14,7 +14,7 @@ from pydough.relational.relational_expressions import RelationalExpression
 from .relational_visitor import RelationalVisitor
 
 
-class Relational(ABC):
+class RelationalNode(ABC):
     """
     The base class for any relational node. This interface defines the basic
     structure of all relational nodes in the PyDough system.
@@ -25,7 +25,7 @@ class Relational(ABC):
 
     @property
     @abstractmethod
-    def inputs(self) -> MutableSequence["Relational"]:
+    def inputs(self) -> MutableSequence["RelationalNode"]:
         """
         Returns any inputs to the current relational expression.
 
@@ -60,7 +60,7 @@ class Relational(ABC):
         return self._columns
 
     @abstractmethod
-    def node_equals(self, other: "Relational") -> bool:
+    def node_equals(self, other: "RelationalNode") -> bool:
         """
         Determine if two relational nodes are exactly identical,
         excluding column generic column details shared by every
@@ -74,7 +74,7 @@ class Relational(ABC):
             bool: Are the two relational nodes equal.
         """
 
-    def equals(self, other: "Relational") -> bool:
+    def equals(self, other: "RelationalNode") -> bool:
         """
         Determine if two relational nodes are exactly identical,
         including column ordering.
@@ -88,7 +88,7 @@ class Relational(ABC):
         return self.node_equals(other) and self.columns == other.columns
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, Relational) and self.equals(other)
+        return isinstance(other, RelationalNode) and self.equals(other)
 
     def make_column_string(
         self, columns: MutableMapping[str, Any], compact: bool
@@ -149,8 +149,8 @@ class Relational(ABC):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence["Relational"],
-    ) -> "Relational":
+        inputs: MutableSequence["RelationalNode"],
+    ) -> "RelationalNode":
         """
         Copy the given relational node with the provided columns and/or
         inputs. This copy maintains any additional properties of the
@@ -169,8 +169,8 @@ class Relational(ABC):
     def copy(
         self,
         columns: MutableMapping[str, RelationalExpression] | None = None,
-        inputs: MutableSequence["Relational"] | None = None,
-    ) -> "Relational":
+        inputs: MutableSequence["RelationalNode"] | None = None,
+    ) -> "RelationalNode":
         """
         Copy the given relational node with the provided columns and/or
         inputs. This copy maintains any additional properties of the

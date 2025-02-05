@@ -60,7 +60,7 @@ from pydough.relational import (
     Limit,
     LiteralExpression,
     Project,
-    Relational,
+    RelationalNode,
     RelationalRoot,
     Scan,
     WindowCallExpression,
@@ -1577,7 +1577,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
 )
 def test_node_to_sqlglot(
     sqlglot_relational_visitor: SQLGlotRelationalVisitor,
-    node: Relational,
+    node: RelationalNode,
     sqlglot_expr: Expression,
 ) -> None:
     """

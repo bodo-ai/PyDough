@@ -21,7 +21,7 @@ from pydough.relational import (
     CallExpression,
     Join,
     JoinType,
-    Relational,
+    RelationalNode,
     RelationalRoot,
     Scan,
 )
@@ -39,14 +39,14 @@ def test_person_total_salary(
     Tests a simple join and aggregate to compute the total salary for each
     person in the PEOPLE table.
     """
-    people: Relational = Scan(
+    people: RelationalNode = Scan(
         table_name="PEOPLE",
         columns={
             "person_id": make_relational_column_reference("person_id"),
             "name": make_relational_column_reference("name"),
         },
     )
-    jobs: Relational = Aggregate(
+    jobs: RelationalNode = Aggregate(
         keys={"person_id": make_relational_column_reference("person_id")},
         aggregations={
             "total_salary": CallExpression(
@@ -112,7 +112,7 @@ def test_person_jobs_multi_join(
     represent multiple joins. It should be noted that this may not be optimal
     way to represent this query, but it is a valid way to represent it.
     """
-    people: Relational = Scan(
+    people: RelationalNode = Scan(
         table_name="PEOPLE",
         columns={
             "person_id": make_relational_column_reference("person_id"),
@@ -120,7 +120,7 @@ def test_person_jobs_multi_join(
         },
     )
     # Select each person's highest salary
-    jobs: Relational = Aggregate(
+    jobs: RelationalNode = Aggregate(
         keys={"person_id": make_relational_column_reference("person_id")},
         aggregations={
             "max_salary": CallExpression(
@@ -138,7 +138,7 @@ def test_person_jobs_multi_join(
         ),
     )
     # Select the average salary across all jobs ever recorded
-    average_salary: Relational = Aggregate(
+    average_salary: RelationalNode = Aggregate(
         keys={},
         aggregations={
             "average_salary": CallExpression(

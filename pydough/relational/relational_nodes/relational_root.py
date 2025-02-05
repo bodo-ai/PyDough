@@ -11,7 +11,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
@@ -25,7 +25,7 @@ class RelationalRoot(SingleRelational):
 
     def __init__(
         self,
-        input: Relational,
+        input: RelationalNode,
         ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
         orderings: MutableSequence[ExpressionSortInfo] | None = None,
     ) -> None:
@@ -56,7 +56,7 @@ class RelationalRoot(SingleRelational):
         """
         return self._orderings
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, RelationalRoot)
             and self.ordered_columns == other.ordered_columns
@@ -82,8 +82,8 @@ class RelationalRoot(SingleRelational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[Relational],
-    ) -> Relational:
+        inputs: MutableSequence[RelationalNode],
+    ) -> RelationalNode:
         assert len(inputs) == 1, "Root node should have exactly one input"
         assert columns == self.columns, "Root columns should not be modified"
         return RelationalRoot(inputs[0], self.ordered_columns, self.orderings)

@@ -22,7 +22,7 @@ from pydough.relational import (
     Limit,
     LiteralExpression,
     Project,
-    Relational,
+    RelationalNode,
     RelationalRoot,
     Scan,
 )
@@ -136,7 +136,9 @@ def test_scan_to_string(scan_node: Scan, output: str) -> None:
         ),
     ],
 )
-def test_scan_equals(first_scan: Scan, second_scan: Relational, output: bool) -> None:
+def test_scan_equals(
+    first_scan: Scan, second_scan: RelationalNode, output: bool
+) -> None:
     """
     Tests the equality functionality for the Scan node.
     """
@@ -278,7 +280,7 @@ def test_empty_singleton_equals() -> None:
     ],
 )
 def test_project_equals(
-    first_project: Project, second_project: Relational, output: bool
+    first_project: Project, second_project: RelationalNode, output: bool
 ) -> None:
     """
     Tests the equality functionality for the Project node.
@@ -487,7 +489,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
     ],
 )
 def test_limit_equals(
-    first_limit: Limit, second_limit: Relational, output: bool
+    first_limit: Limit, second_limit: RelationalNode, output: bool
 ) -> None:
     """
     Tests the equality functionality for the Limit node.
@@ -763,7 +765,7 @@ def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
     ],
 )
 def test_aggregate_equals(
-    first_agg: Aggregate, second_agg: Relational, output: bool
+    first_agg: Aggregate, second_agg: RelationalNode, output: bool
 ) -> None:
     """
     Tests the equality functionality for the Aggregate node.
@@ -968,7 +970,7 @@ def test_filter_to_string(filter: Filter, output: str) -> None:
     ],
 )
 def test_filter_equals(
-    first_filter: Filter, second_filter: Relational, output: bool
+    first_filter: Filter, second_filter: RelationalNode, output: bool
 ) -> None:
     """
     Tests the equality functionality for the Filter node.
@@ -1211,7 +1213,7 @@ def test_root_to_string(root: RelationalRoot, output: str) -> None:
     ],
 )
 def test_root_equals(
-    first_root: RelationalRoot, second_root: Relational, output: bool
+    first_root: RelationalRoot, second_root: RelationalNode, output: bool
 ) -> None:
     """
     Tests the equality functionality for the Root node.
@@ -1916,7 +1918,9 @@ def test_join_to_string(join: Join, output: str) -> None:
         ),
     ],
 )
-def test_join_equals(first_join: Join, second_join: Relational, output: bool) -> None:
+def test_join_equals(
+    first_join: Join, second_join: RelationalNode, output: bool
+) -> None:
     """
     Tests the equality functionality for the Join node.
     """
