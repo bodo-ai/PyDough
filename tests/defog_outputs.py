@@ -181,8 +181,7 @@ def defog_sql_text_broker_basic5() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    What is the average transaction amount for each customer? Return the
-    customer name and average transaction amount.
+    Return the distinct list of customer IDs who have made a 'buy' transaction.
 
     NOTE: added an ORDER BY clause at the end to ensure the results were
     deterministic.
@@ -201,8 +200,8 @@ def defog_sql_text_broker_basic7() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    What is the total transaction amount for each ticker symbol? Return the
-    ticker symbol and total transaction amount.
+    What are the top 3 transaction statuses by number of transactions? Return
+    the status and number of transactions.
     """
     return """
     SELECT sbTxStatus, COUNT(*) AS num_transactions
@@ -218,8 +217,8 @@ def defog_sql_text_broker_basic8() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    What is the number of transactions for each customer? Return the customer
-    name and number of transactions.
+    What are the top 5 countries by number of customers? Return the country
+    name and number of customers.
     """
     return """
     SELECT sbCustCountry, COUNT(*) AS num_customers
