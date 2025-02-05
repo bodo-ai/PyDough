@@ -25,6 +25,9 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [YEAR](#year)
    * [MONTH](#month)
    * [DAY](#day)
+   * [HOUR](#hour)
+   * [MINUTE](#minute)
+   * [SECOND](#second)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
    * [ISIN](#isin)
@@ -36,6 +39,8 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Numerical Functions](#numerical-functions)
    * [ABS](#abs)
    * [ROUND](#round)
+   * [POWER](#power)
+   * [SQRT](#sqrt)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -59,10 +64,10 @@ Below is each binary operator currently supported in PyDough.
 <!-- TOC --><a name="arithmetic"></a>
 ### Arithmetic
 
-Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`).
+Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`), exponentiation (`**`).
 
 ```py
-Lineitems(value = (extended_price * (1 - discount) + 1.0) / part.retail_price)
+Lineitems(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_price)
 ```
 
 > [!WARNING]
@@ -255,6 +260,36 @@ Calling `DAY` on a date/timestamp extracts the day of the month it belongs to:
 Orders(is_first_of_month = DAY(order_date) == 1)
 ```
 
+<!-- TOC --><a name="hour"></a>
+### HOUR
+
+Calling `HOUR` on a date/timestamp extracts the hour it belongs to. The range of output
+is from 0-23:
+
+```py
+Orders(is_12pm = HOUR(order_date) == 12)
+```
+
+<!-- TOC --><a name="minute"></a>
+### MINUTE
+
+Calling `MINUTE` on a date/timestamp extracts the minute. The range of output
+is from 0-59:
+
+```py
+Orders(is_half_hour = MINUTE(order_date) == 30)
+```
+
+<!-- TOC --><a name="second"></a>
+### SECOND
+
+Calling `SECOND` on a date/timestamp extracts the second. The range of output
+is from 0-59:
+
+```py
+Orders(is_lt_30_seconds = SECOND(order_date) < 30)
+```
+
 <!-- TOC --><a name="conditional-functions"></a>
 ## Conditional Functions
 
@@ -347,6 +382,24 @@ The `ROUND` function rounds its first argument to the precision of its second ar
 
 ```py
 Parts(rounded_price = ROUND(retail_price, 1))
+```
+
+<!-- TOC --><a name="power"></a>
+### POWER
+
+The `POWER` function exponentiates its first argument to the power of its second argument. 
+
+```py
+Parts(powered_price = POWER(retail_price, 2))
+```
+
+<!-- TOC --><a name="sqrt"></a>
+### SQRT
+
+The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,0.5)`.
+
+```py
+Parts(sqrt_price = SQRT(retail_price))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>
