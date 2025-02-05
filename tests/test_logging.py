@@ -173,7 +173,7 @@ def test_execute_df_logging(
         execute_df(root, sqlite_tpch_db_context, sqlite_bindings, display_sql=True)
     # Retrieve the output from the buffer
     captured_output = output_capture.getvalue()
-    required_op = """\
+    required_op = """
 [INFO] pydough.sqlglot.execute_relational: SQL query:
  SELECT
   L_RETURNFLAG,
@@ -188,53 +188,53 @@ def test_execute_df_logging(
   COUNT_ORDER
 FROM (
   SELECT
-    L_RETURNFLAG,
-    L_LINESTATUS,
-    SUM(L_QUANTITY) AS SUM_QTY,
-    SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE,
+    COUNT() AS COUNT_ORDER,
     SUM(L_DISCOUNT) AS SUM_DISCOUNT,
+    SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE,
+    SUM(L_QUANTITY) AS SUM_QTY,
     SUM(TEMP_COL0) AS SUM_DISC_PRICE,
     SUM(TEMP_COL1) AS SUM_CHARGE,
-    COUNT() AS COUNT_ORDER
+    L_LINESTATUS,
+    L_RETURNFLAG
   FROM (
     SELECT
-      L_QUANTITY,
-      L_EXTENDEDPRICE,
-      L_DISCOUNT,
-      L_RETURNFLAG,
-      L_LINESTATUS,
-      TEMP_COL0,
       TEMP_COL0 * (
         1 + L_TAX
-      ) AS TEMP_COL1
+      ) AS TEMP_COL1,
+      L_DISCOUNT,
+      L_EXTENDEDPRICE,
+      L_LINESTATUS,
+      L_QUANTITY,
+      L_RETURNFLAG,
+      TEMP_COL0
     FROM (
       SELECT
-        L_QUANTITY,
-        L_EXTENDEDPRICE,
-        L_DISCOUNT,
-        L_TAX,
-        L_RETURNFLAG,
-        L_LINESTATUS,
         L_EXTENDEDPRICE * (
           1 - L_DISCOUNT
-        ) AS TEMP_COL0
+        ) AS TEMP_COL0,
+        L_DISCOUNT,
+        L_EXTENDEDPRICE,
+        L_LINESTATUS,
+        L_QUANTITY,
+        L_RETURNFLAG,
+        L_TAX
       FROM (
         SELECT
-          L_QUANTITY,
-          L_EXTENDEDPRICE,
           L_DISCOUNT,
-          L_TAX,
+          L_EXTENDEDPRICE,
+          L_LINESTATUS,
+          L_QUANTITY,
           L_RETURNFLAG,
-          L_LINESTATUS
+          L_TAX
         FROM (
           SELECT
-            L_QUANTITY,
-            L_EXTENDEDPRICE,
             L_DISCOUNT,
-            L_TAX,
-            L_RETURNFLAG,
+            L_EXTENDEDPRICE,
             L_LINESTATUS,
-            L_SHIPDATE
+            L_QUANTITY,
+            L_RETURNFLAG,
+            L_SHIPDATE,
+            L_TAX
           FROM LINEITEM
         )
         WHERE
