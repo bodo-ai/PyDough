@@ -543,6 +543,15 @@ def create_convert_time_unit_function(unit: str):
 
     return convert_time_unit
 
+def convert_sqrt(
+        raw_args: Sequence[RelationalExpression] | None,
+        sql_glot_args: Sequence[SQLGlotExpression],
+    ) -> SQLGlotExpression:
+
+    return sqlglot_expressions.Pow(
+        this=sql_glot_args[0],
+        expression=sqlglot_expressions.Literal.number(0.5)
+    )
 
 class SqlGlotTransformBindings:
     """
@@ -732,6 +741,9 @@ class SqlGlotTransformBindings:
         self.bind_binop(pydop.NEQ, sqlglot_expressions.NEQ)
         self.bind_binop(pydop.BAN, sqlglot_expressions.And)
         self.bind_binop(pydop.BOR, sqlglot_expressions.Or)
+        self.bind_binop(pydop.POW,sqlglot_expressions.Pow)
+        self.bind_binop(pydop.POWER,sqlglot_expressions.Pow)
+        self.bindings[pydop.SQRT] = convert_sqrt
 
         # Unary operators
         self.bind_unop(pydop.NOT, sqlglot_expressions.Not)

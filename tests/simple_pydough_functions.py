@@ -285,3 +285,18 @@ def hour_minute_day():
         ).ORDER_BY(
         transaction_id.ASC()
     )
+
+def power_of_two_binop():
+    return DailyPrices(
+        low_square = low ** 2
+    )
+
+def power_of_two_func():
+    return DailyPrices(
+        low_square = POWER(low, 2)
+    )
+
+def sqrt_func():
+    return DailyPrices(
+        low_sqrt = SQRT(low)
+    )

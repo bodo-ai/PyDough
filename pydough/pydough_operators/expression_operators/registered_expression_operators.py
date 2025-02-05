@@ -43,11 +43,13 @@ __all__ = [
     "NOT",
     "PERCENTILE",
     "POW",
+    "POWER",
     "PRESENT",
     "RANKING",
     "ROUND",
     "SECOND",
     "SLICE",
+    "SQRT",
     "STARTSWITH",
     "SUB",
     "SUM",
@@ -111,6 +113,12 @@ LIKE = ExpressionFunctionOperator(
 SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
 AVG = ExpressionFunctionOperator(
     "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
+)
+POWER = ExpressionFunctionOperator(
+    "POWER", False, RequireNumArgs(2), ConstantType(Float64Type())
+)
+SQRT = ExpressionFunctionOperator(
+    "SQRT", False, RequireNumArgs(1), ConstantType(Float64Type())
 )
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
 HAS = ExpressionFunctionOperator("HAS", True, AllowAny(), ConstantType(BooleanType()))

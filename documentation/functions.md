@@ -39,6 +39,8 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Numerical Functions](#numerical-functions)
    * [ABS](#abs)
    * [ROUND](#round)
+   * [POWER](#power)
+   * [SQRT](#sqrt)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -380,6 +382,24 @@ The `ROUND` function rounds its first argument to the precision of its second ar
 
 ```py
 Parts(rounded_price = ROUND(retail_price, 1))
+```
+
+<!-- TOC --><a name="power"></a>
+### POWER
+
+The `POWER` function exponentiates its first argument to the power of its second argument. 
+
+```py
+Parts(powered_price = POWER(retail_price, 2))
+```
+
+<!-- TOC --><a name="sqrt"></a>
+### SQRT
+
+The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,2)`.
+
+```py
+Parts(sqrt_price = SQRT(retail_price))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>
