@@ -11,6 +11,9 @@ A training set of PyDough question-answer pairs is located in `pydough_corpus.cs
 - `output`:
     * If valid: the PyDough code to answer the question. The final answer should be a PyDough variable stored in a variable named `"result"`.
     * If invalid: an error message explaining why the question cannot be answered by PyDough.
+- `sql_text` (optional): An equivalent SQL query that solves the same question.
+- `sql_dialect`: The dialect of SQL used by the code in `sql_text` (`sqlite`, `snowflake`, etc.).
+- `is_benchmark`: Whether the question is a benchmark question, and therefore should NOT be used in LLM training (Y or N).
 
 All of the graphs used by the training set are stored one of the JSON files in the `graphs` directory.
 

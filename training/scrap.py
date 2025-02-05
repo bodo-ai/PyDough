@@ -1,5 +1,5 @@
 """
-TODO
+Sandbox file for testing LLM training/interactions with the sample PyDough data.
 """
 
 import json
