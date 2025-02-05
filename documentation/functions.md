@@ -67,7 +67,7 @@ Below is each binary operator currently supported in PyDough.
 Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`), exponentiation (`**`).
 
 ```py
-Lineitems(value = (extended_price * (1 - discount) + 1.0) / part.retail_price)
+Lineitems(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_price)
 ```
 
 > [!WARNING]
