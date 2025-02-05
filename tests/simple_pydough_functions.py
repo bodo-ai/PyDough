@@ -286,17 +286,6 @@ def hour_minute_day():
         transaction_id.ASC()
     )
 
-def power_of_two_binop():
-    return DailyPrices(
-        low_square = low ** 2
-    )
-
-def power_of_two_func():
-    return DailyPrices(
-        low_square = POWER(low, 2)
-    )
-
-def sqrt_func():
-    return DailyPrices(
-        low_sqrt = SQRT(low)
-    )
+def exponentiation():
+    return DailyPrices(low_square = low ** 2, low_sqrt = SQRT(low),
+                        low_cbrt = POWER(low, 1/3), ).TOP_K(10, by=low_square.ASC())

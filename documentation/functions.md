@@ -64,7 +64,7 @@ Below is each binary operator currently supported in PyDough.
 <!-- TOC --><a name="arithmetic"></a>
 ### Arithmetic
 
-Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`).
+Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`), exponentiation (`**`).
 
 ```py
 Lineitems(value = (extended_price * (1 - discount) + 1.0) / part.retail_price)
@@ -396,7 +396,7 @@ Parts(powered_price = POWER(retail_price, 2))
 <!-- TOC --><a name="sqrt"></a>
 ### SQRT
 
-The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,2)`.
+The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,0.5)`.
 
 ```py
 Parts(sqrt_price = SQRT(retail_price))
