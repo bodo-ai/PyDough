@@ -124,6 +124,11 @@ def test_active_session_to_sql(sample_graph_path: str) -> None:
     Verify that the active session can generate SQL by default
     without any configuration.
     """
+    output_query: str = """
+SELECT
+  o_orderkey AS key
+FROM tpch.ORDERS
+"""
     try:
         # Load metadata for the session
         old_metadata: GraphMetadata | None = pydough.active_session.metadata
@@ -132,6 +137,6 @@ def test_active_session_to_sql(sample_graph_path: str) -> None:
         )
         root: UnqualifiedNode = pydough.init_pydough_context(graph)(simple_scan)()
         output = pydough.to_sql(root)
-        assert output == "SELECT o_orderkey AS key FROM tpch.ORDERS"
+        assert output == output_query.strip()
     finally:
         pydough.active_session.metadata = old_metadata

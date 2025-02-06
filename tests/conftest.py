@@ -152,12 +152,25 @@ def get_plan_test_filename() -> Callable[[str], str]:
     return impl
 
 
-@pytest.fixture
-def update_plan_tests() -> bool:
+@pytest.fixture(scope="session")
+def get_sql_test_filename() -> Callable[[str], str]:
     """
-    If True, planner tests should update the refsol file instead of verifying
-    that the test matches the file. If False, the refsol file is used to check
-    the answer.
+    A function that takes in a file name and returns the path to that file
+    from within the directory of SQL text testing refsol files.
+    """
+
+    def impl(file_name: str) -> str:
+        return f"{os.path.dirname(__file__)}/test_sql_refsols/{file_name}.sql"
+
+    return impl
+
+
+@pytest.fixture
+def update_tests() -> bool:
+    """
+    If True, planner/sql tests should update the refsol file instead of
+    verifying that the test matches the file. If False, the refsol file is used
+    to check the answer.
 
     This is controlled by an environment variable `PYDOUGH_UPDATE_TESTS`.
     """
