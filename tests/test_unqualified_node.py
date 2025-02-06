@@ -420,41 +420,41 @@ def test_unqualified_to_string(
             function_defined_terms,
             "",
             id="function_defined_terms",
-            marks=pytest.mark.skip(
-                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            ),
+            # marks=pytest.mark.skip(
+            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            # ),
         ),
         pytest.param(
             dict_comp_terms,
             "",
             id="dict_comp_terms",
-            marks=pytest.mark.skip(
-                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            ),
+            # marks=pytest.mark.skip(
+            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            # ),
         ),
         pytest.param(
             list_comp_terms,
             "",
             id="list_comp_terms",
-            marks=pytest.mark.skip(
-                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            ),
+            # marks=pytest.mark.skip(
+            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            # ),
         ),
         pytest.param(
             set_comp_terms,
             "",
             id="set_comp_terms",
-            marks=pytest.mark.skip(
-                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            ),
+            # marks=pytest.mark.skip(
+            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            # ),
         ),
         pytest.param(
             generator_comp_terms,
             "",
             id="generator_comp_terms",
-            marks=pytest.mark.skip(
-                "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            ),
+            # marks=pytest.mark.skip(
+            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            # ),
         ),
     ],
 )

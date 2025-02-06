@@ -285,3 +285,19 @@ def hour_minute_day():
         ).ORDER_BY(
         transaction_id.ASC()
     )
+
+def mytest():
+    year_month_data = PARTITION(
+        Orders(year=YEAR(order_date), month=MONTH(order_date)),
+        name="orders",
+        by=(year, month),
+    )(n_orders=COUNT(orders))
+    return PARTITION(
+        year_month_data,
+        name="months",
+        by=year,
+    )(year, best_month=MAX(months.n_orders))
+    # n_with_priority = lambda p: COUNT(orders.WHERE(priority==p))
+    # return n_with_priority
+    # return DailyPrices(low_square = low ** 2, low_sqrt = SQRT(low),
+    #                     low_cbrt = POWER(low, 1/3), ).TOP_K(10, by=low_square.ASC())

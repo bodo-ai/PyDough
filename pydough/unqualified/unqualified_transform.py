@@ -97,13 +97,14 @@ class AddRootVisitor(ast.NodeTransformer):
     def visit_For(self, node):
         if isinstance(node.target, ast.Name):
             self._known_names.add(node.target.id)
-        return ast.For(  # type: ignore
-            target=node.target,
-            iter=self.visit_expression(node.iter),
-            body=[self.visit_statement(elem) for elem in node.body],
-            orelse=[self.visit_statement(elem) for elem in node.orelse],
-            type_comment=node.type_comment,
-        )
+        return self.generic_visit(node)
+        # return ast.For(  # type: ignore
+        #     target=node.target,
+        #     iter=self.visit_expression(node.iter),
+        #     body=[self.visit_statement(elem) for elem in node.body],
+        #     orelse=[self.visit_statement(elem) for elem in node.orelse],
+        #     type_comment=node.type_comment,
+        # )
 
     def visit_Name(self, node):
         unrecognized_var: bool = False
@@ -190,7 +191,9 @@ def init_pydough_context(graph: GraphMetadata):
     def decorator(func):
         source: str = inspect.getsource(func)
         graph_dict: dict[str, GraphMetadata] = {"_graph_value": graph}
+        # breakpoint()
         new_tree: ast.AST = transform_code(source, graph_dict, set(func.__globals__))
+        # breakpoint()
         assert isinstance(new_tree, ast.Module)
         file_name: str = func.__code__.co_filename
         new_code = compile(new_tree, file_name, "exec")
