@@ -72,6 +72,7 @@ def test_pydough_to_sql(
     expected_sql = expected_sql.strip()
     assert actual_sql == expected_sql
 
+
 @pytest.mark.parametrize(
     "pydough_code,expected_sql,graph_name",
     [
