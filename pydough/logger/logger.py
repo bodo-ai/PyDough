@@ -26,7 +26,7 @@ def get_logger(
         `logging.Logger` : Configured logger instance.
     """
     logger: logging.Logger = logging.getLogger(name)
-    level_env: str | None = os.getenv("PYDOUGH_LOG_LEVEL")
+    level_env: str = os.getenv("PYDOUGH_LOG_LEVEL")
     level: int
 
     if level_env is not None:
