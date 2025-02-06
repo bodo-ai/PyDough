@@ -3,7 +3,7 @@ Logic for applying decorrelation to hybrid trees before relational conversion
 if the correlate is not a semi/anti join.
 """
 
-__all__ = ["decorrelate_hybrid"]
+__all__ = ["run_hybrid_decorrelation"]
 
 
 from .hybrid_tree import (
@@ -25,8 +25,9 @@ class Decorrelater:
         # hybrid tree.
         if hybrid.parent is not None:
             hybrid._parent = self.decorrelate_hybrid_tree(hybrid.parent)
-        # Iterate across all the children and transform any that require
-        # decorrelation due to the type of connection.
+        # Iterate across all the children, identify any that are correlated,
+        # and transform any of the correlated ones that require decorrelation
+        # due to the type of connection.
         for idx, child in enumerate(hybrid.children):
             if idx not in hybrid.correlated_children:
                 continue
@@ -49,6 +50,8 @@ class Decorrelater:
                     | ConnectionType.NO_MATCH_AGGREGATION
                     | ConnectionType.NO_MATCH_NDISTINCT
                 ):
+                    # These patterns do not require decorrelation since they
+                    # are supported via correlated SEMI/ANTI joins.
                     continue
         # Iterate across all the children and decorrelate them.
         for idx, child in enumerate(hybrid.children):
@@ -56,7 +59,7 @@ class Decorrelater:
         return hybrid
 
 
-def decorrelate_hybrid(hybrid: HybridTree) -> HybridTree:
+def run_hybrid_decorrelation(hybrid: HybridTree) -> HybridTree:
     """
     TODO
     """

@@ -44,7 +44,7 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
-from .hybrid_decorrelater import decorrelate_hybrid
+from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
@@ -1001,7 +1001,7 @@ def convert_ast_to_relational(
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
-    decorrelate_hybrid(hybrid)
+    run_hybrid_decorrelation(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
