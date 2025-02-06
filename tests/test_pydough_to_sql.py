@@ -25,42 +25,41 @@ from pydough.unqualified import (
 
 
 @pytest.mark.parametrize(
-    "pydough_code, expected_sql",
-    # Note: All of these tests are for simple code because the
-    # exact SQL generation for inner expressions is currently
-    # non-deterministic.
+    "pydough_code, test_name",
     [
         pytest.param(
             simple_scan,
-            "SELECT o_orderkey AS key FROM tpch.ORDERS",
+            "simple_scan",
             id="simple_scan",
         ),
         pytest.param(
             simple_filter,
-            "SELECT o_orderkey, o_totalprice FROM (SELECT o_orderkey AS o_orderkey, o_totalprice AS o_totalprice FROM tpch.ORDERS) WHERE o_totalprice < 1000.0",
+            "simple_filter",
             id="simple_filter",
         ),
         pytest.param(
             rank_a,
-            "SELECT ROW_NUMBER() OVER (ORDER BY acctbal DESC NULLS FIRST) AS rank FROM (SELECT c_acctbal AS acctbal FROM tpch.CUSTOMER)",
+            "rank_a",
             id="rank_a",
         ),
         pytest.param(
             rank_b,
-            " SELECT RANK() OVER (ORDER BY order_priority NULLS LAST) AS rank FROM (SELECT o_orderpriority AS order_priority FROM tpch.ORDERS)",
+            "rank_b)",
             id="rank_b",
         ),
         pytest.param(
             rank_c,
-            "SELECT order_date, DENSE_RANK() OVER (ORDER BY order_date NULLS LAST) AS rank FROM (SELECT o_orderdate AS order_date FROM tpch.ORDERS)",
+            "rank_c",
             id="rank_c",
         ),
     ],
 )
-def test_pydough_to_sql(
+def test_pydough_to_sql_tpch(
     pydough_code: Callable[[], UnqualifiedNode],
-    expected_sql: str,
+    test_name: str,
     get_sample_graph: graph_fetcher,
+    get_sql_test_filename: Callable[[str], str],
+    update_tests: bool,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
@@ -69,15 +68,24 @@ def test_pydough_to_sql(
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
     actual_sql: str = to_sql(root, metadata=graph).strip()
-    expected_sql = expected_sql.strip()
-    assert actual_sql == expected_sql
+    file_path: str = get_sql_test_filename(test_name)
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(actual_sql + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            actual_sql == expected_relational_string.strip()
+        ), "Mismatch between tree generated SQL text and expected SQL text"
+
 
 @pytest.mark.parametrize(
-    "pydough_code,expected_sql,graph_name",
+    "pydough_code,test_name,graph_name",
     [
         pytest.param(
             hour_minute_day,
-            """SELECT transaction_id, _expr0, _expr1, _expr2 FROM (SELECT transaction_id AS ordering_0, _expr0, _expr1, _expr2, transaction_id FROM (SELECT _expr0, _expr1, _expr2, symbol, transaction_id FROM (SELECT EXTRACT(HOUR FROM date_time) AS _expr0, EXTRACT(MINUTE FROM date_time) AS _expr1, EXTRACT(SECOND FROM date_time) AS _expr2, ticker_id, transaction_id FROM (SELECT sbTxDateTime AS date_time, sbTxId AS transaction_id, sbTxTickerId AS ticker_id FROM main.sbTransaction)) LEFT JOIN (SELECT sbTickerId AS _id, sbTickerSymbol AS symbol FROM main.sbTicker) ON ticker_id = _id) WHERE symbol IN ('AAPL', 'GOOGL', 'NFLX')) ORDER BY ordering_0""",
+            "hour_minute_day",
             "Broker",
             id="hour_minute_day",
         ),
@@ -85,9 +93,11 @@ def test_pydough_to_sql(
 )
 def test_pydough_to_sql_defog(
     pydough_code: Callable[[], UnqualifiedNode],
-    expected_sql: str,
+    test_name: str,
     graph_name: str,
     defog_graphs: graph_fetcher,
+    get_sql_test_filename: Callable[[str], str],
+    update_tests: bool,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
@@ -96,5 +106,13 @@ def test_pydough_to_sql_defog(
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
     actual_sql: str = to_sql(root, metadata=graph).strip()
-    expected_sql = expected_sql.strip()
-    assert actual_sql == expected_sql
+    file_path: str = get_sql_test_filename(test_name)
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(actual_sql + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            actual_sql == expected_relational_string.strip()
+        ), "Mismatch between tree generated SQL text and expected SQL text"
