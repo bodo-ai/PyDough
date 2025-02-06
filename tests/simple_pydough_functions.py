@@ -278,14 +278,18 @@ def hour_minute_day():
     transaction timestamps for specific ticker symbols ("AAPL","GOOGL","NFLX"),
     ordered by transaction ID in ascending order.
     """
-    return Transactions(
-        transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
-        ).WHERE(
-         ISIN(ticker.symbol,("AAPL", "GOOGL", "NFLX"))
-        ).ORDER_BY(
-        transaction_id.ASC()
+    return (
+        Transactions(
+            transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
+        )
+        .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
+        .ORDER_BY(transaction_id.ASC())
     )
 
+
 def exponentiation():
-    return DailyPrices(low_square = low ** 2, low_sqrt = SQRT(low),
-                        low_cbrt = POWER(low, 1/3), ).TOP_K(10, by=low_square.ASC())
+    return DailyPrices(
+        low_square=low**2,
+        low_sqrt=SQRT(low),
+        low_cbrt=POWER(low, 1 / 3),
+    ).TOP_K(10, by=low_square.ASC())
