@@ -1,0 +1,1796 @@
+{
+    "Broker": {
+      "Customers": {
+        "type": "simple_table",
+        "table_path": "main.sbCustomer",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "sbCustId",
+            "data_type": "string"
+          },
+          "name": {
+            "type": "table_column",
+            "column_name": "sbCustName",
+            "data_type": "string"
+          },
+          "email": {
+            "type": "table_column",
+            "column_name": "sbCustEmail",
+            "data_type": "string"
+          },
+          "phone": {
+            "type": "table_column",
+            "column_name": "sbCustPhone",
+            "data_type": "string"
+          },
+          "address1": {
+            "type": "table_column",
+            "column_name": "sbCustAddress1",
+            "data_type": "string"
+          },
+          "address2": {
+            "type": "table_column",
+            "column_name": "sbCustAddress2",
+            "data_type": "string"
+          },
+          "city": {
+            "type": "table_column",
+            "column_name": "sbCustCity",
+            "data_type": "string"
+          },
+          "state": {
+            "type": "table_column",
+            "column_name": "sbCustState",
+            "data_type": "string"
+          },
+          "country": {
+            "type": "table_column",
+            "column_name": "sbCustCountry",
+            "data_type": "string"
+          },
+          "postal_code": {
+            "type": "table_column",
+            "column_name": "sbCustPostalCode",
+            "data_type": "string"
+          },
+          "join_date": {
+            "type": "table_column",
+            "column_name": "sbCustJoinDate",
+            "data_type": "date"
+          },
+          "status": {
+            "type": "table_column",
+            "column_name": "sbCustStatus",
+            "data_type": "string"
+          },
+          "transactions_made": {
+            "type": "simple_join",
+            "other_collection_name": "Transactions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "_id": [
+                "customer_id"
+              ]
+            },
+            "reverse_relationship_name": "customer"
+          }
+        }
+      },
+      "Tickers": {
+        "type": "simple_table",
+        "table_path": "main.sbTicker",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "sbTickerId",
+            "data_type": "string"
+          },
+          "symbol": {
+            "type": "table_column",
+            "column_name": "sbTickerSymbol",
+            "data_type": "string"
+          },
+          "name": {
+            "type": "table_column",
+            "column_name": "sbTickerName",
+            "data_type": "string"
+          },
+          "ticker_type": {
+            "type": "table_column",
+            "column_name": "sbTickerType",
+            "data_type": "string"
+          },
+          "exchange": {
+            "type": "table_column",
+            "column_name": "sbTickerExchange",
+            "data_type": "string"
+          },
+          "currency": {
+            "type": "table_column",
+            "column_name": "sbTickerCurrency",
+            "data_type": "string"
+          },
+          "db2x": {
+            "type": "table_column",
+            "column_name": "sbTickerDb2x",
+            "data_type": "string"
+          },
+          "is_active": {
+            "type": "table_column",
+            "column_name": "sbTickerIsActive",
+            "data_type": "bool"
+          },
+          "transactions_of": {
+            "type": "simple_join",
+            "other_collection_name": "Transactions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "_id": [
+                "ticker_id"
+              ]
+            },
+            "reverse_relationship_name": "ticker"
+          }
+        }
+      },
+      "DailyPrices": {
+        "type": "simple_table",
+        "table_path": "main.sbDailyPrice",
+        "unique_properties": [["ticker_id", "date"]],
+        "properties": {
+          "ticker_id": {
+            "type": "table_column",
+            "column_name": "sbDpTickerId",
+            "data_type": "string"
+          },
+          "date": {
+            "type": "table_column",
+            "column_name": "sbDpDate",
+            "data_type": "date"
+          },
+          "open": {
+            "type": "table_column",
+            "column_name": "sbDpOpen",
+            "data_type": "decimal[10,2]"
+          },
+          "high": {
+            "type": "table_column",
+            "column_name": "sbDpHigh",
+            "data_type": "decimal[10,2]"
+          },
+          "low": {
+            "type": "table_column",
+            "column_name": "sbDpLow",
+            "data_type": "decimal[10,2]"
+          },
+          "close": {
+            "type": "table_column",
+            "column_name": "sbDpClose",
+            "data_type": "decimal[10,2]"
+          },
+          "volume": {
+            "type": "table_column",
+            "column_name": "sbDpVolume",
+            "data_type": "int64"
+          },
+          "epoch_ms": {
+            "type": "table_column",
+            "column_name": "sbDpEpochMs",
+            "data_type": "int64"
+          },
+          "source": {
+            "type": "table_column",
+            "column_name": "sbDpSource",
+            "data_type": "string"
+          },
+          "ticker": {
+            "type": "simple_join",
+            "other_collection_name": "Tickers",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {
+              "ticker_id": ["_id"]
+            },
+            "reverse_relationship_name": "historical_prices"
+          }
+        }
+      },
+      "Transactions": {
+        "type": "simple_table",
+        "table_path": "main.sbTransaction",
+        "unique_properties": ["transaction_id"],
+        "properties": {
+          "transaction_id": {
+            "type": "table_column",
+            "column_name": "sbTxId",
+            "data_type": "string"
+          },
+          "customer_id": {
+            "type": "table_column",
+            "column_name": "sbTxCustId",
+            "data_type": "string"
+          },
+          "ticker_id": {
+            "type": "table_column",
+            "column_name": "sbTxTickerId",
+            "data_type": "string"
+          },
+          "date_time": {
+            "type": "table_column",
+            "column_name": "sbTxDateTime",
+            "data_type": "timestamp[3]"
+          },
+          "transaction_type": {
+            "type": "table_column",
+            "column_name": "sbTxType",
+            "data_type": "string"
+          },
+          "shares": {
+            "type": "table_column",
+            "column_name": "sbTxShares",
+            "data_type": "decimal[10,2]"
+          },
+          "price": {
+            "type": "table_column",
+            "column_name": "sbTxPrice",
+            "data_type": "decimal[10,2]"
+          },
+          "amount": {
+            "type": "table_column",
+            "column_name": "sbTxAmount",
+            "data_type": "decimal[10,2]"
+          },
+          "currency": {
+            "type": "table_column",
+            "column_name": "sbTxCcy",
+            "data_type": "string"
+          },
+          "tax": {
+            "type": "table_column",
+            "column_name": "sbTxTax",
+            "data_type": "decimal[10,2]"
+          },
+          "commission": {
+            "type": "table_column",
+            "column_name": "sbTxCommission",
+            "data_type": "decimal[10,2]"
+          },
+          "kpx": {
+            "type": "table_column",
+            "column_name": "sbTxKpx",
+            "data_type": "string"
+          },
+          "settlement_date_str": {
+            "type": "table_column",
+            "column_name": "sbTxSettlementDateStr",
+            "data_type": "string"
+          },
+          "status": {
+            "type": "table_column",
+            "column_name": "sbTxStatus",
+            "data_type": "string"
+          }
+        }
+      }
+    },
+    "Dealership": {
+      "Cars": {
+        "type": "simple_table",
+        "table_path": "main.cars",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "make": {
+            "type": "table_column",
+            "column_name": "make",
+            "data_type": "string"
+          },
+          "model": {
+            "type": "table_column",
+            "column_name": "model",
+            "data_type": "string"
+          },
+          "year": {
+            "type": "table_column",
+            "column_name": "year",
+            "data_type": "int32"
+          },
+          "color": {
+            "type": "table_column",
+            "column_name": "color",
+            "data_type": "string"
+          },
+          "vin_number": {
+            "type": "table_column",
+            "column_name": "vin_number",
+            "data_type": "string"
+          },
+          "engine_type": {
+            "type": "table_column",
+            "column_name": "engine_type",
+            "data_type": "string"
+          },
+          "transmission": {
+            "type": "table_column",
+            "column_name": "transmission",
+            "data_type": "string"
+          },
+          "cost": {
+            "type": "table_column",
+            "column_name": "cost",
+            "data_type": "decimal[10,2]"
+          },
+          "crtd_ts": {
+            "type": "table_column",
+            "column_name": "crtd_ts",
+            "data_type": "timestamp[3]"
+          },
+          "sale_records": {
+            "type": "simple_join",
+            "other_collection_name": "Sales",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "_id": ["car_id"]
+            },
+            "reverse_relationship_name": "car"
+          },
+          "inventory_snapshots": {
+            "type": "simple_join",
+            "other_collection_name": "InventorySnapshots",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "_id": ["car_id"]
+            },
+            "reverse_relationship_name": "car"
+          }
+        }
+      },
+      "Salespersons": {
+        "type": "simple_table",
+        "table_path": "main.salespersons",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "first_name": {
+            "type": "table_column",
+            "column_name": "first_name",
+            "data_type": "string"
+          },
+          "last_name": {
+            "type": "table_column",
+            "column_name": "last_name",
+            "data_type": "string"
+          },
+          "email": {
+            "type": "table_column",
+            "column_name": "email",
+            "data_type": "string"
+          },
+          "phone": {
+            "type": "table_column",
+            "column_name": "phone",
+            "data_type": "string"
+          },
+          "hire_date": {
+            "type": "table_column",
+            "column_name": "hire_date",
+            "data_type": "date"
+          },
+          "termination_date": {
+            "type": "table_column",
+            "column_name": "termination_date",
+            "data_type": "date"
+          },
+          "crtd_ts": {
+            "type": "table_column",
+            "column_name": "crtd_ts",
+            "data_type": "timestamp[3]"
+          },
+          "sales_made": {
+            "type": "simple_join",
+            "other_collection_name": "Sales",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "_id": ["salesperson_id"]
+            },
+            "reverse_relationship_name": "salesperson"
+          }
+        }
+      },
+      "Customers": {
+        "type": "simple_table",
+        "table_path": "main.customers",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "first_name": {
+            "type": "table_column",
+            "column_name": "first_name",
+            "data_type": "string"
+          },
+          "last_name": {
+            "type": "table_column",
+            "column_name": "last_name",
+            "data_type": "string"
+          },
+          "email": {
+            "type": "table_column",
+            "column_name": "email",
+            "data_type": "string"
+          },
+          "phone": {
+            "type": "table_column",
+            "column_name": "phone",
+            "data_type": "string"
+          },
+          "address": {
+            "type": "table_column",
+            "column_name": "address",
+            "data_type": "string"
+          },
+          "city": {
+            "type": "table_column",
+            "column_name": "city",
+            "data_type": "string"
+          },
+          "state": {
+            "type": "table_column",
+            "column_name": "state",
+            "data_type": "string"
+          },
+          "zip_code": {
+            "type": "table_column",
+            "column_name": "zip_code",
+            "data_type": "string"
+          },
+          "crtd_ts": {
+            "type": "table_column",
+            "column_name": "crtd_ts",
+            "data_type": "timestamp[3]"
+          },
+          "car_purchases": {
+            "type": "simple_join",
+            "other_collection_name": "Sales",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "_id": ["customer_id"]
+            },
+            "reverse_relationship_name": "customer"
+          }
+        }
+      },
+      "PaymentsReceived": {
+        "type": "simple_table",
+        "table_path": "main.payments_received",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "sale_id": {
+            "type": "table_column",
+            "column_name": "sale_id",
+            "data_type": "int32"
+          },
+          "payment_date": {
+            "type": "table_column",
+            "column_name": "payment_date",
+            "data_type": "date"
+          },
+          "payment_amount": {
+            "type": "table_column",
+            "column_name": "payment_amount",
+            "data_type": "decimal[10,2]"
+          },
+          "payment_method": {
+            "type": "table_column",
+            "column_name": "payment_method",
+            "data_type": "string"
+          },
+          "crtd_ts": {
+            "type": "table_column",
+            "column_name": "crtd_ts",
+            "data_type": "timestamp[3]"
+          }
+        }
+      },
+      "Sales": {
+        "type": "simple_table",
+        "table_path": "main.sales",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "car_id": {
+            "type": "table_column",
+            "column_name": "car_id",
+            "data_type": "int32"
+          },
+          "salesperson_id": {
+            "type": "table_column",
+            "column_name": "salesperson_id",
+            "data_type": "int32"
+          },
+          "customer_id": {
+            "type": "table_column",
+            "column_name": "customer_id",
+            "data_type": "int32"
+          },
+          "sale_price": {
+            "type": "table_column",
+            "column_name": "sale_price",
+            "data_type": "decimal[10,2]"
+          },
+          "sale_date": {
+            "type": "table_column",
+            "column_name": "sale_date",
+            "data_type": "date"
+          },
+          "crtd_ts": {
+            "type": "table_column",
+            "column_name": "crtd_ts",
+            "data_type": "timestamp[3]"
+          },
+          "payment": {
+            "type": "simple_join",
+            "other_collection_name": "PaymentsReceived",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "_id": ["sale_id"]
+            },
+            "reverse_relationship_name": "sale_record"
+          }
+        }
+      },
+      "InventorySnapshots": {
+        "type": "simple_table",
+        "table_path": "main.inventory_snapshots",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "snapshot_date": {
+            "type": "table_column",
+            "column_name": "snapshot_date",
+            "data_type": "date"
+          },
+          "car_id": {
+            "type": "table_column",
+            "column_name": "car_id",
+            "data_type": "int32"
+          },
+          "is_in_inventory": {
+            "type": "table_column",
+            "column_name": "is_in_inventory",
+            "data_type": "bool"
+          },
+          "crtd_ts": {
+            "type": "table_column",
+            "column_name": "crtd_ts",
+            "data_type": "timestamp[3]"
+          }
+        }
+      }
+    },
+    "DermTreatment": {
+      "Doctors": {
+        "type": "simple_table",
+        "table_path": "main.doctors",
+        "unique_properties": ["doc_id"],
+        "properties": {
+          "doc_id": {
+            "type": "table_column",
+            "column_name": "doc_id",
+            "data_type": "int32"
+          },
+          "first_name": {
+            "type": "table_column",
+            "column_name": "first_name",
+            "data_type": "string"
+          },
+          "last_name": {
+            "type": "table_column",
+            "column_name": "last_name",
+            "data_type": "string"
+          },
+          "speciality": {
+            "type": "table_column",
+            "column_name": "specialty",
+            "data_type": "string"
+          },
+          "year_reg": {
+            "type": "table_column",
+            "column_name": "year_reg",
+            "data_type": "int32"
+          },
+          "med_school_name": {
+            "type": "table_column",
+            "column_name": "med_school_name",
+            "data_type": "string"
+          },
+          "loc_city": {
+            "type": "table_column",
+            "column_name": "loc_city",
+            "data_type": "string"
+          },
+          "loc_state": {
+            "type": "table_column",
+            "column_name": "loc_state",
+            "data_type": "string"
+          },
+          "loc_zip": {
+            "type": "table_column",
+            "column_name": "loc_zip",
+            "data_type": "string"
+          },
+          "bd_cert_num": {
+            "type": "table_column",
+            "column_name": "bd_cert_num",
+            "data_type": "string"
+          }
+        }
+      },
+      "Patients": {
+        "type": "simple_table",
+        "table_path": "main.patients",
+        "unique_properties": ["patient_id"],
+        "properties": {
+          "patient_id": {
+            "type": "table_column",
+            "column_name": "patient_id",
+            "data_type": "int32"
+          },
+          "first_name": {
+            "type": "table_column",
+            "column_name": "first_name",
+            "data_type": "string"
+          },
+          "last_name": {
+            "type": "table_column",
+            "column_name": "last_name",
+            "data_type": "string"
+          },
+          "date_of_birth": {
+            "type": "table_column",
+            "column_name": "date_of_birth",
+            "data_type": "date"
+          },
+          "date_of_registration": {
+            "type": "table_column",
+            "column_name": "date_of_registration",
+            "data_type": "date"
+          },
+          "gender": {
+            "type": "table_column",
+            "column_name": "gender",
+            "data_type": "string"
+          },
+          "email": {
+            "type": "table_column",
+            "column_name": "email",
+            "data_type": "string"
+          },
+          "phone": {
+            "type": "table_column",
+            "column_name": "phone",
+            "data_type": "string"
+          },
+          "addr_city": {
+            "type": "table_column",
+            "column_name": "addr_city",
+            "data_type": "string"
+          },
+          "addr_state": {
+            "type": "table_column",
+            "column_name": "addr_state",
+            "data_type": "string"
+          },
+          "addr_zip": {
+            "type": "table_column",
+            "column_name": "addr_zip",
+            "data_type": "string"
+          },
+          "ins_type": {
+            "type": "table_column",
+            "column_name": "ins_type",
+            "data_type": "string"
+          },
+          "ins_policy_num": {
+            "type": "table_column",
+            "column_name": "ins_policy_num",
+            "data_type": "string"
+          },
+          "height_cm": {
+            "type": "table_column",
+            "column_name": "height_cm",
+            "data_type": "float64"
+          },
+          "weight_kg": {
+            "type": "table_column",
+            "column_name": "weight_kg",
+            "data_type": "float64"
+          }
+        }
+      },
+      "Drugs": {
+        "type": "simple_table",
+        "table_path": "main.drugs",
+        "unique_properties": ["drug_id"],
+        "properties": {
+          "drug_id": {
+            "type": "table_column",
+            "column_name": "drug_id",
+            "data_type": "int32"
+          },
+          "drug_name": {
+            "type": "table_column",
+            "column_name": "drug_name",
+            "data_type": "string"
+          },
+          "manufacturer": {
+            "type": "table_column",
+            "column_name": "manufacturer",
+            "data_type": "string"
+          },
+          "drug_type": {
+            "type": "table_column",
+            "column_name": "drug_type",
+            "data_type": "string"
+          },
+          "moa": {
+            "type": "table_column",
+            "column_name": "moa",
+            "data_type": "string"
+          },
+          "fda_appr_dt": {
+            "type": "table_column",
+            "column_name": "fda_appr_dt",
+            "data_type": "date"
+          },
+          "admin_route": {
+            "type": "table_column",
+            "column_name": "admin_route",
+            "data_type": "string"
+          },
+          "dos_amt": {
+            "type": "table_column",
+            "column_name": "dos_amt",
+            "data_type": "decimal[10,2]"
+          },
+          "dos_unit": {
+            "type": "table_column",
+            "column_name": "dos_unit",
+            "data_type": "string"
+          },
+          "dos_freq_hrs": {
+            "type": "table_column",
+            "column_name": "dos_freq_hrs",
+            "data_type": "int32"
+          },
+          "ndc": {
+            "type": "table_column",
+            "column_name": "ndc",
+            "data_type": "string"
+          }
+        }
+      },
+      "Diagnoses": {
+        "type": "simple_table",
+        "table_path": "main.diagnoses",
+        "unique_properties": ["diag_id"],
+        "properties": {
+          "diag_id": {
+            "type": "table_column",
+            "column_name": "diag_id",
+            "data_type": "int32"
+          },
+          "diag_code": {
+            "type": "table_column",
+            "column_name": "diag_code",
+            "data_type": "string"
+          },
+          "diag_name": {
+            "type": "table_column",
+            "column_name": "diag_name",
+            "data_type": "string"
+          },
+          "diag_desc": {
+            "type": "table_column",
+            "column_name": "diag_desc",
+            "data_type": "string"
+          }
+        }
+      },
+      "Treatments": {
+        "type": "simple_table",
+        "table_path": "main.treatments",
+        "unique_properties": ["treatment_id"],
+        "properties": {
+          "treatment_id": {
+            "type": "table_column",
+            "column_name": "treatment_id",
+            "data_type": "int32"
+          },
+          "patient_id": {
+            "type": "table_column",
+            "column_name": "patient_id",
+            "data_type": "int32"
+          },
+          "doc_id": {
+            "type": "table_column",
+            "column_name": "doc_id",
+            "data_type": "int32"
+          },
+          "drug_id": {
+            "type": "table_column",
+            "column_name": "drug_id",
+            "data_type": "int32"
+          },
+          "diag_id": {
+            "type": "table_column",
+            "column_name": "diag_id",
+            "data_type": "int32"
+          },
+          "start_dt": {
+            "type": "table_column",
+            "column_name": "start_dt",
+            "data_type": "date"
+          },
+          "end_dt": {
+            "type": "table_column",
+            "column_name": "end_dt",
+            "data_type": "date"
+          },
+          "is_placebo": {
+            "type": "table_column",
+            "column_name": "is_placebo",
+            "data_type": "bool"
+          },
+          "tot_drug_amt": {
+            "type": "table_column",
+            "column_name": "tot_drug_amt",
+            "data_type": "decimal[10,2]"
+          },
+          "drug_unit": {
+            "type": "table_column",
+            "column_name": "drug_unit",
+            "data_type": "string"
+          },
+          "doctor": {
+            "type": "simple_join",
+            "other_collection_name": "Doctors",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {
+              "doc_id": ["doc_id"]
+            },
+            "reverse_relationship_name": "prescribed_treatments"
+          },
+          "patient": {
+            "type": "simple_join",
+            "other_collection_name": "Patients",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {
+              "patient_id": [
+                "patient_id"
+              ]
+            },
+            "reverse_relationship_name": "treatments_received"
+          },
+          "drug": {
+            "type": "simple_join",
+            "other_collection_name": "Drugs",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {
+              "drug_id": [
+                "drug_id"
+              ]
+            },
+            "reverse_relationship_name": "treatments_used_in"
+          },
+          "diagnosis": {
+            "type": "simple_join",
+            "other_collection_name": "Diagnoses",
+            "singular": true,
+            "no_collisions": false,
+            "keys": {
+              "diag_id": ["diag_id"]
+            },
+            "reverse_relationship_name": "treatments_for"
+          },
+          "outcome_records": {
+            "type": "simple_join",
+            "other_collection_name": "Outcomes",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "treatment_id": ["treatment_id"]
+            },
+            "reverse_relationship_name": "treatment"
+          },
+          "concomitant_meds": {
+            "type": "simple_join",
+            "other_collection_name": "ConcomitantMeds",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "treatment_id": [
+                "treatment_id"
+              ]
+            },
+            "reverse_relationship_name": "treatment"
+          },
+          "adverse_events": {
+            "type": "simple_join",
+            "other_collection_name": "AdverseEvents",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "treatment_id": [
+                "treatment_id"
+              ]
+            },
+            "reverse_relationship_name": "treatment"
+          }
+        }
+      },
+      "Outcomes": {
+        "type": "simple_table",
+        "table_path": "main.outcomes",
+        "unique_properties": ["outcome_id"],
+        "properties": {
+          "outcome_id": {
+            "type": "table_column",
+            "column_name": "outcome_id",
+            "data_type": "int32"
+          },
+          "treatment_id": {
+            "type": "table_column",
+            "column_name": "treatment_id",
+            "data_type": "int32"
+          },
+          "assess_dt": {
+            "type": "table_column",
+            "column_name": "assess_dt",
+            "data_type": "date"
+          },
+          "day7_lesion_cnt": {
+            "type": "table_column",
+            "column_name": "day7_lesion_cnt",
+            "data_type": "int32"
+          },
+          "day30_lesion_cnt": {
+            "type": "table_column",
+            "column_name": "day30_lesion_cnt",
+            "data_type": "int32"
+          },
+          "day100_lesion_cnt": {
+            "type": "table_column",
+            "column_name": "day100_lesion_cnt",
+            "data_type": "int32"
+          },
+          "day7_pasi_score": {
+            "type": "table_column",
+            "column_name": "day7_pasi_score",
+            "data_type": "decimal[4,1]"
+          },
+          "day30_pasi_score": {
+            "type": "table_column",
+            "column_name": "day30_pasi_score",
+            "data_type": "decimal[4,1]"
+          },
+          "day100_pasi_score": {
+            "type": "table_column",
+            "column_name": "day100_pasi_score",
+            "data_type": "decimal[4,1]"
+          },
+          "day7_tewl": {
+            "type": "table_column",
+            "column_name": "day7_tewl",
+            "data_type": "decimal[5,2]"
+          },
+          "day30_tewl": {
+            "type": "table_column",
+            "column_name": "day30_tewl",
+            "data_type": "decimal[5,2]"
+          },
+          "day100_tewl": {
+            "type": "table_column",
+            "column_name": "day100_tewl",
+            "data_type": "decimal[5,2]"
+          },
+          "day7_itch_vas": {
+            "type": "table_column",
+            "column_name": "day7_itch_vas",
+            "data_type": "int32"
+          },
+          "day30_itch_vas": {
+            "type": "table_column",
+            "column_name": "day30_itch_vas",
+            "data_type": "int32"
+          },
+          "day100_itch_vas": {
+            "type": "table_column",
+            "column_name": "day100_itch_vas",
+            "data_type": "int32"
+          },
+          "day7_hfg": {
+            "type": "table_column",
+            "column_name": "day7_hfg",
+            "data_type": "decimal[4,1]"
+          },
+          "day30_hfg": {
+            "type": "table_column",
+            "column_name": "day30_hfg",
+            "data_type": "decimal[4,1]"
+          },
+          "day100_hfg": {
+            "type": "table_column",
+            "column_name": "day100_hfg",
+            "data_type": "decimal[4,1]"
+          }
+        }
+      },
+      "ConcomitantMeds": {
+        "type": "simple_table",
+        "table_path": "main.concomitant_meds",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "treatment_id": {
+            "type": "table_column",
+            "column_name": "treatment_id",
+            "data_type": "int32"
+          },
+          "med_name": {
+            "type": "table_column",
+            "column_name": "med_name",
+            "data_type": "string"
+          },
+          "start_dt": {
+            "type": "table_column",
+            "column_name": "start_dt",
+            "data_type": "string"
+          },
+          "end_dt": {
+            "type": "table_column",
+            "column_name": "end_dt",
+            "data_type": "string"
+          },
+          "dose_amt": {
+            "type": "table_column",
+            "column_name": "dose_amt",
+            "data_type": "decimal[10,2]"
+          },
+          "dose_unit": {
+            "type": "table_column",
+            "column_name": "dose_unit",
+            "data_type": "string"
+          },
+          "freq_hrs": {
+            "type": "table_column",
+            "column_name": "freq_hrs",
+            "data_type": "int32"
+          }
+        }
+      },
+      "AdverseEvents": {
+        "type": "simple_table",
+        "table_path": "main.adverse_events",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "treatment_id": {
+            "type": "table_column",
+            "column_name": "treatment_id",
+            "data_type": "int32"
+          },
+          "reported_dt": {
+            "type": "table_column",
+            "column_name": "reported_dt",
+            "data_type": "date"
+          },
+          "description": {
+            "type": "table_column",
+            "column_name": "description",
+            "data_type": "string"
+          }
+        }
+      }
+    },
+    "Ewallet": {
+      "Users": {
+        "type": "simple_table",
+        "table_path": "main.users",
+        "unique_properties": ["uid", "username"],
+        "properties": {
+          "uid": {
+            "type": "table_column",
+            "column_name": "uid",
+            "data_type": "int64"
+          },
+          "username": {
+            "type": "table_column",
+            "column_name": "username",
+            "data_type": "string"
+          },
+          "email": {
+            "type": "table_column",
+            "column_name": "email",
+            "data_type": "string"
+          },
+          "phone_number": {
+            "type": "table_column",
+            "column_name": "phone_number",
+            "data_type": "string"
+          },
+          "created_at": {
+            "type": "table_column",
+            "column_name": "created_at",
+            "data_type": "timestamp[3]"
+          },
+          "last_login_at": {
+            "type": "table_column",
+            "column_name": "last_login_at",
+            "data_type": "timestamp[3]"
+          },
+          "user_type": {
+            "type": "table_column",
+            "column_name": "user_type",
+            "data_type": "string"
+          },
+          "status": {
+            "type": "table_column",
+            "column_name": "status",
+            "data_type": "string"
+          },
+          "country": {
+            "type": "table_column",
+            "column_name": "country",
+            "data_type": "string"
+          },
+          "address_billing": {
+            "type": "table_column",
+            "column_name": "address_billing",
+            "data_type": "string"
+          },
+          "address_delivery": {
+            "type": "table_column",
+            "column_name": "address_delivery",
+            "data_type": "string"
+          },
+          "kyc_status": {
+            "type": "table_column",
+            "column_name": "kyc_status",
+            "data_type": "string"
+          },
+          "kyc_verified_at": {
+            "type": "table_column",
+            "column_name": "kyc_verified_at",
+            "data_type": "timestamp[3]"
+          },
+          "transactions_sent": {
+            "type": "simple_join",
+            "other_collection_name": "Transactions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "uid": ["sender_id"]
+            },
+            "reverse_relationship_name": "sending_user"
+          },
+          "transactions_received": {
+            "type": "simple_join",
+            "other_collection_name": "Transactions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "uid": ["receiver_id"]
+            },
+            "reverse_relationship_name": "receiving_user"
+          },
+          "balances": {
+            "type": "simple_join",
+            "other_collection_name": "UserBalances",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "uid": ["user_id"]
+            },
+            "reverse_relationship_name": "user"
+          },
+          "notifications": {
+            "type": "simple_join",
+            "other_collection_name": "Notifications",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "uid": ["user_id"]
+            },
+            "reverse_relationship_name": "user"
+          },
+          "sessions": {
+            "type": "simple_join",
+            "other_collection_name": "UserSessions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "uid": ["user_id"]
+            },
+            "reverse_relationship_name": "user"
+          },
+          "setting_snapshots": {
+            "type": "simple_join",
+            "other_collection_name": "UserSettingSnapshots",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "uid": ["user_id"]
+            },
+            "reverse_relationship_name": "user"
+          }
+        }
+      },
+      "Merchants": {
+        "type": "simple_table",
+        "table_path": "main.merchants",
+        "unique_properties": ["mid"],
+        "properties": {
+          "mid": {
+            "type": "table_column",
+            "column_name": "mid",
+            "data_type": "int64"
+          },
+          "name": {
+            "type": "table_column",
+            "column_name": "name",
+            "data_type": "string"
+          },
+          "description": {
+            "type": "table_column",
+            "column_name": "description",
+            "data_type": "string"
+          },
+          "website_url": {
+            "type": "table_column",
+            "column_name": "website_url",
+            "data_type": "string"
+          },
+          "logo_url": {
+            "type": "table_column",
+            "column_name": "logo_url",
+            "data_type": "string"
+          },
+          "created_at": {
+            "type": "table_column",
+            "column_name": "created_at",
+            "data_type": "timestamp[3]"
+          },
+          "country": {
+            "type": "table_column",
+            "column_name": "country",
+            "data_type": "string"
+          },
+          "state": {
+            "type": "table_column",
+            "column_name": "state",
+            "data_type": "string"
+          },
+          "city": {
+            "type": "table_column",
+            "column_name": "city",
+            "data_type": "string"
+          },
+          "postal_code": {
+            "type": "table_column",
+            "column_name": "postal_code",
+            "data_type": "string"
+          },
+          "address": {
+            "type": "table_column",
+            "column_name": "address",
+            "data_type": "string"
+          },
+          "status": {
+            "type": "table_column",
+            "column_name": "status",
+            "data_type": "string"
+          },
+          "category": {
+            "type": "table_column",
+            "column_name": "category",
+            "data_type": "string"
+          },
+          "sub_category": {
+            "type": "table_column",
+            "column_name": "sub_category",
+            "data_type": "string"
+          },
+          "mcc": {
+            "type": "table_column",
+            "column_name": "mcc",
+            "data_type": "int32"
+          },
+          "contact_name": {
+            "type": "table_column",
+            "column_name": "contact_name",
+            "data_type": "string"
+          },
+          "contact_email": {
+            "type": "table_column",
+            "column_name": "contact_email",
+            "data_type": "string"
+          },
+          "contact_phone": {
+            "type": "table_column",
+            "column_name": "contact_phone",
+            "data_type": "string"
+          },
+          "transactions_sent": {
+            "type": "simple_join",
+            "other_collection_name": "Transactions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "mid": ["sender_id"]
+            },
+            "reverse_relationship_name": "sending_merchant"
+          },
+          "transactions_received": {
+            "type": "simple_join",
+            "other_collection_name": "Transactions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "mid": ["receiver_id"]
+            },
+            "reverse_relationship_name": "receiving_merchant"
+          },
+          "balances": {
+            "type": "simple_join",
+            "other_collection_name": "MerchantBalances",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "mid": ["merchant_id"]
+            },
+            "reverse_relationship_name": "merchant"
+          },
+          "coupons": {
+            "type": "simple_join",
+            "other_collection_name": "Coupons",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "mid": ["merchant_id"]
+            },
+            "reverse_relationship_name": "merchant"
+          }
+        }
+      },
+      "Coupons": {
+        "type": "simple_table",
+        "table_path": "main.coupons",
+        "unique_properties": ["cid"],
+        "properties": {
+          "cid": {
+            "type": "table_column",
+            "column_name": "cid",
+            "data_type": "int64"
+          },
+          "merchant_id": {
+            "type": "table_column",
+            "column_name": "merchant_id",
+            "data_type": "int64"
+          },
+          "code": {
+            "type": "table_column",
+            "column_name": "code",
+            "data_type": "string"
+          },
+          "description": {
+            "type": "table_column",
+            "column_name": "description",
+            "data_type": "string"
+          },
+          "start_date": {
+            "type": "table_column",
+            "column_name": "start_date",
+            "data_type": "date"
+          },
+          "end_date": {
+            "type": "table_column",
+            "column_name": "end_date",
+            "data_type": "date"
+          },
+          "discount_type": {
+            "type": "table_column",
+            "column_name": "discount_type",
+            "data_type": "string"
+          },
+          "discount_value": {
+            "type": "table_column",
+            "column_name": "discount_value",
+            "data_type": "decimal[10,2]"
+          },
+          "min_purchase_amount": {
+            "type": "table_column",
+            "column_name": "min_purchase_amount",
+            "data_type": "decimal[10,2]"
+          },
+          "max_discount_amount": {
+            "type": "table_column",
+            "column_name": "max_discount_amount",
+            "data_type": "decimal[10,2]"
+          },
+          "redemption_limit": {
+            "type": "table_column",
+            "column_name": "redemption_limit",
+            "data_type": "int32"
+          },
+          "status": {
+            "type": "table_column",
+            "column_name": "status",
+            "data_type": "string"
+          },
+          "created_at": {
+            "type": "table_column",
+            "column_name": "created_at",
+            "data_type": "timestamp[3]"
+          },
+          "updated_at": {
+            "type": "table_column",
+            "column_name": "updated_at",
+            "data_type": "timestamp[3]"
+          },
+          "transaction_used_in": {
+            "type": "simple_join",
+            "other_collection_name": "Transactions",
+            "singular": false,
+            "no_collisions": true,
+            "keys": {
+              "cid": ["coupon_id"]
+            },
+            "reverse_relationship_name": "coupon"
+          }
+        }
+      },
+      "Transactions": {
+        "type": "simple_table",
+        "table_path": "main.wallet_transactions_daily",
+        "unique_properties": ["txid"],
+        "properties": {
+          "txid": {
+            "type": "table_column",
+            "column_name": "txid",
+            "data_type": "int32"
+          },
+          "sender_id": {
+            "type": "table_column",
+            "column_name": "sender_id",
+            "data_type": "int64"
+          },
+          "sender_type": {
+            "type": "table_column",
+            "column_name": "sender_type",
+            "data_type": "int32"
+          },
+          "receiver_id": {
+            "type": "table_column",
+            "column_name": "receiver_id",
+            "data_type": "int64"
+          },
+          "receiver_type": {
+            "type": "table_column",
+            "column_name": "receiver_type",
+            "data_type": "int32"
+          },
+          "amount": {
+            "type": "table_column",
+            "column_name": "amount",
+            "data_type": "decimal[10,2]"
+          },
+          "status": {
+            "type": "table_column",
+            "column_name": "status",
+            "data_type": "string"
+          },
+          "transaction_type": {
+            "type": "table_column",
+            "column_name": "type",
+            "data_type": "string"
+          },
+          "description": {
+            "type": "table_column",
+            "column_name": "description",
+            "data_type": "string"
+          },
+          "coupon_id": {
+            "type": "table_column",
+            "column_name": "coupon_id",
+            "data_type": "int64"
+          },
+          "created_at": {
+            "type": "table_column",
+            "column_name": "created_at",
+            "data_type": "timestamp[3]"
+          },
+          "completed_at": {
+            "type": "table_column",
+            "column_name": "completed_at",
+            "data_type": "timestamp[3]"
+          },
+          "transaction_ref": {
+            "type": "table_column",
+            "column_name": "transaction_ref",
+            "data_type": "string"
+          },
+          "gateway_name": {
+            "type": "table_column",
+            "column_name": "gateway_name",
+            "data_type": "string"
+          },
+          "gateway_ref": {
+            "type": "table_column",
+            "column_name": "gateway_ref",
+            "data_type": "string"
+          },
+          "device_id": {
+            "type": "table_column",
+            "column_name": "device_id",
+            "data_type": "string"
+          },
+          "ip_address": {
+            "type": "table_column",
+            "column_name": "ip_address",
+            "data_type": "string"
+          },
+          "user_agent": {
+            "type": "table_column",
+            "column_name": "user_agent",
+            "data_type": "string"
+          }
+        }
+      },
+      "UserBalances": {
+        "type": "simple_table",
+        "table_path": "main.wallet_user_balance_daily",
+        "unique_properties": ["user_id","updated_at"],
+        "properties": {
+          "user_id": {
+            "type": "table_column",
+            "column_name": "user_id",
+            "data_type": "int64"
+          },
+          "balance": {
+            "type": "table_column",
+            "column_name": "balance",
+            "data_type": "decimal[10,2]"
+          },
+          "updated_at": {
+            "type": "table_column",
+            "column_name": "updated_at",
+            "data_type": "timestamp[3]"
+          }
+        }
+      },
+      "MerchantBalances": {
+        "type": "simple_table",
+        "table_path": "main.wallet_merchant_balance_daily",
+        "unique_properties": ["merchant_id","updated_at"],
+        "properties": {
+          "merchant_id": {
+            "type": "table_column",
+            "column_name": "merchant_id",
+            "data_type": "int64"
+          },
+          "balance": {
+            "type": "table_column",
+            "column_name": "balance",
+            "data_type": "decimal[10,2]"
+          },
+          "updated_at": {
+            "type": "table_column",
+            "column_name": "updated_at",
+            "data_type": "timestamp[3]"
+          }
+        }
+      },
+      "Notifications": {
+        "type": "simple_table",
+        "table_path": "main.notifications",
+        "unique_properties": ["_id"],
+        "properties": {
+          "_id": {
+            "type": "table_column",
+            "column_name": "_id",
+            "data_type": "int32"
+          },
+          "user_id": {
+            "type": "table_column",
+            "column_name": "user_id",
+            "data_type": "int64"
+          },
+          "message": {
+            "type": "table_column",
+            "column_name": "message",
+            "data_type": "string"
+          },
+          "notification_type": {
+            "type": "table_column",
+            "column_name": "type",
+            "data_type": "string"
+          },
+          "status": {
+            "type": "table_column",
+            "column_name": "status",
+            "data_type": "string"
+          },
+          "created_at": {
+            "type": "table_column",
+            "column_name": "created_at",
+            "data_type": "timestamp[3]"
+          },
+          "read_at": {
+            "type": "table_column",
+            "column_name": "read_at",
+            "data_type": "timestamp[3]"
+          },
+          "device_type": {
+            "type": "table_column",
+            "column_name": "device_type",
+            "data_type": "string"
+          },
+          "device_id": {
+            "type": "table_column",
+            "column_name": "device_id",
+            "data_type": "string"
+          },
+          "action_url": {
+            "type": "table_column",
+            "column_name": "action_url",
+            "data_type": "string"
+          }
+        }
+      },
+      "UserSessions": {
+        "type": "simple_table",
+        "table_path": "main.user_sessions",
+        "unique_properties": ["user_id", "session_start_ts", "session_end_ts"],
+        "properties": {
+          "user_id": {
+            "type": "table_column",
+            "column_name": "user_id",
+            "data_type": "int64"
+          },
+          "session_start_ts": {
+            "type": "table_column",
+            "column_name": "session_start_ts",
+            "data_type": "timestamp[3]"
+          },
+          "session_end_ts": {
+            "type": "table_column",
+            "column_name": "session_end_ts",
+            "data_type": "timestamp[3]"
+          },
+          "device_type": {
+            "type": "table_column",
+            "column_name": "device_type",
+            "data_type": "string"
+          },
+          "device_id": {
+            "type": "table_column",
+            "column_name": "device_id",
+            "data_type": "string"
+          }
+        }
+      },
+      "UserSettingSnapshots": {
+        "type": "simple_table",
+        "table_path": "main.user_setting_snapshot",
+        "unique_properties": ["user_id","snapshot_date"],
+        "properties": {
+          "user_id": {
+            "type": "table_column",
+            "column_name": "user_id",
+            "data_type": "int64"
+          },
+          "snapshot_date": {
+            "type": "table_column",
+            "column_name": "snapshot_date",
+            "data_type": "date"
+          },
+          "tx_limit_daily": {
+            "type": "table_column",
+            "column_name": "tx_limit_daily",
+            "data_type": "decimal[10,2]"
+          },
+          "tx_limit_monthly": {
+            "type": "table_column",
+            "column_name": "tx_limit_monthly",
+            "data_type": "decimal[10,2]"
+          },
+          "membership_status": {
+            "type": "table_column",
+            "column_name": "membership_status",
+            "data_type": "int32"
+          },
+          "password_hash": {
+            "type": "table_column",
+            "column_name": "password_hash",
+            "data_type": "string"
+          },
+          "api_key": {
+            "type": "table_column",
+            "column_name": "api_key",
+            "data_type": "string"
+          },
+          "verified_devices": {
+            "type": "table_column",
+            "column_name": "verified_devices",
+            "data_type": "string"
+          },
+          "verified_ips": {
+            "type": "table_column",
+            "column_name": "verified_ips",
+            "data_type": "string"
+          },
+          "mfa_enabled": {
+            "type": "table_column",
+            "column_name": "mfa_enabled",
+            "data_type": "bool"
+          },
+          "marketing_opt_in": {
+            "type": "table_column",
+            "column_name": "marketing_opt_in",
+            "data_type": "bool"
+          },
+          "created_at": {
+            "type": "table_column",
+            "column_name": "created_at",
+            "data_type": "timestamp[3]"
+          }
+        }
+      }
+    }
+}
