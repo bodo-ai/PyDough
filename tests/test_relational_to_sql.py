@@ -67,8 +67,8 @@ def sqlite_dialect() -> SQLiteDialect:
                 input=build_simple_scan(),
                 ordered_columns=[("b", make_relational_column_reference("b"))],
             ),
-            "simple_scan",
-            id="simple_scan",
+            "simple_scan_test",
+            id="simple_scan_test",
         ),
         pytest.param(
             RelationalRoot(
@@ -159,8 +159,8 @@ def sqlite_dialect() -> SQLiteDialect:
                     ),
                 ),
             ),
-            "simple_filter",
-            id="simple_filter",
+            "simple_filter_test",
+            id="simple_filter_test",
         ),
         pytest.param(
             RelationalRoot(

@@ -1,6 +1,11 @@
 SELECT
-  a,
-  b
-FROM table
+  o_orderkey,
+  o_totalprice
+FROM (
+  SELECT
+    o_orderkey AS o_orderkey,
+    o_totalprice AS o_totalprice
+  FROM tpch.ORDERS
+)
 WHERE
-  a = 1
+  o_totalprice < 1000.0
