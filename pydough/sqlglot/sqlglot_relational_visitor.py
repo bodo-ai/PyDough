@@ -171,6 +171,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         new_columns: list[SQLGlotExpression],
         orig_select: Select,
         deps: set[Identifier],
+        sort: bool = True
     ) -> Select:
         """
         Attempt to merge a new select statement with an existing one.
@@ -184,6 +185,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 of the old columns in some operator other than the
                 "SELECT" component. For example a filter will need to
                 include the column names of any WHERE conditions.
+            sort (bool): If True, the existing columns in the original SELECT
+                statement get sorted alphabetically by their string representation (repr).
 
         Returns:
             Select: A final select statement that may contain the merged columns.
@@ -191,11 +194,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         new_exprs, old_exprs = self._try_merge_columns(
             new_columns, orig_select.expressions, deps
         )
+        if sort:
+            old_exprs = sorted(old_exprs,key=repr)
         orig_select.set("expressions", old_exprs)
         if new_exprs is None:
             return orig_select
         else:
-            return self._build_subquery(orig_select, new_exprs)
+            return self._build_subquery(orig_select, new_exprs, sort=sort)
 
     def _convert_ordering(
         self, ordering: MutableSequence[ExpressionSortInfo]
@@ -266,6 +271,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         input_expr: Select,
         column_exprs: list[SQLGlotExpression],
         alias: str | None = None,
+        sort: bool = True,
     ) -> Select:
         """
         Generate a subquery select statement with the given
@@ -276,10 +282,14 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 another select statement.
             column_exprs (list[SQLGlotExpression]): The columns to select.
             alias (str | None): The alias to give the subquery.
+            sort (bool): If True, the final select statement ordering is based on the
+                sorted string representation of input column expressions.
 
         Returns:
             Select: A select statement representing the subquery.
         """
+        if sort:
+            column_exprs = sorted(column_exprs,key=repr)
         return (
             Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
         )
@@ -311,7 +321,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     def visit_scan(self, scan: Scan) -> None:
         exprs: list[SQLGlotExpression] = [
             self._expr_visitor.relational_to_sqlglot(col, alias)
-            for alias, col in scan.columns.items()
+            for alias, col in sorted(scan.columns.items())
         ]
         query: Select = Select().select(*exprs).from_(scan.table_name)
         self._stack.append(query)
@@ -493,13 +503,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
         if self._is_mergeable_ordering(ordering_exprs, input_expr):
             query = self._merge_selects(
-                exprs, input_expr, find_identifiers_in_list(ordering_exprs)
+                exprs, input_expr, find_identifiers_in_list(ordering_exprs), sort=False
             )
             if "order" in query.args:
                 # avoid repeating the order by clause
                 ordering_exprs = []
         else:
-            query = self._build_subquery(input_expr, exprs)
+            query = self._build_subquery(input_expr, exprs, sort=False)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
         self._stack.append(query)

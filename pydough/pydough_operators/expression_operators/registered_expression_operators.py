@@ -21,6 +21,7 @@ __all__ = [
     "GRT",
     "HAS",
     "HASNOT",
+    "HOUR",
     "IFF",
     "ISIN",
     "JOIN_STRINGS",
@@ -32,6 +33,7 @@ __all__ = [
     "LOWER",
     "MAX",
     "MIN",
+    "MINUTE",
     "MOD",
     "MONOTONIC",
     "MONTH",
@@ -41,10 +43,13 @@ __all__ = [
     "NOT",
     "PERCENTILE",
     "POW",
+    "POWER",
     "PRESENT",
     "RANKING",
     "ROUND",
+    "SECOND",
     "SLICE",
+    "SQRT",
     "STARTSWITH",
     "SUB",
     "SUM",
@@ -109,6 +114,12 @@ SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentT
 AVG = ExpressionFunctionOperator(
     "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
 )
+POWER = ExpressionFunctionOperator(
+    "POWER", False, RequireNumArgs(2), ConstantType(Float64Type())
+)
+SQRT = ExpressionFunctionOperator(
+    "SQRT", False, RequireNumArgs(1), ConstantType(Float64Type())
+)
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
 HAS = ExpressionFunctionOperator("HAS", True, AllowAny(), ConstantType(BooleanType()))
 HASNOT = ExpressionFunctionOperator(
@@ -128,6 +139,15 @@ MONTH = ExpressionFunctionOperator(
 )
 DAY = ExpressionFunctionOperator(
     "DAY", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+HOUR = ExpressionFunctionOperator(
+    "HOUR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+MINUTE = ExpressionFunctionOperator(
+    "MINUTE", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+SECOND = ExpressionFunctionOperator(
+    "SECOND", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)

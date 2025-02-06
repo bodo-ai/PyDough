@@ -505,6 +505,66 @@ def convert_ndistinct(
         this=sqlglot_expressions.Distinct(expressions=[column])
     )
 
+def create_convert_time_unit_function(unit: str):
+    """
+    Creates a function that extracts a specific time unit
+    (e.g., HOUR, MINUTE, SECOND) from a SQLGlot expression.
+
+    Args:
+        `unit`: The time unit to extract. Must be one of 'HOUR', 'MINUTE',
+                or 'SECOND'.
+    Returns:
+        A function that can convert operands into a SQLGlot expression matching
+        the functionality of `EXTRACT(unit FROM expression)`.
+    """
+    def convert_time_unit(
+        raw_args: Sequence[RelationalExpression] | None,
+        sql_glot_args: Sequence[SQLGlotExpression],
+    ) -> SQLGlotExpression:
+        """
+        Converts and extracts the specific time unit from a SQLGlot expression.
+
+        Args:
+            `raw_args`: The operands passed to the function before they were converted to
+            SQLGlot expressions. (Not actively used in this implementation.)
+            `sql_glot_args`: The operands passed to the function after they were converted
+            to SQLGlot expressions. The first operand is expected to be a timestamp or
+                                    datetime.
+
+        Returns:
+            The SQLGlot expression matching the functionality of
+            `EXTRACT(unit FROM expression)` by extracting the specified time unit
+            from the first operand.
+        """
+        return sqlglot_expressions.Extract(
+            this=sqlglot_expressions.Var(this=unit),
+            expression=sql_glot_args[0]
+        )
+
+    return convert_time_unit
+
+def convert_sqrt(
+        raw_args: Sequence[RelationalExpression] | None,
+        sql_glot_args: Sequence[SQLGlotExpression],
+    ) -> SQLGlotExpression:
+    """
+        Support for getting the square root of the operand.
+
+        Args:
+            `raw_args`: The operands passed to the function before they were converted to
+            SQLGlot expressions. (Not actively used in this implementation.)
+            `sql_glot_args`: The operands passed to the function after they were converted
+            to SQLGlot expressions.
+
+        Returns:
+            The SQLGlot expression matching the functionality of
+            `POWER(x,0.5)`,i.e the square root.
+    """
+
+    return sqlglot_expressions.Pow(
+        this=sql_glot_args[0],
+        expression=sqlglot_expressions.Literal.number(0.5)
+    )
 
 class SqlGlotTransformBindings:
     """
@@ -677,6 +737,9 @@ class SqlGlotTransformBindings:
         self.bind_unop(pydop.YEAR, sqlglot_expressions.Year)
         self.bind_unop(pydop.MONTH, sqlglot_expressions.Month)
         self.bind_unop(pydop.DAY, sqlglot_expressions.Day)
+        self.bindings[pydop.HOUR] = create_convert_time_unit_function("HOUR")
+        self.bindings[pydop.MINUTE] = create_convert_time_unit_function("MINUTE")
+        self.bindings[pydop.SECOND] = create_convert_time_unit_function("SECOND")
 
         # Binary operators
         self.bind_binop(pydop.ADD, sqlglot_expressions.Add)
@@ -691,6 +754,9 @@ class SqlGlotTransformBindings:
         self.bind_binop(pydop.NEQ, sqlglot_expressions.NEQ)
         self.bind_binop(pydop.BAN, sqlglot_expressions.And)
         self.bind_binop(pydop.BOR, sqlglot_expressions.Or)
+        self.bind_binop(pydop.POW,sqlglot_expressions.Pow)
+        self.bind_binop(pydop.POWER,sqlglot_expressions.Pow)
+        self.bindings[pydop.SQRT] = convert_sqrt
 
         # Unary operators
         self.bind_unop(pydop.NOT, sqlglot_expressions.Not)
@@ -708,6 +774,9 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.YEAR] = convert_sqlite_datetime_extract("'%Y'")
         self.bindings[pydop.MONTH] = convert_sqlite_datetime_extract("'%m'")
         self.bindings[pydop.DAY] = convert_sqlite_datetime_extract("'%d'")
+        self.bindings[pydop.HOUR] = convert_sqlite_datetime_extract("'%H'")
+        self.bindings[pydop.MINUTE] = convert_sqlite_datetime_extract("'%M'")
+        self.bindings[pydop.SECOND] = convert_sqlite_datetime_extract("'%S'")
 
         # String function overrides
         if sqlite3.sqlite_version < "3.44.1":

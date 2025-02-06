@@ -32,7 +32,9 @@ from simple_pydough_functions import (
     correl_16,
     correl_17,
     double_partition,
+    exponentiation,
     function_sampler,
+    hour_minute_day,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -1002,3 +1004,116 @@ def test_pipeline_e2e_errors(
     with pytest.raises(Exception, match=error_msg):
         root: UnqualifiedNode = init_pydough_context(graph)(impl)()
         to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            (
+                hour_minute_day,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            "TX001",
+                            "TX005",
+                            "TX011",
+                            "TX015",
+                            "TX021",
+                            "TX025",
+                            "TX031",
+                            "TX033",
+                            "TX035",
+                            "TX044",
+                            "TX045",
+                            "TX049",
+                            "TX051",
+                            "TX055",
+                        ],
+                        "_expr0": [9, 12, 9, 12, 9, 12, 0, 0, 0, 10, 10, 16, 0, 0],
+                        "_expr1": [30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 30, 0, 0, 0],
+                        "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    }
+                ),
+            ),
+            id="broker_basic1",
+        ),
+        pytest.param(
+            (
+                exponentiation,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "low_square": [
+                            6642.2500,
+                            6740.4100,
+                            6839.2900,
+                            6938.8900,
+                            7039.2100,
+                            7140.2500,
+                            7242.0100,
+                            16576.5625,
+                            16900.0000,
+                            17292.2500,
+                        ],
+                        "low_sqrt": [
+                            9.027735,
+                            9.060905,
+                            9.093954,
+                            9.126883,
+                            9.159694,
+                            9.192388,
+                            9.224966,
+                            11.346806,
+                            11.401754,
+                            11.467345,
+                        ],
+                        "low_cbrt": [
+                            4.335633,
+                            4.346247,
+                            4.356809,
+                            4.367320,
+                            4.377781,
+                            4.388191,
+                            4.398553,
+                            5.049508,
+                            5.065797,
+                            5.085206,
+                        ],
+                    }
+                ),
+            ),
+            id="exponentiation",
+        ),
+    ],
+)
+def custom_defog_test_data(
+    request,
+) -> tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame]:
+    """
+    Test data for test_defog_e2e. Returns a tuple of the following
+    arguments:
+    1. `unqualified_impl`: a PyDough implementation function.
+    2. `graph_name`: the name of the graph from the defog database to use.
+    3. `answer_impl`: a function that takes in nothing and returns the answer
+    to a defog query as a Pandas DataFrame.
+    """
+    return request.param
+
+
+@pytest.mark.execute
+def test_defog_e2e_with_custom_data(
+    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame],
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+):
+    """
+    Test executing the defog analytical questions on the sqlite database,
+    comparing against the result of running the reference SQL query text on the
+    same database connector.
+    """
+    unqualified_impl, graph_name, answer_impl = custom_defog_test_data
+    graph: GraphMetadata = defog_graphs(graph_name)
+    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
+    pd.testing.assert_frame_equal(result, answer_impl())

@@ -511,3 +511,26 @@ def correl_17():
     region_info = region(fname=JOIN_STRINGS("-", LOWER(name), BACK(1).lname))
     nation_info = Nations(lname=LOWER(name)).WHERE(HAS(region_info))
     return nation_info(fullname=region_info.fname).ORDER_BY(fullname.ASC())
+
+
+def hour_minute_day():
+    """
+    Return the transaction IDs with the hour, minute, and second extracted from
+    transaction timestamps for specific ticker symbols ("AAPL","GOOGL","NFLX"),
+    ordered by transaction ID in ascending order.
+    """
+    return (
+        Transactions(
+            transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
+        )
+        .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
+        .ORDER_BY(transaction_id.ASC())
+    )
+
+
+def exponentiation():
+    return DailyPrices(
+        low_square=low**2,
+        low_sqrt=SQRT(low),
+        low_cbrt=POWER(low, 1 / 3),
+    ).TOP_K(10, by=low_square.ASC())
