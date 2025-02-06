@@ -115,6 +115,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     graph: GraphMetadata
     config: PyDoughConfigs
     database: DatabaseContext
+    display_sql: bool = bool(kwargs.pop("display_sql", False))
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
     if not isinstance(qualified, PyDoughCollectionQDAG):
@@ -122,4 +123,4 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(qualified, config)
-    return execute_df(relational, database, bindings)
+    return execute_df(relational, database, bindings, display_sql)

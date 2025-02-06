@@ -229,6 +229,9 @@ class RelTranslation:
                     expr.kwargs,
                 )
             case HybridCorrelExpr():
+                # Convert correlated expressions by converting the expression
+                # they point to in the context of the top of the stack, then
+                # wrapping the result in a correlated reference.
                 ancestor_context: TranslationOutput = self.stack.pop()
                 ancestor_expr: RelationalExpression = self.translate_expression(
                     expr.expr, ancestor_context

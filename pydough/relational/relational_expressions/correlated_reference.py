@@ -1,5 +1,8 @@
 """
-TODO
+The representation of a correlated column access for use in a relational tree.
+The correl name should be the `correl_name` property of a join ancestor of the
+tree, and the name should match one of the column names of the first input to
+that join, which is the column that the correlated reference refers to.
 """
 
 __all__ = ["CorrelatedReference"]
@@ -13,7 +16,8 @@ from .relational_expression_visitor import RelationalExpressionVisitor
 
 class CorrelatedReference(RelationalExpression):
     """
-    TODO
+    The Expression implementation for accessing a correlated column reference
+    in a relational node.
     """
 
     def __init__(self, name: str, correl_name: str, data_type: PyDoughType) -> None:
