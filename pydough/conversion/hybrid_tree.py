@@ -895,6 +895,7 @@ class HybridTree:
         self._is_connection_root: bool = is_connection_root
         self._agg_keys: list[HybridExpr] | None = None
         self._join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
+        self._correlated_children: set[int] = set()
         if isinstance(root_operation, HybridPartition):
             self._join_keys = []
 
@@ -934,6 +935,14 @@ class HybridTree:
         in the pipeline.
         """
         return self._children
+
+    @property
+    def correlated_children(self) -> set[int]:
+        """
+        The set of indices of children that contain correlated references to
+        the current hybrid tree.
+        """
+        return self._correlated_children
 
     @property
     def successor(self) -> Optional["HybridTree"]:
@@ -1634,6 +1643,8 @@ class HybridTranslator:
                 collection, back_expr.term_name, remaining_steps_back
             )
             parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
+        if not isinstance(parent_result, HybridCorrelExpr):
+            parent_tree.correlated_children.add(len(parent_tree.children))
         # Restore parent_tree back onto the stack, since evaluating `back_expr`
         # does not change the program's current placement in the sutbtrees.
         self.stack.append(parent_tree)
