@@ -486,7 +486,7 @@ def correl_15():
 
 
 def correl_16():
-    # Correlated back reference example #15: hybrid tree order of operations.
+    # Correlated back reference example #16: hybrid tree order of operations.
     # Count how many european suppliers have the exact same percentile value
     # of account balance (relative to all other suppliers) as at least one
     # customer's percentile value of account balance relative to all other
@@ -504,7 +504,7 @@ def correl_16():
 
 
 def correl_17():
-    # Correlated back reference example #15: hybrid tree order of operations.
+    # Correlated back reference example #17: hybrid tree order of operations.
     # An extremely roundabout way of getting each region_name-nation_name
     # pair as a string.
     # (This is a correlated singular/semi access)
