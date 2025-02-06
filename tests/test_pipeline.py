@@ -655,7 +655,7 @@ def test_pipeline_until_relational(
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
-    update_plan_tests: bool,
+    update_tests: bool,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
@@ -674,7 +674,7 @@ def test_pipeline_until_relational(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
     relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
-    if update_plan_tests:
+    if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
     else:
@@ -754,15 +754,26 @@ def test_pipeline_e2e_errors(
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
-                            "TX001", "TX005", "TX011", "TX015", "TX021", "TX025", 
-                            "TX031", "TX033", "TX035", "TX044", "TX045", "TX049", 
-                            "TX051", "TX055"
+                            "TX001",
+                            "TX005",
+                            "TX011",
+                            "TX015",
+                            "TX021",
+                            "TX025",
+                            "TX031",
+                            "TX033",
+                            "TX035",
+                            "TX044",
+                            "TX045",
+                            "TX049",
+                            "TX051",
+                            "TX055",
                         ],
                         "_expr0": [9, 12, 9, 12, 9, 12, 0, 0, 0, 10, 10, 16, 0, 0],
                         "_expr1": [30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 30, 0, 0, 0],
                         "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     }
-                )
+                ),
             ),
             id="broker_basic1",
         ),
@@ -772,22 +783,52 @@ def test_pipeline_e2e_errors(
                 "Broker",
                 lambda: pd.DataFrame(
                     {
-                        "low_square" : [6642.2500, 6740.4100, 6839.2900, 6938.8900, 7039.2100, 
-                                7140.2500, 7242.0100, 16576.5625, 16900.0000, 17292.2500],
-                        "low_sqrt" : [9.027735, 9.060905, 9.093954, 9.126883, 9.159694, 
-                                9.192388, 9.224966, 11.346806, 11.401754, 11.467345],
-                        "low_cbrt" : [4.335633, 4.346247, 4.356809, 4.367320, 4.377781, 
-                                4.388191, 4.398553, 5.049508, 5.065797, 5.085206]
+                        "low_square": [
+                            6642.2500,
+                            6740.4100,
+                            6839.2900,
+                            6938.8900,
+                            7039.2100,
+                            7140.2500,
+                            7242.0100,
+                            16576.5625,
+                            16900.0000,
+                            17292.2500,
+                        ],
+                        "low_sqrt": [
+                            9.027735,
+                            9.060905,
+                            9.093954,
+                            9.126883,
+                            9.159694,
+                            9.192388,
+                            9.224966,
+                            11.346806,
+                            11.401754,
+                            11.467345,
+                        ],
+                        "low_cbrt": [
+                            4.335633,
+                            4.346247,
+                            4.356809,
+                            4.367320,
+                            4.377781,
+                            4.388191,
+                            4.398553,
+                            5.049508,
+                            5.065797,
+                            5.085206,
+                        ],
                     }
-                )
+                ),
             ),
             id="exponentiation",
         ),
-  ],
+    ],
 )
 def custom_defog_test_data(
     request,
-) -> tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame]:
+) -> tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame]:
     """
     Test data for test_defog_e2e. Returns a tuple of the following
     arguments:
@@ -801,7 +842,7 @@ def custom_defog_test_data(
 
 @pytest.mark.execute
 def test_defog_e2e_with_custom_data(
-    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame],
+    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame],
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
@@ -810,7 +851,7 @@ def test_defog_e2e_with_custom_data(
     comparing against the result of running the reference SQL query text on the
     same database connector.
     """
-    unqualified_impl, graph_name ,answer_impl = custom_defog_test_data
+    unqualified_impl, graph_name, answer_impl = custom_defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)

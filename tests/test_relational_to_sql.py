@@ -4,6 +4,7 @@ via a SQLGlot intermediate.
 """
 
 import sqlite3
+from collections.abc import Callable
 
 import pytest
 from sqlglot.dialects import SQLite as SQLiteDialect
@@ -678,7 +679,30 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a INNER JOIN (SELECT a, b FROM table) AS _table_alias_2 ON _table_alias_0.a = _table_alias_2.a",
+            """
+SELECT
+  _table_alias_0.a AS a
+FROM (
+  SELECT
+    a,
+    b
+  FROM table
+) AS _table_alias_0
+INNER JOIN (
+  SELECT
+    a,
+    b
+  FROM table
+) AS _table_alias_1
+  ON _table_alias_0.a = _table_alias_1.a
+INNER JOIN (
+  SELECT
+    a,
+    b
+  FROM table
+) AS _table_alias_2
+  ON _table_alias_0.a = _table_alias_2.a
+""",
             id="multi_join",
         ),
     ],
@@ -697,30 +721,32 @@ def test_convert_relation_to_sql(
 
 
 @pytest.mark.parametrize(
-    "root, sql_text",
+    "root, test_name",
     [
         pytest.param(
             tpch_query_1_plan(),
-            "SELECT L_RETURNFLAG, L_LINESTATUS, SUM_QTY, SUM_BASE_PRICE, SUM_DISC_PRICE, SUM_CHARGE, CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY, CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE, CAST(SUM_DISCOUNT AS REAL) / COUNT_ORDER AS AVG_DISC, COUNT_ORDER FROM (SELECT COUNT() AS COUNT_ORDER, SUM(L_DISCOUNT) AS SUM_DISCOUNT, SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE, SUM(L_QUANTITY) AS SUM_QTY, SUM(TEMP_COL0) AS SUM_DISC_PRICE, SUM(TEMP_COL1) AS SUM_CHARGE, L_LINESTATUS, L_RETURNFLAG FROM (SELECT TEMP_COL0 * (1 + L_TAX) AS TEMP_COL1, L_DISCOUNT, L_EXTENDEDPRICE, L_LINESTATUS, L_QUANTITY, L_RETURNFLAG, TEMP_COL0 FROM (SELECT L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS TEMP_COL0, L_DISCOUNT, L_EXTENDEDPRICE, L_LINESTATUS, L_QUANTITY, L_RETURNFLAG, L_TAX FROM (SELECT L_DISCOUNT, L_EXTENDEDPRICE, L_LINESTATUS, L_QUANTITY, L_RETURNFLAG, L_TAX FROM (SELECT L_DISCOUNT, L_EXTENDEDPRICE, L_LINESTATUS, L_QUANTITY, L_RETURNFLAG, L_SHIPDATE, L_TAX FROM LINEITEM) WHERE L_SHIPDATE <= '1998-12-01'))) GROUP BY L_RETURNFLAG, L_LINESTATUS) ORDER BY L_RETURNFLAG, L_LINESTATUS",
+            "tpch_q1",
             id="tpch_q1",
         ),
         pytest.param(
             tpch_query_3_plan(),
-            "SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT SUM(REVENUE) AS REVENUE, L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY, REVENUE FROM (SELECT L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS REVENUE, L_ORDERKEY FROM (SELECT L_DISCOUNT, L_EXTENDEDPRICE, L_ORDERKEY FROM (SELECT L_DISCOUNT, L_EXTENDEDPRICE, L_ORDERKEY, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE > '1995-03-15')) INNER JOIN (SELECT O_ORDERDATE, O_ORDERKEY, O_SHIPPRIORITY FROM (SELECT O_CUSTKEY, O_ORDERDATE, O_ORDERKEY, O_SHIPPRIORITY FROM ORDERS WHERE O_ORDERDATE < '1995-03-15') INNER JOIN (SELECT C_CUSTKEY FROM (SELECT C_CUSTKEY, C_MKTSEGMENT FROM CUSTOMER) WHERE C_MKTSEGMENT = 'BUILDING') ON O_CUSTKEY = C_CUSTKEY) ON L_ORDERKEY = O_ORDERKEY) GROUP BY L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY) ORDER BY REVENUE DESC, O_ORDERDATE, L_ORDERKEY LIMIT 10",
+            "tpch_q3",
             id="tpch_q3",
         ),
         pytest.param(
             tpch_query_6_plan(),
-            "SELECT SUM(TEMP_COL0) AS REVENUE FROM (SELECT L_EXTENDEDPRICE * L_DISCOUNT AS TEMP_COL0 FROM (SELECT L_DISCOUNT, L_EXTENDEDPRICE FROM (SELECT L_DISCOUNT, L_EXTENDEDPRICE, L_QUANTITY, L_SHIPDATE FROM LINEITEM) WHERE (L_QUANTITY < 24) AND (L_DISCOUNT <= 0.07) AND (L_DISCOUNT >= 0.05) AND (L_SHIPDATE < '1995-01-01') AND (L_SHIPDATE >= '1994-01-01')))",
+            "tpch_q6",
             id="tpch_q6",
         ),
     ],
 )
 def test_tpch_relational_to_sql(
     root: RelationalRoot,
-    sql_text: str,
+    test_name: str,
     sqlite_dialect: SQLiteDialect,
     sqlite_bindings: SqlGlotTransformBindings,
+    get_sql_test_filename: Callable[[str], str],
+    update_tests: bool,
 ) -> None:
     """
     Test that we can take possible relational trees from select TPCH queries
@@ -730,12 +756,21 @@ def test_tpch_relational_to_sql(
     These plans are generated from a couple simple plans we built with
     Apache Calcite in Bodo's SQL optimizer.
     """
+    file_path: str = get_sql_test_filename(test_name)
     created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
-    assert created_sql == sql_text
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(created_sql + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            created_sql == expected_relational_string.strip()
+        ), "Mismatch between tree generated SQL text and expected SQL text"
 
 
 @pytest.mark.parametrize(
-    "root, sql_text",
+    "root, test_name",
     [
         pytest.param(
             RelationalRoot(
@@ -769,7 +804,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE 'a%') AND (b LIKE (a || '%'))",
+            "starts_with",
             id="starts_with",
         ),
         pytest.param(
@@ -804,7 +839,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE '%a') AND (b LIKE ('%' || a))",
+            "ends_with",
             id="ends_with",
         ),
         pytest.param(
@@ -839,7 +874,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE '%a%') AND (b LIKE ('%' || a || '%'))",
+            "contains",
             id="contains",
         ),
         pytest.param(
@@ -860,7 +895,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE b IN (1, 2, 3)",
+            "isin",
             id="isin",
         ),
         pytest.param(
@@ -881,7 +916,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE b LIKE '%abc%efg%'",
+            "like",
             id="like",
         ),
         pytest.param(
@@ -909,7 +944,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT IIF(b >= 0, 'Positive', 'Negative') AS a FROM (SELECT a, b FROM table)",
+            "iff_iif",
             id="iff-iif",
             marks=pytest.mark.skipif(
                 sqlite3.sqlite_version < "3.32.0",
@@ -941,7 +976,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT CASE WHEN b >= 0 THEN 'Positive' ELSE 'Negative' END AS a FROM (SELECT a, b FROM table)",
+            "iff_case",
             id="iff-case",
             marks=pytest.mark.skipif(
                 sqlite3.sqlite_version >= "3.32.0", reason="SQLite 3.32.0 generates IFF"
@@ -961,7 +996,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT CAST(STRFTIME('%Y', a) AS INTEGER) AS a FROM (SELECT a, b FROM table)",
+            "year",
             id="year",
         ),
         pytest.param(
@@ -1023,7 +1058,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT a, b, r FROM (SELECT RANK() OVER (ORDER BY a) AS r, a, b FROM (SELECT a, b FROM table) WHERE b = 0) WHERE r >= 3",
+            "rank_with_filters_a",
             id="rank_with_filters_a",
         ),
         pytest.param(
@@ -1085,20 +1120,31 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT a, b, r FROM (SELECT a, b, r FROM (SELECT RANK() OVER (ORDER BY a) AS r, a, b FROM (SELECT a, b FROM table)) WHERE r >= 3) WHERE b = 0",
+            "rank_with_filters_b",
             id="rank_with_filters_b",
         ),
     ],
 )
 def test_function_to_sql(
     root: RelationalRoot,
-    sql_text: str,
+    test_name: str,
     sqlite_dialect: SQLiteDialect,
     sqlite_bindings: SqlGlotTransformBindings,
+    get_sql_test_filename: Callable[[str], str],
+    update_tests: bool,
 ) -> None:
     """
     Tests that should be small as we need to just test converting a function
     to SQL.
     """
+    file_path: str = get_sql_test_filename(f"func_{test_name}")
     created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
-    assert created_sql == sql_text
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(created_sql + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            created_sql == expected_relational_string.strip()
+        ), "Mismatch between tree generated SQL text and expected SQL text"
