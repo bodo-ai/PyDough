@@ -8,11 +8,11 @@ __all__ = [
     "explain",
     "explain_structure",
     "explain_term",
+    "get_logger",
     "init_pydough_context",
     "parse_json_metadata_from_file",
     "to_df",
     "to_sql",
-    "get_logger"
 ]
 
 from .configs import PyDoughSession

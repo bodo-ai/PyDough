@@ -44,7 +44,7 @@ from pydough.unqualified import (
         ),
         pytest.param(
             rank_b,
-            "rank_b)",
+            "rank_b",
             id="rank_b",
         ),
         pytest.param(
