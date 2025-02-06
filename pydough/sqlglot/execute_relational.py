@@ -26,7 +26,6 @@ def convert_relation_to_sql(
     relational: RelationalRoot,
     dialect: SQLGlotDialect,
     bindings: SqlGlotTransformBindings,
-    pretty_print_sql: bool = False
 ) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
@@ -44,7 +43,7 @@ def convert_relation_to_sql(
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings
     ).relational_to_sqlglot(relational)
-    return glot_expr.sql(dialect,pretty=pretty_print_sql)
+    return glot_expr.sql(dialect, pretty=True)
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
@@ -88,10 +87,7 @@ def execute_df(
         The result of the query as a Pandas DataFrame
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
-    pretty_print_sql: bool = False
-    if display_sql:
-        pretty_print_sql = True
-    sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings,pretty_print_sql)
+    sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")

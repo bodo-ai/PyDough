@@ -2200,7 +2200,7 @@ def test_ast_to_relational(
     tpch_node_builder: AstNodeBuilder,
     default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
-    update_plan_tests: bool,
+    update_tests: bool,
 ) -> None:
     """
     Tests whether the QDAG nodes are correctly translated into Relational nodes
@@ -2210,7 +2210,7 @@ def test_ast_to_relational(
     file_path: str = get_plan_test_filename(file_name)
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
-    if update_plan_tests:
+    if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
     else:
@@ -2336,7 +2336,7 @@ def test_ast_to_relational_alternative_aggregation_configs(
     tpch_node_builder: AstNodeBuilder,
     default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
-    update_plan_tests: bool,
+    update_tests: bool,
 ) -> None:
     """
     Same as `test_ast_to_relational` but with various alternative aggregation
@@ -2350,7 +2350,7 @@ def test_ast_to_relational_alternative_aggregation_configs(
     default_config.avg_default_zero = True
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     relational = convert_ast_to_relational(collection, default_config)
-    if update_plan_tests:
+    if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
     else:

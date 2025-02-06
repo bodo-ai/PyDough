@@ -1,0 +1,523 @@
+id,graph,question,valid,output,sql_text,sql_dialect,is_benchmark
+q001,TPCH,"Provide a summary pricing report for all line items shipped as of September 2nd of 1998. The summary should list totals for extended price, discounted extended price, discounted extended price plus tax, average quantity, average extended price, average discount, and number of lines, all broken down by the return flag & line status. This is also known as TPC-H query #1.",Y,"disc_price = l.extended_price * (1 - l.discount)
+charge = disc_price * (1 + l.tax)
+selected_lines = lines.WHERE((ship_date <= datetime.date(1998, 9, 2)))
+partitioned_lines = PARTITION(selected_lines, name=""l"", by=(return_flag, status))
+result = partitioned_lines(
+    L_RETURNFLAG=return_flag,
+    L_LINESTATUS=status,
+    SUM_QTY=SUM(l.quantity),
+    SUM_BASE_PRICE=SUM(l.extended_price),
+    SUM_DISC_PRICE=SUM(disc_price),
+    SUM_CHARGE=SUM(charge),
+    AVG_QTY=AVG(l.quantity),
+    AVG_PRICE=AVG(l.extended_price),
+    AVG_DISC=AVG(l.discount),
+    COUNT_ORDER=COUNT(l),
+).ORDER_BY(return_flag.ASC(), status.ASC())","select
+	l_returnflag,
+	l_linestatus,
+	sum(l_quantity) as sum_qty,
+	sum(l_extendedprice) as sum_base_price,
+	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+	avg(l_quantity) as avg_qty,
+	avg(l_extendedprice) as avg_price,
+	avg(l_discount) as avg_disc,
+	count(*) as count_order
+from
+	lineitem
+where
+	l_shipdate <= date '1998-12-01' - interval '90' day
+group by
+	l_returnflag,
+	l_linestatus
+order by
+	l_returnflag,
+	l_linestatus",sqlite,N
+q002,TPCH,"Find, within the European region, for each brass part of size 15, the supplier who can supply it at minimum cost. If several suppliers in that region offer the desired part type and size at the same (minimum) cost, list the parts from suppliers with the 100 highest account balances. List the supplier's account balance, name and nation; the part's number and manufacturer; the supplier's address, phone number and comment information. This is also known as TPC-H query #2.",Y,"selected_parts = (
+    nations.WHERE(region.name == ""EUROPE"")
+    .suppliers.supply_records.part(
+        s_acctbal=BACK(2).account_balance,
+        s_name=BACK(2).name,
+        n_name=BACK(3).name,
+        s_address=BACK(2).address,
+        s_phone=BACK(2).phone,
+        s_comment=BACK(2).comment,
+        supplycost=BACK(1).supplycost,
+    )
+    .WHERE(ENDSWITH(part_type, ""BRASS"") & (size == 15))
+)
+part_groups = PARTITION(selected_parts, name=""p"", by=key)(
+    best_cost=MIN(p.supplycost)
+)
+result = part_groups.p.WHERE(
+    (supplycost == BACK(1).best_cost)
+    & ENDSWITH(part_type, ""BRASS"")
+    & (size == 15)
+)(
+    S_ACCTBAL=s_acctbal,
+    S_NAME=s_name,
+    N_NAME=n_name,
+    P_PARTKEY=key,
+    P_MFGR=manufacturer,
+    S_ADDRESS=s_address,
+    S_PHONE=s_phone,
+    S_COMMENT=s_comment,
+).TOP_K(
+    100,
+    by=(S_ACCTBAL.DESC(), N_NAME.ASC(), S_NAME.ASC(), P_PARTKEY.ASC()),
+)","SELECT
+    S_ACCTBAL,
+    S_NAME,
+    N_NAME,
+    P_PARTKEY,
+    P_MFGR,
+    S_ADDRESS,
+    S_PHONE,
+    S_COMMENT
+FROM
+    PART,
+    SUPPLIER,
+    PARTSUPP,
+    NATION,
+    REGION
+WHERE
+    P_PARTKEY = PS_PARTKEY
+    AND S_SUPPKEY = PS_SUPPKEY
+    AND P_SIZE = 15
+    AND P_TYPE LIKE '%BRASS'
+    AND S_NATIONKEY = N_NATIONKEY
+    AND N_REGIONKEY = R_REGIONKEY
+    AND R_NAME = 'EUROPE'
+    AND PS_SUPPLYCOST = (
+        SELECT MIN(PS_SUPPLYCOST)
+        FROM PARTSUPP, SUPPLIER, NATION, REGION
+        WHERE P_PARTKEY = PS_PARTKEY
+          AND S_SUPPKEY = PS_SUPPKEY
+          AND S_NATIONKEY = N_NATIONKEY
+          AND N_REGIONKEY = R_REGIONKEY
+          AND R_NAME = 'EUROPE'
+    )
+ORDER BY
+    S_ACCTBAL DESC,
+    N_NAME,
+    S_NAME,
+    P_PARTKEY
+LIMIT 100",sqlite,N
+q003,TPCH,"Find the 10 unshipped orders with the highest value. Retrieves the shipping priority and potential revenue, defined as the sum of the extended price times one minus the discount, of the orders having the largest revenue among those that had not been shipped as of March 15th, 1995. orders are listed in decreasing order of revenue. If more than 10 unshipped orders exist meeting the criteria, only the 10 orders with the largest revenue are listed. This is also known as TPC-H query #3.",Y,"cutoff_date = datetime.date(1995, 3, 15)
+selected_orders = orders.WHERE(
+    (customer.mktsegment == ""BUILDING"") & (order_date < cutoff_date)
+)
+selected_lines = selected_orders.lines.WHERE(ship_date > cutoff_date)(
+    BACK(1).order_date,
+    BACK(1).ship_priority,
+)
+result = PARTITION(
+    selected_lines, name=""l"", by=(order_key, order_date, ship_priority)
+)(
+    L_ORDERKEY=order_key,
+    REVENUE=SUM(l.extended_price * (1 - l.discount)),
+    O_ORDERDATE=order_date,
+    O_SHIPPRIORITY=ship_priority,
+).TOP_K(10, by=(REVENUE.DESC(), O_ORDERDATE.ASC(), L_ORDERKEY.ASC()))","SELECT
+    L_ORDERKEY,
+    SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) AS REVENUE,
+    O_ORDERDATE,
+    O_SHIPPRIORITY
+FROM
+    CUSTOMER,
+    ORDERS,
+    LINEITEM
+WHERE
+    C_MKTSEGMENT = 'BUILDING'
+    AND C_CUSTKEY = O_CUSTKEY
+    AND L_ORDERKEY = O_ORDERKEY
+    AND O_ORDERDATE < DATE '1995-03-15'
+    AND L_SHIPDATE > DATE '1995-03-15'
+GROUP BY
+    L_ORDERKEY,
+    O_ORDERDATE,
+    O_SHIPPRIORITY
+ORDER BY
+    REVENUE DESC,
+    O_ORDERDATE
+LIMIT 10",sqlite,N
+q004,TPCH,"How well is the order priority system is working at ensuring that orders are delivered on time within the third quarter of 1993? Analyze this by counting the number of orders ordered in the given quarter of the given year in which at least one lineitem was received by the customer later than its committed date. List the count of such orders for each order priority sorted in ascending priority order. This is also known as TPC-H query #4.",Y,"selected_lines = lines.WHERE(commit_date < receipt_date)
+selected_orders = orders.WHERE(
+    (order_date >= datetime.date(1993, 7, 1))
+    & (order_date < datetime.date(1993, 10, 1))
+    & HAS(selected_lines)
+)
+result = PARTITION(selected_orders, name=""o"", by=order_priority)(
+    O_ORDERPRIORITY=order_priority,
+    ORDER_COUNT=COUNT(o),
+).ORDER_BY(O_ORDERPRIORITY.ASC())","SELECT
+    O_ORDERPRIORITY,
+    COUNT(*) AS ORDER_COUNT
+FROM
+    ORDERS
+WHERE
+    O_ORDERDATE >= DATE '1993-07-01'
+    AND O_ORDERDATE < DATE '1993-10-01'
+    AND EXISTS (
+        SELECT 1
+        FROM LINEITEM
+        WHERE L_ORDERKEY = O_ORDERKEY
+          AND L_COMMITDATE < L_RECEIPTDATE
+    )
+GROUP BY
+    O_ORDERPRIORITY
+ORDER BY
+    O_ORDERPRIORITY",sqlite,N
+q005,TPCH,"For each Asian country, calculate the total revenue generated by suppliers in that nation shipping a part to a customer from the same nation, only considering shipments ordered in 1994. Revenue volume for all qualifying lineitems in a particular nation is defined as sum(l_extendedprice * (1 - l_discount)). This is also known as TPC-H query #5.",Y,"selected_lines = customers.orders.WHERE(
+    (order_date >= datetime.date(1994, 1, 1))
+    & (order_date < datetime.date(1995, 1, 1))
+).lines.WHERE(supplier.nation.name == BACK(3).name)(
+    value=extended_price * (1 - discount)
+)
+result = nations.WHERE(region.name == ""ASIA"")(
+    N_NAME=name, REVENUE=SUM(selected_lines.value)
+).ORDER_BY(REVENUE.DESC())",,sqlite,N
+q006,TPCH,"How was revenue impacted in 1994 due to the presence of certain discounts, specifically those between 0.05 and 0.07 (inclusive); speculate on future revenue due to a change in that discount. Considers all the lineitems shipped in the given year with discounts in thar range value. List the amount by which the total revenue would have increased if these discounts had been eliminated for lineitems with a quantity below 24. Note that the potential revenue increase is equal to the sum of the extended price times one minus the discount for all lineitems with discounts and quantities in the qualifying range. This is also known as TPC-H query #6.",Y,"selected_lines = lines.WHERE(
+    (ship_date >= datetime.date(1994, 1, 1))
+    & (ship_date < datetime.date(1995, 1, 1))
+    & (0.05 <= discount)
+    & (discount <= 0.07)
+    & (quantity < 24)
+)(amt=extended_price * discount)
+result = TPCH(REVENUE=SUM(selected_lines.amt))",,sqlite,N
+q007,TPCH,"Calculate the value of goods shipped between France and Germany in 1995 and 1996 as a representation for future contract negotiations. Find, for these two nations, the gross discounted revenues derived from lineitems in which parts were shipped from a supplier in either nation to a customer in the other nation during the chosen years. Lists the supplier nation, the customer nation, the year, and the revenue from shipments that took place in that year. Order the answer by Supplier nation, Customer nation, and year (all ascending). This is also known as TPC-H query #7.",Y,"line_info = lines(
+    supp_nation=supplier.nation.name,
+    cust_nation=order.customer.nation.name,
+    l_year=YEAR(ship_date),
+    volume=extended_price * (1 - discount),
+).WHERE(
+    (ship_date >= datetime.date(1995, 1, 1))
+    & (ship_date <= datetime.date(1996, 12, 31))
+    & (
+        ((supp_nation == ""FRANCE"") & (cust_nation == ""GERMANY""))
+        | ((supp_nation == ""GERMANY"") & (cust_nation == ""FRANCE""))
+    )
+)
+result = PARTITION(line_info, name=""l"", by=(supp_nation, cust_nation, l_year))(
+    SUPP_NATION=supp_nation,
+    CUST_NATION=cust_nation,
+    L_YEAR=l_year,
+    REVENUE=SUM(l.volume),
+).ORDER_BY(
+    SUPP_NATION.ASC(),
+    CUST_NATION.ASC(),
+    L_YEAR.ASC(),
+)",,sqlite,N
+q008,TPCH,"How has the market share of Brazil within the American region has changed from 1995 to 1996 for parts of type 'ECONOMY ANODIZED STEEL'. The market share for a given nation within a given region is defined as the fraction of the revenue, defined as the sum of the extended price times one minus the discount, from the products of a specified type in that region that was supplied by suppliers from the given nation. This is also known as TPC-H query #8.",Y,"selected_orders = orders.WHERE(
+  (order_date >= datetime.date(1995, 1, 1))
+  & (order_date <= datetime.date(1996, 12, 31))
+  & (customer.nation.region.name == ""AMERICA"")
+)
+
+volume = extended_price * (1 - discount)
+
+volume_data = selected_orders.lines.WHERE(
+    part.part_type == ""ECONOMY ANODIZED STEEL""
+)(
+    o_year=YEAR(BACK(1).order_date),
+    volume=volume,
+    brazil_volume=IFF(supplier.nation.name == ""BRAZIL"", volume, 0)
+)
+
+result = PARTITION(volume_data, name=""v"", by=o_year)(
+    O_YEAR=o_year,
+    MKT_SHARE=SUM(v.brazil_volume) / SUM(v.volume),
+)",,sqlite,N
+q009,TPCH,"What was the profit made for a particular line of parts looking at the supplying nation and particular year in question, where the line of parts is green parts. Specifically, for each nation and each year, find the profit for all parts ordered in that year that contain 'green' in their names and that were filled by a supplier in that nation. The profit is defined as the sum of the extended price times one minus the discount, minus the product of the supply cost and quantity, for all lineitems describing parts in the specified line. List the nations in ascending alphabetical order and, for each nation, the year and profit in descending order by year (most recent first). This is also known as TPC-H query #9.",Y,"selected_lines = nations.suppliers.supply_records.WHERE(
+    CONTAINS(part.name, ""green"")
+).lines(
+    nation=BACK(3).name,
+    o_year=YEAR(order.order_date),
+    value=extended_price * (1 - discount) - BACK(1).supplycost * quantity,
+)
+
+result = PARTITION(selected_lines, name=""l"", by=(nation, o_year))(
+    NATION=nation, O_YEAR=o_year, AMOUNT=SUM(l.value)
+).ORDER_BY(NATION.ASC(), O_YEAR.DESC())",,sqlite,N
+q010,TPCH,"This question determines the top 20 customers based on impact in revenue due to having returned parts within a particular quarter. Revenue lost is defined as the sum of the extended price times one minus the discount for all qualifying lineitems. The chosen quarter is the last 3 months of 1993. The query lists the customer's name, address, nation, phone number, account balance, comment information and revenue lost. This is also known as TPC-H query #10.",Y,"selected_lines = orders.WHERE(
+    (order_date >= datetime.date(1993, 10, 1))
+    & (order_date < datetime.date(1994, 1, 1))
+).lines.WHERE(return_flag == 'R')(amt=extended_price * (1 - discount))
+
+result = customers(
+    C_CUSTKEY=key,
+    C_NAME=name,
+    REVENUE=SUM(selected_lines.amt),
+    C_ACCTBAL=acctbal,
+    N_NAME=nation.name,
+    C_ADDRESS=address,
+    C_PHONE=phone,
+    C_COMMENT=comment,
+).TOP_K(20, by=(REVENUE.DESC(), C_CUSTKEY.ASC()))",,sqlite,N
+q011,TPCH,"Identify the most import subset of available part supplies from Germany. To do so, scan the available stock of German suppliers and identify all the parts that represent a significant percentage (at least 0.01%) of the total value of all the stock in Germany. Displays the part number and the value of those parts in descending order of value. The value for a given part from a supplier is defined as the product of the supply cost of the supplier for the part and the quantity that the supplier has for that product. This is also known as TPC-H query #11.",Y,"is_german_supplier = supplier.nation.name == ""GERMANY""
+selected_records = supply_records.WHERE(is_german_supplier)(metric=supplycost * availqty)
+result = TPCH(min_market_share=SUM(selected_records.metric) * 0.0001).PARTITION(
+    selected_records, name=""ps"", by=part_key
+)(
+    PS_PARTKEY=part_key, VALUE=SUM(ps.metric)
+).WHERE(VALUE > BACK(1).min_market_share).ORDER_BY(VALUE.DESC())",,sqlite,N
+q012,TPCH,"Determine the impact of low cost shipping modes on delays for orders of varying priorities. Do so by counting, by ship mode, for lineitems actually received by customers in 1994, the number of lineitems belonging to orders for which the receipt date exceeds the commit date for ship modes of 'MAIL' or 'SHIP'. Only lineitems that were actually shipped before the commit date are considered. The late lineitems are partitioned into two groups, those with priority `1-URGENT` or `2-HIGH`, and those with a priority other than `1-URGENT` or `2-HIGH`. This is also known as TPC-H query #12.",Y,"selected_lines = lines.WHERE(
+    ((ship_mode == ""MAIL"") | (ship_mode == ""SHIP""))
+    & (ship_date < commit_date)
+    & (commit_date < receipt_date)
+    & (receipt_date >= datetime.date(1994, 1, 1))
+    & (receipt_date < datetime.date(1995, 1, 1))
+)(
+    is_high_priority=(order.order_priority == ""1-URGENT"")
+    | (order.order_priority == ""2-HIGH""),
+)
+result = PARTITION(selected_lines, ""l"", by=ship_mode)(
+    L_SHIPMODE=ship_mode,
+    HIGH_LINE_COUNT=SUM(l.is_high_priority),
+    LOW_LINE_COUNT=SUM(~(l.is_high_priority)),
+).ORDER_BY(L_SHIPMODE.ASC())",,sqlite,N
+q013,TPCH,"Calculate the distribution of customers who have made 0, 1, 2, etc. special request orders made. An order is determined to be a special request if its comment contains 'special' and later contains 'requests'. This is also known as TPC-H query #13.",Y,"customer_info = customers(
+    key,
+    num_non_special_orders=COUNT(
+        orders.WHERE(~(LIKE(comment, ""%special%requests%"")))
+    ),
+)
+result = PARTITION(customer_info, name=""custs"", by=num_non_special_orders)(
+    C_COUNT=num_non_special_orders, CUSTDIST=COUNT(custs)
+).ORDER_BY(CUSTDIST.DESC(), C_COUNT.DESC())",,sqlite,N
+q014,TPCH,"What percentage of revenue from parts shipped in September of 1995 was from promotional parts (parts whose type begins with 'PROMO'). Revenue is defined as extended price times one minus the discount. This is also known as TPC-H query #14.",Y,"value = extended_price * (1 - discount)
+selected_lines = lines.WHERE(
+    (ship_date >= datetime.date(1995, 9, 1))
+    & (ship_date < datetime.date(1995, 10, 1))
+)(
+    value=value,
+    promo_value=IFF(STARTSWITH(part.part_type, ""PROMO""), value, 0),
+)
+result = TPCH(PROMO_REVENUE=100.0 * SUM(selected_lines.promo_value) / SUM(selected_lines.value))",,sqlite,N
+q015,TPCH,"Determine the top suppliers in the first quarter of 1996 with the highest revenue from parts shipped in that time period. In case of a tie, the query lists all suppliers whose contribution was equal to the maximum, presented in supplier number order. This is also known as TPC-H query #15.",Y,"selected_lines = lines.WHERE(
+    (ship_date >= datetime.date(1996, 1, 1))
+    & (ship_date < datetime.date(1996, 4, 1))
+)
+total = SUM(selected_lines.extended_price * (1 - selected_lines.discount))
+result = TPCH(
+    max_revenue=MAX(suppliers(total_revenue=total).total_revenue)
+).suppliers(
+    S_SUPPKEY=key,
+    S_NAME=name,
+    S_ADDRESS=address,
+    S_PHONE=phone,
+    TOTAL_REVENUE=total,
+).WHERE(TOTAL_REVENUE == BACK(1).max_revenue).ORDER_BY(S_SUPPKEY.ASC())",,sqlite,N
+q016,TPCH,"Determine how many distinct suppliers can meet the needs of a part with a particular set of attributes. The customer is interested in parts of eight different sizes as long as they are not of type 'MEDIUM POLISHED', not of brand 'BRAND#45', the size is one of [49, 14, 23, 45, 19, 3, 36, 9], excluding suppliers supplier who have had complaints registered at the Better Business Bureau. Break down qualifying parts by the brand, type and size. Present the results by descending count of qualifying suppliers and ascending brand, type, and size. This is also known as TPC-H query #16.",Y,"selected_records = (
+    parts.WHERE(
+        (brand != ""BRAND#45"")
+        & ~STARTSWITH(part_type, ""MEDIUM POLISHED%"")
+        & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])
+    )
+    .supply_records(
+        p_brand=BACK(1).brand,
+        p_type=BACK(1).part_type,
+        p_size=BACK(1).size,
+        ps_suppkey=supplier_key,
+    )
+    .WHERE(~LIKE(supplier.comment, ""%Customer%Complaints%""))
+)
+result = PARTITION(selected_records, name=""ps"", by=(p_brand, p_type, p_size))(
+    P_BRAND=p_brand,
+    P_TYPE=p_type,
+    P_SIZE=p_size,
+    SUPPLIER_COUNT=NDISTINCT(ps.supplier_key),
+).ORDER_BY(SUPPLIER_COUNT.DESC(), P_BRAND.ASC(), P_TYPE.ASC(), P_SIZE.ASC())",,sqlite,N
+q017,TPCH,"Determine how much average yearly revenue would be lost if orders were no longer filled for small quantities (quantities below 20% of the global average) of parts from brand 'BRAND#23' whose container size is 'MED BOX'. Assume that the data is spread out across 7 years when taking the average across all years. This is also known as TPC-H query #17.",Y,"selected_lines = parts.WHERE((brand == ""Brand#23"") & (container == ""MED BOX""))(
+    avg_quantity=AVG(lines.quantity)
+).lines.WHERE(quantity < 0.2 * BACK(1).avg_quantity)
+result = TPCH(AVG_YEARLY=SUM(selected_lines.extended_price) / 7.0)",,sqlite,N
+q018,TPCH,"Order customers based on their status as having placed a large quantity order. Calculate a list of the top 100 instances of a customer having placed large quantity orders by the total price of the order. List the customer name, customer key, the order key, date and total price and the quantity for the order. Break ties in favor of the order made first chronologically. This is also known as TPC-H query #18.",Y,"result = orders(
+    C_NAME=customer.name,
+    C_CUSTKEY=customer.key,
+    O_ORDERKEY=key,
+    O_ORDERDATE=order_date,
+    O_TOTALPRICE=total_price,
+    TOTAL_QUANTITY=SUM(lines.quantity),
+).WHERE(
+    TOTAL_QUANTITY > 300
+).TOP_K(100, by=(O_TOTALPRICE.DESC(), O_ORDERDATE.ASC()))",,sqlite,N
+q019,TPCH,"Report the gross discounted revenue resulting from select parts that were shipped by air and delivered in person. More specifically, it finds the gross discounted revenue for all orders for three different types of parts that were shipped by air and delivered in person. The selected parts are those where one of the following combinations of criteria are true:
+    - The brand is `'BRAND#12'`, the quantity is between 1 and 11, the size is between 1 and 5, and the container type is one of `['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']`.
+    - The brand is `'BRAND#23'`, the quantity is between 10 and 20, the size is between 1 and 10, and the container type is one of `['MED BAG', 'MED BOX', 'MED PKG', 'MED PACK']`.
+    - The brand is `'BRAND#34'`, the quantity is between 20 and 30, the size is between 1 and 15, and the container type is one of `['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']`.
+This is also known as TPC-H query #19.",Y,"selected_lines = lines.WHERE(
+    (ISIN(ship_mode, (""AIR"", ""AIR REG"")))
+    & (ship_instruct == ""DELIVER IN PERSON"")
+    & (part.size >= 1)
+    & (
+        (
+            (part.size <= 5)
+            & (quantity >= 1)
+            & (quantity <= 11)
+            & ISIN(
+                part.container,
+                (""SM CASE"", ""SM BOX"", ""SM PACK"", ""SM PKG""),
+            )
+            & (part.brand == ""Brand#12"")
+        )
+        | (
+            (part.size <= 10)
+            & (quantity >= 10)
+            & (quantity <= 20)
+            & ISIN(
+                part.container,
+                (""MED BAG"", ""MED BOX"", ""MED PACK"", ""MED PKG""),
+            )
+            & (part.brand == ""Brand#23"")
+        )
+        | (
+            (part.size <= 15)
+            & (quantity >= 20)
+            & (quantity <= 30)
+            & ISIN(
+                part.container,
+                (""LG CASE"", ""LG BOX"", ""LG PACK"", ""LG PKG""),
+            )
+            & (part.brand == ""Brand#34"")
+        )
+    )
+)
+result = TPCH(
+    REVENUE=SUM(selected_lines.extended_price * (1 - selected_lines.discount))
+)",,sqlite,N
+q020,TPCH,"List the name and address for all Canadian suppliers that may be a candidate for discounts based on their sales in 1994. Specifically, if the supplier has had at least 1 part they supply that starts with 'forest' where the supplier's excess of that part is more than 50% of the total quantity of that part purchased in 1994. Order the qualifying suppliers alphabetically. This is also known as TPC-H query #20.",Y,"part_qty = SUM(
+    lines.WHERE(
+        (ship_date >= datetime.date(1994, 1, 1))
+        & (ship_date < datetime.date(1995, 1, 1))
+    ).quantity
+)
+selected_part_supplied = supply_records.part.WHERE(
+    STARTSWITH(name, ""forest"") & (BACK(1).availqty > part_qty * 0.5)
+)
+result = suppliers(
+    S_NAME=name,
+    S_ADDRESS=address,
+).WHERE((nation.name == ""CANADA"") & COUNT(selected_part_supplied) > 0).ORDER_BY(S_NAME.ASC())",,sqlite,N
+q021,TPCH,"For each Saudi Arabian supplier, count how many times their product was part of a multi-supplier order (with current status of 'F') where they were the only supplier who failed to meet the committed delivery date. This is also known as TPC-H query #21.",Y,"date_check = receipt_date > commit_date
+different_supplier = supplier_key != BACK(2).supplier_key
+waiting_entries = lines.WHERE(date_check).order.WHERE(
+    (order_status == ""F"")
+    & HAS(lines.WHERE(different_supplier))
+    & HASNOT(lines.WHERE(different_supplier & date_check))
+)
+result = suppliers.WHERE(nation.name == ""SAUDI ARABIA"")(
+    S_NAME=name,
+    NUMWAIT=COUNT(waiting_entries),
+).ORDER_BY(NUMWAIT.DESC(), S_NAME.ASC())",,sqlite,N
+q022,TPCH,"Break down how many customers, by country code of their phone number (only including customers from certain country codes), have not placed an order but have an account balance that is above the average for all positive account balances of such customers. Also include the total balance for all such customers for each country code. The country codes to include are 13, 31, 23, 29, 30, 18 and 17. This is also known as TPC-H query #22.",Y,"selected_customers = customers(cntry_code=phone[:2]).WHERE(
+    ISIN(cntry_code, (""13"", ""31"", ""23"", ""29"", ""30"", ""18"", ""17"")) & HASNOT(orders)
+)
+result = TPCH(
+    avg_balance=AVG(selected_customers.WHERE(acctbal > 0.0).acctbal)
+).PARTITION(
+    selected_customers.WHERE(acctbal > BACK(1).avg_balance),
+    name=""custs"",
+    by=cntry_code,
+)(
+    CNTRY_CODE=cntry_code,
+    NUM_CUSTS=COUNT(custs),
+    TOTACCTBAL=SUM(custs.acctbal),
+)",,sqlite,N
+q023,TPCH,"What is the percentage of orders that include products from multiple suppliers?",Y,"orders_with_multiple_suppliers = orders.WHERE(NDISTINCT(lines.supplier.name) > 1)
+result = TPCH(percentage=100.0*COUNT(orders_with_multiple_suppliers) / COUNT(orders))",,sqlite,N
+q024,TPCH,"What are the top 10 most purchased products by north american customers?",Y,"selected_lines = lines.WHERE(order.customer.nation.region.name == ""AMERICA"")",,sqlite,N
+q025,TPCH,"Which 10 customers ordered the most products with turquoise in the name, by quantity, in the year 1995? Include their name and the total quantity.",Y,"selected_year = 1995
+selected_orders = orders.WHERE(YEAR(order_date) == selected_year)
+selected_lines = selected_orders.lines.WHERE(
+    CONTAINS(part.name, ""turquoise"")
+)
+result = customers(
+    name,
+    total_quantity=SUM(selected_lines.quantity)
+).TOP_K(10, by=total_quantity.DESC())",,sqlite,N
+q026,TPCH,"Which products are at least 1% of all income that their producing supplier makes? Income for a supplier is the extended price of all line items that they supply, after accounting for any discounts. List the product name, supplier name, and percentage of the supplier's income that the product name accounts for.",Y,"line_revenue = extended_price * (1 - discount)
+lines_income = SUM(lines(revenue=line_revenue).revenue)
+result = suppliers(
+    total_income=lines_income
+).supply_records(
+    supplier_name=BACK(1).name,
+    part_name=part.name,
+    income_percentage=100.0*line_income/BACK(1).lines_income
+).WHERE(income_percentage >= 1.0)",,sqlite,N
+q027,TPCH,"Find, for every nation, the name of the nation, the name of its region, and the number of customers in the nation.",Y,"result = nations(
+    nation_name=name,
+    region_name=region.name,
+    num_customers=COUNT(customers)
+)",,sqlite,N
+q028,TPCH,"How many customers made repeated purchases of the same product within a six-month period?",Y,"six_month_repeat_purchases = orders.WHERE(
+ (order_date > BACK(2).order_date) & 
+ (order_date < DATE(BACK(2).order_date, '6 months'))
+).lines.WHERE(part_key == BACK(4).part_key)
+selected_customers = lines.order.customer.WHERE(HAS(six_month_repeat_purchases))
+result = TPCH(
+ customer_count = NDISTINCT(selected_customers.cust_key)
+)",,sqlite,N
+q029,TPCH,"What is the total revenue generated by each customer in 1994?",Y,"revenue_from_lines = extended_price * (1 - discount)
+start_date = datetime.date(1994, 1, 1)
+end_date = datetime.date(1994, 12, 31)
+selected_lines = lines.WHERE(
+    (order.order_date >= start_date) & (order.order_date < end_date)
+)(revenue = revenue_from_lines)
+customer_revenue = customers(name, total_revenue=sum(selected_lines.revenue))",,sqlite,N
+q030,TPCH,"For each region, find the suppliers in the top 0.1% by number of parts they supply, breaking ties alphabetically by name.",Y,"pct = PERCENTILE(
+        by=(COUNT(supply_records).ASC(), name.ASC()), levels=2, n_buckets=1000
+    )
+result = regions.nations.suppliers(name).WHERE(HAS(supply_records) & (pct == 1000))",,sqlite,N
+q031,TPCH,"For each region, calculate the average percentage of purchases made from suppliers in that region belonging to the most common part type shipped from the supplier region to the customer region, averaging across all customer region. Only considers lineitems from June of 1992 where the container is small.",Y,"line_info = (
+    parts.WHERE(
+        STARTSWITH(container, ""SM""),
+    )
+    .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))(
+        supp_region=supplier.nation.region.name,
+    )
+    .order.WHERE(YEAR(order_date) == 1992)(
+        supp_region=BACK(1).supp_region,
+        part_type=BACK(2).part_type,
+        cust_region=customer.nation.region.name,
+    )
+)
+rrt_combos = PARTITION(
+    line_info, name=""lines"", by=(supp_region, cust_region, part_type)
+)(n_instances=COUNT(lines))
+rr_combos = PARTITION(rrt_combos, name=""part_types"", by=(supp_region, cust_region))(
+    percentage=100.0 * MAX(part_types.n_instances) / SUM(part_types.n_instances)
+)
+result = PARTITION(
+    rr_combos,
+    name=""cust_regions"",
+    by=supp_region,
+)(supp_region, avg_percentage=AVG(cust_regions.percentage)).ORDER_BY(
+    supp_region.ASC()
+)",,sqlite,N
+q032,TPCH,"Find all customers whose name ends with a zero and are in the 30-lowest account balances",Y,"result = output = customers(name).WHERE(ENDSWITH(name, ""0"") & (RANKING(by=acctbal.DESC() <= 30)))",,sqlite,N
+q033,TPCH,"For each of the 5 largest part sizes, find the part of that size with the largest retail price",Y,"result = PARTITION(parts, name=""p"", by=size
+).TOP_K(5, by=size.DESC()
+).p(size, name
+).WHERE(RANKING(by=retail_price.DESC(), levels=1) == 1)",,sqlite,N
+q034,TPCH,"What 3 product brands saw the largest positive change in quantity sold from 1995 to 1996.",Y,"selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996)))
+line_info = selected_lines(quant=IFF(YEAR(order.order_date) == 1996, 1, -1))
+result = PARTITION(parts, name=""p"", by=brand)(
+    brand,
+    change_95_to_96=SUM(line_info.quant)
+).WHERE(
+    change_95_to_96 > 0
+).TOP_K(5, by=change_95_to_96.DESC())",,sqlite,N
+q035,Broker,"Who are the top 5 customers by total transaction amount? Return their name and total amount.",Y,"result = Customers(name, total_amount=SUM(transactions_made.amount)).TOP_K(
+    5, by=total_amount.DESC()
+)","WITH cust_tx AS (
+    SELECT c.sbCustId, c.sbCustName, SUM(t.sbTxAmount) AS total_amount
+    FROM sbCustomer AS c
+    JOIN sbTransaction AS t ON c.sbCustId = t.sbTxCustId
+    GROUP BY c.sbCustId, c.sbCustName)
+SELECT sbCustName, total_amount
+FROM cust_tx
+ORDER BY CASE WHEN total_amount IS NULL THEN 1 ELSE 0 END DESC, total_amount DESC
+LIMIT 5",sqlite,Y

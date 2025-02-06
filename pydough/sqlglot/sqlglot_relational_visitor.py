@@ -187,7 +187,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         new_columns: list[SQLGlotExpression],
         orig_select: Select,
         deps: set[Identifier],
-        sort: bool = True
+        sort: bool = True,
     ) -> Select:
         """
         Attempt to merge a new select statement with an existing one.
@@ -211,7 +211,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             new_columns, orig_select.expressions, deps
         )
         if sort:
-            old_exprs = sorted(old_exprs,key=repr)
+            old_exprs = sorted(old_exprs, key=repr)
         orig_select.set("expressions", old_exprs)
         if new_exprs is None:
             return orig_select
@@ -305,7 +305,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             Select: A select statement representing the subquery.
         """
         if sort:
-            column_exprs = sorted(column_exprs,key=repr)
+            column_exprs = sorted(column_exprs, key=repr)
         return (
             Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
         )
