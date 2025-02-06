@@ -98,6 +98,8 @@ These functions must be called on singular data as a function.
 
 - `ABS`: returns the absolute value of the input.
 - `ROUND`: rounds the first argument to a number of digits equal to the second argument.
+- `POWER`: exponentiates the first argument to the power of second argument.
+- `SQRT`: returns the square root of the input. 
 
 #### Aggregation Functions
 

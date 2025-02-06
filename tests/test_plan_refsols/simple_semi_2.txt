@@ -1,0 +1,8 @@
+ROOT(columns=[('name', name)], orderings=[])
+ FILTER(condition=True:bool, columns={'name': name})
+  JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={'name': t0.name})
+   SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
+   FILTER(condition=size < 10:int64, columns={'supplier_key': supplier_key})
+    JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'size': t1.size, 'supplier_key': t0.supplier_key})
+     SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
+     SCAN(table=tpch.PART, columns={'key': p_partkey, 'size': p_size})

@@ -7,7 +7,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpressionVisitor,
 )
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
 from .filter import Filter
@@ -38,7 +38,7 @@ class RelationalExpressionDispatcher(RelationalVisitor):
     def get_expr_visitor(self) -> RelationalExpressionVisitor:
         return self._expr_visitor
 
-    def visit_common(self, node: Relational) -> None:
+    def visit_common(self, node: RelationalNode) -> None:
         """
         Applies a visit common to each node.
         """

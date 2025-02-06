@@ -1,0 +1,7 @@
+ROOT(columns=[('best_year', best_year)], orderings=[])
+ PROJECT(columns={'best_year': agg_0})
+  AGGREGATE(keys={}, aggregations={'agg_0': MAX(n_orders)})
+   PROJECT(columns={'n_orders': DEFAULT_TO(agg_0, 0:int64)})
+    AGGREGATE(keys={'year': year}, aggregations={'agg_0': COUNT()})
+     PROJECT(columns={'year': YEAR(order_date)})
+      SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})

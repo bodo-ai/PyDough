@@ -9,7 +9,7 @@ from collections.abc import MutableMapping, MutableSequence
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
@@ -22,7 +22,7 @@ class Filter(SingleRelational):
 
     def __init__(
         self,
-        input: Relational,
+        input: RelationalNode,
         condition: RelationalExpression,
         columns: MutableMapping[str, RelationalExpression],
     ) -> None:
@@ -39,7 +39,7 @@ class Filter(SingleRelational):
         """
         return self._condition
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Filter)
             and self.condition == other.condition
@@ -55,7 +55,7 @@ class Filter(SingleRelational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[Relational],
-    ) -> Relational:
+        inputs: MutableSequence[RelationalNode],
+    ) -> RelationalNode:
         assert len(inputs) == 1, "Filter node should have exactly one input"
         return Filter(inputs[0], self.condition, columns)

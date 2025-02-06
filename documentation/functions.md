@@ -39,6 +39,8 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Numerical Functions](#numerical-functions)
    * [ABS](#abs)
    * [ROUND](#round)
+   * [POWER](#power)
+   * [SQRT](#sqrt)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -62,10 +64,10 @@ Below is each binary operator currently supported in PyDough.
 <!-- TOC --><a name="arithmetic"></a>
 ### Arithmetic
 
-Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`).
+Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`), exponentiation (`**`).
 
 ```py
-Lineitems(value = (extended_price * (1 - discount) + 1.0) / part.retail_price)
+Lineitems(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_price)
 ```
 
 > [!WARNING]
@@ -380,6 +382,24 @@ The `ROUND` function rounds its first argument to the precision of its second ar
 
 ```py
 Parts(rounded_price = ROUND(retail_price, 1))
+```
+
+<!-- TOC --><a name="power"></a>
+### POWER
+
+The `POWER` function exponentiates its first argument to the power of its second argument. 
+
+```py
+Parts(powered_price = POWER(retail_price, 2))
+```
+
+<!-- TOC --><a name="sqrt"></a>
+### SQRT
+
+The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,0.5)`.
+
+```py
+Parts(sqrt_price = SQRT(retail_price))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>

@@ -35,8 +35,8 @@ from pydough.relational import (
     Limit,
     LiteralExpression,
     Project,
-    Relational,
     RelationalExpression,
+    RelationalNode,
     RelationalRoot,
     Scan,
     WindowCallExpression,
@@ -77,8 +77,18 @@ class TranslationOutput:
     access any HybridExpr's equivalent expression in the Relational node.
     """
 
-    relation: Relational
+    relational_node: RelationalNode
+    """
+    The relational tree describing the way to compute the answer for the
+    logic originally in the hybrid tree.
+    """
+
     expressions: dict[HybridExpr, ColumnReference]
+    """
+    A mapping of each expression that was accessible in the hybrid tree to the
+    corresponding column reference in the relational tree that contains the
+    value of that expression.
+    """
 
 
 class RelTranslation:
@@ -86,7 +96,7 @@ class RelTranslation:
         # An index used for creating fake column names
         self.dummy_idx = 1
 
-    def make_null_column(self, relation: Relational) -> ColumnReference:
+    def make_null_column(self, relation: RelationalNode) -> ColumnReference:
         """
         Inserts a new column into the relation whose value is NULL. If such a
         column already exists, it is used.
@@ -113,6 +123,27 @@ class RelTranslation:
             name = f"NULL_{self.dummy_idx}"
         relation.columns[name] = LiteralExpression(None, UnknownType())
         return ColumnReference(name, UnknownType())
+
+    def get_column_name(
+        self, name: str, existing_names: dict[str, RelationalExpression]
+    ) -> str:
+        """
+        Replaces a name for a new column with another name if the name is
+        already being used.
+
+        Args:
+            `name`: the name of the column to be replaced.
+            `existing_names`: the dictionary of existing column names that
+            are already being used in the current relational tree.
+
+        Returns:
+            A string based on `name` that is not part of `existing_names`.
+        """
+        new_name: str = name
+        while new_name in existing_names:
+            self.dummy_idx += 1
+            new_name = f"{name}_{self.dummy_idx}"
+        return new_name
 
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
@@ -206,7 +237,7 @@ class RelTranslation:
 
         # Special case: if the lhs is an EmptySingleton, just return the RHS,
         # decorated if needed.
-        if isinstance(lhs_result.relation, EmptySingleton):
+        if isinstance(lhs_result.relational_node, EmptySingleton):
             if child_idx is None:
                 return rhs_result
             else:
@@ -216,13 +247,13 @@ class RelTranslation:
                             expr.name, child_idx, expr.typ
                         )
                         out_columns[child_ref] = col_ref
-                return TranslationOutput(rhs_result.relation, out_columns)
+                return TranslationOutput(rhs_result.relational_node, out_columns)
 
         # Create the join node so we know what aliases it uses, but leave
         # the condition as always-True and the output columns empty for now.
         # The condition & output columns will be filled in later.
         out_rel: Join = Join(
-            [lhs_result.relation, rhs_result.relation],
+            [lhs_result.relational_node, rhs_result.relational_node],
             [LiteralExpression(True, BooleanType())],
             [join_type],
             join_columns,
@@ -342,7 +373,7 @@ class RelTranslation:
             aggregations[agg_name] = CallExpression(
                 agg_func.operator, agg_func.typ, args
             )
-        out_rel: Relational = Aggregate(context.relation, keys, aggregations)
+        out_rel: RelationalNode = Aggregate(context.relational_node, keys, aggregations)
         return TranslationOutput(out_rel, out_columns)
 
     def handle_children(
@@ -411,7 +442,7 @@ class RelTranslation:
                         )
                         # Map every child_idx reference from child_output to null
                         null_column: ColumnReference = self.make_null_column(
-                            context.relation
+                            context.relational_node
                         )
                         for expr in child_output.expressions:
                             if isinstance(expr, HybridRefExpr):
@@ -570,7 +601,9 @@ class RelTranslation:
             shifted_expr: HybridExpr | None = expr.shift_back(1)
             if shifted_expr is not None:
                 expressions[shifted_expr] = ref
-        result: TranslationOutput = TranslationOutput(context.relation, expressions)
+        result: TranslationOutput = TranslationOutput(
+            context.relational_node, expressions
+        )
         result = self.handle_children(result, hybrid, pipeline_idx)
         # Pull every aggregation key into the current context since it is now
         # accessible as a normal ref instead of a child ref.
@@ -601,13 +634,13 @@ class RelTranslation:
         """
         # Keep all existing columns.
         kept_columns: dict[str, RelationalExpression] = {
-            name: ColumnReference(name, context.relation.columns[name].data_type)
-            for name in context.relation.columns
+            name: ColumnReference(name, context.relational_node.columns[name].data_type)
+            for name in context.relational_node.columns
         }
         condition: RelationalExpression = self.translate_expression(
             node.condition, context
         )
-        out_rel: Filter = Filter(context.relation, condition, kept_columns)
+        out_rel: Filter = Filter(context.relational_node, condition, kept_columns)
         return TranslationOutput(out_rel, context.expressions)
 
     def translate_limit(
@@ -631,8 +664,8 @@ class RelTranslation:
         """
         # Keep all existing columns.
         kept_columns: dict[str, RelationalExpression] = {
-            name: ColumnReference(name, context.relation.columns[name].data_type)
-            for name in context.relation.columns
+            name: ColumnReference(name, context.relational_node.columns[name].data_type)
+            for name in context.relational_node.columns
         }
         limit_expr: LiteralExpression = LiteralExpression(
             node.records_to_keep, Int64Type()
@@ -640,7 +673,9 @@ class RelTranslation:
         orderings: list[ExpressionSortInfo] = make_relational_ordering(
             node.orderings, context.expressions
         )
-        out_rel: Limit = Limit(context.relation, limit_expr, kept_columns, orderings)
+        out_rel: Limit = Limit(
+            context.relational_node, limit_expr, kept_columns, orderings
+        )
         return TranslationOutput(out_rel, context.expressions)
 
     def translate_calc(
@@ -666,9 +701,9 @@ class RelTranslation:
         proj_columns: dict[str, RelationalExpression] = {}
         out_columns: dict[HybridExpr, ColumnReference] = {}
         # Propagate all of the existing columns.
-        for name in context.relation.columns:
+        for name in context.relational_node.columns:
             proj_columns[name] = ColumnReference(
-                name, context.relation.columns[name].data_type
+                name, context.relational_node.columns[name].data_type
             )
         for expr in context.expressions:
             out_columns[expr] = context.expressions[expr].with_input(None)
@@ -681,9 +716,14 @@ class RelTranslation:
             rel_expr: RelationalExpression = self.translate_expression(
                 hybrid_expr, context
             )
+            # Ensure the name of the new column is not already being used. If
+            # it is, choose a new name. The new name will be the original name
+            # with a numerical index appended to it.
+            if name in proj_columns and proj_columns[name] != rel_expr:
+                name = self.get_column_name(name, proj_columns)
             proj_columns[name] = rel_expr
             out_columns[ref_expr] = ColumnReference(name, rel_expr.data_type)
-        out_rel: Project = Project(context.relation, proj_columns)
+        out_rel: Project = Project(context.relational_node, proj_columns)
         return TranslationOutput(out_rel, out_columns)
 
     def translate_partition_child(
@@ -929,6 +969,6 @@ def convert_ast_to_relational(
     if hybrid_orderings:
         orderings = make_relational_ordering(hybrid_orderings, output.expressions)
     unpruned_result: RelationalRoot = RelationalRoot(
-        output.relation, ordered_columns, orderings
+        output.relational_node, ordered_columns, orderings
     )
     return ColumnPruner().prune_unused_columns(unpruned_result)
