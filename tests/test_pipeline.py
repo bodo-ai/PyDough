@@ -1181,23 +1181,34 @@ def test_pipeline_e2e_errors(
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
-                            "TX001", "TX005", "TX011", "TX015", "TX021", "TX025", 
-                            "TX031", "TX033", "TX035", "TX044", "TX045", "TX049", 
-                            "TX051", "TX055"
+                            "TX001",
+                            "TX005",
+                            "TX011",
+                            "TX015",
+                            "TX021",
+                            "TX025",
+                            "TX031",
+                            "TX033",
+                            "TX035",
+                            "TX044",
+                            "TX045",
+                            "TX049",
+                            "TX051",
+                            "TX055",
                         ],
                         "_expr0": [9, 12, 9, 12, 9, 12, 0, 0, 0, 10, 10, 16, 0, 0],
                         "_expr1": [30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 30, 0, 0, 0],
                         "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     }
-                )
+                ),
             ),
             id="broker_basic1",
         ),
-  ],
+    ],
 )
 def custom_defog_test_data(
     request,
-) -> tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame]:
+) -> tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame]:
     """
     Test data for test_defog_e2e. Returns a tuple of the following
     arguments:
@@ -1211,7 +1222,7 @@ def custom_defog_test_data(
 
 @pytest.mark.execute
 def test_defog_e2e_with_custom_data(
-    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame],
+    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame],
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
@@ -1220,11 +1231,12 @@ def test_defog_e2e_with_custom_data(
     comparing against the result of running the reference SQL query text on the
     same database connector.
     """
-    unqualified_impl, graph_name ,answer_impl = custom_defog_test_data
+    unqualified_impl, graph_name, answer_impl = custom_defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
     pd.testing.assert_frame_equal(result, answer_impl())
+
 
 # DELETE THIS, for testing purposes only.
 @pytest.fixture(
@@ -1236,23 +1248,34 @@ def test_defog_e2e_with_custom_data(
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
-                            "TX001", "TX005", "TX011", "TX015", "TX021", "TX025", 
-                            "TX031", "TX033", "TX035", "TX044", "TX045", "TX049", 
-                            "TX051", "TX055"
+                            "TX001",
+                            "TX005",
+                            "TX011",
+                            "TX015",
+                            "TX021",
+                            "TX025",
+                            "TX031",
+                            "TX033",
+                            "TX035",
+                            "TX044",
+                            "TX045",
+                            "TX049",
+                            "TX051",
+                            "TX055",
                         ],
                         "_expr0": [9, 12, 9, 12, 9, 12, 0, 0, 0, 10, 10, 16, 0, 0],
                         "_expr1": [30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 30, 0, 0, 0],
                         "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     }
-                )
+                ),
             ),
             id="mytest",
         ),
-  ],
+    ],
 )
 def custom_defog_test_data1(
     request,
-) -> tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame]:
+) -> tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame]:
     """
     Test data for test_defog_e2e. Returns a tuple of the following
     arguments:
@@ -1263,9 +1286,10 @@ def custom_defog_test_data1(
     """
     return request.param
 
+
 @pytest.mark.execute
 def test_123(
-    custom_defog_test_data1: tuple[Callable[[], UnqualifiedNode],str,pd.DataFrame],
+    custom_defog_test_data1: tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame],
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
     get_sample_graph: graph_fetcher,
@@ -1275,7 +1299,7 @@ def test_123(
     comparing against the result of running the reference SQL query text on the
     same database connector.
     """
-    unqualified_impl, graph_name ,answer_impl = custom_defog_test_data1
+    unqualified_impl, graph_name, answer_impl = custom_defog_test_data1
     # graph: GraphMetadata = defog_graphs(graph_name)
     graph: GraphMetadata = get_sample_graph("TPCH")
     breakpoint()
@@ -1283,4 +1307,3 @@ def test_123(
     breakpoint()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
     pd.testing.assert_frame_equal(result, answer_impl())
-    
