@@ -160,7 +160,7 @@ def get_sql_test_filename() -> Callable[[str], str]:
     """
 
     def impl(file_name: str) -> str:
-        return f"{os.path.dirname(__file__)}/test_sql_refsols/{file_name}.txt"
+        return f"{os.path.dirname(__file__)}/test_sql_refsols/{file_name}.sql"
 
     return impl
 
