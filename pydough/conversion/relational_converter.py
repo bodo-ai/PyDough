@@ -1001,7 +1001,11 @@ def convert_ast_to_relational(
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    print()
+    print(hybrid)
+    print("DECOR")
     run_hybrid_decorrelation(hybrid)
+    print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1

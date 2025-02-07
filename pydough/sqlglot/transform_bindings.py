@@ -625,7 +625,6 @@ class SqlGlotTransformBindings:
         """
         if operator not in self.bindings:
             # TODO: (gh #169) add support for UDFs
-            breakpoint()
             raise ValueError(f"Unsupported function {operator}")
         binding: transform_binding = self.bindings[operator]
         return binding(raw_args, sql_glot_args)

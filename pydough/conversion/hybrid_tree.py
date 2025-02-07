@@ -1595,9 +1595,10 @@ class HybridTranslator:
         # Special case: stepping out of the data argument of PARTITION back
         # into its ancestor. For example:
         # TPCH(x=...).PARTITION(data.WHERE(y > BACK(1).x), ...)
-        if len(parent_tree.pipeline) == 1 and isinstance(
+        partition_edge_case: bool = len(parent_tree.pipeline) == 1 and isinstance(
             parent_tree.pipeline[0], HybridPartition
-        ):
+        )
+        if partition_edge_case:
             assert parent_tree.parent is not None
             # Treat the partition's parent as the conext for the back
             # to step into, as opposed to the partition itself (so the back
@@ -1605,26 +1606,26 @@ class HybridTranslator:
             self.stack.append(parent_tree.parent)
             parent_result = self.make_hybrid_correl_expr(
                 back_expr, collection, steps_taken_so_far
-            )
+            ).expr
             self.stack.pop()
-            self.stack.append(parent_tree)
+            # self.stack.append(parent_tree)
             # Then, postprocess the output to account for the fact that a
             # BACK level got skipped due to the change in subtree.
-            match parent_result.expr:
-                case HybridRefExpr():
-                    parent_result = HybridBackRefExpr(
-                        parent_result.expr.name, 1, parent_result.typ
-                    )
-                case HybridBackRefExpr():
-                    parent_result = HybridBackRefExpr(
-                        parent_result.expr.name,
-                        parent_result.expr.back_idx + 1,
-                        parent_result.typ,
-                    )
-                case _:
-                    raise ValueError(
-                        f"Malformed expression for correlated reference: {parent_result}"
-                    )
+            # match parent_result.expr:
+            #     case HybridRefExpr():
+            #         parent_result = HybridBackRefExpr(
+            #             parent_result.expr.name, 1, parent_result.typ
+            #         )
+            #     case HybridBackRefExpr():
+            #         parent_result = HybridBackRefExpr(
+            #             parent_result.expr.name,
+            #             parent_result.expr.back_idx + 1,
+            #             parent_result.typ,
+            #         )
+            #     case _:
+            #         raise ValueError(
+            #             f"Malformed expression for correlated reference: {parent_result}"
+            #         )
         elif remaining_steps_back == 0:
             # If there are no more steps back to be made, then the correlated
             # reference is to a reference from the current context.
