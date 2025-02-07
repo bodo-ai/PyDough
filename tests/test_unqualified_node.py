@@ -418,7 +418,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             function_defined_terms,
-            "",
+            "?.Nations(name=?.name, blah=?.n, interval_7=COUNT(?.customers.WHERE(MONOTONIC(7000, ?.acctbal, 8000))), interval_4=COUNT(?.customers.WHERE(MONOTONIC(4000, ?.acctbal, 5000))), interval_13=COUNT(?.customers.WHERE(MONOTONIC(13000, ?.acctbal, 14000))))",
             id="function_defined_terms",
             # marks=pytest.mark.skip(
             #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
@@ -471,6 +471,7 @@ def test_init_pydough_context(
     sample_graph: GraphMetadata = get_sample_graph("TPCH")
     new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
     answer: UnqualifiedNode = new_func()
+    breakpoint()
     assert (
         repr(answer) == as_string
     ), "Mismatch between string representation of unqualified nodes and expected output"

@@ -26,6 +26,17 @@ class AddRootVisitor(ast.NodeTransformer):
         self._graph_name = graph_name
         self._known_names: set[str] = known_names
         self._known_names.update({"UnqualifiedRoot", self._graph_name})
+        self._scope_stack: list[set[str]] = [set({"UnqualifiedRoot", self._graph_name})]
+
+    def current_scope(self) -> set[str]:
+        return self._scope_stack[-1]
+
+    def enter_scope(self):
+        # Inherit parent scope but creates new copy
+        self._scope_stack.append(set(self.current_scope()))
+
+    def exit_scope(self):
+        self._scope_stack.pop()
 
     def visit_Module(self, node):
         """Visit the root node."""
@@ -36,7 +47,8 @@ class AddRootVisitor(ast.NodeTransformer):
     def visit_Assign(self, node):
         for target in node.targets:
             if isinstance(target, ast.Name):
-                self._known_names.add(target.id)
+                # self._known_names.add(target.id)
+                self.current_scope().add(target.id)
         return self.generic_visit(node)
 
     def create_root_def(self) -> list[ast.AST]:
@@ -54,6 +66,19 @@ class AddRootVisitor(ast.NodeTransformer):
         return [import_root, root_def]
 
     def visit_FunctionDef(self, node):
+        self.current_scope().add(node.name)
+        self.enter_scope()
+        # self._known_names.add(node.name)
+        params = []
+        params += [p.arg for p in node.args.posonlyargs]
+        params += [p.arg for p in node.args.args]
+        params += [p.arg for p in node.args.kwonlyargs]
+        if node.args.vararg:
+            params.append(node.args.vararg.arg)
+        if node.args.kwarg:
+            params.append(node.args.kwarg.arg)
+        # self._known_names.update(params)
+        self.current_scope().update(params)
         decorator_list: list[ast.AST] = []
         for deco in node.decorator_list:
             if not (
@@ -82,6 +107,7 @@ class AddRootVisitor(ast.NodeTransformer):
                 returns=node.returns,
             )
         answer: ast.AST = self.generic_visit(result)
+        self.exit_scope()
         return answer
 
     def visit_expression(self, node) -> ast.expr:
@@ -96,7 +122,8 @@ class AddRootVisitor(ast.NodeTransformer):
 
     def visit_For(self, node):
         if isinstance(node.target, ast.Name):
-            self._known_names.add(node.target.id)
+            # self._known_names.add(node.target.id)
+            self.current_scope().add(node.target.id)
         return self.generic_visit(node)
         # return ast.For(  # type: ignore
         #     target=node.target,
@@ -108,7 +135,7 @@ class AddRootVisitor(ast.NodeTransformer):
 
     def visit_Name(self, node):
         unrecognized_var: bool = False
-        if node.id not in self._known_names:
+        if not any(node.id in scope for scope in self._scope_stack):
             try:
                 eval(node.id)
             except NameError:
@@ -191,9 +218,9 @@ def init_pydough_context(graph: GraphMetadata):
     def decorator(func):
         source: str = inspect.getsource(func)
         graph_dict: dict[str, GraphMetadata] = {"_graph_value": graph}
-        # breakpoint()
+        breakpoint()
         new_tree: ast.AST = transform_code(source, graph_dict, set(func.__globals__))
-        # breakpoint()
+        breakpoint()
         assert isinstance(new_tree, ast.Module)
         file_name: str = func.__code__.co_filename
         new_code = compile(new_tree, file_name, "exec")
@@ -206,6 +233,7 @@ def init_pydough_context(graph: GraphMetadata):
         new_func = types.FunctionType(
             new_code.co_consts[idx], func.__globals__ | graph_dict
         )
+        breakpoint()
         #######################################################################
         ###              FOR DEBUGGING: UNCOMMENT THIS SECTION              ###
         #######################################################################

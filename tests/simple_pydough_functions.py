@@ -141,6 +141,7 @@ def function_defined_terms():
 
     return Nations(
         name,
+        blah=n,
         interval_7=interval_n(7),
         interval_4=interval_n(4),
         interval_13=interval_n(13),
