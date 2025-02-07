@@ -125,6 +125,21 @@ class Decorrelater:
                         operation.condition, old_parent, child_height
                     )
             level = level.parent
+        # Update the join keys to join on the unique keys of all the ancestors.
+        new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+        additional_levels: int = 0
+        current_level: HybridTree | None = old_parent
+        while current_level is not None:
+            for unique_key in current_level.pipeline[0].unique_exprs:
+                lhs_key: HybridExpr | None = unique_key.shift_back(additional_levels)
+                rhs_key: HybridExpr | None = unique_key.shift_back(
+                    additional_levels + child_height
+                )
+                assert lhs_key is not None and rhs_key is not None
+                new_join_keys.append((lhs_key, rhs_key))
+            current_level = current_level.parent
+            additional_levels += 1
+        child.subtree.join_keys = new_join_keys
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """

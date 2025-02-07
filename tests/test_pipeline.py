@@ -885,7 +885,37 @@ from pydough.unqualified import (
             (
                 correl_17,
                 "correl_17",
-                lambda: pd.DataFrame({"fullname": [925]}),
+                lambda: pd.DataFrame(
+                    {
+                        "fullname": [
+                            "africa-algeria",
+                            "africa-ethiopia",
+                            "africa-kenya",
+                            "africa-morocco",
+                            "africa-mozambique",
+                            "america-argentina",
+                            "america-brazil",
+                            "america-canada",
+                            "america-peru",
+                            "america-united states",
+                            "asia-china",
+                            "asia-india",
+                            "asia-indonesia",
+                            "asia-japan",
+                            "asia-vietnam",
+                            "europe-france",
+                            "europe-germany",
+                            "europe-romania",
+                            "europe-russia",
+                            "europe-united kingdom",
+                            "middle east-egypt",
+                            "middle east-iran",
+                            "middle east-iraq",
+                            "middle east-jordan",
+                            "middle east-saudi arabia",
+                        ]
+                    }
+                ),
             ),
             id="correl_17",
         ),

@@ -184,6 +184,8 @@ class HybridRefExpr(HybridExpr):
         return self
 
     def shift_back(self, levels: int) -> HybridExpr | None:
+        if levels == 0:
+            return self
         return HybridBackRefExpr(self.name, levels, self.typ)
 
 
