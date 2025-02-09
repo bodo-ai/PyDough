@@ -90,27 +90,21 @@ class Decorrelater:
                     f"Unsupported expression type: {expr.__class__.__name__}."
                 )
 
-    def decorrelate_child(
+    def correl_ref_purge(
         self,
+        level: HybridTree,
         old_parent: HybridTree,
         new_parent: HybridTree,
-        child: HybridConnection,
-        is_aggregate: bool,
+        child_height: int,
     ) -> None:
         """
         TODO
         """
-        # First, find the height of the child subtree & its top-most level.
-        child_root: HybridTree = child.subtree
-        child_height: int = 1
-        while child_root.parent is not None:
-            child_height += 1
-            child_root = child_root.parent
-        # Link the top level of the child subtree to the new parent.
-        new_parent.add_successor(child_root)
-        # Replace any correlated references to the original parent with BACK references.
-        level: HybridTree = child.subtree
         while level.parent is not None and level is not new_parent:
+            for child in level.children:
+                self.correl_ref_purge(
+                    child.subtree, old_parent, new_parent, child_height
+                )
             for operation in level.pipeline:
                 for name, expr in operation.terms.items():
                     operation.terms[name] = self.remove_correl_refs(
@@ -134,6 +128,27 @@ class Decorrelater:
                         operation.condition, old_parent, child_height
                     )
             level = level.parent
+
+    def decorrelate_child(
+        self,
+        old_parent: HybridTree,
+        new_parent: HybridTree,
+        child: HybridConnection,
+        is_aggregate: bool,
+    ) -> None:
+        """
+        TODO
+        """
+        # First, find the height of the child subtree & its top-most level.
+        child_root: HybridTree = child.subtree
+        child_height: int = 1
+        while child_root.parent is not None:
+            child_height += 1
+            child_root = child_root.parent
+        # Link the top level of the child subtree to the new parent.
+        new_parent.add_successor(child_root)
+        # Replace any correlated references to the original parent with BACK references.
+        self.correl_ref_purge(child.subtree, old_parent, new_parent, child_height)
         # Update the join keys to join on the unique keys of all the ancestors.
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         additional_levels: int = 0

@@ -648,7 +648,7 @@ from pydough.unqualified import (
                 "correl_1",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["AFRICA" "AMERICA" "MIDDLE EAST" "EUROPE" "ASIA"],
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
                         "n_prefix_nations": [1, 1, 0, 0, 0],
                     }
                 ),
@@ -661,7 +661,30 @@ from pydough.unqualified import (
                 "correl_2",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["A"] * 5,
+                        "name": [
+                            "EGYPT",
+                            "FRANCE",
+                            "GERMANY",
+                            "IRAN",
+                            "IRAQ",
+                            "JORDAN",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "SAUDI ARABIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_custs": [
+                            19,
+                            593,
+                            595,
+                            15,
+                            21,
+                            9,
+                            588,
+                            620,
+                            19,
+                            585,
+                        ],
                     }
                 ),
             ),
@@ -673,7 +696,8 @@ from pydough.unqualified import (
                 "correl_3",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["A"] * 5,
+                        "name": ["AFRICA" "AMERICA" "ASIA" "EUROPE" "MIDDLE EAST"],
+                        "n_nations": [5, 5, 5, 0, 2],
                     }
                 ),
             ),
