@@ -6,6 +6,5 @@ ROOT(columns=[('name', name), ('n_prefix_nations', n_prefix_nations)], orderings
     AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT()})
      FILTER(condition=SLICE(name_3, None:unknown, 1:int64, None:unknown) == SLICE(name, None:unknown, 1:int64, None:unknown), columns={'key': key})
       JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'name': t0.name, 'name_3': t1.name})
-       FILTER(condition=True:bool, columns={'key': key, 'name': name})
-        SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
        SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})

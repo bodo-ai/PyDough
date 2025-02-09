@@ -41,14 +41,13 @@ class Decorrelater:
         if isinstance(hybrid.pipeline[0], HybridPartition) and child_idx == 0:
             assert hybrid.parent is not None
             return self.make_decorrelate_parent(
-                hybrid.parent, len(hybrid.parent.children), required_steps
+                hybrid.parent, len(hybrid.parent.children), len(hybrid.pipeline)
             )
-        successor: HybridTree | None = hybrid.successor
         hybrid._successor = None
         new_hybrid: HybridTree = copy.deepcopy(hybrid)
-        hybrid._successor = successor
         new_hybrid._children = new_hybrid._children[:child_idx]
         new_hybrid._pipeline = new_hybrid._pipeline[: required_steps + 1]
+        # breakpoint()
         return new_hybrid
 
     def remove_correl_refs(
@@ -91,8 +90,12 @@ class Decorrelater:
                     f"Unsupported expression type: {expr.__class__.__name__}."
                 )
 
-    def decorrelate_singular(
-        self, old_parent: HybridTree, new_parent: HybridTree, child: HybridConnection
+    def decorrelate_child(
+        self,
+        old_parent: HybridTree,
+        new_parent: HybridTree,
+        child: HybridConnection,
+        is_aggregate: bool,
     ) -> None:
         """
         TODO
@@ -146,19 +149,12 @@ class Decorrelater:
             current_level = current_level.parent
             additional_levels += 1
         child.subtree.join_keys = new_join_keys
-
-    def decorrelate_aggregate(
-        self, old_parent: HybridTree, new_parent: HybridTree, child: HybridConnection
-    ) -> None:
-        """
-        TODO
-        """
-        self.decorrelate_singular(old_parent, new_parent, child)
-        new_agg_keys: list[HybridExpr] = []
-        assert child.subtree.join_keys is not None
-        for _, rhs_key in child.subtree.join_keys:
-            new_agg_keys.append(rhs_key)
-        child.subtree.agg_keys = new_agg_keys
+        if is_aggregate:
+            new_agg_keys: list[HybridExpr] = []
+            assert child.subtree.join_keys is not None
+            for _, rhs_key in child.subtree.join_keys:
+                new_agg_keys.append(rhs_key)
+            child.subtree.agg_keys = new_agg_keys
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """
@@ -178,13 +174,18 @@ class Decorrelater:
             if idx not in hybrid.correlated_children:
                 continue
             new_parent: HybridTree = self.make_decorrelate_parent(
-                hybrid, idx, hybrid.children[idx].required_steps + 1
+                hybrid, idx, hybrid.children[idx].required_steps
             )
             match child.connection_type:
-                case ConnectionType.SINGULAR | ConnectionType.SINGULAR_ONLY_MATCH:
-                    self.decorrelate_singular(hybrid, new_parent, child)
-                case ConnectionType.AGGREGATION | ConnectionType.AGGREGATION_ONLY_MATCH:
-                    self.decorrelate_aggregate(hybrid, new_parent, child)
+                case (
+                    ConnectionType.SINGULAR
+                    | ConnectionType.SINGULAR_ONLY_MATCH
+                    | ConnectionType.AGGREGATION
+                    | ConnectionType.AGGREGATION_ONLY_MATCH
+                ):
+                    self.decorrelate_child(
+                        hybrid, new_parent, child, child.connection_type.is_aggregation
+                    )
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(
                         f"PyDough does not yet support correlated references with the {child.connection_type.name} pattern."
