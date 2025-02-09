@@ -279,7 +279,7 @@ def correl_1():
     # access without requiring the RHS be present.
     return Regions(
         name, n_prefix_nations=COUNT(nations.WHERE(name[:1] == BACK(1).name[:1]))
-    )
+    ).ORDER_BY(name.ASC())
 
 
 def correl_2():
@@ -289,20 +289,26 @@ def correl_2():
     # with the letter a. This is a true correlated join doing an aggregated
     # access without requiring the RHS be present.
     selected_custs = customers.WHERE(comment[:1] == LOWER(BACK(2).name[:1]))
-    return Regions.WHERE(~STARTSWITH(name, "A")).nations(
-        name,
-        n_selected_custs=COUNT(selected_custs),
+    return (
+        Regions.WHERE(~STARTSWITH(name, "A"))
+        .nations(
+            name,
+            n_selected_custs=COUNT(selected_custs),
+        )
+        .ORDER_BY(name.ASC())
     )
 
 
 def correl_3():
     # Correlated back reference example #3: double-layer correlated reference
     # For every every region, count how many of its nations have a customer
-    # whose comment starts with the same letter as the region. This is a true
+    # whose comment starts with the same 2 letter as the region. This is a true
     # correlated join doing an aggregated access without requiring the RHS be
     # present.
-    selected_custs = customers.WHERE(comment[:1] == LOWER(BACK(2).name[:1]))
-    return Regions(name, n_nations=COUNT(nations.WHERE(HAS(selected_custs))))
+    selected_custs = customers.WHERE(comment[:2] == LOWER(BACK(2).name[:2]))
+    return Regions(name, n_nations=COUNT(nations.WHERE(HAS(selected_custs)))).ORDER_BY(
+        name.ASC()
+    )
 
 
 def correl_4():
