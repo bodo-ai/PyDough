@@ -58,9 +58,13 @@ class Decorrelater:
         """
         match expr:
             case HybridCorrelExpr():
-                result: HybridExpr | None = expr.expr.shift_back(child_height)
-                assert result is not None
-                return result
+                if expr.hybrid is parent:
+                    result: HybridExpr | None = expr.expr.shift_back(child_height)
+                    assert result is not None
+                    return result
+                else:
+                    expr.expr = self.remove_correl_refs(expr.expr, parent, child_height)
+                    return expr
             case HybridFunctionExpr():
                 for idx, arg in enumerate(expr.args):
                     expr.args[idx] = self.remove_correl_refs(arg, parent, child_height)
@@ -92,7 +96,7 @@ class Decorrelater:
 
     def correl_ref_purge(
         self,
-        level: HybridTree,
+        level: HybridTree | None,
         old_parent: HybridTree,
         new_parent: HybridTree,
         child_height: int,
@@ -100,7 +104,7 @@ class Decorrelater:
         """
         TODO
         """
-        while level.parent is not None and level is not new_parent:
+        while level is not None and level is not new_parent:
             for child in level.children:
                 self.correl_ref_purge(
                     child.subtree, old_parent, new_parent, child_height

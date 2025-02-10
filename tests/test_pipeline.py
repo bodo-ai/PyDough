@@ -696,7 +696,7 @@ from pydough.unqualified import (
                 "correl_3",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["AFRICA" "AMERICA" "ASIA" "EUROPE" "MIDDLE EAST"],
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
                         "n_nations": [5, 5, 5, 0, 2],
                     }
                 ),
