@@ -256,3 +256,21 @@ def correl_17():
     region_info = region(fname=JOIN_STRINGS("-", LOWER(name), BACK(1).lname))
     nation_info = Nations(lname=LOWER(name)).WHERE(HAS(region_info))
     return nation_info(fullname=region_info.fname).ORDER_BY(fullname.ASC())
+
+
+def correl_18():
+    # Correlated back reference example #18: TODO
+    # Count how many orders corresponded to at least half of the total price
+    # spent by the ordering customer in a single day, but only if the customer
+    # ordered multiple orders in on that day. Only considers orders made in
+    # 1993.
+    # (This is a correlated aggregation access)
+    cust_date_groups = PARTITION(
+        Orders.WHERE(YEAR(order_date) == 1993),
+        name="o",
+        by=(customer_key, order_date),
+    )
+    selected_groups = cust_date_groups.WHERE(COUNT(o) > 1)(
+        total_price=SUM(o.total_price),
+    )(n_above_avg=COUNT(o.WHERE(total_price >= 0.5 * BACK(1).total_price)))
+    return TPCH(n=SUM(selected_groups.n_above_avg))

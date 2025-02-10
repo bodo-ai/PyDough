@@ -883,11 +883,18 @@ class RelTranslation:
                 if isinstance(operation.collection, TableCollection):
                     result = self.build_simple_table_scan(operation)
                     if context is not None:
+                        assert preceding_hybrid is not None
+                        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+                        for unique_column in (
+                            preceding_hybrid[0].pipeline[0].unique_exprs
+                        ):
+                            assert unique_column in result.expressions
+                            join_keys.append((unique_column, unique_column))
                         result = self.join_outputs(
                             context,
                             result,
                             JoinType.INNER,
-                            [],
+                            join_keys,
                             None,
                         )
                 else:
