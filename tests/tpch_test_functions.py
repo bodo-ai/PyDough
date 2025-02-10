@@ -19,6 +19,8 @@ __all__ = [
     "impl_tpch_q9",
 ]
 
+import datetime
+
 # ruff: noqa
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
@@ -28,8 +30,6 @@ def impl_tpch_q1():
     """
     PyDough implementation of TPCH Q1.
     """
-    import datetime
-
     selected_lines = Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1)))
     return PARTITION(selected_lines, name="l", by=(return_flag, status))(
         L_RETURNFLAG=return_flag,
@@ -90,8 +90,6 @@ def impl_tpch_q3():
     """
     PyDough implementation of TPCH Q3.
     """
-    import datetime
-
     selected_lines = Orders.WHERE(
         (customer.mktsegment == "BUILDING") & (order_date < datetime.date(1995, 3, 15))
     ).lines.WHERE(ship_date > datetime.date(1995, 3, 15))(
@@ -113,8 +111,6 @@ def impl_tpch_q4():
     """
     PyDough implementation of TPCH Q4.
     """
-    import datetime
-
     selected_lines = lines.WHERE(commit_date < receipt_date)
     selected_orders = Orders.WHERE(
         (order_date >= datetime.date(1993, 7, 1))
@@ -131,8 +127,6 @@ def impl_tpch_q5():
     """
     PyDough implementation of TPCH Q5.
     """
-    import datetime
-
     selected_lines = customers.orders.WHERE(
         (order_date >= datetime.date(1994, 1, 1))
         & (order_date < datetime.date(1995, 1, 1))
@@ -148,8 +142,6 @@ def impl_tpch_q6():
     """
     PyDough implementation of TPCH Q6.
     """
-    import datetime
-
     selected_lines = Lineitems.WHERE(
         (ship_date >= datetime.date(1994, 1, 1))
         & (ship_date < datetime.date(1995, 1, 1))
@@ -164,8 +156,6 @@ def impl_tpch_q7():
     """
     PyDough implementation of TPCH Q7.
     """
-    import datetime
-
     line_info = Lineitems(
         supp_nation=supplier.nation.name,
         cust_nation=order.customer.nation.name,
@@ -196,8 +186,6 @@ def impl_tpch_q8():
     """
     PyDough implementation of TPCH Q8.
     """
-    import datetime
-
     volume_data = (
         Nations.suppliers.supply_records.WHERE(
             part.part_type == "ECONOMY ANODIZED STEEL"
@@ -244,8 +232,6 @@ def impl_tpch_q10():
     """
     PyDough implementation of TPCH Q10.
     """
-    import datetime
-
     selected_lines = orders.WHERE(
         (order_date >= datetime.date(1993, 10, 1))
         & (order_date < datetime.date(1994, 1, 1))
@@ -282,8 +268,6 @@ def impl_tpch_q12():
     """
     PyDough implementation of TPCH Q12.
     """
-    import datetime
-
     selected_lines = Lineitems.WHERE(
         ((ship_mode == "MAIL") | (ship_mode == "SHIP"))
         & (ship_date < commit_date)
@@ -320,8 +304,6 @@ def impl_tpch_q14():
     """
     PyDough implementation of TPCH Q14.
     """
-    import datetime
-
     value = extended_price * (1 - discount)
     selected_lines = Lineitems.WHERE(
         (ship_date >= datetime.date(1995, 9, 1))
@@ -341,8 +323,6 @@ def impl_tpch_q15():
     """
     PyDough implementation of TPCH Q15.
     """
-    import datetime
-
     selected_lines = lines.WHERE(
         (ship_date >= datetime.date(1996, 1, 1))
         & (ship_date < datetime.date(1996, 4, 1))
@@ -469,8 +449,6 @@ def impl_tpch_q20():
     """
     PyDough implementation of TPCH Q20, truncated to 10 rows.
     """
-    import datetime
-
     part_qty = SUM(
         lines.WHERE(
             (ship_date >= datetime.date(1994, 1, 1))

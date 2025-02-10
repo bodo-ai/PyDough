@@ -16,7 +16,8 @@ class AddRootVisitor(ast.NodeTransformer):
     """
     QDAG visitor class that transforms nodes in the following ways:
     1. Whenever a variable is assigned, marks it as a known variable name
-    (in addition to any `known_name` values passed in).
+    by adding it to the current scope set (in addition to all the previous scopes).
+    New scopes are created for functions, lambda functions, comprehensions, context managers, etc.
     2. Removes the `init_pydough_context` decorator from above any functions.
     3. Adds `_ROOT = UnqualifiedRoot(graph)` to the start of each function body.
     4. Prepends any unknown variable names with `_ROOT.`
@@ -24,17 +25,21 @@ class AddRootVisitor(ast.NodeTransformer):
 
     def __init__(self, graph_name: str, known_names: set[str]):
         self._graph_name = graph_name
-        self._scope_stack: list[set[str]] = [set({"UnqualifiedRoot", self._graph_name})]
+        # Initialize the scope stack with the outermost scope, including `known_names` set which would
+        # contain global variables or module imports of the jupyter cell or function.
+        self._scope_stack: list[set[str]] = [
+            set({"UnqualifiedRoot", self._graph_name, *known_names})
+        ]
 
     def current_scope(self) -> set[str]:
         # Return the current scope
         return self._scope_stack[-1]
 
-    def enter_scope(self):
+    def enter_scope(self) -> None:
         # Inherit parent scope but creates new copy
         self._scope_stack.append(set(self.current_scope()))
 
-    def exit_scope(self):
+    def exit_scope(self) -> None:
         self._scope_stack.pop()
 
     def visit_Module(self, node) -> ast.AST:
@@ -67,7 +72,7 @@ class AddRootVisitor(ast.NodeTransformer):
         )
         return [import_root, root_def]
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, node) -> ast.AST:
         """
         Tracks function parameters in the scope and removes the PyDough decorator.
         """
@@ -123,12 +128,12 @@ class AddRootVisitor(ast.NodeTransformer):
         assert isinstance(result, ast.stmt)
         return result
 
-    def visit_For(self, node):
+    def visit_For(self, node) -> ast.AST:
         self._scope_targets(node.target)
         # Visit the rest of the node as usual
         return self.generic_visit(node)
 
-    def visit_Name(self, node):
+    def visit_Name(self, node) -> ast.AST:
         unrecognized_var: bool = False
         if not any(node.id in scope for scope in self._scope_stack):
             try:
@@ -151,7 +156,7 @@ class AddRootVisitor(ast.NodeTransformer):
         self.enter_scope()
 
         # Extract and track lambda parameters
-        params = []
+        params: list[str] = []
         params += [p.arg for p in node.args.posonlyargs]
         params += [p.arg for p in node.args.args]
         params += [p.arg for p in node.args.kwonlyargs]
@@ -162,7 +167,7 @@ class AddRootVisitor(ast.NodeTransformer):
         self.current_scope().update(params)
 
         # Visit the lambda body (an expression)
-        answer = self.generic_visit(node)
+        answer: ast.AST = self.generic_visit(node)
 
         # Exit scope
         self.exit_scope()
@@ -187,9 +192,9 @@ class AddRootVisitor(ast.NodeTransformer):
 
         # Transform key and value. We use self.visit as opposed to self.generic_visit as
         # we would like to dispatch to a specific visitor method such as visit_Name, etc.
-        new_key = self.visit(node.key)
-        new_value = self.visit(node.value)
-        answer = ast.DictComp(
+        new_key: ast.expr = self.visit(node.key)
+        new_value: ast.expr = self.visit(node.value)
+        answer: ast.AST = ast.DictComp(
             key=new_key,
             value=new_value,
             generators=[self.visit(gen) for gen in node.generators],
@@ -210,8 +215,8 @@ class AddRootVisitor(ast.NodeTransformer):
             self._scope_targets(generator.target)
         # Transform elt. The elt attribute is an ast node that corresponds
         # to the expression before the first 'for' in a list comprehension.
-        new_elt = self.visit(node.elt)
-        answer = ast.ListComp(
+        new_elt: ast.expr = self.visit(node.elt)
+        answer: ast.expr = ast.ListComp(
             elt=new_elt,
             generators=[self.visit(gen) for gen in node.generators],
         )
@@ -234,8 +239,8 @@ class AddRootVisitor(ast.NodeTransformer):
             self._scope_targets(generator.target)
         # Transform elt. The elt attribute is an ast node that corresponds
         # to the expression before the first for in a set comprehension.
-        new_elt = self.visit(node.elt)
-        answer = ast.SetComp(
+        new_elt: ast.expr = self.visit(node.elt)
+        answer: ast.expr = ast.SetComp(
             elt=new_elt,
             generators=[self.visit(gen) for gen in node.generators],
         )
@@ -256,8 +261,8 @@ class AddRootVisitor(ast.NodeTransformer):
             self._scope_targets(generator.target)
         # Transform elt. The elt attribute is an ast node that corresponds
         # to the expression before the first for in a generator comprehension.
-        new_elt = self.visit(node.elt)
-        answer = ast.GeneratorExp(
+        new_elt: ast.expr = self.visit(node.elt)
+        answer: ast.expr = ast.GeneratorExp(
             elt=new_elt,
             generators=[self.visit(gen) for gen in node.generators],
         )
@@ -265,7 +270,9 @@ class AddRootVisitor(ast.NodeTransformer):
         return answer
 
     def _scope_targets(self, target: ast.expr) -> None:
-        """Add variables to the current scope."""
+        """
+        Add variables to the current scope.
+        """
         # if target is a tuple like (k,v).
         if isinstance(target, (ast.Tuple, ast.List)):
             for elt in target.elts:
@@ -278,7 +285,9 @@ class AddRootVisitor(ast.NodeTransformer):
             self.current_scope().add(target.id)
 
     def visit_With(self, node: ast.With) -> ast.AST:
-        """Handle context manager variables declared with `as`"""
+        """
+        Handle context manager variables declared with `as`
+        """
         # Track all variables bound by context manager(s)
         self.enter_scope()
         # Let's loop through the contexts. (e.g tf.TemporaryFile() as tf_handle1)
