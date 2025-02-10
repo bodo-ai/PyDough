@@ -29,6 +29,7 @@ class AddRootVisitor(ast.NodeTransformer):
         self._scope_stack: list[set[str]] = [set({"UnqualifiedRoot", self._graph_name})]
 
     def current_scope(self) -> set[str]:
+        # Return the current scope
         return self._scope_stack[-1]
 
     def enter_scope(self):
@@ -38,7 +39,7 @@ class AddRootVisitor(ast.NodeTransformer):
     def exit_scope(self):
         self._scope_stack.pop()
 
-    def visit_Module(self, node):
+    def visit_Module(self, node) -> ast.AST:
         """Visit the root node."""
         # Create the root definition in the outermost body
         node.body = self.create_root_def() + node.body
@@ -162,14 +163,21 @@ class AddRootVisitor(ast.NodeTransformer):
         return answer
 
     def visit_DictComp(self, node: ast.DictComp) -> ast.AST:
-        """Handle dictionary comprehensions.E.g: {k: v for k in range(3) for v in range(3)}"""
+        """
+        Handle dictionary comprehensions.
+
+        Example:
+            {k: v for k in range(3) for v in range(3)}
+        """
         # New scope for comprehension
         self.enter_scope()
+
         # Track generator targets (e.g., generator: "for k, v in items", targets being "k,v")
         # Note that there can be multiple generators (e.g. "{k: v for k in range(3) for v in range(3)}")
         # This gives us node.generators => [for k in range(3),for v in range(3)]
         for generator in node.generators:
             self._scope_targets(generator.target)
+
         # Transform key and value. We use self.visit as opposed to self.generic_visit as
         # we would like to dispatch to a specific visitor method such as visit_Name, etc.
         new_key = self.visit(node.key)
@@ -183,13 +191,18 @@ class AddRootVisitor(ast.NodeTransformer):
         return answer
 
     def visit_ListComp(self, node: ast.ListComp) -> ast.AST:
-        """Handle list comprehensions. Eg: [ord(c) for line in file for c in line]"""
+        """
+        Handle list comprehensions.
+
+        Example:
+            [ord(c) for line in file for c in line]
+        """
         self.enter_scope()  # New scope for comprehension
         # Track generator targets (e.g., i in "for i in items")
         for generator in node.generators:
             self._scope_targets(generator.target)
         # Transform elt. The elt attribute is an ast node that corresponds
-        # to the expression before the first for in a list comprehension.
+        # to the expression before the first 'for' in a list comprehension.
         new_elt = self.visit(node.elt)
         answer = ast.ListComp(
             elt=new_elt,
@@ -201,7 +214,9 @@ class AddRootVisitor(ast.NodeTransformer):
     def visit_SetComp(self, node: ast.SetComp) -> ast.AST:
         """
         Handle set comprehensions.
-            Eg:{
+
+        Example:
+            {
                 COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
                 for i in range(3)
             }

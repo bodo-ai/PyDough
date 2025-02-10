@@ -141,7 +141,6 @@ def function_defined_terms():
 
     return Nations(
         name,
-        redefined_n=n,
         interval_7=interval_n(7),
         interval_4=interval_n(4),
         interval_13=interval_n(13),
@@ -213,7 +212,8 @@ def set_comp_terms():
             }
         )
     )
-    return Nations(*terms)
+    sorted_terms = sorted(terms, key=lambda x: repr(x))
+    return Nations(*sorted_terms)
 
 
 def generator_comp_terms():

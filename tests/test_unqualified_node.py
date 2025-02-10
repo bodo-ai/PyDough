@@ -464,7 +464,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             set_comp_terms,
-            "?.Nations(name=?.name, _expr0=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), _expr1=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), _expr2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
+            "?.Nations(name=?.name, _expr0=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), _expr1=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), _expr2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
             id="set_comp_terms",
         ),
         pytest.param(
