@@ -286,3 +286,17 @@ def correl_19():
     return Suppliers.nation(name=BACK(1).name, n_super_cust=COUNT(super_cust)).TOP_K(
         5, n_super_cust.DESC()
     )
+
+
+def correl_20():
+    # Correlated back reference example #20: multiple ancestor uniqueness keys.
+    # Count the instances where a nation's suppliers shipped a part to a
+    # customer in the same nation, only counting instances where the order was
+    # made in June of 1998.
+    # (This is a correlated singular/semi access)
+    is_domestic = nation(domestic=name == BACK(5).name).domestic
+    selected_orders = Nations.customers.orders.WHERE(
+        (YEAR(order_date) == 1998) & (MONTH(order_date) == 6)
+    )
+    instances = selected_orders.lines.supplier.WHERE(is_domestic)
+    return TPCH(n=COUNT(instances))
