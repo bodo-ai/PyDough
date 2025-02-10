@@ -511,7 +511,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
-        self._stack.append(Select().from_(values([()])))
+        self._stack.append(Select().select(SQLGlotStar()).from_(values([()])))
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_inputs(root)
