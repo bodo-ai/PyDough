@@ -24,8 +24,6 @@ class AddRootVisitor(ast.NodeTransformer):
 
     def __init__(self, graph_name: str, known_names: set[str]):
         self._graph_name = graph_name
-        self._known_names: set[str] = known_names
-        self._known_names.update({"UnqualifiedRoot", self._graph_name})
         self._scope_stack: list[set[str]] = [set({"UnqualifiedRoot", self._graph_name})]
 
     def current_scope(self) -> set[str]:
@@ -40,13 +38,17 @@ class AddRootVisitor(ast.NodeTransformer):
         self._scope_stack.pop()
 
     def visit_Module(self, node) -> ast.AST:
-        """Visit the root node."""
+        """
+        Visit the root node.
+        """
         # Create the root definition in the outermost body
         node.body = self.create_root_def() + node.body
         return self.generic_visit(node)
 
     def visit_Assign(self, node) -> ast.AST:
-        """Handle unpacking assignments like `a, (b, c) = ...`"""
+        """
+        Handle unpacking assignments like `a, (b, c) = ...`
+        """
         for target in node.targets:
             self._scope_targets(target)  # Reuse existing scope-tracking logic
         return self.generic_visit(node)
@@ -66,6 +68,9 @@ class AddRootVisitor(ast.NodeTransformer):
         return [import_root, root_def]
 
     def visit_FunctionDef(self, node):
+        """
+        Tracks function parameters in the scope and removes the PyDough decorator.
+        """
         self.current_scope().add(node.name)
         self.enter_scope()
         params = []
@@ -77,7 +82,7 @@ class AddRootVisitor(ast.NodeTransformer):
         if node.args.kwarg:
             params.append(node.args.kwarg.arg)
         self.current_scope().update(params)
-        decorator_list: list[ast.AST] = []
+        decorator_list: list[ast.expr] = []
         for deco in node.decorator_list:
             if not (
                 isinstance(deco, ast.Call)
@@ -92,7 +97,7 @@ class AddRootVisitor(ast.NodeTransformer):
                 name=node.name,
                 args=node.args,
                 body=prefix + node.body,
-                decorator_list=node.decorator_list,
+                decorator_list=decorator_list,
                 type_params=node.type_params,
                 returns=node.returns,
             )
@@ -101,7 +106,7 @@ class AddRootVisitor(ast.NodeTransformer):
                 name=node.name,
                 args=node.args,
                 body=prefix + node.body,
-                decorator_list=node.decorator_list,
+                decorator_list=decorator_list,
                 returns=node.returns,
             )
         answer: ast.AST = self.generic_visit(result)
@@ -139,7 +144,9 @@ class AddRootVisitor(ast.NodeTransformer):
             return node
 
     def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
-        """Handle lambda function parameters and scoping."""
+        """
+        Handle lambda function parameters and scoping.
+        """
         # Enter new scope
         self.enter_scope()
 
@@ -238,7 +245,9 @@ class AddRootVisitor(ast.NodeTransformer):
     def visit_GeneratorExp(self, node: ast.GeneratorExp) -> ast.AST:
         """
         Handle generator comprehensions.
-            Eg: (COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+
+        Example:
+            (COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
                 for i in range(3))
         """
         self.enter_scope()  # New scope for comprehension
@@ -281,21 +290,27 @@ class AddRootVisitor(ast.NodeTransformer):
         return answer
 
     def visit_Import(self, node: ast.Import) -> ast.AST:
-        """Track imported module aliases like `import x as y`, `import a.b.c`"""
+        """
+        Track imported module aliases like `import x as y`, `import a.b.c`
+        """
         for alias in node.names:
             name = alias.asname or alias.name.split(".", 1)[0]
             self.current_scope().add(name)
         return self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.AST:
-        """Track specific imports like `from x import y as z`"""
+        """
+        Track specific imports like `from x import y as z`
+        """
         for alias in node.names:
             name = alias.asname or alias.name
             self.current_scope().add(name)
         return self.generic_visit(node)
 
     def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
-        """Track exception variables like `except Error as err`"""
+        """
+        Track exception variables like `except Error as err`
+        """
         # Add exception binding name to current scope
         if node.name:
             self.current_scope().add(node.name)
@@ -303,10 +318,11 @@ class AddRootVisitor(ast.NodeTransformer):
         return self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
-        """Handle class definitions and their scoped content"""
+        """
+        Handle class definitions and their scoped content
+        """
         # Track class name in current scope
         self.current_scope().add(node.name)
-
         return self.generic_visit(node)
 
 
