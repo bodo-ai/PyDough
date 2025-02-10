@@ -18,7 +18,6 @@ from simple_pydough_functions import (
     exponentiation,
     function_sampler,
     hour_minute_day,
-    mytest,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -855,76 +854,5 @@ def test_defog_e2e_with_custom_data(
     unqualified_impl, graph_name, answer_impl = custom_defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
-    pd.testing.assert_frame_equal(result, answer_impl())
-
-
-# DELETE THIS, for testing purposes only.
-@pytest.fixture(
-    params=[
-        pytest.param(
-            (
-                mytest,
-                "Broker",
-                lambda: pd.DataFrame(
-                    {
-                        "transaction_id": [
-                            "TX001",
-                            "TX005",
-                            "TX011",
-                            "TX015",
-                            "TX021",
-                            "TX025",
-                            "TX031",
-                            "TX033",
-                            "TX035",
-                            "TX044",
-                            "TX045",
-                            "TX049",
-                            "TX051",
-                            "TX055",
-                        ],
-                        "_expr0": [9, 12, 9, 12, 9, 12, 0, 0, 0, 10, 10, 16, 0, 0],
-                        "_expr1": [30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 30, 0, 0, 0],
-                        "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    }
-                ),
-            ),
-            id="mytest",
-        ),
-    ],
-)
-def custom_defog_test_data1(
-    request,
-) -> tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame]:
-    """
-    Test data for test_defog_e2e. Returns a tuple of the following
-    arguments:
-    1. `unqualified_impl`: a PyDough implementation function.
-    2. `graph_name`: the name of the graph from the defog database to use.
-    3. `answer_impl`: a function that takes in nothing and returns the answer
-    to a defog query as a Pandas DataFrame.
-    """
-    return request.param
-
-
-@pytest.mark.execute
-def test_123(
-    custom_defog_test_data1: tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame],
-    defog_graphs: graph_fetcher,
-    sqlite_defog_connection: DatabaseContext,
-    get_sample_graph: graph_fetcher,
-):
-    """
-    Test executing the defog analytical questions on the sqlite database,
-    comparing against the result of running the reference SQL query text on the
-    same database connector.
-    """
-    unqualified_impl, graph_name, answer_impl = custom_defog_test_data1
-    # graph: GraphMetadata = defog_graphs(graph_name)
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    breakpoint()
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    breakpoint()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
     pd.testing.assert_frame_equal(result, answer_impl())

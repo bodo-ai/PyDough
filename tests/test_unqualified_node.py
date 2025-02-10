@@ -21,12 +21,21 @@ from bad_pydough_functions import (
     bad_window_7,
 )
 from simple_pydough_functions import (
+    args_kwargs,
+    class_handling,
     dict_comp_terms,
+    exception_handling,
     function_defined_terms,
+    function_defined_terms_with_duplicate_names,
     generator_comp_terms,
+    lambda_defined_terms,
     list_comp_terms,
     loop_generated_terms,
+    nested_unpacking,
     set_comp_terms,
+    unpacking,
+    unpacking_in_iterable,
+    with_import_statement,
 )
 from test_utils import graph_fetcher
 from tpch_test_functions import (
@@ -418,15 +427,31 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             function_defined_terms,
-            "?.Nations(name=?.name, blah=?.n, interval_7=COUNT(?.customers.WHERE(MONOTONIC(7000, ?.acctbal, 8000))), interval_4=COUNT(?.customers.WHERE(MONOTONIC(4000, ?.acctbal, 5000))), interval_13=COUNT(?.customers.WHERE(MONOTONIC(13000, ?.acctbal, 14000))))",
+            "?.Nations(name=?.name, interval_7=COUNT(?.customers.WHERE(MONOTONIC(7000, ?.acctbal, 8000))), interval_4=COUNT(?.customers.WHERE(MONOTONIC(4000, ?.acctbal, 5000))), interval_13=COUNT(?.customers.WHERE(MONOTONIC(13000, ?.acctbal, 14000))))",
             id="function_defined_terms",
             # marks=pytest.mark.skip(
             #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
             # ),
         ),
         pytest.param(
+            function_defined_terms_with_duplicate_names,
+            "?.Nations(name=?.name, redefined_name=?.name, interval_7=COUNT(?.customers.WHERE(MONOTONIC(7000, ?.acctbal, 8000))), interval_4=COUNT(?.customers.WHERE(MONOTONIC(4000, ?.acctbal, 5000))), interval_13=COUNT(?.customers.WHERE(MONOTONIC(13000, ?.acctbal, 14000))))",
+            id="function_defined_terms_with_duplicate_names",
+            # marks=pytest.mark.skip(
+            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            # ),
+        ),
+        pytest.param(
+            lambda_defined_terms,
+            "?.Nations(name=?.name, interval_7=COUNT(?.customers.WHERE(MONOTONIC(7000, ?.acctbal, 8000))), interval_4=COUNT(?.customers.WHERE(MONOTONIC(4000, ?.acctbal, 5000))), interval_13=COUNT(?.customers.WHERE(MONOTONIC(13000, ?.acctbal, 14000))))",
+            id="lambda_defined_terms",
+            # marks=pytest.mark.skip(
+            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
+            # ),
+        ),
+        pytest.param(
             dict_comp_terms,
-            "",
+            "?.Nations(name=?.name, interval_0=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), interval_1=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), interval_2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
             id="dict_comp_terms",
             # marks=pytest.mark.skip(
             #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
@@ -434,27 +459,53 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             list_comp_terms,
-            "",
+            "?.Nations(name=?.name, _expr0=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), _expr1=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), _expr2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
             id="list_comp_terms",
-            # marks=pytest.mark.skip(
-            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            # ),
         ),
         pytest.param(
             set_comp_terms,
-            "",
+            "?.Nations(name=?.name, _expr0=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), _expr1=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), _expr2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
             id="set_comp_terms",
-            # marks=pytest.mark.skip(
-            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            # ),
         ),
         pytest.param(
             generator_comp_terms,
-            "",
+            "?.Nations(name=?.name, interval_0=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), interval_1=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), interval_2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
             id="generator_comp_terms",
-            # marks=pytest.mark.skip(
-            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            # ),
+        ),
+        pytest.param(
+            args_kwargs,
+            "?.TPCH(n_tomato=COUNT(?.parts.WHERE(CONTAINS(?.part_name, 'tomato'))), n_almond=COUNT(?.parts.WHERE(CONTAINS(?.part_name, 'almond'))), small=COUNT(?.parts.WHERE(True)), large=COUNT(?.parts.WHERE(True)))",
+            id="args_kwargs",
+        ),
+        pytest.param(
+            unpacking,
+            "?.orders.WHERE(MONOTONIC(1992, YEAR(?.order_date), 1994))",
+            id="unpacking",
+        ),
+        pytest.param(
+            nested_unpacking,
+            "?.customers.WHERE(ISIN(?.nation.name, ['GERMANY', 'FRANCE', 'ARGENTINA']))",
+            id="nested_unpacking",
+        ),
+        pytest.param(
+            unpacking_in_iterable,
+            "?.Nations(c0=COUNT(?.orders.WHERE((YEAR(?.order_date) == 1992))), c1=COUNT(?.orders.WHERE((YEAR(?.order_date) == 1993))), c2=COUNT(?.orders.WHERE((YEAR(?.order_date) == 1994))), c3=COUNT(?.orders.WHERE((YEAR(?.order_date) == 1995))), c4=COUNT(?.orders.WHERE((YEAR(?.order_date) == 1996))))",
+            id="unpacking_in_iterable",
+        ),
+        pytest.param(
+            with_import_statement,
+            "?.customers.WHERE(ISIN(?.nation.name, ['Canada', 'Mexico']))",
+            id="with_import_statement",
+        ),
+        pytest.param(
+            exception_handling,
+            "?.customers.WHERE(ISIN(?.nation.name, ['Canada', 'Mexico']))",
+            id="exception_handling",
+        ),
+        pytest.param(
+            class_handling,
+            "?.customers.WHERE(ISIN(?.nation.name, ['Canada', 'Mexico']))",
+            id="class_handling",
         ),
     ],
 )
@@ -471,7 +522,6 @@ def test_init_pydough_context(
     sample_graph: GraphMetadata = get_sample_graph("TPCH")
     new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
     answer: UnqualifiedNode = new_func()
-    breakpoint()
     assert (
         repr(answer) == as_string
     ), "Mismatch between string representation of unqualified nodes and expected output"

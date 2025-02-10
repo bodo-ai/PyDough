@@ -44,11 +44,10 @@ class AddRootVisitor(ast.NodeTransformer):
         node.body = self.create_root_def() + node.body
         return self.generic_visit(node)
 
-    def visit_Assign(self, node):
+    def visit_Assign(self, node) -> ast.AST:
+        """Handle unpacking assignments like `a, (b, c) = ...`"""
         for target in node.targets:
-            if isinstance(target, ast.Name):
-                # self._known_names.add(target.id)
-                self.current_scope().add(target.id)
+            self._scope_targets(target)  # Reuse existing scope-tracking logic
         return self.generic_visit(node)
 
     def create_root_def(self) -> list[ast.AST]:
@@ -68,7 +67,6 @@ class AddRootVisitor(ast.NodeTransformer):
     def visit_FunctionDef(self, node):
         self.current_scope().add(node.name)
         self.enter_scope()
-        # self._known_names.add(node.name)
         params = []
         params += [p.arg for p in node.args.posonlyargs]
         params += [p.arg for p in node.args.args]
@@ -77,7 +75,6 @@ class AddRootVisitor(ast.NodeTransformer):
             params.append(node.args.vararg.arg)
         if node.args.kwarg:
             params.append(node.args.kwarg.arg)
-        # self._known_names.update(params)
         self.current_scope().update(params)
         decorator_list: list[ast.AST] = []
         for deco in node.decorator_list:
@@ -121,17 +118,9 @@ class AddRootVisitor(ast.NodeTransformer):
         return result
 
     def visit_For(self, node):
-        if isinstance(node.target, ast.Name):
-            # self._known_names.add(node.target.id)
-            self.current_scope().add(node.target.id)
+        self._scope_targets(node.target)
+        # Visit the rest of the node as usual
         return self.generic_visit(node)
-        # return ast.For(  # type: ignore
-        #     target=node.target,
-        #     iter=self.visit_expression(node.iter),
-        #     body=[self.visit_statement(elem) for elem in node.body],
-        #     orelse=[self.visit_statement(elem) for elem in node.orelse],
-        #     type_comment=node.type_comment,
-        # )
 
     def visit_Name(self, node):
         unrecognized_var: bool = False
@@ -147,6 +136,163 @@ class AddRootVisitor(ast.NodeTransformer):
             return result
         else:
             return node
+
+    def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
+        """Handle lambda function parameters and scoping."""
+        # Enter new scope
+        self.enter_scope()
+
+        # Extract and track lambda parameters
+        params = []
+        params += [p.arg for p in node.args.posonlyargs]
+        params += [p.arg for p in node.args.args]
+        params += [p.arg for p in node.args.kwonlyargs]
+        if node.args.vararg:
+            params.append(node.args.vararg.arg)
+        if node.args.kwarg:
+            params.append(node.args.kwarg.arg)
+        self.current_scope().update(params)
+
+        # Visit the lambda body (an expression)
+        answer = self.generic_visit(node)
+
+        # Exit scope
+        self.exit_scope()
+
+        return answer
+
+    def visit_DictComp(self, node: ast.DictComp) -> ast.AST:
+        """Handle dictionary comprehensions.E.g: {k: v for k in range(3) for v in range(3)}"""
+        # New scope for comprehension
+        self.enter_scope()
+        # Track generator targets (e.g., generator: "for k, v in items", targets being "k,v")
+        # Note that there can be multiple generators (e.g. "{k: v for k in range(3) for v in range(3)}")
+        # This gives us node.generators => [for k in range(3),for v in range(3)]
+        for generator in node.generators:
+            self._scope_targets(generator.target)
+        # Transform key and value. We use self.visit as opposed to self.generic_visit as
+        # we would like to dispatch to a specific visitor method such as visit_Name, etc.
+        new_key = self.visit(node.key)
+        new_value = self.visit(node.value)
+        answer = ast.DictComp(
+            key=new_key,
+            value=new_value,
+            generators=[self.visit(gen) for gen in node.generators],
+        )
+        self.exit_scope()
+        return answer
+
+    def visit_ListComp(self, node: ast.ListComp) -> ast.AST:
+        """Handle list comprehensions. Eg: [ord(c) for line in file for c in line]"""
+        self.enter_scope()  # New scope for comprehension
+        # Track generator targets (e.g., i in "for i in items")
+        for generator in node.generators:
+            self._scope_targets(generator.target)
+        # Transform elt. The elt attribute is an ast node that corresponds
+        # to the expression before the first for in a list comprehension.
+        new_elt = self.visit(node.elt)
+        answer = ast.ListComp(
+            elt=new_elt,
+            generators=[self.visit(gen) for gen in node.generators],
+        )
+        self.exit_scope()
+        return answer
+
+    def visit_SetComp(self, node: ast.SetComp) -> ast.AST:
+        """
+        Handle set comprehensions.
+            Eg:{
+                COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+                for i in range(3)
+            }
+        """
+        self.enter_scope()  # New scope for comprehension
+        # Track generator targets (e.g., i in "for i in items")
+        for generator in node.generators:
+            self._scope_targets(generator.target)
+        # Transform elt. The elt attribute is an ast node that corresponds
+        # to the expression before the first for in a set comprehension.
+        new_elt = self.visit(node.elt)
+        answer = ast.SetComp(
+            elt=new_elt,
+            generators=[self.visit(gen) for gen in node.generators],
+        )
+        self.exit_scope()
+        return answer
+
+    def visit_GeneratorExp(self, node: ast.GeneratorExp) -> ast.AST:
+        """
+        Handle generator comprehensions.
+            Eg: (COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+                for i in range(3))
+        """
+        self.enter_scope()  # New scope for comprehension
+        # Track generator targets (e.g., i in "for i in items")
+        for generator in node.generators:
+            self._scope_targets(generator.target)
+        # Transform elt. The elt attribute is an ast node that corresponds
+        # to the expression before the first for in a generator comprehension.
+        new_elt = self.visit(node.elt)
+        answer = ast.GeneratorExp(
+            elt=new_elt,
+            generators=[self.visit(gen) for gen in node.generators],
+        )
+        self.exit_scope()
+        return answer
+
+    def _scope_targets(self, target: ast.expr) -> None:
+        """Add variables to the current scope."""
+        # if target is a tuple like (k,v).
+        if isinstance(target, (ast.Tuple, ast.List)):
+            for elt in target.elts:
+                if isinstance(elt, ast.Name):
+                    self.current_scope().add(elt.id)
+                elif isinstance(elt, (ast.Tuple, ast.List)):
+                    self._scope_targets(elt)
+        # if target is single variable like k.
+        elif isinstance(target, ast.Name):
+            self.current_scope().add(target.id)
+
+    def visit_With(self, node: ast.With) -> ast.AST:
+        """Handle context manager variables declared with `as`"""
+        # Track all variables bound by context manager(s)
+        self.enter_scope()
+        # Let's loop through the contexts. (e.g tf.TemporaryFile() as tf_handle1)
+        for item in node.items:
+            if item.optional_vars:
+                self._scope_targets(item.optional_vars)
+        answer = self.generic_visit(node)
+        self.exit_scope()
+        return answer
+
+    def visit_Import(self, node: ast.Import) -> ast.AST:
+        """Track imported module aliases like `import x as y`, `import a.b.c`"""
+        for alias in node.names:
+            name = alias.asname or alias.name.split(".", 1)[0]
+            self.current_scope().add(name)
+        return self.generic_visit(node)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.AST:
+        """Track specific imports like `from x import y as z`"""
+        for alias in node.names:
+            name = alias.asname or alias.name
+            self.current_scope().add(name)
+        return self.generic_visit(node)
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
+        """Track exception variables like `except Error as err`"""
+        # Add exception binding name to current scope
+        if node.name:
+            self.current_scope().add(node.name)
+        # Process body normally
+        return self.generic_visit(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
+        """Handle class definitions and their scoped content"""
+        # Track class name in current scope
+        self.current_scope().add(node.name)
+
+        return self.generic_visit(node)
 
 
 def transform_code(
@@ -218,13 +364,12 @@ def init_pydough_context(graph: GraphMetadata):
     def decorator(func):
         source: str = inspect.getsource(func)
         graph_dict: dict[str, GraphMetadata] = {"_graph_value": graph}
-        breakpoint()
         new_tree: ast.AST = transform_code(source, graph_dict, set(func.__globals__))
-        breakpoint()
         assert isinstance(new_tree, ast.Module)
         file_name: str = func.__code__.co_filename
         new_code = compile(new_tree, file_name, "exec")
         idx = -1
+        # Only get the CodeType corresponding to the decorated function
         for i in range(len(new_code.co_consts)):
             if new_code.co_consts[i].__class__.__name__ == "code":
                 idx = i
@@ -233,7 +378,6 @@ def init_pydough_context(graph: GraphMetadata):
         new_func = types.FunctionType(
             new_code.co_consts[idx], func.__globals__ | graph_dict
         )
-        breakpoint()
         #######################################################################
         ###              FOR DEBUGGING: UNCOMMENT THIS SECTION              ###
         #######################################################################
