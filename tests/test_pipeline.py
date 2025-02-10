@@ -895,7 +895,7 @@ from pydough.unqualified import (
             (
                 correl_15,
                 "correl_15",
-                lambda: pd.DataFrame({"n": [212]}),
+                lambda: pd.DataFrame({"n": [61]}),
             ),
             id="correl_15",
         ),

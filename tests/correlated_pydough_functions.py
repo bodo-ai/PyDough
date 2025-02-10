@@ -176,8 +176,8 @@ def correl_13():
     # is less than a 50% markup over the supply cost. Only considers suppliers
     # from nations #1/#2/#3, and small parts.
     # (This is a correlated SEMI-joins)
-    selected_part = part.WHERE(STARTSWITH(container, "SM")).WHERE(
-        retail_price < (BACK(1).supplycost * 1.5)
+    selected_part = part.WHERE(
+        STARTSWITH(container, "SM") & (retail_price < (BACK(1).supplycost * 1.5))
     )
     selected_supply_records = supply_records.WHERE(HAS(selected_part))
     supplier_info = Suppliers.WHERE(nation_key <= 3)(
@@ -194,8 +194,10 @@ def correl_14():
     # the part is below the average for all parts from the supplier. Only
     # considers suppliers from nations #19, and LG DRUM parts.
     # (This is multiple correlated SEMI-joins)
-    selected_part = part.WHERE(container == "LG DRUM").WHERE(
-        (retail_price < (BACK(1).supplycost * 1.5)) & (retail_price < BACK(2).avg_price)
+    selected_part = part.WHERE(
+        (container == "LG DRUM")
+        & (retail_price < (BACK(1).supplycost * 1.5))
+        & (retail_price < BACK(2).avg_price)
     )
     selected_supply_records = supply_records.WHERE(HAS(selected_part))
     supplier_info = Suppliers.WHERE(nation_key == 19)(
@@ -209,14 +211,15 @@ def correl_15():
     # Correlated back reference example #15: multiple correlation.
     # Count how many suppliers sell at least one part where the retail price
     # is less than a 50% markup over the supply cost, and the retail price of
-    # the part is below the 90% of the average of the retail price for all
+    # the part is below the 85% of the average of the retail price for all
     # parts globally and below the average for all parts from the supplier.
     # Only considers suppliers from nations #19, and LG DRUM parts.
     # (This is multiple correlated SEMI-joins & a correlated aggregate)
-    selected_part = part.WHERE(container == "LG DRUM").WHERE(
-        (retail_price < (BACK(1).supplycost * 1.5))
+    selected_part = part.WHERE(
+        (container == "LG DRUM")
+        & (retail_price < (BACK(1).supplycost * 1.5))
         & (retail_price < BACK(2).avg_price)
-        & (retail_price < BACK(3).avg_price * 0.9)
+        & (retail_price < BACK(3).avg_price * 0.85)
     )
     selected_supply_records = supply_records.WHERE(HAS(selected_part))
     supplier_info = Suppliers.WHERE(nation_key == 19)(

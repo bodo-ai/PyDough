@@ -11,7 +11,8 @@ from pydough.relational.relational_expressions import (
 
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
-from .join import Join
+from .empty_singleton import EmptySingleton
+from .join import Join, JoinType
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher
 from .relational_root import RelationalRoot
@@ -141,7 +142,23 @@ class ColumnPruner:
 
         # Determine the new node.
         output = new_node.copy(inputs=new_inputs)
-        return self._prune_identity_project(output), correl_refs
+        output = self._prune_identity_project(output)
+        # Special case: replace empty aggregation with VALUES () if possible.
+        if (
+            isinstance(output, Aggregate)
+            and len(output.keys) == 0
+            and len(output.aggregations) == 0
+        ):
+            return EmptySingleton(), correl_refs
+        # Special case: replace join where LHS is VALUES () with the RHS if
+        # possible.
+        if (
+            isinstance(output, Join)
+            and isinstance(output.inputs[0], EmptySingleton)
+            and output.join_types in ([JoinType.INNER], [JoinType.LEFT])
+        ):
+            return output.inputs[1], correl_refs
+        return output, correl_refs
 
     def prune_unused_columns(self, root: RelationalRoot) -> RelationalRoot:
         """
