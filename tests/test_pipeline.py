@@ -30,6 +30,9 @@ from correlated_pydough_functions import (
     correl_15,
     correl_16,
     correl_17,
+    correl_18,
+    correl_19,
+    correl_20,
 )
 from simple_pydough_functions import (
     agg_partition,
@@ -895,7 +898,7 @@ from pydough.unqualified import (
             (
                 correl_15,
                 "correl_15",
-                lambda: pd.DataFrame({"n": [212]}),
+                lambda: pd.DataFrame({"n": [61]}),
             ),
             id="correl_15",
         ),
@@ -944,6 +947,41 @@ from pydough.unqualified import (
                 ),
             ),
             id="correl_17",
+        ),
+        pytest.param(
+            (
+                correl_18,
+                "correl_18",
+                lambda: pd.DataFrame({"n": [697]}),
+            ),
+            id="correl_18",
+        ),
+        pytest.param(
+            (
+                correl_19,
+                "correl_19",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Supplier#000003934",
+                            "Supplier#000003887",
+                            "Supplier#000002628",
+                            "Supplier#000008722",
+                            "Supplier#000007971",
+                        ],
+                        "n_super_cust": [6160, 6142, 6129, 6127, 6117],
+                    }
+                ),
+            ),
+            id="correl_19",
+        ),
+        pytest.param(
+            (
+                correl_20,
+                "correl_20",
+                lambda: pd.DataFrame({"n": [3002]}),
+            ),
+            id="correl_20",
         ),
     ],
 )

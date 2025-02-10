@@ -176,8 +176,8 @@ def correl_13():
     # is less than a 50% markup over the supply cost. Only considers suppliers
     # from nations #1/#2/#3, and small parts.
     # (This is a correlated SEMI-joins)
-    selected_part = part.WHERE(STARTSWITH(container, "SM")).WHERE(
-        retail_price < (BACK(1).supplycost * 1.5)
+    selected_part = part.WHERE(
+        STARTSWITH(container, "SM") & (retail_price < (BACK(1).supplycost * 1.5))
     )
     selected_supply_records = supply_records.WHERE(HAS(selected_part))
     supplier_info = Suppliers.WHERE(nation_key <= 3)(
@@ -194,8 +194,10 @@ def correl_14():
     # the part is below the average for all parts from the supplier. Only
     # considers suppliers from nations #19, and LG DRUM parts.
     # (This is multiple correlated SEMI-joins)
-    selected_part = part.WHERE(container == "LG DRUM").WHERE(
-        (retail_price < (BACK(1).supplycost * 1.5)) & (retail_price < BACK(2).avg_price)
+    selected_part = part.WHERE(
+        (container == "LG DRUM")
+        & (retail_price < (BACK(1).supplycost * 1.5))
+        & (retail_price < BACK(2).avg_price)
     )
     selected_supply_records = supply_records.WHERE(HAS(selected_part))
     supplier_info = Suppliers.WHERE(nation_key == 19)(
@@ -209,14 +211,15 @@ def correl_15():
     # Correlated back reference example #15: multiple correlation.
     # Count how many suppliers sell at least one part where the retail price
     # is less than a 50% markup over the supply cost, and the retail price of
-    # the part is below the 90% of the average of the retail price for all
+    # the part is below the 85% of the average of the retail price for all
     # parts globally and below the average for all parts from the supplier.
     # Only considers suppliers from nations #19, and LG DRUM parts.
     # (This is multiple correlated SEMI-joins & a correlated aggregate)
-    selected_part = part.WHERE(container == "LG DRUM").WHERE(
-        (retail_price < (BACK(1).supplycost * 1.5))
+    selected_part = part.WHERE(
+        (container == "LG DRUM")
+        & (retail_price < (BACK(1).supplycost * 1.5))
         & (retail_price < BACK(2).avg_price)
-        & (retail_price < BACK(3).avg_price * 0.9)
+        & (retail_price < BACK(3).avg_price * 0.85)
     )
     selected_supply_records = supply_records.WHERE(HAS(selected_part))
     supplier_info = Suppliers.WHERE(nation_key == 19)(
@@ -253,3 +256,47 @@ def correl_17():
     region_info = region(fname=JOIN_STRINGS("-", LOWER(name), BACK(1).lname))
     nation_info = Nations(lname=LOWER(name)).WHERE(HAS(region_info))
     return nation_info(fullname=region_info.fname).ORDER_BY(fullname.ASC())
+
+
+def correl_18():
+    # Correlated back reference example #18: partition decorrelation edge case.
+    # Count how many orders corresponded to at least half of the total price
+    # spent by the ordering customer in a single day, but only if the customer
+    # ordered multiple orders in on that day. Only considers orders made in
+    # 1993.
+    # (This is a correlated aggregation access)
+    cust_date_groups = PARTITION(
+        Orders.WHERE(YEAR(order_date) == 1993),
+        name="o",
+        by=(customer_key, order_date),
+    )
+    selected_groups = cust_date_groups.WHERE(COUNT(o) > 1)(
+        total_price=SUM(o.total_price),
+    )(n_above_avg=COUNT(o.WHERE(total_price >= 0.5 * BACK(1).total_price)))
+    return TPCH(n=SUM(selected_groups.n_above_avg))
+
+
+def correl_19():
+    # Correlated back reference example #19: cardinality edge case.
+    # For every supplier, count how many customers in the same nation have a
+    # higher account balance than that supplier. Pick the 5 suppliers with the
+    # largest such count.
+    # (This is a correlated aggregation access)
+    super_cust = customers.WHERE(acctbal > BACK(2).account_balance)
+    return Suppliers.nation(name=BACK(1).name, n_super_cust=COUNT(super_cust)).TOP_K(
+        5, n_super_cust.DESC()
+    )
+
+
+def correl_20():
+    # Correlated back reference example #20: multiple ancestor uniqueness keys.
+    # Count the instances where a nation's suppliers shipped a part to a
+    # customer in the same nation, only counting instances where the order was
+    # made in June of 1998.
+    # (This is a correlated singular/semi access)
+    is_domestic = nation(domestic=name == BACK(5).name).domestic
+    selected_orders = Nations.customers.orders.WHERE(
+        (YEAR(order_date) == 1998) & (MONTH(order_date) == 6)
+    )
+    instances = selected_orders.lines.supplier.WHERE(is_domestic)
+    return TPCH(n=COUNT(instances))
