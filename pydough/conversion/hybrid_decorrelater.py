@@ -249,7 +249,6 @@ class Decorrelater:
         # First, find the height of the child subtree & its top-most level.
         child_root: HybridTree = child.subtree
         child_height: int = 1
-        # breakpoint()
         while child_root.parent is not None:
             child_height += 1
             child_root = child_root.parent
@@ -261,7 +260,6 @@ class Decorrelater:
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         additional_levels: int = 0
         current_level: HybridTree | None = old_parent
-        # breakpoint()
         new_agg_keys: list[HybridExpr] = []
         while current_level is not None:
             skip_join: bool = (
@@ -279,7 +277,6 @@ class Decorrelater:
                 new_agg_keys.append(rhs_key)
             current_level = current_level.parent
             additional_levels += 1
-        # breakpoint()
         child.subtree.join_keys = new_join_keys
         # If aggregating, update the aggregation keys accordingly.
         if is_aggregate:
