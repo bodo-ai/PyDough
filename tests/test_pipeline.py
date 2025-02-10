@@ -12,8 +12,7 @@ from bad_pydough_functions import (
     bad_slice_3,
     bad_slice_4,
 )
-from simple_pydough_functions import (
-    agg_partition,
+from correlated_pydough_functions import (
     correl_1,
     correl_2,
     correl_3,
@@ -31,6 +30,9 @@ from simple_pydough_functions import (
     correl_15,
     correl_16,
     correl_17,
+)
+from simple_pydough_functions import (
+    agg_partition,
     double_partition,
     exponentiation,
     function_sampler,
@@ -696,7 +698,7 @@ from pydough.unqualified import (
                 "correl_3",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["AFRICA" "AMERICA" "ASIA" "EUROPE" "MIDDLE EAST"],
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
                         "n_nations": [5, 5, 5, 0, 2],
                     }
                 ),
