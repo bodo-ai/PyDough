@@ -655,7 +655,7 @@ def test_pipeline_until_relational(
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
-    update_plan_tests: bool,
+    update_tests: bool,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
@@ -674,7 +674,7 @@ def test_pipeline_until_relational(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
     relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
-    if update_plan_tests:
+    if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
     else:

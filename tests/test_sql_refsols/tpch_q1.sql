@@ -1,0 +1,74 @@
+SELECT
+  L_RETURNFLAG,
+  L_LINESTATUS,
+  SUM_QTY,
+  SUM_BASE_PRICE,
+  SUM_DISC_PRICE,
+  SUM_CHARGE,
+  CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY,
+  CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE,
+  CAST(SUM_DISCOUNT AS REAL) / COUNT_ORDER AS AVG_DISC,
+  COUNT_ORDER
+FROM (
+  SELECT
+    COUNT() AS COUNT_ORDER,
+    SUM(L_DISCOUNT) AS SUM_DISCOUNT,
+    SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE,
+    SUM(L_QUANTITY) AS SUM_QTY,
+    SUM(TEMP_COL0) AS SUM_DISC_PRICE,
+    SUM(TEMP_COL1) AS SUM_CHARGE,
+    L_LINESTATUS,
+    L_RETURNFLAG
+  FROM (
+    SELECT
+      TEMP_COL0 * (
+        1 + L_TAX
+      ) AS TEMP_COL1,
+      L_DISCOUNT,
+      L_EXTENDEDPRICE,
+      L_LINESTATUS,
+      L_QUANTITY,
+      L_RETURNFLAG,
+      TEMP_COL0
+    FROM (
+      SELECT
+        L_EXTENDEDPRICE * (
+          1 - L_DISCOUNT
+        ) AS TEMP_COL0,
+        L_DISCOUNT,
+        L_EXTENDEDPRICE,
+        L_LINESTATUS,
+        L_QUANTITY,
+        L_RETURNFLAG,
+        L_TAX
+      FROM (
+        SELECT
+          L_DISCOUNT,
+          L_EXTENDEDPRICE,
+          L_LINESTATUS,
+          L_QUANTITY,
+          L_RETURNFLAG,
+          L_TAX
+        FROM (
+          SELECT
+            L_DISCOUNT,
+            L_EXTENDEDPRICE,
+            L_LINESTATUS,
+            L_QUANTITY,
+            L_RETURNFLAG,
+            L_SHIPDATE,
+            L_TAX
+          FROM LINEITEM
+        )
+        WHERE
+          L_SHIPDATE <= '1998-12-01'
+      )
+    )
+  )
+  GROUP BY
+    L_RETURNFLAG,
+    L_LINESTATUS
+)
+ORDER BY
+  L_RETURNFLAG,
+  L_LINESTATUS
