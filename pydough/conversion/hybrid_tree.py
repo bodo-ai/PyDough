@@ -494,17 +494,26 @@ class HybridCalc(HybridOperation):
         for name, expr in predecessor.terms.items():
             terms[name] = HybridRefExpr(name, expr.typ)
         renamings.update(predecessor.renamings)
+        new_renamings: dict[str, str] = {}
         for name, expr in new_expressions.items():
             if name in terms and terms[name] == expr:
                 continue
             expr = expr.apply_renamings(predecessor.renamings)
             used_name: str = name
             idx: int = 0
-            while used_name in terms or used_name in renamings:
+            while (
+                used_name in terms
+                or used_name in renamings
+                or used_name in new_renamings
+            ):
                 used_name = f"{name}_{idx}"
                 idx += 1
             terms[used_name] = expr
-            renamings[name] = used_name
+            new_renamings[name] = used_name
+        renamings.update(new_renamings)
+        for old_name, new_name in new_renamings.items():
+            expr = new_expressions.pop(old_name)
+            new_expressions[new_name] = expr
         super().__init__(terms, renamings, orderings, predecessor.unique_exprs)
         self.calc = Calc
         self.new_expressions = new_expressions
@@ -520,7 +529,10 @@ class HybridFilter(HybridOperation):
 
     def __init__(self, predecessor: HybridOperation, condition: HybridExpr):
         super().__init__(
-            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+            predecessor.terms,
+            predecessor.renamings,
+            predecessor.orderings,
+            predecessor.unique_exprs,
         )
         self.predecessor: HybridOperation = predecessor
         self.condition: HybridExpr = condition
@@ -566,7 +578,10 @@ class HybridLimit(HybridOperation):
         records_to_keep: int,
     ):
         super().__init__(
-            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+            predecessor.terms,
+            predecessor.renamings,
+            predecessor.orderings,
+            predecessor.unique_exprs,
         )
         self.predecessor: HybridOperation = predecessor
         self.records_to_keep: int = records_to_keep
@@ -1608,24 +1623,6 @@ class HybridTranslator:
                 back_expr, collection, steps_taken_so_far
             ).expr
             self.stack.pop()
-            # self.stack.append(parent_tree)
-            # Then, postprocess the output to account for the fact that a
-            # BACK level got skipped due to the change in subtree.
-            # match parent_result.expr:
-            #     case HybridRefExpr():
-            #         parent_result = HybridBackRefExpr(
-            #             parent_result.expr.name, 1, parent_result.typ
-            #         )
-            #     case HybridBackRefExpr():
-            #         parent_result = HybridBackRefExpr(
-            #             parent_result.expr.name,
-            #             parent_result.expr.back_idx + 1,
-            #             parent_result.typ,
-            #         )
-            #     case _:
-            #         raise ValueError(
-            #             f"Malformed expression for correlated reference: {parent_result}"
-            #         )
         elif remaining_steps_back == 0:
             # If there are no more steps back to be made, then the correlated
             # reference is to a reference from the current context.

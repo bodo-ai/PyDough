@@ -259,7 +259,7 @@ def correl_17():
 
 
 def correl_18():
-    # Correlated back reference example #18: TODO
+    # Correlated back reference example #18: partition decorrelation edge case.
     # Count how many orders corresponded to at least half of the total price
     # spent by the ordering customer in a single day, but only if the customer
     # ordered multiple orders in on that day. Only considers orders made in
@@ -274,3 +274,15 @@ def correl_18():
         total_price=SUM(o.total_price),
     )(n_above_avg=COUNT(o.WHERE(total_price >= 0.5 * BACK(1).total_price)))
     return TPCH(n=SUM(selected_groups.n_above_avg))
+
+
+def correl_19():
+    # Correlated back reference example #19: cardinality edge case.
+    # For every supplier, count how many customers in the same nation have a
+    # higher account balance than that supplier. Pick the 5 suppliers with the
+    # largest such count.
+    # (This is a correlated aggregation access)
+    super_cust = customers.WHERE(acctbal > BACK(2).account_balance)
+    return Suppliers.nation(name=BACK(1).name, n_super_cust=COUNT(super_cust)).TOP_K(
+        5, n_super_cust.DESC()
+    )

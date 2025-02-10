@@ -246,7 +246,7 @@ class Decorrelater:
         additional_levels: int = 0
         current_level: HybridTree | None = old_parent
         while current_level is not None:
-            for unique_key in current_level.pipeline[0].unique_exprs:
+            for unique_key in sorted(current_level.pipeline[0].unique_exprs, key=str):
                 lhs_key: HybridExpr | None = unique_key.shift_back(additional_levels)
                 rhs_key: HybridExpr | None = unique_key.shift_back(
                     additional_levels + child_height
