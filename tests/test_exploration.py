@@ -806,7 +806,7 @@ Call pydough.explain(collection, verbose=True) for more details.
 PyDough collection representing the following logic:
   TPCH
 
-This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
+This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed.
 
 The collection does not have any terms that can be included in a result if it is executed.
 
@@ -819,7 +819,7 @@ Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
 """,
                 """
-This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
+This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed.
 
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
@@ -839,7 +839,7 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ┌─── TPCH
-  └─── Calc[x=42, y=13]
+  └─── Calculate[x=42, y=13]
 
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
   x <- 42
@@ -885,7 +885,7 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ┌─── TPCH
-  └─┬─ Calc[n_customers=COUNT($1), avg_part_price=AVG($2.retail_price)]
+  └─┬─ Calculate[n_customers=COUNT($1), avg_part_price=AVG($2.retail_price)]
     ├─┬─ AccessChild
     │ └─── TableCollection[Customers]
     └─┬─ AccessChild
@@ -946,7 +946,7 @@ Call pydough.explain(collection, verbose=True) for more details.
 PyDough collection representing the following logic:
   ──┬─ TPCH
     ├─── TableCollection[Nations]
-    └─┬─ Calc[name=name, region_name=$1.name, num_customers=COUNT($2)]
+    └─┬─ Calculate[name=name, region_name=$1.name, num_customers=COUNT($2)]
       ├─┬─ AccessChild
       │ └─── SubCollection[region]
       └─┬─ AccessChild
@@ -1011,7 +1011,7 @@ PyDough collection representing the following logic:
     └─┬─ TableCollection[Regions]
       └─┬─ SubCollection[nations]
         ├─── SubCollection[customers]
-        └─── Calc[name=name, nation_name=BACK(1).name, region_name=BACK(2).name]
+        └─── Calculate[name=name, nation_name=BACK(1).name, region_name=BACK(2).name]
 
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
   name <- name (propagated from previous collection)
@@ -1060,7 +1060,7 @@ Call pydough.explain(collection, verbose=True) for more details.
 PyDough collection representing the following logic:
   ──┬─ TPCH
     ├─── TableCollection[Nations]
-    ├─── Calc[name=name]
+    ├─── Calculate[name=name]
     └─┬─ Where[($1.name == 'ASIA') & HAS($2) & (COUNT($3) > 100)]
       ├─┬─ AccessChild
       │ └─── SubCollection[region]
@@ -1141,7 +1141,7 @@ Call pydough.explain(collection, verbose=True) for more details.
 PyDough collection representing the following logic:
   ──┬─ TPCH
     ├─── TableCollection[Nations]
-    ├─── Calc[name=name]
+    ├─── Calculate[name=name]
     └─┬─ OrderBy[COUNT($1).DESC(na_pos='last'), name.ASC(na_pos='first')]
       └─┬─ AccessChild
         └─── SubCollection[suppliers]
@@ -1198,7 +1198,7 @@ Call pydough.explain(collection, verbose=True) for more details.
 PyDough collection representing the following logic:
   ──┬─ TPCH
     ├─── TableCollection[Parts]
-    ├─┬─ Calc[name=name, n_suppliers=COUNT($1)]
+    ├─┬─ Calculate[name=name, n_suppliers=COUNT($1)]
     │ └─┬─ AccessChild
     │   └─── SubCollection[suppliers_of_part]
     └─── TopK[100, n_suppliers.DESC(na_pos='last'), name.ASC(na_pos='first')]
@@ -1305,7 +1305,7 @@ PyDough collection representing the following logic:
     ├─┬─ Partition[name='p', by=part_type]
     │ └─┬─ AccessChild
     │   └─── TableCollection[Parts]
-    ├─┬─ Calc[part_type=part_type, avg_price=AVG($1.retail_price)]
+    ├─┬─ Calculate[part_type=part_type, avg_price=AVG($1.retail_price)]
     │ └─┬─ AccessChild
     │   └─── PartitionChild[p]
     └─┬─ Where[avg_price >= 27.5]
@@ -1512,7 +1512,7 @@ The term is the following expression: name
 
 This is column 'name' of collection 'Nations'
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Nations(name)
 """,
@@ -1543,7 +1543,7 @@ The term is the following expression: $1.name
 
 This is a reference to expression 'name' of child $1
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Nations(region.name)
 """,
@@ -1639,7 +1639,7 @@ The term is the following expression: $1.name
 
 This is a reference to expression 'name' of child $1
 
-This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated.
+This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated.
 For example, the following is valid:
   TPCH.Regions(COUNT(nations.suppliers.name))
 """,
@@ -1672,7 +1672,7 @@ This is a reference to expression 'name' of the 1st ancestor of the collection, 
   ──┬─ TPCH
     └─── TableCollection[Regions]
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Regions.nations(BACK(1).name)
 """,
@@ -1706,7 +1706,7 @@ The term is the following expression: $1.name
 
 This is a reference to expression 'name' of child $1
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Lineitems.part(BACK(1).supplier.name)
         """,
@@ -1773,7 +1773,7 @@ The term is the following expression: $1.extended_price
 
 This is a reference to expression 'extended_price' of child $1
 
-This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated.
+This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated.
 For example, the following is valid:
   TPCH.PartSupp.part(COUNT(BACK(1).lines.extended_price))
         """,
@@ -1845,7 +1845,7 @@ This expression counts how many records of the following subcollection exist for
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Regions(COUNT(nations.suppliers.WHERE(account_balance > 0)))
         """,
@@ -1887,7 +1887,7 @@ This expression calls the function 'AVG' on the following arguments, aggregating
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Partition(Parts, name='p', by=part_type)(AVG(p.retail_price))
         """,
@@ -1959,7 +1959,7 @@ This expression calls the function 'LOWER' on the following arguments:
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Nations(LOWER(name))
         """,
@@ -1993,7 +1993,7 @@ This expression combines the following arguments with the '*' operator:
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Lineitems(extended_price * (1 - discount))
         """,
@@ -2029,7 +2029,7 @@ This expression calls the function 'IFF' on the following arguments:
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Suppliers(IFF(account_balance < 0, 0, account_balance))
         """,
@@ -2068,7 +2068,7 @@ This expression returns whether the collection does not have any records of the 
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Customers(HASNOT(orders))
         """,
@@ -2112,7 +2112,7 @@ This expression returns whether the collection has any records of the following 
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.Parts(HAS(supply_records.supplier.WHERE(nation.name == 'GERMANY')))
         """,

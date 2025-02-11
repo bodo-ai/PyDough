@@ -62,7 +62,7 @@ class Where(AugmentingChildOperator):
         """
         if self._condition is None:
             raise PyDoughQDAGException(
-                "Cannot access `condition` of a Calc node before adding calc terms with `with_condition`"
+                "Cannot access `condition` of a WHERE node before adding the predicate with `with_condition`"
             )
         return self._condition
 

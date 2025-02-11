@@ -6,7 +6,7 @@ nodes to said hybrid nodes.
 
 __all__ = [
     "HybridBackRefExpr",
-    "HybridCalc",
+    "HybridCalculate",
     "HybridChildRefExpr",
     "HybridCollation",
     "HybridCollectionAccess",
@@ -39,7 +39,7 @@ from pydough.metadata import (
 )
 from pydough.qdag import (
     BackReferenceExpression,
-    Calc,
+    Calculate,
     ChildOperator,
     ChildOperatorChildAccess,
     ChildReferenceCollection,
@@ -377,10 +377,10 @@ class HybridOperation:
     - `terms`: mapping of names to expressions accessible from that point in
                the pipeline execution.
     - `renamings`: mapping of names to a new name that should be used to access
-               them from within `terms`. This is used when a `CALC` overrides a
-               term name so that future invocations of the term name use the
-               renamed version, while key operations like joins can still
-               access the original version.
+               them from within `terms`. This is used when a `CALCULATE`
+               overrides a term name so that future invocations of the term
+               name use the renamed version, while key operations like joins
+               can still access the original version.
     - `orderings`: list of collation expressions that specify the order
                that a hybrid operation is sorted by.
     - `unique_exprs`: list of expressions that are used to uniquely identify
@@ -455,9 +455,9 @@ class HybridPartitionChild(HybridOperation):
         return "PARTITION_CHILD[*]"
 
 
-class HybridCalc(HybridOperation):
+class HybridCalculate(HybridOperation):
     """
-    Class for HybridOperation corresponding to a CALC operation.
+    Class for HybridOperation corresponding to a CALCULATE operation.
     """
 
     def __init__(
@@ -483,11 +483,10 @@ class HybridCalc(HybridOperation):
             terms[used_name] = expr
             renamings[name] = used_name
         super().__init__(terms, renamings, orderings, predecessor.unique_exprs)
-        self.calc = Calc
         self.new_expressions = new_expressions
 
     def __repr__(self):
-        return f"CALC[{self.new_expressions}]"
+        return f"CALCULATE[{self.new_expressions}]"
 
 
 class HybridFilter(HybridOperation):
@@ -1213,14 +1212,14 @@ class HybridTranslator:
         child_idx_mapping: dict[int, int],
     ) -> None:
         """
-        Helper utility that takes any children of a child operator (CALC,
+        Helper utility that takes any children of a child operator (CALCULATE,
         WHERE, etc.) and builds the corresponding HybridTree subtree,
         where the parent of the subtree's root is absent instead of the
         current level, and inserts the corresponding HybridConnection node.
 
         Args:
             `hybrid`: the HybridTree having children added to it.
-            `child_operator`: the collection QDAG node (CALC, WHERE, etc.)
+            `child_operator`: the collection QDAG node (CALCULATE, WHERE, etc.)
             containing the children.
             `child_idx_mapping`: a mapping of indices of children of the
             original `child_operator` to the indices of children of the hybrid
@@ -1252,7 +1251,7 @@ class HybridTranslator:
                         self.identify_connection_types(
                             col.expr, child_idx, reference_types
                         )
-                case Calc():
+                case Calculate():
                     for expr in child_operator.calc_term_values.values():
                         self.identify_connection_types(expr, child_idx, reference_types)
                 case PartitionBy():
@@ -1733,7 +1732,7 @@ class HybridTranslator:
 
         Returns:
             A tuple containing a dictionary of new expressions for generating
-            a calc and a list of the new HybridCollation values.
+            a `CALCcULATE` and a list of the new HybridCollation values.
         """
         new_expressions: dict[str, HybridExpr] = {}
         hybrid_orderings: list[HybridCollation] = []
@@ -1786,7 +1785,7 @@ class HybridTranslator:
                 )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
-            case Calc():
+            case Calculate():
                 hybrid = self.make_hybrid_tree(node.preceding_context, parent)
                 self.populate_children(hybrid, node, child_ref_mapping)
                 new_expressions: dict[str, HybridExpr] = {}
@@ -1796,7 +1795,7 @@ class HybridTranslator:
                     )
                     new_expressions[name] = expr
                 hybrid.pipeline.append(
-                    HybridCalc(
+                    HybridCalculate(
                         hybrid.pipeline[-1],
                         new_expressions,
                         hybrid.pipeline[-1].orderings,
@@ -1836,7 +1835,7 @@ class HybridTranslator:
                     hybrid, node.collation, child_ref_mapping
                 )
                 hybrid.pipeline.append(
-                    HybridCalc(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
+                    HybridCalculate(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
                 )
                 if isinstance(node, TopK):
                     hybrid.pipeline.append(

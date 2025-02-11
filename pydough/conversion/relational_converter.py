@@ -14,7 +14,7 @@ from pydough.metadata import (
     SimpleTableMetadata,
 )
 from pydough.qdag import (
-    Calc,
+    Calculate,
     CollectionAccess,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
@@ -46,7 +46,7 @@ from pydough.types import BooleanType, Int64Type, UnknownType
 from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
-    HybridCalc,
+    HybridCalculate,
     HybridChildRefExpr,
     HybridCollation,
     HybridCollectionAccess,
@@ -678,17 +678,17 @@ class RelTranslation:
         )
         return TranslationOutput(out_rel, context.expressions)
 
-    def translate_calc(
+    def translate_calculate(
         self,
-        node: HybridCalc,
+        node: HybridCalculate,
         context: TranslationOutput,
     ) -> TranslationOutput:
         """
-        Converts a calc into a project on top of its child to derive additional
-        terms.
+        Converts a CALCULATE into a project on top of its child to derive
+        additional terms.
 
         Args:
-            `node`: the node corresponding to the calc being derived.
+            `node`: the node corresponding to the CALCULATE being derived.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts and the corresponding relational node.
@@ -849,9 +849,9 @@ class RelTranslation:
             case HybridPartitionChild():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_partition_child(operation, context)
-            case HybridCalc():
+            case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
-                result = self.translate_calc(operation, context)
+                result = self.translate_calculate(operation, context)
             case HybridFilter():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
@@ -877,8 +877,8 @@ class RelTranslation:
         node: PyDoughCollectionQDAG,
     ) -> PyDoughCollectionQDAG:
         """
-        Transforms the final PyDough collection by appending it with an extra CALC
-        containing all of the columns that are output.
+        Transforms the final PyDough collection by appending it with an extra
+        CALCULATE containing all of the columns that are output.
         """
         # Fetch all of the expressions that should be kept in the final output
         original_calc_terms: set[str] = node.calc_terms
@@ -889,7 +889,7 @@ class RelTranslation:
             all_names.add(name)
         final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
         children: list[PyDoughCollectionQDAG] = []
-        final_calc: Calc = Calc(node, children).with_terms(final_terms)
+        final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
         return final_calc
 
 

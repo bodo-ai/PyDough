@@ -12,7 +12,7 @@ Unqualified nodes are the first intermediate representation (IR) created by PyDo
 - `UnqualifiedRoot`: Represents the root of an unqualified node tree.
 - `UnqualifiedLiteral`: Represents a literal value in an unqualified node tree.
 - `UnqualifiedAccess`: Represents accessing a property from another unqualified node.
-- `UnqualifiedCalc`: Represents a CALC clause being done onto another unqualified node.
+- `UnqualifiedCalculate`: Represents a CALCULATE clause being done onto another unqualified node.
 - `UnqualifiedWhere`: Represents a WHERE clause being done onto another unqualified node.
 - `UnqualifiedOrderBy`: Represents an ORDER BY clause being done onto another unqualified node.
 - `UnqualifiedTopK`: Represents a TOP K clause being done onto another unqualified node.

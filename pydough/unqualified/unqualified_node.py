@@ -7,7 +7,7 @@ __all__ = [
     "UnqualifiedAccess",
     "UnqualifiedBack",
     "UnqualifiedBinaryOperation",
-    "UnqualifiedCalc",
+    "UnqualifiedCalculate",
     "UnqualifiedLiteral",
     "UnqualifiedNode",
     "UnqualifiedOperation",
@@ -242,6 +242,9 @@ class UnqualifiedNode(ABC):
         return UnqualifiedOperation("NOT", [self])
 
     def __call__(self, *args, **kwargs: dict[str, object]):
+        return self.CALCULATE(*args, **kwargs)
+
+    def CALCULATE(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
         counter = 0
         for arg in args:
@@ -258,7 +261,7 @@ class UnqualifiedNode(ABC):
             calc_args.append((name, unqualified_arg))
         for name, arg in kwargs.items():
             calc_args.append((name, self.coerce_to_unqualified(arg)))
-        return UnqualifiedCalc(self, calc_args)
+        return UnqualifiedCalculate(self, calc_args)
 
     def WHERE(self, cond: object) -> "UnqualifiedWhere":
         cond_unqualified: UnqualifiedNode = self.coerce_to_unqualified(cond)
@@ -515,9 +518,9 @@ class UnqualifiedAccess(UnqualifiedNode):
         self._parcel: tuple[UnqualifiedNode, str] = (predecessor, name)
 
 
-class UnqualifiedCalc(UnqualifiedNode):
+class UnqualifiedCalculate(UnqualifiedNode):
     """
-    Implementation of UnqualifiedNode used to refer to a CALC clause being
+    Implementation of UnqualifiedNode used to refer to a CALCULATE clause being
     done onto another UnqualifiedNode.
     """
 
@@ -654,7 +657,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             return f"{display_raw(unqualified._parcel[0])}.{method}(na_pos={pos})"
         case UnqualifiedAccess():
             return f"{display_raw(unqualified._parcel[0])}.{unqualified._parcel[1]}"
-        case UnqualifiedCalc():
+        case UnqualifiedCalculate():
             for name, node in unqualified._parcel[1]:
                 term_strings.append(f"{name}={display_raw(node)}")
             return f"{display_raw(unqualified._parcel[0])}({', '.join(term_strings)})"

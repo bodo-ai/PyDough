@@ -1,6 +1,6 @@
 """
 Defines an abstract subclass of ChildOperator for operations that augment their
-preceding context without stepping down into another context, like CALC or
+preceding context without stepping down into another context, like CALCULATE or
 WHERE.
 """
 
@@ -10,7 +10,7 @@ from collections.abc import MutableSequence
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.expressions import CollationExpression
+from pydough.qdag.expressions import CollationExpression, PyDoughExpressionQDAG
 
 from .child_access import ChildAccess
 from .child_operator import ChildOperator
@@ -39,6 +39,10 @@ class AugmentingChildOperator(ChildOperator):
     @property
     def preceding_context(self) -> PyDoughCollectionQDAG:
         return self._preceding_context
+
+    @property
+    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+        return self.preceding_context.ancestral_mapping
 
     @property
     def ordering(self) -> list[CollationExpression] | None:

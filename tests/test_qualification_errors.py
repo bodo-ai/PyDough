@@ -38,7 +38,7 @@ def bad_pydough_impl_02(root: UnqualifiedNode) -> UnqualifiedNode:
     ```
     The problem: there is no function named FIZZBUZZ, so this looks like a
     CALC term of a subcollection, which cannot be used as an expression inside
-    a CALC.
+    a CALCULATE.
     """
     return root.Nations(nation_name=root.FIZZBUZZ(root.name))
 
@@ -114,7 +114,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     ```
     The problem: there is no function named MUL or SUB, so this looks like a
     CALC term of a subcollection, which cannot be used as an expression inside
-    a CALC.
+    a CALCULATE.
     """
     return root.Lineitems(v=root.MUL(root.extended_price, root.SUB(1, root.discount)))
 

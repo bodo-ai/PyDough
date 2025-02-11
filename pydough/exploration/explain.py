@@ -21,7 +21,7 @@ from pydough.metadata.properties import (
     TableColumnMetadata,
 )
 from pydough.qdag import (
-    Calc,
+    Calculate,
     ChildOperator,
     ExpressionFunctionCall,
     GlobalContext,
@@ -349,7 +349,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         match qualified_node:
             case GlobalContext():
                 lines.append(
-                    "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed."
+                    "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed."
                 )
             case TableCollection():
                 collection_name = qualified_node.collection.name
@@ -382,7 +382,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                             lines.append(f"  child ${idx + 1}: {child.to_string()}")
                     lines.append("")
                 match qualified_node:
-                    case Calc():
+                    case Calculate():
                         lines.append(
                             "The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:"
                         )

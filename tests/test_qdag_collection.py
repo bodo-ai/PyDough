@@ -6,7 +6,7 @@ import pytest
 from test_utils import (
     BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
-    CalcInfo,
+    CalculateInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
     CollectionTestInfo,
@@ -83,7 +83,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
     )
     ```
     """
-    test_info: CollectionTestInfo = TableCollectionInfo("Regions") ** CalcInfo(
+    test_info: CollectionTestInfo = TableCollectionInfo("Regions") ** CalculateInfo(
         [
             SubCollectionInfo("suppliers")
             ** SubCollectionInfo("parts_supplied")
@@ -95,7 +95,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                     [ReferenceInfo("ship_mode"), LiteralInfo("AIR", StringType())],
                 ),
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [
                     SubCollectionInfo("order")
                     ** SubCollectionInfo("customer")
@@ -153,13 +153,13 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
     tree_string_representation: str = """
 ──┬─ TPCH
   ├─── TableCollection[Regions]
-  └─┬─ Calc[region_name=name, intra_ratio=SUM($1.adj_value) / SUM($1.value)]
+  └─┬─ Calculate[region_name=name, intra_ratio=SUM($1.adj_value) / SUM($1.value)]
     └─┬─ AccessChild
       └─┬─ SubCollection[suppliers]
         └─┬─ SubCollection[parts_supplied]
           ├─── SubCollection[ps_lines]
           ├─── Where[ship_mode == 'AIR']
-          └─┬─ Calc[value=BACK(1).retail_price * quantity, adj_value=BACK(1).retail_price * (quantity * IFF(BACK(3).name == $1.name, 1, 0))]
+          └─┬─ Calculate[value=BACK(1).retail_price * quantity, adj_value=BACK(1).retail_price * (quantity * IFF(BACK(3).name == $1.name, 1, 0))]
             └─┬─ AccessChild
               └─┬─ SubCollection[order]
                 └─┬─ SubCollection[customer]
@@ -172,7 +172,9 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
     "calc_pipeline, expected_calcs, expected_total_names",
     [
         pytest.param(
-            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            CalculateInfo(
+                [], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())
+            ),
             {"x": 0, "y": 1},
             {
                 "x",
@@ -189,12 +191,12 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
             id="global_calc",
         ),
         pytest.param(
-            CalcInfo(
+            CalculateInfo(
                 [
                     TableCollectionInfo("Suppliers"),
                     TableCollectionInfo("Parts")
                     ** SubCollectionInfo("lines")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         value=FunctionInfo(
                             "MUL", [ReferenceInfo("quantity"), ReferenceInfo("tax")]
@@ -253,7 +255,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
             ),
             {},
@@ -272,7 +274,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
                 )
             ),
@@ -294,7 +296,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
                 )
                 ** SubCollectionInfo("nations")
@@ -316,7 +318,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
             (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
                 )
             ),
@@ -338,10 +340,10 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [], foo=LiteralInfo(42, Int64Type()), bar=ReferenceInfo("name")
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     fizz=FunctionInfo(
                         "ADD", [ReferenceInfo("foo"), LiteralInfo(1, Int64Type())]
@@ -405,7 +407,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
             (
                 TableCollectionInfo("Parts")
                 ** SubCollectionInfo("suppliers_of_part")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     good_comment=FunctionInfo(
                         "EQU",
@@ -543,7 +545,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                         "NEQ", [ReferenceInfo("name"), LiteralInfo("USA", StringType())]
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
@@ -571,7 +573,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 ** SubCollectionInfo("suppliers")
                 ** SubCollectionInfo("supply_records")
                 ** SubCollectionInfo("lines")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 4),
                     nation_name=BackReferenceExpressionInfo("name", 3),
@@ -620,7 +622,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
             (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("lines_sourced_from")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     source_region_name=BackReferenceExpressionInfo("name", 1),
                     taxation=ReferenceInfo("tax"),
@@ -666,7 +668,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -684,7 +686,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -692,7 +694,7 @@ def region_intra_ratio() -> tuple[CollectionTestInfo, str, str]:
                 ),
             )
             ** SubCollectionInfo("parts")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 part_name=ReferenceInfo("name"),
                 container=ReferenceInfo("container"),
@@ -754,21 +756,23 @@ def test_collections_calc_terms(
     "calc_pipeline, expected_string, expected_tree_string",
     [
         pytest.param(
-            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            CalculateInfo(
+                [], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())
+            ),
             "TPCH(x=1, y=3)",
             """
 ┌─── TPCH
-└─── Calc[x=1, y=3]
+└─── Calculate[x=1, y=3]
 """,
             id="global_calc",
         ),
         pytest.param(
-            CalcInfo(
+            CalculateInfo(
                 [
                     TableCollectionInfo("Suppliers"),
                     TableCollectionInfo("Parts")
                     ** SubCollectionInfo("lines")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         value=FunctionInfo(
                             "MUL", [ReferenceInfo("quantity"), ReferenceInfo("tax")]
@@ -783,13 +787,13 @@ def test_collections_calc_terms(
             "TPCH(n_balance=SUM(Suppliers.account_balance), t_value=SUM(Parts.lines(value=quantity * tax).value))",
             """
 ┌─── TPCH
-└─┬─ Calc[n_balance=SUM($1.account_balance), t_value=SUM($2.value)]
+└─┬─ Calculate[n_balance=SUM($1.account_balance), t_value=SUM($2.value)]
   ├─┬─ AccessChild
   │ └─── TableCollection[Suppliers]
   └─┬─ AccessChild
     └─┬─ TableCollection[Parts]
       ├─── SubCollection[lines]
-      └─── Calc[value=quantity * tax]
+      └─── Calculate[value=quantity * tax]
 """,
             id="global_nested_calc",
         ),
@@ -824,20 +828,20 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
             ),
             "TPCH.Regions()",
             """
 ──┬─ TPCH
   ├─── TableCollection[Regions]
-  └─── Calc[]
+  └─── Calculate[]
 """,
             id="regions_empty_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 region_name=ReferenceInfo("name"),
                 adjusted_key=FunctionInfo(
@@ -854,7 +858,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Regions]
-  └─── Calc[region_name=name, adjusted_key=(key - 1) * 2]
+  └─── Calculate[region_name=name, adjusted_key=(key - 1) * 2]
 """,
             id="regions_calc",
         ),
@@ -873,7 +877,7 @@ def test_collections_calc_terms(
                     "NEQ", [ReferenceInfo("name"), LiteralInfo("USA", StringType())]
                 ),
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
@@ -885,14 +889,14 @@ def test_collections_calc_terms(
   └─┬─ Where[name != 'ASIA']
     ├─── SubCollection[nations]
     ├─── Where[name != 'USA']
-    └─── Calc[region_name=BACK(1).name, nation_name=name]
+    └─── Calculate[region_name=BACK(1).name, nation_name=name]
 """,
             id="regions_nations_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("suppliers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("nation_name"),
@@ -903,7 +907,7 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
     ├─── SubCollection[suppliers]
-    └─── Calc[region_name=BACK(1).name, nation_name=nation_name, supplier_name=name]
+    └─── Calculate[region_name=BACK(1).name, nation_name=nation_name, supplier_name=name]
 """,
             id="regions_suppliers_calc",
         ),
@@ -922,7 +926,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Nations")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("suppliers")],
                 nation_name=ReferenceInfo("name"),
                 total_supplier_balances=FunctionInfo(
@@ -933,7 +937,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Nations]
-  └─┬─ Calc[nation_name=name, total_supplier_balances=SUM($1.account_balance)]
+  └─┬─ Calculate[nation_name=name, total_supplier_balances=SUM($1.account_balance)]
     └─┬─ AccessChild
       └─── SubCollection[suppliers]
 """,
@@ -941,9 +945,11 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** CalcInfo([], adj_name=FunctionInfo("LOWER", [ReferenceInfo("name")]))
+            ** CalculateInfo(
+                [], adj_name=FunctionInfo("LOWER", [ReferenceInfo("name")])
+            )
             ** SubCollectionInfo("nations")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("adj_name", 1),
                 nation_name=ReferenceInfo("name"),
@@ -952,15 +958,15 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Regions]
-  └─┬─ Calc[adj_name=LOWER(name)]
+  └─┬─ Calculate[adj_name=LOWER(name)]
     ├─── SubCollection[nations]
-    └─── Calc[region_name=BACK(1).adj_name, nation_name=name]
+    └─── Calculate[region_name=BACK(1).adj_name, nation_name=name]
 """,
             id="regions_calc_nations_calc",
         ),
         pytest.param(
             TableCollectionInfo("Suppliers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts_supplied")],
                 supplier_name=ReferenceInfo("name"),
                 total_retail_price=FunctionInfo(
@@ -980,7 +986,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
-  └─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.retail_price - 1.0)]
+  └─┬─ Calculate[supplier_name=name, total_retail_price=SUM($1.retail_price - 1.0)]
     └─┬─ AccessChild
       └─── SubCollection[parts_supplied]
 """,
@@ -988,10 +994,10 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Suppliers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [
                     SubCollectionInfo("parts_supplied")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         adj_retail_price=FunctionInfo(
                             "SUB",
@@ -1011,21 +1017,21 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
-  └─┬─ Calc[supplier_name=name, total_retail_price=SUM($1.adj_retail_price)]
+  └─┬─ Calculate[supplier_name=name, total_retail_price=SUM($1.adj_retail_price)]
     └─┬─ AccessChild
       ├─── SubCollection[parts_supplied]
-      └─── Calc[adj_retail_price=retail_price - 1.0]
+      └─── Calculate[adj_retail_price=retail_price - 1.0]
 """,
             id="suppliers_childcalc_parts_b",
         ),
         pytest.param(
             TableCollectionInfo("Suppliers")
             ** SubCollectionInfo("parts_supplied")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [
                     SubCollectionInfo("ps_lines"),
                     BackReferenceCollectionInfo("nation", 1)
-                    ** CalcInfo([], nation_name=ReferenceInfo("name")),
+                    ** CalculateInfo([], nation_name=ReferenceInfo("name")),
                 ],
                 nation_name=ChildReferenceExpressionInfo("nation_name", 1),
                 supplier_name=BackReferenceExpressionInfo("name", 1),
@@ -1045,22 +1051,22 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
-    └─┬─ Calc[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM($1.quantity) / ps_availqty]
+    └─┬─ Calculate[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM($1.quantity) / ps_availqty]
       ├─┬─ AccessChild
       │ └─── SubCollection[ps_lines]
       └─┬─ AccessChild
         ├─── BackSubCollection[1, nation]
-        └─── Calc[nation_name=name]
+        └─── Calculate[nation_name=name]
 """,
             id="suppliers_parts_childcalc_a",
         ),
         pytest.param(
             TableCollectionInfo("Suppliers")
             ** SubCollectionInfo("parts_supplied")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [
                     SubCollectionInfo("ps_lines")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         ratio=FunctionInfo(
                             "DIV",
@@ -1082,10 +1088,10 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
     ├─── SubCollection[parts_supplied]
-    └─┬─ Calc[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX($1.ratio)]
+    └─┬─ Calculate[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX($1.ratio)]
       ├─┬─ AccessChild
       │ ├─── SubCollection[ps_lines]
-      │ └─── Calc[ratio=quantity / BACK(1).ps_availqty]
+      │ └─── Calculate[ratio=quantity / BACK(1).ps_availqty]
       └─┬─ AccessChild
         └─── BackSubCollection[1, nation]
 """,
@@ -1093,7 +1099,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [TableCollectionInfo("Customers")],
                     total_balance=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
@@ -1103,19 +1109,19 @@ def test_collections_calc_terms(
             "TPCH(total_balance=SUM(Customers.acctbal))",
             """
 ┌─── TPCH
-└─┬─ Calc[total_balance=SUM($1.acctbal)]
+└─┬─ Calculate[total_balance=SUM($1.acctbal)]
   └─┬─ AccessChild
     └─── TableCollection[Customers]
 """,
             id="globalcalc_a",
         ),
         pytest.param(
-            CalcInfo(
+            CalculateInfo(
                 [
                     TableCollectionInfo("Customers"),
                     TableCollectionInfo("Suppliers")
                     ** SubCollectionInfo("parts_supplied")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         value=FunctionInfo(
                             "MUL",
@@ -1136,13 +1142,13 @@ def test_collections_calc_terms(
             "TPCH(total_demand=SUM(Customers.acctbal), total_supply=SUM(Suppliers.parts_supplied(value=ps_availqty * retail_price).value))",
             """
 ┌─── TPCH
-└─┬─ Calc[total_demand=SUM($1.acctbal), total_supply=SUM($2.value)]
+└─┬─ Calculate[total_demand=SUM($1.acctbal), total_supply=SUM($2.value)]
   ├─┬─ AccessChild
   │ └─── TableCollection[Customers]
   └─┬─ AccessChild
     └─┬─ TableCollection[Suppliers]
       ├─── SubCollection[parts_supplied]
-      └─── Calc[value=ps_availqty * retail_price]
+      └─── Calculate[value=ps_availqty * retail_price]
 """,
             id="globalcalc_b",
         ),
@@ -1159,7 +1165,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Nations")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("customers")],
                 nation_name=ReferenceInfo("name"),
                 n_customers=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
@@ -1168,7 +1174,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Nations]
-  └─┬─ Calc[nation_name=name, n_customers=COUNT($1)]
+  └─┬─ Calculate[nation_name=name, n_customers=COUNT($1)]
     └─┬─ AccessChild
       └─── SubCollection[customers]
 """,
@@ -1176,7 +1182,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Nations")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [
                     SubCollectionInfo("customers"),
                     SubCollectionInfo("customers")
@@ -1217,7 +1223,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Nations]
-  └─┬─ Calc[nation_name=name, n_customers=COUNT($1), n_customers_without_orders=COUNT($2), n_lines_with_tax=COUNT($3.tax), n_part_orders=COUNT($4), n_unique_parts_ordered=NDISTINCT($4)]
+  └─┬─ Calculate[nation_name=name, n_customers=COUNT($1), n_customers_without_orders=COUNT($2), n_lines_with_tax=COUNT($3.tax), n_part_orders=COUNT($4), n_unique_parts_ordered=NDISTINCT($4)]
     ├─┬─ AccessChild
     │ └─── SubCollection[customers]
     ├─┬─ AccessChild
@@ -1290,7 +1296,7 @@ def test_collections_calc_terms(
                     "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
                 ),
             )
-            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** CalculateInfo([], region_name=BackReferenceExpressionInfo("name", 1))
             ** OrderInfo([], (ReferenceInfo("region_name"), True, True))
             ** WhereInfo(
                 [],
@@ -1307,7 +1313,7 @@ def test_collections_calc_terms(
     ├─── SubCollection[customers]
     ├─── OrderBy[key.ASC(na_pos='last')]
     ├─── Where[acctbal > 1000]
-    ├─── Calc[region_name=BACK(1).name]
+    ├─── Calculate[region_name=BACK(1).name]
     ├─── OrderBy[region_name.ASC(na_pos='last')]
     └─── Where[region_name != 'ASIA']
 """,
@@ -1319,7 +1325,7 @@ def test_collections_calc_terms(
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -1332,7 +1338,7 @@ def test_collections_calc_terms(
   ├─┬─ Partition[name='parts', by=container]
   │ └─┬─ AccessChild
   │   └─── TableCollection[Parts]
-  └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+  └─┬─ Calculate[container=container, total_price=SUM($1.retail_price)]
     └─┬─ AccessChild
       └─── PartitionChild[parts]
 """,
@@ -1347,7 +1353,7 @@ def test_collections_calc_terms(
                         "EQU", [ReferenceInfo("tax"), LiteralInfo(0, Int64Type())]
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("order")
                         ** SubCollectionInfo("shipping_region"),
@@ -1362,7 +1368,7 @@ def test_collections_calc_terms(
                     ChildReferenceExpressionInfo("part_type", 0),
                 ],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("lines")],
                 region_name=ReferenceInfo("region_name"),
                 part_type=ReferenceInfo("part_type"),
@@ -1377,13 +1383,13 @@ def test_collections_calc_terms(
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   ├─── Where[tax == 0]
-  │   └─┬─ Calc[region_name=$1.name, part_type=$2.part_type]
+  │   └─┬─ Calculate[region_name=$1.name, part_type=$2.part_type]
   │     ├─┬─ AccessChild
   │     │ └─┬─ SubCollection[order]
   │     │   └─── SubCollection[shipping_region]
   │     └─┬─ AccessChild
   │       └─── SubCollection[part]
-  └─┬─ Calc[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
+  └─┬─ Calculate[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
     └─┬─ AccessChild
       └─── PartitionChild[lines]
 """,
@@ -1395,7 +1401,7 @@ def test_collections_calc_terms(
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -1409,7 +1415,7 @@ def test_collections_calc_terms(
   ├─┬─ Partition[name='parts', by=container]
   │ └─┬─ AccessChild
   │   └─── TableCollection[Parts]
-  ├─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+  ├─┬─ Calculate[container=container, total_price=SUM($1.retail_price)]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[parts]
   └─── OrderBy[total_price.DESC(na_pos='last')]
@@ -1423,7 +1429,7 @@ def test_collections_calc_terms(
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -1431,7 +1437,7 @@ def test_collections_calc_terms(
                 ),
             )
             ** SubCollectionInfo("parts")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 part_name=ReferenceInfo("name"),
                 container=ReferenceInfo("container"),
@@ -1450,17 +1456,17 @@ def test_collections_calc_terms(
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Parts]
   │   └─── OrderBy[retail_price.DESC(na_pos='last')]
-  └─┬─ Calc[container=container, total_price=SUM($1.retail_price)]
+  └─┬─ Calculate[container=container, total_price=SUM($1.retail_price)]
     ├─┬─ AccessChild
     │ └─── PartitionChild[parts]
     ├─── PartitionChild[parts]
-    └─── Calc[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]
+    └─── Calculate[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]
 """,
             id="partition_data_with_data_order",
         ),
         pytest.param(
             TableCollectionInfo("Nations")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("suppliers")],
                 total_sum=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("account_balance", 0)]
@@ -1471,7 +1477,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Nations]
-  ├─┬─ Calc[total_sum=SUM($1.account_balance)]
+  ├─┬─ Calculate[total_sum=SUM($1.account_balance)]
   │ └─┬─ AccessChild
   │   └─── SubCollection[suppliers]
   └─── TopK[5, total_sum.DESC(na_pos='last')]
@@ -1511,7 +1517,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Customers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("nation")],
                 cust_nation_name=ChildReferenceExpressionInfo("name", 0),
             )
@@ -1536,7 +1542,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Customers]
-  ├─┬─ Calc[cust_nation_name=$1.name]
+  ├─┬─ Calculate[cust_nation_name=$1.name]
   │ └─┬─ AccessChild
   │   └─── SubCollection[nation]
   └─┬─ Where[HASNOT($1)]
@@ -1552,7 +1558,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Suppliers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [
                     SubCollectionInfo("parts_supplied")
                     ** WhereInfo(
@@ -1646,7 +1652,7 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
-  ├─┬─ Calc[has_part_24=COUNT($1) > 0, hasnot_part_25=COUNT($2) == 0]
+  ├─┬─ Calculate[has_part_24=COUNT($1) > 0, hasnot_part_25=COUNT($2) == 0]
   │ ├─┬─ AccessChild
   │ │ ├─── SubCollection[parts_supplied]
   │ │ └─── Where[size == 24]
@@ -2026,7 +2032,7 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Customers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 name=ReferenceInfo("name"),
                 cust_rank=WindowInfo(
@@ -2037,13 +2043,13 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Customers]
-  └─── Calc[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')))]
+  └─── Calculate[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')))]
 """,
             id="rank_customers_a",
         ),
         pytest.param(
             TableCollectionInfo("Customers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 name=ReferenceInfo("name"),
                 cust_rank=WindowInfo(
@@ -2054,13 +2060,13 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Customers]
-  └─── Calc[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True)]
+  └─── Calculate[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True)]
 """,
             id="rank_customers_b",
         ),
         pytest.param(
             TableCollectionInfo("Customers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 name=ReferenceInfo("name"),
                 cust_rank=WindowInfo(
@@ -2074,14 +2080,14 @@ def test_collections_calc_terms(
             """
 ──┬─ TPCH
   ├─── TableCollection[Customers]
-  └─── Calc[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True, dense=True)]
+  └─── Calculate[name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), allow_ties=True, dense=True)]
 """,
             id="rank_customers_c",
         ),
         pytest.param(
             TableCollectionInfo("Nations")
             ** SubCollectionInfo("customers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 nation_name=BackReferenceExpressionInfo("name", 1),
                 name=ReferenceInfo("name"),
@@ -2094,7 +2100,7 @@ def test_collections_calc_terms(
 ──┬─ TPCH
   └─┬─ TableCollection[Nations]
     ├─── SubCollection[customers]
-    └─── Calc[nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1)]
+    └─── Calculate[nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1)]
 """,
             id="rank_customers_per_nation",
         ),
@@ -2102,7 +2108,7 @@ def test_collections_calc_terms(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
             ** SubCollectionInfo("customers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 2),
                 nation_name=BackReferenceExpressionInfo("name", 1),
@@ -2121,7 +2127,7 @@ def test_collections_calc_terms(
   └─┬─ TableCollection[Regions]
     └─┬─ SubCollection[nations]
       ├─── SubCollection[customers]
-      └─── Calc[region_name=BACK(2).name, nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True)]
+      └─── Calculate[region_name=BACK(2).name, nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True)]
 """,
             id="rank_customers_per_region",
         ),
@@ -2150,14 +2156,16 @@ def test_collections_to_string(
     "calc_pipeline, expected_collation_strings",
     [
         pytest.param(
-            CalcInfo([], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())),
+            CalculateInfo(
+                [], x=LiteralInfo(1, Int64Type()), y=LiteralInfo(3, Int64Type())
+            ),
             None,
             id="global_calc",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("suppliers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("nation_name"),
@@ -2221,7 +2229,7 @@ def test_collections_to_string(
                     "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
                 ),
             )
-            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** CalculateInfo([], region_name=BackReferenceExpressionInfo("name", 1))
             ** OrderInfo([], (ReferenceInfo("region_name"), True, True))
             ** WhereInfo(
                 [],
@@ -2244,7 +2252,7 @@ def test_collections_to_string(
                     "GRT", [ReferenceInfo("acctbal"), LiteralInfo(1000, Int64Type())]
                 ),
             )
-            ** CalcInfo([], region_name=BackReferenceExpressionInfo("name", 1))
+            ** CalculateInfo([], region_name=BackReferenceExpressionInfo("name", 1))
             ** WhereInfo(
                 [],
                 FunctionInfo(
@@ -2261,7 +2269,7 @@ def test_collections_to_string(
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -2277,7 +2285,7 @@ def test_collections_to_string(
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -2295,7 +2303,7 @@ def test_collections_to_string(
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -2312,7 +2320,7 @@ def test_collections_to_string(
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
@@ -2320,7 +2328,7 @@ def test_collections_to_string(
                 ),
             )
             ** SubCollectionInfo("parts")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [],
                 part_name=ReferenceInfo("name"),
                 container=ReferenceInfo("container"),
@@ -2337,7 +2345,7 @@ def test_collections_to_string(
         ),
         pytest.param(
             TableCollectionInfo("Nations")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("suppliers")],
                 total_sum=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("account_balance", 0)]

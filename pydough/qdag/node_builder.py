@@ -24,7 +24,7 @@ from pydough.types import PyDoughType
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
     BackReferenceCollection,
-    Calc,
+    Calculate,
     ChildAccess,
     ChildReferenceCollection,
     GlobalContext,
@@ -191,7 +191,7 @@ class AstNodeBuilder:
     ) -> Reference:
         """
         Creates a new reference to an expression from a child collection of a
-        CALC.
+        CALCULATE or similar operator.
 
         Args:
             `children`: the child collections that the reference accesses.
@@ -264,23 +264,23 @@ class AstNodeBuilder:
         assert isinstance(term, ChildAccess)
         return term
 
-    def build_calc(
+    def build_calculate(
         self,
         preceding_context: PyDoughCollectionQDAG,
         children: MutableSequence[PyDoughCollectionQDAG],
-    ) -> Calc:
+    ) -> Calculate:
         """
-        Creates a CALC instance, but `with_terms` still needs to be called on
+        Creates a CALCULATE instance, but `with_terms` still needs to be called on
         the output.
 
         Args:
             `preceding_context`: the preceding collection.
-            `children`: the child collections accessed by the CALC term.
+            `children`: the child collections accessed by the CALCULATE term.
 
         Returns:
-            The newly created PyDough CALC term.
+            The newly created PyDough CALCULATE term.
         """
-        return Calc(preceding_context, children)
+        return Calculate(preceding_context, children)
 
     def build_where(
         self,
@@ -373,10 +373,11 @@ class AstNodeBuilder:
             `back_levels`: the number of levels up in the ancestry tree to go.
 
         Returns:
-            The newly created PyDough CALC term.
+            The newly created PyDough back reference collection.
 
         Raises:
-            `PyDoughQDAGException`: if the terms are invalid for the CALC term.
+            `PyDoughQDAGException`: if the terms are invalid for the back
+            reference collection.
         """
         return BackReferenceCollection(collection, term_name, back_levels)
 
@@ -388,7 +389,7 @@ class AstNodeBuilder:
     ) -> ChildReferenceCollection:
         """
         Creates a new reference to a collection from a child collection of a
-        CALC or other child operator.
+        CALCULATE or other child operator.
 
         Args:
             `preceding_context`: the preceding collection.

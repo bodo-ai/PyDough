@@ -9,6 +9,7 @@ __all__ = ["BackReferenceCollection"]
 from functools import cache
 
 from pydough.qdag.errors import PyDoughQDAGException
+from pydough.qdag.expressions import PyDoughExpressionQDAG
 
 from .child_access import ChildAccess
 from .collection_access import CollectionAccess
@@ -48,6 +49,10 @@ class BackReferenceCollection(CollectionAccess):
 
     def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         return BackReferenceCollection(new_ancestor, self.term_name, self.back_levels)
+
+    @property
+    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+        raise NotImplementedError()
 
     @property
     def back_levels(self) -> int:

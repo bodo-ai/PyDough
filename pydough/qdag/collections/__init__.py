@@ -6,7 +6,7 @@ collections, including operators that transform collections.
 __all__ = [
     "AugmentingChildOperator",
     "BackReferenceCollection",
-    "Calc",
+    "Calculate",
     "ChildAccess",
     "ChildOperator",
     "ChildOperatorChildAccess",
@@ -26,7 +26,7 @@ __all__ = [
 
 from .augmenting_child_operator import AugmentingChildOperator
 from .back_reference_collection import BackReferenceCollection
-from .calc import Calc
+from .calculate import Calculate
 from .child_access import ChildAccess
 from .child_operator import ChildOperator
 from .child_operator_child_access import ChildOperatorChildAccess

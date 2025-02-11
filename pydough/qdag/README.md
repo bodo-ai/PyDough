@@ -77,10 +77,10 @@ sub_collection = builder.build_child_access("region", table_collection)
 child_collection = ChildOperatorChildAccess(sub_collection)
 child_reference_node = builder.build_child_reference_expression([child_collection], 0, "name")
 
-# Build a CALC node
+# Build a CALCULATE node
 # Equivalent PyDough code: `TPCH.Nations(region_name=region.name)`
-calc_node = builder.build_calc(table_collection, [child_collection])
-calc_node = calc_node.with_terms([("region_name", child_reference_node)])
+calculate_node = builder.build_calc(table_collection, [child_collection])
+calculate_node = calculate_node.with_terms([("region_name", child_reference_node)])
 
 # Build a WHERE node
 # Equivalent PyDough code: `TPCH.Nations.WHERE(region.name == "ASIA")`
@@ -127,8 +127,8 @@ count_call = builder.build_expression_function_call(
     "COUNT",
     [child_reference_collection_node]
 )
-calc_node = builder.build_calc(table_collection, [customers_child])
-calc_node = calc_node.with_terms([("n_customers", count_call)])
+calculate_node = builder.build_calc(table_collection, [customers_child])
+calculate_node = calculate_node.with_terms([("n_customers", count_call)])
 
 # Build a window function call node
 # Equivalent PyDough code: `RANKING(by=TPCH.Nations.name, levels=1, allow_ties=True)`

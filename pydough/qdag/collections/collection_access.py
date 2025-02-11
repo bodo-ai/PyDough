@@ -18,7 +18,11 @@ from pydough.metadata import (
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
-from pydough.qdag.expressions import CollationExpression, ColumnProperty
+from pydough.qdag.expressions import (
+    CollationExpression,
+    ColumnProperty,
+    PyDoughExpressionQDAG,
+)
 
 from .child_access import ChildAccess
 from .collection_qdag import PyDoughCollectionQDAG
@@ -41,6 +45,7 @@ class CollectionAccess(ChildAccess):
         self._all_property_names: set[str] = set()
         self._calc_property_names: set[str] = set()
         self._calc_property_order: dict[str, int] = {}
+        self._ancestral_mapping: dict[str, PyDoughExpressionQDAG] = {}
         for property_name in sorted(
             collection.get_property_names(),
             key=lambda name: collection.definition_order[name],
@@ -69,6 +74,10 @@ class CollectionAccess(ChildAccess):
     @property
     def all_terms(self) -> set[str]:
         return self._all_property_names
+
+    @property
+    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+        return self._ancestral_mapping
 
     @property
     def ordering(self) -> list[CollationExpression] | None:

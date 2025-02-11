@@ -22,7 +22,7 @@ from pydough.qdag import (
 )
 from pydough.unqualified import (
     UnqualifiedAccess,
-    UnqualifiedCalc,
+    UnqualifiedCalculate,
     UnqualifiedNode,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
@@ -51,7 +51,7 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
             return node
         case (
             UnqualifiedAccess()
-            | UnqualifiedCalc()
+            | UnqualifiedCalculate()
             | UnqualifiedWhere()
             | UnqualifiedOrderBy()
             | UnqualifiedTopK()
@@ -281,7 +281,7 @@ def explain_term(
                 lines.append("")
                 if qualified_term.is_singular(qualified_node.starting_predecessor):
                     lines.append(
-                        "This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection."
+                        "This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection."
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(
@@ -289,7 +289,7 @@ def explain_term(
                     )
                 else:
                     lines.append(
-                        "This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated."
+                        "This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated."
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(

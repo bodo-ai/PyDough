@@ -14,7 +14,7 @@ from pydough.pydough_operators.expression_operators import (
 )
 from pydough.qdag import (
     AstNodeBuilder,
-    Calc,
+    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
@@ -36,7 +36,7 @@ from .unqualified_node import (
     UnqualifiedAccess,
     UnqualifiedBack,
     UnqualifiedBinaryOperation,
-    UnqualifiedCalc,
+    UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedLiteral,
     UnqualifiedNode,
@@ -348,7 +348,7 @@ class Qualifier:
             `children`: the list where collection nodes that must be derived
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection or expression
@@ -431,22 +431,22 @@ class Qualifier:
                             children, ref_num, name
                         )
 
-    def qualify_calc(
+    def qualify_calculate(
         self,
-        unqualified: UnqualifiedCalc,
+        unqualified: UnqualifiedCalculate,
         context: PyDoughCollectionQDAG,
         is_child: bool,
     ) -> PyDoughCollectionQDAG:
         """
-        Transforms an `UnqualifiedCalc` into a PyDoughCollectionQDAG node.
+        Transforms an `UnqualifiedCalculate` into a PyDoughCollectionQDAG node.
 
         Args:
-            `unqualified`: the UnqualifiedCalc instance to be transformed.
+            `unqualified`: the UnqualifiedCalculate instance to be transformed.
             `builder`: a builder object used to create new qualified nodes.
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -470,9 +470,9 @@ class Qualifier:
         for name, term in unqualified_terms:
             qualified_term = self.qualify_expression(term, qualified_parent, children)
             qualified_terms.append((name, qualified_term))
-        # Use the qualified children & terms to create a new CALC node.
-        calc: Calc = self.builder.build_calc(qualified_parent, children)
-        return calc.with_terms(qualified_terms)
+        # Use the qualified children & terms to create a new CALCULATE node.
+        calculate: Calculate = self.builder.build_calculate(qualified_parent, children)
+        return calculate.with_terms(qualified_terms)
 
     def qualify_where(
         self,
@@ -489,7 +489,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -529,7 +529,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -577,7 +577,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -633,7 +633,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -693,7 +693,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -759,7 +759,7 @@ class Qualifier:
             `children`: the list where collection nodes that must be derived
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified node. The result can be either
@@ -784,8 +784,8 @@ class Qualifier:
                 answer = context
             case UnqualifiedAccess():
                 answer = self.qualify_access(unqualified, context, children, is_child)
-            case UnqualifiedCalc():
-                answer = self.qualify_calc(unqualified, context, is_child)
+            case UnqualifiedCalculate():
+                answer = self.qualify_calculate(unqualified, context, is_child)
             case UnqualifiedWhere():
                 answer = self.qualify_where(unqualified, context, is_child)
             case UnqualifiedOrderBy():

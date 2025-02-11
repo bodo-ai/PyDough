@@ -15,6 +15,7 @@ from pydough.qdag.expressions import (
     ChildReferenceExpression,
     CollationExpression,
     PartitionKey,
+    PyDoughExpressionQDAG,
 )
 
 from .child_operator import ChildOperator
@@ -89,7 +90,7 @@ class PartitionBy(ChildOperator):
     def key_name_indices(self) -> dict[str, int]:
         """
         The names of the partitioning keys for the PARTITION BY clause and the
-        index they have in a CALC.
+        index they have in a CALCULATE.
         """
         if self._keys is None:
             raise PyDoughQDAGException(
@@ -123,6 +124,10 @@ class PartitionBy(ChildOperator):
     @property
     def all_terms(self) -> set[str]:
         return self.calc_terms | {self.child_name}
+
+    @property
+    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+        raise NotImplementedError()
 
     @property
     def ordering(self) -> list[CollationExpression] | None:
