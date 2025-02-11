@@ -21,7 +21,6 @@ from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     CollationExpression,
     ColumnProperty,
-    PyDoughExpressionQDAG,
 )
 
 from .child_access import ChildAccess
@@ -45,7 +44,9 @@ class CollectionAccess(ChildAccess):
         self._all_property_names: set[str] = set()
         self._calc_property_names: set[str] = set()
         self._calc_property_order: dict[str, int] = {}
-        self._ancestral_mapping: dict[str, PyDoughExpressionQDAG] = {}
+        self._ancestral_mapping: dict[str, int] = {
+            name: level + 1 for name, level in ancestor.ancestral_mapping.items()
+        }
         for property_name in sorted(
             collection.get_property_names(),
             key=lambda name: collection.definition_order[name],
@@ -57,6 +58,10 @@ class CollectionAccess(ChildAccess):
                 self._calc_property_names.add(property_name)
                 self._calc_property_order[property_name] = len(
                     self._calc_property_order
+                )
+            if property_name in self._ancestral_mapping:
+                raise PyDoughQDAGException(
+                    f"Cannot have term name {property_name!r} used in an ancestor of {self!r}"
                 )
 
     @property
@@ -76,7 +81,7 @@ class CollectionAccess(ChildAccess):
         return self._all_property_names
 
     @property
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         return self._ancestral_mapping
 
     @property

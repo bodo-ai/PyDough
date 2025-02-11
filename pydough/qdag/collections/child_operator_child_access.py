@@ -9,7 +9,6 @@ __all__ = ["ChildOperatorChildAccess"]
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.expressions import PyDoughExpressionQDAG
 
 from .back_reference_collection import BackReferenceCollection
 from .child_access import ChildAccess
@@ -55,7 +54,7 @@ class ChildOperatorChildAccess(ChildAccess):
         return self.child_access.all_terms
 
     @property
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         return self.child_access.ancestral_mapping
 
     @property

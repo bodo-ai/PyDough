@@ -15,7 +15,7 @@ from pydough.metadata import (
 )
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
-from pydough.qdag.expressions import CollationExpression, PyDoughExpressionQDAG
+from pydough.qdag.expressions import CollationExpression
 
 from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
@@ -68,7 +68,7 @@ class GlobalContext(PyDoughCollectionQDAG):
         return set()
 
     @property
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         # A global context does not have any ancestral terms
         return {}
 

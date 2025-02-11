@@ -33,7 +33,7 @@ class Calculate(AugmentingChildOperator):
         self._calc_term_indices: dict[str, int] | None = None
         self._calc_term_values: MutableMapping[str, PyDoughExpressionQDAG] | None = None
         self._all_term_names: set[str] = set()
-        self._ancestral_mapping: dict[str, PyDoughExpressionQDAG] = dict(
+        self._ancestral_mapping: dict[str, int] = dict(
             predecessor.ancestral_mapping.items()
         )
 
@@ -82,7 +82,7 @@ class Calculate(AugmentingChildOperator):
             self._calc_term_indices[name] = idx
             self._calc_term_values[name] = has_hasnot_rewrite(value, False)
             self._all_term_names.add(name)
-            self.ancestral_mapping[name] = self._calc_term_values[name]
+            self.ancestral_mapping[name] = 0
         self.all_terms.update(self.preceding_context.all_terms)
         self.verify_singular_terms(self._calc_term_values.values())
         return self
@@ -128,7 +128,7 @@ class Calculate(AugmentingChildOperator):
         return self._all_term_names
 
     @property
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         return self._ancestral_mapping
 
     def get_expression_position(self, expr_name: str) -> int:

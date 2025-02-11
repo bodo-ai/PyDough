@@ -15,7 +15,6 @@ from pydough.qdag.expressions import (
     ChildReferenceExpression,
     CollationExpression,
     PartitionKey,
-    PyDoughExpressionQDAG,
 )
 
 from .child_operator import ChildOperator
@@ -126,7 +125,7 @@ class PartitionBy(ChildOperator):
         return self.calc_terms | {self.child_name}
 
     @property
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         raise NotImplementedError()
 
     @property

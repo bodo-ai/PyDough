@@ -9,7 +9,7 @@ __all__ = ["ChildReferenceCollection"]
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.expressions import CollationExpression, PyDoughExpressionQDAG
+from pydough.qdag.expressions import CollationExpression
 
 from .child_access import ChildAccess
 from .collection_qdag import PyDoughCollectionQDAG
@@ -63,7 +63,7 @@ class ChildReferenceCollection(ChildAccess):
         return self.collection.all_terms
 
     @property
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         return self.collection.ancestral_mapping
 
     @property

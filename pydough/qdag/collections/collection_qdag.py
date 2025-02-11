@@ -64,12 +64,13 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
     @property
     @abstractmethod
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         """
         A mapping of names created by the current context and its ancestors
         describing terms defined inside a CALCULATE clause that are available
         to the current context & descendants to back-reference via that name
-        to the expressions used to do the back-referencing.
+        to the number of ancestors up required to find the back-referenced
+        term.
         """
 
     @abstractmethod

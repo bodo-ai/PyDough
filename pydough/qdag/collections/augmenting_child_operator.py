@@ -41,7 +41,7 @@ class AugmentingChildOperator(ChildOperator):
         return self._preceding_context
 
     @property
-    def ancestral_mapping(self) -> dict[str, PyDoughExpressionQDAG]:
+    def ancestral_mapping(self) -> dict[str, int]:
         return self.preceding_context.ancestral_mapping
 
     @property
@@ -62,7 +62,7 @@ class AugmentingChildOperator(ChildOperator):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        from pydough.qdag.expressions import PyDoughExpressionQDAG, Reference
+        from pydough.qdag.expressions import Reference
 
         term: PyDoughQDAG = self.preceding_context.get_term(term_name)
         if isinstance(term, ChildAccess):
