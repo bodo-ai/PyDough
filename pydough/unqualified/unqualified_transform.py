@@ -17,7 +17,8 @@ class AddRootVisitor(ast.NodeTransformer):
     QDAG visitor class that transforms nodes in the following ways:
     1. Whenever a variable is assigned, marks it as a known variable name
     by adding it to the current scope set (in addition to all the previous scopes).
-    New scopes are created for functions, lambda functions, comprehensions, context managers, etc.
+    New scopes are created for functions, lambda functions, comprehensions,
+    context managers, etc.
     2. Removes the `init_pydough_context` decorator from above any functions.
     3. Adds `_ROOT = UnqualifiedRoot(graph)` to the start of each function body.
     4. Prepends any unknown variable names with `_ROOT.`
@@ -25,8 +26,9 @@ class AddRootVisitor(ast.NodeTransformer):
 
     def __init__(self, graph_name: str, known_names: set[str]):
         self._graph_name = graph_name
-        # Initialize the scope stack with the outermost scope, including `known_names` set which would
-        # contain global variables or module imports of the jupyter cell or function.
+        # Initialize the scope stack with the outermost scope, including `known_names`
+        # set which would contain global variables or module imports of the
+        # jupyter cell or function.
         self._scope_stack: list[set[str]] = [
             set({"UnqualifiedRoot", self._graph_name, *known_names})
         ]
@@ -58,6 +60,13 @@ class AddRootVisitor(ast.NodeTransformer):
             self._scope_targets(target)  # Reuse existing scope-tracking logic
         return self.generic_visit(node)
 
+    def visit_AnnAssign(self, node) -> ast.AST:
+        """
+        Handle annotated assignments like `a: int = ...`
+        """
+        self._scope_targets(node.target)
+        return self.generic_visit(node)
+
     def create_root_def(self) -> list[ast.AST]:
         import_root: ast.AST = ast.ImportFrom(
             module="pydough.unqualified", names=[ast.alias("UnqualifiedRoot")], level=0
@@ -75,6 +84,11 @@ class AddRootVisitor(ast.NodeTransformer):
     def visit_FunctionDef(self, node) -> ast.AST:
         """
         Tracks function parameters in the scope and removes the PyDough decorator.
+
+        Example:
+            def interval_n(n, name="test"):
+                return COUNT(customers.WHERE(
+                    MONOTONIC(n * 1000, acctbal,  (n + 1) * 1000)))
         """
         self.current_scope().add(node.name)
         self.enter_scope()
@@ -151,6 +165,11 @@ class AddRootVisitor(ast.NodeTransformer):
     def visit_Lambda(self, node: ast.Lambda) -> ast.AST:
         """
         Handle lambda function parameters and scoping.
+
+        Example:
+            interval_n = lambda n: COUNT(
+                customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000))
+            )
         """
         # Enter new scope
         self.enter_scope()
@@ -184,8 +203,10 @@ class AddRootVisitor(ast.NodeTransformer):
         # New scope for comprehension
         self.enter_scope()
 
-        # Track generator targets (e.g., generator: "for k, v in items", targets being "k,v")
-        # Note that there can be multiple generators (e.g. "{k: v for k in range(3) for v in range(3)}")
+        # Track generator targets
+        # Example: generator: "for k, v in items"; targets being "k,v"
+        # Note that there can be multiple generators
+        # (e.g. "{k: v for k in range(3) for v in range(3)}")
         # This gives us node.generators => [for k in range(3),for v in range(3)]
         for generator in node.generators:
             self._scope_targets(generator.target)

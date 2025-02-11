@@ -21,6 +21,7 @@ from bad_pydough_functions import (
     bad_window_7,
 )
 from simple_pydough_functions import (
+    annotated_assignment,
     args_kwargs,
     class_handling,
     dict_comp_terms,
@@ -429,9 +430,6 @@ def test_unqualified_to_string(
             function_defined_terms,
             "?.Nations(name=?.name, interval_7=COUNT(?.customers.WHERE(MONOTONIC(7000, ?.acctbal, 8000))), interval_4=COUNT(?.customers.WHERE(MONOTONIC(4000, ?.acctbal, 5000))), interval_13=COUNT(?.customers.WHERE(MONOTONIC(13000, ?.acctbal, 14000))))",
             id="function_defined_terms",
-            # marks=pytest.mark.skip(
-            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            # ),
         ),
         pytest.param(
             function_defined_terms_with_duplicate_names,
@@ -445,17 +443,11 @@ def test_unqualified_to_string(
             lambda_defined_terms,
             "?.Nations(name=?.name, interval_7=COUNT(?.customers.WHERE(MONOTONIC(7000, ?.acctbal, 8000))), interval_4=COUNT(?.customers.WHERE(MONOTONIC(4000, ?.acctbal, 5000))), interval_13=COUNT(?.customers.WHERE(MONOTONIC(13000, ?.acctbal, 14000))))",
             id="lambda_defined_terms",
-            # marks=pytest.mark.skip(
-            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            # ),
         ),
         pytest.param(
             dict_comp_terms,
             "?.Nations(name=?.name, interval_0=COUNT(?.customers.WHERE(MONOTONIC(0, ?.acctbal, 1000))), interval_1=COUNT(?.customers.WHERE(MONOTONIC(1000, ?.acctbal, 2000))), interval_2=COUNT(?.customers.WHERE(MONOTONIC(2000, ?.acctbal, 3000))))",
             id="dict_comp_terms",
-            # marks=pytest.mark.skip(
-            #     "TODO: (gh #222) ensure PyDough code is compatible with full Python syntax "
-            # ),
         ),
         pytest.param(
             list_comp_terms,
@@ -506,6 +498,11 @@ def test_unqualified_to_string(
             class_handling,
             "?.customers.WHERE(ISIN(?.nation.name, ['Canada', 'Mexico']))",
             id="class_handling",
+        ),
+        pytest.param(
+            annotated_assignment,
+            "?.Nations.WHERE((?.region.name == 'SOUTH WEST AMERICA'))",
+            id="annotated_assignment",
         ),
     ],
 )

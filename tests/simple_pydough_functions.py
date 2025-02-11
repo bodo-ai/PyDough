@@ -379,3 +379,11 @@ def class_handling():
             return customers.WHERE(ISIN(nation.name, self._countries))
 
     return Customer(("Canada", "Mexico")).query()
+
+
+def annotated_assignment():
+    direction1: str
+    direction1 = "SOUTH "
+    specific_region: tuple[str, str] = "WEST", "AMERICA"
+    chosen_region: str = direction1 + " ".join(specific_region)
+    return Nations.WHERE(region.name == chosen_region)
