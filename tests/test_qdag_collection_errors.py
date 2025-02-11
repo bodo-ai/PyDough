@@ -9,7 +9,7 @@ from test_utils import (
     AstNodeTestInfo,
     BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
-    CalcInfo,
+    CalculateInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
     FunctionInfo,
@@ -39,50 +39,51 @@ from pydough.qdag import AstNodeBuilder
             id="subcollection_dne",
         ),
         pytest.param(
-            TableCollectionInfo("Regions") ** CalcInfo([], foo=ReferenceInfo("bar")),
+            TableCollectionInfo("Regions")
+            ** CalculateInfo([], foo=ReferenceInfo("bar")),
             "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'bar'",
             id="reference_dne",
         ),
         pytest.param(
             TableCollectionInfo("Nations")
             ** SubCollectionInfo("suppliers")
-            ** CalcInfo([], foo=ReferenceInfo("region_key")),
+            ** CalculateInfo([], foo=ReferenceInfo("region_key")),
             "Unrecognized term of simple table collection 'Suppliers' in graph 'TPCH': 'region_key'",
             id="reference_bad_ancestry",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 0)),
+            ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 0)),
             "Expected number of levels in BACK to be a positive integer, received 0",
             id="back_zero",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
+            ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
             "Unrecognized term of graph 'TPCH': 'foo'",
             id="back_on_root",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
-            ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 3)),
+            ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 3)),
             "Cannot reference back 3 levels above TPCH.Regions.nations",
             id="back_too_far",
         ),
         pytest.param(
             TableCollectionInfo("Regions")
             ** SubCollectionInfo("nations")
-            ** CalcInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
+            ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
             "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'foo'",
             id="back_dne",
         ),
         pytest.param(
-            CalcInfo([], foo=ChildReferenceExpressionInfo("foo", 0)),
+            CalculateInfo([], foo=ChildReferenceExpressionInfo("foo", 0)),
             "Invalid child reference index 0 with 0 children",
             id="child_dne",
         ),
         pytest.param(
-            CalcInfo(
+            CalculateInfo(
                 [TableCollectionInfo("Regions")],
                 foo=ChildReferenceExpressionInfo("bar", 0),
             ),
@@ -91,7 +92,7 @@ from pydough.qdag import AstNodeBuilder
         ),
         pytest.param(
             TableCollectionInfo("Regions")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("nations")],
                 nation_name=ChildReferenceExpressionInfo("name", 0),
             ),
@@ -101,7 +102,7 @@ from pydough.qdag import AstNodeBuilder
         pytest.param(
             TableCollectionInfo("Nations")
             ** SubCollectionInfo("customers")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [BackReferenceCollectionInfo("suppliers", 1)],
                 customer_name=ChildReferenceExpressionInfo("name", 0),
             ),
@@ -111,7 +112,7 @@ from pydough.qdag import AstNodeBuilder
         pytest.param(
             TableCollectionInfo("Parts")
             ** SubCollectionInfo("suppliers_of_part")
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("ps_lines")],
                 extended_price=ChildReferenceExpressionInfo("extended_price", 0),
             ),
@@ -119,7 +120,7 @@ from pydough.qdag import AstNodeBuilder
             id="bad_plural_c",
         ),
         pytest.param(
-            CalcInfo(
+            CalculateInfo(
                 [TableCollectionInfo("Customers")],
                 cust_name=ChildReferenceExpressionInfo("name", 0),
             ),
@@ -166,7 +167,7 @@ from pydough.qdag import AstNodeBuilder
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 price=ChildReferenceExpressionInfo("retail_price", 0),
@@ -180,7 +181,7 @@ from pydough.qdag import AstNodeBuilder
                 "parts",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
                 container=ReferenceInfo("container"),
                 balance=ChildReferenceExpressionInfo("account_balance", 0),
@@ -196,7 +197,7 @@ from pydough.qdag import AstNodeBuilder
                 "parts",
                 [ChildReferenceExpressionInfo("part_type", 0)],
             )
-            ** CalcInfo(
+            ** CalculateInfo(
                 [
                     SubCollectionInfo("parts")
                     ** SubCollectionInfo("suppliers_of_part"),

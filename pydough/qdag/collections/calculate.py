@@ -11,7 +11,7 @@ from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
-from pydough.qdag.expressions import PyDoughExpressionQDAG
+from pydough.qdag.expressions import PyDoughExpressionQDAG, Reference
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .augmenting_child_operator import AugmentingChildOperator
@@ -74,9 +74,11 @@ class Calculate(AugmentingChildOperator):
                 raise PyDoughQDAGException(
                     f"Cannot redefine term {name!r} in CALCULATE that is already defined in an ancestor"
                 )
-            if name in self.preceding_context.all_terms:
+            if name in self.preceding_context.all_terms and value != Reference(
+                self.preceding_context, name
+            ):
                 raise PyDoughQDAGException(
-                    f"Cannot redefine term {name!r} in CALCULATE that is already defined in a precessor"
+                    f"Cannot redefine term {name!r} in CALCULATE that is already defined in a predecessor"
                 )
             self._calc_term_indices[name] = idx
             self._calc_term_values[name] = has_hasnot_rewrite(value, False)
