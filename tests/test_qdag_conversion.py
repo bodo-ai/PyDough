@@ -66,7 +66,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalculateInfo([], name=LiteralInfo("foo", StringType()))
+                ** CalculateInfo([], hello=LiteralInfo("foo", StringType()))
                 ** CalculateInfo(
                     [], fizz=ReferenceInfo("name"), buzz=ReferenceInfo("key")
                 ),
@@ -95,7 +95,7 @@ from pydough.types import (
                 TableCollectionInfo("Customers")
                 ** CalculateInfo(
                     [],
-                    name=FunctionInfo("LOWER", [ReferenceInfo("name")]),
+                    lname=FunctionInfo("LOWER", [ReferenceInfo("name")]),
                     country_code=FunctionInfo(
                         "SLICE",
                         [
@@ -179,24 +179,6 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalculateInfo([], key=LiteralInfo(-1, Int64Type()))
-                ** SubCollectionInfo("nations")
-                ** CalculateInfo([], key=LiteralInfo(-2, Int64Type()))
-                ** SubCollectionInfo("customers")
-                ** CalculateInfo(
-                    [],
-                    key=LiteralInfo(-3, Int64Type()),
-                    name=ReferenceInfo("name"),
-                    phone=ReferenceInfo("phone"),
-                    mktsegment=ReferenceInfo("mktsegment"),
-                ),
-                "join_regions_nations_calc_override",
-            ),
-            id="join_regions_nations_calc_override",
-        ),
-        pytest.param(
-            (
-                TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
                 ** CalculateInfo(
                     [],
@@ -227,9 +209,9 @@ from pydough.types import (
                     order_year=FunctionInfo(
                         "YEAR", [BackReferenceExpressionInfo("order_date", 1)]
                     ),
-                    customer_region=BackReferenceExpressionInfo("name", 4),
-                    customer_nation=BackReferenceExpressionInfo("name", 3),
-                    supplier_region=ChildReferenceExpressionInfo("name", 0),
+                    customer_region_name=BackReferenceExpressionInfo("name", 4),
+                    customer_nation_name=BackReferenceExpressionInfo("name", 3),
+                    supplier_region_name=ChildReferenceExpressionInfo("name", 0),
                     nation_name=ChildReferenceExpressionInfo("nation_name", 0),
                 ),
                 "lines_shipping_vs_customer_region",
@@ -350,30 +332,30 @@ from pydough.types import (
                 TableCollectionInfo("Nations")
                 ** CalculateInfo(
                     [SubCollectionInfo("customers")],
-                    total_consumer_value=FunctionInfo(
+                    total_consumer_value_a=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
                     ),
-                    avg_consumer_value=FunctionInfo(
+                    avg_consumer_value_a=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("acctbal", 0)]
                     ),
                 )
                 ** CalculateInfo(
                     [SubCollectionInfo("suppliers")],
-                    nation_name=ReferenceInfo("key"),
-                    total_supplier_value=FunctionInfo(
+                    nation_name_a=ReferenceInfo("key"),
+                    total_supplier_value_a=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("account_balance", 0)]
                     ),
-                    avg_supplier_value=FunctionInfo(
+                    avg_supplier_value_a=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("account_balance", 0)]
                     ),
                 )
                 ** CalculateInfo(
                     [SubCollectionInfo("suppliers"), SubCollectionInfo("customers")],
                     nation_name=ReferenceInfo("key"),
-                    total_consumer_value=ReferenceInfo("total_consumer_value"),
-                    total_supplier_value=ReferenceInfo("total_supplier_value"),
-                    avg_consumer_value=ReferenceInfo("avg_consumer_value"),
-                    avg_supplier_value=ReferenceInfo("avg_supplier_value"),
+                    total_consumer_value=ReferenceInfo("total_consumer_value_a"),
+                    total_supplier_value=ReferenceInfo("total_supplier_value_a"),
+                    avg_consumer_value=ReferenceInfo("avg_consumer_value_a"),
+                    avg_supplier_value=ReferenceInfo("avg_supplier_value_a"),
                     best_consumer_value=FunctionInfo(
                         "MAX", [ChildReferenceExpressionInfo("acctbal", 1)]
                     ),

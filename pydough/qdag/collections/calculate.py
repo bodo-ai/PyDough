@@ -70,15 +70,14 @@ class Calculate(AugmentingChildOperator):
         self._calc_term_indices = {}
         self._calc_term_values = {}
         for idx, (name, value) in enumerate(terms):
-            if name in self.ancestral_mapping:
+            if name in self.preceding_context.all_terms:
+                if value != Reference(self.preceding_context, name):
+                    raise PyDoughQDAGException(
+                        f"Cannot redefine term {name!r} in CALCULATE that is already defined in a predecessor"
+                    )
+            elif name in self.ancestral_mapping:
                 raise PyDoughQDAGException(
                     f"Cannot redefine term {name!r} in CALCULATE that is already defined in an ancestor"
-                )
-            if name in self.preceding_context.all_terms and value != Reference(
-                self.preceding_context, name
-            ):
-                raise PyDoughQDAGException(
-                    f"Cannot redefine term {name!r} in CALCULATE that is already defined in a predecessor"
                 )
             self._calc_term_indices[name] = idx
             self._calc_term_values[name] = has_hasnot_rewrite(value, False)
