@@ -23,7 +23,6 @@ from pydough.types import PyDoughType
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
-    BackReferenceCollection,
     Calculate,
     ChildAccess,
     ChildReferenceCollection,
@@ -357,29 +356,6 @@ class AstNodeBuilder:
             The newly created PyDough PARTITION BY instance.
         """
         return PartitionBy(preceding_context, child, child_name)
-
-    def build_back_reference_collection(
-        self,
-        collection: PyDoughCollectionQDAG,
-        term_name: str,
-        back_levels: int,
-    ) -> BackReferenceCollection:
-        """
-        Creates a reference to a a subcollection of an ancestor.
-
-        Args:
-            `collection`: the preceding collection.
-            `term_name`: the name of the subcollection being accessed.
-            `back_levels`: the number of levels up in the ancestry tree to go.
-
-        Returns:
-            The newly created PyDough back reference collection.
-
-        Raises:
-            `PyDoughQDAGException`: if the terms are invalid for the back
-            reference collection.
-        """
-        return BackReferenceCollection(collection, term_name, back_levels)
 
     def build_child_reference_collection(
         self,

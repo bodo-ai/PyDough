@@ -14,10 +14,6 @@ __all__ = [
     "global_calc_impl",
     "global_impl",
     "lineitems_arithmetic_impl",
-    "lps_back_lines_impl",
-    "lps_back_lines_price_impl",
-    "lps_back_supplier_impl",
-    "lps_back_supplier_name_impl",
     "nation_expr_impl",
     "nation_impl",
     "nation_name_impl",
@@ -77,7 +73,7 @@ def subcollection_calc_backref_impl() -> UnqualifiedNode:
 
 
 def filter_impl() -> UnqualifiedNode:
-    return Nations(name).WHERE(
+    return Nations(nation_name=name).WHERE(
         (region.name == "ASIA")
         & HAS(customers.orders.lines.WHERE(CONTAINS(part.name, "STEEL")))
         & (COUNT(suppliers.WHERE(account_balance >= 0.0)) > 100)
@@ -155,22 +151,6 @@ def region_nations_suppliers_name_impl() -> tuple[UnqualifiedNode, UnqualifiedNo
 
 def region_nations_back_name() -> tuple[UnqualifiedNode, UnqualifiedNode]:
     return Regions.nations, BACK(1).name
-
-
-def lps_back_supplier_name_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return Lineitems.part, BACK(1).supplier.name
-
-
-def lps_back_supplier_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return Lineitems.part, BACK(1).supplier
-
-
-def lps_back_lines_price_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return PartSupp.part, BACK(1).lines.extended_price
-
-
-def lps_back_lines_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return PartSupp.part, BACK(1).lines
 
 
 def region_n_suppliers_in_red_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:

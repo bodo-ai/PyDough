@@ -4,7 +4,6 @@ Unit tests for PyDough QDAG nodes for collections.
 
 import pytest
 from test_utils import (
-    BackReferenceCollectionInfo,
     BackReferenceExpressionInfo,
     CalculateInfo,
     ChildReferenceCollectionInfo,
@@ -912,19 +911,6 @@ def test_collections_calc_terms(
             id="regions_suppliers_calc",
         ),
         pytest.param(
-            TableCollectionInfo("Parts")
-            ** SubCollectionInfo("suppliers_of_part")
-            ** SubCollectionInfo("ps_lines"),
-            "TPCH.Parts.suppliers_of_part.ps_lines",
-            """
-──┬─ TPCH
-  └─┬─ TableCollection[Parts]
-    └─┬─ SubCollection[suppliers_of_part]
-      └─── SubCollection[ps_lines]
-""",
-            id="parts_suppliers_lines",
-        ),
-        pytest.param(
             TableCollectionInfo("Nations")
             ** CalculateInfo(
                 [SubCollectionInfo("suppliers")],
@@ -1026,76 +1012,38 @@ def test_collections_calc_terms(
         ),
         pytest.param(
             TableCollectionInfo("Suppliers")
-            ** SubCollectionInfo("parts_supplied")
+            ** SubCollectionInfo("supply_records")
             ** CalculateInfo(
-                [
-                    SubCollectionInfo("ps_lines"),
-                    BackReferenceCollectionInfo("nation", 1)
-                    ** CalculateInfo([], nation_name=ReferenceInfo("name")),
-                ],
-                nation_name=ChildReferenceExpressionInfo("nation_name", 1),
-                supplier_name=BackReferenceExpressionInfo("name", 1),
-                part_name=ReferenceInfo("name"),
+                [SubCollectionInfo("lines")],
                 ratio=FunctionInfo(
                     "DIV",
                     [
                         FunctionInfo(
                             "SUM", [ChildReferenceExpressionInfo("quantity", 0)]
                         ),
-                        ReferenceInfo("ps_availqty"),
+                        ReferenceInfo("availqty"),
                     ],
                 ),
-            ),
-            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation(nation_name=name).nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM(ps_lines.quantity) / ps_availqty)",
-            """
-──┬─ TPCH
-  └─┬─ TableCollection[Suppliers]
-    ├─── SubCollection[parts_supplied]
-    └─┬─ Calculate[nation_name=$2.nation_name, supplier_name=BACK(1).name, part_name=name, ratio=SUM($1.quantity) / ps_availqty]
-      ├─┬─ AccessChild
-      │ └─── SubCollection[ps_lines]
-      └─┬─ AccessChild
-        ├─── BackSubCollection[1, nation]
-        └─── Calculate[nation_name=name]
-""",
-            id="suppliers_parts_childcalc_a",
-        ),
-        pytest.param(
-            TableCollectionInfo("Suppliers")
-            ** SubCollectionInfo("parts_supplied")
+            )
+            ** SubCollectionInfo("part")
             ** CalculateInfo(
-                [
-                    SubCollectionInfo("ps_lines")
-                    ** CalculateInfo(
-                        [],
-                        ratio=FunctionInfo(
-                            "DIV",
-                            [
-                                ReferenceInfo("quantity"),
-                                BackReferenceExpressionInfo("ps_availqty", 1),
-                            ],
-                        ),
-                    ),
-                    BackReferenceCollectionInfo("nation", 1),
-                ],
-                nation_name=ChildReferenceExpressionInfo("name", 1),
-                supplier_name=BackReferenceExpressionInfo("name", 1),
+                [],
+                supplier_name=BackReferenceExpressionInfo("name", 2),
                 part_name=ReferenceInfo("name"),
-                ratio=FunctionInfo("MAX", [ChildReferenceExpressionInfo("ratio", 0)]),
+                ratio=BackReferenceExpressionInfo("ratio", 1),
             ),
-            "TPCH.Suppliers.parts_supplied(nation_name=BACK(1).nation.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX(ps_lines(ratio=quantity / BACK(1).ps_availqty).ratio))",
+            "TPCH.Suppliers.supply_records(ratio=SUM(lines.quantity) / availqty).part(supplier_name=BACK(2).name, part_name=name)",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
-    ├─── SubCollection[parts_supplied]
-    └─┬─ Calculate[nation_name=$2.name, supplier_name=BACK(1).name, part_name=name, ratio=MAX($1.ratio)]
+    ├─── SubCollection[supply_records]
+    └─┬─ Calculate[ratio=SUM($1.quantity) / availqty]
       ├─┬─ AccessChild
-      │ ├─── SubCollection[ps_lines]
-      │ └─── Calculate[ratio=quantity / BACK(1).ps_availqty]
-      └─┬─ AccessChild
-        └─── BackSubCollection[1, nation]
+      │ └─── SubCollection[lines]
+      ├─── SubCollection[part]
+      └─── Calculate[supplier_name=BACK(2).name, part_name=name]
 """,
-            id="suppliers_parts_childcalc_b",
+            id="suppliers_parts_childcalc",
         ),
         pytest.param(
             (

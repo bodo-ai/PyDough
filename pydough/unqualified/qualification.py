@@ -377,8 +377,8 @@ class Qualifier:
             # Identify whether the access is an expression or a collection
             term = ancestor.get_term(name)
             if isinstance(term, PyDoughCollectionQDAG):
-                return self.builder.build_back_reference_collection(
-                    context, name, levels
+                raise PyDoughUnqualifiedException(
+                    f"Cannot back reference a collection {name} from {ancestor}"
                 )
             else:
                 return self.builder.build_back_reference_expression(

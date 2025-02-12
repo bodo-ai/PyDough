@@ -40,7 +40,7 @@ def rank_nations_by_region():
 
 def rank_nations_per_region_by_customers():
     return Regions.nations(
-        name, rank=RANKING(by=COUNT(customers).DESC(), levels=1)
+        name, rank=RANKING(by=COUNT(customers).DESC(), levels="Regions")
     ).TOP_K(5, by=rank.ASC())
 
 
@@ -245,15 +245,14 @@ def triple_partition():
     # customer region. Only considers lineitems from June of 1992 where the
     # container is small.
     line_info = (
-        Parts.WHERE(
+        Parts(part_type=part_type)
+        .WHERE(
             STARTSWITH(container, "SM"),
         )
         .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))(
             supp_region=supplier.nation.region.name,
         )
         .order.WHERE(YEAR(order_date) == 1992)(
-            supp_region=BACK(1).supp_region,
-            part_type=BACK(2).part_type,
             cust_region=customer.nation.region.name,
         )
     )

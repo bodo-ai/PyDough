@@ -16,8 +16,6 @@ The QDAG collections module contains the following hierarchy of collection class
             - [`TableCollection`](table_collection.py) (concrete): Accessing a table collection directly.
             - [`SubCollection`](sub_collection.py) (concrete): Accessing a subcolleciton of another collection.
                 - [`CompoundSubCollection`](sub_collection.py) (concrete): Accessing a subcollection of another collection where the subcollection property is a compound relationship.
-            - [`BackReferenceCollection`](back_reference_collection.py) (concrete): Same idea as `ChildReferenceCollection`, but on a subcollection of an ancestor collection
-                - [`HiddenBackReferenceCollection`](hidden_back_reference_collection.py) (concrete): Same idea as `BackReferenceCollection`, but where the back reference is hidden because it is a subcollection reference where the subcollection comes from a hidden ancestor of a compound relationship.
     - [`ChildOperator`](child_operator.py) (abstract): Base class for collection QDAG nodes that need to access child contexts in order to make a child reference.
         - [`Calculate`](calculate.py) (concrete): Operation that defines new singular expression terms in the current context and names them.
         - [`Where`](where.py) (concrete): Operation that filters the current context based on a predicate that is a singular expression.

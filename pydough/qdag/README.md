@@ -111,10 +111,6 @@ partition_key = builder.build_reference(part_collection, "part_type")
 partition_by_node = builder.build_partition(part_collection, child_collection, "p")
 partition_by_node = partition_by_node.with_keys([partition_key])
 
-# Build a back reference collection node
-# Equivalent PyDough code: `BACK(1).subcollection`
-back_reference_collection_node = builder.build_back_reference_collection(table_collection, "subcollection", 1)
-
 # Build a child reference collection node
 # Equivalent PyDough code: `Nations(n_customers=COUNT(customers))`
 customers_sub_collection = builder.build_child_access("customers", table_collection)

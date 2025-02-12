@@ -308,12 +308,12 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q2,
-            "?.PARTITION(?.Nations.WHERE((?.region.name == 'EUROPE')).suppliers.supply_records.part(s_acctbal=BACK(2).account_balance, s_name=BACK(2).name, n_name=BACK(3).name, s_address=BACK(2).address, s_phone=BACK(2).phone, s_comment=BACK(2).comment, supplycost=BACK(1).supplycost).WHERE((ENDSWITH(?.part_type, 'BRASS') & (?.size == 15))), name='p', by=(?.key))(best_cost=MIN(?.p.supplycost)).p.WHERE((((?.supplycost == BACK(1).best_cost) & ENDSWITH(?.part_type, 'BRASS')) & (?.size == 15)))(S_ACCTBAL=?.s_acctbal, S_NAME=?.s_name, N_NAME=?.n_name, P_PARTKEY=?.key, P_MFGR=?.manufacturer, S_ADDRESS=?.s_address, S_PHONE=?.s_phone, S_COMMENT=?.s_comment).TOP_K(10, by=(?.S_ACCTBAL.DESC(na_pos='last'), ?.N_NAME.ASC(na_pos='first'), ?.S_NAME.ASC(na_pos='first'), ?.P_PARTKEY.ASC(na_pos='first')))",
+            "?.PARTITION(?.Nations(n_name=?.name).WHERE((?.region.name == 'EUROPE')).suppliers(s_acctbal=?.acctbal, s_name=?.name, s_address=?.address, s_phone=?.phone, s_comment=?.comment).supply_records(supplycost=?.supplycost).part.WHERE((ENDSWITH(?.part_type, 'BRASS') & (?.size == 15))), name='p', by=(?.key))(best_cost=MIN(?.p.supplycost)).p.WHERE((((?.supplycost == BACK(1).best_cost) & ENDSWITH(?.part_type, 'BRASS')) & (?.size == 15)))(S_ACCTBAL=?.s_acctbal, S_NAME=?.s_name, N_NAME=?.n_name, P_PARTKEY=?.key, P_MFGR=?.manufacturer, S_ADDRESS=?.s_address, S_PHONE=?.s_phone, S_COMMENT=?.s_comment).TOP_K(10, by=(?.S_ACCTBAL.DESC(na_pos='last'), ?.N_NAME.ASC(na_pos='first'), ?.S_NAME.ASC(na_pos='first'), ?.P_PARTKEY.ASC(na_pos='first')))",
             id="tpch_q2",
         ),
         pytest.param(
             impl_tpch_q3,
-            "?.PARTITION(?.Orders.WHERE(((?.customer.mktsegment == 'BUILDING') & (?.order_date < datetime.date(1995, 3, 15)))).lines.WHERE((?.ship_date > datetime.date(1995, 3, 15)))(order_date=BACK(1).order_date, ship_priority=BACK(1).ship_priority), name='l', by=(?.order_key, ?.order_date, ?.ship_priority))(L_ORDERKEY=?.order_key, REVENUE=SUM((?.l.extended_price * (1 - ?.l.discount))), O_ORDERDATE=?.order_date, O_SHIPPRIORITY=?.ship_priority).TOP_K(10, by=(?.REVENUE.DESC(na_pos='last'), ?.O_ORDERDATE.ASC(na_pos='first'), ?.L_ORDERKEY.ASC(na_pos='first')))",
+            "?.PARTITION(?.Orders(order_date=?.order_date, ship_priority=?.ship_priority).WHERE(((?.customer.mktsegment == 'BUILDING') & (?.order_date < datetime.date(1995, 3, 15)))).lines.WHERE((?.ship_date > datetime.date(1995, 3, 15))), name='l', by=(?.order_key, ?.order_date, ?.ship_priority))(L_ORDERKEY=?.order_key, REVENUE=SUM((?.l.extended_price * (1 - ?.l.discount))), O_ORDERDATE=?.order_date, O_SHIPPRIORITY=?.ship_priority).TOP_K(10, by=(?.REVENUE.DESC(na_pos='last'), ?.O_ORDERDATE.ASC(na_pos='first'), ?.L_ORDERKEY.ASC(na_pos='first')))",
             id="tpch_q3",
         ),
         pytest.param(
@@ -338,12 +338,12 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q8,
-            "?.PARTITION(?.Nations.suppliers.supply_records.WHERE((?.part.part_type == 'ECONOMY ANODIZED STEEL')).lines(volume=(?.extended_price * (1 - ?.discount))).order(o_year=YEAR(?.order_date), volume=BACK(1).volume, brazil_volume=IFF((BACK(4).name == 'BRAZIL'), BACK(1).volume, 0)).WHERE((((?.order_date >= datetime.date(1995, 1, 1)) & (?.order_date <= datetime.date(1996, 12, 31))) & (?.customer.nation.region.name == 'AMERICA'))), name='v', by=(?.o_year))(O_YEAR=?.o_year, MKT_SHARE=(SUM(?.v.brazil_volume) / SUM(?.v.volume)))",
+            "?.PARTITION(?.Nations(nation_name=?.name).suppliers.supply_records.WHERE((?.part.part_type == 'ECONOMY ANODIZED STEEL')).lines(volume=(?.extended_price * (1 - ?.discount))).order(o_year=YEAR(?.order_date), volume=?.volume, brazil_volume=IFF((?.nation_name == 'BRAZIL'), ?.volume, 0)).WHERE((((?.order_date >= datetime.date(1995, 1, 1)) & (?.order_date <= datetime.date(1996, 12, 31))) & (?.customer.nation.region.name == 'AMERICA'))), name='v', by=(?.o_year))(O_YEAR=?.o_year, MKT_SHARE=(SUM(?.v.brazil_volume) / SUM(?.v.volume)))",
             id="tpch_q8",
         ),
         pytest.param(
             impl_tpch_q9,
-            "?.PARTITION(?.Nations.suppliers.supply_records.WHERE(CONTAINS(?.part.name, 'green')).lines(nation=BACK(3).name, o_year=YEAR(?.order.order_date), value=((?.extended_price * (1 - ?.discount)) - (BACK(1).supplycost * ?.quantity))), name='l', by=(?.nation, ?.o_year))(NATION=?.nation, O_YEAR=?.o_year, AMOUNT=SUM(?.l.value)).TOP_K(10, by=(?.NATION.ASC(na_pos='first'), ?.O_YEAR.DESC(na_pos='last')))",
+            "?.PARTITION(?.Nations(nation_name=?.nation).suppliers.supply_records.WHERE(CONTAINS(?.part.name, 'green')).lines(o_year=YEAR(?.order.order_date), value=((?.extended_price * (1 - ?.discount)) - (BACK(1).supplycost * ?.quantity))), name='l', by=(?.nation_name, ?.o_year))(NATION=?.nation_name, O_YEAR=?.o_year, AMOUNT=SUM(?.l.value)).TOP_K(10, by=(?.NATION.ASC(na_pos='first'), ?.O_YEAR.DESC(na_pos='last')))",
             id="tpch_q9",
         ),
         pytest.param(
@@ -353,7 +353,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q11,
-            "?.TPCH(min_market_share=(SUM(?.PartSupp.WHERE((?.supplier.nation.name == 'GERMANY'))(metric=(?.supplycost * ?.availqty)).metric) * 0.0001)).PARTITION(?.PartSupp.WHERE((?.supplier.nation.name == 'GERMANY'))(metric=(?.supplycost * ?.availqty)), name='ps', by=(?.part_key))(PS_PARTKEY=?.part_key, VALUE=SUM(?.ps.metric)).WHERE((?.VALUE > BACK(1).min_market_share)).TOP_K(10, by=(?.VALUE.DESC(na_pos='last')))",
+            "?.TPCH(min_market_share=(SUM(?.PartSupp.WHERE((?.supplier.nation.name == 'GERMANY'))(metric=(?.supplycost * ?.availqty)).metric) * 0.0001)).PARTITION(?.PartSupp.WHERE((?.supplier.nation.name == 'GERMANY'))(metric=(?.supplycost * ?.availqty)), name='ps', by=(?.part_key))(PS_PARTKEY=?.part_key, VALUE=SUM(?.ps.metric)).WHERE((?.VALUE > ?.min_market_share)).TOP_K(10, by=(?.VALUE.DESC(na_pos='last')))",
             id="tpch_q11",
         ),
         pytest.param(
@@ -363,7 +363,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q13,
-            "?.PARTITION(?.Customers(key=?.key, num_non_special_orders=COUNT(?.orders.WHERE(NOT(LIKE(?.comment, '%special%requests%'))))), name='custs', by=(?.num_non_special_orders))(C_COUNT=?.num_non_special_orders, CUSTDIST=COUNT(?.custs)).TOP_K(10, by=(?.CUSTDIST.DESC(na_pos='last'), ?.C_COUNT.DESC(na_pos='last')))",
+            "?.PARTITION(?.Customers(num_non_special_orders=COUNT(?.orders.WHERE(NOT(LIKE(?.comment, '%special%requests%'))))), name='custs', by=(?.num_non_special_orders))(C_COUNT=?.num_non_special_orders, CUSTDIST=COUNT(?.custs)).TOP_K(10, by=(?.CUSTDIST.DESC(na_pos='last'), ?.C_COUNT.DESC(na_pos='last')))",
             id="tpch_q13",
         ),
         pytest.param(
@@ -373,17 +373,17 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q15,
-            "?.TPCH(max_revenue=MAX(?.Suppliers(total_revenue=SUM((?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - ?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).discount)))).total_revenue)).Suppliers(S_SUPPKEY=?.key, S_NAME=?.name, S_ADDRESS=?.address, S_PHONE=?.phone, TOTAL_REVENUE=SUM((?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - ?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).discount)))).WHERE((?.TOTAL_REVENUE == BACK(1).max_revenue)).ORDER_BY(?.S_SUPPKEY.ASC(na_pos='first'))",
+            "?.TPCH(max_revenue=MAX(?.Suppliers(total_revenue=SUM((?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - ?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).discount)))).total_revenue)).Suppliers(S_SUPPKEY=?.key, S_NAME=?.name, S_ADDRESS=?.address, S_PHONE=?.phone, TOTAL_REVENUE=SUM((?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - ?.lines.WHERE(((?.ship_date >= datetime.date(1996, 1, 1)) & (?.ship_date < datetime.date(1996, 4, 1)))).discount)))).WHERE((?.TOTAL_REVENUE == ?.max_revenue)).ORDER_BY(?.S_SUPPKEY.ASC(na_pos='first'))",
             id="tpch_q15",
         ),
         pytest.param(
             impl_tpch_q16,
-            "?.PARTITION(?.Parts.WHERE((((?.brand != 'BRAND#45') & NOT(STARTSWITH(?.part_type, 'MEDIUM POLISHED%'))) & ISIN(?.size, [49, 14, 23, 45, 19, 3, 36, 9]))).supply_records(p_brand=BACK(1).brand, p_type=BACK(1).part_type, p_size=BACK(1).size, ps_suppkey=?.supplier_key).WHERE(NOT(LIKE(?.supplier.comment, '%Customer%Complaints%'))), name='ps', by=(?.p_brand, ?.p_type, ?.p_size))(P_BRAND=?.p_brand, P_TYPE=?.p_type, P_SIZE=?.p_size, SUPPLIER_COUNT=NDISTINCT(?.ps.supplier_key)).TOP_K(10, by=(?.SUPPLIER_COUNT.DESC(na_pos='last'), ?.P_BRAND.ASC(na_pos='first'), ?.P_TYPE.ASC(na_pos='first'), ?.P_SIZE.ASC(na_pos='first')))",
+            "?.PARTITION(?.Parts.WHERE((((?.brand != 'BRAND#45') & NOT(STARTSWITH(?.part_type, 'MEDIUM POLISHED%'))) & ISIN(?.size, [49, 14, 23, 45, 19, 3, 36, 9])))(p_brand=?.brand, p_type=?.part_type, p_size=?.size).supply_records(ps_suppkey=?.supplier_key).WHERE(NOT(LIKE(?.supplier.comment, '%Customer%Complaints%'))), name='ps', by=(?.p_brand, ?.p_type, ?.p_size))(P_BRAND=?.p_brand, P_TYPE=?.p_type, P_SIZE=?.p_size, SUPPLIER_COUNT=NDISTINCT(?.ps.supplier_key)).TOP_K(10, by=(?.SUPPLIER_COUNT.DESC(na_pos='last'), ?.P_BRAND.ASC(na_pos='first'), ?.P_TYPE.ASC(na_pos='first'), ?.P_SIZE.ASC(na_pos='first')))",
             id="tpch_q16",
         ),
         pytest.param(
             impl_tpch_q17,
-            "?.TPCH(AVG_YEARLY=(SUM(?.Parts.WHERE(((?.brand == 'Brand#23') & (?.container == 'MED BOX')))(avg_quantity=AVG(?.lines.quantity)).lines.WHERE((?.quantity < (0.2 * BACK(1).avg_quantity))).extended_price) / 7.0))",
+            "?.TPCH(AVG_YEARLY=(SUM(?.Parts.WHERE(((?.brand == 'Brand#23') & (?.container == 'MED BOX')))(part_avg_quantity=AVG(?.lines.quantity)).lines.WHERE((?.quantity < (0.2 * ?.part_avg_quantity.avg_quantity))).extended_price) / 7.0))",
             id="tpch_q17",
         ),
         pytest.param(
@@ -398,17 +398,17 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q20,
-            "?.Suppliers(S_NAME=?.name, S_ADDRESS=?.address).WHERE((((?.nation.name == 'CANADA') & COUNT(?.supply_records.part.WHERE((STARTSWITH(?.name, 'forest') & (BACK(1).availqty > (SUM(?.lines.WHERE(((?.ship_date >= datetime.date(1994, 1, 1)) & (?.ship_date < datetime.date(1995, 1, 1)))).quantity) * 0.5)))))) > 0)).TOP_K(10, by=(?.S_NAME.ASC(na_pos='first')))",
+            "?.Suppliers(S_NAME=?.name, S_ADDRESS=?.address).WHERE((((?.nation.name == 'CANADA') & COUNT(?.supply_records(availqty=?.availqty).part.WHERE((STARTSWITH(?.name, 'forest') & (?.availqty > (SUM(?.lines.WHERE(((?.ship_date >= datetime.date(1994, 1, 1)) & (?.ship_date < datetime.date(1995, 1, 1)))).quantity) * 0.5)))))) > 0)).TOP_K(10, by=(?.S_NAME.ASC(na_pos='first')))",
             id="tpch_q20",
         ),
         pytest.param(
             impl_tpch_q21,
-            "?.Suppliers.WHERE((?.nation.name == 'SAUDI ARABIA'))(S_NAME=?.name, NUMWAIT=COUNT(?.lines.WHERE((?.receipt_date > ?.commit_date)).order.WHERE((((?.order_status == 'F') & HAS(?.lines.WHERE((?.supplier_key != BACK(2).supplier_key)))) & HASNOT(?.lines.WHERE(((?.supplier_key != BACK(2).supplier_key) & (?.receipt_date > ?.commit_date)))))))).TOP_K(10, by=(?.NUMWAIT.DESC(na_pos='last'), ?.S_NAME.ASC(na_pos='first')))",
+            "?.Suppliers.WHERE((?.nation.name == 'SAUDI ARABIA'))(S_NAME=?.name, NUMWAIT=COUNT(?.lines(original_key=?.supplier_key).WHERE((?.receipt_date > ?.commit_date)).order.WHERE((((?.order_status == 'F') & HAS(?.lines.WHERE((?.supplier_key != ?.original_key)))) & HASNOT(?.lines.WHERE(((?.supplier_key != ?.original_key) & (?.receipt_date > ?.commit_date)))))))).TOP_K(10, by=(?.NUMWAIT.DESC(na_pos='last'), ?.S_NAME.ASC(na_pos='first')))",
             id="tpch_q21",
         ),
         pytest.param(
             impl_tpch_q22,
-            "?.TPCH(avg_balance=AVG(?.Customers(cntry_code=SLICE(?.phone, None, 2, None)).WHERE((ISIN(?.cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT(?.orders))).WHERE((?.acctbal > 0.0)).acctbal)).PARTITION(?.Customers(cntry_code=SLICE(?.phone, None, 2, None)).WHERE((ISIN(?.cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT(?.orders))).WHERE((?.acctbal > BACK(1).avg_balance)), name='custs', by=(?.cntry_code))(CNTRY_CODE=?.cntry_code, NUM_CUSTS=COUNT(?.custs), TOTACCTBAL=SUM(?.custs.acctbal))",
+            "?.TPCH(global_avg_balance=AVG(?.Customers(cntry_code=SLICE(?.phone, None, 2, None)).WHERE((ISIN(?.cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT(?.orders))).WHERE((?.acctbal > 0.0)).acctbal)).PARTITION(?.Customers(cntry_code=SLICE(?.phone, None, 2, None)).WHERE((ISIN(?.cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT(?.orders))).WHERE((?.acctbal > ?.global_avg_balance)), name='custs', by=(?.cntry_code))(CNTRY_CODE=?.cntry_code, NUM_CUSTS=COUNT(?.custs), TOTACCTBAL=SUM(?.custs.acctbal))",
             id="tpch_q22",
         ),
         pytest.param(

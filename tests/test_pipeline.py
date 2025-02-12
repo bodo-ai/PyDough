@@ -632,9 +632,7 @@ from pydough.unqualified import (
 )
 def pydough_pipeline_test_data(
     request,
-) -> tuple[
-    Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
-]:
+) -> tuple[Callable[[], UnqualifiedNode], str, Callable[[], pd.DataFrame]]:
     """
     Test data for test_pydough_pipeline. Returns a tuple of the following
     arguments:
@@ -650,7 +648,7 @@ def pydough_pipeline_test_data(
 
 def test_pipeline_until_relational(
     pydough_pipeline_test_data: tuple[
-        Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
+        Callable[[], UnqualifiedNode], str, Callable[[], pd.DataFrame]
     ],
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
@@ -688,7 +686,7 @@ def test_pipeline_until_relational(
 @pytest.mark.execute
 def test_pipeline_e2e(
     pydough_pipeline_test_data: tuple[
-        Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
+        Callable[[], UnqualifiedNode], str, Callable[[], pd.DataFrame]
     ],
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
@@ -730,7 +728,7 @@ def test_pipeline_e2e(
     ],
 )
 def test_pipeline_e2e_errors(
-    impl: Callable[[UnqualifiedRoot], UnqualifiedNode],
+    impl: Callable[[], UnqualifiedNode],
     error_msg: str,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,

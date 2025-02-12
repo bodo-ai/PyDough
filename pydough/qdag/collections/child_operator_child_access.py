@@ -10,7 +10,6 @@ from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 
-from .back_reference_collection import BackReferenceCollection
 from .child_access import ChildAccess
 from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
@@ -82,9 +81,7 @@ class ChildOperatorChildAccess(ChildAccess):
         assert ancestor is not None
         relative_context: PyDoughCollectionQDAG = ancestor.starting_predecessor
         return self.child_access.is_singular(relative_context) and (
-            isinstance(self.child_access, BackReferenceCollection)
-            or (context == relative_context)
-            or relative_context.is_singular(context)
+            (context == relative_context) or relative_context.is_singular(context)
         )
 
     @property

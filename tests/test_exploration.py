@@ -17,10 +17,6 @@ from exploration_examples import (
     global_calc_impl,
     global_impl,
     lineitems_arithmetic_impl,
-    lps_back_lines_impl,
-    lps_back_lines_price_impl,
-    lps_back_supplier_impl,
-    lps_back_supplier_name_impl,
     nation_expr_impl,
     nation_impl,
     nation_name_impl,
@@ -1060,7 +1056,7 @@ Call pydough.explain(collection, verbose=True) for more details.
 PyDough collection representing the following logic:
   ──┬─ TPCH
     ├─── TableCollection[Nations]
-    ├─── Calculate[name=name]
+    ├─── Calculate[nation_name=name]
     └─┬─ Where[($1.name == 'ASIA') & HAS($2) & (COUNT($3) > 100)]
       ├─┬─ AccessChild
       │ └─── SubCollection[region]
@@ -1095,12 +1091,12 @@ The main task of this node is to filter on the following conditions:
   COUNT($3) > 100, aka COUNT(suppliers.WHERE(account_balance >= 0.0)) > 100
 
 The following terms will be included in the result if this collection is executed:
-  name
+  nation_name
 
 It is possible to use BACK to go up to 1 level above this collection.
 
 The collection has access to the following expressions:
-  comment, key, name, region_key
+  comment, key, name, nation_name, region_key
 
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
@@ -1120,7 +1116,7 @@ The main task of this node is to filter on the following conditions:
   COUNT($3) > 100, aka COUNT(suppliers.WHERE(account_balance >= 0.0)) > 100
 
 The collection has access to the following expressions:
-  comment, key, name, region_key
+  comment, key, name, nation_name, region_key
 
 The collection has access to the following collections:
   customers, orders_shipped_to, region, suppliers
@@ -1686,142 +1682,6 @@ This is a reference to expression 'name' of the 1st ancestor of the collection, 
 """,
             ),
             id="region_nations-back_name",
-        ),
-        pytest.param(
-            (
-                "TPCH",
-                lps_back_supplier_name_impl,
-                """
-Collection:
-  ──┬─ TPCH
-    └─┬─ TableCollection[Lineitems]
-      └─── SubCollection[part]
-
-The evaluation of this term first derives the following additional children to the collection before doing its main task:
-  child $1:
-    └─┬─ TableCollection[Lineitems]
-      └─── BackSubCollection[1, supplier]
-
-The term is the following expression: $1.name
-
-This is a reference to expression 'name' of child $1
-
-This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
-For example, the following is valid:
-  TPCH.Lineitems.part(BACK(1).supplier.name)
-        """,
-                """
-Collection: TPCH.Lineitems.part
-
-The evaluation of this term first derives the following additional children to the collection before doing its main task:
-  child $1: BACK(1).supplier
-
-The term is the following expression: $1.name
-
-This is a reference to expression 'name' of child $1
-        """,
-            ),
-            id="lineitem_part-back_supplier_name",
-        ),
-        pytest.param(
-            (
-                "TPCH",
-                lps_back_supplier_impl,
-                """
-Collection:
-  ──┬─ TPCH
-    └─┬─ TableCollection[Lineitems]
-      └─── SubCollection[part]
-
-The term is the following child of the collection:
-  ──┬─ TPCH
-    └─┬─ TableCollection[Lineitems]
-      └─── BackSubCollection[1, supplier]
-
-This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression.
-For example, the following is valid:
-  TPCH.Lineitems.part(BACK(1).supplier.account_balance)
-
-To learn more about this child, you can try calling pydough.explain on the following:
-  TPCH.Lineitems.supplier
-        """,
-                """
-Collection: TPCH.Lineitems.part
-
-The term is the following child of the collection:
-  BACK(1).supplier
-        """,
-            ),
-            id="lineitem_part-back_supplier",
-        ),
-        pytest.param(
-            (
-                "TPCH",
-                lps_back_lines_price_impl,
-                """
-Collection:
-  ──┬─ TPCH
-    └─┬─ TableCollection[PartSupp]
-      └─── SubCollection[part]
-
-The evaluation of this term first derives the following additional children to the collection before doing its main task:
-  child $1:
-    └─┬─ TableCollection[PartSupp]
-      └─── BackSubCollection[1, lines]
-
-The term is the following expression: $1.extended_price
-
-This is a reference to expression 'extended_price' of child $1
-
-This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated.
-For example, the following is valid:
-  TPCH.PartSupp.part(COUNT(BACK(1).lines.extended_price))
-        """,
-                """
-Collection: TPCH.PartSupp.part
-
-The evaluation of this term first derives the following additional children to the collection before doing its main task:
-  child $1: BACK(1).lines
-
-The term is the following expression: $1.extended_price
-
-This is a reference to expression 'extended_price' of child $1
-        """,
-            ),
-            id="partsupp_part-back_lines_price",
-        ),
-        pytest.param(
-            (
-                "TPCH",
-                lps_back_lines_impl,
-                """
-Collection:
-  ──┬─ TPCH
-    └─┬─ TableCollection[PartSupp]
-      └─── SubCollection[part]
-
-The term is the following child of the collection:
-  ──┬─ TPCH
-    └─┬─ TableCollection[PartSupp]
-      └─── BackSubCollection[1, lines]
-
-This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
-For example, the following are valid:
-  TPCH.PartSupp.part(COUNT(BACK(1).lines.comment))
-  TPCH.PartSupp.part.WHERE(HAS(BACK(1).lines))
-  TPCH.PartSupp.part.ORDER_BY(COUNT(BACK(1).lines).DESC())
-
-To learn more about this child, you can try calling pydough.explain on the following:
-  TPCH.PartSupp.lines
-        """,
-                """
-Collection: TPCH.PartSupp.part
-
-The term is the following child of the collection:
-  BACK(1).lines
-        """,
-            ),
-            id="partsupp_part-back_lines",
         ),
         pytest.param(
             (

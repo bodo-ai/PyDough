@@ -59,10 +59,6 @@ class CollectionAccess(ChildAccess):
                 self._calc_property_order[property_name] = len(
                     self._calc_property_order
                 )
-            if property_name in self._ancestral_mapping:
-                raise PyDoughQDAGException(
-                    f"Cannot have term name {property_name!r} used in an ancestor of {self!r}"
-                )
 
     @property
     def collection(self) -> CollectionMetadata:
@@ -106,6 +102,10 @@ class CollectionAccess(ChildAccess):
         from .compound_sub_collection import CompoundSubCollection
         from .sub_collection import SubCollection
 
+        if term_name in self.ancestral_mapping and term_name in self.calc_terms:
+            raise PyDoughQDAGException(
+                f"Cannot have term name {term_name!r} used in an ancestor of collection {self!r}"
+            )
         if term_name not in self.all_terms:
             raise PyDoughQDAGException(
                 f"Unrecognized term of {self.collection.error_name}: {term_name!r}"

@@ -1751,7 +1751,7 @@ from pydough.types import (
                             ),
                         )
                     ],
-                    name=ReferenceInfo("name"),
+                    nation_name=ReferenceInfo("name"),
                     region_name=ChildReferenceExpressionInfo("name", 0),
                 )
                 ** WhereInfo(
@@ -1919,7 +1919,7 @@ from pydough.types import (
                             ),
                         )
                     ],
-                    name=ReferenceInfo("name"),
+                    nation_name=ReferenceInfo("name"),
                     region_name=ChildReferenceExpressionInfo("name", 0),
                 )
                 ** WhereInfo(

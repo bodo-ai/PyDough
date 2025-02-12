@@ -11,7 +11,10 @@ from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
-from pydough.qdag.expressions import PyDoughExpressionQDAG, Reference
+from pydough.qdag.expressions import (
+    BackReferenceExpression,
+    PyDoughExpressionQDAG,
+)
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
 from .augmenting_child_operator import AugmentingChildOperator
@@ -70,12 +73,15 @@ class Calculate(AugmentingChildOperator):
         self._calc_term_indices = {}
         self._calc_term_values = {}
         for idx, (name, value) in enumerate(terms):
-            if name in self.preceding_context.all_terms:
-                if value != Reference(self.preceding_context, name):
-                    raise PyDoughQDAGException(
-                        f"Cannot redefine term {name!r} in CALCULATE that is already defined in a predecessor"
-                    )
-            elif name in self.ancestral_mapping:
+            ancestral_idx: int = self.ancestral_mapping.get(name, 0)
+            if ancestral_idx > 0:
+                # Ignore no-op back-references (e.g. name=BACK(1).name)
+                if (
+                    isinstance(value, BackReferenceExpression)
+                    and value.back_levels == ancestral_idx
+                    and value.term_name == name
+                ):
+                    continue
                 raise PyDoughQDAGException(
                     f"Cannot redefine term {name!r} in CALCULATE that is already defined in an ancestor"
                 )

@@ -84,29 +84,16 @@ def bad_pydough_impl_06(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.Suppliers.parts_supplied(o=ps_lines.order.order_date)
+    TPCH.Suppliers.supply_records(o=lines.order.order_date)
     ```
-    The problem: ps_lines is plural with regards to parts_supplied, therefore
-    ps_lines.order.order_date is also plural and it cannot be used as a calc
-    term relative to parts_supplied.
+    The problem: lines is plural with regards to supply_records, therefore
+    lines.order.order_date is also plural and it cannot be used as a calc
+    term relative to suppl_records.
     """
-    return root.Suppliers.parts_supplied(o=root.ps_lines.order.order_date)
+    return root.Suppliers.supply_records(o=root.lines.order.order_date)
 
 
 def bad_pydough_impl_07(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.Nations.suppliers.parts_supplied(cust_name=BACK(2).customers.name)
-    ```
-    The problem: customers is plural with regards to BACK(2), therefore
-    BACK(2).customers.name is also plural and it cannot be used as a calc
-    term relative to parts_supplied.
-    """
-    return root.Suppliers.parts_supplied(o=root.ps_lines.order.order_date)
-
-
-def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
@@ -119,7 +106,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     return root.Lineitems(v=root.MUL(root.extended_price, root.SUB(1, root.discount)))
 
 
-def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
+def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
@@ -162,23 +149,18 @@ def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_06,
-            "Expected all terms in (o=ps_lines.order.order_date) to be singular, but encountered a plural expression: ps_lines.order.order_date",
+            "Expected all terms in (o=lines.order.order_date) to be singular, but encountered a plural expression: lines.order.order_date",
             id="06",
         ),
         pytest.param(
             bad_pydough_impl_07,
-            "Expected all terms in (o=ps_lines.order.order_date) to be singular, but encountered a plural expression: ps_lines.order.order_date",
+            "Unrecognized term of simple table collection 'Lineitems' in graph 'TPCH': 'MUL'",
             id="07",
         ),
         pytest.param(
             bad_pydough_impl_08,
-            "Unrecognized term of simple table collection 'Lineitems' in graph 'TPCH': 'MUL'",
-            id="08",
-        ),
-        pytest.param(
-            bad_pydough_impl_09,
             "PyDough objects do not yet support writing properties to them.",
-            id="09",
+            id="08",
         ),
     ],
 )

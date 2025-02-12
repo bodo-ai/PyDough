@@ -5,7 +5,6 @@ build QDAG nodes for unit tests.
 
 __all__ = [
     "AstNodeTestInfo",
-    "BackReferenceCollectionInfo",
     "BackReferenceExpressionInfo",
     "CalculateInfo",
     "ChildReferenceExpressionInfo",
@@ -495,36 +494,6 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
             builder, context, children_contexts
         )
         return ChildOperatorChildAccess(access)
-
-
-class BackReferenceCollectionInfo(CollectionTestInfo):
-    """
-    CollectionTestInfo implementation class to build a reference to an
-    ancestor collection. Contains the following fields:
-    - `name`: the name of the calc term being referenced.
-    - `levels`: the number of levels upward to reference.
-
-    NOTE: must provide a `context` when building.
-    """
-
-    def __init__(self, name: str, levels: int):
-        super().__init__()
-        self.name: str = name
-        self.levels: int = levels
-
-    def local_string(self) -> str:
-        return f"BackReferenceCollection[{self.levels}:{self.name}]"
-
-    def local_build(
-        self,
-        builder: AstNodeBuilder,
-        context: PyDoughCollectionQDAG | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
-    ) -> PyDoughCollectionQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on BackReferenceCollectionInfo without providing a context"
-        return builder.build_back_reference_collection(context, self.name, self.levels)
 
 
 class ChildReferenceCollectionInfo(CollectionTestInfo):

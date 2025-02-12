@@ -40,6 +40,9 @@ class PartitionBy(ChildOperator):
         self._child_name: str = child_name
         self._keys: list[PartitionKey] | None = None
         self._key_name_indices: dict[str, int] = {}
+        self._ancestral_mapping: dict[str, int] = {
+            name: level + 1 for name, level in ancestor.ancestral_mapping.items()
+        }
 
     def with_keys(self, keys: list[ChildReferenceExpression]) -> "PartitionBy":
         """
@@ -126,7 +129,7 @@ class PartitionBy(ChildOperator):
 
     @property
     def ancestral_mapping(self) -> dict[str, int]:
-        raise NotImplementedError()
+        return self._ancestral_mapping
 
     @property
     def ordering(self) -> list[CollationExpression] | None:

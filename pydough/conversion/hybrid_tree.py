@@ -423,6 +423,10 @@ class HybridCollectionAccess(HybridOperation):
         self.collection: CollectionAccess = collection
         terms: dict[str, HybridExpr] = {}
         for name in collection.calc_terms:
+            # Skip columns that are overloaded with a name from an ancestor,
+            # since they should not be used.
+            if name in collection.ancestral_mapping:
+                continue
             expr = collection.get_expr(name)
             assert isinstance(expr, ColumnProperty)
             terms[name] = HybridColumnExpr(expr)

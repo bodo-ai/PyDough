@@ -9,7 +9,6 @@ __all__ = ["explain_term", "find_unqualified_root"]
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
-    BackReferenceCollection,
     BackReferenceExpression,
     ChildReferenceExpression,
     ColumnProperty,
@@ -80,13 +79,7 @@ def collection_in_context_string(
     Returns:
         The desired string representation of context and collection combined.
     """
-    if isinstance(collection, BackReferenceCollection):
-        ancestor: PyDoughCollectionQDAG = context
-        for _ in range(collection.back_levels):
-            assert ancestor.ancestor_context is not None
-            ancestor = ancestor.ancestor_context
-        return f"{ancestor.to_string()}.{collection.term_name}"
-    elif (
+    if (
         collection.preceding_context is not None
         and collection.preceding_context is not context
     ):
