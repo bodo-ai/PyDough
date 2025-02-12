@@ -866,11 +866,13 @@ class HybridTree:
     def __init__(
         self,
         root_operation: HybridOperation,
+        ancestral_mapping: dict[str, int],
         is_hidden_level: bool = False,
         is_connection_root: bool = False,
     ):
         self._pipeline: list[HybridOperation] = [root_operation]
         self._children: list[HybridConnection] = []
+        self._ancestral_mapping: dict[str, int] = ancestral_mapping
         self._successor: HybridTree | None = None
         self._parent: HybridTree | None = None
         self._is_hidden_level: bool = is_hidden_level
@@ -916,6 +918,14 @@ class HybridTree:
         in the pipeline.
         """
         return self._children
+
+    @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        """
+        The mapping used to identify terms that are references to an alias
+        defined in an ancestor.
+        """
+        return self._ancestral_mapping
 
     @property
     def successor(self) -> Optional["HybridTree"]:
@@ -1608,6 +1618,12 @@ class HybridTranslator:
                 )
                 return HybridBackRefExpr(expr_name, expr.back_levels, expr.pydough_type)
             case Reference():
+                if expr.term_name in hybrid.ancestral_mapping:
+                    return HybridBackRefExpr(
+                        expr.term_name,
+                        hybrid.ancestral_mapping[expr.term_name],
+                        expr.pydough_type,
+                    )
                 expr_name = hybrid.pipeline[-1].renamings.get(
                     expr.term_name, expr.term_name
                 )
@@ -1774,18 +1790,21 @@ class HybridTranslator:
         join_key_exprs: list[tuple[HybridExpr, HybridExpr]] = []
         match node:
             case GlobalContext():
-                return HybridTree(HybridRoot())
+                return HybridTree(HybridRoot(), node.ancestral_mapping)
             case CompoundSubCollection():
                 raise NotImplementedError(f"{node.__class__.__name__}")
             case TableCollection() | SubCollection():
-                successor_hybrid = HybridTree(HybridCollectionAccess(node))
+                successor_hybrid = HybridTree(
+                    HybridCollectionAccess(node), node.ancestral_mapping
+                )
                 hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case PartitionChild():
                 hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
                 successor_hybrid = HybridTree(
-                    HybridPartitionChild(hybrid.children[0].subtree)
+                    HybridPartitionChild(hybrid.children[0].subtree),
+                    node.ancestral_mapping,
                 )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
@@ -1815,7 +1834,7 @@ class HybridTranslator:
             case PartitionBy():
                 hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
                 partition: HybridPartition = HybridPartition()
-                successor_hybrid = HybridTree(partition)
+                successor_hybrid = HybridTree(partition, node.ancestral_mapping)
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
                 partition_child_idx: int = child_ref_mapping[0]
@@ -1853,7 +1872,8 @@ class HybridTranslator:
                         node.child_access, CompoundSubCollection
                     ):
                         successor_hybrid = HybridTree(
-                            HybridCollectionAccess(node.child_access)
+                            HybridCollectionAccess(node.child_access),
+                            node.ancestral_mapping,
                         )
                         if isinstance(node.child_access, SubCollection):
                             join_key_exprs = HybridTranslator.get_join_keys(
