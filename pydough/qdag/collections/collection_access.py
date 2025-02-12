@@ -19,6 +19,7 @@ from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
+    BackReferenceExpression,
     CollationExpression,
     ColumnProperty,
 )
@@ -47,6 +48,7 @@ class CollectionAccess(ChildAccess):
         self._ancestral_mapping: dict[str, int] = {
             name: level + 1 for name, level in ancestor.ancestral_mapping.items()
         }
+        self._all_property_names.update(self._ancestral_mapping)
         for property_name in sorted(
             collection.get_property_names(),
             key=lambda name: collection.definition_order[name],
@@ -102,10 +104,20 @@ class CollectionAccess(ChildAccess):
         from .compound_sub_collection import CompoundSubCollection
         from .sub_collection import SubCollection
 
-        if term_name in self.ancestral_mapping and term_name in self.calc_terms:
-            raise PyDoughQDAGException(
-                f"Cannot have term name {term_name!r} used in an ancestor of collection {self!r}"
+        # Special handling of terms down-streamed from an ancestor CALCULATE
+        # clause.
+        if term_name in self.ancestral_mapping:
+            # Verify that the ancestor name is not also a name in the current
+            # context.
+            if term_name in self.calc_terms:
+                raise PyDoughQDAGException(
+                    f"Cannot have term name {term_name!r} used in an ancestor of collection {self!r}"
+                )
+            # Create a back-reference to the ancestor term.
+            return BackReferenceExpression(
+                self, term_name, self.ancestral_mapping[term_name]
             )
+
         if term_name not in self.all_terms:
             raise PyDoughQDAGException(
                 f"Unrecognized term of {self.collection.error_name}: {term_name!r}"

@@ -21,6 +21,7 @@ from pydough.metadata.properties import (
     TableColumnMetadata,
 )
 from pydough.qdag import (
+    BackReferenceExpression,
     Calculate,
     ChildOperator,
     ExpressionFunctionCall,
@@ -400,6 +401,10 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                                     suffix += " (propagated from previous collection)"
                                 else:
                                     suffix += f" (overwrites existing value of {name})"
+                            elif isinstance(expr, BackReferenceExpression):
+                                suffix = (
+                                    " (referencing an alias defined in an ancestor)"
+                                )
                             lines.append(f"  {name} <- {tree_string}{suffix}")
                     case Where():
                         lines.append(
@@ -471,23 +476,6 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
             else:
                 lines.append(
                     "\nThe collection does not have any terms that can be included in a result if it is executed."
-                )
-
-            # Identify the number of BACK levels that are accessible
-            back_counter: int = 0
-            copy_node: PyDoughCollectionQDAG = qualified_node
-            while copy_node.ancestor_context is not None:
-                back_counter += 1
-                copy_node = copy_node.ancestor_context
-            if back_counter == 0:
-                lines.append("\nIt is not possible to use BACK from this collection.")
-            elif back_counter == 1:
-                lines.append(
-                    "\nIt is possible to use BACK to go up to 1 level above this collection."
-                )
-            else:
-                lines.append(
-                    f"\nIt is possible to use BACK to go up to {back_counter} levels above this collection."
                 )
 
         # Dump the collection & expression terms of the collection

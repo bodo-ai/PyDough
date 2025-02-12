@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 import pytest
 from exploration_examples import (
+    calc_subcollection_impl,
     contextless_aggfunc_impl,
     contextless_collections_impl,
     contextless_expr_impl,
@@ -764,8 +765,6 @@ Call pydough.explain(graph['Nations']) to learn more about this collection.
 The following terms will be included in the result if this collection is executed:
   comment, key, name, region_key
 
-It is possible to use BACK to go up to 1 level above this collection.
-
 The collection has access to the following expressions:
   comment, key, name, region_key
 
@@ -805,8 +804,6 @@ This node is a reference to the global context for the entire graph. An operatio
 
 The collection does not have any terms that can be included in a result if it is executed.
 
-It is not possible to use BACK from this collection.
-
 The collection has access to the following collections:
   Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
 
@@ -842,8 +839,6 @@ The main task of this node is to calculate the following additional expressions 
 
 The following terms will be included in the result if this collection is executed:
   x, y
-
-It is not possible to use BACK from this collection.
 
 The collection has access to the following expressions:
   x, y
@@ -898,8 +893,6 @@ The main task of this node is to calculate the following additional expressions 
 
 The following terms will be included in the result if this collection is executed:
   avg_part_price, n_customers
-
-It is not possible to use BACK from this collection.
 
 The collection has access to the following expressions:
   avg_part_price, n_customers
@@ -961,8 +954,6 @@ The main task of this node is to calculate the following additional expressions 
 The following terms will be included in the result if this collection is executed:
   name, num_customers, region_name
 
-It is possible to use BACK to go up to 1 level above this collection.
-
 The collection has access to the following expressions:
   comment, key, name, num_customers, region_key, region_name
 
@@ -1003,20 +994,20 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    └─┬─ TableCollection[Regions]
-      └─┬─ SubCollection[nations]
+    ├─── TableCollection[Regions]
+    └─┬─ Calculate[region_name=name]
+      ├─── SubCollection[nations]
+      └─┬─ Calculate[nation_name=name]
         ├─── SubCollection[customers]
-        └─── Calculate[name=name, nation_name=BACK(1).name, region_name=BACK(2).name]
+        └─── Calculate[name=name, nation_name=nation_name, region_name=region_name]
 
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
   name <- name (propagated from previous collection)
-  nation_name <- BACK(1).name
-  region_name <- BACK(2).name
+  nation_name <- nation_name (propagated from previous collection)
+  region_name <- region_name (propagated from previous collection)
 
 The following terms will be included in the result if this collection is executed:
   name, nation_name, region_name
-
-It is possible to use BACK to go up to 3 levels above this collection.
 
 The collection has access to the following expressions:
   acctbal, address, comment, key, mktsegment, name, nation_key, nation_name, phone, region_name
@@ -1030,8 +1021,8 @@ expressions or collections that the collection has access to.
                 """
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
   name <- name (propagated from previous collection)
-  nation_name <- BACK(1).name
-  region_name <- BACK(2).name
+  nation_name <- nation_name (propagated from previous collection)
+  region_name <- region_name (propagated from previous collection)
 
 The collection has access to the following expressions:
   acctbal, address, comment, key, mktsegment, name, nation_key, nation_name, phone, region_name
@@ -1046,6 +1037,48 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """,
             ),
             id="subcollection_calc_backref",
+        ),
+        pytest.param(
+            (
+                "TPCH",
+                calc_subcollection_impl,
+                """
+PyDough collection representing the following logic:
+  ──┬─ TPCH
+    ├─── TableCollection[Nations]
+    └─┬─ Calculate[nation_name=name]
+      └─── SubCollection[region]
+
+This node, specifically, accesses the subcollection Nations.region. Call pydough.explain(graph['Nations']['region']) to learn more about this subcollection property.
+
+The following terms will be included in the result if this collection is executed:
+  comment, key, name
+
+The collection has access to the following expressions:
+  comment, key, name, nation_name
+
+The collection has access to the following collections:
+  customers, lines_sourced_from, nations, orders_shipped_to, suppliers
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+                """,
+                """
+This node, specifically, accesses the subcollection Nations.region. Call pydough.explain(graph['Nations']['region']) to learn more about this subcollection property.
+
+The collection has access to the following expressions:
+  comment, key, name, nation_name
+
+The collection has access to the following collections:
+  customers, lines_sourced_from, nations, orders_shipped_to, suppliers
+
+Call pydough.explain_term(collection, term) to learn more about any of these
+expressions or collections that the collection has access to.
+
+Call pydough.explain(collection, verbose=True) for more details.
+                """,
+            ),
+            id="calc_subcollection",
         ),
         pytest.param(
             (
@@ -1091,8 +1124,6 @@ The main task of this node is to filter on the following conditions:
 
 The following terms will be included in the result if this collection is executed:
   nation_name
-
-It is possible to use BACK to go up to 1 level above this collection.
 
 The collection has access to the following expressions:
   comment, key, name, nation_name, region_key
@@ -1152,8 +1183,6 @@ The main task of this node is to sort the collection on the following:
 The following terms will be included in the result if this collection is executed:
   name
 
-It is possible to use BACK to go up to 1 level above this collection.
-
 The collection has access to the following expressions:
   comment, key, name, region_key
 
@@ -1205,8 +1234,6 @@ The main task of this node is to sort the collection on the following and keep t
 The following terms will be included in the result if this collection is executed:
   n_suppliers, name
 
-It is possible to use BACK to go up to 1 level above this collection.
-
 The collection has access to the following expressions:
   brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size
 
@@ -1256,8 +1283,6 @@ Note: the subcollection of this collection containing records from the unpartiti
 
 The following terms will be included in the result if this collection is executed:
   part_type
-
-It is possible to use BACK to go up to 1 level above this collection.
 
 The collection has access to the following expressions:
   part_type
@@ -1311,10 +1336,8 @@ This node, specifically, accesses the unpartitioned data of a partitioning (chil
 The following terms will be included in the result if this collection is executed:
   brand, comment, container, key, manufacturer, name, part_type, retail_price, size
 
-It is possible to use BACK to go up to 2 levels above this collection.
-
 The collection has access to the following expressions:
-  brand, comment, container, key, manufacturer, name, part_type, retail_price, size
+  avg_price, brand, comment, container, key, manufacturer, name, part_type, retail_price, size
 
 The collection has access to the following collections:
   lines, suppliers_of_part, supply_records
@@ -1326,7 +1349,7 @@ expressions or collections that the collection has access to.
 This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
 
 The collection has access to the following expressions:
-  brand, comment, container, key, manufacturer, name, part_type, retail_price, size
+  avg_price, brand, comment, container, key, manufacturer, name, part_type, retail_price, size
 
 The collection has access to the following collections:
   lines, suppliers_of_part, supply_records
@@ -1641,26 +1664,28 @@ This is a reference to expression 'name' of child $1
                 """
 Collection:
   ──┬─ TPCH
-    └─┬─ TableCollection[Regions]
+    ├─── TableCollection[Regions]
+    └─┬─ Calculate[region_name=name]
       └─── SubCollection[nations]
 
-The term is the following expression: BACK(1).name
+The term is the following expression: region_name
 
-This is a reference to expression 'name' of the 1st ancestor of the collection, which is the following:
+This is a reference to expression 'region_name' of the 1st ancestor of the collection, which is the following:
   ──┬─ TPCH
-    └─── TableCollection[Regions]
+    ├─── TableCollection[Regions]
+    └─── Calculate[region_name=name]
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Regions.nations.CALCULATE(BACK(1).name)
+  TPCH.Regions.CALCULATE(region_name=name).nations.CALCULATE(region_name)
 """,
                 """
-Collection: TPCH.Regions.nations
+Collection: TPCH.Regions.CALCULATE(region_name=name).nations
 
-The term is the following expression: BACK(1).name
+The term is the following expression: region_name
 
-This is a reference to expression 'name' of the 1st ancestor of the collection, which is the following:
-  TPCH.Regions
+This is a reference to expression 'region_name' of the 1st ancestor of the collection, which is the following:
+  TPCH.Regions.CALCULATE(region_name=name)
 """,
             ),
             id="region_nations-back_name",

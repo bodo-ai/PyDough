@@ -319,6 +319,8 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
             ),
             {"key": 0, "name": 1, "region_key": 2, "comment": 3},
             {
+                "foo",
+                "bar",
                 "name",
                 "key",
                 "region_key",
@@ -738,6 +740,7 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "suppliers_of_part",
                 "supply_records",
                 "part_type",
+                "total_price",
             },
             id="partition_data_with_data_order",
         ),
@@ -1049,7 +1052,7 @@ def test_collections_calc_terms(
                 part_name=ReferenceInfo("name"),
                 ratio=BackReferenceExpressionInfo("ratio", 1),
             ),
-            "TPCH.Suppliers.supply_records.CALCULATE(ratio=SUM(lines.quantity) / availqty).part.CALCULATE(supplier_name=name, part_name=name)",
+            "TPCH.Suppliers.supply_records.CALCULATE(ratio=SUM(lines.quantity) / availqty).part.CALCULATE(supplier_name=name, part_name=name, ratio=ratio)",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
@@ -1058,7 +1061,7 @@ def test_collections_calc_terms(
       ├─┬─ AccessChild
       │ └─── SubCollection[lines]
       ├─── SubCollection[part]
-      └─── Calculate[supplier_name=name, part_name=name]
+      └─── Calculate[supplier_name=name, part_name=name, ratio=ratio]
 """,
             id="suppliers_parts_childcalc",
         ),

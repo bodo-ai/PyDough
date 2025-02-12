@@ -72,14 +72,6 @@ class Where(AugmentingChildOperator):
         return f"{self.preceding_context.key}.WHERE"
 
     @property
-    def calc_terms(self) -> set[str]:
-        return self.preceding_context.calc_terms
-
-    @property
-    def all_terms(self) -> set[str]:
-        return self.preceding_context.all_terms
-
-    @property
     @cache
     def standalone_string(self) -> str:
         return f"WHERE({self.condition.to_string()})"

@@ -12,6 +12,7 @@ from functools import cache
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
+    BackReferenceExpression,
     ChildReferenceExpression,
     CollationExpression,
     PartitionKey,
@@ -125,7 +126,7 @@ class PartitionBy(ChildOperator):
 
     @property
     def all_terms(self) -> set[str]:
-        return self.calc_terms | {self.child_name}
+        return self.calc_terms | set(self.ancestral_mapping) | {self.child_name}
 
     @property
     def ancestral_mapping(self) -> dict[str, int]:
@@ -173,7 +174,11 @@ class PartitionBy(ChildOperator):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        if term_name in self._key_name_indices:
+        if term_name in self.ancestral_mapping:
+            return BackReferenceExpression(
+                self, term_name, self.ancestral_mapping[term_name]
+            )
+        elif term_name in self._key_name_indices:
             term: PartitionKey = self.keys[self._key_name_indices[term_name]]
             return term
         elif term_name == self.child_name:

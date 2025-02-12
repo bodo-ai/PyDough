@@ -78,14 +78,6 @@ class OrderBy(AugmentingChildOperator):
         return f"{self.preceding_context.key}.ORDERBY"
 
     @property
-    def calc_terms(self) -> set[str]:
-        return self.preceding_context.calc_terms
-
-    @property
-    def all_terms(self) -> set[str]:
-        return self.preceding_context.all_terms
-
-    @property
     def ordering(self) -> list[CollationExpression]:
         return self.collation
 

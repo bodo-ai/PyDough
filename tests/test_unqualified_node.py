@@ -308,7 +308,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q2,
-            "PARTITION(Nations.CALCULATE(n_name=name).WHERE((region.name == 'EUROPE')).suppliers.CALCULATE(s_acctbal=acctbal, s_name=name, s_address=address, s_phone=phone, s_comment=comment).supply_records.CALCULATE(supplycost=supplycost).part.WHERE((ENDSWITH(part_type, 'BRASS') & (size == 15))), name='p', by=(key)).CALCULATE(best_cost=MIN(p.supplycost)).p.WHERE((((supplycost == best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15))).CALCULATE(S_ACCTBAL=s_acctbal, S_NAME=s_name, N_NAME=n_name, P_PARTKEY=key, P_MFGR=manufacturer, S_ADDRESS=s_address, S_PHONE=s_phone, S_COMMENT=s_comment).TOP_K(10, by=(S_ACCTBAL.DESC(na_pos='last'), N_NAME.ASC(na_pos='first'), S_NAME.ASC(na_pos='first'), P_PARTKEY.ASC(na_pos='first')))",
+            "PARTITION(Nations.CALCULATE(n_name=name).WHERE((region.name == 'EUROPE')).suppliers.CALCULATE(s_acctbal=account_balance, s_name=name, s_address=address, s_phone=phone, s_comment=comment).supply_records.CALCULATE(supplycost=supplycost).part.WHERE((ENDSWITH(part_type, 'BRASS') & (size == 15))), name='p', by=(key)).CALCULATE(best_cost=MIN(p.supplycost)).p.WHERE((((supplycost == best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15))).CALCULATE(S_ACCTBAL=s_acctbal, S_NAME=s_name, N_NAME=n_name, P_PARTKEY=key, P_MFGR=manufacturer, S_ADDRESS=s_address, S_PHONE=s_phone, S_COMMENT=s_comment).TOP_K(10, by=(S_ACCTBAL.DESC(na_pos='last'), N_NAME.ASC(na_pos='first'), S_NAME.ASC(na_pos='first'), P_PARTKEY.ASC(na_pos='first')))",
             id="tpch_q2",
         ),
         pytest.param(
@@ -343,7 +343,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q9,
-            "PARTITION(Nations.CALCULATE(nation_name=nation).suppliers.supply_records.CALCULATE(supplycost=supplycost).WHERE(CONTAINS(part.name, 'green')).lines.CALCULATE(o_year=YEAR(order.order_date), value=((extended_price * (1 - discount)) - (supplycost * quantity))), name='l', by=(nation_name, o_year)).CALCULATE(NATION=nation_name, O_YEAR=o_year, AMOUNT=SUM(l.value)).TOP_K(10, by=(NATION.ASC(na_pos='first'), O_YEAR.DESC(na_pos='last')))",
+            "PARTITION(Nations.CALCULATE(nation_name=name).suppliers.supply_records.CALCULATE(supplycost=supplycost).WHERE(CONTAINS(part.name, 'green')).lines.CALCULATE(o_year=YEAR(order.order_date), value=((extended_price * (1 - discount)) - (supplycost * quantity))), name='l', by=(nation_name, o_year)).CALCULATE(NATION=nation_name, O_YEAR=o_year, AMOUNT=SUM(l.value)).TOP_K(10, by=(NATION.ASC(na_pos='first'), O_YEAR.DESC(na_pos='last')))",
             id="tpch_q9",
         ),
         pytest.param(
@@ -383,7 +383,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q17,
-            "TPCH.CALCULATE(AVG_YEARLY=(SUM(Parts.WHERE(((brand == 'Brand#23') & (container == 'MED BOX'))).CALCULATE(part_avg_quantity=AVG(lines.quantity)).lines.WHERE((quantity < (0.2 * part_avg_quantity.avg_quantity))).extended_price) / 7.0))",
+            "TPCH.CALCULATE(AVG_YEARLY=(SUM(Parts.WHERE(((brand == 'Brand#23') & (container == 'MED BOX'))).CALCULATE(part_avg_quantity=AVG(lines.quantity)).lines.WHERE((quantity < (0.2 * part_avg_quantity))).extended_price) / 7.0))",
             id="tpch_q17",
         ),
         pytest.param(

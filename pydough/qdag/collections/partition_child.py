@@ -8,7 +8,7 @@ __all__ = ["PartitionChild"]
 
 from functools import cache
 
-from pydough.qdag.expressions.collation_expression import CollationExpression
+from pydough.qdag.expressions import BackReferenceExpression, CollationExpression
 
 from .child_access import ChildAccess
 from .child_operator_child_access import ChildOperatorChildAccess
@@ -34,6 +34,9 @@ class PartitionChild(ChildOperatorChildAccess):
         self._is_last = True
         self._partition_child_name: str = partition_child_name
         self._ancestor: PyDoughCollectionQDAG = ancestor
+        self._ancestral_mapping: dict[str, int] = {
+            name: level + 1 for name, level in ancestor.ancestral_mapping.items()
+        }
 
     def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         return PartitionChild(
@@ -54,6 +57,22 @@ class PartitionChild(ChildOperatorChildAccess):
     @property
     def ordering(self) -> list[CollationExpression] | None:
         return self._child_access.ordering
+
+    @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        return self._ancestral_mapping
+
+    @property
+    def all_terms(self) -> set[str]:
+        return self.child_access.all_terms | set(self.ancestral_mapping)
+
+    @cache
+    def get_term(self, term_name: str):
+        if term_name in self.ancestral_mapping:
+            return BackReferenceExpression(
+                self, term_name, self.ancestral_mapping[term_name]
+            )
+        return super().get_term(term_name)
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # The child of a PARTITION BY clause is always presumed to be plural

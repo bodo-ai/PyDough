@@ -57,7 +57,7 @@ def impl_tpch_q2():
         Nations.CALCULATE(n_name=name)
         .WHERE(region.name == "EUROPE")
         .suppliers.CALCULATE(
-            s_acctbal=acctbal,
+            s_acctbal=account_balance,
             s_name=name,
             s_address=address,
             s_phone=phone,
@@ -236,7 +236,7 @@ def impl_tpch_q9():
     PyDough implementation of TPCH Q9, truncated to 10 rows.
     """
     selected_lines = (
-        Nations.CALCULATE(nation_name=nation)
+        Nations.CALCULATE(nation_name=name)
         .suppliers.supply_records.CALCULATE(supplycost=supplycost)
         .WHERE(CONTAINS(part.name, "green"))
         .lines.CALCULATE(
@@ -418,9 +418,7 @@ def impl_tpch_q17():
     part_info = Parts.WHERE((brand == "Brand#23") & (container == "MED BOX")).CALCULATE(
         part_avg_quantity=AVG(lines.quantity)
     )
-    selected_lines = part_info.lines.WHERE(
-        quantity < 0.2 * part_avg_quantity.avg_quantity
-    )
+    selected_lines = part_info.lines.WHERE(quantity < 0.2 * part_avg_quantity)
     return TPCH.CALCULATE(AVG_YEARLY=SUM(selected_lines.extended_price) / 7.0)
 
 

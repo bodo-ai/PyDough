@@ -510,8 +510,6 @@ Call pydough.explain(graph['nations']) to learn more about this collection.
 The following terms will be included in the result if this collection is executed:
   comment, key, name, region_key
 
-It is possible to use BACK to go up to 1 level above this collection.
-
 The collection has access to the following expressions:
   comment, key, name, region_key
 
@@ -547,8 +545,6 @@ The main task of this node is to filter on the following conditions:
 
 The following terms will be included in the result if this collection is executed:
   comment, key, name, region_key
-
-It is possible to use BACK to go up to 1 level above this collection.
 
 The collection has access to the following expressions:
   comment, key, name, region_key
@@ -589,8 +585,6 @@ The main task of this node is to calculate the following additional expressions 
 
 The following terms will be included in the result if this collection is executed:
   n_custs, name
-
-It is possible to use BACK to go up to 1 level above this collection.
 
 The collection has access to the following expressions:
   comment, key, n_custs, name, region_key

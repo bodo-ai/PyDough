@@ -49,6 +49,14 @@ class AugmentingChildOperator(ChildOperator):
         return self.preceding_context.ordering
 
     @property
+    def calc_terms(self) -> set[str]:
+        return self.preceding_context.calc_terms
+
+    @property
+    def all_terms(self) -> set[str]:
+        return self.preceding_context.all_terms
+
+    @property
     def unique_terms(self) -> list[str]:
         return self.preceding_context.unique_terms
 

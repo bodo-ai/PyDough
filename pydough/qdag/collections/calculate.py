@@ -14,6 +14,7 @@ from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     PyDoughExpressionQDAG,
+    Reference,
 )
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
@@ -77,15 +78,17 @@ class Calculate(AugmentingChildOperator):
             if ancestral_idx > 0:
                 # Ignore no-op back-references, e.g.:
                 # region(region_name=name).customers(region_name=region_name)
-                if (
-                    isinstance(value, BackReferenceExpression)
-                    and value.back_levels == ancestral_idx
-                    and value.term_name == name
+                if not (
+                    (
+                        isinstance(value, BackReferenceExpression)
+                        and value.back_levels == ancestral_idx
+                        and value.term_name == name
+                    )
+                    or isinstance(value, Reference)
                 ):
-                    continue
-                raise PyDoughQDAGException(
-                    f"Cannot redefine term {name!r} in CALCULATE that is already defined in an ancestor"
-                )
+                    raise PyDoughQDAGException(
+                        f"Cannot redefine term {name!r} in CALCULATE that is already defined in an ancestor"
+                    )
             self._calc_term_indices[name] = idx
             self._calc_term_values[name] = has_hasnot_rewrite(value, False)
             self._all_term_names.add(name)

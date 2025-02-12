@@ -298,7 +298,7 @@ def hour_minute_day():
     ordered by transaction ID in ascending order.
     """
     return (
-        Transactions(
+        Transactions.CALCULATE(
             transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
         )
         .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
@@ -307,7 +307,7 @@ def hour_minute_day():
 
 
 def exponentiation():
-    return DailyPrices(
+    return DailyPrices.CALCULATE(
         low_square=low**2,
         low_sqrt=SQRT(low),
         low_cbrt=POWER(low, 1 / 3),

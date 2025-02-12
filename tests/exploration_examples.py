@@ -77,6 +77,10 @@ def subcollection_calc_backref_impl() -> UnqualifiedNode:
     )
 
 
+def calc_subcollection_impl() -> UnqualifiedNode:
+    return Nations.CALCULATE(nation_name=name).region
+
+
 def filter_impl() -> UnqualifiedNode:
     return Nations.CALCULATE(nation_name=name).WHERE(
         (region.name == "ASIA")
