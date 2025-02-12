@@ -197,7 +197,7 @@ People(
     has_middle_name=PRESENT(middle_name)
     full_name_with_middle=JOIN_STRINGS(" ", first_name, middle_name, last_name),
     full_name_without_middle=JOIN_STRINGS(" ", first_name, last_name),
-)(
+).CALCULATE(
     full_name=IFF(has_middle_name, full_name_with_middle, full_name_without_middle),
     email=email,
 )
@@ -404,7 +404,7 @@ GRAPH(n_cases=SUM(package_info.is_shipped_to_current_addr))
 
 ```py
 %%pydough
-Customers(
+Customers.CALCULATE(
     avg_package_cost=AVG(packages.cost)
 ).packages(
     is_above_avg=cost > BACK(1).avg_package_cost
@@ -458,7 +458,7 @@ People.current_address(a=BACK(1).phone)
 
 ```py
 %%pydough
-cust_info = Customers(
+cust_info = Customers.CALCULATE(
     avg_package_cost=AVG(packages.cost)
 )
 Customers.packages(
@@ -491,7 +491,7 @@ Addresses.current_occupants.packages(
 )
 
 # Invoking normal functions/operations on other singular data
-Customers(
+Customers.CALCULATE(
     lowered_name=LOWER(name),
     normalized_birth_month=MONTH(birth_date) - 1,
     lives_in_c_state=STARTSWITH(current_address.state, "C"),
@@ -510,7 +510,7 @@ Customers(
 from pandas import Timestamp
 from datetime import date
 from decimal import Decimal
-Customers(
+Customers.CALCULATE(
     a=0,
     b=3.14,
     c="hello world",
@@ -524,7 +524,7 @@ Customers(
 )
 
 # Invoking aggregation functions on plural data
-Customers(
+Customers.CALCULATE(
     n_packages=COUNT(packages),
     home_has_had_packages_billed=HAS(current_address.billed_packages),
     avg_package_cost=AVG(packages.package_cost),
@@ -533,7 +533,7 @@ Customers(
 )
 
 # Invoking window functions on singular
-Customers(
+Customers.CALCULATE(
     cust_ranking=RANKING(by=COUNT(packages).DESC()),
     cust_percentile=PERCENTILE(by=COUNT(packages).DESC()),
 )
@@ -555,14 +555,14 @@ A core PyDough operation is the ability to filter the records of a collection. T
 
 ```py
 %%pydough
-People.WHERE(PRESENT(middle_name) & ENDSWITH(email, "gmail.com"))(first_name, last_name)
+People.WHERE(PRESENT(middle_name) & ENDSWITH(email, "gmail.com")).CALCULATE(first_name, last_name)
 ```
 
 **Good Example #2**: For every package where the package cost is greater than 100, fetches the package id and the state it was shipped to.
 
 ```py
 %%pydough
-Packages.WHERE(package_cost > 100)(package_id, shipping_state=shipping_address.state)
+Packages.WHERE(package_cost > 100).CALCULATE(package_id, shipping_state=shipping_address.state)
 ```
 
 **Good Example #3**: For every person who has ordered more than 5 packages, fetches their first name, last name, and email.
@@ -637,35 +637,35 @@ People.WHERE(HASNOT(packages.WHERE(YEAR(order_date) == 2024)))
 
 ```py
 %%pydough
-People.WHERE(PRESENT(phone_number))(first_name, last_name)
+People.WHERE(PRESENT(phone_number)).CALCULATE(first_name, last_name)
 ```
 
 **Bad Example #2**: For every package, fetches the package id only if the package cost is greater than 100 and the shipping state is Texas. This is invalid because `and` is used instead of `&`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
-Packages.WHERE((package_cost > 100) and (shipping_address.state == "TX"))(package_id)
+Packages.WHERE((package_cost > 100) and (shipping_address.state == "TX")).CALCULATE(package_id)
 ```
 
 **Bad Example #3**: For every package, fetches the package id only if the package is either being shipped from Pennsylvania or to Pennsylvania. This is invalid because `or` is used instead of `|`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
-Packages.WHERE((customer.current_address.state == "PA") or (shipping_address.state == "PA"))(package_id)
+Packages.WHERE((customer.current_address.state == "PA") or (shipping_address.state == "PA")).CALCULATE(package_id)
 ```
 
 **Bad Example #4**: For every package, fetches the package id only if the customer's first name does not start with a J. This is invalid because `not` is used instead of `~`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
-Packages.WHERE(not STARTSWITH(customer.first_name, "J"))(package_id)
+Packages.WHERE(not STARTSWITH(customer.first_name, "J")).CALCULATE(package_id)
 ```
 
 **Bad Example #5**: For every package, fetches the package id only if the package was ordered between February and May. [See here](functions.md#comparisons) for more details on the valid/invalid use of comparisons in Python.
 
 ```py
 %%pydough
-Packages.WHERE(2 <= MONTH(arrival_date) <= 5)(package_id)
+Packages.WHERE(2 <= MONTH(arrival_date) <= 5).CALCULATE(package_id)
 ```
 
 **Bad Example #6**: Obtain every person whose packages were shipped in the month of June. This is invalid because `packages` is a plural property of `People`, so `MONTH(packages.order_date) == 6` is a plural expression with regards to `People` that cannot be used as a filtering condition. 
@@ -913,14 +913,14 @@ The ancestry of the `PARTITION` clause can be changed by prepending it with anot
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=state)(state)
+PARTITION(Addresses, name="addrs", by=state).CALCULATE(state)
 ```
 
 **Good Example #2**: For every state, count how many addresses are in that state.
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=state)(
+PARTITION(Addresses, name="addrs", by=state).CALCULATE(
     state,
     n_addr=COUNT(addrs)
 )
@@ -930,7 +930,7 @@ PARTITION(Addresses, name="addrs", by=state)(
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=(city, state))(
+PARTITION(Addresses, name="addrs", by=(city, state)).CALCULATE(
     state,
     city,
     n_people=COUNT(addrs.current_occupants)
@@ -944,7 +944,7 @@ PARTITION(Addresses, name="addrs", by=(city, state))(
 yahoo_people = People(
     birth_year=YEAR(birth_date)
 ).WHERE(ENDSWITH(email, "@yahoo.com"))
-PARTITION(yahoo_people, name="yah_ppl", by=birth_year)(
+PARTITION(yahoo_people, name="yah_ppl", by=birth_year).CALCULATE(
     birth_year,
     n_people=COUNT(yah_ppl)
 ).TOP_K(5, by=n_people.DESC())
@@ -955,7 +955,7 @@ PARTITION(yahoo_people, name="yah_ppl", by=birth_year)(
 ```py
 %%pydough
 package_info = Packages(order_year=YEAR(order_date), order_month=MONTH(order_date))
-PARTITION(package_info, name="packs", by=(order_year, order_month))(
+PARTITION(package_info, name="packs", by=(order_year, order_month)).CALCULATE(
     avg_package_cost=AVG(packs.package_cost)
 ).packs.WHERE(
     package_cost < BACK(1).avg_package_cost
@@ -966,7 +966,7 @@ PARTITION(package_info, name="packs", by=(order_year, order_month))(
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=(city, state))(
+PARTITION(Addresses, name="addrs", by=(city, state)).CALCULATE(
     total_packages=COUNT(addrs.current_occupants.packages)
 ).addrs.current_occupants(
     first_name,
@@ -983,7 +983,7 @@ PARTITION(Addresses, name="addrs", by=(city, state))(
 %%pydough
 GRAPH(
     total_packages=COUNT(Packages)
-).PARTITION(Addresses, name="addrs", by=state)(
+).PARTITION(Addresses, name="addrs", by=state).CALCULATE(
     state,
     pct_of_packages=100.0 * COUNT(addrs.current_occupants.package) / BACK(1).packages
 ).WHERE(pct_of_packages >= 1.0)
@@ -994,12 +994,12 @@ GRAPH(
 ```py
 %%pydough
 pack_info = Packages(order_month=MONTH(order_date))
-month_info = PARTITION(pack_info, name="packs", by=order_month)(
+month_info = PARTITION(pack_info, name="packs", by=order_month).CALCULATE(
     n_packages=COUNT(packs)
 )
 GRAPH(
     avg_packages_per_month=AVG(month_info.n_packages)
-).PARTITION(pack_info, name="packs", by=order_month)(
+).PARTITION(pack_info, name="packs", by=order_month).CALCULATE(
     month,
 ).WHERE(COUNT(packs) > BACK(1).avg_packages_per_month)
 ```
@@ -1012,7 +1012,7 @@ people_info = Addresses.current_occupants(
     state=BACK(1).state,
     first_letter=first_name[:1],
 )
-PARTITION(people_info, name="ppl", by=(state, first_letter))(
+PARTITION(people_info, name="ppl", by=(state, first_letter)).CALCULATE(
     state,
     first_letter,
     n_people=COUNT(ppl),
@@ -1027,7 +1027,7 @@ people_info = People(
     state=DEFALT_TO(current_address.state, "N/A"),
     first_letter=first_name[:1],
 )
-PARTITION(people_info, name="ppl", by=(state, first_letter))(
+PARTITION(people_info, name="ppl", by=(state, first_letter)).CALCULATE(
     state,
     first_letter,
     n_people=COUNT(ppl),
@@ -1059,7 +1059,7 @@ PARTITION(People, name="ppl")
 
 ```py
 %%pydough
-PARTITION(Packages, name="packs", by=YEAR(order_date))(
+PARTITION(Packages, name="packs", by=YEAR(order_date)).CALCULATE(
     n_packages=COUNT(packages)
 )
 ```
@@ -1068,7 +1068,7 @@ PARTITION(Packages, name="packs", by=YEAR(order_date))(
 
 ```py
 %%pydough
-PARTITION(People, name="ppl", by=current_address.state)(
+PARTITION(People, name="ppl", by=current_address.state).CALCULATE(
     n_packages=COUNT(packages)
 )
 ```
@@ -1077,7 +1077,7 @@ PARTITION(People, name="ppl", by=current_address.state)(
 
 ```py
 %%pydough
-PARTITION(Addresses.current_occupants, name="ppl", by=(BACK(1).state, first_name[:1]))(
+PARTITION(Addresses.current_occupants, name="ppl", by=(BACK(1).state, first_name[:1])).CALCULATE(
     BACK(1).state,
     first_name[:1],
     n_people=COUNT(ppl),
@@ -1088,7 +1088,7 @@ PARTITION(Addresses.current_occupants, name="ppl", by=(BACK(1).state, first_name
 
 ```py
 %%pydough
-PARTITION(People(birth_year=YEAR(birth_date)), name="ppl", by=birth_year)(
+PARTITION(People(birth_year=YEAR(birth_date)), name="ppl", by=birth_year).CALCULATE(
     birth_year,
     email,
     n_people=COUNT(ppl)
@@ -1099,7 +1099,7 @@ PARTITION(People(birth_year=YEAR(birth_date)), name="ppl", by=birth_year)(
 
 ```py
 %%pydough
-People.PARTITION(packages(year=YEAR(order_date)), name="p", by=year)(
+People.PARTITION(packages(year=YEAR(order_date)), name="p", by=year).CALCULATE(
     ssn=BACK(1).ssn,
     year=year,
     n_packs=COUNT(p)
@@ -1111,7 +1111,7 @@ People.PARTITION(packages(year=YEAR(order_date)), name="p", by=year)(
 ```py
 %%pydough
 people_info = Addresses.current_occupants(birth_year=YEAR(birth_date))
-GRAPH.PARTITION(people_info, name="p", by=birth_year)(
+GRAPH.PARTITION(people_info, name="p", by=birth_year).CALCULATE(
     birth_year,
     n_people=COUNT(p),
     foo=BACK(2).bar,
@@ -1204,7 +1204,7 @@ prev_package = PREV(by=order_date.ASC(), levels=1)
 package_deltas = packages(
     hour_difference=DATEDIFF('hours', order_date, prev_package.order_date)
 )
-Customers(
+Customers.CALCULATE(
     ssn,
     avg_hours_between_purchases=AVG(package_deltas.hour_difference)
 )
@@ -1217,7 +1217,7 @@ Customers(
 first_after = NEXT(1, by=COUNT(packages).DESC())
 second_after = NEXT(2, by=COUNT(packages).DESC())
 third_after = NEXT(3, by=COUNT(packages).DESC())
-Customers(
+Customers.CALCULATE(
     ssn,
     same_state_as_order_neighbors=(
         DEFAULT_TO(current_address.state == first_after.current_address.state, False) | 
@@ -1317,7 +1317,7 @@ Additional keyword arguments can be supplied to `BEST` that change its behavior:
 
 ```py
 %%pydough
-Customers.BEST(packages, by=order_date.ASC())(
+Customers.BEST(packages, by=order_date.ASC()).CALCULATE(
     package_id,
     shipping_address.zip_code
 )
@@ -1327,7 +1327,7 @@ Customers.BEST(packages, by=order_date.ASC())(
 
 ```py
 %%pydough
-Customers(
+Customers.CALCULATE(
     ssn,
     most_recent_cost=BEST(packages, by=order_date.DESC()).package_cost
 )
@@ -1339,7 +1339,7 @@ Customers(
 %%pydough
 addr_info = Addresses.WHERE(
     state == "NY"
-)(address_id, n_occupants=COUNT(current_occupants))
+).CALCULATE(address_id, n_occupants=COUNT(current_occupants))
 GRAPH.BEST(addr_info, by=(n_occupants.DESC(), address_id.ASC()))
 ```
 
@@ -1348,7 +1348,7 @@ GRAPH.BEST(addr_info, by=(n_occupants.DESC(), address_id.ASC()))
 ```py
 %%pydough
 most_recent_package = BEST(packages, by=order_date.DESC())
-Customers(
+Customers.CALCULATE(
     ssn,
     n_occ_most_recent_addr=COUNT(most_recent_package.shipping_address.current_occupants)
 )
@@ -1358,12 +1358,12 @@ Customers(
 
 ```py
 %%pydough
-Addresses.WHERE(HAS(current_occupants))(
+Addresses.WHERE(HAS(current_occupants)).CALCULATE(
     n_occupants=COUNT(current_occupants)
 ).BEST(
     current_occupants(n_orders=COUNT(packages)),
     by=(n_orders.DESC(), ssn.ASC())
-)(
+).CALCULATE(
     first_name,
     last_name,
     n_orders,
@@ -1509,7 +1509,7 @@ states = PARTITION(
     addr_info,
     name="addrs",
     by=state
-)(
+).CALCULATE(
     state,
     average_occupants=AVG(addrs.n_occupants)
 )
@@ -1538,7 +1538,7 @@ to_east_coast = ISIN(shipping_address.state, east_coast_states)
 # terms for if they are trans-coastal + the year they were ordered
 package_info = Packages.WHERE(
     PRESENT(arrival_date)
-)(
+).CALCULATE(
     is_trans_coastal=from_west_coast & to_east_coast,
     year=YEAR(order_date),
 )
@@ -1549,7 +1549,7 @@ year_info = PARTITION(
     package_info,
     name="packs",
     by=year,
-)(
+).CALCULATE(
     year,
     pct_trans_coastal=100.0 * SUM(packs.is_trans_coastal) / COUNT(packs),
 )
@@ -1579,7 +1579,7 @@ cities = PARTITION(
 oldest_occupants = cities.BEST(
     addrs.current_occupants.WHERE(HASNOT(packages)),
     by=(birth_date.ASC(), ssn.ASC()),
-)(
+).CALCULATE(
     state=BACK(2).state,
     city=BACK(2).city,
     email=email,
@@ -1628,7 +1628,7 @@ months = PARTITION(
     package_info,
     name="packs",
     by=month
-)(
+).CALCULATE(
     month,
     pct_outliers=100.0 * SUM(packs.is_10x_avg) / COUNT(packs)
 )
@@ -1652,7 +1652,7 @@ yearly_data = PARTITION(
     Packages(year=YEAR(order_date)),
     name="packs",
     by=year,
-)(
+).CALCULATE(
     year,
     n_orders = COUNT(packs),
 )

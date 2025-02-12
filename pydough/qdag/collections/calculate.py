@@ -170,12 +170,9 @@ class Calculate(AugmentingChildOperator):
         return ", ".join(kwarg_strings)
 
     @property
+    @cache
     def standalone_string(self) -> str:
-        return f"({self.calc_kwarg_strings(False)})"
-
-    def to_string(self) -> str:
-        assert self.preceding_context is not None
-        return f"{self.preceding_context.to_string()}{self.standalone_string}"
+        return f"CALCULATE({self.calc_kwarg_strings(False)})"
 
     @property
     def tree_item_string(self) -> str:

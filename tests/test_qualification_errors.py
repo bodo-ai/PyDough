@@ -23,37 +23,41 @@ def bad_pydough_impl_01(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.Nations(nation_name=name, total_balance=SUM(acctbal))
+    TPCH.Nations.CALCULATE(nation_name=name, total_balance=SUM(acctbal))
     ```
     The problem: there is no property `acctbal` to be accessed from Nations.
     """
-    return root.Nations(nation_name=root.name, total_balance=root.SUM(root.acctbal))
+    return root.Nations.CALCULATE(
+        nation_name=root.name, total_balance=root.SUM(root.acctbal)
+    )
 
 
 def bad_pydough_impl_02(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.Nations(nation_name=FIZZBUZZ(name))
+    TPCH.Nations.CALCULATE(nation_name=FIZZBUZZ(name))
     ```
     The problem: there is no function named FIZZBUZZ, so this looks like a
     CALC term of a subcollection, which cannot be used as an expression inside
     a CALCULATE.
     """
-    return root.Nations(nation_name=root.FIZZBUZZ(root.name))
+    return root.Nations.CALCULATE(nation_name=root.FIZZBUZZ(root.name))
 
 
 def bad_pydough_impl_03(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.Nations(y=suppliers(x=COUNT(parts_supplied)).x)
+    TPCH.Nations.CALCULATE(y=suppliers.CALCULATE(x=COUNT(parts_supplied)).x)
     ```
-    The problem: `suppliers(x=COUNT(parts_supplied))` is plural with regards
+    The problem: `suppliers.CALCULATE(x=COUNT(parts_supplied))` is plural with regards
     to Nations, so accessing its `x` property is still plural, therefore it
     cannot be used as a calc term relative to Nations.
     """
-    return root.Nations(y=root.suppliers(x=root.COUNT(root.parts_supplied)).x)
+    return root.Nations.CALCULATE(
+        y=root.suppliers.CALCULATE(x=root.COUNT(root.parts_supplied)).x
+    )
 
 
 def bad_pydough_impl_04(root: UnqualifiedNode) -> UnqualifiedNode:
@@ -77,33 +81,35 @@ def bad_pydough_impl_05(root: UnqualifiedNode) -> UnqualifiedNode:
     The problem: nation.region is a collection, therefore cannot be used as
     an expression in a CALC term.
     """
-    return root.Customers(r=root.nation.region)
+    return root.Customers.CALCULATE(r=root.nation.region)
 
 
 def bad_pydough_impl_06(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.Suppliers.supply_records(o=lines.order.order_date)
+    TPCH.Suppliers.supply_records.CALCULATE(o=lines.order.order_date)
     ```
     The problem: lines is plural with regards to supply_records, therefore
     lines.order.order_date is also plural and it cannot be used as a calc
     term relative to suppl_records.
     """
-    return root.Suppliers.supply_records(o=root.lines.order.order_date)
+    return root.Suppliers.supply_records.CALCULATE(o=root.lines.order.order_date)
 
 
 def bad_pydough_impl_07(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.Lineitems(v=MUL(extended_price, SUB(1, discount)))
+    TPCH.Lineitems.CALCULATE(v=MUL(extended_price, SUB(1, discount)))
     ```
     The problem: there is no function named MUL or SUB, so this looks like a
     CALC term of a subcollection, which cannot be used as an expression inside
     a CALCULATE.
     """
-    return root.Lineitems(v=root.MUL(root.extended_price, root.SUB(1, root.discount)))
+    return root.Lineitems.CALCULATE(
+        v=root.MUL(root.extended_price, root.SUB(1, root.discount))
+    )
 
 
 def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
@@ -111,12 +117,12 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
     TPCH.Lineitems.tax = 0
-    TPCH.Lineitems(value=extended_price * tax)
+    TPCH.Lineitems.CALCULATE(value=extended_price * tax)
     ```
     The problem: writing to an unqualified node is not yet supported.
     """
     root.Lineitems.tax = 0
-    return root.Lineitems(value=root.extended_price * root.tax)
+    return root.Lineitems.CALCULATE(value=root.extended_price * root.tax)
 
 
 @pytest.mark.parametrize(
@@ -134,7 +140,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_03,
-            "Expected all terms in (y=suppliers(x=COUNT(parts_supplied)).x) to be singular, but encountered a plural expression: suppliers(x=COUNT(parts_supplied)).x",
+            "Expected all terms in CALCULATE(y=suppliers.CALCULATE(x=COUNT(parts_supplied)).x) to be singular, but encountered a plural expression: suppliers.CALCULATE(x=COUNT(parts_supplied)).x",
             id="03",
         ),
         pytest.param(
@@ -149,7 +155,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_06,
-            "Expected all terms in (o=lines.order.order_date) to be singular, but encountered a plural expression: lines.order.order_date",
+            "Expected all terms in CALCULATE(o=lines.order.order_date) to be singular, but encountered a plural expression: lines.order.order_date",
             id="06",
         ),
         pytest.param(

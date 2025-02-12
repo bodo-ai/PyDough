@@ -48,7 +48,7 @@ graph = parse_json_metadata_from_file("path/to/metadata.json", "example_graph")
 # Define a function with the init_pydough_context decorator
 @init_pydough_context(graph)
 def example_function():
-    return Nations(
+    return Nations.CALCULATE(
         nation_name=name,
         region_name=region.name,
         num_customers=COUNT(customers)
@@ -57,7 +57,7 @@ def example_function():
 # Transform the source code of the function
 source_code = """
 def example_function():
-    return Nations(
+    return Nations.CALCULATE(
         nation_name=name,
         region_name=region.name,
         num_customers=COUNT(customers)
@@ -73,7 +73,7 @@ print(ast.unparse(transformed_ast))
 
 # Transform a Jupyter cell
 cell_code = """
-result = Nations(
+result = Nations.CALCULATE(
     nation_name=name,
     region_name=region.name,
     num_customers=COUNT(customers)
@@ -92,7 +92,7 @@ from pydough.unqualified import UnqualifiedRoot
 _ROOT = UnqualifiedRoot(example_graph)
 
 def example_function():
-    return _ROOT.Nations(
+    return _ROOT.Nations.CALCULATE(
         nation_name=_ROOT.name,
         region_name=_ROOT.region.name,
         num_customers=_ROOT.COUNT(_ROOT.customers)
@@ -105,7 +105,7 @@ The transformed Python code for the Jupyter cell will look like this:
 from pydough.unqualified import UnqualifiedRoot
 _ROOT = UnqualifiedRoot(example_graph)
 
-result = _ROOT.Nations(
+result = _ROOT.Nations.CALCULATE(
     nation_name=_ROOT.name,
     region_name=_ROOT.region.name,
     num_customers=_ROOT.COUNT(_ROOT.customers)

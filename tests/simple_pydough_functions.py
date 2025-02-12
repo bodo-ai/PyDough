@@ -4,48 +4,54 @@
 
 
 def simple_scan():
-    return Orders(key)
+    return Orders.CALCULATE(key)
 
 
 def simple_filter():
     # Note: The SQL is non-deterministic once we add nested expressions.
-    return Orders(o_orderkey=key, o_totalprice=total_price).WHERE(o_totalprice < 1000.0)
+    return Orders.CALCULATE(o_orderkey=key, o_totalprice=total_price).WHERE(
+        o_totalprice < 1000.0
+    )
 
 
 def simple_scan_top_five():
-    return Orders(key).TOP_K(5, by=key.ASC())
+    return Orders.CALCULATE(key).TOP_K(5, by=key.ASC())
 
 
 def simple_filter_top_five():
-    return Orders(key, total_price).WHERE(total_price < 1000.0).TOP_K(5, by=key.DESC())
+    return (
+        Orders.CALCULATE(key, total_price)
+        .WHERE(total_price < 1000.0)
+        .TOP_K(5, by=key.DESC())
+    )
 
 
 def rank_a():
-    return Customers(rank=RANKING(by=acctbal.DESC()))
+    return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 
 
 def rank_b():
-    return Orders(rank=RANKING(by=(order_priority.ASC()), allow_ties=True))
+    return Orders.CALCULATE(rank=RANKING(by=(order_priority.ASC()), allow_ties=True))
 
 
 def rank_c():
-    return Orders(
+    return Orders.CALCULATE(
         order_date, rank=RANKING(by=order_date.ASC(), allow_ties=True, dense=True)
     )
 
 
 def rank_nations_by_region():
-    return Nations(name, rank=RANKING(by=region.name.ASC(), allow_ties=True))
+    return Nations.CALCULATE(name, rank=RANKING(by=region.name.ASC(), allow_ties=True))
 
 
 def rank_nations_per_region_by_customers():
-    return Regions.nations(
+    return Regions.nations.CALCULATE(
         name, rank=RANKING(by=COUNT(customers).DESC(), levels="Regions")
     ).TOP_K(5, by=rank.ASC())
 
 
 def rank_parts_per_supplier_region_by_size():
-    return Regions.nations.suppliers.supply_records.part(
+    return Regions.nations.suppliers.supply_records.part.CALCULATE(
         key,
         region=BACK(4).name,
         rank=RANKING(
@@ -59,7 +65,7 @@ def rank_parts_per_supplier_region_by_size():
 
 def rank_with_filters_a():
     return (
-        Customers(n=name, r=RANKING(by=acctbal.DESC()))
+        Customers.CALCULATE(n=name, r=RANKING(by=acctbal.DESC()))
         .WHERE(ENDSWITH(name, "0"))
         .WHERE(r <= 30)
     )
@@ -67,7 +73,7 @@ def rank_with_filters_a():
 
 def rank_with_filters_b():
     return (
-        Customers(n=name, r=RANKING(by=acctbal.DESC()))
+        Customers.CALCULATE(n=name, r=RANKING(by=acctbal.DESC()))
         .WHERE(r <= 30)
         .WHERE(ENDSWITH(name, "0"))
     )
@@ -85,7 +91,7 @@ def rank_with_filters_c():
 def percentile_nations():
     # For every nation, give its name & its bucket from 1-5 ordered by name
     # alphabetically
-    return Nations(name, p=PERCENTILE(by=name.ASC(), n_buckets=5))
+    return Nations.CALCULATE(name, p=PERCENTILE(by=name.ASC(), n_buckets=5))
 
 
 def percentile_customers_per_region():
@@ -94,7 +100,7 @@ def percentile_customers_per_region():
     # means more money) and whose phone number ends in two zeros, sorted by the
     # name of the customers
     return (
-        Regions.nations.customers(name)
+        Regions.nations.customers.CALCULATE(name)
         .WHERE((PERCENTILE(by=(acctbal.ASC()), levels=2) == 95) & ENDSWITH(phone, "00"))
         .ORDER_BY(name.ASC())
     )
@@ -106,13 +112,15 @@ def regional_suppliers_percentile():
     pct = PERCENTILE(
         by=(COUNT(supply_records).ASC(), name.ASC()), levels=2, n_buckets=1000
     )
-    return Regions.nations.suppliers(name).WHERE(HAS(supply_records) & (pct == 1000))
+    return Regions.nations.suppliers.CALCULATE(name).WHERE(
+        HAS(supply_records) & (pct == 1000)
+    )
 
 
 def function_sampler():
     # Examples of using different functions
     return (
-        Regions.nations.customers(
+        Regions.nations.customers.CALCULATE(
             a=JOIN_STRINGS("-", BACK(2).name, BACK(1).name, name[16:]),
             b=ROUND(acctbal, 1),
             c=KEEP_IF(name, phone[:1] == "3"),
@@ -131,7 +139,7 @@ def loop_generated_terms():
         terms[f"interval_{i}"] = COUNT(
             customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))
         )
-    return Nations(**terms)
+    return Nations.CALCULATE(**terms)
 
 
 def function_defined_terms():
@@ -139,7 +147,7 @@ def function_defined_terms():
     def interval_n(n):
         return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
 
-    return Nations(
+    return Nations.CALCULATE(
         name,
         interval_7=interval_n(7),
         interval_4=interval_n(4),
@@ -153,7 +161,7 @@ def lambda_defined_terms():
         customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000))
     )
 
-    return Nations(
+    return Nations.CALCULATE(
         name,
         interval_7=interval_n(7),
         interval_4=interval_n(4),
@@ -172,7 +180,7 @@ def dict_comp_terms():
             for i in range(3)
         }
     )
-    return Nations(**terms)
+    return Nations.CALCULATE(**terms)
 
 
 def list_comp_terms():
@@ -184,7 +192,7 @@ def list_comp_terms():
             for i in range(3)
         ]
     )
-    return Nations(**terms)
+    return Nations.CALCULATE(**terms)
 
 
 def set_comp_terms():
@@ -198,7 +206,7 @@ def set_comp_terms():
             }
         )
     )
-    return Nations(**terms)
+    return Nations.CALCULATE(**terms)
 
 
 def generator_comp_terms():
@@ -212,29 +220,29 @@ def generator_comp_terms():
         for i in range(3)
     ):
         terms[term] = value
-    return Nations(**terms)
+    return Nations.CALCULATE(**terms)
 
 
 def agg_partition():
     # Doing a global aggregation on the output of a partition aggregation
-    yearly_data = PARTITION(Orders(year=YEAR(order_date)), name="orders", by=year)(
-        n_orders=COUNT(orders)
-    )
-    return TPCH(best_year=MAX(yearly_data.n_orders))
+    yearly_data = PARTITION(
+        Orders.CALCULATE(year=YEAR(order_date)), name="orders", by=year
+    ).CALCULATE(n_orders=COUNT(orders))
+    return TPCH.CALCULATE(best_year=MAX(yearly_data.n_orders))
 
 
 def double_partition():
     # Doing a partition aggregation on the output of a partition aggregation
     year_month_data = PARTITION(
-        Orders(year=YEAR(order_date), month=MONTH(order_date)),
+        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)),
         name="orders",
         by=(year, month),
-    )(n_orders=COUNT(orders))
+    ).CALCULATE(n_orders=COUNT(orders))
     return PARTITION(
         year_month_data,
         name="months",
         by=year,
-    )(year, best_month=MAX(months.n_orders))
+    ).CALCULATE(year, best_month=MAX(months.n_orders))
 
 
 def triple_partition():
@@ -245,29 +253,35 @@ def triple_partition():
     # customer region. Only considers lineitems from June of 1992 where the
     # container is small.
     line_info = (
-        Parts(part_type=part_type)
+        Parts.CALCULATE(part_type=part_type)
         .WHERE(
             STARTSWITH(container, "SM"),
         )
-        .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))(
+        .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))
+        .CALCULATE(
             supp_region=supplier.nation.region.name,
         )
-        .order.WHERE(YEAR(order_date) == 1992)(
+        .order.WHERE(YEAR(order_date) == 1992)
+        .CALCULATE(
             cust_region=customer.nation.region.name,
         )
     )
     rrt_combos = PARTITION(
         line_info, name="lines", by=(supp_region, cust_region, part_type)
-    )(n_instances=COUNT(lines))
-    rr_combos = PARTITION(rrt_combos, name="part_types", by=(supp_region, cust_region))(
+    ).CALCULATE(n_instances=COUNT(lines))
+    rr_combos = PARTITION(
+        rrt_combos, name="part_types", by=(supp_region, cust_region)
+    ).CALCULATE(
         percentage=100.0 * MAX(part_types.n_instances) / SUM(part_types.n_instances)
     )
-    return PARTITION(
-        rr_combos,
-        name="cust_regions",
-        by=supp_region,
-    )(supp_region, avg_percentage=AVG(cust_regions.percentage)).ORDER_BY(
-        supp_region.ASC()
+    return (
+        PARTITION(
+            rr_combos,
+            name="cust_regions",
+            by=supp_region,
+        )
+        .CALCULATE(supp_region, avg_percentage=AVG(cust_regions.percentage))
+        .ORDER_BY(supp_region.ASC())
     )
 
 

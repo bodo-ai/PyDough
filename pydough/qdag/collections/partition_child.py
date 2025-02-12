@@ -6,6 +6,8 @@ partitioned in a PARTITION clause.
 __all__ = ["PartitionChild"]
 
 
+from functools import cache
+
 from pydough.qdag.expressions.collation_expression import CollationExpression
 
 from .child_access import ChildAccess
@@ -63,6 +65,7 @@ class PartitionChild(ChildOperatorChildAccess):
     def standalone_string(self) -> str:
         return self.partition_child_name
 
+    @cache
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 

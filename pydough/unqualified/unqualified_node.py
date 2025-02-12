@@ -616,7 +616,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
     operands_str: str
     match unqualified:
         case UnqualifiedRoot():
-            return "?"
+            return unqualified._parcel[0].name
         case UnqualifiedBack():
             return f"BACK({unqualified._parcel[0]})"
         case UnqualifiedLiteral():
@@ -656,11 +656,13 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             pos: str = "'last'" if unqualified._parcel[2] else "'first'"
             return f"{display_raw(unqualified._parcel[0])}.{method}(na_pos={pos})"
         case UnqualifiedAccess():
+            if isinstance(unqualified._parcel[0], UnqualifiedRoot):
+                return unqualified._parcel[1]
             return f"{display_raw(unqualified._parcel[0])}.{unqualified._parcel[1]}"
         case UnqualifiedCalculate():
             for name, node in unqualified._parcel[1]:
                 term_strings.append(f"{name}={display_raw(node)}")
-            return f"{display_raw(unqualified._parcel[0])}({', '.join(term_strings)})"
+            return f"{display_raw(unqualified._parcel[0])}.CALCULATE({', '.join(term_strings)})"
         case UnqualifiedWhere():
             return f"{display_raw(unqualified._parcel[0])}.WHERE({display_raw(unqualified._parcel[1])})"
         case UnqualifiedTopK():
@@ -676,6 +678,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         case UnqualifiedPartition():
             for node in unqualified._parcel[3]:
                 term_strings.append(display_raw(node))
+            if isinstance(unqualified._parcel[0], UnqualifiedRoot):
+                return f"PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
             return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
         case _:
             raise PyDoughUnqualifiedException(

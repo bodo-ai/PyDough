@@ -67,7 +67,7 @@ Below is each binary operator currently supported in PyDough.
 Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`), exponentiation (`**`).
 
 ```py
-Lineitems(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_price)
+Lineitems.CALCULATE(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_price)
 ```
 
 > [!WARNING]
@@ -79,7 +79,7 @@ Lineitems(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_p
 Expression values can be compared using standard comparison operators: `<=`, `<`, `==`, `!=`, `>` and `>=`:
 
 ```py
-Customers(
+Customers.CALCULATE(
     in_debt = acctbal < 0,
     at_most_12_orders = COUNT(orders) <= 12,
     is_european = nation.region.name == "EUROPE",
@@ -101,7 +101,7 @@ Multiple boolean expression values can be logically combined with `&`, `|` and `
 is_asian = nation.region.name == "ASIA"
 is_european = nation.region.name == "EUROPE"
 in_debt = acctbal < 0
-Customers(
+Customers.CALCULATE(
     is_eurasian = is_asian | is_european,
     is_not_eurasian = ~(is_asian | is_european),
     is_european_in_debt = is_european & in_debt
@@ -122,7 +122,7 @@ Below is each unary operator currently supported in PyDough.
 A numerical expression's sign can be flipped by prefixing it with the `-` operator:
 
 ```py
-Lineitems(lost_value = extended_price * (-discount))
+Lineitems.CALCULATE(lost_value = extended_price * (-discount))
 ```
 
 <!-- TOC --><a name="other-operators"></a>
@@ -136,7 +136,7 @@ Below are all other operators currently supported in PyDough that use other synt
 A string expression can have a substring extracted with Python string slicing syntax `s[a:b:c]`:
 
 ```py
-Customers(
+Customers.CALCULATE(
     country_code = phone[:3],
     name_without_first_char = name[1:]
 )
@@ -156,7 +156,7 @@ Below is each function currently supported in PyDough that operates on strings.
 Calling `LOWER` on a string converts its characters to lowercase:
 
 ```py
-Customers(lowercase_name = LOWER(name))
+Customers.CALCULATE(lowercase_name = LOWER(name))
 ```
 
 <!-- TOC --><a name="upper"></a>
@@ -165,7 +165,7 @@ Customers(lowercase_name = LOWER(name))
 Calling `UPPER` on a string converts its characters to uppercase:
 
 ```py
-Customers(uppercase_name = UPPER(name))
+Customers.CALCULATE(uppercase_name = UPPER(name))
 ```
 
 <!-- TOC --><a name="length"></a>
@@ -174,7 +174,7 @@ Customers(uppercase_name = UPPER(name))
 Calling `length` on a string returns the number of characters it contains:
 
 ```py
-Suppliers(n_chars_in_comment = LENGTH(comment))
+Suppliers.CALCULATE(n_chars_in_comment = LENGTH(comment))
 ```
 
 <!-- TOC --><a name="startswith"></a>
@@ -183,7 +183,7 @@ Suppliers(n_chars_in_comment = LENGTH(comment))
 The `STARTSWITH` function checks if its first argument begins with its second argument as a string prefix:
 
 ```py
-Parts(begins_with_yellow = STARTSWITH(name, "yellow"))
+Parts.CALCULATE(begins_with_yellow = STARTSWITH(name, "yellow"))
 ```
 
 <!-- TOC --><a name="endswith"></a>
@@ -192,7 +192,7 @@ Parts(begins_with_yellow = STARTSWITH(name, "yellow"))
 The `ENDSWITH` function checks if its first argument ends with its second argument as a string suffix:
 
 ```py
-Parts(ends_with_chocolate = ENDSWITH(name, "chocolate"))
+Parts.CALCULATE(ends_with_chocolate = ENDSWITH(name, "chocolate"))
 ```
 
 <!-- TOC --><a name="contains"></a>
@@ -201,7 +201,7 @@ Parts(ends_with_chocolate = ENDSWITH(name, "chocolate"))
 The `CONTAINS` function checks if its first argument contains its second argument as a substring:
 
 ```py
-Parts(is_green = CONTAINS(name, "green"))
+Parts.CALCULATE(is_green = CONTAINS(name, "green"))
 ```
 
 <!-- TOC --><a name="like"></a>
@@ -210,7 +210,7 @@ Parts(is_green = CONTAINS(name, "green"))
 The `LIKE` function checks if the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
 
 ```py
-Orders(is_special_request = LIKE(comment, "%special%requests%"))
+Orders.CALCULATE(is_special_request = LIKE(comment, "%special%requests%"))
 ```
 
 [This link](https://www.w3schools.com/sql/sql_like.asp) explains how these SQL pattern strings work and provides some examples.
@@ -221,7 +221,7 @@ Orders(is_special_request = LIKE(comment, "%special%requests%"))
 The `JOIN_STRINGS` function concatenates all its string arguments, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
 
 ```py
-Regions.nations.customers(
+Regions.nations.customers.CALCULATE(
     fully_qualified_name = JOIN_STRINGS("-", BACK(2).name, BACK(1).name, name)
 )
 ```
@@ -248,7 +248,7 @@ Orders.WHERE(YEAR(order_date) == 1995)
 Calling `MONTH` on a date/timestamp extracts the month of the year it belongs to:
 
 ```py
-Orders(is_summer = (MONTH(order_date) >= 6) & (MONTH(order_date) <= 8))
+Orders.CALCULATE(is_summer = (MONTH(order_date) >= 6) & (MONTH(order_date) <= 8))
 ```
 
 <!-- TOC --><a name="day"></a>
@@ -257,7 +257,7 @@ Orders(is_summer = (MONTH(order_date) >= 6) & (MONTH(order_date) <= 8))
 Calling `DAY` on a date/timestamp extracts the day of the month it belongs to:
 
 ```py
-Orders(is_first_of_month = DAY(order_date) == 1)
+Orders.CALCULATE(is_first_of_month = DAY(order_date) == 1)
 ```
 
 <!-- TOC --><a name="hour"></a>
@@ -267,7 +267,7 @@ Calling `HOUR` on a date/timestamp extracts the hour it belongs to. The range of
 is from 0-23:
 
 ```py
-Orders(is_12pm = HOUR(order_date) == 12)
+Orders.CALCULATE(is_12pm = HOUR(order_date) == 12)
 ```
 
 <!-- TOC --><a name="minute"></a>
@@ -277,7 +277,7 @@ Calling `MINUTE` on a date/timestamp extracts the minute. The range of output
 is from 0-59:
 
 ```py
-Orders(is_half_hour = MINUTE(order_date) == 30)
+Orders.CALCULATE(is_half_hour = MINUTE(order_date) == 30)
 ```
 
 <!-- TOC --><a name="second"></a>
@@ -287,7 +287,7 @@ Calling `SECOND` on a date/timestamp extracts the second. The range of output
 is from 0-59:
 
 ```py
-Orders(is_lt_30_seconds = SECOND(order_date) < 30)
+Orders.CALCULATE(is_lt_30_seconds = SECOND(order_date) < 30)
 ```
 
 <!-- TOC --><a name="conditional-functions"></a>
@@ -302,8 +302,8 @@ The `IFF` function cases on the True/False value of its first argument. If it is
 
 ```py
 qty_from_germany = IFF(supplier.nation.name == "GERMANY", quantity, 0)
-Customers(
-    total_quantity_shipped_from_germany = SUM(lines(q=qty_from_germany).q)
+Customers.CALCULATE(
+    total_quantity_shipped_from_germany = SUM(lines.CALCULATE(q=qty_from_germany).q)
 )
 ```
 
@@ -322,7 +322,7 @@ Parts.WHERE(ISIN(size, (10, 11, 17, 19, 45)))
 The `DEFAULT_TO` function returns the first of its arguments that is non-null (e.g. the same as the `COALESCE` function in SQL):
 
 ```py
-Lineitems(adj_tax = DEFAULT_TO(tax, 0))
+Lineitems.CALCULATE(adj_tax = DEFAULT_TO(tax, 0))
 ```
 
 <!-- TOC --><a name="present"></a>
@@ -331,7 +331,7 @@ Lineitems(adj_tax = DEFAULT_TO(tax, 0))
 The `PRESENT` function checks if its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
 
 ```py
-Lineitems(has_tax = PRESENT(tax))
+Lineitems.CALCULATE(has_tax = PRESENT(tax))
 ```
 
 <!-- TOC --><a name="absent"></a>
@@ -340,7 +340,7 @@ Lineitems(has_tax = PRESENT(tax))
 The `ABSENT` function checks if its argument is null (e.g. the same as `IS NULL` in SQL):
 
 ```py
-Lineitems(no_tax = ABSENT(tax))
+Lineitems.CALCULATE(no_tax = ABSENT(tax))
 ```
 
 <!-- TOC --><a name="keep_if"></a>
@@ -349,7 +349,7 @@ Lineitems(no_tax = ABSENT(tax))
 The `KEEP_IF` function returns the first function if the second arguments is True, otherwise it returns a null value. In other words, `KEEP_IF(a, b)` is equivalent to the SQL expression `CASE WHEN b THEN a END`.
 
 ```py
-TPCH(avg_non_debt_balance = AVG(Customers(no_debt_bal = KEEP_IF(acctbal, acctbal > 0)).no_debt_bal))
+TPCH.CALCULATE(avg_non_debt_balance = AVG(Customers.CALCULATE(no_debt_bal = KEEP_IF(acctbal, acctbal > 0)).no_debt_bal))
 ```
 
 <!-- TOC --><a name="monotonic"></a>
@@ -372,7 +372,7 @@ Below is each numerical function currently supported in PyDough.
 The `ABS` function returns the absolute value of its input.
 
 ```py
-Customers(acct_magnitude = ABS(acctbal))
+Customers.CALCULATE(acct_magnitude = ABS(acctbal))
 ```
 
 <!-- TOC --><a name="round"></a>
@@ -381,7 +381,7 @@ Customers(acct_magnitude = ABS(acctbal))
 The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function.
 
 ```py
-Parts(rounded_price = ROUND(retail_price, 1))
+Parts.CALCULATE(rounded_price = ROUND(retail_price, 1))
 ```
 
 <!-- TOC --><a name="power"></a>
@@ -390,7 +390,7 @@ Parts(rounded_price = ROUND(retail_price, 1))
 The `POWER` function exponentiates its first argument to the power of its second argument. 
 
 ```py
-Parts(powered_price = POWER(retail_price, 2))
+Parts.CALCULATE(powered_price = POWER(retail_price, 2))
 ```
 
 <!-- TOC --><a name="sqrt"></a>
@@ -399,7 +399,7 @@ Parts(powered_price = POWER(retail_price, 2))
 The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,0.5)`.
 
 ```py
-Parts(sqrt_price = SQRT(retail_price))
+Parts.CALCULATE(sqrt_price = SQRT(retail_price))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>
@@ -415,7 +415,7 @@ Aggregation functions are a special set of functions that, when called on their 
 The `SUM` function returns the sum of the plural set of numerical values it is called on.
 
 ```py
-Nations(total_consumer_wealth = SUM(customers.acctbal))
+Nations.CALCULATE(total_consumer_wealth = SUM(customers.acctbal))
 ```
 
 <!-- TOC --><a name="avg"></a>
@@ -424,7 +424,7 @@ Nations(total_consumer_wealth = SUM(customers.acctbal))
 The `AVG` function takes the average of the plural set of numerical values it is called on.
 
 ```py
-Parts(average_shipment_size = AVG(lines.quantity))
+Parts.CALCULATE(average_shipment_size = AVG(lines.quantity))
 ```
 
 <!-- TOC --><a name="min"></a>
@@ -433,7 +433,7 @@ Parts(average_shipment_size = AVG(lines.quantity))
 The `MIN` function returns the smallest value from the set of numerical values it is called on.
 
 ```py
-Suppliers(cheapest_part_supplied = MIN(supply_records.supply_cost))
+Suppliers.CALCULATE(cheapest_part_supplied = MIN(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="max"></a>
@@ -442,7 +442,7 @@ Suppliers(cheapest_part_supplied = MIN(supply_records.supply_cost))
 The `MAX` function returns the largest value from the set of numerical values it is called on.
 
 ```py
-Suppliers(most_expensive_part_supplied = MAX(supply_records.supply_cost))
+Suppliers.CALCULATE(most_expensive_part_supplied = MAX(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="count"></a>
@@ -451,13 +451,13 @@ Suppliers(most_expensive_part_supplied = MAX(supply_records.supply_cost))
 The `COUNT` function returns how many non-null records exist on the set of plural values it is called on.
 
 ```py
-Customers(num_taxed_purchases = COUNT(orders.lines.tax))
+Customers.CALCULATE(num_taxed_purchases = COUNT(orders.lines.tax))
 ```
 
 The `COUNT` function can also be called on a sub-collection, in which case it will return how many records from that sub-collection exist.
 
 ```py
-Nations(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
+Nations.CALCULATE(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
 ```
 
 <!-- TOC --><a name="ndistinct"></a>
@@ -466,7 +466,7 @@ Nations(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
 The `NDISTINCT` function returns how many distinct values of its argument exist.
 
 ```py
-Customers(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
+Customers.CALCULATE(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
 ```
 
 <!-- TOC --><a name="has"></a>
@@ -498,16 +498,16 @@ For example, if using the `RANKING` window function, consider the following exam
 
 ```py
 # (no levels) rank every customer relative to all other customers
-Regions.nations.customers(r=RANKING(...))
+Regions.nations.customers.CALCULATE(r=RANKING(...))
 
 # (levels=1) rank every customer relative to other customers in the same nation
-Regions.nations.customers(r=RANKING(..., levels=1))
+Regions.nations.customers.CALCULATE(r=RANKING(..., levels=1))
 
 # (levels=2) rank every customer relative to other customers in the same region
-Regions.nations.customers(r=RANKING(..., levels=2))
+Regions.nations.customers.CALCULATE(r=RANKING(..., levels=2))
 
 # (levels=3) rank every customer relative to all other customers
-Regions.nations.customers(r=RANKING(..., levels=3))
+Regions.nations.customers.CALCULATE(r=RANKING(..., levels=3))
 ```
 
 Below is each window function currently supported in PyDough.
@@ -525,7 +525,7 @@ The `RANKING` function returns ordinal position of the current record when all r
 ```py
 # Rank customers per-nation by their account balance
 # (highest = rank #1, no ties)
-Nations.customers(r = RANKING(by=acctbal.DESC(), levels=1))
+Nations.customers.CALCULATE(r = RANKING(by=acctbal.DESC(), levels=1))
 
 # For every customer, finds their most recent order
 # (ties allowed)

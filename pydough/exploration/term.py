@@ -278,7 +278,7 @@ def explain_term(
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}({qualified_term.to_string()})"
+                        f"  {qualified_node.to_string()}.CALCULATE({qualified_term.to_string()})"
                     )
                 else:
                     lines.append(
@@ -286,7 +286,7 @@ def explain_term(
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}(COUNT({qualified_term.to_string()}))"
+                        f"  {qualified_node.to_string()}.CALCULATE(COUNT({qualified_term.to_string()}))"
                     )
         else:
             assert isinstance(qualified_term, PyDoughCollectionQDAG)
@@ -310,7 +310,7 @@ def explain_term(
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}({qualified_term.to_string()}.{chosen_term_name})"
+                        f"  {qualified_node.to_string()}.CALCULATE({qualified_term.to_string()}.{chosen_term_name})"
                     )
                 else:
                     lines.append(

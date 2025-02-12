@@ -8,6 +8,7 @@ __all__ = ["TopK"]
 
 
 from collections.abc import MutableSequence
+from functools import cache
 
 from .collection_qdag import PyDoughCollectionQDAG
 from .order_by import OrderBy
@@ -43,7 +44,8 @@ class TopK(OrderBy):
         return self.preceding_context.calc_terms
 
     @property
-    def standalone_string(self) -> str:
+    @cache
+    def standalone_string(self):
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
         return f"TOP_K({self.records_to_keep}, {collation_str})"
 

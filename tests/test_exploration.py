@@ -1510,7 +1510,7 @@ This is column 'name' of collection 'Nations'
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Nations(name)
+  TPCH.Nations.CALCULATE(name)
 """,
                 """
 Collection: TPCH.Nations
@@ -1541,7 +1541,7 @@ This is a reference to expression 'name' of child $1
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Nations(region.name)
+  TPCH.Nations.CALCULATE(region.name)
 """,
                 """
 Collection: TPCH.Nations
@@ -1571,7 +1571,7 @@ The term is the following child of the collection:
 
 This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression.
 For example, the following is valid:
-  TPCH.Nations(region.comment)
+  TPCH.Nations.CALCULATE(region.comment)
 
 To learn more about this child, you can try calling pydough.explain on the following:
   TPCH.Nations.region
@@ -1601,7 +1601,7 @@ The term is the following child of the collection:
 
 This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
 For example, the following are valid:
-  TPCH.Regions(COUNT(nations.suppliers.account_balance))
+  TPCH.Regions.CALCULATE(COUNT(nations.suppliers.account_balance))
   TPCH.Regions.WHERE(HAS(nations.suppliers))
   TPCH.Regions.ORDER_BY(COUNT(nations.suppliers).DESC())
 
@@ -1637,7 +1637,7 @@ This is a reference to expression 'name' of child $1
 
 This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated.
 For example, the following is valid:
-  TPCH.Regions(COUNT(nations.suppliers.name))
+  TPCH.Regions.CALCULATE(COUNT(nations.suppliers.name))
 """,
                 """
 Collection: TPCH.Regions
@@ -1670,7 +1670,7 @@ This is a reference to expression 'name' of the 1st ancestor of the collection, 
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Regions.nations(BACK(1).name)
+  TPCH.Regions.nations.CALCULATE(BACK(1).name)
 """,
                 """
 Collection: TPCH.Regions.nations
@@ -1707,7 +1707,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Regions(COUNT(nations.suppliers.WHERE(account_balance > 0)))
+  TPCH.Regions.CALCULATE(COUNT(nations.suppliers.WHERE(account_balance > 0)))
         """,
                 """
 Collection: TPCH.Regions
@@ -1749,7 +1749,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Partition(Parts, name='p', by=part_type)(AVG(p.retail_price))
+  TPCH.Partition(Parts, name='p', by=part_type).CALCULATE(AVG(p.retail_price))
         """,
                 """
 Collection: TPCH.Partition(Parts, name='p', by=part_type)
@@ -1787,7 +1787,7 @@ The term is the following child of the collection:
 
 This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
 For example, the following are valid:
-  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5)(COUNT(p.brand))
+  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).CALCULATE(COUNT(p.brand))
   TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).WHERE(HAS(p))
   TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).ORDER_BY(COUNT(p).DESC())
 
@@ -1821,7 +1821,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Nations(LOWER(name))
+  TPCH.Nations.CALCULATE(LOWER(name))
         """,
                 """
 Collection: TPCH.Nations
@@ -1855,7 +1855,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Lineitems(extended_price * (1 - discount))
+  TPCH.Lineitems.CALCULATE(extended_price * (1 - discount))
         """,
                 """
 Collection: TPCH.Lineitems
@@ -1891,7 +1891,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Suppliers(IFF(account_balance < 0, 0, account_balance))
+  TPCH.Suppliers.CALCULATE(IFF(account_balance < 0, 0, account_balance))
         """,
                 """
 Collection: TPCH.Suppliers
@@ -1930,7 +1930,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Customers(HASNOT(orders))
+  TPCH.Customers.CALCULATE(HASNOT(orders))
         """,
                 """
 Collection: TPCH.Customers
@@ -1974,7 +1974,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Parts(HAS(supply_records.supplier.WHERE(nation.name == 'GERMANY')))
+  TPCH.Parts.CALCULATE(HAS(supply_records.supplier.WHERE(nation.name == 'GERMANY')))
         """,
                 """
 Collection: TPCH.Parts

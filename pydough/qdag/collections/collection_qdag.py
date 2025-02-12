@@ -266,8 +266,14 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         structured. For example, consider the following PyDough snippet:
 
         ```
-        Regions.WHERE(ENDSWITH(name, 's')).nations.WHERE(name != 'USA')(
-            a=BACK(1).name,
+        Regions.CALCULATE(
+            region_name=name,
+        ).WHERE(
+            ENDSWITH(name, 's')
+        ).nations.WHERE(
+            name != 'USA'
+        ).CALCULATE(
+            a=region_name,
             b=name,
             c=MAX(YEAR(suppliers.WHERE(STARTSWITH(phone, '415')).supply_records.lines.ship_date)),
             d=COUNT(customers.WHERE(acctbal > 0))
@@ -283,10 +289,11 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         ```
         ──┬─ TPCH
           ├─── TableCollection[Regions]
+          ├─── Calculate[region_name=name]
           └─┬─ Where[ENDSWITH(name, 's')]
             ├─── SubCollection[nations]
             ├─── Where[name != 'USA']
-            ├─┬─ Calculate[a=[BACK(1).name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
+            ├─┬─ Calculate[a=[BACK(1).region_name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
             │ ├─┬─ AccessChild
             │ │ ├─ SubCollection[customers]
             │ │ └─── Where[acctbal > 0]

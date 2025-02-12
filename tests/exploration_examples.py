@@ -55,25 +55,29 @@ def global_impl() -> UnqualifiedNode:
 
 
 def global_calc_impl() -> UnqualifiedNode:
-    return TPCH(x=42, y=13)
+    return TPCH.CALCULATE(x=42, y=13)
 
 
 def global_agg_calc_impl() -> UnqualifiedNode:
-    return TPCH(n_customers=COUNT(Customers), avg_part_price=AVG(Parts.retail_price))
+    return TPCH.CALCULATE(
+        n_customers=COUNT(Customers), avg_part_price=AVG(Parts.retail_price)
+    )
 
 
 def table_calc_impl() -> UnqualifiedNode:
-    return Nations(name, region_name=region.name, num_customers=COUNT(customers))
+    return Nations.CALCULATE(
+        name, region_name=region.name, num_customers=COUNT(customers)
+    )
 
 
 def subcollection_calc_backref_impl() -> UnqualifiedNode:
-    return Regions.nations.customers(
+    return Regions.nations.customers.CALCULATE(
         name, nation_name=BACK(1).name, region_name=BACK(2).name
     )
 
 
 def filter_impl() -> UnqualifiedNode:
-    return Nations(nation_name=name).WHERE(
+    return Nations.CALCULATE(nation_name=name).WHERE(
         (region.name == "ASIA")
         & HAS(customers.orders.lines.WHERE(CONTAINS(part.name, "STEEL")))
         & (COUNT(suppliers.WHERE(account_balance >= 0.0)) > 100)
@@ -81,11 +85,11 @@ def filter_impl() -> UnqualifiedNode:
 
 
 def order_by_impl() -> UnqualifiedNode:
-    return Nations(name).ORDER_BY(COUNT(suppliers).DESC(), name.ASC())
+    return Nations.CALCULATE(name).ORDER_BY(COUNT(suppliers).DESC(), name.ASC())
 
 
 def top_k_impl() -> UnqualifiedNode:
-    return Parts(name, n_suppliers=COUNT(suppliers_of_part)).TOP_K(
+    return Parts.CALCULATE(name, n_suppliers=COUNT(suppliers_of_part)).TOP_K(
         100, by=(n_suppliers.DESC(), name.ASC())
     )
 
@@ -96,7 +100,8 @@ def partition_impl() -> UnqualifiedNode:
 
 def partition_child_impl() -> UnqualifiedNode:
     return (
-        PARTITION(Parts, name="p", by=part_type)(
+        PARTITION(Parts, name="p", by=part_type)
+        .CALCULATE(
             part_type,
             avg_price=AVG(p.retail_price),
         )
@@ -114,7 +119,7 @@ def contextless_expr_impl() -> UnqualifiedNode:
 
 
 def contextless_collections_impl() -> UnqualifiedNode:
-    return lines(extended_price, name=part.name)
+    return lines.CALCULATE(extended_price, name=part.name)
 
 
 def contextless_back_impl() -> UnqualifiedNode:

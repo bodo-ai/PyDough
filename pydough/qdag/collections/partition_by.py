@@ -146,6 +146,7 @@ class PartitionBy(ChildOperator):
         return False
 
     @property
+    @cache
     def standalone_string(self) -> str:
         keys_str: str
         if len(self.keys) == 1:
@@ -154,6 +155,7 @@ class PartitionBy(ChildOperator):
             keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
         return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
 
+    @cache
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 

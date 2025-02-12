@@ -1,7 +1,7 @@
 """
 Definition of PyDough QDAG nodes for referencing expressions from a child
 collection of a child operator, e.g. `orders.order_date` in
-`customers(most_recent_order=MAX(orders.order_date))`.
+`customers.CALCULATE(most_recent_order=MAX(orders.order_date))`.
 """
 
 __all__ = ["ChildReferenceExpression"]
