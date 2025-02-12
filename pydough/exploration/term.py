@@ -318,7 +318,7 @@ def explain_term(
                     )
                     lines.append("For example, the following are valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
+                        f"  {qualified_node.to_string()}.CALCULATE(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
                     )
                     lines.append(
                         f"  {qualified_node.to_string()}.WHERE(HAS({qualified_term.to_string()}))"

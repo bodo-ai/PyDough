@@ -1419,11 +1419,11 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_aggfunc_impl,
                 """
-Cannot call pydough.explain on COUNT(?.customers).
+Cannot call pydough.explain on COUNT(customers).
 Did you mean to use pydough.explain_term?
 """,
                 """
-Cannot call pydough.explain on COUNT(?.customers).
+Cannot call pydough.explain on COUNT(customers).
 Did you mean to use pydough.explain_term?
 """,
             ),
@@ -1434,11 +1434,11 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_func_impl,
                 """
-Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name)).
+Cannot call pydough.explain on LOWER(((first_name + ' ') + last_name)).
 Did you mean to use pydough.explain_term?
 """,
                 """
-Cannot call pydough.explain on LOWER(((?.first_name + ' ') + ?.last_name)).
+Cannot call pydough.explain on LOWER(((first_name + ' ') + last_name)).
 Did you mean to use pydough.explain_term?
 """,
             ),

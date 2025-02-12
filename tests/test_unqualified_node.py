@@ -205,7 +205,7 @@ def verify_pydough_code_exec_match_unqualified(
             id="arithmetic_12",
         ),
         pytest.param(
-            "answer = _ROOT.Parts.CALCULATE(part_name=_ROOT.LOWER(_ROOT.name)).suppliers_of_part.region.CALCULATE(part_name=part_name)",
+            "answer = _ROOT.Parts.CALCULATE(part_name=_ROOT.LOWER(_ROOT.name)).suppliers_of_part.region.CALCULATE(part_name=_ROOT.part_name)",
             "Parts.CALCULATE(part_name=LOWER(name)).suppliers_of_part.region.CALCULATE(part_name=part_name)",
             id="multi_calc_with_back",
         ),

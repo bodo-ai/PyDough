@@ -1016,7 +1016,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("adj_retail_price", 0)]
                 ),
             ),
-            "TPCH.Suppliers.CALCULATE(supplier_name=name, total_retail_price=SUM(parts_supplied(adj_retail_price=retail_price - 1.0).adj_retail_price))",
+            "TPCH.Suppliers.CALCULATE(supplier_name=name, total_retail_price=SUM(parts_supplied.CALCULATE(adj_retail_price=retail_price - 1.0).adj_retail_price))",
             """
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
@@ -1104,7 +1104,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("value", 1)]
                 ),
             ),
-            "TPCH.CALCULATE(total_demand=SUM(Customers.acctbal), total_supply=SUM(Suppliers.parts_supplied(value=ps_availqty * retail_price).value))",
+            "TPCH.CALCULATE(total_demand=SUM(Customers.acctbal), total_supply=SUM(Suppliers.parts_supplied.CALCULATE(value=ps_availqty * retail_price).value))",
             """
 ┌─── TPCH
 └─┬─ Calculate[total_demand=SUM($1.acctbal), total_supply=SUM($2.value)]
