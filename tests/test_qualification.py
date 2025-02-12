@@ -74,13 +74,13 @@ from pydough.unqualified import (
   │     └─┬─ SubCollection[suppliers]
   │       └─┬─ SubCollection[supply_records]
   │         ├─── SubCollection[part]
-  │         ├─── Calculate[s_acctbal=BACK(2).account_balance, s_name=BACK(2).name, n_name=BACK(3).name, s_address=BACK(2).address, s_phone=BACK(2).phone, s_comment=BACK(2).comment, supplycost=BACK(1).supplycost]
+  │         ├─── Calculate[s_acctbal=account_balance, s_name=name, n_name=name, s_address=address, s_phone=phone, s_comment=comment, supplycost=supplycost]
   │         └─── Where[ENDSWITH(part_type, 'BRASS') & (size == 15)]
   └─┬─ Calculate[best_cost=MIN($1.supplycost)]
     ├─┬─ AccessChild
     │ └─── PartitionChild[p]
     ├─── PartitionChild[p]
-    ├─── Where[supplycost == BACK(1).best_cost]
+    ├─── Where[supplycost == best_cost]
     ├─── Calculate[s_acctbal=s_acctbal, s_name=s_name, n_name=n_name, p_partkey=key, p_mfgr=manufacturer, s_address=s_address, s_phone=s_phone, s_comment=s_comment]
     └─── TopK[10, s_acctbal.DESC(na_pos='last'), n_name.ASC(na_pos='first'), s_name.ASC(na_pos='first'), p_partkey.ASC(na_pos='first')]
 """,
@@ -98,7 +98,7 @@ from pydough.unqualified import (
   │     │ └─── SubCollection[customer]
   │     ├─── SubCollection[lines]
   │     ├─── Where[ship_date > datetime.date(1995, 3, 15)]
-  │     └─── Calculate[order_date=BACK(1).order_date, ship_priority=BACK(1).ship_priority]
+  │     └─── Calculate[order_date=order_date, ship_priority=ship_priority]
   ├─┬─ Calculate[l_orderkey=order_key, revenue=SUM($1.extended_price * (1 - $1.discount)), o_orderdate=order_date, o_shippriority=ship_priority]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[l]
@@ -138,7 +138,7 @@ from pydough.unqualified import (
   │     ├─── SubCollection[orders]
   │     └─┬─ Where[(order_date >= datetime.date(1994, 1, 1)) & (order_date < datetime.date(1995, 1, 1))]
   │       ├─── SubCollection[lines]
-  │       ├─┬─ Where[$1.name == BACK(3).name]
+  │       ├─┬─ Where[$1.name == name]
   │       │ └─┬─ AccessChild
   │       │   └─┬─ SubCollection[supplier]
   │       │     └─── SubCollection[nation]
@@ -197,7 +197,7 @@ from pydough.unqualified import (
   │         ├─── SubCollection[lines]
   │         └─┬─ Calculate[volume=extended_price * (1 - discount)]
   │           ├─── SubCollection[order]
-  │           ├─── Calculate[o_year=YEAR(order_date), volume=BACK(1).volume, brazil_volume=IFF(BACK(4).name == 'BRAZIL', BACK(1).volume, 0)]
+  │           ├─── Calculate[o_year=YEAR(order_date), volume=volume, brazil_volume=IFF(name == 'BRAZIL', volume, 0)]
   │           └─┬─ Where[(order_date >= datetime.date(1995, 1, 1)) & (order_date <= datetime.date(1996, 12, 31)) & ($1.name == 'AMERICA')]
   │             └─┬─ AccessChild
   │               └─┬─ SubCollection[customer]
@@ -222,7 +222,7 @@ from pydough.unqualified import (
   │         ├─┬─ AccessChild
   │         │ └─── SubCollection[part]
   │         ├─── SubCollection[lines]
-  │         └─┬─ Calculate[nation=BACK(3).name, o_year=YEAR($1.order_date), value=(extended_price * (1 - discount)) - (BACK(1).supplycost * quantity)]
+  │         └─┬─ Calculate[nation=name, o_year=YEAR($1.order_date), value=(extended_price * (1 - discount)) - (supplycost * quantity)]
   │           └─┬─ AccessChild
   │             └─── SubCollection[order]
   ├─┬─ Calculate[nation=nation, o_year=o_year, amount=SUM($1.value)]
@@ -273,7 +273,7 @@ from pydough.unqualified import (
   ├─┬─ Calculate[ps_partkey=part_key, value=SUM($1.metric)]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[ps]
-  ├─── Where[value > BACK(1).min_market_share]
+  ├─── Where[value > min_market_share]
   └─── TopK[10, value.DESC(na_pos='last')]
 """,
             id="tpch_q11",
@@ -344,7 +344,7 @@ from pydough.unqualified import (
   │ └─┬─ AccessChild
   │   ├─── SubCollection[lines]
   │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
-  ├─── Where[total_revenue == BACK(1).max_revenue]
+  ├─── Where[total_revenue == max_revenue]
   └─── OrderBy[s_suppkey.ASC(na_pos='first')]
 """,
             id="tpch_q15",
@@ -358,7 +358,7 @@ from pydough.unqualified import (
   │   ├─── TableCollection[Parts]
   │   └─┬─ Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])]
   │     ├─── SubCollection[supply_records]
-  │     ├─── Calculate[p_brand=BACK(1).brand, p_type=BACK(1).part_type, p_size=BACK(1).size, ps_suppkey=supplier_key]
+  │     ├─── Calculate[p_brand=brand, p_type=part_type, p_size=size, ps_suppkey=supplier_key]
   │     └─┬─ Where[NOT(LIKE($1.comment, '%Customer%Complaints%'))]
   │       └─┬─ AccessChild
   │         └─── SubCollection[supplier]
@@ -381,7 +381,7 @@ from pydough.unqualified import (
       ├─┬─ AccessChild
       │ └─── SubCollection[lines]
       ├─── SubCollection[lines]
-      └─── Where[quantity < (0.2 * BACK(1).avg_quantity)]
+      └─── Where[quantity < (0.2 * avg_quantity)]
 """,
             id="tpch_q17",
         ),
@@ -425,7 +425,7 @@ from pydough.unqualified import (
   │ └─┬─ AccessChild
   │   └─┬─ SubCollection[supply_records]
   │     ├─── SubCollection[part]
-  │     └─┬─ Where[STARTSWITH(name, 'forest') & HAS($1) & (BACK(1).availqty > (SUM($1.quantity) * 0.5))]
+  │     └─┬─ Where[STARTSWITH(name, 'forest') & HAS($1) & (availqty > (SUM($1.quantity) * 0.5))]
   │       └─┬─ AccessChild
   │         ├─── SubCollection[lines]
   │         └─── Where[(ship_date >= datetime.date(1994, 1, 1)) & (ship_date < datetime.date(1995, 1, 1))]
@@ -449,10 +449,10 @@ from pydough.unqualified import (
   │     └─┬─ Where[(order_status == 'F') & HAS($1) & HASNOT($2)]
   │       ├─┬─ AccessChild
   │       │ ├─── SubCollection[lines]
-  │       │ └─── Where[supplier_key != BACK(2).supplier_key]
+  │       │ └─── Where[supplier_key != supplier_key]
   │       └─┬─ AccessChild
   │         ├─── SubCollection[lines]
-  │         └─── Where[(supplier_key != BACK(2).supplier_key) & (receipt_date > commit_date)]
+  │         └─── Where[(supplier_key != supplier_key) & (receipt_date > commit_date)]
   └─── TopK[10, numwait.DESC(na_pos='last'), s_name.ASC(na_pos='first')]
 """,
             id="tpch_q21",
@@ -476,7 +476,7 @@ from pydough.unqualified import (
   │   ├─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT($1)]
   │   │ └─┬─ AccessChild
   │   │   └─── SubCollection[orders]
-  │   └─── Where[acctbal > BACK(1).avg_balance]
+  │   └─── Where[acctbal > avg_balance]
   └─┬─ Calculate[cntry_code=cntry_code, num_custs=COUNT($1), totacctbal=SUM($1.acctbal)]
     └─┬─ AccessChild
       └─── PartitionChild[custs]

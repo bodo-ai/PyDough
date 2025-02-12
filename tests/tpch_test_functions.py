@@ -73,9 +73,7 @@ def impl_tpch_q2():
         PARTITION(selected_parts, name="p", by=key)
         .CALCULATE(best_cost=MIN(p.supplycost))
         .p.WHERE(
-            (supplycost == BACK(1).best_cost)
-            & ENDSWITH(part_type, "BRASS")
-            & (size == 15)
+            (supplycost == best_cost) & ENDSWITH(part_type, "BRASS") & (size == 15)
         )
         .CALCULATE(
             S_ACCTBAL=s_acctbal,
@@ -148,11 +146,12 @@ def impl_tpch_q5():
             (order_date >= datetime.date(1994, 1, 1))
             & (order_date < datetime.date(1995, 1, 1))
         )
-        .lines.WHERE(supplier.nation.name == BACK(3).name)
+        .lines.WHERE(supplier.nation.name == nation_name)
         .CALCULATE(value=extended_price * (1 - discount))
     )
     return (
-        Nations.WHERE(region.name == "ASIA")
+        Nations.CALCULATE(nation_name=name)
+        .WHERE(region.name == "ASIA")
         .CALCULATE(N_NAME=name, REVENUE=SUM(selected_lines.value))
         .ORDER_BY(REVENUE.DESC())
     )
@@ -238,10 +237,11 @@ def impl_tpch_q9():
     """
     selected_lines = (
         Nations.CALCULATE(nation_name=nation)
-        .suppliers.supply_records.WHERE(CONTAINS(part.name, "green"))
+        .suppliers.supply_records.CALCULATE(supplycost=supplycost)
+        .WHERE(CONTAINS(part.name, "green"))
         .lines.CALCULATE(
             o_year=YEAR(order.order_date),
-            value=extended_price * (1 - discount) - BACK(1).supplycost * quantity,
+            value=extended_price * (1 - discount) - supplycost * quantity,
         )
     )
     return (

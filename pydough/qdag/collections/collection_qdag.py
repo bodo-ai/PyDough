@@ -30,9 +30,9 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
     @property
     def ancestor_context(self) -> Union["PyDoughCollectionQDAG", None]:
         """
-        The ancestor context from which this collection is derived, e.g. what
-        is accessed by `BACK(1)`. Returns None if there is no ancestor context,
-        e.g. because the collection is the top of the hierarchy.
+        The ancestor context from which this collection is derived. Returns
+        None if there is no ancestor context because the collection is the top
+        of the hierarchy.
         """
 
     @property
@@ -293,7 +293,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
           └─┬─ Where[ENDSWITH(name, 's')]
             ├─── SubCollection[nations]
             ├─── Where[name != 'USA']
-            ├─┬─ Calculate[a=[BACK(1).region_name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
+            ├─┬─ Calculate[a=[region_name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
             │ ├─┬─ AccessChild
             │ │ ├─ SubCollection[customers]
             │ │ └─── Where[acctbal > 0]

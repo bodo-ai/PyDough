@@ -7,7 +7,6 @@ from collections.abc import Callable
 import pytest
 from exploration_examples import (
     contextless_aggfunc_impl,
-    contextless_back_impl,
     contextless_collections_impl,
     contextless_expr_impl,
     contextless_func_impl,
@@ -1308,7 +1307,6 @@ PyDough collection representing the following logic:
       └─── PartitionChild[p]
 
 This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
-Using BACK(1) will access the partitioned data.
 
 The following terms will be included in the result if this collection is executed:
   brand, comment, container, key, manufacturer, name, part_type, retail_price, size
@@ -1326,7 +1324,6 @@ expressions or collections that the collection has access to.
                 """,
                 """
 This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
-Using BACK(1) will access the partitioned data.
 
 The collection has access to the following expressions:
   brand, comment, container, key, manufacturer, name, part_type, retail_price, size
@@ -1402,21 +1399,6 @@ Did you mean to use pydough.explain_term?
         pytest.param(
             (
                 "TPCH",
-                contextless_back_impl,
-                """
-Cannot call pydough.explain on BACK(1).fizz.
-Did you mean to use pydough.explain_term?
-""",
-                """
-Cannot call pydough.explain on BACK(1).fizz.
-Did you mean to use pydough.explain_term?
-""",
-            ),
-            id="not_qualified_collection_d",
-        ),
-        pytest.param(
-            (
-                "TPCH",
                 contextless_aggfunc_impl,
                 """
 Cannot call pydough.explain on COUNT(customers).
@@ -1427,7 +1409,7 @@ Cannot call pydough.explain on COUNT(customers).
 Did you mean to use pydough.explain_term?
 """,
             ),
-            id="not_qualified_collection_e",
+            id="not_qualified_collection_d",
         ),
         pytest.param(
             (
@@ -1442,7 +1424,7 @@ Cannot call pydough.explain on LOWER(((first_name + ' ') + last_name)).
 Did you mean to use pydough.explain_term?
 """,
             ),
-            id="not_qualified_collection_f",
+            id="not_qualified_collection_e",
         ),
     ]
 )

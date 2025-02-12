@@ -5,7 +5,6 @@ PyDough whenever a user writes PyDough code.
 
 __all__ = [
     "UnqualifiedAccess",
-    "UnqualifiedBack",
     "UnqualifiedBinaryOperation",
     "UnqualifiedCalculate",
     "UnqualifiedLiteral",
@@ -131,6 +130,11 @@ class UnqualifiedNode(ABC):
                 f"Cannot index into PyDough object {self} with {key!r}"
             )
 
+    def __call__(self, *args, **kwargs):
+        raise PyDoughUnqualifiedException(
+            f"PyDough nodes {self!r} is not callable. Did you mean to use a function?"
+        )
+
     def __bool__(self):
         raise PyDoughUnqualifiedException(
             "PyDough code cannot be treated as a boolean. If you intend to do a logical operation, use `|`, `&` and `~` instead of `or`, `and` and `not`."
@@ -241,9 +245,6 @@ class UnqualifiedNode(ABC):
     def __invert__(self):
         return UnqualifiedOperation("NOT", [self])
 
-    def __call__(self, *args, **kwargs: dict[str, object]):
-        return self.CALCULATE(*args, **kwargs)
-
     def CALCULATE(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
         counter = 0
@@ -314,12 +315,6 @@ class UnqualifiedNode(ABC):
         else:
             return UnqualifiedPartition(self, data, name, list(by))
 
-    def BACK(self, levels: int) -> "UnqualifiedBack":
-        """
-        Method used to create a BACK node.
-        """
-        return UnqualifiedBack(levels)
-
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -344,17 +339,6 @@ class UnqualifiedRoot(UnqualifiedNode):
             return UnqualifiedOperator(name)
         else:
             return super().__getattribute__(name)
-
-
-class UnqualifiedBack(UnqualifiedNode):
-    """
-    Implementation of UnqualifiedNode used to refer to a BACK node, meaning that
-    anything pointing to this node as an ancestor/predecessor must be derivable
-    by looking at the ancestors of the context it is placed within.
-    """
-
-    def __init__(self, levels: int):
-        self._parcel: tuple[int] = (levels,)
 
 
 class UnqualifiedLiteral(UnqualifiedNode):
@@ -617,8 +601,6 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
     match unqualified:
         case UnqualifiedRoot():
             return unqualified._parcel[0].name
-        case UnqualifiedBack():
-            return f"BACK({unqualified._parcel[0]})"
         case UnqualifiedLiteral():
             literal_value: Any = unqualified._parcel[0]
             match literal_value:

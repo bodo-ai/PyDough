@@ -34,7 +34,6 @@ from pydough.types import PyDoughType
 from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
     UnqualifiedAccess,
-    UnqualifiedBack,
     UnqualifiedBinaryOperation,
     UnqualifiedCalculate,
     UnqualifiedCollation,
@@ -362,74 +361,51 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         name: str = unqualified._parcel[1]
         term: PyDoughQDAG
-        if isinstance(unqualified_parent, UnqualifiedBack):
-            # If the parent is an `UnqualifiedBack`, it means that this is an
-            # access in the form "BACK(n).term_name". First, fetch the ancestor
-            # context in question.
-            levels: int = unqualified_parent._parcel[0]
-            ancestor: PyDoughCollectionQDAG = context
-            for _ in range(levels):
-                if ancestor.ancestor_context is None:
-                    raise PyDoughUnqualifiedException(
-                        f"Cannot back reference {levels} above {unqualified_parent}"
-                    )
-                ancestor = ancestor.ancestor_context
-            # Identify whether the access is an expression or a collection
-            term = ancestor.get_term(name)
-            if isinstance(term, PyDoughCollectionQDAG):
-                raise PyDoughUnqualifiedException(
-                    f"Cannot back reference a collection {name} from {ancestor}"
-                )
-            else:
-                return self.builder.build_back_reference_expression(
-                    context, name, levels
-                )
+        # First, qualify the parent collection.
+        qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        if (
+            isinstance(qualified_parent, GlobalContext)
+            and name == qualified_parent.graph.name
+        ):
+            # Special case: if the parent is the root context and the child
+            # is named after the graph name, return the parent since the
+            # child is just a de-sugared invocation of the global context.
+            return qualified_parent
         else:
-            # First, qualify the parent collection.
-            qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-                unqualified_parent, context, is_child
-            )
-            if (
-                isinstance(qualified_parent, GlobalContext)
-                and name == qualified_parent.graph.name
-            ):
-                # Special case: if the parent is the root context and the child
-                # is named after the graph name, return the parent since the
-                # child is just a de-sugared invocation of the global context.
-                return qualified_parent
+            # Identify whether the access is an expression or a collection
+            term = qualified_parent.get_term(name)
+            if isinstance(term, PyDoughCollectionQDAG):
+                # If it is a collection that is not the special case,
+                # access the child collection from the qualified parent
+                # collection.
+                answer: PyDoughCollectionQDAG = self.builder.build_child_access(
+                    name, qualified_parent
+                )
+                if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+                    answer = ChildOperatorChildAccess(answer)
+                return answer
             else:
-                # Identify whether the access is an expression or a collection
-                term = qualified_parent.get_term(name)
-                if isinstance(term, PyDoughCollectionQDAG):
-                    # If it is a collection that is not the special case,
-                    # access the child collection from the qualified parent
-                    # collection.
-                    answer: PyDoughCollectionQDAG = self.builder.build_child_access(
-                        name, qualified_parent
-                    )
-                    if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
-                        answer = ChildOperatorChildAccess(answer)
-                    return answer
+                assert isinstance(term, PyDoughExpressionQDAG)
+                if isinstance(unqualified_parent, UnqualifiedRoot):
+                    # If at the root, the access must be a reference to a scalar
+                    # attribute accessible in the current context.
+                    return self.builder.build_reference(context, name)
                 else:
-                    assert isinstance(term, PyDoughExpressionQDAG)
-                    if isinstance(unqualified_parent, UnqualifiedRoot):
-                        # If at the root, the access must be a reference to a scalar
-                        # attribute accessible in the current context.
-                        return self.builder.build_reference(context, name)
+                    # Otherwise, the access is a reference to a scalar attribute of
+                    # a child collection node of the current context. Add this new
+                    # child to the list of children, unless already present, then
+                    # return the answer as a reference to a field of the child.
+                    ref_num: int
+                    if qualified_parent in children:
+                        ref_num = children.index(qualified_parent)
                     else:
-                        # Otherwise, the access is a reference to a scalar attribute of
-                        # a child collection node of the current context. Add this new
-                        # child to the list of children, unless already present, then
-                        # return the answer as a reference to a field of the child.
-                        ref_num: int
-                        if qualified_parent in children:
-                            ref_num = children.index(qualified_parent)
-                        else:
-                            ref_num = len(children)
-                            children.append(qualified_parent)
-                        return self.builder.build_child_reference_expression(
-                            children, ref_num, name
-                        )
+                        ref_num = len(children)
+                        children.append(qualified_parent)
+                    return self.builder.build_child_reference_expression(
+                        children, ref_num, name
+                    )
 
     def qualify_calculate(
         self,

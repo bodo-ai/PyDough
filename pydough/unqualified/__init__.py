@@ -7,7 +7,6 @@ into PyDough QDAG nodes.
 __all__ = [
     "PyDoughUnqualifiedException",
     "UnqualifiedAccess",
-    "UnqualifiedBack",
     "UnqualifiedBinaryOperation",
     "UnqualifiedCalculate",
     "UnqualifiedLiteral",
@@ -32,7 +31,6 @@ from .errors import PyDoughUnqualifiedException
 from .qualification import qualify_node, qualify_term
 from .unqualified_node import (
     UnqualifiedAccess,
-    UnqualifiedBack,
     UnqualifiedBinaryOperation,
     UnqualifiedCalculate,
     UnqualifiedLiteral,

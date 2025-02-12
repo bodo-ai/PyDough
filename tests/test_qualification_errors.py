@@ -135,7 +135,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_02,
-            "Unrecognized term of simple table collection 'Nations' in graph 'TPCH': 'FIZZBUZZ'",
+            "PyDough nodes FIZZBUZZ is not callable. Did you mean to use a function?",
             id="02",
         ),
         pytest.param(
@@ -160,7 +160,7 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_07,
-            "Unrecognized term of simple table collection 'Lineitems' in graph 'TPCH': 'MUL'",
+            "PyDough nodes SUB is not callable. Did you mean to use a function?",
             id="07",
         ),
         pytest.param(

@@ -4,7 +4,6 @@ Definitions of functions used in unit tests in `test_exploration.py`.
 
 __all__ = [
     "contextless_aggfunc_impl",
-    "contextless_back_impl",
     "contextless_collections_impl",
     "contextless_expr_impl",
     "contextless_func_impl",
@@ -71,8 +70,10 @@ def table_calc_impl() -> UnqualifiedNode:
 
 
 def subcollection_calc_backref_impl() -> UnqualifiedNode:
-    return Regions.nations.customers.CALCULATE(
-        name, nation_name=BACK(1).name, region_name=BACK(2).name
+    return (
+        Regions.CALCULATE(region_name=name)
+        .nations.CALCULATE(nation_name=name)
+        .customers.CALCULATE(name, nation_name, region_name)
     )
 
 
@@ -122,10 +123,6 @@ def contextless_collections_impl() -> UnqualifiedNode:
     return lines.CALCULATE(extended_price, name=part.name)
 
 
-def contextless_back_impl() -> UnqualifiedNode:
-    return BACK(1).fizz
-
-
 def contextless_func_impl() -> UnqualifiedNode:
     return LOWER(first_name + " " + last_name)
 
@@ -155,7 +152,7 @@ def region_nations_suppliers_name_impl() -> tuple[UnqualifiedNode, UnqualifiedNo
 
 
 def region_nations_back_name() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return Regions.nations, BACK(1).name
+    return Regions.CALCULATE(region_name=name).nations, region_name
 
 
 def region_n_suppliers_in_red_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:

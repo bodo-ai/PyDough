@@ -134,7 +134,7 @@ def impl_defog_broker_basic4():
     What are the top 5 combinations of customer state and ticker type by
     number of transactions? Return the customer state, ticker type and number of transactions.
     """
-    data = Customers.transactions_made.ticker(state=BACK(2).state)
+    data = Customers(state=state).transactions_made.ticker
     return (
         PARTITION(data, name="combo", by=(state, ticker_type))
         .CALCULATE(

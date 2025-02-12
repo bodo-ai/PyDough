@@ -367,7 +367,6 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                 lines.append(
                     f"This node, specifically, accesses the unpartitioned data of a partitioning (child name: {qualified_node.partition_child_name})."
                 )
-                lines.append("Using BACK(1) will access the partitioned data.")
             case ChildOperator():
                 if len(qualified_node.children):
                     lines.append(

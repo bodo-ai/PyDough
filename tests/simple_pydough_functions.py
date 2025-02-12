@@ -51,16 +51,20 @@ def rank_nations_per_region_by_customers():
 
 
 def rank_parts_per_supplier_region_by_size():
-    return Regions.nations.suppliers.supply_records.part.CALCULATE(
-        key,
-        region=BACK(4).name,
-        rank=RANKING(
-            by=(size.DESC(), container.DESC(), part_type.DESC()),
-            levels=4,
-            allow_ties=True,
-            dense=True,
-        ),
-    ).TOP_K(15, by=key.ASC())
+    return (
+        Regions.CALCULATE(region_name=name)
+        .nations.suppliers.supply_records.part.CALCULATE(
+            key,
+            region=region_name,
+            rank=RANKING(
+                by=(size.DESC(), container.DESC(), part_type.DESC()),
+                levels=4,
+                allow_ties=True,
+                dense=True,
+            ),
+        )
+        .TOP_K(15, by=key.ASC())
+    )
 
 
 def rank_with_filters_a():
@@ -83,7 +87,7 @@ def rank_with_filters_c():
     return (
         PARTITION(Parts, name="p", by=size)
         .TOP_K(5, by=size.DESC())
-        .p(size, name)
+        .p.CALCULATE(size, name)
         .WHERE(RANKING(by=retail_price.DESC(), levels=1) == 1)
     )
 
@@ -120,8 +124,10 @@ def regional_suppliers_percentile():
 def function_sampler():
     # Examples of using different functions
     return (
-        Regions.nations.customers.CALCULATE(
-            a=JOIN_STRINGS("-", BACK(2).name, BACK(1).name, name[16:]),
+        Regions.CALCULATE(region_name=name)
+        .nations.CALCULATE(nation_name=name)
+        .customers.CALCULATE(
+            a=JOIN_STRINGS("-", region_name, nation_name, name[16:]),
             b=ROUND(acctbal, 1),
             c=KEEP_IF(name, phone[:1] == "3"),
             d=PRESENT(KEEP_IF(name, phone[1:2] == "1")),

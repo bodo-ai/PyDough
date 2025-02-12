@@ -75,7 +75,8 @@ class Calculate(AugmentingChildOperator):
         for idx, (name, value) in enumerate(terms):
             ancestral_idx: int = self.ancestral_mapping.get(name, 0)
             if ancestral_idx > 0:
-                # Ignore no-op back-references (e.g. name=BACK(1).name)
+                # Ignore no-op back-references, e.g.:
+                # region(region_name=name).customers(region_name=region_name)
                 if (
                     isinstance(value, BackReferenceExpression)
                     and value.back_levels == ancestral_idx

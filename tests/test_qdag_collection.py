@@ -154,8 +154,8 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
             ),
         )
     )
-    is_intra: str = "order.customer.region.name == BACK(4).region_name"
-    base_value: str = "BACK(1).retail_price * quantity"
+    is_intra: str = "order.customer.region.name == region_name"
+    base_value: str = "retail_price * quantity"
     path_to_lines = "nations.suppliers.supply_records.CALCULATE(retail_price=part.retail_price).lines.WHERE(ship_mode == 'AIR')"
     part_values: str = (
         f"{path_to_lines}.CALCULATE(is_intra={is_intra}, value={base_value})"
@@ -175,7 +175,7 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
             │ └─── SubCollection[part]
             ├─── SubCollection[lines]
             ├─── Where[ship_mode == 'AIR']
-            └─┬─ Calculate[is_intra=$1.name == BACK(4).region_name, value=BACK(1).retail_price * quantity]
+            └─┬─ Calculate[is_intra=$1.name == region_name, value=retail_price * quantity]
               └─┬─ AccessChild
                 └─┬─ SubCollection[order]
                   └─┬─ SubCollection[customer]
@@ -898,14 +898,14 @@ def test_collections_calc_terms(
                 region_name=BackReferenceExpressionInfo("name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
-            "TPCH.Regions.WHERE(name != 'ASIA').nations.WHERE(name != 'USA').CALCULATE(region_name=BACK(1).name, nation_name=name)",
+            "TPCH.Regions.WHERE(name != 'ASIA').nations.WHERE(name != 'USA').CALCULATE(region_name=name, nation_name=name)",
             """
 ──┬─ TPCH
   ├─── TableCollection[Regions]
   └─┬─ Where[name != 'ASIA']
     ├─── SubCollection[nations]
     ├─── Where[name != 'USA']
-    └─── Calculate[region_name=BACK(1).name, nation_name=name]
+    └─── Calculate[region_name=name, nation_name=name]
 """,
             id="regions_nations_calc",
         ),
@@ -918,12 +918,12 @@ def test_collections_calc_terms(
                 nation_name=ReferenceInfo("nation_name"),
                 supplier_name=ReferenceInfo("name"),
             ),
-            "TPCH.Regions.suppliers.CALCULATE(region_name=BACK(1).name, nation_name=nation_name, supplier_name=name)",
+            "TPCH.Regions.suppliers.CALCULATE(region_name=name, nation_name=nation_name, supplier_name=name)",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
     ├─── SubCollection[suppliers]
-    └─── Calculate[region_name=BACK(1).name, nation_name=nation_name, supplier_name=name]
+    └─── Calculate[region_name=name, nation_name=nation_name, supplier_name=name]
 """,
             id="regions_suppliers_calc",
         ),
@@ -957,13 +957,13 @@ def test_collections_calc_terms(
                 region_name=BackReferenceExpressionInfo("adj_name", 1),
                 nation_name=ReferenceInfo("name"),
             ),
-            "TPCH.Regions.CALCULATE(adj_name=LOWER(name)).nations.CALCULATE(region_name=BACK(1).adj_name, nation_name=name)",
+            "TPCH.Regions.CALCULATE(adj_name=LOWER(name)).nations.CALCULATE(region_name=adj_name, nation_name=name)",
             """
 ──┬─ TPCH
   ├─── TableCollection[Regions]
   └─┬─ Calculate[adj_name=LOWER(name)]
     ├─── SubCollection[nations]
-    └─── Calculate[region_name=BACK(1).adj_name, nation_name=name]
+    └─── Calculate[region_name=adj_name, nation_name=name]
 """,
             id="regions_calc_nations_calc",
         ),
@@ -1049,7 +1049,7 @@ def test_collections_calc_terms(
                 part_name=ReferenceInfo("name"),
                 ratio=BackReferenceExpressionInfo("ratio", 1),
             ),
-            "TPCH.Suppliers.supply_records.CALCULATE(ratio=SUM(lines.quantity) / availqty).part.CALCULATE(supplier_name=BACK(2).name, part_name=name)",
+            "TPCH.Suppliers.supply_records.CALCULATE(ratio=SUM(lines.quantity) / availqty).part.CALCULATE(supplier_name=name, part_name=name)",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Suppliers]
@@ -1058,7 +1058,7 @@ def test_collections_calc_terms(
       ├─┬─ AccessChild
       │ └─── SubCollection[lines]
       ├─── SubCollection[part]
-      └─── Calculate[supplier_name=BACK(2).name, part_name=name]
+      └─── Calculate[supplier_name=name, part_name=name]
 """,
             id="suppliers_parts_childcalc",
         ),
@@ -1270,7 +1270,7 @@ def test_collections_calc_terms(
                     [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
                 ),
             ),
-            "TPCH.Regions.ORDER_BY(name.ASC(na_pos='last')).customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(acctbal > 1000).CALCULATE(region_name=BACK(1).name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
+            "TPCH.Regions.ORDER_BY(name.ASC(na_pos='last')).customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(acctbal > 1000).CALCULATE(region_name=name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
             """
 ──┬─ TPCH
   ├─── TableCollection[Regions]
@@ -1278,7 +1278,7 @@ def test_collections_calc_terms(
     ├─── SubCollection[customers]
     ├─── OrderBy[key.ASC(na_pos='last')]
     ├─── Where[acctbal > 1000]
-    ├─── Calculate[region_name=BACK(1).name]
+    ├─── Calculate[region_name=name]
     ├─── OrderBy[region_name.ASC(na_pos='last')]
     └─── Where[region_name != 'ASIA']
 """,
@@ -1414,7 +1414,7 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container).CALCULATE(container=container, total_price=SUM(parts.retail_price)).parts.CALCULATE(part_name=name, container=container, ratio=retail_price / BACK(1).total_price)",
+            "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container).CALCULATE(container=container, total_price=SUM(parts.retail_price)).parts.CALCULATE(part_name=name, container=container, ratio=retail_price / total_price)",
             """
 ──┬─ TPCH
   ├─┬─ Partition[name='parts', by=container]
@@ -1425,7 +1425,7 @@ def test_collections_calc_terms(
     ├─┬─ AccessChild
     │ └─── PartitionChild[parts]
     ├─── PartitionChild[parts]
-    └─── Calculate[part_name=name, container=container, ratio=retail_price / BACK(1).total_price]
+    └─── Calculate[part_name=name, container=container, ratio=retail_price / total_price]
 """,
             id="partition_data_with_data_order",
         ),
@@ -1503,7 +1503,7 @@ def test_collections_calc_terms(
                 ],
                 FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
             ),
-            "TPCH.Customers.CALCULATE(cust_nation_name=nation.name).WHERE(HASNOT(orders.lines.WHERE(supplier.nation.name != BACK(2).cust_nation_name)))",
+            "TPCH.Customers.CALCULATE(cust_nation_name=nation.name).WHERE(HASNOT(orders.lines.WHERE(supplier.nation.name != cust_nation_name)))",
             """
 ──┬─ TPCH
   ├─── TableCollection[Customers]
@@ -1514,7 +1514,7 @@ def test_collections_calc_terms(
     └─┬─ AccessChild
       └─┬─ SubCollection[orders]
         ├─── SubCollection[lines]
-        └─┬─ Where[$1.name != BACK(2).cust_nation_name]
+        └─┬─ Where[$1.name != cust_nation_name]
           └─┬─ AccessChild
             └─┬─ SubCollection[supplier]
               └─── SubCollection[nation]
@@ -2060,12 +2060,12 @@ def test_collections_calc_terms(
                     "RANKING", (ReferenceInfo("acctbal"), False, True), levels=1
                 ),
             ),
-            "TPCH.Nations.customers.CALCULATE(nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1))",
+            "TPCH.Nations.customers.CALCULATE(nation_name=name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1))",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Nations]
     ├─── SubCollection[customers]
-    └─── Calculate[nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1)]
+    └─── Calculate[nation_name=name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=1)]
 """,
             id="rank_customers_per_nation",
         ),
@@ -2086,13 +2086,13 @@ def test_collections_calc_terms(
                     dense=True,
                 ),
             ),
-            "TPCH.Regions.nations.customers.CALCULATE(region_name=BACK(2).name, nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True))",
+            "TPCH.Regions.nations.customers.CALCULATE(region_name=name, nation_name=name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True))",
             """
 ──┬─ TPCH
   └─┬─ TableCollection[Regions]
     └─┬─ SubCollection[nations]
       ├─── SubCollection[customers]
-      └─── Calculate[region_name=BACK(2).name, nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True)]
+      └─── Calculate[region_name=name, nation_name=name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True)]
 """,
             id="rank_customers_per_region",
         ),

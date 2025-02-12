@@ -68,8 +68,8 @@ def collection_in_context_string(
     """
     Converts a collection in the context of another collection into a single
     string in a way that elides back collection references. For example,
-    if the context is A.B.C.D, and the collection is BACK(2).E.F, the result
-    would be "A.B.E.F".
+    if the context is A.B.WHERE(C), and the collection is D.E, the result
+    would be "A.B.WHERE(C).D.E".
 
     Args:
         `context`: the collection representing the context that `collection`
