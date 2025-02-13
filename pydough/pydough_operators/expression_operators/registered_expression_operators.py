@@ -151,7 +151,7 @@ SECOND = ExpressionFunctionOperator(
     "SECOND", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 DATEDIFF = ExpressionFunctionOperator(
-    "DATEDIFF", False, RequireMinArgs(2), ConstantType(Int64Type())
+    "DATEDIFF", False, RequireNumArgs(3), ConstantType(Int64Type())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)

@@ -391,48 +391,39 @@ def annotated_assignment():
     return Nations.WHERE(region.name == chosen_region)
 
 
-def years_datediff():
-    y_datetime = datetime.datetime(2025, 4, 2, 11, 00, 0)
-    return Transactions.WHERE((YEAR(date_time) <= 2025) & (DAY(date_time) >= 3))(
-        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "years")
-    ).TOP_K(20, by=diff.DESC())
-
-
-def months_datediff():
-    y_datetime = datetime.datetime(2025, 4, 2, 11, 00, 0)
-    return (
-        Transactions.WHERE((YEAR(date_time) <= 2025) & (DAY(date_time) >= 3))(
-            x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "months")
-        )
-        .WHERE(MONOTONIC(-24, diff, 24))
-        .TOP_K(30, by=diff.DESC())
-    )
-
-
-def days_datediff():
-    return Transactions.WHERE(YEAR(date_time) <= 2024)(
+def years_months_days_hours_datediff():
+    y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
+    return Transactions.WHERE((YEAR(date_time) < 2025))(
         x=date_time,
-        y=datetime.date(2023, 4, 2),
-        diff=DATEDIFF(date_time, datetime.date(2023, 4, 2), "days"),
-    ).TOP_K(30, by=diff.DESC())
+        y1=y1_datetime,
+        years_diff=DATEDIFF("years", date_time, y1_datetime),
+        months_diff=DATEDIFF("months", date_time, y1_datetime),
+        days_diff=DATEDIFF("days", date_time, y1_datetime),
+        hours_diff=DATEDIFF("hours", date_time, y1_datetime),
+    ).TOP_K(30, by=years_diff.ASC())
 
 
-def hours_datediff():
-    y_datetime = datetime.datetime(2023, 4, 2, 11, 00, 0)
-    return Transactions.WHERE(YEAR(date_time) <= 2024)(
-        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "hours")
-    ).TOP_K(30, by=diff.DESC())
-
-
-def minutes_datediff():
-    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 0)
-    return Transactions.WHERE(YEAR(date_time) <= 2024)(
-        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "minutes")
-    ).TOP_K(30, by=x.DESC())
-
-
-def seconds_datediff():
+def minutes_seconds_datediff():
     y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
     return Transactions.WHERE(YEAR(date_time) <= 2024)(
-        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "seconds")
+        x=date_time,
+        y=y_datetime,
+        minutes_diff=DATEDIFF("m", date_time, y_datetime),
+        seconds_diff=DATEDIFF("s", date_time, y_datetime),
     ).TOP_K(30, by=x.DESC())
+
+
+def datediff():
+    y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
+    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
+    return Transactions.WHERE((YEAR(date_time) < 2025))(
+        x=date_time,
+        y1=y1_datetime,
+        y=y_datetime,
+        years_diff=DATEDIFF("years", date_time, y1_datetime),
+        months_diff=DATEDIFF("months", date_time, y1_datetime),
+        days_diff=DATEDIFF("days", date_time, y1_datetime),
+        hours_diff=DATEDIFF("hours", date_time, y1_datetime),
+        minutes_diff=DATEDIFF("minutes", date_time, y_datetime),
+        seconds_diff=DATEDIFF("seconds", date_time, y_datetime),
+    ).TOP_K(30, by=years_diff.ASC())

@@ -294,22 +294,33 @@ Orders(is_lt_30_seconds = SECOND(order_date) < 30)
 <!-- TOC --><a name="datediff"></a>
 ### DATEDIFF
 
-Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`, `months`,`days`,`hours`,`minutes`,`seconds`. Default is `days`.
+Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`, `months`,`days`,`hours`,`minutes` or`seconds`.
 
-- `DATEDIFF(x, y, "years")` returns y-x in years (December 31st of 2009 and January 1st of 2010 count as 1 year apart).
-- `DATEDIFF(x, y, "months") `returns y-x in months (January 31st of 2014 and February 1st of 2014 count as 1 month apart).
-- `DATEDIFF(x, y, "days")` returns y-x in days (11:59 pm of one day vs 12:01 am of the next day count as 1 day apart).
-- `DATEDIFF(x, y, "hours")` returns y-x in hours (6:59 pm vs 7:01 pm of the same day count as 1 hour apart).
-- `DATEDIFF(x, y, "minutes")` returns y-x in minutes (same idea as hours).
-- `DATEDIFF(x, y, "seconds")` returns y-x in seconds (same idea as hours)
+- `DATEDIFF("years", x, y)`: Returns the **number of full years since x that y occurred**. For example, if **x** is December 31, 2009, and **y** is January 1, 2010, it counts as **1 year apart**, even though they are only 1 day apart.
+- `DATEDIFF("months", x, y)`: Returns the **number of full months since x that y occurred**. For example, if **x** is January 31, 2014, and **y** is February 1, 2014, it counts as **1 month apart**, even though they are only 1 day apart.
+- `DATEDIFF("days", x, y)`: Returns the **number of full days since x that y occurred**. For example, if **x** is 11:59 PM on one day, and **y** is 12:01 AM the next day, it counts as **1 day apart**, even though they are only 2 minutes apart.
+- `DATEDIFF("hours", x, y)`: Returns the **number of full hours since x that y occurred**. For example, if **x** is 6:59 PM and **y** is 7:01 PM on the same day, it counts as **1 hour apart**, even though the difference is only 2 minutes.
+- `DATEDIFF("minutes", x, y)`: Returns the **number of full minutes since x that y occurred**. For example, if **x** is 7:00 PM and **y** is 7:01 PM, it counts as **1 minute apart**, even though the difference is exactly 60 seconds.
+- `DATEDIFF("seconds", x, y)`: Returns the **number of full seconds since x that y occurred**. For example, if **x** is at 7:00:01 PM and **y** is at 7:00:02 PM, it counts as **1 second apart**.
 
 ```py
-# This calculates the difference between date_time attribute of Transactions collection
-# and datetime.date(2023, 4, 2) in days.
-Transactions.WHERE(YEAR(date_time) <= 2024) \
-            (x = date_time, y = datetime.date(2023, 4, 2),
-             diff = DATEDIFF(date_time, datetime.date(2023, 4, 2), 'days')).TOP_K(30,by=diff.DESC())
+# Calculates, for each order, the number of days since January 1st 1992
+# that the order was placed:
+orders( 
+   days_since=DATEDIFF("days",datetime.date(1992, 1, 1), order_date)
+)
 ```
+
+The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown:
+
+- **Years**: Supported aliases are `"years"`, `"year"`, and `"y"`.
+- **Months**: Supported aliases are `"months"`, `"month"`, and `"mm"`.
+- **Days**: Supported aliases are `"days"`, `"day"`, and `"d"`.
+- **Hours**: Supported aliases are `"hours"`, `"hour"`, and `"h"`.
+- **Minutes**: Supported aliases are `"minutes"`, `"minute"`, and `"m"`.
+- **Seconds**: Supported aliases are `"seconds"`, `"second"`, and `"s"`.
+
+Invalid or unrecognized units will result in an error. For example, `"Days"`, `"DAYS"`, and `"d"` are all treated the same due to case insensitivity.
 
 <!-- TOC --><a name="conditional-functions"></a>
 ## Conditional Functions

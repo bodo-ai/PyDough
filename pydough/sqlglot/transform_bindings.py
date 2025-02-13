@@ -585,32 +585,34 @@ def convert_datediff(
         The SQLGlot expression matching the functionality of
         `DATEDIFF(y, x)`,i.e the difference between two dates.
     """
-    assert len(sql_glot_args) == 2 or len(sql_glot_args) == 3
-    unit: str
-    if len(sql_glot_args) == 2:
-        unit = "days"
-    else:
-        unit = sql_glot_args[2].this
-    x = sql_glot_args[0]
-    y = sql_glot_args[1]
-    datediff_unit: str = unit
-    match unit:
-        case "years":
-            datediff_unit = "year"
-        case "months":
-            datediff_unit = "month"
-        case "days":
-            datediff_unit = "day"
-        case "hours":
-            datediff_unit = "hour"
-        case "minutes":
-            datediff_unit = "minute"
-        case "seconds":
-            datediff_unit = "second"
-        case _:
-            raise ValueError(f"Unsupported argument {unit} for DATEDIFF.")
+    assert len(sql_glot_args) == 3
+    # Check if unit is a string.
+    if not isinstance(sql_glot_args[0], sqlglot_expressions.Literal):
+        raise ValueError(
+            f"Unsupported argument {sql_glot_args[0]} for DATEDIFF."
+            "It should be a string."
+        )
+    elif not sql_glot_args[0].is_string:
+        raise ValueError(
+            f"Unsupported argument {sql_glot_args[0]} for DATEDIFF."
+            "It should be a string."
+        )
+    x = sql_glot_args[1]
+    y = sql_glot_args[2]
+    unit: str = sql_glot_args[0].this
+    year_units = ["years", "year", "y"]
+    month_units = ["months", "month", "mm"]
+    day_units = ["days", "day", "d"]
+    hour_units = ["hours", "hour", "h"]
+    minute_units = ["minutes", "minute", "m"]
+    second_units = ["seconds", "second", "s"]
+    all_units = (
+        year_units + month_units + day_units + hour_units + minute_units + second_units
+    )
+    if unit.lower() not in all_units:
+        raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
     answer = sqlglot_expressions.DateDiff(
-        unit=sqlglot_expressions.Var(this=datediff_unit), this=y, expression=x
+        unit=sqlglot_expressions.Var(this=unit), this=y, expression=x
     )
     return answer
 
@@ -630,39 +632,46 @@ def convert_sqlite_datediff(
 
     Returns:
         The SQLGlot expression matching the functionality of
-        `DATEDIFF(y, x)`,i.e the difference between two dates.
+        `DATEDIFF(unit, y, x)`,i.e the difference between two dates.
     """
-    assert len(sql_glot_args) == 2 or len(sql_glot_args) == 3
-    unit: str
-    if len(sql_glot_args) == 2:
-        unit = "days"
-    else:
-        unit = sql_glot_args[2].this
-    match unit:
-        case "years":
+    assert len(sql_glot_args) == 3
+    # Check if unit is a string.
+    if not isinstance(sql_glot_args[0], sqlglot_expressions.Literal):
+        raise ValueError(
+            f"Unsupported argument {sql_glot_args[0]} for DATEDIFF."
+            "It should be a string."
+        )
+    elif not sql_glot_args[0].is_string:
+        raise ValueError(
+            f"Unsupported argument {sql_glot_args[0]} for DATEDIFF."
+            "It should be a string."
+        )
+    unit: str = sql_glot_args[0].this
+    match unit.lower():
+        case "years" | "year" | "y":
             # Extracts the year from the date and subtracts the years.
             year_x: SQLGlotExpression = convert_sqlite_datetime_extract("'%Y'")(
-                None, [sql_glot_args[0]]
+                None, [sql_glot_args[1]]
             )
             year_y: SQLGlotExpression = convert_sqlite_datetime_extract("'%Y'")(
-                None, [sql_glot_args[1]]
+                None, [sql_glot_args[2]]
             )
             # equivalent to: expression - this
             years_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=year_y, expression=year_x
             )
             return years_diff
-        case "months":
+        case "months" | "month" | "mm":
             # Extracts the difference in years multiplied by 12.
             # Extracts the month from the date and subtracts the months.
             # Adds the difference in months to the difference in years*12.
             # Implementation wise, this is equivalent to:
-            # (years_diff*12 + month_y) - month_x
+            # (years_diff * 12 + month_y) - month_x
             # On expansion: (year_y - year_x) * 12 + month_y - month_x
             sql_glot_args_hours = [
-                sql_glot_args[0],
-                sql_glot_args[1],
                 sqlglot_expressions.Literal(this="years", is_string=True),
+                sql_glot_args[1],
+                sql_glot_args[2],
             ]
             _years_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_hours
@@ -671,8 +680,8 @@ def convert_sqlite_datediff(
                 this=apply_parens(_years_diff),
                 expression=sqlglot_expressions.Literal.number(12),
             )
-            month_x = convert_sqlite_datetime_extract("'%m'")(None, [sql_glot_args[0]])
-            month_y = convert_sqlite_datetime_extract("'%m'")(None, [sql_glot_args[1]])
+            month_x = convert_sqlite_datetime_extract("'%m'")(None, [sql_glot_args[1]])
+            month_y = convert_sqlite_datetime_extract("'%m'")(None, [sql_glot_args[2]])
             months_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(
                     this=years_diff_in_months, expression=month_y
@@ -680,16 +689,16 @@ def convert_sqlite_datediff(
                 expression=month_x,
             )
             return months_diff
-        case "days":
+        case "days" | "day" | "d":
             # Extracts the start of date from the datetime and subtracts the dates.
             date_x = sqlglot_expressions.Date(
-                this=sql_glot_args[0],
+                this=sql_glot_args[1],
                 expressions=[
                     sqlglot_expressions.Literal(this="start of day", is_string=True)
                 ],
             )
             date_y = sqlglot_expressions.Date(
-                this=sql_glot_args[1],
+                this=sql_glot_args[2],
                 expressions=[
                     sqlglot_expressions.Literal(this="start of day", is_string=True)
                 ],
@@ -701,16 +710,17 @@ def convert_sqlite_datediff(
                 expression=date_x,
             )
             return answer
-        case "hours":
+        case "hours" | "hour" | "h":
             # Extracts the difference in days multiplied by 24 to get difference in hours.
-            # Extracts the hours of x and hours of y. Adds the difference in hours to the (difference in days*24).
+            # Extracts the hours of x and hours of y.
+            # Adds the difference in hours to the (difference in days*24).
             # Implementation wise, this is equivalent to:
             # (days_diff*24 + hours_y) - hours_x
-            # On expansion: (( day_y - day_x )*24 + hours_y) - hours_x
+            # On expansion: (( day_y - day_x ) * 24 + hours_y) - hours_x
             sql_glot_args_days = [
-                sql_glot_args[0],
-                sql_glot_args[1],
                 sqlglot_expressions.Literal(this="days", is_string=True),
+                sql_glot_args[1],
+                sql_glot_args[2],
             ]
             _days_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_days
@@ -720,10 +730,10 @@ def convert_sqlite_datediff(
                 expression=sqlglot_expressions.Literal.number(24),
             )
             hours_x: SQLGlotExpression = convert_sqlite_datetime_extract("'%H'")(
-                None, [sql_glot_args[0]]
+                None, [sql_glot_args[1]]
             )
             hours_y: SQLGlotExpression = convert_sqlite_datetime_extract("'%H'")(
-                None, [sql_glot_args[1]]
+                None, [sql_glot_args[2]]
             )
             hours_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(
@@ -732,16 +742,17 @@ def convert_sqlite_datediff(
                 expression=hours_x,
             )
             return hours_diff
-        case "minutes":
+        case "minutes" | "minute" | "m":
             # Extracts the difference in hours multiplied by 60 to get difference in minutes.
-            # Extracts the minutes of x and minutes of y. Adds the difference in minutes to the (difference in hours*60).
+            # Extracts the minutes of x and minutes of y.
+            # Adds the difference in minutes to the (difference in hours*60).
             # Implementation wise, this is equivalent to:
             # (hours_diff*60 + minutes_y) - minutes_x
             # On expansion: (( hours_y - hours_x )*60 + minutes_y) - minutes_x
             sql_glot_args_hours = [
-                sql_glot_args[0],
-                sql_glot_args[1],
                 sqlglot_expressions.Literal(this="hours", is_string=True),
+                sql_glot_args[1],
+                sql_glot_args[2],
             ]
             _hours_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_hours
@@ -750,23 +761,24 @@ def convert_sqlite_datediff(
                 this=apply_parens(_hours_diff),
                 expression=sqlglot_expressions.Literal.number(60),
             )
-            min_x = convert_sqlite_datetime_extract("'%M'")(None, [sql_glot_args[0]])
-            min_y = convert_sqlite_datetime_extract("'%M'")(None, [sql_glot_args[1]])
+            min_x = convert_sqlite_datetime_extract("'%M'")(None, [sql_glot_args[1]])
+            min_y = convert_sqlite_datetime_extract("'%M'")(None, [sql_glot_args[2]])
             mins_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(this=hours_diff_in_mins, expression=min_y),
                 expression=min_x,
             )
             return mins_diff
-        case "seconds":
+        case "seconds" | "second" | "s":
             # Extracts the difference in minutes multiplied by 60 to get difference in seconds.
-            # Extracts the seconds of x and seconds of y. Adds the difference in seconds to the (difference in minutes*60).
+            # Extracts the seconds of x and seconds of y.
+            # Adds the difference in seconds to the (difference in minutes*60).
             # Implementation wise, this is equivalent to:
             # (mins_diff*60 + seconds_y) - seconds_x
             # On expansion: (( mins_y - mins_x )*60 + seconds_y) - seconds_x
             sql_glot_args_minutes = [
-                sql_glot_args[0],
-                sql_glot_args[1],
                 sqlglot_expressions.Literal(this="minutes", is_string=True),
+                sql_glot_args[1],
+                sql_glot_args[2],
             ]
             _mins_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_minutes
@@ -775,8 +787,8 @@ def convert_sqlite_datediff(
                 this=apply_parens(_mins_diff),
                 expression=sqlglot_expressions.Literal.number(60),
             )
-            sec_x = convert_sqlite_datetime_extract("'%S'")(None, [sql_glot_args[0]])
-            sec_y = convert_sqlite_datetime_extract("'%S'")(None, [sql_glot_args[1]])
+            sec_x = convert_sqlite_datetime_extract("'%S'")(None, [sql_glot_args[1]])
+            sec_y = convert_sqlite_datetime_extract("'%S'")(None, [sql_glot_args[2]])
             secs_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(
                     this=minutes_diff_in_secs, expression=sec_y
@@ -785,7 +797,7 @@ def convert_sqlite_datediff(
             )
             return secs_diff
         case _:
-            raise ValueError(f"Unsupported argument {unit} for DATEDIFF.")
+            raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
 
 class SqlGlotTransformBindings:
