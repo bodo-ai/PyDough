@@ -212,6 +212,7 @@ This sections describes various APIs you can use to execute PyDough code.
 
 The `to_sql` API takes in PyDough code and transforms it into SQL query text without executing it on a database. The first argument it takes in is the PyDough node for the collection being converted to SQL. It can optionally take in the following keyword arguments:
 
+- `columns`: which columns to include in the answer if what names to call them by (if omitted, uses the names/ordering from the last `CALCULATE` clause). This can either be a non-empty list of column name strings, or a non-empty dictionary where the values are column name strings, and the keys are the strings of the aliases they should be named as.
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
@@ -222,7 +223,7 @@ Below is an example of using `pydough.to_sql` and the output (the SQL output may
 %%pydough
 european_countries = nations.WHERE(region.name == "EUROPE")
 result = european_countries(name, n_custs=COUNT(customers))
-pydough.to_sql(result)
+pydough.to_sql(result, columns=["name", "n_custs"])
 ```
 
 ```sql
@@ -263,6 +264,8 @@ See the [demo notebooks](../demos/README.md) for more instances of how to use th
 
 The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), but goes a step further and executes the query using the provided database connection, returning the result as a pandas DataFrame.  The first argument it takes in is the PyDough node for the collection being converted to SQL. It can optionally take in the following keyword arguments:
 
+
+- `columns`: which columns to include in the answer if what names to call them by (if omitted, uses the names/ordering from the last `CALCULATE` clause). This can either be a non-empty list of column name strings, or a non-empty dictionary where the values are column name strings, and the keys are the strings of the aliases they should be named as.
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
@@ -273,8 +276,8 @@ Below is an example of using `pydough.to_df` and the output, attached to a sqlit
 ```py
 %%pydough
 european_countries = nations.WHERE(region.name == "EUROPE")
-result = european_countries(name, n_custs=COUNT(customers))
-pydough.to_df(result)
+result = european_countries(n=COUNT(customers))
+pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 ```
 
 <div>
