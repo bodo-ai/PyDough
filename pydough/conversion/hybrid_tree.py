@@ -1847,18 +1847,14 @@ class HybridTranslator:
                     partition_child_idx
                 ].subtree.ancestral_mapping:
                     # Skip adding backrefs for terms that remain part of the
-                    # ancestry through the PARTITION
+                    # ancestry through the PARTITION, since this creates an
+                    # unecessary correlation.
                     if name in node.ancestor_context.ancestral_mapping:
                         continue
-                    # TODO: REMOVE THIS TRY EXCEPT BEFORE MERGING, ONCE CORRRELATION IS HANDLED,
-                    # BUT MAKE SURE TO PRUNE CORRELATION TERMS IF THEY ARE UNUSED!!!
-                    try:
-                        hybrid_back_expr: HybridExpr = self.make_hybrid_expr(
-                            subtree, node.children[0].get_expr(name), {}
-                        )
-                        back_exprs[name] = hybrid_back_expr
-                    except Exception:
-                        pass
+                    hybrid_back_expr: HybridExpr = self.make_hybrid_expr(
+                        subtree, node.children[0].get_expr(name), {}
+                    )
+                    back_exprs[name] = hybrid_back_expr
                 subtree.pipeline.append(
                     HybridCalculate(
                         subtree.pipeline[-1],
