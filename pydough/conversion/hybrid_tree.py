@@ -25,6 +25,7 @@ __all__ = [
     "HybridTree",
 ]
 
+import copy
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -1838,6 +1839,29 @@ class HybridTranslator:
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
                 partition_child_idx: int = child_ref_mapping[0]
+                back_exprs: dict[str, HybridExpr] = {}
+                subtree: HybridTree = successor_hybrid.children[
+                    partition_child_idx
+                ].subtree
+                for name in successor_hybrid.children[
+                    partition_child_idx
+                ].subtree.ancestral_mapping:
+                    # TODO: REMOVE THIS TRY EXCEPT BEFORE MERGING, ONCE CORRRELATION IS HANDLED,
+                    # BUT MAKE SURE TO PRUNE CORRELATION TERMS IF THEY ARE UNUSED!!!
+                    try:
+                        hybrid_back_expr: HybridExpr = self.make_hybrid_expr(
+                            subtree, node.children[0].get_expr(name), {}
+                        )
+                        back_exprs[name] = hybrid_back_expr
+                    except Exception:
+                        pass
+                subtree.pipeline.append(
+                    HybridCalculate(
+                        subtree.pipeline[-1],
+                        back_exprs,
+                        subtree.pipeline[-1].orderings,
+                    )
+                )
                 for key_name in node.calc_terms:
                     key = node.get_expr(key_name)
                     expr = self.make_hybrid_expr(
@@ -1882,9 +1906,7 @@ class HybridTranslator:
                                 successor_hybrid.pipeline[-1],
                             )
                     case PartitionChild():
-                        successor_hybrid = self.make_hybrid_tree(
-                            node.child_access.child_access, parent
-                        )
+                        successor_hybrid = copy.deepcopy(parent.children[0].subtree)
                         partition_by = node.child_access.ancestor_context
                         assert isinstance(partition_by, PartitionBy)
                         for key in partition_by.keys:
@@ -1893,7 +1915,9 @@ class HybridTranslator:
                                 Reference(node.child_access, key.expr.term_name),
                                 child_ref_mapping,
                             )
-                            assert isinstance(rhs_expr, HybridRefExpr)
+                            assert isinstance(
+                                rhs_expr, (HybridRefExpr, HybridBackRefExpr)
+                            )
                             lhs_expr: HybridExpr = HybridChildRefExpr(
                                 rhs_expr.name, 0, rhs_expr.typ
                             )
