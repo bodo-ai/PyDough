@@ -2,6 +2,8 @@
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
+import datetime
+
 
 def simple_scan():
     return Orders(key)
@@ -387,3 +389,50 @@ def annotated_assignment():
     specific_region: tuple[str, str] = "WEST", "AMERICA"
     chosen_region: str = direction1 + " ".join(specific_region)
     return Nations.WHERE(region.name == chosen_region)
+
+
+def years_datediff():
+    y_datetime = datetime.datetime(2025, 4, 2, 11, 00, 0)
+    return Transactions.WHERE((YEAR(date_time) <= 2025) & (DAY(date_time) >= 3))(
+        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "years")
+    ).TOP_K(20, by=diff.DESC())
+
+
+def months_datediff():
+    y_datetime = datetime.datetime(2025, 4, 2, 11, 00, 0)
+    return (
+        Transactions.WHERE((YEAR(date_time) <= 2025) & (DAY(date_time) >= 3))(
+            x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "months")
+        )
+        .WHERE(MONOTONIC(-24, diff, 24))
+        .TOP_K(30, by=diff.DESC())
+    )
+
+
+def days_datediff():
+    return Transactions.WHERE(YEAR(date_time) <= 2024)(
+        x=date_time,
+        y=datetime.date(2023, 4, 2),
+        diff=DATEDIFF(date_time, datetime.date(2023, 4, 2), "days"),
+    ).TOP_K(30, by=diff.DESC())
+
+
+def hours_datediff():
+    y_datetime = datetime.datetime(2023, 4, 2, 11, 00, 0)
+    return Transactions.WHERE(YEAR(date_time) <= 2024)(
+        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "hours")
+    ).TOP_K(30, by=diff.DESC())
+
+
+def minutes_datediff():
+    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 0)
+    return Transactions.WHERE(YEAR(date_time) <= 2024)(
+        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "minutes")
+    ).TOP_K(30, by=x.DESC())
+
+
+def seconds_datediff():
+    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
+    return Transactions.WHERE(YEAR(date_time) <= 2024)(
+        x=date_time, y=y_datetime, diff=DATEDIFF(date_time, y_datetime, "seconds")
+    ).TOP_K(30, by=x.DESC())

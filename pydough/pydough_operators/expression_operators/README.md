@@ -84,6 +84,8 @@ These functions must be called on singular data as a function.
 - `HOUR`: Returns the hour component of a datetime.
 - `MINUTE`: Returns the minute component of a datetime.
 - `SECOND`: Returns the second component of a datetime.
+- `DATEDIFF`: Returns the difference between two dates in one of 
+              `years`, `months`,`days`,`hours`,`minutes`,`seconds`. Default is `days`. 
 
 ##### Conditional Functions
 

@@ -28,6 +28,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [HOUR](#hour)
    * [MINUTE](#minute)
    * [SECOND](#second)
+   * [DATEDIFF] (#datediff)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
    * [ISIN](#isin)
@@ -288,6 +289,26 @@ is from 0-59:
 
 ```py
 Orders(is_lt_30_seconds = SECOND(order_date) < 30)
+```
+
+<!-- TOC --><a name="datediff"></a>
+### DATEDIFF
+
+Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`, `months`,`days`,`hours`,`minutes`,`seconds`. Default is `days`.
+
+- `DATEDIFF(x, y, "years")` returns y-x in years (December 31st of 2009 and January 1st of 2010 count as 1 year apart).
+- `DATEDIFF(x, y, "months") `returns y-x in months (January 31st of 2014 and February 1st of 2014 count as 1 month apart).
+- `DATEDIFF(x, y, "days")` returns y-x in days (11:59 pm of one day vs 12:01 am of the next day count as 1 day apart).
+- `DATEDIFF(x, y, "hours")` returns y-x in hours (6:59 pm vs 7:01 pm of the same day count as 1 hour apart).
+- `DATEDIFF(x, y, "minutes")` returns y-x in minutes (same idea as hours).
+- `DATEDIFF(x, y, "seconds")` returns y-x in seconds (same idea as hours)
+
+```py
+# This calculates the difference between date_time attribute of Transactions collection
+# and datetime.date(2023, 4, 2) in days.
+Transactions.WHERE(YEAR(date_time) <= 2024) \
+            (x = date_time, y = datetime.date(2023, 4, 2),
+             diff = DATEDIFF(date_time, datetime.date(2023, 4, 2), 'days')).TOP_K(30,by=diff.DESC())
 ```
 
 <!-- TOC --><a name="conditional-functions"></a>
