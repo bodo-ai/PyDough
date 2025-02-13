@@ -671,7 +671,9 @@ def test_pipeline_until_relational(
     assert isinstance(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
-    relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, None, default_config
+    )
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")

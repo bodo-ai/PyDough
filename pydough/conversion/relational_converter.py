@@ -875,19 +875,21 @@ class RelTranslation:
     @staticmethod
     def preprocess_root(
         node: PyDoughCollectionQDAG,
+        output_cols: list[tuple[str, str]] | None,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms the final PyDough collection by appending it with an extra
         CALCULATE containing all of the columns that are output.
         """
         # Fetch all of the expressions that should be kept in the final output
-        original_calc_terms: set[str] = node.calc_terms
         final_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
-        all_names: set[str] = set()
-        for name in original_calc_terms:
-            final_terms.append((name, Reference(node, name)))
-            all_names.add(name)
-        final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
+        if output_cols is None:
+            for name in node.calc_terms:
+                final_terms.append((name, Reference(node, name)))
+            final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
+        else:
+            for _, column in output_cols:
+                final_terms.append((column, Reference(node, column)))
         children: list[PyDoughCollectionQDAG] = []
         final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
         return final_calc
@@ -921,7 +923,9 @@ def make_relational_ordering(
 
 
 def convert_ast_to_relational(
-    node: PyDoughCollectionQDAG, configs: PyDoughConfigs
+    node: PyDoughCollectionQDAG,
+    columns: list[tuple[str, str]] | None,
+    configs: PyDoughConfigs,
 ) -> RelationalRoot:
     """
     Main API for converting from the collection QDAG form into relational
@@ -929,6 +933,11 @@ def convert_ast_to_relational(
 
     Args:
         `node`: the PyDough QDAG collection node to be translated.
+        `columns`: the a list of tuples in the form `(alias, column)`
+        describing every column that should be in the output, in the order
+        they should appear, and the alias they should be given. If None, uses
+        the most recent CALCULATE in the node to determine the columns.
+        `configs`: the configuration settings to use during translation.
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
@@ -939,8 +948,8 @@ def convert_ast_to_relational(
     # Pre-process the QDAG node so the final CALC term includes any ordering
     # keys.
     translator: RelTranslation = RelTranslation()
-    final_terms: set[str] = node.calc_terms
-    node = translator.preprocess_root(node)
+    # final_terms: set[str] = node.calc_terms
+    node = translator.preprocess_root(node, columns)
 
     # Convert the QDAG node to the hybrid form, then invoke the relational
     # conversion procedure. The first element in the returned list is the
@@ -959,12 +968,18 @@ def convert_ast_to_relational(
     rel_expr: RelationalExpression
     name: str
     original_name: str
-    for original_name in final_terms:
-        name = renamings.get(original_name, original_name)
-        hybrid_expr = hybrid.pipeline[-1].terms[name]
-        rel_expr = output.expressions[hybrid_expr]
-        ordered_columns.append((original_name, rel_expr))
-    ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
+    if columns is None:
+        for original_name in node.calc_terms:
+            name = renamings.get(original_name, original_name)
+            hybrid_expr = hybrid.pipeline[-1].terms[name]
+            rel_expr = output.expressions[hybrid_expr]
+            ordered_columns.append((original_name, rel_expr))
+        ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
+    else:
+        for alias, column in columns:
+            hybrid_expr = hybrid.pipeline[-1].terms[column]
+            rel_expr = output.expressions[hybrid_expr]
+            ordered_columns.append((alias, rel_expr))
     hybrid_orderings: list[HybridCollation] = hybrid.pipeline[-1].orderings
     if hybrid_orderings:
         orderings = make_relational_ordering(hybrid_orderings, output.expressions)

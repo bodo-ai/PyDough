@@ -66,6 +66,47 @@ def _load_session_info(
     return metadata, config, database, bindings
 
 
+def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] | None:
+    """
+    Load the column selection from the keyword arguments if it is found.
+    The column selection must be a keyword argument `columns` that is either a
+    list of strings, or a dictionary mapping output column names to the column
+    they correspond to in the collection.
+
+    Args:
+        kwargs: The keyword arguments to load the column selection from.
+
+    Returns:
+        The column selection if it is found, otherwise None.
+    """
+    if "columns" not in kwargs:
+        return None
+    columns_arg = kwargs.pop("columns")
+    result: list[tuple[str, str]] = []
+    if isinstance(columns_arg, list):
+        for column in columns_arg:
+            assert isinstance(
+                column, str
+            ), f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
+            result.append((column, column))
+        return result
+    elif isinstance(columns_arg, dict):
+        for alias, column in columns_arg.items():
+            assert isinstance(
+                alias, str
+            ), f"Expected alias name in `columns` argument to be a string, found {column.__class__.__name__}"
+            assert isinstance(
+                column, str
+            ), f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
+            result.append((alias, column))
+        return result
+    else:
+        raise TypeError(
+            f"Expected `columns` argument to be a list or dictionary, found {columns_arg.__class__.__name__}"
+        )
+    return result
+
+
 def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     """
     Convert the given unqualified tree to a SQL string.
@@ -84,13 +125,16 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     graph: GraphMetadata
     config: PyDoughConfigs
     database: DatabaseContext
+    column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
-    relational: RelationalRoot = convert_ast_to_relational(qualified, config)
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, column_selection, config
+    )
     return convert_relation_to_sql(
         relational, convert_dialect_to_sqlglot(database.dialect), bindings
     )
@@ -115,6 +159,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     graph: GraphMetadata
     config: PyDoughConfigs
     database: DatabaseContext
+    column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
     display_sql: bool = bool(kwargs.pop("display_sql", False))
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
@@ -122,5 +167,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
-    relational: RelationalRoot = convert_ast_to_relational(qualified, config)
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, column_selection, config
+    )
     return execute_df(relational, database, bindings, display_sql)

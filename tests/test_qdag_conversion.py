@@ -2193,7 +2193,7 @@ def test_ast_to_relational(
     calc_pipeline, file_name = relational_test_data
     file_path: str = get_plan_test_filename(file_name)
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, default_config)
+    relational = convert_ast_to_relational(collection, None, default_config)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
@@ -2333,7 +2333,7 @@ def test_ast_to_relational_alternative_aggregation_configs(
     default_config.sum_default_zero = False
     default_config.avg_default_zero = True
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, default_config)
+    relational = convert_ast_to_relational(collection, None, default_config)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
