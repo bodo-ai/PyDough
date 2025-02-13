@@ -1846,6 +1846,10 @@ class HybridTranslator:
                 for name in successor_hybrid.children[
                     partition_child_idx
                 ].subtree.ancestral_mapping:
+                    # Skip adding backrefs for terms that remain part of the
+                    # ancestry through the PARTITION
+                    if name in node.ancestor_context.ancestral_mapping:
+                        continue
                     # TODO: REMOVE THIS TRY EXCEPT BEFORE MERGING, ONCE CORRRELATION IS HANDLED,
                     # BUT MAKE SURE TO PRUNE CORRELATION TERMS IF THEY ARE UNUSED!!!
                     try:
