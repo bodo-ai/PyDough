@@ -159,7 +159,7 @@ Once a `CALCULATE` clause is created, all terms of the current collection still 
 
 Importantly, when a term is defined in a `CALCULATE`, that definition does not take effect until after the `CALCULATE` completes. This means that if a term in a `CALCULATE` uses the definition of a term defined in the same `CALCULATE`, it will not work.
 
-A `CALCULATE` can also be done on the graph itself to create a collection with 1 row and columns corresponding to the properties inside the CALC. This is useful when aggregating an entire collection globally instead of with regards to a parent collection.
+A `CALCULATE` can also be done on the graph itself to create a collection with 1 row and columns corresponding to the properties inside the `CALCULATE`. This is useful when aggregating an entire collection globally instead of with regards to a parent collection.
 
 **Good Example #1**: For every person, fetch just their first name and last name.
 
@@ -253,14 +253,14 @@ People.CALCULATE(
 )
 ```
 
-**Bad Example #3**: For each person, list the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #3**: For each person, list the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a `CALCULATE` term of `People` unless aggregated.
 
 ```py
 %%pydough
 People.CALCULATE(packages.address_id)
 ```
 
-**Bad Example #4**: For each person, list their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #4**: For each person, list their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a `CALCULATE` term of `People` unless aggregated.
 
 ```py
 %%pydough
@@ -292,14 +292,14 @@ Addresses.CALCULATE(state_bird=state.bird)
 Addresses.current_occupants.CALCULATE(first_name, last_name, city, state)
 ```
 
-**Bad Example #8**: For each person include their ssn and current address. This is invalid because a collection cannot be a CALC term, and `current_address` is a sub-collection property of `People`. Instead, properties of `current_address` can be accessed.
+**Bad Example #8**: For each person include their ssn and current address. This is invalid because a collection cannot be a `CALCULATE` term, and `current_address` is a sub-collection property of `People`. Instead, properties of `current_address` can be accessed.
 
 ```py
 %%pydough
 People.CALCULATE(ssn, current_address)
 ```
 
-**Bad Example #9**: For each person, list their first name, last name, and the sum of the package costs. This is invalid because `SUM` is an aggregation function and cannot be used in a CALC term without specifying the sub-collection it should be applied to.
+**Bad Example #9**: For each person, list their first name, last name, and the sum of the package costs. This is invalid because `SUM` is an aggregation function and cannot be used in a `CALCULATE` term without specifying the sub-collection it should be applied to.
 
 ```py
 %%pydough
@@ -324,7 +324,7 @@ People.CALCULATE(
 
 PyDough allows defining snippets of PyDough code out of context that do not make sense until they are later placed within a context. This can be done by writing a contextless expression, binding it to a variable as if it were any other Python expression, then later using it inside of PyDough code. This should always have the same effect as if the PyDough code was written fully in-context, but allows re-using common snippets.
 
-**Good Example #1**: Same as good example #4 from the CALC section, but written with contextless expressions.
+**Good Example #1**: Same as good example #4 from the `CALCULATE` section, but written with contextless expressions.
 
 ```py
 %%pydough
@@ -391,7 +391,7 @@ People.CALCULATE(february=is_february)
 <!-- TOC --><a name="expressions"></a>
 ### Expressions
 
-So far, many different kinds of expressions have been noted in the examples for CALC, BACK, and contextless expressions. The following are examples & explanations of the various types of valid expressions:
+So far, many different kinds of expressions have been noted in the examples for `CALCULATE` and contextless expressions. The following are examples & explanations of the various types of valid expressions:
 
 ```py
 # Referencing scalar properties of the current collection
@@ -586,7 +586,7 @@ So far all of the examples shown have been about accessing collections/sub-colle
 <!-- TOC --><a name="where"></a>
 ### WHERE
 
-A core PyDough operation is the ability to filter the records of a collection. This is done by appending a PyDough collection with `.WHERE(cond)` where `cond` is any expression that could have been placed in a `CALC` term and should have a True/False value. Every record where `cond` evaluates to True will be preserved, and the rest will be dropped from the answer. The terms in the collection are unchanged by the `WHERE` clause, since the only change is which records are kept/dropped.
+A core PyDough operation is the ability to filter the records of a collection. This is done by appending a PyDough collection with `.WHERE(cond)` where `cond` is any expression that could have been placed in a `CALCULATE` term and should have a True/False value. Every record where `cond` evaluates to True will be preserved, and the rest will be dropped from the answer. The terms in the collection are unchanged by the `WHERE` clause, since the only change is which records are kept/dropped.
 
 **Good Example #1**: For every person who has a middle name and and email that ends with `"gmail.com"`, fetches their first name and last name.
 
@@ -715,7 +715,7 @@ People.WHERE(MONTH(packages.order_date) == 6)
 <!-- TOC --><a name="order_by"></a>
 ### ORDER_BY
 
-Another operation that can be done onto PyDough collections is sorting them. This is done by appending a collection with `.ORDER_BY(...)` which will order the collection by the collation terms between the parenthesis. The collation terms must be 1+ expressions that can be inside of a CALC term (singular expressions with regards to the current context), each decorated with information making it usable as a collation.
+Another operation that can be done onto PyDough collections is sorting them. This is done by appending a collection with `.ORDER_BY(...)` which will order the collection by the collation terms between the parenthesis. The collation terms must be 1+ expressions that can be inside of a `CALCULATE` term (singular expressions with regards to the current context), each decorated with information making it usable as a collation.
 
 An expression becomes a collation expression when it is appended with `.ASC()` (indicating that the expression should be used to sort in ascending order) or `.DESC()` (indicating that the expression should be used to sort in descending order). Both `.ASC()` and `.DESC()` take in an optional argument `na_pos` indicating where to place null values. This keyword argument can be either `"first"` or `"last"`, and the default is `"first"` for `.ASC()` and `"last"` for `.DESC()`. The way the sorting works is that it orders by the first collation term provided, and in cases of ties it moves on to the second collation term, and if there are ties in that it moves on to the third, and so on until there are no more terms to sort by, at which point the ties are broken arbitrarily.
 
@@ -1118,7 +1118,7 @@ PARTITION(Addresses, by=state)
 PARTITION(People, name="ppl")
 ```
 
-**Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed ot be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+**Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed ot be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
 
 ```py
 %%pydough
@@ -1127,7 +1127,7 @@ PARTITION(Packages, name="packs", by=YEAR(order_date)).CALCULATE(
 )
 ```
 
-**Bad Example #5**: Count how many people live in each state. Invalid because `current_address.state` is not allowed to be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+**Bad Example #5**: Count how many people live in each state. Invalid because `current_address.state` is not allowed to be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
 
 ```py
 %%pydough
@@ -1471,7 +1471,7 @@ People.BEST(packages, by=())
 People.BEST(packages, by=order_date.DESC(), n_best=5, allow_ties=True)
 ```
 
-**Bad Example #6**: For each person, find the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
+**Bad Example #6**: For each person, find the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
 
 ```py
 %%pydough
@@ -1479,7 +1479,7 @@ best_packages = BEST(packages, by=order_date.DESC(), n_best=10)
 People.CALCULATE(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #7**: For each person, find the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
+**Bad Example #7**: For each person, find the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
 
 ```py
 %%pydough
@@ -1499,7 +1499,7 @@ Addresses.most_recent_package(
 )
 ```
 
-**Bad Example #9**: For each address find the oldest occupant. This is invalid because the `BEST` clause is placed in the calc without accessing any of its attributes.
+**Bad Example #9**: For each address find the oldest occupant. This is invalid because the `BEST` clause is placed in the `CALCULATE` without accessing any of its attributes.
 
 ```py
 %%pydough

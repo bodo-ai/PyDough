@@ -481,7 +481,7 @@ pydough.explain(result, verbose=True)
 PyDough collection representing the following logic:
   TPCH
 
-This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
+This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed.
 
 The collection does not have any terms that can be included in a result if it is executed.
 
@@ -559,7 +559,7 @@ Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
 ```
 
-4d. Calling `explain` on PyDough code for a collection (example 4: calc).
+4d. Calling `explain` on PyDough code for a collection (example 4: CALCULATE).
 
 ```py
 %%pydough
@@ -574,7 +574,7 @@ PyDough collection representing the following logic:
     ├─┬─ Where[$1.name == 'EUROPE']
     │ └─┬─ AccessChild
     │   └─── SubCollection[region]
-    └─┬─ Calc[name=name, n_custs=COUNT($1)]
+    └─┬─ Calculate[name=name, n_custs=COUNT($1)]
       └─┬─ AccessChild
         └─── SubCollection[customers]
 
@@ -631,7 +631,7 @@ The term is the following expression: name
 
 This is column 'name' of collection 'nations'
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(name)
 ```
@@ -692,7 +692,7 @@ The term is the following expression: $1.acctbal
 
 This is a reference to expression 'acctbal' of child $1
 
-This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated.
+This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated.
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(COUNT(customers.acctbal))
 ```
@@ -725,7 +725,7 @@ This expression calls the function 'AVG' on the following arguments, aggregating
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(AVG(customers.acctbal))
 ```

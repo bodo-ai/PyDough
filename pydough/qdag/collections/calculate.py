@@ -24,7 +24,7 @@ from .collection_qdag import PyDoughCollectionQDAG
 
 class Calculate(AugmentingChildOperator):
     """
-    The QDAG node implementation class representing a CALC expression.
+    The QDAG node implementation class representing a CALCULATE expression.
     """
 
     def __init__(
