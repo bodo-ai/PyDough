@@ -55,22 +55,25 @@ The objects are created by calling the `to_tree_form` API of a collection QDAG n
 Below is an example of a PyDough snippet and the corresponding tree string representation:
 
 ```python
-Nations.WHERE(
+Nations.CALCULATE(
+    nation_name=name,
+).WHERE(
     region.name == "EUROPE"
 ).suppliers.CALCULATE(
     supplier_name=name,
-    nation_name=BACK(1).name
+    nation_name=nation_name,
 )
 ```
 
 ```
 ──┬─ TPCH
   ├─── TableCollection[Nations]
+  ├─── Calculate[nation_name=name]
   └─┬─ Where[$1.name == 'EUROPE']
     ├─┬─ AccessChild
     │ └─── SubCollection[region]
     ├─── SubCollection[suppliers]
-    └─── Calculate[supplier_name=name, nation_name=BACK(1).name]
+    └─── Calculate[supplier_name=name, nation_name=nation_name]
 ```
 
 And below is another such example:
