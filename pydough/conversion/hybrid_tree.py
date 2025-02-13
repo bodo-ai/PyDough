@@ -1753,7 +1753,7 @@ class HybridTranslator:
 
         Returns:
             A tuple containing a dictionary of new expressions for generating
-            a `CALCcULATE` and a list of the new HybridCollation values.
+            a `CALCULATE` and a list of the new HybridCollation values.
         """
         new_expressions: dict[str, HybridExpr] = {}
         hybrid_orderings: list[HybridCollation] = []
