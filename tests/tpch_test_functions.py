@@ -215,7 +215,6 @@ def impl_tpch_q8():
         .lines.CALCULATE(volume=extended_price * (1 - discount))
         .order.CALCULATE(
             o_year=YEAR(order_date),
-            volume=volume,
             brazil_volume=IFF(nation_name == "BRAZIL", volume, 0),
         )
         .WHERE(
@@ -237,7 +236,7 @@ def impl_tpch_q9():
     """
     selected_lines = (
         Nations.CALCULATE(nation_name=name)
-        .suppliers.supply_records.CALCULATE(supplycost=supplycost)
+        .suppliers.supply_records.CALCULATE(supplycost)
         .WHERE(CONTAINS(part.name, "green"))
         .lines.CALCULATE(
             o_year=YEAR(order.order_date),
@@ -392,10 +391,7 @@ def impl_tpch_q16():
             p_type=part_type,
             p_size=size,
         )
-        .supply_records.CALCULATE(
-            ps_suppkey=supplier_key,
-        )
-        .WHERE(~LIKE(supplier.comment, "%Customer%Complaints%"))
+        .supply_records.WHERE(~LIKE(supplier.comment, "%Customer%Complaints%"))
     )
     return (
         PARTITION(selected_records, name="ps", by=(p_brand, p_type, p_size))
@@ -499,9 +495,9 @@ def impl_tpch_q20():
             & (ship_date < datetime.date(1995, 1, 1))
         ).quantity
     )
-    selected_part_supplied = supply_records.CALCULATE(
-        availqty=availqty,
-    ).part.WHERE(STARTSWITH(name, "forest") & (availqty > part_qty * 0.5))
+    selected_part_supplied = supply_records.CALCULATE(availqty).part.WHERE(
+        STARTSWITH(name, "forest") & (availqty > part_qty * 0.5)
+    )
 
     return (
         Suppliers.CALCULATE(

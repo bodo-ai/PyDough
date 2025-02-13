@@ -201,7 +201,7 @@ from pydough.unqualified import (
   │         ├─── SubCollection[lines]
   │         └─┬─ Calculate[volume=extended_price * (1 - discount)]
   │           ├─── SubCollection[order]
-  │           ├─── Calculate[o_year=YEAR(order_date), volume=volume, brazil_volume=IFF(nation_name == 'BRAZIL', volume, 0)]
+  │           ├─── Calculate[o_year=YEAR(order_date), brazil_volume=IFF(nation_name == 'BRAZIL', volume, 0)]
   │           └─┬─ Where[(order_date >= datetime.date(1995, 1, 1)) & (order_date <= datetime.date(1996, 12, 31)) & ($1.name == 'AMERICA')]
   │             └─┬─ AccessChild
   │               └─┬─ SubCollection[customer]
@@ -365,7 +365,6 @@ from pydough.unqualified import (
   │   ├─── Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])]
   │   └─┬─ Calculate[p_brand=brand, p_type=part_type, p_size=size]
   │     ├─── SubCollection[supply_records]
-  │     ├─── Calculate[ps_suppkey=supplier_key]
   │     └─┬─ Where[NOT(LIKE($1.comment, '%Customer%Complaints%'))]
   │       └─┬─ AccessChild
   │         └─── SubCollection[supplier]

@@ -348,7 +348,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q8,
-            "PARTITION(Nations.CALCULATE(nation_name=name).suppliers.supply_records.WHERE((part.part_type == 'ECONOMY ANODIZED STEEL')).lines.CALCULATE(volume=(extended_price * (1 - discount))).order.CALCULATE(o_year=YEAR(order_date), volume=volume, brazil_volume=IFF((nation_name == 'BRAZIL'), volume, 0)).WHERE((((order_date >= datetime.date(1995, 1, 1)) & (order_date <= datetime.date(1996, 12, 31))) & (customer.nation.region.name == 'AMERICA'))), name='v', by=(o_year)).CALCULATE(O_YEAR=o_year, MKT_SHARE=(SUM(v.brazil_volume) / SUM(v.volume)))",
+            "PARTITION(Nations.CALCULATE(nation_name=name).suppliers.supply_records.WHERE((part.part_type == 'ECONOMY ANODIZED STEEL')).lines.CALCULATE(volume=(extended_price * (1 - discount))).order.CALCULATE(o_year=YEAR(order_date), brazil_volume=IFF((nation_name == 'BRAZIL'), volume, 0)).WHERE((((order_date >= datetime.date(1995, 1, 1)) & (order_date <= datetime.date(1996, 12, 31))) & (customer.nation.region.name == 'AMERICA'))), name='v', by=(o_year)).CALCULATE(O_YEAR=o_year, MKT_SHARE=(SUM(v.brazil_volume) / SUM(v.volume)))",
             id="tpch_q8",
         ),
         pytest.param(
@@ -388,7 +388,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q16,
-            "PARTITION(Parts.WHERE((((brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%'))) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9]))).CALCULATE(p_brand=brand, p_type=part_type, p_size=size).supply_records.CALCULATE(ps_suppkey=supplier_key).WHERE(NOT(LIKE(supplier.comment, '%Customer%Complaints%'))), name='ps', by=(p_brand, p_type, p_size)).CALCULATE(P_BRAND=p_brand, P_TYPE=p_type, P_SIZE=p_size, SUPPLIER_COUNT=NDISTINCT(ps.supplier_key)).TOP_K(10, by=(SUPPLIER_COUNT.DESC(na_pos='last'), P_BRAND.ASC(na_pos='first'), P_TYPE.ASC(na_pos='first'), P_SIZE.ASC(na_pos='first')))",
+            "PARTITION(Parts.WHERE((((brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%'))) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9]))).CALCULATE(p_brand=brand, p_type=part_type, p_size=size).supply_records.WHERE(NOT(LIKE(supplier.comment, '%Customer%Complaints%'))), name='ps', by=(p_brand, p_type, p_size)).CALCULATE(P_BRAND=p_brand, P_TYPE=p_type, P_SIZE=p_size, SUPPLIER_COUNT=NDISTINCT(ps.supplier_key)).TOP_K(10, by=(SUPPLIER_COUNT.DESC(na_pos='last'), P_BRAND.ASC(na_pos='first'), P_TYPE.ASC(na_pos='first'), P_SIZE.ASC(na_pos='first')))",
             id="tpch_q16",
         ),
         pytest.param(
