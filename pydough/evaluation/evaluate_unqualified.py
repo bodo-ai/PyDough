@@ -89,7 +89,6 @@ def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] |
                 column, str
             ), f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
             result.append((column, column))
-        return result
     elif isinstance(columns_arg, dict):
         for alias, column in columns_arg.items():
             assert isinstance(
@@ -99,11 +98,12 @@ def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] |
                 column, str
             ), f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
             result.append((alias, column))
-        return result
     else:
         raise TypeError(
             f"Expected `columns` argument to be a list or dictionary, found {columns_arg.__class__.__name__}"
         )
+    if len(result) == 0:
+        raise ValueError("Column selection must not be empty")
     return result
 
 
