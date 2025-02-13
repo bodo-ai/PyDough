@@ -161,6 +161,20 @@ def function_defined_terms():
     )
 
 
+def function_defined_terms_with_duplicate_names():
+    # Using a regular function to generate PyDough calc terms with the function argument same as collection's fields.
+    def interval_n(n, name="test"):
+        return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
+
+    return Nations.CALCULATE(
+        name,
+        redefined_name=name,
+        interval_7=interval_n(7),
+        interval_4=interval_n(4),
+        interval_13=interval_n(13),
+    )
+
+
 def lambda_defined_terms():
     # Using a lambda function to generate PyDough calc terms
     interval_n = lambda n: COUNT(
@@ -198,7 +212,7 @@ def list_comp_terms():
             for i in range(3)
         ]
     )
-    return Nations.CALCULATE(**terms)
+    return Nations.CALCULATE(*terms)
 
 
 def set_comp_terms():
@@ -212,7 +226,8 @@ def set_comp_terms():
             }
         )
     )
-    return Nations.CALCULATE(**terms)
+    sorted_terms = sorted(terms, key=lambda x: repr(x))
+    return Nations.CALCULATE(*sorted_terms)
 
 
 def generator_comp_terms():
@@ -312,3 +327,82 @@ def exponentiation():
         low_sqrt=SQRT(low),
         low_cbrt=POWER(low, 1 / 3),
     ).TOP_K(10, by=low_square.ASC())
+
+
+def args_kwargs():
+    def impl(*args, **kwargs):
+        terms = {}
+        for i, color in enumerate(args):
+            terms[f"n_{color}"] = COUNT(parts.WHERE(CONTAINS(part_name, color)))
+        for n, size in kwargs.items():
+            terms[n] = COUNT(parts.WHERE(size == size))
+        return TPCH.CALCULATE(**terms)
+
+    result = impl("tomato", "almond", small=10, large=40)
+    return result
+
+
+def unpacking():
+    start, end = (1992, 1994)
+    selects_orders = orders.WHERE(MONOTONIC(start, YEAR(order_date), end))
+    return selects_orders
+
+
+def nested_unpacking():
+    a, (b, c) = ["GERMANY", ["FRANCE", "ARGENTINA"]]
+    chosen_customers = customers.WHERE(ISIN(nation.name, (a, b, c)))
+    return chosen_customers
+
+
+def unpacking_in_iterable():
+    terms = {}
+    for i, j in zip(range(5), range(1992, 1997)):
+        terms[f"c{i}"] = COUNT(orders.WHERE(YEAR(order_date) == j))
+    return Nations.CALCULATE(**terms)
+
+
+def with_import_statement():
+    import tempfile as tf
+    import logging.config
+
+    logging.config.dictConfig({"version": 1})
+    from os import path as opath
+
+    result1 = opath.join("folder", "file.txt")
+    with tf.TemporaryFile() as tf_handle1, tf.TemporaryFile() as tf_handle2:
+        tf_handle1.write(b"Canada")
+        tf_handle2.write(b"Mexico")
+        tf_handle1.seek(0)
+        tf_handle2.seek(0)
+        a = str(tf_handle1.read().decode("utf-8"))
+        b = str(tf_handle2.read().decode("utf-8"))
+        return customers.WHERE(ISIN(nation.name, (a, b)))
+
+
+def exception_handling():
+    try:
+        raise Exception("Canada")
+    except Exception as e:
+        country = str(e)
+        return customers.WHERE(ISIN(nation.name, (country, "Mexico")))
+    finally:
+        pass
+
+
+def class_handling():
+    class Customer:
+        def __init__(self, countries):
+            self._countries = countries
+
+        def query(self):
+            return customers.WHERE(ISIN(nation.name, self._countries))
+
+    return Customer(("Canada", "Mexico")).query()
+
+
+def annotated_assignment():
+    direction1: str
+    direction1 = "SOUTH "
+    specific_region: tuple[str, str] = "WEST", "AMERICA"
+    chosen_region: str = direction1 + " ".join(specific_region)
+    return Nations.WHERE(region.name == chosen_region)
