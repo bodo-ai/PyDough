@@ -8,7 +8,6 @@ def simple_scan():
 
 
 def simple_filter():
-    # Note: The SQL is non-deterministic once we add nested expressions.
     return Orders.CALCULATE(o_orderkey=key, o_totalprice=total_price).WHERE(
         o_totalprice < 1000.0
     )

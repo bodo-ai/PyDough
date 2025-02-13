@@ -79,11 +79,11 @@ def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] |
     Returns:
         The column selection if it is found, otherwise None.
     """
-    if "columns" not in kwargs:
-        return None
-    columns_arg = kwargs.pop("columns")
+    columns_arg = kwargs.pop("columns", None)
     result: list[tuple[str, str]] = []
-    if isinstance(columns_arg, list):
+    if columns_arg is None:
+        return None
+    elif isinstance(columns_arg, list):
         for column in columns_arg:
             assert isinstance(
                 column, str
