@@ -71,7 +71,7 @@ def impl_defog_broker_adv11():
     FAANG companies (Amazon, Apple, Google, Meta or Netflix)?
     """
     faang = ("AMZN", "AAPL", "GOOGL", "META", "NFLX")
-    return Broker(
+    return Broker.CALCULATE(
         n_customers=COUNT(
             Customers.WHERE(
                 ENDSWITH(email, ".com")
@@ -92,7 +92,7 @@ def impl_defog_broker_adv12():
         (STARTSWITH(LOWER(name), "j") | ENDSWITH(LOWER(name), "ez"))
         & ENDSWITH(LOWER(state), "a")
     )
-    return Broker(n_customers=COUNT(selected_customers))
+    return Broker.CALCULATE(n_customers=COUNT(selected_customers))
 
 
 def impl_defog_broker_adv15():
@@ -107,7 +107,7 @@ def impl_defog_broker_adv15():
     countries = PARTITION(selected_customers, name="custs", by=country)
     n_active = SUM(custs.status == "active")
     n_custs = COUNT(custs)
-    return countries(
+    return countries.CALCULATE(
         country,
         ar=100 * DEFAULT_TO(n_active / n_custs, 0.0),
     )
@@ -120,7 +120,7 @@ def impl_defog_broker_basic3():
     What are the 2 most frequently bought stock ticker symbols in the past 10
     days? Return the ticker symbol and number of buy transactions.
     """
-    return Tickers(
+    return Tickers.CALCULATE(
         symbol,
         num_transactions=COUNT(transactions_of),
         total_amount=SUM(transactions_of.amount),
@@ -134,7 +134,7 @@ def impl_defog_broker_basic4():
     What are the top 5 combinations of customer state and ticker type by
     number of transactions? Return the customer state, ticker type and number of transactions.
     """
-    data = Customers(state=state).transactions_made.ticker
+    data = Customers.CALCULATE(state=state).transactions_made.ticker
     return (
         PARTITION(data, name="combo", by=(state, ticker_type))
         .CALCULATE(
