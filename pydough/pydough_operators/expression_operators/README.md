@@ -78,6 +78,7 @@ These functions must be called on singular data as a function.
 
 ##### Datetime Functions
 
+- `DATETIME`: constructs a new datetime, either from an existing one or the current datetime, and augments it by adding/subtracting intervals of time and/or truncating it to various units.
 - `YEAR`: returns the year component of a datetime.
 - `MONTH`: returns the month component of a datetime.
 - `DAY`: returns the day component of a datetime.

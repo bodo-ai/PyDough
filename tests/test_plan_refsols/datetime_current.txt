@@ -1,0 +1,3 @@
+ROOT(columns=[('d1', d1), ('d2', d2), ('d3', d3)], orderings=[])
+ PROJECT(columns={'d1': DATETIME('now':string, 'start of of year':string, '+5 months':string, '-1 day':string), 'd2': DATETIME('now':string, 'start of month':string), 'd3': DATETIME('now':string, 'start of day':string, '+12 hours':string, '-150 minutes':string, '+2 seconds':string)})
+  EMPTYSINGLETON()

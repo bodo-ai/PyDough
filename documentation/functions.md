@@ -22,6 +22,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [LIKE](#like)
    * [JOIN_STRINGS](#join_strings)
 - [Datetime Functions](#datetime-functions)
+   * [DATETIME](#datetime)
    * [YEAR](#year)
    * [MONTH](#month)
    * [DAY](#day)
@@ -232,6 +233,15 @@ For instance, `JOIN_STRINGS("; ", "Alpha", "Beta", "Gamma)` returns `"Alpha; Bet
 ## Datetime Functions
 
 Below is each function currently supported in PyDough that operates on date/time/timestamp values.
+
+<!-- TOC --><a name="datetime"></a>
+### YEAR
+
+TODO: add description
+
+```py
+# TODO: add example
+```
 
 <!-- TOC --><a name="year"></a>
 ### YEAR

@@ -14,6 +14,8 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    datetime_current,
+    datetime_relative_tpch,
     double_partition,
     exponentiation,
     function_sampler,
@@ -577,6 +579,69 @@ from pydough.unqualified import (
                 ),
             ),
             id="function_sampler",
+        ),
+        pytest.param(
+            (
+                datetime_current,
+                "datetime_current",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": [f"{pd.Timestamp.now().year}-05-31"],
+                        "d2": [
+                            f"{pd.Timestamp.now().year}-{pd.Timestamp.now().month}-01"
+                        ],
+                        "d3": [
+                            (
+                                pd.Timestamp.now().normalize()
+                                + pd.Timedelta(hours=12, minutes=-150, seconds=2)
+                            ).strftime("%Y-%m-%d %H:%M:%S")
+                        ],
+                    },
+                ),
+            ),
+            id="datetime_current",
+        ),
+        pytest.param(
+            (
+                datetime_relative_tpch,
+                "datetime_relative_tpch",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": [
+                            f"{y}-01-01"
+                            for y in [1992] * 3 + [1994] * 3 + [1996] * 3 + [1997]
+                        ],
+                        "d2": [
+                            "1992-04-01",
+                            "1992-04-01",
+                            "1992-08-01",
+                            "1994-05-01",
+                            "1994-08-01",
+                            "1994-12-01",
+                            "1996-06-01",
+                            "1996-07-01",
+                            "1996-12-01",
+                            "1997-03-01",
+                        ],
+                        "d3": [
+                            "1981-12-29 04:57:01",
+                            "1982-01-12 04:57:01",
+                            "1982-05-15 04:57:01",
+                            "1984-02-14 04:57:01",
+                            "1984-05-21 04:57:01",
+                            "1984-09-17 04:57:01",
+                            "1986-03-22 04:57:01",
+                            "1986-03-25 04:57:01",
+                            "1986-09-02 04:57:01",
+                            "1986-12-16 04:57:01",
+                        ],
+                        "d4": ["2025-07-04 12:00:00"] * 10,
+                        "d5": ["2025-07-04 12:58:00"] * 10,
+                        "d6": ["2025-07-16 02:45:25"] * 10,
+                    },
+                ),
+            ),
+            id="datetime_relative_tpch",
         ),
         pytest.param(
             (

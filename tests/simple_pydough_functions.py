@@ -2,6 +2,8 @@
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
+import pandas as pd
+
 
 def simple_scan():
     return Orders(key)
@@ -121,6 +123,36 @@ def function_sampler():
         )
         .WHERE(MONOTONIC(0.0, acctbal, 100.0))
         .TOP_K(10, by=address.ASC())
+    )
+
+
+def datetime_current():
+    return TPCH(
+        d1=DATETIME("now", "start of of year", "+5 months", "-1 day"),
+        d2=DATETIME("now", "start of month"),
+        d3=DATETIME("now", "start of day", "+12 hours", "-150 minutes", "+2 seconds"),
+    )
+
+
+def datetime_relative_tpch():
+    selected_orders = Orders.TOP_K(
+        10, by=(customer_key.ASC(), order_date.ASC())
+    ).ORDER_BY(order_date.ASC())
+    return selected_orders(
+        d1=DATETIME(order_date, "start of of year"),
+        d2=DATETIME(order_date, "start of month"),
+        d3=DATETIME(
+            order_date,
+            "-11 years",
+            "+9 months",
+            "-7 days",
+            "+5 hours",
+            "-3 minutes",
+            "+1 second",
+        ),
+        d4=DATETIME(pd.Timestamp("2025-07-04 12:58:45"), "start of hour"),
+        d5=DATETIME(pd.Timestamp("2025-07-04 12:58:45"), "start of minute"),
+        d6=DATETIME(pd.Timestamp("2025-07-14 12:58:45"), "+ 1000000 seconds"),
     )
 
 

@@ -12,6 +12,7 @@ __all__ = [
     "BXR",
     "CONTAINS",
     "COUNT",
+    "DATETIME",
     "DAY",
     "DEFAULT_TO",
     "DIV",
@@ -64,7 +65,7 @@ from pydough.pydough_operators.type_inference import (
     RequireNumArgs,
     SelectArgumentType,
 )
-from pydough.types import BooleanType, Float64Type, Int64Type, StringType
+from pydough.types import BooleanType, DateType, Float64Type, Int64Type, StringType
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
@@ -131,6 +132,9 @@ NDISTINCT = ExpressionFunctionOperator(
 MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
 MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
+DATETIME = ExpressionFunctionOperator(
+    "DATETIME", False, AllowAny(), ConstantType(DateType())
+)
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
