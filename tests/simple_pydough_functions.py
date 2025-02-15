@@ -397,9 +397,19 @@ def years_months_days_hours_datediff():
         x=date_time,
         y1=y1_datetime,
         years_diff=DATEDIFF("years", date_time, y1_datetime),
+        c_years_diff=DATEDIFF("YEARS", date_time, y1_datetime),
+        c_y_diff=DATEDIFF("Y", date_time, y1_datetime),
+        y_diff=DATEDIFF("y", date_time, y1_datetime),
         months_diff=DATEDIFF("months", date_time, y1_datetime),
+        c_months_diff=DATEDIFF("MONTHS", date_time, y1_datetime),
+        mm_diff=DATEDIFF("mm", date_time, y1_datetime),
         days_diff=DATEDIFF("days", date_time, y1_datetime),
+        c_days_diff=DATEDIFF("DAYS", date_time, y1_datetime),
+        c_d_diff=DATEDIFF("D", date_time, y1_datetime),
+        d_diff=DATEDIFF("d", date_time, y1_datetime),
         hours_diff=DATEDIFF("hours", date_time, y1_datetime),
+        c_hours_diff=DATEDIFF("HOURS", date_time, y1_datetime),
+        c_h_diff=DATEDIFF("H", date_time, y1_datetime),
     ).TOP_K(30, by=years_diff.ASC())
 
 
