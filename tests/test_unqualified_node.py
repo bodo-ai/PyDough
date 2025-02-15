@@ -12,6 +12,19 @@ from bad_pydough_functions import (
     bad_bool_1,
     bad_bool_2,
     bad_bool_3,
+    bad_ceil_1,
+    bad_complex_1,
+    bad_contains_1,
+    bad_float_1,
+    bad_floor_1,
+    bad_index_1,
+    bad_int_1,
+    bad_iter_1,
+    bad_len_1,
+    bad_nonzero_1,
+    bad_reversed_1,
+    bad_setitem_1,
+    bad_trunc_1,
     bad_window_1,
     bad_window_2,
     bad_window_3,
@@ -21,6 +34,7 @@ from bad_pydough_functions import (
     bad_window_7,
 )
 from simple_pydough_functions import (
+    abs_round_magic_method,
     annotated_assignment,
     args_kwargs,
     class_handling,
@@ -504,6 +518,11 @@ def test_unqualified_to_string(
             "?.Nations.WHERE((?.region.name == 'SOUTH WEST AMERICA'))",
             id="annotated_assignment",
         ),
+        pytest.param(
+            abs_round_magic_method,
+            "?.DailyPrices(abs_low=ABS(?.low), round_low=ROUND(?.low, 2))",
+            id="abs_round_magic_method",
+        ),
     ],
 )
 def test_init_pydough_context(
@@ -579,6 +598,71 @@ def test_init_pydough_context(
             bad_window_7,
             "`n_buckets` argument must be a positive integer",
             id="bad_window_7",
+        ),
+        pytest.param(
+            bad_floor_1,
+            "PyDough does not support the math.floor function at this time.",
+            id="bad_floor_1",
+        ),
+        pytest.param(
+            bad_ceil_1,
+            "PyDough does not support the math.ceil function at this time.",
+            id="bad_ceil_1",
+        ),
+        pytest.param(
+            bad_trunc_1,
+            "PyDough does not support the math.trunc function at this time.",
+            id="bad_trunc_1",
+        ),
+        pytest.param(
+            bad_reversed_1,
+            "PyDough does not support the reversed function at this time.",
+            id="bad_reversed_1",
+        ),
+        pytest.param(
+            bad_int_1,
+            "PyDough objects cannot be cast to int.",
+            id="bad_int_1",
+        ),
+        pytest.param(
+            bad_float_1,
+            "PyDough objects cannot be cast to float.",
+            id="bad_float_1",
+        ),
+        pytest.param(
+            bad_complex_1,
+            "PyDough objects cannot be cast to complex.",
+            id="bad_complex_1",
+        ),
+        pytest.param(
+            bad_index_1,
+            "PyDough objects cannot be used as indices in Python slices.",
+            id="bad_index_1",
+        ),
+        pytest.param(
+            bad_nonzero_1,
+            "PyDough code cannot be treated as a boolean. If you intend to do a logical operation, use `|`, `&` and `~` instead of `or`, `and` and `not`.",
+            id="bad_nonzero_1",
+        ),
+        pytest.param(
+            bad_len_1,
+            "PyDough objects cannot be used with the len function.",
+            id="bad_len_1",
+        ),
+        pytest.param(
+            bad_contains_1,
+            "PyDough objects cannot be used with the 'in' operator.",
+            id="bad_contains_1",
+        ),
+        pytest.param(
+            bad_setitem_1,
+            "PyDough objects cannot support item assignment.",
+            id="bad_setitem_1",
+        ),
+        pytest.param(
+            bad_iter_1,
+            "Cannot index into PyDough object \?.customer with 0",
+            id="bad_iter_1",
         ),
     ],
 )

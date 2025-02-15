@@ -387,3 +387,7 @@ def annotated_assignment():
     specific_region: tuple[str, str] = "WEST", "AMERICA"
     chosen_region: str = direction1 + " ".join(specific_region)
     return Nations.WHERE(region.name == chosen_region)
+
+
+def abs_round_magic_method():
+    return DailyPrices(abs_low=abs(low), round_low=round(low, 2))

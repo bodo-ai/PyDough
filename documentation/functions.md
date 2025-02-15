@@ -53,6 +53,18 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Window Functions](#window-functions)
    * [RANKING](#ranking)
    * [PERCENTILE](#percentile)
+- [Unsupported Magic Methods](#unsupported-magic-methods)
+   * [FLOOR](#floor)
+   * [CEIL](#ceil)
+   * [TRUNC](#trunc)
+   * [REVERSED](#reversed)
+   * [INT](#int)
+   * [FLOAT](#float)
+   * [COMPLEX](#complex)
+   * [INDEX](#index)
+   * [LEN](#len)
+   * [CONTAINS](#contains)
+   * [SETITEM](#setitem)
 
 <!-- TOC end -->
 
@@ -369,19 +381,23 @@ Below is each numerical function currently supported in PyDough.
 <!-- TOC --><a name="abs"></a>
 ### ABS
 
-The `ABS` function returns the absolute value of its input.
+The `ABS` function returns the absolute value of its input. The `abs()` magic method is also evaluated to the same.
 
 ```py
 Customers(acct_magnitude = ABS(acctbal))
+# The below statement is equivalent to above.
+Customers(acct_magnitude = abs(acctbal))
 ```
 
 <!-- TOC --><a name="round"></a>
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function.
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The `round()` magic method is also evaluated to the same.
 
 ```py
 Parts(rounded_price = ROUND(retail_price, 1))
+# The below statement is equivalent to above.
+Parts(rounded_price = round(retail_price, 1))
 ```
 
 <!-- TOC --><a name="power"></a>
@@ -547,4 +563,165 @@ Customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
 
 # For every region, find the top 5% of customers with the highest account balances.
 Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), levels=2) > 95)
+```
+## Unsupported Magic Methods
+
+Below is a list of magic methods that are not supported in PyDough. Calling these methods will result in an Exception.
+
+<!-- TOC --><a name="floor"></a>
+### FLOOR
+
+The `math.floor` function calls the `__floor__` magic method, which is not supported in PyDough.
+
+```py
+def bad_floor_1():
+   # Using `math.floor` (calls __floor__)
+   return Customer(age=math.floor(order.total_price))
+```
+
+<!-- TOC --><a name="ceil"></a>
+### CEIL
+
+The `math.ceil` function calls the `__ceil__` magic method, which is not supported in PyDough.
+
+```py
+def bad_ceil_1():
+   # Using `math.ceil` (calls __ceil__)
+   return Customer(age=math.ceil(order.total_price))
+```
+
+<!-- TOC --><a name="trunc"></a>
+### TRUNC
+
+The `math.trunc` function calls the `__trunc__` magic method, which is not supported in PyDough.
+
+```py
+def bad_trunc_1():
+   # Using `math.trunc` (calls __trunc__)
+   return Customer(age=math.trunc(order.total_price))
+```
+
+<!-- TOC --><a name="reversed"></a>
+### REVERSED
+
+The `reversed` function calls the `__reversed__` magic method, which is not supported in PyDough.
+
+```py
+def bad_reversed_1():
+   # Using `reversed` (calls __reversed__)
+   return Orders(reversed(order_key))
+```
+
+<!-- TOC --><a name="int"></a>
+### INT
+
+Casting to `int` calls the `__int__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
+
+```py
+def bad_int_1():
+   # Casting to int (calls __int__)
+   return Orders(limit=int(order.total_price))
+```
+
+<!-- TOC --><a name="float"></a>
+### FLOAT
+
+Casting to `float` calls the `__float__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a float instead of a PyDough object.
+
+```py
+def bad_float_1():
+   # Casting to float (calls __float__)
+   return Orders(limit=float(order.quantity))
+```
+
+<!-- TOC --><a name="complex"></a>
+### COMPLEX
+
+Casting to `complex` calls the `__complex__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a complex instead of a PyDough object.
+
+```py
+def bad_complex_1():
+   # Casting to complex (calls __complex__)
+   return Orders(limit=complex(order.total_price))
+```
+
+<!-- TOC --><a name="index"></a>
+### INDEX
+
+Using an object as an index calls the `__index__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
+
+```py
+def bad_index_1():
+   # Using as an index (calls __index__)
+   return Customers(sliced = name[:order])
+```
+
+<!-- TOC --><a name="nonzero"></a>
+### NONZERO
+
+Using an object in a boolean context calls the `__nonzero__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
+
+```py
+def bad_nonzero_1():
+   # Using in a boolean context (calls __nonzero__)
+   return Orders(discount=not order.total_price)
+```
+
+<!-- TOC --><a name="len"></a>
+### LEN
+
+The `len` function calls the `__len__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
+
+```py
+def bad_len_1():
+   # Using `len` (calls __len__)
+   return Customers(len(customer.name))
+```
+
+<!-- TOC --><a name="contains"></a>
+### CONTAINS
+
+Using the `in` operator calls the `__contains__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a boolean instead of a PyDough object.
+
+```py
+def bad_contains_1():
+   # Using `in` operator (calls __contains__)
+   return Orders('discount' in order.details)
+```
+
+<!-- TOC --><a name="setitem"></a>
+### SETITEM
+
+Assigning to an index calls the `__setitem__` magic method, which is not supported in PyDough. This operation is not allowed.
+
+```py
+def bad_setitem_1():
+   # Assigning to an index (calls __setitem__)
+   order.details['discount'] = True
+   return order
+```
+
+<!-- TOC --><a name="iter"></a>
+### ITER
+
+Iterating over an object calls the `__iter__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an iterator instead of a PyDough object.
+
+```py
+def bad_iter_1():
+   # Iterating over an object (calls __iter__)
+   for item in customer:
+      print(item)
+   return customer
+
+def bad_iter_2():
+   # Using list comprehension (calls __iter__)
+   return [item for item in customer]
+
+def bad_iter_3():
+   # Using list() constructor (calls __iter__)
+   return list(customer)
+
+def bad_iter_4():
+   # Using tuple() constructor (calls __iter__)
+   return tuple(customer)
 ```
