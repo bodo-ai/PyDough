@@ -13,6 +13,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Star as SQLGlotStar
+from sqlglot.expressions import convert as sqlglot_convert
 
 from pydough.relational import (
     Aggregate,
@@ -488,7 +489,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
-        self._stack.append(Select().from_(values([()])))
+        self._stack.append(
+            Select().select(SQLGlotStar()).from_(values([sqlglot_convert((None,))]))
+        )
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_inputs(root)

@@ -130,7 +130,7 @@ def function_sampler():
 def datetime_current():
     return TPCH(
         d1=DATETIME("now", "start of year", "+5 months", "-1 day"),
-        d2=DATETIME("now", "start of month"),
+        d2=DATETIME("now", "start of month", "+24 hours"),
         d3=DATETIME("now", "start of day", "+12 hours", "-150 minutes", "+2 seconds"),
     )
 
