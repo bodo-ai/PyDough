@@ -144,27 +144,6 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         full_name: str = f"{self._correlated_names[correlated_reference.correl_name]}.{correlated_reference.name}"
         self._stack.append(Identifier(this=full_name))
 
-    # TODO: implement the column-based version of make_sqlglot_column, with table sources
-    # @staticmethod
-    # def make_sqlglot_column(
-    #     column_reference: ColumnReference,
-    # ) -> Column:
-    #     """
-    #     Convert a column reference to a SQLGlot column. This is split into a
-    #     separate static method to ensure consistency across multiple visitors.
-
-    #     Args:
-    #         column_reference (ColumnReference): The column reference to generate
-    #             an identifier for.
-
-    #     Returns:
-    #         Identifier: The output column reference containing an identifier.
-    #     """
-    #     result: SQLGlotExpression = Column(this=Identifier(this=column_reference.name))
-    #     if column_reference.input_name is not None:
-    #         result.set("table", Identifier(this=column_reference.input_name))
-    #     return result
-
     @staticmethod
     def make_sqlglot_column(
         column_reference: ColumnReference,
