@@ -20,6 +20,7 @@ from test_utils import (
 )
 
 from pydough import init_pydough_context, to_sql
+from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -61,11 +62,11 @@ from pydough.unqualified import (
         ),
     ],
 )
-def test_pydough_to_sql_tpch(
+def test_pydough_to_ansi_sql_tpch(
     pydough_code: Callable[[], UnqualifiedNode],
     test_name: str,
     get_sample_graph: graph_fetcher,
-    get_sql_test_filename: Callable[[str], str],
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ) -> None:
     """
@@ -75,7 +76,7 @@ def test_pydough_to_sql_tpch(
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
     actual_sql: str = to_sql(root, metadata=graph).strip()
-    file_path: str = get_sql_test_filename(test_name)
+    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.ANSI)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(actual_sql + "\n")
@@ -104,12 +105,12 @@ def test_pydough_to_sql_tpch(
         ),
     ],
 )
-def test_pydough_to_sql_defog(
+def test_pydough_to_ansi_sql_defog(
     pydough_code: Callable[[], UnqualifiedNode],
     test_name: str,
     graph_name: str,
     defog_graphs: graph_fetcher,
-    get_sql_test_filename: Callable[[str], str],
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ) -> None:
     """
@@ -119,7 +120,7 @@ def test_pydough_to_sql_defog(
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
     actual_sql: str = to_sql(root, metadata=graph).strip()
-    file_path: str = get_sql_test_filename(test_name)
+    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.ANSI)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(actual_sql + "\n")
