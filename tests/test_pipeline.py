@@ -33,6 +33,9 @@ from correlated_pydough_functions import (
     correl_18,
     correl_19,
     correl_20,
+    correl_21,
+    correl_22,
+    correl_23,
 )
 from simple_pydough_functions import (
     agg_partition,
@@ -984,6 +987,41 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({"n": [3002]}),
             ),
             id="correl_20",
+        ),
+        pytest.param(
+            (
+                correl_21,
+                "correl_21",
+                lambda: pd.DataFrame({"n_sizes": [30]}),
+            ),
+            id="correl_21",
+        ),
+        pytest.param(
+            (
+                correl_22,
+                "correl_22",
+                lambda: pd.DataFrame(
+                    {
+                        "container": [
+                            "JUMBO DRUM",
+                            "JUMBO PKG",
+                            "MED DRUM",
+                            "SM BAG",
+                            "LG PKG",
+                        ],
+                        "n_types": [89, 86, 81, 81, 80],
+                    }
+                ),
+            ),
+            id="correl_22",
+        ),
+        pytest.param(
+            (
+                correl_23,
+                "correl_23",
+                lambda: pd.DataFrame({"n_sizes": [23]}),
+            ),
+            id="correl_23",
         ),
     ],
 )

@@ -63,7 +63,10 @@ class Decorrelater:
             # parent of the level containing the partition operation. In this
             # case, all of the parent's children & pipeline operators should be
             # included in the snapshot.
-            assert hybrid.parent is not None
+            if hybrid.parent is None:
+                raise ValueError(
+                    "Malformed hybrid tree: partition data input to a partition node cannot contain a correlated reference to the partition node."
+                )
             result = self.make_decorrelate_parent(
                 hybrid.parent, len(hybrid.parent.children), len(hybrid.pipeline)
             )
@@ -284,7 +287,17 @@ class Decorrelater:
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """
-        TODO
+        The recursive procedure to remove unwanted correlated references from
+        the entire hybrid tree, called from the bottom and working upwards
+        to the top layer, and having each layer also de-correlate its children.
+
+        Args:
+            `hybrid`: The hybrid tree to remove correlated references from.
+
+        Returns:
+            The hybrid tree with all invalid correlated references removed as the
+            tree structure is re-written to allow them to be replaced with BACK
+            references. The transformation is also done in-place.
         """
         # Recursively decorrelate the ancestors of the current level of the
         # hybrid tree.
@@ -300,9 +313,6 @@ class Decorrelater:
         for idx, child in enumerate(hybrid.children):
             if idx not in hybrid.correlated_children:
                 continue
-            new_parent, skipped_levels = self.make_decorrelate_parent(
-                hybrid, idx, hybrid.children[idx].required_steps
-            )
             match child.connection_type:
                 case (
                     ConnectionType.SINGULAR
@@ -310,6 +320,9 @@ class Decorrelater:
                     | ConnectionType.AGGREGATION
                     | ConnectionType.AGGREGATION_ONLY_MATCH
                 ):
+                    new_parent, skipped_levels = self.make_decorrelate_parent(
+                        hybrid, idx, hybrid.children[idx].required_steps
+                    )
                     self.decorrelate_child(
                         hybrid,
                         new_parent,

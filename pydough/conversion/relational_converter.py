@@ -928,7 +928,8 @@ class RelTranslation:
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
             case HybridPartition():
-                assert context is not None, "Malformed HybridTree pattern."
+                if context is None:
+                    context = TranslationOutput(EmptySingleton(), {})
                 result = self.translate_partition(
                     operation, context, hybrid, pipeline_idx
                 )
