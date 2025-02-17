@@ -4,6 +4,7 @@
 
 import pandas as pd
 import datetime
+import random
 
 
 def simple_scan():
@@ -157,6 +158,82 @@ def datetime_relative():
         d5=DATETIME(pd.Timestamp("2025-07-04 12:58:45"), "start of minute"),
         d6=DATETIME(pd.Timestamp("2025-07-14 12:58:45"), "+ 1000000 seconds"),
     )
+
+
+def datetime_sampler():
+    # Near-exhaustive edge cases coverage testing for DATETIME strings
+    random.seed(42)
+    terms = []
+    bases = []
+    modifiers = []
+
+    for base in (
+        "2025-07-04 12:58:45",
+        "2024-12-31 11:59:00",
+        "2025-01-01",
+        "1999-03-14",
+        "now",
+        "current_date",
+        "current_timestamp",
+        "current date",
+        "current timestamp",
+    ):
+        bases.append(base)
+        if not base[0].isdigit():
+            bases.append(f" {base.title()} ")
+            bases.append(f"{base.upper()}\n\t\t\r")
+    bases.append(order_date)
+
+    for base in bases:
+        terms.append(DATETIME(base))
+
+    units = [
+        "year",
+        "years",
+        "y",
+        "month",
+        "months",
+        "mm",
+        "day",
+        "days",
+        "d",
+        "hour",
+        "hours",
+        "h",
+        "minute",
+        "minutes",
+        "m",
+        "second",
+        "seconds",
+        "s",
+    ]
+    for unit in units:
+        for _ in range(2):
+            sign = random.choice(("+", "-", ""))
+            amt = random.randint(1, 100) * min(
+                random.randint(1, 10), random.randint(1, 10), random.randint(1, 10)
+            )
+            trunc_options = (
+                f"start of {unit}",
+                f"\n  Start  Of\t{unit.title()}\n\n",
+                f"START of    {unit.upper()}",
+            )
+            offset_options = (
+                f"{sign}{amt} {unit}",
+                f"{sign} {amt} {unit.upper()}",
+                f" \n {sign}\t{amt} \n{unit.title()} \n\r ",
+            )
+            modifiers.append(random.choice(trunc_options))
+            modifiers.append(random.choice(offset_options))
+
+    random.shuffle(modifiers)
+    while len(modifiers) > 0:
+        n_modifiers = random.randint(1, 4)
+        if len(modifiers) >= n_modifiers:
+            base = random.choice(bases)
+            chosen_modifiers = [modifiers.pop() for _ in range(n_modifiers)]
+            terms.append(DATETIME(base, *chosen_modifiers))
+    return Orders(*terms)
 
 
 def loop_generated_terms():

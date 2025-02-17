@@ -285,7 +285,7 @@ def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
         sql_glot_args: Sequence[SQLGlotExpression],
     ):
         # Regex pattern for truncation modifiers and offset strings.
-        trunc_pattern = re.compile(r"start\s+of\s+(\w+)", re.IGNORECASE)
+        trunc_pattern = re.compile(r"\s*start\s+of\s+(\w+)\s*", re.IGNORECASE)
         offset_pattern = re.compile(r"\s*([+-]?)\s*(\d+)\s+(\w+)\s*", re.IGNORECASE)
 
         # Handle the first argument
@@ -296,7 +296,7 @@ def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
         # result via a sequence of truncation and offset operations.
         for i in range(1, len(sql_glot_args)):
             arg: SQLGlotExpression = sql_glot_args[i]
-            if not isinstance(arg, sqlglot_expressions.Literal) and arg.is_string:
+            if not (isinstance(arg, sqlglot_expressions.Literal) and arg.is_string):
                 raise NotImplementedError(
                     f"DATETIME function currently requires all arguments after the first argument to be string literals, but received {arg.sql()!r}"
                 )
