@@ -45,6 +45,14 @@ The relational_expressions module provides functionality to define and manage va
 
 - `ColumnReferenceFinder`: Finds all unique column references in a relational expression.
 
+### [correlated_reference.py](correlated_reference.py)
+
+- `CorrelatedReference`: The expression implementation for accessing a correlated column reference in a relational node.
+
+### [correlated_reference_finder.py](correlated_reference_finder.py)
+
+- `CorrelatedReferenceFinder`: Finds all unique correlated references in a relational expression.
+
 ### [relational_expression_shuttle.py](relational_expression_shuttle.py)
 
 - `RelationalExpressionShuttle`: Specialized form of the visitor pattern that returns a relational expression. This is used to handle the common case where we need to modify a type of input.
@@ -69,6 +77,8 @@ from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     ColumnReferenceFinder,
     ColumnReferenceInputNameModifier,
+    CorrelatedReference,
+    CorrelatedReferenceFinder,
 )
 from pydough.pydough_operators import ADD
 from pydough.types import Int64Type
@@ -81,6 +91,10 @@ literal_expr = LiteralExpression(10, Int64Type())
 
 # Create a call expression for addition
 call_expr = CallExpression(ADD, Int64Type(), [column_ref, literal_expr])
+
+# Create a correlated reference to column `column_name` in the first input to
+# an ancestor join of `corr1`
+correlated_ref = CorrelatedReference("column_name", "corr1", Int64Type())
 
 # Create an expression sort info
 sort_info = ExpressionSortInfo(call_expr, ascending=True, nulls_first=False)
@@ -96,4 +110,9 @@ unique_column_refs = finder.get_column_references()
 # Modify the input name of column references in the call expression
 modifier = ColumnReferenceInputNameModifier({"old_input_name": "new_input_name"})
 modified_call_expr = call_expr.accept_shuttle(modifier)
+
+# Find all unique correlated references in the call expression
+correlated_finder = CorrelatedReferenceFinder()
+call_expr.accept(correlated_finder)
+unique_correlated_refs = correlated_finder.get_correlated_references()
 ```

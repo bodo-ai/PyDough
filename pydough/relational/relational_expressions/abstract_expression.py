@@ -81,6 +81,9 @@ class RelationalExpression(ABC):
     def __repr__(self) -> str:
         return self.to_string()
 
+    def __hash__(self) -> int:
+        return hash(self.to_string())
+
     @abstractmethod
     def accept(self, visitor: RelationalExpressionVisitor) -> None:
         """

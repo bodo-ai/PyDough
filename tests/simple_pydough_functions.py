@@ -1,3 +1,6 @@
+"""
+Various functions containing PyDough code snippets for testing purposes.
+"""
 # ruff: noqa
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this

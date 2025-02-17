@@ -18,6 +18,8 @@ The relational_expressions submodule provides functionality to define and manage
 - `ExpressionSortInfo`: The representation of ordering for an expression within a relational node.
 - `RelationalExpressionVisitor`: The basic Visitor pattern to perform operations across the expression components of a relational tree.
 - `ColumnReferenceFinder`: Finds all unique column references in a relational expression.
+- `CorrelatedReference`: The expression implementation for accessing a correlated column reference in a relational node.
+- `CorrelatedReferenceFinder`: Finds all unique correlated references in a relational expression.
 - `RelationalExpressionShuttle`: Specialized form of the visitor pattern that returns a relational expression.
 - `ColumnReferenceInputNameModifier`: Shuttle implementation designed to update all uses of a column reference's input name to a new input name based on a dictionary.
 
@@ -33,6 +35,7 @@ from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     ColumnReferenceFinder,
     ColumnReferenceInputNameModifier,
+    CorrelatedReferenceFinder,
     WindowCallExpression,
 )
 from pydough.pydough_operators import ADD, RANKING
@@ -64,6 +67,11 @@ unique_column_refs = finder.get_column_references()
 # Modify the input name of column references in the call expression
 modifier = ColumnReferenceInputNameModifier({"old_input_name": "new_input_name"})
 modified_call_expr = call_expr.accept_shuttle(modifier)
+
+# Find all unique correlated references in the call expression
+correlated_finder = CorrelatedReferenceFinder()
+call_expr.accept(correlated_finder)
+unique_correlated_refs = correlated_finder.get_correlated_references()
 ```
 
 ## [Relational Nodes](relational_nodes/README.md)
