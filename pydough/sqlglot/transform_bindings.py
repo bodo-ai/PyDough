@@ -8,6 +8,8 @@ __all__ = ["SqlGlotTransformBindings"]
 import re
 import sqlite3
 from collections.abc import Callable, Sequence
+from enum import Enum
+from typing import Union
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
@@ -62,25 +64,48 @@ The valid string representations of the second unit.
 """
 
 
-def get_unit_string(unit: str) -> str | None:
+class DateTimeUnit(Enum):
     """
-    TODO
+    Enum representing the valid date/time units that can be used in PyDough.
     """
-    unit = unit.lower()
-    if unit in year_units:
-        return "year"
-    elif unit in month_units:
-        return "month"
-    elif unit in day_units:
-        return "day"
-    elif unit in hour_units:
-        return "hour"
-    elif unit in minute_units:
-        return "minute"
-    elif unit in second_units:
-        return "second"
-    else:
-        return None
+
+    YEAR = "year"
+    MONTH = "month"
+    DAY = "day"
+    HOUR = "hour"
+    MINUTE = "minute"
+    SECOND = "second"
+
+    @staticmethod
+    def from_string(unit: str) -> Union["DateTimeUnit", None]:
+        """
+        Converts a string literal representing a date/time unit into a
+        DateTimeUnit enum value.
+        canonical form if it is recognized as one of the valid date/time unit
+        aliases (case-insensitive).
+
+        Args:
+            `unit`: The string literal representing the date/time unit.
+
+        Returns:
+            The enum form of the date/time unit, or `None` if the unit is
+            not one of the recognized date/time unit aliases.
+        """
+        unit = unit.lower()
+        if unit in year_units:
+            return DateTimeUnit.YEAR
+        elif unit in month_units:
+            return DateTimeUnit.MONTH
+        elif unit in day_units:
+            return DateTimeUnit.DAY
+        elif unit in hour_units:
+            return DateTimeUnit.HOUR
+        elif unit in minute_units:
+            return DateTimeUnit.MINUTE
+        elif unit in second_units:
+            return DateTimeUnit.SECOND
+        else:
+            return None
 
 
 def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
@@ -133,36 +158,45 @@ def convert_sqlite_datetime_extract(format_str: str) -> transform_binding:
 
 
 def apply_datetime_truncation(
-    base: SQLGlotExpression, unit: str, sqlite: bool
+    base: SQLGlotExpression, unit: DateTimeUnit, dialect: DatabaseDialect
 ) -> SQLGlotExpression:
     """
-    TODO
+    Applies a truncation operation to a date/time expression by a certain unit.
+
+    Args:
+        `base`: The base date/time expression to truncate.
+        `unit`: The unit to truncate the date/time expression to.
+        `dialect`: The dialect being used to generate the SQL.
+
+    Returns:
+        The SQLGlot expression to truncate `base`.
     """
-    if sqlite:
-        if unit in ("year", "month", "day"):
-            return sqlglot_expressions.Datetime(
-                this=[base, sqlglot_expressions.convert(f"start of {unit}")],
-            )
-        elif unit == "hour":
-            return sqlglot_expressions.TimeToStr(
-                this=base,
-                format="'%Y-%m-%d %H:00:00'",
-            )
-        elif unit == "minute":
-            return sqlglot_expressions.TimeToStr(
-                this=base,
-                format="'%Y-%m-%d %H:%M:00'",
-            )
-        elif unit == "second":
-            return sqlglot_expressions.TimeToStr(
-                this=base,
-                format="'%Y-%m-%d %H:%M:%S'",
-            )
-        else:
-            raise ValueError(
-                f"Unsupported DATETIME truncation unit for sqlite: {unit!r}"
-            )
+    if dialect == DatabaseDialect.SQLITE:
+        match unit:
+            # For y/m/d, use the `start of` modifier in SQLite.
+            case DateTimeUnit.YEAR | DateTimeUnit.MONTH | DateTimeUnit.DAY:
+                return sqlglot_expressions.Datetime(
+                    this=[base, sqlglot_expressions.convert(f"start of {unit.value}")],
+                )
+            # SQLite does not have `start of` modifiers for hours, minutes, or
+            # seconds, so we use `strftime` to truncate to the unit.
+            case DateTimeUnit.HOUR:
+                return sqlglot_expressions.TimeToStr(
+                    this=base,
+                    format="'%Y-%m-%d %H:00:00'",
+                )
+            case DateTimeUnit.MINUTE:
+                return sqlglot_expressions.TimeToStr(
+                    this=base,
+                    format="'%Y-%m-%d %H:%M:00'",
+                )
+            case DateTimeUnit.SECOND:
+                return sqlglot_expressions.TimeToStr(
+                    this=base,
+                    format="'%Y-%m-%d %H:%M:%S'",
+                )
     else:
+        # For other dialects, we can rely the DATE_TRUNC function.
         return sqlglot_expressions.DateTrunc(
             this=base,
             unit=sqlglot_expressions.Var(this=unit),
@@ -170,29 +204,54 @@ def apply_datetime_truncation(
 
 
 def apply_datetime_offset(
-    base: SQLGlotExpression, amt: int, unit: str, sqlite: bool
+    base: SQLGlotExpression, amt: int, unit: DateTimeUnit, dialect: DatabaseDialect
 ) -> SQLGlotExpression:
     """
-    TODO
+    Adds/subtracts a datetime interval to to a date/time expression.
+
+    Args:
+        `base`: The base date/time expression to add/subtract from.
+        `amt`: The amount of the unit to add (if positive) or subtract
+        (if negative).
+        `unit`: The unit of the interval to add/subtract.
+        `dialect`: The dialect being used to generate the SQL.
+
+    Returns:
+        The SQLGlot expression to add/subtract the specified interval to/from
+        `base`.
     """
-    if sqlite:
+    if dialect == DatabaseDialect.SQLITE:
+        # For sqlite, use the DATETIME operator to add the interval
         return sqlglot_expressions.Datetime(
-            this=[base, sqlglot_expressions.convert(f"{amt} {unit}")],
+            this=[base, sqlglot_expressions.convert(f"{amt} {unit.value}")],
         )
     else:
+        # For other dialects, we can rely the DATEADD function.
         return sqlglot_expressions.DateAdd(
             this=base,
             expression=sqlglot_expressions.convert(amt),
-            unit=sqlglot_expressions.Var(this=unit),
+            unit=sqlglot_expressions.Var(this=unit.value),
         )
 
 
 def handle_datetime_base_arg(
-    arg: SQLGlotExpression, is_only_arg, sqlite: bool
+    arg: SQLGlotExpression, dialect: DatabaseDialect
 ) -> SQLGlotExpression:
     """
-    TODO
+    Handle the first argument tot he DATETIME function, which can be a datetime
+    column or a string indicating to fetch the current timestamp.
+
+    Args:
+        `arg`: The first argument to the DATETIME function.
+        `dialect`: The dialect being used to generate the SQL.
+
+    Returns:
+        The SQLGlot expression corresponding to the first argument of the
+        DATETIME function.
     """
+    # If the argument is a string literal, check if it is one of the special
+    # values (ignoring case & leading/trailing spaces) indicating the current
+    # datetime should be used.
     if isinstance(arg, sqlglot_expressions.Literal) and arg.is_string:
         if str(arg.this).lower().strip() in (
             "now",
@@ -201,7 +260,7 @@ def handle_datetime_base_arg(
             "current timestamp",
             "current date",
         ):
-            if sqlite:
+            if dialect == DatabaseDialect.SQLITE:
                 return sqlglot_expressions.Datetime(
                     this=sqlglot_expressions.convert("now")
                 )
@@ -210,47 +269,61 @@ def handle_datetime_base_arg(
     return sqlglot_expressions.Datetime(this=arg)
 
 
-def convert_datetime(sqlite: bool) -> transform_binding:
+def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
     """
-    TODO
+    Converts a call to the `DATETIME` function to a SQLGlot expression.
+
+    Args:
+        `dialect`: The dialect being used to generate the SQL.
+
+    Returns:
+        A new transform binding that corresponds to a DATETIME function call.
     """
 
     def impl(
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
     ):
+        # Regex pattern for truncation modifiers and offset strings.
         trunc_pattern = re.compile(r"start\s+of\s+(\w+)", re.IGNORECASE)
         offset_pattern = re.compile(r"\s*([+-]?)\s*(\d+)\s+(\w+)\s*", re.IGNORECASE)
+
+        # Handle the first argument
         assert len(sql_glot_args) > 0
-        result: SQLGlotExpression = handle_datetime_base_arg(
-            sql_glot_args[0], len(sql_glot_args) > 1, sqlite
-        )
+        result: SQLGlotExpression = handle_datetime_base_arg(sql_glot_args[0], dialect)
+
+        # Accumulate the answer by using each modifier argument to build up
+        # result via a sequence of truncation and offset operations.
         for i in range(1, len(sql_glot_args)):
             arg: SQLGlotExpression = sql_glot_args[i]
             if not isinstance(arg, sqlglot_expressions.Literal) and arg.is_string:
                 raise NotImplementedError(
                     f"DATETIME function currently requires all arguments after the first argument to be string literals, but received {arg.sql()!r}"
                 )
-            unit: str | None
+            unit: DateTimeUnit | None
             trunc_match: re.Match | None = trunc_pattern.fullmatch(arg.this)
             offset_match: re.Match | None = offset_pattern.fullmatch(arg.this)
             if trunc_match is not None:
-                unit = get_unit_string(str(trunc_match.group(1)))
+                # If the string is in the form `start of <unit>`, apply
+                # truncation.
+                unit = DateTimeUnit.from_string(str(trunc_match.group(1)))
                 if unit is None:
                     raise ValueError(
                         f"Unsupported DATETIME modifier string: {arg.this!r}"
                     )
-                result = apply_datetime_truncation(result, unit, sqlite)
+                result = apply_datetime_truncation(result, unit, dialect)
             elif offset_match is not None:
+                # If the string is in the form `±<amt> <unit>`, apply an
+                # offset.
                 amt = int(offset_match.group(2))
                 if str(offset_match.group(1)) == "-":
                     amt *= -1
-                unit = get_unit_string(str(offset_match.group(3)))
+                unit = DateTimeUnit.from_string(str(offset_match.group(3)))
                 if unit is None:
                     raise ValueError(
                         f"Unsupported DATETIME modifier string: {arg.this!r}"
                     )
-                result = apply_datetime_offset(result, amt, unit, sqlite)
+                result = apply_datetime_offset(result, amt, unit, dialect)
             else:
                 raise ValueError(f"Unsupported DATETIME modifier string: {arg.this!r}")
         return result
@@ -778,11 +851,11 @@ def convert_datediff(
         )
     x = sql_glot_args[1]
     y = sql_glot_args[2]
-    unit: str | None = get_unit_string(sql_glot_args[0].this)
+    unit: DateTimeUnit | None = DateTimeUnit.from_string(sql_glot_args[0].this)
     if unit is None:
         raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
     answer = sqlglot_expressions.DateDiff(
-        unit=sqlglot_expressions.Var(this=unit), this=y, expression=x
+        unit=sqlglot_expressions.Var(this=unit.value), this=y, expression=x
     )
     return answer
 
@@ -1145,7 +1218,7 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.MINUTE] = create_convert_time_unit_function("MINUTE")
         self.bindings[pydop.SECOND] = create_convert_time_unit_function("SECOND")
         self.bindings[pydop.DATEDIFF] = convert_datediff
-        self.bindings[pydop.DATETIME] = convert_datetime(False)
+        self.bindings[pydop.DATETIME] = convert_datetime(DatabaseDialect.ANSI)
 
         # Binary operators
         self.bind_binop(pydop.ADD, sqlglot_expressions.Add)
@@ -1176,7 +1249,7 @@ class SqlGlotTransformBindings:
         if sqlite3.sqlite_version >= "3.32":
             self.bind_simple_function(pydop.IFF, sqlglot_expressions.If)
 
-        self.bindings[pydop.DATETIME] = convert_datetime(True)
+        self.bindings[pydop.DATETIME] = convert_datetime(DatabaseDialect.SQLITE)
 
         # Datetime function overrides
         self.bindings[pydop.YEAR] = convert_sqlite_datetime_extract("'%Y'")
