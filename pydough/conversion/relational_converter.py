@@ -252,7 +252,9 @@ class RelTranslation:
                             f"Unsupported expression to reference in a correlated reference: {ancestor_expr}"
                         )
             case _:
-                raise NotImplementedError(expr.__class__.__name__)
+                raise NotImplementedError(
+                    f"TODO: support relational conversion on {expr.__class__.__name__}"
+                )
 
     def join_outputs(
         self,
