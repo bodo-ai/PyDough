@@ -5,6 +5,7 @@ implementations of how to convert them to SQLGlot expressions
 
 __all__ = ["SqlGlotTransformBindings"]
 
+import re
 import sqlite3
 from collections.abc import Callable, Sequence
 
@@ -77,6 +78,55 @@ def convert_sqlite_datetime_extract(format_str: str) -> transform_binding:
         )
 
     return impl
+
+
+def convert_sqlite_datetime(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+):
+    """
+    TODO
+    """
+    trunc_pattern = re.compile(r"start\s*of\s*(\w+)", re.IGNORECASE)
+    offset_pattern = re.compile(r"\s*([+-]?)\s*(\d+)\s*(\w+)\s*", re.IGNORECASE)
+    assert len(sql_glot_args) > 0
+    modifier_args: list[SQLGlotExpression] = []
+    for i in range(1, len(sql_glot_args)):
+        arg: SQLGlotExpression = sql_glot_args[i]
+        if not isinstance(arg, sqlglot_expressions.Literal) and arg.is_string:
+            raise NotImplementedError(
+                f"DATETIME function currently requires all arguments after the first argument to be string literals, but received {arg.sql()!r}"
+            )
+        transformed_arg: str
+        unit: str
+        trunc_match: re.Match | None = trunc_pattern.fullmatch(arg.this)
+        offset_match: re.Match | None = offset_pattern.fullmatch(arg.this)
+        if trunc_match is not None:
+            match str(trunc_match.group(1)).lower():
+                case "year" | "years" | "yr" | "yrs" | "y":
+                    unit = "year"
+                case _:
+                    raise ValueError(
+                        f"Unsupported DATETIME modifier string: {arg.this!r}"
+                    )
+            transformed_arg = f"start of {unit}"
+        elif offset_match is not None:
+            sign: str = str(offset_match.group(1))
+            amt = int(offset_match.group(2))
+            match str(offset_match.group(3)).lower():
+                case "year" | "years" | "yr" | "yrs" | "y":
+                    unit = "years"
+                case _:
+                    raise ValueError(
+                        f"Unsupported DATETIME modifier string: {arg.this!r}"
+                    )
+            transformed_arg = f"{sign}{amt} {unit}"
+        else:
+            raise ValueError(f"Unsupported DATETIME modifier string: {arg.this!r}")
+        modifier_args.append(transformed_arg)
+    return sqlglot_expressions.Datetime(
+        this=sql_glot_args[0], expressions=modifier_args
+    )
 
 
 def convert_iff_case(
@@ -771,6 +821,8 @@ class SqlGlotTransformBindings:
         # enough.
         if sqlite3.sqlite_version >= "3.32":
             self.bind_simple_function(pydop.IFF, sqlglot_expressions.If)
+
+        self.bindings[pydop.DATETIME] = convert_sqlite_datetime
 
         # Datetime function overrides
         self.bindings[pydop.YEAR] = convert_sqlite_datetime_extract("'%Y'")
