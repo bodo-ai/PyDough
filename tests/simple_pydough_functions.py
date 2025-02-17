@@ -161,79 +161,174 @@ def datetime_relative():
 
 
 def datetime_sampler():
-    # Near-exhaustive edge cases coverage testing for DATETIME strings
-    random.seed(42)
-    terms = []
-    bases = []
-    modifiers = []
-
-    for base in (
-        "2025-07-04 12:58:45",
-        "2024-12-31 11:59:00",
-        "2025-01-01",
-        "1999-03-14",
-        "now",
-        "current_date",
-        "current_timestamp",
-        "current date",
-        "current timestamp",
-    ):
-        bases.append(base)
-        if not base[0].isdigit():
-            bases.append(f" {base.title()} ")
-            bases.append(f"{base.upper()}\n\t\t\r")
-    bases.append(order_date)
-
-    for base in bases:
-        terms.append(DATETIME(base))
-
-    units = [
-        "year",
-        "years",
-        "y",
-        "month",
-        "months",
-        "mm",
-        "day",
-        "days",
-        "d",
-        "hour",
-        "hours",
-        "h",
-        "minute",
-        "minutes",
-        "m",
-        "second",
-        "seconds",
-        "s",
-    ]
-    for unit in units:
-        for _ in range(2):
-            sign = random.choice(("+", "-", ""))
-            amt = random.randint(1, 100) * min(
-                random.randint(1, 10), random.randint(1, 10), random.randint(1, 10)
-            )
-            trunc_options = (
-                f"start of {unit}",
-                f"\n  Start  Of\t{unit.title()}\n\n",
-                f"START of    {unit.upper()}",
-            )
-            offset_options = (
-                f"{sign}{amt} {unit}",
-                f"{sign} {amt} {unit.upper()}",
-                f" \n {sign}\t{amt} \n{unit.title()} \n\r ",
-            )
-            modifiers.append(random.choice(trunc_options))
-            modifiers.append(random.choice(offset_options))
-
-    random.shuffle(modifiers)
-    while len(modifiers) > 0:
-        n_modifiers = random.randint(1, 4)
-        if len(modifiers) >= n_modifiers:
-            base = random.choice(bases)
-            chosen_modifiers = [modifiers.pop() for _ in range(n_modifiers)]
-            terms.append(DATETIME(base, *chosen_modifiers))
-    return Orders(*terms)
+    # Near-exhaustive edge cases coverage testing for DATETIME strings. The
+    # terms were generated via random combination selection of various ways
+    # of augmenting the base/modifier terms.
+    return Orders(
+        DATETIME("2025-07-04 12:58:45"),
+        DATETIME("2024-12-31 11:59:00"),
+        DATETIME("2025-01-01"),
+        DATETIME("1999-03-14"),
+        DATETIME("now"),
+        DATETIME(" Now "),
+        DATETIME("NOW\n\t\t\r"),
+        DATETIME("current_date"),
+        DATETIME(" Current_Date "),
+        DATETIME("CURRENT_DATE\n\t\t\r"),
+        DATETIME("current_timestamp"),
+        DATETIME(" Current_Timestamp "),
+        DATETIME("CURRENT_TIMESTAMP\n\t\t\r"),
+        DATETIME("current date"),
+        DATETIME(" Current Date "),
+        DATETIME("CURRENT DATE\n\t\t\r"),
+        DATETIME("current timestamp"),
+        DATETIME(" Current Timestamp "),
+        DATETIME("CURRENT TIMESTAMP\n\t\t\r"),
+        DATETIME(order_date),
+        DATETIME("CURRENT_DATE\n\t\t\r", "start of seconds"),
+        DATETIME("current date", "\n  Start  Of\tY\n\n", "+8 minutes", "-141 mm"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "\tSTART\tOF\tmonth\t",
+            "\tSTART\tOF\tsecond\t",
+            "\tSTART\tOF\thour\t",
+        ),
+        DATETIME(
+            " Current Timestamp ",
+            "start of h",
+            "START of    SECOND",
+            "START of    HOUR",
+        ),
+        DATETIME("NOW\n\t\t\r", "- 96 H", "15 year"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "\n  Start  Of\tY\n\n",
+            "-3 years",
+            "\n  Start  Of\tM\n\n",
+            "+65 month",
+        ),
+        DATETIME(order_date, "-56 h", "start of year"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "-63 days",
+            "START of    MINUTE",
+            "start of seconds",
+        ),
+        DATETIME("CURRENT_DATE\n\t\t\r", "\n  Start  Of\tMonth\n\n"),
+        DATETIME("NOW\n\t\t\r", "-312 hour", "start of s", " \n +\t48 \nYear \n\r "),
+        DATETIME(
+            "CURRENT TIMESTAMP\n\t\t\r",
+            " 75 DAY",
+            "\n  Start  Of\tDays\n\n",
+            "+600 minutes",
+            " \n -\t294 \nDays \n\r ",
+        ),
+        DATETIME(
+            " Current Date ",
+            "\n  Start  Of\tMonths\n\n",
+            " \n +\t480 \nMm \n\r ",
+            " \n -\t45 \nY \n\r ",
+        ),
+        DATETIME(
+            " Current Date ",
+            "- 270 MINUTES",
+            "- 34 SECONDS",
+            "\tSTART\tOF\td\t",
+            "start of second",
+        ),
+        DATETIME("current timestamp", "START of    MM", " \n \t213 \nS \n\r "),
+        DATETIME(
+            " Now ", "\n  Start  Of\tMonth\n\n", "13 minute", "28 year", "+344 second"
+        ),
+        DATETIME("CURRENT_DATE\n\t\t\r", "\tSTART\tOF\tdays\t"),
+        DATETIME("2025-01-01", "START of    H", "+ 49 MINUTE", "+91 y"),
+        DATETIME("CURRENT_DATE\n\t\t\r", "START of    YEARS", "\tSTART\tOF\td\t"),
+        DATETIME("NOW\n\t\t\r", "start of days", "START of    YEARS"),
+        DATETIME("2025-07-04 12:58:45", "\tSTART\tOF\tmonths\t", " \n \t22 \nM \n\r "),
+        DATETIME("current_date", "START of    YEAR"),
+        DATETIME(
+            order_date,
+            "+ 82 S",
+            "415 second",
+            " \n -\t160 \nSecond \n\r ",
+            "START of    Y",
+        ),
+        DATETIME(" Current Date ", "192 months"),
+        DATETIME(
+            "CURRENT TIMESTAMP\n\t\t\r",
+            "START of    H",
+            "start of minute",
+            "\n  Start  Of\tHours\n\n",
+            "+ 486 M",
+        ),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r", "\n  Start  Of\tSeconds\n\n", "- 50 HOURS"
+        ),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            " 297 D",
+            "72 months",
+            " \n -\t92 \nMonth \n\r ",
+            "\tSTART\tOF\thours\t",
+        ),
+        DATETIME("now", " \n +\t285 \nSeconds \n\r ", "\tSTART\tOF\tday\t"),
+        DATETIME("1999-03-14", "+62 d"),
+        DATETIME(
+            "current_date",
+            "START of    MM",
+            "+1 hour",
+            "start of mm",
+            " \n -\t21 \nDay \n\r ",
+        ),
+        DATETIME("current timestamp", "+212 minute", " \n +\t368 \nYears \n\r "),
+        DATETIME(
+            "2024-12-31 11:59:00",
+            "\n  Start  Of\tMonths\n\n",
+            "\n  Start  Of\tYears\n\n",
+            "\n  Start  Of\tMinutes\n\n",
+            "start of m",
+        ),
+        DATETIME("1999-03-14", "START of    HOURS", "start of day"),
+        DATETIME(
+            "now",
+            " \n -\t60 \nH \n\r ",
+            "START of    D",
+            "START of    MINUTE",
+            "+196 years",
+        ),
+        DATETIME(
+            "current timestamp",
+            "-40 hours",
+            " \n -\t385 \nDay \n\r ",
+            "start of m",
+            " \n +\t29 \nHour \n\r ",
+        ),
+        DATETIME(
+            " Current Date ", "+405 days", "start of hour", "\tSTART\tOF\tminutes\t"
+        ),
+        DATETIME(
+            " Current Timestamp ",
+            "\tSTART\tOF\tyear\t",
+            "\n  Start  Of\tS\n\n",
+            " \n +\t98 \nY \n\r ",
+            " \n \t96 \nMonth \n\r ",
+        ),
+        DATETIME(
+            " Now ",
+            "\tSTART\tOF\tminutes\t",
+            "\tSTART\tOF\ts\t",
+            "start of day",
+            "78 seconds",
+        ),
+        DATETIME(
+            " Current Date ",
+            " 136 HOURS",
+            " \n +\t104 \nM \n\r ",
+            "-104 months",
+            " \n \t312 \nD \n\r ",
+        ),
+        DATETIME(" Current_Date ", "+ 45 MM", "-135 s"),
+    )
 
 
 def loop_generated_terms():

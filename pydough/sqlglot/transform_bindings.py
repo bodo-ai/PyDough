@@ -199,7 +199,7 @@ def apply_datetime_truncation(
         # For other dialects, we can rely the DATE_TRUNC function.
         return sqlglot_expressions.DateTrunc(
             this=base,
-            unit=sqlglot_expressions.Var(this=unit),
+            unit=sqlglot_expressions.Var(this=unit.value),
         )
 
 
