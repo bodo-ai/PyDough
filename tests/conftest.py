@@ -18,6 +18,7 @@ from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
     DatabaseDialect,
+    empty_connection,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
@@ -202,6 +203,20 @@ def sqlite_dialects(request) -> DatabaseDialect:
     Returns the SQLite dialect.
     """
     return request.param
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(DatabaseDialect.ANSI, id="ansi"),
+        pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+    ]
+)
+def empty_context_database(request) -> DatabaseContext:
+    """
+    Returns a database context with an empty connection for each supported
+    PyDough SQL dialect.
+    """
+    return DatabaseContext(empty_connection, request.param)
 
 
 @pytest.fixture(scope="session")

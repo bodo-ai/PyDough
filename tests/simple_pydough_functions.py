@@ -4,7 +4,6 @@
 
 import pandas as pd
 import datetime
-import random
 
 
 def simple_scan():

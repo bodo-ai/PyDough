@@ -20,7 +20,7 @@ from test_utils import (
 )
 
 from pydough import init_pydough_context, to_sql
-from pydough.database_connectors import DatabaseDialect
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -67,6 +67,7 @@ def test_pydough_to_ansi_sql_tpch(
     test_name: str,
     get_sample_graph: graph_fetcher,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    empty_context_database: DatabaseContext,
     update_tests: bool,
 ) -> None:
     """
@@ -75,8 +76,10 @@ def test_pydough_to_ansi_sql_tpch(
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
-    actual_sql: str = to_sql(root, metadata=graph).strip()
-    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.ANSI)
+    actual_sql: str = to_sql(
+        root, metadata=graph, database=empty_context_database
+    ).strip()
+    file_path: str = get_sql_test_filename(test_name, empty_context_database.dialect)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(actual_sql + "\n")
@@ -111,6 +114,7 @@ def test_pydough_to_ansi_sql_defog(
     graph_name: str,
     defog_graphs: graph_fetcher,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    empty_context_database: DatabaseContext,
     update_tests: bool,
 ) -> None:
     """
@@ -119,8 +123,10 @@ def test_pydough_to_ansi_sql_defog(
     """
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
-    actual_sql: str = to_sql(root, metadata=graph).strip()
-    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.ANSI)
+    actual_sql: str = to_sql(
+        root, metadata=graph, database=empty_context_database
+    ).strip()
+    file_path: str = get_sql_test_filename(test_name, empty_context_database.dialect)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(actual_sql + "\n")
