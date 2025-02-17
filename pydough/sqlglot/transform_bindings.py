@@ -194,7 +194,7 @@ def handle_datetime_base_arg(
     TODO
     """
     if isinstance(arg, sqlglot_expressions.Literal) and arg.is_string:
-        if str(arg.this).lower().strip in (
+        if str(arg.this).lower().strip() in (
             "now",
             "current_timestamp",
             "current_date",
@@ -219,8 +219,8 @@ def convert_datetime(sqlite: bool) -> transform_binding:
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
     ):
-        trunc_pattern = re.compile(r"start\s*of\s*(\w+)", re.IGNORECASE)
-        offset_pattern = re.compile(r"\s*([+-]?)\s*(\d+)\s*(\w+)\s*", re.IGNORECASE)
+        trunc_pattern = re.compile(r"start\s+of\s+(\w+)", re.IGNORECASE)
+        offset_pattern = re.compile(r"\s*([+-]?)\s*(\d+)\s+(\w+)\s*", re.IGNORECASE)
         assert len(sql_glot_args) > 0
         result: SQLGlotExpression = handle_datetime_base_arg(
             sql_glot_args[0], len(sql_glot_args) > 1, sqlite

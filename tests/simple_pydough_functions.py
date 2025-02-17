@@ -129,9 +129,11 @@ def function_sampler():
 
 def datetime_current():
     return TPCH(
-        d1=DATETIME("now", "start of year", "+5 months", "-1 day"),
-        d2=DATETIME("now", "start of month", "+24 hours"),
-        d3=DATETIME("now", "start of day", "+12 hours", "-150 minutes", "+2 seconds"),
+        d1=DATETIME("now", "start of year", "5 months", "-1 DAY"),
+        d2=DATETIME("current_date", "start  of mm", "+24 hours"),
+        d3=DATETIME(
+            " Current Timestamp ", "start of day", "+12 hours", "-150 minutes", "+2 s"
+        ),
     )
 
 
@@ -140,14 +142,14 @@ def datetime_relative():
         10, by=(customer_key.ASC(), order_date.ASC())
     ).ORDER_BY(order_date.ASC())
     return selected_orders(
-        d1=DATETIME(order_date, "start of year"),
-        d2=DATETIME(order_date, "start of month"),
+        d1=DATETIME(order_date, "Start of Year"),
+        d2=DATETIME(order_date, "START OF MONTHS"),
         d3=DATETIME(
             order_date,
             "-11 years",
             "+9 months",
-            "-7 days",
-            "+5 hours",
+            " - 7 DaYs ",
+            "+5 h",
             "-3 minutes",
             "+1 second",
         ),
