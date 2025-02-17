@@ -135,7 +135,7 @@ def datetime_current():
     )
 
 
-def datetime_relative_tpch():
+def datetime_relative():
     selected_orders = Orders.TOP_K(
         10, by=(customer_key.ASC(), order_date.ASC())
     ).ORDER_BY(order_date.ASC())

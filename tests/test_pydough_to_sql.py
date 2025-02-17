@@ -7,6 +7,8 @@ from collections.abc import Callable
 import pytest
 from simple_pydough_functions import (
     datediff,
+    datetime_current,
+    datetime_relative,
     hour_minute_day,
     rank_a,
     rank_b,
@@ -52,6 +54,16 @@ from pydough.unqualified import (
             rank_c,
             "rank_c",
             id="rank_c",
+        ),
+        pytest.param(
+            datetime_current,
+            "datetime_current",
+            id="datetime_current",
+        ),
+        pytest.param(
+            datetime_relative,
+            "datetime_relative",
+            id="datetime_relative",
         ),
     ],
 )

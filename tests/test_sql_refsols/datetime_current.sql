@@ -1,0 +1,14 @@
+SELECT
+  DATE_ADD(DATE_ADD(DATE_TRUNC('YEAR', DATETIME('now')), 5, 'MONTH'), -1, 'DAY') AS d1,
+  DATE_ADD(DATE_TRUNC('MONTH', DATETIME('now')), 24, 'HOUR') AS d2,
+  DATE_ADD(
+    DATE_ADD(DATE_ADD(DATE_TRUNC('DAY', DATETIME('now')), 12, 'HOUR'), -150, 'MINUTE'),
+    2,
+    'SECOND'
+  ) AS d3
+FROM (
+  SELECT
+    *
+  FROM (VALUES
+    (NULL))
+)

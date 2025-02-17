@@ -15,7 +15,7 @@ from bad_pydough_functions import (
 from simple_pydough_functions import (
     agg_partition,
     datetime_current,
-    datetime_relative_tpch,
+    datetime_relative,
     double_partition,
     exponentiation,
     function_sampler,
@@ -605,8 +605,8 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
-                datetime_relative_tpch,
-                "datetime_relative_tpch",
+                datetime_relative,
+                "datetime_relative",
                 lambda: pd.DataFrame(
                     {
                         "d1": [
