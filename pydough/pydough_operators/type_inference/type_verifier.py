@@ -103,3 +103,40 @@ class RequireMinArgs(TypeVerifier):
                 )
             return False
         return True
+
+
+class RequireArgRange(TypeVerifier):
+    """
+    Type verifier implementation class that requires the
+    number of arguments to be within a range, both ends inclusive.
+    """
+
+    def __init__(self, low_range: int, high_range: int):
+        self._low_range: int = low_range
+        self._high_range: int = high_range
+
+    @property
+    def low_range(self) -> int:
+        """
+        The lower end of the range.
+        """
+        return self._low_range
+
+    @property
+    def high_range(self) -> int:
+        """
+        The higher end of the range.
+        """
+        return self._high_range
+
+    def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
+        from pydough.qdag.errors import PyDoughQDAGException
+
+        if not (self.low_range <= len(args) <= self.high_range):
+            if error_on_fail:
+                raise PyDoughQDAGException(
+                    f"Expected between {self.low_range} and {self.high_range} arguments,\
+                        received {len(args)}"
+                )
+            return False
+        return True

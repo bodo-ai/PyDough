@@ -29,10 +29,6 @@ class LiteralExpression(RelationalExpression):
         super().__init__(data_type)
         self._value: Any = value
 
-    def __hash__(self) -> int:
-        # Note: This will break if the value isn't hashable.
-        return hash((self.value, self.data_type))
-
     @property
     def value(self) -> object:
         """
