@@ -1544,7 +1544,7 @@ class HybridTranslator:
         # Identify the child connection that the aggregation call is pushed
         # into.
         child_idx: int = child_indices.pop()
-        child_connection = hybrid.children[child_idx]
+        child_connection: HybridConnection = hybrid.children[child_idx]
         # Generate a unique name for the agg call to push into the child
         # connection.
         agg_name: str = self.get_agg_name(child_connection)
@@ -1571,14 +1571,14 @@ class HybridTranslator:
             before we have run out of BACK levels to step up out of.
             `steps_taken_so_far`: the number of steps already taken to step
             up from the BACK node. This is needed so we know how many steps
-            still need to be taken upward once we have stepped out of hte child
+            still need to be taken upward once we have stepped out of the child
             subtree back into the parent subtree.
         """
         if len(self.stack) == 0:
             raise ValueError("Back reference steps too far back")
         # Identify the parent subtree that the BACK reference is stepping back
         # into, out of the child.
-        parent_tree = self.stack.pop()
+        parent_tree: HybridTree = self.stack.pop()
         remaining_steps_back: int = back_expr.back_levels - steps_taken_so_far - 1
         parent_result: HybridExpr
         # Special case: stepping out of the data argument of PARTITION back
