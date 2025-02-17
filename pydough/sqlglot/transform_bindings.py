@@ -107,6 +107,25 @@ class DateTimeUnit(Enum):
         else:
             return None
 
+    @property
+    def truncation_string(self) -> str:
+        """
+        The format string that can be used to truncate to the specified unit.
+        """
+        match self:
+            case DateTimeUnit.YEAR:
+                return "'%Y-01-01 00:00:00'"
+            case DateTimeUnit.MONTH:
+                return "'%Y-%m-01 00:00:00'"
+            case DateTimeUnit.DAY:
+                return "'%Y-%m-%d 00:00:00'"
+            case DateTimeUnit.HOUR:
+                return "'%Y-%m-%d %H:00:00'"
+            case DateTimeUnit.MINUTE:
+                return "'%Y-%m-%d %H:%M:00'"
+            case DateTimeUnit.SECOND:
+                return "'%Y-%m-%d %H:%M:%S'"
+
 
 def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
     """
@@ -175,25 +194,21 @@ def apply_datetime_truncation(
         match unit:
             # For y/m/d, use the `start of` modifier in SQLite.
             case DateTimeUnit.YEAR | DateTimeUnit.MONTH | DateTimeUnit.DAY:
+                trunc_expr: SQLGlotExpression = sqlglot_expressions.convert(
+                    f"start of {unit.value}"
+                )
+                if isinstance(base, sqlglot_expressions.Datetime):
+                    base.this.append(trunc_expr)
+                    return base
                 return sqlglot_expressions.Datetime(
-                    this=[base, sqlglot_expressions.convert(f"start of {unit.value}")],
+                    this=[base, trunc_expr],
                 )
             # SQLite does not have `start of` modifiers for hours, minutes, or
             # seconds, so we use `strftime` to truncate to the unit.
-            case DateTimeUnit.HOUR:
+            case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
                 return sqlglot_expressions.TimeToStr(
                     this=base,
-                    format="'%Y-%m-%d %H:00:00'",
-                )
-            case DateTimeUnit.MINUTE:
-                return sqlglot_expressions.TimeToStr(
-                    this=base,
-                    format="'%Y-%m-%d %H:%M:00'",
-                )
-            case DateTimeUnit.SECOND:
-                return sqlglot_expressions.TimeToStr(
-                    this=base,
-                    format="'%Y-%m-%d %H:%M:%S'",
+                    format=unit.truncation_string,
                 )
     else:
         # For other dialects, we can rely the DATE_TRUNC function.
@@ -222,6 +237,12 @@ def apply_datetime_offset(
     """
     if dialect == DatabaseDialect.SQLITE:
         # For sqlite, use the DATETIME operator to add the interval
+        offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
+            f"{amt} {unit.value}"
+        )
+        if isinstance(base, sqlglot_expressions.Datetime):
+            base.this.append(offset_expr)
+            return base
         return sqlglot_expressions.Datetime(
             this=[base, sqlglot_expressions.convert(f"{amt} {unit.value}")],
         )
@@ -262,11 +283,11 @@ def handle_datetime_base_arg(
         ):
             if dialect == DatabaseDialect.SQLITE:
                 return sqlglot_expressions.Datetime(
-                    this=sqlglot_expressions.convert("now")
+                    this=[sqlglot_expressions.convert("now")]
                 )
             else:
                 return sqlglot_expressions.CurrentTimestamp()
-    return sqlglot_expressions.Datetime(this=arg)
+    return sqlglot_expressions.Datetime(this=[arg])
 
 
 def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
