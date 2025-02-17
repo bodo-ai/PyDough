@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 import pytest
 from simple_pydough_functions import (
+    datediff,
     hour_minute_day,
     rank_a,
     rank_b,
@@ -88,6 +89,12 @@ def test_pydough_to_sql_tpch(
             "hour_minute_day",
             "Broker",
             id="hour_minute_day",
+        ),
+        pytest.param(
+            datediff,
+            "datediff",
+            "Broker",
+            id="datediff",
         ),
     ],
 )
