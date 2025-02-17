@@ -28,7 +28,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [HOUR](#hour)
    * [MINUTE](#minute)
    * [SECOND](#second)
-   * [DATEDIFF] (#datediff)
+   * [DATEDIFF](#datediff)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
    * [ISIN](#isin)
@@ -54,27 +54,31 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Window Functions](#window-functions)
    * [RANKING](#ranking)
    * [PERCENTILE](#percentile)
-- [Unsupported Magic Methods](#unsupported-magic-methods)
-   * [FLOOR](#floor)
-   * [CEIL](#ceil)
-   * [TRUNC](#trunc)
-   * [REVERSED](#reversed)
-   * [INT](#int)
-   * [FLOAT](#float)
-   * [COMPLEX](#complex)
-   * [INDEX](#index)
-   * [LEN](#len)
-   * [CONTAINS](#contains)
-   * [SETITEM](#setitem)
+- [Banned Python Logic](#banned-python-logic)
+   * [\_\_bool\_\_](#__bool__)
+   * [\_\_call\_\_](#call_banned)
+   * [\_\_floor\_\_](#floor_banned)
+   * [\_\_ceil\_\_](#ceil_banned)
+   * [\_\_trunc\_\_](#trunc_banned)
+   * [\_\_reversed\_\_](#reversed_banned)
+   * [\_\_int\_\_](#int_banned)
+   * [\_\_float\_\_](#float_banned)
+   * [\_\_complex\_\_](#complex_banned)
+   * [\_\_index\_\_](#index_banned)
+   * [\_\_len\_\_](#len_banned)
+   * [\_\_contains\_\_](#contains_banned)
+   * [\_\_setitem\_\_](#setitem_banned)
 
 <!-- TOC end -->
 
 <!-- TOC --><a name="binary-operators"></a>
+
 ## Binary Operators
 
 Below is each binary operator currently supported in PyDough.
 
 <!-- TOC --><a name="arithmetic"></a>
+
 ### Arithmetic
 
 Supported mathematical operations: addition (`+`), subtraction (`-`), multiplication (`*`), division (`/`), exponentiation (`**`).
@@ -87,6 +91,7 @@ Lineitems(value = (extended_price * (1 - (discount ** 2)) + 1.0) / part.retail_p
 > The behavior when the denominator is `0` depends on the database being used to evaluate the expression.
 
 <!-- TOC --><a name="comparisons"></a>
+
 ### Comparisons
 
 Expression values can be compared using standard comparison operators: `<=`, `<`, `==`, `!=`, `>` and `>=`:
@@ -106,6 +111,7 @@ Customers(
 > Chained inequalities, like `a <= b <= c`, can cause undefined/incorrect behavior in PyDough. Instead, use expressions like `(a <= b) & (b <= c)`, or the [MONOTONIC](#monotonic) function.
 
 <!-- TOC --><a name="logical"></a>
+
 ### Logical
 
 Multiple boolean expression values can be logically combined with `&`, `|` and `~` being used as logical AND, OR and NOT, respectively:
@@ -125,11 +131,13 @@ Customers(
 > Do **NOT** use the builtin Python syntax `and`, `or`, or `not` on PyDough node. Using these instead of `&`, `|` or `~` can result in undefined incorrect results.
 
 <!-- TOC --><a name="unary-operators"></a>
+
 ## Unary Operators
 
 Below is each unary operator currently supported in PyDough.
 
 <!-- TOC --><a name="negation"></a>
+
 ### Negation
 
 A numerical expression's sign can be flipped by prefixing it with the `-` operator:
@@ -139,11 +147,13 @@ Lineitems(lost_value = extended_price * (-discount))
 ```
 
 <!-- TOC --><a name="other-operators"></a>
+
 ## Other Operators
 
 Below are all other operators currently supported in PyDough that use other syntax besides function calls:
 
 <!-- TOC --><a name="slicing"></a>
+
 ### Slicing
 
 A string expression can have a substring extracted with Python string slicing syntax `s[a:b:c]`:
@@ -159,11 +169,13 @@ Customers(
 > PyDough currently only supports combinations of `string[start:stop:step]` where `step` is either 1 or omitted, and both `start` and `stop` are either non-negative values or omitted.
 
 <!-- TOC --><a name="string-functions"></a>
+
 ## String Functions
 
 Below is each function currently supported in PyDough that operates on strings.
 
 <!-- TOC --><a name="lower"></a>
+
 ### LOWER
 
 Calling `LOWER` on a string converts its characters to lowercase:
@@ -173,6 +185,7 @@ Customers(lowercase_name = LOWER(name))
 ```
 
 <!-- TOC --><a name="upper"></a>
+
 ### UPPER
 
 Calling `UPPER` on a string converts its characters to uppercase:
@@ -182,6 +195,7 @@ Customers(uppercase_name = UPPER(name))
 ```
 
 <!-- TOC --><a name="length"></a>
+
 ### LENGTH
 
 Calling `length` on a string returns the number of characters it contains:
@@ -191,6 +205,7 @@ Suppliers(n_chars_in_comment = LENGTH(comment))
 ```
 
 <!-- TOC --><a name="startswith"></a>
+
 ### STARTSWITH
 
 The `STARTSWITH` function checks if its first argument begins with its second argument as a string prefix:
@@ -200,6 +215,7 @@ Parts(begins_with_yellow = STARTSWITH(name, "yellow"))
 ```
 
 <!-- TOC --><a name="endswith"></a>
+
 ### ENDSWITH
 
 The `ENDSWITH` function checks if its first argument ends with its second argument as a string suffix:
@@ -209,6 +225,7 @@ Parts(ends_with_chocolate = ENDSWITH(name, "chocolate"))
 ```
 
 <!-- TOC --><a name="contains"></a>
+
 ### CONTAINS
 
 The `CONTAINS` function checks if its first argument contains its second argument as a substring:
@@ -218,6 +235,7 @@ Parts(is_green = CONTAINS(name, "green"))
 ```
 
 <!-- TOC --><a name="like"></a>
+
 ### LIKE
 
 The `LIKE` function checks if the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
@@ -229,6 +247,7 @@ Orders(is_special_request = LIKE(comment, "%special%requests%"))
 [This link](https://www.w3schools.com/sql/sql_like.asp) explains how these SQL pattern strings work and provides some examples.
 
 <!-- TOC --><a name="join_strings"></a>
+
 ### JOIN_STRINGS
 
 The `JOIN_STRINGS` function concatenates all its string arguments, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
@@ -242,11 +261,13 @@ Regions.nations.customers(
 For instance, `JOIN_STRINGS("; ", "Alpha", "Beta", "Gamma)` returns `"Alpha; Beta; Gamma"`.
 
 <!-- TOC --><a name="datetime-functions"></a>
+
 ## Datetime Functions
 
 Below is each function currently supported in PyDough that operates on date/time/timestamp values.
 
 <!-- TOC --><a name="year"></a>
+
 ### YEAR
 
 Calling `YEAR` on a date/timestamp extracts the year it belongs to:
@@ -256,6 +277,7 @@ Orders.WHERE(YEAR(order_date) == 1995)
 ```
 
 <!-- TOC --><a name="month"></a>
+
 ### MONTH
 
 Calling `MONTH` on a date/timestamp extracts the month of the year it belongs to:
@@ -265,6 +287,7 @@ Orders(is_summer = (MONTH(order_date) >= 6) & (MONTH(order_date) <= 8))
 ```
 
 <!-- TOC --><a name="day"></a>
+
 ### DAY
 
 Calling `DAY` on a date/timestamp extracts the day of the month it belongs to:
@@ -274,6 +297,7 @@ Orders(is_first_of_month = DAY(order_date) == 1)
 ```
 
 <!-- TOC --><a name="hour"></a>
+
 ### HOUR
 
 Calling `HOUR` on a date/timestamp extracts the hour it belongs to. The range of output
@@ -284,6 +308,7 @@ Orders(is_12pm = HOUR(order_date) == 12)
 ```
 
 <!-- TOC --><a name="minute"></a>
+
 ### MINUTE
 
 Calling `MINUTE` on a date/timestamp extracts the minute. The range of output
@@ -294,6 +319,7 @@ Orders(is_half_hour = MINUTE(order_date) == 30)
 ```
 
 <!-- TOC --><a name="second"></a>
+
 ### SECOND
 
 Calling `SECOND` on a date/timestamp extracts the second. The range of output
@@ -304,6 +330,7 @@ Orders(is_lt_30_seconds = SECOND(order_date) < 30)
 ```
 
 <!-- TOC --><a name="datediff"></a>
+
 ### DATEDIFF
 
 Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`, `months`,`days`,`hours`,`minutes` or`seconds`.
@@ -318,7 +345,7 @@ Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`
 ```py
 # Calculates, for each order, the number of days since January 1st 1992
 # that the order was placed:
-orders( 
+orders(
    days_since=DATEDIFF("days",datetime.date(1992, 1, 1), order_date)
 )
 ```
@@ -335,11 +362,13 @@ The first argument in the `DATEDIFF` function supports the following aliases for
 Invalid or unrecognized units will result in an error. For example, `"Days"`, `"DAYS"`, and `"d"` are all treated the same due to case insensitivity.
 
 <!-- TOC --><a name="conditional-functions"></a>
+
 ## Conditional Functions
 
 Below is each function currently supported in PyDough that handles conditional logic.
 
 <!-- TOC --><a name="iff"></a>
+
 ### IFF
 
 The `IFF` function cases on the True/False value of its first argument. If it is True, it returns the second argument, otherwise it returns the third argument. In this way, the PyDough code `IFF(a, b, c)` is semantically the same as the SQL expression `CASE WHEN a THEN b ELSE c END`.
@@ -352,6 +381,7 @@ Customers(
 ```
 
 <!-- TOC --><a name="isin"></a>
+
 ### ISIN
 
 The `ISIN` function takes in an expression and an iterable of literals and returns whether the expression is a member of provided literals.
@@ -361,6 +391,7 @@ Parts.WHERE(ISIN(size, (10, 11, 17, 19, 45)))
 ```
 
 <!-- TOC --><a name="default_to"></a>
+
 ### DEFAULT_TO
 
 The `DEFAULT_TO` function returns the first of its arguments that is non-null (e.g. the same as the `COALESCE` function in SQL):
@@ -370,6 +401,7 @@ Lineitems(adj_tax = DEFAULT_TO(tax, 0))
 ```
 
 <!-- TOC --><a name="present"></a>
+
 ### PRESENT
 
 The `PRESENT` function checks if its argument is non-null (e.g. the same as `IS NOT NULL` in SQL):
@@ -379,6 +411,7 @@ Lineitems(has_tax = PRESENT(tax))
 ```
 
 <!-- TOC --><a name="absent"></a>
+
 ### ABSENT
 
 The `ABSENT` function checks if its argument is null (e.g. the same as `IS NULL` in SQL):
@@ -388,6 +421,7 @@ Lineitems(no_tax = ABSENT(tax))
 ```
 
 <!-- TOC --><a name="keep_if"></a>
+
 ### KEEP_IF
 
 The `KEEP_IF` function returns the first function if the second arguments is True, otherwise it returns a null value. In other words, `KEEP_IF(a, b)` is equivalent to the SQL expression `CASE WHEN b THEN a END`.
@@ -397,6 +431,7 @@ TPCH(avg_non_debt_balance = AVG(Customers(no_debt_bal = KEEP_IF(acctbal, acctbal
 ```
 
 <!-- TOC --><a name="monotonic"></a>
+
 ### MONOTONIC
 
 The `MONOTONIC` function checks if all of its arguments are in ascending order (e.g. `MONOTONIC(a, b, c, d)` is equivalent to `(a <= b) & (b <= c) & (c <= d)`):
@@ -406,11 +441,13 @@ Lineitems.WHERE(MONOTONIC(10, quantity, 20) & MONOTONIC(5, part.size, 13))
 ```
 
 <!-- TOC --><a name="numerical-functions"></a>
+
 ## Numerical Functions
 
 Below is each numerical function currently supported in PyDough.
 
 <!-- TOC --><a name="abs"></a>
+
 ### ABS
 
 The `ABS` function returns the absolute value of its input. The `abs()` magic method is also evaluated to the same.
@@ -422,9 +459,10 @@ Customers(acct_magnitude = abs(acctbal))
 ```
 
 <!-- TOC --><a name="round"></a>
+
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The `round()` magic method is also evaluated to the same.
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The `round()` magic method is also evaluated to the same. 
 
 ```py
 Parts(rounded_price = ROUND(retail_price, 1))
@@ -432,16 +470,27 @@ Parts(rounded_price = ROUND(retail_price, 1))
 Parts(rounded_price = round(retail_price, 1))
 ```
 
+Note: The default precision for `round` magic method is 0, to be in alignment with the Python implementation. The pydough `ROUND` function requires the precision to be specified.
+
+```py
+# This is legal.
+Parts(rounded_price = round(retail_price))
+# This is illegal as precision is not specified.
+Parts(rounded_price = ROUND(retail_price))
+```
+
 <!-- TOC --><a name="power"></a>
+
 ### POWER
 
-The `POWER` function exponentiates its first argument to the power of its second argument. 
+The `POWER` function exponentiates its first argument to the power of its second argument.
 
 ```py
 Parts(powered_price = POWER(retail_price, 2))
 ```
 
 <!-- TOC --><a name="sqrt"></a>
+
 ### SQRT
 
 The `SQRT` function takes the square root of its input. It's equivalent to `POWER(x,0.5)`.
@@ -451,6 +500,7 @@ Parts(sqrt_price = SQRT(retail_price))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>
+
 ## Aggregation Functions
 
 When terms of a plural sub-collection are accessed, those terms are plural with regards to the current collection. For example, if each nation in `Nations` has multiple `customers`, and each customer has a single `acctbal`, then `customers.acctbal` is plural with regards to `Nations` and cannot be used in any calculations when the current context is `Nations`. The exception to this is when `customers.acctbal` is made singular with regards to `Nations` by aggregating it.
@@ -458,6 +508,7 @@ When terms of a plural sub-collection are accessed, those terms are plural with 
 Aggregation functions are a special set of functions that, when called on their inputs, convert them from plural to singular. Below is each aggregation function currently supported in PyDough.
 
 <!-- TOC --><a name="sum"></a>
+
 ### SUM
 
 The `SUM` function returns the sum of the plural set of numerical values it is called on.
@@ -467,6 +518,7 @@ Nations(total_consumer_wealth = SUM(customers.acctbal))
 ```
 
 <!-- TOC --><a name="avg"></a>
+
 ### AVG
 
 The `AVG` function takes the average of the plural set of numerical values it is called on.
@@ -476,6 +528,7 @@ Parts(average_shipment_size = AVG(lines.quantity))
 ```
 
 <!-- TOC --><a name="min"></a>
+
 ### MIN
 
 The `MIN` function returns the smallest value from the set of numerical values it is called on.
@@ -485,6 +538,7 @@ Suppliers(cheapest_part_supplied = MIN(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="max"></a>
+
 ### MAX
 
 The `MAX` function returns the largest value from the set of numerical values it is called on.
@@ -494,6 +548,7 @@ Suppliers(most_expensive_part_supplied = MAX(supply_records.supply_cost))
 ```
 
 <!-- TOC --><a name="count"></a>
+
 ### COUNT
 
 The `COUNT` function returns how many non-null records exist on the set of plural values it is called on.
@@ -509,6 +564,7 @@ Nations(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
 ```
 
 <!-- TOC --><a name="ndistinct"></a>
+
 ### NDISTINCT
 
 The `NDISTINCT` function returns how many distinct values of its argument exist.
@@ -518,6 +574,7 @@ Customers(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
 ```
 
 <!-- TOC --><a name="has"></a>
+
 ### HAS
 
 The `HAS` function is called on a sub-collection and returns `True` if at least one record of the sub-collection exists. In other words, `HAS(x)` is equivalent to `COUNT(x) > 0`.
@@ -527,6 +584,7 @@ Parts.WHERE(HAS(supply_records.supplier.WHERE(nation.name == "GERMANY")))
 ```
 
 <!-- TOC --><a name="hasnot"></a>
+
 ### HASNOT
 
 The `HASNOT` function is called on a sub-collection and returns `True` if no records of the sub-collection exist. In other words, `HASNOT(x)` is equivalent to `COUNT(x) == 0`.
@@ -536,11 +594,12 @@ Customers.WHERE(HASNOT(orders))
 ```
 
 <!-- TOC --><a name="window-functions"></a>
+
 ## Window Functions
 
 Window functions are special functions whose output depends on other records in the same context.A common example of this is finding the ranking of each record if all of the records were to be sorted.
 
-Window functions in PyDough have an optional `levels` argument. If this argument is omitted, it means that the window function applies to all records of the current collection (e.g. rank all customers). If it is provided, it should be a value that can be used as an  argument to `BACK`, and in that case it means that the set of values used by the window function should be per-record of the correspond ancestor (e.g. rank all customers within each nation).
+Window functions in PyDough have an optional `levels` argument. If this argument is omitted, it means that the window function applies to all records of the current collection (e.g. rank all customers). If it is provided, it should be a value that can be used as an argument to `BACK`, and in that case it means that the set of values used by the window function should be per-record of the correspond ancestor (e.g. rank all customers within each nation).
 
 For example, if using the `RANKING` window function, consider the following examples:
 
@@ -561,6 +620,7 @@ Regions.nations.customers(r=RANKING(..., levels=3))
 Below is each window function currently supported in PyDough.
 
 <!-- TOC --><a name="ranking"></a>
+
 ### RANKING
 
 The `RANKING` function returns ordinal position of the current record when all records in the current context are sorted by certain ordering keys. The arguments:
@@ -581,6 +641,7 @@ Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) 
 ```
 
 <!-- TOC --><a name="percentile"></a>
+
 ### PERCENTILE
 
 The `PERCENTILE` function returns what index the current record belongs to if all records in the current context are ordered then split into evenly sized buckets. The arguments:
@@ -596,164 +657,178 @@ Customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
 # For every region, find the top 5% of customers with the highest account balances.
 Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), levels=2) > 95)
 ```
-## Unsupported Magic Methods
 
-Below is a list of magic methods that are not supported in PyDough. Calling these methods will result in an Exception.
+## Banned Python Logic
 
-<!-- TOC --><a name="floor"></a>
-### FLOOR
+Below is a list of banned python logic (magic methods,etc.) that are not supported in PyDough. Calling these methods will result in an Exception.
 
-The `math.floor` function calls the `__floor__` magic method, which is not supported in PyDough.
+<!-- TOC --><a name="__bool__"></a>
 
-```py
-def bad_floor_1():
-   # Using `math.floor` (calls __floor__)
-   return Customer(age=math.floor(order.total_price))
-```
+### \_\_bool\_\_
 
-<!-- TOC --><a name="ceil"></a>
-### CEIL
-
-The `math.ceil` function calls the `__ceil__` magic method, which is not supported in PyDough.
+The `__bool__` magic method is not supported in PyDough. PyDough code cannot be treated as booleans. Instead of using `or`, `and`, and `not`, use `|`, `&`, and `~` for logical operations. Check out the [Logical](#logical) section for more information.
 
 ```py
-def bad_ceil_1():
-   # Using `math.ceil` (calls __ceil__)
-   return Customer(age=math.ceil(order.total_price))
+# Not allowed - will raise PyDoughUnqualifiedException
+if Customer and Order:
+   print("Available")
+   
+# Use & instead of and
+Customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
+
+# Use | instead of or 
+Orders.WHERE((discount > 0.05) | (tax > 0.08))
+
+# Use ~ instead of not
+Parts.WHERE(~(retail_price > 1000))
 ```
 
-<!-- TOC --><a name="trunc"></a>
-### TRUNC
+<!-- TOC --><a name="__call__"></a>
 
-The `math.trunc` function calls the `__trunc__` magic method, which is not supported in PyDough.
+### \_\_call\_\_
+
+The `__call__` magic method is not supported in PyDough, but calling an object will not throw an error. Instead, it internally evaluates to the `CALC` property.
 
 ```py
-def bad_trunc_1():
-   # Using `math.trunc` (calls __trunc__)
-   return Customer(age=math.trunc(order.total_price))
+# These are equivalent:
+Customers(name)
+Customers.__call__(name)
 ```
 
-<!-- TOC --><a name="reversed"></a>
-### REVERSED
+<!-- TOC --><a name="__floor__"></a>
 
-The `reversed` function calls the `__reversed__` magic method, which is not supported in PyDough.
+### \_\_floor\_\_
+
+The `math.floor` function calls the `__floor__` magic method, which is currently not supported in PyDough.
 
 ```py
-def bad_reversed_1():
-   # Using `reversed` (calls __reversed__)
-   return Orders(reversed(order_key))
+Customer(age=math.floor(order.total_price))
 ```
 
-<!-- TOC --><a name="int"></a>
-### INT
+<!-- TOC --><a name="__ceil__"></a>
+
+### \_\_ceil\_\_
+
+The `math.ceil` function calls the `__ceil__` magic method, which is currently not supported in PyDough.
+
+```py
+Customer(age=math.ceil(order.total_price))
+```
+
+<!-- TOC --><a name="__trunc__"></a>
+
+### \_\_trunc\_\_
+
+The `math.trunc` function calls the `__trunc__` magic method, which is currently not supported in PyDough.
+
+```py
+Customer(age=math.trunc(order.total_price))
+```
+
+<!-- TOC --><a name="__reversed__"></a>
+
+### \_\_reversed\_\_
+
+The `reversed` function calls the `__reversed__` magic method, which is currently not supported in PyDough.
+
+```py
+Orders(reversed(order_key))
+```
+
+<!-- TOC --><a name="__int__"></a>
+
+### \_\_int\_\_
 
 Casting to `int` calls the `__int__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
-def bad_int_1():
-   # Casting to int (calls __int__)
-   return Orders(limit=int(order.total_price))
+Orders(limit=int(order.total_price))
 ```
 
-<!-- TOC --><a name="float"></a>
-### FLOAT
+<!-- TOC --><a name="__float__"></a>
+
+### \_\_float\_\_
 
 Casting to `float` calls the `__float__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a float instead of a PyDough object.
 
 ```py
-def bad_float_1():
-   # Casting to float (calls __float__)
-   return Orders(limit=float(order.quantity))
+Orders(limit=float(order.quantity))
 ```
 
-<!-- TOC --><a name="complex"></a>
-### COMPLEX
+<!-- TOC --><a name="__complex__"></a>
+
+### \_\_complex\_\_
 
 Casting to `complex` calls the `__complex__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a complex instead of a PyDough object.
 
 ```py
-def bad_complex_1():
-   # Casting to complex (calls __complex__)
-   return Orders(limit=complex(order.total_price))
+Orders(limit=complex(order.total_price))
 ```
 
-<!-- TOC --><a name="index"></a>
-### INDEX
+<!-- TOC --><a name="__index__"></a>
+
+### \_\_index\_\_
 
 Using an object as an index calls the `__index__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
-def bad_index_1():
-   # Using as an index (calls __index__)
-   return Customers(sliced = name[:order])
+Customers(sliced = name[:order])
 ```
 
-<!-- TOC --><a name="nonzero"></a>
-### NONZERO
+<!-- TOC --><a name="__nonzero__"></a>
+
+### \_\_nonzero\_\_
 
 Using an object in a boolean context calls the `__nonzero__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
-def bad_nonzero_1():
-   # Using in a boolean context (calls __nonzero__)
-   return Orders(discount=not order.total_price)
+Orders(discount=bool(order.total_price))
 ```
 
-<!-- TOC --><a name="len"></a>
-### LEN
+<!-- TOC --><a name="__len__"></a>
 
-The `len` function calls the `__len__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
+### \_\_len\_\_
+
+The `len` function calls the `__len__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object. Instead, usage of [LENGTH](#length) function is recommended.
 
 ```py
-def bad_len_1():
-   # Using `len` (calls __len__)
-   return Customers(len(customer.name))
+Customers(len(customer.name))
 ```
 
-<!-- TOC --><a name="contains"></a>
-### CONTAINS
+<!-- TOC --><a name="__contains__"></a>
 
-Using the `in` operator calls the `__contains__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a boolean instead of a PyDough object.
+### \_\_contains\_\_
+
+Using the `in` operator calls the `__contains__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a boolean instead of a PyDough object. Instead, usage of [ISIN](#isin) function is recommended.
 
 ```py
-def bad_contains_1():
-   # Using `in` operator (calls __contains__)
-   return Orders('discount' in order.details)
+Orders('discount' in order.details)
 ```
 
-<!-- TOC --><a name="setitem"></a>
-### SETITEM
+<!-- TOC --><a name="__setitem__"></a>
+
+### \_\_setitem\_\_
 
 Assigning to an index calls the `__setitem__` magic method, which is not supported in PyDough. This operation is not allowed.
 
 ```py
-def bad_setitem_1():
-   # Assigning to an index (calls __setitem__)
-   order.details['discount'] = True
-   return order
+Order.details['discount'] = True
 ```
 
-<!-- TOC --><a name="iter"></a>
-### ITER
+<!-- TOC --><a name="__iter__"></a>
+
+### \_\_iter\_\_
 
 Iterating over an object calls the `__iter__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an iterator instead of a PyDough object.
 
 ```py
-def bad_iter_1():
-   # Iterating over an object (calls __iter__)
-   for item in customer:
-      print(item)
-   return customer
+# Not allowed operations
+for item in customer:
+   print(item)
 
-def bad_iter_2():
-   # Using list comprehension (calls __iter__)
-   return [item for item in customer]
+[item for item in customer]
 
-def bad_iter_3():
-   # Using list() constructor (calls __iter__)
-   return list(customer)
+list(customer)
 
-def bad_iter_4():
-   # Using tuple() constructor (calls __iter__)
-   return tuple(customer)
+tuple(customer)
 ```

@@ -267,11 +267,9 @@ class UnqualifiedNode(ABC):
     def __abs__(self):
         return UnqualifiedOperation("ABS", [self])
 
-    def __round__(self, n):
+    def __round__(self, n=None):
         if n is None:
-            raise PyDoughUnqualifiedException(
-                "PyDough requires a specific number of decimal places for rounding."
-            )
+            n = 0
         n_unqualified = self.coerce_to_unqualified(n)
         return UnqualifiedOperation("ROUND", [self, n_unqualified])
 

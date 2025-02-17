@@ -392,7 +392,7 @@ def annotated_assignment():
 
 
 def abs_round_magic_method():
-    return DailyPrices(abs_low=abs(low), round_low=round(low, 2))
+    return DailyPrices(abs_low=abs(low), round_low=round(low, 2), round_zero=round(low))
 
 
 def years_months_days_hours_datediff():
