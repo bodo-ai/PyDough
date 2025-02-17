@@ -371,7 +371,7 @@ class Qualifier:
             for _ in range(levels):
                 if ancestor.ancestor_context is None:
                     raise PyDoughUnqualifiedException(
-                        f"Cannot back reference {levels} above {unqualified_parent}"
+                        f"Cannot back reference {levels} above {context}"
                     )
                 ancestor = ancestor.ancestor_context
             # Identify whether the access is an expression or a collection
