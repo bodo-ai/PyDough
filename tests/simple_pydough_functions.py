@@ -3,6 +3,7 @@
 # ruff & mypy should not try to typecheck or verify any of this
 
 import pandas as pd
+import datetime
 
 
 def simple_scan():
@@ -419,3 +420,51 @@ def annotated_assignment():
     specific_region: tuple[str, str] = "WEST", "AMERICA"
     chosen_region: str = direction1 + " ".join(specific_region)
     return Nations.WHERE(region.name == chosen_region)
+
+
+def years_months_days_hours_datediff():
+    y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
+    return Transactions.WHERE((YEAR(date_time) < 2025))(
+        x=date_time,
+        y1=y1_datetime,
+        years_diff=DATEDIFF("years", date_time, y1_datetime),
+        c_years_diff=DATEDIFF("YEARS", date_time, y1_datetime),
+        c_y_diff=DATEDIFF("Y", date_time, y1_datetime),
+        y_diff=DATEDIFF("y", date_time, y1_datetime),
+        months_diff=DATEDIFF("months", date_time, y1_datetime),
+        c_months_diff=DATEDIFF("MONTHS", date_time, y1_datetime),
+        mm_diff=DATEDIFF("mm", date_time, y1_datetime),
+        days_diff=DATEDIFF("days", date_time, y1_datetime),
+        c_days_diff=DATEDIFF("DAYS", date_time, y1_datetime),
+        c_d_diff=DATEDIFF("D", date_time, y1_datetime),
+        d_diff=DATEDIFF("d", date_time, y1_datetime),
+        hours_diff=DATEDIFF("hours", date_time, y1_datetime),
+        c_hours_diff=DATEDIFF("HOURS", date_time, y1_datetime),
+        c_h_diff=DATEDIFF("H", date_time, y1_datetime),
+    ).TOP_K(30, by=years_diff.ASC())
+
+
+def minutes_seconds_datediff():
+    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
+    return Transactions.WHERE(YEAR(date_time) <= 2024)(
+        x=date_time,
+        y=y_datetime,
+        minutes_diff=DATEDIFF("m", date_time, y_datetime),
+        seconds_diff=DATEDIFF("s", date_time, y_datetime),
+    ).TOP_K(30, by=x.DESC())
+
+
+def datediff():
+    y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
+    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
+    return Transactions.WHERE((YEAR(date_time) < 2025))(
+        x=date_time,
+        y1=y1_datetime,
+        y=y_datetime,
+        years_diff=DATEDIFF("years", date_time, y1_datetime),
+        months_diff=DATEDIFF("months", date_time, y1_datetime),
+        days_diff=DATEDIFF("days", date_time, y1_datetime),
+        hours_diff=DATEDIFF("hours", date_time, y1_datetime),
+        minutes_diff=DATEDIFF("minutes", date_time, y_datetime),
+        seconds_diff=DATEDIFF("seconds", date_time, y_datetime),
+    ).TOP_K(30, by=years_diff.ASC())

@@ -1,5 +1,5 @@
 """
-Definition bindings of builtin PyDough operators that reutrn an expression.
+Definition bindings of builtin PyDough operators that return an expression.
 """
 
 __all__ = [
@@ -12,6 +12,7 @@ __all__ = [
     "BXR",
     "CONTAINS",
     "COUNT",
+    "DATEDIFF",
     "DATETIME",
     "DAY",
     "DEFAULT_TO",
@@ -152,6 +153,9 @@ MINUTE = ExpressionFunctionOperator(
 )
 SECOND = ExpressionFunctionOperator(
     "SECOND", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+DATEDIFF = ExpressionFunctionOperator(
+    "DATEDIFF", False, RequireNumArgs(3), ConstantType(Int64Type())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)
