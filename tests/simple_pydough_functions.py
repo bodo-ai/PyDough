@@ -254,6 +254,9 @@ def multi_partition_access_1():
 
 
 def multi_partition_access_2():
+    # Identify transactions that are below the average number of shares for
+    # transactions of the same combinations of (customer, stock, type), or
+    # the same combination of (customer, stock), or the same customer.
     grps_a = PARTITION(
         Transactions, name="child_3", by=(customer_id, ticker_id, transaction_type)
     )(avg_shares_a=AVG(child_3.shares))

@@ -1148,7 +1148,9 @@ def test_pipeline_e2e_errors(
             (
                 multi_partition_access_1,
                 "Broker",
-                pd.DataFrame({"symbol": ["AAPL", "AAMZ", "BRK.B", "FB", "GOOG"]}),
+                lambda: pd.DataFrame(
+                    {"symbol": ["AAPL", "AMZN", "BRK.B", "FB", "GOOG"]}
+                ),
             ),
             id="multi_partition_access_1",
         ),
@@ -1156,21 +1158,21 @@ def test_pipeline_e2e_errors(
             (
                 multi_partition_access_2,
                 "Broker",
-                pd.DataFrame(
+                lambda: pd.DataFrame(
                     {
                         "transaction_id": [f"TX{i:03}" for i in (22, 24, 25, 27, 56)],
-                        "symbol": [
+                        "name": [
                             "Jane Smith",
                             "Samantha Lee",
                             "Michael Chen",
                             "David Kim",
                             "Jane Smith",
                         ],
-                        "name": ["MSFT", "Tesla", "GOOGL", "BRK.B", "FB"],
+                        "symbol": ["MSFT", "TSLA", "GOOGL", "BRK.B", "FB"],
                         "transaction_type": ["sell", "sell", "buy", "buy", "sell"],
-                        "avg_shares_a": [56.6667, 55.0, 4.0, 55.5, 47.5],
-                        "avg_shares_b": [50.0, 41.6667, 3.3333, 37.33333, 47.5],
-                        "avg_shares_c": [50.625, 46.25, 40.0, 37.3333, 50.625],
+                        "avg_shares_a": [56.66667, 55.0, 4.0, 55.5, 47.5],
+                        "avg_shares_b": [50.0, 41.66667, 3.33333, 37.33333, 47.5],
+                        "avg_shares_c": [50.625, 46.25, 40.0, 37.33333, 50.625],
                     }
                 ),
             ),

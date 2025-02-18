@@ -1880,9 +1880,14 @@ class HybridTranslator:
                 return successor_hybrid
             case PartitionChild():
                 hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
-                successor_hybrid = HybridTree(
-                    HybridPartitionChild(hybrid.children[0].subtree)
-                )
+                # Identify the original data being partitioned, which may
+                # require stepping in multiple times if the partition is
+                # nested inside another partition.
+                src_tree: HybridTree = hybrid
+                while isinstance(src_tree.pipeline[0], HybridPartitionChild):
+                    src_tree = src_tree.pipeline[0].subtree
+                subtree: HybridTree = src_tree.children[0].subtree
+                successor_hybrid = HybridTree(HybridPartitionChild(subtree))
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
             case Calc():
