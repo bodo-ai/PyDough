@@ -34,7 +34,7 @@ class Decorrelater:
 
     def make_decorrelate_parent(
         self, hybrid: HybridTree, child_idx: int, required_steps: int
-    ) -> HybridTree:
+    ) -> tuple[HybridTree, int]:
         """
         Creates a snapshot of the ancestry of the hybrid tree that contains
         a correlated child, without any of its children, its descendants, or
@@ -50,10 +50,12 @@ class Decorrelater:
             derivable.
 
         Returns:
-            A snapshot of `hybrid` and its ancestry in the hybrid tree, without
-            without any of its children or pipeline operators that occur during
-            or after the derivation of the correlated child, or without any of
-            its descendants.
+            A tuple where the first entry is a snapshot of `hybrid` and its
+            ancestry in the hybrid tree, without without any of its children or
+            pipeline operators that occur during or after the derivation of the
+            correlated child, or without any of its descendants. The second
+            entry is the number of ancestor layers that should be skipped due
+            to the PARTITION edge case.
         """
         if isinstance(hybrid.pipeline[0], HybridPartition) and child_idx == 0:
             # Special case: if the correlated child is the data argument of a
@@ -61,10 +63,14 @@ class Decorrelater:
             # parent of the level containing the partition operation. In this
             # case, all of the parent's children & pipeline operators should be
             # included in the snapshot.
-            assert hybrid.parent is not None
-            return self.make_decorrelate_parent(
+            if hybrid.parent is None:
+                raise ValueError(
+                    "Malformed hybrid tree: partition data input to a partition node cannot contain a correlated reference to the partition node."
+                )
+            result = self.make_decorrelate_parent(
                 hybrid.parent, len(hybrid.parent.children), len(hybrid.pipeline)
             )
+            return result[0], result[1] + 1
         # Temporarily detach the successor of the current level, then create a
         # deep copy of the current level (which will include its ancestors),
         # then reattach the successor back to the original. This ensures that
@@ -78,7 +84,7 @@ class Decorrelater:
         # that is has to.
         new_hybrid._children = new_hybrid._children[:child_idx]
         new_hybrid._pipeline = new_hybrid._pipeline[: required_steps + 1]
-        return new_hybrid
+        return new_hybrid, 0
 
     def remove_correl_refs(
         self, expr: HybridExpr, parent: HybridTree, child_height: int
@@ -221,6 +227,7 @@ class Decorrelater:
         new_parent: HybridTree,
         child: HybridConnection,
         is_aggregate: bool,
+        skipped_levels: int,
     ) -> None:
         """
         Runs the logic to de-correlate a child of a hybrid tree that contains
@@ -230,6 +237,17 @@ class Decorrelater:
         child can now replace correlated references with BACK references that
         point to terms in its newly expanded ancestry, and the original hybrid
         tree can now join onto this child using its uniqueness keys.
+
+        Args:
+            `old_parent`: The correlated ancestor hybrid tree that the correlated
+            references should point to when they are targeted for removal.
+            `new_parent`: The ancestor of `level` that removal should stop at.
+            `child`: The child of the hybrid tree that contains the correlated
+            nodes to be removed.
+            `is_aggregate`: Whether the child is being aggregated with regards
+            to its parent.
+            `skipped_levels`: The number of ancestor layers that should be
+            ignored when deriving backshifts of join/agg keys.
         """
         # First, find the height of the child subtree & its top-most level.
         child_root: HybridTree = child.subtree
@@ -245,28 +263,41 @@ class Decorrelater:
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         additional_levels: int = 0
         current_level: HybridTree | None = old_parent
+        new_agg_keys: list[HybridExpr] = []
         while current_level is not None:
-            for unique_key in current_level.pipeline[0].unique_exprs:
+            skip_join: bool = (
+                isinstance(current_level.pipeline[0], HybridPartition)
+                and child is current_level.children[0]
+            )
+            for unique_key in sorted(current_level.pipeline[0].unique_exprs, key=str):
                 lhs_key: HybridExpr | None = unique_key.shift_back(additional_levels)
                 rhs_key: HybridExpr | None = unique_key.shift_back(
-                    additional_levels + child_height
+                    additional_levels + child_height - skipped_levels
                 )
                 assert lhs_key is not None and rhs_key is not None
-                new_join_keys.append((lhs_key, rhs_key))
+                if not skip_join:
+                    new_join_keys.append((lhs_key, rhs_key))
+                new_agg_keys.append(rhs_key)
             current_level = current_level.parent
             additional_levels += 1
         child.subtree.join_keys = new_join_keys
-        # If aggregating, do the same with the aggregation keys.
+        # If aggregating, update the aggregation keys accordingly.
         if is_aggregate:
-            new_agg_keys: list[HybridExpr] = []
-            assert child.subtree.join_keys is not None
-            for _, rhs_key in child.subtree.join_keys:
-                new_agg_keys.append(rhs_key)
             child.subtree.agg_keys = new_agg_keys
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """
-        TODO
+        The recursive procedure to remove unwanted correlated references from
+        the entire hybrid tree, called from the bottom and working upwards
+        to the top layer, and having each layer also de-correlate its children.
+
+        Args:
+            `hybrid`: The hybrid tree to remove correlated references from.
+
+        Returns:
+            The hybrid tree with all invalid correlated references removed as the
+            tree structure is re-written to allow them to be replaced with BACK
+            references. The transformation is also done in-place.
         """
         # Recursively decorrelate the ancestors of the current level of the
         # hybrid tree.
@@ -282,9 +313,6 @@ class Decorrelater:
         for idx, child in enumerate(hybrid.children):
             if idx not in hybrid.correlated_children:
                 continue
-            new_parent: HybridTree = self.make_decorrelate_parent(
-                hybrid, idx, hybrid.children[idx].required_steps
-            )
             match child.connection_type:
                 case (
                     ConnectionType.SINGULAR
@@ -292,8 +320,15 @@ class Decorrelater:
                     | ConnectionType.AGGREGATION
                     | ConnectionType.AGGREGATION_ONLY_MATCH
                 ):
+                    new_parent, skipped_levels = self.make_decorrelate_parent(
+                        hybrid, idx, hybrid.children[idx].required_steps
+                    )
                     self.decorrelate_child(
-                        hybrid, new_parent, child, child.connection_type.is_aggregation
+                        hybrid,
+                        new_parent,
+                        child,
+                        child.connection_type.is_aggregation,
+                        skipped_levels,
                     )
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(

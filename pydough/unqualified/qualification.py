@@ -676,7 +676,12 @@ class Qualifier:
         partition: PartitionBy = self.builder.build_partition(
             qualified_parent, qualified_child, child_name
         )
-        return partition.with_keys(child_references)
+        partition = partition.with_keys(child_references)
+        # Special case: if accessing as a child, wrap in a
+        # ChildOperatorChildAccess term.
+        if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+            return ChildOperatorChildAccess(partition)
+        return partition
 
     def qualify_collection(
         self,

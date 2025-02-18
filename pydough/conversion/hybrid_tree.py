@@ -494,17 +494,26 @@ class HybridCalc(HybridOperation):
         for name, expr in predecessor.terms.items():
             terms[name] = HybridRefExpr(name, expr.typ)
         renamings.update(predecessor.renamings)
+        new_renamings: dict[str, str] = {}
         for name, expr in new_expressions.items():
             if name in terms and terms[name] == expr:
                 continue
             expr = expr.apply_renamings(predecessor.renamings)
             used_name: str = name
             idx: int = 0
-            while used_name in terms or used_name in renamings:
+            while (
+                used_name in terms
+                or used_name in renamings
+                or used_name in new_renamings
+            ):
                 used_name = f"{name}_{idx}"
                 idx += 1
             terms[used_name] = expr
-            renamings[name] = used_name
+            new_renamings[name] = used_name
+        renamings.update(new_renamings)
+        for old_name, new_name in new_renamings.items():
+            expr = new_expressions.pop(old_name)
+            new_expressions[new_name] = expr
         super().__init__(terms, renamings, orderings, predecessor.unique_exprs)
         self.calc = Calc
         self.new_expressions = new_expressions
@@ -520,7 +529,10 @@ class HybridFilter(HybridOperation):
 
     def __init__(self, predecessor: HybridOperation, condition: HybridExpr):
         super().__init__(
-            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+            predecessor.terms,
+            predecessor.renamings,
+            predecessor.orderings,
+            predecessor.unique_exprs,
         )
         self.predecessor: HybridOperation = predecessor
         self.condition: HybridExpr = condition
@@ -566,7 +578,10 @@ class HybridLimit(HybridOperation):
         records_to_keep: int,
     ):
         super().__init__(
-            predecessor.terms, {}, predecessor.orderings, predecessor.unique_exprs
+            predecessor.terms,
+            predecessor.renamings,
+            predecessor.orderings,
+            predecessor.unique_exprs,
         )
         self.predecessor: HybridOperation = predecessor
         self.records_to_keep: int = records_to_keep
@@ -908,13 +923,13 @@ class HybridTree:
         lines.append(" -> ".join(repr(operation) for operation in self.pipeline))
         prefix = " " if self.successor is None else "↓"
         for idx, child in enumerate(self.children):
-            lines.append(f"{prefix} child #{idx}:")
+            lines.append(f"{prefix} child #{idx} ({child.connection_type.name}):")
             if child.subtree.agg_keys is not None:
-                lines.append(
-                    f"{prefix}  aggregate: {child.subtree.agg_keys} -> {child.aggs}:"
-                )
+                lines.append(f"{prefix}  aggregate: {child.subtree.agg_keys}")
+            if len(child.aggs):
+                lines.append(f"{prefix}  aggs: {child.aggs}:")
             if child.subtree.join_keys is not None:
-                lines.append(f"{prefix}  join: {child.subtree.join_keys}:")
+                lines.append(f"{prefix}  join: {child.subtree.join_keys}")
             for line in repr(child.subtree).splitlines():
                 lines.append(f"{prefix} {line}")
         return "\n".join(lines)
@@ -1964,6 +1979,24 @@ class HybridTranslator:
                                 rhs_expr.name, 0, rhs_expr.typ
                             )
                             join_key_exprs.append((lhs_expr, rhs_expr))
+
+                    case PartitionBy():
+                        partition = HybridPartition()
+                        successor_hybrid = HybridTree(partition)
+                        self.populate_children(
+                            successor_hybrid, node.child_access, child_ref_mapping
+                        )
+                        partition_child_idx = child_ref_mapping[0]
+                        for key_name in node.calc_terms:
+                            key = node.get_expr(key_name)
+                            expr = self.make_hybrid_expr(
+                                successor_hybrid, key, child_ref_mapping, False
+                            )
+                            partition.add_key(key_name, expr)
+                            key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                        successor_hybrid.children[
+                            partition_child_idx
+                        ].subtree.agg_keys = key_exprs
                     case _:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"

@@ -300,3 +300,46 @@ def correl_20():
     )
     instances = selected_orders.lines.supplier.WHERE(is_domestic)
     return TPCH(n=COUNT(instances))
+
+
+def correl_21():
+    # Correlated back reference example #21: partition edge case.
+    # Count how many part sizes have an above-average number of parts
+    # of that size.
+    # (This is a correlated aggregation access)
+    sizes = PARTITION(Parts, name="p", by=size)(n_parts=COUNT(p))
+    return TPCH(avg_n_parts=AVG(sizes.n_parts))(
+        n_sizes=COUNT(sizes.WHERE(n_parts > BACK(1).avg_n_parts))
+    )
+
+
+def correl_22():
+    # Correlated back reference example #22: partition edge case.
+    # Finds the top 5 part sizes with the most container types
+    # where the average retail price of parts of that container type
+    # & part type is above the global average retail price.
+    # (This is a correlated aggregation access)
+    ct_combos = PARTITION(Parts, name="p", by=(container, part_type))(
+        avg_price=AVG(p.retail_price)
+    )
+    return (
+        TPCH(global_avg_price=AVG(Parts.retail_price))
+        .PARTITION(
+            ct_combos.WHERE(avg_price > BACK(1).global_avg_price),
+            name="ct",
+            by=container,
+        )(container, n_types=COUNT(ct))
+        .TOP_K(5, (n_types.DESC(), container.ASC()))
+    )
+
+
+def correl_23():
+    # Correlated back reference example #23: partition edge case.
+    # Counts how many part sizes have an above-average number of combinations
+    # of part types/containers.
+    # (This is a correlated aggregation access)
+    combos = PARTITION(Parts, name="p", by=(size, part_type, container))
+    sizes = PARTITION(combos, name="c", by=size)(n_combos=COUNT(c))
+    return TPCH(avg_n_combo=AVG(sizes.n_combos))(
+        n_sizes=COUNT(sizes.WHERE(n_combos > BACK(1).avg_n_combo)),
+    )

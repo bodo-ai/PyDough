@@ -885,11 +885,26 @@ class RelTranslation:
                 if isinstance(operation.collection, TableCollection):
                     result = self.build_simple_table_scan(operation)
                     if context is not None:
+                        # If the collection access is the child of something
+                        # else, join it onto that something else. Use the
+                        # uniqueness keys of the ancestor, which should also be
+                        # present in the collection (e.g. joining a partition
+                        # onto the original data using the partition keys).
+                        assert preceding_hybrid is not None
+                        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+                        for unique_column in sorted(
+                            preceding_hybrid[0].pipeline[0].unique_exprs, key=str
+                        ):
+                            if unique_column not in result.expressions:
+                                raise ValueError(
+                                    f"Cannot connect parent context to child {operation.collection} because {unique_column} is not in the child's expressions."
+                                )
+                            join_keys.append((unique_column, unique_column))
                         result = self.join_outputs(
                             context,
                             result,
                             JoinType.INNER,
-                            [],
+                            join_keys,
                             None,
                         )
                 else:
@@ -913,7 +928,8 @@ class RelTranslation:
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
             case HybridPartition():
-                assert context is not None, "Malformed HybridTree pattern."
+                if context is None:
+                    context = TranslationOutput(EmptySingleton(), {})
                 result = self.translate_partition(
                     operation, context, hybrid, pipeline_idx
                 )

@@ -431,6 +431,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
             if (
                 "group" in input_expr.args
+                or "distinct" in input_expr.args
                 or "where" in input_expr.args
                 or "qualify" in input_expr.args
                 or "order" in input_expr.args
@@ -462,6 +463,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         query: Select
         if (
             "group" in input_expr.args
+            or "distinct" in input_expr.args
             or "qualify" in input_expr.args
             or "order" in input_expr.args
             or "limit" in input_expr.args
@@ -472,7 +474,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 select_cols, input_expr, find_identifiers_in_list(select_cols)
             )
         if keys:
-            query = query.group_by(*keys)
+            if aggregations:
+                query = query.group_by(*keys)
+            else:
+                query = query.distinct()
         self._stack.append(query)
 
     def visit_limit(self, limit: Limit) -> None:
@@ -511,7 +516,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
-        self._stack.append(Select().from_(values([()])))
+        self._stack.append(Select().select(SQLGlotStar()).from_(values([()])))
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_inputs(root)

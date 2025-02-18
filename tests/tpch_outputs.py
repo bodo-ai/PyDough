@@ -715,7 +715,7 @@ def tpch_q22_output() -> pd.DataFrame:
     This query needs manual rewriting to run efficiently in SQLite
     by avoiding the correlated join.
     """
-    columns = ["CNTRYCODE", "NUMCUST", "TOTACCTBAL"]
+    columns = ["CNTRY_CODE", "NUM_CUSTS", "TOTACCTBAL"]
     data = [
         ("13", 888, 6737713.99),
         ("17", 861, 6460573.72),
