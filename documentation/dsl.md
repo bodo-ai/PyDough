@@ -1174,9 +1174,6 @@ Addresses(
 <!-- TOC --><a name="next-prev"></a>
 ### NEXT / PREV
 
-> [!IMPORTANT]
-> This feature has not yet been implemented in PyDough
-
 In PyDough, it is also possible to access data from other records in the same collection that occur before or after the current record, when all the records are sorted. Similar to how `BACK(n)` can be used as a collection to access terms from an ancestor context, `PREV(n, by=...)` can be used to access terms from another record of the same context, specifically the record obtained by ordering by the `by` terms then looking for the record `n` entries before the current record. Similarly, `NEXT(n, ...)` is the same as `PREV(-n, ...)`.
 
 The arguments to `NEXT` and `PREV` are as follows:
