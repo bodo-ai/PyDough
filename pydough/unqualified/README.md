@@ -22,6 +22,7 @@ Unqualified nodes are the first intermediate representation (IR) created by PyDo
 - `UnqualifiedCollation`: Represents a collation expression.
 - `UnqualifiedOperator`: Represents a function that has yet to be called.
 - `UnqualifiedBack`: Represents a BACK node.
+- `UnqualifiedPrev`: Represents a PREV node.
 - `UnqualifiedWindow`: Represents a window operation.
 
 ## Code Transformation
