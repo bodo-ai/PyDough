@@ -243,6 +243,41 @@ def agg_partition():
     return TPCH(best_year=MAX(yearly_data.n_orders))
 
 
+def multi_partition_access_1():
+    # A use of multiple PARTITION and stepping into partition children that is
+    # a no-op.
+    data = Tickers(symbol).TOP_K(5, by=symbol.ASC())
+    grps_a = PARTITION(data, name="child_3", by=(currency, exchange, ticker_type))
+    grps_b = PARTITION(grps_a, name="child_2", by=(currency, exchange))
+    grps_c = PARTITION(grps_b, name="child_1", by=exchange)
+    return grps_c.child_1.child_2.child_3
+
+
+def multi_partition_access_2():
+    grps_a = PARTITION(
+        Transactions, name="child_3", by=(customer_id, ticker_id, transaction_type)
+    )(avg_shares_a=AVG(child_3.shares))
+    grps_b = PARTITION(grps_a, name="child_2", by=(customer_id, ticker_id))(
+        avg_shares_b=AVG(child_2.child_3.shares)
+    )
+    grps_c = PARTITION(grps_b, name="child_1", by=customer_id)(
+        avg_shares_c=AVG(child_1.child_2.child_3.shares)
+    )
+    return grps_c.child_1.child_2.child_3.WHERE(
+        (shares < BACK(1).avg_shares_a)
+        & (shares < BACK(2).avg_shares_b)
+        & (shares < BACK(3).avg_shares_c)
+    )(
+        transaction_id,
+        customer.name,
+        ticker.symbol,
+        transaction_type,
+        BACK(1).avg_shares_a,
+        BACK(2).avg_shares_b,
+        BACK(3).avg_shares_c,
+    ).ORDER_BY(transaction_id.ASC())
+
+
 def double_partition():
     # Doing a partition aggregation on the output of a partition aggregation
     year_month_data = PARTITION(

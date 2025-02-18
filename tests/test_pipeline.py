@@ -44,6 +44,8 @@ from simple_pydough_functions import (
     function_sampler,
     hour_minute_day,
     minutes_seconds_datediff,
+    multi_partition_access_1,
+    multi_partition_access_2,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -1142,6 +1144,38 @@ def test_pipeline_e2e_errors(
 
 @pytest.fixture(
     params=[
+        pytest.param(
+            (
+                multi_partition_access_1,
+                "Broker",
+                pd.DataFrame({"symbol": ["AAPL", "AAMZ", "BRK.B", "FB", "GOOG"]}),
+            ),
+            id="multi_partition_access_1",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_2,
+                "Broker",
+                pd.DataFrame(
+                    {
+                        "transaction_id": [f"TX{i:03}" for i in (22, 24, 25, 27, 56)],
+                        "symbol": [
+                            "Jane Smith",
+                            "Samantha Lee",
+                            "Michael Chen",
+                            "David Kim",
+                            "Jane Smith",
+                        ],
+                        "name": ["MSFT", "Tesla", "GOOGL", "BRK.B", "FB"],
+                        "transaction_type": ["sell", "sell", "buy", "buy", "sell"],
+                        "avg_shares_a": [56.6667, 55.0, 4.0, 55.5, 47.5],
+                        "avg_shares_b": [50.0, 41.6667, 3.3333, 37.33333, 47.5],
+                        "avg_shares_c": [50.625, 46.25, 40.0, 37.3333, 50.625],
+                    }
+                ),
+            ),
+            id="multi_partition_access_2",
+        ),
         pytest.param(
             (
                 hour_minute_day,
