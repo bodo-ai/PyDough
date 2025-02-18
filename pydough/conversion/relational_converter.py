@@ -44,6 +44,7 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
+from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
@@ -648,7 +649,7 @@ class RelTranslation:
 
         Returns:
             The TranslationOutput payload containing access to the aggregated
-            child corresponding tot he partition data.
+            child corresponding to the partition data.
         """
         expressions: dict[HybridExpr, ColumnReference] = {}
         # Account for the fact that the PARTITION is stepping down a level,
@@ -998,10 +999,11 @@ def convert_ast_to_relational(
     final_terms: set[str] = node.calc_terms
     node = translator.preprocess_root(node)
 
-    # Convert the QDAG node to the hybrid form, then invoke the relational
-    # conversion procedure. The first element in the returned list is the
-    # final rel node.
+    # Convert the QDAG node to the hybrid form, decorrelate it, then invoke
+    # the relational conversion procedure. The first element in the returned
+    # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    run_hybrid_decorrelation(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
