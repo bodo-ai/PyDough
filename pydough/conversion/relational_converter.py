@@ -649,7 +649,7 @@ class RelTranslation:
 
         Returns:
             The TranslationOutput payload containing access to the aggregated
-            child corresponding tot he partition data.
+            child corresponding to the partition data.
         """
         expressions: dict[HybridExpr, ColumnReference] = {}
         # Account for the fact that the PARTITION is stepping down a level,

@@ -229,7 +229,7 @@ class Decorrelater:
         tree that contained the correlated child as a child. The transformed
         child can now replace correlated references with BACK references that
         point to terms in its newly expanded ancestry, and the original hybrid
-        tree cna now join onto this child using its uniqueness keys.
+        tree can now join onto this child using its uniqueness keys.
         """
         # First, find the height of the child subtree & its top-most level.
         child_root: HybridTree = child.subtree
