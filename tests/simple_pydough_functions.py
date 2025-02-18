@@ -174,7 +174,7 @@ def datetime_sampler():
         DATETIME("current_date"),
         DATETIME(" Current_Date "),
         DATETIME("CURRENT_DATE\n\t\t\r"),
-        DATETIME("current_timestamp"),
+        DATETIME("cUrReNt_Timestamp"),
         DATETIME(" Current_Timestamp "),
         DATETIME("CURRENT_TIMESTAMP\n\t\t\r"),
         DATETIME("current date"),
@@ -229,7 +229,7 @@ def datetime_sampler():
             " \n -\t45 \nY \n\r ",
         ),
         DATETIME(
-            " Current Date ",
+            " CuRrEnT dAtE ",
             "- 270 MINUTES",
             "- 34 SECONDS",
             "\tSTART\tOF\td\t",

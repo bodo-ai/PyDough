@@ -62,7 +62,7 @@ from pydough.unqualified import (
         ),
     ],
 )
-def test_pydough_to_ansi_sql_tpch(
+def test_pydough_to_sql_tpch(
     pydough_code: Callable[[], UnqualifiedNode],
     test_name: str,
     get_sample_graph: graph_fetcher,
@@ -108,7 +108,7 @@ def test_pydough_to_ansi_sql_tpch(
         ),
     ],
 )
-def test_pydough_to_ansi_sql_defog(
+def test_pydough_to_sql_defog(
     pydough_code: Callable[[], UnqualifiedNode],
     test_name: str,
     graph_name: str,

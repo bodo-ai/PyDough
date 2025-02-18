@@ -259,7 +259,7 @@ def handle_datetime_base_arg(
     arg: SQLGlotExpression, dialect: DatabaseDialect
 ) -> SQLGlotExpression:
     """
-    Handle the first argument tot he DATETIME function, which can be a datetime
+    Handle the first argument to the DATETIME function, which can be a datetime
     column or a string indicating to fetch the current timestamp.
 
     Args:

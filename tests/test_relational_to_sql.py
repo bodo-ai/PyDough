@@ -685,7 +685,7 @@ def sqlite_dialect() -> SQLiteDialect:
         ),
     ],
 )
-def test_convert_relation_to_ansi_sql(
+def test_convert_relation_to_sqlite_sql(
     root: RelationalRoot,
     test_name: str,
     sqlite_dialect: SQLiteDialect,
@@ -696,7 +696,7 @@ def test_convert_relation_to_ansi_sql(
     """
     Test converting a relational tree to SQL text in the SQLite dialect.
     """
-    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.ANSI)
+    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
     created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
     if update_tests:
         with open(file_path, "w") as f:
@@ -729,7 +729,7 @@ def test_convert_relation_to_ansi_sql(
         ),
     ],
 )
-def test_tpch_relational_to_ansi_sql(
+def test_tpch_relational_to_sqlite_sql(
     root: RelationalRoot,
     test_name: str,
     sqlite_dialect: SQLiteDialect,
@@ -745,7 +745,7 @@ def test_tpch_relational_to_ansi_sql(
     These plans are generated from a couple simple plans we built with
     Apache Calcite in Bodo's SQL optimizer.
     """
-    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.ANSI)
+    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
     created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
     if update_tests:
         with open(file_path, "w") as f:
