@@ -18,6 +18,7 @@ from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
     DatabaseDialect,
+    empty_connection,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
@@ -153,14 +154,14 @@ def get_plan_test_filename() -> Callable[[str], str]:
 
 
 @pytest.fixture(scope="session")
-def get_sql_test_filename() -> Callable[[str], str]:
+def get_sql_test_filename() -> Callable[[str, DatabaseDialect], str]:
     """
     A function that takes in a file name and returns the path to that file
     from within the directory of SQL text testing refsol files.
     """
 
-    def impl(file_name: str) -> str:
-        return f"{os.path.dirname(__file__)}/test_sql_refsols/{file_name}.sql"
+    def impl(file_name: str, dialect: DatabaseDialect) -> str:
+        return f"{os.path.dirname(__file__)}/test_sql_refsols/{file_name}_{dialect.value.lower()}.sql"
 
     return impl
 
@@ -202,6 +203,20 @@ def sqlite_dialects(request) -> DatabaseDialect:
     Returns the SQLite dialect.
     """
     return request.param
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(DatabaseDialect.ANSI, id="ansi"),
+        pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+    ]
+)
+def empty_context_database(request) -> DatabaseContext:
+    """
+    Returns a database context with an empty connection for each supported
+    PyDough SQL dialect.
+    """
+    return DatabaseContext(empty_connection, request.param)
 
 
 @pytest.fixture(scope="session")
