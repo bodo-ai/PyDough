@@ -75,3 +75,14 @@ class RelationalExpressionShuttle(ABC):
         Returns:
             RelationalExpression: The new node resulting from visiting this node.
         """
+
+    @abstractmethod
+    def visit_correlated_reference(self, correlated_reference):
+        """
+        Visit a CorrelatedReference node.
+
+        Args:
+            correlated_reference (CorrelatedReference): The correlated reference node to visit.
+        Returns:
+            RelationalExpression: The new node resulting from visiting this node.
+        """

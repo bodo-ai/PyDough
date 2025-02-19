@@ -49,6 +49,7 @@ class Join(RelationalNode):
         conditions: list[RelationalExpression],
         join_types: list[JoinType],
         columns: MutableMapping[str, RelationalExpression],
+        correl_name: str | None = None,
     ) -> None:
         super().__init__(columns)
         num_inputs = len(inputs)
@@ -65,6 +66,15 @@ class Join(RelationalNode):
         ), "Join condition must be a boolean type"
         self._conditions: list[RelationalExpression] = conditions
         self._join_types: list[JoinType] = join_types
+        self._correl_name: str | None = correl_name
+
+    @property
+    def correl_name(self) -> str | None:
+        """
+        The name used to refer to the first join input when subsequent inputs
+        have correlated references.
+        """
+        return self._correl_name
 
     @property
     def conditions(self) -> list[RelationalExpression]:
@@ -101,6 +111,7 @@ class Join(RelationalNode):
             isinstance(other, Join)
             and self.conditions == other.conditions
             and self.join_types == other.join_types
+            and self.correl_name == other.correl_name
             and all(
                 self.inputs[i].node_equals(other.inputs[i])
                 for i in range(len(self.inputs))
@@ -109,7 +120,10 @@ class Join(RelationalNode):
 
     def to_string(self, compact: bool = False) -> str:
         conditions: list[str] = [cond.to_string(compact) for cond in self.conditions]
-        return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)})"
+        correl_suffix = (
+            "" if self.correl_name is None else f", correl_name={self.correl_name!r}"
+        )
+        return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_join(self)
@@ -119,4 +133,4 @@ class Join(RelationalNode):
         columns: MutableMapping[str, RelationalExpression],
         inputs: MutableSequence[RelationalNode],
     ) -> RelationalNode:
-        return Join(inputs, self.conditions, self.join_types, columns)
+        return Join(inputs, self.conditions, self.join_types, columns, self.correl_name)

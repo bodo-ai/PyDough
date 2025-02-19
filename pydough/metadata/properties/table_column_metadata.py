@@ -26,7 +26,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
     column of data from a relational table.
     """
 
-    # Set of names of of fields that can be included in the JSON object
+    # Set of names of fields that can be included in the JSON object
     # describing a table column property.
     allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "data_type",

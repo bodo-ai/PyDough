@@ -22,13 +22,13 @@ FROM (
     years_diff
   FROM (
     SELECT
-      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, DAYS) AS days_diff,
-      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, HOURS) AS hours_diff,
-      DATEDIFF(TIME_STR_TO_TIME('2023-04-03 13:16:30'), date_time, MINUTES) AS minutes_diff,
-      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, MONTHS) AS months_diff,
-      DATEDIFF(TIME_STR_TO_TIME('2023-04-03 13:16:30'), date_time, SECONDS) AS seconds_diff,
-      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, YEARS) AS ordering_0,
-      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, YEARS) AS years_diff,
+      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, DAY) AS days_diff,
+      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, HOUR) AS hours_diff,
+      DATEDIFF(TIME_STR_TO_TIME('2023-04-03 13:16:30'), date_time, MINUTE) AS minutes_diff,
+      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, MONTH) AS months_diff,
+      DATEDIFF(TIME_STR_TO_TIME('2023-04-03 13:16:30'), date_time, SECOND) AS seconds_diff,
+      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, YEAR) AS ordering_0,
+      DATEDIFF(TIME_STR_TO_TIME('2025-05-02 11:00:00'), date_time, YEAR) AS years_diff,
       date_time AS x,
       TIME_STR_TO_TIME('2023-04-03 13:16:30') AS y,
       TIME_STR_TO_TIME('2025-05-02 11:00:00') AS y1

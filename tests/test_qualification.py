@@ -68,6 +68,26 @@ def pydough_impl_misc_02(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
+def pydough_impl_misc_03(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following PyDough snippet:
+    ```
+    sizes = PARTITION(Parts, name="p", by=size)(n_parts=COUNT(p))
+    TPCH(
+        avg_n_parts=AVG(sizes.n_parts)
+    )(
+        n_parts=COUNT(sizes.WHERE(n_parts > BACK(1).avg_n_parts))
+    )
+    ```
+    """
+    sizes = root.PARTITION(root.Parts, name="p", by=root.size)(
+        n_parts=root.COUNT(root.p)
+    )
+    return root.TPCH(avg_n_parts=root.AVG(sizes.n_parts))(
+        n_parts=root.COUNT(sizes.WHERE(root.n_parts > root.BACK(1).avg_n_parts))
+    )
+
+
 def pydough_impl_tpch_q1(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for TPC-H query 1.
@@ -611,6 +631,30 @@ def pydough_impl_tpch_q22(root: UnqualifiedNode) -> UnqualifiedNode:
           └─── SubCollection[lines]
 """,
             id="misc_02",
+        ),
+        pytest.param(
+            pydough_impl_misc_03,
+            """
+┌─── TPCH
+├─┬─ Calc[avg_n_parts=AVG($1.n_parts)]
+│ └─┬─ AccessChild
+│   ├─┬─ Partition[name='p', by=size]
+│   │ └─┬─ AccessChild
+│   │   └─── TableCollection[Parts]
+│   └─┬─ Calc[n_parts=COUNT($1)]
+│     └─┬─ AccessChild
+│       └─── PartitionChild[p]
+└─┬─ Calc[n_parts=COUNT($1)]
+  └─┬─ AccessChild
+    ├─┬─ Partition[name='p', by=size]
+    │ └─┬─ AccessChild
+    │   └─── TableCollection[Parts]
+    ├─┬─ Calc[n_parts=COUNT($1)]
+    │ └─┬─ AccessChild
+    │   └─── PartitionChild[p]
+    └─── Where[n_parts > BACK(1).avg_n_parts]
+""",
+            id="misc_03",
         ),
         pytest.param(
             pydough_impl_tpch_q1,

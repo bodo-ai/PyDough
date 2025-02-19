@@ -371,7 +371,7 @@ class Qualifier:
             for _ in range(levels):
                 if ancestor.ancestor_context is None:
                     raise PyDoughUnqualifiedException(
-                        f"Cannot back reference {levels} above {unqualified_parent}"
+                        f"Cannot back reference {levels} above {context}"
                     )
                 ancestor = ancestor.ancestor_context
             # Identify whether the access is an expression or a collection
@@ -676,7 +676,12 @@ class Qualifier:
         partition: PartitionBy = self.builder.build_partition(
             qualified_parent, qualified_child, child_name
         )
-        return partition.with_keys(child_references)
+        partition = partition.with_keys(child_references)
+        # Special case: if accessing as a child, wrap in a
+        # ChildOperatorChildAccess term.
+        if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+            return ChildOperatorChildAccess(partition)
+        return partition
 
     def qualify_collection(
         self,
