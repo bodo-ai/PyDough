@@ -4,26 +4,27 @@ Find all unique column references in a relational expression.
 
 from .call_expression import CallExpression
 from .column_reference import ColumnReference
+from .correlated_reference import CorrelatedReference
 from .literal_expression import LiteralExpression
 from .relational_expression_visitor import RelationalExpressionVisitor
 from .window_call_expression import WindowCallExpression
 
-__all__ = ["ColumnReferenceFinder"]
+__all__ = ["CorrelatedReferenceFinder"]
 
 
-class ColumnReferenceFinder(RelationalExpressionVisitor):
+class CorrelatedReferenceFinder(RelationalExpressionVisitor):
     """
-    Find all unique column references in a relational expression.
+    Find all unique correlated references in a relational expression.
     """
 
     def __init__(self) -> None:
-        self._column_references: set[ColumnReference] = set()
+        self._correlated_references: set[CorrelatedReference] = set()
 
     def reset(self) -> None:
-        self._column_references = set()
+        self._correlated_references = set()
 
-    def get_column_references(self) -> set[ColumnReference]:
-        return self._column_references
+    def get_correlated_references(self) -> set[CorrelatedReference]:
+        return self._correlated_references
 
     def visit_call_expression(self, call_expression: CallExpression) -> None:
         for arg in call_expression.inputs:
@@ -41,7 +42,7 @@ class ColumnReferenceFinder(RelationalExpressionVisitor):
         pass
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
-        self._column_references.add(column_reference)
+        pass
 
     def visit_correlated_reference(self, correlated_reference) -> None:
-        pass
+        self._correlated_references.add(correlated_reference)

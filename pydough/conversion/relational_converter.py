@@ -27,6 +27,7 @@ from pydough.relational import (
     CallExpression,
     ColumnPruner,
     ColumnReference,
+    CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
@@ -43,6 +44,7 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
+from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
@@ -52,6 +54,7 @@ from .hybrid_tree import (
     HybridCollectionAccess,
     HybridColumnExpr,
     HybridConnection,
+    HybridCorrelExpr,
     HybridExpr,
     HybridFilter,
     HybridFunctionExpr,
@@ -90,11 +93,20 @@ class TranslationOutput:
     value of that expression.
     """
 
+    correlated_name: str | None = None
+    """
+    The name that can be used to refer to the relational output in correlated
+    references.
+    """
+
 
 class RelTranslation:
     def __init__(self):
         # An index used for creating fake column names
         self.dummy_idx = 1
+        # A stack of contexts used to point to ancestors for correlated
+        # references.
+        self.stack: list[TranslationOutput] = []
 
     def make_null_column(self, relation: RelationalNode) -> ColumnReference:
         """
@@ -144,6 +156,24 @@ class RelTranslation:
             self.dummy_idx += 1
             new_name = f"{name}_{self.dummy_idx}"
         return new_name
+
+    def get_correlated_name(self, context: TranslationOutput) -> str:
+        """
+        Finds the name used to refer to a context for correlated variable
+        access. If the context does not have a correlated name, a new one is
+        generated for it.
+
+        Args:
+            `context`: the context containing the relational subtree being
+            referrenced in a correlated variable access.
+
+        Returns:
+            The name used to refer to the context in a correlated reference.
+        """
+        if context.correlated_name is None:
+            context.correlated_name = f"corr{self.dummy_idx}"
+            self.dummy_idx += 1
+        return context.correlated_name
 
     def translate_expression(
         self, expr: HybridExpr, context: TranslationOutput | None
@@ -199,8 +229,32 @@ class RelTranslation:
                     order_inputs,
                     expr.kwargs,
                 )
+            case HybridCorrelExpr():
+                # Convert correlated expressions by converting the expression
+                # they point to in the context of the top of the stack, then
+                # wrapping the result in a correlated reference.
+                ancestor_context: TranslationOutput = self.stack.pop()
+                ancestor_expr: RelationalExpression = self.translate_expression(
+                    expr.expr, ancestor_context
+                )
+                self.stack.append(ancestor_context)
+                match ancestor_expr:
+                    case ColumnReference():
+                        return CorrelatedReference(
+                            ancestor_expr.name,
+                            self.get_correlated_name(ancestor_context),
+                            expr.typ,
+                        )
+                    case CorrelatedReference():
+                        return ancestor_expr
+                    case _:
+                        raise ValueError(
+                            f"Unsupported expression to reference in a correlated reference: {ancestor_expr}"
+                        )
             case _:
-                raise NotImplementedError(expr.__class__.__name__)
+                raise NotImplementedError(
+                    f"TODO: support relational conversion on {expr.__class__.__name__}"
+                )
 
     def join_outputs(
         self,
@@ -257,6 +311,7 @@ class RelTranslation:
             [LiteralExpression(True, BooleanType())],
             [join_type],
             join_columns,
+            correl_name=lhs_result.correlated_name,
         )
         input_aliases: list[str | None] = out_rel.default_input_aliases
 
@@ -397,9 +452,11 @@ class RelTranslation:
         """
         for child_idx, child in enumerate(hybrid.children):
             if child.required_steps == pipeline_idx:
+                self.stack.append(context)
                 child_output = self.rel_translation(
                     child, child.subtree, len(child.subtree.pipeline) - 1
                 )
+                self.stack.pop()
                 assert child.subtree.join_keys is not None
                 join_keys: list[tuple[HybridExpr, HybridExpr]] = child.subtree.join_keys
                 agg_keys: list[HybridExpr]
@@ -828,11 +885,26 @@ class RelTranslation:
                 if isinstance(operation.collection, TableCollection):
                     result = self.build_simple_table_scan(operation)
                     if context is not None:
+                        # If the collection access is the child of something
+                        # else, join it onto that something else. Use the
+                        # uniqueness keys of the ancestor, which should also be
+                        # present in the collection (e.g. joining a partition
+                        # onto the original data using the partition keys).
+                        assert preceding_hybrid is not None
+                        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+                        for unique_column in sorted(
+                            preceding_hybrid[0].pipeline[0].unique_exprs, key=str
+                        ):
+                            if unique_column not in result.expressions:
+                                raise ValueError(
+                                    f"Cannot connect parent context to child {operation.collection} because {unique_column} is not in the child's expressions."
+                                )
+                            join_keys.append((unique_column, unique_column))
                         result = self.join_outputs(
                             context,
                             result,
                             JoinType.INNER,
-                            [],
+                            join_keys,
                             None,
                         )
                 else:
@@ -856,7 +928,8 @@ class RelTranslation:
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
             case HybridPartition():
-                assert context is not None, "Malformed HybridTree pattern."
+                if context is None:
+                    context = TranslationOutput(EmptySingleton(), {})
                 result = self.translate_partition(
                     operation, context, hybrid, pipeline_idx
                 )
@@ -942,10 +1015,11 @@ def convert_ast_to_relational(
     final_terms: set[str] = node.calc_terms
     node = translator.preprocess_root(node)
 
-    # Convert the QDAG node to the hybrid form, then invoke the relational
-    # conversion procedure. The first element in the returned list is the
-    # final rel node.
-    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node)
+    # Convert the QDAG node to the hybrid form, decorrelate it, then invoke
+    # the relational conversion procedure. The first element in the returned
+    # list is the final rel node.
+    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    run_hybrid_decorrelation(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
