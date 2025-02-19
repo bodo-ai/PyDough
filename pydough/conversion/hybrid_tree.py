@@ -1898,11 +1898,11 @@ class HybridTranslator:
         subtree: HybridTree
         successor_hybrid: HybridTree
         expr: HybridExpr
+        hybrid_back_expr: HybridExpr
         child_ref_mapping: dict[int, int] = {}
         key_exprs: list[HybridExpr] = []
         join_key_exprs: list[tuple[HybridExpr, HybridExpr]] = []
-        hybrid_back_expr: HybridExpr
-        back_exprs: dict[str, HybridExpr]
+        back_exprs: dict[str, HybridExpr] = {}
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot(), node.ancestral_mapping)
@@ -1961,7 +1961,6 @@ class HybridTranslator:
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
                 partition_child_idx: int = child_ref_mapping[0]
-                back_exprs = {}
                 subtree = successor_hybrid.children[partition_child_idx].subtree
                 for name in subtree.ancestral_mapping:
                     # Skip adding backrefs for terms that remain part of the
@@ -2062,7 +2061,6 @@ class HybridTranslator:
                             )
                             partition.add_key(key_name, expr)
                             key_exprs.append(HybridRefExpr(key_name, expr.typ))
-                        back_exprs = {}
                         subtree = successor_hybrid.children[partition_child_idx].subtree
                         for name in subtree.ancestral_mapping:
                             # Skip adding backrefs for terms that remain part of the
