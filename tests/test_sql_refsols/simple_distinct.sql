@@ -1,5 +1,3 @@
-SELECT
+SELECT DISTINCT
   b
 FROM table
-GROUP BY
-  b
