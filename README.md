@@ -18,7 +18,7 @@ Suppose I want to know for every person their name & the total income they've ma
 The following PyDough snippet solves this problem:
 
 ```py
-result = People(
+result = People.CALCULATE(
     name,
     net_income = SUM(jobs.income_earned) - SUM(schools.tuition_paid)
 )

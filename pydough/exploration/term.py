@@ -9,7 +9,6 @@ __all__ = ["explain_term", "find_unqualified_root"]
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
-    BackReferenceCollection,
     BackReferenceExpression,
     ChildReferenceExpression,
     ColumnProperty,
@@ -22,7 +21,7 @@ from pydough.qdag import (
 )
 from pydough.unqualified import (
     UnqualifiedAccess,
-    UnqualifiedCalc,
+    UnqualifiedCalculate,
     UnqualifiedNode,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
@@ -51,7 +50,7 @@ def find_unqualified_root(node: UnqualifiedNode) -> UnqualifiedRoot | None:
             return node
         case (
             UnqualifiedAccess()
-            | UnqualifiedCalc()
+            | UnqualifiedCalculate()
             | UnqualifiedWhere()
             | UnqualifiedOrderBy()
             | UnqualifiedTopK()
@@ -69,8 +68,8 @@ def collection_in_context_string(
     """
     Converts a collection in the context of another collection into a single
     string in a way that elides back collection references. For example,
-    if the context is A.B.C.D, and the collection is BACK(2).E.F, the result
-    would be "A.B.E.F".
+    if the context is A.B.WHERE(C), and the collection is D.E, the result
+    would be "A.B.WHERE(C).D.E".
 
     Args:
         `context`: the collection representing the context that `collection`
@@ -80,13 +79,7 @@ def collection_in_context_string(
     Returns:
         The desired string representation of context and collection combined.
     """
-    if isinstance(collection, BackReferenceCollection):
-        ancestor: PyDoughCollectionQDAG = context
-        for _ in range(collection.back_levels):
-            assert ancestor.ancestor_context is not None
-            ancestor = ancestor.ancestor_context
-        return f"{ancestor.to_string()}.{collection.term_name}"
-    elif (
+    if (
         collection.preceding_context is not None
         and collection.preceding_context is not context
     ):
@@ -281,19 +274,19 @@ def explain_term(
                 lines.append("")
                 if qualified_term.is_singular(qualified_node.starting_predecessor):
                     lines.append(
-                        "This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection."
+                        "This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection."
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}({qualified_term.to_string()})"
+                        f"  {qualified_node.to_string()}.CALCULATE({qualified_term.to_string()})"
                     )
                 else:
                     lines.append(
-                        "This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated."
+                        "This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated."
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}(COUNT({qualified_term.to_string()}))"
+                        f"  {qualified_node.to_string()}.CALCULATE(COUNT({qualified_term.to_string()}))"
                     )
         else:
             assert isinstance(qualified_term, PyDoughCollectionQDAG)
@@ -317,7 +310,7 @@ def explain_term(
                     )
                     lines.append("For example, the following is valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}({qualified_term.to_string()}.{chosen_term_name})"
+                        f"  {qualified_node.to_string()}.CALCULATE({qualified_term.to_string()}.{chosen_term_name})"
                     )
                 else:
                     lines.append(
@@ -325,7 +318,7 @@ def explain_term(
                     )
                     lines.append("For example, the following are valid:")
                     lines.append(
-                        f"  {qualified_node.to_string()}(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
+                        f"  {qualified_node.to_string()}.CALCULATE(COUNT({qualified_term.to_string()}.{chosen_term_name}))"
                     )
                     lines.append(
                         f"  {qualified_node.to_string()}.WHERE(HAS({qualified_term.to_string()}))"

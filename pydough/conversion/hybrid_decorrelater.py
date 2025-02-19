@@ -11,7 +11,7 @@ import copy
 from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
-    HybridCalc,
+    HybridCalculate,
     HybridChildRefExpr,
     HybridColumnExpr,
     HybridConnection,
@@ -208,7 +208,7 @@ class Decorrelater:
                     operation.unique_exprs[idx] = self.remove_correl_refs(
                         expr, old_parent, child_height
                     )
-                if isinstance(operation, HybridCalc):
+                if isinstance(operation, HybridCalculate):
                     for str, expr in operation.new_expressions.items():
                         operation.new_expressions[str] = self.remove_correl_refs(
                             expr, old_parent, child_height

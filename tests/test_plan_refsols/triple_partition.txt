@@ -1,4 +1,4 @@
-ROOT(columns=[('supp_region', supp_region), ('avg_percentage', avg_percentage)], orderings=[(ordering_1):asc_first])
+ROOT(columns=[('region', supp_region), ('avgpct', avg_percentage)], orderings=[(ordering_1):asc_first])
  PROJECT(columns={'avg_percentage': avg_percentage, 'ordering_1': supp_region, 'supp_region': supp_region})
   PROJECT(columns={'avg_percentage': agg_0, 'supp_region': supp_region})
    AGGREGATE(keys={'supp_region': supp_region}, aggregations={'agg_0': AVG(percentage)})

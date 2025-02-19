@@ -68,6 +68,11 @@ class GlobalContext(PyDoughCollectionQDAG):
         return set()
 
     @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        # A global context does not have any ancestral terms
+        return {}
+
+    @property
     def all_terms(self) -> set[str]:
         return set(self.collections)
 

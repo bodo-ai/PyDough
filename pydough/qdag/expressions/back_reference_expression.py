@@ -65,7 +65,7 @@ class BackReferenceExpression(Reference):
         return False
 
     def to_string(self, tree_form: bool = False) -> str:
-        return f"BACK({self.back_levels}).{self.term_name}"
+        return self.term_name
 
     def equals(self, other: object) -> bool:
         return (
