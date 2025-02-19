@@ -1621,6 +1621,7 @@ class HybridTranslator:
         parent_tree: HybridTree = self.stack.pop()
         remaining_steps_back: int = back_expr.back_levels - steps_taken_so_far - 1
         parent_result: HybridExpr
+        new_expr: PyDoughExpressionQDAG
         # Special case: stepping out of the data argument of PARTITION back
         # into its ancestor. For example:
         # TPCH.CALCULATE(x=...).PARTITION(data.WHERE(y > BACK(1).x), ...)
@@ -1640,20 +1641,28 @@ class HybridTranslator:
         elif remaining_steps_back == 0:
             # If there are no more steps back to be made, then the correlated
             # reference is to a reference from the current context.
-            if back_expr.term_name not in parent_tree.pipeline[-1].terms:
+            if back_expr.term_name in parent_tree.ancestral_mapping:
+                new_expr = BackReferenceExpression(
+                    collection,
+                    back_expr.term_name,
+                    parent_tree.ancestral_mapping[back_expr.term_name],
+                )
+                parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
+            elif back_expr.term_name in parent_tree.pipeline[-1].terms:
+                parent_name: str = parent_tree.pipeline[-1].renamings.get(
+                    back_expr.term_name, back_expr.term_name
+                )
+                parent_result = HybridRefExpr(parent_name, back_expr.pydough_type)
+            else:
                 raise ValueError(
                     f"Back reference to {back_expr.term_name} not found in parent"
                 )
-            parent_name: str = parent_tree.pipeline[-1].renamings.get(
-                back_expr.term_name, back_expr.term_name
-            )
-            parent_result = HybridRefExpr(parent_name, back_expr.pydough_type)
         else:
             # Otherwise, a back reference needs to be made from the current
             # collection a number of steps back based on how many steps still
             # need to be taken, and it must be recursively converted to a
             # hybrid expression that gets wrapped in a correlated reference.
-            new_expr: PyDoughExpressionQDAG = BackReferenceExpression(
+            new_expr = BackReferenceExpression(
                 collection, back_expr.term_name, remaining_steps_back
             )
             parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
@@ -2028,6 +2037,7 @@ class HybridTranslator:
                             )
                     case PartitionChild():
                         successor_hybrid = copy.deepcopy(parent.children[0].subtree)
+                        successor_hybrid._ancestral_mapping = node.ancestral_mapping
                         partition_by = (
                             node.child_access.ancestor_context.starting_predecessor
                         )

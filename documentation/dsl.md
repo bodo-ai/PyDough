@@ -521,7 +521,7 @@ packages_billed_home = packages.WHERE(
 People.CALCULATE(
     original_address=current_address.address_id,
     n_packages=COUNT(current_address.packages_billed_to),
-)(
+).CALCULATE(
     ssn,
     pct=100.0 * COUNT(packages_billed_home) / n_packages
 )
