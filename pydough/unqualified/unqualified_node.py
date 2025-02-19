@@ -14,6 +14,7 @@ __all__ = [
     "UnqualifiedOperator",
     "UnqualifiedOrderBy",
     "UnqualifiedPartition",
+    "UnqualifiedPrev",
     "UnqualifiedRoot",
     "UnqualifiedTopK",
     "UnqualifiedWhere",
@@ -342,6 +343,55 @@ class UnqualifiedRoot(UnqualifiedNode):
         else:
             return super().__getattribute__(name)
 
+    def PREV(
+        self,
+        n_behind: int = 1,
+        by: object | Iterable[object] | None = None,
+        levels: int | None = None,
+    ) -> "UnqualifiedPrev":
+        """
+        Method used to create a PREV node.
+        """
+        if by is None:
+            return UnqualifiedPrev(n_behind, None, levels)
+        else:
+            keys_unqualified: MutableSequence[UnqualifiedNode]
+            if isinstance(by, Iterable):
+                keys_unqualified = [self.coerce_to_unqualified(key) for key in by]
+            else:
+                keys_unqualified = [self.coerce_to_unqualified(by)]
+            return UnqualifiedPrev(n_behind, keys_unqualified, levels)
+
+    def NEXT(
+        self,
+        n_ahead: int = 1,
+        by: object | Iterable[object] | None = None,
+        levels: int | None = None,
+    ) -> "UnqualifiedPrev":
+        """
+        Method used to create a NEXT node, which is just a PREV node with the
+        sign flipped.
+        """
+        return self.PREV(-n_ahead, by, levels)
+
+
+class UnqualifiedPrev(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a PREV node, which can
+    be used to access the value of an expression from a previous row of the
+    current context.
+    """
+
+    def __init__(
+        self,
+        n_behind: int,
+        by: MutableSequence[UnqualifiedNode] | None,
+        levels: int | None,
+    ):
+        self._parcel: tuple[
+            int, MutableSequence[UnqualifiedNode] | None, int | None
+        ] = (n_behind, by, levels)
+
 
 class UnqualifiedBack(UnqualifiedNode):
     """
@@ -614,6 +664,13 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
     match unqualified:
         case UnqualifiedRoot():
             return "?"
+        case UnqualifiedPrev():
+            operands_str = repr(unqualified._parcel[0])
+            if unqualified._parcel[1] is not None:
+                operands_str += f', by=({", ".join([display_raw(operand) for operand in unqualified._parcel[1]])}'
+            if unqualified._parcel[2] is not None:
+                operands_str += f", levels={unqualified._parcel[2]}"
+            return f"PREV({operands_str})"
         case UnqualifiedBack():
             return f"BACK({unqualified._parcel[0]})"
         case UnqualifiedLiteral():
