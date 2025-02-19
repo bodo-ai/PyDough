@@ -531,18 +531,12 @@ def triple_partition():
     # customer region. Only considers lineitems from June of 1992 where the
     # container is small.
     line_info = (
-        Parts.CALCULATE(part_type=part_type)
-        .WHERE(
-            STARTSWITH(container, "SM"),
-        )
+        Parts.CALCULATE(part_type)
+        .WHERE(STARTSWITH(container, "SM"))
         .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))
-        .CALCULATE(
-            supp_region=supplier.nation.region.name,
-        )
+        .CALCULATE(supp_region=supplier.nation.region.name)
         .order.WHERE(YEAR(order_date) == 1992)
-        .CALCULATE(
-            cust_region=customer.nation.region.name,
-        )
+        .CALCULATE(cust_region=customer.nation.region.name)
     )
     rrt_combos = PARTITION(
         line_info, name="lines", by=(supp_region, cust_region, part_type)
