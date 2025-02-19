@@ -1,0 +1,3 @@
+SELECT DISTINCT
+  b
+FROM table

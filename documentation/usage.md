@@ -752,7 +752,7 @@ logger.info("This is an info message.")
 logger.error("This is an error message.")
 ```
 
-We can also set the level of logging via a function argument. Note that if `PYDOUGH_LOG_LEVEL` is available, the default_level argument is overriden. 
+We can also set the level of logging via a function argument. Note that if `PYDOUGH_LOG_LEVEL` is available, the default_level argument is overridden. 
 
 ```python
 # Import the function

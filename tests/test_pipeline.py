@@ -12,12 +12,42 @@ from bad_pydough_functions import (
     bad_slice_3,
     bad_slice_4,
 )
+from correlated_pydough_functions import (
+    correl_1,
+    correl_2,
+    correl_3,
+    correl_4,
+    correl_5,
+    correl_6,
+    correl_7,
+    correl_8,
+    correl_9,
+    correl_10,
+    correl_11,
+    correl_12,
+    correl_13,
+    correl_14,
+    correl_15,
+    correl_16,
+    correl_17,
+    correl_18,
+    correl_19,
+    correl_20,
+    correl_21,
+    correl_22,
+    correl_23,
+)
 from simple_pydough_functions import (
     agg_partition,
+    datetime_current,
+    datetime_relative,
     double_partition,
     exponentiation,
     function_sampler,
     hour_minute_day,
+    minutes_seconds_datediff,
+    multi_partition_access_1,
+    multi_partition_access_2,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -31,6 +61,7 @@ from simple_pydough_functions import (
     simple_scan,
     simple_scan_top_five,
     triple_partition,
+    years_months_days_hours_datediff,
 )
 from test_utils import (
     graph_fetcher,
@@ -145,7 +176,6 @@ from pydough.unqualified import (
                 tpch_q5_output,
             ),
             id="tpch_q5",
-            marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
         pytest.param(
             (
@@ -290,7 +320,6 @@ from pydough.unqualified import (
                 tpch_q21_output,
             ),
             id="tpch_q21",
-            marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
         pytest.param(
             (
@@ -300,7 +329,6 @@ from pydough.unqualified import (
                 tpch_q22_output,
             ),
             id="tpch_q22",
-            marks=pytest.mark.skip("TODO: support correlated back references"),
         ),
         pytest.param(
             (
@@ -616,6 +644,71 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
+                datetime_current,
+                None,
+                "datetime_current",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": [f"{pd.Timestamp.now().year}-05-31 00:00:00"],
+                        "d2": [
+                            f"{pd.Timestamp.now().year}-{pd.Timestamp.now().month:02}-02 00:00:00"
+                        ],
+                        "d3": [
+                            (
+                                pd.Timestamp.now().normalize()
+                                + pd.Timedelta(hours=12, minutes=-150, seconds=2)
+                            ).strftime("%Y-%m-%d %H:%M:%S")
+                        ],
+                    },
+                ),
+            ),
+            id="datetime_current",
+        ),
+        pytest.param(
+            (
+                datetime_relative,
+                None,
+                "datetime_relative",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": [
+                            f"{y}-01-01 00:00:00"
+                            for y in [1992] * 3 + [1994] * 3 + [1996] * 3 + [1997]
+                        ],
+                        "d2": [
+                            "1992-04-01 00:00:00",
+                            "1992-04-01 00:00:00",
+                            "1992-08-01 00:00:00",
+                            "1994-05-01 00:00:00",
+                            "1994-08-01 00:00:00",
+                            "1994-12-01 00:00:00",
+                            "1996-06-01 00:00:00",
+                            "1996-07-01 00:00:00",
+                            "1996-12-01 00:00:00",
+                            "1997-03-01 00:00:00",
+                        ],
+                        "d3": [
+                            "1981-12-29 04:57:01",
+                            "1982-01-12 04:57:01",
+                            "1982-05-15 04:57:01",
+                            "1984-02-14 04:57:01",
+                            "1984-05-21 04:57:01",
+                            "1984-09-17 04:57:01",
+                            "1986-03-22 04:57:01",
+                            "1986-03-25 04:57:01",
+                            "1986-09-02 04:57:01",
+                            "1986-12-16 04:57:01",
+                        ],
+                        "d4": ["2025-07-04 12:00:00"] * 10,
+                        "d5": ["2025-07-04 12:58:00"] * 10,
+                        "d6": ["2025-07-26 02:45:25"] * 10,
+                    },
+                ),
+            ),
+            id="datetime_relative_tpch",
+        ),
+        pytest.param(
+            (
                 agg_partition,
                 None,
                 "agg_partition",
@@ -667,19 +760,420 @@ from pydough.unqualified import (
             ),
             id="triple_partition",
         ),
+        pytest.param(
+            (
+                correl_1,
+                None,
+                "correl_1",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_prefix_nations": [1, 1, 0, 0, 0],
+                    }
+                ),
+            ),
+            id="correl_1",
+        ),
+        pytest.param(
+            (
+                correl_2,
+                None,
+                "correl_2",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "EGYPT",
+                            "FRANCE",
+                            "GERMANY",
+                            "IRAN",
+                            "IRAQ",
+                            "JORDAN",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "SAUDI ARABIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_custs": [
+                            19,
+                            593,
+                            595,
+                            15,
+                            21,
+                            9,
+                            588,
+                            620,
+                            19,
+                            585,
+                        ],
+                    }
+                ),
+            ),
+            id="correl_2",
+        ),
+        pytest.param(
+            (
+                correl_3,
+                None,
+                "correl_3",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_nations": [5, 5, 5, 0, 2],
+                    }
+                ),
+            ),
+            id="correl_3",
+        ),
+        pytest.param(
+            (
+                correl_4,
+                None,
+                "correl_4",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["ARGENTINA", "KENYA", "UNITED KINGDOM"],
+                    }
+                ),
+            ),
+            id="correl_4",
+        ),
+        pytest.param(
+            (
+                correl_5,
+                None,
+                "correl_5",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "ASIA", "MIDDLE EAST"],
+                    }
+                ),
+            ),
+            id="correl_5",
+        ),
+        pytest.param(
+            (
+                correl_6,
+                None,
+                "correl_6",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA"],
+                        "n_prefix_nations": [1, 1],
+                    }
+                ),
+            ),
+            id="correl_6",
+        ),
+        pytest.param(
+            (
+                correl_7,
+                None,
+                "correl_7",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_prefix_nations": [0] * 3,
+                    }
+                ),
+            ),
+            id="correl_7",
+        ),
+        pytest.param(
+            (
+                correl_8,
+                None,
+                "correl_8",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                            "INDONESIA",
+                            "IRAN",
+                            "IRAQ",
+                            "JAPAN",
+                            "JORDAN",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "PERU",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "SAUDI ARABIA",
+                            "UNITED KINGDOM",
+                            "UNITED STATES",
+                            "VIETNAM",
+                        ],
+                        "rname": ["AFRICA", "AMERICA"] + [None] * 23,
+                    }
+                ),
+            ),
+            id="correl_8",
+        ),
+        pytest.param(
+            (
+                correl_9,
+                None,
+                "correl_9",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                        ],
+                        "rname": ["AFRICA", "AMERICA"],
+                    }
+                ),
+            ),
+            id="correl_9",
+        ),
+        pytest.param(
+            (
+                correl_10,
+                None,
+                "correl_10",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                            "INDONESIA",
+                            "IRAN",
+                            "IRAQ",
+                            "JAPAN",
+                            "JORDAN",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "PERU",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "SAUDI ARABIA",
+                            "UNITED KINGDOM",
+                            "UNITED STATES",
+                            "VIETNAM",
+                        ],
+                        "rname": [None] * 23,
+                    }
+                ),
+            ),
+            id="correl_10",
+        ),
+        pytest.param(
+            (
+                correl_11,
+                None,
+                "correl_11",
+                lambda: pd.DataFrame(
+                    {"brand": ["Brand#33", "Brand#43", "Brand#45", "Brand#55"]}
+                ),
+            ),
+            id="correl_11",
+        ),
+        pytest.param(
+            (
+                correl_12,
+                None,
+                "correl_12",
+                lambda: pd.DataFrame(
+                    {
+                        "brand": [
+                            "Brand#14",
+                            "Brand#31",
+                            "Brand#33",
+                            "Brand#43",
+                            "Brand#55",
+                        ]
+                    }
+                ),
+            ),
+            id="correl_12",
+        ),
+        pytest.param(
+            (
+                correl_13,
+                None,
+                "correl_13",
+                lambda: pd.DataFrame({"n": [1129]}),
+            ),
+            id="correl_13",
+        ),
+        pytest.param(
+            (
+                correl_14,
+                None,
+                "correl_14",
+                lambda: pd.DataFrame({"n": [66]}),
+            ),
+            id="correl_14",
+        ),
+        pytest.param(
+            (
+                correl_15,
+                None,
+                "correl_15",
+                lambda: pd.DataFrame({"n": [61]}),
+            ),
+            id="correl_15",
+        ),
+        pytest.param(
+            (
+                correl_16,
+                None,
+                "correl_16",
+                lambda: pd.DataFrame({"n": [929]}),
+            ),
+            id="correl_16",
+        ),
+        pytest.param(
+            (
+                correl_17,
+                None,
+                "correl_17",
+                lambda: pd.DataFrame(
+                    {
+                        "fullname": [
+                            "africa-algeria",
+                            "africa-ethiopia",
+                            "africa-kenya",
+                            "africa-morocco",
+                            "africa-mozambique",
+                            "america-argentina",
+                            "america-brazil",
+                            "america-canada",
+                            "america-peru",
+                            "america-united states",
+                            "asia-china",
+                            "asia-india",
+                            "asia-indonesia",
+                            "asia-japan",
+                            "asia-vietnam",
+                            "europe-france",
+                            "europe-germany",
+                            "europe-romania",
+                            "europe-russia",
+                            "europe-united kingdom",
+                            "middle east-egypt",
+                            "middle east-iran",
+                            "middle east-iraq",
+                            "middle east-jordan",
+                            "middle east-saudi arabia",
+                        ]
+                    }
+                ),
+            ),
+            id="correl_17",
+        ),
+        pytest.param(
+            (
+                correl_18,
+                None,
+                "correl_18",
+                lambda: pd.DataFrame({"n": [697]}),
+            ),
+            id="correl_18",
+        ),
+        pytest.param(
+            (
+                correl_19,
+                None,
+                "correl_19",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Supplier#000003934",
+                            "Supplier#000003887",
+                            "Supplier#000002628",
+                            "Supplier#000008722",
+                            "Supplier#000007971",
+                        ],
+                        "n_super_cust": [6160, 6142, 6129, 6127, 6117],
+                    }
+                ),
+            ),
+            id="correl_19",
+        ),
+        pytest.param(
+            (
+                correl_20,
+                None,
+                "correl_20",
+                lambda: pd.DataFrame({"n": [3002]}),
+            ),
+            id="correl_20",
+        ),
+        pytest.param(
+            (
+                correl_21,
+                None,
+                "correl_21",
+                lambda: pd.DataFrame({"n_sizes": [30]}),
+            ),
+            id="correl_21",
+        ),
+        pytest.param(
+            (
+                correl_22,
+                None,
+                "correl_22",
+                lambda: pd.DataFrame(
+                    {
+                        "container": [
+                            "JUMBO DRUM",
+                            "JUMBO PKG",
+                            "MED DRUM",
+                            "SM BAG",
+                            "LG PKG",
+                        ],
+                        "n_types": [89, 86, 81, 81, 80],
+                    }
+                ),
+            ),
+            id="correl_22",
+        ),
+        pytest.param(
+            (
+                correl_23,
+                None,
+                "correl_23",
+                lambda: pd.DataFrame({"n_sizes": [23]}),
+            ),
+            id="correl_23",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
     request,
-) -> tuple[Callable[[], UnqualifiedNode], str, Callable[[], pd.DataFrame]]:
+) -> tuple[
+    Callable[[], UnqualifiedNode],
+    dict[str, str] | list[str] | None,
+    str,
+    Callable[[], pd.DataFrame],
+]:
     """
     Test data for test_pydough_pipeline. Returns a tuple of the following
     arguments:
     1. `unqualified_impl`: a function that takes in an unqualified root and
     creates the unqualified node for the TPCH query.
-    2. `file_name`: the name of the file containing the expected relational
+    2. `columns`: a valid value for the `columns` argument of `to_sql` or
+    `to_df`.
+    3. `file_name`: the name of the file containing the expected relational
     plan.
-    3. `answer_impl`: a function that takes in nothing and returns the answer
+    4. `answer_impl`: a function that takes in nothing and returns the answer
     to a TPCH query as a Pandas DataFrame.
     """
     return request.param
@@ -831,6 +1325,42 @@ def test_pipeline_e2e_errors(
     params=[
         pytest.param(
             (
+                multi_partition_access_1,
+                None,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {"symbol": ["AAPL", "AMZN", "BRK.B", "FB", "GOOG"]}
+                ),
+            ),
+            id="multi_partition_access_1",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_2,
+                None,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [f"TX{i:03}" for i in (22, 24, 25, 27, 56)],
+                        "name": [
+                            "Jane Smith",
+                            "Samantha Lee",
+                            "Michael Chen",
+                            "David Kim",
+                            "Jane Smith",
+                        ],
+                        "symbol": ["MSFT", "TSLA", "GOOGL", "BRK.B", "FB"],
+                        "transaction_type": ["sell", "sell", "buy", "buy", "sell"],
+                        "avg_shares_a": [56.66667, 55.0, 4.0, 55.5, 47.5],
+                        "avg_shares_b": [50.0, 41.66667, 3.33333, 37.33333, 47.5],
+                        "avg_shares_c": [50.625, 46.25, 40.0, 37.33333, 50.625],
+                    }
+                ),
+            ),
+            id="multi_partition_access_2",
+        ),
+        pytest.param(
+            (
                 hour_minute_day,
                 None,
                 "Broker",
@@ -907,6 +1437,265 @@ def test_pipeline_e2e_errors(
                 ),
             ),
             id="exponentiation",
+        ),
+        pytest.param(
+            (
+                years_months_days_hours_datediff,
+                "Broker",
+                lambda: pd.DataFrame(
+                    data={
+                        "x": [
+                            "2023-04-01 09:30:00",
+                            "2023-04-01 10:15:00",
+                            "2023-04-01 11:00:00",
+                            "2023-04-01 11:45:00",
+                            "2023-04-01 12:30:00",
+                            "2023-04-01 13:15:00",
+                            "2023-04-01 14:00:00",
+                            "2023-04-01 14:45:00",
+                            "2023-04-01 15:30:00",
+                            "2023-04-01 16:15:00",
+                            "2023-04-02 09:30:00",
+                            "2023-04-02 10:15:00",
+                            "2023-04-02 11:00:00",
+                            "2023-04-02 11:45:00",
+                            "2023-04-02 12:30:00",
+                            "2023-04-02 13:15:00",
+                            "2023-04-02 14:00:00",
+                            "2023-04-02 14:45:00",
+                            "2023-04-02 15:30:00",
+                            "2023-04-02 16:15:00",
+                            "2023-04-03 09:30:00",
+                            "2023-04-03 10:15:00",
+                            "2023-04-03 11:00:00",
+                            "2023-04-03 11:45:00",
+                            "2023-04-03 12:30:00",
+                            "2023-04-03 13:15:00",
+                            "2023-04-03 14:00:00",
+                            "2023-04-03 14:45:00",
+                            "2023-04-03 15:30:00",
+                            "2023-04-03 16:15:00",
+                        ],
+                        "y1": ["2025-05-02 11:00:00"] * 30,
+                        "years_diff": [2] * 30,
+                        "c_years_diff": [2] * 30,
+                        "c_y_diff": [2] * 30,
+                        "y_diff": [2] * 30,
+                        "months_diff": [25] * 30,
+                        "c_months_diff": [25] * 30,
+                        "mm_diff": [25] * 30,
+                        "days_diff": [762] * 10 + [761] * 10 + [760] * 10,
+                        "c_days_diff": [762] * 10 + [761] * 10 + [760] * 10,
+                        "c_d_diff": [762] * 10 + [761] * 10 + [760] * 10,
+                        "d_diff": [762] * 10 + [761] * 10 + [760] * 10,
+                        "hours_diff": [
+                            18290,
+                            18289,
+                            18288,
+                            18288,
+                            18287,
+                            18286,
+                            18285,
+                            18285,
+                            18284,
+                            18283,
+                            18266,
+                            18265,
+                            18264,
+                            18264,
+                            18263,
+                            18262,
+                            18261,
+                            18261,
+                            18260,
+                            18259,
+                            18242,
+                            18241,
+                            18240,
+                            18240,
+                            18239,
+                            18238,
+                            18237,
+                            18237,
+                            18236,
+                            18235,
+                        ],
+                        "c_hours_diff": [
+                            18290,
+                            18289,
+                            18288,
+                            18288,
+                            18287,
+                            18286,
+                            18285,
+                            18285,
+                            18284,
+                            18283,
+                            18266,
+                            18265,
+                            18264,
+                            18264,
+                            18263,
+                            18262,
+                            18261,
+                            18261,
+                            18260,
+                            18259,
+                            18242,
+                            18241,
+                            18240,
+                            18240,
+                            18239,
+                            18238,
+                            18237,
+                            18237,
+                            18236,
+                            18235,
+                        ],
+                        "c_h_diff": [
+                            18290,
+                            18289,
+                            18288,
+                            18288,
+                            18287,
+                            18286,
+                            18285,
+                            18285,
+                            18284,
+                            18283,
+                            18266,
+                            18265,
+                            18264,
+                            18264,
+                            18263,
+                            18262,
+                            18261,
+                            18261,
+                            18260,
+                            18259,
+                            18242,
+                            18241,
+                            18240,
+                            18240,
+                            18239,
+                            18238,
+                            18237,
+                            18237,
+                            18236,
+                            18235,
+                        ],
+                    }
+                ),
+            ),
+            id="years_months_days_hours_datediff",
+        ),
+        pytest.param(
+            (
+                minutes_seconds_datediff,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "x": [
+                            "2023-04-03 16:15:00",
+                            "2023-04-03 15:30:00",
+                            "2023-04-03 14:45:00",
+                            "2023-04-03 14:00:00",
+                            "2023-04-03 13:15:00",
+                            "2023-04-03 12:30:00",
+                            "2023-04-03 11:45:00",
+                            "2023-04-03 11:00:00",
+                            "2023-04-03 10:15:00",
+                            "2023-04-03 09:30:00",
+                            "2023-04-02 16:15:00",
+                            "2023-04-02 15:30:00",
+                            "2023-04-02 14:45:00",
+                            "2023-04-02 14:00:00",
+                            "2023-04-02 13:15:00",
+                            "2023-04-02 12:30:00",
+                            "2023-04-02 11:45:00",
+                            "2023-04-02 11:00:00",
+                            "2023-04-02 10:15:00",
+                            "2023-04-02 09:30:00",
+                            "2023-04-01 16:15:00",
+                            "2023-04-01 15:30:00",
+                            "2023-04-01 14:45:00",
+                            "2023-04-01 14:00:00",
+                            "2023-04-01 13:15:00",
+                            "2023-04-01 12:30:00",
+                            "2023-04-01 11:45:00",
+                            "2023-04-01 11:00:00",
+                            "2023-04-01 10:15:00",
+                            "2023-04-01 09:30:00",
+                        ],
+                        "y": ["2023-04-03 13:16:30"] * 30,
+                        "minutes_diff": [
+                            -179,
+                            -134,
+                            -89,
+                            -44,
+                            1,
+                            46,
+                            91,
+                            136,
+                            181,
+                            226,
+                            1261,
+                            1306,
+                            1351,
+                            1396,
+                            1441,
+                            1486,
+                            1531,
+                            1576,
+                            1621,
+                            1666,
+                            2701,
+                            2746,
+                            2791,
+                            2836,
+                            2881,
+                            2926,
+                            2971,
+                            3016,
+                            3061,
+                            3106,
+                        ],
+                        "seconds_diff": [
+                            -10710,
+                            -8010,
+                            -5310,
+                            -2610,
+                            90,
+                            2790,
+                            5490,
+                            8190,
+                            10890,
+                            13590,
+                            75690,
+                            78390,
+                            81090,
+                            83790,
+                            86490,
+                            89190,
+                            91890,
+                            94590,
+                            97290,
+                            99990,
+                            162090,
+                            164790,
+                            167490,
+                            170190,
+                            172890,
+                            175590,
+                            178290,
+                            180990,
+                            183690,
+                            186390,
+                        ],
+                    }
+                ),
+            ),
+            id="minutes_seconds_datediff",
         ),
     ],
 )

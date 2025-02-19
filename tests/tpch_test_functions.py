@@ -539,14 +539,16 @@ def impl_tpch_q22():
     PyDough implementation of TPCH Q22.
     """
     selected_customers = Customers.CALCULATE(cntry_code=phone[:2]).WHERE(
-        ISIN(cntry_code, ("13", "31", "23", "29", "30", "18", "17")) & HASNOT(orders)
+        ISIN(cntry_code, ("13", "31", "23", "29", "30", "18", "17"))
     )
     return (
         TPCH.CALCULATE(
             global_avg_balance=AVG(selected_customers.WHERE(acctbal > 0.0).acctbal)
         )
         .PARTITION(
-            selected_customers.WHERE(acctbal > global_avg_balance),
+            selected_customers.WHERE(
+                (acctbal > global_avg_balance) & (COUNT(orders) == 0)
+            ),
             name="custs",
             by=cntry_code,
         )
@@ -555,4 +557,5 @@ def impl_tpch_q22():
             NUM_CUSTS=COUNT(custs),
             TOTACCTBAL=SUM(custs.acctbal),
         )
+        .ORDER_BY(CNTRY_CODE.ASC())
     )

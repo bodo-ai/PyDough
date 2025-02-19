@@ -1,6 +1,12 @@
+"""
+Various functions containing PyDough code snippets for testing purposes.
+"""
 # ruff: noqa
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
+
+import pandas as pd
+import datetime
 
 
 def simple_scan():
@@ -137,6 +143,209 @@ def function_sampler():
     )
 
 
+def datetime_current():
+    return TPCH.CALCULATE(
+        d1=DATETIME("now", "start of year", "5 months", "-1 DAY"),
+        d2=DATETIME("current_date", "start  of mm", "+24 hours"),
+        d3=DATETIME(
+            " Current Timestamp ", "start of day", "+12 hours", "-150 minutes", "+2 s"
+        ),
+    )
+
+
+def datetime_relative():
+    selected_orders = Orders.TOP_K(
+        10, by=(customer_key.ASC(), order_date.ASC())
+    ).ORDER_BY(order_date.ASC())
+    return selected_orders.CALCULATE(
+        d1=DATETIME(order_date, "Start of Year"),
+        d2=DATETIME(order_date, "START OF MONTHS"),
+        d3=DATETIME(
+            order_date,
+            "-11 years",
+            "+9 months",
+            " - 7 DaYs ",
+            "+5 h",
+            "-3 minutes",
+            "+1 second",
+        ),
+        d4=DATETIME(pd.Timestamp("2025-07-04 12:58:45"), "start of hour"),
+        d5=DATETIME(pd.Timestamp("2025-07-04 12:58:45"), "start of minute"),
+        d6=DATETIME(pd.Timestamp("2025-07-14 12:58:45"), "+ 1000000 seconds"),
+    )
+
+
+def datetime_sampler():
+    # Near-exhaustive edge cases coverage testing for DATETIME strings. The
+    # terms were generated via random combination selection of various ways
+    # of augmenting the base/modifier terms.
+    return Orders.CALCULATE(
+        DATETIME("2025-07-04 12:58:45"),
+        DATETIME("2024-12-31 11:59:00"),
+        DATETIME("2025-01-01"),
+        DATETIME("1999-03-14"),
+        DATETIME("now"),
+        DATETIME(" Now "),
+        DATETIME("NOW\n\t\t\r"),
+        DATETIME("current_date"),
+        DATETIME(" Current_Date "),
+        DATETIME("CURRENT_DATE\n\t\t\r"),
+        DATETIME("cUrReNt_Timestamp"),
+        DATETIME(" Current_Timestamp "),
+        DATETIME("CURRENT_TIMESTAMP\n\t\t\r"),
+        DATETIME("current date"),
+        DATETIME(" Current Date "),
+        DATETIME("CURRENT DATE\n\t\t\r"),
+        DATETIME("current timestamp"),
+        DATETIME(" Current Timestamp "),
+        DATETIME("CURRENT TIMESTAMP\n\t\t\r"),
+        DATETIME(order_date),
+        DATETIME("CURRENT_DATE\n\t\t\r", "start of seconds"),
+        DATETIME("current date", "\n  Start  Of\tY\n\n", "+8 minutes", "-141 mm"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "\tSTART\tOF\tmonth\t",
+            "\tSTART\tOF\tsecond\t",
+            "\tSTART\tOF\thour\t",
+        ),
+        DATETIME(
+            " Current Timestamp ",
+            "start of h",
+            "START of    SECOND",
+            "START of    HOUR",
+        ),
+        DATETIME("NOW\n\t\t\r", "- 96 H", "15 year"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "\n  Start  Of\tY\n\n",
+            "-3 years",
+            "\n  Start  Of\tM\n\n",
+            "+65 month",
+        ),
+        DATETIME(order_date, "-56 h", "start of year"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "-63 days",
+            "START of    MINUTE",
+            "start of seconds",
+        ),
+        DATETIME("CURRENT_DATE\n\t\t\r", "\n  Start  Of\tMonth\n\n"),
+        DATETIME("NOW\n\t\t\r", "-312 hour", "start of s", " \n +\t48 \nYear \n\r "),
+        DATETIME(
+            "CURRENT TIMESTAMP\n\t\t\r",
+            " 75 DAY",
+            "\n  Start  Of\tDays\n\n",
+            "+600 minutes",
+            " \n -\t294 \nDays \n\r ",
+        ),
+        DATETIME(
+            " Current Date ",
+            "\n  Start  Of\tMonths\n\n",
+            " \n +\t480 \nMm \n\r ",
+            " \n -\t45 \nY \n\r ",
+        ),
+        DATETIME(
+            " CuRrEnT dAtE ",
+            "- 270 MINUTES",
+            "- 34 SECONDS",
+            "\tSTART\tOF\td\t",
+            "start of second",
+        ),
+        DATETIME("current timestamp", "START of    MM", " \n \t213 \nS \n\r "),
+        DATETIME(
+            " Now ", "\n  Start  Of\tMonth\n\n", "13 minute", "28 year", "+344 second"
+        ),
+        DATETIME("CURRENT_DATE\n\t\t\r", "\tSTART\tOF\tdays\t"),
+        DATETIME("2025-01-01", "START of    H", "+ 49 MINUTE", "+91 y"),
+        DATETIME("CURRENT_DATE\n\t\t\r", "START of    YEARS", "\tSTART\tOF\td\t"),
+        DATETIME("NOW\n\t\t\r", "start of days", "START of    YEARS"),
+        DATETIME("2025-07-04 12:58:45", "\tSTART\tOF\tmonths\t", " \n \t22 \nM \n\r "),
+        DATETIME("current_date", "START of    YEAR"),
+        DATETIME(
+            order_date,
+            "+ 82 S",
+            "415 second",
+            " \n -\t160 \nSecond \n\r ",
+            "START of    Y",
+        ),
+        DATETIME(" Current Date ", "192 months"),
+        DATETIME(
+            "CURRENT TIMESTAMP\n\t\t\r",
+            "START of    H",
+            "start of minute",
+            "\n  Start  Of\tHours\n\n",
+            "+ 486 M",
+        ),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r", "\n  Start  Of\tSeconds\n\n", "- 50 HOURS"
+        ),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            " 297 D",
+            "72 months",
+            " \n -\t92 \nMonth \n\r ",
+            "\tSTART\tOF\thours\t",
+        ),
+        DATETIME("now", " \n +\t285 \nSeconds \n\r ", "\tSTART\tOF\tday\t"),
+        DATETIME("1999-03-14", "+62 d"),
+        DATETIME(
+            "current_date",
+            "START of    MM",
+            "+1 hour",
+            "start of mm",
+            " \n -\t21 \nDay \n\r ",
+        ),
+        DATETIME("current timestamp", "+212 minute", " \n +\t368 \nYears \n\r "),
+        DATETIME(
+            "2024-12-31 11:59:00",
+            "\n  Start  Of\tMonths\n\n",
+            "\n  Start  Of\tYears\n\n",
+            "\n  Start  Of\tMinutes\n\n",
+            "start of m",
+        ),
+        DATETIME("1999-03-14", "START of    HOURS", "start of day"),
+        DATETIME(
+            "now",
+            " \n -\t60 \nH \n\r ",
+            "START of    D",
+            "START of    MINUTE",
+            "+196 years",
+        ),
+        DATETIME(
+            "current timestamp",
+            "-40 hours",
+            " \n -\t385 \nDay \n\r ",
+            "start of m",
+            " \n +\t29 \nHour \n\r ",
+        ),
+        DATETIME(
+            " Current Date ", "+405 days", "start of hour", "\tSTART\tOF\tminutes\t"
+        ),
+        DATETIME(
+            " Current Timestamp ",
+            "\tSTART\tOF\tyear\t",
+            "\n  Start  Of\tS\n\n",
+            " \n +\t98 \nY \n\r ",
+            " \n \t96 \nMonth \n\r ",
+        ),
+        DATETIME(
+            " Now ",
+            "\tSTART\tOF\tminutes\t",
+            "\tSTART\tOF\ts\t",
+            "start of day",
+            "78 seconds",
+        ),
+        DATETIME(
+            " Current Date ",
+            " 136 HOURS",
+            " \n +\t104 \nM \n\r ",
+            "-104 months",
+            " \n \t312 \nD \n\r ",
+        ),
+        DATETIME(" Current_Date ", "+ 45 MM", "-135 s"),
+    )
+
+
 def loop_generated_terms():
     # Using a loop & dictionary to generate PyDough calc terms
     terms = {"name": name}
@@ -243,12 +452,61 @@ def generator_comp_terms():
     return Nations.CALCULATE(**terms)
 
 
+def partition_as_child():
+    # Count how many part sizes have an above-average number of parts of that
+    # size.
+    sizes = PARTITION(Parts, name="p", by=size).CALCULATE(n_parts=COUNT(p))
+    return TPCH.CALCULATE(avg_n_parts=AVG(sizes.n_parts)).CALCULATE(
+        n_parts=COUNT(sizes.WHERE(n_parts > avg_n_parts))
+    )
+
+
 def agg_partition():
     # Doing a global aggregation on the output of a partition aggregation
     yearly_data = PARTITION(
         Orders.CALCULATE(year=YEAR(order_date)), name="orders", by=year
     ).CALCULATE(n_orders=COUNT(orders))
     return TPCH.CALCULATE(best_year=MAX(yearly_data.n_orders))
+
+
+def multi_partition_access_1():
+    # A use of multiple PARTITION and stepping into partition children that is
+    # a no-op.
+    data = Tickers(symbol).TOP_K(5, by=symbol.ASC())
+    grps_a = PARTITION(data, name="child_3", by=(currency, exchange, ticker_type))
+    grps_b = PARTITION(grps_a, name="child_2", by=(currency, exchange))
+    grps_c = PARTITION(grps_b, name="child_1", by=exchange)
+    return grps_c.child_1.child_2.child_3
+
+
+def multi_partition_access_2():
+    # Identify transactions that are below the average number of shares for
+    # transactions of the same combinations of (customer, stock, type), or
+    # the same combination of (customer, stock), or the same customer.
+    grps_a = PARTITION(
+        Transactions, name="child_3", by=(customer_id, ticker_id, transaction_type)
+    ).CALCULATE(avg_shares_a=AVG(child_3.shares))
+    grps_b = PARTITION(grps_a, name="child_2", by=(customer_id, ticker_id)).CALCULATE(
+        avg_shares_b=AVG(child_2.child_3.shares)
+    )
+    grps_c = PARTITION(grps_b, name="child_1", by=customer_id).CALCULATE(
+        avg_shares_c=AVG(child_1.child_2.child_3.shares)
+    )
+    return (
+        grps_c.child_1.child_2.child_3.WHERE(
+            (shares < avg_shares_a) & (shares < avg_shares_b) & (shares < avg_shares_c)
+        )
+        .CALCULATE(
+            transaction_id,
+            customer.name,
+            ticker.symbol,
+            transaction_type,
+            avg_shares_a,
+            avg_shares_b,
+            avg_shares_c,
+        )
+        .ORDER_BY(transaction_id.ASC())
+    )
 
 
 def double_partition():
@@ -405,3 +663,63 @@ def annotated_assignment():
     specific_region: tuple[str, str] = "WEST", "AMERICA"
     chosen_region: str = direction1 + " ".join(specific_region)
     return Nations.WHERE(region.name == chosen_region)
+
+
+def years_months_days_hours_datediff():
+    y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
+    return (
+        Transactions.WHERE((YEAR(date_time) < 2025))
+        .CALCULATE(
+            x=date_time,
+            y1=y1_datetime,
+            years_diff=DATEDIFF("years", date_time, y1_datetime),
+            c_years_diff=DATEDIFF("YEARS", date_time, y1_datetime),
+            c_y_diff=DATEDIFF("Y", date_time, y1_datetime),
+            y_diff=DATEDIFF("y", date_time, y1_datetime),
+            months_diff=DATEDIFF("months", date_time, y1_datetime),
+            c_months_diff=DATEDIFF("MONTHS", date_time, y1_datetime),
+            mm_diff=DATEDIFF("mm", date_time, y1_datetime),
+            days_diff=DATEDIFF("days", date_time, y1_datetime),
+            c_days_diff=DATEDIFF("DAYS", date_time, y1_datetime),
+            c_d_diff=DATEDIFF("D", date_time, y1_datetime),
+            d_diff=DATEDIFF("d", date_time, y1_datetime),
+            hours_diff=DATEDIFF("hours", date_time, y1_datetime),
+            c_hours_diff=DATEDIFF("HOURS", date_time, y1_datetime),
+            c_h_diff=DATEDIFF("H", date_time, y1_datetime),
+        )
+        .TOP_K(30, by=years_diff.ASC())
+    )
+
+
+def minutes_seconds_datediff():
+    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
+    return (
+        Transactions.WHERE(YEAR(date_time) <= 2024)
+        .CALCULATE(
+            x=date_time,
+            y=y_datetime,
+            minutes_diff=DATEDIFF("m", date_time, y_datetime),
+            seconds_diff=DATEDIFF("s", date_time, y_datetime),
+        )
+        .TOP_K(30, by=x.DESC())
+    )
+
+
+def datediff():
+    y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
+    y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
+    return (
+        Transactions.WHERE((YEAR(date_time) < 2025))
+        .CALCULATE(
+            x=date_time,
+            y1=y1_datetime,
+            y=y_datetime,
+            years_diff=DATEDIFF("years", date_time, y1_datetime),
+            months_diff=DATEDIFF("months", date_time, y1_datetime),
+            days_diff=DATEDIFF("days", date_time, y1_datetime),
+            hours_diff=DATEDIFF("hours", date_time, y1_datetime),
+            minutes_diff=DATEDIFF("minutes", date_time, y_datetime),
+            seconds_diff=DATEDIFF("seconds", date_time, y_datetime),
+        )
+        .TOP_K(30, by=years_diff.ASC())
+    )

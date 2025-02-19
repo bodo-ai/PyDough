@@ -78,12 +78,20 @@ These functions must be called on singular data as a function.
 
 ##### Datetime Functions
 
+- `DATETIME`: constructs a new datetime, either from an existing one or the current datetime, and augments it by adding/subtracting intervals of time and/or truncating it to various units.
 - `YEAR`: returns the year component of a datetime.
 - `MONTH`: returns the month component of a datetime.
 - `DAY`: returns the day component of a datetime.
 - `HOUR`: Returns the hour component of a datetime.
 - `MINUTE`: Returns the minute component of a datetime.
 - `SECOND`: Returns the second component of a datetime.
+- `DATEDIFF("unit",x,y)`: Returns the difference between two dates (y-x) in one of 
+            - **Years**: `"years"`, `"year"`, `"y"`
+            - **Months**: `"months"`, `"month"`, `"mm"`
+            - **Days**: `"days"`, `"day"`, `"d"`
+            - **Hours**: `"hours"`, `"hour"`, `"h"`
+            - **Minutes**: `"minutes"`, `"minute"`, `"m"`
+            - **Seconds**: `"seconds"`, `"second"`, `"s"`.
 
 ##### Conditional Functions
 

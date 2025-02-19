@@ -6,6 +6,8 @@ from collections.abc import Callable
 
 import pytest
 from simple_pydough_functions import (
+    datediff,
+    datetime_sampler,
     hour_minute_day,
     rank_a,
     rank_b,
@@ -18,6 +20,7 @@ from test_utils import (
 )
 
 from pydough import init_pydough_context, to_sql
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -57,6 +60,12 @@ from pydough.unqualified import (
             "rank_c",
             id="rank_c",
         ),
+        pytest.param(
+            datetime_sampler,
+            None,
+            "datetime_sampler",
+            id="datetime_sampler",
+        ),
     ],
 )
 def test_pydough_to_sql_tpch(
@@ -64,7 +73,8 @@ def test_pydough_to_sql_tpch(
     columns: dict[str, str] | list[str] | None,
     test_name: str,
     get_sample_graph: graph_fetcher,
-    get_sql_test_filename: Callable[[str], str],
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    empty_context_database: DatabaseContext,
     update_tests: bool,
 ) -> None:
     """
@@ -73,8 +83,10 @@ def test_pydough_to_sql_tpch(
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
-    actual_sql: str = to_sql(root, columns=columns, metadata=graph).strip()
-    file_path: str = get_sql_test_filename(test_name)
+    actual_sql: str = to_sql(
+        root, columns=columns, metadata=graph, database=empty_context_database
+    ).strip()
+    file_path: str = get_sql_test_filename(test_name, empty_context_database.dialect)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(actual_sql + "\n")
@@ -95,6 +107,12 @@ def test_pydough_to_sql_tpch(
             "Broker",
             id="hour_minute_day",
         ),
+        pytest.param(
+            datediff,
+            "datediff",
+            "Broker",
+            id="datediff",
+        ),
     ],
 )
 def test_pydough_to_sql_defog(
@@ -102,7 +120,8 @@ def test_pydough_to_sql_defog(
     test_name: str,
     graph_name: str,
     defog_graphs: graph_fetcher,
-    get_sql_test_filename: Callable[[str], str],
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    empty_context_database: DatabaseContext,
     update_tests: bool,
 ) -> None:
     """
@@ -111,8 +130,10 @@ def test_pydough_to_sql_defog(
     """
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
-    actual_sql: str = to_sql(root, metadata=graph).strip()
-    file_path: str = get_sql_test_filename(test_name)
+    actual_sql: str = to_sql(
+        root, metadata=graph, database=empty_context_database
+    ).strip()
+    file_path: str = get_sql_test_filename(test_name, empty_context_database.dialect)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(actual_sql + "\n")

@@ -109,7 +109,7 @@ class StructType(PyDoughType):
                 except PyDoughTypeException:
                     pass
 
-                # Otherwise, iterate across all commas int he right hand side
+                # Otherwise, iterate across all commas in the right hand side
                 # that are candidate splitting locations between a PyDough
                 # type and a suffix that is a valid list of fields.
                 if field_type is None:

@@ -6,6 +6,7 @@ into qualified DAG nodes.
 from collections.abc import Callable
 
 import pytest
+from simple_pydough_functions import partition_as_child
 from test_utils import (
     graph_fetcher,
 )
@@ -46,6 +47,30 @@ from pydough.unqualified import (
 @pytest.mark.parametrize(
     "impl, answer_tree_str",
     [
+        pytest.param(
+            partition_as_child,
+            """
+┌─── TPCH
+├─┬─ Calculate[avg_n_parts=AVG($1.n_parts)]
+│ └─┬─ AccessChild
+│   ├─┬─ Partition[name='p', by=size]
+│   │ └─┬─ AccessChild
+│   │   └─── TableCollection[Parts]
+│   └─┬─ Calculate[n_parts=COUNT($1)]
+│     └─┬─ AccessChild
+│       └─── PartitionChild[p]
+└─┬─ Calculate[n_parts=COUNT($1)]
+  └─┬─ AccessChild
+    ├─┬─ Partition[name='p', by=size]
+    │ └─┬─ AccessChild
+    │   └─── TableCollection[Parts]
+    ├─┬─ Calculate[n_parts=COUNT($1)]
+    │ └─┬─ AccessChild
+    │   └─── PartitionChild[p]
+    └─── Where[n_parts > avg_n_parts]
+""",
+            id="partition_as_child",
+        ),
         pytest.param(
             impl_tpch_q1,
             """
@@ -473,21 +498,20 @@ from pydough.unqualified import (
   ├─┬─ AccessChild
   │ ├─── TableCollection[Customers]
   │ ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
-  │ ├─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT($1)]
-  │ │ └─┬─ AccessChild
-  │ │   └─── SubCollection[orders]
+  │ ├─── Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17'])]
   │ └─── Where[acctbal > 0.0]
   ├─┬─ Partition[name='custs', by=cntry_code]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Customers]
   │   ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
-  │   ├─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & HASNOT($1)]
-  │   │ └─┬─ AccessChild
-  │   │   └─── SubCollection[orders]
-  │   └─── Where[acctbal > global_avg_balance]
-  └─┬─ Calculate[CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT($1), TOTACCTBAL=SUM($1.acctbal)]
-    └─┬─ AccessChild
-      └─── PartitionChild[custs]
+  │   ├─── Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17'])]
+  │   └─┬─ Where[(acctbal > global_avg_balance) & (COUNT($1) == 0)]
+  │     └─┬─ AccessChild
+  │       └─── SubCollection[orders]
+  ├─┬─ Calculate[CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT($1), TOTACCTBAL=SUM($1.acctbal)]
+  │ └─┬─ AccessChild
+  │   └─── PartitionChild[custs]
+  └─── OrderBy[CNTRY_CODE.ASC(na_pos='first')]
 """,
             id="tpch_q22",
         ),

@@ -45,3 +45,6 @@ class ColumnReferenceInputNameModifier(RelationalExpressionShuttle):
             raise ValueError(
                 f"Input name {column_reference.input_name} not found in the input name map."
             )
+
+    def visit_correlated_reference(self, correlated_reference) -> RelationalExpression:
+        return correlated_reference

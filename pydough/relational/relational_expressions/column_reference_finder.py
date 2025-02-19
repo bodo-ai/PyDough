@@ -42,3 +42,6 @@ class ColumnReferenceFinder(RelationalExpressionVisitor):
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         self._column_references.add(column_reference)
+
+    def visit_correlated_reference(self, correlated_reference) -> None:
+        pass

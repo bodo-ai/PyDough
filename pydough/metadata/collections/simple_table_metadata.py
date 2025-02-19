@@ -31,7 +31,7 @@ class SimpleTableMetadata(CollectionMetadata):
     of other such tables created from joins.
     """
 
-    # Set of names of of fields that can be included in the JSON
+    # Set of names of fields that can be included in the JSON
     # object describing a simple table collection.
     allowed_fields: set[str] = CollectionMetadata.allowed_fields | {
         "table_path",
