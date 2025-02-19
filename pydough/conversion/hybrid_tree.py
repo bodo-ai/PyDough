@@ -1746,10 +1746,15 @@ class HybridTranslator:
                 return HybridBackRefExpr(expr_name, expr.back_levels, expr.pydough_type)
             case Reference():
                 if expr.term_name in hybrid.ancestral_mapping:
-                    return HybridBackRefExpr(
-                        expr.term_name,
-                        hybrid.ancestral_mapping[expr.term_name],
-                        expr.pydough_type,
+                    return self.make_hybrid_expr(
+                        hybrid,
+                        BackReferenceExpression(
+                            expr.collection,
+                            expr.term_name,
+                            hybrid.ancestral_mapping[expr.term_name],
+                        ),
+                        child_ref_mapping,
+                        inside_agg,
                     )
                 expr_name = hybrid.pipeline[-1].renamings.get(
                     expr.term_name, expr.term_name
