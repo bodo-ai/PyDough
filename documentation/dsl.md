@@ -548,7 +548,7 @@ People.CALCULATE(y=bar)
 People.packages.CALCULATE(email)
 ```
 
-**Bad Example #4**: This time, `email` was placed in a `CALCULATE`, but it was given a different name `my_email` which means that name has to be used to access it, instead of `email`.
+**Bad Example #4**: This time, `email` was placed in a `CALCULATE`, but it was given a different name `my_email` which means that `my_email` has to be used to access it, instead of `email`.
 
 ```py
 %%pydough
@@ -768,7 +768,7 @@ People.ORDER_BY(
 
 ```py
 %%pydough
-Addresses(state, city).WHERE(
+Addresses.CALCULATE(state, city).WHERE(
     state == "OHIO"
 ).current_occupants.ORDER_BY(
     state.ASC(),
@@ -992,7 +992,7 @@ PARTITION(package_info, name="packs", by=(order_year, order_month)).CALCULATE(
 %%pydough
 PARTITION(Addresses, name="addrs", by=(city, state)).CALCULATE(
     total_packages=COUNT(addrs.current_occupants.packages)
-).addrs(city, state).current_occupants.CALCULATE(
+).addrs.CALCULATE(city, state).current_occupants.CALCULATE(
     first_name,
     last_name,
     city=city,
@@ -1118,7 +1118,7 @@ PARTITION(Addresses, by=state)
 PARTITION(People, name="ppl")
 ```
 
-**Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed ot be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
+**Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed to be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
 
 ```py
 %%pydough
