@@ -767,7 +767,13 @@ from pydough.unqualified import (
                 "correl_1",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
                         "n_prefix_nations": [1, 1, 0, 0, 0],
                     }
                 ),
@@ -817,7 +823,13 @@ from pydough.unqualified import (
                 "correl_3",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
                         "n_nations": [5, 5, 5, 0, 2],
                     }
                 ),
@@ -1094,7 +1106,7 @@ from pydough.unqualified import (
                 "correl_19",
                 lambda: pd.DataFrame(
                     {
-                        "name": [
+                        "supplier_name": [
                             "Supplier#000003934",
                             "Supplier#000003887",
                             "Supplier#000002628",
@@ -1441,6 +1453,7 @@ def test_pipeline_e2e_errors(
         pytest.param(
             (
                 years_months_days_hours_datediff,
+                None,
                 "Broker",
                 lambda: pd.DataFrame(
                     data={
@@ -1592,6 +1605,7 @@ def test_pipeline_e2e_errors(
         pytest.param(
             (
                 minutes_seconds_datediff,
+                None,
                 "Broker",
                 lambda: pd.DataFrame(
                     {

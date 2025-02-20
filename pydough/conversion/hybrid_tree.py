@@ -1755,7 +1755,7 @@ class HybridTranslator:
                 )
                 return HybridBackRefExpr(expr_name, expr.back_levels, expr.pydough_type)
             case Reference():
-                if expr.term_name in hybrid.ancestral_mapping:
+                if hybrid.ancestral_mapping.get(expr.term_name, 0) > 0:
                     collection = expr.collection
                     while (
                         isinstance(collection, PartitionChild)

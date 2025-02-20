@@ -472,7 +472,7 @@ def agg_partition():
 def multi_partition_access_1():
     # A use of multiple PARTITION and stepping into partition children that is
     # a no-op.
-    data = Tickers(symbol).TOP_K(5, by=symbol.ASC())
+    data = Tickers.CALCULATE(symbol).TOP_K(5, by=symbol.ASC())
     grps_a = PARTITION(data, name="child_3", by=(currency, exchange, ticker_type))
     grps_b = PARTITION(grps_a, name="child_2", by=(currency, exchange))
     grps_c = PARTITION(grps_b, name="child_1", by=exchange)
