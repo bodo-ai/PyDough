@@ -231,6 +231,32 @@ def convert_concat(
         return Concat(expressions=inputs)
 
 
+def positive_index(
+    column: SQLGlotExpression, neg_index: int, is_0_based: bool = False
+) -> int:
+    """
+    Gives the SQL Glot expression for converting a
+    negative index to a positive index in 1 or 0 based indexing.
+
+    Args:
+        `column`: The column expression to reference
+        `neg_index`: The negative index in 0 based index to convert to positive
+        `is_0_based`: Whether the return index is 0-based or 1-based
+
+    Returns:
+        SQLGlot expression corresponding to:
+        `(LENGTH(column) + neg_index + offset)`,
+         where offset is 0, if is_0_based is True, else 1.
+    """
+    sql_len = sqlglot_expressions.Length(this=column)
+    offset = 0 if is_0_based else 1
+    return apply_parens(
+        sqlglot_expressions.Add(
+            this=sql_len, expression=sqlglot_expressions.convert(neg_index + offset)
+        )
+    )
+
+
 def convert_slice(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
@@ -248,6 +274,7 @@ def convert_slice(
         The SQLGlot expression matching the functionality of `SUBSTRING`.
     """
     assert len(sql_glot_args) == 4
+    _, start, stop, step = sql_glot_args
 
     for arg in sql_glot_args[1:]:
         if not isinstance(arg, (sqlglot_expressions.Literal, sqlglot_expressions.Null)):
@@ -255,50 +282,237 @@ def convert_slice(
                 "SLICE function currently only supports the slicing arguments being integer literals or absent"
             )
 
-    _, start, stop, step = sql_glot_args
-    start_idx: int | None = None
-    stop_idx: int | None = None
-    if isinstance(start, sqlglot_expressions.Literal):
-        if int(start.this) < 0:
-            raise NotImplementedError(
-                "SLICE function currently only supports non-negative start indices"
-            )
-        start_idx = int(start.this)
-    if isinstance(stop, sqlglot_expressions.Literal):
-        if int(stop.this) < 0:
-            raise NotImplementedError(
-                "SLICE function currently only supports non-negative stop indices"
-            )
-        stop_idx = int(stop.this)
     if isinstance(step, sqlglot_expressions.Literal):
         if int(step.this) != 1:
             raise NotImplementedError(
                 "SLICE function currently only supports a step of 1"
             )
 
+    start_idx: int | None = None
+    stop_idx: int | None = None
+    start_idx = (
+        int(start.this) if not isinstance(start, sqlglot_expressions.Null) else None
+    )
+    stop_idx = (
+        int(stop.this) if not isinstance(stop, sqlglot_expressions.Null) else None
+    )
+
     match (start_idx, stop_idx):
         case (None, None):
             raise sql_glot_args[0]
         case (_, None):
             assert start_idx is not None
-            return sqlglot_expressions.Substring(
-                this=sql_glot_args[0], start=sqlglot_expressions.convert(start_idx + 1)
-            )
+            if start_idx > 0:
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                )
+            else:
+                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                answer = sqlglot_expressions.Substring(
+                    this=sql_glot_args[0], start=start_idx_glot
+                )
+                return answer
         case (None, _):
             assert stop_idx is not None
-            return sqlglot_expressions.Substring(
-                this=sql_glot_args[0],
-                start=sqlglot_expressions.convert(1),
-                length=sqlglot_expressions.convert(stop_idx),
-            )
+            if stop_idx > 0:
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(1),
+                    length=sqlglot_expressions.convert(stop_idx),
+                )
+            else:
+                stop_idx_glot = positive_index(sql_glot_args[0], stop_idx, True)
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(1),
+                    length=stop_idx_glot,  # length is the stop index
+                )
         case _:
             assert start_idx is not None
             assert stop_idx is not None
-            return sqlglot_expressions.Substring(
-                this=sql_glot_args[0],
-                start=sqlglot_expressions.convert(start_idx + 1),
-                length=sqlglot_expressions.convert(stop_idx - start_idx),
+            # Get the positive index if negative
+            if start_idx > 0 and stop_idx > 0:
+                if start_idx > stop_idx:
+                    return sqlglot_expressions.convert("")
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                    length=sqlglot_expressions.convert(stop_idx - start_idx),
+                )
+            if start_idx < 0 and stop_idx > 0:
+                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                answer = sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=start_idx_glot,
+                    length=sqlglot_expressions.Sub(
+                        this=sqlglot_expressions.convert(stop_idx + 1),
+                        expression=start_idx_glot,
+                    ),
+                )
+                breakpoint()
+                return answer
+            if start_idx > 0 and stop_idx < 0:
+                stop_idx_glot = positive_index(sql_glot_args[0], stop_idx, True)
+                answer = sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                    length=sqlglot_expressions.Sub(
+                        this=stop_idx_glot,
+                        expression=sqlglot_expressions.convert(start_idx),
+                    ),
+                )
+                return answer
+            if start_idx < 0 and stop_idx < 0:
+                if start_idx > stop_idx:
+                    return sqlglot_expressions.convert("")
+                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                stop_idx_glot = positive_index(sql_glot_args[0], stop_idx)
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=start_idx_glot,
+                    length=sqlglot_expressions.Sub(
+                        this=stop_idx_glot, expression=start_idx_glot
+                    ),
+                )
+
+
+def convert_slice_sqlite(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for generating a `SLICE` expression from a list of arguments.
+
+    Args:
+        `raw_args`: The operands to `SLICE`, before they were
+        converted to SQLGlot expressions.
+        `sql_glot_args`: The operands to `SLICE`, after they were
+        converted to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `SUBSTRING`.
+    """
+    assert len(sql_glot_args) == 4
+    _, start, stop, step = sql_glot_args
+
+    for arg in sql_glot_args[1:]:
+        if not isinstance(arg, (sqlglot_expressions.Literal, sqlglot_expressions.Null)):
+            raise NotImplementedError(
+                "SLICE function currently only supports the slicing arguments being integer literals or absent"
             )
+
+    if isinstance(step, sqlglot_expressions.Literal):
+        if int(step.this) != 1:
+            raise NotImplementedError(
+                "SLICE function currently only supports a step of 1"
+            )
+
+    start_idx: int | None = None
+    stop_idx: int | None = None
+    start_idx = (
+        int(start.this) if not isinstance(start, sqlglot_expressions.Null) else None
+    )
+    stop_idx = (
+        int(stop.this) if not isinstance(stop, sqlglot_expressions.Null) else None
+    )
+    sql_zero = sqlglot_expressions.convert(0)
+    blank_str = sqlglot_expressions.convert("")
+    match (start_idx, stop_idx):
+        case (None, None):
+            raise sql_glot_args[0]
+        case (_, None):
+            assert start_idx is not None
+            if start_idx >= 0:
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                )
+            else:
+                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                sql_substr = sqlglot_expressions.Substring(
+                    this=sql_glot_args[0], start=start_idx_glot
+                )
+                answer = (
+                    sqlglot_expressions.Case()
+                    .when(
+                        sqlglot_expressions.LTE(
+                            this=start_idx_glot, expression=sql_zero
+                        ),
+                        blank_str,
+                    )
+                    .else_(sql_substr)
+                )
+                breakpoint()
+                return answer
+        case (None, _):
+            assert stop_idx is not None
+            if stop_idx >= 0:
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(1),
+                    length=sqlglot_expressions.convert(stop_idx + 1),
+                )
+            else:
+                stop_idx_glot = positive_index(sql_glot_args[0], stop_idx, True)
+                length = stop_idx_glot  # length is the stop index
+                sql_substr = sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(1),
+                    length=length,
+                )
+                return (
+                    sqlglot_expressions.Case()
+                    .when(sqlglot_expressions.LTE(length, sql_zero), blank_str)
+                    .else_(sql_substr)
+                )
+        case _:
+            assert start_idx is not None
+            assert stop_idx is not None
+            # Get the positive index if negative
+            if start_idx > 0 and stop_idx > 0:
+                if start_idx > stop_idx:
+                    return sqlglot_expressions.convert("")
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                    length=sqlglot_expressions.convert(stop_idx - start_idx),
+                )
+            if start_idx < 0 and stop_idx > 0:
+                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                answer = sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=start_idx_glot,
+                    length=sqlglot_expressions.Sub(
+                        this=sqlglot_expressions.convert(stop_idx + 1),
+                        expression=start_idx_glot,
+                    ),
+                )
+                breakpoint()
+                return answer
+            if start_idx > 0 and stop_idx < 0:
+                stop_idx_glot = positive_index(sql_glot_args[0], stop_idx, True)
+                answer = sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                    length=sqlglot_expressions.Sub(
+                        this=stop_idx_glot,
+                        expression=sqlglot_expressions.convert(start_idx),
+                    ),
+                )
+                return answer
+            if start_idx < 0 and stop_idx < 0:
+                if start_idx > stop_idx:
+                    return sqlglot_expressions.convert("")
+                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                stop_idx_glot = positive_index(sql_glot_args[0], stop_idx)
+                return sqlglot_expressions.Substring(
+                    this=sql_glot_args[0],
+                    start=start_idx_glot,
+                    length=sqlglot_expressions.Sub(
+                        this=stop_idx_glot, expression=start_idx_glot
+                    ),
+                )
 
 
 def convert_concat_ws(
@@ -1013,6 +1227,7 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.MINUTE] = convert_sqlite_datetime_extract("'%M'")
         self.bindings[pydop.SECOND] = convert_sqlite_datetime_extract("'%S'")
         self.bindings[pydop.DATEDIFF] = convert_sqlite_datediff
+        self.bindings[pydop.SLICE] = convert_slice_sqlite
 
         # String function overrides
         if sqlite3.sqlite_version < "3.44.1":

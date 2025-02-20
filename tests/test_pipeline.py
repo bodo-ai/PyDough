@@ -30,6 +30,7 @@ from simple_pydough_functions import (
     regional_suppliers_percentile,
     simple_filter_top_five,
     simple_scan_top_five,
+    step_slicing,
     triple_partition,
     years_months_days_hours_datediff,
 )
@@ -1085,6 +1086,63 @@ def test_pipeline_e2e_errors(
             ),
             id="minutes_seconds_datediff",
         ),
+        pytest.param(
+            (
+                step_slicing,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "john doe",
+                            "Jane Smith",
+                            "Bob Johnson",
+                            "Samantha Lee",
+                            "Michael Chen",
+                            "Emily Davis",
+                            "David Kim",
+                            "Sarah Nguyen",
+                            "William Garcia",
+                            "Jessica Hernandez",
+                            "Alex Rodriguez",
+                            "Olivia Johnson",
+                            "Ethan Davis",
+                            "Ava Wilson",
+                            "Emma Brown",
+                            "sophia martinez",
+                            "Jacob Taylor",
+                            "Michael Anderson",
+                            "Isabella Thompson",
+                            "Maurice Lee",
+                        ]
+                    }
+                ).assign(
+                    neg_none_step=lambda x: x["name"].str[-2::1],
+                    pos_none_step=lambda x: x["name"].str[3::1],
+                    none_pos_step=lambda x: x["name"].str[:3:1],
+                    none_neg_step=lambda x: x["name"].str[:-2:1],
+                    pos_pos_step=lambda x: x["name"].str[2:4:1],
+                    pos_neg_step=lambda x: x["name"].str[2:-2:1],
+                    neg_pos_step=lambda x: x["name"].str[-4:2:1],
+                    neg_neg_step=lambda x: x["name"].str[-4:-2:1],
+                    empty1=lambda x: x["name"].str[2:2:1],
+                    empty2=lambda x: x["name"].str[-2:-2:1],
+                    empty3=lambda x: x["name"].str[-2:-4:1],
+                    empty4=lambda x: x["name"].str[4:2:1],
+                    oob1=lambda x: x["name"].str[100:200:1],
+                    oob2=lambda x: x["name"].str[-200:-100:1],
+                    wo_step1=lambda x: x["name"].str[-2:],
+                    wo_step2=lambda x: x["name"].str[3:],
+                    wo_step3=lambda x: x["name"].str[:3],
+                    wo_step4=lambda x: x["name"].str[:-2],
+                    wo_step5=lambda x: x["name"].str[2:4],
+                    wo_step6=lambda x: x["name"].str[2:-2],
+                    wo_step7=lambda x: x["name"].str[-4:2],
+                    wo_step8=lambda x: x["name"].str[-4:-2],
+                    wo_step9=lambda x: x["name"].str[2:2],
+                ),
+            ),
+            id="step_slicing",
+        ),
     ],
 )
 def custom_defog_test_data(
@@ -1116,4 +1174,5 @@ def test_defog_e2e_with_custom_data(
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
+    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())

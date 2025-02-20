@@ -441,3 +441,32 @@ def datediff():
         minutes_diff=DATEDIFF("minutes", date_time, y_datetime),
         seconds_diff=DATEDIFF("seconds", date_time, y_datetime),
     ).TOP_K(30, by=years_diff.ASC())
+
+
+def step_slicing():
+    return Customers(
+        name,
+        #  neg_none_step = name[-2::1],
+        #  pos_none_step = name[3::1],
+        #  none_pos_step = name[:3:1],
+        #  none_neg_step = name[:-2:1],
+        #  pos_pos_step = name[2:4:1],
+        #  pos_neg_step = name[2:-2:1],
+        neg_pos_step=name[-9:2:1],
+    )
+    #  neg_neg_step = name[-4:-2:1],
+    #  empty1 = name[2:2:1],
+    #  empty2 = name[-2:-2:1],
+    #  empty3 = name[-2:-4:1],
+    #  empty4 = name[4:2:1],
+    #  oob1 = name[100:200:1],
+    #  oob2 = name[-200:-100:1],
+    #  wo_step1 = name[-2:],
+    #  wo_step2 = name[3:],
+    #  wo_step3 = name[:3],
+    #  wo_step4 = name[:-2],
+    #  wo_step5 = name[2:4],
+    #  wo_step6 = name[2:-2],
+    #  wo_step7 = name[-4:2],
+    #  wo_step8 = name[-4:-2],
+    #  wo_step9 = name[2:2],)
