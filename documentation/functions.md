@@ -223,8 +223,12 @@ Orders.CALCULATE(is_special_request = LIKE(comment, "%special%requests%"))
 The `JOIN_STRINGS` function concatenates all its string arguments, using the first argument as a delimiter between each of the following arguments (like the `.join` method in Python):
 
 ```py
-Regions(region_name=name).nations(nation_name=name).customers.CALCULATE(
-    fully_qualified_name = JOIN_STRINGS("-", region_name, nation_name, name)
+Regions.CALCULATE(
+   region_name=name
+).nations.CALCULATE(
+   nation_name=name
+).customers.CALCULATE(
+   fully_qualified_name = JOIN_STRINGS("-", region_name, nation_name, name)
 )
 ```
 

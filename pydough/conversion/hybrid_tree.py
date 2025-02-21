@@ -455,7 +455,7 @@ class HybridCollectionAccess(HybridOperation):
             assert isinstance(expr, ColumnProperty)
             terms[name] = HybridColumnExpr(expr)
         unique_exprs: list[HybridExpr] = []
-        for name in collection.unique_terms:
+        for name in sorted(collection.unique_terms, key=str):
             expr = collection.get_expr(name)
             unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
         super().__init__(terms, {}, [], unique_exprs)
@@ -1830,7 +1830,9 @@ class HybridTranslator:
                         if ancestor_tree.parent is None:
                             raise ValueError("Window function references too far back")
                         ancestor_tree = ancestor_tree.parent
-                    for unique_term in ancestor_tree.pipeline[-1].unique_exprs:
+                    for unique_term in sorted(
+                        ancestor_tree.pipeline[-1].unique_exprs, key=str
+                    ):
                         shifted_arg: HybridExpr | None = unique_term.shift_back(
                             expr.levels
                         )
@@ -1992,7 +1994,7 @@ class HybridTranslator:
                             subtree.pipeline[-1].orderings,
                         )
                     )
-                for key_name in node.calc_terms:
+                for key_name in sorted(node.calc_terms, key=str):
                     key = node.get_expr(key_name)
                     expr = self.make_hybrid_expr(
                         successor_hybrid, key, child_ref_mapping, False

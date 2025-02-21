@@ -362,7 +362,7 @@ People.CALCULATE(
 
 ```py
 %%pydough
-current_addresses(city, state)
+current_addresses.CALCULATE(city, state)
 ```
 
 **Bad Example #2**: Just a contextless expression for a scalar expression that has not been placed into a collection for it to make sense.
@@ -1032,7 +1032,7 @@ GRAPH.CALCULATE(
 
 ```py
 %%pydough
-people_info = Addresses(state).current_occupants.CALCULATE(
+people_info = Addresses.CALCULATE(state).current_occupants.CALCULATE(
     first_letter=first_name[:1],
 )
 PARTITION(people_info, name="ppl", by=(state, first_letter)).CALCULATE(
@@ -1064,7 +1064,7 @@ PARTITION(people_info, name="ppl", by=(state, first_letter)).CALCULATE(
 people_info = Addresses.CALCULATE(state).current_occupants.CALCULATE(birth_year=YEAR(birth_date))
 GRAPH.PARTITION(people_info, name="ppl", by=birth_year).WHERE(
     COUNT(p) >= 10000
-).ppl(
+).ppl.CALCULATE(
     first_name,
     last_name,
     state
@@ -1075,7 +1075,7 @@ GRAPH.PARTITION(people_info, name="ppl", by=birth_year).WHERE(
 
 ```py
 %%pydough
-package_info = Packages(
+package_info = Packages.CALCULATE(
     order_year=YEAR(order_date),
     shipping_state=shipping_address.state
 )
@@ -1162,7 +1162,9 @@ PARTITION(People.CALCULATE(birth_year=YEAR(birth_date)), name="ppl", by=birth_ye
 
 ```py
 %%pydough
-People(ssn).PARTITION(packages.CALCULATE(year=YEAR(order_date)), name="p", by=year).CALCULATE(
+People.CALCULATE(ssn).PARTITION(
+    packages.CALCULATE(year=YEAR(order_date)), name="p", by=year
+).CALCULATE(
     ssn=ssn,
     year=year,
     n_packs=COUNT(p)
@@ -1427,8 +1429,9 @@ People.CALCULATE(
 
 ```py
 %%pydough
-most_recent_package = BEST(current_occupants(email).packages, by=order_date.DESC())
-Addresses(address_id).most_recent_package(
+packages_from_occupants = current_occupants.CALCULATE(email).packages
+most_recent_package = BEST(packages_from_occupants, by=order_date.DESC())
+Addresses.CALCULATE(address_id).most_recent_package.CALCULATE(
     address_id,
     email,
     package_id=package_id,
@@ -1492,7 +1495,7 @@ People.CALCULATE(first_name, best_cost=best_packages.package_cost)
 ```py
 %%pydough
 most_recent_package = BEST(current_occupants.packages, by=order_date.DESC())
-Addresses.most_recent_package(
+Addresses.most_recent_package.CALCULATE(
     address_id=address_id,
     package_id=package_id,
     order_date=order_date,

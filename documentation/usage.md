@@ -222,7 +222,7 @@ Below is an example of using `pydough.to_sql` and the output (the SQL output may
 ```py
 %%pydough
 european_countries = nations.WHERE(region.name == "EUROPE")
-result = european_countries(name, n_custs=COUNT(customers))
+result = european_countries.CALCULATE(name, n_custs=COUNT(customers))
 pydough.to_sql(result, columns=["name", "n_custs"])
 ```
 
@@ -276,7 +276,7 @@ Below is an example of using `pydough.to_df` and the output, attached to a sqlit
 ```py
 %%pydough
 european_countries = nations.WHERE(region.name == "EUROPE")
-result = european_countries(n=COUNT(customers))
+result = european_countries.CALCULATE(n=COUNT(customers))
 pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 ```
 

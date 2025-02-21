@@ -1023,7 +1023,6 @@ def convert_ast_to_relational(
     # Pre-process the QDAG node so the final CALC term includes any ordering
     # keys.
     translator: RelTranslation = RelTranslation()
-    # final_terms: set[str] = node.calc_terms
     node = translator.preprocess_root(node, columns)
 
     # Convert the QDAG node to the hybrid form, decorrelate it, then invoke

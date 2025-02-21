@@ -1340,6 +1340,7 @@ def test_pipeline_e2e_errors(
                 multi_partition_access_1,
                 None,
                 "Broker",
+                "multi_partition_access_1",
                 lambda: pd.DataFrame(
                     {"symbol": ["AAPL", "AMZN", "BRK.B", "FB", "GOOG"]}
                 ),
@@ -1351,6 +1352,7 @@ def test_pipeline_e2e_errors(
                 multi_partition_access_2,
                 None,
                 "Broker",
+                "multi_partition_access_2",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [f"TX{i:03}" for i in (22, 24, 25, 27, 56)],
@@ -1376,6 +1378,7 @@ def test_pipeline_e2e_errors(
                 hour_minute_day,
                 None,
                 "Broker",
+                "hour_minute_day",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -1407,6 +1410,7 @@ def test_pipeline_e2e_errors(
                 exponentiation,
                 None,
                 "Broker",
+                "exponentiation",
                 lambda: pd.DataFrame(
                     {
                         "low_square": [
@@ -1455,6 +1459,7 @@ def test_pipeline_e2e_errors(
                 years_months_days_hours_datediff,
                 None,
                 "Broker",
+                "years_months_days_hours_datediff",
                 lambda: pd.DataFrame(
                     data={
                         "x": [
@@ -1607,6 +1612,7 @@ def test_pipeline_e2e_errors(
                 minutes_seconds_datediff,
                 None,
                 "Broker",
+                "minutes_seconds_datediff",
                 lambda: pd.DataFrame(
                     {
                         "x": [
@@ -1716,7 +1722,11 @@ def test_pipeline_e2e_errors(
 def custom_defog_test_data(
     request,
 ) -> tuple[
-    Callable[[], UnqualifiedNode], dict[str, str] | list[str] | None, str, pd.DataFrame
+    Callable[[], UnqualifiedNode],
+    dict[str, str] | list[str] | None,
+    str,
+    str,
+    pd.DataFrame,
 ]:
     """
     Test data for test_defog_e2e. Returns a tuple of the following
@@ -1724,10 +1734,52 @@ def custom_defog_test_data(
     1. `unqualified_impl`: a PyDough implementation function.
     2. `columns`: the columns to select from the relational plan (optional).
     3. `graph_name`: the name of the graph from the defog database to use.
-    4. `answer_impl`: a function that takes in nothing and returns the answer
+    4. `file_name`: the name of the file containing the expected relational
+    plan.
+    5. `answer_impl`: a function that takes in nothing and returns the answer
     to a defog query as a Pandas DataFrame.
     """
     return request.param
+
+
+def test_defog_until_relational(
+    custom_defog_test_data: tuple[
+        Callable[[], UnqualifiedNode],
+        dict[str, str] | list[str] | None,
+        str,
+        str,
+        pd.DataFrame,
+    ],
+    defog_graphs: graph_fetcher,
+    default_config: PyDoughConfigs,
+    get_plan_test_filename: Callable[[str], str],
+    update_tests: bool,
+):
+    """
+    Same as `test_pipeline_until_relational`, but for defog data.
+    """
+    unqualified_impl, columns, graph_name, file_name, _ = custom_defog_test_data
+    graph: GraphMetadata = defog_graphs(graph_name)
+    init_pydough_context(graph)(unqualified_impl)()
+    file_path: str = get_plan_test_filename(file_name)
+    UnqualifiedRoot(graph)
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
+    assert isinstance(
+        qualified, PyDoughCollectionQDAG
+    ), "Expected qualified answer to be a collection, not an expression"
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, _load_column_selection({"columns": columns}), default_config
+    )
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(relational.to_tree_string() + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            relational.to_tree_string() == expected_relational_string.strip()
+        ), "Mismatch between tree string representation of relational node and expected Relational tree string"
 
 
 @pytest.mark.execute
@@ -1735,6 +1787,7 @@ def test_defog_e2e_with_custom_data(
     custom_defog_test_data: tuple[
         Callable[[], UnqualifiedNode],
         dict[str, str] | list[str] | None,
+        str,
         str,
         pd.DataFrame,
     ],
@@ -1746,7 +1799,7 @@ def test_defog_e2e_with_custom_data(
     comparing against the result of running the reference SQL query text on the
     same database connector.
     """
-    unqualified_impl, columns, graph_name, answer_impl = custom_defog_test_data
+    unqualified_impl, columns, graph_name, _, answer_impl = custom_defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(
