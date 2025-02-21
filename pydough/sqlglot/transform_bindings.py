@@ -587,19 +587,35 @@ def convert_slice(
             )
 
     if isinstance(step, sqlglot_expressions.Literal):
-        if int(step.this) != 1:
+        try:
+            step_int = int(step.this)
+        except ValueError:
+            raise ValueError(
+                "SLICE function currently only supports the slicing arguments being integer literals or absent"
+            )
+        if step_int != 1:
             raise NotImplementedError(
                 "SLICE function currently only supports a step of 1"
             )
 
     start_idx: int | None = None
     stop_idx: int | None = None
-    start_idx = (
-        int(start.this) if not isinstance(start, sqlglot_expressions.Null) else None
-    )
-    stop_idx = (
-        int(stop.this) if not isinstance(stop, sqlglot_expressions.Null) else None
-    )
+    try:
+        start_idx = (
+            int(start.this) if not isinstance(start, sqlglot_expressions.Null) else None
+        )
+    except ValueError:
+        raise ValueError(
+            "SLICE function currently only supports the slicing arguments being integer literals or absent"
+        )
+    try:
+        stop_idx = (
+            int(stop.this) if not isinstance(stop, sqlglot_expressions.Null) else None
+        )
+    except ValueError:
+        raise ValueError(
+            "SLICE function currently only supports the slicing arguments being integer literals or absent"
+        )
 
     # SQLGlot expressions for 0 and 1 and empty string
     sql_zero = sqlglot_expressions.convert(0)

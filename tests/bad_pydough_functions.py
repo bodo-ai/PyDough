@@ -3,6 +3,7 @@
 # ruff & mypy should not try to typecheck or verify any of this
 
 import math
+import datetime
 
 
 def bad_bool_1():
@@ -65,6 +66,51 @@ def bad_slice_1():
 def bad_slice_2():
     # Unsupported slicing: reversed
     return Customers(name[::-1])
+
+
+def bad_slice_3():
+    # Unsupported slicing: non-integer start
+    return Customers(name["invalid":-1:])
+
+
+def bad_slice_4():
+    # Unsupported slicing: non-integer start
+    return Customers(name[datetime.datetime.now() : -1 :])
+
+
+def bad_slice_5():
+    # Unsupported slicing: non-integer start
+    return Customers(name[42.4:10:])
+
+
+def bad_slice_6():
+    # Unsupported slicing: non-integer stop
+    return Customers(name[1:"invalid":])
+
+
+def bad_slice_7():
+    # Unsupported slicing: non-integer stop
+    return Customers(name[1 : datetime.datetime.now() :])
+
+
+def bad_slice_8():
+    # Unsupported slicing: non-integer stop
+    return Customers(name[1:42.4:])
+
+
+def bad_slice_9():
+    # Unsupported slicing: non-integer step
+    return Customers(name[1:10:"invalid"])
+
+
+def bad_slice_10():
+    # Unsupported slicing: non-integer step
+    return Customers(name[1 : 10 : datetime.datetime.now()])
+
+
+def bad_slice_11():
+    # Unsupported slicing: non-integer step
+    return Customers(name[1:10:42.4])
 
 
 def bad_floor():

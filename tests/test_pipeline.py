@@ -9,6 +9,15 @@ import pytest
 from bad_pydough_functions import (
     bad_slice_1,
     bad_slice_2,
+    bad_slice_3,
+    bad_slice_4,
+    bad_slice_5,
+    bad_slice_6,
+    bad_slice_7,
+    bad_slice_8,
+    bad_slice_9,
+    bad_slice_10,
+    bad_slice_11,
 )
 from correlated_pydough_functions import (
     correl_1,
@@ -1177,6 +1186,51 @@ def test_pipeline_e2e(
             bad_slice_2,
             "SLICE function currently only supports a step of 1",
             id="bad_slice_2",
+        ),
+        pytest.param(
+            bad_slice_3,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_3",
+        ),
+        pytest.param(
+            bad_slice_4,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_4",
+        ),
+        pytest.param(
+            bad_slice_5,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_5",
+        ),
+        pytest.param(
+            bad_slice_6,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_6",
+        ),
+        pytest.param(
+            bad_slice_7,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_7",
+        ),
+        pytest.param(
+            bad_slice_8,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_8",
+        ),
+        pytest.param(
+            bad_slice_9,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_9",
+        ),
+        pytest.param(
+            bad_slice_10,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_10",
+        ),
+        pytest.param(
+            bad_slice_11,
+            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            id="bad_slice_11",
         ),
     ],
 )
