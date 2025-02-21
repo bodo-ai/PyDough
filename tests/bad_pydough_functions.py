@@ -73,3 +73,48 @@ def bad_slice_3():
 def bad_slice_4():
     # Unsupported slicing: reversed
     return Customers(name[::-1])
+
+
+def bad_lpad_11():
+    # Missing arguments
+    return Customers(padded_name=LPAD(name))
+
+
+def bad_lpad_1():
+    # String length argument
+    return Customers(padded_name=LPAD(name, "20", "*"))
+
+
+def bad_lpad_2():
+    # Empty padding string
+    return Customers(padded_name=LPAD(name, 20, ""))
+
+
+def bad_lpad_3():
+    # Negative length
+    return Customers(padded_name=LPAD(name, -5, "*"))
+
+
+def bad_lpad_4():
+    # Multi-character padding string
+    return Customers(padded_name=LPAD(name, 20, "*#"))
+
+
+def bad_rpad_1():
+    # String length argument
+    return Customers(padded_name=RPAD(name, "20", "*"))
+
+
+def bad_rpad_2():
+    # Empty padding string
+    return Customers(padded_name=RPAD(name, 20, ""))
+
+
+def bad_rpad_3():
+    # Negative length
+    return Customers(padded_name=RPAD(name, -5, "*"))
+
+
+def bad_rpad_4():
+    # Multi-character padding string
+    return Customers(padded_name=RPAD(name, 20, "*#"))

@@ -682,3 +682,17 @@ def datediff():
         minutes_diff=DATEDIFF("minutes", date_time, y_datetime),
         seconds_diff=DATEDIFF("seconds", date_time, y_datetime),
     ).TOP_K(30, by=years_diff.ASC())
+
+
+def padding_functions():
+    return Customers(
+        original_name=name,
+        right_padded=RPAD(name, 30, "*"),
+        left_padded=LPAD(name, 30, "#"),
+        truncated_right=RPAD(name, 8, "-"),
+        truncated_left=LPAD(name, 8, "-"),
+        zero_pad_right=RPAD(name, 0, "."),
+        zero_pad_left=LPAD(name, 0, "."),
+        right_padded_space=RPAD(name, 30, " "),
+        left_padded_space=LPAD(name, 30, " "),
+    ).TOP_K(5, by=name.ASC())

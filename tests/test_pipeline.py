@@ -7,6 +7,14 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 from bad_pydough_functions import (
+    bad_lpad_1,
+    bad_lpad_2,
+    bad_lpad_3,
+    bad_lpad_4,
+    bad_rpad_1,
+    bad_rpad_2,
+    bad_rpad_3,
+    bad_rpad_4,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -48,6 +56,7 @@ from simple_pydough_functions import (
     minutes_seconds_datediff,
     multi_partition_access_1,
     multi_partition_access_2,
+    padding_functions,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -1579,6 +1588,54 @@ def test_pipeline_e2e_errors(
             ),
             id="minutes_seconds_datediff",
         ),
+        pytest.param(
+            (
+                padding_functions,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "original_name": [
+                            "Alex Rodriguez",
+                            "Ava Wilson",
+                            "Bob Johnson",
+                            "David Kim",
+                            "Emily Davis",
+                        ]
+                    }
+                ).assign(
+                    right_padded=lambda x: x.original_name.apply(
+                        lambda s: (s + "*" * 30)[:30]
+                    ),
+                    # This lambda only works when each string is less than 30 characters
+                    left_padded=lambda x: x.original_name.apply(
+                        lambda s: ("#" * 30 + s)[-30:]
+                    ),
+                    truncated_right=[
+                        "Alex Rod",
+                        "Ava Wils",
+                        "Bob John",
+                        "David Ki",
+                        "Emily Da",
+                    ],
+                    truncated_left=[
+                        "Alex Rod",
+                        "Ava Wils",
+                        "Bob John",
+                        "David Ki",
+                        "Emily Da",
+                    ],
+                    zero_pad_right=["", "", "", "", ""],
+                    zero_pad_left=["", "", "", "", ""],
+                    right_padded_space=lambda x: x.original_name.apply(
+                        lambda s: (s + " " * 30)[:30]
+                    ),
+                    left_padded_space=lambda x: x.original_name.apply(
+                        lambda s: (" " * 30 + s)[-30:]
+                    ),
+                ),
+            ),
+            id="padding_functions",
+        ),
     ],
 )
 def custom_defog_test_data(
@@ -1611,3 +1668,65 @@ def test_defog_e2e_with_custom_data(
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
     pd.testing.assert_frame_equal(result, answer_impl())
+
+
+@pytest.mark.execute
+@pytest.mark.parametrize(
+    "impl, error_msg",
+    [
+        pytest.param(
+            bad_lpad_1,
+            "LPAD function requires the length argument to be a number",
+            id="bad_lpad_1",
+        ),
+        pytest.param(
+            bad_lpad_2,
+            "LPAD function requires the padding argument to be of length 1.",
+            id="bad_lpad_2",
+        ),
+        pytest.param(
+            bad_lpad_3,
+            "LPAD function requires a non-negative length",
+            id="bad_lpad_3",
+        ),
+        pytest.param(
+            bad_lpad_4,
+            "LPAD function requires the padding argument to be of length 1",
+            id="bad_lpad_4",
+        ),
+        pytest.param(
+            bad_rpad_1,
+            "RPAD function requires the length argument to be a number",
+            id="bad_rpad_1",
+        ),
+        pytest.param(
+            bad_rpad_2,
+            "RPAD function requires the padding argument to be of length 1.",
+            id="bad_rpad_2",
+        ),
+        pytest.param(
+            bad_rpad_3,
+            "RPAD function requires a non-negative length",
+            id="bad_rpad_3",
+        ),
+        pytest.param(
+            bad_rpad_4,
+            "RPAD function requires the padding argument to be of length 1",
+            id="bad_rpad_4",
+        ),
+    ],
+)
+def test_defog_e2e_errors(
+    impl: Callable[[], UnqualifiedNode],
+    error_msg: str,
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+):
+    """
+    Tests running bad PyDough code through the entire pipeline to verify that
+    a certain error is raised for defog database.
+    """
+    graph: GraphMetadata = defog_graphs("Broker")
+    with pytest.raises(Exception, match=error_msg):
+        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
+        to_df(root, metadata=graph, database=sqlite_defog_connection)

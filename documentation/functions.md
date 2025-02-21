@@ -21,6 +21,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [CONTAINS](#contains)
    * [LIKE](#like)
    * [JOIN_STRINGS](#join_strings)
+   * [LPAD](#lpad)
+   * [RPAD](#rpad)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -229,6 +231,48 @@ Regions.nations.customers(
 ```
 
 For instance, `JOIN_STRINGS("; ", "Alpha", "Beta", "Gamma)` returns `"Alpha; Beta; Gamma"`.
+
+<!-- TOC --><a name="lpad"></a>
+### LPAD
+
+The `LPAD` function pads an expression on the left side with a specified padding character and returns the padded expression till the desired length. It takes three arguments:
+
+1. The input expression to pad.
+2. The desired final length of the expression.
+3. The single character to use for padding.
+
+The function behaves as follows:
+
+- If the input expression is shorter than the desired length, it adds padding characters on the left until reaching the desired length. 
+- If the input expression is longer than the desired length, it truncates the expression from the left to match the desired length.
+- If the desired length is 0, it returns an empty string.
+- If the desired length is negative, it raises an error.
+- If the padding argument is not a single character, it raises an error.
+
+```py
+Customers(left_padded_name = LPAD(name, 30, "*"))
+```
+
+<!-- TOC --><a name="rpad"></a>
+### RPAD
+
+The `RPAD` function pads an expression on the right side with a specified padding character and returns the padded expression till the desired length. It takes three arguments:
+
+1. The input expression to pad.
+2. The desired final length of the expression.
+3. The single character to use for padding.
+
+The function behaves as follows:
+
+- If the input expression is shorter than the desired length, it adds padding characters on the right until reaching the desired length.
+- If the input expression is longer than the desired length, it truncates the expression from the left to match the desired length.
+- If the desired length is 0, it returns an empty string
+- If the desired length is negative, it raises an error
+- If the padding argument is not a single character, it raises an error
+
+```py
+Customers(right_padded_name = RPAD(name, 30, "*"))
+```
 
 <!-- TOC --><a name="datetime-functions"></a>
 ## Datetime Functions
