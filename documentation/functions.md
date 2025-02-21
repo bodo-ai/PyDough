@@ -690,7 +690,7 @@ Parts.WHERE(not(retail_price > 1000))
 
 ### \_\_call\_\_
 
-The `__call__` magic method is not supported in PyDough, but calling an object will not throw an error. Instead, it internally evaluates to the `CALC` property.
+The `__call__` magic method is not supported in PyDough as it calls PyDough code as if it were a function.
 
 ```py
 # Not allowed - calls PyDough code as if it were a function
