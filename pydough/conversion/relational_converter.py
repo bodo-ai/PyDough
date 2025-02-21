@@ -1008,7 +1008,7 @@ def convert_ast_to_relational(
 
     Args:
         `node`: the PyDough QDAG collection node to be translated.
-        `columns`: the a list of tuples in the form `(alias, column)`
+        `columns`: a list of tuples in the form `(alias, column)`
         describing every column that should be in the output, in the order
         they should appear, and the alias they should be given. If None, uses
         the most recent CALCULATE in the node to determine the columns.
