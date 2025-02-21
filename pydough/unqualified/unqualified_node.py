@@ -126,7 +126,7 @@ class UnqualifiedNode(ABC):
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
                 if not isinstance(coerced_elem, UnqualifiedLiteral):
                     raise PyDoughUnqualifiedException(
-                        "PyDough objects cannot be used as indices in Python slices."
+                        "PyDough objects are currently not supported to be used as indices in Python slices."
                     )
                 args.append(coerced_elem)
             return UnqualifiedOperation("SLICE", args)

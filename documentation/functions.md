@@ -450,7 +450,7 @@ Below is each numerical function currently supported in PyDough.
 
 ### ABS
 
-The `ABS` function returns the absolute value of its input. The `abs()` magic method is also evaluated to the same.
+The `ABS` function returns the absolute value of its input. The Python builtin `abs()` function can also be used to accomplish the same thing.
 
 ```py
 Customers(acct_magnitude = ABS(acctbal))
@@ -462,7 +462,7 @@ Customers(acct_magnitude = abs(acctbal))
 
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The `round()` magic method is also evaluated to the same. 
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
 Parts(rounded_price = ROUND(retail_price, 1))
@@ -470,7 +470,7 @@ Parts(rounded_price = ROUND(retail_price, 1))
 Parts(rounded_price = round(retail_price, 1))
 ```
 
-Note: The default precision for `round` magic method is 0, to be in alignment with the Python implementation. The pydough `ROUND` function requires the precision to be specified.
+Note: The default precision for builtin `round` method is 0, to be in alignment with the Python implementation. The PyDough `ROUND` function requires the precision to be specified.
 
 ```py
 # This is legal.
@@ -666,21 +666,24 @@ Below is a list of banned python logic (magic methods,etc.) that are not support
 
 ### \_\_bool\_\_
 
-The `__bool__` magic method is not supported in PyDough. PyDough code cannot be treated as booleans. Instead of using `or`, `and`, and `not`, use `|`, `&`, and `~` for logical operations. Check out the [Logical](#logical) section for more information.
+The `__bool__` magic method is not supported in PyDough. PyDough code cannot be treated as booleans.
 
 ```py
 # Not allowed - will raise PyDoughUnqualifiedException
 if Customer and Order:
    print("Available")
-   
-# Use & instead of and
-Customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
 
-# Use | instead of or 
-Orders.WHERE((discount > 0.05) | (tax > 0.08))
+Customers.WHERE((acctbal > 0) and (nation.name == "GERMANY"))
+# Use &`instead of `and`:
+# Customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
 
-# Use ~ instead of not
-Parts.WHERE(~(retail_price > 1000))
+Orders.WHERE((discount > 0.05) or (tax > 0.08))
+# Use `|` instead of `or` 
+# Orders.WHERE((discount > 0.05) | (tax > 0.08))
+
+Parts.WHERE(not(retail_price > 1000))
+# Use `~` instead of `not`
+# Parts.WHERE(~(retail_price > 1000))
 ```
 
 <!-- TOC --><a name="__call__"></a>
@@ -690,9 +693,8 @@ Parts.WHERE(~(retail_price > 1000))
 The `__call__` magic method is not supported in PyDough, but calling an object will not throw an error. Instead, it internally evaluates to the `CALC` property.
 
 ```py
-# These are equivalent:
-Customers(name)
-Customers.__call__(name)
+# Not allowed - calls PyDough code as if it were a function
+(1 - discount)(extended_price * 0.5)
 ```
 
 <!-- TOC --><a name="__floor__"></a>
@@ -712,6 +714,7 @@ Customer(age=math.floor(order.total_price))
 The `math.ceil` function calls the `__ceil__` magic method, which is currently not supported in PyDough.
 
 ```py
+# Not allowed currently- will raise PyDoughUnqualifiedException
 Customer(age=math.ceil(order.total_price))
 ```
 
@@ -722,6 +725,7 @@ Customer(age=math.ceil(order.total_price))
 The `math.trunc` function calls the `__trunc__` magic method, which is currently not supported in PyDough.
 
 ```py
+# Not allowed currently- will raise PyDoughUnqualifiedException
 Customer(age=math.trunc(order.total_price))
 ```
 
@@ -732,7 +736,8 @@ Customer(age=math.trunc(order.total_price))
 The `reversed` function calls the `__reversed__` magic method, which is currently not supported in PyDough.
 
 ```py
-Orders(reversed(order_key))
+# Not allowed currently- will raise PyDoughUnqualifiedException
+Regions(backwards_name=reversed(name))
 ```
 
 <!-- TOC --><a name="__int__"></a>
@@ -742,6 +747,7 @@ Orders(reversed(order_key))
 Casting to `int` calls the `__int__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
+# Not allowed currently as it would need to return an int instead of a PyDough object
 Orders(limit=int(order.total_price))
 ```
 
@@ -752,6 +758,7 @@ Orders(limit=int(order.total_price))
 Casting to `float` calls the `__float__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a float instead of a PyDough object.
 
 ```py
+# Not allowed currently as it would need to return a float instead of a PyDough object
 Orders(limit=float(order.quantity))
 ```
 
@@ -762,6 +769,7 @@ Orders(limit=float(order.quantity))
 Casting to `complex` calls the `__complex__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a complex instead of a PyDough object.
 
 ```py
+# Not allowed currently as it would need to return a complex instead of a PyDough object
 Orders(limit=complex(order.total_price))
 ```
 
@@ -772,7 +780,8 @@ Orders(limit=complex(order.total_price))
 Using an object as an index calls the `__index__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
-Customers(sliced = name[:order])
+# Not allowed currently as it would need to return an int instead of a PyDough object
+Orders(s="ABCDE"[:order_priority])
 ```
 
 <!-- TOC --><a name="__nonzero__"></a>
@@ -782,7 +791,8 @@ Customers(sliced = name[:order])
 Using an object in a boolean context calls the `__nonzero__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
-Orders(discount=bool(order.total_price))
+# Not allowed currently as it would need to return an int instead of a PyDough object
+Lineitems(is_taxed=bool(tax))
 ```
 
 <!-- TOC --><a name="__len__"></a>
@@ -792,6 +802,7 @@ Orders(discount=bool(order.total_price))
 The `len` function calls the `__len__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object. Instead, usage of [LENGTH](#length) function is recommended.
 
 ```py
+# Not allowed currently as it would need to return an int instead of a PyDough object
 Customers(len(customer.name))
 ```
 
@@ -799,9 +810,10 @@ Customers(len(customer.name))
 
 ### \_\_contains\_\_
 
-Using the `in` operator calls the `__contains__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a boolean instead of a PyDough object. Instead, usage of [ISIN](#isin) function is recommended.
+Using the `in` operator calls the `__contains__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a boolean instead of a PyDough object. Instead, If you need to check if a string is inside another substring, use [CONTAINS](#contains). If you need to check if an expression is a member of a list of literals, use [ISIN](#isin).
 
 ```py
+# Not allowed currently as it would need to return a boolean instead of a PyDough object
 Orders('discount' in order.details)
 ```
 
@@ -812,6 +824,7 @@ Orders('discount' in order.details)
 Assigning to an index calls the `__setitem__` magic method, which is not supported in PyDough. This operation is not allowed.
 
 ```py
+# Not allowed currently as PyDough objects cannot support item assignment.
 Order.details['discount'] = True
 ```
 
@@ -822,7 +835,7 @@ Order.details['discount'] = True
 Iterating over an object calls the `__iter__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an iterator instead of a PyDough object.
 
 ```py
-# Not allowed operations
+# Not allowed currently as implementation has to return an iterator instead of a PyDough object.
 for item in customer:
    print(item)
 
