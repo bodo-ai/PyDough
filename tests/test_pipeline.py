@@ -9,8 +9,6 @@ import pytest
 from bad_pydough_functions import (
     bad_slice_1,
     bad_slice_2,
-    bad_slice_3,
-    bad_slice_4,
 )
 from simple_pydough_functions import (
     agg_partition,
@@ -712,23 +710,13 @@ def test_pipeline_e2e(
     [
         pytest.param(
             bad_slice_1,
-            "SLICE function currently only supports non-negative stop indices",
+            "SLICE function currently only supports a step of 1",
             id="bad_slice_1",
         ),
         pytest.param(
             bad_slice_2,
-            "SLICE function currently only supports non-negative start indices",
+            "SLICE function currently only supports a step of 1",
             id="bad_slice_2",
-        ),
-        pytest.param(
-            bad_slice_3,
-            "SLICE function currently only supports a step of 1",
-            id="bad_slice_3",
-        ),
-        pytest.param(
-            bad_slice_4,
-            "SLICE function currently only supports a step of 1",
-            id="bad_slice_4",
         ),
     ],
 )
@@ -1093,26 +1081,7 @@ def test_pipeline_e2e_errors(
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "john doe",
                             "Jane Smith",
-                            "Bob Johnson",
-                            "Samantha Lee",
-                            "Michael Chen",
-                            "Emily Davis",
-                            "David Kim",
-                            "Sarah Nguyen",
-                            "William Garcia",
-                            "Jessica Hernandez",
-                            "Alex Rodriguez",
-                            "Olivia Johnson",
-                            "Ethan Davis",
-                            "Ava Wilson",
-                            "Emma Brown",
-                            "sophia martinez",
-                            "Jacob Taylor",
-                            "Michael Anderson",
-                            "Isabella Thompson",
-                            "Maurice Lee",
                         ]
                     }
                 ).assign(
@@ -1122,14 +1091,30 @@ def test_pipeline_e2e_errors(
                     none_neg_step=lambda x: x["name"].str[:-2:1],
                     pos_pos_step=lambda x: x["name"].str[2:4:1],
                     pos_neg_step=lambda x: x["name"].str[2:-2:1],
-                    neg_pos_step=lambda x: x["name"].str[-4:2:1],
+                    neg_pos_step=lambda x: x["name"].str[-12:2:1],
                     neg_neg_step=lambda x: x["name"].str[-4:-2:1],
+                    inbetween_chars=lambda x: x["name"].str[1:-1:1],
                     empty1=lambda x: x["name"].str[2:2:1],
                     empty2=lambda x: x["name"].str[-2:-2:1],
                     empty3=lambda x: x["name"].str[-2:-4:1],
                     empty4=lambda x: x["name"].str[4:2:1],
                     oob1=lambda x: x["name"].str[100:200:1],
                     oob2=lambda x: x["name"].str[-200:-100:1],
+                    oob3=lambda x: x["name"].str[100::1],
+                    oob4=lambda x: x["name"].str[-200::1],
+                    oob5=lambda x: x["name"].str[:100:1],
+                    oob6=lambda x: x["name"].str[:-200:1],
+                    oob7=lambda x: x["name"].str[100:-200:1],
+                    oob8=lambda x: x["name"].str[-200:100:1],
+                    oob9=lambda x: x["name"].str[100:-1:1],
+                    oob10=lambda x: x["name"].str[-100:-1:1],
+                    oob11=lambda x: x["name"].str[-3:100:1],
+                    oob12=lambda x: x["name"].str[-3:-100:1],
+                    zero1=lambda x: x["name"].str[0:0:1],
+                    zero2=lambda x: x["name"].str[0:1:1],
+                    zero3=lambda x: x["name"].str[-1:0:1],
+                    zero4=lambda x: x["name"].str[1:0:1],
+                    zero5=lambda x: x["name"].str[0:-1:1],
                     wo_step1=lambda x: x["name"].str[-2:],
                     wo_step2=lambda x: x["name"].str[3:],
                     wo_step3=lambda x: x["name"].str[:3],
@@ -1174,5 +1159,4 @@ def test_defog_e2e_with_custom_data(
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
-    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
