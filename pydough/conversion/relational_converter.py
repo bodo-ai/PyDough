@@ -812,7 +812,7 @@ class RelTranslation:
         )
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         assert node.subtree.agg_keys is not None
-        for agg_key in node.subtree.agg_keys:
+        for agg_key in sorted(node.subtree.agg_keys, key=str):
             join_keys.append((agg_key, agg_key))
 
         return self.join_outputs(
