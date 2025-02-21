@@ -2,6 +2,7 @@
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
+import datetime
 import math
 
 
@@ -75,6 +76,66 @@ def bad_slice_3():
 def bad_slice_4():
     # Unsupported slicing: reversed
     return Customers(name[::-1])
+
+
+def bad_lpad_1():
+    # String length argument
+    return Customers(padded_name=LPAD(name, "20", "*"))
+
+
+def bad_lpad_2():
+    # Empty padding string
+    return Customers(padded_name=LPAD(name, 20, ""))
+
+
+def bad_lpad_3():
+    # Negative length
+    return Customers(padded_name=LPAD(name, -5, "*"))
+
+
+def bad_lpad_4():
+    # Multi-character padding string
+    return Customers(padded_name=LPAD(name, 20, "*#"))
+
+
+def bad_lpad_5():
+    # Non-integer length
+    return Customers(padded_name=LPAD(name, 20.5, "*"))
+
+
+def bad_lpad_6():
+    # Non-integer length
+    return Customers(padded_name=LPAD(name, datetime.datetime.now(), "*"))
+
+
+def bad_rpad_1():
+    # String length argument
+    return Customers(padded_name=RPAD(name, "20", "*"))
+
+
+def bad_rpad_2():
+    # Empty padding string
+    return Customers(padded_name=RPAD(name, 20, ""))
+
+
+def bad_rpad_3():
+    # Negative length
+    return Customers(padded_name=RPAD(name, -5, "*"))
+
+
+def bad_rpad_4():
+    # Multi-character padding string
+    return Customers(padded_name=RPAD(name, 20, "*#"))
+
+
+def bad_rpad_5():
+    # Non-integer length
+    return Customers(padded_name=RPAD(name, 20.5, "*"))
+
+
+def bad_rpad_6():
+    # Non-integer length
+    return Customers(padded_name=RPAD(name, datetime.datetime.now(), "*"))
 
 
 def bad_floor():
