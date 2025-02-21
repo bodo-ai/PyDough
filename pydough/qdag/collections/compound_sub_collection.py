@@ -180,12 +180,8 @@ class CompoundSubCollection(SubCollection):
             original_name: str = self._inheritance_source_name[term_name]
             expr = ancestor.get_term(original_name)
             if isinstance(expr, PyDoughCollectionQDAG):
-                from .hidden_back_reference_collection import (
-                    HiddenBackReferenceCollection,
-                )
-
-                return HiddenBackReferenceCollection(
-                    self, term_name, original_name, back_levels
+                raise NotImplementedError(
+                    f"Cannot access subcollection property {term_name} of compound subcollection {self.subcollection_property.name}"
                 )
             else:
                 return HiddenBackReferenceExpression(

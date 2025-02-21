@@ -77,10 +77,10 @@ sub_collection = builder.build_child_access("region", table_collection)
 child_collection = ChildOperatorChildAccess(sub_collection)
 child_reference_node = builder.build_child_reference_expression([child_collection], 0, "name")
 
-# Build a CALC node
-# Equivalent PyDough code: `TPCH.Nations(region_name=region.name)`
-calc_node = builder.build_calc(table_collection, [child_collection])
-calc_node = calc_node.with_terms([("region_name", child_reference_node)])
+# Build a CALCULATE node
+# Equivalent PyDough code: `TPCH.Nations.CALCULATE(region_name=region.name)`
+calculate_node = builder.build_calc(table_collection, [child_collection])
+calculate_node = calculate_node.with_terms([("region_name", child_reference_node)])
 
 # Build a WHERE node
 # Equivalent PyDough code: `TPCH.Nations.WHERE(region.name == "ASIA")`
@@ -111,12 +111,8 @@ partition_key = builder.build_reference(part_collection, "part_type")
 partition_by_node = builder.build_partition(part_collection, child_collection, "p")
 partition_by_node = partition_by_node.with_keys([partition_key])
 
-# Build a back reference collection node
-# Equivalent PyDough code: `BACK(1).subcollection`
-back_reference_collection_node = builder.build_back_reference_collection(table_collection, "subcollection", 1)
-
 # Build a child reference collection node
-# Equivalent PyDough code: `Nations(n_customers=COUNT(customers))`
+# Equivalent PyDough code: `Nations.CALCULATE(n_customers=COUNT(customers))`
 customers_sub_collection = builder.build_child_access("customers", table_collection)
 customers_child = ChildOperatorChildAccess(customers_sub_collection)
 child_reference_collection_node = builder.build_child_reference_collection(
@@ -127,8 +123,8 @@ count_call = builder.build_expression_function_call(
     "COUNT",
     [child_reference_collection_node]
 )
-calc_node = builder.build_calc(table_collection, [customers_child])
-calc_node = calc_node.with_terms([("n_customers", count_call)])
+calculate_node = builder.build_calc(table_collection, [customers_child])
+calculate_node = calculate_node.with_terms([("n_customers", count_call)])
 
 # Build a window function call node
 # Equivalent PyDough code: `RANKING(by=TPCH.Nations.name, levels=1, allow_ties=True)`
@@ -144,11 +140,11 @@ Below are some examples of PyDough snippets that are/aren't affected by the rewr
 
 
 ```python
-# Will be rewritten to `Customers(name, has_orders=COUNT(orders) > 0)`
-Customers(name, has_orders=HAS(orders))
+# Will be rewritten to `Customers.CALCULATE(name, has_orders=COUNT(orders) > 0)`
+Customers.CALCULATE(name, has_orders=HAS(orders))
 
-# Will be rewritten to `Customers(name, never_made_order=COUNT(orders) == 0)`
-Customers(name, never_made_order=HASNOT(orders))
+# Will be rewritten to `Customers.CALCULATE(name, never_made_order=COUNT(orders) == 0)`
+Customers.CALCULATE(name, never_made_order=HASNOT(orders))
 
 # Will not be rewritten
 Customers.WHERE(HAS(orders) & (nation.region.name == "EUROPE"))

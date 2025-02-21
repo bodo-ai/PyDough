@@ -25,10 +25,9 @@ The `TestInfo` classes are used to specify information about a QDAG (Qualified D
 - `TableCollectionInfo`: Class for building a table collection.
 - `SubCollectionInfo`: Class for creating a subcollection access.
 - `ChildOperatorChildAccessInfo`: Class for wrapping around a subcollection info within a Calc context.
-- `BackReferenceCollectionInfo`: Class for building a reference to an ancestor collection.
 - `ChildReferenceCollectionInfo`: Class for building a reference to a child collection.
 - `ChildOperatorInfo`: Base class for types of CollectionTestInfo that have child nodes.
-- `CalcInfo`: Class for building a CALC node.
+- `CalcInfo`: Class for building a CALCULATE node.
 - `WhereInfo`: Class for building a WHERE clause.
 - `OrderInfo`: Class for building an ORDER BY clause.
 - `TopKInfo`: Class for building a TOP K clause.

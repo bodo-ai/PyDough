@@ -12,7 +12,7 @@ Unqualified nodes are the first intermediate representation (IR) created by PyDo
 - `UnqualifiedRoot`: Represents the root of an unqualified node tree.
 - `UnqualifiedLiteral`: Represents a literal value in an unqualified node tree.
 - `UnqualifiedAccess`: Represents accessing a property from another unqualified node.
-- `UnqualifiedCalc`: Represents a CALC clause being done onto another unqualified node.
+- `UnqualifiedCalculate`: Represents a CALCULATE clause being done onto another unqualified node.
 - `UnqualifiedWhere`: Represents a WHERE clause being done onto another unqualified node.
 - `UnqualifiedOrderBy`: Represents an ORDER BY clause being done onto another unqualified node.
 - `UnqualifiedTopK`: Represents a TOP K clause being done onto another unqualified node.
@@ -21,7 +21,6 @@ Unqualified nodes are the first intermediate representation (IR) created by PyDo
 - `UnqualifiedBinaryOperation`: Represents a binary operation.
 - `UnqualifiedCollation`: Represents a collation expression.
 - `UnqualifiedOperator`: Represents a function that has yet to be called.
-- `UnqualifiedBack`: Represents a BACK node.
 - `UnqualifiedWindow`: Represents a window operation.
 
 ## Code Transformation
@@ -48,7 +47,7 @@ graph = parse_json_metadata_from_file("path/to/metadata.json", "example_graph")
 # Define a function with the init_pydough_context decorator
 @init_pydough_context(graph)
 def example_function():
-    return Nations(
+    return Nations.CALCULATE(
         nation_name=name,
         region_name=region.name,
         num_customers=COUNT(customers)
@@ -57,7 +56,7 @@ def example_function():
 # Transform the source code of the function
 source_code = """
 def example_function():
-    return Nations(
+    return Nations.CALCULATE(
         nation_name=name,
         region_name=region.name,
         num_customers=COUNT(customers)
@@ -73,7 +72,7 @@ print(ast.unparse(transformed_ast))
 
 # Transform a Jupyter cell
 cell_code = """
-result = Nations(
+result = Nations.CALCULATE(
     nation_name=name,
     region_name=region.name,
     num_customers=COUNT(customers)
@@ -92,7 +91,7 @@ from pydough.unqualified import UnqualifiedRoot
 _ROOT = UnqualifiedRoot(example_graph)
 
 def example_function():
-    return _ROOT.Nations(
+    return _ROOT.Nations.CALCULATE(
         nation_name=_ROOT.name,
         region_name=_ROOT.region.name,
         num_customers=_ROOT.COUNT(_ROOT.customers)
@@ -105,7 +104,7 @@ The transformed Python code for the Jupyter cell will look like this:
 from pydough.unqualified import UnqualifiedRoot
 _ROOT = UnqualifiedRoot(example_graph)
 
-result = _ROOT.Nations(
+result = _ROOT.Nations.CALCULATE(
     nation_name=_ROOT.name,
     region_name=_ROOT.region.name,
     num_customers=_ROOT.COUNT(_ROOT.customers)

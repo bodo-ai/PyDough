@@ -8,7 +8,7 @@ from collections.abc import Callable
 import pytest
 from test_utils import (
     BackReferenceExpressionInfo,
-    CalcInfo,
+    CalculateInfo,
     ChildReferenceCollectionInfo,
     ChildReferenceExpressionInfo,
     CollectionTestInfo,
@@ -54,7 +54,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=ReferenceInfo("name"),
                     magic_word=LiteralInfo("foo", StringType()),
@@ -66,8 +66,10 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo([], name=LiteralInfo("foo", StringType()))
-                ** CalcInfo([], fizz=ReferenceInfo("name"), buzz=ReferenceInfo("key")),
+                ** CalculateInfo([], hello=LiteralInfo("foo", StringType()))
+                ** CalculateInfo(
+                    [], fizz=ReferenceInfo("name"), buzz=ReferenceInfo("key")
+                ),
                 "scan_calc_calc",
             ),
             id="scan_calc_calc",
@@ -91,9 +93,9 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Customers")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
-                    name=FunctionInfo("LOWER", [ReferenceInfo("name")]),
+                    lname=FunctionInfo("LOWER", [ReferenceInfo("name")]),
                     country_code=FunctionInfo(
                         "SLICE",
                         [
@@ -132,7 +134,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("region")],
                     nation_name=ReferenceInfo("name"),
                     region_name=ChildReferenceExpressionInfo("name", 0),
@@ -144,7 +146,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Lineitems")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("part_and_supplier")
                         ** SubCollectionInfo("supplier")
@@ -177,26 +179,8 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo([], key=LiteralInfo(-1, Int64Type()))
                 ** SubCollectionInfo("nations")
-                ** CalcInfo([], key=LiteralInfo(-2, Int64Type()))
-                ** SubCollectionInfo("customers")
-                ** CalcInfo(
-                    [],
-                    key=LiteralInfo(-3, Int64Type()),
-                    name=ReferenceInfo("name"),
-                    phone=ReferenceInfo("phone"),
-                    mktsegment=ReferenceInfo("mktsegment"),
-                ),
-                "join_regions_nations_calc_override",
-            ),
-            id="join_regions_nations_calc_override",
-        ),
-        pytest.param(
-            (
-                TableCollectionInfo("Regions")
-                ** SubCollectionInfo("nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
@@ -212,22 +196,22 @@ from pydough.types import (
                 ** TableCollectionInfo("customers")
                 ** TableCollectionInfo("orders")
                 ** SubCollectionInfo("lines")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("part_and_supplier")
                         ** SubCollectionInfo("supplier")
                         ** SubCollectionInfo("nation")
                         ** SubCollectionInfo("region")
-                        ** CalcInfo(
+                        ** CalculateInfo(
                             [], nation_name=BackReferenceExpressionInfo("name", 1)
                         )
                     ],
                     order_year=FunctionInfo(
                         "YEAR", [BackReferenceExpressionInfo("order_date", 1)]
                     ),
-                    customer_region=BackReferenceExpressionInfo("name", 4),
-                    customer_nation=BackReferenceExpressionInfo("name", 3),
-                    supplier_region=ChildReferenceExpressionInfo("name", 0),
+                    customer_region_name=BackReferenceExpressionInfo("name", 4),
+                    customer_nation_name=BackReferenceExpressionInfo("name", 3),
+                    supplier_region_name=ChildReferenceExpressionInfo("name", 0),
                     nation_name=ChildReferenceExpressionInfo("nation_name", 0),
                 ),
                 "lines_shipping_vs_customer_region",
@@ -237,7 +221,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Orders")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("lines")],
                     okey=ReferenceInfo("key"),
                     lsum=FunctionInfo(
@@ -251,7 +235,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Customers")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("orders") ** SubCollectionInfo("lines")],
                     okey=ReferenceInfo("key"),
                     lsum=FunctionInfo(
@@ -265,7 +249,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("customers")
                         ** SubCollectionInfo("orders")
@@ -283,7 +267,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Regions")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("nations")
                         ** SubCollectionInfo("customers")
@@ -302,7 +286,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Orders")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("lines")],
                     okey=ReferenceInfo("key"),
                     lavg=FunctionInfo(
@@ -326,7 +310,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("customers"),
                         SubCollectionInfo("suppliers"),
@@ -346,32 +330,32 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("customers")],
-                    total_consumer_value=FunctionInfo(
+                    total_consumer_value_a=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
                     ),
-                    avg_consumer_value=FunctionInfo(
+                    avg_consumer_value_a=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("acctbal", 0)]
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("suppliers")],
-                    nation_name=ReferenceInfo("key"),
-                    total_supplier_value=FunctionInfo(
+                    nation_name_a=ReferenceInfo("key"),
+                    total_supplier_value_a=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("account_balance", 0)]
                     ),
-                    avg_supplier_value=FunctionInfo(
+                    avg_supplier_value_a=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("account_balance", 0)]
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("suppliers"), SubCollectionInfo("customers")],
                     nation_name=ReferenceInfo("key"),
-                    total_consumer_value=ReferenceInfo("total_consumer_value"),
-                    total_supplier_value=ReferenceInfo("total_supplier_value"),
-                    avg_consumer_value=ReferenceInfo("avg_consumer_value"),
-                    avg_supplier_value=ReferenceInfo("avg_supplier_value"),
+                    total_consumer_value=ReferenceInfo("total_consumer_value_a"),
+                    total_supplier_value=ReferenceInfo("total_supplier_value_a"),
+                    avg_consumer_value=ReferenceInfo("avg_consumer_value_a"),
+                    avg_supplier_value=ReferenceInfo("avg_supplier_value_a"),
                     best_consumer_value=FunctionInfo(
                         "MAX", [ChildReferenceExpressionInfo("acctbal", 1)]
                     ),
@@ -386,7 +370,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("customers")],
                     nation_name=ReferenceInfo("key"),
                     num_customers=FunctionInfo(
@@ -400,7 +384,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("customers"), SubCollectionInfo("suppliers")],
                     nation_name=ReferenceInfo("key"),
                     num_customers=FunctionInfo(
@@ -429,7 +413,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("customers"),
                     ],
@@ -461,11 +445,11 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Orders")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("lines")
                         ** SubCollectionInfo("part_and_supplier")
-                        ** CalcInfo(
+                        ** CalculateInfo(
                             [],
                             ratio=FunctionInfo(
                                 "DIV",
@@ -488,14 +472,14 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Orders")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("lines")],
                     total_quantity=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("quantity", 0)]
                     ),
                 )
                 ** SubCollectionInfo("lines")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     part_key=ReferenceInfo("part_key"),
                     supplier_key=ReferenceInfo("supplier_key"),
@@ -514,7 +498,7 @@ from pydough.types import (
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [],
                     a=LiteralInfo(0, Int64Type()),
                     b=LiteralInfo("X", StringType()),
@@ -527,12 +511,12 @@ from pydough.types import (
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [],
                     a=LiteralInfo(0, Int64Type()),
                     b=LiteralInfo("X", StringType()),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     a=ReferenceInfo("a"),
                     b=ReferenceInfo("b"),
@@ -545,7 +529,7 @@ from pydough.types import (
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [TableCollectionInfo("Customers")],
                     total_bal=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
@@ -570,7 +554,7 @@ from pydough.types import (
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [
                         TableCollectionInfo("Customers"),
                         TableCollectionInfo("Suppliers"),
@@ -586,13 +570,13 @@ from pydough.types import (
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [],
                     a=LiteralInfo(28.15, Int64Type()),
                     b=LiteralInfo("NICKEL", StringType()),
                 )
                 ** TableCollectionInfo("Parts")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),
                     is_above_cutoff=FunctionInfo(
@@ -616,14 +600,14 @@ from pydough.types import (
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [TableCollectionInfo("Parts")],
                     avg_price=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
                 )
                 ** TableCollectionInfo("Parts")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),
                     is_above_avg=FunctionInfo(
@@ -641,7 +625,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Parts")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("supply_records")],
                     name=ReferenceInfo("name"),
                     total_delta=FunctionInfo(
@@ -669,7 +653,7 @@ from pydough.types import (
                     "p",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("p")],
                     part_type=ReferenceInfo("part_type"),
                     num_parts=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
@@ -685,7 +669,7 @@ from pydough.types import (
             (
                 PartitionInfo(
                     TableCollectionInfo("Orders")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
                         month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
@@ -696,7 +680,7 @@ from pydough.types import (
                         ChildReferenceExpressionInfo("month", 0),
                     ],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("o")],
                     year=ReferenceInfo("year"),
                     month=ReferenceInfo("month"),
@@ -712,7 +696,7 @@ from pydough.types import (
             (
                 PartitionInfo(
                     TableCollectionInfo("Orders")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
                         month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
@@ -723,7 +707,7 @@ from pydough.types import (
                         ChildReferenceExpressionInfo("month", 0),
                     ],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("o"),
                         SubCollectionInfo("o")
@@ -759,7 +743,7 @@ from pydough.types import (
             (
                 PartitionInfo(
                     TableCollectionInfo("Orders")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
                         month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
@@ -770,7 +754,7 @@ from pydough.types import (
                         ChildReferenceExpressionInfo("month", 0),
                     ],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("o")
                         ** WhereInfo(
@@ -808,7 +792,7 @@ from pydough.types import (
                     ** SubCollectionInfo("part_and_supplier")
                     ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
-                    ** CalcInfo(
+                    ** CalculateInfo(
                         [],
                         year=FunctionInfo(
                             "YEAR", [BackReferenceExpressionInfo("order_date", 4)]
@@ -824,7 +808,7 @@ from pydough.types import (
                         ChildReferenceExpressionInfo("supplier_nation", 0),
                     ],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("combos")],
                     year=ReferenceInfo("year"),
                     customer_nation=ReferenceInfo("customer_nation"),
@@ -842,7 +826,7 @@ from pydough.types import (
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [TableCollectionInfo("Parts")],
                     total_num_parts=FunctionInfo(
                         "COUNT", [ChildReferenceCollectionInfo(0)]
@@ -856,7 +840,7 @@ from pydough.types import (
                     "p",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("p")],
                     part_type=ReferenceInfo("part_type"),
                     percentage_of_parts=FunctionInfo(
@@ -904,7 +888,7 @@ from pydough.types import (
                     ),
                 )
                 ** SubCollectionInfo("p")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),
                     part_type=ReferenceInfo("part_type"),
@@ -921,14 +905,14 @@ from pydough.types import (
                     "p",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("p")],
                     avg_price=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
                 )
                 ** SubCollectionInfo("p")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),
                     part_type=ReferenceInfo("part_type"),
@@ -951,14 +935,14 @@ from pydough.types import (
                     "p",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("p")],
                     avg_price=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
                 )
                 ** SubCollectionInfo("p")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),
                     part_type=ReferenceInfo("part_type"),
@@ -1041,7 +1025,7 @@ from pydough.types import (
                         ],
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     order_key=ReferenceInfo("order_key"),
                     ship_date=ReferenceInfo("ship_date"),
@@ -1088,7 +1072,7 @@ from pydough.types import (
                         ],
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     rname=BackReferenceExpressionInfo("name", 4),
                     price=ReferenceInfo("extended_price"),
@@ -1119,7 +1103,7 @@ from pydough.types import (
                         ],
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("order")
                         ** SubCollectionInfo("customer")
@@ -1161,7 +1145,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("suppliers")
                         ** WhereInfo(
@@ -1191,7 +1175,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo([], name=ReferenceInfo("name"))
+                ** CalculateInfo([], name=ReferenceInfo("name"))
                 ** WhereInfo(
                     [
                         SubCollectionInfo("suppliers")
@@ -1233,7 +1217,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("suppliers")
                         ** WhereInfo(
@@ -1297,7 +1281,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("suppliers")
                         ** WhereInfo(
@@ -1353,7 +1337,7 @@ from pydough.types import (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
                 ** TopKInfo([], 10, (ReferenceInfo("name"), True, True))
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
@@ -1375,7 +1359,7 @@ from pydough.types import (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
                 ** OrderInfo([], (ReferenceInfo("name"), False, True))
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
@@ -1389,7 +1373,7 @@ from pydough.types import (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
                 ** OrderInfo([], (ReferenceInfo("name"), True, True))
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
@@ -1413,7 +1397,7 @@ from pydough.types import (
                 TableCollectionInfo("Regions")
                 ** OrderInfo([], (ReferenceInfo("name"), True, True))
                 ** TopKInfo([], 10, (ReferenceInfo("name"), True, True))
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=ReferenceInfo("name"),
                     name_length=FunctionInfo("LENGTH", [ReferenceInfo("name")]),
@@ -1502,7 +1486,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("suppliers")
                         ** TopKInfo(
@@ -1561,7 +1545,7 @@ from pydough.types import (
                         True,
                     ),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("suppliers")],
                     name=ReferenceInfo("name"),
                     total_bal=FunctionInfo(
@@ -1576,7 +1560,7 @@ from pydough.types import (
             (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     region_name=BackReferenceExpressionInfo("name", 1),
                     nation_name=ReferenceInfo("name"),
@@ -1590,7 +1574,7 @@ from pydough.types import (
             (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     nation_name=ReferenceInfo("name"),
                 )
@@ -1602,7 +1586,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     ordering_0=ReferenceInfo("name"),
                     ordering_1=ReferenceInfo("key"),
@@ -1614,7 +1598,7 @@ from pydough.types import (
                     (FunctionInfo("ABS", [ReferenceInfo("key")]), False, True),
                     (FunctionInfo("LENGTH", [ReferenceInfo("comment")]), True, False),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     ordering_0=ReferenceInfo("ordering_2"),
                     ordering_1=ReferenceInfo("ordering_0"),
@@ -1637,7 +1621,7 @@ from pydough.types import (
                     [SubCollectionInfo("orders")],
                     FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     name=ReferenceInfo("name"),
                 ),
@@ -1662,7 +1646,7 @@ from pydough.types import (
                     ],
                     FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     name=ReferenceInfo("name"),
                 ),
@@ -1677,7 +1661,7 @@ from pydough.types import (
                     [SubCollectionInfo("orders")],
                     FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     name=ReferenceInfo("name"),
                 ),
@@ -1702,7 +1686,7 @@ from pydough.types import (
                     ],
                     FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     name=ReferenceInfo("name"),
                 ),
@@ -1729,7 +1713,7 @@ from pydough.types import (
                     ],
                     FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("region")
                         ** WhereInfo(
@@ -1753,7 +1737,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("region")
                         ** WhereInfo(
@@ -1767,7 +1751,7 @@ from pydough.types import (
                             ),
                         )
                     ],
-                    name=ReferenceInfo("name"),
+                    nation_name=ReferenceInfo("name"),
                     region_name=ChildReferenceExpressionInfo("name", 0),
                 )
                 ** WhereInfo(
@@ -1807,7 +1791,7 @@ from pydough.types import (
                     ],
                     FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("supply_records")
                         ** SubCollectionInfo("part")
@@ -1837,7 +1821,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Suppliers")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("supply_records")
                         ** SubCollectionInfo("part")
@@ -1897,7 +1881,7 @@ from pydough.types import (
                     ],
                     FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("region")
                         ** WhereInfo(
@@ -1921,7 +1905,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("region")
                         ** WhereInfo(
@@ -1935,7 +1919,7 @@ from pydough.types import (
                             ),
                         )
                     ],
-                    name=ReferenceInfo("name"),
+                    nation_name=ReferenceInfo("name"),
                     region_name=ChildReferenceExpressionInfo("name", 0),
                 )
                 ** WhereInfo(
@@ -1975,7 +1959,7 @@ from pydough.types import (
                     ],
                     FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("supply_records")
                         ** SubCollectionInfo("part")
@@ -2005,7 +1989,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Suppliers")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("supply_records")
                         ** SubCollectionInfo("part")
@@ -2100,7 +2084,7 @@ from pydough.types import (
                         ],
                     ),
                 )
-                ** CalcInfo([], name=ReferenceInfo("name")),
+                ** CalculateInfo([], name=ReferenceInfo("name")),
                 "multiple_has_hasnot",
             ),
             id="multiple_has_hasnot",
@@ -2108,7 +2092,7 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Customers")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     name=ReferenceInfo("name"),
                     cust_rank=WindowInfo(
@@ -2124,7 +2108,7 @@ from pydough.types import (
             (
                 TableCollectionInfo("Nations")
                 ** SubCollectionInfo("customers")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     nation_name=BackReferenceExpressionInfo("name", 1),
                     name=ReferenceInfo("name"),
@@ -2144,7 +2128,7 @@ from pydough.types import (
                 TableCollectionInfo("Regions")
                 ** SubCollectionInfo("nations")
                 ** SubCollectionInfo("customers")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [],
                     nation_name=BackReferenceExpressionInfo("name", 1),
                     name=ReferenceInfo("name"),
@@ -2163,10 +2147,10 @@ from pydough.types import (
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("customers")
-                        ** CalcInfo(
+                        ** CalculateInfo(
                             [],
                             cust_rank=WindowInfo(
                                 "RANKING",
@@ -2209,7 +2193,7 @@ def test_ast_to_relational(
     calc_pipeline, file_name = relational_test_data
     file_path: str = get_plan_test_filename(file_name)
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, default_config)
+    relational = convert_ast_to_relational(collection, None, default_config)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
@@ -2226,7 +2210,7 @@ def test_ast_to_relational(
         pytest.param(
             (
                 TableCollectionInfo("Nations")
-                ** CalcInfo(
+                ** CalculateInfo(
                     [SubCollectionInfo("customers")],
                     nation_name=ReferenceInfo("name"),
                     total_bal=FunctionInfo(
@@ -2252,7 +2236,7 @@ def test_ast_to_relational(
         ),
         pytest.param(
             (
-                CalcInfo(
+                CalculateInfo(
                     [TableCollectionInfo("Customers")],
                     total_bal=FunctionInfo(
                         "SUM", [ChildReferenceExpressionInfo("acctbal", 0)]
@@ -2292,7 +2276,7 @@ def test_ast_to_relational(
                     ],
                     FunctionInfo("HASNOT", [ChildReferenceCollectionInfo(0)]),
                 )
-                ** CalcInfo(
+                ** CalculateInfo(
                     [
                         SubCollectionInfo("supply_records")
                         ** SubCollectionInfo("part")
@@ -2349,7 +2333,7 @@ def test_ast_to_relational_alternative_aggregation_configs(
     default_config.sum_default_zero = False
     default_config.avg_default_zero = True
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, default_config)
+    relational = convert_ast_to_relational(collection, None, default_config)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")

@@ -21,7 +21,8 @@ from pydough.metadata.properties import (
     TableColumnMetadata,
 )
 from pydough.qdag import (
-    Calc,
+    BackReferenceExpression,
+    Calculate,
     ChildOperator,
     ExpressionFunctionCall,
     GlobalContext,
@@ -349,7 +350,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
         match qualified_node:
             case GlobalContext():
                 lines.append(
-                    "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed."
+                    "This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed."
                 )
             case TableCollection():
                 collection_name = qualified_node.collection.name
@@ -367,7 +368,6 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                 lines.append(
                     f"This node, specifically, accesses the unpartitioned data of a partitioning (child name: {qualified_node.partition_child_name})."
                 )
-                lines.append("Using BACK(1) will access the partitioned data.")
             case ChildOperator():
                 if len(qualified_node.children):
                     lines.append(
@@ -382,7 +382,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                             lines.append(f"  child ${idx + 1}: {child.to_string()}")
                     lines.append("")
                 match qualified_node:
-                    case Calc():
+                    case Calculate():
                         lines.append(
                             "The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:"
                         )
@@ -401,6 +401,10 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                                     suffix += " (propagated from previous collection)"
                                 else:
                                     suffix += f" (overwrites existing value of {name})"
+                            elif isinstance(expr, BackReferenceExpression):
+                                suffix = (
+                                    " (referencing an alias defined in an ancestor)"
+                                )
                             lines.append(f"  {name} <- {tree_string}{suffix}")
                     case Where():
                         lines.append(
@@ -472,23 +476,6 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
             else:
                 lines.append(
                     "\nThe collection does not have any terms that can be included in a result if it is executed."
-                )
-
-            # Identify the number of BACK levels that are accessible
-            back_counter: int = 0
-            copy_node: PyDoughCollectionQDAG = qualified_node
-            while copy_node.ancestor_context is not None:
-                back_counter += 1
-                copy_node = copy_node.ancestor_context
-            if back_counter == 0:
-                lines.append("\nIt is not possible to use BACK from this collection.")
-            elif back_counter == 1:
-                lines.append(
-                    "\nIt is possible to use BACK to go up to 1 level above this collection."
-                )
-            else:
-                lines.append(
-                    f"\nIt is possible to use BACK to go up to {back_counter} levels above this collection."
                 )
 
         # Dump the collection & expression terms of the collection

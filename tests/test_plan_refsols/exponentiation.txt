@@ -1,0 +1,5 @@
+ROOT(columns=[('low_square', low_square), ('low_sqrt', low_sqrt), ('low_cbrt', low_cbrt)], orderings=[(ordering_0):asc_first])
+ LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'low_cbrt': low_cbrt, 'low_sqrt': low_sqrt, 'low_square': low_square, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_first])
+  PROJECT(columns={'low_cbrt': low_cbrt, 'low_sqrt': low_sqrt, 'low_square': low_square, 'ordering_0': low_square})
+   PROJECT(columns={'low_cbrt': POWER(low, 0.3333333333333333:float64), 'low_sqrt': SQRT(low), 'low_square': low ** 2:int64})
+    SCAN(table=main.sbDailyPrice, columns={'low': sbDpLow})
