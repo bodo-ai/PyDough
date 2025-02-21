@@ -756,19 +756,26 @@ def convert_lpad(
     """
     assert len(sql_glot_args) == 3
 
-    assert isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
-    if sql_glot_args[1].is_string:
-        raise ValueError("LPAD function requires the length argument to be a number.")
+    if (
+        not isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
+        or sql_glot_args[1].is_string
+    ):
+        raise ValueError("LPAD function requires the length argument to be an integer.")
 
-    assert isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
-    if not sql_glot_args[2].is_string:
+    if (
+        not isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
+        or not sql_glot_args[2].is_string
+    ):
         raise ValueError("LPAD function requires the padding argument to be a string.")
     if len(str(sql_glot_args[2].this)) != 1:
         raise ValueError(
             "LPAD function requires the padding argument to be of length 1."
         )
 
-    required_len = int(sql_glot_args[1].this)
+    try:
+        required_len = int(sql_glot_args[1].this)
+    except ValueError:
+        raise ValueError("LPAD function requires the length argument to be an integer.")
     if required_len < 0:
         raise ValueError("LPAD function requires a non-negative length.")
     if required_len == 0:
@@ -830,19 +837,26 @@ def convert_rpad(
     """
     assert len(sql_glot_args) == 3
 
-    assert isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
-    if sql_glot_args[1].is_string:
-        raise ValueError("RPAD function requires the length argument to be a number")
+    if (
+        not isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
+        or sql_glot_args[1].is_string
+    ):
+        raise ValueError("RPAD function requires the length argument to be an integer.")
 
-    assert isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
-    if not sql_glot_args[2].is_string:
+    if (
+        not isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
+        or not sql_glot_args[2].is_string
+    ):
         raise ValueError("RPAD function requires the padding argument to be a string")
     if len(str(sql_glot_args[2].this)) != 1:
         raise ValueError(
             "RPAD function requires the padding argument to be of length 1."
         )
 
-    required_len = int(sql_glot_args[1].this)
+    try:
+        required_len = int(sql_glot_args[1].this)
+    except ValueError:
+        raise ValueError("RPAD function requires the length argument to be an integer.")
     if required_len < 0:
         raise ValueError("RPAD function requires a non-negative length")
     if required_len == 0:

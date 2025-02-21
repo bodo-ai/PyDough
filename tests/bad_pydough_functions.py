@@ -2,6 +2,8 @@
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
+import datetime
+
 
 def bad_bool_1():
     # Using `or`
@@ -100,6 +102,16 @@ def bad_lpad_4():
     return Customers(padded_name=LPAD(name, 20, "*#"))
 
 
+def bad_lpad_5():
+    # Non-integer length
+    return Customers(padded_name=LPAD(name, 20.5, "*"))
+
+
+def bad_lpad_6():
+    # Non-integer length
+    return Customers(padded_name=LPAD(name, datetime.datetime.now(), "*"))
+
+
 def bad_rpad_1():
     # String length argument
     return Customers(padded_name=RPAD(name, "20", "*"))
@@ -118,3 +130,13 @@ def bad_rpad_3():
 def bad_rpad_4():
     # Multi-character padding string
     return Customers(padded_name=RPAD(name, 20, "*#"))
+
+
+def bad_rpad_5():
+    # Non-integer length
+    return Customers(padded_name=RPAD(name, 20.5, "*"))
+
+
+def bad_rpad_6():
+    # Non-integer length
+    return Customers(padded_name=RPAD(name, datetime.datetime.now(), "*"))

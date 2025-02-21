@@ -11,10 +11,14 @@ from bad_pydough_functions import (
     bad_lpad_2,
     bad_lpad_3,
     bad_lpad_4,
+    bad_lpad_5,
+    bad_lpad_6,
     bad_rpad_1,
     bad_rpad_2,
     bad_rpad_3,
     bad_rpad_4,
+    bad_rpad_5,
+    bad_rpad_6,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -1676,7 +1680,7 @@ def test_defog_e2e_with_custom_data(
     [
         pytest.param(
             bad_lpad_1,
-            "LPAD function requires the length argument to be a number",
+            "LPAD function requires the length argument to be an integer.",
             id="bad_lpad_1",
         ),
         pytest.param(
@@ -1695,8 +1699,18 @@ def test_defog_e2e_with_custom_data(
             id="bad_lpad_4",
         ),
         pytest.param(
+            bad_lpad_5,
+            "LPAD function requires the length argument to be an integer.",
+            id="bad_lpad_5",
+        ),
+        pytest.param(
+            bad_lpad_6,
+            "LPAD function requires the length argument to be an integer.",
+            id="bad_lpad_6",
+        ),
+        pytest.param(
             bad_rpad_1,
-            "RPAD function requires the length argument to be a number",
+            "RPAD function requires the length argument to be an integer.",
             id="bad_rpad_1",
         ),
         pytest.param(
@@ -1713,6 +1727,16 @@ def test_defog_e2e_with_custom_data(
             bad_rpad_4,
             "RPAD function requires the padding argument to be of length 1",
             id="bad_rpad_4",
+        ),
+        pytest.param(
+            bad_rpad_5,
+            "RPAD function requires the length argument to be an integer.",
+            id="bad_rpad_5",
+        ),
+        pytest.param(
+            bad_rpad_6,
+            "RPAD function requires the length argument to be an integer.",
+            id="bad_rpad_6",
         ),
     ],
 )
