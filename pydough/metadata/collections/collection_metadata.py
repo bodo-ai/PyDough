@@ -30,7 +30,7 @@ class CollectionMetadata(AbstractMetadata):
     - `parse_from_json`
     """
 
-    # Set of names of of fields that can be included in the JSON
+    # Set of names of fields that can be included in the JSON
     # object describing a collection. Implementations should extend this.
     allowed_fields: set[str] = {"type", "properties"}
 

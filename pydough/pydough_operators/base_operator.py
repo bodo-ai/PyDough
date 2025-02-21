@@ -80,3 +80,15 @@ class PyDoughOperator:
         Returns:
             The string representation of the operator called on its arguments.
         """
+
+    @abstractmethod
+    def equals(self, other: object) -> bool:
+        """
+        Returns whether this operator is equal to another operator.
+        """
+
+    def __eq__(self, other: object) -> bool:
+        return self.equals(other)
+
+    def __hash__(self) -> int:
+        return hash(repr(self))

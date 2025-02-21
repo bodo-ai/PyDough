@@ -84,7 +84,7 @@ def bad_trunc():
 
 def bad_reversed():
     # Using `reversed` (calls __reversed__)
-    return Orders(reversed(order_key))
+    return Regions(backwards_name=reversed(name))
 
 
 def bad_int():
@@ -104,12 +104,12 @@ def bad_complex():
 
 def bad_index():
     # Using as an index (calls __index__)
-    return Customers(sliced=name[:order])
+    return Orders(s="ABCDE"[:order_priority])
 
 
 def bad_nonzero():
     # Using in a boolean context (calls __nonzero__)
-    return Orders(discount=not order.total_price)
+    return Lineitems(is_taxed=bool(tax))
 
 
 def bad_len():

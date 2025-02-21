@@ -22,6 +22,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [LIKE](#like)
    * [JOIN_STRINGS](#join_strings)
 - [Datetime Functions](#datetime-functions)
+   * [DATETIME](#datetime)
    * [YEAR](#year)
    * [MONTH](#month)
    * [DAY](#day)
@@ -269,6 +270,49 @@ For instance, `JOIN_STRINGS("; ", "Alpha", "Beta", "Gamma)` returns `"Alpha; Bet
 
 Below is each function currently supported in PyDough that operates on date/time/timestamp values.
 
+<!-- TOC --><a name="datetime"></a>
+### DATETIME
+
+The `DATETIME` function is used to build/augment date/timestamp values. The first argument is the base date/timestamp, and it can optionally take in a variable number of modifier arguments.
+
+The base argument can be one of the following:
+
+- A string literal indicating that the current timestamp should be built, which has to be one of the following: `now`, `current_date`, `current_timestamp`, `current date`, `current timestamp`. All of these aliases are equivalent, case-insensitive, and ignore leading/trailing whitespace.
+- A column of datetime data.
+
+The modifier arguments can be the following (all of the options are case-insensitive and ignore leading/trailing/extra whitespace):
+- A string literal in the format `start of <UNIT>` indicating to truncate the datetime value to a certain unit, which can be the following:
+   - **Years**: Supported aliases are `"years"`, `"year"`, and `"y"`.
+   - **Months**: Supported aliases are `"months"`, `"month"`, and `"mm"`.
+   - **Days**: Supported aliases are `"days"`, `"day"`, and `"d"`.
+   - **Hours**: Supported aliases are `"hours"`, `"hour"`, and `"h"`.
+   - **Minutes**: Supported aliases are `"minutes"`, `"minute"`, and `"m"`.
+   - **Seconds**: Supported aliases are `"seconds"`, `"second"`, and `"s"`.
+- A string literal in the form `±<AMT> <UNIT>` indicating to add/subtract a date/time interval to the datetime value. The sign can be `+` or `-`, and if omitted the default is `+`. The amount must be an integer. The unit must be one of the same unit strings allowed for trucation.
+
+For example, `"Days"`, `"DAYS"`, and `"d"` are all treated the same due to case insensitivity.
+
+If there are multiple modifiers, they operate left-to-right.
+
+```py
+# Returns the following datetime moments:
+# 1. The current timestamp
+# 2. The start of the current month
+# 3. Exactly 12 hours from now
+# 4. The last day of the previous year
+# 5. The current day, at midnight
+TPCH(
+   ts_1=DATETIME('now'),
+   ts_2=DATETIME('NoW', 'start of month'),
+   ts_3=DATETIME(' CURRENT_DATE ', '12 hours'),
+   ts_4=DATETIME('Current Timestamp', 'start of y', '- 1 D'),
+   ts_5=DATETIME('NOW', '  Start  of  Day  '),
+)
+
+# For each order, truncates the order date to the first day of the year
+Orders(order_year=DATETIME(order_year, 'START OF Y'))
+```
+
 <!-- TOC --><a name="year"></a>
 
 ### YEAR
@@ -353,16 +397,7 @@ orders(
 )
 ```
 
-The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown:
-
-- **Years**: Supported aliases are `"years"`, `"year"`, and `"y"`.
-- **Months**: Supported aliases are `"months"`, `"month"`, and `"mm"`.
-- **Days**: Supported aliases are `"days"`, `"day"`, and `"d"`.
-- **Hours**: Supported aliases are `"hours"`, `"hour"`, and `"h"`.
-- **Minutes**: Supported aliases are `"minutes"`, `"minute"`, and `"m"`.
-- **Seconds**: Supported aliases are `"seconds"`, `"second"`, and `"s"`.
-
-Invalid or unrecognized units will result in an error. For example, `"Days"`, `"DAYS"`, and `"d"` are all treated the same due to case insensitivity.
+The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown. See [`DATETIME`](#datetime) for the supported units and their aliases. Invalid or unrecognized units will result in an error. 
 
 <!-- TOC --><a name="conditional-functions"></a>
 
@@ -453,7 +488,7 @@ Below is each numerical function currently supported in PyDough.
 
 ### ABS
 
-The `ABS` function returns the absolute value of its input. The `abs()` magic method is also evaluated to the same.
+The `ABS` function returns the absolute value of its input. The Python builtin `abs()` function can also be used to accomplish the same thing.
 
 ```py
 Customers(acct_magnitude = ABS(acctbal))
@@ -465,7 +500,7 @@ Customers(acct_magnitude = abs(acctbal))
 
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The `round()` magic method is also evaluated to the same. 
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
 Parts(rounded_price = ROUND(retail_price, 1))
@@ -473,7 +508,7 @@ Parts(rounded_price = ROUND(retail_price, 1))
 Parts(rounded_price = round(retail_price, 1))
 ```
 
-Note: The default precision for `round` magic method is 0, to be in alignment with the Python implementation. The pydough `ROUND` function requires the precision to be specified.
+Note: The default precision for builtin `round` method is 0, to be in alignment with the Python implementation. The PyDough `ROUND` function requires the precision to be specified.
 
 ```py
 # This is legal.
@@ -669,33 +704,35 @@ Below is a list of banned python logic (magic methods,etc.) that are not support
 
 ### \_\_bool\_\_
 
-The `__bool__` magic method is not supported in PyDough. PyDough code cannot be treated as booleans. Instead of using `or`, `and`, and `not`, use `|`, `&`, and `~` for logical operations. Check out the [Logical](#logical) section for more information.
+The `__bool__` magic method is not supported in PyDough. PyDough code cannot be treated as booleans.
 
 ```py
 # Not allowed - will raise PyDoughUnqualifiedException
 if Customer and Order:
    print("Available")
-   
-# Use & instead of and
-Customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
 
-# Use | instead of or 
-Orders.WHERE((discount > 0.05) | (tax > 0.08))
+Customers.WHERE((acctbal > 0) and (nation.name == "GERMANY"))
+# Use &`instead of `and`:
+# Customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
 
-# Use ~ instead of not
-Parts.WHERE(~(retail_price > 1000))
+Orders.WHERE((discount > 0.05) or (tax > 0.08))
+# Use `|` instead of `or` 
+# Orders.WHERE((discount > 0.05) | (tax > 0.08))
+
+Parts.WHERE(not(retail_price > 1000))
+# Use `~` instead of `not`
+# Parts.WHERE(~(retail_price > 1000))
 ```
 
 <!-- TOC --><a name="__call__"></a>
 
 ### \_\_call\_\_
 
-The `__call__` magic method is not supported in PyDough, but calling an object will not throw an error. Instead, it internally evaluates to the `CALC` property.
+The `__call__` magic method is not supported in PyDough as it calls PyDough code as if it were a function.
 
 ```py
-# These are equivalent:
-Customers(name)
-Customers.__call__(name)
+# Not allowed - calls PyDough code as if it were a function
+(1 - discount)(extended_price * 0.5)
 ```
 
 <!-- TOC --><a name="__floor__"></a>
@@ -715,6 +752,7 @@ Customer(age=math.floor(order.total_price))
 The `math.ceil` function calls the `__ceil__` magic method, which is currently not supported in PyDough.
 
 ```py
+# Not allowed currently- will raise PyDoughUnqualifiedException
 Customer(age=math.ceil(order.total_price))
 ```
 
@@ -725,6 +763,7 @@ Customer(age=math.ceil(order.total_price))
 The `math.trunc` function calls the `__trunc__` magic method, which is currently not supported in PyDough.
 
 ```py
+# Not allowed currently- will raise PyDoughUnqualifiedException
 Customer(age=math.trunc(order.total_price))
 ```
 
@@ -735,7 +774,8 @@ Customer(age=math.trunc(order.total_price))
 The `reversed` function calls the `__reversed__` magic method, which is currently not supported in PyDough.
 
 ```py
-Orders(reversed(order_key))
+# Not allowed currently- will raise PyDoughUnqualifiedException
+Regions(backwards_name=reversed(name))
 ```
 
 <!-- TOC --><a name="__int__"></a>
@@ -745,6 +785,7 @@ Orders(reversed(order_key))
 Casting to `int` calls the `__int__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
+# Not allowed currently as it would need to return an int instead of a PyDough object
 Orders(limit=int(order.total_price))
 ```
 
@@ -755,6 +796,7 @@ Orders(limit=int(order.total_price))
 Casting to `float` calls the `__float__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a float instead of a PyDough object.
 
 ```py
+# Not allowed currently as it would need to return a float instead of a PyDough object
 Orders(limit=float(order.quantity))
 ```
 
@@ -765,6 +807,7 @@ Orders(limit=float(order.quantity))
 Casting to `complex` calls the `__complex__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a complex instead of a PyDough object.
 
 ```py
+# Not allowed currently as it would need to return a complex instead of a PyDough object
 Orders(limit=complex(order.total_price))
 ```
 
@@ -775,7 +818,8 @@ Orders(limit=complex(order.total_price))
 Using an object as an index calls the `__index__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
-Customers(sliced = name[:order])
+# Not allowed currently as it would need to return an int instead of a PyDough object
+Orders(s="ABCDE"[:order_priority])
 ```
 
 <!-- TOC --><a name="__nonzero__"></a>
@@ -785,7 +829,8 @@ Customers(sliced = name[:order])
 Using an object in a boolean context calls the `__nonzero__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object.
 
 ```py
-Orders(discount=bool(order.total_price))
+# Not allowed currently as it would need to return an int instead of a PyDough object
+Lineitems(is_taxed=bool(tax))
 ```
 
 <!-- TOC --><a name="__len__"></a>
@@ -795,6 +840,7 @@ Orders(discount=bool(order.total_price))
 The `len` function calls the `__len__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an integer instead of a PyDough object. Instead, usage of [LENGTH](#length) function is recommended.
 
 ```py
+# Not allowed currently as it would need to return an int instead of a PyDough object
 Customers(len(customer.name))
 ```
 
@@ -802,9 +848,10 @@ Customers(len(customer.name))
 
 ### \_\_contains\_\_
 
-Using the `in` operator calls the `__contains__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a boolean instead of a PyDough object. Instead, usage of [ISIN](#isin) function is recommended.
+Using the `in` operator calls the `__contains__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return a boolean instead of a PyDough object. Instead, If you need to check if a string is inside another substring, use [CONTAINS](#contains). If you need to check if an expression is a member of a list of literals, use [ISIN](#isin).
 
 ```py
+# Not allowed currently as it would need to return a boolean instead of a PyDough object
 Orders('discount' in order.details)
 ```
 
@@ -815,6 +862,7 @@ Orders('discount' in order.details)
 Assigning to an index calls the `__setitem__` magic method, which is not supported in PyDough. This operation is not allowed.
 
 ```py
+# Not allowed currently as PyDough objects cannot support item assignment.
 Order.details['discount'] = True
 ```
 
@@ -825,7 +873,7 @@ Order.details['discount'] = True
 Iterating over an object calls the `__iter__` magic method, which is not supported in PyDough. This operation is not allowed because the implementation has to return an iterator instead of a PyDough object.
 
 ```py
-# Not allowed operations
+# Not allowed currently as implementation has to return an iterator instead of a PyDough object.
 for item in customer:
    print(item)
 

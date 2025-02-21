@@ -28,7 +28,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
     join between a collection and its subcollection based on equi-join keys.
     """
 
-    # Set of names of of fields that can be included in the JSON object
+    # Set of names of fields that can be included in the JSON object
     # describing a simple join property.
     allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
         "other_collection_name",
