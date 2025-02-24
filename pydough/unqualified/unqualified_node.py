@@ -125,6 +125,10 @@ class UnqualifiedNode(ABC):
             args: MutableSequence[UnqualifiedNode] = [self]
             for arg in (key.start, key.stop, key.step):
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
+                if not isinstance(coerced_elem, UnqualifiedLiteral):
+                    raise PyDoughUnqualifiedException(
+                        "PyDough objects are currently not supported to be used as indices in Python slices."
+                    )
                 args.append(coerced_elem)
             return UnqualifiedOperation("SLICE", args)
         else:
@@ -260,6 +264,67 @@ class UnqualifiedNode(ABC):
         for name, arg in kwargs.items():
             calc_args.append((name, self.coerce_to_unqualified(arg)))
         return UnqualifiedCalc(self, calc_args)
+
+    def __abs__(self):
+        return UnqualifiedOperation("ABS", [self])
+
+    def __round__(self, n=None):
+        if n is None:
+            n = 0
+        n_unqualified = self.coerce_to_unqualified(n)
+        return UnqualifiedOperation("ROUND", [self, n_unqualified])
+
+    def __floor__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the math.floor function at this time."
+        )
+
+    def __ceil__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the math.ceil function at this time."
+        )
+
+    def __trunc__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the math.trunc function at this time."
+        )
+
+    def __reversed__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the reversed function at this time."
+        )
+
+    def __int__(self):
+        raise PyDoughUnqualifiedException("PyDough objects cannot be cast to int.")
+
+    def __float__(self):
+        raise PyDoughUnqualifiedException("PyDough objects cannot be cast to float.")
+
+    def __complex__(self):
+        raise PyDoughUnqualifiedException("PyDough objects cannot be cast to complex.")
+
+    def __index__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot be used as indices in Python slices."
+        )
+
+    def __nonzero__(self):
+        return self.__bool__()
+
+    def __len__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot be used with the len function."
+        )
+
+    def __contains__(self, item):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot be used with the 'in' operator."
+        )
+
+    def __setitem__(self, key, value):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot support item assignment."
+        )
 
     def WHERE(self, cond: object) -> "UnqualifiedWhere":
         cond_unqualified: UnqualifiedNode = self.coerce_to_unqualified(cond)
