@@ -580,6 +580,38 @@ def multi_partition_access_5():
     )
 
 
+def multi_partition_access_6():
+    # Find all transactions that are the only transaction of that type for
+    # that ticker, or the only transaction of that type for that customer,
+    # but not the only transaction for that customer, type, or ticker. List
+    # the transaction IDs in ascending order.
+    ticker_type_groups = PARTITION(
+        Transactions, name="data", by=(ticker_id, transaction_type)
+    ).CALCULATE(n_ticker_type_trans=COUNT(data))
+    ticker_groups = PARTITION(
+        ticker_type_groups, name="sub_trans", by=ticker_id
+    ).CALCULATE(n_ticker_trans=SUM(sub_trans.n_ticker_type_trans))
+    type_groups = PARTITION(
+        ticker_groups.sub_trans, name="sub_trans", by=transaction_type
+    ).CALCULATE(n_type_trans=SUM(sub_trans.n_ticker_type_trans))
+    cust_type_groups = PARTITION(
+        type_groups.sub_trans.data, name="data", by=(customer_id, transaction_type)
+    ).CALCULATE(n_cust_type_trans=COUNT(data))
+    cust_groups = PARTITION(
+        cust_type_groups, name="sub_trans", by=customer_id
+    ).CALCULATE(n_cust_trans=SUM(sub_trans.n_cust_type_trans))
+    return (
+        cust_groups.sub_trans.data.CALCULATE(transaction_id)
+        .WHERE(
+            ((n_ticker_type_trans == 1) | (n_cust_type_trans == 1))
+            & (n_cust_trans > 1)
+            & (n_type_trans > 1)
+            & (n_ticker_trans > 1)
+        )
+        .ORDER_BY(transaction_id.ASC())
+    )
+
+
 def double_partition():
     # Doing a partition aggregation on the output of a partition aggregation
     year_month_data = PARTITION(

@@ -51,6 +51,7 @@ from simple_pydough_functions import (
     multi_partition_access_3,
     multi_partition_access_4,
     multi_partition_access_5,
+    multi_partition_access_6,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -1475,6 +1476,40 @@ def test_pipeline_e2e_errors(
                 ),
             ),
             id="multi_partition_access_5",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_6,
+                None,
+                "Broker",
+                "multi_partition_access_6",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{i:03}"
+                            for i in (
+                                11,
+                                12,
+                                13,
+                                14,
+                                15,
+                                16,
+                                17,
+                                18,
+                                19,
+                                20,
+                                30,
+                                46,
+                                47,
+                                48,
+                                49,
+                                50,
+                            )
+                        ],
+                    }
+                ),
+            ),
+            id="multi_partition_access_6",
         ),
         pytest.param(
             (
