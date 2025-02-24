@@ -144,7 +144,8 @@ def yoy_change_in_num_orders():
     # percentage change from the previous year.
     years = PARTITION(Orders(year=YEAR(order_date)), name="orders_in_year", by=year)
     current_year_orders = COUNT(orders_in_year)
-    prev_year_orders = COUNT(PREV(by=year.ASC()).orders_in_year)
+    # prev_year_orders = COUNT(PREV(by=year.ASC()).orders_in_year)
+    prev_year_orders = PREV(by=year.ASC())(n=COUNT(orders_in_year)).n
     return years(
         year,
         current_year_orders=current_year_orders,

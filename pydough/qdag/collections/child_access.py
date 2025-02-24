@@ -58,11 +58,11 @@ class ChildAccess(PyDoughCollectionQDAG):
         )
 
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
-        ancestor: CollectionTreeForm = self.ancestor_context.to_tree_form(True)
-        ancestor.has_children = True
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(is_last)
+        predecessor.has_children = True
         tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
-        tree_form.predecessor = ancestor
-        tree_form.depth = ancestor.depth + 1
+        tree_form.depth = predecessor.depth + 1
+        tree_form.predecessor = predecessor
         return tree_form
 
     def equals(self, other: object) -> bool:

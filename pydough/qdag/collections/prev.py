@@ -90,8 +90,16 @@ class Prev(ChildAccess):
     def get_expression_position(self, expr_name: str) -> int:
         return self.ancestor_context.get_expression_position(expr_name)
 
+    @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        return self.ancestor_context.get_term(term_name)
+        from pydough.qdag.expressions import PyDoughExpressionQDAG, Reference
+
+        term: PyDoughQDAG = self.ancestor_context.get_term(term_name)
+        if isinstance(term, ChildAccess):
+            term = term.clone_with_parent(self)
+        elif isinstance(term, PyDoughExpressionQDAG):
+            term = Reference(self.ancestor_context, term_name)
+        return term
 
     @property
     def unique_terms(self) -> list[str]:
@@ -111,6 +119,14 @@ class Prev(ChildAccess):
         levels_str = f", levels={self.levels}" if self.levels is not None else ""
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
         return f"Prev[{self.n_behind}{levels_str}, by=({collation_str})]"
+
+    # def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
+    #     ancestor: CollectionTreeForm = self.ancestor_context.to_tree_form(True)
+    #     ancestor.has_children = True
+    #     tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
+    #     tree_form.predecessor = ancestor
+    #     tree_form.depth = ancestor.depth + 1
+    #     return tree_form
 
     def equals(self, other: object) -> bool:
         return (
