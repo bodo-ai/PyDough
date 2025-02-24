@@ -762,6 +762,12 @@ def annotated_assignment():
     return Nations.WHERE(region.name == chosen_region)
 
 
+def abs_round_magic_method():
+    return DailyPrices.CALCULATE(
+        abs_low=abs(low), round_low=round(low, 2), round_zero=round(low)
+    )
+
+
 def years_months_days_hours_datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     return (
