@@ -115,6 +115,82 @@ def regional_suppliers_percentile():
     return Regions.nations.suppliers(name).WHERE(HAS(supply_records) & (pct == 1000))
 
 
+def prev_next_regions():
+    # Sorts the regions alphabetically and finds the previous and next regions'
+    # names in a rolling window.
+    return Regions(
+        two_preceding=PREV(2, by=name.ASC()).name,
+        one_preceding=PREV(by=name.ASC()).name,
+        current=name,
+        one_following=NEXT(by=name.ASC()).name,
+        two_following=NEXT(2, by=name.ASC()).name,
+    ).ORDER_BY(current.ASC())
+
+
+def avg_order_diff_per_customer():
+    # Finds the 5 customers with the highest average difference in days between
+    # orders made.
+    prev_order_by_cust = PREV(by=order_date.ASC(), levels=1)
+    order_info = orders(
+        day_diff=DATEDIFF("days", order_date, prev_order_by_cust.order_date)
+    )
+    return Customers(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
+        5, by=avg_diff.DESC()
+    )
+
+
+def yoy_change_in_num_orders():
+    # For every year, counts the number of orders made in that year and the
+    # percentage change from the previous year.
+    years = PARTITION(Orders(year=YEAR(order_date)), name="orders_in_year", by=year)
+    current_year_orders = COUNT(orders_in_year)
+    prev_year_orders = COUNT(PREV(by=year.ASC()).orders_in_year)
+    return years(
+        year,
+        current_year_orders=current_year_orders,
+        pct_change=100.0 * (current_year_orders - prev_year_orders) / prev_year_orders,
+    ).ORDER_BY(year.ASC())
+
+
+def first_order_in_year():
+    # Find all orders that do not have a previous order in the same year
+    # (breaking ties by order key).
+    previous_order = PREV(by=(order_date.ASC(), key.ASC())).WHERE(
+        YEAR(order_date) == YEAR(BACK(1).order_date)
+    )
+    return Orders.WHERE(HASNOT(previous_order))(order_date, key).ORDER_BY(
+        order_date.ASC()
+    )
+
+
+def customer_largest_order_deltas():
+    # For each customer, find the highest positive/negative difference in
+    # revenue between one of their orders and and the most recent order before
+    # it, ignoring their first ever order. Return the 5 customers with the
+    # largest such difference.
+    revenue = extended_price * (1 - discount)
+    previous_order = PREV(by=order_date.ASC(), levels=1)
+    orders_info = orders.WHERE(HAS(previous_order))(
+        revenue_delta=SUM(lines(r=revenue).r) - SUM(previous_order.lines(r=revenue).r)
+    )
+    return Customers(
+        max_diff=MAX(orders_info.revenue_delta), min_diff=MIN(orders_info.revenue_delta)
+    )(
+        name,
+        largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff),
+    ).TOP_K(5, by=largest_diff.DESC())
+
+
+def suppliers_bal_diffs():
+    # Finds the 5 suppliers with the largest difference in account balance from
+    # the supplier with the next smallest account balance in the same region.
+    return Regions.nations.suppliers(
+        name,
+        region_name=BACK(2).name,
+        acctbal_delta=account_balance - PREV(by=account_balance.ASC()).account_balance,
+    ).TOP_K(5, by=acctbal_delta.DESC())
+
+
 def function_sampler():
     # Examples of using different functions
     return (
