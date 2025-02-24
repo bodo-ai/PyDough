@@ -40,6 +40,7 @@ class Calculate(AugmentingChildOperator):
         self._ancestral_mapping: dict[str, int] = dict(
             predecessor.ancestral_mapping.items()
         )
+        self._calc_terms: set[str] = set()
 
     def with_terms(
         self, terms: MutableSequence[tuple[str, PyDoughExpressionQDAG]]
@@ -92,6 +93,7 @@ class Calculate(AugmentingChildOperator):
             self._calc_term_indices[name] = idx
             self._calc_term_values[name] = has_hasnot_rewrite(value, False)
             self._all_term_names.add(name)
+            self._calc_terms.add(name)
             self.ancestral_mapping[name] = 0
         self.all_terms.update(self.preceding_context.all_terms)
         self.verify_singular_terms(self._calc_term_values.values())
@@ -131,7 +133,7 @@ class Calculate(AugmentingChildOperator):
 
     @property
     def calc_terms(self) -> set[str]:
-        return set(self.calc_term_indices)
+        return self._calc_terms
 
     @property
     def all_terms(self) -> set[str]:

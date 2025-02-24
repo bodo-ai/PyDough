@@ -73,6 +73,17 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         term.
         """
 
+    @property
+    @abstractmethod
+    def inherited_downstreamed_terms(self) -> set[str]:
+        """
+        A set of names created by indirect ancestors of the current context
+        that can be used to back-reference. The specific index of the
+        back-reference is handled during the hybrid conversion process, when
+        implicit back-references are flushed to populate the base of the tree
+        input to a PARTITION node.
+        """
+
     @abstractmethod
     def is_singular(self, context: "PyDoughCollectionQDAG") -> bool:
         """

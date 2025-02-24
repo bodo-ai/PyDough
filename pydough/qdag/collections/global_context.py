@@ -73,6 +73,11 @@ class GlobalContext(PyDoughCollectionQDAG):
         return {}
 
     @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        # A global context does not have any inherited downstreamed terms
+        return set()
+
+    @property
     def all_terms(self) -> set[str]:
         return set(self.collections)
 

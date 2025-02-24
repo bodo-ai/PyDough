@@ -48,6 +48,9 @@ from simple_pydough_functions import (
     minutes_seconds_datediff,
     multi_partition_access_1,
     multi_partition_access_2,
+    multi_partition_access_3,
+    multi_partition_access_4,
+    multi_partition_access_5,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -1365,13 +1368,113 @@ def test_pipeline_e2e_errors(
                         ],
                         "symbol": ["MSFT", "TSLA", "GOOGL", "BRK.B", "FB"],
                         "transaction_type": ["sell", "sell", "buy", "buy", "sell"],
-                        "avg_shares_a": [56.66667, 55.0, 4.0, 55.5, 47.5],
-                        "avg_shares_b": [50.0, 41.66667, 3.33333, 37.33333, 47.5],
-                        "avg_shares_c": [50.625, 46.25, 40.0, 37.33333, 50.625],
+                        "cus_tick_typ_avg_shares": [56.66667, 55.0, 4.0, 55.5, 47.5],
+                        "cust_tick_avg_shares": [
+                            50.0,
+                            41.66667,
+                            3.33333,
+                            37.33333,
+                            47.5,
+                        ],
+                        "cust_avg_shares": [50.625, 46.25, 40.0, 37.33333, 50.625],
                     }
                 ),
             ),
             id="multi_partition_access_2",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_3,
+                None,
+                "Broker",
+                "multi_partition_access_3",
+                lambda: pd.DataFrame(
+                    {
+                        "symbol": [
+                            "AAPL",
+                            "AMZN",
+                            "FB",
+                            "GOOGL",
+                            "JPM",
+                            "MSFT",
+                            "NFLX",
+                            "PG",
+                            "TSLA",
+                            "V",
+                        ],
+                        "close": [
+                            153.5,
+                            3235,
+                            207,
+                            2535,
+                            133.75,
+                            284,
+                            320.5,
+                            143.25,
+                            187.75,
+                            223.5,
+                        ],
+                    }
+                ),
+            ),
+            id="multi_partition_access_3",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_4,
+                None,
+                "Broker",
+                "multi_partition_access_4",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{i:03}"
+                            for i in (3, 4, 5, 6, 7, 8, 9, 40, 41, 42, 43, 47, 48, 49)
+                        ],
+                    }
+                ),
+            ),
+            id="multi_partition_access_4",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_5,
+                None,
+                "Broker",
+                "multi_partition_access_5",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{i:03}"
+                            for i in (
+                                40,
+                                41,
+                                42,
+                                43,
+                                2,
+                                4,
+                                6,
+                                22,
+                                24,
+                                26,
+                                32,
+                                34,
+                                36,
+                                46,
+                                48,
+                                50,
+                                52,
+                                54,
+                                56,
+                            )
+                        ],
+                        "n_ticker_type_trans": [1] * 4 + [5] * 15,
+                        "n_ticker_trans": [1] * 4 + [6] * 15,
+                        "n_type_trans": [29, 27] * 2 + [27] * 15,
+                    }
+                ),
+            ),
+            id="multi_partition_access_5",
         ),
         pytest.param(
             (

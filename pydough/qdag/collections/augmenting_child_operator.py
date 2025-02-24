@@ -45,6 +45,10 @@ class AugmentingChildOperator(ChildOperator):
         return self.preceding_context.ancestral_mapping
 
     @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.preceding_context.inherited_downstreamed_terms
+
+    @property
     def ordering(self) -> list[CollationExpression] | None:
         return self.preceding_context.ordering
 

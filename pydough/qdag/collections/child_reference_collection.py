@@ -67,6 +67,10 @@ class ChildReferenceCollection(ChildAccess):
         return self.collection.ancestral_mapping
 
     @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.collection.inherited_downstreamed_terms
+
+    @property
     def ordering(self) -> list[CollationExpression] | None:
         return self.collection.ordering
 

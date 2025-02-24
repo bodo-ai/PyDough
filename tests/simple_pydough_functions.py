@@ -483,29 +483,100 @@ def multi_partition_access_2():
     # Identify transactions that are below the average number of shares for
     # transactions of the same combinations of (customer, stock, type), or
     # the same combination of (customer, stock), or the same customer.
-    grps_a = PARTITION(
-        Transactions, name="child_3", by=(customer_id, ticker_id, transaction_type)
-    ).CALCULATE(avg_shares_a=AVG(child_3.shares))
-    grps_b = PARTITION(grps_a, name="child_2", by=(customer_id, ticker_id)).CALCULATE(
-        avg_shares_b=AVG(child_2.child_3.shares)
-    )
-    grps_c = PARTITION(grps_b, name="child_1", by=customer_id).CALCULATE(
-        avg_shares_c=AVG(child_1.child_2.child_3.shares)
+    cust_tick_typ_groups = PARTITION(
+        Transactions,
+        name="original_data",
+        by=(customer_id, ticker_id, transaction_type),
+    ).CALCULATE(cus_tick_typ_avg_shares=AVG(original_data.shares))
+    cust_tick_groups = PARTITION(
+        cust_tick_typ_groups, name="typs", by=(customer_id, ticker_id)
+    ).CALCULATE(cust_tick_avg_shares=AVG(typs.original_data.shares))
+    cus_groups = PARTITION(cust_tick_groups, name="ticks", by=customer_id).CALCULATE(
+        cust_avg_shares=AVG(ticks.typs.original_data.shares)
     )
     return (
-        grps_c.child_1.child_2.child_3.WHERE(
-            (shares < avg_shares_a) & (shares < avg_shares_b) & (shares < avg_shares_c)
+        cus_groups.ticks.typs.original_data.WHERE(
+            (shares < cus_tick_typ_avg_shares)
+            & (shares < cust_tick_avg_shares)
+            & (shares < cust_avg_shares)
         )
         .CALCULATE(
             transaction_id,
             customer.name,
             ticker.symbol,
             transaction_type,
-            avg_shares_a,
-            avg_shares_b,
-            avg_shares_c,
+            cus_tick_typ_avg_shares,
+            cust_tick_avg_shares,
+            cust_avg_shares,
         )
         .ORDER_BY(transaction_id.ASC())
+    )
+
+
+def multi_partition_access_3():
+    # Find all daily price updates whose closing price was the high mark for
+    # that ticker, but not for tickers of that type.
+    data = Tickers.CALCULATE(symbol, ticker_type).historical_prices
+    ticker_groups = PARTITION(data, name="ticker_data", by=ticker_id).CALCULATE(
+        ticker_high_price=MAX(ticker_data.close)
+    )
+    type_groups = PARTITION(
+        ticker_groups.ticker_data, name="type_data", by=ticker_type
+    ).CALCULATE(type_high_price=MAX(type_data.close))
+    return (
+        type_groups.type_data.WHERE(
+            (close == ticker_high_price) & (close < type_high_price)
+        )
+        .CALCULATE(symbol, close)
+        .ORDER_BY(symbol.ASC())
+    )
+
+
+def multi_partition_access_4():
+    # Find all transacitons that were the largest for a customer of that ticker
+    # (by number of shares) but not the largest for that customer overall.
+    cust_ticker_groups = PARTITION(
+        Transactions, name="data", by=(customer_id, ticker_id)
+    ).CALCULATE(cust_ticker_max_shares=MAX(data.shares))
+    cust_groups = PARTITION(
+        cust_ticker_groups, name="ticker_groups", by=customer_id
+    ).CALCULATE(cust_max_shares=MAX(ticker_groups.cust_ticker_max_shares))
+    return (
+        cust_groups.ticker_groups.data.WHERE(
+            (shares >= cust_ticker_max_shares) & (shares < cust_max_shares)
+        )
+        .CALCULATE(transaction_id)
+        .ORDER_BY(transaction_id.ASC())
+    )
+
+
+def multi_partition_access_5():
+    # Find all transactions where more than 80% of all transactions of that
+    # that ticker were of that type, but less than 20% of all transactions of
+    # that type were from that ticker. List the transaction ID, the number of
+    # transactions of that ticker/type, ticker, and type. Sort by the number of
+    # transactions of that ticker/type, breaking ties by trnasaction ID.
+    ticker_type_groups = PARTITION(
+        Transactions, name="data", by=(ticker_id, transaction_type)
+    ).CALCULATE(n_ticker_type_trans=COUNT(data))
+    ticker_groups = PARTITION(
+        ticker_type_groups, name="sub_trans", by=ticker_id
+    ).CALCULATE(n_ticker_trans=SUM(sub_trans.n_ticker_type_trans))
+    type_groups = PARTITION(
+        ticker_groups.sub_trans, name="sub_trans", by=transaction_type
+    ).CALCULATE(n_type_trans=SUM(sub_trans.n_ticker_type_trans))
+    return (
+        type_groups.sub_trans.data.CALCULATE(
+            transaction_id,
+            n_ticker_type_trans,
+            n_ticker_trans,
+            n_type_trans,
+        )
+        .WHERE(
+            ((n_ticker_type_trans / n_ticker_trans) > 0.8)
+            & ((n_ticker_type_trans / n_type_trans) < 0.2)
+        )
+        .ORDER_BY(n_ticker_type_trans.ASC(), transaction_id.ASC())
     )
 
 

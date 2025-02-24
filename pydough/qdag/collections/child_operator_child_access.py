@@ -57,6 +57,10 @@ class ChildOperatorChildAccess(ChildAccess):
         return self.child_access.ancestral_mapping
 
     @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.child_access.inherited_downstreamed_terms
+
+    @property
     def unique_terms(self) -> list[str]:
         return self.child_access.unique_terms
 

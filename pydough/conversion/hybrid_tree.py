@@ -911,7 +911,7 @@ class HybridTree:
     ):
         self._pipeline: list[HybridOperation] = [root_operation]
         self._children: list[HybridConnection] = []
-        self._ancestral_mapping: dict[str, int] = ancestral_mapping
+        self._ancestral_mapping: dict[str, int] = dict(ancestral_mapping)
         self._successor: HybridTree | None = None
         self._parent: HybridTree | None = None
         self._is_hidden_level: bool = is_hidden_level
@@ -1936,7 +1936,8 @@ class HybridTranslator:
                     src_tree = src_tree.pipeline[0].subtree
                 subtree = src_tree.children[0].subtree
                 successor_hybrid = HybridTree(
-                    HybridPartitionChild(subtree), node.ancestral_mapping
+                    HybridPartitionChild(subtree),
+                    node.ancestral_mapping,
                 )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid

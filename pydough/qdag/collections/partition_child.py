@@ -11,6 +11,7 @@ from functools import cache
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
+    Reference,
 )
 
 from .child_access import ChildAccess
@@ -40,6 +41,19 @@ class PartitionChild(ChildOperatorChildAccess):
         self._ancestral_mapping: dict[str, int] = {
             name: level + 1 for name, level in ancestor.ancestral_mapping.items()
         }
+        self._inherited_downstreamed_terms: set[str] = set(
+            self.ancestor_context.inherited_downstreamed_terms
+        )
+        for name in self._child_access.ancestral_mapping:
+            self._inherited_downstreamed_terms.add(name)
+        for name in self._child_access.inherited_downstreamed_terms:
+            self._inherited_downstreamed_terms.add(name)
+
+        self._all_terms: set[str] = (
+            self.child_access.all_terms
+            | set(self.ancestral_mapping)
+            | self._inherited_downstreamed_terms
+        )
 
     def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         return PartitionChild(
@@ -67,7 +81,11 @@ class PartitionChild(ChildOperatorChildAccess):
 
     @property
     def all_terms(self) -> set[str]:
-        return self.child_access.all_terms | set(self.ancestral_mapping)
+        return self._all_terms
+
+    @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self._inherited_downstreamed_terms
 
     @cache
     def get_term(self, term_name: str):
@@ -75,6 +93,15 @@ class PartitionChild(ChildOperatorChildAccess):
             return BackReferenceExpression(
                 self, term_name, self.ancestral_mapping[term_name]
             )
+        if term_name in self.inherited_downstreamed_terms:
+            context: PyDoughCollectionQDAG = self.child_access
+            while term_name not in context.all_terms:
+                if context is self.child_access:
+                    context = self.ancestor_context
+                else:
+                    assert context.ancestor_context is not None
+                    context = context.ancestor_context
+            return Reference(context, term_name)
         return super().get_term(term_name)
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:

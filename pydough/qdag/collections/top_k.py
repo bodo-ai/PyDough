@@ -40,10 +40,6 @@ class TopK(OrderBy):
         return f"{self.preceding_context.key}.TOPK"
 
     @property
-    def calc_terms(self) -> set[str]:
-        return self.preceding_context.calc_terms
-
-    @property
     @cache
     def standalone_string(self):
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])

@@ -44,6 +44,8 @@ class PartitionBy(ChildOperator):
         self._ancestral_mapping: dict[str, int] = {
             name: level + 1 for name, level in ancestor.ancestral_mapping.items()
         }
+        self._calc_terms: set[str] = set()
+        self._all_terms: set[str] = set(self.ancestral_mapping) | {self.child_name}
 
     def with_keys(self, keys: list[ChildReferenceExpression]) -> "PartitionBy":
         """
@@ -67,6 +69,8 @@ class PartitionBy(ChildOperator):
         self._keys = [PartitionKey(self, key) for key in keys]
         for idx, ref in enumerate(keys):
             self._key_name_indices[ref.term_name] = idx
+            self._calc_terms.add(ref.term_name)
+        self.all_terms.update(self._calc_terms)
         self.verify_singular_terms(self._keys)
         return self
 
@@ -122,15 +126,19 @@ class PartitionBy(ChildOperator):
 
     @property
     def calc_terms(self) -> set[str]:
-        return set(self._key_name_indices)
+        return self._calc_terms
 
     @property
     def all_terms(self) -> set[str]:
-        return self.calc_terms | set(self.ancestral_mapping) | {self.child_name}
+        return self._all_terms
 
     @property
     def ancestral_mapping(self) -> dict[str, int]:
         return self._ancestral_mapping
+
+    @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.ancestor_context.inherited_downstreamed_terms
 
     @property
     def ordering(self) -> list[CollationExpression] | None:

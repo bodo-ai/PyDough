@@ -204,6 +204,13 @@ class RelTranslation:
             case HybridRefExpr() | HybridChildRefExpr() | HybridBackRefExpr():
                 assert context is not None
                 if expr not in context.expressions:
+                    if isinstance(expr, HybridRefExpr):
+                        for back_expr in context.expressions:
+                            if (
+                                isinstance(back_expr, HybridBackRefExpr)
+                                and back_expr.name == expr.name
+                            ):
+                                return context.expressions[back_expr]
                     raise ValueError(f"Context does not contain expression {expr}")
                 return context.expressions[expr]
             case HybridFunctionExpr():
@@ -815,13 +822,14 @@ class RelTranslation:
         for agg_key in sorted(node.subtree.agg_keys, key=str):
             join_keys.append((agg_key, agg_key))
 
-        return self.join_outputs(
+        result = self.join_outputs(
             context,
             child_output,
             JoinType.INNER,
             join_keys,
             None,
         )
+        return result
 
     def rel_translation(
         self,
