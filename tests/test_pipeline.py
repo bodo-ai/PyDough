@@ -1748,5 +1748,4 @@ def test_defog_e2e_with_custom_data(
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
-    # breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
