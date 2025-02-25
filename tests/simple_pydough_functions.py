@@ -689,7 +689,7 @@ def datediff():
 
 
 def step_slicing():
-    return Customers.WHERE(name == "Jane Smith")(
+    return Customers(
         name,
         neg_none_step=name[-2::1],
         pos_none_step=name[3::1],

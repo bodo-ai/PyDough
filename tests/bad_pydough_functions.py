@@ -113,6 +113,21 @@ def bad_slice_11():
     return Customers(name[1:10:42.4])
 
 
+def bad_slice_12():
+    # Unsupported slicing: non-integer start
+    return Customers(name[LENGTH(name) : 10 :])
+
+
+def bad_slice_13():
+    # Unsupported slicing: non-integer step
+    return Customers(name[1 : LENGTH(name) :])
+
+
+def bad_slice_14():
+    # Unsupported slicing: non-integer step
+    return Customers(name[1 : 10 : LENGTH(name)])
+
+
 def bad_floor():
     # Using `math.floor` (calls __floor__)
     return Customer(age=math.floor(order.total_price))

@@ -18,6 +18,9 @@ from bad_pydough_functions import (
     bad_slice_9,
     bad_slice_10,
     bad_slice_11,
+    bad_slice_12,
+    bad_slice_13,
+    bad_slice_14,
 )
 from correlated_pydough_functions import (
     correl_1,
@@ -1179,58 +1182,73 @@ def test_pipeline_e2e(
     [
         pytest.param(
             bad_slice_1,
-            "SLICE function currently only supports a step of 1",
+            "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_1",
         ),
         pytest.param(
             bad_slice_2,
-            "SLICE function currently only supports a step of 1",
+            "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_2",
         ),
         pytest.param(
             bad_slice_3,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the start index being integer literal or absent.",
             id="bad_slice_3",
         ),
         pytest.param(
             bad_slice_4,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the start index being integer literal or absent.",
             id="bad_slice_4",
         ),
         pytest.param(
             bad_slice_5,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the start index being integer literal or absent.",
             id="bad_slice_5",
         ),
         pytest.param(
             bad_slice_6,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the stop index being integer literal or absent.",
             id="bad_slice_6",
         ),
         pytest.param(
             bad_slice_7,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the stop index being integer literal or absent.",
             id="bad_slice_7",
         ),
         pytest.param(
             bad_slice_8,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the stop index being integer literal or absent.",
             id="bad_slice_8",
         ),
         pytest.param(
             bad_slice_9,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_9",
         ),
         pytest.param(
             bad_slice_10,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_10",
         ),
         pytest.param(
             bad_slice_11,
-            "SLICE function currently only supports the slicing arguments being integer literals or absent",
+            "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_11",
+        ),
+        pytest.param(
+            bad_slice_12,
+            "PyDough objects are currently not supported to be used as indices in Python slices.",
+            id="bad_slice_12",
+        ),
+        pytest.param(
+            bad_slice_13,
+            "PyDough objects are currently not supported to be used as indices in Python slices.",
+            id="bad_slice_13",
+        ),
+        pytest.param(
+            bad_slice_14,
+            "PyDough objects are currently not supported to be used as indices in Python slices.",
+            id="bad_slice_14",
         ),
     ],
 )
@@ -1629,7 +1647,26 @@ def test_pipeline_e2e_errors(
                 lambda: pd.DataFrame(
                     {
                         "name": [
+                            "john doe",
                             "Jane Smith",
+                            "Bob Johnson",
+                            "Samantha Lee",
+                            "Michael Chen",
+                            "Emily Davis",
+                            "David Kim",
+                            "Sarah Nguyen",
+                            "William Garcia",
+                            "Jessica Hernandez",
+                            "Alex Rodriguez",
+                            "Olivia Johnson",
+                            "Ethan Davis",
+                            "Ava Wilson",
+                            "Emma Brown",
+                            "sophia martinez",
+                            "Jacob Taylor",
+                            "Michael Anderson",
+                            "Isabella Thompson",
+                            "Maurice Lee",
                         ]
                     }
                 ).assign(
@@ -1711,4 +1748,5 @@ def test_defog_e2e_with_custom_data(
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
+    # breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())

@@ -59,7 +59,7 @@ These are created with a prefix operator syntax instead of called as a function.
 
 These are other PyDough operators that are not necessarily used as functions:
 
-- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Negative slicing is supported, however currently, PyDough does not support providing step values other than 1.
+- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Negative slicing is supported. Currently PyDough does not support providing step values other than 1.
 
 #### Scalar Functions
 

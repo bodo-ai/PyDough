@@ -505,7 +505,7 @@ def convert_concat(
 
 
 def positive_index(
-    column: SQLGlotExpression, neg_index: int, is_0_based: bool = False
+    string_expr: SQLGlotExpression, neg_index: int, is_zero_based: bool = False
 ) -> SQLGlotExpression:
     """
     Gives the SQL Glot expression for converting a
@@ -513,17 +513,17 @@ def positive_index(
     based on the length of the column.
 
     Args:
-        `column`: The column expression to reference
+        `string_expr`: The expression to reference
         `neg_index`: The negative index in 0 based index to convert to positive
-        `is_0_based`: Whether the return index is 0-based or 1-based
+        `is_zero_based`: Whether the return index is 0-based or 1-based
 
     Returns:
         SQLGlot expression corresponding to:
-        `(LENGTH(column) + neg_index + offset)`,
-         where offset is 0, if is_0_based is True, else 1.
+        `(LENGTH(string_expr) + neg_index + offset)`,
+         where offset is 0, if is_zero_based is True, else 1.
     """
-    sql_len = sqlglot_expressions.Length(this=column)
-    offset = 0 if is_0_based else 1
+    sql_len = sqlglot_expressions.Length(this=string_expr)
+    offset = 0 if is_zero_based else 1
     return apply_parens(
         sqlglot_expressions.Add(
             this=sql_len, expression=sqlglot_expressions.convert(neg_index + offset)
@@ -556,14 +556,14 @@ def convert_slice(
             - Convert `start` to 1-based.
             - Set `length = stop - start`.
         - 2. `start < 0`, `stop >= 0`:
-            - Convert `start` to positive. If < 1, set to 1.
+            - Convert `start` to 1 based index. If < 1, set to 1.
             - Compute `length = stop - start` (clamp to 0 if negative).
         - 3. `start >= 0`, `stop < 0`:
-            - Convert `stop` & `start` to positive.
+            - Convert `stop` & `start` to 1 based index.
             - If `stop` < 1, slice is empty (`length = 0`).
             - Else, `length = stop - start`.
         - 4. `start < 0`, `stop < 0`:
-            - Convert `start` & `stop` to positive. If `start` < 1, set to 1.
+            - Convert `start` & `stop` to 1 based index. If `start` < 1, set to 1.
             - If `stop` < 1, slice is empty (`length = 0`).
             - Else, `length = stop - start`.
 
@@ -578,44 +578,53 @@ def convert_slice(
         with the caveat that it only supports a step of 1.
     """
     assert len(sql_glot_args) == 4
-    _, start, stop, step = sql_glot_args
-
-    for arg in sql_glot_args[1:]:
-        if not isinstance(arg, (sqlglot_expressions.Literal, sqlglot_expressions.Null)):
-            raise NotImplementedError(
-                "SLICE function currently only supports the slicing arguments being integer literals or absent"
-            )
-
-    if isinstance(step, sqlglot_expressions.Literal):
-        try:
-            step_int = int(step.this)
-        except ValueError:
-            raise ValueError(
-                "SLICE function currently only supports the slicing arguments being integer literals or absent"
-            )
-        if step_int != 1:
-            raise NotImplementedError(
-                "SLICE function currently only supports a step of 1"
-            )
+    string_expr, start, stop, step = sql_glot_args
 
     start_idx: int | None = None
+    if not isinstance(start, sqlglot_expressions.Null):
+        if isinstance(start, sqlglot_expressions.Literal):
+            try:
+                start_idx = int(start.this)
+            except ValueError:
+                raise ValueError(
+                    "SLICE function currently only supports the start index being integer literal or absent."
+                )
+        else:
+            raise ValueError(
+                "SLICE function currently only supports the start index being integer literal or absent."
+            )
+
     stop_idx: int | None = None
-    try:
-        start_idx = (
-            int(start.this) if not isinstance(start, sqlglot_expressions.Null) else None
-        )
-    except ValueError:
-        raise ValueError(
-            "SLICE function currently only supports the slicing arguments being integer literals or absent"
-        )
-    try:
-        stop_idx = (
-            int(stop.this) if not isinstance(stop, sqlglot_expressions.Null) else None
-        )
-    except ValueError:
-        raise ValueError(
-            "SLICE function currently only supports the slicing arguments being integer literals or absent"
-        )
+    if not isinstance(stop, sqlglot_expressions.Null):
+        if isinstance(stop, sqlglot_expressions.Literal):
+            try:
+                stop_idx = int(stop.this)
+            except ValueError:
+                raise ValueError(
+                    "SLICE function currently only supports the stop index being integer literal or absent."
+                )
+        else:
+            raise ValueError(
+                "SLICE function currently only supports the stop index being integer literal or absent."
+            )
+
+    step_idx: int | None = None
+    if not isinstance(step, sqlglot_expressions.Null):
+        if isinstance(step, sqlglot_expressions.Literal):
+            try:
+                step_idx = int(step.this)
+                if step_idx != 1:
+                    raise ValueError(
+                        "SLICE function currently only supports the step being integer literal 1 or absent."
+                    )
+            except ValueError:
+                raise ValueError(
+                    "SLICE function currently only supports the step being integer literal 1 or absent."
+                )
+        else:
+            raise ValueError(
+                "SLICE function currently only supports the step being integer literal 1 or absent."
+            )
 
     # SQLGlot expressions for 0 and 1 and empty string
     sql_zero = sqlglot_expressions.convert(0)
@@ -624,22 +633,22 @@ def convert_slice(
 
     match (start_idx, stop_idx):
         case (None, None):
-            raise sql_glot_args[0]
+            raise string_expr
         case (_, None):
             assert start_idx is not None
             if start_idx > 0:
                 return sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],
+                    this=string_expr,
                     start=sqlglot_expressions.convert(start_idx + 1),
                 )
             else:
                 # Calculate the positive index equivalent for the negative index
                 # e.g., for string "hello" and index -2, converts to index 4 (LENGTH("hello") + (-2) + 1)
-                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                start_idx_glot = positive_index(string_expr, start_idx)
 
                 # Create a SUBSTRING expression with adjusted start position
                 answer = sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],  # The original string to slice
+                    this=string_expr,  # The original string to slice
                     start=convert_iff_case(
                         None,
                         [
@@ -657,21 +666,21 @@ def convert_slice(
             assert stop_idx is not None
             if stop_idx > 0:
                 return sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],
+                    this=string_expr,
                     start=sql_one,
                     length=sqlglot_expressions.convert(stop_idx),
                 )
             else:
                 # Convert negative stop index to positive index
                 # For example, with string "hello" and stop_idx=-2:
-                # LENGTH("hello") + (-2) = 3 when is_0_based=True
+                # LENGTH("hello") + (-2) = 3 when is_zero_based=True
                 # No +1 adjustment needed since we're using 0-based indexing
                 # to calculate the length, of which the higher bound is exclusive.
-                stop_idx_glot = positive_index(sql_glot_args[0], stop_idx, True)
+                stop_idx_glot = positive_index(string_expr, stop_idx, True)
 
                 # Create a SUBSTRING expression that starts from beginning
                 return sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],  # The original string to slice
+                    this=string_expr,  # The original string to slice
                     start=sql_one,  # Always start from position 1
                     length=convert_iff_case(
                         None,
@@ -693,14 +702,14 @@ def convert_slice(
                 if start_idx > stop_idx:
                     return sql_empty_str
                 return sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],
+                    this=string_expr,
                     start=sqlglot_expressions.convert(start_idx + 1),
                     length=sqlglot_expressions.convert(stop_idx - start_idx),
                 )
             if start_idx < 0 and stop_idx >= 0:
                 # Calculate the positive index equivalent for the negative start index
                 # e.g., for string "hello" and start_idx=-2, converts to index 4 (LENGTH("hello") + (-2) + 1)
-                start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                start_idx_glot = positive_index(string_expr, start_idx)
 
                 # Adjust start index to ensure it's not less than 1 (SQL's SUBSTRING is 1-based)
                 start_idx_adjusted_glot = convert_iff_case(
@@ -718,7 +727,7 @@ def convert_slice(
 
                 # Create the SUBSTRING expression
                 answer = sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],  # The original string to slice
+                    this=string_expr,  # The original string to slice
                     start=start_idx_adjusted_glot,  # Use adjusted start position
                     length=convert_iff_case(
                         None,
@@ -744,7 +753,7 @@ def convert_slice(
             if start_idx >= 0 and stop_idx < 0:
                 # Convert negative stop index to its positive equivalent
                 # e.g., for string "hello" and stop_idx=-2, converts to index 4 (LENGTH("hello") + (-2) + 1)
-                stop_idx_adjusted_glot = positive_index(sql_glot_args[0], stop_idx)
+                stop_idx_adjusted_glot = positive_index(string_expr, stop_idx)
 
                 # Convert start index to 1-based indexing (SQL's SUBSTRING is 1-based)
                 # e.g., for start_idx=1 (0-based), converts to 2 (1-based)
@@ -752,7 +761,7 @@ def convert_slice(
 
                 # Create the SUBSTRING expression
                 answer = sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],  # The original string to slice
+                    this=string_expr,  # The original string to slice
                     start=start_idx_adjusted_glot,  # Use 1-based start position
                     length=convert_iff_case(
                         None,
@@ -786,12 +795,12 @@ def convert_slice(
             if start_idx < 0 and stop_idx < 0:
                 # Early return if start index is greater than stop index
                 # e.g., "hello"[-2:-4] should return empty string
-                if start_idx > stop_idx:
+                if start_idx >= stop_idx:
                     return sql_empty_str
 
                 # Convert negative start index to positive equivalent
                 # e.g., for string "hello" and start_idx=-2, converts to index 4 (LENGTH("hello") + (-2) + 1)
-                pos_start_idx_glot = positive_index(sql_glot_args[0], start_idx)
+                pos_start_idx_glot = positive_index(string_expr, start_idx)
 
                 # Adjust start index to ensure it's not less than 1 (SQL's SUBSTRING is 1-based)
                 start_idx_adjusted_glot = convert_iff_case(
@@ -806,11 +815,11 @@ def convert_slice(
                 )
 
                 # Convert negative stop index to positive equivalent
-                stop_idx_adjusted_glot = positive_index(sql_glot_args[0], stop_idx)
+                stop_idx_adjusted_glot = positive_index(string_expr, stop_idx)
 
                 # Create the SUBSTRING expression
                 return sqlglot_expressions.Substring(
-                    this=sql_glot_args[0],  # The original string to slice
+                    this=string_expr,  # The original string to slice
                     start=start_idx_adjusted_glot,  # Use adjusted start position
                     length=convert_iff_case(
                         None,

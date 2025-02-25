@@ -166,6 +166,8 @@ Customers(
     name_without_first_char = name[1:],
     last_digit = phone[-1:],
     name_without_start_and_end_char = name[1:-1]
+    phone_without_last_5_chars = phone[:-5]
+    name_second_to_last_char = name[-2:-1]
 )
 ```
 
