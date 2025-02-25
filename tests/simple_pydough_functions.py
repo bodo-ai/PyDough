@@ -144,7 +144,6 @@ def yoy_change_in_num_orders():
     # percentage change from the previous year.
     years = PARTITION(Orders(year=YEAR(order_date)), name="orders_in_year", by=year)
     current_year_orders = COUNT(orders_in_year)
-    # prev_year_orders = COUNT(PREV(by=year.ASC()).orders_in_year)
     prev_year_orders = PREV(by=year.ASC())(n=COUNT(orders_in_year)).n
     return years(
         year,
@@ -190,6 +189,39 @@ def suppliers_bal_diffs():
         region_name=BACK(2).name,
         acctbal_delta=account_balance - PREV(by=account_balance.ASC()).account_balance,
     ).TOP_K(5, by=acctbal_delta.DESC())
+
+
+def month_year_sliding_windows():
+    # Finds all months where the total amount spent by customers on orders in
+    # that month was more than the preceding/following month, and the amount
+    # spent in that year was more than the following year.
+    ym_groups = PARTITION(
+        Orders(year=YEAR(order_date), month=MONTH(order_date)),
+        name="orders",
+        by=(year, month),
+    )(month_total_spent=SUM(orders.total_price))
+    y_groups = PARTITION(ym_groups, name="months", by=year)(
+        curr_year_total_spent=SUM(months.month_total_spent),
+        next_year_total_spent=SUM(NEXT(by=year.ASC()).months.month_total_spent),
+    ).WHERE(curr_year_total_spent > next_year_total_spent)
+    return (
+        y_groups.months(
+            curr_year_total_spent=BACK(1).curr_year_total_spent,
+            next_year_total_spent=BACK(1).next_year_total_spent,
+        )
+        .WHERE(
+            (
+                month_total_spent
+                > DEFAULT_TO(PREV(by=(year.ASC(), month.ASC())).month_total_spent, 0.0)
+            )
+            & (
+                month_total_spent
+                > DEFAULT_TO(NEXT(by=(year.ASC(), month.ASC())).month_total_spent, 0.0)
+            )
+            & (curr_year_total_spent > next_year_total_spent)
+        )(year, month)
+        .ORDER_BY(year.ASC(), month.ASC())
+    )
 
 
 def function_sampler():

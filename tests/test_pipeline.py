@@ -49,6 +49,7 @@ from simple_pydough_functions import (
     function_sampler,
     hour_minute_day,
     minutes_seconds_datediff,
+    month_year_sliding_windows,
     multi_partition_access_1,
     multi_partition_access_2,
     percentile_customers_per_region,
@@ -1231,6 +1232,19 @@ from pydough.unqualified import (
                 ),
             ),
             id="suppliers_bal_diffs",
+        ),
+        pytest.param(
+            (
+                month_year_sliding_windows,
+                "month_year_sliding_windows",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1996] * 6 + [1997] * 4 + [1998] * 4,
+                        "month": [1, 3, 5, 8, 10, 12, 3, 5, 7, 10, 1, 3, 5, 7],
+                    }
+                ),
+            ),
+            id="month_year_sliding_windows",
         ),
     ],
 )
