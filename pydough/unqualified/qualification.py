@@ -43,6 +43,7 @@ from .unqualified_node import (
     UnqualifiedOperation,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
+    UnqualifiedPrev,
     UnqualifiedRoot,
     UnqualifiedTopK,
     UnqualifiedWhere,
@@ -683,6 +684,61 @@ class Qualifier:
             return ChildOperatorChildAccess(partition)
         return partition
 
+    def qualify_prev(
+        self,
+        unqualified: UnqualifiedPrev,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+    ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedPrev` into a PyDoughCollectionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedPrev instance to be transformed.
+            `builder`: a builder object used to create new qualified nodes.
+            `context`: the collection QDAG whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALC or PARTITION.
+
+        Returns:
+            The PyDough QDAG object for the qualified collection node.
+
+        Raises:
+            `PyDoughUnqualifiedException` or `PyDoughQDAGException` if something
+            goes wrong during the qualification process, e.g. a term cannot be
+            qualified or is not recognized.
+        """
+        assert is_child, "Malformed qualification case"
+        n_behind: int = unqualified._parcel[0]
+        levels: int | None = unqualified._parcel[2]
+        assert (
+            unqualified._parcel[1] is not None
+        ), "Prev does not currently support an implied 'by' clause."
+        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
+        # Qualify all of the collation terms, storing the children built along
+        # the way.
+        children: MutableSequence[PyDoughCollectionQDAG] = []
+        qualified_collations: list[CollationExpression] = []
+        for term in unqualified_terms:
+            qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
+                term, context, children
+            )
+            assert isinstance(qualified_term, CollationExpression)
+            if children:
+                raise PyDoughUnqualifiedException(
+                    f"Prev does not yet support the following as a collation terms: {qualified_term.expr}."
+                )
+            qualified_collations.append(qualified_term)
+        if not qualified_collations:
+            raise PyDoughUnqualifiedException(
+                "Prev requires a 'by' clause to be specified."
+            )
+
+        return ChildOperatorChildAccess(
+            self.builder.build_prev(context, n_behind, levels, qualified_collations)
+        )
+
     def qualify_collection(
         self,
         unqualified: UnqualifiedNode,
@@ -799,6 +855,8 @@ class Qualifier:
                 answer = self.qualify_top_k(unqualified, context, is_child)
             case UnqualifiedPartition():
                 answer = self.qualify_partition(unqualified, context, is_child)
+            case UnqualifiedPrev():
+                answer = self.qualify_prev(unqualified, context, is_child)
             case UnqualifiedLiteral():
                 answer = self.qualify_literal(unqualified)
             case UnqualifiedOperation():

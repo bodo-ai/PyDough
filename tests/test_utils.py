@@ -14,6 +14,7 @@ __all__ = [
     "LiteralInfo",
     "OrderInfo",
     "PartitionInfo",
+    "PrevInfo",
     "ReferenceInfo",
     "SubCollectionInfo",
     "TableCollectionInfo",
@@ -558,6 +559,51 @@ class ChildReferenceCollectionInfo(CollectionTestInfo):
         )
 
 
+class PrevInfo(CollectionTestInfo):
+    """
+    CollectionTestInfo implementation class to build a PREV node. Contains the
+    following fields:
+    - `n_behind`: the name of rows backward to look (negative=forward).
+    - `levels`: the number of levels upward the partitioning is done with
+    regards to.
+    - `collations`: a list of tuples in the form `(test_info, asc, na_last)`
+      ordering keys for the ORDER BY clause. Passed in via variadic arguments.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(self, n_behind: int, levels: int | None, *args):
+        super().__init__()
+        self.n_behind: int = n_behind
+        self.levels: int | None = levels
+        self.collation: tuple[tuple[AstNodeTestInfo, bool, bool]] = args
+
+    def local_string(self) -> str:
+        levels_str = f", levels={self.levels}" if self.levels is not None else ""
+        collation_strings: list[str] = []
+        for info, asc, na_last in self.collation:
+            suffix = "ASC" if asc else "DESC"
+            kwarg = "'last'" if na_last else "'first'"
+            collation_strings.append(f"({info.to_string()}).{suffix}(na_pos={kwarg})")
+        return f"Prev[{self.n_behind}{levels_str}, by=({', '.join(collation_strings)})]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
+        assert (
+            context is not None
+        ), "Cannot call .build() on PrevInfo without providing a context"
+        collation: list[CollationExpression] = []
+        for info, asc, na_last in self.collation:
+            expr = info.build(builder, context, [])
+            assert isinstance(expr, PyDoughExpressionQDAG)
+            collation.append(CollationExpression(expr, asc, na_last))
+        return builder.build_prev(context, self.n_behind, self.levels, collation)
+
+
 class ChildOperatorInfo(CollectionTestInfo):
     """
     Base class for types of CollectionTestInfo that have child nodes, such as
@@ -639,8 +685,7 @@ class CalcInfo(ChildOperatorInfo):
             builder,
             context,
         )
-        raw_calc = builder.build_calc(context, children)
-        assert isinstance(raw_calc, Calc)
+        raw_calc: Calc = builder.build_calc(context, children)
         args: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
@@ -678,8 +723,7 @@ class WhereInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_where = builder.build_where(context, children)
-        assert isinstance(raw_where, Where)
+        raw_where: Where = builder.build_where(context, children)
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionQDAG)
         return raw_where.with_condition(cond)
@@ -724,8 +768,7 @@ class OrderInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_order = builder.build_order(context, children)
-        assert isinstance(raw_order, OrderBy)
+        raw_order: OrderBy = builder.build_order(context, children)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
@@ -776,8 +819,7 @@ class TopKInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_top_k = builder.build_top_k(context, children, self.records_to_keep)
-        assert isinstance(raw_top_k, TopK)
+        raw_top_k: TopK = builder.build_top_k(context, children, self.records_to_keep)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
@@ -820,8 +862,9 @@ class PartitionInfo(ChildOperatorInfo):
             builder, context
         )
         assert len(children) == 1
-        raw_partition = builder.build_partition(context, children[0], self.child_name)
-        assert isinstance(raw_partition, PartitionBy)
+        raw_partition: PartitionBy = builder.build_partition(
+            context, children[0], self.child_name
+        )
         keys: list[ChildReferenceExpression] = []
         for info in self.keys:
             expr = info.build(builder, context, children)

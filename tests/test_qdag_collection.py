@@ -14,6 +14,7 @@ from test_utils import (
     LiteralInfo,
     OrderInfo,
     PartitionInfo,
+    PrevInfo,
     ReferenceInfo,
     SubCollectionInfo,
     TableCollectionInfo,
@@ -2124,6 +2125,182 @@ def test_collections_calc_terms(
       └─── Calc[region_name=BACK(2).name, nation_name=BACK(1).name, name=name, cust_rank=RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True, dense=True)]
 """,
             id="rank_customers_per_region",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("orders")
+                    ** CalcInfo(
+                        [PrevInfo(1, 1, ((ReferenceInfo("order_date"), True, True)))],
+                        order_date=ReferenceInfo("order_date"),
+                        days_between_orders=FunctionInfo(
+                            "DATEDIFF",
+                            [
+                                LiteralInfo("days", StringType()),
+                                ChildReferenceExpressionInfo("order_date", 0),
+                                ReferenceInfo("order_date"),
+                            ],
+                        ),
+                    )
+                ],
+                name=ReferenceInfo("name"),
+                avg_delta=FunctionInfo(
+                    "AVG",
+                    [ChildReferenceExpressionInfo("days_between_orders", 0)],
+                ),
+            ),
+            "TPCH.Customers(name=name, avg_delta=AVG(orders(order_date=order_date, days_between_orders=DATEDIFF('days', PREV(1, levels=1, by=(order_date.ASC(na_pos='last'))).order_date, order_date)).days_between_orders))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  └─┬─ Calc[name=name, avg_delta=AVG($1.days_between_orders)]
+    └─┬─ AccessChild
+      ├─── SubCollection[orders]
+      └─┬─ Calc[order_date=order_date, days_between_orders=DATEDIFF('days', $1.order_date, order_date)]
+        └─┬─ AccessChild
+          └─── Prev[1, levels=1, by=(order_date.ASC(na_pos='last'))]
+""",
+            id="avg_days_since_prev_order_per_customer",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("orders")
+                    ** CalcInfo(
+                        [
+                            SubCollectionInfo("lines"),
+                            PrevInfo(1, 1, ((ReferenceInfo("order_date"), True, True)))
+                            ** SubCollectionInfo("lines"),
+                        ],
+                        order_value_diff=FunctionInfo(
+                            "SUB",
+                            [
+                                FunctionInfo(
+                                    "SUM",
+                                    [ChildReferenceExpressionInfo("extended_price", 1)],
+                                ),
+                                FunctionInfo(
+                                    "SUM",
+                                    [ChildReferenceExpressionInfo("extended_price", 0)],
+                                ),
+                            ],
+                        ),
+                    )
+                ],
+                name=ReferenceInfo("name"),
+                max_diff=FunctionInfo(
+                    "MAX",
+                    [ChildReferenceExpressionInfo("order_value_diff", 0)],
+                ),
+                min_diff=FunctionInfo(
+                    "MIN",
+                    [ChildReferenceExpressionInfo("order_value_diff", 0)],
+                ),
+            )
+            ** CalcInfo(
+                [],
+                name=ReferenceInfo("name"),
+                largest_diff=FunctionInfo(
+                    "IFF",
+                    [
+                        FunctionInfo(
+                            "GRT",
+                            [
+                                FunctionInfo("ABS", [ReferenceInfo("min_diff")]),
+                                ReferenceInfo("max_diff"),
+                            ],
+                        ),
+                        ReferenceInfo("min_diff"),
+                        ReferenceInfo("max_diff"),
+                    ],
+                ),
+            ),
+            "TPCH.Customers(name=name, max_diff=MAX(orders(order_value_diff=SUM(PREV(1, levels=1, by=(order_date.ASC(na_pos='last'))).lines.extended_price) - SUM(lines.extended_price)).order_value_diff), min_diff=MIN(orders(order_value_diff=SUM(PREV(1, levels=1, by=(order_date.ASC(na_pos='last'))).lines.extended_price) - SUM(lines.extended_price)).order_value_diff))(name=name, largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  ├─┬─ Calc[name=name, max_diff=MAX($1.order_value_diff), min_diff=MIN($1.order_value_diff)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[orders]
+  │   └─┬─ Calc[order_value_diff=SUM($2.extended_price) - SUM($1.extended_price)]
+  │     ├─┬─ AccessChild
+  │     │ └─── SubCollection[lines]
+  │     └─┬─ AccessChild
+  │       └─┬─ Prev[1, levels=1, by=(order_date.ASC(na_pos='last'))]
+  │         └─── SubCollection[lines]
+  └─── Calc[name=name, largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff)]
+""",
+            id="largest_prev_order_value_diff_per_customer_a",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** CalcInfo(
+                [
+                    SubCollectionInfo("orders")
+                    ** CalcInfo(
+                        [SubCollectionInfo("lines")],
+                        order_value=FunctionInfo(
+                            "SUM",
+                            [ChildReferenceExpressionInfo("extended_price", 0)],
+                        ),
+                    )
+                    ** CalcInfo(
+                        [PrevInfo(1, 1, ((ReferenceInfo("order_date"), True, True)))],
+                        order_value_diff=FunctionInfo(
+                            "SUB",
+                            [
+                                ReferenceInfo("order_value"),
+                                ChildReferenceExpressionInfo("order_value", 0),
+                            ],
+                        ),
+                    )
+                ],
+                name=ReferenceInfo("name"),
+                max_diff=FunctionInfo(
+                    "MAX",
+                    [ChildReferenceExpressionInfo("order_value_diff", 0)],
+                ),
+                min_diff=FunctionInfo(
+                    "MIN",
+                    [ChildReferenceExpressionInfo("order_value_diff", 0)],
+                ),
+            )
+            ** CalcInfo(
+                [],
+                name=ReferenceInfo("name"),
+                largest_diff=FunctionInfo(
+                    "IFF",
+                    [
+                        FunctionInfo(
+                            "GRT",
+                            [
+                                FunctionInfo("ABS", [ReferenceInfo("min_diff")]),
+                                ReferenceInfo("max_diff"),
+                            ],
+                        ),
+                        ReferenceInfo("min_diff"),
+                        ReferenceInfo("max_diff"),
+                    ],
+                ),
+            ),
+            "TPCH.Customers(name=name, max_diff=MAX(orders(order_value=SUM(lines.extended_price))(order_value_diff=order_value - PREV(1, levels=1, by=(order_date.ASC(na_pos='last'))).order_value).order_value_diff), min_diff=MIN(orders(order_value=SUM(lines.extended_price))(order_value_diff=order_value - PREV(1, levels=1, by=(order_date.ASC(na_pos='last'))).order_value).order_value_diff))(name=name, largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  ├─┬─ Calc[name=name, max_diff=MAX($1.order_value_diff), min_diff=MIN($1.order_value_diff)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[orders]
+  │   ├─┬─ Calc[order_value=SUM($1.extended_price)]
+  │   │ └─┬─ AccessChild
+  │   │   └─── SubCollection[lines]
+  │   └─┬─ Calc[order_value_diff=order_value - $1.order_value]
+  │     └─┬─ AccessChild
+  │       └─── Prev[1, levels=1, by=(order_date.ASC(na_pos='last'))]
+  └─── Calc[name=name, largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff)]
+""",
+            id="largest_prev_order_value_diff_per_customer_b",
         ),
     ],
 )
