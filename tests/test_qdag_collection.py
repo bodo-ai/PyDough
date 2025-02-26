@@ -754,18 +754,18 @@ def test_collections_calc_terms(
 ) -> None:
     """
     Tests that a sequence of collection-producing QDAG nodes results in the
-    correct calc terms & total set of available terms.
+    correct calculate terms & total set of available terms.
     """
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     assert collection.calc_terms == set(
         expected_calcs
-    ), "Mismatch between set of calc terms and expected value"
+    ), "Mismatch between set of calculate terms and expected value"
     actual_calcs: dict[str, int] = {
         expr: collection.get_expression_position(expr) for expr in collection.calc_terms
     }
     assert (
         actual_calcs == expected_calcs
-    ), "Mismatch between positions of calc terms and expected value"
+    ), "Mismatch between positions of calculate terms and expected value"
     assert (
         collection.all_terms == expected_total_names
     ), "Mismatch between set of all terms and expected value"

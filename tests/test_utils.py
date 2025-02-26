@@ -259,7 +259,7 @@ class ReferenceInfo(AstNodeTestInfo):
     """
     TestInfo implementation class to build a reference. Contains the
     following fields:
-    - `name`: the name of the calc term being referenced.
+    - `name`: the name of the term being referenced from the preceding context.
     """
 
     def __init__(self, name: str):
@@ -284,7 +284,7 @@ class BackReferenceExpressionInfo(AstNodeTestInfo):
     """
     TestInfo implementation class to build a back reference expression.
     Contains the following fields:
-    - `name`: the name of the calc term being referenced.
+    - `name`: the name of the term being referenced.
     - `levels`: the number of levels upward to reference.
     """
 
@@ -311,7 +311,7 @@ class ChildReferenceExpressionInfo(AstNodeTestInfo):
     """
     TestInfo implementation class to build a child reference expression.
     Contains the following fields:
-    - `name`: the name of the calc term being referenced.
+    - `name`: the name of the term being referenced.
     - `child_idx`: the index of the child being referenced.
     """
 
@@ -500,7 +500,7 @@ class ChildReferenceCollectionInfo(CollectionTestInfo):
     """
     CollectionTestInfo implementation class to build a reference to a
     child collection. Contains the following fields:
-    - `idx`: the index of the calc term being referenced.
+    - `idx`: the index of the child collection being referenced.
 
     NOTE: must provide a `context` when building.
     """

@@ -1024,11 +1024,11 @@ def convert_ast_to_relational(
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
-        collection node corresponds to. Ensures that the calc terms of
-        `node` are included in the root in the correct order, and if it
+        collection node corresponds to. Ensures that the desired output columns
+        of `node` are included in the root in the correct order, and if it
         has an ordering then the relational root stores that information.
     """
-    # Pre-process the QDAG node so the final CALC term includes any ordering
+    # Pre-process the QDAG node so the final CALCULATE includes any ordering
     # keys.
     translator: RelTranslation = RelTranslation()
     node = translator.preprocess_root(node, columns)

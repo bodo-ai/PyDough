@@ -347,7 +347,7 @@ def datetime_sampler():
 
 
 def loop_generated_terms():
-    # Using a loop & dictionary to generate PyDough calc terms
+    # Using a loop & dictionary to generate PyDough calculate terms
     terms = {"name": name}
     for i in range(3):
         terms[f"interval_{i}"] = COUNT(
@@ -357,7 +357,7 @@ def loop_generated_terms():
 
 
 def function_defined_terms():
-    # Using a regular function to generate PyDough calc terms
+    # Using a regular function to generate PyDough calculate terms
     def interval_n(n):
         return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
 
@@ -370,7 +370,8 @@ def function_defined_terms():
 
 
 def function_defined_terms_with_duplicate_names():
-    # Using a regular function to generate PyDough calc terms with the function argument same as collection's fields.
+    # Using a regular function to generate PyDough calculate terms with the
+    # function argument same as collection's fields.
     def interval_n(n, name="test"):
         return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
 
@@ -384,7 +385,7 @@ def function_defined_terms_with_duplicate_names():
 
 
 def lambda_defined_terms():
-    # Using a lambda function to generate PyDough calc terms
+    # Using a lambda function to generate PyDough calculate terms
     interval_n = lambda n: COUNT(
         customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000))
     )
@@ -398,7 +399,7 @@ def lambda_defined_terms():
 
 
 def dict_comp_terms():
-    # Using a dictionary comprehension to generate PyDough calc terms
+    # Using a dictionary comprehension to generate PyDough calculate terms
     terms = {"name": name}
     terms.update(
         {
@@ -412,7 +413,7 @@ def dict_comp_terms():
 
 
 def list_comp_terms():
-    # Using a list comprehension to generate PyDough calc terms
+    # Using a list comprehension to generate PyDough calculate terms
     terms = [name]
     terms.extend(
         [
@@ -424,7 +425,7 @@ def list_comp_terms():
 
 
 def set_comp_terms():
-    # Using a set comprehension to generate PyDough calc terms
+    # Using a set comprehension to generate PyDough calculate terms
     terms = [name]
     terms.extend(
         set(
@@ -439,7 +440,7 @@ def set_comp_terms():
 
 
 def generator_comp_terms():
-    # Using a generator comprehension to generate PyDough calc terms
+    # Using a generator comprehension to generate PyDough calculate terms
     terms = {"name": name}
     for term, value in (
         (

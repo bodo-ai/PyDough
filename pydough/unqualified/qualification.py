@@ -439,7 +439,7 @@ class Qualifier:
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
-        # Qualify all of the CALC terms, storing the children built along
+        # Qualify all of the CALCULATE terms, storing the children built along
         # the way.
         children: MutableSequence[PyDoughCollectionQDAG] = []
         qualified_terms: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []

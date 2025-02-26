@@ -39,8 +39,8 @@ def bad_pydough_impl_02(root: UnqualifiedNode) -> UnqualifiedNode:
     TPCH.Nations.CALCULATE(nation_name=FIZZBUZZ(name))
     ```
     The problem: there is no function named FIZZBUZZ, so this looks like a
-    CALC term of a subcollection, which cannot be used as an expression inside
-    a CALCULATE.
+    CALCULATE being done onto a subcollection, which cannot be used as an
+    expression inside a CALCULATE.
     """
     return root.Nations.CALCULATE(nation_name=root.FIZZBUZZ(root.name))
 
@@ -53,7 +53,7 @@ def bad_pydough_impl_03(root: UnqualifiedNode) -> UnqualifiedNode:
     ```
     The problem: `suppliers.CALCULATE(x=COUNT(parts_supplied))` is plural with regards
     to Nations, so accessing its `x` property is still plural, therefore it
-    cannot be used as a calc term relative to Nations.
+    cannot be used as a term inside a CALCULATE from the context of Nations.
     """
     return root.Nations.CALCULATE(
         y=root.suppliers.CALCULATE(x=root.COUNT(root.parts_supplied)).x
@@ -79,7 +79,7 @@ def bad_pydough_impl_05(root: UnqualifiedNode) -> UnqualifiedNode:
     TPCH.Customer(r=nation.region)
     ```
     The problem: nation.region is a collection, therefore cannot be used as
-    an expression in a CALC term.
+    an expression in a CALCULATE.
     """
     return root.Customers.CALCULATE(r=root.nation.region)
 
@@ -91,8 +91,8 @@ def bad_pydough_impl_06(root: UnqualifiedNode) -> UnqualifiedNode:
     TPCH.Suppliers.supply_records.CALCULATE(o=lines.order.order_date)
     ```
     The problem: lines is plural with regards to supply_records, therefore
-    lines.order.order_date is also plural and it cannot be used as a calc
-    term relative to suppl_records.
+    lines.order.order_date is also plural and it cannot be used in a CALCULATE
+    in the context of supply_records.
     """
     return root.Suppliers.supply_records.CALCULATE(o=root.lines.order.order_date)
 
@@ -104,8 +104,8 @@ def bad_pydough_impl_07(root: UnqualifiedNode) -> UnqualifiedNode:
     TPCH.Lineitems.CALCULATE(v=MUL(extended_price, SUB(1, discount)))
     ```
     The problem: there is no function named MUL or SUB, so this looks like a
-    CALC term of a subcollection, which cannot be used as an expression inside
-    a CALCULATE.
+    CALCULATE operation on a subcollection, which cannot be used as an
+    expression inside of a CALCULATE.
     """
     return root.Lineitems.CALCULATE(
         v=root.MUL(root.extended_price, root.SUB(1, root.discount))

@@ -31,7 +31,7 @@ The base QDAG collection node contains the following interface:
 - `all_terms`: Property that returns the set of all names of terms of the collection (collections or expressions).
 - `is_singular`: Method that takes in a context and returns whether the current collection is singular with regards to that context. (Note: it is assumed that `.starting_predecessor` has been called on all the arguments already).
 - `starting_predecessor`: Property that finds the furthest predecessor of the curren collection.
-- `verify_singular_terms`: Method that takes in a sequence of expression QDAG nodes and verifies that all of them are singular with regards to the current context (e.g. can they be used as CALC terms).
+- `verify_singular_terms`: Method that takes in a sequence of expression QDAG nodes and verifies that all of them are singular with regards to the current context (e.g. can they be used as CALCULATE terms).
 - `get_expression_position`: Method that takes in the string name of a calculate term and returns its ordinal position when placed in the output.
 - `get_term`: Method that takes in the string name of any term of the current context and returns the QDAG node for it with regards to the current context. E.g. if calling on the name of a subcollection, returns the subcollection node.
 - `get_expr`: Same as `get_term` but specifically for expressions-only.
