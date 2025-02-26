@@ -266,16 +266,16 @@ For instance, `JOIN_STRINGS("; ", "Alpha", "Beta", "Gamma)` returns `"Alpha; Bet
 <!-- TOC --><a name="lpad"></a>
 ### LPAD
 
-The `LPAD` function pads an expression on the left side with a specified padding character and returns the padded expression till the desired length. It takes three arguments:
+The `LPAD` function pads an expression on the left side with a specified padding character until it is the desired length. It takes three arguments:
 
-1. The input expression to pad.
-2. The desired final length of the expression.
-3. The single character to use for padding.
+1. The input string to pad.
+2. The desired final length of the expression. It should be a positive integer literal.
+3. The single character literal to use for padding.
 
 The function behaves as follows:
 
 - If the input expression is shorter than the desired length, it adds padding characters on the left until reaching the desired length. 
-- If the input expression is longer than the desired length, it truncates the expression from the left to match the desired length.
+- If the input expression is longer than the desired length, it truncates the expression by removing characters from the right side until it matches the desired length.
 - If the desired length is 0, it returns an empty string.
 - If the desired length is negative, it raises an error.
 - If the padding argument is not a single character, it raises an error.
@@ -284,19 +284,28 @@ The function behaves as follows:
 Customers(left_padded_name = LPAD(name, 30, "*"))
 ```
 
+For demonstration purposes here are examples on how it pads on string literals. Note that the first argument cannot be a string literal and this is only for demonstration purposes:
+| Input | Output |
+|-------|--------|
+| `LPAD("123", 6, "0")` | `"000123"` |
+| `LPAD("123", 5, "#")` | `"##123"` |
+| `LPAD("123", 3, "0")` | `"123"` |
+| `LPAD("123", 2, "0")` | `"12"` |
+| `LPAD("123", 0, "0")` | `""` |
+
 <!-- TOC --><a name="rpad"></a>
 ### RPAD
 
-The `RPAD` function pads an expression on the right side with a specified padding character and returns the padded expression till the desired length. It takes three arguments:
+The `RPAD` function pads an expression on the right side with a specified padding character until it is the desired length. It takes three arguments:
 
-1. The input expression to pad.
-2. The desired final length of the expression.
-3. The single character to use for padding.
+1. The input string to pad.
+2. The desired final length of the expression. It should be a positive integer literal.
+3. The single character literal to use for padding.
 
 The function behaves as follows:
 
 - If the input expression is shorter than the desired length, it adds padding characters on the right until reaching the desired length.
-- If the input expression is longer than the desired length, it truncates the expression from the left to match the desired length.
+- If the input expression is longer than the desired length, it truncates the expression by removing characters from the right side until it matches the desired length.
 - If the desired length is 0, it returns an empty string
 - If the desired length is negative, it raises an error
 - If the padding argument is not a single character, it raises an error
@@ -304,6 +313,15 @@ The function behaves as follows:
 ```py
 Customers(right_padded_name = RPAD(name, 30, "*"))
 ```
+
+For demonstration purposes here are examples on how it pads on string literals. Please note the first argument cannot be a string literal and this is only for demonstration purposes:
+| Input | Output |
+|-------|--------|
+| `RPAD("123", 6, "0")` | `"123000"` |
+| `RPAD("123", 5, "#")` | `"123##"` |
+| `RPAD("123", 3, "0")` | `"123"` |
+| `RPAD("123", 2, "0")` | `"12"` |
+| `RPAD("123", 0, "0")` | `""` |
 
 <!-- TOC --><a name="datetime-functions"></a>
 

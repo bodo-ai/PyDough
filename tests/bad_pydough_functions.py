@@ -108,6 +108,16 @@ def bad_lpad_6():
     return Customers(padded_name=LPAD(name, datetime.datetime.now(), "*"))
 
 
+def bad_lpad_7():
+    # Non-literal length
+    return Customers(padded_name=LPAD(name, LENGTH(phone), "*"))
+
+
+def bad_lpad_8():
+    # Non-literal padding string
+    return Customers(padded_name=LPAD(name, 20, LENGTH(phone)))
+
+
 def bad_rpad_1():
     # String length argument
     return Customers(padded_name=RPAD(name, "20", "*"))
@@ -136,6 +146,16 @@ def bad_rpad_5():
 def bad_rpad_6():
     # Non-integer length
     return Customers(padded_name=RPAD(name, datetime.datetime.now(), "*"))
+
+
+def bad_rpad_7():
+    # Non-literal length
+    return Customers(padded_name=RPAD(name, LENGTH(phone), "*"))
+
+
+def bad_rpad_8():
+    # Non-literal padding string
+    return Customers(padded_name=RPAD(name, 20, LENGTH(phone)))
 
 
 def bad_floor():

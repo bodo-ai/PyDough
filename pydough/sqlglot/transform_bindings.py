@@ -729,6 +729,70 @@ def convert_contains(
     return convert_like(None, [column, pattern])
 
 
+def pad_helper(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+    pad_func: str,
+) -> SQLGlotExpression:
+    """
+    Helper function for LPAD and RPAD.
+    Expects sqlglot_args[0] to be the column to pad.
+    Expects sqlglot_args[1] and sqlglot_args[2] to be literals.
+    Expects sqlglot_args[1] to be the returned length of the padded string.
+    Expects sqlglot_args[2] to be the string to pad with.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions. The first operand is expected to be a string.
+        `pad_func`: The name of the padding function to use.
+
+    Returns:
+        A tuple of sqlglot expressions for the column to pad, the length of the column,
+        the required length, padding string and the integer literal of the required length.
+    """
+    assert pad_func in ["LPAD", "RPAD"]
+    assert len(sql_glot_args) == 3
+
+    if (
+        isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
+        and not sql_glot_args[1].is_string
+    ):
+        try:
+            required_len = int(sql_glot_args[1].this)
+            if required_len < 0:
+                raise ValueError()
+        except ValueError:
+            raise ValueError(
+                f"{pad_func} function requires the length argument to be a non-negative integer literal."
+            )
+    else:
+        raise ValueError(
+            f"{pad_func} function requires the length argument to be a non-negative integer literal."
+        )
+
+    if (
+        not isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
+        or not sql_glot_args[2].is_string
+    ):
+        raise ValueError(
+            f"{pad_func} function requires the padding argument to be a string literal of length 1."
+        )
+    if len(str(sql_glot_args[2].this)) != 1:
+        raise ValueError(
+            f"{pad_func} function requires the padding argument to be a string literal of length 1."
+        )
+
+    col_glot = sql_glot_args[0]
+    col_len_glot = sqlglot_expressions.Length(this=sql_glot_args[0])
+    required_len_glot = sqlglot_expressions.convert(required_len)
+    pad_string_glot = sqlglot_expressions.convert(
+        str(sql_glot_args[2].this) * required_len
+    )
+    return col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len
+
+
 def convert_lpad(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
@@ -738,10 +802,6 @@ def convert_lpad(
     If length is 0, return an empty string.
     If length is negative, raise an error.
     If length is positive, pad the string on the left to the specified length.
-    Expects sqlglot_args[0] to be the column to pad.
-    Expects sqlglot_args[1] and sqlglot_args[2] to be literals.
-    Expects sqlglot_args[1] to be the returned length of the padded string.
-    Expects sqlglot_args[2] to be the string to pad with.
 
     Args:
         `raw_args`: The operands passed to the function before they were converted to
@@ -754,39 +814,12 @@ def convert_lpad(
         `LPAD(string, length, padding)`. With the caveat that if length is 0,
         it will return an empty string.
     """
-    assert len(sql_glot_args) == 3
-
-    if (
-        not isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
-        or sql_glot_args[1].is_string
-    ):
-        raise ValueError("LPAD function requires the length argument to be an integer.")
-
-    if (
-        not isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
-        or not sql_glot_args[2].is_string
-    ):
-        raise ValueError("LPAD function requires the padding argument to be a string.")
-    if len(str(sql_glot_args[2].this)) != 1:
-        raise ValueError(
-            "LPAD function requires the padding argument to be of length 1."
-        )
-
-    try:
-        required_len = int(sql_glot_args[1].this)
-    except ValueError:
-        raise ValueError("LPAD function requires the length argument to be an integer.")
-    if required_len < 0:
-        raise ValueError("LPAD function requires a non-negative length.")
+    col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len = (
+        pad_helper(raw_args, sql_glot_args, "LPAD")
+    )
     if required_len == 0:
         return sqlglot_expressions.convert("")
 
-    col_glot = sql_glot_args[0]
-    col_len_glot = sqlglot_expressions.Length(this=sql_glot_args[0])
-    required_len_glot = sqlglot_expressions.convert(required_len)
-    pad_string_glot = sqlglot_expressions.convert(
-        str(sql_glot_args[2].this) * required_len
-    )
     answer = convert_iff_case(
         None,
         [
@@ -819,10 +852,6 @@ def convert_rpad(
     If length is 0, return an empty string.
     If length is negative, raise an error.
     If length is positive, pad the string on the right to the specified length.
-    Expects sqlglot_args[0] to be the column to pad.
-    Expects sqlglot_args[1] and sqlglot_args[2] to be literals.
-    Expects sqlglot_args[1] to be the returned length of the padded string.
-    Expects sqlglot_args[2] to be the string to pad with.
 
     Args:
         `raw_args`: The operands passed to the function before they were converted to
@@ -835,38 +864,12 @@ def convert_rpad(
         `RPAD(string, length, padding)`. With the caveat that if length is 0,
         it will return an empty string.
     """
-    assert len(sql_glot_args) == 3
-
-    if (
-        not isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
-        or sql_glot_args[1].is_string
-    ):
-        raise ValueError("RPAD function requires the length argument to be an integer.")
-
-    if (
-        not isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
-        or not sql_glot_args[2].is_string
-    ):
-        raise ValueError("RPAD function requires the padding argument to be a string")
-    if len(str(sql_glot_args[2].this)) != 1:
-        raise ValueError(
-            "RPAD function requires the padding argument to be of length 1."
-        )
-
-    try:
-        required_len = int(sql_glot_args[1].this)
-    except ValueError:
-        raise ValueError("RPAD function requires the length argument to be an integer.")
-    if required_len < 0:
-        raise ValueError("RPAD function requires a non-negative length")
+    col_glot, _, required_len_glot, pad_string_glot, required_len = pad_helper(
+        raw_args, sql_glot_args, "RPAD"
+    )
     if required_len == 0:
         return sqlglot_expressions.convert("")
 
-    col_glot = sql_glot_args[0]
-    required_len_glot = sqlglot_expressions.convert(required_len)
-    pad_string_glot = sqlglot_expressions.convert(
-        str(sql_glot_args[2].this) * required_len
-    )
     answer = sqlglot_expressions.Substring(
         this=convert_concat(None, [col_glot, pad_string_glot]),
         start=sqlglot_expressions.convert(1),

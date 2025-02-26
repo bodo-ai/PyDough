@@ -13,12 +13,16 @@ from bad_pydough_functions import (
     bad_lpad_4,
     bad_lpad_5,
     bad_lpad_6,
+    bad_lpad_7,
+    bad_lpad_8,
     bad_rpad_1,
     bad_rpad_2,
     bad_rpad_3,
     bad_rpad_4,
     bad_rpad_5,
     bad_rpad_6,
+    bad_rpad_7,
+    bad_rpad_8,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -127,7 +131,7 @@ from tpch_test_functions import (
     impl_tpch_q22,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -1628,8 +1632,8 @@ def test_pipeline_e2e_errors(
                         "David Ki",
                         "Emily Da",
                     ],
-                    zero_pad_right=["", "", "", "", ""],
-                    zero_pad_left=["", "", "", "", ""],
+                    zero_pad_right=[""] * 5,
+                    zero_pad_left=[""] * 5,
                     right_padded_space=lambda x: x.original_name.apply(
                         lambda s: (s + " " * 30)[:30]
                     ),
@@ -1674,74 +1678,110 @@ def test_defog_e2e_with_custom_data(
     pd.testing.assert_frame_equal(result, answer_impl())
 
 
-@pytest.mark.execute
 @pytest.mark.parametrize(
-    "impl, error_msg",
+    "impl, graph_name, error_msg",
     [
         pytest.param(
             bad_lpad_1,
-            "LPAD function requires the length argument to be an integer.",
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_lpad_1",
         ),
         pytest.param(
             bad_lpad_2,
-            "LPAD function requires the padding argument to be of length 1.",
+            "Broker",
+            "LPAD function requires the padding argument to be a string literal of length 1.",
             id="bad_lpad_2",
         ),
         pytest.param(
             bad_lpad_3,
-            "LPAD function requires a non-negative length",
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_lpad_3",
         ),
         pytest.param(
             bad_lpad_4,
-            "LPAD function requires the padding argument to be of length 1",
+            "Broker",
+            "LPAD function requires the padding argument to be a string literal of length 1.",
             id="bad_lpad_4",
         ),
         pytest.param(
             bad_lpad_5,
-            "LPAD function requires the length argument to be an integer.",
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_lpad_5",
         ),
         pytest.param(
             bad_lpad_6,
-            "LPAD function requires the length argument to be an integer.",
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_lpad_6",
         ),
         pytest.param(
+            bad_lpad_7,
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_lpad_7",
+        ),
+        pytest.param(
+            bad_lpad_8,
+            "Broker",
+            "LPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_lpad_8",
+        ),
+        pytest.param(
             bad_rpad_1,
-            "RPAD function requires the length argument to be an integer.",
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_rpad_1",
         ),
         pytest.param(
             bad_rpad_2,
-            "RPAD function requires the padding argument to be of length 1.",
+            "Broker",
+            "RPAD function requires the padding argument to be a string literal of length 1.",
             id="bad_rpad_2",
         ),
         pytest.param(
             bad_rpad_3,
-            "RPAD function requires a non-negative length",
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_rpad_3",
         ),
         pytest.param(
             bad_rpad_4,
-            "RPAD function requires the padding argument to be of length 1",
+            "Broker",
+            "RPAD function requires the padding argument to be a string literal of length 1.",
             id="bad_rpad_4",
         ),
         pytest.param(
             bad_rpad_5,
-            "RPAD function requires the length argument to be an integer.",
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_rpad_5",
         ),
         pytest.param(
             bad_rpad_6,
-            "RPAD function requires the length argument to be an integer.",
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
             id="bad_rpad_6",
+        ),
+        pytest.param(
+            bad_rpad_7,
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_rpad_7",
+        ),
+        pytest.param(
+            bad_rpad_8,
+            "Broker",
+            "RPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_rpad_8",
         ),
     ],
 )
 def test_defog_e2e_errors(
     impl: Callable[[], UnqualifiedNode],
+    graph_name: str,
     error_msg: str,
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
@@ -1750,7 +1790,7 @@ def test_defog_e2e_errors(
     Tests running bad PyDough code through the entire pipeline to verify that
     a certain error is raised for defog database.
     """
-    graph: GraphMetadata = defog_graphs("Broker")
+    graph: GraphMetadata = defog_graphs(graph_name)
     with pytest.raises(Exception, match=error_msg):
         root: UnqualifiedNode = init_pydough_context(graph)(impl)()
-        to_df(root, metadata=graph, database=sqlite_defog_connection)
+        to_sql(root, metadata=graph, database=sqlite_defog_connection)
