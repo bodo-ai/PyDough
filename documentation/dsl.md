@@ -479,7 +479,7 @@ There is a key caveat to the name conflict rule: it is ok to create a term with 
 ```py
 %%pydough
 Addresses.CALCULATE(
-    current_city, current_state
+    current_city=city, current_state=state
 ).current_occupants.CALCULATE(
     first_name,
     last_name,

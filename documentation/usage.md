@@ -485,8 +485,6 @@ This node is a reference to the global context for the entire graph. An operatio
 
 The collection does not have any terms that can be included in a result if it is executed.
 
-It is not possible to use BACK from this collection.
-
 The collection has access to the following collections:
   customers, lines, nations, orders, parts, regions, suppliers, supply_records
 
