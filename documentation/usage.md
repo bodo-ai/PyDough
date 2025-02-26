@@ -46,7 +46,7 @@ Once you have done all of these steps, you can run PyDough in any cell of the no
 
 ```py
 %%pydough
-result = nations.WHERE(region.name == "ASIA")(name, n_cust=COUNT(customers))
+result = nations.WHERE(region.name == "ASIA").CALCULATE(name, n_cust=COUNT(customers))
 pydough.to_df(result)
 ```
 
@@ -147,7 +147,7 @@ For example, consider this PyDough snippet:
 ```py
 %%pydough
 selected_customers = customers.WHERE(CONTAINS(name, '2468'))
-result = Nations(
+result = Nations.CALCULATE(
     name,
     total_bal=SUM(selected_customers.acctbal),
     average_bal=AVG(selected_customers.acctbal),
@@ -212,6 +212,7 @@ This sections describes various APIs you can use to execute PyDough code.
 
 The `to_sql` API takes in PyDough code and transforms it into SQL query text without executing it on a database. The first argument it takes in is the PyDough node for the collection being converted to SQL. It can optionally take in the following keyword arguments:
 
+- `columns`: which columns to include in the answer if what names to call them by (if omitted, uses the names/ordering from the last `CALCULATE` clause). This can either be a non-empty list of column name strings, or a non-empty dictionary where the values are column name strings, and the keys are the strings of the aliases they should be named as.
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
@@ -221,8 +222,8 @@ Below is an example of using `pydough.to_sql` and the output (the SQL output may
 ```py
 %%pydough
 european_countries = nations.WHERE(region.name == "EUROPE")
-result = european_countries(name, n_custs=COUNT(customers))
-pydough.to_sql(result)
+result = european_countries.CALCULATE(name, n_custs=COUNT(customers))
+pydough.to_sql(result, columns=["name", "n_custs"])
 ```
 
 ```sql
@@ -263,6 +264,8 @@ See the [demo notebooks](../demos/README.md) for more instances of how to use th
 
 The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), but goes a step further and executes the query using the provided database connection, returning the result as a pandas DataFrame.  The first argument it takes in is the PyDough node for the collection being converted to SQL. It can optionally take in the following keyword arguments:
 
+
+- `columns`: which columns to include in the answer if what names to call them by (if omitted, uses the names/ordering from the last `CALCULATE` clause). This can either be a non-empty list of column name strings, or a non-empty dictionary where the values are column name strings, and the keys are the strings of the aliases they should be named as.
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
@@ -273,8 +276,8 @@ Below is an example of using `pydough.to_df` and the output, attached to a sqlit
 ```py
 %%pydough
 european_countries = nations.WHERE(region.name == "EUROPE")
-result = european_countries(name, n_custs=COUNT(customers))
-pydough.to_df(result)
+result = european_countries.CALCULATE(n=COUNT(customers))
+pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 ```
 
 <div>
@@ -478,11 +481,9 @@ pydough.explain(result, verbose=True)
 PyDough collection representing the following logic:
   TPCH
 
-This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALC or accessing a collection) before it can be executed.
+This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed.
 
 The collection does not have any terms that can be included in a result if it is executed.
-
-It is not possible to use BACK from this collection.
 
 The collection has access to the following collections:
   customers, lines, nations, orders, parts, regions, suppliers, supply_records
@@ -509,8 +510,6 @@ Call pydough.explain(graph['nations']) to learn more about this collection.
 
 The following terms will be included in the result if this collection is executed:
   comment, key, name, region_key
-
-It is possible to use BACK to go up to 1 level above this collection.
 
 The collection has access to the following expressions:
   comment, key, name, region_key
@@ -548,8 +547,6 @@ The main task of this node is to filter on the following conditions:
 The following terms will be included in the result if this collection is executed:
   comment, key, name, region_key
 
-It is possible to use BACK to go up to 1 level above this collection.
-
 The collection has access to the following expressions:
   comment, key, name, region_key
 
@@ -560,11 +557,11 @@ Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
 ```
 
-4d. Calling `explain` on PyDough code for a collection (example 4: calc).
+4d. Calling `explain` on PyDough code for a collection (example 4: CALCULATE).
 
 ```py
 %%pydough
-result = nations.WHERE(region.name == "EUROPE")(name, n_custs=COUNT(customers))
+result = nations.WHERE(region.name == "EUROPE").CALCULATE(name, n_custs=COUNT(customers))
 pydough.explain(result, verbose=True)
 ```
 
@@ -575,7 +572,7 @@ PyDough collection representing the following logic:
     ├─┬─ Where[$1.name == 'EUROPE']
     │ └─┬─ AccessChild
     │   └─── SubCollection[region]
-    └─┬─ Calc[name=name, n_custs=COUNT($1)]
+    └─┬─ Calculate[name=name, n_custs=COUNT($1)]
       └─┬─ AccessChild
         └─── SubCollection[customers]
 
@@ -589,8 +586,6 @@ The main task of this node is to calculate the following additional expressions 
 
 The following terms will be included in the result if this collection is executed:
   n_custs, name
-
-It is possible to use BACK to go up to 1 level above this collection.
 
 The collection has access to the following expressions:
   comment, key, n_custs, name, region_key
@@ -634,9 +629,9 @@ The term is the following expression: name
 
 This is column 'name' of collection 'nations'
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.nations.WHERE(region.name == 'EUROPE')(name)
+  TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(name)
 ```
 
 2. Calling `explain_term` on a sub-collection of a collection.
@@ -662,7 +657,7 @@ The term is the following child of the collection:
 
 This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
 For example, the following are valid:
-  TPCH.nations.WHERE(region.name == 'EUROPE')(COUNT(customers.acctbal))
+  TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(COUNT(customers.acctbal))
   TPCH.nations.WHERE(region.name == 'EUROPE').WHERE(HAS(customers))
   TPCH.nations.WHERE(region.name == 'EUROPE').ORDER_BY(COUNT(customers).DESC())
 
@@ -695,9 +690,9 @@ The term is the following expression: $1.acctbal
 
 This is a reference to expression 'acctbal' of child $1
 
-This expression is plural with regards to the collection, meaning it can be placed in a CALC of a collection if it is aggregated.
+This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated.
 For example, the following is valid:
-  TPCH.nations.WHERE(region.name == 'EUROPE')(COUNT(customers.acctbal))
+  TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(COUNT(customers.acctbal))
 ```
 
 4. Calling `explain_term` on an aggregation function call.
@@ -728,9 +723,9 @@ This expression calls the function 'AVG' on the following arguments, aggregating
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
-This term is singular with regards to the collection, meaning it can be placed in a CALC of a collection.
+This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.nations.WHERE(region.name == 'EUROPE')(AVG(customers.acctbal))
+  TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(AVG(customers.acctbal))
 ```
 ## Logging
 
@@ -755,7 +750,7 @@ logger.info("This is an info message.")
 logger.error("This is an error message.")
 ```
 
-We can also set the level of logging via a function argument. Note that if `PYDOUGH_LOG_LEVEL` is available, the default_level argument is overriden. 
+We can also set the level of logging via a function argument. Note that if `PYDOUGH_LOG_LEVEL` is available, the default_level argument is overridden. 
 
 ```python
 # Import the function

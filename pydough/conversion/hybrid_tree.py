@@ -6,7 +6,7 @@ nodes to said hybrid nodes.
 
 __all__ = [
     "HybridBackRefExpr",
-    "HybridCalc",
+    "HybridCalculate",
     "HybridChildRefExpr",
     "HybridCollation",
     "HybridCollectionAccess",
@@ -25,6 +25,7 @@ __all__ = [
     "HybridTree",
 ]
 
+import copy
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -39,7 +40,7 @@ from pydough.metadata import (
 )
 from pydough.qdag import (
     BackReferenceExpression,
-    Calc,
+    Calculate,
     ChildOperator,
     ChildOperatorChildAccess,
     ChildReferenceCollection,
@@ -400,10 +401,10 @@ class HybridOperation:
     - `terms`: mapping of names to expressions accessible from that point in
                the pipeline execution.
     - `renamings`: mapping of names to a new name that should be used to access
-               them from within `terms`. This is used when a `CALC` overrides a
-               term name so that future invocations of the term name use the
-               renamed version, while key operations like joins can still
-               access the original version.
+               them from within `terms`. This is used when a `CALCULATE`
+               overrides a term name so that future invocations of the term
+               name use the renamed version, while key operations like joins
+               can still access the original version.
     - `orderings`: list of collation expressions that specify the order
                that a hybrid operation is sorted by.
     - `unique_exprs`: list of expressions that are used to uniquely identify
@@ -446,11 +447,15 @@ class HybridCollectionAccess(HybridOperation):
         self.collection: CollectionAccess = collection
         terms: dict[str, HybridExpr] = {}
         for name in collection.calc_terms:
+            # Skip columns that are overloaded with a name from an ancestor,
+            # since they should not be used.
+            if name in collection.ancestral_mapping:
+                continue
             expr = collection.get_expr(name)
             assert isinstance(expr, ColumnProperty)
             terms[name] = HybridColumnExpr(expr)
         unique_exprs: list[HybridExpr] = []
-        for name in collection.unique_terms:
+        for name in sorted(collection.unique_terms, key=str):
             expr = collection.get_expr(name)
             unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
         super().__init__(terms, {}, [], unique_exprs)
@@ -478,9 +483,9 @@ class HybridPartitionChild(HybridOperation):
         return "PARTITION_CHILD[*]"
 
 
-class HybridCalc(HybridOperation):
+class HybridCalculate(HybridOperation):
     """
-    Class for HybridOperation corresponding to a CALC operation.
+    Class for HybridOperation corresponding to a CALCULATE operation.
     """
 
     def __init__(
@@ -515,11 +520,10 @@ class HybridCalc(HybridOperation):
             expr = new_expressions.pop(old_name)
             new_expressions[new_name] = expr
         super().__init__(terms, renamings, orderings, predecessor.unique_exprs)
-        self.calc = Calc
         self.new_expressions = new_expressions
 
     def __repr__(self):
-        return f"CALC[{self.new_expressions}]"
+        return f"CALCULATE[{self.new_expressions}]"
 
 
 class HybridFilter(HybridOperation):
@@ -609,7 +613,7 @@ class ConnectionType(Enum):
     combined with the parent tree via a left join. The aggregate call may be
     augmented after the left join, e.g. to coalesce with a default value if the
     left join was not used. The grouping keys for the aggregate are the keys
-    used to join the parent tree output onto the subtree ouput.
+    used to join the parent tree output onto the subtree output.
 
     If this is used as a child access of a `PARTITION` node, there is no left
     join, though some of the post-processing steps may still occur.
@@ -901,11 +905,13 @@ class HybridTree:
     def __init__(
         self,
         root_operation: HybridOperation,
+        ancestral_mapping: dict[str, int],
         is_hidden_level: bool = False,
         is_connection_root: bool = False,
     ):
         self._pipeline: list[HybridOperation] = [root_operation]
         self._children: list[HybridConnection] = []
+        self._ancestral_mapping: dict[str, int] = dict(ancestral_mapping)
         self._successor: HybridTree | None = None
         self._parent: HybridTree | None = None
         self._is_hidden_level: bool = is_hidden_level
@@ -952,6 +958,14 @@ class HybridTree:
         in the pipeline.
         """
         return self._children
+
+    @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        """
+        The mapping used to identify terms that are references to an alias
+        defined in an ancestor.
+        """
+        return self._ancestral_mapping
 
     @property
     def correlated_children(self) -> set[int]:
@@ -1264,14 +1278,14 @@ class HybridTranslator:
         child_idx_mapping: dict[int, int],
     ) -> None:
         """
-        Helper utility that takes any children of a child operator (CALC,
+        Helper utility that takes any children of a child operator (CALCULATE,
         WHERE, etc.) and builds the corresponding HybridTree subtree,
         where the parent of the subtree's root is absent instead of the
         current level, and inserts the corresponding HybridConnection node.
 
         Args:
             `hybrid`: the HybridTree having children added to it.
-            `child_operator`: the collection QDAG node (CALC, WHERE, etc.)
+            `child_operator`: the collection QDAG node (CALCULATE, WHERE, etc.)
             containing the children.
             `child_idx_mapping`: a mapping of indices of children of the
             original `child_operator` to the indices of children of the hybrid
@@ -1304,7 +1318,7 @@ class HybridTranslator:
                         self.identify_connection_types(
                             col.expr, child_idx, reference_types
                         )
-                case Calc():
+                case Calculate():
                     for expr in child_operator.calc_term_values.values():
                         self.identify_connection_types(expr, child_idx, reference_types)
                 case PartitionBy():
@@ -1607,9 +1621,10 @@ class HybridTranslator:
         parent_tree: HybridTree = self.stack.pop()
         remaining_steps_back: int = back_expr.back_levels - steps_taken_so_far - 1
         parent_result: HybridExpr
+        new_expr: PyDoughExpressionQDAG
         # Special case: stepping out of the data argument of PARTITION back
         # into its ancestor. For example:
-        # TPCH(x=...).PARTITION(data.WHERE(y > BACK(1).x), ...)
+        # TPCH.CALCULATE(x=...).PARTITION(data.WHERE(y > BACK(1).x), ...)
         partition_edge_case: bool = len(parent_tree.pipeline) == 1 and isinstance(
             parent_tree.pipeline[0], HybridPartition
         )
@@ -1626,20 +1641,28 @@ class HybridTranslator:
         elif remaining_steps_back == 0:
             # If there are no more steps back to be made, then the correlated
             # reference is to a reference from the current context.
-            if back_expr.term_name not in parent_tree.pipeline[-1].terms:
+            if back_expr.term_name in parent_tree.ancestral_mapping:
+                new_expr = BackReferenceExpression(
+                    collection,
+                    back_expr.term_name,
+                    parent_tree.ancestral_mapping[back_expr.term_name],
+                )
+                parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
+            elif back_expr.term_name in parent_tree.pipeline[-1].terms:
+                parent_name: str = parent_tree.pipeline[-1].renamings.get(
+                    back_expr.term_name, back_expr.term_name
+                )
+                parent_result = HybridRefExpr(parent_name, back_expr.pydough_type)
+            else:
                 raise ValueError(
                     f"Back reference to {back_expr.term_name} not found in parent"
                 )
-            parent_name: str = parent_tree.pipeline[-1].renamings.get(
-                back_expr.term_name, back_expr.term_name
-            )
-            parent_result = HybridRefExpr(parent_name, back_expr.pydough_type)
         else:
             # Otherwise, a back reference needs to be made from the current
             # collection a number of steps back based on how many steps still
             # need to be taken, and it must be recursively converted to a
             # hybrid expression that gets wrapped in a correlated reference.
-            new_expr: PyDoughExpressionQDAG = BackReferenceExpression(
+            new_expr = BackReferenceExpression(
                 collection, back_expr.term_name, remaining_steps_back
             )
             parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
@@ -1681,6 +1704,7 @@ class HybridTranslator:
         args: list[HybridExpr] = []
         hybrid_arg: HybridExpr
         ancestor_tree: HybridTree
+        collection: PyDoughCollectionQDAG
         match expr:
             case PartitionKey():
                 return self.make_hybrid_expr(
@@ -1714,7 +1738,7 @@ class HybridTranslator:
                 # Keep stepping backward until `expr.back_levels` non-hidden
                 # steps have been taken (to ignore steps that are part of a
                 # compound).
-                collection: PyDoughCollectionQDAG = expr.collection
+                collection = expr.collection
                 while true_steps_back < expr.back_levels:
                     assert collection.ancestor_context is not None
                     collection = collection.ancestor_context
@@ -1731,6 +1755,23 @@ class HybridTranslator:
                 )
                 return HybridBackRefExpr(expr_name, expr.back_levels, expr.pydough_type)
             case Reference():
+                if hybrid.ancestral_mapping.get(expr.term_name, 0) > 0:
+                    collection = expr.collection
+                    while (
+                        isinstance(collection, PartitionChild)
+                        and expr.term_name in collection.child_access.ancestral_mapping
+                    ):
+                        collection = collection.child_access
+                    return self.make_hybrid_expr(
+                        hybrid,
+                        BackReferenceExpression(
+                            collection,
+                            expr.term_name,
+                            hybrid.ancestral_mapping[expr.term_name],
+                        ),
+                        child_ref_mapping,
+                        inside_agg,
+                    )
                 expr_name = hybrid.pipeline[-1].renamings.get(
                     expr.term_name, expr.term_name
                 )
@@ -1789,7 +1830,9 @@ class HybridTranslator:
                         if ancestor_tree.parent is None:
                             raise ValueError("Window function references too far back")
                         ancestor_tree = ancestor_tree.parent
-                    for unique_term in ancestor_tree.pipeline[-1].unique_exprs:
+                    for unique_term in sorted(
+                        ancestor_tree.pipeline[-1].unique_exprs, key=str
+                    ):
                         shifted_arg: HybridExpr | None = unique_term.shift_back(
                             expr.levels
                         )
@@ -1830,7 +1873,7 @@ class HybridTranslator:
 
         Returns:
             A tuple containing a dictionary of new expressions for generating
-            a calc and a list of the new HybridCollation values.
+            a `CALCULATE` and a list of the new HybridCollation values.
         """
         new_expressions: dict[str, HybridExpr] = {}
         hybrid_orderings: list[HybridCollation] = []
@@ -1863,18 +1906,23 @@ class HybridTranslator:
             The HybridTree representation of `node`.
         """
         hybrid: HybridTree
+        subtree: HybridTree
         successor_hybrid: HybridTree
         expr: HybridExpr
+        hybrid_back_expr: HybridExpr
         child_ref_mapping: dict[int, int] = {}
         key_exprs: list[HybridExpr] = []
         join_key_exprs: list[tuple[HybridExpr, HybridExpr]] = []
+        back_exprs: dict[str, HybridExpr] = {}
         match node:
             case GlobalContext():
-                return HybridTree(HybridRoot())
+                return HybridTree(HybridRoot(), node.ancestral_mapping)
             case CompoundSubCollection():
                 raise NotImplementedError(f"{node.__class__.__name__}")
             case TableCollection() | SubCollection():
-                successor_hybrid = HybridTree(HybridCollectionAccess(node))
+                successor_hybrid = HybridTree(
+                    HybridCollectionAccess(node), node.ancestral_mapping
+                )
                 hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
@@ -1886,11 +1934,14 @@ class HybridTranslator:
                 src_tree: HybridTree = hybrid
                 while isinstance(src_tree.pipeline[0], HybridPartitionChild):
                     src_tree = src_tree.pipeline[0].subtree
-                subtree: HybridTree = src_tree.children[0].subtree
-                successor_hybrid = HybridTree(HybridPartitionChild(subtree))
+                subtree = src_tree.children[0].subtree
+                successor_hybrid = HybridTree(
+                    HybridPartitionChild(subtree),
+                    node.ancestral_mapping,
+                )
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
-            case Calc():
+            case Calculate():
                 hybrid = self.make_hybrid_tree(node.preceding_context, parent)
                 self.populate_children(hybrid, node, child_ref_mapping)
                 new_expressions: dict[str, HybridExpr] = {}
@@ -1900,7 +1951,7 @@ class HybridTranslator:
                     )
                     new_expressions[name] = expr
                 hybrid.pipeline.append(
-                    HybridCalc(
+                    HybridCalculate(
                         hybrid.pipeline[-1],
                         new_expressions,
                         hybrid.pipeline[-1].orderings,
@@ -1918,11 +1969,33 @@ class HybridTranslator:
             case PartitionBy():
                 hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
                 partition: HybridPartition = HybridPartition()
-                successor_hybrid = HybridTree(partition)
+                successor_hybrid = HybridTree(partition, node.ancestral_mapping)
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
                 partition_child_idx: int = child_ref_mapping[0]
-                for key_name in node.calc_terms:
+                subtree = successor_hybrid.children[partition_child_idx].subtree
+                for name in subtree.ancestral_mapping:
+                    # Skip adding backrefs for terms that remain part of the
+                    # ancestry through the PARTITION, since this creates an
+                    # unecessary correlation.
+                    if name in node.ancestor_context.ancestral_mapping:
+                        continue
+                    hybrid_back_expr = self.make_hybrid_expr(
+                        subtree,
+                        node.children[0].get_expr(name),
+                        {},
+                        False,
+                    )
+                    back_exprs[name] = hybrid_back_expr
+                if len(back_exprs):
+                    subtree.pipeline.append(
+                        HybridCalculate(
+                            subtree.pipeline[-1],
+                            back_exprs,
+                            subtree.pipeline[-1].orderings,
+                        )
+                    )
+                for key_name in sorted(node.calc_terms, key=str):
                     key = node.get_expr(key_name)
                     expr = self.make_hybrid_expr(
                         successor_hybrid, key, child_ref_mapping, False
@@ -1942,7 +2015,7 @@ class HybridTranslator:
                     hybrid, node.collation, child_ref_mapping
                 )
                 hybrid.pipeline.append(
-                    HybridCalc(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
+                    HybridCalculate(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
                 )
                 if isinstance(node, TopK):
                     hybrid.pipeline.append(
@@ -1956,7 +2029,8 @@ class HybridTranslator:
                         node.child_access, CompoundSubCollection
                     ):
                         successor_hybrid = HybridTree(
-                            HybridCollectionAccess(node.child_access)
+                            HybridCollectionAccess(node.child_access),
+                            node.ancestral_mapping,
                         )
                         if isinstance(node.child_access, SubCollection):
                             join_key_exprs = HybridTranslator.get_join_keys(
@@ -1965,9 +2039,8 @@ class HybridTranslator:
                                 successor_hybrid.pipeline[-1],
                             )
                     case PartitionChild():
-                        successor_hybrid = self.make_hybrid_tree(
-                            node.child_access.child_access, parent
-                        )
+                        successor_hybrid = copy.deepcopy(parent.children[0].subtree)
+                        successor_hybrid._ancestral_mapping = node.ancestral_mapping
                         partition_by = (
                             node.child_access.ancestor_context.starting_predecessor
                         )
@@ -1979,7 +2052,9 @@ class HybridTranslator:
                                 child_ref_mapping,
                                 False,
                             )
-                            assert isinstance(rhs_expr, HybridRefExpr)
+                            assert isinstance(
+                                rhs_expr, (HybridRefExpr, HybridBackRefExpr)
+                            )
                             lhs_expr: HybridExpr = HybridChildRefExpr(
                                 rhs_expr.name, 0, rhs_expr.typ
                             )
@@ -1987,7 +2062,7 @@ class HybridTranslator:
 
                     case PartitionBy():
                         partition = HybridPartition()
-                        successor_hybrid = HybridTree(partition)
+                        successor_hybrid = HybridTree(partition, node.ancestral_mapping)
                         self.populate_children(
                             successor_hybrid, node.child_access, child_ref_mapping
                         )
@@ -1999,6 +2074,28 @@ class HybridTranslator:
                             )
                             partition.add_key(key_name, expr)
                             key_exprs.append(HybridRefExpr(key_name, expr.typ))
+                        subtree = successor_hybrid.children[partition_child_idx].subtree
+                        for name in subtree.ancestral_mapping:
+                            # Skip adding backrefs for terms that remain part of the
+                            # ancestry through the PARTITION, since this creates an
+                            # unecessary correlation.
+                            if name in node.ancestor_context.ancestral_mapping:
+                                continue
+                            hybrid_back_expr = self.make_hybrid_expr(
+                                subtree,
+                                node.child_access.children[0].get_expr(name),
+                                {},
+                                False,
+                            )
+                            back_exprs[name] = hybrid_back_expr
+                        if len(back_exprs):
+                            subtree.pipeline.append(
+                                HybridCalculate(
+                                    subtree.pipeline[-1],
+                                    back_exprs,
+                                    subtree.pipeline[-1].orderings,
+                                )
+                            )
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs

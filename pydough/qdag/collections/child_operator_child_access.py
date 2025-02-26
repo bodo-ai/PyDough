@@ -10,7 +10,6 @@ from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 
-from .back_reference_collection import BackReferenceCollection
 from .child_access import ChildAccess
 from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
@@ -54,6 +53,14 @@ class ChildOperatorChildAccess(ChildAccess):
         return self.child_access.all_terms
 
     @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        return self.child_access.ancestral_mapping
+
+    @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.child_access.inherited_downstreamed_terms
+
+    @property
     def unique_terms(self) -> list[str]:
         return self.child_access.unique_terms
 
@@ -78,9 +85,7 @@ class ChildOperatorChildAccess(ChildAccess):
         assert ancestor is not None
         relative_context: PyDoughCollectionQDAG = ancestor.starting_predecessor
         return self.child_access.is_singular(relative_context) and (
-            isinstance(self.child_access, BackReferenceCollection)
-            or (context == relative_context)
-            or relative_context.is_singular(context)
+            (context == relative_context) or relative_context.is_singular(context)
         )
 
     @property
@@ -89,7 +94,7 @@ class ChildOperatorChildAccess(ChildAccess):
 
     def to_string(self) -> str:
         # Does not include the parent since this exists within the context
-        # of a CALC node.
+        # of an operator such as a CALCULATE node.
         return self.standalone_string
 
     @property

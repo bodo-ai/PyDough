@@ -7,10 +7,10 @@ This page describes the specification of the PyDough DSL. The specification incl
 - [Example Graph](#example-graph)
 - [Collections](#collections)
    * [Sub-Collections](#sub-collections)
-   * [CALC](#calc)
+   * [CALCULATE](#calculate)
    * [Contextless Expressions](#contextless-expressions)
-   * [BACK](#back)
    * [Expressions](#expressions)
+   * [Down-Streaming](#down-streaming)
 - [Collection Operators](#collection-operators)
    * [WHERE](#where)
    * [ORDER_BY](#order_by)
@@ -141,36 +141,38 @@ Addresses.former_occupants
 Packages.shipping_addresses
 ```
 
-<!-- TOC --><a name="calc"></a>
-### CALC
+<!-- TOC --><a name="calculate"></a>
+### CALCULATE
 
-The examples so far just show selecting all properties from records of a collection. Most of the time, an analytical question will only want a subset of the properties, may want to rename them, and may want to derive new properties via calculated expressions. The way to do this is with a `CALC` term, which is done by following a PyDough collection with parenthesis containing the expressions that should be included.
+The examples so far just show selecting all properties from records of a collection. Most of the time, an analytical question will only want a subset of the properties, and may want to derive new properties via calculated expressions. The way to do this is with a `CALCULATE` term. This method contains the expressions that should be derived by the `CALCULATE` operation.
 
 These expressions can be positional arguments or keyword arguments. Keyword arguments use the name of the keyword as the name of the output expression. Positional arguments use the name of the expression, if one exists, otherwise an arbitrary name is chosen.
 
-The value of one of these terms in a CALC must be expressions that are singular with regards to the current context. That can mean:
+The value of one of these terms in a `CALCULATE` must be expressions that are singular with regards to the current context. That can mean:
 - Referencing one of the scalar properties of the current collection.
 - Creating a literal.
 - Referencing a singular expression of a sub-collection of the current collection that is singular with regards to the current collection.
 - Calling a non-aggregation function on more singular expressions.
 - Calling an aggregation function on a plural expression.
 
-Once a CALC term is created, all terms of the current collection still exist even if they weren't part of the CALC and can still be referenced, they just will not be part of the final answer. If there are multiple CALC terms, the last one is used to determine what expressions are part of the final answer, so earlier CALCs can be used to derive intermediary expressions. If a CALC includes a term with the same name as an existing property of the collection, the existing name is overridden to include the new term.
+Once a `CALCULATE` clause is created, all terms of the current collection still exist even if they weren't part of the `CALCULATE` and can still be referenced, they just will not be part of the final answer. If there are multiple `CALCULATE` clause, the last one is used to determine what expressions are part of the final answer, so earlier `CALCULATE` clauses can be used to derive intermediary expressions. If a `CALCULATE` includes a term with the same name as an existing property of the collection, the existing name is overridden to include the new term.
 
-A CALC can also be done on the graph itself to create a collection with 1 row and columns corresponding to the properties inside the CALC. This is useful when aggregating an entire collection globally instead of with regards to a parent collection.
+Importantly, when a term is defined in a `CALCULATE`, that definition does not take effect until after the `CALCULATE` completes. This means that if a term in a `CALCULATE` uses the definition of a term defined in the same `CALCULATE`, it will not work.
+
+A `CALCULATE` can also be done on the graph itself to create a collection with 1 row and columns corresponding to the properties inside the `CALCULATE`. This is useful when aggregating an entire collection globally instead of with regards to a parent collection.
 
 **Good Example #1**: For every person, fetch just their first name and last name.
 
 ```py
 %%pydough
-People(first_name, last_name)
+People.CALCULATE(first_name, last_name)
 ```
 
 **Good Example #2**: For every package, fetch the package id, the first and last name of the person who ordered it, and the state that it was shipped to. Also, include a field named `secret_key` that is always equal to the string `"alphabet soup"`.
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     package_id,
     first_name=customer.first_name,
     last_name=customer.last_name,
@@ -183,7 +185,7 @@ Packages(
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     name=JOIN_STRINGS("", first_name, last_name),
     n_packages_ordered=COUNT(packages),
 )
@@ -193,11 +195,11 @@ People(
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     has_middle_name=PRESENT(middle_name)
     full_name_with_middle=JOIN_STRINGS(" ", first_name, middle_name, last_name),
     full_name_without_middle=JOIN_STRINGS(" ", first_name, last_name),
-)(
+).CALCULATE(
     full_name=IFF(has_middle_name, full_name_with_middle, full_name_without_middle),
     email=email,
 )
@@ -207,7 +209,7 @@ People(
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     most_recent_package_year=YEAR(MAX(packages.order_date)),
     first_ever_package_year=YEAR(MIN(packages.order_date)),
 )
@@ -217,7 +219,7 @@ People(
 
 ```py
 %%pydough
-GRAPH(
+GRAPH.CALCULATE(
     n_people=COUNT(People),
     n_packages=COUNT(Packages),
     n_addresses=COUNT(Addresses),
@@ -228,7 +230,7 @@ GRAPH(
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     package_id,
     shipped_to_curr_addr=shipping_address.address_id == customer.current_address.address_id
 )
@@ -238,31 +240,31 @@ Packages(
 
 ```py
 %%pydough
-People(first_name, last_name, phone_number)
+People.CALCULATE(first_name, last_name, phone_number)
 ```
 
 **Bad Example #2**: For each person, list their combined first & last name followed by their email. This is invalid because a positional argument is included after a keyword argument.
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     full_name=JOIN_STRINGS(" ", first_name, last_name),
     email
 )
 ```
 
-**Bad Example #3**: For each person, list the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #3**: For each person, list the address_id of packages they have ordered. This is invalid because `packages` is a plural property of `People`, so its properties cannot be included in a `CALCULATE` term of `People` unless aggregated.
 
 ```py
 %%pydough
-People(packages.address_id)
+People.CALCULATE(packages.address_id)
 ```
 
-**Bad Example #4**: For each person, list their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a calc term of `People` unless aggregated.
+**Bad Example #4**: For each person, list their first/last name followed by the concatenated city/state name of their current address. This is invalid because `current_address` is a plural property of `People`, so its properties cannot be included in a `CALCULATE` term of `People` unless aggregated.
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     first_name,
     last_name,
     location=JOIN_STRINGS(", ", current_address.city, current_address.state),
@@ -273,35 +275,48 @@ People(
 
 ```py
 %%pydough
-Addresses(is_c_state=state.startswith("c"))
+Addresses.CALCULATE(is_c_state=state.startswith("c"))
 ```
 
 **Bad Example #6**: For each address, find the state bird of the state it is in. This is invalid because the `state` property of each record of `Addresses` is a scalar expression, not a subcolleciton, so it does not have any properties that can be accessed with `.` syntax.
 
 ```py
 %%pydough
-Addresses(state_bird=state.bird)
+Addresses.CALCULATE(state_bird=state.bird)
 ```
 
 **Bad Example #7**: For each current occupant of each address, list their first name, last name, and city/state they live in. This is invalid because `city` and `state` are not properties of the current collection (`People`, accessed via `current_occupants` of each record of `Addresses`).
 
 ```py
 %%pydough
-Addresses.current_occupants(first_name, last_name, city, state)
+Addresses.current_occupants.CALCULATE(first_name, last_name, city, state)
 ```
 
-**Bad Example #8**: For each person include their ssn and current address. This is invalid because a collection cannot be a CALC term, and `current_address` is a sub-collection property of `People`. Instead, properties of `current_address` can be accessed.
+**Bad Example #8**: For each person include their ssn and current address. This is invalid because a collection cannot be a `CALCULATE` term, and `current_address` is a sub-collection property of `People`. Instead, properties of `current_address` can be accessed.
 
 ```py
 %%pydough
-People(ssn, current_address)
+People.CALCULATE(ssn, current_address)
 ```
 
-**Bad Example #9**: For each person, list their first name, last name, and the sum of the package costs. This is invalid because `SUM` is an aggregation function and cannot be used in a CALC term without specifying the sub-collection it should be applied to.
+**Bad Example #9**: For each person, list their first name, last name, and the sum of the package costs. This is invalid because `SUM` is an aggregation function and cannot be used in a `CALCULATE` term without specifying the sub-collection it should be applied to.
 
 ```py
 %%pydough
-People(first_name, last_name, total_cost=SUM(package_cost))
+People.CALCULATE(first_name, last_name, total_cost=SUM(package_cost))
+```
+
+**Bad Example #9**: For each person, list their first name, last name, and the ratio between the cost of all packages they apply ordered and the number of packages they ordered. This is invalid the `total_cost` and `n_packages` are used to define `ratio` in the same `CALCULATE` where they are defined.
+
+```py
+%%pydough
+People.CALCULATE(
+    first_name,
+    last_name,
+    total_cost=SUM(packages.package_cost),
+    n_packages=COUNT(packages),
+    ratio=total_cost/n_packages,
+)
 ```
 
 <!-- TOC --><a name="contextless-expressions"></a>
@@ -309,14 +324,14 @@ People(first_name, last_name, total_cost=SUM(package_cost))
 
 PyDough allows defining snippets of PyDough code out of context that do not make sense until they are later placed within a context. This can be done by writing a contextless expression, binding it to a variable as if it were any other Python expression, then later using it inside of PyDough code. This should always have the same effect as if the PyDough code was written fully in-context, but allows re-using common snippets.
 
-**Good Example #1**: Same as good example #4 from the CALC section, but written with contextless expressions.
+**Good Example #1**: Same as good example #4 from the `CALCULATE` section, but written with contextless expressions.
 
 ```py
 %%pydough
 has_middle_name = PRESENT(middle_name)
 full_name_with_middle = JOIN_STRINGS(" ", first_name, middle_name, last_name),
 full_name_without_middle = JOIN_STRINGS(" ", first_name, last_name),
-People(
+People.CALCULATE(
     full_name=IFF(has_middle_name, full_name_with_middle, full_name_without_middle),
     email=email,
 )
@@ -328,13 +343,13 @@ People(
 %%pydough
 is_february = MONTH(order_date) == 2
 february_value = KEEP_IF(package_cost, is_february)
-aug_packages = packages(
+aug_packages = packages.CALCULATE(
     is_february=is_february,
     february_value=february_value,
     is_valentines_day=is_february & (DAY(order_date) == 14)
 )
 n_feb_packages = SUM(aug_packages.is_february)
-People(
+People.CALCULATE(
     ssn,
     total_february_value=SUM(aug_packages.february_value),
     n_february_packages=n_feb_packages,
@@ -347,7 +362,7 @@ People(
 
 ```py
 %%pydough
-current_addresses(city, state)
+current_addresses.CALCULATE(city, state)
 ```
 
 **Bad Example #2**: Just a contextless expression for a scalar expression that has not been placed into a collection for it to make sense.
@@ -362,7 +377,7 @@ LOWER(current_occupants.first_name)
 ```py
 %%pydough
 value = package_cost
-People(x=ssn + value)
+People.CALCULATE(x=ssn + value)
 ```
 
 **Bad Example #4**: A contextless expression that does not make sense when placed into its context (`People` does not have a property named `order_date`, so substituting it when `is_february` is referenced does not make sense).
@@ -370,128 +385,36 @@ People(x=ssn + value)
 ```py
 %%pydough
 is_february = MONTH(order_date) == 2
-People(february=is_february)
-```
-
-<!-- TOC --><a name="back"></a>
-### BACK
-
-Part of the benefit of doing `collection.subcollection` accesses is that properties from the ancestor collection can be accessed from the current collection. This is done via a `BACK` call. Accessing properties from `BACK(n)` can be done to access properties from the n-th ancestor of the current collection. The simplest recommended way to do this is to just access a scalar property of an ancestor in order to include it in the final answer.
-
-**Good Example #1**: For each address's current occupants, list their first name last name, and the city/state of the current address they belong to.
-
-```py
-%%pydough
-Addresses.current_occupants(
-    first_name,
-    last_name,
-    current_city=BACK(1).city,
-    current_state=BACK(1).state,
-)
-```
-
-**Good Example #2**: Count the total number of cases where a package is shipped to the current address of the customer who ordered it.
-
-```py
-%%pydough
-package_info = Addresses.current_occupants.packages(
-    is_shipped_to_current_addr=shipping_address.address_id == BACK(2).address_id
-)
-GRAPH(n_cases=SUM(package_info.is_shipped_to_current_addr))
-```
-
-**Good Example #3**: Indicate whether a package is above the average cost for all packages ordered by that customer.
-
-```py
-%%pydough
-Customers(
-    avg_package_cost=AVG(packages.cost)
-).packages(
-    is_above_avg=cost > BACK(1).avg_package_cost
-)
-```
-
-**Good Example #4**: For every customer, indicate what percentage of all packages billed to their current address were purchased by that same customer.
-
-```py
-%%pydough
-aug_packages = packages(
-    include=IFF(billing_address.address_id == BACK(2).address_id, 1, 0)
-)
-Addresses(
-    n_packages=COUNT(packages_billed_to)
-).current_occupants(
-    ssn,
-    pct=100.0 * SUM(aug_packages.include) / BACK(1).n_packages
-)
-```
-
-**Bad Example #1**: The `GRAPH` does not have any ancestors, so `BACK(1)` is invalid.
-
-```py
-%%pydough
-GRAPH(x=BACK(1).foo)
-```
-
-**Bad Example #2**: The 1st ancestor of `People` is `GRAPH` which does not have a term named `bar`.
-
-```py
-%%pydough
-People(y=BACK(1).bar)
-```
-
-**Bad Example #3**: The 1st ancestor of `People` is `GRAPH` which does not have an ancestor. Therefore, `People` cannot have a 2nd ancestor.
-
-```py
-%%pydough
-People(z=BACK(2).fizz)
-```
-
-**Bad Example #4**: The 1st ancestor of `current_address` is `People` which does not have a term named `phone`.
-
-```py
-%%pydough
-People.current_address(a=BACK(1).phone)
-```
-
-**Bad Example #5**: Even though `cust_info` has defined `avg_package_cost`, the final expression `Customers.packages(...)` does not have `cust_info` as an ancestor, so it cannot access `BACK(1).avg_package_cost` since its 1st ancestor (`Customers`) does not have any term named `avg_package_cost`.
-
-```py
-%%pydough
-cust_info = Customers(
-    avg_package_cost=AVG(packages.cost)
-)
-Customers.packages(
-    is_above_avg=cost > BACK(1).avg_package_cost
-)
+People.CALCULATE(february=is_february)
 ```
 
 <!-- TOC --><a name="expressions"></a>
 ### Expressions
 
-So far, many different kinds of expressions have been noted in the examples for CALC, BACK, and contextless expressions. The following are examples & explanations of the various types of valid expressions:
+So far, many different kinds of expressions have been noted in the examples for `CALCULATE` and contextless expressions. The following are examples & explanations of the various types of valid expressions:
 
 ```py
 # Referencing scalar properties of the current collection
-People(
+People.CALCULATE(
     first_name,
     last_name
 )
 
 # Referencing scalar properties of a singular sub-collection
-People(
+People.CALCULATE(
     current_state=current_address.state,
     current_state=current_address.state,
 )
 
-# Referencing scalar properties of an ancestor collection
-Addresses.current_occupants.packages(
-    customer_email=BACK(1).email,
-    customer_zip_code=BACK(2).zip_code,
+# Referencing properties from the CALCULATE an ancestor collection
+# (see down-streaming for more details)
+Addresses.CALCULATE(zip_code).current_occupants.CALCULATE(email).packages.CALCULATE(
+    email,    # <- refers to the `email` from `current_occupants`
+    zip_code, # <- refers to the `zip_code` from `Addresses`
 )
 
 # Invoking normal functions/operations on other singular data
-Customers(
+Customers.CALCULATE(
     lowered_name=LOWER(name),
     normalized_birth_month=MONTH(birth_date) - 1,
     lives_in_c_state=STARTSWITH(current_address.state, "C"),
@@ -510,7 +433,7 @@ Customers(
 from pandas import Timestamp
 from datetime import date
 from decimal import Decimal
-Customers(
+Customers.CALCULATE(
     a=0,
     b=3.14,
     c="hello world",
@@ -524,7 +447,7 @@ Customers(
 )
 
 # Invoking aggregation functions on plural data
-Customers(
+Customers.CALCULATE(
     n_packages=COUNT(packages),
     home_has_had_packages_billed=HAS(current_address.billed_packages),
     avg_package_cost=AVG(packages.package_cost),
@@ -533,13 +456,127 @@ Customers(
 )
 
 # Invoking window functions on singular
-Customers(
+Customers.CALCULATE(
     cust_ranking=RANKING(by=COUNT(packages).DESC()),
     cust_percentile=PERCENTILE(by=COUNT(packages).DESC()),
 )
 ```
 
 See [the list of PyDough functions](funcitons.md) to see all of the builtin functions & operators that can be called in PyDough.
+
+<!-- TOC --><a name="down-streaming"></a>
+### Down-Streaming
+
+Whenever an expression is defined inside of a `CALCULATE` call, it is available to all descendants of the current context using the same name. However, to avoid ambiguity, this means that descendants invoke or create any properties they have that share a name with one of these terms from an ancestor `CALCULATE`. As a result, it is best practice to avoid using names in `CALCULATE` that exist elsewhere in the collections being used.
+
+However, only names that have been placed in a `CALCULATE` are available to descendant terms; any other properties of the current context are not made available to its descendants.
+
+There is a key caveat to the name conflict rule: it is ok to create a term with a name conflict so long as it is a no-op assignment. For example, `collection.CALCULATE(x=a+b, y=a-b).subcollection.CALCULATE(x, y=y)` is legal even though `x` and `y` are defined in both the ancestor and descendant `CALCULATE` clauses because the definitions in the descendant just re-use the ones from the ancestor without changing any information or aliases.
+
+
+**Good Example #1**: For each address's current occupants, list their first name last name, and the city/state of the current address they belong to.
+
+```py
+%%pydough
+Addresses.CALCULATE(
+    current_city=city, current_state=state
+).current_occupants.CALCULATE(
+    first_name,
+    last_name,
+    current_city,
+    current_state=current_state,
+)
+```
+
+**Good Example #2**: Count the total number of cases where a package is shipped to the current address of the customer who ordered it.
+
+```py
+%%pydough
+package_info = Addresses.CALCULATE(
+    first_address_id=address_id
+).current_occupants.packages.CALCULATE(
+    is_shipped_to_current_addr=shipping_address.address_id == first_address_id
+)
+GRAPH.CALCULATE(n_cases=SUM(package_info.is_shipped_to_current_addr))
+```
+
+**Good Example #3**: Indicate whether a package is above the average cost for all packages ordered by that customer.
+
+```py
+%%pydough
+Customers.CALCULATE(
+    avg_package_cost=AVG(packages.cost)
+).packages.CALCULATE(
+    is_above_avg=cost > avg_package_cost
+)
+```
+
+**Good Example #4**: For every customer, indicate what percentage of all packages billed to their current address were purchased by that same customer (see [WHERE](#where) for more details).
+
+```py
+%%pydough
+packages_billed_home = packages.WHERE(
+    billing_address.address_id == original_address
+)
+People.CALCULATE(
+    original_address=current_address.address_id,
+    n_packages=COUNT(current_address.packages_billed_to),
+).CALCULATE(
+    ssn,
+    pct=100.0 * COUNT(packages_billed_home) / n_packages
+)
+```
+
+**Bad Example #1**: `GRAPH` does not have a term named `foo`, nor does it have an ancestor, so there is no ancestor term that can be down-streamed.
+
+```py
+%%pydough
+GRAPH.CALCULATE(x=foo)
+```
+
+**Bad Example #2**: The only ancestor  of `People` is `GRAPH` which does not have a term named `bar`.
+
+```py
+%%pydough
+People.CALCULATE(y=bar)
+```
+
+**Bad Example #3**: Even though `email` is a property of `People`, which is an ancestor of `packages`, it was not included in a `CALCULATE` of `People`, so it cannot be accessed by `packages`.
+
+```py
+%%pydough
+People.packages.CALCULATE(email)
+```
+
+**Bad Example #4**: This time, `email` was placed in a `CALCULATE`, but it was given a different name `my_email` which means that `my_email` has to be used to access it, instead of `email`.
+
+```py
+%%pydough
+People.CALCULATE(my_email=email).packages.CALCULATE(email)
+```
+
+**Bad Example #5**: Even though `cust_info` has defined `avg_package_cost`, the final expression `Customers.packages.CALCULATE(...)` does not have `cust_info` as an ancestor, so it cannot access `avg_package_cost` since it is not part of its own ancestry.
+
+```py
+%%pydough
+cust_info = Customers.CALCULATE(
+    avg_package_cost=AVG(packages.cost)
+)
+Customers.packages.CALCULATE(
+    is_above_avg=cost > avg_package_cost
+)
+```
+
+**Bad Example #6**: The `CALCULATE` defines a term `zip_code`, which has a conflict since `zip_code` also exists as a property that is invoked by `current_address`. When `zip_code` is invoked, PyDough does not know whether it is referring to the `zip_code` property of `current_addresses` or the `zip_code` property defined in the `CALCULATE`.
+
+```py
+%%pydough
+People.CALCULATE(
+    zip_code=15213
+).current_address.CALCULATE(
+    is_chosen_zip_code = zip_code == 55555
+)
+```
 
 <!-- TOC --><a name="collection-operators"></a>
 ## Collection Operators
@@ -549,27 +586,27 @@ So far all of the examples shown have been about accessing collections/sub-colle
 <!-- TOC --><a name="where"></a>
 ### WHERE
 
-A core PyDough operation is the ability to filter the records of a collection. This is done by appending a PyDough collection with `.WHERE(cond)` where `cond` is any expression that could have been placed in a `CALC` term and should have a True/False value. Every record where `cond` evaluates to True will be preserved, and the rest will be dropped from the answer. The terms in the collection are unchanged by the `WHERE` clause, since the only change is which records are kept/dropped.
+A core PyDough operation is the ability to filter the records of a collection. This is done by appending a PyDough collection with `.WHERE(cond)` where `cond` is any expression that could have been placed in a `CALCULATE` term and should have a True/False value. Every record where `cond` evaluates to True will be preserved, and the rest will be dropped from the answer. The terms in the collection are unchanged by the `WHERE` clause, since the only change is which records are kept/dropped.
 
 **Good Example #1**: For every person who has a middle name and and email that ends with `"gmail.com"`, fetches their first name and last name.
 
 ```py
 %%pydough
-People.WHERE(PRESENT(middle_name) & ENDSWITH(email, "gmail.com"))(first_name, last_name)
+People.WHERE(PRESENT(middle_name) & ENDSWITH(email, "gmail.com")).CALCULATE(first_name, last_name)
 ```
 
 **Good Example #2**: For every package where the package cost is greater than 100, fetches the package id and the state it was shipped to.
 
 ```py
 %%pydough
-Packages.WHERE(package_cost > 100)(package_id, shipping_state=shipping_address.state)
+Packages.WHERE(package_cost > 100).CALCULATE(package_id, shipping_state=shipping_address.state)
 ```
 
 **Good Example #3**: For every person who has ordered more than 5 packages, fetches their first name, last name, and email.
 
 ```py
 %%pydough
-People(first_name, last_name, email).WHERE(COUNT(packages) > 5)
+People.CALCULATE(first_name, last_name, email).WHERE(COUNT(packages) > 5)
 ```
 
 **Good Example #4**: Find every person whose most recent order was shipped in the year 2023, and list all properties of that person. 
@@ -586,7 +623,7 @@ People.WHERE(YEAR(MAX(packages.order_date)) == 2023)
 packages_jan_2018 = Packages.WHERE(
     (YEAR(order_date) == 2018) & (MONTH(order_date) == 1)
 )
-GRAPH(n_jan_2018=COUNT(selected_packages))
+GRAPH.CALCULATE(n_jan_2018=COUNT(selected_packages))
 ```
 
 **Good Example #6**: Count how many people have don't have a first or last name that starts with A. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
@@ -596,7 +633,7 @@ GRAPH(n_jan_2018=COUNT(selected_packages))
 selected_people = People.WHERE(
     ~STARTSWITH(first_name, "A") & ~STARTSWITH(first_name, "B") 
 )
-GRAPH(n_people=COUNT(selected_people))
+GRAPH.CALCULATE(n_people=COUNT(selected_people))
 ```
 
 **Good Example #7**: Count how many people have a gmail or yahoo account. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
@@ -606,7 +643,7 @@ GRAPH(n_people=COUNT(selected_people))
 gmail_or_yahoo = People.WHERE(
     ENDSWITH(email, "@gmail.com") | ENDSWITH(email, "@yahoo.com") 
 )
-GRAPH(n_gmail_or_yahoo=COUNT(gmail_or_yahoo))
+GRAPH.CALCULATE(n_gmail_or_yahoo=COUNT(gmail_or_yahoo))
 ```
 
 **Good Example #8**: Count how many people were born in the 1980s. [See here](functions.md#comparisons) for more details on the valid/invalid use of comparisons in Python.
@@ -616,7 +653,7 @@ GRAPH(n_gmail_or_yahoo=COUNT(gmail_or_yahoo))
 eighties_babies = People.WHERE(
     (1980 <= YEAR(birth_date)) & (YEAR(birth_date) < 1990)
 )
-GRAPH(n_eighties_babies=COUNT(eighties_babies))
+GRAPH.CALCULATE(n_eighties_babies=COUNT(eighties_babies))
 ```
 
 **Good Example #9**: Find every person whose has sent a package to Idaho.
@@ -637,35 +674,35 @@ People.WHERE(HASNOT(packages.WHERE(YEAR(order_date) == 2024)))
 
 ```py
 %%pydough
-People.WHERE(PRESENT(phone_number))(first_name, last_name)
+People.WHERE(PRESENT(phone_number)).CALCULATE(first_name, last_name)
 ```
 
 **Bad Example #2**: For every package, fetches the package id only if the package cost is greater than 100 and the shipping state is Texas. This is invalid because `and` is used instead of `&`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
-Packages.WHERE((package_cost > 100) and (shipping_address.state == "TX"))(package_id)
+Packages.WHERE((package_cost > 100) and (shipping_address.state == "TX")).CALCULATE(package_id)
 ```
 
 **Bad Example #3**: For every package, fetches the package id only if the package is either being shipped from Pennsylvania or to Pennsylvania. This is invalid because `or` is used instead of `|`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
-Packages.WHERE((customer.current_address.state == "PA") or (shipping_address.state == "PA"))(package_id)
+Packages.WHERE((customer.current_address.state == "PA") or (shipping_address.state == "PA")).CALCULATE(package_id)
 ```
 
 **Bad Example #4**: For every package, fetches the package id only if the customer's first name does not start with a J. This is invalid because `not` is used instead of `~`. [See here](functions.md#logical) for more details on the valid/invalid use of logical operations in Python.
 
 ```py
 %%pydough
-Packages.WHERE(not STARTSWITH(customer.first_name, "J"))(package_id)
+Packages.WHERE(not STARTSWITH(customer.first_name, "J")).CALCULATE(package_id)
 ```
 
 **Bad Example #5**: For every package, fetches the package id only if the package was ordered between February and May. [See here](functions.md#comparisons) for more details on the valid/invalid use of comparisons in Python.
 
 ```py
 %%pydough
-Packages.WHERE(2 <= MONTH(arrival_date) <= 5)(package_id)
+Packages.WHERE(2 <= MONTH(arrival_date) <= 5).CALCULATE(package_id)
 ```
 
 **Bad Example #6**: Obtain every person whose packages were shipped in the month of June. This is invalid because `packages` is a plural property of `People`, so `MONTH(packages.order_date) == 6` is a plural expression with regards to `People` that cannot be used as a filtering condition. 
@@ -678,7 +715,7 @@ People.WHERE(MONTH(packages.order_date) == 6)
 <!-- TOC --><a name="order_by"></a>
 ### ORDER_BY
 
-Another operation that can be done onto PyDough collections is sorting them. This is done by appending a collection with `.ORDER_BY(...)` which will order the collection by the collation terms between the parenthesis. The collation terms must be 1+ expressions that can be inside of a CALC term (singular expressions with regards to the current context), each decorated with information making it usable as a collation.
+Another operation that can be done onto PyDough collections is sorting them. This is done by appending a collection with `.ORDER_BY(...)` which will order the collection by the collation terms between the parenthesis. The collation terms must be 1+ expressions that can be inside of a `CALCULATE` term (singular expressions with regards to the current context), each decorated with information making it usable as a collation.
 
 An expression becomes a collation expression when it is appended with `.ASC()` (indicating that the expression should be used to sort in ascending order) or `.DESC()` (indicating that the expression should be used to sort in descending order). Both `.ASC()` and `.DESC()` take in an optional argument `na_pos` indicating where to place null values. This keyword argument can be either `"first"` or `"last"`, and the default is `"first"` for `.ASC()` and `"last"` for `.DESC()`. The way the sorting works is that it orders by the first collation term provided, and in cases of ties it moves on to the second collation term, and if there are ties in that it moves on to the third, and so on until there are no more terms to sort by, at which point the ties are broken arbitrarily.
 
@@ -698,7 +735,7 @@ People.ORDER_BY(last_name.ASC(), first_name.ASC(), middle_name.ASC(na_pos="last"
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     ssn, n_packages=COUNT(packages).DESC()
 ).ORDER_BY(
     n_packages.DESC(), birth_date.ASC()
@@ -727,15 +764,15 @@ People.ORDER_BY(
 )
 ```
 
-**Good Example #5**: Same as good example #4, but written so it only includes people who are current occupants of an address in Ohio.
+**Good Example #5**: Same as good example #4, but written so it only includes people who are current occupants of an address in Ohio, and accesses the state/city via down-streaming.
 
 ```py
 %%pydough
-Addresses.WHERE(
+Addresses.CALCULATE(state, city).WHERE(
     state == "OHIO"
 ).current_occupants.ORDER_BY(
-    BACK(1).state.ASC(),
-    BACK(1).city.ASC(),
+    state.ASC(),
+    city.ASC(),
     ssn.ASC(),
 )
 ```
@@ -761,40 +798,27 @@ People.ORDER_BY(account_balance.DESC())
 Addresses.ORDER_BY(current_occupants.ASC())
 ```
 
-**Bad Example #3**: Same as good example #5, but incorrect because `BACK(2)` is used, and `BACK(2)` refers to the 2nd ancestor of `current_occupants` which is `GRAPH`, which does not have any properties named `state` or `city`.
+**Bad Example #3**: Same as good example #5, but incorrect because `state` and `city` were not made available for down-streaming.
 
 ```py
 %%pydough
 Addresses.WHERE(
     state == "OHIO"
 ).current_occupants.ORDER_BY(
-    BACK(2).state.ASC(),
-    BACK(2).city.ASC(),
+    state.ASC(),
+    city.ASC(),
     ssn.ASC(),
 )
 ```
 
-**Bad Example #4**: Same as bad example #3, but incorrect because `BACK(3)` is used, and `BACK(3)` refers to the 3rd ancestor of `current_occupants` which does not exist because the 2nd ancestor is `GRAPH`, which does not have any ancestors.
-
-```py
-%%pydough
-Addresses.WHERE(
-    state == "OHIO"
-).current_occupants.ORDER_BY(
-    BACK(2).state.ASC(),
-    BACK(2).city.ASC(),
-    ssn.ASC(),
-)
-```
-
-**Bad Example #5**: Sort every person by their first name. This is invalid because no `.ASC()` or `.DESC()` term is provided.
+**Bad Example #4**: Sort every person by their first name. This is invalid because no `.ASC()` or `.DESC()` term is provided.
 
 ```py
 %%pydough
 People.ORDER_BY(first_name)
 ```
 
-**Bad Example #6**: Sort every person. This is invalid because no collation terms are provided.
+**Bad Example #5**: Sort every person. This is invalid because no collation terms are provided.
 
 ```py
 %%pydough
@@ -814,7 +838,7 @@ The terms in the collection are unchanged by the `TOP_K` clause, since the only 
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     first_name,
     last_name,
     birth_date,
@@ -844,7 +868,7 @@ Addresses.TOP_K(10, by=most_recent_package.DESC())
 
 ```py
 %%pydough
-People(
+People.CALCULATE(
     first_name,
     last_name,
     total_package_cost=SUM(packages.package_cost)
@@ -862,7 +886,7 @@ People.TOP_K(5, by=gpa.ASC())
 
 ```py
 %%pydough
-Addresses.packages_billed(25, by=gpa.packages_billed.arrival_date())
+Addresses.packages_billed.CALCULATE(25, by=gpa.packages_billed.arrival_date())
 ```
 
 **Bad Example #3**: Find the top 100 people currently living in the city of San Francisco. This is invalid because the `by` clause is absent.
@@ -905,22 +929,22 @@ The syntax for this is `PARTITION(data, name="...", by=...)`. The `data` argumen
 > [!WARNING]
 > PyDough currently only supports using references to scalar expressions from the `data` collection itself as partition keys, not an ancestor term, or a term from a child collection, or the result of a function call.
 
-If the partitioned data is accessed, its original ancestry is lost. Instead, it inherits the ancestry of the `PARTITION` clause, so `BACK(1)` is the `PARTITION` clause, and `BACK(2)` is the ancestor of the partition clause (the default is the entire graph, just like collections).
+If the partitioned data is accessed, its original ancestry is lost. Instead, it inherits the ancestry from the `PARTITION` clause. The default ancestor of `PARTITION`, if not specified, is the entire graph (just like for table collections). The partitioned data still has access to any of the down-streamed terms from its original ancestry.
 
-The ancestry of the `PARTITION` clause can be changed by prepending it with another collection, separated by a dot. However, this is currently only supported in PyDough when the collection before the dot is just an augmented version of the graph context, as opposed to another collection (e.g. `GRAPH(x=42).PARTITION(...)` is supported, but `People.PARTITION(...)` is not).
+The ancestry of the `PARTITION` clause can be changed by prepending it with another collection, separated by a dot. However, this is currently only supported in PyDough when the collection before the dot is just an augmented version of the graph context, as opposed to another collection (e.g. `GRAPH.CALCULATE(x=42).PARTITION(...)` is supported, but `People.PARTITION(...)` is not).
 
 **Good Example #1**: Find every unique state.
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=state)(state)
+PARTITION(Addresses, name="addrs", by=state).CALCULATE(state)
 ```
 
 **Good Example #2**: For every state, count how many addresses are in that state.
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=state)(
+PARTITION(Addresses, name="addrs", by=state).CALCULATE(
     state,
     n_addr=COUNT(addrs)
 )
@@ -930,7 +954,7 @@ PARTITION(Addresses, name="addrs", by=state)(
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=(city, state))(
+PARTITION(Addresses, name="addrs", by=(city, state)).CALCULATE(
     state,
     city,
     n_people=COUNT(addrs.current_occupants)
@@ -941,24 +965,24 @@ PARTITION(Addresses, name="addrs", by=(city, state))(
 
 ```py
 %%pydough
-yahoo_people = People(
+yahoo_people = People.CALCULATE(
     birth_year=YEAR(birth_date)
 ).WHERE(ENDSWITH(email, "@yahoo.com"))
-PARTITION(yahoo_people, name="yah_ppl", by=birth_year)(
+PARTITION(yahoo_people, name="yah_ppl", by=birth_year).CALCULATE(
     birth_year,
     n_people=COUNT(yah_ppl)
 ).TOP_K(5, by=n_people.DESC())
 ```
 
-**Good Example #4**: For every year/month, find all packages that were below the average cost of all packages ordered in that year/month.
+**Good Example #4**: For every year/month, find all packages that were below the average cost of all packages ordered in that year/month. Notice how `packs` can access `avg_package_cost`, which was defined by its ancestor (at the `PARTITION` level).
 
 ```py
 %%pydough
-package_info = Packages(order_year=YEAR(order_date), order_month=MONTH(order_date))
-PARTITION(package_info, name="packs", by=(order_year, order_month))(
+package_info = Packages.CALCULATE(order_year=YEAR(order_date), order_month=MONTH(order_date))
+PARTITION(package_info, name="packs", by=(order_year, order_month)).CALCULATE(
     avg_package_cost=AVG(packs.package_cost)
 ).packs.WHERE(
-    package_cost < BACK(1).avg_package_cost
+    package_cost < avg_package_cost
 )
 ```
 
@@ -966,26 +990,26 @@ PARTITION(package_info, name="packs", by=(order_year, order_month))(
 
 ```py
 %%pydough
-PARTITION(Addresses, name="addrs", by=(city, state))(
+PARTITION(Addresses, name="addrs", by=(city, state)).CALCULATE(
     total_packages=COUNT(addrs.current_occupants.packages)
-).addrs.current_occupants(
+).addrs.CALCULATE(city, state).current_occupants.CALCULATE(
     first_name,
     last_name,
-    city=BACK(1).city,
-    state=BACK(1).state,
-    pct_of_packages=100.0 * COUNT(packages) / BACK(2).total_packages,
+    city=city,
+    state=state,
+    pct_of_packages=100.0 * COUNT(packages) / total_packages,
 )
 ```
 
-**Good Example #6**: Identify the states whose current occupants account for at least 1% of all packages purchased. List the state and the percentage.
+**Good Example #6**: Identify the states whose current occupants account for at least 1% of all packages purchased. List the state and the percentage. Notice how `total_packages` is down-streamed from the graph-level `CALCULATE`.
 
 ```py
 %%pydough
-GRAPH(
+GRAPH.CALCULATE(
     total_packages=COUNT(Packages)
-).PARTITION(Addresses, name="addrs", by=state)(
+).PARTITION(Addresses, name="addrs", by=state).CALCULATE(
     state,
-    pct_of_packages=100.0 * COUNT(addrs.current_occupants.package) / BACK(1).packages
+    pct_of_packages=100.0 * COUNT(addrs.current_occupants.package) / total_packages
 ).WHERE(pct_of_packages >= 1.0)
 ```
 
@@ -993,26 +1017,25 @@ GRAPH(
 
 ```py
 %%pydough
-pack_info = Packages(order_month=MONTH(order_date))
-month_info = PARTITION(pack_info, name="packs", by=order_month)(
+pack_info = Packages.CALCULATE(order_month=MONTH(order_date))
+month_info = PARTITION(pack_info, name="packs", by=order_month).CALCULATE(
     n_packages=COUNT(packs)
 )
-GRAPH(
+GRAPH.CALCULATE(
     avg_packages_per_month=AVG(month_info.n_packages)
-).PARTITION(pack_info, name="packs", by=order_month)(
+).PARTITION(pack_info, name="packs", by=order_month).CALCULATE(
     month,
-).WHERE(COUNT(packs) > BACK(1).avg_packages_per_month)
+).WHERE(COUNT(packs) > avg_packages_per_month)
 ```
 
-**Good Example #8**: Find the 10 most frequent combinations of the state that the person lives in and the first letter of that person's name.
+**Good Example #8**: Find the 10 most frequent combinations of the state that the person lives in and the first letter of that person's name. Notice how `state` can be used as a partition key of `people_info` since it was made available via down-streaming.
 
 ```py
 %%pydough
-people_info = Addresses.current_occupants(
-    state=BACK(1).state,
+people_info = Addresses.CALCULATE(state).current_occupants.CALCULATE(
     first_letter=first_name[:1],
 )
-PARTITION(people_info, name="ppl", by=(state, first_letter))(
+PARTITION(people_info, name="ppl", by=(state, first_letter)).CALCULATE(
     state,
     first_letter,
     n_people=COUNT(ppl),
@@ -1023,15 +1046,55 @@ PARTITION(people_info, name="ppl", by=(state, first_letter))(
 
 ```py
 %%pydough
-people_info = People(
+people_info = People.CALCULATE(
     state=DEFALT_TO(current_address.state, "N/A"),
     first_letter=first_name[:1],
 )
-PARTITION(people_info, name="ppl", by=(state, first_letter))(
+PARTITION(people_info, name="ppl", by=(state, first_letter)).CALCULATE(
     state,
     first_letter,
     n_people=COUNT(ppl),
 ).TOP_K(10, by=n_people.DESC())
+```
+
+**Good Example #10**: Partition the current occupants of each address by their birth year and filter to include individuals born in years with at least 10,000 births. For each such person, list their first/last name and the state they live in. This is valid because `state` was down-streamed to `people_info` before it was partitioned, so when `ppl` is accessed, it still has access to `state`.
+
+```py
+%%pydough
+people_info = Addresses.CALCULATE(state).current_occupants.CALCULATE(birth_year=YEAR(birth_date))
+GRAPH.PARTITION(people_info, name="ppl", by=birth_year).WHERE(
+    COUNT(p) >= 10000
+).ppl.CALCULATE(
+    first_name,
+    last_name,
+    state
+)
+```
+
+**Good Example #11**: Find all packages that meet the following criteria: they were ordered in the last year that any package in the database was ordered, their cost was below the average of all packages ever ordered, and the state it was shipped to received at least 10,000 packages that year.
+
+```py
+%%pydough
+package_info = Packages.CALCULATE(
+    order_year=YEAR(order_date),
+    shipping_state=shipping_address.state
+)
+GRAPH.CALCULATE(
+    avg_cost=AVG(package_info.package_cost),
+    final_year=MAX(package_info.order_year),
+).PARTITION(
+    package_info.WHERE(order_year == final_year),
+    name="packs",
+    by=shipping_state
+).WHERE(
+    COUNT(packs) > 10000
+).packs.WHERE(
+    package_cost < avg_cost
+).CALCULATE(
+    shipping_state,
+    package_id,
+    order_date,
+)
 ```
 
 **Bad Example #1**: Partition a collection `Products` that does not exist in the graph.
@@ -1055,80 +1118,56 @@ PARTITION(Addresses, by=state)
 PARTITION(People, name="ppl")
 ```
 
-**Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed ot be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+**Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed to be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
 
 ```py
 %%pydough
-PARTITION(Packages, name="packs", by=YEAR(order_date))(
+PARTITION(Packages, name="packs", by=YEAR(order_date)).CALCULATE(
     n_packages=COUNT(packages)
 )
 ```
 
-**Bad Example #5**: Count how many people live in each state. Invalid because `current_address.state` is not allowed to be used as a partition term (it must be placed in a CALC so it is accessible as a named reference).
+**Bad Example #5**: Count how many people live in each state. Invalid because `current_address.state` is not allowed to be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
 
 ```py
 %%pydough
-PARTITION(People, name="ppl", by=current_address.state)(
+PARTITION(People, name="ppl", by=current_address.state).CALCULATE(
     n_packages=COUNT(packages)
 )
 ```
 
-**Bad Example #6**: Invalid version of good example #8 that did not use a CALC to get rid of the `BACK` or `first_name[:1]`, which cannot be used as partition terms.
+**Bad Example #6**: Invalid version of good example #8 that did not use a `CALCULATE` to make `state` available via down-streaming or to bind `first_name[:1]` to a name, therefore neither can be used as a partition term.
 
 ```py
 %%pydough
-PARTITION(Addresses.current_occupants, name="ppl", by=(BACK(1).state, first_name[:1]))(
-    BACK(1).state,
+PARTITION(Addresses.current_occupants, name="ppl", by=(state, first_name[:1])).CALCULATE(
+    state,
     first_name[:1],
     n_people=COUNT(ppl),
 ).TOP_K(10, by=n_people.DESC())
 ```
 
-**Bad Example #7**: Partition people by their birth year to find the number of people born in each year. Invalid because the `email` property is referenced, which is not one of the properties accessible by the partition.
+**Bad Example #7**: Partition people by their birth year to find the number of people born in each year. Invalid because the `email` property is referenced, which is not one of the partition keys, even though the data being partitioned does have an `email` property.
 
 ```py
 %%pydough
-PARTITION(People(birth_year=YEAR(birth_date)), name="ppl", by=birth_year)(
+PARTITION(People.CALCULATE(birth_year=YEAR(birth_date)), name="ppl", by=birth_year).CALCULATE(
     birth_year,
     email,
     n_people=COUNT(ppl)
 )
 ```
 
-**Bad Example #7**: For each person & year, count how many times that person ordered a packaged in that year. This is invalid because doing `.PARTITION` after `People` is unsupported, since `People` is not a graph-level collection like `GRAPH(...)`.
+**Bad Example #7**: For each person & year, count how many times that person ordered a packaged in that year. This is invalid because doing `.PARTITION` after `People` is unsupported, since `People` is not a graph-level collection like `GRAPH.CALCULATE(...)`.
 
 ```py
 %%pydough
-People.PARTITION(packages(year=YEAR(order_date)), name="p", by=year)(
-    ssn=BACK(1).ssn,
+People.CALCULATE(ssn).PARTITION(
+    packages.CALCULATE(year=YEAR(order_date)), name="p", by=year
+).CALCULATE(
+    ssn=ssn,
     year=year,
     n_packs=COUNT(p)
-)
-```
-
-**Bad Example #8**: Partition each address' current occupants by their birth year to get the number of people per birth year. This is invalid because the example includes a field `BACK(2).bar` which does not exist because the first ancestor of the partition is `GRAPH`, which does not have a second ancestor.
-
-```py
-%%pydough
-people_info = Addresses.current_occupants(birth_year=YEAR(birth_date))
-GRAPH.PARTITION(people_info, name="p", by=birth_year)(
-    birth_year,
-    n_people=COUNT(p),
-    foo=BACK(2).bar,
-)
-```
-
-**Bad Example #9**: Partition the current occupants of each address by their birth year and filters to include only those born in years with at least 10,000 births. It then gets more information about people from those years. This query is invalid because, after accessing `.ppl`, the term `BACK(1).state` is used. This is not valid because, although the data that `.ppl` refers to (`people_info`) originally had access to `BACK(1).state`, that ancestry information was lost after partitioning `people_info`. Instead, `BACK(1)` now refers to the `PARTITION` clause, which does not have a state field.
-
-```py
-%%pydough
-people_info = Addresses.current_occupants(birth_year=YEAR(birth_date))
-GRAPH.PARTITION(people_info, name="ppl", by=birth_year).WHERE(
-    COUNT(p) >= 10000
-).ppl(
-    first_name,
-    last_name,
-    state=BACK(1).state,
 )
 ```
 
@@ -1147,7 +1186,7 @@ Certain PyDough operations, such as specific filters, can cause plural data to b
 most_recent_package = packages.WHERE(
     RANKING(by=order_date.DESC(), levels=1) == 1
 ).SINGULAR()
-People(
+People.CALCULATE(
     ssn,
     first_name,
     middle_name,
@@ -1165,7 +1204,7 @@ js = current_occupants.WHERE(
     (last_name == "Smith") & 
     ABSENT(middle_name)
 ).SINGULAR()
-Addresses(
+Addresses.CALCULATE(
     address_id,
     john_smith_email=DEFAULT_TO(js.email, "NO JOHN SMITH LIVING HERE")
 )
@@ -1177,7 +1216,7 @@ Addresses(
 > [!IMPORTANT]
 > This feature has not yet been implemented in PyDough
 
-In PyDough, it is also possible to access data from other records in the same collection that occur before or after the current record, when all the records are sorted. Similar to how `BACK(n)` can be used as a collection to access terms from an ancestor context, `PREV(n, by=...)` can be used to access terms from another record of the same context, specifically the record obtained by ordering by the `by` terms then looking for the record `n` entries before the current record. Similarly, `NEXT(n, ...)` is the same as `PREV(-n, ...)`.
+In PyDough, it is also possible to access data from other records in the same collection that occur before or after the current record, when all the records are sorted. Similar to how down-streaming can be used to access terms from an ancestor context, `PREV(n, by=...)` can be used as a collection to access terms from another record of the same context, specifically the record obtained by ordering by the `by` terms then looking for the record `n` entries before the current record. Similarly, `NEXT(n, ...)` is the same as `PREV(-n, ...)`.
 
 The arguments to `NEXT` and `PREV` are as follows:
 - `n` (optional): how many records before/after the current record to look. The default value is 1.
@@ -1190,7 +1229,7 @@ If the entry `n` records before/after the current entry does not exist, then acc
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     package_id,
     same_customer_as_prev_package=customer_ssn == PREV(by=order_date.ASC()).ssn
 )
@@ -1201,10 +1240,10 @@ Packages(
 ```py
 %%pydough
 prev_package = PREV(by=order_date.ASC(), levels=1)
-package_deltas = packages(
+package_deltas = packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, prev_package.order_date)
 )
-Customers(
+Customers.CALCULATE(
     ssn,
     avg_hours_between_purchases=AVG(package_deltas.hour_difference)
 )
@@ -1217,7 +1256,7 @@ Customers(
 first_after = NEXT(1, by=COUNT(packages).DESC())
 second_after = NEXT(2, by=COUNT(packages).DESC())
 third_after = NEXT(3, by=COUNT(packages).DESC())
-Customers(
+Customers.CALCULATE(
     ssn,
     same_state_as_order_neighbors=(
         DEFAULT_TO(current_address.state == first_after.current_address.state, False) | 
@@ -1231,7 +1270,7 @@ Customers(
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, PREV().order_date)
 )
 ```
@@ -1240,7 +1279,7 @@ Packages(
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, NEXT(by=()).order_date)
 )
 ```
@@ -1249,7 +1288,7 @@ Packages(
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, PREV(5, by=order_date).order_date)
 )
 ```
@@ -1258,7 +1297,7 @@ Packages(
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, NEXT("ten", by=order_date.ASC()).order_date)
 )
 ```
@@ -1267,7 +1306,7 @@ Packages(
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, PREV(1, by=order_date.ASC()))
 )
 ```
@@ -1276,7 +1315,7 @@ Packages(
 
 ```py
 %%pydough
-Packages(
+Packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, PREV(1, by=order_date.ASC()).odate)
 )
 ```
@@ -1292,7 +1331,7 @@ Packages.PREV(order_date.ASC())
 
 ```py
 %%pydough
-Customers.packages(
+Customers.packages.CALCULATE(
     hour_difference=DATEDIFF('hours', order_date, PREV(1, by=order_date.ASC(), levels=5).order_date)
 )
 ```
@@ -1307,7 +1346,7 @@ PyDough supports identifying a specific record from a sub-collection that is opt
 
 A call to `BEST` can either be done with `.` syntax, to step from a parent collection to a child collection, or can be a freestanding accessor used inside of a collection operator, just like `BACK`, `PREV` or `NEXT`. For example, both `Parent.BEST(child, by=...)` and `Parent(x=BEST(child, by=...).y)` are allowed.
 
-The original ancestry of the sub-collection is intact. So, if doing `A.BEST(b.c.d, by=...)`, `BACK(1)` revers to `c`, `BACK(2)` refers to `b` and `BACK(3)` refers to `A`.
+The original ancestry of the sub-collection is intact, so any down-streaming is preserved.
 
 Additional keyword arguments can be supplied to `BEST` that change its behavior:
 - `allow_ties` (default=False): if True, changes the behavior to keep all records of the sub-collection that share the optimal values of the collation terms. If `allow_ties` is True, the `BEST` clause is no longer singular.
@@ -1317,7 +1356,7 @@ Additional keyword arguments can be supplied to `BEST` that change its behavior:
 
 ```py
 %%pydough
-Customers.BEST(packages, by=order_date.ASC())(
+Customers.BEST(packages, by=order_date.ASC()).CALCULATE(
     package_id,
     shipping_address.zip_code
 )
@@ -1327,7 +1366,7 @@ Customers.BEST(packages, by=order_date.ASC())(
 
 ```py
 %%pydough
-Customers(
+Customers.CALCULATE(
     ssn,
     most_recent_cost=BEST(packages, by=order_date.DESC()).package_cost
 )
@@ -1339,7 +1378,7 @@ Customers(
 %%pydough
 addr_info = Addresses.WHERE(
     state == "NY"
-)(address_id, n_occupants=COUNT(current_occupants))
+).CALCULATE(address_id, n_occupants=COUNT(current_occupants))
 GRAPH.BEST(addr_info, by=(n_occupants.DESC(), address_id.ASC()))
 ```
 
@@ -1348,7 +1387,7 @@ GRAPH.BEST(addr_info, by=(n_occupants.DESC(), address_id.ASC()))
 ```py
 %%pydough
 most_recent_package = BEST(packages, by=order_date.DESC())
-Customers(
+Customers.CALCULATE(
     ssn,
     n_occ_most_recent_addr=COUNT(most_recent_package.shipping_address.current_occupants)
 )
@@ -1358,18 +1397,20 @@ Customers(
 
 ```py
 %%pydough
-Addresses.WHERE(HAS(current_occupants))(
-    n_occupants=COUNT(current_occupants)
+Addresses.WHERE(HAS(current_occupants)).CALCULATE(
+    city,
+    state,
+    n_occupants=COUNT(current_occupants),
 ).BEST(
-    current_occupants(n_orders=COUNT(packages)),
+    current_occupants.CALCULATE(n_orders=COUNT(packages)),
     by=(n_orders.DESC(), ssn.ASC())
-)(
+).CALCULATE(
     first_name,
     last_name,
     n_orders,
-    n_living_in_same_addr=BACK(1).n_occupants,
-    city=BACK(1).city,
-    state=BACK(1).state,
+    n_living_in_same_addr=n_occupants,
+    city=city,
+    state=state,
 )
 ```
 
@@ -1378,20 +1419,21 @@ Addresses.WHERE(HAS(current_occupants))(
 ```py
 %%pydough
 five_most_recent = BEST(packages, by=order_date.DESC(), n_best=5)
-People(
+People.CALCULATE(
     ssn,
     value_most_recent_5=SUM(five_most_recent.package_cost)
 )
 ```
 
-**Good Example #7**: For each address, find the package most recently ordered by one of the current occupants of that address, including the email of the occupant who ordered it and the address' id. Notice that `BACK(1)` refers to `current_occupants` and `BACK(2)` refers to `Addresses` as if the packages were accessed as `Addresses.current_occupants.packages` instead of using `BEST`.
+**Good Example #7**: For each address, find the package most recently ordered by one of the current occupants of that address, including the email of the occupant who ordered it and the address' id.
 
 ```py
 %%pydough
-most_recent_package = BEST(current_occupants.packages, by=order_date.DESC())
-Addresses.most_recent_package(
-    address_id=BACK(2).address_id,
-    cust_email=BACK(1).email,
+packages_from_occupants = current_occupants.CALCULATE(email).packages
+most_recent_package = BEST(packages_from_occupants, by=order_date.DESC())
+Addresses.CALCULATE(address_id).most_recent_package.CALCULATE(
+    address_id,
+    email,
     package_id=package_id,
     order_date=order_date,
 )
@@ -1401,7 +1443,7 @@ Addresses.most_recent_package(
 
 ```py
 %%pydough
-People(first_name, BEST(email, by=birth_date.DESC()))
+People.CALCULATE(first_name, BEST(email, by=birth_date.DESC()))
 ```
 
 **Bad Example #2**: For each person find their best package. This is invalid because the `by` argument is missing.
@@ -1432,39 +1474,39 @@ People.BEST(packages, by=())
 People.BEST(packages, by=order_date.DESC(), n_best=5, allow_ties=True)
 ```
 
-**Bad Example #6**: For each person, find the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
+**Bad Example #6**: For each person, find the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
 
 ```py
 %%pydough
 best_packages = BEST(packages, by=order_date.DESC(), n_best=10)
-People(first_name, best_cost=best_packages.package_cost)
+People.CALCULATE(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #7**: For each person, find the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the calc without aggregating.
+**Bad Example #7**: For each person, find the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
 
 ```py
 %%pydough
 best_packages = BEST(packages, by=package_cost.DESC(), allow_ties=True)
-People(first_name, best_cost=best_packages.package_cost)
+People.CALCULATE(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #8**: For each address, find the package most recently ordered by one of the current occupants of that address, including the address id of the address. This is invalid because `BACK(1)` refers to `current_occupants`, which does not have a field called `address_id`.
+**Bad Example #8**: For each address, find the package most recently ordered by one of the current occupants of that address, including the address id of the address. This is invalid because `address_id` is used despite not being down-streamed from `Addressed`.
 
 ```py
 %%pydough
 most_recent_package = BEST(current_occupants.packages, by=order_date.DESC())
-Addresses.most_recent_package(
-    address_id=BACK(1).address_id,
+Addresses.most_recent_package.CALCULATE(
+    address_id=address_id,
     package_id=package_id,
     order_date=order_date,
 )
 ```
 
-**Bad Example #9**: For each address find the oldest occupant. This is invalid because the `BEST` clause is placed in the calc without accessing any of its attributes.
+**Bad Example #9**: For each address find the oldest occupant. This is invalid because the `BEST` clause is placed in the `CALCULATE` without accessing any of its attributes.
 
 ```py
 %%pydough
-Addresses(address_id, oldest_occupant=BEST(current_occupants, by=birth_date.ASC()))
+Addresses.CALCULATE(address_id, oldest_occupant=BEST(current_occupants, by=birth_date.ASC()))
 ```
 
 <!-- TOC --><a name="induced-properties"></a>
@@ -1501,7 +1543,7 @@ The rest of the document are examples of questions asked about the data in the p
 ```py
 %%pydough
 # For each address, identify how many current occupants it has
-addr_info = Addresses(n_occupants=COUNT(current_occupants))
+addr_info = Addresses.CALCULATE(n_occupants=COUNT(current_occupants))
 
 # Partition the addresses by the state, and for each state calculate the
 # average value of `n_occupants` for all addresses in that state
@@ -1509,7 +1551,7 @@ states = PARTITION(
     addr_info,
     name="addrs",
     by=state
-)(
+).CALCULATE(
     state,
     average_occupants=AVG(addrs.n_occupants)
 )
@@ -1538,7 +1580,7 @@ to_east_coast = ISIN(shipping_address.state, east_coast_states)
 # terms for if they are trans-coastal + the year they were ordered
 package_info = Packages.WHERE(
     PRESENT(arrival_date)
-)(
+).CALCULATE(
     is_trans_coastal=from_west_coast & to_east_coast,
     year=YEAR(order_date),
 )
@@ -1549,7 +1591,7 @@ year_info = PARTITION(
     package_info,
     name="packs",
     by=year,
-)(
+).CALCULATE(
     year,
     pct_trans_coastal=100.0 * SUM(packs.is_trans_coastal) / COUNT(packs),
 )
@@ -1569,7 +1611,7 @@ result = year_info.ORDER_BY(year.ASC())
 
 # Partition every address by the city/state
 cities = PARTITION(
-    Addresses,
+    Addresses.CALCULATE(city, state, zip_code),
     name="addrs",
     by=(city, state)
 )
@@ -1579,11 +1621,11 @@ cities = PARTITION(
 oldest_occupants = cities.BEST(
     addrs.current_occupants.WHERE(HASNOT(packages)),
     by=(birth_date.ASC(), ssn.ASC()),
-)(
-    state=BACK(2).state,
-    city=BACK(2).city,
-    email=email,
-    zip_code=BACK(1).zip_code,
+).CALCULATE(
+    state,
+    city,
+    email,
+    zip_code
 )
 
 # Sort the output by state, followed by city
@@ -1605,20 +1647,20 @@ result = oldest_occupants.ORDER_BY(
 is_2017 = YEAR(order_date) == 2017
 
 # Identify the average package cost of all packages ordered in 2017
-global_info = GRAPH(
+global_info = GRAPH.CALCULATE(
     avg_package_cost=AVG(Packages.WHERE(is_2017).package_cost)
 )
 
-# Identify all packages ordered in 2017, but where BACK(1) is global_info
-# instead of GRAPH, so we have access to global_info's terms.
+# Identify all packages ordered in 2017, but where the ancestor is global_info
+# instead of GRAPH, so `avg_package_cost` gets down-streamed.
 selected_package = global_info.Packages.WHERE(is_2017)
 
 # For each such package, identify the month it was ordered, and add a term to
 # indicate if the cost of the package is at least 10x the average for all such
 # packages.
-packages = selected_packages(
+packages = selected_packages.CALCULATE(
     month=MONTH(order_date),
-    is_10x_avg=package_cost >= (10.0 * BACK(1).avg_package_cost)
+    is_10x_avg=package_cost >= (10.0 * avg_package_cost)
 )
 
 # Partition the packages by the month they were ordered, and for each month
@@ -1628,7 +1670,7 @@ months = PARTITION(
     package_info,
     name="packs",
     by=month
-)(
+).CALCULATE(
     month,
     pct_outliers=100.0 * SUM(packs.is_10x_avg) / COUNT(packs)
 )
@@ -1649,28 +1691,28 @@ Note: uses the formula [discussed here](https://medium.com/swlh/linear-regressio
 %%pydough
 # Identify every year & how many packages were ordered that year
 yearly_data = PARTITION(
-    Packages(year=YEAR(order_date)),
+    Packages.CALCULATE(year=YEAR(order_date)),
     name="packs",
     by=year,
-)(
+).CALCULATE(
     year,
     n_orders = COUNT(packs),
 )
 
 # Obtain the global average of the year (x-coordinate) and
 # n_orders (y-coordinate). These correspond to `x-bar` and `y-bar`.
-global_info = GRAPH(
+global_info = GRAPH.CALCULATE(
     avg_x = AVG(yearly_data.year),
     avg_y = AVG(yearly_data.n_orders),
 )
 
 # Contextless expression: corresponds to `x - x-bar` with regards to yearly_data
 # inside of global_info
-dx = n_orders - BACK(1).avg_x
+dx = n_orders - avg_x
 
 # Contextless expression: corresponds to `y - y-bar` with regards to yearly_data
 # inside of global_info
-dy = year - BACK(1).avg_y
+dy = year - avg_y
 
 # Contextless expression: derive the slope with regards to global_info
 regression_data = yearly_data(value=(dx * dy) / (dx * dx))
