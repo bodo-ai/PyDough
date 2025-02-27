@@ -161,7 +161,7 @@ A string expression can have a substring extracted with Python string slicing sy
 The implementation is based on Python slicing semantics. PyDough supports negative slicing, but currently, it does not support providing step values other than 1.
 
 ```py
-Customers(
+Customers.CALCULATE(
     country_code = phone[:3],
     name_without_first_char = name[1:],
     last_digit = phone[-1:],
