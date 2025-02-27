@@ -16,10 +16,8 @@ The QDAG collections module contains the following hierarchy of collection class
             - [`TableCollection`](table_collection.py) (concrete): Accessing a table collection directly.
             - [`SubCollection`](sub_collection.py) (concrete): Accessing a subcolleciton of another collection.
                 - [`CompoundSubCollection`](sub_collection.py) (concrete): Accessing a subcollection of another collection where the subcollection property is a compound relationship.
-            - [`BackReferenceCollection`](back_reference_collection.py) (concrete): Same idea as `ChildReferenceCollection`, but on a subcollection of an ancestor collection
-                - [`HiddenBackReferenceCollection`](hidden_back_reference_collection.py) (concrete): Same idea as `BackReferenceCollection`, but where the back reference is hidden because it is a subcollection reference where the subcollection comes from a hidden ancestor of a compound relationship.
     - [`ChildOperator`](child_operator.py) (abstract): Base class for collection QDAG nodes that need to access child contexts in order to make a child reference.
-        - [`Calc`](calc.py) (concrete): Operation that defines new singular expression terms in the current context and names them.
+        - [`Calculate`](calculate.py) (concrete): Operation that defines new singular expression terms in the current context and names them.
         - [`Where`](where.py) (concrete): Operation that filters the current context based on a predicate that is a singular expression.
         - [`OrderBy`](order_by.py) (concrete): Operation that sorts the current context based on 1+ singular collation expressions.
             - [`TopK`](top_k.py) (concrete): Operation that sorts the current context based on 1+ singular collation expressions and filters to only keep the first `k` records.
@@ -33,8 +31,8 @@ The base QDAG collection node contains the following interface:
 - `all_terms`: Property that returns the set of all names of terms of the collection (collections or expressions).
 - `is_singular`: Method that takes in a context and returns whether the current collection is singular with regards to that context. (Note: it is assumed that `.starting_predecessor` has been called on all the arguments already).
 - `starting_predecessor`: Property that finds the furthest predecessor of the curren collection.
-- `verify_singular_terms`: Method that takes in a sequence of expression QDAG nodes and verifies that all of them are singular with regards to the current context (e.g. can they be used as CALC terms).
-- `get_expression_position`: Method that takes in the string name of a calc term and returns its ordinal position when placed in the output.
+- `verify_singular_terms`: Method that takes in a sequence of expression QDAG nodes and verifies that all of them are singular with regards to the current context (e.g. can they be used as CALCULATE terms).
+- `get_expression_position`: Method that takes in the string name of a calculate term and returns its ordinal position when placed in the output.
 - `get_term`: Method that takes in the string name of any term of the current context and returns the QDAG node for it with regards to the current context. E.g. if calling on the name of a subcollection, returns the subcollection node.
 - `get_expr`: Same as `get_term` but specifically for expressions-only.
 - `get_collection`: Same as `get_term` but specifically for collections-only.
@@ -57,22 +55,25 @@ The objects are created by calling the `to_tree_form` API of a collection QDAG n
 Below is an example of a PyDough snippet and the corresponding tree string representation:
 
 ```python
-Nations.WHERE(
+Nations.CALCULATE(
+    nation_name=name,
+).WHERE(
     region.name == "EUROPE"
-).suppliers(
+).suppliers.CALCULATE(
     supplier_name=name,
-    nation_name=BACK(1).name
+    nation_name=nation_name,
 )
 ```
 
 ```
 ──┬─ TPCH
   ├─── TableCollection[Nations]
+  ├─── Calculate[nation_name=name]
   └─┬─ Where[$1.name == 'EUROPE']
     ├─┬─ AccessChild
     │ └─── SubCollection[region]
     ├─── SubCollection[suppliers]
-    └─── Calc[supplier_name=name, nation_name=BACK(1).name]
+    └─── Calculate[supplier_name=name, nation_name=nation_name]
 ```
 
 And below is another such example:
@@ -80,7 +81,7 @@ And below is another such example:
 ```python
 german_suppliers = supply_records.WHERE(supplier.nation == "GERMANY")
 selected_parts = parts.WHERE(HAS(german_suppliers))
-PARTITION(selected_parts, name="p", by=size)(
+PARTITION(selected_parts, name="p", by=size).CALCULATE(
     size,
     n_parts_with_german_supplier=COUNT(p)
 ).TOP_K(
@@ -101,7 +102,7 @@ PARTITION(selected_parts, name="p", by=size)(
   │           └─┬─ AccessChild
   │             └─┬─ SubCollection[supplier]
   │               └─── SubCollection[nation]
-  ├─┬─ Calc[size=size, n_parts_with_german_supplier=COUNT($1)]
+  ├─┬─ Calculate[size=size, n_parts_with_german_supplier=COUNT($1)]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[p]
   └─── TopK[10, n_parts_with_german_supplier.DESC(na_pos='last')]
