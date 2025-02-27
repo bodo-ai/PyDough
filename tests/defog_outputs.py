@@ -6,9 +6,12 @@ __all__ = [
     "defog_sql_text_broker_adv1",
     "defog_sql_text_broker_adv11",
     "defog_sql_text_broker_adv12",
+    "defog_sql_text_broker_adv14",
     "defog_sql_text_broker_adv15",
+    "defog_sql_text_broker_adv2",
     "defog_sql_text_broker_adv3",
     "defog_sql_text_broker_adv6",
+    "defog_sql_text_broker_adv7",
     "defog_sql_text_broker_basic10",
     "defog_sql_text_broker_basic3",
     "defog_sql_text_broker_basic4",
@@ -36,7 +39,28 @@ def defog_sql_text_broker_adv1() -> str:
     FROM cust_tx
     ORDER BY CASE WHEN total_amount IS NULL THEN 1 ELSE 0 END DESC, total_amount DESC
     LIMIT 5
-    ;
+    """
+
+
+def defog_sql_text_broker_adv2() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What are the 2 most frequently bought stock ticker symbols in the past 10
+    days? Return the ticker symbol and number of buy transactions.
+    """
+    return """
+    WITH popular_stocks AS (
+        SELECT t.sbTickerSymbol, COUNT(*) AS tx_count FROM sbTransaction AS tx
+        JOIN sbTicker AS t
+        ON tx.sbTxTickerId = t.sbTickerId
+        WHERE tx.sbTxType = 'buy' AND tx.sbTxDateTime >= DATE('now', '-10 days')
+        GROUP BY t.sbTickerSymbol
+    )
+    SELECT sbTickerSymbol, tx_count
+    FROM popular_stocks
+    ORDER BY tx_count DESC
+    LIMIT 2
     """
 
 
@@ -44,7 +68,9 @@ def defog_sql_text_broker_adv3() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    For customers with at least 5 total transactions, what is their transaction success rate? Return the customer name and success rate, ordered from lowest to highest success rate.
+    For customers with at least 5 total transactions, what is their
+    transaction success rate? Return the customer name and success rate,
+    ordered from lowest to highest success rate.
     """
     return """
     WITH cust_tx_stats AS (
@@ -57,7 +83,6 @@ def defog_sql_text_broker_adv3() -> str:
     FROM cust_tx_stats
     WHERE total_tx >= 5
     ORDER BY CASE WHEN success_rate IS NULL THEN 1 ELSE 0 END, success_rate
-    ;
     """
 
 
@@ -76,7 +101,30 @@ def defog_sql_text_broker_adv6() -> str:
     SELECT c.sbCustName, ct.num_tx, ct.total_amount, RANK() OVER (ORDER BY CASE WHEN ct.total_amount IS NULL THEN 1 ELSE 0 END DESC, ct.total_amount DESC) AS cust_rank
     FROM cust_tx_counts AS ct
     JOIN sbCustomer AS c
-    ON ct.sbTxCustId = c.sbCustId;
+    ON ct.sbTxCustId = c.sbCustId
+    """
+
+
+def defog_sql_text_broker_adv7() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What are the PMCS and PMAT for customers who signed up in the last 6 months
+    excluding the current month? PMCS = per month customer signups. PMAT = per
+    month average transaction amount. Truncate date to month for aggregation.
+    """
+    return """
+    SELECT
+        strftime('%Y-%m', sbCustJoinDate) AS MONTH,
+        COUNT(sbCustId) AS customer_signups,
+        AVG(t.sbTxAmount) AS avg_tx_amount
+    FROM sbCustomer AS c
+    LEFT JOIN sbTransaction AS t
+    ON c.sbCustId = t.sbTxCustId
+    AND strftime('%Y-%m', t.sbTxDateTime) = strftime('%Y-%m', c.sbCustJoinDate)
+    WHERE sbCustJoinDate >= date('now', '-6 months', 'start of month')
+    AND sbCustJoinDate < date('now', 'start of month')
+    GROUP BY MONTH
     """
 
 
@@ -96,7 +144,6 @@ def defog_sql_text_broker_adv11() -> str:
     ON t.sbTxTickerId = tk.sbTickerId
     WHERE c.sbCustEmail LIKE '%.com'
     AND (tk.sbTickerSymbol LIKE 'AMZN' OR tk.sbTickerSymbol LIKE 'AAPL' OR tk.sbTickerSymbol LIKE 'GOOGL' OR tk.sbTickerSymbol LIKE 'META' OR tk.sbTickerSymbol LIKE 'NFLX')
-    ;
     """
 
 
@@ -112,7 +159,22 @@ def defog_sql_text_broker_adv12() -> str:
     FROM sbCustomer
     WHERE (LOWER(sbCustName) LIKE 'j%' OR LOWER(sbCustName) LIKE '%ez')
     AND LOWER(sbCustState) LIKE '%a'
-    ;
+    """
+
+
+def defog_sql_text_broker_adv14():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    How many TAC are there from each country, for customers who joined on or
+    after January 1, 2023? Return the country and the count. TAC = Total Active
+    Customers who joined on or after January 1, 2023
+    """
+    return """
+    SELECT sbCustCountry, COUNT(sbCustId) AS TAC
+    FROM sbCustomer
+    WHERE sbCustJoinDate >= '2023-01-01'
+    GROUP BY sbCustCountry
     """
 
 
@@ -131,7 +193,6 @@ def defog_sql_text_broker_adv15() -> str:
     ON c.sbCustId = t.sbTxCustId
     WHERE c.sbCustJoinDate BETWEEN '2022-01-01' AND '2022-12-31'
     GROUP BY c.sbCustCountry
-    ;
     """
 
 
@@ -151,7 +212,6 @@ def defog_sql_text_broker_basic3() -> str:
     GROUP BY tk.sbTickerSymbol
     ORDER BY CASE WHEN total_amount IS NULL THEN 1 ELSE 0 END DESC, total_amount DESC
     LIMIT 10
-    ;
     """
 
 
@@ -173,7 +233,6 @@ def defog_sql_text_broker_basic4() -> str:
     GROUP BY c.sbCustState, t.sbTickerType
     ORDER BY CASE WHEN num_transactions IS NULL THEN 1 ELSE 0 END DESC, num_transactions DESC
     LIMIT 5
-    ;
     """
 
 
@@ -192,7 +251,6 @@ def defog_sql_text_broker_basic5() -> str:
     ON c.sbCustId = t.sbTxCustId
     WHERE t.sbTxType = 'buy'
     ORDER BY sbCustId
-    ;
     """
 
 
@@ -209,7 +267,6 @@ def defog_sql_text_broker_basic7() -> str:
     GROUP BY sbTxStatus
     ORDER BY CASE WHEN num_transactions IS NULL THEN 1 ELSE 0 END DESC, num_transactions DESC
     LIMIT 3
-    ;
     """
 
 
@@ -226,7 +283,6 @@ def defog_sql_text_broker_basic8() -> str:
     GROUP BY sbCustCountry
     ORDER BY CASE WHEN num_customers IS NULL THEN 1 ELSE 0 END DESC, num_customers DESC
     LIMIT 5
-    ;
     """
 
 
@@ -234,8 +290,8 @@ def defog_sql_text_broker_basic9() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    What is the total transaction amount for each customer state? Return the
-    customer state and total transaction amount.
+    Return the customer ID and name of customers who have not made any
+    transactions.
     """
     return """
     SELECT c.sbCustId, c.sbCustName
@@ -243,7 +299,6 @@ def defog_sql_text_broker_basic9() -> str:
     LEFT JOIN sbTransaction AS t
     ON c.sbCustId = t.sbTxCustId
     WHERE t.sbTxCustId IS NULL
-    ;
     """
 
 
@@ -251,8 +306,8 @@ def defog_sql_text_broker_basic10() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    What is the number of transactions for each ticker type? Return the ticker
-    type and number of transactions.
+    Return the ticker ID and symbol of tickers that do not have any daily
+    price records.
     """
     return """
     SELECT tk.sbTickerId, tk.sbTickerSymbol
@@ -260,5 +315,4 @@ def defog_sql_text_broker_basic10() -> str:
     LEFT JOIN sbDailyPrice AS dp
     ON tk.sbTickerId = dp.sbDpTickerId
     WHERE dp.sbDpTickerId IS NULL
-    ;
     """

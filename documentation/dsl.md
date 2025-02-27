@@ -1731,5 +1731,5 @@ results = {}
 for n in range(1, 4):
     results[f"year_{n}"] = last_year.year + n
     results[f"year_{n}_prediction"] = last_year.n_orders + (n * slope)
-result = global_info(**results)
+result = global_info.CALCULATE(**results)
 ```

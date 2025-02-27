@@ -8,10 +8,13 @@ import pandas as pd
 import pytest
 from defog_outputs import (
     defog_sql_text_broker_adv1,
+    defog_sql_text_broker_adv2,
     defog_sql_text_broker_adv3,
     defog_sql_text_broker_adv6,
+    defog_sql_text_broker_adv7,
     defog_sql_text_broker_adv11,
     defog_sql_text_broker_adv12,
+    defog_sql_text_broker_adv14,
     defog_sql_text_broker_adv15,
     defog_sql_text_broker_basic3,
     defog_sql_text_broker_basic4,
@@ -23,10 +26,13 @@ from defog_outputs import (
 )
 from defog_test_functions import (
     impl_defog_broker_adv1,
+    impl_defog_broker_adv2,
     impl_defog_broker_adv3,
     impl_defog_broker_adv6,
+    impl_defog_broker_adv7,
     impl_defog_broker_adv11,
     impl_defog_broker_adv12,
+    impl_defog_broker_adv14,
     impl_defog_broker_adv15,
     impl_defog_broker_basic3,
     impl_defog_broker_basic4,
@@ -79,6 +85,14 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
         pytest.param(
             (
+                impl_defog_broker_adv2,
+                "Broker",
+                defog_sql_text_broker_adv2,
+            ),
+            id="broker_adv2",
+        ),
+        pytest.param(
+            (
                 impl_defog_broker_adv3,
                 "Broker",
                 defog_sql_text_broker_adv3,
@@ -95,6 +109,14 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
         pytest.param(
             (
+                impl_defog_broker_adv7,
+                "Broker",
+                defog_sql_text_broker_adv7,
+            ),
+            id="broker_adv7",
+        ),
+        pytest.param(
+            (
                 impl_defog_broker_adv11,
                 "Broker",
                 defog_sql_text_broker_adv11,
@@ -108,6 +130,14 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv12,
             ),
             id="broker_adv12",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv14,
+                "Broker",
+                defog_sql_text_broker_adv14,
+            ),
+            id="broker_adv14",
         ),
         pytest.param(
             (
