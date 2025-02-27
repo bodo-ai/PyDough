@@ -58,6 +58,10 @@ from simple_pydough_functions import (
     minutes_seconds_datediff,
     multi_partition_access_1,
     multi_partition_access_2,
+    multi_partition_access_3,
+    multi_partition_access_4,
+    multi_partition_access_5,
+    multi_partition_access_6,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -68,6 +72,7 @@ from simple_pydough_functions import (
     rank_with_filters_c,
     regional_suppliers_percentile,
     simple_filter_top_five,
+    simple_scan,
     simple_scan_top_five,
     step_slicing,
     triple_partition,
@@ -129,6 +134,7 @@ from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
+from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -144,6 +150,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q1,
+                None,
                 "tpch_q1",
                 tpch_q1_output,
             ),
@@ -152,6 +159,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q2,
+                None,
                 "tpch_q2",
                 tpch_q2_output,
             ),
@@ -160,6 +168,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q3,
+                None,
                 "tpch_q3",
                 tpch_q3_output,
             ),
@@ -168,6 +177,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q4,
+                None,
                 "tpch_q4",
                 tpch_q4_output,
             ),
@@ -176,6 +186,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q5,
+                None,
                 "tpch_q5",
                 tpch_q5_output,
             ),
@@ -184,6 +195,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q6,
+                None,
                 "tpch_q6",
                 tpch_q6_output,
             ),
@@ -192,6 +204,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q7,
+                None,
                 "tpch_q7",
                 tpch_q7_output,
             ),
@@ -200,6 +213,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q8,
+                None,
                 "tpch_q8",
                 tpch_q8_output,
             ),
@@ -208,6 +222,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q9,
+                None,
                 "tpch_q9",
                 tpch_q9_output,
             ),
@@ -216,6 +231,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q10,
+                None,
                 "tpch_q10",
                 tpch_q10_output,
             ),
@@ -224,6 +240,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q11,
+                None,
                 "tpch_q11",
                 tpch_q11_output,
             ),
@@ -232,6 +249,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q12,
+                None,
                 "tpch_q12",
                 tpch_q12_output,
             ),
@@ -240,6 +258,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q13,
+                None,
                 "tpch_q13",
                 tpch_q13_output,
             ),
@@ -248,6 +267,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q14,
+                None,
                 "tpch_q14",
                 tpch_q14_output,
             ),
@@ -256,6 +276,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q15,
+                None,
                 "tpch_q15",
                 tpch_q15_output,
             ),
@@ -264,6 +285,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q16,
+                None,
                 "tpch_q16",
                 tpch_q16_output,
             ),
@@ -272,6 +294,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q17,
+                None,
                 "tpch_q17",
                 tpch_q17_output,
             ),
@@ -280,6 +303,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q18,
+                None,
                 "tpch_q18",
                 tpch_q18_output,
             ),
@@ -288,6 +312,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q19,
+                None,
                 "tpch_q19",
                 tpch_q19_output,
             ),
@@ -296,6 +321,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q20,
+                None,
                 "tpch_q20",
                 tpch_q20_output,
             ),
@@ -304,6 +330,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q21,
+                None,
                 "tpch_q21",
                 tpch_q21_output,
             ),
@@ -312,6 +339,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 impl_tpch_q22,
+                None,
                 "tpch_q22",
                 tpch_q22_output,
             ),
@@ -320,6 +348,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 simple_scan_top_five,
+                None,
                 "simple_scan_top_five",
                 lambda: pd.DataFrame(
                     {
@@ -332,11 +361,11 @@ from pydough.unqualified import (
         pytest.param(
             (
                 simple_filter_top_five,
+                ["key"],
                 "simple_filter_top_five",
                 lambda: pd.DataFrame(
                     {
                         "key": [5989315, 5935174, 5881093, 5876066, 5866437],
-                        "total_price": [947.81, 974.01, 995.6, 967.55, 916.41],
                     }
                 ),
             ),
@@ -345,6 +374,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 rank_nations_by_region,
+                None,
                 "rank_nations_by_region",
                 lambda: pd.DataFrame(
                     {
@@ -384,6 +414,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 rank_nations_per_region_by_customers,
+                None,
                 "rank_nations_per_region_by_customers",
                 lambda: pd.DataFrame(
                     {
@@ -397,6 +428,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 rank_parts_per_supplier_region_by_size,
+                None,
                 "rank_parts_per_supplier_region_by_size",
                 lambda: pd.DataFrame(
                     {
@@ -443,6 +475,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 rank_with_filters_a,
+                None,
                 "rank_with_filters_a",
                 lambda: pd.DataFrame(
                     {
@@ -460,6 +493,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 rank_with_filters_b,
+                None,
                 "rank_with_filters_b",
                 lambda: pd.DataFrame(
                     {
@@ -477,17 +511,18 @@ from pydough.unqualified import (
         pytest.param(
             (
                 rank_with_filters_c,
+                {"pname": "name", "psize": "size"},
                 "rank_with_filters_c",
                 lambda: pd.DataFrame(
                     {
-                        "size": [46, 47, 48, 49, 50],
-                        "name": [
+                        "pname": [
                             "frosted powder drab burnished grey",
                             "lace khaki orange bisque beige",
                             "steel chartreuse navy ivory brown",
                             "forest azure almond antique violet",
                             "blanched floral red maroon papaya",
                         ],
+                        "psize": [46, 47, 48, 49, 50],
                     }
                 ),
             ),
@@ -496,6 +531,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 percentile_nations,
+                {"name": "name", "p1": "p", "p2": "p"},
                 "percentile_nations",
                 lambda: pd.DataFrame(
                     {
@@ -526,7 +562,8 @@ from pydough.unqualified import (
                             "UNITED STATES",
                             "VIETNAM",
                         ],
-                        "p": [1] * 5 + [2] * 5 + [3] * 5 + [4] * 5 + [5] * 5,
+                        "p1": [1] * 5 + [2] * 5 + [3] * 5 + [4] * 5 + [5] * 5,
+                        "p2": [1] * 5 + [2] * 5 + [3] * 5 + [4] * 5 + [5] * 5,
                     }
                 ),
             ),
@@ -535,6 +572,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 percentile_customers_per_region,
+                None,
                 "percentile_customers_per_region",
                 lambda: pd.DataFrame(
                     {
@@ -558,6 +596,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 regional_suppliers_percentile,
+                ["name"],
                 "regional_suppliers_percentile",
                 lambda: pd.DataFrame(
                     {
@@ -579,6 +618,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 function_sampler,
+                None,
                 "function_sampler",
                 lambda: pd.DataFrame(
                     {
@@ -620,6 +660,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 datetime_current,
+                None,
                 "datetime_current",
                 lambda: pd.DataFrame(
                     {
@@ -641,6 +682,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 datetime_relative,
+                None,
                 "datetime_relative",
                 lambda: pd.DataFrame(
                     {
@@ -683,6 +725,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 agg_partition,
+                None,
                 "agg_partition",
                 lambda: pd.DataFrame(
                     {
@@ -695,6 +738,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 double_partition,
+                None,
                 "double_partition",
                 lambda: pd.DataFrame(
                     {
@@ -708,17 +752,18 @@ from pydough.unqualified import (
         pytest.param(
             (
                 triple_partition,
+                {"region": "supp_region", "avgpct": "avg_percentage"},
                 "triple_partition",
                 lambda: pd.DataFrame(
                     {
-                        "supp_region": [
+                        "region": [
                             "AFRICA",
                             "AMERICA",
                             "ASIA",
                             "EUROPE",
                             "MIDDLE EAST",
                         ],
-                        "avg_percentage": [
+                        "avgpct": [
                             1.8038152,
                             1.9968418,
                             1.6850716,
@@ -733,10 +778,17 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_1,
+                None,
                 "correl_1",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
                         "n_prefix_nations": [1, 1, 0, 0, 0],
                     }
                 ),
@@ -746,6 +798,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_2,
+                None,
                 "correl_2",
                 lambda: pd.DataFrame(
                     {
@@ -781,10 +834,17 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_3,
+                None,
                 "correl_3",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
                         "n_nations": [5, 5, 5, 0, 2],
                     }
                 ),
@@ -794,6 +854,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_4,
+                None,
                 "correl_4",
                 lambda: pd.DataFrame(
                     {
@@ -806,6 +867,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_5,
+                None,
                 "correl_5",
                 lambda: pd.DataFrame(
                     {
@@ -818,6 +880,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_6,
+                None,
                 "correl_6",
                 lambda: pd.DataFrame(
                     {
@@ -831,6 +894,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_7,
+                None,
                 "correl_7",
                 lambda: pd.DataFrame(
                     {
@@ -844,6 +908,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_8,
+                None,
                 "correl_8",
                 lambda: pd.DataFrame(
                     {
@@ -883,6 +948,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_9,
+                None,
                 "correl_9",
                 lambda: pd.DataFrame(
                     {
@@ -899,6 +965,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_10,
+                None,
                 "correl_10",
                 lambda: pd.DataFrame(
                     {
@@ -936,6 +1003,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_11,
+                None,
                 "correl_11",
                 lambda: pd.DataFrame(
                     {"brand": ["Brand#33", "Brand#43", "Brand#45", "Brand#55"]}
@@ -946,6 +1014,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_12,
+                None,
                 "correl_12",
                 lambda: pd.DataFrame(
                     {
@@ -964,6 +1033,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_13,
+                None,
                 "correl_13",
                 lambda: pd.DataFrame({"n": [1129]}),
             ),
@@ -972,6 +1042,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_14,
+                None,
                 "correl_14",
                 lambda: pd.DataFrame({"n": [66]}),
             ),
@@ -980,6 +1051,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_15,
+                None,
                 "correl_15",
                 lambda: pd.DataFrame({"n": [61]}),
             ),
@@ -988,6 +1060,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_16,
+                None,
                 "correl_16",
                 lambda: pd.DataFrame({"n": [929]}),
             ),
@@ -996,6 +1069,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_17,
+                None,
                 "correl_17",
                 lambda: pd.DataFrame(
                     {
@@ -1034,6 +1108,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_18,
+                None,
                 "correl_18",
                 lambda: pd.DataFrame({"n": [697]}),
             ),
@@ -1042,10 +1117,11 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_19,
+                None,
                 "correl_19",
                 lambda: pd.DataFrame(
                     {
-                        "name": [
+                        "supplier_name": [
                             "Supplier#000003934",
                             "Supplier#000003887",
                             "Supplier#000002628",
@@ -1061,6 +1137,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_20,
+                None,
                 "correl_20",
                 lambda: pd.DataFrame({"n": [3002]}),
             ),
@@ -1069,6 +1146,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_21,
+                None,
                 "correl_21",
                 lambda: pd.DataFrame({"n_sizes": [30]}),
             ),
@@ -1077,6 +1155,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_22,
+                None,
                 "correl_22",
                 lambda: pd.DataFrame(
                     {
@@ -1096,6 +1175,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 correl_23,
+                None,
                 "correl_23",
                 lambda: pd.DataFrame({"n_sizes": [23]}),
             ),
@@ -1106,16 +1186,21 @@ from pydough.unqualified import (
 def pydough_pipeline_test_data(
     request,
 ) -> tuple[
-    Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
+    Callable[[], UnqualifiedNode],
+    dict[str, str] | list[str] | None,
+    str,
+    Callable[[], pd.DataFrame],
 ]:
     """
     Test data for test_pydough_pipeline. Returns a tuple of the following
     arguments:
     1. `unqualified_impl`: a function that takes in an unqualified root and
     creates the unqualified node for the TPCH query.
-    2. `file_name`: the name of the file containing the expected relational
+    2. `columns`: a valid value for the `columns` argument of `to_sql` or
+    `to_df`.
+    3. `file_name`: the name of the file containing the expected relational
     plan.
-    3. `answer_impl`: a function that takes in nothing and returns the answer
+    4. `answer_impl`: a function that takes in nothing and returns the answer
     to a TPCH query as a Pandas DataFrame.
     """
     return request.param
@@ -1123,7 +1208,10 @@ def pydough_pipeline_test_data(
 
 def test_pipeline_until_relational(
     pydough_pipeline_test_data: tuple[
-        Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
+        Callable[[], UnqualifiedNode],
+        dict[str, str] | list[str] | None,
+        str,
+        Callable[[], pd.DataFrame],
     ],
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
@@ -1137,7 +1225,7 @@ def test_pipeline_until_relational(
     # Run the query through the stages from unqualified node to qualified node
     # to relational tree, and confirm the tree string matches the expected
     # structure.
-    unqualified_impl, file_name, _ = pydough_pipeline_test_data
+    unqualified_impl, columns, file_name, _ = pydough_pipeline_test_data
     file_path: str = get_plan_test_filename(file_name)
     graph: GraphMetadata = get_sample_graph("TPCH")
     UnqualifiedRoot(graph)
@@ -1146,7 +1234,9 @@ def test_pipeline_until_relational(
     assert isinstance(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
-    relational: RelationalRoot = convert_ast_to_relational(qualified, default_config)
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, _load_column_selection({"columns": columns}), default_config
+    )
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
@@ -1161,7 +1251,10 @@ def test_pipeline_until_relational(
 @pytest.mark.execute
 def test_pipeline_e2e(
     pydough_pipeline_test_data: tuple[
-        Callable[[UnqualifiedRoot], UnqualifiedNode], str, Callable[[], pd.DataFrame]
+        Callable[[], UnqualifiedNode],
+        dict[str, str] | list[str] | None,
+        str,
+        Callable[[], pd.DataFrame],
     ],
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
@@ -1169,91 +1262,138 @@ def test_pipeline_e2e(
     """
     Test executing the TPC-H queries from the original code generation.
     """
-    unqualified_impl, _, answer_impl = pydough_pipeline_test_data
+    unqualified_impl, columns, _, answer_impl = pydough_pipeline_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+    result: pd.DataFrame = to_df(
+        root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
+    )
     pd.testing.assert_frame_equal(result, answer_impl())
 
 
 @pytest.mark.execute
 @pytest.mark.parametrize(
-    "impl, error_msg",
+    "impl, columns, error_msg",
     [
         pytest.param(
             bad_slice_1,
+            None,
             "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_1",
         ),
         pytest.param(
             bad_slice_2,
+            None,
             "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_2",
         ),
         pytest.param(
             bad_slice_3,
+            None,
             "SLICE function currently only supports the start index being integer literal or absent.",
             id="bad_slice_3",
         ),
         pytest.param(
             bad_slice_4,
+            None,
             "SLICE function currently only supports the start index being integer literal or absent.",
             id="bad_slice_4",
         ),
         pytest.param(
             bad_slice_5,
+            None,
             "SLICE function currently only supports the start index being integer literal or absent.",
             id="bad_slice_5",
         ),
         pytest.param(
             bad_slice_6,
+            None,
             "SLICE function currently only supports the stop index being integer literal or absent.",
             id="bad_slice_6",
         ),
         pytest.param(
             bad_slice_7,
+            None,
             "SLICE function currently only supports the stop index being integer literal or absent.",
             id="bad_slice_7",
         ),
         pytest.param(
             bad_slice_8,
+            None,
             "SLICE function currently only supports the stop index being integer literal or absent.",
             id="bad_slice_8",
         ),
         pytest.param(
             bad_slice_9,
+            None,
             "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_9",
         ),
         pytest.param(
             bad_slice_10,
+            None,
             "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_10",
         ),
         pytest.param(
             bad_slice_11,
+            None,
             "SLICE function currently only supports the step being integer literal 1 or absent.",
             id="bad_slice_11",
         ),
         pytest.param(
             bad_slice_12,
+            None,
             "PyDough objects are currently not supported to be used as indices in Python slices.",
             id="bad_slice_12",
         ),
         pytest.param(
             bad_slice_13,
+            None,
             "PyDough objects are currently not supported to be used as indices in Python slices.",
             id="bad_slice_13",
         ),
         pytest.param(
             bad_slice_14,
+            None,
             "PyDough objects are currently not supported to be used as indices in Python slices.",
             id="bad_slice_14",
+        ),
+        pytest.param(
+            simple_scan,
+            [],
+            "Column selection must not be empty",
+            id="bad_columns_1",
+        ),
+        pytest.param(
+            simple_scan,
+            {},
+            "Column selection must not be empty",
+            id="bad_columns_2",
+        ),
+        pytest.param(
+            simple_scan,
+            ["A", "B", "C"],
+            "Unrecognized term of simple table collection 'Orders' in graph 'TPCH': 'A'",
+            id="bad_columns_3",
+        ),
+        pytest.param(
+            simple_scan,
+            {"X": "key", "W": "Y"},
+            "Unrecognized term of simple table collection 'Orders' in graph 'TPCH': 'Y'",
+            id="bad_columns_4",
+        ),
+        pytest.param(
+            simple_scan,
+            ["key", "key"],
+            "Duplicate column names found in root.",
+            id="bad_columns_5",
         ),
     ],
 )
 def test_pipeline_e2e_errors(
-    impl: Callable[[UnqualifiedRoot], UnqualifiedNode],
+    impl: Callable[[], UnqualifiedNode],
+    columns: dict[str, str] | list[str] | None,
     error_msg: str,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
@@ -1265,7 +1405,7 @@ def test_pipeline_e2e_errors(
     graph: GraphMetadata = get_sample_graph("TPCH")
     with pytest.raises(Exception, match=error_msg):
         root: UnqualifiedNode = init_pydough_context(graph)(impl)()
-        to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+        to_df(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
 
 
 @pytest.fixture(
@@ -1273,7 +1413,9 @@ def test_pipeline_e2e_errors(
         pytest.param(
             (
                 multi_partition_access_1,
+                None,
                 "Broker",
+                "multi_partition_access_1",
                 lambda: pd.DataFrame(
                     {"symbol": ["AAPL", "AMZN", "BRK.B", "FB", "GOOG"]}
                 ),
@@ -1283,7 +1425,9 @@ def test_pipeline_e2e_errors(
         pytest.param(
             (
                 multi_partition_access_2,
+                None,
                 "Broker",
+                "multi_partition_access_2",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [f"TX{i:03}" for i in (22, 24, 25, 27, 56)],
@@ -1296,9 +1440,15 @@ def test_pipeline_e2e_errors(
                         ],
                         "symbol": ["MSFT", "TSLA", "GOOGL", "BRK.B", "FB"],
                         "transaction_type": ["sell", "sell", "buy", "buy", "sell"],
-                        "avg_shares_a": [56.66667, 55.0, 4.0, 55.5, 47.5],
-                        "avg_shares_b": [50.0, 41.66667, 3.33333, 37.33333, 47.5],
-                        "avg_shares_c": [50.625, 46.25, 40.0, 37.33333, 50.625],
+                        "cus_tick_typ_avg_shares": [56.66667, 55.0, 4.0, 55.5, 47.5],
+                        "cust_tick_avg_shares": [
+                            50.0,
+                            41.66667,
+                            3.33333,
+                            37.33333,
+                            47.5,
+                        ],
+                        "cust_avg_shares": [50.625, 46.25, 40.0, 37.33333, 50.625],
                     }
                 ),
             ),
@@ -1306,8 +1456,138 @@ def test_pipeline_e2e_errors(
         ),
         pytest.param(
             (
-                hour_minute_day,
+                multi_partition_access_3,
+                None,
                 "Broker",
+                "multi_partition_access_3",
+                lambda: pd.DataFrame(
+                    {
+                        "symbol": [
+                            "AAPL",
+                            "AMZN",
+                            "FB",
+                            "GOOGL",
+                            "JPM",
+                            "MSFT",
+                            "NFLX",
+                            "PG",
+                            "TSLA",
+                            "V",
+                        ],
+                        "close": [
+                            153.5,
+                            3235,
+                            207,
+                            2535,
+                            133.75,
+                            284,
+                            320.5,
+                            143.25,
+                            187.75,
+                            223.5,
+                        ],
+                    }
+                ),
+            ),
+            id="multi_partition_access_3",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_4,
+                None,
+                "Broker",
+                "multi_partition_access_4",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{i:03}"
+                            for i in (3, 4, 5, 6, 7, 8, 9, 40, 41, 42, 43, 47, 48, 49)
+                        ],
+                    }
+                ),
+            ),
+            id="multi_partition_access_4",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_5,
+                None,
+                "Broker",
+                "multi_partition_access_5",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{i:03}"
+                            for i in (
+                                40,
+                                41,
+                                42,
+                                43,
+                                2,
+                                4,
+                                6,
+                                22,
+                                24,
+                                26,
+                                32,
+                                34,
+                                36,
+                                46,
+                                48,
+                                50,
+                                52,
+                                54,
+                                56,
+                            )
+                        ],
+                        "n_ticker_type_trans": [1] * 4 + [5] * 15,
+                        "n_ticker_trans": [1] * 4 + [6] * 15,
+                        "n_type_trans": [29, 27] * 2 + [27] * 15,
+                    }
+                ),
+            ),
+            id="multi_partition_access_5",
+        ),
+        pytest.param(
+            (
+                multi_partition_access_6,
+                None,
+                "Broker",
+                "multi_partition_access_6",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{i:03}"
+                            for i in (
+                                11,
+                                12,
+                                13,
+                                14,
+                                15,
+                                16,
+                                17,
+                                18,
+                                19,
+                                20,
+                                30,
+                                46,
+                                47,
+                                48,
+                                49,
+                                50,
+                            )
+                        ],
+                    }
+                ),
+            ),
+            id="multi_partition_access_6",
+        ),
+        pytest.param(
+            (
+                hour_minute_day,
+                None,
+                "Broker",
+                "hour_minute_day",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -1332,12 +1612,14 @@ def test_pipeline_e2e_errors(
                     }
                 ),
             ),
-            id="broker_basic1",
+            id="hour_minute_day",
         ),
         pytest.param(
             (
                 exponentiation,
+                None,
                 "Broker",
+                "exponentiation",
                 lambda: pd.DataFrame(
                     {
                         "low_square": [
@@ -1384,7 +1666,9 @@ def test_pipeline_e2e_errors(
         pytest.param(
             (
                 years_months_days_hours_datediff,
+                None,
                 "Broker",
+                "years_months_days_hours_datediff",
                 lambda: pd.DataFrame(
                     data={
                         "x": [
@@ -1535,7 +1819,9 @@ def test_pipeline_e2e_errors(
         pytest.param(
             (
                 minutes_seconds_datediff,
+                None,
                 "Broker",
+                "minutes_seconds_datediff",
                 lambda: pd.DataFrame(
                     {
                         "x": [
@@ -1643,7 +1929,9 @@ def test_pipeline_e2e_errors(
         pytest.param(
             (
                 step_slicing,
+                None,
                 "Broker",
+                "step_slicing",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -1721,21 +2009,76 @@ def test_pipeline_e2e_errors(
 )
 def custom_defog_test_data(
     request,
-) -> tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame]:
+) -> tuple[
+    Callable[[], UnqualifiedNode],
+    dict[str, str] | list[str] | None,
+    str,
+    str,
+    pd.DataFrame,
+]:
     """
     Test data for test_defog_e2e. Returns a tuple of the following
     arguments:
     1. `unqualified_impl`: a PyDough implementation function.
-    2. `graph_name`: the name of the graph from the defog database to use.
-    3. `answer_impl`: a function that takes in nothing and returns the answer
+    2. `columns`: the columns to select from the relational plan (optional).
+    3. `graph_name`: the name of the graph from the defog database to use.
+    4. `file_name`: the name of the file containing the expected relational
+    plan.
+    5. `answer_impl`: a function that takes in nothing and returns the answer
     to a defog query as a Pandas DataFrame.
     """
     return request.param
 
 
+def test_defog_until_relational(
+    custom_defog_test_data: tuple[
+        Callable[[], UnqualifiedNode],
+        dict[str, str] | list[str] | None,
+        str,
+        str,
+        pd.DataFrame,
+    ],
+    defog_graphs: graph_fetcher,
+    default_config: PyDoughConfigs,
+    get_plan_test_filename: Callable[[str], str],
+    update_tests: bool,
+):
+    """
+    Same as `test_pipeline_until_relational`, but for defog data.
+    """
+    unqualified_impl, columns, graph_name, file_name, _ = custom_defog_test_data
+    graph: GraphMetadata = defog_graphs(graph_name)
+    init_pydough_context(graph)(unqualified_impl)()
+    file_path: str = get_plan_test_filename(file_name)
+    UnqualifiedRoot(graph)
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
+    assert isinstance(
+        qualified, PyDoughCollectionQDAG
+    ), "Expected qualified answer to be a collection, not an expression"
+    relational: RelationalRoot = convert_ast_to_relational(
+        qualified, _load_column_selection({"columns": columns}), default_config
+    )
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(relational.to_tree_string() + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            relational.to_tree_string() == expected_relational_string.strip()
+        ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+
+
 @pytest.mark.execute
 def test_defog_e2e_with_custom_data(
-    custom_defog_test_data: tuple[Callable[[], UnqualifiedNode], str, pd.DataFrame],
+    custom_defog_test_data: tuple[
+        Callable[[], UnqualifiedNode],
+        dict[str, str] | list[str] | None,
+        str,
+        str,
+        pd.DataFrame,
+    ],
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
@@ -1744,8 +2087,10 @@ def test_defog_e2e_with_custom_data(
     comparing against the result of running the reference SQL query text on the
     same database connector.
     """
-    unqualified_impl, graph_name, answer_impl = custom_defog_test_data
+    unqualified_impl, columns, graph_name, _, answer_impl = custom_defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
+    result: pd.DataFrame = to_df(
+        root, columns=columns, metadata=graph, database=sqlite_defog_connection
+    )
     pd.testing.assert_frame_equal(result, answer_impl())

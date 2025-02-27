@@ -5,9 +5,8 @@ build QDAG nodes for unit tests.
 
 __all__ = [
     "AstNodeTestInfo",
-    "BackReferenceCollectionInfo",
     "BackReferenceExpressionInfo",
-    "CalcInfo",
+    "CalculateInfo",
     "ChildReferenceExpressionInfo",
     "ColumnInfo",
     "FunctionInfo",
@@ -32,7 +31,7 @@ import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
 from pydough.qdag import (
     AstNodeBuilder,
-    Calc,
+    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
@@ -102,7 +101,8 @@ class AstNodeTestInfo(ABC):
             `context`: an optional collection QDAG used as the context within
             which the QDAG is created.
             `children_contexts`: an optional list of collection QDAGs of
-            child nodes of a CALC that are accessible for ChildReferenceExpression usage.
+            child nodes of a CALCULATE that are accessible for
+            ChildReferenceExpression usage.
 
         Returns:
             The new instance of the QDAG object.
@@ -259,7 +259,7 @@ class ReferenceInfo(AstNodeTestInfo):
     """
     TestInfo implementation class to build a reference. Contains the
     following fields:
-    - `name`: the name of the calc term being referenced.
+    - `name`: the name of the term being referenced from the preceding context.
     """
 
     def __init__(self, name: str):
@@ -284,7 +284,7 @@ class BackReferenceExpressionInfo(AstNodeTestInfo):
     """
     TestInfo implementation class to build a back reference expression.
     Contains the following fields:
-    - `name`: the name of the calc term being referenced.
+    - `name`: the name of the term being referenced.
     - `levels`: the number of levels upward to reference.
     """
 
@@ -311,7 +311,7 @@ class ChildReferenceExpressionInfo(AstNodeTestInfo):
     """
     TestInfo implementation class to build a child reference expression.
     Contains the following fields:
-    - `name`: the name of the calc term being referenced.
+    - `name`: the name of the term being referenced.
     - `child_idx`: the index of the child being referenced.
     """
 
@@ -394,7 +394,8 @@ class CollectionTestInfo(AstNodeTestInfo):
             `context`: an optional collection QDAG used as the context within
             which the QDAG is created.
             `children_contexts`: an optional list of collection QDAG of child
-            nodes of a CALC that are accessible for ChildReferenceExpression usage.
+            nodes of a CALCULATE that are accessible for
+            ChildReferenceExpression usage.
 
         Returns:
             The new instance of the collection QDAG object.
@@ -467,7 +468,7 @@ class SubCollectionInfo(TableCollectionInfo):
 class ChildOperatorChildAccessInfo(CollectionTestInfo):
     """
     CollectionTestInfo implementation class that wraps around a subcollection
-    info within a Calc context. Contains the following fields:
+    info within a CALCULATE context. Contains the following fields:
     - `child_info`: the collection info for the child subcollection.
 
     NOTE: must provide a `context` when building.
@@ -495,41 +496,11 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
         return ChildOperatorChildAccess(access)
 
 
-class BackReferenceCollectionInfo(CollectionTestInfo):
-    """
-    CollectionTestInfo implementation class to build a reference to an
-    ancestor collection. Contains the following fields:
-    - `name`: the name of the calc term being referenced.
-    - `levels`: the number of levels upward to reference.
-
-    NOTE: must provide a `context` when building.
-    """
-
-    def __init__(self, name: str, levels: int):
-        super().__init__()
-        self.name: str = name
-        self.levels: int = levels
-
-    def local_string(self) -> str:
-        return f"BackReferenceCollection[{self.levels}:{self.name}]"
-
-    def local_build(
-        self,
-        builder: AstNodeBuilder,
-        context: PyDoughCollectionQDAG | None = None,
-        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
-    ) -> PyDoughCollectionQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on BackReferenceCollectionInfo without providing a context"
-        return builder.build_back_reference_collection(context, self.name, self.levels)
-
-
 class ChildReferenceCollectionInfo(CollectionTestInfo):
     """
     CollectionTestInfo implementation class to build a reference to a
     child collection. Contains the following fields:
-    - `idx`: the index of the calc term being referenced.
+    - `idx`: the index of the child collection being referenced.
 
     NOTE: must provide a `context` when building.
     """
@@ -561,7 +532,7 @@ class ChildReferenceCollectionInfo(CollectionTestInfo):
 class ChildOperatorInfo(CollectionTestInfo):
     """
     Base class for types of CollectionTestInfo that have child nodes, such as
-    CALC or WHERE.  Contains the following fields:
+    CALCULATE or WHERE.  Contains the following fields:
     - `children_info`: a list of CollectionTestInfo objects that will be used
        to build the child contexts.
     """
@@ -605,14 +576,14 @@ class ChildOperatorInfo(CollectionTestInfo):
         return children
 
 
-class CalcInfo(ChildOperatorInfo):
+class CalculateInfo(ChildOperatorInfo):
     """
-    CollectionTestInfo implementation class to build a CALC node.
+    CollectionTestInfo implementation class to build a CALCULATE node.
     Contains the following fields:
     - `children_info`: a list of CollectionTestInfo objects that will be used
        to build the child contexts.
     - `args`: a list tuples containing a field name and a test info to derive
-       an expression in the CALC. Passed in via keyword arguments to the
+       an expression in the CALCULATE. Passed in via keyword arguments to the
        constructor, where the argument names are the field names and the
        argument values are the expression infos.
     """
@@ -625,7 +596,7 @@ class CalcInfo(ChildOperatorInfo):
         args_strings: MutableSequence[str] = [
             f"{name}={arg.to_string()}" for name, arg in self.args
         ]
-        return f"Calc[{self.child_strings()}{', '.join(args_strings)}]"
+        return f"Calculate[{self.child_strings()}{', '.join(args_strings)}]"
 
     def local_build(
         self,
@@ -639,8 +610,8 @@ class CalcInfo(ChildOperatorInfo):
             builder,
             context,
         )
-        raw_calc = builder.build_calc(context, children)
-        assert isinstance(raw_calc, Calc)
+        raw_calc = builder.build_calculate(context, children)
+        assert isinstance(raw_calc, Calculate)
         args: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)

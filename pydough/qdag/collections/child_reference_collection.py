@@ -9,7 +9,7 @@ __all__ = ["ChildReferenceCollection"]
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.expressions.collation_expression import CollationExpression
+from pydough.qdag.expressions import CollationExpression
 
 from .child_access import ChildAccess
 from .collection_qdag import PyDoughCollectionQDAG
@@ -19,7 +19,7 @@ from .collection_tree_form import CollectionTreeForm
 class ChildReferenceCollection(ChildAccess):
     """
     The QDAG node implementation class representing a reference to a collection
-    term in a child collection of a CALC or other child operator.
+    term in a child collection of a CALCULATE or other child operator.
     """
 
     def __init__(
@@ -45,7 +45,7 @@ class ChildReferenceCollection(ChildAccess):
     @property
     def child_idx(self) -> int:
         """
-        The integer index of the child from the CALC that the
+        The integer index of the child from the CALCULATE that the
         ChildReferenceCollection refers to.
         """
         return self._child_idx
@@ -61,6 +61,14 @@ class ChildReferenceCollection(ChildAccess):
     @property
     def all_terms(self) -> set[str]:
         return self.collection.all_terms
+
+    @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        return self.collection.ancestral_mapping
+
+    @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.collection.inherited_downstreamed_terms
 
     @property
     def ordering(self) -> list[CollationExpression] | None:

@@ -12,6 +12,7 @@ from functools import cache
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
+    BackReferenceExpression,
     ChildReferenceExpression,
     CollationExpression,
     PartitionKey,
@@ -40,6 +41,11 @@ class PartitionBy(ChildOperator):
         self._child_name: str = child_name
         self._keys: list[PartitionKey] | None = None
         self._key_name_indices: dict[str, int] = {}
+        self._ancestral_mapping: dict[str, int] = {
+            name: level + 1 for name, level in ancestor.ancestral_mapping.items()
+        }
+        self._calc_terms: set[str] = set()
+        self._all_terms: set[str] = set(self.ancestral_mapping) | {self.child_name}
 
     def with_keys(self, keys: list[ChildReferenceExpression]) -> "PartitionBy":
         """
@@ -63,6 +69,8 @@ class PartitionBy(ChildOperator):
         self._keys = [PartitionKey(self, key) for key in keys]
         for idx, ref in enumerate(keys):
             self._key_name_indices[ref.term_name] = idx
+            self._calc_terms.add(ref.term_name)
+        self.all_terms.update(self._calc_terms)
         self.verify_singular_terms(self._keys)
         return self
 
@@ -89,7 +97,7 @@ class PartitionBy(ChildOperator):
     def key_name_indices(self) -> dict[str, int]:
         """
         The names of the partitioning keys for the PARTITION BY clause and the
-        index they have in a CALC.
+        index they have in a CALCULATE.
         """
         if self._keys is None:
             raise PyDoughQDAGException(
@@ -118,11 +126,19 @@ class PartitionBy(ChildOperator):
 
     @property
     def calc_terms(self) -> set[str]:
-        return set(self._key_name_indices)
+        return self._calc_terms
 
     @property
     def all_terms(self) -> set[str]:
-        return self.calc_terms | {self.child_name}
+        return self._all_terms
+
+    @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        return self._ancestral_mapping
+
+    @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.ancestor_context.inherited_downstreamed_terms
 
     @property
     def ordering(self) -> list[CollationExpression] | None:
@@ -139,6 +155,7 @@ class PartitionBy(ChildOperator):
         return False
 
     @property
+    @cache
     def standalone_string(self) -> str:
         keys_str: str
         if len(self.keys) == 1:
@@ -147,6 +164,7 @@ class PartitionBy(ChildOperator):
             keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
         return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
 
+    @cache
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 
@@ -164,7 +182,11 @@ class PartitionBy(ChildOperator):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        if term_name in self._key_name_indices:
+        if term_name in self.ancestral_mapping:
+            return BackReferenceExpression(
+                self, term_name, self.ancestral_mapping[term_name]
+            )
+        elif term_name in self._key_name_indices:
             term: PartitionKey = self.keys[self._key_name_indices[term_name]]
             return term
         elif term_name == self.child_name:

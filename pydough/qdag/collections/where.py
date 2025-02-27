@@ -7,6 +7,7 @@ __all__ = ["Where"]
 
 
 from collections.abc import MutableSequence
+from functools import cache
 
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import PyDoughExpressionQDAG
@@ -62,7 +63,7 @@ class Where(AugmentingChildOperator):
         """
         if self._condition is None:
             raise PyDoughQDAGException(
-                "Cannot access `condition` of a Calc node before adding calc terms with `with_condition`"
+                "Cannot access `condition` of a WHERE node before adding the predicate with `with_condition`"
             )
         return self._condition
 
@@ -71,20 +72,9 @@ class Where(AugmentingChildOperator):
         return f"{self.preceding_context.key}.WHERE"
 
     @property
-    def calc_terms(self) -> set[str]:
-        return self.preceding_context.calc_terms
-
-    @property
-    def all_terms(self) -> set[str]:
-        return self.preceding_context.all_terms
-
-    @property
+    @cache
     def standalone_string(self) -> str:
         return f"WHERE({self.condition.to_string()})"
-
-    def to_string(self) -> str:
-        assert self.preceding_context is not None
-        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:

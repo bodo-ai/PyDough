@@ -6,9 +6,8 @@ relational tree.
 
 __all__ = [
     "AstNodeBuilder",
-    "BackReferenceCollection",
     "BackReferenceExpression",
-    "Calc",
+    "Calculate",
     "ChildAccess",
     "ChildOperator",
     "ChildOperatorChildAccess",
@@ -39,8 +38,7 @@ __all__ = [
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
-    BackReferenceCollection,
-    Calc,
+    Calculate,
     ChildAccess,
     ChildOperator,
     ChildOperatorChildAccess,
