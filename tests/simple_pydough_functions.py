@@ -689,7 +689,7 @@ def datediff():
 
 
 def padding_functions():
-    return Customers(
+    return Customers.CALCULATE(
         original_name=name,
         right_padded=RPAD(name, 30, "*"),
         left_padded=LPAD(name, 30, "#"),

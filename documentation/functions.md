@@ -281,7 +281,7 @@ The function behaves as follows:
 - If the padding argument is not a single character, it raises an error.
 
 ```py
-Customers(left_padded_name = LPAD(name, 30, "*"))
+Customers.CALCULATE(left_padded_name = LPAD(name, 30, "*"))
 ```
 
 For demonstration purposes here are examples on how it pads on string literals. Note that the first argument cannot be a string literal and this is only for demonstration purposes:
@@ -311,7 +311,7 @@ The function behaves as follows:
 - If the padding argument is not a single character, it raises an error
 
 ```py
-Customers(right_padded_name = RPAD(name, 30, "*"))
+Customers.CALCULATE(right_padded_name = RPAD(name, 30, "*"))
 ```
 
 For demonstration purposes here are examples on how it pads on string literals. Please note the first argument cannot be a string literal and this is only for demonstration purposes:
