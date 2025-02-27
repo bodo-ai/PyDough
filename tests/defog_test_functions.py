@@ -2,8 +2,10 @@ __all__ = [
     "impl_defog_broker_adv1",
     "impl_defog_broker_adv11",
     "impl_defog_broker_adv12",
+    "impl_defog_broker_adv13",
     "impl_defog_broker_adv14",
     "impl_defog_broker_adv15",
+    "impl_defog_broker_adv16",
     "impl_defog_broker_adv2",
     "impl_defog_broker_adv3",
     "impl_defog_broker_adv6",
@@ -120,14 +122,11 @@ def impl_defog_broker_adv11():
     FAANG companies (Amazon, Apple, Google, Meta or Netflix)?
     """
     faang = ("AMZN", "AAPL", "GOOGL", "META", "NFLX")
-    return Broker.CALCULATE(
-        n_customers=COUNT(
-            Customers.WHERE(
-                ENDSWITH(email, ".com")
-                & HAS(transactions_made.WHERE(ISIN(ticker.symbol, faang)))
-            )
-        )
+    selected_customers = Customers.WHERE(
+        ENDSWITH(email, ".com")
+        & HAS(transactions_made.WHERE(ISIN(ticker.symbol, faang)))
     )
+    return Broker.CALCULATE(n_customers=COUNT(selected_customers))
 
 
 def impl_defog_broker_adv12():
@@ -144,17 +143,35 @@ def impl_defog_broker_adv12():
     return Broker.CALCULATE(n_customers=COUNT(selected_customers))
 
 
-def impl_defog_broker_adv14():
+def impl_defog_broker_adv13():
     """
     PyDough implementation of the following question for the Broker graph:
 
     How many TAC are there from each country, for customers who joined on or
     after January 1, 2023? Return the country and the count. TAC = Total Active
-    Customers who joined on or after January 1, 2023
+    Customers who joined on or after January 1, 2023.
     """
     selected_customers = Customers.WHERE(join_date >= datetime.date(2023, 1, 1))
     countries = PARTITION(selected_customers, name="custs", by=country)
     return countries.CALCULATE(cust_country=country, TAC=COUNT(custs))
+
+
+def impl_defog_broker_adv14():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What is the ACP for each ticker type in the past 7 days, inclusive of
+    today? Return the ticker type and the average closing price.
+    ACP = Average Closing Price of tickers in the last 7 days, inclusive of
+    today.
+    """
+    selected_updates = DailyPrices.WHERE(
+        DATEDIFF("days", date, DATETIME("now")) <= 0
+    ).CALCULATE(ticker_type=ticker.ticker_type)
+
+    ticker_types = PARTITION(selected_updates, name="updates", by=ticker_type)
+
+    return ticker_types.CALCULATE(ticker_type, ACP=AVG(updates.close))
 
 
 def impl_defog_broker_adv15():
@@ -175,6 +192,29 @@ def impl_defog_broker_adv15():
         country,
         ar=100 * DEFAULT_TO(n_active / n_custs, 0.0),
     )
+
+
+def impl_defog_broker_adv16():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What is the SPM for each ticker symbol from sell transactions in the past
+    month, inclusive of 1 month ago? Return the ticker symbol and SPM.
+    SPM (Selling Profit Margin) = (Total Amount from Sells - (Tax + Commission))
+    / Total Amount from Sells * 100
+    """
+    selected_txns = transactions_of.WHERE(
+        (transaction_type == "sell") & (date_time >= DATETIME("now", "-1 month"))
+    )
+    spm = (
+        100.0
+        * (
+            SUM(selected_txns.amount)
+            - SUM(selected_txns.tax + selected_txns.commission)
+        )
+        / SUM(selected_txns.amount)
+    )
+    return Tickers.CALCULATE(symbol, SPM=spm).WHERE(PRESENT(SPM)).ORDER_BY(symbol.ASC())
 
 
 def impl_defog_broker_basic3():

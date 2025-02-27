@@ -6,8 +6,10 @@ __all__ = [
     "defog_sql_text_broker_adv1",
     "defog_sql_text_broker_adv11",
     "defog_sql_text_broker_adv12",
+    "defog_sql_text_broker_adv13",
     "defog_sql_text_broker_adv14",
     "defog_sql_text_broker_adv15",
+    "defog_sql_text_broker_adv16",
     "defog_sql_text_broker_adv2",
     "defog_sql_text_broker_adv3",
     "defog_sql_text_broker_adv6",
@@ -162,7 +164,7 @@ def defog_sql_text_broker_adv12() -> str:
     """
 
 
-def defog_sql_text_broker_adv14():
+def defog_sql_text_broker_adv13():
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -178,11 +180,32 @@ def defog_sql_text_broker_adv14():
     """
 
 
+def defog_sql_text_broker_adv14():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the ACP for each ticker type in the past 7 days, inclusive of
+    today? Return the ticker type and the average closing price.
+    ACP = Average Closing Price of tickers in the last 7 days, inclusive of
+    today.
+    """
+    return """
+    SELECT sbTicker.sbTickerType, AVG(sbDailyPrice.sbDpClose) AS ACP
+    FROM sbDailyPrice
+    JOIN sbTicker
+    ON sbDailyPrice.sbDpTickerId = sbTicker.sbTickerId
+    WHERE sbDpDate >= DATE('now', '-7 days')
+    GROUP BY sbTicker.sbTickerType
+    """
+
+
 def defog_sql_text_broker_adv15() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    What is the AR for each country for customers who joined in 2022? Return the country and AR. AR (Activity Ratio) = (Number of Active Customers with Transactions / Total Number of Customers with Transactions) * 100.
+    What is the AR for each country for customers who joined in 2022? Return
+    the country and AR. AR (Activity Ratio) = (Number of Active Customers with
+    Transactions / Total Number of Customers with Transactions) * 100.
     """
     return """
     SELECT
@@ -193,6 +216,31 @@ def defog_sql_text_broker_adv15() -> str:
     ON c.sbCustId = t.sbTxCustId
     WHERE c.sbCustJoinDate BETWEEN '2022-01-01' AND '2022-12-31'
     GROUP BY c.sbCustCountry
+    """
+
+
+def defog_sql_text_broker_adv16() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the SPM for each ticker symbol from sell transactions in the past
+    month, inclusive of 1 month ago? Return the ticker symbol and SPM.
+    SPM (Selling Profit Margin) = (Total Amount from Sells - (Tax + Commission))
+    / Total Amount from Sells * 100.
+
+    NOTE: query adjusted to ensure the division is performed as a float
+    division instead of integer.
+    """
+    return """
+    SELECT
+        sbTickerSymbol,
+        CASE WHEN SUM(sbTxAmount) = 0 THEN NULL ELSE (SUM(sbTxAmount) - SUM(sbTxTax + sbTxCommission)) / (1.0 * SUM(sbTxAmount)) * 100 END AS SPM
+    FROM sbTransaction
+    JOIN sbTicker
+    ON sbTransaction.sbTxTickerId = sbTicker.sbTickerId
+    WHERE sbTxType = 'sell'
+    AND sbTxDateTime >= DATE('now', '-1 month')
+    GROUP BY sbTickerSymbol
     """
 
 

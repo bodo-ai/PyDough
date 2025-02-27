@@ -14,8 +14,10 @@ from defog_outputs import (
     defog_sql_text_broker_adv7,
     defog_sql_text_broker_adv11,
     defog_sql_text_broker_adv12,
+    defog_sql_text_broker_adv13,
     defog_sql_text_broker_adv14,
     defog_sql_text_broker_adv15,
+    defog_sql_text_broker_adv16,
     defog_sql_text_broker_basic3,
     defog_sql_text_broker_basic4,
     defog_sql_text_broker_basic5,
@@ -32,8 +34,10 @@ from defog_test_functions import (
     impl_defog_broker_adv7,
     impl_defog_broker_adv11,
     impl_defog_broker_adv12,
+    impl_defog_broker_adv13,
     impl_defog_broker_adv14,
     impl_defog_broker_adv15,
+    impl_defog_broker_adv16,
     impl_defog_broker_basic3,
     impl_defog_broker_basic4,
     impl_defog_broker_basic5,
@@ -114,6 +118,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv7,
             ),
             id="broker_adv7",
+            marks=pytest.mark.skip("TODO: add LPAD support to PyDough"),
         ),
         pytest.param(
             (
@@ -133,6 +138,14 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
         pytest.param(
             (
+                impl_defog_broker_adv13,
+                "Broker",
+                defog_sql_text_broker_adv13,
+            ),
+            id="broker_adv13",
+        ),
+        pytest.param(
+            (
                 impl_defog_broker_adv14,
                 "Broker",
                 defog_sql_text_broker_adv14,
@@ -146,6 +159,14 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv15,
             ),
             id="broker_adv15",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv16,
+                "Broker",
+                defog_sql_text_broker_adv16,
+            ),
+            id="broker_adv16",
         ),
         pytest.param(
             (
