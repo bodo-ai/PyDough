@@ -3,6 +3,7 @@
 # ruff & mypy should not try to typecheck or verify any of this
 
 import math
+import datetime
 
 
 def bad_bool_1():
@@ -58,23 +59,73 @@ def bad_window_7():
 
 
 def bad_slice_1():
-    # Unsupported slicing: negative stop
-    return Customers.CALCULATE(name[:-1])
-
-
-def bad_slice_2():
-    # Unsupported slicing: negative start
-    return Customers.CALCULATE(name[-5:])
-
-
-def bad_slice_3():
     # Unsupported slicing: skipping
     return Customers.CALCULATE(name[1:10:2])
 
 
-def bad_slice_4():
+def bad_slice_2():
     # Unsupported slicing: reversed
     return Customers.CALCULATE(name[::-1])
+
+
+def bad_slice_3():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name["invalid":-1:])
+
+
+def bad_slice_4():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name[datetime.datetime.now() : -1 :])
+
+
+def bad_slice_5():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name[42.4:10:])
+
+
+def bad_slice_6():
+    # Unsupported slicing: non-integer stop
+    return Customers.CALCULATE(name[1:"invalid":])
+
+
+def bad_slice_7():
+    # Unsupported slicing: non-integer stop
+    return Customers.CALCULATE(name[1 : datetime.datetime.now() :])
+
+
+def bad_slice_8():
+    # Unsupported slicing: non-integer stop
+    return Customers.CALCULATE(name[1:42.4:])
+
+
+def bad_slice_9():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1:10:"invalid"])
+
+
+def bad_slice_10():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1 : 10 : datetime.datetime.now()])
+
+
+def bad_slice_11():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1:10:42.4])
+
+
+def bad_slice_12():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name[LENGTH(name) : 10 :])
+
+
+def bad_slice_13():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1 : LENGTH(name) :])
+
+
+def bad_slice_14():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1 : 10 : LENGTH(name)])
 
 
 def bad_floor():
