@@ -179,7 +179,7 @@ def defog_test_data(
     request,
 ) -> tuple[Callable[[], UnqualifiedNode], Callable[[], str]]:
     """
-    Test data for test_defog_e2e. Returns a tuple of the following
+    Test data for `test_defog_e2e`. Returns a tuple of the following
     arguments:
     1. `unqualified_impl`: a PyDough implementation function.
     2. `graph_name`: the name of the graph from the defog database to use.
@@ -198,7 +198,7 @@ def test_defog_e2e(
     """
     Test executing the defog analytical questions on the sqlite database,
     comparing against the result of running the reference SQL query text on the
-    same database connector.
+    same database connector. Run on the defog.ai queries.
     """
     unqualified_impl, graph_name, query_impl = defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
