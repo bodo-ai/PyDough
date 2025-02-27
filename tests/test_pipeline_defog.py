@@ -8,11 +8,16 @@ import pandas as pd
 import pytest
 from defog_outputs import (
     defog_sql_text_broker_adv1,
+    defog_sql_text_broker_adv2,
     defog_sql_text_broker_adv3,
     defog_sql_text_broker_adv6,
+    defog_sql_text_broker_adv7,
     defog_sql_text_broker_adv11,
     defog_sql_text_broker_adv12,
+    defog_sql_text_broker_adv13,
+    defog_sql_text_broker_adv14,
     defog_sql_text_broker_adv15,
+    defog_sql_text_broker_adv16,
     defog_sql_text_broker_basic3,
     defog_sql_text_broker_basic4,
     defog_sql_text_broker_basic5,
@@ -23,11 +28,16 @@ from defog_outputs import (
 )
 from defog_test_functions import (
     impl_defog_broker_adv1,
+    impl_defog_broker_adv2,
     impl_defog_broker_adv3,
     impl_defog_broker_adv6,
+    impl_defog_broker_adv7,
     impl_defog_broker_adv11,
     impl_defog_broker_adv12,
+    impl_defog_broker_adv13,
+    impl_defog_broker_adv14,
     impl_defog_broker_adv15,
+    impl_defog_broker_adv16,
     impl_defog_broker_basic3,
     impl_defog_broker_basic4,
     impl_defog_broker_basic5,
@@ -79,6 +89,14 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
         pytest.param(
             (
+                impl_defog_broker_adv2,
+                "Broker",
+                defog_sql_text_broker_adv2,
+            ),
+            id="broker_adv2",
+        ),
+        pytest.param(
+            (
                 impl_defog_broker_adv3,
                 "Broker",
                 defog_sql_text_broker_adv3,
@@ -92,6 +110,15 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv6,
             ),
             id="broker_adv6",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv7,
+                "Broker",
+                defog_sql_text_broker_adv7,
+            ),
+            id="broker_adv7",
+            marks=pytest.mark.skip("TODO: add LPAD support to PyDough"),
         ),
         pytest.param(
             (
@@ -111,11 +138,35 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
         pytest.param(
             (
+                impl_defog_broker_adv13,
+                "Broker",
+                defog_sql_text_broker_adv13,
+            ),
+            id="broker_adv13",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv14,
+                "Broker",
+                defog_sql_text_broker_adv14,
+            ),
+            id="broker_adv14",
+        ),
+        pytest.param(
+            (
                 impl_defog_broker_adv15,
                 "Broker",
                 defog_sql_text_broker_adv15,
             ),
             id="broker_adv15",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv16,
+                "Broker",
+                defog_sql_text_broker_adv16,
+            ),
+            id="broker_adv16",
         ),
         pytest.param(
             (
@@ -179,7 +230,7 @@ def defog_test_data(
     request,
 ) -> tuple[Callable[[], UnqualifiedNode], Callable[[], str]]:
     """
-    Test data for test_defog_e2e. Returns a tuple of the following
+    Test data for `test_defog_e2e`. Returns a tuple of the following
     arguments:
     1. `unqualified_impl`: a PyDough implementation function.
     2. `graph_name`: the name of the graph from the defog database to use.
@@ -198,7 +249,7 @@ def test_defog_e2e(
     """
     Test executing the defog analytical questions on the sqlite database,
     comparing against the result of running the reference SQL query text on the
-    same database connector.
+    same database connector. Run on the defog.ai queries.
     """
     unqualified_impl, graph_name, query_impl = defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
