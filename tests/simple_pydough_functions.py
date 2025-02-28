@@ -832,6 +832,8 @@ def datediff():
 def padding_functions():
     return Customers.CALCULATE(
         original_name=name,
+        ref_rpad=RPAD("Cust0001", 30, "*"),
+        ref_lpad=LPAD("Cust0001", 30, "*"),
         right_padded=RPAD(name, 30, "*"),
         left_padded=LPAD(name, 30, "#"),
         truncated_right=RPAD(name, 8, "-"),

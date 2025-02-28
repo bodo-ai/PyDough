@@ -1889,6 +1889,8 @@ def test_pipeline_e2e_errors(
                         ]
                     }
                 ).assign(
+                    ref_rpad=lambda x: "Cust0001**********************",
+                    ref_lpad=lambda x: "**********************Cust0001",
                     right_padded=lambda x: x.original_name.apply(
                         lambda s: (s + "*" * 30)[:30]
                     ),
@@ -2010,6 +2012,7 @@ def test_defog_e2e_with_custom_data(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_defog_connection
     )
+    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

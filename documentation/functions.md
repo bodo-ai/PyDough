@@ -288,7 +288,7 @@ The function behaves as follows:
 Customers.CALCULATE(left_padded_name = LPAD(name, 30, "*"))
 ```
 
-For demonstration purposes here are examples on how it pads on string literals. Note that the first argument cannot be a string literal and this is only for demonstration purposes:
+Here are examples on how it pads on string literals:
 | Input | Output |
 |-------|--------|
 | `LPAD("123", 6, "0")` | `"000123"` |
@@ -318,7 +318,7 @@ The function behaves as follows:
 Customers.CALCULATE(right_padded_name = RPAD(name, 30, "*"))
 ```
 
-For demonstration purposes here are examples on how it pads on string literals. Please note the first argument cannot be a string literal and this is only for demonstration purposes:
+Here are examples on how it pads on string literals:
 | Input | Output |
 |-------|--------|
 | `RPAD("123", 6, "0")` | `"123000"` |
