@@ -97,6 +97,25 @@ def rank_with_filters_c():
     )
 
 
+def first_order_per_customer():
+    # For each customer, find the total price of the first order they made and
+    # when it was made. Pick the 5 customers with the highest such values.
+    # Using aggregations as a stopgap until SINGULAR is implemented. If a
+    # customer ordered multiple orders on the first such day, pick the one with
+    # the lowest key. Only consider customers with at least $9k in their
+    # account.
+    first_order = orders.WHERE(RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1)
+    return (
+        Customers.WHERE(acctbal >= 9000.0)
+        .CALCULATE(
+            name,
+            first_order_date=MIN(first_order.order_date),
+            first_order_price=MIN(first_order.total_price),
+        )
+        .TOP_K(5, by=first_order_price.DESC())
+    )
+
+
 def percentile_nations():
     # For every nation, give its name & its bucket from 1-5 ordered by name
     # alphabetically

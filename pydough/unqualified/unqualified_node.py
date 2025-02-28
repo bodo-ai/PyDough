@@ -493,15 +493,9 @@ class UnqualifiedOperator(UnqualifiedNode):
             case "PREV":
                 window_operator = pydop.PREV
                 is_integer.verify(kwargs.get("n", 1), "`n` argument")
-                kwargs["default"] = self.coerce_to_unqualified(
-                    kwargs.get("default", None)
-                )
             case "NEXT":
                 window_operator = pydop.NEXT
                 is_integer.verify(kwargs.get("n", 1), "`n` argument")
-                kwargs["default"] = self.coerce_to_unqualified(
-                    kwargs.get("default", None)
-                )
             case func:
                 is_window = False
                 if len(kwargs) > 0:

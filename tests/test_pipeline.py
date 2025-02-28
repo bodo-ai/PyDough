@@ -46,6 +46,7 @@ from simple_pydough_functions import (
     double_partition,
     exponentiation,
     first_order_in_year,
+    first_order_per_customer,
     function_sampler,
     hour_minute_day,
     minutes_seconds_datediff,
@@ -1176,6 +1177,39 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({"n_sizes": [23]}),
             ),
             id="correl_23",
+        ),
+        pytest.param(
+            (
+                first_order_per_customer,
+                None,
+                "first_order_per_customer",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000097444",
+                            "Customer#000092695",
+                            "Customer#000142948",
+                            "Customer#000095797",
+                            "Customer#000050726",
+                        ],
+                        "first_order_date": [
+                            "1992-03-01",
+                            "1992-09-10",
+                            "1992-09-07",
+                            "1992-06-18",
+                            "1992-11-01",
+                        ],
+                        "first_order_price": [
+                            454639.91,
+                            448940.71,
+                            447699.76,
+                            446979.77,
+                            443394.94,
+                        ],
+                    }
+                ),
+            ),
+            id="first_order_per_customer",
         ),
         pytest.param(
             (

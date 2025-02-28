@@ -1,6 +1,6 @@
 ROOT(columns=[('year', year), ('current_year_orders', current_year_orders), ('pct_change', pct_change)], orderings=[(ordering_4):asc_first])
  PROJECT(columns={'current_year_orders': current_year_orders, 'ordering_4': year, 'pct_change': pct_change, 'year': year})
-  PROJECT(columns={'current_year_orders': DEFAULT_TO(agg_0, 0:int64), 'pct_change': 100.0:float64 * DEFAULT_TO(agg_1, 0:int64) - PREV(args=[], partition=[], order=[(year):asc_last], default=None) / PREV(args=[], partition=[], order=[(year):asc_last], default=None), 'year': year})
+  PROJECT(columns={'current_year_orders': DEFAULT_TO(agg_0, 0:int64), 'pct_change': 100.0:float64 * DEFAULT_TO(agg_1, 0:int64) - PREV(args=[], partition=[], order=[(year):asc_last]) / PREV(args=[], partition=[], order=[(year):asc_last]), 'year': year})
    AGGREGATE(keys={'year': year}, aggregations={'agg_0': COUNT(), 'agg_1': COUNT()})
     PROJECT(columns={'year': YEAR(order_date)})
      SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})

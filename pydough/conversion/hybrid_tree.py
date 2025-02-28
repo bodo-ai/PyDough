@@ -1679,6 +1679,34 @@ class HybridTranslator:
         # the parent tree, which could also be a correlated expression.
         return HybridCorrelExpr(parent_tree, parent_result)
 
+    def add_unique_terms(
+        self,
+        hybrid: HybridTree,
+        levels_reamining: int,
+        levels_so_far: int,
+        partition_args: list[HybridExpr],
+    ) -> None:
+        if levels_reamining == 0:
+            for unique_term in sorted(hybrid.pipeline[-1].unique_exprs, key=str):
+                shifted_arg: HybridExpr | None = unique_term.shift_back(levels_so_far)
+                assert shifted_arg is not None
+                partition_args.append(shifted_arg)
+        elif hybrid.parent is None:
+            if len(self.stack) == 0:
+                raise ValueError("Window function references too far back")
+            prev_hybrid: HybridTree = self.stack.pop()
+            correl_args: list[HybridExpr] = []
+            self.add_unique_terms(prev_hybrid, levels_reamining - 1, 0, correl_args)
+            for arg in correl_args:
+                if not isinstance(arg, HybridCorrelExpr):
+                    prev_hybrid.correlated_children.add(len(prev_hybrid.children))
+                partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
+            self.stack.append(prev_hybrid)
+        else:
+            self.add_unique_terms(
+                hybrid.parent, levels_reamining - 1, levels_so_far + 1, partition_args
+            )
+
     def make_hybrid_expr(
         self,
         hybrid: HybridTree,
@@ -1829,19 +1857,7 @@ class HybridTranslator:
                 partition_args: list[HybridExpr] = []
                 order_args: list[HybridCollation] = []
                 if expr.levels is not None:
-                    ancestor_tree = hybrid
-                    for _ in range(expr.levels):
-                        if ancestor_tree.parent is None:
-                            raise ValueError("Window function references too far back")
-                        ancestor_tree = ancestor_tree.parent
-                    for unique_term in sorted(
-                        ancestor_tree.pipeline[-1].unique_exprs, key=str
-                    ):
-                        shifted_arg: HybridExpr | None = unique_term.shift_back(
-                            expr.levels
-                        )
-                        assert shifted_arg is not None
-                        partition_args.append(shifted_arg)
+                    self.add_unique_terms(hybrid, expr.levels, 0, partition_args)
                 for arg in expr.args:
                     args.append(
                         self.make_hybrid_expr(
