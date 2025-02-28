@@ -1873,7 +1873,7 @@ class HybridTranslator:
                     )
                 return HybridWindowExpr(
                     expr.window_operator,
-                    [],
+                    args,
                     partition_args,
                     order_args,
                     expr.pydough_type,
