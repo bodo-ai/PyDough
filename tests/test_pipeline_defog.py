@@ -10,8 +10,13 @@ from defog_outputs import (
     defog_sql_text_broker_adv1,
     defog_sql_text_broker_adv2,
     defog_sql_text_broker_adv3,
+    defog_sql_text_broker_adv4,
+    defog_sql_text_broker_adv5,
     defog_sql_text_broker_adv6,
     defog_sql_text_broker_adv7,
+    defog_sql_text_broker_adv8,
+    defog_sql_text_broker_adv9,
+    defog_sql_text_broker_adv10,
     defog_sql_text_broker_adv11,
     defog_sql_text_broker_adv12,
     defog_sql_text_broker_adv13,
@@ -30,8 +35,13 @@ from defog_test_functions import (
     impl_defog_broker_adv1,
     impl_defog_broker_adv2,
     impl_defog_broker_adv3,
+    impl_defog_broker_adv4,
+    impl_defog_broker_adv5,
     impl_defog_broker_adv6,
     impl_defog_broker_adv7,
+    impl_defog_broker_adv8,
+    impl_defog_broker_adv9,
+    impl_defog_broker_adv10,
     impl_defog_broker_adv11,
     impl_defog_broker_adv12,
     impl_defog_broker_adv13,
@@ -105,6 +115,23 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
         pytest.param(
             (
+                impl_defog_broker_adv4,
+                "Broker",
+                defog_sql_text_broker_adv4,
+            ),
+            id="broker_adv4",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv5,
+                "Broker",
+                defog_sql_text_broker_adv5,
+            ),
+            id="broker_adv5",
+            marks=pytest.mark.skip("TODO: add PREV function support to PyDough"),
+        ),
+        pytest.param(
+            (
                 impl_defog_broker_adv6,
                 "Broker",
                 defog_sql_text_broker_adv6,
@@ -118,7 +145,37 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv7,
             ),
             id="broker_adv7",
-            marks=pytest.mark.skip("TODO: add LPAD support to PyDough"),
+            marks=pytest.mark.skip("TODO: add LPAD function support to PyDough"),
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv8,
+                "Broker",
+                defog_sql_text_broker_adv8,
+            ),
+            id="broker_adv8",
+            marks=pytest.mark.skip(
+                "TODO: add 'week' support to PyDough DATETIME function"
+            ),
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv9,
+                "Broker",
+                defog_sql_text_broker_adv9,
+            ),
+            id="broker_adv9",
+            marks=pytest.mark.skip(
+                "TODO: add 'week' support to PyDough DATETIME function and DAYOFWEEK and WEEKOFYEAR functions"
+            ),
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_adv10,
+                "Broker",
+                defog_sql_text_broker_adv10,
+            ),
+            id="broker_adv10",
         ),
         pytest.param(
             (

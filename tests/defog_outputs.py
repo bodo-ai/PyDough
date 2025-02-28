@@ -4,6 +4,7 @@ File that holds expected outputs for the defog queries.
 
 __all__ = [
     "defog_sql_text_broker_adv1",
+    "defog_sql_text_broker_adv10",
     "defog_sql_text_broker_adv11",
     "defog_sql_text_broker_adv12",
     "defog_sql_text_broker_adv13",
@@ -12,8 +13,12 @@ __all__ = [
     "defog_sql_text_broker_adv16",
     "defog_sql_text_broker_adv2",
     "defog_sql_text_broker_adv3",
+    "defog_sql_text_broker_adv4",
+    "defog_sql_text_broker_adv5",
     "defog_sql_text_broker_adv6",
     "defog_sql_text_broker_adv7",
+    "defog_sql_text_broker_adv8",
+    "defog_sql_text_broker_adv9",
     "defog_sql_text_broker_basic10",
     "defog_sql_text_broker_basic3",
     "defog_sql_text_broker_basic4",
@@ -88,6 +93,64 @@ def defog_sql_text_broker_adv3() -> str:
     """
 
 
+def defog_sql_text_broker_adv4() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Which 3 distinct stocks had the highest price change between the low and
+    high from April 1 2023 to April 4 2023? I want the different in the low and
+    high throughout this timerange, not just the intraday price changes. Return
+    the ticker symbol and price change.
+    """
+    return """
+    WITH stock_stats AS (
+        SELECT t.sbTickerSymbol, MIN(d.sbDpLow) AS min_price, MAX(d.sbDpHigh) AS max_price
+        FROM sbDailyPrice AS d
+        JOIN sbTicker AS t
+        ON d.sbDpTickerId = t.sbTickerId
+        WHERE d.sbDpDate BETWEEN '2023-04-01' AND '2023-04-04'
+        GROUP BY t.sbTickerSymbol
+    )
+    SELECT sbTickerSymbol, max_price - min_price AS price_change
+    FROM stock_stats ORDER BY CASE WHEN price_change IS NULL THEN 1 ELSE 0 END DESC, price_change DESC
+    LIMIT 3
+    """
+
+
+def defog_sql_text_broker_adv5() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the ticker symbol, month, average closing price, highest price,
+    lowest price, and MoMC for each ticker by month? MoMC = month-over-month
+    change in average closing price, which is calculated as:
+    (avg_close_given_month - avg_close_previous_month) /
+    avg_close_previous_month for each ticker symbol each month.
+    """
+    return """
+    WITH monthly_price_stats AS (
+        SELECT
+            strftime('%Y-%m', sbDpDate) AS month,
+            sbDpTickerId,
+            AVG(sbDpClose) AS avg_close,
+            MAX(sbDpHigh) AS max_high,
+            MIN(sbDpLow) AS min_low
+        FROM sbDailyPrice
+        GROUP BY month, sbDpTickerId
+    )
+    SELECT
+        t.sbTickerSymbol,
+        mps.month,
+        mps.avg_close,
+        mps.max_high,
+        mps.min_low,
+        (mps.avg_close - LAG(mps.avg_close) OVER (PARTITION BY mps.sbDpTickerId ORDER BY mps.month)) / LAG(mps.avg_close) OVER (PARTITION BY mps.sbDpTickerId ORDER BY mps.month) AS mom_change
+    FROM monthly_price_stats AS mps
+    JOIN sbTicker AS t
+    ON mps.sbDpTickerId = t.sbTickerId
+    """
+
+
 def defog_sql_text_broker_adv6() -> str:
     """
     SQLite query text for the following question for the Broker graph:
@@ -127,6 +190,74 @@ def defog_sql_text_broker_adv7() -> str:
     WHERE sbCustJoinDate >= date('now', '-6 months', 'start of month')
     AND sbCustJoinDate < date('now', 'start of month')
     GROUP BY MONTH
+    """
+
+
+def defog_sql_text_broker_adv8() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    How many transactions were made by customers from the USA last week
+    (exclusive of the current week)? Return the number of transactions and
+    total transaction amount.
+    """
+    return """
+    SELECT COUNT(DISTINCT sb.sbTxId) AS num_transactions, SUM(sb.sbTxAmount) AS total_transaction_amount
+    FROM sbTransaction AS sb
+    JOIN sbCustomer AS sc
+    ON sb.sbTxCustId = sc.sbCustId
+    WHERE LOWER(sc.sbCustCountry) = 'usa'
+    AND sb.sbTxDateTime >= DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days', '-7 days')
+    AND sb.sbTxDateTime < DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days')
+    """
+
+
+def defog_sql_text_broker_adv9() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    How many transactions for stocks occurred in each of the last 8 weeks
+    excluding the current week? How many of these transactions happened on
+    weekends? Weekend days are Saturday and Sunday. Truncate date to week for
+    aggregation.
+    """
+    return """
+    SELECT
+        strftime('%Y-%W', t.sbTxDateTime) AS WEEK,
+        COUNT(t.sbTxId) AS num_transactions,
+        COUNT(CASE WHEN strftime('%w', t.sbTxDateTime) IN ('0', '6') THEN 1 END) AS weekend_transactions
+    FROM sbTransaction AS t
+    JOIN sbTicker AS tk
+    ON t.sbTxTickerId = tk.sbTickerId
+    WHERE tk.sbTickerType = 'stock'
+    AND t.sbTxDateTime >= DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days', '-56 days')
+    AND t.sbTxDateTime < DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days')
+    GROUP BY WEEK
+    """
+
+
+def defog_sql_text_broker_adv10() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Which customer made the highest number of transactions in the same month as
+    they signed up? Return the customer's id, name and number of transactions.
+    """
+    return """
+    WITH active_customers AS (
+        SELECT c.sbCustId, COUNT(t.sbTxId) AS num_transactions
+        FROM sbCustomer AS c
+        JOIN sbTransaction AS t
+        ON c.sbCustId = t.sbTxCustId
+        AND strftime('%Y-%m', c.sbCustJoinDate) = strftime('%Y-%m', t.sbTxDateTime) 
+        GROUP BY c.sbCustId
+    )
+    SELECT ac.sbCustId, c.sbCustName, ac.num_transactions
+    FROM active_customers AS ac
+    JOIN sbCustomer AS c
+    ON ac.sbCustId = c.sbCustId
+    ORDER BY ac.num_transactions
+    DESC LIMIT 1
     """
 
 

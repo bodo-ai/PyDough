@@ -1,5 +1,6 @@
 __all__ = [
     "impl_defog_broker_adv1",
+    "impl_defog_broker_adv10",
     "impl_defog_broker_adv11",
     "impl_defog_broker_adv12",
     "impl_defog_broker_adv13",
@@ -8,8 +9,12 @@ __all__ = [
     "impl_defog_broker_adv16",
     "impl_defog_broker_adv2",
     "impl_defog_broker_adv3",
+    "impl_defog_broker_adv4",
+    "impl_defog_broker_adv5",
     "impl_defog_broker_adv6",
     "impl_defog_broker_adv7",
+    "impl_defog_broker_adv8",
+    "impl_defog_broker_adv9",
     "impl_defog_broker_basic10",
     "impl_defog_broker_basic3",
     "impl_defog_broker_basic4",
@@ -70,6 +75,41 @@ def impl_defog_broker_adv3():
     )
 
 
+def impl_defog_broker_adv4():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    Which 3 distinct stocks had the highest price change between the low and
+    high from April 1 2023 to April 4 2023? I want the different in the low and
+    high throughout this timerange, not just the intraday price changes. Return
+    the ticker symbol and price change.
+    """
+    selected_prices = historical_prices.WHERE(
+        (date >= datetime.date(2023, 4, 1)) & (date <= datetime.date(2023, 4, 4))
+    ).CALCULATE(ticker_symbol=ticker.symbol)
+    ticker_info = Tickers.CALCULATE(
+        symbol,
+        low=MIN(selected_prices.low),
+        high=MAX(selected_prices.high),
+    )
+    return ticker_info.CALCULATE(symbol, price_change=high - low).TOP_K(
+        3, price_change.DESC()
+    )
+
+
+def impl_defog_broker_adv5():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What is the ticker symbol, month, average closing price, highest price,
+    lowest price, and MoMC for each ticker by month? MoMC = month-over-month
+    change in average closing price, which is calculated as:
+    (avg_close_given_month - avg_close_previous_month) /
+    avg_close_previous_month for each ticker symbol each month.
+    """
+    raise NotImplementedError
+
+
 def impl_defog_broker_adv6():
     """
     PyDough implementation of the following question for the Broker graph:
@@ -101,7 +141,7 @@ def impl_defog_broker_adv7():
     ).CALCULATE(
         join_year=YEAR(join_date),
         join_month=YEAR(join_date),
-        month=JOIN_STRINGS("-", YEAR(join_date), LPAD(YEAR(join_date), 0, "0")),
+        month=JOIN_STRINGS("-", YEAR(join_date), LPAD(YEAR(join_date), 2, "0")),
     )
     months = selected_customers(selected_customers, name="custs", by=month)
     selected_txns = custs.transactions_made.WHERE(
@@ -111,6 +151,68 @@ def impl_defog_broker_adv7():
         month,
         customer_signups=COUNT(custs),
         avg_tx_amount=AVG(selected_txns),
+    )
+
+
+def impl_defog_broker_adv8():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    How many transactions were made by customers from the USA last week
+    (exclusive of the current week)? Return the number of transactions and
+    total transaction amount.
+    """
+    is_american = HAS(customer.WHERE(LOWER(country) == "usa"))
+    selected_txns = Transactions.WHERE(
+        is_american
+        & (date_time < DATETIME("now", "start_of_week"))
+        & (date_time >= DATETIME("now", "start_of_week", "-1 week"))
+    )
+    return Broker.CALCULATE(
+        n_transactions=COUNT(selected_txns),
+        total_amount=SUM(selected_txns.amount),
+    )
+
+
+def impl_defog_broker_adv9():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    How many transactions for stocks occurred in each of the last 8 weeks
+    excluding the current week? How many of these transactions happened on
+    weekends? Weekend days are Saturday and Sunday. Truncate date to week for
+    aggregation.
+    """
+    selected_transactions = Transactions.WHERE(
+        (date_time < DATETIME("now", "start_of_week"))
+        & (date_time >= DATETIME("now", "start_of_week", "-8 weeks"))
+    ).CALCULATE(
+        week=JOIN_STRINGS("-", YEAR(date_time, LPAD(WEEKOFYEAR(date_time), 2, "0"))),
+        is_weekend=ISIN(DAYOFWEEK(date_time), (0, 6)),
+    )
+    weeks = PARTITION(selected_transactions, name="txns", by=week)
+    return weeks.CALCULATE(
+        week,
+        num_transactions=COUNT(txns),
+        weekend_transactions=SUM(txns.is_weekend),
+    )
+
+
+def impl_defog_broker_adv10():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    Which customer made the highest number of transactions in the same month as
+    they signed up? Return the customer's id, name and number of transactions.
+    """
+    cust_info = Customers.CALCULATE(
+        join_year=YEAR(join_date), join_month=MONTH(join_date)
+    )
+    selected_txns = transactions_made.WHERE(
+        (YEAR(date_time) == join_year) & (MONTH(date_time) == join_month)
+    )
+    return cust_info.CALCULATE(_id, name, num_transactions=COUNT(selected_txns)).TOP_K(
+        1, by=num_transactions.DESC()
     )
 
 
@@ -166,7 +268,7 @@ def impl_defog_broker_adv14():
     today.
     """
     selected_updates = DailyPrices.WHERE(
-        DATEDIFF("days", date, DATETIME("now")) <= 0
+        DATEDIFF("days", date, DATETIME("now")) <= 7
     ).CALCULATE(ticker_type=ticker.ticker_type)
 
     ticker_types = PARTITION(selected_updates, name="updates", by=ticker_type)
