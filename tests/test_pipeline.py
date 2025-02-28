@@ -1180,6 +1180,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 prev_next_regions,
+                None,
                 "prev_next_regions",
                 lambda: pd.DataFrame(
                     {
@@ -1208,6 +1209,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 avg_order_diff_per_customer,
+                None,
                 "avg_order_diff_per_customer",
                 lambda: pd.DataFrame(
                     {
@@ -1227,6 +1229,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 yoy_change_in_num_orders,
+                None,
                 "yoy_change_in_num_orders",
                 lambda: pd.DataFrame(
                     {
@@ -1256,6 +1259,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 first_order_in_year,
+                None,
                 "first_order_in_year",
                 lambda: pd.DataFrame(
                     {
@@ -1269,6 +1273,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 customer_largest_order_deltas,
+                None,
                 "customer_largest_order_deltas",
                 lambda: pd.DataFrame(
                     {
@@ -1294,6 +1299,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 suppliers_bal_diffs,
+                None,
                 "suppliers_bal_diffs",
                 lambda: pd.DataFrame(
                     {
@@ -1316,6 +1322,7 @@ from pydough.unqualified import (
         pytest.param(
             (
                 month_year_sliding_windows,
+                None,
                 "month_year_sliding_windows",
                 lambda: pd.DataFrame(
                     {

@@ -247,6 +247,7 @@ class WindowInfo(AstNodeTestInfo):
             case "RANKING":
                 return builder.build_window_call(
                     pydop.RANKING,
+                    [],
                     collation_args,
                     self.levels,
                     self.kwargs,

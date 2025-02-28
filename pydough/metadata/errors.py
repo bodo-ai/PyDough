@@ -17,6 +17,7 @@ __all__ = [
     "PyDoughPredicate",
     "compound_relationship_inherited_predicate",
     "is_bool",
+    "is_integer",
     "is_positive_int",
     "is_string",
     "is_valid_name",
@@ -301,6 +302,7 @@ class PositiveInteger(PyDoughPredicate):
 ###############################################################################
 
 is_valid_name: PyDoughPredicate = ValidName()
+is_integer = HasType(int, "integer")
 is_string = HasType(str, "string")
 is_bool = HasType(bool, "boolean")
 is_positive_int = PositiveInteger()

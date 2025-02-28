@@ -129,23 +129,23 @@ def regional_suppliers_percentile():
 def prev_next_regions():
     # Sorts the regions alphabetically and finds the previous and next regions'
     # names in a rolling window.
-    return Regions(
-        two_preceding=PREV(2, by=name.ASC()).name,
-        one_preceding=PREV(by=name.ASC()).name,
+    return Regions.CALCULATE(
+        two_preceding=PREV(name, n=2, by=name.ASC()),
+        one_preceding=PREV(name, by=name.ASC()),
         current=name,
-        one_following=NEXT(by=name.ASC()).name,
-        two_following=NEXT(2, by=name.ASC()).name,
+        one_following=NEXT(name, by=name.ASC()),
+        two_following=NEXT(name, n=2, by=name.ASC()),
     ).ORDER_BY(current.ASC())
 
 
 def avg_order_diff_per_customer():
     # Finds the 5 customers with the highest average difference in days between
     # orders made.
-    prev_order_by_cust = PREV(by=order_date.ASC(), levels=1)
-    order_info = orders(
-        day_diff=DATEDIFF("days", order_date, prev_order_by_cust.order_date)
+    prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), levels=1)
+    order_info = orders.CALCULATE(
+        day_diff=DATEDIFF("days", order_date, prev_order_date_by_cust)
     )
-    return Customers(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
+    return Customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
     )
 
@@ -153,10 +153,12 @@ def avg_order_diff_per_customer():
 def yoy_change_in_num_orders():
     # For every year, counts the number of orders made in that year and the
     # percentage change from the previous year.
-    years = PARTITION(Orders(year=YEAR(order_date)), name="orders_in_year", by=year)
+    years = PARTITION(
+        Orders.CALCULATE(year=YEAR(order_date)), name="orders_in_year", by=year
+    )
     current_year_orders = COUNT(orders_in_year)
-    prev_year_orders = PREV(by=year.ASC())(n=COUNT(orders_in_year)).n
-    return years(
+    prev_year_orders = PREV(COUNT(orders_in_year), by=year.ASC())
+    return years.CALCULATE(
         year,
         current_year_orders=current_year_orders,
         pct_change=100.0 * (current_year_orders - prev_year_orders) / prev_year_orders,
@@ -166,11 +168,14 @@ def yoy_change_in_num_orders():
 def first_order_in_year():
     # Find all orders that do not have a previous order in the same year
     # (breaking ties by order key).
-    previous_order = PREV(by=(order_date.ASC(), key.ASC())).WHERE(
-        YEAR(order_date) == YEAR(BACK(1).order_date)
-    )
-    return Orders.WHERE(HASNOT(previous_order))(order_date, key).ORDER_BY(
-        order_date.ASC()
+    previous_order_date = PREV(key, by=(order_date.ASC(), key.ASC()))
+    return (
+        Orders.WHERE(
+            ABSENT(previous_order_date)
+            | (YEAR(previous_order_date) != YEAR(order_date))
+        )
+        .CALCULATE(order_date, key)
+        .ORDER_BY(order_date.ASC())
     )
 
 
@@ -179,27 +184,39 @@ def customer_largest_order_deltas():
     # revenue between one of their orders and and the most recent order before
     # it, ignoring their first ever order. Return the 5 customers with the
     # largest such difference.
-    revenue = extended_price * (1 - discount)
-    previous_order = PREV(by=order_date.ASC(), levels=1)
-    orders_info = orders.WHERE(HAS(previous_order))(
-        revenue_delta=SUM(lines(r=revenue).r) - SUM(previous_order.lines(r=revenue).r)
+    line_revenue = extended_price * (1 - discount)
+    order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
+    previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), levels=1)
+    orders_info = orders.WHERE(PRESENT(previous_order_revenue)).CALCULATE(
+        revenue_delta=order_revenue
+        - PREV(order_revenue, by=order_date.ASC(), levels=1),
     )
-    return Customers(
-        max_diff=MAX(orders_info.revenue_delta), min_diff=MIN(orders_info.revenue_delta)
-    )(
-        name,
-        largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff),
-    ).TOP_K(5, by=largest_diff.DESC())
+    return (
+        Customers.CALCULATE(
+            max_diff=MAX(orders_info.revenue_delta),
+            min_diff=MIN(orders_info.revenue_delta),
+        )
+        .CALCULATE(
+            name,
+            largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff),
+        )
+        .TOP_K(5, by=largest_diff.DESC())
+    )
 
 
 def suppliers_bal_diffs():
     # Finds the 5 suppliers with the largest difference in account balance from
     # the supplier with the next smallest account balance in the same region.
-    return Regions.nations.suppliers(
-        name,
-        region_name=BACK(2).name,
-        acctbal_delta=account_balance - PREV(by=account_balance.ASC()).account_balance,
-    ).TOP_K(5, by=acctbal_delta.DESC())
+    return (
+        Regions.CALCULATE(region_name=name)
+        .nations.suppliers.CALCULATE(
+            name,
+            region_name,
+            acctbal_delta=account_balance
+            - PREV(account_balance, by=account_balance.ASC()),
+        )
+        .TOP_K(5, by=acctbal_delta.DESC())
+    )
 
 
 def month_year_sliding_windows():
@@ -207,30 +224,32 @@ def month_year_sliding_windows():
     # that month was more than the preceding/following month, and the amount
     # spent in that year was more than the following year.
     ym_groups = PARTITION(
-        Orders(year=YEAR(order_date), month=MONTH(order_date)),
+        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)),
         name="orders",
         by=(year, month),
-    )(month_total_spent=SUM(orders.total_price))
-    y_groups = PARTITION(ym_groups, name="months", by=year)(
-        curr_year_total_spent=SUM(months.month_total_spent),
-        next_year_total_spent=SUM(NEXT(by=year.ASC()).months.month_total_spent),
-    ).WHERE(curr_year_total_spent > next_year_total_spent)
-    return (
-        y_groups.months(
-            curr_year_total_spent=BACK(1).curr_year_total_spent,
-            next_year_total_spent=BACK(1).next_year_total_spent,
+    ).CALCULATE(month_total_spent=SUM(orders.total_price))
+    y_groups = (
+        PARTITION(ym_groups, name="months", by=year)
+        .CALCULATE(
+            curr_year_total_spent=SUM(months.month_total_spent),
+            next_year_total_spent=NEXT(
+                SUM(months.month_total_spent), by=year.ASC(), default=0.0
+            ),
         )
-        .WHERE(
+        .WHERE(curr_year_total_spent > next_year_total_spent)
+    )
+    return (
+        y_groups.months.WHERE(
             (
                 month_total_spent
-                > DEFAULT_TO(PREV(by=(year.ASC(), month.ASC())).month_total_spent, 0.0)
+                > PREV(month_total_spent, by=(year.ASC(), month.ASC()), default=0.0)
             )
             & (
                 month_total_spent
-                > DEFAULT_TO(NEXT(by=(year.ASC(), month.ASC())).month_total_spent, 0.0)
+                > NEXT(month_total_spent, by=(year.ASC(), month.ASC()), default=0.0)
             )
-            & (curr_year_total_spent > next_year_total_spent)
-        )(year, month)
+        )
+        .CALCULATE(year, month)
         .ORDER_BY(year.ASC(), month.ASC())
     )
 
