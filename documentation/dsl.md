@@ -721,10 +721,7 @@ An expression becomes a collation expression when it is appended with `.ASC()` (
 
 If there are multiple `ORDER_BY` terms, the last one is the one that takes precedence. The terms in the collection are unchanged by the `ORDER_BY` clause, since the only change is the order of the records.
 
-
-
-> [!WARNING]
-> In the current version of PyDough, the behavior when the expressions inside an `ORDER_BY` clause are not collation expressions with `.ASC()` or `.DESC()` is undefined/unsupported.
+PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 
 **Good Example #1**: Order every person alphabetically by last name, then first name, then middle name (people with no middle name going last).
 
@@ -786,6 +783,28 @@ Addresses.CALCULATE(state, city).WHERE(
 People.WHERE(PERCENTILE(by=COUNT(packages).ASC()) == 100)
 ```
 
+**Good Example #7**: Sort every person by their first name. This is valid because the collation term is by default ascending based on the `collation_default_asc` config.
+
+```py
+%%pydough
+People.ORDER_BY(first_name)
+```
+
+**Good Example #8**: Sort every person by their first name in ascending order, last name in descending order, and the number of packages they have ordered in descending order.
+Let's keep the default behavior of `collation_default_asc` and set `propogate_collation` to `True`.
+
+```py
+%%pydough
+People.ORDER_BY(first_name, last_name.DESC(), COUNT(packages))
+```
+
+This is valid because the collation term is by default ascending based on the `collation_default_asc` config. Setting the `propogate_collation` config to `True` will cause the collation to be propogated to the `COUNT(packages)` term. Hence its equivalent to:
+
+```py
+%%pydough
+People.ORDER_BY(first_name.ASC(), last_name.DESC(), COUNT(packages).DESC())
+```
+
 **Bad Example #1**: Sort each person by their account balance in descending order. This is invalid because the `People` collection does not have an `account_balance` property.
 
 ```py
@@ -813,14 +832,7 @@ Addresses.WHERE(
 )
 ```
 
-**Bad Example #4**: Sort every person by their first name. This is invalid because no `.ASC()` or `.DESC()` term is provided.
-
-```py
-%%pydough
-People.ORDER_BY(first_name)
-```
-
-**Bad Example #5**: Sort every person. This is invalid because no collation terms are provided.
+**Bad Example #4**: Sort every person. This is invalid because no collation terms are provided.
 
 ```py
 %%pydough
@@ -833,6 +845,8 @@ People.ORDER_BY()
 A similar operation to `ORDER_BY` is `TOP_K`. The `TOP_K` operation also sorts a collection, but then uses the ordered results in order to pick the first `k`, values, where `k` is a provided constant.
 
 The syntax for this is `.TOP_K(k, by=...)` where `k` is a positive integer and the `by` clause is either a single collation term (as seen in `ORDER_BY`) or an iterable of collation terms (e.g. a list or tuple). The same restrictions as `ORDER_BY` apply to `TOP_K` regarding their collation terms.
+
+PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 
 The terms in the collection are unchanged by the `TOP_K` clause, since the only change is the order of the records and which ones are kept/dropped.
 
@@ -877,6 +891,13 @@ People.CALCULATE(
 ).TOP_K(3, by=total_package_cost.DESC())
 ```
 
+**Good Example #5**: Find the 1000 people by birth date. This is valid because the collation term is by default ascending based on the `collation_default_asc` config.
+
+```py
+%%pydough
+People.TOP_K(1000, by=birth_date)
+```
+
 **Bad Example #1**: Find the 5 people with the lowest GPAs. This is invalid because the `People` collection does not have a `gpa` property.
 
 ```py
@@ -912,13 +933,6 @@ Packages.TOP_K(by=package_cost.DESC())
 ```py
 %%pydough
 Addresses.TOP_K(300, by=())
-```
-
-**Bad Example #6**: Find the 1000 people by birth date. This is invalid because the collation term does not have `.ASC()` or `.DESC()`.
-
-```py
-%%pydough
-People.TOP_K(1000, by=birth_date)
 ```
 
 <!-- TOC --><a name="partition"></a>
