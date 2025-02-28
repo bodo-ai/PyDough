@@ -19,10 +19,13 @@ __all__ = [
     "defog_sql_text_broker_adv7",
     "defog_sql_text_broker_adv8",
     "defog_sql_text_broker_adv9",
+    "defog_sql_text_broker_basic1",
     "defog_sql_text_broker_basic10",
+    "defog_sql_text_broker_basic2",
     "defog_sql_text_broker_basic3",
     "defog_sql_text_broker_basic4",
     "defog_sql_text_broker_basic5",
+    "defog_sql_text_broker_basic6",
     "defog_sql_text_broker_basic7",
     "defog_sql_text_broker_basic8",
     "defog_sql_text_broker_basic9",
@@ -375,6 +378,51 @@ def defog_sql_text_broker_adv16() -> str:
     """
 
 
+def defog_sql_text_broker_basic1() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What are the top 5 countries by total transaction amount in the past 30
+    days, inclusive of 30 days ago? Return the country name, number of
+    transactions and total transaction amount.
+    """
+    return """
+    SELECT
+        c.sbCustCountry,
+        COUNT(t.sbTxId) AS num_transactions,
+        SUM(t.sbTxAmount) AS total_amount
+    FROM sbCustomer AS c
+    JOIN sbTransaction AS t
+    ON c.sbCustId = t.sbTxCustId
+    WHERE t.sbTxDateTime >= DATE('now', '-30 days')
+    GROUP BY c.sbCustCountry
+    ORDER BY total_amount DESC
+    LIMIT 5
+    """
+
+
+def defog_sql_text_broker_basic2() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    How many distinct customers made each type of transaction between Jan 1,
+    2023 and Mar 31, 2023 (inclusive of start and end dates)? Return the
+    transaction type, number of distinct customers and average number of
+    shares, for the top 3 transaction types by number of customers.
+    """
+    return """
+    SELECT
+        t.sbTxType,
+        COUNT(DISTINCT t.sbTxCustId) AS num_customers,
+        AVG(t.sbTxShares) AS avg_shares
+    FROM sbTransaction AS t
+    WHERE t.sbTxDateTime BETWEEN '2023-01-01' AND '2023-03-31 23:59:59'
+    GROUP BY t.sbTxType
+    ORDER BY CASE WHEN num_customers IS NULL THEN 1 ELSE 0 END DESC, num_customers DESC
+    LIMIT 3
+    """
+
+
 def defog_sql_text_broker_basic3() -> str:
     """
     SQLite query text for the following question for the Broker graph:
@@ -430,6 +478,22 @@ def defog_sql_text_broker_basic5() -> str:
     ON c.sbCustId = t.sbTxCustId
     WHERE t.sbTxType = 'buy'
     ORDER BY sbCustId
+    """
+
+
+def defog_sql_text_broker_basic6() -> str:
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return the distinct list of ticker IDs that have daily price records on or
+    after Apr 1, 2023.
+    """
+    return """
+    SELECT DISTINCT tk.sbTickerId
+    FROM sbTicker AS tk
+    JOIN sbDailyPrice AS dp
+    ON tk.sbTickerId = dp.sbDpTickerId
+    WHERE dp.sbDpDate >= '2023-04-01'
     """
 
 

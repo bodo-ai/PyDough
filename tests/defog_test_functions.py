@@ -15,10 +15,13 @@ __all__ = [
     "impl_defog_broker_adv7",
     "impl_defog_broker_adv8",
     "impl_defog_broker_adv9",
+    "impl_defog_broker_basic1",
     "impl_defog_broker_basic10",
+    "impl_defog_broker_basic2",
     "impl_defog_broker_basic3",
     "impl_defog_broker_basic4",
     "impl_defog_broker_basic5",
+    "impl_defog_broker_basic6",
     "impl_defog_broker_basic7",
     "impl_defog_broker_basic8",
     "impl_defog_broker_basic9",
@@ -337,6 +340,46 @@ def impl_defog_broker_adv16():
     return Tickers.CALCULATE(symbol, SPM=spm).WHERE(PRESENT(SPM)).ORDER_BY(symbol.ASC())
 
 
+def impl_defog_broker_basic1():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    What are the top 5 countries by total transaction amount in the past 30
+    days, inclusive of 30 days ago? Return the country name, number of
+    transactions and total transaction amount.
+    """
+    counries = PARTITION(Customers, name="custs", by=country)
+    selected_txns = custs.transactions_made.WHERE(
+        date_time >= DATETIME("now", "-30 days", "start of day")
+    )
+    return counries.CALCULATE(
+        country,
+        num_transactions=COUNT(selected_txns),
+        total_amount=SUM(selected_txns.amount),
+    )
+
+
+def impl_defog_broker_basic2():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    How many distinct customers made each type of transaction between Jan 1,
+    2023 and Mar 31, 2023 (inclusive of start and end dates)? Return the
+    transaction type, number of distinct customers and average number of
+    shares, for the top 3 transaction types by number of customers.
+    """
+    selected_txns = Transactions.WHERE(
+        (date_time >= datetime.date(2023, 1, 1))
+        & (date_time <= datetime.date(2023, 3, 31))
+    )
+    txn_types = PARTITION(selected_txns, name="txns", by=transaction_type)
+    return txn_types.CALCULATE(
+        transaction_type,
+        num_customers=NDISTINCT(txns.customer_id),
+        avg_shares=AVG(txns.shares),
+    ).TOP_K(3, by=num_customers.DESC())
+
+
 def impl_defog_broker_basic3():
     """
     PyDough implementation of the following question for the Broker graph:
@@ -380,6 +423,17 @@ def impl_defog_broker_basic5():
     return Customers.WHERE(
         HAS(transactions_made.WHERE(transaction_type == "buy"))
     ).CALCULATE(_id)
+
+
+def impl_defog_broker_basic6():
+    """
+    PyDough implementation of the following question for the Broker graph:
+
+    Return the distinct list of ticker IDs that have daily price records on or
+    after Apr 1, 2023.
+    """
+    selected_price_records = historical_prices.WHERE(date >= datetime.date(2023, 4, 1))
+    return Tickers.CALCULATE(_id).WHERE(HAS(selected_price_records))
 
 
 def impl_defog_broker_basic7():
