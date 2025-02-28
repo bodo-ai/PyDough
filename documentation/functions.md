@@ -159,12 +159,17 @@ Below are all other operators currently supported in PyDough that use other synt
 
 ### Slicing
 
-A string expression can have a substring extracted with Python string slicing syntax `s[a:b:c]`:
+A string expression can have a substring extracted with Python string slicing syntax `s[a:b:c]`.
+The implementation is based on Python slicing semantics. PyDough supports negative slicing, but currently, it does not support providing step values other than 1.
 
 ```py
 Customers.CALCULATE(
     country_code = phone[:3],
-    name_without_first_char = name[1:]
+    name_without_first_char = name[1:],
+    last_digit = phone[-1:],
+    name_without_start_and_end_char = name[1:-1]
+    phone_without_last_5_chars = phone[:-5]
+    name_second_to_last_char = name[-2:-1]
 )
 ```
 
