@@ -280,6 +280,55 @@ answer = x.TOP_K(100)\
             "Parts.CALCULATE(name=name, rank=RANKING(by=(retail_price.DESC(na_pos='last'), levels=2, allow_ties=True, dense=True))",
             id="ranking_4",
         ),
+        pytest.param(
+            "answer = _ROOT.PREV()",
+            "PREV(1)",
+            id="prev_next_1",
+        ),
+        pytest.param(
+            "answer = _ROOT.NEXT(by=_ROOT.order_date.ASC())",
+            "PREV(-1, by=(?.order_date.ASC(na_pos='first'))",
+            id="prev_next_2",
+        ),
+        pytest.param(
+            "answer = _ROOT.PREV(5)",
+            "PREV(5)",
+            id="prev_next_3",
+        ),
+        pytest.param(
+            "answer = _ROOT.NEXT(levels=5)",
+            "PREV(-1, levels=5)",
+            id="prev_next_4",
+        ),
+        pytest.param(
+            "answer = _ROOT.PREV(1, by=_ROOT.value.DESC(), levels=1)",
+            "PREV(1, by=(?.value.DESC(na_pos='last'), levels=1)",
+            id="prev_next_5",
+        ),
+        pytest.param(
+            "answer = _ROOT.NEXT(1, by=[_ROOT.name.ASC()])",
+            "PREV(-1, by=(?.name.ASC(na_pos='first'))",
+            id="prev_next_6",
+        ),
+        pytest.param(
+            "answer = _ROOT.PREV(10, levels=2)",
+            "PREV(10, levels=2)",
+            id="prev_next_7",
+        ),
+        pytest.param(
+            "answer = _ROOT.NEXT(by=(_ROOT.first_name.ASC(), _ROOT.last_name.ASC(), _ROOT.middle_name.ASC()), levels=1)",
+            "PREV(-1, by=(?.first_name.ASC(na_pos='first'), ?.last_name.ASC(na_pos='first'), ?.middle_name.ASC(na_pos='first'), levels=1)",
+            id="prev_next_8",
+        ),
+        pytest.param(
+            """\
+prev_order_by_customer = _ROOT.PREV(by=_ROOT.order_date.ASC(), levels=1)
+order_info = _ROOT.orders(day_delta=_ROOT.DATEDIFF('days', prev_order_by_customer.order_date, _ROOT.order_date))
+answer = _ROOT.Customers(_ROOT.name, avg_delta=_ROOT.AVG(order_info.day_delta))\
+""",
+            "?.Customers(name=?.name, avg_delta=AVG(?.orders(day_delta=DATEDIFF('days', PREV(1, by=(?.order_date.ASC(na_pos='first'), levels=1).order_date, ?.order_date)).day_delta))",
+            id="prev_next_9",
+        ),
     ],
 )
 def test_unqualified_to_string(
