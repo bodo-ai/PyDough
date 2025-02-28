@@ -16,6 +16,7 @@ __all__ = [
     "OrderBy",
     "PartitionBy",
     "PartitionChild",
+    "Prev",
     "PyDoughCollectionQDAG",
     "SubCollection",
     "TableCollection",
@@ -36,6 +37,7 @@ from .global_context import GlobalContext
 from .order_by import OrderBy
 from .partition_by import PartitionBy
 from .partition_child import PartitionChild
+from .prev import Prev
 from .sub_collection import SubCollection
 from .table_collection import TableCollection
 from .top_k import TopK

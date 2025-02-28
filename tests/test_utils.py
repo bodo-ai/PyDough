@@ -610,8 +610,7 @@ class CalculateInfo(ChildOperatorInfo):
             builder,
             context,
         )
-        raw_calc = builder.build_calculate(context, children)
-        assert isinstance(raw_calc, Calculate)
+        raw_calc: Calculate = builder.build_calculate(context, children)
         args: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
@@ -649,8 +648,7 @@ class WhereInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_where = builder.build_where(context, children)
-        assert isinstance(raw_where, Where)
+        raw_where: Where = builder.build_where(context, children)
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionQDAG)
         return raw_where.with_condition(cond)
@@ -695,8 +693,7 @@ class OrderInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_order = builder.build_order(context, children)
-        assert isinstance(raw_order, OrderBy)
+        raw_order: OrderBy = builder.build_order(context, children)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
@@ -747,8 +744,7 @@ class TopKInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_top_k = builder.build_top_k(context, children, self.records_to_keep)
-        assert isinstance(raw_top_k, TopK)
+        raw_top_k: TopK = builder.build_top_k(context, children, self.records_to_keep)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
@@ -791,8 +787,9 @@ class PartitionInfo(ChildOperatorInfo):
             builder, context
         )
         assert len(children) == 1
-        raw_partition = builder.build_partition(context, children[0], self.child_name)
-        assert isinstance(raw_partition, PartitionBy)
+        raw_partition: PartitionBy = builder.build_partition(
+            context, children[0], self.child_name
+        )
         keys: list[ChildReferenceExpression] = []
         for info in self.keys:
             expr = info.build(builder, context, children)
