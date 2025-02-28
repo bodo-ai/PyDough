@@ -39,17 +39,22 @@ from correlated_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    avg_order_diff_per_customer,
+    customer_largest_order_deltas,
     datetime_current,
     datetime_relative,
     double_partition,
     exponentiation,
+    first_order_in_year,
     function_sampler,
     hour_minute_day,
     minutes_seconds_datediff,
+    month_year_sliding_windows,
     multi_partition_access_1,
     multi_partition_access_2,
     percentile_customers_per_region,
     percentile_nations,
+    prev_next_regions,
     rank_nations_by_region,
     rank_nations_per_region_by_customers,
     rank_parts_per_supplier_region_by_size,
@@ -59,8 +64,10 @@ from simple_pydough_functions import (
     regional_suppliers_percentile,
     simple_filter_top_five,
     simple_scan_top_five,
+    suppliers_bal_diffs,
     triple_partition,
     years_months_days_hours_datediff,
+    yoy_change_in_num_orders,
 )
 from test_utils import (
     graph_fetcher,
@@ -1089,6 +1096,155 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({"n_sizes": [23]}),
             ),
             id="correl_23",
+        ),
+        pytest.param(
+            (
+                prev_next_regions,
+                "prev_next_regions",
+                lambda: pd.DataFrame(
+                    {
+                        "two_preceding": [None, None, "ARICA", "AMERICA", "ASIA"],
+                        "one_preceding": [None, "ARICA", "AMERICA", "ASIA", "EUROPE"],
+                        "current": [
+                            "ARICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "one_following": [
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                            None,
+                        ],
+                        "two_following": ["ASIA", "EUROPE", "MIDDLE EAST", None, None],
+                    }
+                ),
+            ),
+            id="prev_next_regions",
+        ),
+        pytest.param(
+            (
+                avg_order_diff_per_customer,
+                "avg_order_diff_per_customer",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000075872",
+                            "Customer#000004796",
+                            "Customer#000112880",
+                            "Customer#000041345",
+                            "Customer#000119474",
+                        ],
+                        "avg_order_gap": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
+                    }
+                ),
+            ),
+            id="avg_order_diff_per_customer",
+        ),
+        pytest.param(
+            (
+                yoy_change_in_num_orders,
+                "yoy_change_in_num_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "year": range(1992, 1999),
+                        "n_orders": [
+                            227089,
+                            226645,
+                            227597,
+                            228637,
+                            228626,
+                            227783,
+                            133623,
+                        ],
+                        "pct_change": [
+                            -0.195518,
+                            0.420040,
+                            0.456948,
+                            -0.004811,
+                            -0.368724,
+                            -41.337589,
+                        ],
+                    }
+                ),
+            ),
+            id="yoy_change_in_num_orders",
+        ),
+        pytest.param(
+            (
+                first_order_in_year,
+                "first_order_in_year",
+                lambda: pd.DataFrame(
+                    {
+                        "order_date": [f"{yr}-01-01" for yr in range(1992, 1999)],
+                        "key": [3271, 15233, 290, 14178, 4640, 5895, 20064],
+                    }
+                ),
+            ),
+            id="first_order_in_year",
+        ),
+        pytest.param(
+            (
+                customer_largest_order_deltas,
+                "customer_largest_order_deltas",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000054733",
+                            "Customer#000107128",
+                            "Customer#000019063",
+                            "Customer#000100810",
+                            "Customer#000127003",
+                        ],
+                        "largest_diffs": [
+                            454753.9935,
+                            447181.8195,
+                            446706.3978,
+                            443366.9780,
+                            442893.6328,
+                        ],
+                    }
+                ),
+            ),
+            id="customer_largest_order_deltas",
+        ),
+        pytest.param(
+            (
+                suppliers_bal_diffs,
+                "suppliers_bal_diffs",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Supplier#000004473"
+                            "Supplier#000000188"
+                            "Supplier#000005963"
+                            "Supplier#000004115"
+                            "Supplier#000007267"
+                        ],
+                        "region_name": [
+                            "ASIA" "MIDDLE EAST" "AMERICA" "EUROPE" "EUROPE"
+                        ],
+                        "diff": [44.43, 43.25, 43.15, 41.54, 41.48],
+                    }
+                ),
+            ),
+            id="suppliers_bal_diffs",
+        ),
+        pytest.param(
+            (
+                month_year_sliding_windows,
+                "month_year_sliding_windows",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1996] * 6 + [1997] * 4 + [1998] * 4,
+                        "month": [1, 3, 5, 8, 10, 12, 3, 5, 7, 10, 1, 3, 5, 7],
+                    }
+                ),
+            ),
+            id="month_year_sliding_windows",
         ),
     ],
 )

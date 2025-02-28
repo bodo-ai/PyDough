@@ -30,6 +30,7 @@ from .collections import (
     GlobalContext,
     OrderBy,
     PartitionBy,
+    Prev,
     PyDoughCollectionQDAG,
     TopK,
     Where,
@@ -408,3 +409,28 @@ class AstNodeBuilder:
         return ChildReferenceCollection(
             preceding_context, children[child_idx], child_idx
         )
+
+    def build_prev(
+        self,
+        context: PyDoughCollectionQDAG,
+        n_behind: int,
+        levels: int | None,
+        collation: list[CollationExpression],
+    ) -> Prev:
+        """
+        Creates a Prev node.
+
+        Args:
+            `context`: the collection that the previous record is being found
+            from.
+            `n_behind`: the number of rows back to look.
+            `levels`: the number of ancestor levels to look for where to
+            partition the context.
+            `collation`: the list of collation expressions to use for the
+            Prev operator. This must be a list of references to expressions
+            in the context of the Prev operator.
+
+        Returns:
+            The newly created PyDough Prev instance.
+        """
+        return Prev(context, n_behind, levels, collation)
