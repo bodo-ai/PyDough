@@ -139,8 +139,8 @@ pydough.active_session.config = old_configs
 ```
 
 Each `PyDoughConfigs` currently encapsulates the following configurations:
-- `sum_default_zero` (default=True): if True, then `SUM` will always return `0` instead of `NULL` when there are no records to be summed (e.g. summing over an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
-- `avg_default_zero` (default=False): if True, then `AVG` will always return `0` instead of `NULL` when there are no records to be summed (e.g. taking the average from an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
+1. `sum_default_zero` (default=True): if True, then `SUM` will always return `0` instead of `NULL` when there are no records to be summed (e.g. summing over an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
+2. `avg_default_zero` (default=False): if True, then `AVG` will always return `0` instead of `NULL` when there are no records to be summed (e.g. taking the average from an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
 
 For example, consider this PyDough snippet:
 
@@ -167,6 +167,62 @@ old_sum_behavior = configs.sum_default_zero
 configs.sum_default_zero = False
 ```
 
+The following configs are used in the behavior of `PERCENTILE`, `RANKING`, `ORDER_BY` and `TOP_K` where a collation(`ASC` or `DESC`) is not explicitly specified:
+
+3. `collation_default_asc` (default=True): if True, then the default collation is ascending. If False, then the default collation is descending.
+4. `propogate_collation` (default=False): if True, then the collation of the current expression, which does not have a collation, uses the most recent available collation in the nodes of the term. If there is no recent available collation, then the default collation is used as specified by `collation_default_asc`. If False, the expression uses the default collation as specified by `collation_default_asc`.
+
+For example, consider the following PyDough code:
+
+```py
+%%pydough
+# The collations are not explicitly specified for few of the terms.
+result =Suppliers.ORDER_BY(
+    COUNT(supply_records).ASC(),
+    name, phone,
+    account_balance.DESC(), comment
+).TOP_K(5, by=(
+    key,COUNT(supply_records),
+    name.DESC(), address,
+    account_balance.ASC(), comment
+))
+
+# Capture the configs of the active session
+configs = pydough.active_session.config
+
+# Example 1: Setting `collation_default_asc` to False and using default behavior of `propogate_collation`.
+# Setting `collation_default_asc` to False will cause the collations to be descending.
+configs.collation_default_asc = False
+# Default behavior is to not propogate the collation.
+
+# Hence its equivalent to:
+result = Suppliers.ORDER_BY(
+    COUNT(supply_records).DESC(),
+    name.DESC(), phone.DESC(),
+    account_balance.ASC(), comment.DESC()
+).TOP_K(5, by=(
+    key.DESC(),COUNT(supply_records).DESC(),
+    name.DESC(), address.DESC(),
+    account_balance.ASC(), comment.DESC()
+))
+
+# Example 2: Setting `collation_default_asc` to False and using `propogate_collation` to True.
+# Setting `collation_default_asc` to False will cause the collations to be descending.
+configs.collation_default_asc = False
+# Setting `propogate_collation` to True will cause the collations to be propogated.
+configs.propogate_collation = True
+
+# Hence its equivalent to:
+result = Suppliers.ORDER_BY(
+    COUNT(supply_records).DESC(),
+    name.DESC(), phone.DESC(),
+    account_balance.ASC(), comment.DESC()
+).TOP_K(5, by=(
+    key.DESC(),COUNT(supply_records).DESC(),
+    name.DESC(), address.DESC(),
+    account_balance.ASC(), comment.ASC()
+))
+```
 <!-- TOC --><a name="session-database"></a>
 ### Session Database
 

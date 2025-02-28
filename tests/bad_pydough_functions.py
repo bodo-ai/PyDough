@@ -33,26 +33,21 @@ def bad_window_2():
 
 
 def bad_window_3():
-    # Non-collations in `by`
-    return Orders.CALCULATE(RANKING(by=order_key))
-
-
-def bad_window_4():
     # Non-positive levels
     return Orders.CALCULATE(RANKING(by=order_key.ASC(), levels=0))
 
 
-def bad_window_5():
+def bad_window_4():
     # Non-integer levels
     return Orders.CALCULATE(RANKING(by=order_key.ASC(), levels="hello"))
 
 
-def bad_window_6():
+def bad_window_5():
     # Non-positive n_buckets
     return Orders.CALCULATE(PERCENTILE(by=order_key.ASC(), n_buckets=-3))
 
 
-def bad_window_7():
+def bad_window_6():
     # Non-integer n_buckets
     return Orders.CALCULATE(PERCENTILE(by=order_key.ASC(), n_buckets=[1, 2, 3]))
 

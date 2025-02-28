@@ -7,7 +7,9 @@ unqualified node.
 __all__ = ["explain_term", "find_unqualified_root"]
 
 
+import pydough
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.qdag import (
     BackReferenceExpression,
     ChildReferenceExpression,
@@ -123,14 +125,14 @@ def explain_term(
     lines: list[str] = []
     root: UnqualifiedRoot | None = find_unqualified_root(node)
     qualified_node: PyDoughQDAG | None = None
-
+    config: PyDoughConfigs = pydough.active_session.config
     try:
         if root is None:
             lines.append(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
             )
         else:
-            qualified_node = qualify_node(node, root._parcel[0])
+            qualified_node = qualify_node(node, root._parcel[0], config)
     except PyDoughQDAGException as e:
         if "Unrecognized term" in str(e):
             lines.append(

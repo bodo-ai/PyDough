@@ -721,6 +721,8 @@ An expression becomes a collation expression when it is appended with `.ASC()` (
 
 If there are multiple `ORDER_BY` terms, the last one is the one that takes precedence. The terms in the collection are unchanged by the `ORDER_BY` clause, since the only change is the order of the records.
 
+
+
 > [!WARNING]
 > In the current version of PyDough, the behavior when the expressions inside an `ORDER_BY` clause are not collation expressions with `.ASC()` or `.DESC()` is undefined/unsupported.
 

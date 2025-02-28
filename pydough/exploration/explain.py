@@ -5,8 +5,9 @@ explanations of PyDough metadata objects and unqualified nodes.
 
 __all__ = ["explain"]
 
-
+import pydough
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
 from pydough.metadata.graphs import GraphMetadata
@@ -295,13 +296,13 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     """
     lines: list[str] = []
     qualified_node: PyDoughQDAG | None = None
-
+    config: PyDoughConfigs = pydough.active_session.config
     # Attempt to qualify the node, dumping an appropriate message if it could
     # not be qualified
     try:
         root: UnqualifiedRoot | None = find_unqualified_root(node)
         if root is not None:
-            qualified_node = qualify_node(node, root._parcel[0])
+            qualified_node = qualify_node(node, root._parcel[0], config)
         else:
             # If the root is None, it means that the node was an expression
             # without information about its context.

@@ -1219,7 +1219,7 @@ def test_pipeline_until_relational(
     graph: GraphMetadata = get_sample_graph("TPCH")
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
     assert isinstance(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
@@ -1902,7 +1902,7 @@ def test_defog_until_relational(
     file_path: str = get_plan_test_filename(file_name)
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
     assert isinstance(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
