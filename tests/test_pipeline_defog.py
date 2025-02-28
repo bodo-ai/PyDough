@@ -134,7 +134,9 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv5,
             ),
             id="broker_adv5",
-            marks=pytest.mark.skip("TODO: add PREV function support to PyDough"),
+            marks=pytest.mark.skip(
+                "TODO (gh #158): add PREV function support to PyDough"
+            ),
         ),
         pytest.param(
             (
@@ -151,7 +153,9 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv7,
             ),
             id="broker_adv7",
-            marks=pytest.mark.skip("TODO: add LPAD function support to PyDough"),
+            marks=pytest.mark.skip(
+                "TODO (gh #261): add LPAD function support to PyDough"
+            ),
         ),
         pytest.param(
             (
@@ -161,7 +165,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="broker_adv8",
             marks=pytest.mark.skip(
-                "TODO: add 'week' support to PyDough DATETIME function"
+                "TODO (gh #271): add 'week' support to PyDough DATETIME function"
             ),
         ),
         pytest.param(
@@ -172,7 +176,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="broker_adv9",
             marks=pytest.mark.skip(
-                "TODO: add 'week' support to PyDough DATETIME function and DAYOFWEEK and WEEKOFYEAR functions"
+                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK and WEEKOFYEAR functions"
             ),
         ),
         pytest.param(
