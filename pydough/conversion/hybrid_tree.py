@@ -1227,6 +1227,10 @@ class HybridTranslator:
             case WindowCall():
                 # Otherwise, mutate `reference_types` based on the arguments
                 # to the window call.
+                for window_arg in expr.args:
+                    HybridTranslator.identify_connection_types(
+                        window_arg, child_idx, reference_types, inside_aggregation
+                    )
                 for col in expr.collation_args:
                     HybridTranslator.identify_connection_types(
                         col.expr, child_idx, reference_types, inside_aggregation
@@ -1838,11 +1842,19 @@ class HybridTranslator:
                         )
                         assert shifted_arg is not None
                         partition_args.append(shifted_arg)
-                for arg in expr.collation_args:
-                    hybrid_arg = self.make_hybrid_expr(
-                        hybrid, arg.expr, child_ref_mapping, inside_agg
+                for arg in expr.args:
+                    args.append(
+                        self.make_hybrid_expr(
+                            hybrid, arg, child_ref_mapping, inside_agg
+                        )
                     )
-                    order_args.append(HybridCollation(hybrid_arg, arg.asc, arg.na_last))
+                for col_arg in expr.collation_args:
+                    hybrid_arg = self.make_hybrid_expr(
+                        hybrid, col_arg.expr, child_ref_mapping, inside_agg
+                    )
+                    order_args.append(
+                        HybridCollation(hybrid_arg, col_arg.asc, col_arg.na_last)
+                    )
                 return HybridWindowExpr(
                     expr.window_operator,
                     [],

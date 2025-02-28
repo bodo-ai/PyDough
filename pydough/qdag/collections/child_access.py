@@ -10,6 +10,7 @@ from abc import abstractmethod
 from pydough.qdag.expressions.collation_expression import CollationExpression
 
 from .collection_qdag import PyDoughCollectionQDAG
+from .collection_tree_form import CollectionTreeForm
 
 
 class ChildAccess(PyDoughCollectionQDAG):
@@ -48,6 +49,21 @@ class ChildAccess(PyDoughCollectionQDAG):
     @property
     def ordering(self) -> list[CollationExpression] | None:
         return None
+
+    def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
+        return CollectionTreeForm(
+            self.tree_item_string,
+            0,
+            has_predecessor=True,
+        )
+
+    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
+        predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(is_last)
+        predecessor.has_children = True
+        tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
+        tree_form.depth = predecessor.depth + 1
+        tree_form.predecessor = predecessor
+        return tree_form
 
     def equals(self, other: object) -> bool:
         return (
