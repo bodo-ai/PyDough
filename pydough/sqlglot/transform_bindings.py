@@ -32,6 +32,15 @@ The types of SQLGlot expressions that need to be wrapped in parenthesis for the
 sake of precedence.
 """
 
+trunc_pattern = re.compile(r"\s*start\s+of\s+(\w+)\s*", re.IGNORECASE)
+"""
+The REGEX pattern for truncation modifiers in DATETIME call.
+"""
+
+offset_pattern = re.compile(r"\s*([+-]?)\s*(\d+)\s+(\w+)\s*", re.IGNORECASE)
+"""
+The REGEX pattern for offset modifiers in DATETIME call.
+"""
 
 year_units = ("years", "year", "y")
 """
@@ -305,10 +314,6 @@ def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
     ):
-        # Regex pattern for truncation modifiers and offset strings.
-        trunc_pattern = re.compile(r"\s*start\s+of\s+(\w+)\s*", re.IGNORECASE)
-        offset_pattern = re.compile(r"\s*([+-]?)\s*(\d+)\s+(\w+)\s*", re.IGNORECASE)
-
         # Handle the first argument
         assert len(sql_glot_args) > 0
         result: SQLGlotExpression = handle_datetime_base_arg(sql_glot_args[0], dialect)

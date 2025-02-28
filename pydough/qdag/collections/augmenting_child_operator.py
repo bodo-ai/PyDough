@@ -1,6 +1,6 @@
 """
 Defines an abstract subclass of ChildOperator for operations that augment their
-preceding context without stepping down into another context, like CALC or
+preceding context without stepping down into another context, like CALCULATE or
 WHERE.
 """
 
@@ -10,7 +10,7 @@ from collections.abc import MutableSequence
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.expressions import CollationExpression
+from pydough.qdag.expressions import CollationExpression, PyDoughExpressionQDAG
 
 from .child_access import ChildAccess
 from .child_operator import ChildOperator
@@ -41,8 +41,24 @@ class AugmentingChildOperator(ChildOperator):
         return self._preceding_context
 
     @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        return self.preceding_context.ancestral_mapping
+
+    @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.preceding_context.inherited_downstreamed_terms
+
+    @property
     def ordering(self) -> list[CollationExpression] | None:
         return self.preceding_context.ordering
+
+    @property
+    def calc_terms(self) -> set[str]:
+        return self.preceding_context.calc_terms
+
+    @property
+    def all_terms(self) -> set[str]:
+        return self.preceding_context.all_terms
 
     @property
     def unique_terms(self) -> list[str]:
@@ -58,7 +74,7 @@ class AugmentingChildOperator(ChildOperator):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        from pydough.qdag.expressions import PyDoughExpressionQDAG, Reference
+        from pydough.qdag.expressions import Reference
 
         term: PyDoughQDAG = self.preceding_context.get_term(term_name)
         if isinstance(term, ChildAccess):
@@ -66,6 +82,10 @@ class AugmentingChildOperator(ChildOperator):
         elif isinstance(term, PyDoughExpressionQDAG):
             term = Reference(self.preceding_context, term_name)
         return term
+
+    @cache
+    def to_string(self) -> str:
+        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.preceding_context.to_tree_form(is_last)

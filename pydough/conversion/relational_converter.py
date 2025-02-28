@@ -14,7 +14,7 @@ from pydough.metadata import (
     SimpleTableMetadata,
 )
 from pydough.qdag import (
-    Calc,
+    Calculate,
     CollectionAccess,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
@@ -48,7 +48,7 @@ from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
-    HybridCalc,
+    HybridCalculate,
     HybridChildRefExpr,
     HybridCollation,
     HybridCollectionAccess,
@@ -203,6 +203,15 @@ class RelTranslation:
                 return LiteralExpression(expr.literal.value, expr.typ)
             case HybridRefExpr() | HybridChildRefExpr() | HybridBackRefExpr():
                 assert context is not None
+                if expr not in context.expressions:
+                    if isinstance(expr, HybridRefExpr):
+                        for back_expr in context.expressions:
+                            if (
+                                isinstance(back_expr, HybridBackRefExpr)
+                                and back_expr.name == expr.name
+                            ):
+                                return context.expressions[back_expr]
+                    raise ValueError(f"Context does not contain expression {expr}")
                 return context.expressions[expr]
             case HybridFunctionExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]
@@ -735,17 +744,17 @@ class RelTranslation:
         )
         return TranslationOutput(out_rel, context.expressions)
 
-    def translate_calc(
+    def translate_calculate(
         self,
-        node: HybridCalc,
+        node: HybridCalculate,
         context: TranslationOutput,
     ) -> TranslationOutput:
         """
-        Converts a calc into a project on top of its child to derive additional
-        terms.
+        Converts a CALCULATE into a project on top of its child to derive
+        additional terms.
 
         Args:
-            `node`: the node corresponding to the calc being derived.
+            `node`: the node corresponding to the CALCULATE being derived.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts and the corresponding relational node.
@@ -810,16 +819,17 @@ class RelTranslation:
         )
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         assert node.subtree.agg_keys is not None
-        for agg_key in node.subtree.agg_keys:
+        for agg_key in sorted(node.subtree.agg_keys, key=str):
             join_keys.append((agg_key, agg_key))
 
-        return self.join_outputs(
+        result = self.join_outputs(
             context,
             child_output,
             JoinType.INNER,
             join_keys,
             None,
         )
+        return result
 
     def rel_translation(
         self,
@@ -921,9 +931,9 @@ class RelTranslation:
             case HybridPartitionChild():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_partition_child(operation, context)
-            case HybridCalc():
+            case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
-                result = self.translate_calc(operation, context)
+                result = self.translate_calculate(operation, context)
             case HybridFilter():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_filter(operation, context)
@@ -948,21 +958,23 @@ class RelTranslation:
     @staticmethod
     def preprocess_root(
         node: PyDoughCollectionQDAG,
+        output_cols: list[tuple[str, str]] | None,
     ) -> PyDoughCollectionQDAG:
         """
-        Transforms the final PyDough collection by appending it with an extra CALC
-        containing all of the columns that are output.
+        Transforms the final PyDough collection by appending it with an extra
+        CALCULATE containing all of the columns that are output.
         """
         # Fetch all of the expressions that should be kept in the final output
-        original_calc_terms: set[str] = node.calc_terms
         final_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
-        all_names: set[str] = set()
-        for name in original_calc_terms:
-            final_terms.append((name, Reference(node, name)))
-            all_names.add(name)
-        final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
+        if output_cols is None:
+            for name in node.calc_terms:
+                final_terms.append((name, Reference(node, name)))
+            final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
+        else:
+            for _, column in output_cols:
+                final_terms.append((column, Reference(node, column)))
         children: list[PyDoughCollectionQDAG] = []
-        final_calc: Calc = Calc(node, children).with_terms(final_terms)
+        final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
         return final_calc
 
 
@@ -994,7 +1006,9 @@ def make_relational_ordering(
 
 
 def convert_ast_to_relational(
-    node: PyDoughCollectionQDAG, configs: PyDoughConfigs
+    node: PyDoughCollectionQDAG,
+    columns: list[tuple[str, str]] | None,
+    configs: PyDoughConfigs,
 ) -> RelationalRoot:
     """
     Main API for converting from the collection QDAG form into relational
@@ -1002,18 +1016,22 @@ def convert_ast_to_relational(
 
     Args:
         `node`: the PyDough QDAG collection node to be translated.
+        `columns`: a list of tuples in the form `(alias, column)`
+        describing every column that should be in the output, in the order
+        they should appear, and the alias they should be given. If None, uses
+        the most recent CALCULATE in the node to determine the columns.
+        `configs`: the configuration settings to use during translation.
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
-        collection node corresponds to. Ensures that the calc terms of
-        `node` are included in the root in the correct order, and if it
+        collection node corresponds to. Ensures that the desired output columns
+        of `node` are included in the root in the correct order, and if it
         has an ordering then the relational root stores that information.
     """
-    # Pre-process the QDAG node so the final CALC term includes any ordering
+    # Pre-process the QDAG node so the final CALCULATE includes any ordering
     # keys.
     translator: RelTranslation = RelTranslation()
-    final_terms: set[str] = node.calc_terms
-    node = translator.preprocess_root(node)
+    node = translator.preprocess_root(node, columns)
 
     # Convert the QDAG node to the hybrid form, decorrelate it, then invoke
     # the relational conversion procedure. The first element in the returned
@@ -1033,12 +1051,18 @@ def convert_ast_to_relational(
     rel_expr: RelationalExpression
     name: str
     original_name: str
-    for original_name in final_terms:
-        name = renamings.get(original_name, original_name)
-        hybrid_expr = hybrid.pipeline[-1].terms[name]
-        rel_expr = output.expressions[hybrid_expr]
-        ordered_columns.append((original_name, rel_expr))
-    ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
+    if columns is None:
+        for original_name in node.calc_terms:
+            name = renamings.get(original_name, original_name)
+            hybrid_expr = hybrid.pipeline[-1].terms[name]
+            rel_expr = output.expressions[hybrid_expr]
+            ordered_columns.append((original_name, rel_expr))
+        ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
+    else:
+        for alias, column in columns:
+            hybrid_expr = hybrid.pipeline[-1].terms[column]
+            rel_expr = output.expressions[hybrid_expr]
+            ordered_columns.append((alias, rel_expr))
     hybrid_orderings: list[HybridCollation] = hybrid.pipeline[-1].orderings
     if hybrid_orderings:
         orderings = make_relational_ordering(hybrid_orderings, output.expressions)

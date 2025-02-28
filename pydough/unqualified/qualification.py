@@ -14,7 +14,7 @@ from pydough.pydough_operators.expression_operators import (
 )
 from pydough.qdag import (
     AstNodeBuilder,
-    Calc,
+    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
@@ -34,9 +34,8 @@ from pydough.types import PyDoughType
 from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
     UnqualifiedAccess,
-    UnqualifiedBack,
     UnqualifiedBinaryOperation,
-    UnqualifiedCalc,
+    UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedLiteral,
     UnqualifiedNode,
@@ -348,7 +347,7 @@ class Qualifier:
             `children`: the list where collection nodes that must be derived
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection or expression
@@ -362,91 +361,68 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         name: str = unqualified._parcel[1]
         term: PyDoughQDAG
-        if isinstance(unqualified_parent, UnqualifiedBack):
-            # If the parent is an `UnqualifiedBack`, it means that this is an
-            # access in the form "BACK(n).term_name". First, fetch the ancestor
-            # context in question.
-            levels: int = unqualified_parent._parcel[0]
-            ancestor: PyDoughCollectionQDAG = context
-            for _ in range(levels):
-                if ancestor.ancestor_context is None:
-                    raise PyDoughUnqualifiedException(
-                        f"Cannot back reference {levels} above {context}"
-                    )
-                ancestor = ancestor.ancestor_context
-            # Identify whether the access is an expression or a collection
-            term = ancestor.get_term(name)
-            if isinstance(term, PyDoughCollectionQDAG):
-                return self.builder.build_back_reference_collection(
-                    context, name, levels
-                )
-            else:
-                return self.builder.build_back_reference_expression(
-                    context, name, levels
-                )
+        # First, qualify the parent collection.
+        qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        if (
+            isinstance(qualified_parent, GlobalContext)
+            and name == qualified_parent.graph.name
+        ):
+            # Special case: if the parent is the root context and the child
+            # is named after the graph name, return the parent since the
+            # child is just a de-sugared invocation of the global context.
+            return qualified_parent
         else:
-            # First, qualify the parent collection.
-            qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-                unqualified_parent, context, is_child
-            )
-            if (
-                isinstance(qualified_parent, GlobalContext)
-                and name == qualified_parent.graph.name
-            ):
-                # Special case: if the parent is the root context and the child
-                # is named after the graph name, return the parent since the
-                # child is just a de-sugared invocation of the global context.
-                return qualified_parent
+            # Identify whether the access is an expression or a collection
+            term = qualified_parent.get_term(name)
+            if isinstance(term, PyDoughCollectionQDAG):
+                # If it is a collection that is not the special case,
+                # access the child collection from the qualified parent
+                # collection.
+                answer: PyDoughCollectionQDAG = self.builder.build_child_access(
+                    name, qualified_parent
+                )
+                if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
+                    answer = ChildOperatorChildAccess(answer)
+                return answer
             else:
-                # Identify whether the access is an expression or a collection
-                term = qualified_parent.get_term(name)
-                if isinstance(term, PyDoughCollectionQDAG):
-                    # If it is a collection that is not the special case,
-                    # access the child collection from the qualified parent
-                    # collection.
-                    answer: PyDoughCollectionQDAG = self.builder.build_child_access(
-                        name, qualified_parent
-                    )
-                    if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
-                        answer = ChildOperatorChildAccess(answer)
-                    return answer
+                assert isinstance(term, PyDoughExpressionQDAG)
+                if isinstance(unqualified_parent, UnqualifiedRoot):
+                    # If at the root, the access must be a reference to a scalar
+                    # attribute accessible in the current context.
+                    return self.builder.build_reference(context, name)
                 else:
-                    assert isinstance(term, PyDoughExpressionQDAG)
-                    if isinstance(unqualified_parent, UnqualifiedRoot):
-                        # If at the root, the access must be a reference to a scalar
-                        # attribute accessible in the current context.
-                        return self.builder.build_reference(context, name)
+                    # Otherwise, the access is a reference to a scalar attribute of
+                    # a child collection node of the current context. Add this new
+                    # child to the list of children, unless already present, then
+                    # return the answer as a reference to a field of the child.
+                    ref_num: int
+                    if qualified_parent in children:
+                        ref_num = children.index(qualified_parent)
                     else:
-                        # Otherwise, the access is a reference to a scalar attribute of
-                        # a child collection node of the current context. Add this new
-                        # child to the list of children, unless already present, then
-                        # return the answer as a reference to a field of the child.
-                        ref_num: int
-                        if qualified_parent in children:
-                            ref_num = children.index(qualified_parent)
-                        else:
-                            ref_num = len(children)
-                            children.append(qualified_parent)
-                        return self.builder.build_child_reference_expression(
-                            children, ref_num, name
-                        )
+                        ref_num = len(children)
+                        children.append(qualified_parent)
+                    return self.builder.build_child_reference_expression(
+                        children, ref_num, name
+                    )
 
-    def qualify_calc(
+    def qualify_calculate(
         self,
-        unqualified: UnqualifiedCalc,
+        unqualified: UnqualifiedCalculate,
         context: PyDoughCollectionQDAG,
         is_child: bool,
     ) -> PyDoughCollectionQDAG:
         """
-        Transforms an `UnqualifiedCalc` into a PyDoughCollectionQDAG node.
+        Transforms an `UnqualifiedCalculate` into a PyDoughCollectionQDAG node.
 
         Args:
-            `unqualified`: the UnqualifiedCalc instance to be transformed.
+            `unqualified`: the UnqualifiedCalculate instance to be transformed.
             `builder`: a builder object used to create new qualified nodes.
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -463,16 +439,16 @@ class Qualifier:
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
-        # Qualify all of the CALC terms, storing the children built along
+        # Qualify all of the CALCULATE terms, storing the children built along
         # the way.
         children: MutableSequence[PyDoughCollectionQDAG] = []
         qualified_terms: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
         for name, term in unqualified_terms:
             qualified_term = self.qualify_expression(term, qualified_parent, children)
             qualified_terms.append((name, qualified_term))
-        # Use the qualified children & terms to create a new CALC node.
-        calc: Calc = self.builder.build_calc(qualified_parent, children)
-        return calc.with_terms(qualified_terms)
+        # Use the qualified children & terms to create a new CALCULATE node.
+        calculate: Calculate = self.builder.build_calculate(qualified_parent, children)
+        return calculate.with_terms(qualified_terms)
 
     def qualify_where(
         self,
@@ -489,7 +465,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -529,7 +505,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -577,7 +553,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -633,7 +609,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -698,7 +674,7 @@ class Qualifier:
             `context`: the collection QDAG whose context the collection is being
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -764,7 +740,7 @@ class Qualifier:
             `children`: the list where collection nodes that must be derived
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
-            of a child operator context, such as CALC or PARTITION.
+            of a child operator context, such as CALCULATE or PARTITION.
 
         Returns:
             The PyDough QDAG object for the qualified node. The result can be either
@@ -789,8 +765,8 @@ class Qualifier:
                 answer = context
             case UnqualifiedAccess():
                 answer = self.qualify_access(unqualified, context, children, is_child)
-            case UnqualifiedCalc():
-                answer = self.qualify_calc(unqualified, context, is_child)
+            case UnqualifiedCalculate():
+                answer = self.qualify_calculate(unqualified, context, is_child)
             case UnqualifiedWhere():
                 answer = self.qualify_where(unqualified, context, is_child)
             case UnqualifiedOrderBy():

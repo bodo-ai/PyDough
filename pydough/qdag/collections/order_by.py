@@ -7,6 +7,7 @@ __all__ = ["OrderBy"]
 
 
 from collections.abc import MutableSequence
+from functools import cache
 
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression
@@ -77,25 +78,14 @@ class OrderBy(AugmentingChildOperator):
         return f"{self.preceding_context.key}.ORDERBY"
 
     @property
-    def calc_terms(self) -> set[str]:
-        return self.preceding_context.calc_terms
-
-    @property
-    def all_terms(self) -> set[str]:
-        return self.preceding_context.all_terms
-
-    @property
     def ordering(self) -> list[CollationExpression]:
         return self.collation
 
     @property
+    @cache
     def standalone_string(self) -> str:
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
         return f"ORDER_BY({collation_str})"
-
-    def to_string(self) -> str:
-        assert self.preceding_context is not None
-        return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 
     @property
     def tree_item_string(self) -> str:

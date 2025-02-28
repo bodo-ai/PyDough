@@ -26,7 +26,7 @@ Once the extension is loaded, you can use the `%%pydough` magic command to run P
 
 ```python
 %%pydough
-result = Nations(
+result = Nations.CALCULATE(
     nation_name=name,
     region_name=region.name,
     num_customers=COUNT(customers)
@@ -40,7 +40,7 @@ The transformed code will look like this:
 from pydough.unqualified import UnqualifiedRoot
 _ROOT = UnqualifiedRoot(pydough.active_session.metadata)
 
-result = _ROOT.Nations(
+result = _ROOT.Nations.CALCULATE(
     nation_name=_ROOT.name,
     region_name=_ROOT.region.name,
     num_customers=_ROOT.COUNT(_ROOT.customers)
