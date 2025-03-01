@@ -62,7 +62,6 @@ from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
-from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -257,7 +256,6 @@ def pydough_pipeline_tpch_test_data(
     request,
 ) -> tuple[
     Callable[[], UnqualifiedNode],
-    dict[str, str] | list[str] | None,
     str,
     Callable[[], pd.DataFrame],
 ]:
@@ -266,11 +264,9 @@ def pydough_pipeline_tpch_test_data(
     arguments:
     1. `unqualified_impl`: a function that takes in an unqualified root and
     creates the unqualified node for the TPCH query.
-    2. `columns`: a valid value for the `columns` argument of `to_sql` or
-    `to_df`.
-    3. `file_name`: the name of the file containing the expected relational
+    2. `file_name`: the name of the file containing the expected relational
     plan.
-    4. `answer_impl`: a function that takes in nothing and returns the answer
+    3. `answer_impl`: a function that takes in nothing and returns the answer
     to a TPCH query as a Pandas DataFrame.
     """
     return request.param
@@ -279,7 +275,6 @@ def pydough_pipeline_tpch_test_data(
 def test_pipeline_until_relational_tpch(
     pydough_pipeline_tpch_test_data: tuple[
         Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
         str,
         Callable[[], pd.DataFrame],
     ],
@@ -296,7 +291,7 @@ def test_pipeline_until_relational_tpch(
     # Run the query through the stages from unqualified node to qualified node
     # to relational tree, and confirm the tree string matches the expected
     # structure.
-    unqualified_impl, columns, file_name, _ = pydough_pipeline_tpch_test_data
+    unqualified_impl, file_name, _ = pydough_pipeline_tpch_test_data
     file_path: str = get_plan_test_filename(file_name)
     graph: GraphMetadata = get_sample_graph("TPCH")
     UnqualifiedRoot(graph)
@@ -306,7 +301,7 @@ def test_pipeline_until_relational_tpch(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
     relational: RelationalRoot = convert_ast_to_relational(
-        qualified, _load_column_selection({"columns": columns}), default_config
+        qualified, None, default_config
     )
     if update_tests:
         with open(file_path, "w") as f:
