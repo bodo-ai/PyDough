@@ -1835,7 +1835,6 @@ class HybridTranslator:
                 # call. If it is an aggregation, transform accordingly.
                 # such function that takes in a collection, as none currently
                 # exist that are not aggregations.
-                expr.operator.is_aggregation
                 for arg in expr.args:
                     if not isinstance(arg, PyDoughExpressionQDAG):
                         raise NotImplementedError(
