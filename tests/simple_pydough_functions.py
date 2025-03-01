@@ -153,7 +153,7 @@ def prev_next_regions():
         one_preceding=PREV(name, by=name.ASC()),
         current=name,
         one_following=NEXT(name, by=name.ASC()),
-        two_following=NEXT(name, n=2, by=name.ASC()),
+        two_following=PREV(name, n=-2, by=name.ASC()),
     ).ORDER_BY(current.ASC())
 
 

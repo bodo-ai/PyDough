@@ -128,6 +128,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                         f"Invalid 'n' argument to {window_expression.op.function_name}: {raw_offset!r} (expected an integer)"
                     )
                 offset: int = raw_offset
+                # By default, we use the LAG function. If doing NEXT, switch
+                # to LEAD. If the offset is negative, switch again.
                 func, other_func = sqlglot_expressions.Lag, sqlglot_expressions.Lead
                 if window_expression.op.function_name == "NEXT":
                     func, other_func = other_func, func
