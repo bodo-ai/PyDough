@@ -67,7 +67,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # Visit the inputs in reverse order so we can pop them off in order.
         for arg in reversed(window_expression.inputs):
             arg.accept(self)
-        [self._stack.pop() for _ in range(len(window_expression.inputs))]
+        arg_exprs: list[SQLGlotExpression] = [
+            self._stack.pop() for _ in range(len(window_expression.inputs))
+        ]
         # Do the same with the partition expressions.
         for arg in reversed(window_expression.partition_inputs):
             arg.accept(self)
@@ -119,6 +121,27 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                         this = sqlglot_expressions.Anonymous(this="RANK")
                 else:
                     this = sqlglot_expressions.RowNumber()
+            case "PREV" | "NEXT":
+                raw_offset: object = window_expression.kwargs.get("n", 1)
+                if not isinstance(raw_offset, int):
+                    raise ValueError(
+                        f"Invalid 'n' argument to {window_expression.op.function_name}: {raw_offset!r} (expected an integer)"
+                    )
+                offset: int = raw_offset
+                func, other_func = sqlglot_expressions.Lag, sqlglot_expressions.Lead
+                if window_expression.op.function_name == "NEXT":
+                    func, other_func = other_func, func
+                if offset < 0:
+                    offset *= -1
+                    func, other_func = other_func, func
+                lag_args: dict[str, SQLGlotExpression] = {}
+                lag_args["this"] = arg_exprs[0]
+                lag_args["offset"] = sqlglot_expressions.convert(offset)
+                if "default" in window_expression.kwargs:
+                    lag_args["default"] = sqlglot_expressions.convert(
+                        window_expression.kwargs.get("default")
+                    )
+                this = func(**lag_args)
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"

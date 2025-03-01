@@ -194,4 +194,4 @@ PERCENTILE = ExpressionWindowOperator(
     "PERCENTILE", RequireNumArgs(0), ConstantType(Int64Type())
 )
 PREV = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
-NEXT = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
+NEXT = ExpressionWindowOperator("NEXT", RequireNumArgs(1), SelectArgumentType(0))

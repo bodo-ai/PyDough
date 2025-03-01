@@ -1218,10 +1218,10 @@ from pydough.unqualified import (
                 "prev_next_regions",
                 lambda: pd.DataFrame(
                     {
-                        "two_preceding": [None, None, "ARICA", "AMERICA", "ASIA"],
-                        "one_preceding": [None, "ARICA", "AMERICA", "ASIA", "EUROPE"],
+                        "two_preceding": [None, None, "AFRICA", "AMERICA", "ASIA"],
+                        "one_preceding": [None, "AFRICA", "AMERICA", "ASIA", "EUROPE"],
                         "current": [
-                            "ARICA",
+                            "AFRICA",
                             "AMERICA",
                             "ASIA",
                             "EUROPE",
@@ -1254,7 +1254,7 @@ from pydough.unqualified import (
                             "Customer#000041345",
                             "Customer#000119474",
                         ],
-                        "avg_order_gap": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
+                        "avg_diff": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
                     }
                 ),
             ),
@@ -1268,7 +1268,7 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame(
                     {
                         "year": range(1992, 1999),
-                        "n_orders": [
+                        "current_year_orders": [
                             227089,
                             226645,
                             227597,
@@ -1278,10 +1278,11 @@ from pydough.unqualified import (
                             133623,
                         ],
                         "pct_change": [
+                            None,
                             -0.195518,
                             0.420040,
                             0.456948,
-                            -0.004811,
+                            -0.0048111,
                             -0.368724,
                             -41.337589,
                         ],
@@ -1318,7 +1319,7 @@ from pydough.unqualified import (
                             "Customer#000100810",
                             "Customer#000127003",
                         ],
-                        "largest_diffs": [
+                        "largest_diff": [
                             454753.9935,
                             447181.8195,
                             446706.3978,
@@ -1338,16 +1339,20 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Supplier#000004473"
-                            "Supplier#000000188"
-                            "Supplier#000005963"
-                            "Supplier#000004115"
-                            "Supplier#000007267"
+                            "Supplier#000004473",
+                            "Supplier#000000188",
+                            "Supplier#000005963",
+                            "Supplier#000004115",
+                            "Supplier#000007267",
                         ],
                         "region_name": [
-                            "ASIA" "MIDDLE EAST" "AMERICA" "EUROPE" "EUROPE"
+                            "ASIA",
+                            "MIDDLE EAST",
+                            "AMERICA",
+                            "EUROPE",
+                            "EUROPE",
                         ],
-                        "diff": [44.43, 43.25, 43.15, 41.54, 41.48],
+                        "acctbal_delta": [44.43, 43.25, 43.15, 41.54, 41.48],
                     }
                 ),
             ),

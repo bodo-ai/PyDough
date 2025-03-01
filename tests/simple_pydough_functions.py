@@ -162,7 +162,7 @@ def avg_order_diff_per_customer():
     # orders made.
     prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), levels=1)
     order_info = orders.CALCULATE(
-        day_diff=DATEDIFF("days", order_date, prev_order_date_by_cust)
+        day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
     return Customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
@@ -187,7 +187,7 @@ def yoy_change_in_num_orders():
 def first_order_in_year():
     # Find all orders that do not have a previous order in the same year
     # (breaking ties by order key).
-    previous_order_date = PREV(key, by=(order_date.ASC(), key.ASC()))
+    previous_order_date = PREV(order_date, by=(order_date.ASC(), key.ASC()))
     return (
         Orders.WHERE(
             ABSENT(previous_order_date)
@@ -232,7 +232,7 @@ def suppliers_bal_diffs():
             name,
             region_name,
             acctbal_delta=account_balance
-            - PREV(account_balance, by=account_balance.ASC()),
+            - PREV(account_balance, by=account_balance.ASC(), levels=2),
         )
         .TOP_K(5, by=acctbal_delta.DESC())
     )
