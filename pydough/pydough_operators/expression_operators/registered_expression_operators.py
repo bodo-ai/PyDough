@@ -1,5 +1,5 @@
 """
-Definition bindings of builtin PyDough operators that reutrn an expression.
+Definition bindings of builtin PyDough operators that return an expression.
 """
 
 __all__ = [
@@ -12,6 +12,8 @@ __all__ = [
     "BXR",
     "CONTAINS",
     "COUNT",
+    "DATEDIFF",
+    "DATETIME",
     "DAY",
     "DEFAULT_TO",
     "DIV",
@@ -21,6 +23,7 @@ __all__ = [
     "GRT",
     "HAS",
     "HASNOT",
+    "HOUR",
     "IFF",
     "ISIN",
     "JOIN_STRINGS",
@@ -32,6 +35,7 @@ __all__ = [
     "LOWER",
     "MAX",
     "MIN",
+    "MINUTE",
     "MOD",
     "MONOTONIC",
     "MONTH",
@@ -41,10 +45,13 @@ __all__ = [
     "NOT",
     "PERCENTILE",
     "POW",
+    "POWER",
     "PRESENT",
     "RANKING",
     "ROUND",
+    "SECOND",
     "SLICE",
+    "SQRT",
     "STARTSWITH",
     "SUB",
     "SUM",
@@ -59,7 +66,7 @@ from pydough.pydough_operators.type_inference import (
     RequireNumArgs,
     SelectArgumentType,
 )
-from pydough.types import BooleanType, Float64Type, Int64Type, StringType
+from pydough.types import BooleanType, DateType, Float64Type, Int64Type, StringType
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
@@ -109,6 +116,12 @@ SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentT
 AVG = ExpressionFunctionOperator(
     "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
 )
+POWER = ExpressionFunctionOperator(
+    "POWER", False, RequireNumArgs(2), ConstantType(Float64Type())
+)
+SQRT = ExpressionFunctionOperator(
+    "SQRT", False, RequireNumArgs(1), ConstantType(Float64Type())
+)
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
 HAS = ExpressionFunctionOperator("HAS", True, AllowAny(), ConstantType(BooleanType()))
 HASNOT = ExpressionFunctionOperator(
@@ -120,6 +133,9 @@ NDISTINCT = ExpressionFunctionOperator(
 MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
 MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
+DATETIME = ExpressionFunctionOperator(
+    "DATETIME", False, AllowAny(), ConstantType(DateType())
+)
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
@@ -128,6 +144,18 @@ MONTH = ExpressionFunctionOperator(
 )
 DAY = ExpressionFunctionOperator(
     "DAY", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+HOUR = ExpressionFunctionOperator(
+    "HOUR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+MINUTE = ExpressionFunctionOperator(
+    "MINUTE", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+SECOND = ExpressionFunctionOperator(
+    "SECOND", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+DATEDIFF = ExpressionFunctionOperator(
+    "DATEDIFF", False, RequireNumArgs(3), ConstantType(Int64Type())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)

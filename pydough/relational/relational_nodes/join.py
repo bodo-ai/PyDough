@@ -9,7 +9,7 @@ from enum import Enum
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .relational_visitor import RelationalVisitor
 
 
@@ -22,7 +22,7 @@ class JoinType(Enum):
     SEMI = "semi"
 
 
-class Join(Relational):
+class Join(RelationalNode):
     """
     Relational representation of all join operations. This single
     node can represent multiple joins at once, similar to a multi-join
@@ -45,10 +45,11 @@ class Join(Relational):
 
     def __init__(
         self,
-        inputs: MutableSequence[Relational],
+        inputs: MutableSequence[RelationalNode],
         conditions: list[RelationalExpression],
         join_types: list[JoinType],
         columns: MutableMapping[str, RelationalExpression],
+        correl_name: str | None = None,
     ) -> None:
         super().__init__(columns)
         num_inputs = len(inputs)
@@ -65,6 +66,15 @@ class Join(Relational):
         ), "Join condition must be a boolean type"
         self._conditions: list[RelationalExpression] = conditions
         self._join_types: list[JoinType] = join_types
+        self._correl_name: str | None = correl_name
+
+    @property
+    def correl_name(self) -> str | None:
+        """
+        The name used to refer to the first join input when subsequent inputs
+        have correlated references.
+        """
+        return self._correl_name
 
     @property
     def conditions(self) -> list[RelationalExpression]:
@@ -81,7 +91,7 @@ class Join(Relational):
         return self._join_types
 
     @property
-    def inputs(self) -> MutableSequence[Relational]:
+    def inputs(self) -> MutableSequence[RelationalNode]:
         return self._inputs
 
     @property
@@ -96,11 +106,12 @@ class Join(Relational):
         """
         return [f"t{i}" for i in range(len(self.inputs))]
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Join)
             and self.conditions == other.conditions
             and self.join_types == other.join_types
+            and self.correl_name == other.correl_name
             and all(
                 self.inputs[i].node_equals(other.inputs[i])
                 for i in range(len(self.inputs))
@@ -109,7 +120,10 @@ class Join(Relational):
 
     def to_string(self, compact: bool = False) -> str:
         conditions: list[str] = [cond.to_string(compact) for cond in self.conditions]
-        return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)})"
+        correl_suffix = (
+            "" if self.correl_name is None else f", correl_name={self.correl_name!r}"
+        )
+        return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
     def accept(self, visitor: RelationalVisitor) -> None:
         visitor.visit_join(self)
@@ -117,6 +131,6 @@ class Join(Relational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[Relational],
-    ) -> Relational:
-        return Join(inputs, self.conditions, self.join_types, columns)
+        inputs: MutableSequence[RelationalNode],
+    ) -> RelationalNode:
+        return Join(inputs, self.conditions, self.join_types, columns, self.correl_name)

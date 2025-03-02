@@ -137,7 +137,7 @@ class PyDoughSession:
             DatabaseContext: The newly created database context.
         """
         context: DatabaseContext = load_database_context(database_name, **kwargs)
-        self._database = context
+        self.database = context
         return context
 
     def load_metadata_graph(self, graph_path: str, graph_name: str) -> GraphMetadata:
@@ -158,5 +158,5 @@ class PyDoughSession:
             GraphMetadata: The loaded metadata graph.
         """
         graph: GraphMetadata = parse_json_metadata_from_file(graph_path, graph_name)
-        self._metadata = graph
+        self.metadata = graph
         return graph

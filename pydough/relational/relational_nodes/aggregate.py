@@ -12,7 +12,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
@@ -26,7 +26,7 @@ class Aggregate(SingleRelational):
 
     def __init__(
         self,
-        input: Relational,
+        input: RelationalNode,
         keys: MutableMapping[str, ColumnReference],
         aggregations: MutableMapping[str, CallExpression],
     ) -> None:
@@ -55,7 +55,7 @@ class Aggregate(SingleRelational):
         """
         return self._aggregations
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Aggregate)
             and self.keys == other.keys
@@ -72,8 +72,8 @@ class Aggregate(SingleRelational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[Relational],
-    ) -> Relational:
+        inputs: MutableSequence[RelationalNode],
+    ) -> RelationalNode:
         assert len(inputs) == 1, "Aggregate node should have exactly one input"
         # Aggregate nodes don't cleanly map to the existing columns API.
         # We still fulfill it as much as possible by mapping all column

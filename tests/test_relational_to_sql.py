@@ -4,6 +4,7 @@ via a SQLGlot intermediate.
 """
 
 import sqlite3
+from collections.abc import Callable
 
 import pytest
 from sqlglot.dialects import SQLite as SQLiteDialect
@@ -19,6 +20,7 @@ from tpch_relational_plans import (
     tpch_query_6_plan,
 )
 
+from pydough.database_connectors import DatabaseDialect
 from pydough.pydough_operators import (
     ABS,
     ADD,
@@ -59,15 +61,15 @@ def sqlite_dialect() -> SQLiteDialect:
 
 
 @pytest.mark.parametrize(
-    "root, sql_text",
+    "root, test_name",
     [
         pytest.param(
             RelationalRoot(
                 input=build_simple_scan(),
                 ordered_columns=[("b", make_relational_column_reference("b"))],
             ),
-            "SELECT b FROM table",
-            id="simple_scan",
+            "simple_scan_test",
+            id="simple_scan_test",
         ),
         pytest.param(
             RelationalRoot(
@@ -84,7 +86,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ),
                 ],
             ),
-            "SELECT a, b FROM table ORDER BY a",
+            "simple_scan_with_ordering",
             id="simple_scan_with_ordering",
         ),
         pytest.param(
@@ -115,7 +117,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ),
                 ],
             ),
-            "SELECT b FROM (SELECT a, b, a + 1 AS c FROM (SELECT a, b FROM table)) ORDER BY c",
+            "project_scan_with_ordering",
             id="project_scan_with_ordering",
         ),
         pytest.param(
@@ -133,7 +135,7 @@ def sqlite_dialect() -> SQLiteDialect:
                 ],
                 orderings=[],
             ),
-            "SELECT 42 AS A, 'foo' AS B FROM (VALUES ())",
+            "simple_values",
             id="simple_values",
         ),
         pytest.param(
@@ -158,8 +160,8 @@ def sqlite_dialect() -> SQLiteDialect:
                     ),
                 ),
             ),
-            "SELECT a, b FROM table WHERE a = 1",
-            id="simple_filter",
+            "simple_filter_test",
+            id="simple_filter_test",
         ),
         pytest.param(
             RelationalRoot(
@@ -176,7 +178,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT a, b FROM table LIMIT 1",
+            "simple_limit",
             id="simple_limit",
         ),
         pytest.param(
@@ -201,7 +203,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT a, b FROM table LIMIT 1",
+            "duplicate_limit_min_inner",
             id="duplicate_limit_min_inner",
         ),
         pytest.param(
@@ -238,7 +240,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT a, b FROM table ORDER BY a, b DESC LIMIT 1",
+            "duplicate_limit_min_outer",
             id="duplicate_limit_min_outer",
         ),
         pytest.param(
@@ -277,7 +279,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ],
                 ),
             ),
-            "SELECT a, b FROM (SELECT a, b FROM table ORDER BY a LIMIT 5) ORDER BY b DESC LIMIT 2",
+            "duplicate_limit_different_ordering",
             id="duplicate_limit_different_ordering",
         ),
         pytest.param(
@@ -307,7 +309,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ],
                 ),
             ),
-            "SELECT a, b FROM table ORDER BY a, b DESC LIMIT 10",
+            "simple_limit_with_ordering",
             id="simple_limit_with_ordering",
         ),
         pytest.param(
@@ -323,7 +325,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     aggregations={},
                 ),
             ),
-            "SELECT b FROM table GROUP BY b",
+            "simple_distinct",
             id="simple_distinct",
         ),
         pytest.param(
@@ -341,7 +343,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT SUM(a) AS a FROM (SELECT a, b FROM table)",
+            "simple_sum",
             id="simple_sum",
         ),
         pytest.param(
@@ -362,7 +364,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT SUM(a) AS a, b FROM (SELECT a, b FROM table) GROUP BY b",
+            "simple_groupby_sum",
             id="simple_groupby_sum",
         ),
         pytest.param(
@@ -390,7 +392,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a, _table_alias_1.b AS b FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a",
+            "simple_inner_join",
             id="simple_inner_join",
         ),
         pytest.param(
@@ -416,7 +418,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 LEFT JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a",
+            "simple_left_join",
             id="simple_left_join",
         ),
         pytest.param(
@@ -442,7 +444,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 RIGHT JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a",
+            "simple_right_join",
             id="simple_right_join",
         ),
         pytest.param(
@@ -468,7 +470,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 FULL OUTER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a",
+            "simple_full_outer_join",
             id="simple_full_outer_join",
         ),
         pytest.param(
@@ -494,7 +496,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 WHERE EXISTS(SELECT 1 FROM (SELECT a, b FROM table) AS _table_alias_1 WHERE _table_alias_0.a = _table_alias_1.a)",
+            "simple_semi_join",
             id="simple_semi_join",
         ),
         pytest.param(
@@ -520,7 +522,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 WHERE NOT EXISTS(SELECT 1 FROM (SELECT a, b FROM table) AS _table_alias_1 WHERE _table_alias_0.a = _table_alias_1.a)",
+            "simple_anti_join",
             id="simple_anti_join",
         ),
         pytest.param(
@@ -574,7 +576,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_2.b AS d FROM (SELECT _table_alias_0.a AS a, _table_alias_1.b AS b FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a) AS _table_alias_2 LEFT JOIN (SELECT a, b FROM table) AS _table_alias_3 ON _table_alias_2.a = _table_alias_3.a",
+            "nested_join",
             id="nested_join",
         ),
         pytest.param(
@@ -619,7 +621,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT a * (b + 1) AS a, a + (b * 1) AS b FROM (SELECT a, b FROM table)",
+            "nested_binary_functions",
             id="nested_binary_functions",
         ),
         pytest.param(
@@ -640,7 +642,7 @@ def sqlite_dialect() -> SQLiteDialect:
                     ),
                 ],
             ),
-            "SELECT a FROM table ORDER BY ABS(a)",
+            "ordering_function",
             id="ordering_function",
         ),
         pytest.param(
@@ -678,51 +680,64 @@ def sqlite_dialect() -> SQLiteDialect:
                     },
                 ),
             ),
-            "SELECT _table_alias_0.a AS a FROM (SELECT a, b FROM table) AS _table_alias_0 INNER JOIN (SELECT a, b FROM table) AS _table_alias_1 ON _table_alias_0.a = _table_alias_1.a INNER JOIN (SELECT a, b FROM table) AS _table_alias_2 ON _table_alias_0.a = _table_alias_2.a",
+            "multi_join",
             id="multi_join",
         ),
     ],
 )
-def test_convert_relation_to_sql(
+def test_convert_relation_to_sqlite_sql(
     root: RelationalRoot,
-    sql_text: str,
+    test_name: str,
     sqlite_dialect: SQLiteDialect,
     sqlite_bindings: SqlGlotTransformBindings,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
 ) -> None:
     """
     Test converting a relational tree to SQL text in the SQLite dialect.
     """
+    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
     created_sql: str = convert_relation_to_sql(
         root, sqlite_dialect, sqlite_bindings, True
     )
-    assert created_sql == sql_text
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(created_sql + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            created_sql == expected_relational_string.strip()
+        ), "Mismatch between tree generated SQL text and expected SQL text"
 
 
 @pytest.mark.parametrize(
-    "root, sql_text",
+    "root, test_name",
     [
         pytest.param(
             tpch_query_1_plan(),
-            "SELECT L_RETURNFLAG, L_LINESTATUS, SUM_QTY, SUM_BASE_PRICE, SUM_DISC_PRICE, SUM_CHARGE, CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY, CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE, CAST(SUM_DISCOUNT AS REAL) / COUNT_ORDER AS AVG_DISC, COUNT_ORDER FROM (SELECT L_RETURNFLAG, L_LINESTATUS, SUM(L_QUANTITY) AS SUM_QTY, SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE, SUM(L_DISCOUNT) AS SUM_DISCOUNT, SUM(TEMP_COL0) AS SUM_DISC_PRICE, SUM(TEMP_COL1) AS SUM_CHARGE, COUNT() AS COUNT_ORDER FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_RETURNFLAG, L_LINESTATUS, TEMP_COL0, TEMP_COL0 * (1 + L_TAX) AS TEMP_COL1 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS TEMP_COL0 FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS FROM (SELECT L_QUANTITY, L_EXTENDEDPRICE, L_DISCOUNT, L_TAX, L_RETURNFLAG, L_LINESTATUS, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE <= '1998-12-01'))) GROUP BY L_RETURNFLAG, L_LINESTATUS) ORDER BY L_RETURNFLAG, L_LINESTATUS",
+            "tpch_q1",
             id="tpch_q1",
         ),
         pytest.param(
             tpch_query_3_plan(),
-            "SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY, SUM(REVENUE) AS REVENUE FROM (SELECT L_ORDERKEY, REVENUE, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS REVENUE FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_ORDERKEY, L_EXTENDEDPRICE, L_DISCOUNT, L_SHIPDATE FROM LINEITEM) WHERE L_SHIPDATE > '1995-03-15')) INNER JOIN (SELECT O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM (SELECT O_CUSTKEY, O_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY FROM ORDERS WHERE O_ORDERDATE < '1995-03-15') INNER JOIN (SELECT C_CUSTKEY FROM (SELECT C_CUSTKEY, C_MKTSEGMENT FROM CUSTOMER) WHERE C_MKTSEGMENT = 'BUILDING') ON O_CUSTKEY = C_CUSTKEY) ON L_ORDERKEY = O_ORDERKEY) GROUP BY L_ORDERKEY, O_ORDERDATE, O_SHIPPRIORITY) ORDER BY REVENUE DESC, O_ORDERDATE, L_ORDERKEY LIMIT 10",
+            "tpch_q3",
             id="tpch_q3",
         ),
         pytest.param(
             tpch_query_6_plan(),
-            "SELECT SUM(TEMP_COL0) AS REVENUE FROM (SELECT L_EXTENDEDPRICE * L_DISCOUNT AS TEMP_COL0 FROM (SELECT L_EXTENDEDPRICE, L_DISCOUNT FROM (SELECT L_QUANTITY, L_DISCOUNT, L_EXTENDEDPRICE, L_SHIPDATE FROM LINEITEM) WHERE (L_QUANTITY < 24) AND (L_DISCOUNT <= 0.07) AND (L_DISCOUNT >= 0.05) AND (L_SHIPDATE < '1995-01-01') AND (L_SHIPDATE >= '1994-01-01')))",
+            "tpch_q6",
             id="tpch_q6",
         ),
     ],
 )
-def test_tpch_relational_to_sql(
+def test_tpch_relational_to_sqlite_sql(
     root: RelationalRoot,
-    sql_text: str,
+    test_name: str,
     sqlite_dialect: SQLiteDialect,
     sqlite_bindings: SqlGlotTransformBindings,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
 ) -> None:
     """
     Test that we can take possible relational trees from select TPCH queries
@@ -732,14 +747,23 @@ def test_tpch_relational_to_sql(
     These plans are generated from a couple simple plans we built with
     Apache Calcite in Bodo's SQL optimizer.
     """
+    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
     created_sql: str = convert_relation_to_sql(
         root, sqlite_dialect, sqlite_bindings, True
     )
-    assert created_sql == sql_text
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(created_sql + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            created_sql == expected_relational_string.strip()
+        ), "Mismatch between tree generated SQL text and expected SQL text"
 
 
 @pytest.mark.parametrize(
-    "root, sql_text",
+    "root, test_name",
     [
         pytest.param(
             RelationalRoot(
@@ -773,7 +797,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE 'a%') AND (b LIKE (a || '%'))",
+            "starts_with",
             id="starts_with",
         ),
         pytest.param(
@@ -808,7 +832,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE '%a') AND (b LIKE ('%' || a))",
+            "ends_with",
             id="ends_with",
         ),
         pytest.param(
@@ -843,7 +867,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE (b LIKE '%a%') AND (b LIKE ('%' || a || '%'))",
+            "contains",
             id="contains",
         ),
         pytest.param(
@@ -864,7 +888,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE b IN (1, 2, 3)",
+            "isin",
             id="isin",
         ),
         pytest.param(
@@ -885,7 +909,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT b FROM table WHERE b LIKE '%abc%efg%'",
+            "like",
             id="like",
         ),
         pytest.param(
@@ -913,7 +937,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT IIF(b >= 0, 'Positive', 'Negative') AS a FROM (SELECT a, b FROM table)",
+            "iff_iif",
             id="iff-iif",
             marks=pytest.mark.skipif(
                 sqlite3.sqlite_version < "3.32.0",
@@ -945,7 +969,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT CASE WHEN b >= 0 THEN 'Positive' ELSE 'Negative' END AS a FROM (SELECT a, b FROM table)",
+            "iff_case",
             id="iff-case",
             marks=pytest.mark.skipif(
                 sqlite3.sqlite_version >= "3.32.0", reason="SQLite 3.32.0 generates IFF"
@@ -965,7 +989,7 @@ def test_tpch_relational_to_sql(
                     },
                 ),
             ),
-            "SELECT CAST(STRFTIME('%Y', a) AS INTEGER) AS a FROM (SELECT a, b FROM table)",
+            "year",
             id="year",
         ),
         pytest.param(
@@ -1027,7 +1051,7 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT a, b, r FROM (SELECT a, b, RANK() OVER (ORDER BY a) AS r FROM (SELECT a, b FROM table) WHERE b = 0) WHERE r >= 3",
+            "rank_with_filters_a",
             id="rank_with_filters_a",
         ),
         pytest.param(
@@ -1089,22 +1113,33 @@ def test_tpch_relational_to_sql(
                     ),
                 ),
             ),
-            "SELECT a, b, r FROM (SELECT a, b, r FROM (SELECT a, b, RANK() OVER (ORDER BY a) AS r FROM (SELECT a, b FROM table)) WHERE r >= 3) WHERE b = 0",
+            "rank_with_filters_b",
             id="rank_with_filters_b",
         ),
     ],
 )
 def test_function_to_sql(
     root: RelationalRoot,
-    sql_text: str,
+    test_name: str,
     sqlite_dialect: SQLiteDialect,
     sqlite_bindings: SqlGlotTransformBindings,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
 ) -> None:
     """
     Tests that should be small as we need to just test converting a function
     to SQL.
     """
+    file_path: str = get_sql_test_filename(f"func_{test_name}", DatabaseDialect.ANSI)
     created_sql: str = convert_relation_to_sql(
         root, sqlite_dialect, sqlite_bindings, True
     )
-    assert created_sql == sql_text
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(created_sql + "\n")
+    else:
+        with open(file_path) as f:
+            expected_relational_string: str = f.read()
+        assert (
+            created_sql == expected_relational_string.strip()
+        ), "Mismatch between tree generated SQL text and expected SQL text"

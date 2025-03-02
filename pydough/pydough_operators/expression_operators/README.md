@@ -59,7 +59,7 @@ These are created with a prefix operator syntax instead of called as a function.
 
 These are other PyDough operators that are not necessarily used as functions:
 
-- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Currently, PyDough does not support negative indices or providing step values other than 1.
+- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Negative slicing is supported. Currently PyDough does not support providing step values other than 1.
 
 #### Scalar Functions
 
@@ -73,14 +73,25 @@ These functions must be called on singular data as a function.
 - `STARTSWITH`: returns whether the first argument string starts with the second argument string.
 - `ENDSWITH`: returns whether the first argument string ends with the second argument string.
 - `CONTAINS`: returns whether the first argument string contains the second argument string.
-- `LIKES`: returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
+- `LIKE`: returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
 - `JOIN_STRINGS`: equivalent to the Python string join method, where the first argument is used as a delimiter to concatenate the remaining arguments.
 
 ##### Datetime Functions
 
+- `DATETIME`: constructs a new datetime, either from an existing one or the current datetime, and augments it by adding/subtracting intervals of time and/or truncating it to various units.
 - `YEAR`: returns the year component of a datetime.
 - `MONTH`: returns the month component of a datetime.
 - `DAY`: returns the day component of a datetime.
+- `HOUR`: Returns the hour component of a datetime.
+- `MINUTE`: Returns the minute component of a datetime.
+- `SECOND`: Returns the second component of a datetime.
+- `DATEDIFF("unit",x,y)`: Returns the difference between two dates (y-x) in one of 
+            - **Years**: `"years"`, `"year"`, `"y"`
+            - **Months**: `"months"`, `"month"`, `"mm"`
+            - **Days**: `"days"`, `"day"`, `"d"`
+            - **Hours**: `"hours"`, `"hour"`, `"h"`
+            - **Minutes**: `"minutes"`, `"minute"`, `"m"`
+            - **Seconds**: `"seconds"`, `"second"`, `"s"`.
 
 ##### Conditional Functions
 
@@ -95,6 +106,8 @@ These functions must be called on singular data as a function.
 
 - `ABS`: returns the absolute value of the input.
 - `ROUND`: rounds the first argument to a number of digits equal to the second argument.
+- `POWER`: exponentiates the first argument to the power of second argument.
+- `SQRT`: returns the square root of the input. 
 
 #### Aggregation Functions
 
@@ -123,7 +136,7 @@ These functions return an expression and use logic that produces a value that de
 - `RANKING(by=..., levels=None, allow_ties=False, dense=False)`: returns the ordinal position of the current record when all records are sorted by the collation expressions in the `by` argument. By default, uses the same semantics as `ROW_NUMBER`. If `allow_ties=True`, instead uses `RANK`. If `allow_ties=True` and `dense=True`, instead uses `DENSE_RANK`.
 - `PERCENTILE(by=..., levels=None, n_buckets=100)`: splits the data into `n_buckets` equal sized sections by ordering the data by the `by` arguments, where bucket `1` is the smallest data and bucket `n_buckets` is the largest. This is useful for understanding the relative position of a value within a group, like finding the top 10% of performers in a class.
 
-For an example of how `levels` works, when doing `Regions.nations.customers(r=RANKING(by=...))`:
+For an example of how `levels` works, when doing `Regions.nations.customers.CALCULATE(r=RANKING(by=...))`:
 
 - If `levels=None` or `levels=3`, `r` is the ranking across all `customers`.
 - If `levels=1`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).

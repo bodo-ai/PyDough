@@ -12,7 +12,7 @@ from pydough.relational.relational_expressions import (
 )
 from pydough.types.integer_types import IntegerType
 
-from .abstract_node import Relational
+from .abstract_node import RelationalNode
 from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
@@ -26,7 +26,7 @@ class Limit(SingleRelational):
 
     def __init__(
         self,
-        input: Relational,
+        input: RelationalNode,
         limit: RelationalExpression,
         columns: MutableMapping[str, RelationalExpression],
         orderings: MutableSequence[ExpressionSortInfo] | None = None,
@@ -57,7 +57,7 @@ class Limit(SingleRelational):
         """
         return self._orderings
 
-    def node_equals(self, other: Relational) -> bool:
+    def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Limit)
             and self.limit == other.limit
@@ -77,7 +77,7 @@ class Limit(SingleRelational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[Relational],
-    ) -> Relational:
+        inputs: MutableSequence[RelationalNode],
+    ) -> RelationalNode:
         assert len(inputs) == 1, "Limit node should have exactly one input"
         return Limit(inputs[0], self.limit, columns, self.orderings)

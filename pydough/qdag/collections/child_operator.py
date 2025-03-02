@@ -14,7 +14,7 @@ from .collection_tree_form import CollectionTreeForm
 class ChildOperator(PyDoughCollectionQDAG):
     """
     Base class for PyDough collection QDAG nodes that have access to
-    child collections, such as CALC or WHERE.
+    child collections, such as CALCULATE or WHERE.
     """
 
     def __init__(

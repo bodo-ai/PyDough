@@ -1,0 +1,8 @@
+ROOT(columns=[('key', key_0_10), ('name', name_11), ('phone', phone), ('mktsegment', mktsegment)], orderings=[])
+ PROJECT(columns={'key_0_10': key_0_10, 'mktsegment': mktsegment, 'name_11': name_9, 'phone': phone})
+  PROJECT(columns={'key_0_10': -3:int64, 'mktsegment': mktsegment, 'name_9': name_7, 'phone': phone})
+   JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'mktsegment': t1.mktsegment, 'name_7': t1.name, 'phone': t1.phone})
+    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key})
+     SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+     SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
+    SCAN(table=tpch.CUSTOMER, columns={'mktsegment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey, 'phone': c_phone})

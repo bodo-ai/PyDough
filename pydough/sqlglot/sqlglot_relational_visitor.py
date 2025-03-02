@@ -8,7 +8,11 @@ from collections import defaultdict
 from collections.abc import MutableMapping, MutableSequence
 
 from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.expressions import Alias as SQLGlotAlias
+from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.expressions import Identifier as SQLGlotIdentifier
+from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Select, Subquery, values
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import TableAlias as SQLGlotTableAlias
@@ -19,6 +23,7 @@ from pydough.relational import (
     ColumnReference,
     ColumnReferenceInputNameModifier,
     ColumnReferenceInputNameRemover,
+    CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
@@ -51,8 +56,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
+        self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(dialect, bindings)
+            SQLGlotRelationalExpressionVisitor(
+                dialect, bindings, self._correlated_names
+            )
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
@@ -75,6 +83,23 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         alias = f"_table_alias_{self._alias_counter}"
         self._alias_counter += 1
         return alias
+
+    @staticmethod
+    def _is_mergeable_column(expr: SQLGlotExpression) -> bool:
+        """
+        Determine if a given SQLGlot expression is a candidate
+        for merging with other columns.
+
+        Args:
+            expr (SQLGlotExpression): The expression to check.
+
+        Returns:
+            bool: Can we potentially merge this column.
+        """
+        if isinstance(expr, SQLGlotAlias):
+            return SQLGlotRelationalVisitor._is_mergeable_column(expr.this)
+        else:
+            return isinstance(expr, (SQLGlotLiteral, SQLGlotIdentifier, SQLGlotColumn))
 
     def _convert_ordering(
         self, ordering: MutableSequence[ExpressionSortInfo], input_alias: str
@@ -144,7 +169,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self,
         input_expr: Select,
         column_exprs: list[SQLGlotExpression],
-        alias: str,
+        alias: str | None = None,
+        sort: bool = True,
     ) -> Select:
         """
         Generate a subquery select statement with the given
@@ -153,14 +179,18 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         Args:
             `input_expr`: The from input, which should be
                 another select statement.
-            `column_exprs`: The columns to select.
-            `alias`: The alias to give the subquery.
+            column_exprs (list[SQLGlotExpression]): The columns to select.
+            alias (str | None): The alias to give the subquery.
+            sort (bool): If True, the final select statement ordering is based on the
+                sorted string representation of input column expressions.
 
         Returns:
             Select: A select statement representing the subquery.
         """
         if alias is None:
             alias = self._generate_table_alias()
+        if sort:
+            column_exprs = sorted(column_exprs, key=repr)
         return (
             Select()
             .select(*column_exprs)
@@ -174,7 +204,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         match exp:
             case CallExpression():
                 return any(self.contains_window(arg) for arg in exp.inputs)
-            case ColumnReference() | LiteralExpression():
+            case ColumnReference() | LiteralExpression() | CorrelatedReference():
                 return False
             case WindowCallExpression():
                 return True
@@ -194,7 +224,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     def visit_scan(self, scan: Scan) -> None:
         exprs: list[SQLGlotExpression] = [
             self._expr_visitor.relational_to_sqlglot(col, scan.table_name, alias)
-            for alias, col in scan.columns.items()
+            for alias, col in sorted(scan.columns.items())
         ]
         query: Select = Select().select(*exprs).from_(scan.table_name)
         query = Subquery(
@@ -203,6 +233,12 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
+        alias_map: dict[str | None, str] = {}
+        if join.correl_name is not None:
+            input_name = join.default_input_aliases[0]
+            alias = self._generate_table_alias()
+            alias_map[input_name] = alias
+            self._correlated_names[join.correl_name] = alias
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
@@ -310,7 +346,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         select_cols = keys + aggregations
         query: Select = self._build_subquery(input_expr, select_cols, in_alias)
         if keys:
-            query = query.group_by(*keys)
+            if aggregations:
+                query = query.group_by(*keys)
+            else:
+                query = query.distinct()
         self._stack.append(query)
 
     def visit_limit(self, limit: Limit) -> None:

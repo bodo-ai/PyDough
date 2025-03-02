@@ -6,7 +6,7 @@ available.
 import json
 import os
 import sqlite3
-from collections.abc import MutableMapping
+from collections.abc import Callable, MutableMapping
 
 import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
@@ -18,6 +18,7 @@ from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
     DatabaseDialect,
+    empty_connection,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
@@ -139,6 +140,44 @@ def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
     return AstNodeBuilder(get_sample_graph("TPCH"))
 
 
+@pytest.fixture(scope="session")
+def get_plan_test_filename() -> Callable[[str], str]:
+    """
+    A function that takes in a file name and returns the path to that file
+    from within the directory of plan testing refsol files.
+    """
+
+    def impl(file_name: str) -> str:
+        return f"{os.path.dirname(__file__)}/test_plan_refsols/{file_name}.txt"
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_sql_test_filename() -> Callable[[str, DatabaseDialect], str]:
+    """
+    A function that takes in a file name and returns the path to that file
+    from within the directory of SQL text testing refsol files.
+    """
+
+    def impl(file_name: str, dialect: DatabaseDialect) -> str:
+        return f"{os.path.dirname(__file__)}/test_sql_refsols/{file_name}_{dialect.value.lower()}.sql"
+
+    return impl
+
+
+@pytest.fixture
+def update_tests() -> bool:
+    """
+    If True, planner/sql tests should update the refsol file instead of
+    verifying that the test matches the file. If False, the refsol file is used
+    to check the answer.
+
+    This is controlled by an environment variable `PYDOUGH_UPDATE_TESTS`.
+    """
+    return os.getenv("PYDOUGH_UPDATE_TESTS", "0") == "1"
+
+
 @pytest.fixture(
     params=[
         pytest.param(operator, id=operator.binop.name)
@@ -164,6 +203,20 @@ def sqlite_dialects(request) -> DatabaseDialect:
     Returns the SQLite dialect.
     """
     return request.param
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(DatabaseDialect.ANSI, id="ansi"),
+        pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+    ]
+)
+def empty_context_database(request) -> DatabaseContext:
+    """
+    Returns a database context with an empty connection for each supported
+    PyDough SQL dialect.
+    """
+    return DatabaseContext(empty_connection, request.param)
 
 
 @pytest.fixture(scope="session")

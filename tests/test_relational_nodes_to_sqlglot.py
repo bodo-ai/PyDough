@@ -60,7 +60,7 @@ from pydough.relational import (
     Limit,
     LiteralExpression,
     Project,
-    Relational,
+    RelationalNode,
     RelationalRoot,
     Scan,
     WindowCallExpression,
@@ -152,6 +152,8 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
         query = query.where(kwargs.pop("where"))
     if "group_by" in kwargs:
         query = query.group_by(*kwargs.pop("group_by"))
+    if kwargs.pop("distinct", False):
+        query = query.distinct()
     if "qualify" in kwargs:
         query = query.qualify(kwargs.pop("qualify"))
     if "order_by" in kwargs:
@@ -249,9 +251,9 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
+                    set_glot_alias(mk_literal(1, False), "c"),
                     Ident(this="a"),
                     Ident(this="b"),
-                    set_glot_alias(mk_literal(1, False), "c"),
                 ],
                 _from=GlotFrom(Table(this=Ident(this="table"))),
             ),
@@ -615,8 +617,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    Ident(this="b"),
                     set_glot_alias(mk_literal(1, False), "c"),
+                    Ident(this="b"),
                 ],
                 _from=GlotFrom(Table(this=Ident(this="table"))),
                 limit=mk_literal(2, False),
@@ -627,14 +629,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             Aggregate(
                 input=build_simple_scan(),
                 keys={
+                    "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
                 },
                 aggregations={},
             ),
             mkglot(
-                expressions=[Ident(this="b")],
+                expressions=[Ident(this="a"), Ident(this="b")],
                 _from=GlotFrom(Table(this=Ident(this="table"))),
-                group_by=[Ident(this="b")],
+                distinct=True,
             ),
             id="simple_distinct",
         ),
@@ -678,11 +681,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    Ident(this="b"),
                     set_glot_alias(
                         mkglot_func(Sum, [Ident(this="a")]),
                         "a",
                     ),
+                    Ident(this="b"),
                 ],
                 group_by=[Ident(this="b")],
                 _from=GlotFrom(
@@ -718,7 +721,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[Ident(this="b")],
                 where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
-                group_by=[Ident(this="b")],
+                distinct=True,
                 _from=GlotFrom(
                     mkglot(
                         expressions=[Ident(this="a"), Ident(this="b")],
@@ -759,11 +762,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            Ident(this="b"),
                             set_glot_alias(
                                 mkglot_func(Sum, [Ident(this="a")]),
                                 "a",
                             ),
+                            Ident(this="b"),
                         ],
                         group_by=[Ident(this="b")],
                         _from=GlotFrom(
@@ -794,7 +797,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[Ident(this="b")],
-                group_by=[Ident(this="b")],
+                distinct=True,
                 _from=GlotFrom(
                     mkglot(
                         expressions=[Ident(this="a"), Ident(this="b")],
@@ -829,7 +832,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[Ident(this="b")],
                 _from=GlotFrom(Table(this=Ident(this="table"))),
-                group_by=[Ident(this="b")],
+                distinct=True,
                 order_by=[Ident(this="b").desc(nulls_first=False)],
                 limit=mk_literal(10, False),
             ),
@@ -865,8 +868,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=GlotFrom(
                     mkglot(
                         expressions=[Ident(this="b")],
-                        group_by=[Ident(this="b")],
                         _from=GlotFrom(Table(this=Ident(this="table"))),
+                        distinct=True,
                     )
                 ),
             ),
@@ -1297,14 +1300,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            Ident(this="a"),
-                            Ident(this="b"),
                             set_glot_alias(
                                 mkglot_func(
                                     Add, [Ident(this="a"), mk_literal(1, False)]
                                 ),
                                 "c",
                             ),
+                            Ident(this="a"),
+                            Ident(this="b"),
                         ],
                         _from=GlotFrom(
                             mkglot(
@@ -1418,11 +1421,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            Ident(this="b"),
                             set_glot_alias(
                                 mkglot_func(Sum, [Ident(this="a")]),
                                 "a",
                             ),
+                            Ident(this="b"),
                         ],
                         group_by=[Ident(this="b")],
                         _from=GlotFrom(
@@ -1577,7 +1580,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
 )
 def test_node_to_sqlglot(
     sqlglot_relational_visitor: SQLGlotRelationalVisitor,
-    node: Relational,
+    node: RelationalNode,
     sqlglot_expr: Expression,
 ) -> None:
     """

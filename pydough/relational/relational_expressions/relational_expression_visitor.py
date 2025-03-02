@@ -61,3 +61,12 @@ class RelationalExpressionVisitor(ABC):
         Args:
             column_reference (ColumnReference): The column reference node to visit.
         """
+
+    @abstractmethod
+    def visit_correlated_reference(self, correlated_reference) -> None:
+        """
+        Visit a CorrelatedReference node.
+
+        Args:
+            correlated_reference (CorrelatedReference): The correlated reference node to visit.
+        """

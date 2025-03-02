@@ -15,6 +15,7 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
 )
+from pydough.logger import get_logger
 from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
@@ -42,6 +43,8 @@ def convert_relation_to_sql(
     Returns:
         str: The SQL string representing the relational tree.
     """
+    # TODO (gh #205): use simplify/optimize from sqlglo to rewrite the
+    # generated SQL.
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings
     ).relational_to_sqlglot(relational)
@@ -54,7 +57,7 @@ def convert_relation_to_sql(
 
         # glot_expr = optimize(glot_expr, dialect=dialect, rules=RULES[:1])
         glot_expr = optimize(glot_expr, dialect=dialect)
-        sql_text = glot_expr.sql(dialect)
+        sql_text = glot_expr.sql(dialect, pretty=True)
     return sql_text
 
 
@@ -105,8 +108,7 @@ def execute_df(
     sql: str = convert_relation_to_sql(
         relational, sqlglot_dialect, bindings, run_optimizer
     )
-    # TODO: (gh #163) handle with a proper Python logger instead of
-    # just printing
     if display_sql:
-        print("SQL query:\n", sql)
+        pyd_logger = get_logger(__name__)
+        pyd_logger.info(f"SQL query:\n {sql}")
     return ctx.connection.execute_query_df(sql)

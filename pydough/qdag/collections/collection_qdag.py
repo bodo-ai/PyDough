@@ -30,9 +30,9 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
     @property
     def ancestor_context(self) -> Union["PyDoughCollectionQDAG", None]:
         """
-        The ancestor context from which this collection is derived, e.g. what
-        is accessed by `BACK(1)`. Returns None if there is no ancestor context,
-        e.g. because the collection is the top of the hierarchy.
+        The ancestor context from which this collection is derived. Returns
+        None if there is no ancestor context because the collection is the top
+        of the hierarchy.
         """
 
     @property
@@ -40,7 +40,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
     def preceding_context(self) -> Union["PyDoughCollectionQDAG", None]:
         """
         The preceding context from which this collection is derived, e.g. an
-        ORDER BY term before a CALC. Returns None if there is no preceding
+        ORDER BY term before a CALCULATE. Returns None if there is no preceding
         context, e.g. because the collection is the start of a pipeline
         within a larger ancestor context.
         """
@@ -51,7 +51,8 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         """
         The list of expressions that would be retrieved if the collection
         were to have its results evaluated. This is the set of names in the
-        most-recent CALC, potentially with extra expressions added since then.
+        most-recent CALCULATE, potentially with extra expressions added since
+        then.
         """
 
     @property
@@ -59,6 +60,28 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
     def all_terms(self) -> set[str]:
         """
         The set of expression/subcollection names accessible by the context.
+        """
+
+    @property
+    @abstractmethod
+    def ancestral_mapping(self) -> dict[str, int]:
+        """
+        A mapping of names created by the current context and its ancestors
+        describing terms defined inside a CALCULATE clause that are available
+        to the current context & descendants to back-reference via that name
+        to the number of ancestors up required to find the back-referenced
+        term.
+        """
+
+    @property
+    @abstractmethod
+    def inherited_downstreamed_terms(self) -> set[str]:
+        """
+        A set of names created by indirect ancestors of the current context
+        that can be used to back-reference. The specific index of the
+        back-reference is handled during the hybrid conversion process, when
+        implicit back-references are flushed to populate the base of the tree
+        input to a PARTITION node.
         """
 
     @abstractmethod
@@ -98,7 +121,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
     def verify_singular_terms(self, exprs: Iterable[PyDoughExpressionQDAG]) -> None:
         """
         Verifies that a list of expressions is singular with regards to the
-        current collection, e.g. they can used as CALC terms.
+        current collection, e.g. they can used as CALCULATE terms.
 
         Args:
             `exprs`: the list of expression to be checked.
@@ -254,8 +277,14 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         structured. For example, consider the following PyDough snippet:
 
         ```
-        Regions.WHERE(ENDSWITH(name, 's')).nations.WHERE(name != 'USA')(
-            a=BACK(1).name,
+        Regions.CALCULATE(
+            region_name=name,
+        ).WHERE(
+            ENDSWITH(name, 's')
+        ).nations.WHERE(
+            name != 'USA'
+        ).CALCULATE(
+            a=region_name,
             b=name,
             c=MAX(YEAR(suppliers.WHERE(STARTSWITH(phone, '415')).supply_records.lines.ship_date)),
             d=COUNT(customers.WHERE(acctbal > 0))
@@ -271,10 +300,11 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         ```
         ──┬─ TPCH
           ├─── TableCollection[Regions]
+          ├─── Calculate[region_name=name]
           └─┬─ Where[ENDSWITH(name, 's')]
             ├─── SubCollection[nations]
             ├─── Where[name != 'USA']
-            ├─┬─ Calc[a=[BACK(1).name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
+            ├─┬─ Calculate[a=[region_name], b=[name], c=[MAX($2._expr1)], d=[COUNT($1)]]
             │ ├─┬─ AccessChild
             │ │ ├─ SubCollection[customers]
             │ │ └─── Where[acctbal > 0]
@@ -283,7 +313,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             │     ├─── Where[STARTSWITH(phone, '415')]
             │     └─┬─ SubCollection[supply_records]
             │       └─┬─ SubCollection[lines]
-            │         └─── Calc[_expr1=YEAR(ship_date)]
+            │         └─── Calculate[_expr1=YEAR(ship_date)]
             ├─── Where[c > 1000]
             └─── OrderBy[d.DESC()]
         ```

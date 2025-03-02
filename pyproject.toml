@@ -26,7 +26,7 @@ dependencies = ["pytz", "sqlglot", "pandas>=2.0.0", "jupyterlab"]
 Repository = "https://github.com/bodo-ai/PyDough"
 
 [tool.uv]
-dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7"]
+dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7", "pytest-repeat"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

@@ -5,9 +5,8 @@ PyDough whenever a user writes PyDough code.
 
 __all__ = [
     "UnqualifiedAccess",
-    "UnqualifiedBack",
     "UnqualifiedBinaryOperation",
-    "UnqualifiedCalc",
+    "UnqualifiedCalculate",
     "UnqualifiedLiteral",
     "UnqualifiedNode",
     "UnqualifiedOperation",
@@ -124,12 +123,26 @@ class UnqualifiedNode(ABC):
             args: MutableSequence[UnqualifiedNode] = [self]
             for arg in (key.start, key.stop, key.step):
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
+                if not isinstance(coerced_elem, UnqualifiedLiteral):
+                    raise PyDoughUnqualifiedException(
+                        "PyDough objects are currently not supported to be used as indices in Python slices."
+                    )
                 args.append(coerced_elem)
             return UnqualifiedOperation("SLICE", args)
         else:
             raise PyDoughUnqualifiedException(
                 f"Cannot index into PyDough object {self} with {key!r}"
             )
+
+    def __call__(self, *args, **kwargs):
+        raise PyDoughUnqualifiedException(
+            f"PyDough nodes {self!r} is not callable. Did you mean to use a function?"
+        )
+
+    def __bool__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough code cannot be treated as a boolean. If you intend to do a logical operation, use `|`, `&` and `~` instead of `or`, `and` and `not`."
+        )
 
     def __add__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
@@ -236,7 +249,7 @@ class UnqualifiedNode(ABC):
     def __invert__(self):
         return UnqualifiedOperation("NOT", [self])
 
-    def __call__(self, *args, **kwargs: dict[str, object]):
+    def CALCULATE(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
         counter = 0
         for arg in args:
@@ -253,7 +266,68 @@ class UnqualifiedNode(ABC):
             calc_args.append((name, unqualified_arg))
         for name, arg in kwargs.items():
             calc_args.append((name, self.coerce_to_unqualified(arg)))
-        return UnqualifiedCalc(self, calc_args)
+        return UnqualifiedCalculate(self, calc_args)
+
+    def __abs__(self):
+        return UnqualifiedOperation("ABS", [self])
+
+    def __round__(self, n=None):
+        if n is None:
+            n = 0
+        n_unqualified = self.coerce_to_unqualified(n)
+        return UnqualifiedOperation("ROUND", [self, n_unqualified])
+
+    def __floor__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the math.floor function at this time."
+        )
+
+    def __ceil__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the math.ceil function at this time."
+        )
+
+    def __trunc__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the math.trunc function at this time."
+        )
+
+    def __reversed__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough does not support the reversed function at this time."
+        )
+
+    def __int__(self):
+        raise PyDoughUnqualifiedException("PyDough objects cannot be cast to int.")
+
+    def __float__(self):
+        raise PyDoughUnqualifiedException("PyDough objects cannot be cast to float.")
+
+    def __complex__(self):
+        raise PyDoughUnqualifiedException("PyDough objects cannot be cast to complex.")
+
+    def __index__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot be used as indices in Python slices."
+        )
+
+    def __nonzero__(self):
+        return self.__bool__()
+
+    def __len__(self):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot be used with the len function."
+        )
+
+    def __contains__(self, item):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot be used with the 'in' operator."
+        )
+
+    def __setitem__(self, key, value):
+        raise PyDoughUnqualifiedException(
+            "PyDough objects cannot support item assignment."
+        )
 
     def WHERE(self, cond: object) -> "UnqualifiedWhere":
         cond_unqualified: UnqualifiedNode = self.coerce_to_unqualified(cond)
@@ -306,12 +380,6 @@ class UnqualifiedNode(ABC):
         else:
             return UnqualifiedPartition(self, data, name, list(by))
 
-    def BACK(self, levels: int) -> "UnqualifiedBack":
-        """
-        Method used to create a BACK node.
-        """
-        return UnqualifiedBack(levels)
-
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -336,17 +404,6 @@ class UnqualifiedRoot(UnqualifiedNode):
             return UnqualifiedOperator(name)
         else:
             return super().__getattribute__(name)
-
-
-class UnqualifiedBack(UnqualifiedNode):
-    """
-    Implementation of UnqualifiedNode used to refer to a BACK node, meaning that
-    anything pointing to this node as an ancestor/predecessor must be derivable
-    by looking at the ancestors of the context it is placed within.
-    """
-
-    def __init__(self, levels: int):
-        self._parcel: tuple[int] = (levels,)
 
 
 class UnqualifiedLiteral(UnqualifiedNode):
@@ -510,9 +567,9 @@ class UnqualifiedAccess(UnqualifiedNode):
         self._parcel: tuple[UnqualifiedNode, str] = (predecessor, name)
 
 
-class UnqualifiedCalc(UnqualifiedNode):
+class UnqualifiedCalculate(UnqualifiedNode):
     """
-    Implementation of UnqualifiedNode used to refer to a CALC clause being
+    Implementation of UnqualifiedNode used to refer to a CALCULATE clause being
     done onto another UnqualifiedNode.
     """
 
@@ -608,9 +665,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
     operands_str: str
     match unqualified:
         case UnqualifiedRoot():
-            return "?"
-        case UnqualifiedBack():
-            return f"BACK({unqualified._parcel[0]})"
+            return unqualified._parcel[0].name
         case UnqualifiedLiteral():
             literal_value: Any = unqualified._parcel[0]
             match literal_value:
@@ -648,11 +703,13 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             pos: str = "'last'" if unqualified._parcel[2] else "'first'"
             return f"{display_raw(unqualified._parcel[0])}.{method}(na_pos={pos})"
         case UnqualifiedAccess():
+            if isinstance(unqualified._parcel[0], UnqualifiedRoot):
+                return unqualified._parcel[1]
             return f"{display_raw(unqualified._parcel[0])}.{unqualified._parcel[1]}"
-        case UnqualifiedCalc():
+        case UnqualifiedCalculate():
             for name, node in unqualified._parcel[1]:
                 term_strings.append(f"{name}={display_raw(node)}")
-            return f"{display_raw(unqualified._parcel[0])}({', '.join(term_strings)})"
+            return f"{display_raw(unqualified._parcel[0])}.CALCULATE({', '.join(term_strings)})"
         case UnqualifiedWhere():
             return f"{display_raw(unqualified._parcel[0])}.WHERE({display_raw(unqualified._parcel[1])})"
         case UnqualifiedTopK():
@@ -668,6 +725,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         case UnqualifiedPartition():
             for node in unqualified._parcel[3]:
                 term_strings.append(display_raw(node))
+            if isinstance(unqualified._parcel[0], UnqualifiedRoot):
+                return f"PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
             return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
         case _:
             raise PyDoughUnqualifiedException(
