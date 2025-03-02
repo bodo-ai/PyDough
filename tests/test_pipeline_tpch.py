@@ -318,7 +318,6 @@ def test_pipeline_until_relational_tpch(
 def test_pipeline_e2e_tpch(
     pydough_pipeline_tpch_test_data: tuple[
         Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
         str,
         Callable[[], pd.DataFrame],
     ],
@@ -328,10 +327,8 @@ def test_pipeline_e2e_tpch(
     """
     Test executing the TPC-H queries from the original code generation.
     """
-    unqualified_impl, columns, _, answer_impl = pydough_pipeline_tpch_test_data
+    unqualified_impl, _, answer_impl = pydough_pipeline_tpch_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
-    )
+    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
     pd.testing.assert_frame_equal(result, answer_impl())
