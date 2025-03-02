@@ -20,7 +20,7 @@ def test_tpch_q6(sqlite_tpch_db: sqlite3.Connection) -> None:
     cur: sqlite3.Cursor = sqlite_tpch_db.cursor()
     cur.execute("""
         select
-            sum(l_extendedprice * l_discount) as revenue
+            sum(l_extendedprice * l_discount) as REVENUE
         from
             lineitem
         where

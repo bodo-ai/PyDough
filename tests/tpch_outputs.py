@@ -10,16 +10,16 @@ def tpch_q1_output() -> pd.DataFrame:
     Expected output for TPC-H query 1.
     """
     columns = [
-        "l_returnflag",
-        "l_linestatus",
-        "sum_qty",
-        "sum_base_price",
-        "sum_disc_price",
-        "sum_charge",
-        "avg_qty",
-        "avg_price",
-        "avg_disc",
-        "count_order",
+        "L_RETURNFLAG",
+        "L_LINESTATUS",
+        "SUM_QTY",
+        "SUM_BASE_PRICE",
+        "SUM_DISC_PRICE",
+        "SUM_CHARGE",
+        "AVG_QTY",
+        "AVG_PRICE",
+        "AVG_DISC",
+        "COUNT_ORDER",
     ]
     data = [
         (
@@ -80,14 +80,14 @@ def tpch_q2_output() -> pd.DataFrame:
     the first 10 rows.
     """
     columns = [
-        "s_acctbal",
-        "s_name",
-        "n_name",
-        "p_partkey",
-        "p_mfgr",
-        "s_address",
-        "s_phone",
-        "s_comment",
+        "S_ACCTBAL",
+        "S_NAME",
+        "N_NAME",
+        "P_PARTKEY",
+        "P_MFGR",
+        "S_ADDRESS",
+        "S_PHONE",
+        "S_COMMENT",
     ]
     data = [
         (
@@ -198,7 +198,7 @@ def tpch_q3_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 3.
     """
-    columns = ["l_orderkey", "revenue", "o_orderdate", "o_shippriority"]
+    columns = ["L_ORDERKEY", "REVENUE", "O_ORDERDATE", "O_SHIPPRIORITY"]
     data = [
         (2456423, 406181.0111, "1995-03-05", 0),
         (3459808, 405838.6989, "1995-03-04", 0),
@@ -218,7 +218,7 @@ def tpch_q4_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 4.
     """
-    columns = ["o_orderpriority", "order_count"]
+    columns = ["O_ORDERPRIORITY", "ORDER_COUNT"]
     data = [
         ("1-URGENT", 10594),
         ("2-HIGH", 10476),
@@ -233,7 +233,7 @@ def tpch_q5_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 5.
     """
-    columns = ["n_name", "revenue"]
+    columns = ["N_NAME", "REVENUE"]
     data = [
         ("INDONESIA", 55502041.1697),
         ("VIETNAM", 55295086.9967),
@@ -248,7 +248,7 @@ def tpch_q6_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 6.
     """
-    columns = ["revenue"]
+    columns = ["REVENUE"]
     data = [(123141078.2283,)]
     return pd.DataFrame(data, columns=columns)
 
@@ -257,7 +257,7 @@ def tpch_q7_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 7.
     """
-    columns = ["supp_nation", "cust_nation", "l_year", "revenue"]
+    columns = ["SUPP_NATION", "CUST_NATION", "L_YEAR", "REVENUE"]
     data = [
         ("FRANCE", "GERMANY", 1995, 54639732.7336),
         ("FRANCE", "GERMANY", 1996, 54633083.3076),
@@ -271,7 +271,7 @@ def tpch_q8_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 8.
     """
-    columns = ["o_year", "mkt_share"]
+    columns = ["O_YEAR", "MKT_SHARE"]
     data = [(1995, 0.034435890406654804), (1996, 0.04148552129353032)]
     return pd.DataFrame(data, columns=columns)
 
@@ -281,7 +281,7 @@ def tpch_q9_output() -> pd.DataFrame:
     Expected output for TPC-H query 9. Note: This is truncated to
     the first 10 rows.
     """
-    columns = ["nation", "o_year", "amount"]
+    columns = ["NATION", "O_YEAR", "AMOUNT"]
     data = [
         ("ALGERIA", 1998, 27136900.1803),
         ("ALGERIA", 1997, 48611833.496199995),
@@ -302,14 +302,14 @@ def tpch_q10_output() -> pd.DataFrame:
     Expected output for TPC-H query 10.
     """
     columns = [
-        "c_custkey",
-        "c_name",
-        "revenue",
-        "c_acctbal",
-        "n_name",
-        "c_address",
-        "c_phone",
-        "c_comment",
+        "C_CUSTKEY",
+        "C_NAME",
+        "REVENUE",
+        "C_ACCTBAL",
+        "N_NAME",
+        "C_ADDRESS",
+        "C_PHONE",
+        "C_COMMENT",
     ]
     data = [
         (
@@ -521,7 +521,7 @@ def tpch_q11_output() -> pd.DataFrame:
     Expected output for TPC-H query 11. Note: This is truncated to
     the first 10 rows.
     """
-    columns = ["ps_partkey", "value"]
+    columns = ["PS_PARTKEY", "VALUE"]
     data = [
         (129760, 17538456.86),
         (166726, 16503353.92),
@@ -541,7 +541,7 @@ def tpch_q12_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 12.
     """
-    columns = ["l_shipmode", "high_line_count", "low_line_count"]
+    columns = ["L_SHIPMODE", "HIGH_LINE_COUNT", "LOW_LINE_COUNT"]
     data = [("MAIL", 6202, 9324), ("SHIP", 6200, 9262)]
     return pd.DataFrame(data, columns=columns)
 
@@ -551,7 +551,7 @@ def tpch_q13_output() -> pd.DataFrame:
     Expected output for TPC-H query 13. Note: This is truncated to
     the first 10 rows.
     """
-    columns = ["c_count", "custdist"]
+    columns = ["C_COUNT", "CUSTDIST"]
     data = [
         (0, 50005),
         (9, 6641),
@@ -571,7 +571,7 @@ def tpch_q14_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 14.
     """
-    columns = ["promo_revenue"]
+    columns = ["PROMO_REVENUE"]
     data = [(16.38077862639554,)]
     return pd.DataFrame(data, columns=columns)
 
@@ -580,7 +580,7 @@ def tpch_q15_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 15.
     """
-    columns = ["s_suppkey", "s_name", "s_address", "s_phone", "total_revenue"]
+    columns = ["S_SUPPKEY", "S_NAME", "S_ADDRESS", "S_PHONE", "TOTAL_REVENUE"]
     data = [
         (
             8449,
@@ -598,7 +598,7 @@ def tpch_q16_output() -> pd.DataFrame:
     Expected output for TPC-H query 16. Note: This is truncated to
     the first 10 rows.
     """
-    columns = ["p_brand", "p_type", "p_size", "supplier_count"]
+    columns = ["P_BRAND", "P_TYPE", "P_SIZE", "SUPPLIER_COUNT"]
     data = [
         ("Brand#41", "MEDIUM BRUSHED TIN", 3, 28),
         ("Brand#54", "STANDARD BRUSHED COPPER", 14, 27),
@@ -621,7 +621,7 @@ def tpch_q17_output() -> pd.DataFrame:
     This query needs manual rewriting to run efficiently in SQLite
     by avoiding the correlated join.
     """
-    columns = ["avg_yearly"]
+    columns = ["AVG_YEARLY"]
     data = [(348406.0542857143,)]
     return pd.DataFrame(data, columns=columns)
 
@@ -632,12 +632,12 @@ def tpch_q18_output() -> pd.DataFrame:
     the first 10 rows.
     """
     columns = [
-        "c_name",
-        "c_custkey",
-        "o_orderkey",
-        "o_orderdate",
-        "o_totalprice",
-        "total_quantity",
+        "C_NAME",
+        "C_CUSTKEY",
+        "O_ORDERKEY",
+        "O_ORDERDATE",
+        "O_TOTALPRICE",
+        "TOTAL_QUANTITY",
     ]
     data = [
         ("Customer#000128120", 128120, 4722021, "1994-04-07", 544089.09, 323),
@@ -658,7 +658,7 @@ def tpch_q19_output() -> pd.DataFrame:
     """
     Expected output for TPC-H query 19.
     """
-    columns = ["revenue"]
+    columns = ["REVENUE"]
     data = [(3083843.0578,)]
     return pd.DataFrame(data, columns=columns)
 
@@ -671,7 +671,7 @@ def tpch_q20_output() -> pd.DataFrame:
     This query needs manual rewriting to run efficiently in SQLite
     by avoiding the correlated join.
     """
-    columns = ["s_name", "s_address"]
+    columns = ["S_NAME", "S_ADDRESS"]
     data = [
         ("Supplier#000000020", "iybAE,RmTymrZVYaFZva2SH,j"),
         ("Supplier#000000091", "YV45D7TkfdQanOOZ7q9QxkyGUapU1oOWU6q3"),
