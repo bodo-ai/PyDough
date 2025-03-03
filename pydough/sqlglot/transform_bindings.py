@@ -206,10 +206,17 @@ def apply_datetime_truncation(
                 trunc_expr: SQLGlotExpression = sqlglot_expressions.convert(
                     f"start of {unit.value}"
                 )
-                if isinstance(base, sqlglot_expressions.Datetime):
+                if isinstance(base, sqlglot_expressions.Date):
                     base.this.append(trunc_expr)
                     return base
-                return sqlglot_expressions.Datetime(
+                if (
+                    isinstance(base, sqlglot_expressions.Datetime)
+                    and len(base.this) == 1
+                ):
+                    return sqlglot_expressions.Date(
+                        this=base.this + [trunc_expr],
+                    )
+                return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
                 )
             # SQLite does not have `start of` modifiers for hours, minutes, or
@@ -249,7 +256,10 @@ def apply_datetime_offset(
         offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
             f"{amt} {unit.value}"
         )
-        if isinstance(base, sqlglot_expressions.Datetime):
+        if isinstance(base, sqlglot_expressions.Datetime) or (
+            isinstance(base, sqlglot_expressions.Date)
+            and unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY)
+        ):
             base.this.append(offset_expr)
             return base
         return sqlglot_expressions.Datetime(
