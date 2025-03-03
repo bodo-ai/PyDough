@@ -161,17 +161,17 @@ def impl_defog_broker_adv7():
         & (join_date < DATETIME("now", "start of month"))
     ).CALCULATE(
         join_year=YEAR(join_date),
-        join_month=YEAR(join_date),
-        month=JOIN_STRINGS("-", YEAR(join_date), LPAD(YEAR(join_date), 2, "0")),
+        join_month=MONTH(join_date),
+        month=JOIN_STRINGS("-", YEAR(join_date), LPAD(MONTH(join_date), 2, "0")),
     )
-    months = selected_customers(selected_customers, name="custs", by=month)
+    months = PARTITION(selected_customers, name="custs", by=month)
     selected_txns = custs.transactions_made.WHERE(
         (YEAR(date_time) == join_year) & (MONTH(date_time) == join_month)
     )
     return months.CALCULATE(
         month,
         customer_signups=COUNT(custs),
-        avg_tx_amount=AVG(selected_txns),
+        avg_tx_amount=AVG(selected_txns.amount),
     )
 
 

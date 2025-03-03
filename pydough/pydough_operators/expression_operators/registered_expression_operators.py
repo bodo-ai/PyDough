@@ -33,6 +33,7 @@ __all__ = [
     "LET",
     "LIKE",
     "LOWER",
+    "LPAD",
     "MAX",
     "MIN",
     "MINUTE",
@@ -51,6 +52,7 @@ __all__ = [
     "PREV",
     "RANKING",
     "ROUND",
+    "RPAD",
     "SECOND",
     "SLICE",
     "SQRT",
@@ -161,6 +163,12 @@ DATEDIFF = ExpressionFunctionOperator(
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)
+)
+LPAD = ExpressionFunctionOperator(
+    "LPAD", False, RequireNumArgs(3), SelectArgumentType(0)
+)
+RPAD = ExpressionFunctionOperator(
+    "RPAD", False, RequireNumArgs(3), SelectArgumentType(0)
 )
 NOT = ExpressionFunctionOperator(
     "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())

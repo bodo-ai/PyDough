@@ -206,10 +206,17 @@ def apply_datetime_truncation(
                 trunc_expr: SQLGlotExpression = sqlglot_expressions.convert(
                     f"start of {unit.value}"
                 )
-                if isinstance(base, sqlglot_expressions.Datetime):
+                if isinstance(base, sqlglot_expressions.Date):
                     base.this.append(trunc_expr)
                     return base
-                return sqlglot_expressions.Datetime(
+                if (
+                    isinstance(base, sqlglot_expressions.Datetime)
+                    and len(base.this) == 1
+                ):
+                    return sqlglot_expressions.Date(
+                        this=base.this + [trunc_expr],
+                    )
+                return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
                 )
             # SQLite does not have `start of` modifiers for hours, minutes, or
@@ -249,7 +256,10 @@ def apply_datetime_offset(
         offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
             f"{amt} {unit.value}"
         )
-        if isinstance(base, sqlglot_expressions.Datetime):
+        if isinstance(base, sqlglot_expressions.Datetime) or (
+            isinstance(base, sqlglot_expressions.Date)
+            and unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY)
+        ):
             base.this.append(offset_expr)
             return base
         return sqlglot_expressions.Datetime(
@@ -998,6 +1008,155 @@ def convert_contains(
     return convert_like(None, [column, pattern])
 
 
+def pad_helper(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+    pad_func: str,
+) -> SQLGlotExpression:
+    """
+    Helper function for LPAD and RPAD.
+    Expects sqlglot_args[0] to be the column to pad.
+    Expects sqlglot_args[1] and sqlglot_args[2] to be literals.
+    Expects sqlglot_args[1] to be the returned length of the padded string.
+    Expects sqlglot_args[2] to be the string to pad with.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions. The first operand is expected to be a string.
+        `pad_func`: The name of the padding function to use.
+
+    Returns:
+        A tuple of sqlglot expressions for the column to pad, the length of the column,
+        the required length, padding string and the integer literal of the required length.
+    """
+    assert pad_func in ["LPAD", "RPAD"]
+    assert len(sql_glot_args) == 3
+
+    if (
+        isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
+        and not sql_glot_args[1].is_string
+    ):
+        try:
+            required_len = int(sql_glot_args[1].this)
+            if required_len < 0:
+                raise ValueError()
+        except ValueError:
+            raise ValueError(
+                f"{pad_func} function requires the length argument to be a non-negative integer literal."
+            )
+    else:
+        raise ValueError(
+            f"{pad_func} function requires the length argument to be a non-negative integer literal."
+        )
+
+    if (
+        not isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
+        or not sql_glot_args[2].is_string
+    ):
+        raise ValueError(
+            f"{pad_func} function requires the padding argument to be a string literal of length 1."
+        )
+    if len(str(sql_glot_args[2].this)) != 1:
+        raise ValueError(
+            f"{pad_func} function requires the padding argument to be a string literal of length 1."
+        )
+
+    col_glot = sql_glot_args[0]
+    col_len_glot = sqlglot_expressions.Length(this=sql_glot_args[0])
+    required_len_glot = sqlglot_expressions.convert(required_len)
+    pad_string_glot = sqlglot_expressions.convert(
+        str(sql_glot_args[2].this) * required_len
+    )
+    return col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len
+
+
+def convert_lpad(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Converts and pads the string to the left till the string is the specified length.
+    If length is 0, return an empty string.
+    If length is negative, raise an error.
+    If length is positive, pad the string on the left to the specified length.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions. The first operand is expected to be a string.
+
+    Returns:
+        The SQLGlot expression matching the functionality of
+        `LPAD(string, length, padding)`. With the caveat that if length is 0,
+        it will return an empty string.
+    """
+    col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len = (
+        pad_helper(raw_args, sql_glot_args, "LPAD")
+    )
+    if required_len == 0:
+        return sqlglot_expressions.convert("")
+
+    answer = convert_iff_case(
+        None,
+        [
+            sqlglot_expressions.GTE(this=col_len_glot, expression=required_len_glot),
+            sqlglot_expressions.Substring(
+                this=col_glot,
+                start=sqlglot_expressions.convert(1),
+                length=required_len_glot,
+            ),
+            sqlglot_expressions.Substring(
+                this=convert_concat(None, [pad_string_glot, col_glot]),
+                start=apply_parens(
+                    sqlglot_expressions.Mul(
+                        this=required_len_glot,
+                        expression=sqlglot_expressions.convert(-1),
+                    )
+                ),
+            ),
+        ],
+    )
+    return answer
+
+
+def convert_rpad(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Converts and pads the string to the right to the specified length.
+    If length is 0, return an empty string.
+    If length is negative, raise an error.
+    If length is positive, pad the string on the right to the specified length.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions. The first operand is expected to be a string.
+
+    Returns:
+        The SQLGlot expression matching the functionality of
+        `RPAD(string, length, padding)`. With the caveat that if length is 0,
+        it will return an empty string.
+    """
+    col_glot, _, required_len_glot, pad_string_glot, required_len = pad_helper(
+        raw_args, sql_glot_args, "RPAD"
+    )
+    if required_len == 0:
+        return sqlglot_expressions.convert("")
+
+    answer = sqlglot_expressions.Substring(
+        this=convert_concat(None, [col_glot, pad_string_glot]),
+        start=sqlglot_expressions.convert(1),
+        length=required_len_glot,
+    )
+    return answer
+
+
 def convert_isin(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
@@ -1486,6 +1645,8 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.LIKE] = convert_like
         self.bindings[pydop.SLICE] = convert_slice
         self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws
+        self.bindings[pydop.LPAD] = convert_lpad
+        self.bindings[pydop.RPAD] = convert_rpad
 
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)

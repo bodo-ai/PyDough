@@ -153,9 +153,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv7,
             ),
             id="broker_adv7",
-            marks=pytest.mark.skip(
-                "TODO (gh #261): add LPAD function support to PyDough"
-            ),
         ),
         pytest.param(
             (
