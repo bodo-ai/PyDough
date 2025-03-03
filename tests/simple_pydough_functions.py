@@ -829,6 +829,22 @@ def datediff():
     )
 
 
+def padding_functions():
+    return Customers.CALCULATE(
+        original_name=name,
+        ref_rpad=RPAD("Cust0001", 30, "*"),
+        ref_lpad=LPAD("Cust0001", 30, "*"),
+        right_padded=RPAD(name, 30, "*"),
+        left_padded=LPAD(name, 30, "#"),
+        truncated_right=RPAD(name, 8, "-"),
+        truncated_left=LPAD(name, 8, "-"),
+        zero_pad_right=RPAD(name, 0, "."),
+        zero_pad_left=LPAD(name, 0, "."),
+        right_padded_space=RPAD(name, 30, " "),
+        left_padded_space=LPAD(name, 30, " "),
+    ).TOP_K(5, by=name.ASC())
+
+
 def step_slicing():
     return Customers.CALCULATE(
         name,

@@ -7,6 +7,24 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
+from bad_pydough_functions import (
+    bad_lpad_1,
+    bad_lpad_2,
+    bad_lpad_3,
+    bad_lpad_4,
+    bad_lpad_5,
+    bad_lpad_6,
+    bad_lpad_7,
+    bad_lpad_8,
+    bad_rpad_1,
+    bad_rpad_2,
+    bad_rpad_3,
+    bad_rpad_4,
+    bad_rpad_5,
+    bad_rpad_6,
+    bad_rpad_7,
+    bad_rpad_8,
+)
 from simple_pydough_functions import (
     exponentiation,
     hour_minute_day,
@@ -17,6 +35,7 @@ from simple_pydough_functions import (
     multi_partition_access_4,
     multi_partition_access_5,
     multi_partition_access_6,
+    padding_functions,
     step_slicing,
     years_months_days_hours_datediff,
 )
@@ -24,7 +43,7 @@ from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -559,6 +578,58 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
+                padding_functions,
+                None,
+                "Broker",
+                "padding_functions",
+                lambda: pd.DataFrame(
+                    {
+                        "original_name": [
+                            "Alex Rodriguez",
+                            "Ava Wilson",
+                            "Bob Johnson",
+                            "David Kim",
+                            "Emily Davis",
+                        ]
+                    }
+                ).assign(
+                    ref_rpad=lambda x: "Cust0001**********************",
+                    ref_lpad=lambda x: "**********************Cust0001",
+                    right_padded=lambda x: x.original_name.apply(
+                        lambda s: (s + "*" * 30)[:30]
+                    ),
+                    # This lambda only works when each string is less than 30 characters
+                    left_padded=lambda x: x.original_name.apply(
+                        lambda s: ("#" * 30 + s)[-30:]
+                    ),
+                    truncated_right=[
+                        "Alex Rod",
+                        "Ava Wils",
+                        "Bob John",
+                        "David Ki",
+                        "Emily Da",
+                    ],
+                    truncated_left=[
+                        "Alex Rod",
+                        "Ava Wils",
+                        "Bob John",
+                        "David Ki",
+                        "Emily Da",
+                    ],
+                    zero_pad_right=[""] * 5,
+                    zero_pad_left=[""] * 5,
+                    right_padded_space=lambda x: x.original_name.apply(
+                        lambda s: (s + " " * 30)[:30]
+                    ),
+                    left_padded_space=lambda x: x.original_name.apply(
+                        lambda s: (" " * 30 + s)[-30:]
+                    ),
+                ),
+            ),
+            id="padding_functions",
+        ),
+        pytest.param(
+            (
                 step_slicing,
                 None,
                 "Broker",
@@ -728,3 +799,121 @@ def test_pipeline_e2e_defog_custom(
         root, columns=columns, metadata=graph, database=sqlite_defog_connection
     )
     pd.testing.assert_frame_equal(result, answer_impl())
+
+
+@pytest.mark.parametrize(
+    "impl, graph_name, error_msg",
+    [
+        pytest.param(
+            bad_lpad_1,
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_lpad_1",
+        ),
+        pytest.param(
+            bad_lpad_2,
+            "Broker",
+            "LPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_lpad_2",
+        ),
+        pytest.param(
+            bad_lpad_3,
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_lpad_3",
+        ),
+        pytest.param(
+            bad_lpad_4,
+            "Broker",
+            "LPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_lpad_4",
+        ),
+        pytest.param(
+            bad_lpad_5,
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_lpad_5",
+        ),
+        pytest.param(
+            bad_lpad_6,
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_lpad_6",
+        ),
+        pytest.param(
+            bad_lpad_7,
+            "Broker",
+            "LPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_lpad_7",
+        ),
+        pytest.param(
+            bad_lpad_8,
+            "Broker",
+            "LPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_lpad_8",
+        ),
+        pytest.param(
+            bad_rpad_1,
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_rpad_1",
+        ),
+        pytest.param(
+            bad_rpad_2,
+            "Broker",
+            "RPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_rpad_2",
+        ),
+        pytest.param(
+            bad_rpad_3,
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_rpad_3",
+        ),
+        pytest.param(
+            bad_rpad_4,
+            "Broker",
+            "RPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_rpad_4",
+        ),
+        pytest.param(
+            bad_rpad_5,
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_rpad_5",
+        ),
+        pytest.param(
+            bad_rpad_6,
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_rpad_6",
+        ),
+        pytest.param(
+            bad_rpad_7,
+            "Broker",
+            "RPAD function requires the length argument to be a non-negative integer literal.",
+            id="bad_rpad_7",
+        ),
+        pytest.param(
+            bad_rpad_8,
+            "Broker",
+            "RPAD function requires the padding argument to be a string literal of length 1.",
+            id="bad_rpad_8",
+        ),
+    ],
+)
+def test_defog_e2e_errors(
+    impl: Callable[[], UnqualifiedNode],
+    graph_name: str,
+    error_msg: str,
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+):
+    """
+    Tests running bad PyDough code through the entire pipeline to verify that
+    a certain error is raised for defog database.
+    """
+    graph: GraphMetadata = defog_graphs(graph_name)
+    with pytest.raises(Exception, match=error_msg):
+        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
+        to_sql(root, metadata=graph, database=sqlite_defog_connection)
