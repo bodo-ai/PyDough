@@ -86,9 +86,9 @@ class ExpressionFunctionCall(PyDoughExpressionQDAG):
                     arg_string = f"({arg_string})"
             elif isinstance(arg, PyDoughCollectionQDAG):
                 if tree_form:
-                    assert isinstance(
-                        arg, ChildReferenceCollection
-                    ), f"Unexpected argument to function call {arg}: expected an expression, or reference to a collection"
+                    assert isinstance(arg, ChildReferenceCollection), (
+                        f"Unexpected argument to function call {arg}: expected an expression, or reference to a collection"
+                    )
                     arg_string = arg.tree_item_string
                 else:
                     arg_string = arg.to_string()

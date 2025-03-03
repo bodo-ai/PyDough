@@ -555,9 +555,9 @@ class RelTranslation:
             hybrid_ref: HybridRefExpr = HybridRefExpr(expr_name, hybrid_expr.typ)
             out_ref: ColumnReference = ColumnReference(expr_name, hybrid_expr.typ)
             out_columns[hybrid_ref] = out_ref
-        assert isinstance(
-            node.collection.collection, SimpleTableMetadata
-        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.collection.__class__.__name__}"
+        assert isinstance(node.collection.collection, SimpleTableMetadata), (
+            f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.collection.__class__.__name__}"
+        )
         answer = Scan(node.collection.collection.table_path, scan_columns)
         return TranslationOutput(answer, out_columns)
 
@@ -587,9 +587,9 @@ class RelTranslation:
         # First, build the table scan for the collection being stepped into.
         collection_access: CollectionAccess = node.collection
         assert isinstance(collection_access, SubCollection)
-        assert isinstance(
-            collection_access.collection, SimpleTableMetadata
-        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
+        assert isinstance(collection_access.collection, SimpleTableMetadata), (
+            f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
+        )
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
         join_keys: list[tuple[HybridExpr, HybridExpr]] = (
@@ -628,9 +628,9 @@ class RelTranslation:
         # First, build the table scan for the collection being stepped into.
         collection_access: CollectionAccess = node.collection
         assert isinstance(collection_access, SubCollection)
-        assert isinstance(
-            collection_access.collection, SimpleTableMetadata
-        ), f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
+        assert isinstance(collection_access.collection, SimpleTableMetadata), (
+            f"Expected table collection to correspond to an instance of simple table metadata, found: {collection_access.collection.__class__.__name__}"
+        )
         result: TranslationOutput = self.build_simple_table_scan(node)
         return result
 
@@ -857,9 +857,9 @@ class RelTranslation:
             `hybrid` from all pipeline operators up to and including the
             value of `pipeline_idx`.
         """
-        assert pipeline_idx < len(
-            hybrid.pipeline
-        ), f"Pipeline index {pipeline_idx} is too big for hybrid tree:\n{hybrid}"
+        assert pipeline_idx < len(hybrid.pipeline), (
+            f"Pipeline index {pipeline_idx} is too big for hybrid tree:\n{hybrid}"
+        )
 
         # Identify the operation that will be computed at this stage, and the
         # previous stage on the current level of the hybrid tree, or the last

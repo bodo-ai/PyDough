@@ -93,9 +93,9 @@ def test_pydough_to_sql_tpch(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            actual_sql == expected_relational_string.strip()
-        ), "Mismatch between tree generated SQL text and expected SQL text"
+        assert actual_sql == expected_relational_string.strip(), (
+            "Mismatch between tree generated SQL text and expected SQL text"
+        )
 
 
 @pytest.mark.parametrize(
@@ -140,6 +140,6 @@ def test_pydough_to_sql_defog(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            actual_sql == expected_relational_string.strip()
-        ), "Mismatch between tree generated SQL text and expected SQL text"
+        assert actual_sql == expected_relational_string.strip(), (
+            "Mismatch between tree generated SQL text and expected SQL text"
+        )

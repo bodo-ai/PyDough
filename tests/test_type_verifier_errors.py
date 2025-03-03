@@ -78,8 +78,8 @@ def test_verification(
     and also returns False.
     """
     args: list[PyDoughQDAG] = [info.build(tpch_node_builder) for info in args_info]
-    assert not verifier.accepts(
-        args, error_on_fail=False
-    ), "expected verifier to reject argument"
+    assert not verifier.accepts(args, error_on_fail=False), (
+        "expected verifier to reject argument"
+    )
     with pytest.raises(PyDoughQDAGException, match=error_message):
         verifier.accepts(args, error_on_fail=True)

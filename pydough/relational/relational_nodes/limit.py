@@ -35,9 +35,9 @@ class Limit(SingleRelational):
         # Note: The limit is a relational expression because it should be a constant
         # now but in the future could be a more complex expression that may require
         # multi-step SQL to successfully evaluate.
-        assert isinstance(
-            limit.data_type, IntegerType
-        ), "Limit must be an integer type."
+        assert isinstance(limit.data_type, IntegerType), (
+            "Limit must be an integer type."
+        )
         self._limit: RelationalExpression = limit
         self._orderings: MutableSequence[ExpressionSortInfo] = (
             [] if orderings is None else orderings

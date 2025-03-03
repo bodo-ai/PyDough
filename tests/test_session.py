@@ -44,9 +44,9 @@ def test_defaults(session: PyDoughSession) -> None:
     default_config: PyDoughConfigs = PyDoughConfigs()
     for key, value in PyDoughConfigs.__dict__.items():
         if isinstance(value, ConfigProperty):
-            assert getattr(session.config, key) == getattr(
-                default_config, key
-            ), f"Configuration value {key} doesn't match the default value."
+            assert getattr(session.config, key) == getattr(default_config, key), (
+                f"Configuration value {key} doesn't match the default value."
+            )
     assert session.database is not None
     assert session.database.connection is empty_connection
     assert session.database.dialect is DatabaseDialect.ANSI

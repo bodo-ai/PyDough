@@ -39,9 +39,9 @@ def test_verification(
     and also returns True.
     """
     args: list[PyDoughQDAG] = [info.build(tpch_node_builder) for info in args_info]
-    assert verifier.accepts(
-        args, error_on_fail=False
-    ), "expected verifier to accept argument"
-    assert verifier.accepts(
-        args, error_on_fail=True
-    ), "expected verifier to accept argument"
+    assert verifier.accepts(args, error_on_fail=False), (
+        "expected verifier to accept argument"
+    )
+    assert verifier.accepts(args, error_on_fail=True), (
+        "expected verifier to accept argument"
+    )

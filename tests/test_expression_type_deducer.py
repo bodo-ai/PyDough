@@ -51,6 +51,6 @@ def test_returned_type(
     Checks that expression ttype deducers produce the correct type.
     """
     args: list[PyDoughQDAG] = [info.build(tpch_node_builder) for info in args_info]
-    assert (
-        deducer.infer_return_type(args) == expected_type
-    ), "mismatch between inferred return type and expected type"
+    assert deducer.infer_return_type(args) == expected_type, (
+        "mismatch between inferred return type and expected type"
+    )

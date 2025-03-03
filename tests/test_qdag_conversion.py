@@ -2200,9 +2200,9 @@ def test_ast_to_relational(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            relational.to_tree_string() == expected_relational_string.strip()
-        ), "Mismatch between full string representation of output Relational node versus expected string"
+        assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between full string representation of output Relational node versus expected string"
+        )
 
 
 @pytest.fixture(
@@ -2340,6 +2340,6 @@ def test_ast_to_relational_alternative_aggregation_configs(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            relational.to_tree_string() == expected_relational_string.strip()
-        ), "Mismatch between full string representation of output Relational node versus expected string"
+        assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between full string representation of output Relational node versus expected string"
+        )

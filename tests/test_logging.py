@@ -117,9 +117,9 @@ def test_get_logger_with_env_variable(level_str, expected_level, monkeypatch):
     logger = get_logger(name="get_logger_with_env_variable_test_logger")
 
     # Assert that the logger level matches the expected level
-    assert (
-        logger.level == expected_level
-    ), f"Expected level {expected_level}, but got {logger.level}"
+    assert logger.level == expected_level, (
+        f"Expected level {expected_level}, but got {logger.level}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -142,9 +142,9 @@ def test_get_logger_with_default_level_variable(expected_level):
     )
 
     # Assert that the logger level matches the expected level
-    assert (
-        logger.level == expected_level
-    ), f"Expected level {expected_level}, but got {logger.level}"
+    assert logger.level == expected_level, (
+        f"Expected level {expected_level}, but got {logger.level}"
+    )
 
 
 def test_get_logger_invalid_env_level(monkeypatch):
@@ -250,6 +250,6 @@ ORDER BY
   L_RETURNFLAG,
   L_LINESTATUS
 """
-    assert (
-        required_op.strip() in captured_output.strip()
-    ), f"'{required_op.strip()}' not found in captured output: {captured_output.strip()}"
+    assert required_op.strip() in captured_output.strip(), (
+        f"'{required_op.strip()}' not found in captured output: {captured_output.strip()}"
+    )

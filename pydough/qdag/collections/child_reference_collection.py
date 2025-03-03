@@ -93,7 +93,7 @@ class ChildReferenceCollection(ChildAccess):
 
     @property
     def standalone_string(self) -> str:
-        return f"${self.child_idx+1}"
+        return f"${self.child_idx + 1}"
 
     def to_string(self, tree_form: bool = False) -> str:
         if tree_form:

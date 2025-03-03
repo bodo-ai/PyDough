@@ -27,9 +27,9 @@ class Filter(SingleRelational):
         columns: MutableMapping[str, RelationalExpression],
     ) -> None:
         super().__init__(input, columns)
-        assert isinstance(
-            condition.data_type, BooleanType
-        ), "Filter condition must be a boolean type"
+        assert isinstance(condition.data_type, BooleanType), (
+            "Filter condition must be a boolean type"
+        )
         self._condition: RelationalExpression = condition
 
     @property

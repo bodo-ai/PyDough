@@ -298,9 +298,9 @@ def explain_term(
                 lines.append(f"  {qualified_term.to_string()}")
             if verbose:
                 lines.append("")
-                assert (
-                    len(qualified_term.calc_terms) > 0
-                ), "Child collection has no expression terms"
+                assert len(qualified_term.calc_terms) > 0, (
+                    "Child collection has no expression terms"
+                )
                 chosen_term_name: str = min(qualified_term.calc_terms)
                 if qualified_term.starting_predecessor.is_singular(
                     qualified_node.starting_predecessor
