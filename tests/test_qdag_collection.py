@@ -757,18 +757,18 @@ def test_collections_calc_terms(
     correct calculate terms & total set of available terms.
     """
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    assert collection.calc_terms == set(
-        expected_calcs
-    ), "Mismatch between set of calculate terms and expected value"
+    assert collection.calc_terms == set(expected_calcs), (
+        "Mismatch between set of calculate terms and expected value"
+    )
     actual_calcs: dict[str, int] = {
         expr: collection.get_expression_position(expr) for expr in collection.calc_terms
     }
-    assert (
-        actual_calcs == expected_calcs
-    ), "Mismatch between positions of calculate terms and expected value"
-    assert (
-        collection.all_terms == expected_total_names
-    ), "Mismatch between set of all terms and expected value"
+    assert actual_calcs == expected_calcs, (
+        "Mismatch between positions of calculate terms and expected value"
+    )
+    assert collection.all_terms == expected_total_names, (
+        "Mismatch between set of all terms and expected value"
+    )
 
 
 @pytest.mark.parametrize(
@@ -2112,12 +2112,12 @@ def test_collections_to_string(
     non-tree string representation.
     """
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    assert (
-        collection.to_string() == expected_string
-    ), "Mismatch between non-tree string representation and expected value"
-    assert (
-        collection.to_tree_string() == expected_tree_string.strip()
-    ), "Mismatch between tree string representation and expected value"
+    assert collection.to_string() == expected_string, (
+        "Mismatch between non-tree string representation and expected value"
+    )
+    assert collection.to_tree_string() == expected_tree_string.strip(), (
+        "Mismatch between tree string representation and expected value"
+    )
 
 
 @pytest.mark.parametrize(
@@ -2336,19 +2336,19 @@ def test_collections_ordering(
     """
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
     if expected_collation_strings is None:
-        assert (
-            collection.ordering is None
-        ), "expected collection to not have an ordering, but it did have one"
+        assert collection.ordering is None, (
+            "expected collection to not have an ordering, but it did have one"
+        )
     else:
-        assert (
-            collection.ordering is not None
-        ), "expected collection to have an ordering, but it did not"
+        assert collection.ordering is not None, (
+            "expected collection to have an ordering, but it did not"
+        )
         collation_strings: list[str] = [
             collation.to_string() for collation in collection.ordering
         ]
-        assert (
-            collation_strings == expected_collation_strings
-        ), "Mismatch between string representation of collation keys and expected value"
+        assert collation_strings == expected_collation_strings, (
+            "Mismatch between string representation of collation keys and expected value"
+        )
 
 
 def test_regions_intra_pct_string_order(

@@ -598,9 +598,9 @@ def test_metadata_exploration(
     test_impl, verbose_answer, non_verbose_answer = metadata_exploration_test_data
     explanation_string: str = test_impl(get_sample_graph, verbose)
     answer: str = verbose_answer if verbose else non_verbose_answer
-    assert (
-        explanation_string == answer
-    ), "Mismatch between produced string and expected answer"
+    assert explanation_string == answer, (
+        "Mismatch between produced string and expected answer"
+    )
 
 
 @pytest.mark.parametrize(
@@ -743,9 +743,9 @@ def test_graph_structure(
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
     structure_string: str = pydough.explain_structure(graph)
-    assert (
-        structure_string == answer.strip()
-    ), "Mismatch between produced string and expected answer"
+    assert structure_string == answer.strip(), (
+        "Mismatch between produced string and expected answer"
+    )
 
 
 @pytest.fixture(
@@ -1493,9 +1493,9 @@ def test_unqualified_node_exploration(
     node: UnqualifiedNode = pydough.init_pydough_context(graph)(test_impl)()
     answer: str = pydough.explain(node, verbose=verbose)
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
-    assert (
-        answer == expected_answer
-    ), "Mismatch between produced string and expected answer"
+    assert answer == expected_answer, (
+        "Mismatch between produced string and expected answer"
+    )
 
 
 @pytest.fixture(
@@ -2051,6 +2051,6 @@ def test_unqualified_term_exploration(
     node, term = pydough.init_pydough_context(graph)(test_impl)()
     answer: str = pydough.explain_term(node, term, verbose=verbose)
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
-    assert (
-        answer == expected_answer
-    ), "Mismatch between produced string and expected answer"
+    assert answer == expected_answer, (
+        "Mismatch between produced string and expected answer"
+    )

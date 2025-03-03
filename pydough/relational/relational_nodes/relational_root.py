@@ -30,9 +30,9 @@ class RelationalRoot(SingleRelational):
         orderings: MutableSequence[ExpressionSortInfo] | None = None,
     ) -> None:
         columns = dict(ordered_columns)
-        assert len(columns) == len(
-            ordered_columns
-        ), "Duplicate column names found in root."
+        assert len(columns) == len(ordered_columns), (
+            "Duplicate column names found in root."
+        )
         super().__init__(input, columns)
         self._ordered_columns: MutableSequence[tuple[str, RelationalExpression]] = (
             ordered_columns

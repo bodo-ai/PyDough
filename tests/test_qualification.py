@@ -529,9 +529,9 @@ def test_qualify_node_to_ast_string(
     graph: GraphMetadata = get_sample_graph("TPCH")
     unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
     qualified: PyDoughQDAG = qualify_node(unqualified, graph)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
-    assert (
-        qualified.to_tree_string() == answer_tree_str.strip()
-    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
+    assert qualified.to_tree_string() == answer_tree_str.strip(), (
+        "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    )

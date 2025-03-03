@@ -31,15 +31,15 @@ class Aggregate(SingleRelational):
         aggregations: MutableMapping[str, CallExpression],
     ) -> None:
         total_cols: MutableMapping[str, RelationalExpression] = {**keys, **aggregations}
-        assert len(total_cols) == len(keys) + len(
-            aggregations
-        ), "Keys and aggregations must have unique names"
+        assert len(total_cols) == len(keys) + len(aggregations), (
+            "Keys and aggregations must have unique names"
+        )
         super().__init__(input, total_cols)
         self._keys: MutableMapping[str, ColumnReference] = keys
         self._aggregations: MutableMapping[str, CallExpression] = aggregations
-        assert all(
-            agg.is_aggregation for agg in aggregations.values()
-        ), "All functions used in aggregations must be aggregation functions"
+        assert all(agg.is_aggregation for agg in aggregations.values()), (
+            "All functions used in aggregations must be aggregation functions"
+        )
 
     @property
     def keys(self) -> MutableMapping[str, ColumnReference]:
@@ -84,8 +84,8 @@ class Aggregate(SingleRelational):
             if isinstance(val, ColumnReference):
                 keys[key] = val
             else:
-                assert isinstance(
-                    val, CallExpression
-                ), "All columns must be references or functions"
+                assert isinstance(val, CallExpression), (
+                    "All columns must be references or functions"
+                )
                 aggregations[key] = val
         return Aggregate(inputs[0], keys, aggregations)

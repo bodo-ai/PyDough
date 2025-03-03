@@ -62,9 +62,9 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
     Testing that the metadata for the defog graphs is parsed correctly.
     """
     graph = defog_graphs(graph_name)
-    assert isinstance(
-        graph, GraphMetadata
-    ), "Expected to be metadata for a PyDough graph"
+    assert isinstance(graph, GraphMetadata), (
+        "Expected to be metadata for a PyDough graph"
+    )
 
 
 @pytest.fixture(

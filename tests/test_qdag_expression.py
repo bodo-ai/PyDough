@@ -67,9 +67,9 @@ def test_column_property_type(
     builder: AstNodeBuilder = AstNodeBuilder(get_sample_graph(graph_name))
     property: PyDoughQDAG = property_info.build(builder)
     assert isinstance(property, ColumnProperty)
-    assert (
-        property.pydough_type == expected_type
-    ), "Mismatch between column property type and expected value"
+    assert property.pydough_type == expected_type, (
+        "Mismatch between column property type and expected value"
+    )
 
 
 @pytest.mark.parametrize(
@@ -131,12 +131,12 @@ def test_function_call_return(
     builder: AstNodeBuilder = AstNodeBuilder(get_sample_graph(graph_name))
     call = call_info.build(builder)
     assert isinstance(call, ExpressionFunctionCall)
-    assert (
-        call.pydough_type == expected_type
-    ), "Mismatch between return type and expected value"
-    assert (
-        call.is_aggregation == out_aggregated
-    ), "Mismatch between aggregation status and expected value"
+    assert call.pydough_type == expected_type, (
+        "Mismatch between return type and expected value"
+    )
+    assert call.is_aggregation == out_aggregated, (
+        "Mismatch between aggregation status and expected value"
+    )
 
 
 @pytest.mark.parametrize(
@@ -169,9 +169,9 @@ def test_literal_type(
     """
     expr = literal_info.build(tpch_node_builder)
     assert isinstance(expr, Literal)
-    assert (
-        expr.pydough_type == expected_type
-    ), "Mismatch between literal type and expected value"
+    assert expr.pydough_type == expected_type, (
+        "Mismatch between literal type and expected value"
+    )
 
 
 @pytest.mark.parametrize(
@@ -343,6 +343,6 @@ def test_expression_strings(
     """
     expr = expr_info.build(tpch_node_builder)
     assert isinstance(expr, PyDoughExpressionQDAG)
-    assert (
-        expr.to_string() == expected_string
-    ), "Mismatch between string representation and expected value"
+    assert expr.to_string() == expected_string, (
+        "Mismatch between string representation and expected value"
+    )
