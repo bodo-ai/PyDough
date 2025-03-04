@@ -177,51 +177,41 @@ For example, consider the following PyDough code:
 ```py
 %%pydough
 # The collations are not explicitly specified for few of the terms.
-result =Suppliers.ORDER_BY(
-    COUNT(supply_records).ASC(),
-    name, phone,
-    account_balance.DESC(), comment
-).TOP_K(5, by=(
-    key,COUNT(supply_records),
-    name.DESC(), address,
-    account_balance.ASC(), comment
-))
+Suppliers.ORDER_BY(
+  COUNT(lines),
+  nation.name.ASC(),
+  COUNT(supply_records),
+  account_balance.DESC(),
+  key,
+)
 
-# Capture the configs of the active session
-configs = pydough.active_session.config
+# Let's see the behavior of the terms with different configurations
+# With the default settings
+Suppliers.ORDER_BY(
+  COUNT(lines).ASC(),
+  nation.name.ASC(),
+  COUNT(supply_records).ASC(),
+  account_balance.DESC(),
+  key.ASC(),
+)
 
-# Example 1: Setting `collation_default_asc` to False and using default behavior of `propogate_collation`.
-# Setting `collation_default_asc` to False will cause the collations to be descending.
-configs.collation_default_asc = False
-# Default behavior is to not propogate the collation.
+# With collation_default_asc=False and propogate_collation=False
+Suppliers.ORDER_BY(
+  COUNT(lines).DESC(),
+  nation.name.ASC(),
+  COUNT(supply_records).DESC(),
+  account_balance.DESC(),
+  key.DESC(),
+)
 
-# Hence its equivalent to:
-result = Suppliers.ORDER_BY(
-    COUNT(supply_records).DESC(),
-    name.DESC(), phone.DESC(),
-    account_balance.ASC(), comment.DESC()
-).TOP_K(5, by=(
-    key.DESC(),COUNT(supply_records).DESC(),
-    name.DESC(), address.DESC(),
-    account_balance.ASC(), comment.DESC()
-))
-
-# Example 2: Setting `collation_default_asc` to False and using `propogate_collation` to True.
-# Setting `collation_default_asc` to False will cause the collations to be descending.
-configs.collation_default_asc = False
-# Setting `propogate_collation` to True will cause the collations to be propogated.
-configs.propogate_collation = True
-
-# Hence its equivalent to:
-result = Suppliers.ORDER_BY(
-    COUNT(supply_records).DESC(),
-    name.DESC(), phone.DESC(),
-    account_balance.ASC(), comment.DESC()
-).TOP_K(5, by=(
-    key.DESC(),COUNT(supply_records).DESC(),
-    name.DESC(), address.DESC(),
-    account_balance.ASC(), comment.ASC()
-))
+# With collation_default_asc=True and propogate_collation=True
+Suppliers.ORDER_BY(
+  COUNT(lines).ASC(),
+  nation.name.ASC(),
+  COUNT(supply_records).ASC(),
+  account_balance.DESC(),
+  key.DESC(),
+)
 ```
 <!-- TOC --><a name="session-database"></a>
 ### Session Database

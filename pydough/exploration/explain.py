@@ -520,7 +520,11 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     return "\n".join(lines)
 
 
-def explain(data: AbstractMetadata | UnqualifiedNode, verbose: bool = False) -> str:
+def explain(
+    data: AbstractMetadata | UnqualifiedNode,
+    verbose: bool = False,
+    config: PyDoughConfigs | None = None,
+) -> str:
     """
     Displays information about a PyDough metadata object or unqualified node.
     The metadata could be for a graph, collection, or property. An unqualified
@@ -531,10 +535,14 @@ def explain(data: AbstractMetadata | UnqualifiedNode, verbose: bool = False) -> 
         `data`: the metadata or unqualified node object being examined.
         `verbose`: if true, displays more detailed information about `data` and
         in a less compact format.
+        `config`: the configuration to use for the explanation. If not provided,
+        the active session's configuration will be used.
 
     Returns:
         An explanation of `data`.
     """
+    if config is None:
+        config = pydough.active_session.config
     match data:
         case GraphMetadata():
             return explain_graph(data, verbose)

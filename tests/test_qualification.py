@@ -545,91 +545,79 @@ def test_qualify_node_to_ast_string(
     [
         pytest.param(
             simple_collation,
-            "TPCH.Suppliers.CALCULATE(p=PERCENTILE(by=(COUNT(supply_records).ASC(na_pos='first'), "
-            "name.ASC(na_pos='first'), address.ASC(na_pos='first'), "
-            "nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), "
-            "account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), "
-            "r=RANKING(by=(key.ASC(na_pos='first'), COUNT(supply_records).ASC(na_pos='first'), "
-            "name.DESC(na_pos='last'), address.DESC(na_pos='last'), "
-            "nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), "
-            "account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first'))))"
-            ".ORDER_BY(COUNT(supply_records).ASC(na_pos='first'), name.ASC(na_pos='first'), "
-            "address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), "
-            "phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), "
-            "comment.DESC(na_pos='last')).TOP_K(5, key.ASC(na_pos='first'), "
-            "COUNT(supply_records).ASC(na_pos='first'), name.DESC(na_pos='last'), "
-            "address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), "
-            "phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), "
-            "comment.ASC(na_pos='first'))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), r=RANKING(by=(key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
             True,
             True,
-            id="collation1",
+            id="asc-with_propagation",
         ),
         pytest.param(
             simple_collation,
-            "TPCH.Suppliers.CALCULATE(p=PERCENTILE(by=(COUNT(supply_records).ASC(na_pos='first'), "
-            "name.ASC(na_pos='first'), address.ASC(na_pos='first'), "
-            "nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), "
-            "account_balance.DESC(na_pos='last'), comment.ASC(na_pos='first'))), "
-            "r=RANKING(by=(key.ASC(na_pos='first'), COUNT(supply_records).ASC(na_pos='first'), "
-            "name.DESC(na_pos='last'), address.ASC(na_pos='first'), "
-            "nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), "
-            "account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first'))))"
-            ".ORDER_BY(COUNT(supply_records).ASC(na_pos='first'), "
-            "name.ASC(na_pos='first'), address.ASC(na_pos='first'), "
-            "nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), "
-            "account_balance.DESC(na_pos='last'), comment.ASC(na_pos='first')).TOP_K(5, "
-            "key.ASC(na_pos='first'), COUNT(supply_records).ASC(na_pos='first'), "
-            "name.DESC(na_pos='last'), address.ASC(na_pos='first'), "
-            "nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), "
-            "account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first'))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.ASC(na_pos='first'))), r=RANKING(by=(key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.ASC(na_pos='first')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
             True,
             False,
-            id="collation2",
+            id="asc-no_propagation",
         ),
         pytest.param(
             simple_collation,
-            "TPCH.Suppliers.CALCULATE(p=PERCENTILE(by=(COUNT(supply_records).ASC(na_pos='first'), "
-            "name.ASC(na_pos='first'), address.ASC(na_pos='first'), "
-            "nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), "
-            "account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), "
-            "r=RANKING(by=(key.DESC(na_pos='last'), COUNT(supply_records).DESC(na_pos='last'), "
-            "name.DESC(na_pos='last'), address.DESC(na_pos='last'), "
-            "nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), "
-            "account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first'))))"
-            ".ORDER_BY(COUNT(supply_records).ASC(na_pos='first'), "
-            "name.ASC(na_pos='first'), address.ASC(na_pos='first'), "
-            "nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), "
-            "account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')).TOP_K(5, "
-            "key.DESC(na_pos='last'), COUNT(supply_records).DESC(na_pos='last'), "
-            "name.DESC(na_pos='last'), address.DESC(na_pos='last'), "
-            "nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), "
-            "account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first'))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), r=RANKING(by=(key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
             False,
             True,
-            id="collation3",
+            id="desc-with_propagation",
         ),
         pytest.param(
             simple_collation,
-            "TPCH.Suppliers.CALCULATE(p=PERCENTILE(by=(COUNT(supply_records).ASC(na_pos='first'), "
-            "name.DESC(na_pos='last'), address.DESC(na_pos='last'), "
-            "nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), "
-            "account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), "
-            "r=RANKING(by=(key.DESC(na_pos='last'), COUNT(supply_records).DESC(na_pos='last'), "
-            "name.DESC(na_pos='last'), address.DESC(na_pos='last'), "
-            "nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), "
-            "account_balance.ASC(na_pos='first'), comment.DESC(na_pos='last'))))"
-            ".ORDER_BY(COUNT(supply_records).ASC(na_pos='first'), "
-            "name.DESC(na_pos='last'), address.DESC(na_pos='last'), "
-            "nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), "
-            "account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')).TOP_K(5, "
-            "key.DESC(na_pos='last'), COUNT(supply_records).DESC(na_pos='last'), "
-            "name.DESC(na_pos='last'), address.DESC(na_pos='last'), "
-            "nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), "
-            "account_balance.ASC(na_pos='first'), comment.DESC(na_pos='last'))",
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), r=RANKING(by=(key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.DESC(na_pos='last')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.DESC(na_pos='last')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
             False,
             False,
-            id="collation4",
+            id="desc-no_propagation",
         ),
     ],
 )
@@ -654,5 +642,5 @@ def test_qualify_node_collation(
         qualified, PyDoughCollectionQDAG
     ), "Expected qualified answer to be a collection, not an expression"
     assert (
-        repr(qualified) == answer_tree_str.strip()
-    ), "Mismatch between repr representation of qualified node and expected QDAG repr"
+        qualified.to_tree_string() == answer_tree_str.strip()
+    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"

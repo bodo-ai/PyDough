@@ -451,12 +451,12 @@ def get_by_arg(
             f"The `by` argument to `{func_name}` must be provided"
         )
     by = kwargs.pop("by")
-    by_allowed_types = (UnqualifiedCollation, UnqualifiedOperation, UnqualifiedAccess)
-    if isinstance(by, by_allowed_types):
+    by_allowed_type = UnqualifiedNode
+    if isinstance(by, by_allowed_type):
         by = [by]
     elif not (
         isinstance(by, Sequence)
-        and all(isinstance(arg, by_allowed_types) for arg in by)
+        and all(isinstance(arg, by_allowed_type) for arg in by)
         and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(

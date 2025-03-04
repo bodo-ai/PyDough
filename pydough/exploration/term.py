@@ -94,7 +94,10 @@ def collection_in_context_string(
 
 
 def explain_term(
-    node: UnqualifiedNode, term: UnqualifiedNode, verbose: bool = False
+    node: UnqualifiedNode,
+    term: UnqualifiedNode,
+    verbose: bool = False,
+    config: PyDoughConfigs | None = None,
 ) -> str:
     """
     Displays information about an unqualified node as it exists within
@@ -117,6 +120,8 @@ def explain_term(
         `node`. This term could be an expression or a collection.
         `verbose`: if true, displays more detailed information about `node` and
         `term` in a less compact format.
+        `config`: the configuration to use for the explanation. If not provided,
+        the active session's configuration will be used.
 
     Returns:
         An explanation of `term` as it exists within the context of `node`.
@@ -125,7 +130,8 @@ def explain_term(
     lines: list[str] = []
     root: UnqualifiedRoot | None = find_unqualified_root(node)
     qualified_node: PyDoughQDAG | None = None
-    config: PyDoughConfigs = pydough.active_session.config
+    if config is None:
+        config = pydough.active_session.config
     try:
         if root is None:
             lines.append(
