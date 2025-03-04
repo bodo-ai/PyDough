@@ -2,7 +2,9 @@
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
+import datetime
 import math
+import datetime
 
 
 def bad_bool_1():
@@ -52,24 +54,154 @@ def bad_window_6():
     return Orders.CALCULATE(PERCENTILE(by=order_key.ASC(), n_buckets=[1, 2, 3]))
 
 
+def bad_lpad_1():
+    # String length argument
+    return Customers.CALCULATE(padded_name=LPAD(name, "20", "*"))
+
+
+def bad_lpad_2():
+    # Empty padding string
+    return Customers.CALCULATE(padded_name=LPAD(name, 20, ""))
+
+
+def bad_lpad_3():
+    # Negative length
+    return Customers.CALCULATE(padded_name=LPAD(name, -5, "*"))
+
+
+def bad_lpad_4():
+    # Multi-character padding string
+    return Customers.CALCULATE(padded_name=LPAD(name, 20, "*#"))
+
+
+def bad_lpad_5():
+    # Non-integer length
+    return Customers.CALCULATE(padded_name=LPAD(name, 20.5, "*"))
+
+
+def bad_lpad_6():
+    # Non-integer length
+    return Customers.CALCULATE(padded_name=LPAD(name, datetime.datetime.now(), "*"))
+
+
+def bad_lpad_7():
+    # Non-literal length
+    return Customers.CALCULATE(padded_name=LPAD(name, LENGTH(phone), "*"))
+
+
+def bad_lpad_8():
+    # Non-literal padding string
+    return Customers.CALCULATE(padded_name=LPAD(name, 20, LENGTH(phone)))
+
+
+def bad_rpad_1():
+    # String length argument
+    return Customers.CALCULATE(padded_name=RPAD(name, "20", "*"))
+
+
+def bad_rpad_2():
+    # Empty padding string
+    return Customers.CALCULATE(padded_name=RPAD(name, 20, ""))
+
+
+def bad_rpad_3():
+    # Negative length
+    return Customers.CALCULATE(padded_name=RPAD(name, -5, "*"))
+
+
+def bad_rpad_4():
+    # Multi-character padding string
+    return Customers.CALCULATE(padded_name=RPAD(name, 20, "*#"))
+
+
+def bad_rpad_5():
+    # Non-integer length
+    return Customers.CALCULATE(padded_name=RPAD(name, 20.5, "*"))
+
+
+def bad_rpad_6():
+    # Non-integer length
+    return Customers.CALCULATE(padded_name=RPAD(name, datetime.datetime.now(), "*"))
+
+
+def bad_rpad_7():
+    # Non-literal length
+    return Customers.CALCULATE(padded_name=RPAD(name, LENGTH(phone), "*"))
+
+
+def bad_rpad_8():
+    # Non-literal padding string
+    return Customers.CALCULATE(padded_name=RPAD(name, 20, LENGTH(phone)))
+
+
 def bad_slice_1():
-    # Unsupported slicing: negative stop
-    return Customers.CALCULATE(name[:-1])
-
-
-def bad_slice_2():
-    # Unsupported slicing: negative start
-    return Customers.CALCULATE(name[-5:])
-
-
-def bad_slice_3():
     # Unsupported slicing: skipping
     return Customers.CALCULATE(name[1:10:2])
 
 
-def bad_slice_4():
+def bad_slice_2():
     # Unsupported slicing: reversed
     return Customers.CALCULATE(name[::-1])
+
+
+def bad_slice_3():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name["invalid":-1:])
+
+
+def bad_slice_4():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name[datetime.datetime.now() : -1 :])
+
+
+def bad_slice_5():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name[42.4:10:])
+
+
+def bad_slice_6():
+    # Unsupported slicing: non-integer stop
+    return Customers.CALCULATE(name[1:"invalid":])
+
+
+def bad_slice_7():
+    # Unsupported slicing: non-integer stop
+    return Customers.CALCULATE(name[1 : datetime.datetime.now() :])
+
+
+def bad_slice_8():
+    # Unsupported slicing: non-integer stop
+    return Customers.CALCULATE(name[1:42.4:])
+
+
+def bad_slice_9():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1:10:"invalid"])
+
+
+def bad_slice_10():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1 : 10 : datetime.datetime.now()])
+
+
+def bad_slice_11():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1:10:42.4])
+
+
+def bad_slice_12():
+    # Unsupported slicing: non-integer start
+    return Customers.CALCULATE(name[LENGTH(name) : 10 :])
+
+
+def bad_slice_13():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1 : LENGTH(name) :])
+
+
+def bad_slice_14():
+    # Unsupported slicing: non-integer step
+    return Customers.CALCULATE(name[1 : 10 : LENGTH(name)])
 
 
 def bad_floor():

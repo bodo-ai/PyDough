@@ -59,7 +59,7 @@ These are created with a prefix operator syntax instead of called as a function.
 
 These are other PyDough operators that are not necessarily used as functions:
 
-- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Currently, PyDough does not support negative indices or providing step values other than 1.
+- `SLICE`: operator used for string slicing, with the same semantics as Python string slicing. If `s[a:b:c]` is done, that is translated to `SLICE(s,a,b,c)` in PyDough, and any of `a`/`b`/`c` could be absent. Negative slicing is supported. Currently PyDough does not support providing step values other than 1.
 
 #### Scalar Functions
 
@@ -75,6 +75,8 @@ These functions must be called on singular data as a function.
 - `CONTAINS`: returns whether the first argument string contains the second argument string.
 - `LIKE`: returns whether the first argument matches the SQL pattern text of the second argument, where `_` is a 1 character wildcard and `%` is an 0+ character wildcard.
 - `JOIN_STRINGS`: equivalent to the Python string join method, where the first argument is used as a delimiter to concatenate the remaining arguments.
+- `LPAD`: pads the first argument with the second argument to the left until the first argument is equal in length to the third argument.
+- `RPAD`: pads the first argument with the second argument to the right until the first argument is equal in length to the third argument.
 
 ##### Datetime Functions
 

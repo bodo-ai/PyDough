@@ -879,3 +879,68 @@ def datediff():
         )
         .TOP_K(30, by=years_diff.ASC())
     )
+
+
+def padding_functions():
+    return Customers.CALCULATE(
+        original_name=name,
+        ref_rpad=RPAD("Cust0001", 30, "*"),
+        ref_lpad=LPAD("Cust0001", 30, "*"),
+        right_padded=RPAD(name, 30, "*"),
+        left_padded=LPAD(name, 30, "#"),
+        truncated_right=RPAD(name, 8, "-"),
+        truncated_left=LPAD(name, 8, "-"),
+        zero_pad_right=RPAD(name, 0, "."),
+        zero_pad_left=LPAD(name, 0, "."),
+        right_padded_space=RPAD(name, 30, " "),
+        left_padded_space=LPAD(name, 30, " "),
+    ).TOP_K(5, by=name.ASC())
+
+
+def step_slicing():
+    return Customers.CALCULATE(
+        name,
+        neg_none_step=name[-2::1],
+        pos_none_step=name[3::1],
+        none_pos_step=name[:3:1],
+        none_neg_step=name[:-2:1],
+        pos_pos_step=name[2:4:1],
+        pos_neg_step=name[2:-2:1],
+        neg_pos_step=name[-12:2:1],
+        neg_neg_step=name[-4:-2:1],
+        inbetween_chars=name[1:-1:1],
+        empty1=name[2:2:1],
+        empty2=name[-2:-2:1],
+        empty3=name[-2:-4:1],
+        empty4=name[4:2:1],
+        oob1=name[100:200:1],
+        oob2=name[-200:-100:1],
+        oob3=name[100::1],
+        oob4=name[-200::1],
+        oob5=name[:100:1],
+        oob6=name[:-200:1],
+        oob7=name[100:-200:1],
+        oob8=name[-200:100:1],
+        oob9=name[100:-1:1],
+        oob10=name[-100:-1:1],
+        oob11=name[-3:100:1],
+        oob12=name[-3:-100:1],
+        zero1=name[0:0:1],
+        zero2=name[0:1:1],
+        zero3=name[-1:0:1],
+        zero4=name[1:0:1],
+        zero5=name[0:-1:1],
+        zero6=name[0:-20:1],
+        zero7=name[0:100:1],
+        zero8=name[20:0:1],
+        zero9=name[-20:0:1],
+        wo_step1=name[-2:],
+        wo_step2=name[3:],
+        wo_step3=name[:3],
+        wo_step4=name[:-2],
+        wo_step5=name[2:4],
+        wo_step6=name[2:-2],
+        wo_step7=name[-4:2],
+        wo_step8=name[-4:-2],
+        wo_step9=name[2:2],
+    )

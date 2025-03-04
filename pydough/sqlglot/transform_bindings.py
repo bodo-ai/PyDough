@@ -206,10 +206,17 @@ def apply_datetime_truncation(
                 trunc_expr: SQLGlotExpression = sqlglot_expressions.convert(
                     f"start of {unit.value}"
                 )
-                if isinstance(base, sqlglot_expressions.Datetime):
+                if isinstance(base, sqlglot_expressions.Date):
                     base.this.append(trunc_expr)
                     return base
-                return sqlglot_expressions.Datetime(
+                if (
+                    isinstance(base, sqlglot_expressions.Datetime)
+                    and len(base.this) == 1
+                ):
+                    return sqlglot_expressions.Date(
+                        this=base.this + [trunc_expr],
+                    )
+                return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
                 )
             # SQLite does not have `start of` modifiers for hours, minutes, or
@@ -249,7 +256,10 @@ def apply_datetime_offset(
         offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
             f"{amt} {unit.value}"
         )
-        if isinstance(base, sqlglot_expressions.Datetime):
+        if isinstance(base, sqlglot_expressions.Datetime) or (
+            isinstance(base, sqlglot_expressions.Date)
+            and unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY)
+        ):
             base.this.append(offset_expr)
             return base
         return sqlglot_expressions.Datetime(
@@ -509,12 +519,68 @@ def convert_concat(
         return Concat(expressions=inputs)
 
 
+def positive_index(
+    string_expr: SQLGlotExpression, neg_index: int, is_zero_based: bool = False
+) -> SQLGlotExpression:
+    """
+    Gives the SQL Glot expression for converting a
+    negative index to a positive index in 1 or 0 based indexing
+    based on the length of the column.
+
+    Args:
+        `string_expr`: The expression to reference
+        `neg_index`: The negative index in 0 based index to convert to positive
+        `is_zero_based`: Whether the return index is 0-based or 1-based
+
+    Returns:
+        SQLGlot expression corresponding to:
+        `(LENGTH(string_expr) + neg_index + offset)`,
+         where offset is 0, if is_zero_based is True, else 1.
+    """
+    sql_len = sqlglot_expressions.Length(this=string_expr)
+    offset = 0 if is_zero_based else 1
+    return apply_parens(
+        sqlglot_expressions.Add(
+            this=sql_len, expression=sqlglot_expressions.convert(neg_index + offset)
+        )
+    )
+
+
 def convert_slice(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
     Support for generating a `SLICE` expression from a list of arguments.
+    It is expected that len(sql_glot_args) == 4.
+    The first argument is the string to slice.
+    The second argument is the `start` index.
+    The third argument is the `stop` index.
+    The fourth argument is the `step`.
+    Outline of the logic:
+    - Case 1: `(None, None)`
+        - Returns the string as is.
+    - Case 2: `(start, None)`
+        - Positive `start`: Convert to 1-based indexing and slice from `start`.
+        - Negative `start`: Compute `LENGTH(string) + start + 1`; clamp to `1` if less than `1`.
+    - Case 3: `(None, stop)`
+        - Positive `stop`: Slice from position `1` to `stop`.
+        - Negative `stop`: Compute `LENGTH(string) + stop`; clamp to `0` if less than `0` (empty slice).
+    - Case 4: `(start, stop)`
+        - 1. Both `start` & `stop` >= 0:
+            - Convert `start` to 1-based.
+            - Set `length = stop - start`.
+        - 2. `start < 0`, `stop >= 0`:
+            - Convert `start` to 1 based index. If < 1, set to 1.
+            - Compute `length = stop - start` (clamp to 0 if negative).
+        - 3. `start >= 0`, `stop < 0`:
+            - Convert `stop` & `start` to 1 based index.
+            - If `stop` < 1, slice is empty (`length = 0`).
+            - Else, `length = stop - start`.
+        - 4. `start < 0`, `stop < 0`:
+            - Convert `start` & `stop` to 1 based index. If `start` < 1, set to 1.
+            - If `stop` < 1, slice is empty (`length = 0`).
+            - Else, `length = stop - start`.
 
     Args:
         `raw_args`: The operands to `SLICE`, before they were
@@ -523,60 +589,268 @@ def convert_slice(
         converted to SQLGlot expressions.
 
     Returns:
-        The SQLGlot expression matching the functionality of `SUBSTRING`.
+        The SQLGlot expression matching the functionality of Python based string slicing
+        with the caveat that it only supports a step of 1.
     """
     assert len(sql_glot_args) == 4
+    string_expr, start, stop, step = sql_glot_args
 
-    for arg in sql_glot_args[1:]:
-        if not isinstance(arg, (sqlglot_expressions.Literal, sqlglot_expressions.Null)):
-            raise NotImplementedError(
-                "SLICE function currently only supports the slicing arguments being integer literals or absent"
-            )
-
-    _, start, stop, step = sql_glot_args
     start_idx: int | None = None
+    if not isinstance(start, sqlglot_expressions.Null):
+        if isinstance(start, sqlglot_expressions.Literal):
+            try:
+                start_idx = int(start.this)
+            except ValueError:
+                raise ValueError(
+                    "SLICE function currently only supports the start index being integer literal or absent."
+                )
+        else:
+            raise ValueError(
+                "SLICE function currently only supports the start index being integer literal or absent."
+            )
+
     stop_idx: int | None = None
-    if isinstance(start, sqlglot_expressions.Literal):
-        if int(start.this) < 0:
-            raise NotImplementedError(
-                "SLICE function currently only supports non-negative start indices"
+    if not isinstance(stop, sqlglot_expressions.Null):
+        if isinstance(stop, sqlglot_expressions.Literal):
+            try:
+                stop_idx = int(stop.this)
+            except ValueError:
+                raise ValueError(
+                    "SLICE function currently only supports the stop index being integer literal or absent."
+                )
+        else:
+            raise ValueError(
+                "SLICE function currently only supports the stop index being integer literal or absent."
             )
-        start_idx = int(start.this)
-    if isinstance(stop, sqlglot_expressions.Literal):
-        if int(stop.this) < 0:
-            raise NotImplementedError(
-                "SLICE function currently only supports non-negative stop indices"
+
+    step_idx: int | None = None
+    if not isinstance(step, sqlglot_expressions.Null):
+        if isinstance(step, sqlglot_expressions.Literal):
+            try:
+                step_idx = int(step.this)
+                if step_idx != 1:
+                    raise ValueError(
+                        "SLICE function currently only supports the step being integer literal 1 or absent."
+                    )
+            except ValueError:
+                raise ValueError(
+                    "SLICE function currently only supports the step being integer literal 1 or absent."
+                )
+        else:
+            raise ValueError(
+                "SLICE function currently only supports the step being integer literal 1 or absent."
             )
-        stop_idx = int(stop.this)
-    if isinstance(step, sqlglot_expressions.Literal):
-        if int(step.this) != 1:
-            raise NotImplementedError(
-                "SLICE function currently only supports a step of 1"
-            )
+
+    # SQLGlot expressions for 0 and 1 and empty string
+    sql_zero = sqlglot_expressions.convert(0)
+    sql_one = sqlglot_expressions.convert(1)
+    sql_empty_str = sqlglot_expressions.convert("")
 
     match (start_idx, stop_idx):
         case (None, None):
-            raise sql_glot_args[0]
+            raise string_expr
         case (_, None):
             assert start_idx is not None
-            return sqlglot_expressions.Substring(
-                this=sql_glot_args[0], start=sqlglot_expressions.convert(start_idx + 1)
-            )
+            if start_idx > 0:
+                return sqlglot_expressions.Substring(
+                    this=string_expr,
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                )
+            else:
+                # Calculate the positive index equivalent for the negative index
+                # e.g., for string "hello" and index -2, converts to index 4 (LENGTH("hello") + (-2) + 1)
+                start_idx_glot = positive_index(string_expr, start_idx)
+
+                # Create a SUBSTRING expression with adjusted start position
+                answer = sqlglot_expressions.Substring(
+                    this=string_expr,  # The original string to slice
+                    start=convert_iff_case(
+                        None,
+                        [
+                            # Check if the calculated positive index is less than 1
+                            sqlglot_expressions.LT(
+                                this=start_idx_glot, expression=sql_one
+                            ),
+                            sql_one,  # If true, use index 1 (start from beginning)
+                            start_idx_glot,  # If false, use the calculated positive index
+                        ],
+                    ),
+                )
+                return answer
         case (None, _):
             assert stop_idx is not None
-            return sqlglot_expressions.Substring(
-                this=sql_glot_args[0],
-                start=sqlglot_expressions.convert(1),
-                length=sqlglot_expressions.convert(stop_idx),
-            )
+            if stop_idx > 0:
+                return sqlglot_expressions.Substring(
+                    this=string_expr,
+                    start=sql_one,
+                    length=sqlglot_expressions.convert(stop_idx),
+                )
+            else:
+                # Convert negative stop index to positive index
+                # For example, with string "hello" and stop_idx=-2:
+                # LENGTH("hello") + (-2) = 3 when is_zero_based=True
+                # No +1 adjustment needed since we're using 0-based indexing
+                # to calculate the length, of which the higher bound is exclusive.
+                stop_idx_glot = positive_index(string_expr, stop_idx, True)
+
+                # Create a SUBSTRING expression that starts from beginning
+                return sqlglot_expressions.Substring(
+                    this=string_expr,  # The original string to slice
+                    start=sql_one,  # Always start from position 1
+                    length=convert_iff_case(
+                        None,
+                        [
+                            # Check if the calculated stop position is less than 0
+                            sqlglot_expressions.LT(
+                                this=stop_idx_glot, expression=sql_zero
+                            ),
+                            sql_zero,  # If true, length is 0 (empty string)
+                            stop_idx_glot,  # If false, use index position as length
+                        ],
+                    ),
+                )
         case _:
             assert start_idx is not None
             assert stop_idx is not None
-            return sqlglot_expressions.Substring(
-                this=sql_glot_args[0],
-                start=sqlglot_expressions.convert(start_idx + 1),
-                length=sqlglot_expressions.convert(stop_idx - start_idx),
-            )
+            # Get the positive index if negative
+            if start_idx >= 0 and stop_idx >= 0:
+                if start_idx > stop_idx:
+                    return sql_empty_str
+                return sqlglot_expressions.Substring(
+                    this=string_expr,
+                    start=sqlglot_expressions.convert(start_idx + 1),
+                    length=sqlglot_expressions.convert(stop_idx - start_idx),
+                )
+            if start_idx < 0 and stop_idx >= 0:
+                # Calculate the positive index equivalent for the negative start index
+                # e.g., for string "hello" and start_idx=-2, converts to index 4 (LENGTH("hello") + (-2) + 1)
+                start_idx_glot = positive_index(string_expr, start_idx)
+
+                # Adjust start index to ensure it's not less than 1 (SQL's SUBSTRING is 1-based)
+                start_idx_adjusted_glot = convert_iff_case(
+                    None,
+                    [
+                        sqlglot_expressions.LT(this=start_idx_glot, expression=sql_one),
+                        sql_one,  # If calculated position < 1, use position 1
+                        start_idx_glot,  # Otherwise use calculated position
+                    ],
+                )
+
+                # Convert positive stop_idx to 1-based indexing by adding 1
+                # e.g., for stop_idx=3 (0-based), converts to 4 (1-based)
+                stop_idx_adjusted_glot = sqlglot_expressions.convert(stop_idx + 1)
+
+                # Create the SUBSTRING expression
+                answer = sqlglot_expressions.Substring(
+                    this=string_expr,  # The original string to slice
+                    start=start_idx_adjusted_glot,  # Use adjusted start position
+                    length=convert_iff_case(
+                        None,
+                        [
+                            # Check if the length (stop - start) is negative or zero
+                            sqlglot_expressions.LTE(
+                                this=sqlglot_expressions.Sub(
+                                    this=stop_idx_adjusted_glot,
+                                    expression=start_idx_adjusted_glot,
+                                ),
+                                expression=sql_zero,
+                            ),
+                            sql_empty_str,  # If length ≤ 0, return empty string
+                            # Otherwise calculate actual length
+                            sqlglot_expressions.Sub(
+                                this=stop_idx_adjusted_glot,
+                                expression=start_idx_adjusted_glot,
+                            ),
+                        ],
+                    ),
+                )
+                return answer
+            if start_idx >= 0 and stop_idx < 0:
+                # Convert negative stop index to its positive equivalent
+                # e.g., for string "hello" and stop_idx=-2, converts to index 4 (LENGTH("hello") + (-2) + 1)
+                stop_idx_adjusted_glot = positive_index(string_expr, stop_idx)
+
+                # Convert start index to 1-based indexing (SQL's SUBSTRING is 1-based)
+                # e.g., for start_idx=1 (0-based), converts to 2 (1-based)
+                start_idx_adjusted_glot = sqlglot_expressions.convert(start_idx + 1)
+
+                # Create the SUBSTRING expression
+                answer = sqlglot_expressions.Substring(
+                    this=string_expr,  # The original string to slice
+                    start=start_idx_adjusted_glot,  # Use 1-based start position
+                    length=convert_iff_case(
+                        None,
+                        [
+                            # First check: Is the calculated stop position less than 1?
+                            sqlglot_expressions.LT(
+                                this=stop_idx_adjusted_glot, expression=sql_one
+                            ),
+                            sql_zero,  # If true, length becomes 0 (empty string)
+                            convert_iff_case(
+                                None,
+                                [  # Second check: Is the length negative?
+                                    sqlglot_expressions.LTE(
+                                        this=sqlglot_expressions.Sub(
+                                            this=stop_idx_adjusted_glot,
+                                            expression=start_idx_adjusted_glot,
+                                        ),
+                                        expression=sql_zero,
+                                    ),
+                                    sql_empty_str,  # If length ≤ 0, return empty string
+                                    sqlglot_expressions.Sub(  # Otherwise calculate actual length
+                                        this=stop_idx_adjusted_glot,
+                                        expression=start_idx_adjusted_glot,
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                )
+                return answer
+            if start_idx < 0 and stop_idx < 0:
+                # Early return if start index is greater than stop index
+                # e.g., "hello"[-2:-4] should return empty string
+                if start_idx >= stop_idx:
+                    return sql_empty_str
+
+                # Convert negative start index to positive equivalent
+                # e.g., for string "hello" and start_idx=-2, converts to index 4 (LENGTH("hello") + (-2) + 1)
+                pos_start_idx_glot = positive_index(string_expr, start_idx)
+
+                # Adjust start index to ensure it's not less than 1 (SQL's SUBSTRING is 1-based)
+                start_idx_adjusted_glot = convert_iff_case(
+                    None,
+                    [
+                        sqlglot_expressions.LT(
+                            this=pos_start_idx_glot, expression=sql_one
+                        ),
+                        sql_one,  # If calculated position < 1, use position 1
+                        pos_start_idx_glot,  # Otherwise use calculated position
+                    ],
+                )
+
+                # Convert negative stop index to positive equivalent
+                stop_idx_adjusted_glot = positive_index(string_expr, stop_idx)
+
+                # Create the SUBSTRING expression
+                return sqlglot_expressions.Substring(
+                    this=string_expr,  # The original string to slice
+                    start=start_idx_adjusted_glot,  # Use adjusted start position
+                    length=convert_iff_case(
+                        None,
+                        [
+                            # Check if the stop position is less than 1
+                            sqlglot_expressions.LT(
+                                this=stop_idx_adjusted_glot, expression=sql_one
+                            ),
+                            sql_zero,  # Length becomes 0 if stop_idx is < 1
+                            sqlglot_expressions.Sub(  # Else calculate length as (stop - start)
+                                this=stop_idx_adjusted_glot,
+                                expression=start_idx_adjusted_glot,
+                            ),
+                        ],
+                    ),
+                )
 
 
 def convert_concat_ws(
@@ -732,6 +1006,155 @@ def convert_contains(
         ],
     )
     return convert_like(None, [column, pattern])
+
+
+def pad_helper(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+    pad_func: str,
+) -> SQLGlotExpression:
+    """
+    Helper function for LPAD and RPAD.
+    Expects sqlglot_args[0] to be the column to pad.
+    Expects sqlglot_args[1] and sqlglot_args[2] to be literals.
+    Expects sqlglot_args[1] to be the returned length of the padded string.
+    Expects sqlglot_args[2] to be the string to pad with.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions. The first operand is expected to be a string.
+        `pad_func`: The name of the padding function to use.
+
+    Returns:
+        A tuple of sqlglot expressions for the column to pad, the length of the column,
+        the required length, padding string and the integer literal of the required length.
+    """
+    assert pad_func in ["LPAD", "RPAD"]
+    assert len(sql_glot_args) == 3
+
+    if (
+        isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
+        and not sql_glot_args[1].is_string
+    ):
+        try:
+            required_len = int(sql_glot_args[1].this)
+            if required_len < 0:
+                raise ValueError()
+        except ValueError:
+            raise ValueError(
+                f"{pad_func} function requires the length argument to be a non-negative integer literal."
+            )
+    else:
+        raise ValueError(
+            f"{pad_func} function requires the length argument to be a non-negative integer literal."
+        )
+
+    if (
+        not isinstance(sql_glot_args[2], sqlglot_expressions.Literal)
+        or not sql_glot_args[2].is_string
+    ):
+        raise ValueError(
+            f"{pad_func} function requires the padding argument to be a string literal of length 1."
+        )
+    if len(str(sql_glot_args[2].this)) != 1:
+        raise ValueError(
+            f"{pad_func} function requires the padding argument to be a string literal of length 1."
+        )
+
+    col_glot = sql_glot_args[0]
+    col_len_glot = sqlglot_expressions.Length(this=sql_glot_args[0])
+    required_len_glot = sqlglot_expressions.convert(required_len)
+    pad_string_glot = sqlglot_expressions.convert(
+        str(sql_glot_args[2].this) * required_len
+    )
+    return col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len
+
+
+def convert_lpad(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Converts and pads the string to the left till the string is the specified length.
+    If length is 0, return an empty string.
+    If length is negative, raise an error.
+    If length is positive, pad the string on the left to the specified length.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions. The first operand is expected to be a string.
+
+    Returns:
+        The SQLGlot expression matching the functionality of
+        `LPAD(string, length, padding)`. With the caveat that if length is 0,
+        it will return an empty string.
+    """
+    col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len = (
+        pad_helper(raw_args, sql_glot_args, "LPAD")
+    )
+    if required_len == 0:
+        return sqlglot_expressions.convert("")
+
+    answer = convert_iff_case(
+        None,
+        [
+            sqlglot_expressions.GTE(this=col_len_glot, expression=required_len_glot),
+            sqlglot_expressions.Substring(
+                this=col_glot,
+                start=sqlglot_expressions.convert(1),
+                length=required_len_glot,
+            ),
+            sqlglot_expressions.Substring(
+                this=convert_concat(None, [pad_string_glot, col_glot]),
+                start=apply_parens(
+                    sqlglot_expressions.Mul(
+                        this=required_len_glot,
+                        expression=sqlglot_expressions.convert(-1),
+                    )
+                ),
+            ),
+        ],
+    )
+    return answer
+
+
+def convert_rpad(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Converts and pads the string to the right to the specified length.
+    If length is 0, return an empty string.
+    If length is negative, raise an error.
+    If length is positive, pad the string on the right to the specified length.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions. The first operand is expected to be a string.
+
+    Returns:
+        The SQLGlot expression matching the functionality of
+        `RPAD(string, length, padding)`. With the caveat that if length is 0,
+        it will return an empty string.
+    """
+    col_glot, _, required_len_glot, pad_string_glot, required_len = pad_helper(
+        raw_args, sql_glot_args, "RPAD"
+    )
+    if required_len == 0:
+        return sqlglot_expressions.convert("")
+
+    answer = sqlglot_expressions.Substring(
+        this=convert_concat(None, [col_glot, pad_string_glot]),
+        start=sqlglot_expressions.convert(1),
+        length=required_len_glot,
+    )
+    return answer
 
 
 def convert_isin(
@@ -1222,6 +1645,8 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.LIKE] = convert_like
         self.bindings[pydop.SLICE] = convert_slice
         self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws
+        self.bindings[pydop.LPAD] = convert_lpad
+        self.bindings[pydop.RPAD] = convert_rpad
 
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)
