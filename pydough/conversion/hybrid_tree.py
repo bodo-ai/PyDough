@@ -2094,7 +2094,10 @@ class HybridTranslator:
                                 successor_hybrid.pipeline[-1],
                             )
                     case PartitionChild():
-                        successor_hybrid = copy.deepcopy(parent.children[0].subtree)
+                        source: HybridTree = parent
+                        while isinstance(source.pipeline[0], HybridPartitionChild):
+                            source = source.pipeline[0].subtree
+                        successor_hybrid = copy.deepcopy(source.children[0].subtree)
                         successor_hybrid._ancestral_mapping = node.ancestral_mapping
                         partition_by = (
                             node.child_access.ancestor_context.starting_predecessor
