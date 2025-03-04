@@ -42,6 +42,7 @@ from simple_pydough_functions import (
     simple_scan,
     simple_scan_top_five,
     triple_partition,
+    year_month_nation_orders,
 )
 from test_utils import (
     graph_fetcher,
@@ -375,6 +376,28 @@ from pydough.unqualified import (
                 ),
             ),
             id="function_sampler",
+        ),
+        pytest.param(
+            (
+                year_month_nation_orders,
+                None,
+                "year_month_nation_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "MOZAMBIQUE",
+                            "MOZAMBIQUE",
+                            "CHINA",
+                            "ALGERIA",
+                            "INDONESIA",
+                        ],
+                        "order_year": [1992, 1997, 1993, 1996, 1996],
+                        "order_month": [10, 7, 8, 4, 5],
+                        "n_orders": [198, 194, 188, 186, 185],
+                    }
+                ),
+            ),
+            id="year_month_nation_orders",
         ),
         pytest.param(
             (
