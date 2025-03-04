@@ -11,6 +11,8 @@ The configs module provides functionality to manage various configuration settin
 - `PyDoughConfigs`: Class used to store information about various configuration settings of PyDough.
     - `sum_default_zero`: If True, the `SUM` function always defaults to 0 if there are no records to be summed up. If False, the output could be `NULL`. The default is True.
     - `avg_default_zero`: If True, the `AVG` function always defaults to 0 if there are no records to be averaged. If False, the output could be `NULL`. The default is False.
+    - `collation_default_asc`: If True, the default collation is ascending. If False, the default collation is descending. The default is True.
+    - `propogate_collation`: If True, the collation of the current expression, which does not have a collation, uses the most recent available collation in the nodes of the term. If False, the expression uses the default collation as specified by `collation_default_asc`. The default is False.
 
 ### [session.py](session.py)
 

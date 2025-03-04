@@ -11,6 +11,8 @@ from test_utils import (
     graph_fetcher,
 )
 
+import pydough
+from pydough.configs import PyDoughConfigs
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -184,6 +186,7 @@ def test_qualify_error(
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = UnqualifiedRoot(graph)
+    default_config: PyDoughConfigs = pydough.active_session.config
     with pytest.raises(Exception, match=re.escape(error_msg)):
         unqualified: UnqualifiedNode = impl(root)
-        qualify_node(unqualified, graph)
+        qualify_node(unqualified, graph, default_config)

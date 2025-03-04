@@ -31,7 +31,6 @@ from bad_pydough_functions import (
     bad_window_4,
     bad_window_5,
     bad_window_6,
-    bad_window_7,
 )
 from simple_pydough_functions import (
     abs_round_magic_method,
@@ -568,12 +567,13 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_2,
-            "The `by` argument to `PERCENTILE` must be a single collation expression or a non-empty iterable of collation expressions",
+            "The `by` argument to `PERCENTILE` must be a single expression or a non-empty iterable of expressions."
+            "Please refer to the config documentation for more information.",
             id="bad_window_2",
         ),
         pytest.param(
             bad_window_3,
-            "The `by` argument to `RANKING` must be a single collation expression or a non-empty iterable of collation expressions",
+            "`levels` argument must be a positive integer",
             id="bad_window_3",
         ),
         pytest.param(
@@ -583,18 +583,13 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_5,
-            "`levels` argument must be a positive integer",
+            "`n_buckets` argument must be a positive integer",
             id="bad_window_5",
         ),
         pytest.param(
             bad_window_6,
             "`n_buckets` argument must be a positive integer",
             id="bad_window_6",
-        ),
-        pytest.param(
-            bad_window_7,
-            "`n_buckets` argument must be a positive integer",
-            id="bad_window_7",
         ),
         pytest.param(
             bad_floor,

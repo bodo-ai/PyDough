@@ -31,6 +31,58 @@ def simple_filter_top_five():
     )
 
 
+def simple_collation():
+    return (
+        Suppliers.CALCULATE(
+            p=PERCENTILE(
+                by=(
+                    COUNT(supply_records).ASC(),
+                    name,
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.DESC(),
+                    comment,
+                )
+            ),
+            r=RANKING(
+                by=(
+                    key,
+                    COUNT(supply_records),
+                    name.DESC(),
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.ASC(),
+                    comment,
+                )
+            ),
+        )
+        .ORDER_BY(
+            COUNT(supply_records).ASC(),
+            name,
+            address,
+            nation_key,
+            phone,
+            account_balance.DESC(),
+            comment,
+        )
+        .TOP_K(
+            5,
+            by=(
+                key,
+                COUNT(supply_records),
+                name.DESC(),
+                address,
+                nation_key,
+                phone,
+                account_balance.ASC(),
+                comment,
+            ),
+        )
+    )
+
+
 def rank_a():
     return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 

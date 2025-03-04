@@ -125,6 +125,8 @@ The qualification process transforms unqualified nodes into PyDough QDAG nodes. 
 To use the qualification module, you can import the necessary functions and call them with the appropriate arguments. For example:
 
 ```python
+import pydough
+from pydough.configs import PyDoughConfigs
 from pydough.unqualified import qualify_node, qualify_term
 from pydough.metadata import parse_json_metadata_from_file
 from pydough.unqualified.unqualified_node import UnqualifiedLiteral, UnqualifiedRoot
@@ -135,8 +137,11 @@ graph = parse_json_metadata_from_file("path/to/metadata.json", "example_graph")
 # Define an unqualified node for a collection
 unqualified_node = UnqualifiedRoot(graph).Nations.WHERE(region.name == "ASIA")
 
+# Get the active session config
+config = pydough.active_session.config
+
 # Qualify the unqualified node
-qualified_node = qualify_node(unqualified_node, graph)
+qualified_node = qualify_node(unqualified_node, graph, config)
 print(qualified_node.to_string())
 
 # Define a collection context
@@ -144,7 +149,7 @@ collection_context = qualified_node
 
 # Qualify a term within the context of the collection
 term = UnqualifiedRoot(graph).name
-children, qualified_term = qualify_term(collection_context, term, graph)
+children, qualified_term = qualify_term(collection_context, term, graph, config)
 print(qualified_term.to_string())
 ```
 

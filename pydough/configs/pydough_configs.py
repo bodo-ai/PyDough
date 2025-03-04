@@ -65,6 +65,19 @@ class PyDoughConfigs:
     is False.
     """
 
+    collation_default_asc = ConfigProperty[bool](True)
+    """
+    If True, then the collation will default to `ASC`. If False, then the
+    collation will default to `DESC`. The default is True.
+    """
+
+    propogate_collation = ConfigProperty[bool](False)
+    """
+    If True, then the collation(`ASC` or `DESC`), if exists, will be propogated across
+    the nodes for that term. If False, then the collation will not be propogated across
+    the nodes for that term. The default is False.
+    """
+
     def __setattr__(self, name: str, value: Any) -> None:
         if name not in dir(self):
             raise AttributeError(f"Unrecognized PyDough config name: {name}")
