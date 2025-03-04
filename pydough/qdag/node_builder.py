@@ -41,6 +41,7 @@ from .expressions import (
     ColumnProperty,
     ExpressionFunctionCall,
     Literal,
+    PyDoughExpressionQDAG,
     Reference,
     WindowCall,
 )
@@ -142,6 +143,7 @@ class AstNodeBuilder:
     def build_window_call(
         self,
         window_operator: ExpressionWindowOperator,
+        qualified_args: list[PyDoughExpressionQDAG],
         collation_args: list[CollationExpression],
         levels: int | None,
         kwargs: dict[str, object],
@@ -161,7 +163,9 @@ class AstNodeBuilder:
         Returns:
             The window function call as a QDAG expression node.
         """
-        return WindowCall(window_operator, collation_args, levels, kwargs)
+        return WindowCall(
+            window_operator, qualified_args, collation_args, levels, kwargs
+        )
 
     def build_reference(
         self, collection: PyDoughCollectionQDAG, name: str

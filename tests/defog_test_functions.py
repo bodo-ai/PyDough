@@ -111,7 +111,8 @@ def impl_defog_broker_adv5():
     avg_close_previous_month for each ticker symbol each month.
     """
     price_info = DailyPrices.CALCULATE(
-        month=JOIN_STRINGS("-", YEAR(date), MONTH(date)), symbol=ticker.symbol
+        month=JOIN_STRINGS("-", YEAR(date), LPAD(MONTH(date), 2, "0")),
+        symbol=ticker.symbol,
     )
     ticker_months = PARTITION(price_info, name="updates", by=(symbol, month))
     months = PARTITION(ticker_months, name="months", by=symbol).months
@@ -126,7 +127,7 @@ def impl_defog_broker_adv5():
         month,
         avg_close,
         max_high,
-        max_low,
+        min_low,
         momc=(avg_close - prev_month_avg_close) / prev_month_avg_close,
     )
 

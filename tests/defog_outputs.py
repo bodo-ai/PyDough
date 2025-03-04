@@ -129,6 +129,9 @@ def defog_sql_text_broker_adv5() -> str:
     change in average closing price, which is calculated as:
     (avg_close_given_month - avg_close_previous_month) /
     avg_close_previous_month for each ticker symbol each month.
+
+    NOTE: added an ORDER BY clause at the end to ensure the results were
+    deterministic.
     """
     return """
     WITH monthly_price_stats AS (
@@ -151,6 +154,7 @@ def defog_sql_text_broker_adv5() -> str:
     FROM monthly_price_stats AS mps
     JOIN sbTicker AS t
     ON mps.sbDpTickerId = t.sbTickerId
+    ORDER BY sbTickerSymbol, month
     """
 
 
