@@ -697,7 +697,9 @@ def test_convert_relation_to_sqlite_sql(
     Test converting a relational tree to SQL text in the SQLite dialect.
     """
     file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, sqlite_dialect, sqlite_bindings, True
+    )
     if update_tests:
         with open(file_path, "w") as f:
             f.write(created_sql + "\n")
@@ -746,7 +748,9 @@ def test_tpch_relational_to_sqlite_sql(
     Apache Calcite in Bodo's SQL optimizer.
     """
     file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, sqlite_dialect, sqlite_bindings, True
+    )
     if update_tests:
         with open(file_path, "w") as f:
             f.write(created_sql + "\n")
@@ -1127,7 +1131,9 @@ def test_function_to_sql(
     to SQL.
     """
     file_path: str = get_sql_test_filename(f"func_{test_name}", DatabaseDialect.ANSI)
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, sqlite_dialect, sqlite_bindings, True
+    )
     if update_tests:
         with open(file_path, "w") as f:
             f.write(created_sql + "\n")

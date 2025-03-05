@@ -122,6 +122,9 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     Returns:
         str: The SQL string corresponding to the unqualified query.
     """
+    display_sql = kwargs.pop("display_sql", False)
+    assert isinstance(display_sql, bool)
+
     graph: GraphMetadata
     config: PyDoughConfigs
     database: DatabaseContext
@@ -136,7 +139,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
         qualified, column_selection, config
     )
     return convert_relation_to_sql(
-        relational, convert_dialect_to_sqlglot(database.dialect), bindings
+        relational, convert_dialect_to_sqlglot(database.dialect), bindings, display_sql
     )
 
 
@@ -156,11 +159,16 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The DataFrame corresponding to the unqualified query.
     """
+    display_sql = kwargs.pop("display_sql", False)
+    assert isinstance(display_sql, bool)
+
+    run_optimizer = kwargs.pop("run_optimizer", True)
+    assert isinstance(run_optimizer, bool)
+
     graph: GraphMetadata
     config: PyDoughConfigs
     database: DatabaseContext
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
-    display_sql: bool = bool(kwargs.pop("display_sql", False))
     graph, config, database, bindings = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph)
     if not isinstance(qualified, PyDoughCollectionQDAG):
@@ -170,4 +178,4 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, column_selection, config
     )
-    return execute_df(relational, database, bindings, display_sql)
+    return execute_df(relational, database, bindings, display_sql, run_optimizer)
