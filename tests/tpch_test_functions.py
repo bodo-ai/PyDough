@@ -1,3 +1,7 @@
+"""
+PyDough implementation of TPCH queries.
+"""
+
 __all__ = [
     "impl_tpch_q1",
     "impl_tpch_q10",
