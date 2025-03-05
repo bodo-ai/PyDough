@@ -1038,6 +1038,9 @@ def convert_ast_to_relational(
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
     run_hybrid_decorrelation(hybrid)
+    if hybrid.has_useless_partition():
+        print()
+        print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1

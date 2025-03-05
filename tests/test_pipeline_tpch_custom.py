@@ -29,6 +29,7 @@ from simple_pydough_functions import (
     datetime_relative,
     double_partition,
     function_sampler,
+    order_info_per_priority,
     percentile_customers_per_region,
     percentile_nations,
     rank_nations_by_region,
@@ -376,6 +377,33 @@ from pydough.unqualified import (
                 ),
             ),
             id="function_sampler",
+        ),
+        pytest.param(
+            (
+                order_info_per_priority,
+                None,
+                "order_info_per_priority",
+                lambda: pd.DataFrame(
+                    {
+                        "order_priority": [
+                            "1-URGENT",
+                            "2-HIGH",
+                            "3-MEDIUM",
+                            "4-NOT SPECIFIED",
+                            "5-LOW",
+                        ],
+                        "order_key": [3586919, 1474818, 972901, 1750466, 631651],
+                        "order_total_price": [
+                            522644.48,
+                            491348.26,
+                            508668.52,
+                            555285.16,
+                            504509.06,
+                        ],
+                    }
+                ),
+            ),
+            id="order_info_per_priority",
         ),
         pytest.param(
             (

@@ -31,6 +31,20 @@ def simple_filter_top_five():
     )
 
 
+def order_info_per_priority():
+    # Find information about the highest total price order for each priority
+    # type in 1992. Specifically, for each order priority, the key & total
+    # price of the order. Order the results by priority.
+    priorities = PARTITION(
+        Orders.WHERE(YEAR(order_date) == 1992), name="orders", by=order_priority
+    )
+    return (
+        priorities.orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+        .CALCULATE(order_priority, order_key=key, order_total_price=total_price)
+        .ORDER_BY(order_priority.ASC())
+    )
+
+
 def year_month_nation_orders():
     # Finds the 5 largest instances of numbers of orders made in a month of a
     # year by customers in a nation, only looking at nations from Asia and

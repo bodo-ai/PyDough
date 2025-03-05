@@ -1120,6 +1120,15 @@ class HybridTree:
                 successor_join_keys.append((lhs_key, shifted_expr))
             successor._join_keys = successor_join_keys
 
+    def has_useless_partition(self) -> bool:
+        if len(self.pipeline) == 0 and isinstance(self.pipeline[0], HybridPartition):
+            return True
+        if any(child.subtree.has_useless_partition() for child in self.children):
+            return True
+        if self.parent is None:
+            return False
+        return self.parent.has_useless_partition()
+
 
 class HybridTranslator:
     """
