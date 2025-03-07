@@ -6,7 +6,11 @@ into qualified DAG nodes.
 from collections.abc import Callable
 
 import pytest
-from simple_pydough_functions import partition_as_child
+from simple_pydough_functions import (
+    partition_as_child,
+    singular1,
+    singular2,
+)
 from test_utils import (
     graph_fetcher,
 )
@@ -524,6 +528,33 @@ def test_qualify_node_to_ast_string(
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
+    qualified DAG version, with the correct string representation.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
+    assert isinstance(
+        qualified, PyDoughCollectionQDAG
+    ), "Expected qualified answer to be a collection, not an expression"
+    assert (
+        qualified.to_tree_string() == answer_tree_str.strip()
+    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+
+
+@pytest.mark.parametrize(
+    "impl, answer_tree_str",
+    [
+        pytest.param(singular1, "", id="singular1"),
+        pytest.param(singular2, "", id="singular2"),
+    ],
+)
+def test_qualify_singular_to_ast_string(
+    impl: Callable[[], UnqualifiedNode],
+    answer_tree_str: str,
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """
+    Tests that a PyDough unqualified singular node can be correctly translated to its
     qualified DAG version, with the correct string representation.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")

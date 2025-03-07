@@ -43,6 +43,7 @@ from .unqualified_node import (
     UnqualifiedOrderBy,
     UnqualifiedPartition,
     UnqualifiedRoot,
+    UnqualifiedSingular,
     UnqualifiedTopK,
     UnqualifiedWhere,
     UnqualifiedWindow,
@@ -722,6 +723,18 @@ class Qualifier:
             )
         return answer
 
+    def qualify_singular(
+        self,
+        unqualified: UnqualifiedSingular,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+    ) -> PyDoughCollectionQDAG:
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        answer: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        return self.builder.build_singular(answer)
+
     def qualify_node(
         self,
         unqualified: UnqualifiedNode,
@@ -785,6 +798,8 @@ class Qualifier:
                 answer = self.qualify_binary_operation(unqualified, context, children)
             case UnqualifiedCollation():
                 answer = self.qualify_collation(unqualified, context, children)
+            case UnqualifiedSingular():
+                answer = self.qualify_singular(unqualified, context, is_child)
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"

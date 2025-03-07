@@ -22,6 +22,7 @@ The QDAG collections module contains the following hierarchy of collection class
         - [`OrderBy`](order_by.py) (concrete): Operation that sorts the current context based on 1+ singular collation expressions.
             - [`TopK`](top_k.py) (concrete): Operation that sorts the current context based on 1+ singular collation expressions and filters to only keep the first `k` records.
         - [`PartitionBy`] (concrete): Operation that partitions the its child data by its partition keys, creating a new parent collection where the expressions are the unique combinations of partition key values  and there is a single subcollection pointing back to the original data.
+        - [`Singular`](singular.py) (concrete): Operation that returns a singular value from the current context.
 
 The base QDAG collection node contains the following interface:
 

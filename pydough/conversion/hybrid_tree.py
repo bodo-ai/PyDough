@@ -59,6 +59,7 @@ from pydough.qdag import (
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     Reference,
+    Singular,
     SubCollection,
     TableCollection,
     TopK,
@@ -1956,6 +1957,9 @@ class HybridTranslator:
                         hybrid.pipeline[-1].orderings,
                     )
                 )
+                return hybrid
+            case Singular():
+                hybrid = self.make_hybrid_tree(node.preceding_context, parent)
                 return hybrid
             case Where():
                 hybrid = self.make_hybrid_tree(node.preceding_context, parent)

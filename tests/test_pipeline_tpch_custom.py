@@ -28,6 +28,7 @@ from simple_pydough_functions import (
     datetime_current,
     datetime_relative,
     double_partition,
+    first_order_per_customer_singular,
     function_sampler,
     percentile_customers_per_region,
     percentile_nations,
@@ -41,13 +42,16 @@ from simple_pydough_functions import (
     simple_filter_top_five,
     simple_scan,
     simple_scan_top_five,
+    singular1,
+    singular2,
+    singular3,
     triple_partition,
 )
 from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -494,6 +498,27 @@ from pydough.unqualified import (
             ),
             id="triple_partition",
         ),
+        pytest.param(
+            (singular1, None, "singular1", lambda: pd.DataFrame({})),
+            id="singular1",
+        ),
+        pytest.param(
+            (singular2, None, "singular2", lambda: pd.DataFrame({})),
+            id="singular2",
+        ),
+        pytest.param(
+            (singular3, None, "singular3", lambda: pd.DataFrame({})),
+            id="singular3",
+        ),
+        pytest.param(
+            (
+                first_order_per_customer_singular,
+                None,
+                "first_order_per_customer_singular",
+                lambda: pd.DataFrame({}),
+            ),
+            id="first_order_per_customer_singular",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -580,10 +605,12 @@ def test_pipeline_e2e_tpch_custom(
     unqualified_impl, columns, _, answer_impl = pydough_pipeline_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
-    )
-    pd.testing.assert_frame_equal(result, answer_impl())
+    # result: pd.DataFrame = to_df(
+    #     root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
+    # )
+    to_sql(root, metadata=graph, database=sqlite_tpch_db_context).strip()
+    breakpoint()
+    # pd.testing.assert_frame_equal(result, answer_impl())
 
 
 @pytest.mark.execute

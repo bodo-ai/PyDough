@@ -91,6 +91,16 @@ condition = builder.build_expression_function_call(
 where_node = builder.build_where(table_collection, [child_collection])
 where_node = where_node.with_condition(condition)
 
+# Build a SINGULAR node
+# Equivalent PyDough code: `Regions.CALCULATE(n_4_nation=nations.WHERE(key == 4).SINGULAR())`
+condition = builder.build_expression_function_call(
+    "EQU",
+    [child_reference_node, builder.build_literal(4, Int64Type())]
+)
+where_node = builder.build_where(table_collection, [child_collection])
+where_node = where_node.with_condition(condition)
+singular_node = builder.build_singular(table_collection)
+
 # Build an ORDER BY node
 # Equivalent PyDough code: `TPCH.Nations.ORDER_BY(name.ASC(na_pos='first'))`
 collation_expression = builder.build_collation_expression(

@@ -892,3 +892,42 @@ def step_slicing():
         wo_step8=name[-4:-2],
         wo_step9=name[2:2],
     )
+
+
+def singular1():
+    nation_4 = nations.WHERE(key == 4).SINGULAR()
+    return Regions.CALCULATE(name, nation_4_name=nation_4.name)
+
+
+def singular2():
+    return Nations.CALCULATE(name, okey=customers.SINGULAR().orders.key)
+
+
+def singular3():
+    return Customers.ORDER_BY(
+        orders.WHERE(RANKING(by=order_date.ASC()) == 1)
+        .SINGULAR()
+        .order_date.ASC(na_pos="last")
+    )
+
+
+def first_order_per_customer_singular():
+    # For each customer, find the total price of the first order they made and
+    # when it was made. Pick the 5 customers with the highest such values.
+    # Using aggregations as a stopgap until SINGULAR is implemented. If a
+    # customer ordered multiple orders on the first such day, pick the one with
+    # the lowest key. Only consider customers with at least $9k in their
+    # account. This implementation uses SINGULAR to get the first order per customer.
+    # No need to use MIN() as the first order is singular.
+    first_order = orders.WHERE(
+        RANKING(by=(order_date.ASC(), key.ASC())) == 1
+    ).SINGULAR()
+    return (
+        Customers.WHERE(acctbal >= 9000.0)
+        .CALCULATE(
+            name,
+            first_order_date=first_order.order_date,
+            first_order_price=first_order.total_price,
+        )
+        .TOP_K(5, by=first_order_price.DESC())
+    )

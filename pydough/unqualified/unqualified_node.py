@@ -380,6 +380,12 @@ class UnqualifiedNode(ABC):
         else:
             return UnqualifiedPartition(self, data, name, list(by))
 
+    def SINGULAR(self) -> "UnqualifiedSingular":
+        """
+        Method used to create a SINGULAR node.
+        """
+        return UnqualifiedSingular(self)
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -650,6 +656,15 @@ class UnqualifiedPartition(UnqualifiedNode):
         )
 
 
+class UnqualifiedSingular(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a SINGULAR clause.
+    """
+
+    def __init__(self, predecessor: UnqualifiedNode):
+        self._parcel: tuple[UnqualifiedNode] = (predecessor,)
+
+
 def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     Prints an unqualified node in a human-readable manner that shows its
@@ -728,6 +743,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             if isinstance(unqualified._parcel[0], UnqualifiedRoot):
                 return f"PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
             return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
+        case UnqualifiedSingular():
+            return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
         case _:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node: {unqualified.__class__.__name__}"
