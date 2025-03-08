@@ -46,7 +46,6 @@ class SubCollection(CollectionAccess):
         # A subcollection is singular if the underlying subcollection property
         # is singular and the parent collection is singular relative to the
         # desired context (or the parent is the desired context).
-        breakpoint()
         if self.subcollection_property.is_plural:
             return False
         relative_ancestor: PyDoughCollectionQDAG = (

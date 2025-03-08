@@ -133,7 +133,6 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         relative_context: PyDoughCollectionQDAG = self.starting_predecessor
         for expr in exprs:
             if not expr.is_singular(relative_context):
-                breakpoint()
                 raise PyDoughQDAGException(
                     f"Expected all terms in {self.standalone_string} to be singular, but encountered a plural expression: {expr.to_string()}"
                 )

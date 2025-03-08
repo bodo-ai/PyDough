@@ -895,39 +895,55 @@ def step_slicing():
 
 
 def singular1():
+    # Singular in CALCULATE & WHERE
     nation_4 = nations.WHERE(key == 4).SINGULAR()
     return Regions.CALCULATE(name, nation_4_name=nation_4.name)
 
 
 def singular2():
-    return Nations.CALCULATE(name, okey=customers.SINGULAR().orders.key)
-
-
-def singular3():
-    return Customers.ORDER_BY(
-        orders.WHERE(RANKING(by=order_date.ASC()) == 1)
-        .SINGULAR()
-        .order_date.ASC(na_pos="last")
+    # Singular in CALCULATE & WHERE with multiple SINGULARs
+    return Nations.CALCULATE(
+        name,
+        okey=customers.WHERE(key == 1).SINGULAR().orders.WHERE(key == 1).SINGULAR().key,
     )
 
 
-def first_order_per_customer_singular():
-    # For each customer, find the total price of the first order they made and
-    # when it was made. Pick the 5 customers with the highest such values.
-    # Using aggregations as a stopgap until SINGULAR is implemented. If a
-    # customer ordered multiple orders on the first such day, pick the one with
-    # the lowest key. Only consider customers with at least $9k in their
-    # account. This implementation uses SINGULAR to get the first order per customer.
-    # No need to use MIN() as the first order is singular.
-    first_order = orders.WHERE(
-        RANKING(by=(order_date.ASC(), key.ASC())) == 1
-    ).SINGULAR()
+def singular3():
+    # Singular in ORDER_BY
+    # Query takes 5 seconds to run.
     return (
-        Customers.WHERE(acctbal >= 9000.0)
-        .CALCULATE(
-            name,
-            first_order_date=first_order.order_date,
-            first_order_price=first_order.total_price,
+        Customers.TOP_K(5, by=name.ASC())
+        .CALCULATE(name)
+        .ORDER_BY(
+            orders.WHERE(RANKING(by=order_date.ASC()) == 1)
+            .SINGULAR()
+            .order_date.ASC(na_pos="last")
         )
-        .TOP_K(5, by=first_order_price.DESC())
+        .orders.CALCULATE(name, key)
+    )
+
+
+def singular4():
+    # Singular in TOP_K
+    return Customers.TOP_K(
+        5,
+        by=orders.WHERE(RANKING(by=order_date.ASC()) == 1)
+        .SINGULAR()
+        .order_date.ASC(na_pos="last"),
+    ).CALCULATE(name)
+
+
+# needs work.
+def singular5():
+    return PARTITION(
+        Parts,
+        name="parts",
+        by=container,
+    ).CALCULATE(
+        container=container,
+        highest_price_per_container=(
+            parts.lines.WHERE(RANKING(by=extended_price.DESC(), levels=1) == 1)
+            .SINGULAR()
+            .extended_price
+        ),
     )

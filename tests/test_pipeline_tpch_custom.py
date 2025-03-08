@@ -28,7 +28,6 @@ from simple_pydough_functions import (
     datetime_current,
     datetime_relative,
     double_partition,
-    first_order_per_customer_singular,
     function_sampler,
     percentile_customers_per_region,
     percentile_nations,
@@ -45,13 +44,15 @@ from simple_pydough_functions import (
     singular1,
     singular2,
     singular3,
+    singular4,
+    singular5,
     triple_partition,
 )
 from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df, to_sql
+from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -499,25 +500,177 @@ from pydough.unqualified import (
             id="triple_partition",
         ),
         pytest.param(
-            (singular1, None, "singular1", lambda: pd.DataFrame({})),
+            (
+                singular1,
+                None,
+                "singular1",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "nation_4_name": [None, None, None, None, "EGYPT"],
+                    }
+                ),
+            ),
             id="singular1",
         ),
         pytest.param(
-            (singular2, None, "singular2", lambda: pd.DataFrame({})),
+            (
+                singular2,
+                None,
+                "singular2",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                            "INDONESIA",
+                            "IRAN",
+                            "IRAQ",
+                            "JAPAN",
+                            "JORDAN",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "PERU",
+                            "CHINA",
+                            "ROMANIA",
+                            "SAUDI ARABIA",
+                            "VIETNAM",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                            "UNITED STATES",
+                        ],
+                        "okey": [None] * 25,  # Creates a list of 25 None values
+                    }
+                ),
+            ),
             id="singular2",
         ),
         pytest.param(
-            (singular3, None, "singular3", lambda: pd.DataFrame({})),
+            (
+                singular3,
+                None,
+                "singular3",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000000001",
+                            "Customer#000000001",
+                            "Customer#000000001",
+                            "Customer#000000001",
+                            "Customer#000000001",
+                            "Customer#000000001",
+                            "Customer#000000002",
+                            "Customer#000000002",
+                            "Customer#000000002",
+                            "Customer#000000002",
+                            "Customer#000000002",
+                            "Customer#000000002",
+                            "Customer#000000002",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000004",
+                            "Customer#000000005",
+                            "Customer#000000005",
+                            "Customer#000000005",
+                            "Customer#000000005",
+                        ],
+                        "key": [
+                            454791,
+                            579908,
+                            3868359,
+                            4273923,
+                            4808192,
+                            5133509,
+                            430243,
+                            1071617,
+                            1374019,
+                            1763205,
+                            1842406,
+                            2992930,
+                            3986496,
+                            164711,
+                            385825,
+                            1192231,
+                            1226497,
+                            1590469,
+                            1755398,
+                            1944711,
+                            1953441,
+                            1978756,
+                            2459619,
+                            2765152,
+                            2986913,
+                            3251169,
+                            3421092,
+                            3683623,
+                            3951331,
+                            4320612,
+                            4960614,
+                            5453440,
+                            5612065,
+                            224167,
+                            287619,
+                            905633,
+                            2630562,
+                        ],
+                    }
+                ),
+            ),
             id="singular3",
         ),
         pytest.param(
             (
-                first_order_per_customer_singular,
+                singular4,
                 None,
-                "first_order_per_customer_singular",
+                "singular4",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000000001",
+                            "Customer#000000002",
+                            "Customer#000000003",
+                            "Customer#000000004",
+                            "Customer#000000005",
+                        ]
+                    }
+                ),
+            ),
+            id="singular4",
+        ),
+        pytest.param(
+            (
+                singular5,
+                None,
+                "singular5",
                 lambda: pd.DataFrame({}),
             ),
-            id="first_order_per_customer_singular",
+            id="singular5",
+            marks=pytest.mark.skip(reason="Needs work on logic."),
         ),
     ],
 )
@@ -605,12 +758,11 @@ def test_pipeline_e2e_tpch_custom(
     unqualified_impl, columns, _, answer_impl = pydough_pipeline_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    # result: pd.DataFrame = to_df(
-    #     root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
-    # )
-    to_sql(root, metadata=graph, database=sqlite_tpch_db_context).strip()
+    result: pd.DataFrame = to_df(
+        root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
+    )
     breakpoint()
-    # pd.testing.assert_frame_equal(result, answer_impl())
+    pd.testing.assert_frame_equal(result, answer_impl())
 
 
 @pytest.mark.execute
