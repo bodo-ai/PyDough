@@ -275,8 +275,3 @@ def bad_iter():
     for item in Customers:
         print(item)
     return Customers
-
-
-def bad_singular():
-    # This will fail because customers is not singular wrt to orders.
-    return Nations.CALCULATE(name, okey=customers.SINGULAR().orders.key)

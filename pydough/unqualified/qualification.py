@@ -729,6 +729,19 @@ class Qualifier:
         context: PyDoughCollectionQDAG,
         is_child: bool,
     ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedSingular` into a PyDoughCollectionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedSingular instance to be transformed.
+            `context`: the collection QDAG whose context the singular is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+
+        Returns:
+            The PyDough QDAG object for the qualified singular node.
+        """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         answer: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child

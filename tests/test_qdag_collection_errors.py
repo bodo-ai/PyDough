@@ -190,6 +190,7 @@ from pydough.qdag import AstNodeBuilder
             "Expected all terms in CALCULATE(container=container, balance=parts.suppliers_of_part.account_balance) to be singular, but encountered a plural expression: parts.suppliers_of_part.account_balance",
             id="bad_plural_i",
         ),
+        # TODO: Add test for Nations.CALCULATE(name, okey=customers.SINGULAR().orders.key)
     ],
 )
 def test_malformed_collection_sequences(
