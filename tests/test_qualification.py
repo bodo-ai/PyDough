@@ -10,6 +10,8 @@ from simple_pydough_functions import (
     partition_as_child,
     singular1,
     singular2,
+    singular3,
+    singular4,
 )
 from test_utils import (
     graph_fetcher,
@@ -544,8 +546,66 @@ def test_qualify_node_to_ast_string(
 @pytest.mark.parametrize(
     "impl, answer_tree_str",
     [
-        pytest.param(singular1, "", id="singular1"),
-        pytest.param(singular2, "", id="singular2"),
+        pytest.param(
+            singular1,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calculate[name=name, nation_4_name=$1.name]
+    └─┬─ AccessChild
+      ├─── SubCollection[nations]
+      ├─── Where[key == 4]
+      └─── Singular
+         """,
+            id="singular1",
+        ),
+        pytest.param(
+            singular2,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─┬─ Calculate[name=name, okey=$1.key]
+    └─┬─ AccessChild
+      ├─── SubCollection[customers]
+      ├─── Where[key == 1]
+      └─┬─ Singular
+        ├─── SubCollection[orders]
+        ├─── Where[key == 1]
+        └─── Singular
+        """,
+            id="singular2",
+        ),
+        pytest.param(
+            singular3,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  ├─── TopK[5, name.ASC(na_pos='first')]
+  ├─── Calculate[name=name]
+  └─┬─ OrderBy[$1.order_date.ASC(na_pos='last')]
+    ├─┬─ AccessChild
+    │ ├─── SubCollection[orders]
+    │ ├─── Where[RANKING(by=(order_date.ASC(na_pos='first'))) == 1]
+    │ └─── Singular
+    ├─── SubCollection[orders]
+    └─── Calculate[name=name, key=key]
+        """,
+            id="singular3",
+        ),
+        pytest.param(
+            singular4,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  ├─┬─ TopK[5, $1.order_date.ASC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[orders]
+  │   ├─── Where[RANKING(by=(order_date.ASC(na_pos='first'))) == 1]
+  │   └─── Singular
+  └─── Calculate[name=name]        
+        """,
+            id="singular4",
+        ),
     ],
 )
 def test_qualify_singular_to_ast_string(
