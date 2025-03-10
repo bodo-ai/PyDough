@@ -498,8 +498,14 @@ class Qualifier:
         self, terms: Iterable[UnqualifiedNode] | MutableSequence[UnqualifiedNode]
     ) -> MutableSequence[UnqualifiedNode]:
         """
-        Modifies the collation terms to be ASC or DESC based on the configuration
-        settings.
+        Coerces nodes to be collation terms if they are not already. For nodes
+        that are not collation terms, uses configuration settings to determine
+        if they should be ASC or DESC. The first term uses
+        `collation_default_asc` config. If `propogate_collation` is True,
+        subsequent terms use `propogate_collation` config to determine if they
+        inherit the available collation from the previous term. If
+        `propogate_collation` is False, terms without an explicit collation will
+        use the default from `collation_default_asc`.
 
         Args:
             `terms`: the list of collation terms to be modified.

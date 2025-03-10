@@ -73,9 +73,10 @@ class PyDoughConfigs:
 
     propogate_collation = ConfigProperty[bool](False)
     """
-    If True, then the collation(`ASC` or `DESC`), if exists, will be propogated across
-    the nodes for that term. If False, then the collation will not be propogated across
-    the nodes for that term. The default is False.
+    If True, each term, which does not have an explicit collation, will inherit
+    the collation (ASC/DESC) from the previous specified term. If False, terms
+    without an explicit collation will use the default from
+    `collation_default_asc`. The default is False.
     """
 
     def __setattr__(self, name: str, value: Any) -> None:

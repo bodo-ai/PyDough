@@ -176,6 +176,11 @@ For example, consider the following PyDough code:
 
 ```py
 %%pydough
+
+import pydough
+# The configs of the active session
+configs = pydough.active_session.config
+
 # The collations are not explicitly specified for few of the terms.
 Suppliers.ORDER_BY(
   COUNT(lines),
@@ -186,7 +191,7 @@ Suppliers.ORDER_BY(
 )
 
 # Let's see the behavior of the terms with different configurations
-# With the default settings
+# With the default settings (collation_default_asc=True and propogate_collation=False)
 Suppliers.ORDER_BY(
   COUNT(lines).ASC(),
   nation.name.ASC(),
@@ -195,7 +200,20 @@ Suppliers.ORDER_BY(
   key.ASC(),
 )
 
+# With collation_default_asc=False and propogate_collation=True
+configs.collation_default_asc = False
+configs.propogate_collation = True
+Suppliers.ORDER_BY(
+  COUNT(lines).DESC(),
+  nation.name.ASC(),
+  COUNT(supply_records).DESC(),
+  account_balance.DESC(),
+  key.DESC(),
+)
+
 # With collation_default_asc=False and propogate_collation=False
+configs.collation_default_asc = False
+configs.propogate_collation = False
 Suppliers.ORDER_BY(
   COUNT(lines).DESC(),
   nation.name.ASC(),
@@ -205,6 +223,8 @@ Suppliers.ORDER_BY(
 )
 
 # With collation_default_asc=True and propogate_collation=True
+configs.collation_default_asc = True
+configs.propogate_collation = True
 Suppliers.ORDER_BY(
   COUNT(lines).ASC(),
   nation.name.ASC(),

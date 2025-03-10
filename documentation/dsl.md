@@ -791,8 +791,7 @@ People.ORDER_BY(first_name)
 ```
 
 **Good Example #8**: Sort every person by their first name in ascending order, last name in descending order, and the number of packages they have ordered in descending order.
-Let's keep the default behavior of `collation_default_asc` and set `propogate_collation` to `True`.
-
+Let's keep the default behavior of `collation_default_asc` and set `propogate_collation` to `True`.  We can do this by setting the [Session Configs](./usage.md#session-configs).
 ```py
 %%pydough
 People.ORDER_BY(first_name, last_name.DESC(), COUNT(packages))
@@ -804,6 +803,9 @@ This is valid because the collation term is by default ascending based on the `c
 %%pydough
 People.ORDER_BY(first_name.ASC(), last_name.DESC(), COUNT(packages).DESC())
 ```
+
+`COUNT(packages)` becomes a descending term because `propogate_collation` is `True` and the previous term `last_name.DESC()` is descending.
+`first_name` is ascending because `collation_default_asc` is `True` and `first_name` is the first term. The `propogate_collation` config does not affect the collation of the first term.
 
 **Bad Example #1**: Sort each person by their account balance in descending order. This is invalid because the `People` collection does not have an `account_balance` property.
 

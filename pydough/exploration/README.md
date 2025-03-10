@@ -4,7 +4,7 @@ This subdirectory of the PyDough directory deals with the exploration of PyDough
 
 ## Available APIs
 
-The exploration module has the following notable APIs available for use.:
+The exploration module has the following notable APIs available for use:
 
 - `explain`: A function that provides detailed explanations of PyDough metadata objects and unqualified nodes.
 - `explain_structure`: A function that provides detailed explanations about the overall structure of a PyDough metadata graph.
