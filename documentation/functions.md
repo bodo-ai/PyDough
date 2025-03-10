@@ -23,6 +23,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [JOIN_STRINGS](#join_strings)
    * [LPAD](#lpad)
    * [RPAD](#rpad)
+   * [FIND](#find)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -332,6 +333,25 @@ Here are examples on how it pads on string literals:
 | `RPAD("123", 3, "0")` | `"123"` |
 | `RPAD("123", 2, "0")` | `"12"` |
 | `RPAD("123", 0, "0")` | `""` |
+
+<!-- TOC --><a name="find"></a>
+
+### FIND
+
+The `FIND` function returns the index(0-indexed) of the first occurrence of the second argument within the first argument, or -1 if the second argument is not found.
+
+```py
+Customers.WHERE(name == "Alex Rodriguez")
+         .CALCULATE(
+            idx_Alex = FIND(name, "Alex"), # 0
+            idx_Rodriguez = FIND(name, "Rodriguez"), # 5
+            idx_bob = FIND(name, "bob"), # -1
+            idx_e = FIND(name, "e"), # 2
+            idx_space = FIND(name, " "), # 4
+            idx_of_R = FIND(name, "R"), # 5
+            idx_of_Alex_Rodriguez = FIND(name, "Alex Rodriguez"), # 0
+)
+```
 
 <!-- TOC --><a name="datetime-functions"></a>
 

@@ -1504,7 +1504,6 @@ def convert_sign(
         SQLGlot expressions. (Not actively used in this implementation.)
         `sql_glot_args`: The operands passed to the function after they were converted
         to SQLGlot expressions.
-
     Returns:
         The SQLGlot expression matching the functionality of `SIGN(X)`.
     """
@@ -1529,6 +1528,37 @@ def convert_sign(
                 ),
             ),
         ],
+    )
+    return answer
+
+
+def convert_find(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for getting the index of the first occurrence of a substring within a string.
+    The first argument is the string to search within,
+    and the second argument is the substring to search for.
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+    Returns:
+        The SQLGlot expression matching the functionality of `FIND(this, expression)`,
+        i.e the index of the first occurrence of the second argument within
+        the first argument, or -1 if the second argument is not found.
+    """
+    assert len(sql_glot_args) == 2
+    # answer = sqlglot_expressions.StrPosition(
+    #         this=sql_glot_args[0], position=sql_glot_args[1]
+    #     )
+    answer: SQLGlotExpression = sqlglot_expressions.Sub(
+        this=sqlglot_expressions.StrPosition(
+            this=sql_glot_args[0], substr=sql_glot_args[1]
+        ),
+        expression=sqlglot_expressions.Literal.number(1),
     )
     return answer
 
@@ -1688,6 +1718,7 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws
         self.bindings[pydop.LPAD] = convert_lpad
         self.bindings[pydop.RPAD] = convert_rpad
+        self.bindings[pydop.FIND] = convert_find
 
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)
