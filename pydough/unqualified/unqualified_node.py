@@ -701,7 +701,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         case UnqualifiedWindow():
             operands_str = ""
             for operand in unqualified._parcel[1]:
-                operands_str += f"{display_raw(oeprand)}, "
+                operands_str += f"{display_raw(operand)}, "
             operands_str += f'by=({", ".join([display_raw(operand) for operand in unqualified._parcel[2]])}'
             if unqualified._parcel[3] is not None:
                 operands_str += ", levels=" + str(unqualified._parcel[3])
