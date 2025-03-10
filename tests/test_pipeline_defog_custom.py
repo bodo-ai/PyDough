@@ -843,7 +843,6 @@ def test_pipeline_e2e_defog_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_defog_connection
     )
-    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

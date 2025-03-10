@@ -24,6 +24,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [LPAD](#lpad)
    * [RPAD](#rpad)
    * [FIND](#find)
+   * [STRIP](#strip)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -352,6 +353,14 @@ Customers.WHERE(name == "Alex Rodriguez")
             idx_of_Alex_Rodriguez = FIND(name, "Alex Rodriguez"), # 0
 )
 ```
+
+<!-- TOC --><a name="strip"></a>
+
+### STRIP
+
+The `STRIP` function removes all leading and trailing whitespace from a string.
+
+
 
 <!-- TOC --><a name="datetime-functions"></a>
 
