@@ -1522,14 +1522,14 @@ def convert_round(
         ):
             raise ValueError(
                 f"Unsupported argument {sql_glot_args[1]} for ROUND."
-                "It should be an integer literal."
+                "The precision argument should be an integer literal."
             )
         try:
             int(sql_glot_args[1].this)
         except ValueError:
             raise ValueError(
                 f"Unsupported argument {sql_glot_args[1]} for ROUND."
-                "It should be an integer literal."
+                "The precision argument should be an integer literal."
             )
         precision_glot = sql_glot_args[1]
     return sqlglot_expressions.Round(
