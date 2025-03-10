@@ -607,9 +607,9 @@ class Qualifier:
         records_to_keep: int = unqualified._parcel[1]
         # TODO: (gh #164) add ability to infer the "by" clause from a
         # predecessor
-        assert (
-            unqualified._parcel[2] is not None
-        ), "TopK does not currently support an implied 'by' clause."
+        assert unqualified._parcel[2] is not None, (
+            "TopK does not currently support an implied 'by' clause."
+        )
         unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_terms = self._expressions_to_collations(unqualified_terms)
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
@@ -682,9 +682,9 @@ class Qualifier:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
                 term, qualified_child, children
             )
-            assert isinstance(
-                qualified_term, Reference
-            ), "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
+            assert isinstance(qualified_term, Reference), (
+                "PARTITION currently only supports partition keys that are references to a scalar property of the collection being partitioned"
+            )
             child_ref: ChildReferenceExpression = ChildReferenceExpression(
                 qualified_child, 0, qualified_term.term_name
             )

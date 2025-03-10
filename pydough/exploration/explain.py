@@ -514,7 +514,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
 
         if not verbose:
             lines.append(
-                "\n" "Call pydough.explain(collection, verbose=True) for more details."
+                "\nCall pydough.explain(collection, verbose=True) for more details."
             )
 
     return "\n".join(lines)

@@ -42,6 +42,7 @@ from simple_pydough_functions import (
     simple_scan,
     simple_scan_top_five,
     triple_partition,
+    year_month_nation_orders,
 )
 from test_utils import (
     graph_fetcher,
@@ -378,6 +379,28 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
+                year_month_nation_orders,
+                None,
+                "year_month_nation_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "MOZAMBIQUE",
+                            "MOZAMBIQUE",
+                            "CHINA",
+                            "ALGERIA",
+                            "INDONESIA",
+                        ],
+                        "order_year": [1992, 1997, 1993, 1996, 1996],
+                        "order_month": [10, 7, 8, 4, 5],
+                        "n_orders": [198, 194, 188, 186, 185],
+                    }
+                ),
+            ),
+            id="year_month_nation_orders",
+        ),
+        pytest.param(
+            (
                 datetime_current,
                 None,
                 "datetime_current",
@@ -545,9 +568,9 @@ def test_pipeline_until_relational_tpch_custom(
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, _load_column_selection({"columns": columns}), default_config
     )
@@ -557,9 +580,9 @@ def test_pipeline_until_relational_tpch_custom(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            relational.to_tree_string() == expected_relational_string.strip()
-        ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+        assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between tree string representation of relational node and expected Relational tree string"
+        )
 
 
 @pytest.mark.execute

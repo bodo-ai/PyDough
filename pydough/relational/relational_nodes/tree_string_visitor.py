@@ -23,7 +23,7 @@ class TreeStringVisitor(RelationalVisitor):
         """
         Generic visitor implementation used by visit_xxx methods.
         """
-        self.lines.append(f"{' '*self.depth}{node.to_string(compact=True)}")
+        self.lines.append(f"{' ' * self.depth}{node.to_string(compact=True)}")
         self.depth += 1
         self.visit_inputs(node)
         self.depth -= 1

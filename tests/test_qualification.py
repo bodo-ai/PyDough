@@ -532,12 +532,12 @@ def test_qualify_node_to_ast_string(
     unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
     config: PyDoughConfigs = pydough.active_session.config
     qualified: PyDoughQDAG = qualify_node(unqualified, graph, config)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
-    assert (
-        qualified.to_tree_string() == answer_tree_str.strip()
-    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
+    assert qualified.to_tree_string() == answer_tree_str.strip(), (
+        "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    )
 
 
 @pytest.mark.parametrize(
@@ -638,9 +638,9 @@ def test_qualify_node_collation(
     graph: GraphMetadata = get_sample_graph("TPCH")
     unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
     qualified: PyDoughQDAG = qualify_node(unqualified, graph, custom_config)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
-    assert (
-        qualified.to_tree_string() == answer_tree_str.strip()
-    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
+    assert qualified.to_tree_string() == answer_tree_str.strip(), (
+        "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    )
