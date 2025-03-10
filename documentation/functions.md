@@ -369,12 +369,12 @@ Customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trail
 Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
 ```
 
-| **Input String (X)**       | **TRIM(Y FROM X)**                    | **Result**          |
+| **Input String (X)**       | **STRIP(X, Y)**                    | **Result**          |
 |-----------------------------|---------------------------------------|---------------------|
-| `'abcXYZcba'`              | `TRIM('abc' FROM 'abcXYZcba')`        | `'XYZ'`            |
-| `'$$Hello$$'`              | `TRIM('$e' FROM '$$Hello$$')`          | `'Hello'`          |
-| `'---Test-String---'`      | `TRIM('-' FROM '---Test-String---')`  | `'Test-String'`    |
-| `'123456Hello654321'`      | `TRIM('123456' FROM '123456Hello654321')` | `'Hello'`         |
+| `'abcXYZcba'`              | `STRIP('abcXYZcba','abc')`        | `'XYZ'`            |
+| `'$$Hello$$'`              | `STRIP('$$Hello$$','$$')`          | `'Hello'`          |
+| `'---Test-String---'`      | `STRIP('---Test-String---','-')`  | `'Test-String'`    |
+| `'123456Hello654321'`      | `STRIP('123456Hello654321','123456')` | `'Hello'`         |
 
 <!-- TOC --><a name="datetime-functions"></a>
 
