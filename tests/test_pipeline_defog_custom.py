@@ -27,6 +27,7 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     exponentiation,
+    find,
     hour_minute_day,
     minutes_seconds_datediff,
     multi_partition_access_1,
@@ -706,6 +707,29 @@ from pydough.unqualified import (
                 ),
             ),
             id="step_slicing",
+        ),
+        pytest.param(
+            (
+                find,
+                None,
+                "Broker",
+                "find",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["Alex Rodriguez"],
+                        "idx_Alex": ["Alex Rodriguez".find("Alex")],
+                        "idx_Rodriguez": ["Alex Rodriguez".find("Rodriguez")],
+                        "idx_bob": ["Alex Rodriguez".find("bob")],
+                        "idx_e": ["Alex Rodriguez".find("e")],
+                        "idx_space": ["Alex Rodriguez".find(" ")],
+                        "idx_of_R": ["Alex Rodriguez".find("R")],
+                        "idx_of_Alex_Rodriguez": [
+                            "Alex Rodriguez".find("Alex Rodriguez")
+                        ],
+                    }
+                ),
+            ),
+            id="find",
         ),
     ],
 )

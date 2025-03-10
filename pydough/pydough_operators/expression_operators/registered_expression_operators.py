@@ -19,6 +19,7 @@ __all__ = [
     "DIV",
     "ENDSWITH",
     "EQU",
+    "FIND",
     "GEQ",
     "GRT",
     "HAS",
@@ -167,6 +168,9 @@ LPAD = ExpressionFunctionOperator(
 )
 RPAD = ExpressionFunctionOperator(
     "RPAD", False, RequireNumArgs(3), SelectArgumentType(0)
+)
+FIND = ExpressionFunctionOperator(
+    "FIND", False, RequireNumArgs(2), ConstantType(Int64Type())
 )
 NOT = ExpressionFunctionOperator(
     "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())

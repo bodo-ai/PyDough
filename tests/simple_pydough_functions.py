@@ -914,3 +914,16 @@ def step_slicing():
         wo_step8=name[-4:-2],
         wo_step9=name[2:2],
     )
+
+
+def find():
+    return Customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        name,
+        idx_Alex=FIND(name, "Alex"),
+        idx_Rodriguez=FIND(name, "Rodriguez"),
+        idx_bob=FIND(name, "bob"),
+        idx_e=FIND(name, "e"),
+        idx_space=FIND(name, " "),
+        idx_of_R=FIND(name, "R"),
+        idx_of_Alex_Rodriguez=FIND(name, "Alex Rodriguez"),
+    )

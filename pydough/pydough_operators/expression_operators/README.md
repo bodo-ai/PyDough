@@ -77,6 +77,7 @@ These functions must be called on singular data as a function.
 - `JOIN_STRINGS`: equivalent to the Python string join method, where the first argument is used as a delimiter to concatenate the remaining arguments.
 - `LPAD`: pads the first argument with the second argument to the left until the first argument is equal in length to the third argument.
 - `RPAD`: pads the first argument with the second argument to the right until the first argument is equal in length to the third argument.
+- `FIND`: returns the index(0-indexed) of the first occurrence of the second argument within the first argument, or -1 if the second argument is not found.
 
 ##### Datetime Functions
 
