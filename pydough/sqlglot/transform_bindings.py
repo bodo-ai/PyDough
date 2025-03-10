@@ -1697,7 +1697,6 @@ class SqlGlotTransformBindings:
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)
         self.bindings[pydop.ROUND] = convert_round
-        # self.bind_simple_function(pydop.ROUND, sqlglot_expressions.Round)
 
         # Conditional functions
         self.bind_simple_function(pydop.DEFAULT_TO, sqlglot_expressions.Coalesce)

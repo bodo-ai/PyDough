@@ -149,10 +149,9 @@ def regional_suppliers_percentile():
 
 
 def function_sampler():
-    # Examples of using different functions
     # Functions tested:
     # JOIN_STRINGS,
-    # ROUND - with and without precision,
+    # ROUND (with and without precision),
     # KEEP_IF,
     # PRESENT,
     # ABSENT,
