@@ -1532,6 +1532,38 @@ def convert_sign(
     return answer
 
 
+def convert_strip(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for removing all leading and trailing whitespace from a string.
+    If a second argument is provided, it is used as the set of characters
+    to remove from the leading and trailing ends of the first argument.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `STRIP(X, Y)`.
+        In Python, this is equivalent to `X.strip(Y)`.
+    """
+    assert 1 <= len(sql_glot_args) <= 2
+    to_strip: SQLGlotExpression = sql_glot_args[0]
+    strip_char_glot: SQLGlotExpression
+    if len(sql_glot_args) == 1:
+        strip_char_glot = sqlglot_expressions.Literal.string("\n\t ")
+    else:
+        strip_char_glot = sql_glot_args[1]
+    return sqlglot_expressions.Trim(
+        this=to_strip,
+        expression=strip_char_glot,
+    )
+
+
 def convert_find(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
@@ -1719,6 +1751,7 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.LPAD] = convert_lpad
         self.bindings[pydop.RPAD] = convert_rpad
         self.bindings[pydop.FIND] = convert_find
+        self.bindings[pydop.STRIP] = convert_strip
 
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)

@@ -946,3 +946,27 @@ def find():
         idx_of_R=FIND(name, "R"),
         idx_of_Alex_Rodriguez=FIND(name, "Alex Rodriguez"),
     )
+
+
+def strip():
+    return (
+        Customers.WHERE(name == "Alex Rodriguez")
+        .CALCULATE(
+            name,
+            alt_name1="  Alex Rodriguez  ",
+            alt_name2="aeiAlex Rodriguezaeiou",
+            alt_name3=";;Alex Rodriguez;;",
+            alt_name4="""
+    Alex Rodriguez
+        """,  # equivalent to "\n\tAlex Rodriguez\n"
+        )
+        .CALCULATE(
+            stripped_name=STRIP(name, "Alex Rodriguez"),
+            stripped_name1=STRIP(name),
+            stripped_name_with_chars=STRIP(name, "lAez"),
+            stripped_alt_name1=STRIP(alt_name1),
+            stripped_alt_name2=STRIP(alt_name2, "aeiou"),
+            stripped_alt_name3=STRIP(alt_name3, ";"),
+            stripped_alt_name4=STRIP(alt_name4),
+        )
+    )

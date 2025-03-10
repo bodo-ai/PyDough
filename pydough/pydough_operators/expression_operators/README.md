@@ -78,7 +78,7 @@ These functions must be called on singular data as a function.
 - `LPAD`: pads the first argument with the second argument to the left until the first argument is equal in length to the third argument.
 - `RPAD`: pads the first argument with the second argument to the right until the first argument is equal in length to the third argument.
 - `FIND`: returns the index(0-indexed) of the first occurrence of the second argument within the first argument, or -1 if the second argument is not found.
-
+- `STRIP`: returns the first argument with all leading and trailing whitespace removed, including newlines, tabs, and spaces. If the second argument is provided, it is used as the set of characters to remove from the leading and trailing ends of the first argument.
 ##### Datetime Functions
 
 - `DATETIME`: constructs a new datetime, either from an existing one or the current datetime, and augments it by adding/subtracting intervals of time and/or truncating it to various units.

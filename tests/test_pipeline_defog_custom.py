@@ -39,6 +39,7 @@ from simple_pydough_functions import (
     padding_functions,
     sign,
     step_slicing,
+    strip,
     years_months_days_hours_datediff,
 )
 from test_utils import (
@@ -751,6 +752,26 @@ from pydough.unqualified import (
                 ),
             ),
             id="find",
+        ),
+        pytest.param(
+            (
+                strip,
+                None,
+                "Broker",
+                "strip",
+                lambda: pd.DataFrame(
+                    {
+                        "stripped_name": [""],
+                        "stripped_name1": ["Alex Rodriguez"],
+                        "stripped_name_with_chars": ["x Rodrigu"],
+                        "stripped_alt_name1": ["Alex Rodriguez"],
+                        "stripped_alt_name2": ["Alex Rodriguez"],
+                        "stripped_alt_name3": ["Alex Rodriguez"],
+                        "stripped_alt_name4": ["Alex Rodriguez"],
+                    }
+                ),
+            ),
+            id="strip",
         ),
     ],
 )

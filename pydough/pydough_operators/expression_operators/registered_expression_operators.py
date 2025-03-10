@@ -57,6 +57,7 @@ __all__ = [
     "SLICE",
     "SQRT",
     "STARTSWITH",
+    "STRIP",
     "SUB",
     "SUM",
     "UPPER",
@@ -66,6 +67,7 @@ __all__ = [
 from pydough.pydough_operators.type_inference import (
     AllowAny,
     ConstantType,
+    RequireArgRange,
     RequireMinArgs,
     RequireNumArgs,
     SelectArgumentType,
@@ -106,6 +108,9 @@ UPPER = ExpressionFunctionOperator(
 )
 STARTSWITH = ExpressionFunctionOperator(
     "STARTSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
+)
+STRIP = ExpressionFunctionOperator(
+    "STRIP", False, RequireArgRange(1, 2), SelectArgumentType(0)
 )
 ENDSWITH = ExpressionFunctionOperator(
     "ENDSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())

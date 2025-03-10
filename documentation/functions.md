@@ -358,9 +358,23 @@ Customers.WHERE(name == "Alex Rodriguez")
 
 ### STRIP
 
-The `STRIP` function removes all leading and trailing whitespace from a string.
+The `STRIP` function returns the first argument with all leading and trailing whitespace removed, including newlines, tabs, and spaces.
+If the second argument is provided, it is used as the set of characters to remove from the leading and trailing ends of the first argument.
+It continues removing characters until it encounters a character that is not in the set.
+This function is equivalent to python's `str.strip()` method.
+Note: This function is case-sensitive.
 
+```py
+Customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trailing whitespace
+Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
+```
 
+| **Input String (X)**       | **TRIM(Y FROM X)**                    | **Result**          |
+|-----------------------------|---------------------------------------|---------------------|
+| `'abcXYZcba'`              | `TRIM('abc' FROM 'abcXYZcba')`        | `'XYZ'`            |
+| `'$$Hello$$'`              | `TRIM('$e' FROM '$$Hello$$')`          | `'Hello'`          |
+| `'---Test-String---'`      | `TRIM('-' FROM '---Test-String---')`  | `'Test-String'`    |
+| `'123456Hello654321'`      | `TRIM('123456' FROM '123456Hello654321')` | `'Hello'`         |
 
 <!-- TOC --><a name="datetime-functions"></a>
 
