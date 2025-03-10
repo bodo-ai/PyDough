@@ -92,9 +92,9 @@ class UnqualifiedNode(ABC):
             typ: PyDoughType = UnknownType()
             for elem in obj:
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
-                assert isinstance(
-                    coerced_elem, UnqualifiedLiteral
-                ), f"Can only coerce list of literals to a literal, not {elem}"
+                assert isinstance(coerced_elem, UnqualifiedLiteral), (
+                    f"Can only coerce list of literals to a literal, not {elem}"
+                )
                 elems.append(coerced_elem)
             return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
@@ -702,7 +702,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             operands_str = ""
             for operand in unqualified._parcel[1]:
                 operands_str += f"{display_raw(operand)}, "
-            operands_str += f'by=({", ".join([display_raw(operand) for operand in unqualified._parcel[2]])}'
+            operands_str += f"by=({', '.join([display_raw(operand) for operand in unqualified._parcel[2]])}"
             if unqualified._parcel[3] is not None:
                 operands_str += ", levels=" + str(unqualified._parcel[3])
             for kwarg, val in unqualified._parcel[4].items():

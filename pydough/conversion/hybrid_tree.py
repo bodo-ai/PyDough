@@ -1466,14 +1466,14 @@ class HybridTranslator:
         Returns:
             The HybridExpr node corresponding to `expr`
         """
-        assert (
-            expr.operator == pydop.COUNT
-        ), f"Malformed call to handle_collection_count: {expr}"
+        assert expr.operator == pydop.COUNT, (
+            f"Malformed call to handle_collection_count: {expr}"
+        )
         assert len(expr.args) == 1, f"Malformed call to handle_collection_count: {expr}"
         collection_arg = expr.args[0]
-        assert isinstance(
-            collection_arg, ChildReferenceCollection
-        ), f"Malformed call to handle_collection_count: {expr}"
+        assert isinstance(collection_arg, ChildReferenceCollection), (
+            f"Malformed call to handle_collection_count: {expr}"
+        )
         count_call: HybridFunctionExpr = HybridFunctionExpr(
             pydop.COUNT, [], expr.pydough_type
         )
@@ -1509,9 +1509,9 @@ class HybridTranslator:
         ), f"Malformed call to handle_has_hasnot: {expr}"
         assert len(expr.args) == 1, f"Malformed call to handle_has_hasnot: {expr}"
         collection_arg = expr.args[0]
-        assert isinstance(
-            collection_arg, ChildReferenceCollection
-        ), f"Malformed call to handle_has_hasnot: {expr}"
+        assert isinstance(collection_arg, ChildReferenceCollection), (
+            f"Malformed call to handle_has_hasnot: {expr}"
+        )
         # Reconcile the existing connection type with either SEMI or ANTI
         child_idx: int = child_ref_mapping[collection_arg.child_idx]
         child_connection: HybridConnection = hybrid.children[child_idx]

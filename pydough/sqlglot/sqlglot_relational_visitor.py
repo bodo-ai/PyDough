@@ -484,9 +484,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     def visit_limit(self, limit: Limit) -> None:
         self.visit_inputs(limit)
         input_expr: Select = self._stack.pop()
-        assert isinstance(
-            limit.limit, LiteralExpression
-        ), "Limit currently only supports literals"
+        assert isinstance(limit.limit, LiteralExpression), (
+            "Limit currently only supports literals"
+        )
         limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
             limit.limit
         )
@@ -570,7 +570,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             SQLGlotExpression: The SQLGlot expression representing the tree we have already
                 visited.
         """
-        assert (
-            len(self._stack) == 1
-        ), "Expected exactly one SQLGlot expression on the stack"
+        assert len(self._stack) == 1, (
+            "Expected exactly one SQLGlot expression on the stack"
+        )
         return self._stack[0]
