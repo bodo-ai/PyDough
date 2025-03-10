@@ -1492,6 +1492,47 @@ def convert_sqlite_datediff(
             raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
 
+def convert_sign(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for getting the sign of the operand.
+    It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `SIGN(X)`.
+    """
+    assert len(sql_glot_args) == 1
+    arg: SQLGlotExpression = sql_glot_args[0]
+    zero_glot: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+    one_glot: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
+    minus_one_glot: SQLGlotExpression = sqlglot_expressions.Literal.number(-1)
+    answer: SQLGlotExpression = convert_iff_case(
+        None,
+        [
+            sqlglot_expressions.EQ(this=arg, expression=zero_glot),
+            zero_glot,
+            apply_parens(
+                convert_iff_case(
+                    None,
+                    [
+                        sqlglot_expressions.LT(this=arg, expression=zero_glot),
+                        minus_one_glot,
+                        one_glot,
+                    ],
+                ),
+            ),
+        ],
+    )
+    return answer
+
+
 class SqlGlotTransformBindings:
     """
     Binding infrastructure used to associate PyDough operators with a procedure
@@ -1651,6 +1692,7 @@ class SqlGlotTransformBindings:
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)
         self.bind_simple_function(pydop.ROUND, sqlglot_expressions.Round)
+        self.bindings[pydop.SIGN] = convert_sign
 
         # Conditional functions
         self.bind_simple_function(pydop.DEFAULT_TO, sqlglot_expressions.Coalesce)

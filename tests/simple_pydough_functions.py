@@ -914,3 +914,22 @@ def step_slicing():
         wo_step8=name[-4:-2],
         wo_step9=name[2:2],
     )
+
+
+def sign():
+    return (
+        DailyPrices.CALCULATE(
+            high,
+            high_neg=-1 * high,
+            high_zero=0 * high,
+        )
+        .TOP_K(5, by=high.ASC())
+        .CALCULATE(
+            high,
+            high_neg,
+            high_zero,
+            sign_high=SIGN(high),
+            sign_high_neg=SIGN(high_neg),
+            sign_high_zero=SIGN(high_zero),
+        )
+    )

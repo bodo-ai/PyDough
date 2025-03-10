@@ -45,6 +45,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [ROUND](#round)
    * [POWER](#power)
    * [SQRT](#sqrt)
+   * [SIGN](#sign)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -603,6 +604,16 @@ The `SQRT` function takes the square root of its input. It's equivalent to `POWE
 
 ```py
 Parts.CALCULATE(sqrt_price = SQRT(retail_price))
+```
+
+<!-- TOC --><a name="sign"></a>
+
+### SIGN
+
+The `SIGN` function returns the sign of its input. It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+
+```py
+Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>

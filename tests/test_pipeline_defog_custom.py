@@ -36,6 +36,7 @@ from simple_pydough_functions import (
     multi_partition_access_5,
     multi_partition_access_6,
     padding_functions,
+    sign,
     step_slicing,
     years_months_days_hours_datediff,
 )
@@ -593,8 +594,8 @@ from pydough.unqualified import (
                         ]
                     }
                 ).assign(
-                    ref_rpad=lambda x: "Cust0001**********************",
-                    ref_lpad=lambda x: "**********************Cust0001",
+                    ref_rpad="Cust0001**********************",
+                    ref_lpad="**********************Cust0001",
                     right_padded=lambda x: x.original_name.apply(
                         lambda s: (s + "*" * 30)[:30]
                     ),
@@ -707,6 +708,26 @@ from pydough.unqualified import (
             ),
             id="step_slicing",
         ),
+        pytest.param(
+            (
+                sign,
+                None,
+                "Broker",
+                "sign",
+                lambda: pd.DataFrame(
+                    {
+                        "high": [83.0, 83.6, 84.2, 84.8, 85.4],
+                    }
+                ).assign(
+                    high_neg=lambda x: x["high"] * -1,
+                    high_zero=lambda x: x["high"] * 0,
+                    sign_high=1,
+                    sign_high_neg=-1,
+                    sign_high_zero=0,
+                ),
+            ),
+            id="sign",
+        ),
     ],
 )
 def custom_defog_test_data(
@@ -798,6 +819,7 @@ def test_pipeline_e2e_defog_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_defog_connection
     )
+    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

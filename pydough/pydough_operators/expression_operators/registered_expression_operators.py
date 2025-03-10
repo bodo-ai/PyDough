@@ -52,6 +52,7 @@ __all__ = [
     "ROUND",
     "RPAD",
     "SECOND",
+    "SIGN",
     "SLICE",
     "SQRT",
     "STARTSWITH",
@@ -123,6 +124,9 @@ POWER = ExpressionFunctionOperator(
 )
 SQRT = ExpressionFunctionOperator(
     "SQRT", False, RequireNumArgs(1), ConstantType(Float64Type())
+)
+SIGN = ExpressionFunctionOperator(
+    "SIGN", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
 HAS = ExpressionFunctionOperator("HAS", True, AllowAny(), ConstantType(BooleanType()))
