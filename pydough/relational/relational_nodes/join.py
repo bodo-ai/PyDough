@@ -61,9 +61,9 @@ class Join(RelationalNode):
             and num_conditions == num_join_types
         ), "Number of inputs, conditions, and join types must be the same"
         self._inputs = inputs
-        assert all(
-            isinstance(cond.data_type, BooleanType) for cond in conditions
-        ), "Join condition must be a boolean type"
+        assert all(isinstance(cond.data_type, BooleanType) for cond in conditions), (
+            "Join condition must be a boolean type"
+        )
         self._conditions: list[RelationalExpression] = conditions
         self._join_types: list[JoinType] = join_types
         self._correl_name: str | None = correl_name

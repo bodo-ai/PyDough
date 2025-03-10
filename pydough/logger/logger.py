@@ -30,26 +30,25 @@ def get_logger(
     level: int
 
     if level_env is not None:
-        assert isinstance(
-            level_env, str
-        ), f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be a string, found {level_env.__class__.__name__}"
+        assert isinstance(level_env, str), (
+            f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be a string, found {level_env.__class__.__name__}"
+        )
         allowed_levels: list[str] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        assert (
-            level_env in allowed_levels
-        ), f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be one of {', '.join(allowed_levels)}, found {level_env}"
+        assert level_env in allowed_levels, (
+            f"expected environment variable 'PYDOUGH_LOG_LEVEL' to be one of {', '.join(allowed_levels)}, found {level_env}"
+        )
         # Convert string level (e.g., "DEBUG", "INFO") to a logging constant
         level = getattr(logging, level_env.upper(), default_level)
     else:
-        assert (
-            default_level
-            in [
-                logging.DEBUG,
-                logging.INFO,
-                logging.WARNING,
-                logging.ERROR,
-                logging.CRITICAL,
-            ]
-        ), f"expected arguement default_value to be one of logging.DEBUG,logging.INFO,logging.WARNING,logging.ERROR,logging.CRITICAL, found {default_level}"
+        assert default_level in [
+            logging.DEBUG,
+            logging.INFO,
+            logging.WARNING,
+            logging.ERROR,
+            logging.CRITICAL,
+        ], (
+            f"expected arguement default_value to be one of logging.DEBUG,logging.INFO,logging.WARNING,logging.ERROR,logging.CRITICAL, found {default_level}"
+        )
         level = default_level
 
     # Create default console handler
