@@ -122,12 +122,11 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 else:
                     this = sqlglot_expressions.RowNumber()
             case "PREV" | "NEXT":
-                raw_offset: object = window_expression.kwargs.get("n", 1)
-                if not isinstance(raw_offset, int):
+                offset = window_expression.kwargs.get("n", 1)
+                if not isinstance(offset, int):
                     raise ValueError(
-                        f"Invalid 'n' argument to {window_expression.op.function_name}: {raw_offset!r} (expected an integer)"
+                        f"Invalid 'n' argument to {window_expression.op.function_name}: {offset!r} (expected an integer)"
                     )
-                offset: int = raw_offset
                 # By default, we use the LAG function. If doing NEXT, switch
                 # to LEAD. If the offset is negative, switch again.
                 func, other_func = sqlglot_expressions.Lag, sqlglot_expressions.Lead

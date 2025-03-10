@@ -1682,7 +1682,7 @@ class HybridTranslator:
     def add_unique_terms(
         self,
         hybrid: HybridTree,
-        levels_reamining: int,
+        levels_remaining: int,
         levels_so_far: int,
         partition_args: list[HybridExpr],
     ) -> None:
@@ -1693,7 +1693,7 @@ class HybridTranslator:
         Args:
             `hybrid`: the hybrid tree whose ancestor's unique terms are being
             added to the partition keys.
-            `levels_reamining`: the number of levels left to step back before
+            `levels_remaining`: the number of levels left to step back before
             the unique terms are added to the partition keys.
             `levels_so_far`: the number of levels that have been stepped back
             so far.
@@ -1702,7 +1702,7 @@ class HybridTranslator:
         """
         # When the number of levels remaining to step back is 0, we have
         # reached the targeted ancestor, so we add the unique terms.
-        if levels_reamining == 0:
+        if levels_remaining == 0:
             for unique_term in sorted(hybrid.pipeline[-1].unique_exprs, key=str):
                 shifted_arg: HybridExpr | None = unique_term.shift_back(levels_so_far)
                 assert shifted_arg is not None
@@ -1715,7 +1715,7 @@ class HybridTranslator:
                 raise ValueError("Window function references too far back")
             prev_hybrid: HybridTree = self.stack.pop()
             correl_args: list[HybridExpr] = []
-            self.add_unique_terms(prev_hybrid, levels_reamining - 1, 0, correl_args)
+            self.add_unique_terms(prev_hybrid, levels_remaining - 1, 0, correl_args)
             for arg in correl_args:
                 if not isinstance(arg, HybridCorrelExpr):
                     prev_hybrid.correlated_children.add(len(prev_hybrid.children))
@@ -1725,7 +1725,7 @@ class HybridTranslator:
             # Otherwise, we hae to step back further, so we recursively
             # repeat the procedure one level further up in the hybrid tree.
             self.add_unique_terms(
-                hybrid.parent, levels_reamining - 1, levels_so_far + 1, partition_args
+                hybrid.parent, levels_remaining - 1, levels_so_far + 1, partition_args
             )
 
     def make_hybrid_expr(
@@ -2095,7 +2095,7 @@ class HybridTranslator:
                             )
                     case PartitionChild():
                         source: HybridTree = parent
-                        while isinstance(source.pipeline[0], HybridPartitionChild):
+                        if isinstance(source.pipeline[0], HybridPartitionChild):
                             source = source.pipeline[0].subtree
                         successor_hybrid = copy.deepcopy(source.children[0].subtree)
                         successor_hybrid._ancestral_mapping = node.ancestral_mapping
