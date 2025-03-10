@@ -1876,7 +1876,7 @@ class HybridTranslator:
             case WindowCall():
                 partition_args: list[HybridExpr] = []
                 order_args: list[HybridCollation] = []
-                # If the levels argument was provided, find the partitkon keys
+                # If the levels argument was provided, find the partition keys
                 # for that ancestor level.
                 if expr.levels is not None:
                     self.add_unique_terms(hybrid, expr.levels, 0, partition_args)
