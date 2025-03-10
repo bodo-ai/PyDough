@@ -787,7 +787,7 @@ Customers.WHERE(COUNT(orders) > 5).CALCULATE(
 ).TOP_K(10, by=average_order_gap.DESC())
 
 # For every year/month, calculate the percent change in the number of
-# orders made in that month from the previous month..
+# orders made in that month from the previous month.
 PARTITION(
    Orders(year=YEAR(order_date), month=MONTH(order_date)),
    name="orders",
