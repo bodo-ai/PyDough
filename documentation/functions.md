@@ -773,7 +773,7 @@ Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), levels=2) > 95)
 The `PREV` function returns the value of an expression from a preceding record in the collection. The arguments:
 
 - `expression`: the expression to return the shifted value of.
-- `n` (optional): how many records backwards to look (default: `1`).
+- `n` (optional): optional argument (default `1`) how many records backwards to look.
 - `default` (optional): the value to output when there is no record `n` before the current record (default: `None`). This must be a valid literal.
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
 - `levels` (optional): same `levels` argument as all other window functions.
