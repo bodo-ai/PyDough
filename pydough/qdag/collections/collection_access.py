@@ -22,6 +22,7 @@ from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
     ColumnProperty,
+    Reference,
 )
 
 from .child_access import ChildAccess
@@ -121,6 +122,16 @@ class CollectionAccess(ChildAccess):
             return BackReferenceExpression(
                 self, term_name, self.ancestral_mapping[term_name]
             )
+
+        if term_name in self.inherited_downstreamed_terms:
+            context: PyDoughCollectionQDAG = self
+            while term_name not in context.all_terms:
+                if context is self:
+                    context = self.ancestor_context
+                else:
+                    assert context.ancestor_context is not None
+                    context = context.ancestor_context
+            return Reference(context, term_name)
 
         if term_name not in self.all_terms:
             raise PyDoughQDAGException(
