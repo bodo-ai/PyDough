@@ -1492,6 +1492,52 @@ def convert_sqlite_datediff(
             raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
 
+def convert_round(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for rounding a number to a specified precision.
+    If no precision is provided, the number is rounded to 0 decimal places.
+    If a precision is provided, it must be an integer literal.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `ROUND(number, precision)`.
+    """
+    assert len(sql_glot_args) == 1 or len(sql_glot_args) == 2
+    precision_glot: SQLGlotExpression
+    if len(sql_glot_args) == 1:
+        precision_glot = sqlglot_expressions.Literal.number(0)
+    else:
+        # Check if the second argument is a integer literal.
+        if (
+            not isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
+            or sql_glot_args[1].is_string
+        ):
+            raise ValueError(
+                f"Unsupported argument {sql_glot_args[1]} for ROUND."
+                "The precision argument should be an integer literal."
+            )
+        try:
+            int(sql_glot_args[1].this)
+        except ValueError:
+            raise ValueError(
+                f"Unsupported argument {sql_glot_args[1]} for ROUND."
+                "The precision argument should be an integer literal."
+            )
+        precision_glot = sql_glot_args[1]
+    return sqlglot_expressions.Round(
+        this=sql_glot_args[0],
+        decimals=precision_glot,
+    )
+
+
 class SqlGlotTransformBindings:
     """
     Binding infrastructure used to associate PyDough operators with a procedure
@@ -1650,7 +1696,7 @@ class SqlGlotTransformBindings:
 
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)
-        self.bind_simple_function(pydop.ROUND, sqlglot_expressions.Round)
+        self.bindings[pydop.ROUND] = convert_round
 
         # Conditional functions
         self.bind_simple_function(pydop.DEFAULT_TO, sqlglot_expressions.Coalesce)

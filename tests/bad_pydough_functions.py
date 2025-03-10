@@ -275,3 +275,11 @@ def bad_iter():
     for item in Customers:
         print(item)
     return Customers
+
+
+def bad_round1():
+    return DailyPrices.CALCULATE(rounded_high=ROUND(high, 0.5))
+
+
+def bad_round2():
+    return DailyPrices.CALCULATE(rounded_high=ROUND(high, -0.5, 2))

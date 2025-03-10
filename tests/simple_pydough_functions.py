@@ -149,7 +149,13 @@ def regional_suppliers_percentile():
 
 
 def function_sampler():
-    # Examples of using different functions
+    # Functions tested:
+    # JOIN_STRINGS,
+    # ROUND (with and without precision),
+    # KEEP_IF,
+    # PRESENT,
+    # ABSENT,
+    # MONOTONIC
     return (
         Regions.CALCULATE(region_name=name)
         .nations.CALCULATE(nation_name=name)
@@ -159,6 +165,7 @@ def function_sampler():
             c=KEEP_IF(name, phone[:1] == "3"),
             d=PRESENT(KEEP_IF(name, phone[1:2] == "1")),
             e=ABSENT(KEEP_IF(name, phone[14:] == "7")),
+            f=ROUND(acctbal),
         )
         .WHERE(MONOTONIC(0.0, acctbal, 100.0))
         .TOP_K(10, by=address.ASC())

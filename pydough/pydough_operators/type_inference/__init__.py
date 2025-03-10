@@ -7,6 +7,7 @@ __all__ = [
     "AllowAny",
     "ConstantType",
     "ExpressionTypeDeducer",
+    "RequireArgRange",
     "RequireMinArgs",
     "RequireNumArgs",
     "SelectArgumentType",
@@ -18,4 +19,10 @@ from .expression_type_deducer import (
     ExpressionTypeDeducer,
     SelectArgumentType,
 )
-from .type_verifier import AllowAny, RequireMinArgs, RequireNumArgs, TypeVerifier
+from .type_verifier import (
+    AllowAny,
+    RequireArgRange,
+    RequireMinArgs,
+    RequireNumArgs,
+    TypeVerifier,
+)
