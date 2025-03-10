@@ -107,7 +107,7 @@ These functions must be called on singular data as a function.
 ##### Numeric Functions
 
 - `ABS`: returns the absolute value of the input.
-- `ROUND`: rounds the first argument to a number of digits equal to the second argument.
+- `ROUND`: rounds the first argument to a number of digits equal to the second argument. If second argument is not provided, the first argument is rounded to 0 decimal places.
 - `POWER`: exponentiates the first argument to the power of second argument.
 - `SQRT`: returns the square root of the input. 
 

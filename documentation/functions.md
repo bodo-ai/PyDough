@@ -568,12 +568,17 @@ Customers.CALCULATE(acct_magnitude = abs(acctbal))
 
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The Python builtin `round()` function can also be used to accomplish the same thing. 
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places. The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
 Parts.CALCULATE(rounded_price = ROUND(retail_price, 1))
 # The below statement is equivalent to above.
 Parts.CALCULATE(rounded_price = round(retail_price, 1))
+
+# The below statement takes the default precision as 0.
+Parts.CALCULATE(rounded_price = ROUND(retail_price))
+# The below statement is equivalent to above.
+Parts.CALCULATE(rounded_price = ROUND(retail_price,0))
 ```
 
 Note: The default precision for builtin `round` method is 0, to be in alignment with the Python implementation. The PyDough `ROUND` function requires the precision to be specified.

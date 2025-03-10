@@ -181,7 +181,7 @@ PRESENT = ExpressionFunctionOperator(
     "PRESENT", False, RequireNumArgs(1), ConstantType(BooleanType())
 )
 ROUND = ExpressionFunctionOperator(
-    "ROUND", False, RequireNumArgs(2), SelectArgumentType(0)
+    "ROUND", False, RequireMinArgs(1), SelectArgumentType(0)
 )
 MONOTONIC = ExpressionFunctionOperator(
     "MONOTONIC", False, RequireMinArgs(1), ConstantType(BooleanType())
