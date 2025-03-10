@@ -423,6 +423,9 @@ class HybridOperation:
         self.orderings: list[HybridCollation] = orderings
         self.unique_exprs: list[HybridExpr] = unique_exprs
 
+    def search_term_definition(self, name: str) -> HybridExpr | None:
+        return self.terms.get(name, None)
+
 
 class HybridRoot(HybridOperation):
     """
@@ -494,6 +497,7 @@ class HybridCalculate(HybridOperation):
         new_expressions: dict[str, HybridExpr],
         orderings: list[HybridCollation],
     ):
+        self.predecessor: HybridOperation = predecessor
         terms: dict[str, HybridExpr] = {}
         renamings: dict[str, str] = {}
         for name, expr in predecessor.terms.items():
@@ -511,10 +515,16 @@ class HybridCalculate(HybridOperation):
                 or used_name in renamings
                 or used_name in new_renamings
             ):
+                if (
+                    (used_name not in renamings)
+                    and (used_name not in new_renamings)
+                    and (self.predecessor.search_term_definition(used_name) == expr)
+                ):
+                    break
                 used_name = f"{name}_{idx}"
                 idx += 1
+                new_renamings[name] = used_name
             terms[used_name] = expr
-            new_renamings[name] = used_name
         renamings.update(new_renamings)
         for old_name, new_name in new_renamings.items():
             expr = new_expressions.pop(old_name)
@@ -524,6 +534,13 @@ class HybridCalculate(HybridOperation):
 
     def __repr__(self):
         return f"CALCULATE[{self.new_expressions}]"
+
+    def search_term_definition(self, name: str) -> HybridExpr | None:
+        if name in self.new_expressions:
+            expr: HybridExpr = self.new_expressions[name]
+            if not (isinstance(expr, HybridRefExpr) and expr.name == name):
+                return self.new_expressions[name]
+        return self.predecessor.search_term_definition(name)
 
 
 class HybridFilter(HybridOperation):
@@ -543,6 +560,9 @@ class HybridFilter(HybridOperation):
 
     def __repr__(self):
         return f"FILTER[{self.condition}]"
+
+    def search_term_definition(self, name: str) -> HybridExpr | None:
+        return self.predecessor.search_term_definition(name)
 
 
 class HybridPartition(HybridOperation):
@@ -592,6 +612,9 @@ class HybridLimit(HybridOperation):
 
     def __repr__(self):
         return f"LIMIT_{self.records_to_keep}[{self.orderings}]"
+
+    def search_term_definition(self, name: str) -> HybridExpr | None:
+        return self.predecessor.search_term_definition(name)
 
 
 class ConnectionType(Enum):

@@ -31,6 +31,28 @@ def simple_filter_top_five():
     )
 
 
+def year_month_nation_orders():
+    # Finds the 5 largest instances of numbers of orders made in a month of a
+    # year by customers in a nation, only looking at nations from Asia and
+    # Africa.
+    selected_regions = Regions.WHERE(ISIN(name, ("ASIA", "AFRICA")))
+    urgent_orders = (
+        selected_regions.nations.CALCULATE(nation_name=name)
+        .customers.orders.WHERE(order_priority == "1-URGENT")
+        .CALCULATE(
+            nation_name,
+            order_year=YEAR(order_date),
+            order_month=MONTH(order_date),
+        )
+    )
+    groups = PARTITION(
+        urgent_orders, name="u", by=(nation_name, order_year, order_month)
+    )
+    return groups.CALCULATE(
+        nation_name, order_year, order_month, n_orders=COUNT(u)
+    ).TOP_K(5, by=n_orders.DESC())
+
+
 def rank_a():
     return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 
