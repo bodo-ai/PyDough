@@ -814,6 +814,7 @@ class RelTranslation:
             The TranslationOutput payload containing expressions for both the
             aggregated partitions and the original partitioned data.
         """
+        breakpoint()
         child_output: TranslationOutput = self.rel_translation(
             None, node.subtree, len(node.subtree.pipeline) - 1
         )

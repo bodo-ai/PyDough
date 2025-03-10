@@ -1121,7 +1121,7 @@ class HybridTree:
             successor._join_keys = successor_join_keys
 
     def has_useless_partition(self) -> bool:
-        if len(self.pipeline) == 0 and isinstance(self.pipeline[0], HybridPartition):
+        if len(self.pipeline) == 1 and isinstance(self.pipeline[0], HybridPartition):
             return True
         if any(child.subtree.has_useless_partition() for child in self.children):
             return True
