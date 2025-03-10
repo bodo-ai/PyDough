@@ -339,7 +339,7 @@ Here are examples on how it pads on string literals:
 
 ### FIND
 
-The `FIND` function returns the index(0-indexed) of the first occurrence of the second argument within the first argument, or -1 if the second argument is not found.
+The `FIND` function returns the position (0-indexed) of the first occurrence of a substring within a string, or -1 if the substring is not found. The first argument is the string to search within, and the second argument is the substring to search for.
 
 ```py
 Customers.WHERE(name == "Alex Rodriguez")
