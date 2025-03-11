@@ -25,6 +25,7 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
     customer_largest_order_deltas,
     datetime_current,
@@ -758,6 +759,15 @@ from pydough.unqualified import (
                 ),
             ),
             id="month_year_sliding_windows",
+        ),
+        pytest.param(
+            (
+                avg_gap_prev_urgent_same_clerk,
+                None,
+                "avg_gap_prev_urgent_same_clerk",
+                lambda: pd.DataFrame({"avg_delta": [7.9820674]}),
+            ),
+            id="avg_gap_prev_urgent_same_clerk",
         ),
     ],
 )

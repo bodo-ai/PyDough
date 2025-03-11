@@ -362,6 +362,19 @@ def month_year_sliding_windows():
     )
 
 
+def avg_gap_prev_urgent_same_clerk():
+    # Finds the average gap in days between each urgent order and the previous
+    # urgent order handled by the same clerk
+    urgent_orders = Orders.WHERE(order_priority == "1-URGENT")
+    clerks = PARTITION(urgent_orders, name="orders", by=clerk)
+    order_info = clerks.orders.CALCULATE(
+        delta=DATEDIFF(
+            "days", PREV(order_date, by=order_date.ASC(), levels=1), order_date
+        )
+    )
+    return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
