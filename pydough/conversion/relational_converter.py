@@ -814,10 +814,25 @@ class RelTranslation:
             The TranslationOutput payload containing expressions for both the
             aggregated partitions and the original partitioned data.
         """
-        breakpoint()
         child_output: TranslationOutput = self.rel_translation(
             None, node.subtree, len(node.subtree.pipeline) - 1
         )
+
+        # Special case: when the context is the just-partitioned data, just
+        # return the child without bothering to join them.
+        if (
+            isinstance(context.relational_node, Aggregate)
+            and len(context.relational_node.aggregations) == 0
+        ):
+            new_expressions: dict[HybridExpr, ColumnReference] = dict(
+                child_output.expressions
+            )
+            for expr, column_ref in child_output.expressions.items():
+                shifted_expr: HybridExpr | None = expr.shift_back(1)
+                if shifted_expr is not None:
+                    new_expressions[shifted_expr] = column_ref
+            return TranslationOutput(child_output.relational_node, new_expressions)
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         assert node.subtree.agg_keys is not None
         for agg_key in sorted(node.subtree.agg_keys, key=str):
@@ -1039,9 +1054,6 @@ def convert_ast_to_relational(
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
     run_hybrid_decorrelation(hybrid)
-    if hybrid.has_useless_partition():
-        print()
-        print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
