@@ -23,6 +23,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [JOIN_STRINGS](#join_strings)
    * [LPAD](#lpad)
    * [RPAD](#rpad)
+   * [FIND](#find)
+   * [STRIP](#strip)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -45,6 +47,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [ROUND](#round)
    * [POWER](#power)
    * [SQRT](#sqrt)
+   * [SIGN](#sign)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -332,6 +335,47 @@ Here are examples on how it pads on string literals:
 | `RPAD("123", 2, "0")` | `"12"` |
 | `RPAD("123", 0, "0")` | `""` |
 
+<!-- TOC --><a name="find"></a>
+
+### FIND
+
+The `FIND` function returns the position (0-indexed) of the first occurrence of a substring within a string, or -1 if the substring is not found. The first argument is the string to search within, and the second argument is the substring to search for.
+
+```py
+Customers.WHERE(name == "Alex Rodriguez")
+         .CALCULATE(
+            idx_Alex = FIND(name, "Alex"), # 0
+            idx_Rodriguez = FIND(name, "Rodriguez"), # 5
+            idx_bob = FIND(name, "bob"), # -1
+            idx_e = FIND(name, "e"), # 2
+            idx_space = FIND(name, " "), # 4
+            idx_of_R = FIND(name, "R"), # 5
+            idx_of_Alex_Rodriguez = FIND(name, "Alex Rodriguez"), # 0
+)
+```
+
+<!-- TOC --><a name="strip"></a>
+
+### STRIP
+
+The `STRIP` function returns the first argument with all leading and trailing whitespace removed, including newlines, tabs, and spaces.
+If the second argument is provided, it is used as the set of characters to remove from the leading and trailing ends of the first argument.
+It continues removing characters until it encounters a character that is not in the set.
+This function is equivalent to python's `str.strip()` method.
+Note: This function is case-sensitive.
+
+```py
+Customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trailing whitespace
+Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
+```
+
+| **Input String (X)**       | **STRIP(X, Y)**                    | **Result**          |
+|-----------------------------|---------------------------------------|---------------------|
+| `'abcXYZcba'`              | `STRIP('abcXYZcba','abc')`        | `'XYZ'`            |
+| `'$$Hello$$'`              | `STRIP('$$Hello$$','$$')`          | `'Hello'`          |
+| `'---Test-String---'`      | `STRIP('---Test-String---','-')`  | `'Test-String'`    |
+| `'123456Hello654321'`      | `STRIP('123456Hello654321','123456')` | `'Hello'`         |
+
 <!-- TOC --><a name="datetime-functions"></a>
 
 ## Datetime Functions
@@ -608,6 +652,16 @@ The `SQRT` function takes the square root of its input. It's equivalent to `POWE
 
 ```py
 Parts.CALCULATE(sqrt_price = SQRT(retail_price))
+```
+
+<!-- TOC --><a name="sign"></a>
+
+### SIGN
+
+The `SIGN` function returns the sign of its input. It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+
+```py
+Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>

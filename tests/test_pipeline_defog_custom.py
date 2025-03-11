@@ -29,6 +29,7 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     exponentiation,
+    find,
     hour_minute_day,
     minutes_seconds_datediff,
     multi_partition_access_1,
@@ -38,7 +39,9 @@ from simple_pydough_functions import (
     multi_partition_access_5,
     multi_partition_access_6,
     padding_functions,
+    sign,
     step_slicing,
+    strip,
     years_months_days_hours_datediff,
 )
 from test_utils import (
@@ -595,8 +598,8 @@ from pydough.unqualified import (
                         ]
                     }
                 ).assign(
-                    ref_rpad=lambda x: "Cust0001**********************",
-                    ref_lpad=lambda x: "**********************Cust0001",
+                    ref_rpad="Cust0001**********************",
+                    ref_lpad="**********************Cust0001",
                     right_padded=lambda x: x.original_name.apply(
                         lambda s: (s + "*" * 30)[:30]
                     ),
@@ -708,6 +711,69 @@ from pydough.unqualified import (
                 ),
             ),
             id="step_slicing",
+        ),
+        pytest.param(
+            (
+                sign,
+                None,
+                "Broker",
+                "sign",
+                lambda: pd.DataFrame(
+                    {
+                        "high": [83.0, 83.6, 84.2, 84.8, 85.4],
+                    }
+                ).assign(
+                    high_neg=lambda x: x["high"] * -1,
+                    high_zero=lambda x: x["high"] * 0,
+                    sign_high=1,
+                    sign_high_neg=-1,
+                    sign_high_zero=0,
+                ),
+            ),
+            id="sign",
+        ),
+        pytest.param(
+            (
+                find,
+                None,
+                "Broker",
+                "find",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["Alex Rodriguez"],
+                        "idx_Alex": ["Alex Rodriguez".find("Alex")],
+                        "idx_Rodriguez": ["Alex Rodriguez".find("Rodriguez")],
+                        "idx_bob": ["Alex Rodriguez".find("bob")],
+                        "idx_e": ["Alex Rodriguez".find("e")],
+                        "idx_space": ["Alex Rodriguez".find(" ")],
+                        "idx_of_R": ["Alex Rodriguez".find("R")],
+                        "idx_of_Alex_Rodriguez": [
+                            "Alex Rodriguez".find("Alex Rodriguez")
+                        ],
+                    }
+                ),
+            ),
+            id="find",
+        ),
+        pytest.param(
+            (
+                strip,
+                None,
+                "Broker",
+                "strip",
+                lambda: pd.DataFrame(
+                    {
+                        "stripped_name": [""],
+                        "stripped_name1": ["Alex Rodriguez"],
+                        "stripped_name_with_chars": ["x Rodrigu"],
+                        "stripped_alt_name1": ["Alex Rodriguez"],
+                        "stripped_alt_name2": ["Alex Rodriguez"],
+                        "stripped_alt_name3": ["Alex Rodriguez"],
+                        "stripped_alt_name4": ["Alex Rodriguez"],
+                    }
+                ),
+            ),
+            id="strip",
         ),
     ],
 )
