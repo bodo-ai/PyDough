@@ -1583,9 +1583,6 @@ def convert_find(
         the first argument, or -1 if the second argument is not found.
     """
     assert len(sql_glot_args) == 2
-    # answer = sqlglot_expressions.StrPosition(
-    #         this=sql_glot_args[0], position=sql_glot_args[1]
-    #     )
     answer: SQLGlotExpression = sqlglot_expressions.Sub(
         this=sqlglot_expressions.StrPosition(
             this=sql_glot_args[0], substr=sql_glot_args[1]
