@@ -60,6 +60,8 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Window Functions](#window-functions)
    * [RANKING](#ranking)
    * [PERCENTILE](#percentile)
+   * [PREV](#prev)
+   * [NEXT](#next)
 - [Banned Python Logic](#banned-python-logic)
    * [\_\_bool\_\_](#__bool__)
    * [\_\_call\_\_](#call_banned)
@@ -790,10 +792,11 @@ Below is each window function currently supported in PyDough.
 
 The `RANKING` function returns ordinal position of the current record when all records in the current context are sorted by certain ordering keys. The arguments:
 
+- `by`:1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `allow_ties` (optional): optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
+- `dense` (optional): optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
-- `levels`: same `levels` argument as all other window functions.
-- `allow_ties`: optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
-- `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
 
 ```py
 # Rank customers per-nation by their account balance
@@ -812,8 +815,8 @@ Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) 
 The `PERCENTILE` function returns what index the current record belongs to if all records in the current context are ordered then split into evenly sized buckets. The arguments:
 
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
-- `levels`: same `levels` argument as all other window functions.
-- `n_buckets`: optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `n_buckets` (optional): optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
 
 ```py
 # Keep the top 0.1% of customers with the highest account balances.
@@ -822,6 +825,56 @@ Customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
 # For every region, find the top 5% of customers with the highest account balances.
 Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), levels=2) > 95)
 ```
+
+<!-- TOC --><a name="prev"></a>
+
+### PREV
+
+The `PREV` function returns the value of an expression from a preceding record in the collection. The arguments:
+
+- `expression`: the expression to return the shifted value of.
+- `n` (optional): optional argument (default `1`) how many records backwards to look.
+- `default` (optional): optional argument (default `None`) the value to output when there is no record `n` before the current record. This must be a valid literal.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+```py
+# Find the 10 customers with at least 5 orders with the largest average time
+# gap between their orders, in days.
+Customers.WHERE(COUNT(orders) > 5).CALCULATE(
+   name,
+   average_order_gap=DATEDIFF("days", PREV(order_date, by=order_date.ASC(), levels=1), order_date)
+).TOP_K(10, by=average_order_gap.DESC())
+
+# For every year/month, calculate the percent change in the number of
+# orders made in that month from the previous month.
+PARTITION(
+   Orders(year=YEAR(order_date), month=MONTH(order_date)),
+   name="orders",
+   by=(year, month)
+).CALCULATE(
+   year,
+   month,
+   n_orders=COUNT(orders),
+   pct_change=
+      100.0
+      * (COUNT(orders) - PREV(COUNT(orders), by=(year.ASC(), month.ASC())))
+      / PREV(COUNT(orders), by=(year.ASC(), month.ASC()))
+)
+```
+
+<!-- TOC --><a name="next"></a>
+
+### NEXT
+
+The `NEXT` function returns the value of an expression from a following record in the collection. In other words, `NEXT(expr, n)` is the same as `PREV(expr, -n)`. The arguments:
+
+- `expression`: the expression to return the shifted value of.
+- `n` (optional): optional argument (default `1`) how many records forward to look.
+- `default` (optional): optional argument (default `None`) the value to output when there is no record `n` after the current record. This must be a valid literal.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
 
 ## Banned Python Logic
 

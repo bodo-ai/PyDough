@@ -277,10 +277,16 @@ class Qualifier:
             qualified or is not recognized.
         """
         window_operator: ExpressionWindowOperator = unqualified._parcel[0]
-        unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[1]
+        unqualified_args: Iterable[UnqualifiedNode] = unqualified._parcel[1]
+        unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_by = self._expressions_to_collations(unqualified_by)
-        levels: int | None = unqualified._parcel[2]
-        kwargs: dict[str, object] = unqualified._parcel[3]
+        levels: int | None = unqualified._parcel[3]
+        kwargs: dict[str, object] = unqualified._parcel[4]
+        # Qualify all of the function args, storing the children built along
+        # the way.
+        qualified_args: list[PyDoughExpressionQDAG] = []
+        for arg in unqualified_args:
+            qualified_args.append(self.qualify_expression(arg, context, children))
         # Qualify all of the collation terms, storing the children built along
         # the way.
         qualified_collations: list[CollationExpression] = []
@@ -296,7 +302,7 @@ class Qualifier:
                 "Window calls require a non-empty 'by' clause to be specified."
             )
         return self.builder.build_window_call(
-            window_operator, qualified_collations, levels, kwargs
+            window_operator, qualified_args, qualified_collations, levels, kwargs
         )
 
     def qualify_collation(
