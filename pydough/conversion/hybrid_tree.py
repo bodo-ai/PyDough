@@ -1959,6 +1959,11 @@ class HybridTranslator:
                 )
                 return hybrid
             case Singular():
+                # a Singular node is just used to annotate the preceding context
+                # with additional information with respect to parent context.
+                # This information is no longer needed (as it has been used in
+                # conversion from Unqualified to QDAG), so it can be discarded
+                # and replaced with the preceding context.
                 hybrid = self.make_hybrid_tree(node.preceding_context, parent)
                 return hybrid
             case Where():

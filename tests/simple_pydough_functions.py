@@ -904,37 +904,44 @@ def singular2():
     # Singular in CALCULATE & WHERE with multiple SINGULARs
     return Nations.CALCULATE(
         name,
-        okey=customers.WHERE(key == 1).SINGULAR().orders.WHERE(key == 1).SINGULAR().key,
+        okey=customers.WHERE(key == 454791)
+        .SINGULAR()
+        .orders.WHERE(key == 1)
+        .SINGULAR()
+        .key,
     )
 
 
 def singular3():
     # Singular in ORDER_BY
-    # Query takes 5 seconds to run.
+    # Finds the names of the first 5 customers alphabetically, and sorts them
+    # by the date of the most expensive order they ever made.
     return (
         Customers.TOP_K(5, by=name.ASC())
         .CALCULATE(name)
         .ORDER_BY(
-            orders.WHERE(RANKING(by=order_date.ASC()) == 1)
+            orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
             .SINGULAR()
             .order_date.ASC(na_pos="last")
         )
-        .orders.CALCULATE(name, key)
     )
 
 
 def singular4():
     # Singular in TOP_K
+    # Finds the names of the first 5 customers
+    # by the date of the most expensive order they ever made.
     return Customers.TOP_K(
         5,
-        by=orders.WHERE(RANKING(by=order_date.ASC()) == 1)
+        by=orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
         .SINGULAR()
         .order_date.ASC(na_pos="last"),
     ).CALCULATE(name)
 
 
-# needs work.
 def singular5():
+    # Finds the highest line item price per container, along with the container
+    # name.
     return PARTITION(
         Parts,
         name="parts",
@@ -942,8 +949,47 @@ def singular5():
     ).CALCULATE(
         container=container,
         highest_price_per_container=(
-            parts.lines.WHERE(RANKING(by=extended_price.DESC(), levels=1) == 1)
+            parts.lines.WHERE(RANKING(by=extended_price.DESC(), levels=2) == 1)
             .SINGULAR()
             .extended_price
         ),
     )
+
+
+def singular6():
+    # For each customer, what is the first part they received the nation it
+    # came from (breaking ties in favor of the one with the largest revenue)?
+    # Include the 5 customers with the earliest such received parts (breaking
+    # ties alphabetically by customer name).
+    revenue = extended_price * (1 - discount)
+
+    lq = (
+        orders.lines.CALCULATE(receipt_date)
+        .WHERE(RANKING(by=(receipt_date.ASC(), revenue.DESC()), levels=2) == 1)
+        .SINGULAR()
+        .supplier.nation.CALCULATE(nation_name=name)
+    )
+
+    return Customers.CALCULATE(name, lq.receipt_date, lq.nation_name).TOP_K(
+        5, by=(receipt_date.ASC(), name.ASC())
+    )
+
+
+def singular7():
+    # For each supplier, what is the most popular part they supplied in 1994
+    # (breaking ties alphabetically by part name)? Include the 5 suppliers
+    # along with name, part name, and number of orders of that part in 1994
+    # (breaking ties alphabetically by supplier name).
+    best_part = (
+        supply_records.CALCULATE(
+            n_orders=COUNT(lines.WHERE(YEAR(ship_date) == 1994)),
+            part_name=part.name,
+        )
+        .WHERE(RANKING(by=(n_orders.DESC(), part_name.ASC()), levels=1) == 1)
+        .SINGULAR()
+    )
+    return Suppliers.CALCULATE(
+        supplier_name=name,
+        part_name=best_part.part_name,
+        n_orders=best_part.n_orders,
+    ).TOP_K(5, by=(n_orders.DESC(), supplier_name.ASC()))

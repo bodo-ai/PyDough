@@ -6,8 +6,6 @@ singular.
 __all__ = ["Singular"]
 
 
-from functools import cache
-
 from .augmenting_child_operator import AugmentingChildOperator
 from .collection_qdag import PyDoughCollectionQDAG
 
@@ -28,7 +26,6 @@ class Singular(AugmentingChildOperator):
         return f"{self.preceding_context.key}.SINGULAR"
 
     @property
-    @cache
     def standalone_string(self) -> str:
         return "SINGULAR"
 
@@ -40,4 +37,5 @@ class Singular(AugmentingChildOperator):
         return super().equals(other) and isinstance(other, Singular)
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
+        # SINGULAR node is always singular with regards to the parent context.
         return True
