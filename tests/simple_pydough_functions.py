@@ -31,6 +31,58 @@ def simple_filter_top_five():
     )
 
 
+def simple_collation():
+    return (
+        Suppliers.CALCULATE(
+            p=PERCENTILE(
+                by=(
+                    COUNT(supply_records).ASC(),
+                    name,
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.DESC(),
+                    comment,
+                )
+            ),
+            r=RANKING(
+                by=(
+                    key,
+                    COUNT(supply_records),
+                    name.DESC(),
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.ASC(),
+                    comment,
+                )
+            ),
+        )
+        .ORDER_BY(
+            COUNT(supply_records).ASC(),
+            name,
+            address,
+            nation_key,
+            phone,
+            account_balance.DESC(),
+            comment,
+        )
+        .TOP_K(
+            5,
+            by=(
+                key,
+                COUNT(supply_records),
+                name.DESC(),
+                address,
+                nation_key,
+                phone,
+                account_balance.ASC(),
+                comment,
+            ),
+        )
+    )
+
+
 def year_month_nation_orders():
     # Finds the 5 largest instances of numbers of orders made in a month of a
     # year by customers in a nation, only looking at nations from Asia and

@@ -10,6 +10,8 @@ The exploration module has the following notable APIs available for use:
 - `explain_structure`: A function that provides detailed explanations about the overall structure of a PyDough metadata graph.
 - `explain_term`: A function that provides detailed explanations of PyDough unqualified nodes within the context of another PyDough unqualified node.
 
+The APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
+
 ## [explain](explain.py)
 
 The `explain` function displays information about a PyDough metadata object or unqualified node. The metadata could be for a graph, collection, or property. An unqualified node can only be passed in if it is possible to qualify it as a PyDough collection. If not, then `explain_term` may need to be used.

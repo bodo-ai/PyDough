@@ -451,17 +451,19 @@ def get_by_arg(
             f"The `by` argument to `{func_name}` must be provided"
         )
     by = kwargs.pop("by")
-    if isinstance(by, UnqualifiedCollation):
+    by_allowed_type = UnqualifiedNode
+    if isinstance(by, by_allowed_type):
         by = [by]
     elif not (
         isinstance(by, Sequence)
-        and all(isinstance(arg, UnqualifiedCollation) for arg in by)
+        and all(isinstance(arg, by_allowed_type) for arg in by)
         and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{func_name}` must be a single collation expression or a non-empty iterable of collation expressions"
+            f"The `by` argument to `{func_name}` must be a single expression or a non-empty iterable of expressions."
+            "Please refer to the config documentation for more information."
         )
-    return by
+    return list(by)
 
 
 class UnqualifiedOperator(UnqualifiedNode):
