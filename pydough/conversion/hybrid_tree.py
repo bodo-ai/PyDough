@@ -1250,6 +1250,10 @@ class HybridTranslator:
             case WindowCall():
                 # Otherwise, mutate `reference_types` based on the arguments
                 # to the window call.
+                for window_arg in expr.args:
+                    HybridTranslator.identify_connection_types(
+                        window_arg, child_idx, reference_types, inside_aggregation
+                    )
                 for col in expr.collation_args:
                     HybridTranslator.identify_connection_types(
                         col.expr, child_idx, reference_types, inside_aggregation
@@ -1698,6 +1702,55 @@ class HybridTranslator:
         # the parent tree, which could also be a correlated expression.
         return HybridCorrelExpr(parent_tree, parent_result)
 
+    def add_unique_terms(
+        self,
+        hybrid: HybridTree,
+        levels_remaining: int,
+        levels_so_far: int,
+        partition_args: list[HybridExpr],
+    ) -> None:
+        """
+        Populates a list of partition keys with the unique terms of an ancestor
+        level of the hybrid tree.
+
+        Args:
+            `hybrid`: the hybrid tree whose ancestor's unique terms are being
+            added to the partition keys.
+            `levels_remaining`: the number of levels left to step back before
+            the unique terms are added to the partition keys.
+            `levels_so_far`: the number of levels that have been stepped back
+            so far.
+            `partition_args`: the list of partition keys that is being
+            populated with the unique terms of the ancestor level.
+        """
+        # When the number of levels remaining to step back is 0, we have
+        # reached the targeted ancestor, so we add the unique terms.
+        if levels_remaining == 0:
+            for unique_term in sorted(hybrid.pipeline[-1].unique_exprs, key=str):
+                shifted_arg: HybridExpr | None = unique_term.shift_back(levels_so_far)
+                assert shifted_arg is not None
+                partition_args.append(shifted_arg)
+        elif hybrid.parent is None:
+            # If we have not reached the target level yet, but we have reached
+            # the top level of the tree, we need to step out of a child subtree
+            # back into its parent and make a correlated reference.
+            if len(self.stack) == 0:
+                raise ValueError("Window function references too far back")
+            prev_hybrid: HybridTree = self.stack.pop()
+            correl_args: list[HybridExpr] = []
+            self.add_unique_terms(prev_hybrid, levels_remaining - 1, 0, correl_args)
+            for arg in correl_args:
+                if not isinstance(arg, HybridCorrelExpr):
+                    prev_hybrid.correlated_children.add(len(prev_hybrid.children))
+                partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
+            self.stack.append(prev_hybrid)
+        else:
+            # Otherwise, we hae to step back further, so we recursively
+            # repeat the procedure one level further up in the hybrid tree.
+            self.add_unique_terms(
+                hybrid.parent, levels_remaining - 1, levels_so_far + 1, partition_args
+            )
+
     def make_hybrid_expr(
         self,
         hybrid: HybridTree,
@@ -1846,28 +1899,31 @@ class HybridTranslator:
             case WindowCall():
                 partition_args: list[HybridExpr] = []
                 order_args: list[HybridCollation] = []
+                # If the levels argument was provided, find the partition keys
+                # for that ancestor level.
                 if expr.levels is not None:
-                    ancestor_tree = hybrid
-                    for _ in range(expr.levels):
-                        if ancestor_tree.parent is None:
-                            raise ValueError("Window function references too far back")
-                        ancestor_tree = ancestor_tree.parent
-                    for unique_term in sorted(
-                        ancestor_tree.pipeline[-1].unique_exprs, key=str
-                    ):
-                        shifted_arg: HybridExpr | None = unique_term.shift_back(
-                            expr.levels
+                    self.add_unique_terms(hybrid, expr.levels, 0, partition_args)
+                # Convert all of the window function arguments to hybrid
+                # expressions.
+                for arg in expr.args:
+                    args.append(
+                        self.make_hybrid_expr(
+                            hybrid, arg, child_ref_mapping, inside_agg
                         )
-                        assert shifted_arg is not None
-                        partition_args.append(shifted_arg)
-                for arg in expr.collation_args:
-                    hybrid_arg = self.make_hybrid_expr(
-                        hybrid, arg.expr, child_ref_mapping, inside_agg
                     )
-                    order_args.append(HybridCollation(hybrid_arg, arg.asc, arg.na_last))
+                # Convert all of the ordering terms to hybrid expressions.
+                for col_arg in expr.collation_args:
+                    hybrid_arg = self.make_hybrid_expr(
+                        hybrid, col_arg.expr, child_ref_mapping, inside_agg
+                    )
+                    order_args.append(
+                        HybridCollation(hybrid_arg, col_arg.asc, col_arg.na_last)
+                    )
+                # Build the new hybrid window function call with all the
+                # converted terms.
                 return HybridWindowExpr(
                     expr.window_operator,
-                    [],
+                    args,
                     partition_args,
                     order_args,
                     expr.pydough_type,
@@ -2061,7 +2117,10 @@ class HybridTranslator:
                                 successor_hybrid.pipeline[-1],
                             )
                     case PartitionChild():
-                        successor_hybrid = copy.deepcopy(parent.children[0].subtree)
+                        source: HybridTree = parent
+                        if isinstance(source.pipeline[0], HybridPartitionChild):
+                            source = source.pipeline[0].subtree
+                        successor_hybrid = copy.deepcopy(source.children[0].subtree)
                         successor_hybrid._ancestral_mapping = node.ancestral_mapping
                         partition_by = (
                             node.child_access.ancestor_context.starting_predecessor
