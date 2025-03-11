@@ -16,6 +16,8 @@ from bad_pydough_functions import (
     bad_lpad_6,
     bad_lpad_7,
     bad_lpad_8,
+    bad_round1,
+    bad_round2,
     bad_rpad_1,
     bad_rpad_2,
     bad_rpad_3,
@@ -27,6 +29,7 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     exponentiation,
+    find,
     hour_minute_day,
     minutes_seconds_datediff,
     multi_partition_access_1,
@@ -36,7 +39,9 @@ from simple_pydough_functions import (
     multi_partition_access_5,
     multi_partition_access_6,
     padding_functions,
+    sign,
     step_slicing,
+    strip,
     years_months_days_hours_datediff,
 )
 from test_utils import (
@@ -593,8 +598,8 @@ from pydough.unqualified import (
                         ]
                     }
                 ).assign(
-                    ref_rpad=lambda x: "Cust0001**********************",
-                    ref_lpad=lambda x: "**********************Cust0001",
+                    ref_rpad="Cust0001**********************",
+                    ref_lpad="**********************Cust0001",
                     right_padded=lambda x: x.original_name.apply(
                         lambda s: (s + "*" * 30)[:30]
                     ),
@@ -707,6 +712,69 @@ from pydough.unqualified import (
             ),
             id="step_slicing",
         ),
+        pytest.param(
+            (
+                sign,
+                None,
+                "Broker",
+                "sign",
+                lambda: pd.DataFrame(
+                    {
+                        "high": [83.0, 83.6, 84.2, 84.8, 85.4],
+                    }
+                ).assign(
+                    high_neg=lambda x: x["high"] * -1,
+                    high_zero=lambda x: x["high"] * 0,
+                    sign_high=1,
+                    sign_high_neg=-1,
+                    sign_high_zero=0,
+                ),
+            ),
+            id="sign",
+        ),
+        pytest.param(
+            (
+                find,
+                None,
+                "Broker",
+                "find",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["Alex Rodriguez"],
+                        "idx_Alex": ["Alex Rodriguez".find("Alex")],
+                        "idx_Rodriguez": ["Alex Rodriguez".find("Rodriguez")],
+                        "idx_bob": ["Alex Rodriguez".find("bob")],
+                        "idx_e": ["Alex Rodriguez".find("e")],
+                        "idx_space": ["Alex Rodriguez".find(" ")],
+                        "idx_of_R": ["Alex Rodriguez".find("R")],
+                        "idx_of_Alex_Rodriguez": [
+                            "Alex Rodriguez".find("Alex Rodriguez")
+                        ],
+                    }
+                ),
+            ),
+            id="find",
+        ),
+        pytest.param(
+            (
+                strip,
+                None,
+                "Broker",
+                "strip",
+                lambda: pd.DataFrame(
+                    {
+                        "stripped_name": [""],
+                        "stripped_name1": ["Alex Rodriguez"],
+                        "stripped_name_with_chars": ["x Rodrigu"],
+                        "stripped_alt_name1": ["Alex Rodriguez"],
+                        "stripped_alt_name2": ["Alex Rodriguez"],
+                        "stripped_alt_name3": ["Alex Rodriguez"],
+                        "stripped_alt_name4": ["Alex Rodriguez"],
+                    }
+                ),
+            ),
+            id="strip",
+        ),
     ],
 )
 def custom_defog_test_data(
@@ -756,10 +824,10 @@ def test_pipeline_until_relational_defog(
     file_path: str = get_plan_test_filename(file_name)
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, _load_column_selection({"columns": columns}), default_config
     )
@@ -769,9 +837,9 @@ def test_pipeline_until_relational_defog(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            relational.to_tree_string() == expected_relational_string.strip()
-        ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+        assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between tree string representation of relational node and expected Relational tree string"
+        )
 
 
 @pytest.mark.execute
@@ -899,6 +967,19 @@ def test_pipeline_e2e_defog_custom(
             "Broker",
             "RPAD function requires the padding argument to be a string literal of length 1.",
             id="bad_rpad_8",
+        ),
+        pytest.param(
+            bad_round1,
+            "Broker",
+            "Unsupported argument 0.5 for ROUND.The precision argument should be an integer literal.",
+            id="bad_round1",
+        ),
+        pytest.param(
+            bad_round2,
+            "Broker",
+            "Invalid operator invocation 'ROUND\(high, -0.5, 2\)':"
+            " Expected between 1 and 2 arguments inclusive,received 3.",
+            id="bad_round2",
         ),
     ],
 )

@@ -296,10 +296,10 @@ def test_pipeline_until_relational_tpch(
     graph: GraphMetadata = get_sample_graph("TPCH")
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, None, default_config
     )
@@ -309,9 +309,9 @@ def test_pipeline_until_relational_tpch(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            relational.to_tree_string() == expected_relational_string.strip()
-        ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+        assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between tree string representation of relational node and expected Relational tree string"
+        )
 
 
 @pytest.mark.execute

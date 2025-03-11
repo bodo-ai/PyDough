@@ -6,6 +6,8 @@ detailed explanations about the overall structure of a PyDough metadata graph.
 __all__ = ["explain_structure"]
 
 
+import pydough
+from pydough.configs import PyDoughConfigs
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.properties import (
@@ -16,7 +18,9 @@ from pydough.metadata.properties import (
 )
 
 
-def explain_structure(graph: GraphMetadata) -> str:
+def explain_structure(
+    graph: GraphMetadata, config: PyDoughConfigs | None = None
+) -> str:
     """
     Displays information about a PyDough metadata graph, including the
     following:
@@ -30,11 +34,15 @@ def explain_structure(graph: GraphMetadata) -> str:
 
     Args:
         `graph`: the metadata graph being examined.
+        `config`: the configuration to use for the explanation. If not provided,
+        the active session's configuration will be used.
 
     Returns:
         The string representation of the graph's structure.
     """
     assert isinstance(graph, GraphMetadata)
+    if config is None:
+        config = pydough.active_session.config
     lines: list[str] = []
     lines.append(f"Structure of PyDough graph: {graph.name}")
     collection_names: list[str] = sorted(graph.get_collection_names())

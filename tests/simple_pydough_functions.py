@@ -45,6 +45,58 @@ def order_info_per_priority():
     )
 
 
+def simple_collation():
+    return (
+        Suppliers.CALCULATE(
+            p=PERCENTILE(
+                by=(
+                    COUNT(supply_records).ASC(),
+                    name,
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.DESC(),
+                    comment,
+                )
+            ),
+            r=RANKING(
+                by=(
+                    key,
+                    COUNT(supply_records),
+                    name.DESC(),
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.ASC(),
+                    comment,
+                )
+            ),
+        )
+        .ORDER_BY(
+            COUNT(supply_records).ASC(),
+            name,
+            address,
+            nation_key,
+            phone,
+            account_balance.DESC(),
+            comment,
+        )
+        .TOP_K(
+            5,
+            by=(
+                key,
+                COUNT(supply_records),
+                name.DESC(),
+                address,
+                nation_key,
+                phone,
+                account_balance.ASC(),
+                comment,
+            ),
+        )
+    )
+
+
 def year_month_nation_orders():
     # Finds the 5 largest instances of numbers of orders made in a month of a
     # year by customers in a nation, only looking at nations from Asia and
@@ -163,7 +215,13 @@ def regional_suppliers_percentile():
 
 
 def function_sampler():
-    # Examples of using different functions
+    # Functions tested:
+    # JOIN_STRINGS,
+    # ROUND (with and without precision),
+    # KEEP_IF,
+    # PRESENT,
+    # ABSENT,
+    # MONOTONIC
     return (
         Regions.CALCULATE(region_name=name)
         .nations.CALCULATE(nation_name=name)
@@ -173,6 +231,7 @@ def function_sampler():
             c=KEEP_IF(name, phone[:1] == "3"),
             d=PRESENT(KEEP_IF(name, phone[1:2] == "1")),
             e=ABSENT(KEEP_IF(name, phone[14:] == "7")),
+            f=ROUND(acctbal),
         )
         .WHERE(MONOTONIC(0.0, acctbal, 100.0))
         .TOP_K(10, by=address.ASC())
@@ -927,4 +986,60 @@ def step_slicing():
         wo_step7=name[-4:2],
         wo_step8=name[-4:-2],
         wo_step9=name[2:2],
+    )
+
+
+def sign():
+    return (
+        DailyPrices.CALCULATE(
+            high,
+            high_neg=-1 * high,
+            high_zero=0 * high,
+        )
+        .TOP_K(5, by=high.ASC())
+        .CALCULATE(
+            high,
+            high_neg,
+            high_zero,
+            sign_high=SIGN(high),
+            sign_high_neg=SIGN(high_neg),
+            sign_high_zero=SIGN(high_zero),
+        )
+    )
+
+
+def find():
+    return Customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        name,
+        idx_Alex=FIND(name, "Alex"),
+        idx_Rodriguez=FIND(name, "Rodriguez"),
+        idx_bob=FIND(name, "bob"),
+        idx_e=FIND(name, "e"),
+        idx_space=FIND(name, " "),
+        idx_of_R=FIND(name, "R"),
+        idx_of_Alex_Rodriguez=FIND(name, "Alex Rodriguez"),
+    )
+
+
+def strip():
+    return (
+        Customers.WHERE(name == "Alex Rodriguez")
+        .CALCULATE(
+            name,
+            alt_name1="  Alex Rodriguez  ",
+            alt_name2="aeiAlex Rodriguezaeiou",
+            alt_name3=";;Alex Rodriguez;;",
+            alt_name4="""
+    Alex Rodriguez
+        """,  # equivalent to "\n\tAlex Rodriguez\n"
+        )
+        .CALCULATE(
+            stripped_name=STRIP(name, "Alex Rodriguez"),
+            stripped_name1=STRIP(name),
+            stripped_name_with_chars=STRIP(name, "lAez"),
+            stripped_alt_name1=STRIP(alt_name1),
+            stripped_alt_name2=STRIP(alt_name2, "aeiou"),
+            stripped_alt_name3=STRIP(alt_name3, ";"),
+            stripped_alt_name4=STRIP(alt_name4),
+        )
     )

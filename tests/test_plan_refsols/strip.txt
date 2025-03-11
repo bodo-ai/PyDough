@@ -1,0 +1,5 @@
+ROOT(columns=[('stripped_name', stripped_name), ('stripped_name1', stripped_name1), ('stripped_name_with_chars', stripped_name_with_chars), ('stripped_alt_name1', stripped_alt_name1), ('stripped_alt_name2', stripped_alt_name2), ('stripped_alt_name3', stripped_alt_name3), ('stripped_alt_name4', stripped_alt_name4)], orderings=[])
+ PROJECT(columns={'stripped_alt_name1': STRIP(alt_name1), 'stripped_alt_name2': STRIP(alt_name2, 'aeiou':string), 'stripped_alt_name3': STRIP(alt_name3, ';':string), 'stripped_alt_name4': STRIP(alt_name4), 'stripped_name': STRIP(name, 'Alex Rodriguez':string), 'stripped_name1': STRIP(name), 'stripped_name_with_chars': STRIP(name, 'lAez':string)})
+  PROJECT(columns={'alt_name1': '  Alex Rodriguez  ':string, 'alt_name2': 'aeiAlex Rodriguezaeiou':string, 'alt_name3': ';;Alex Rodriguez;;':string, 'alt_name4': '\n    Alex Rodriguez\n        ':string, 'name': name})
+   FILTER(condition=name == 'Alex Rodriguez':string, columns={'name': name})
+    SCAN(table=main.sbCustomer, columns={'name': sbCustName})

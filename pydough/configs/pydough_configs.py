@@ -65,6 +65,20 @@ class PyDoughConfigs:
     is False.
     """
 
+    collation_default_asc = ConfigProperty[bool](True)
+    """
+    If True, then the collation will default to `ASC`. If False, then the
+    collation will default to `DESC`. The default is True.
+    """
+
+    propogate_collation = ConfigProperty[bool](False)
+    """
+    If True, each term, which does not have an explicit collation, will inherit
+    the collation (ASC/DESC) from the previous specified term. If False, terms
+    without an explicit collation will use the default from
+    `collation_default_asc`. The default is False.
+    """
+
     def __setattr__(self, name: str, value: Any) -> None:
         if name not in dir(self):
             raise AttributeError(f"Unrecognized PyDough config name: {name}")

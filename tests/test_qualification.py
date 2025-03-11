@@ -6,7 +6,7 @@ into qualified DAG nodes.
 from collections.abc import Callable
 
 import pytest
-from simple_pydough_functions import partition_as_child
+from simple_pydough_functions import partition_as_child, simple_collation
 from test_utils import (
     graph_fetcher,
 )
@@ -35,7 +35,9 @@ from tpch_test_functions import (
     impl_tpch_q22,
 )
 
+import pydough
 from pydough import init_pydough_context
+from pydough.configs import PyDoughConfigs
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.unqualified import (
@@ -528,10 +530,117 @@ def test_qualify_node_to_ast_string(
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
-    assert (
-        qualified.to_tree_string() == answer_tree_str.strip()
-    ), "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    config: PyDoughConfigs = pydough.active_session.config
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, config)
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
+    assert qualified.to_tree_string() == answer_tree_str.strip(), (
+        "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    )
+
+
+@pytest.mark.parametrize(
+    "impl, answer_tree_str, collation_default_asc, propogate_collation",
+    [
+        pytest.param(
+            simple_collation,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), r=RANKING(by=(key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
+            True,
+            True,
+            id="asc-with_propagation",
+        ),
+        pytest.param(
+            simple_collation,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.ASC(na_pos='first'))), r=RANKING(by=(key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.ASC(na_pos='first')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.ASC(na_pos='first'), COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
+            True,
+            False,
+            id="asc-no_propagation",
+        ),
+        pytest.param(
+            simple_collation,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), r=RANKING(by=(key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.ASC(na_pos='first'), address.ASC(na_pos='first'), nation_key.ASC(na_pos='first'), phone.ASC(na_pos='first'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.ASC(na_pos='first')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
+            False,
+            True,
+            id="desc-with_propagation",
+        ),
+        pytest.param(
+            simple_collation,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Calculate[p=PERCENTILE(by=(COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last'))), r=RANKING(by=(key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.DESC(na_pos='last')))]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  ├─┬─ OrderBy[COUNT($1).ASC(na_pos='first'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.DESC(na_pos='last'), comment.DESC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[supply_records]
+  └─┬─ TopK[5, key.DESC(na_pos='last'), COUNT($1).DESC(na_pos='last'), name.DESC(na_pos='last'), address.DESC(na_pos='last'), nation_key.DESC(na_pos='last'), phone.DESC(na_pos='last'), account_balance.ASC(na_pos='first'), comment.DESC(na_pos='last')]
+    └─┬─ AccessChild
+      └─── SubCollection[supply_records]
+            """,
+            False,
+            False,
+            id="desc-no_propagation",
+        ),
+    ],
+)
+def test_qualify_node_collation(
+    impl: Callable[[], UnqualifiedNode],
+    answer_tree_str: str,
+    collation_default_asc: bool,
+    propogate_collation: bool,
+    get_sample_graph: graph_fetcher,
+) -> None:
+    """
+    Tests that a PyDough unqualified node can be correctly translated to its
+    qualified DAG version, with the correct string representation.
+    """
+    custom_config: PyDoughConfigs = PyDoughConfigs()
+    setattr(custom_config, "collation_default_asc", collation_default_asc)
+    setattr(custom_config, "propogate_collation", propogate_collation)
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, custom_config)
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
+    assert qualified.to_tree_string() == answer_tree_str.strip(), (
+        "Mismatch between tree string representation of qualified node and expected QDAG tree string"
+    )

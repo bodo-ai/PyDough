@@ -92,9 +92,9 @@ class UnqualifiedNode(ABC):
             typ: PyDoughType = UnknownType()
             for elem in obj:
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
-                assert isinstance(
-                    coerced_elem, UnqualifiedLiteral
-                ), f"Can only coerce list of literals to a literal, not {elem}"
+                assert isinstance(coerced_elem, UnqualifiedLiteral), (
+                    f"Can only coerce list of literals to a literal, not {elem}"
+                )
                 elems.append(coerced_elem)
             return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
@@ -451,17 +451,19 @@ def get_by_arg(
             f"The `by` argument to `{func_name}` must be provided"
         )
     by = kwargs.pop("by")
-    if isinstance(by, UnqualifiedCollation):
+    by_allowed_type = UnqualifiedNode
+    if isinstance(by, by_allowed_type):
         by = [by]
     elif not (
         isinstance(by, Sequence)
-        and all(isinstance(arg, UnqualifiedCollation) for arg in by)
+        and all(isinstance(arg, by_allowed_type) for arg in by)
         and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{func_name}` must be a single collation expression or a non-empty iterable of collation expressions"
+            f"The `by` argument to `{func_name}` must be a single expression or a non-empty iterable of expressions."
+            "Please refer to the config documentation for more information."
         )
-    return by
+    return list(by)
 
 
 class UnqualifiedOperator(UnqualifiedNode):
@@ -690,7 +692,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             )
             return f"{unqualified._parcel[0]}({operands_str})"
         case UnqualifiedWindow():
-            operands_str = f'by=({", ".join([display_raw(operand) for operand in unqualified._parcel[1]])}'
+            operands_str = f"by=({', '.join([display_raw(operand) for operand in unqualified._parcel[1]])}"
             if unqualified._parcel[2] is not None:
                 operands_str += ", levels=" + str(unqualified._parcel[2])
             for kwarg, val in unqualified._parcel[3].items():

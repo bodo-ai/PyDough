@@ -2,7 +2,13 @@
 Utilities used for PyDough type checking.
 """
 
-__all__ = ["AllowAny", "RequireMinArgs", "RequireNumArgs", "TypeVerifier"]
+__all__ = [
+    "AllowAny",
+    "RequireArgRange",
+    "RequireMinArgs",
+    "RequireNumArgs",
+    "TypeVerifier",
+]
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -135,8 +141,8 @@ class RequireArgRange(TypeVerifier):
         if not (self.low_range <= len(args) <= self.high_range):
             if error_on_fail:
                 raise PyDoughQDAGException(
-                    f"Expected between {self.low_range} and {self.high_range} arguments,\
-                        received {len(args)}"
+                    f"Expected between {self.low_range} and {self.high_range} arguments inclusive,"
+                    f"received {len(args)}."
                 )
             return False
         return True
