@@ -31,6 +31,58 @@ def simple_filter_top_five():
     )
 
 
+def simple_collation():
+    return (
+        Suppliers.CALCULATE(
+            p=PERCENTILE(
+                by=(
+                    COUNT(supply_records).ASC(),
+                    name,
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.DESC(),
+                    comment,
+                )
+            ),
+            r=RANKING(
+                by=(
+                    key,
+                    COUNT(supply_records),
+                    name.DESC(),
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.ASC(),
+                    comment,
+                )
+            ),
+        )
+        .ORDER_BY(
+            COUNT(supply_records).ASC(),
+            name,
+            address,
+            nation_key,
+            phone,
+            account_balance.DESC(),
+            comment,
+        )
+        .TOP_K(
+            5,
+            by=(
+                key,
+                COUNT(supply_records),
+                name.DESC(),
+                address,
+                nation_key,
+                phone,
+                account_balance.ASC(),
+                comment,
+            ),
+        )
+    )
+
+
 def year_month_nation_orders():
     # Finds the 5 largest instances of numbers of orders made in a month of a
     # year by customers in a nation, only looking at nations from Asia and
@@ -149,7 +201,13 @@ def regional_suppliers_percentile():
 
 
 def function_sampler():
-    # Examples of using different functions
+    # Functions tested:
+    # JOIN_STRINGS,
+    # ROUND (with and without precision),
+    # KEEP_IF,
+    # PRESENT,
+    # ABSENT,
+    # MONOTONIC
     return (
         Regions.CALCULATE(region_name=name)
         .nations.CALCULATE(nation_name=name)
@@ -159,6 +217,7 @@ def function_sampler():
             c=KEEP_IF(name, phone[:1] == "3"),
             d=PRESENT(KEEP_IF(name, phone[1:2] == "1")),
             e=ABSENT(KEEP_IF(name, phone[14:] == "7")),
+            f=ROUND(acctbal),
         )
         .WHERE(MONOTONIC(0.0, acctbal, 100.0))
         .TOP_K(10, by=address.ASC())

@@ -7,7 +7,9 @@ unqualified node.
 __all__ = ["explain_term", "find_unqualified_root"]
 
 
+import pydough
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.qdag import (
     BackReferenceExpression,
     ChildReferenceExpression,
@@ -92,7 +94,10 @@ def collection_in_context_string(
 
 
 def explain_term(
-    node: UnqualifiedNode, term: UnqualifiedNode, verbose: bool = False
+    node: UnqualifiedNode,
+    term: UnqualifiedNode,
+    verbose: bool = False,
+    config: PyDoughConfigs | None = None,
 ) -> str:
     """
     Displays information about an unqualified node as it exists within
@@ -115,6 +120,8 @@ def explain_term(
         `node`. This term could be an expression or a collection.
         `verbose`: if true, displays more detailed information about `node` and
         `term` in a less compact format.
+        `config`: the configuration to use for the explanation. If not provided,
+        the active session's configuration will be used.
 
     Returns:
         An explanation of `term` as it exists within the context of `node`.
@@ -123,14 +130,15 @@ def explain_term(
     lines: list[str] = []
     root: UnqualifiedRoot | None = find_unqualified_root(node)
     qualified_node: PyDoughQDAG | None = None
-
+    if config is None:
+        config = pydough.active_session.config
     try:
         if root is None:
             lines.append(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
             )
         else:
-            qualified_node = qualify_node(node, root._parcel[0])
+            qualified_node = qualify_node(node, root._parcel[0], config)
     except PyDoughQDAGException as e:
         if "Unrecognized term" in str(e):
             lines.append(
@@ -298,9 +306,9 @@ def explain_term(
                 lines.append(f"  {qualified_term.to_string()}")
             if verbose:
                 lines.append("")
-                assert (
-                    len(qualified_term.calc_terms) > 0
-                ), "Child collection has no expression terms"
+                assert len(qualified_term.calc_terms) > 0, (
+                    "Child collection has no expression terms"
+                )
                 chosen_term_name: str = min(qualified_term.calc_terms)
                 if qualified_term.starting_predecessor.is_singular(
                     qualified_node.starting_predecessor

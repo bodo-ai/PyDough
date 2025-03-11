@@ -16,6 +16,8 @@ from bad_pydough_functions import (
     bad_lpad_6,
     bad_lpad_7,
     bad_lpad_8,
+    bad_round1,
+    bad_round2,
     bad_rpad_1,
     bad_rpad_2,
     bad_rpad_3,
@@ -822,10 +824,10 @@ def test_pipeline_until_relational_defog(
     file_path: str = get_plan_test_filename(file_name)
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, _load_column_selection({"columns": columns}), default_config
     )
@@ -835,9 +837,9 @@ def test_pipeline_until_relational_defog(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            relational.to_tree_string() == expected_relational_string.strip()
-        ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+        assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between tree string representation of relational node and expected Relational tree string"
+        )
 
 
 @pytest.mark.execute
@@ -965,6 +967,19 @@ def test_pipeline_e2e_defog_custom(
             "Broker",
             "RPAD function requires the padding argument to be a string literal of length 1.",
             id="bad_rpad_8",
+        ),
+        pytest.param(
+            bad_round1,
+            "Broker",
+            "Unsupported argument 0.5 for ROUND.The precision argument should be an integer literal.",
+            id="bad_round1",
+        ),
+        pytest.param(
+            bad_round2,
+            "Broker",
+            "Invalid operator invocation 'ROUND\(high, -0.5, 2\)':"
+            " Expected between 1 and 2 arguments inclusive,received 3.",
+            id="bad_round2",
         ),
     ],
 )

@@ -31,7 +31,6 @@ from bad_pydough_functions import (
     bad_window_4,
     bad_window_5,
     bad_window_6,
-    bad_window_7,
 )
 from simple_pydough_functions import (
     abs_round_magic_method,
@@ -124,15 +123,15 @@ def verify_pydough_code_exec_match_unqualified(
     exec(pydough_str, ctx, env)
     assert "answer" in env, "Expected `pydough_str` to define a variable `answer`."
     answer = env["answer"]
-    assert isinstance(
-        answer, UnqualifiedNode
-    ), "Expected `pydough_str` to define `answer` as an UnqualifiedNode."
-    assert (
-        repr(answer) == expected_str
-    ), "Mismatch between string representation of `answer` and expected value."
-    assert (
-        pydough.display_raw(answer) == expected_str
-    ), "Mismatch between string representation of `answer` and expected value."
+    assert isinstance(answer, UnqualifiedNode), (
+        "Expected `pydough_str` to define `answer` as an UnqualifiedNode."
+    )
+    assert repr(answer) == expected_str, (
+        "Mismatch between string representation of `answer` and expected value."
+    )
+    assert pydough.display_raw(answer) == expected_str, (
+        "Mismatch between string representation of `answer` and expected value."
+    )
 
 
 @pytest.mark.parametrize(
@@ -535,12 +534,12 @@ def test_init_pydough_context(
     sample_graph: GraphMetadata = get_sample_graph("TPCH")
     new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
     answer: UnqualifiedNode = new_func()
-    assert (
-        repr(answer) == as_string
-    ), "Mismatch between string representation of unqualified nodes and expected output"
-    assert (
-        pydough.display_raw(answer) == as_string
-    ), "Mismatch between string representation of unqualified nodes and expected output"
+    assert repr(answer) == as_string, (
+        "Mismatch between string representation of unqualified nodes and expected output"
+    )
+    assert pydough.display_raw(answer) == as_string, (
+        "Mismatch between string representation of unqualified nodes and expected output"
+    )
 
 
 @pytest.mark.parametrize(
@@ -568,12 +567,13 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_2,
-            "The `by` argument to `PERCENTILE` must be a single collation expression or a non-empty iterable of collation expressions",
+            "The `by` argument to `PERCENTILE` must be a single expression or a non-empty iterable of expressions."
+            "Please refer to the config documentation for more information.",
             id="bad_window_2",
         ),
         pytest.param(
             bad_window_3,
-            "The `by` argument to `RANKING` must be a single collation expression or a non-empty iterable of collation expressions",
+            "`levels` argument must be a positive integer",
             id="bad_window_3",
         ),
         pytest.param(
@@ -583,18 +583,13 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_5,
-            "`levels` argument must be a positive integer",
+            "`n_buckets` argument must be a positive integer",
             id="bad_window_5",
         ),
         pytest.param(
             bad_window_6,
             "`n_buckets` argument must be a positive integer",
             id="bad_window_6",
-        ),
-        pytest.param(
-            bad_window_7,
-            "`n_buckets` argument must be a positive integer",
-            id="bad_window_7",
         ),
         pytest.param(
             bad_floor,

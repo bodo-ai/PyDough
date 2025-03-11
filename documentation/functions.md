@@ -612,12 +612,17 @@ Customers.CALCULATE(acct_magnitude = abs(acctbal))
 
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The Python builtin `round()` function can also be used to accomplish the same thing. 
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places. The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
 Parts.CALCULATE(rounded_price = ROUND(retail_price, 1))
 # The below statement is equivalent to above.
 Parts.CALCULATE(rounded_price = round(retail_price, 1))
+
+# The below statement takes the default precision as 0.
+Parts.CALCULATE(rounded_price = ROUND(retail_price))
+# The below statement is equivalent to above.
+Parts.CALCULATE(rounded_price = ROUND(retail_price,0))
 ```
 
 Note: The default precision for builtin `round` method is 0, to be in alignment with the Python implementation. The PyDough `ROUND` function requires the precision to be specified.
@@ -785,7 +790,7 @@ Below is each window function currently supported in PyDough.
 
 The `RANKING` function returns ordinal position of the current record when all records in the current context are sorted by certain ordering keys. The arguments:
 
-- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 - `levels`: same `levels` argument as all other window functions.
 - `allow_ties`: optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
 - `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
@@ -806,7 +811,7 @@ Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) 
 
 The `PERCENTILE` function returns what index the current record belongs to if all records in the current context are ordered then split into evenly sized buckets. The arguments:
 
-- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 - `levels`: same `levels` argument as all other window functions.
 - `n_buckets`: optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
 
