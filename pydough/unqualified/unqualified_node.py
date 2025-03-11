@@ -492,12 +492,13 @@ class UnqualifiedOperator(UnqualifiedNode):
                 window_operator = pydop.RANKING
                 is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
                 is_bool.verify(kwargs.get("dense", False), "`dense` argument")
-            case "PREV":
-                window_operator = pydop.PREV
+            case "PREV" | "NEXT":
+                window_operator = (
+                    pydop.PREV if self._parcel[0] == "PREV" else pydop.NEXT
+                )
                 is_integer.verify(kwargs.get("n", 1), "`n` argument")
-            case "NEXT":
-                window_operator = pydop.NEXT
-                is_integer.verify(kwargs.get("n", 1), "`n` argument")
+                if len(args) > 1:
+                    is_integer.verify(args[1], "`n` argument")
             case func:
                 is_window = False
                 if len(kwargs) > 0:
