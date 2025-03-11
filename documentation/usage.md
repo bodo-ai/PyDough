@@ -139,8 +139,8 @@ pydough.active_session.config = old_configs
 ```
 
 Each `PyDoughConfigs` currently encapsulates the following configurations:
-- `sum_default_zero` (default=True): if True, then `SUM` will always return `0` instead of `NULL` when there are no records to be summed (e.g. summing over an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
-- `avg_default_zero` (default=False): if True, then `AVG` will always return `0` instead of `NULL` when there are no records to be summed (e.g. taking the average from an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
+1. `sum_default_zero` (default=True): if True, then `SUM` will always return `0` instead of `NULL` when there are no records to be summed (e.g. summing over an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
+2. `avg_default_zero` (default=False): if True, then `AVG` will always return `0` instead of `NULL` when there are no records to be summed (e.g. taking the average from an empty sub-collection). If False, then the behavior will depend on the database being used to execute (though this nearly always means returning `NULL`).
 
 For example, consider this PyDough snippet:
 
@@ -167,6 +167,72 @@ old_sum_behavior = configs.sum_default_zero
 configs.sum_default_zero = False
 ```
 
+The following configs are used in the behavior of `PERCENTILE`, `RANKING`, `ORDER_BY` and `TOP_K` where a collation(`ASC` or `DESC`) is not explicitly specified:
+
+3. `collation_default_asc` (default=True): if True, then the default collation is ascending. If False, then the default collation is descending.
+4. `propogate_collation` (default=False): if True, then the collation of the current expression, which does not have a collation, uses the most recent available collation in the nodes of the term. If there is no recent available collation, then the default collation is used as specified by `collation_default_asc`. If False, the expression uses the default collation as specified by `collation_default_asc`.
+
+For example, consider the following PyDough code:
+
+```py
+%%pydough
+
+import pydough
+# The configs of the active session
+configs = pydough.active_session.config
+
+# The collations are not explicitly specified for few of the terms.
+Suppliers.ORDER_BY(
+  COUNT(lines),
+  nation.name.ASC(),
+  COUNT(supply_records),
+  account_balance.DESC(),
+  key,
+)
+
+# Let's see the behavior of the terms with different configurations
+# With the default settings (collation_default_asc=True and propogate_collation=False)
+Suppliers.ORDER_BY(
+  COUNT(lines).ASC(),
+  nation.name.ASC(),
+  COUNT(supply_records).ASC(),
+  account_balance.DESC(),
+  key.ASC(),
+)
+
+# With collation_default_asc=False and propogate_collation=True
+configs.collation_default_asc = False
+configs.propogate_collation = True
+Suppliers.ORDER_BY(
+  COUNT(lines).DESC(),
+  nation.name.ASC(),
+  COUNT(supply_records).DESC(),
+  account_balance.DESC(),
+  key.DESC(),
+)
+
+# With collation_default_asc=False and propogate_collation=False
+configs.collation_default_asc = False
+configs.propogate_collation = False
+Suppliers.ORDER_BY(
+  COUNT(lines).DESC(),
+  nation.name.ASC(),
+  COUNT(supply_records).DESC(),
+  account_balance.DESC(),
+  key.DESC(),
+)
+
+# With collation_default_asc=True and propogate_collation=True
+configs.collation_default_asc = True
+configs.propogate_collation = True
+Suppliers.ORDER_BY(
+  COUNT(lines).ASC(),
+  nation.name.ASC(),
+  COUNT(supply_records).ASC(),
+  account_balance.DESC(),
+  key.DESC(),
+)
+```
 <!-- TOC --><a name="session-database"></a>
 ### Session Database
 
@@ -324,7 +390,7 @@ See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more insta
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
-This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it.
+This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
 
 See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 

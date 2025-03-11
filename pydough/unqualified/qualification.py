@@ -7,6 +7,8 @@ __all__ = ["qualify_node"]
 
 from collections.abc import Iterable, MutableSequence
 
+import pydough
+from pydough.configs import PyDoughConfigs
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators.expression_operators import (
     BinOp,
@@ -51,8 +53,9 @@ from .unqualified_node import (
 
 
 class Qualifier:
-    def __init__(self, graph: GraphMetadata):
+    def __init__(self, graph: GraphMetadata, configs: PyDoughConfigs):
         self._graph: GraphMetadata = graph
+        self._configs: PyDoughConfigs = configs
         self._builder: AstNodeBuilder = AstNodeBuilder(graph)
         self._memo: dict[tuple[str, PyDoughCollectionQDAG], PyDoughQDAG] = {}
 
@@ -276,6 +279,7 @@ class Qualifier:
         window_operator: ExpressionWindowOperator = unqualified._parcel[0]
         unqualified_args: Iterable[UnqualifiedNode] = unqualified._parcel[1]
         unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[2]
+        unqualified_by = self._expressions_to_collations(unqualified_by)
         levels: int | None = unqualified._parcel[3]
         kwargs: dict[str, object] = unqualified._parcel[4]
         # Qualify all of the function args, storing the children built along
@@ -496,6 +500,40 @@ class Qualifier:
         where: Where = self.builder.build_where(qualified_parent, children)
         return where.with_condition(qualified_cond)
 
+    def _expressions_to_collations(
+        self, terms: Iterable[UnqualifiedNode] | MutableSequence[UnqualifiedNode]
+    ) -> MutableSequence[UnqualifiedNode]:
+        """
+        Coerces nodes to be collation terms if they are not already. For nodes
+        that are not collation terms, uses configuration settings to determine
+        if they should be ASC or DESC. The first term uses
+        `collation_default_asc` config. If `propogate_collation` is True,
+        subsequent terms use `propogate_collation` config to determine if they
+        inherit the available collation from the previous term. If
+        `propogate_collation` is False, terms without an explicit collation will
+        use the default from `collation_default_asc`.
+
+        Args:
+            `terms`: the list of collation terms to be modified.
+
+        Returns:
+            The modified list of collation terms.
+        """
+        is_collation_propogated: bool = self._configs.propogate_collation
+        is_prev_asc: bool = self._configs.collation_default_asc
+        modified_terms: list[UnqualifiedNode] = []
+        for idx, term in enumerate(terms):
+            if isinstance(term, UnqualifiedCollation):
+                modified_terms.append(term)
+                if is_collation_propogated:
+                    is_prev_asc = term._parcel[1]
+            else:
+                if is_prev_asc:
+                    modified_terms.append(term.ASC())
+                else:
+                    modified_terms.append(term.DESC())
+        return modified_terms
+
     def qualify_order_by(
         self,
         unqualified: UnqualifiedOrderBy,
@@ -523,6 +561,8 @@ class Qualifier:
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
+        unqualified_terms = self._expressions_to_collations(unqualified_terms)
+
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
@@ -577,6 +617,7 @@ class Qualifier:
             "TopK does not currently support an implied 'by' clause."
         )
         unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[2]
+        unqualified_terms = self._expressions_to_collations(unqualified_terms)
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
@@ -800,7 +841,9 @@ class Qualifier:
         return answer
 
 
-def qualify_node(unqualified: UnqualifiedNode, graph: GraphMetadata) -> PyDoughQDAG:
+def qualify_node(
+    unqualified: UnqualifiedNode, graph: GraphMetadata, configs: PyDoughConfigs
+) -> PyDoughQDAG:
     """
     Transforms an UnqualifiedNode into a qualified node.
 
@@ -818,7 +861,7 @@ def qualify_node(unqualified: UnqualifiedNode, graph: GraphMetadata) -> PyDoughQ
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    qual: Qualifier = Qualifier(graph)
+    qual: Qualifier = Qualifier(graph, configs)
     return qual.qualify_node(
         unqualified, qual.builder.build_global_context(), [], False
     )
@@ -851,6 +894,7 @@ def qualify_term(
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    qual: Qualifier = Qualifier(graph)
+    configs: PyDoughConfigs = pydough.active_session.config
+    qual: Qualifier = Qualifier(graph, configs)
     children: list[PyDoughCollectionQDAG] = []
     return children, qual.qualify_node(term, collection, children, True)

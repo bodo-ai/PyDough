@@ -296,7 +296,7 @@ def test_pipeline_until_relational_tpch(
     graph: GraphMetadata = get_sample_graph("TPCH")
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
     assert isinstance(qualified, PyDoughCollectionQDAG), (
         "Expected qualified answer to be a collection, not an expression"
     )
