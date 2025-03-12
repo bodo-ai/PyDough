@@ -230,15 +230,15 @@ def defog_sql_text_broker_adv9() -> str:
     """
     return """
     SELECT
-        strftime('%Y-%W', t.sbTxDateTime) AS WEEK,
+        DATE(t.sbTxDateTime, '-' || ((strftime('%w', t.sbTxDateTime) + 6) % 7) || ' days') AS WEEK,
         COUNT(t.sbTxId) AS num_transactions,
         COUNT(CASE WHEN strftime('%w', t.sbTxDateTime) IN ('0', '6') THEN 1 END) AS weekend_transactions
     FROM sbTransaction AS t
     JOIN sbTicker AS tk
     ON t.sbTxTickerId = tk.sbTickerId
     WHERE tk.sbTickerType = 'stock'
-    AND t.sbTxDateTime >= DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days', '-56 days')
-    AND t.sbTxDateTime < DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days')
+    AND t.sbTxDateTime >= DATE('now', '-' || ((strftime('%w', 'now') + 6) % 7) || ' days', '-56 days')
+    AND t.sbTxDateTime < DATE('now', '-' || ((strftime('%w', 'now') + 6) % 7) || ' days')
     GROUP BY WEEK
     """
 
