@@ -238,7 +238,8 @@ def apply_datetime_truncation(
                 )
             case DateTimeUnit.WEEK:
                 # implementation for week.
-                return sqlglot_expressions.Literal.number(1)
+                pass  # TODO: some enum from config. where to keep enum?
+
     else:
         # For other dialects, we can rely the DATE_TRUNC function.
         return sqlglot_expressions.DateTrunc(
