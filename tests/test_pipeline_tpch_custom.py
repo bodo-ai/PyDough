@@ -769,6 +769,15 @@ from pydough.unqualified import (
             ),
             id="avg_gap_prev_urgent_same_clerk",
         ),
+        # pytest.param(
+        #     (
+        #         xxx,
+        #         None,
+        #         "xxx",
+        #         lambda: pd.DataFrame({"xxx": [7.9820674]}),
+        #     ),
+        #     id="xxx",
+        # ),
     ],
 )
 def pydough_pipeline_test_data(

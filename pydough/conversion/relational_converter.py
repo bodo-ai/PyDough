@@ -795,7 +795,7 @@ class RelTranslation:
     def translate_partition_child(
         self,
         node: HybridPartitionChild,
-        context: TranslationOutput,
+        context: TranslationOutput | None,
     ) -> TranslationOutput:
         """
         Converts a step into the child of a PARTITION node into a join between
@@ -817,6 +817,9 @@ class RelTranslation:
         child_output: TranslationOutput = self.rel_translation(
             None, node.subtree, len(node.subtree.pipeline) - 1
         )
+
+        if context is None:
+            return child_output
 
         # Special case: when the context is the just-partitioned data, just
         # return the child without bothering to join them.
@@ -945,7 +948,6 @@ class RelTranslation:
                     else:
                         result = self.build_simple_table_scan(operation)
             case HybridPartitionChild():
-                assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_partition_child(operation, context)
             case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
