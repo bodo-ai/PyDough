@@ -645,5 +645,5 @@ def defog_sql_text_broker_gen5():
     SELECT strftime('%Y-%m-01', sbTxDateTime) AS datetime, AVG(sbTxPrice) AS avg_price FROM sbTransaction
     WHERE sbTxStatus = 'success' AND sbTxDateTime BETWEEN '2023-01-01' AND '2023-03-31'
     GROUP BY datetime
-    ORDER BY datetime
+    ORDER BY datetime 
     """
