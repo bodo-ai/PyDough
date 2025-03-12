@@ -489,47 +489,55 @@ def impl_defog_broker_basic10():
     """
     return Tickers.WHERE(HASNOT(historical_prices)).CALCULATE(_id, symbol)
 
+
 def impl_defog_broker_gen1():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    Return the lowest daily closest price for symbol `VTI` in the past 7 
+    Return the lowest daily closest price for symbol `VTI` in the past 7
     days.
     """
-    selected_prices = DailyPrices.WHERE((ticker.symbol == 'VTI') & 
-                                    (DATEDIFF("days", date, 'now') <= 7))
-    
-    return Broker.CALCULATE(lowest_price = MIN(selected_prices.close))
+    selected_prices = DailyPrices.WHERE(
+        (ticker.symbol == "VTI") & (DATEDIFF("days", date, "now") <= 7)
+    )
+
+    return Broker.CALCULATE(lowest_price=MIN(selected_prices.close))
+
 
 def impl_defog_broker_gen2():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    Return the number of transactions by users who joined in the past 70 
+    Return the number of transactions by users who joined in the past 70
     days.
     """
-    selected_tx = Transactions.WHERE((DATEDIFF("days",customer.join_date, 'now') <= 70))
+    selected_tx = Transactions.WHERE(
+        (DATEDIFF("days", customer.join_date, "now") <= 70)
+    )
 
-    return Broker.CALCULATE(transaction_count = COUNT(selected_tx.customer_id))
+    return Broker.CALCULATE(transaction_count=COUNT(selected_tx.customer_id))
+
 
 def impl_defog_broker_gen3():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    Return the customer id and the difference between their time from 
+    Return the customer id and the difference between their time from
     joining to their first transaction. Ignore customers who haven't made
     any transactions.
     """
-    customer_dates = Transactions.CALCULATE(tx_date_time = date_time).customer
+    customer_dates = Transactions.CALCULATE(tx_date_time=date_time).customer
 
-    first_dates = PARTITION(customer_dates, name = 'cd', by=(_id, join_date)
-                        ).CALCULATE(first_tx = MIN(cd.tx_date_time)
-                    )
-    
-    return (
-        first_dates.CALCULATE(cust_id = _id, 
-            DaysFromJoinToFirstTransaction = (DATEDIFF("seconds", join_date, first_tx)) /86400.0)
-            )
+    first_dates = PARTITION(customer_dates, name="cd", by=(_id, join_date)).CALCULATE(
+        first_tx=MIN(cd.tx_date_time)
+    )
+
+    return first_dates.CALCULATE(
+        cust_id=_id,
+        DaysFromJoinToFirstTransaction=(DATEDIFF("seconds", join_date, first_tx))
+        / 86400.0,
+    )
+
 
 def impl_defog_broker_gen4():
     """
@@ -538,29 +546,31 @@ def impl_defog_broker_gen4():
     Return the customer who made the most sell transactions on 2023-04-01.
     Return the id, name and number of transactions.
     """
-    selected_transactions = (Transactions.WHERE((DATEDIFF("days", date_time, '2023-04-01') == 0)
-                            & (transaction_type == 'sell')).customer
-                             )
+    selected_transactions = Transactions.WHERE(
+        (DATEDIFF("days", date_time, "2023-04-01") == 0) & (transaction_type == "sell")
+    ).customer
     return (
-        PARTITION(selected_transactions, name = 'c', by=(_id, name)
-                            ).CALCULATE(_id = _id, name = name, num_tx = COUNT(c)
-                            ).TOP_K(1, by=num_tx.DESC(na_pos="first"))
+        PARTITION(selected_transactions, name="c", by=(_id, name))
+        .CALCULATE(_id=_id, name=name, num_tx=COUNT(c))
+        .TOP_K(1, by=num_tx.DESC(na_pos="first"))
     )
+
 
 def impl_defog_broker_gen5():
     """
     PyDough implementation of the following question for the Broker graph:
 
-    What is the monthly average transaction price for successful 
+    What is the monthly average transaction price for successful
     transactions in the 1st quarter of 2023?
     """
-    selected_transactions = Transactions.WHERE((DATEDIFF("days", '2023-01-01', date_time) >= 0 )
-                            & (DATEDIFF("days", date_time, '2023-03-31') >= 0) 
-                            & (status == 'success')
-                            ).CALCULATE(_month = DATETIME(date_time, 'start of month'))
-    
+    selected_transactions = Transactions.WHERE(
+        (DATEDIFF("days", "2023-01-01", date_time) >= 0)
+        & (DATEDIFF("days", date_time, "2023-03-31") >= 0)
+        & (status == "success")
+    ).CALCULATE(_month=DATETIME(date_time, "start of month"))
+
     return (
-        PARTITION(selected_transactions, name = 'm', by=(_month)
-                    ).CALCULATE(_month = _month, avg_price = AVG(m.price)
-                    ).ORDER_BY(_month.ASC())
+        PARTITION(selected_transactions, name="m", by=(_month))
+        .CALCULATE(_month=_month, avg_price=AVG(m.price))
+        .ORDER_BY(_month.ASC())
     )

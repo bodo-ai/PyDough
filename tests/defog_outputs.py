@@ -569,11 +569,12 @@ def defog_sql_text_broker_basic10() -> str:
     WHERE dp.sbDpTickerId IS NULL
     """
 
+
 def defog_sql_text_broker_gen1():
     """
     SQLite query text for the following question for the Broker graph:
 
-    Return the lowest daily closest price for symbol `VTI` in the past 7 
+    Return the lowest daily closest price for symbol `VTI` in the past 7
     days.
     """
     return """
@@ -583,11 +584,12 @@ def defog_sql_text_broker_gen1():
     WHERE st.sbTickerSymbol = 'VTI' AND sdp.sbDpDate >= date('now', '-7 days');
     """
 
+
 def defog_sql_text_broker_gen2():
     """
     SQLite query text for the following question for the Broker graph:
 
-    Return the number of transactions by users who joined in the past 70 
+    Return the number of transactions by users who joined in the past 70
     days.
     """
     return """
@@ -597,11 +599,12 @@ def defog_sql_text_broker_gen2():
     WHERE c.sbCustJoinDate >= date('now', '-70 days');
     """
 
+
 def defog_sql_text_broker_gen3():
     """
     SQLite query text for the following question for the Broker graph:
 
-    Return the customer id and the difference between their time from 
+    Return the customer id and the difference between their time from
     joining to their first transaction. Ignore customers who haven't made
     any transactions.
     """
@@ -612,6 +615,7 @@ def defog_sql_text_broker_gen3():
     JOIN sbTransaction AS t ON c.sbCustId = t.sbTxCustId
     GROUP BY c.sbCustId;
     """
+
 
 def defog_sql_text_broker_gen4():
     """
@@ -634,11 +638,12 @@ def defog_sql_text_broker_gen4():
     LIMIT 1;
     """
 
+
 def defog_sql_text_broker_gen5():
     """
     SQLite query text for the following question for the Broker graph:
 
-    What is the monthly average transaction price for successful 
+    What is the monthly average transaction price for successful
     transactions in the 1st quarter of 2023?
     """
     return """
