@@ -25,6 +25,7 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
     customer_largest_order_deltas,
     datetime_current,
@@ -34,6 +35,7 @@ from simple_pydough_functions import (
     first_order_per_customer,
     function_sampler,
     month_year_sliding_windows,
+    order_info_per_priority,
     percentile_customers_per_region,
     percentile_nations,
     prev_next_regions,
@@ -401,6 +403,33 @@ from pydough.unqualified import (
                 ),
             ),
             id="function_sampler",
+        ),
+        pytest.param(
+            (
+                order_info_per_priority,
+                None,
+                "order_info_per_priority",
+                lambda: pd.DataFrame(
+                    {
+                        "order_priority": [
+                            "1-URGENT",
+                            "2-HIGH",
+                            "3-MEDIUM",
+                            "4-NOT SPECIFIED",
+                            "5-LOW",
+                        ],
+                        "order_key": [3586919, 1474818, 972901, 1750466, 631651],
+                        "order_total_price": [
+                            522644.48,
+                            491348.26,
+                            508668.52,
+                            555285.16,
+                            504509.06,
+                        ],
+                    }
+                ),
+            ),
+            id="order_info_per_priority",
         ),
         pytest.param(
             (
@@ -836,23 +865,32 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame(
                     {
                         "container": [
-                            "SM PACK",
-                            "LG BOX",
-                            "MED JAR",
+                            "MED CAN",
                             "LG JAR",
-                            "JUMBO CAN",
+                            "LG CASE",
+                            "WRAP CAN",
+                            "LG DRUM",
                         ],
                         "highest_price_ship_date": [
-                            "1992-02-12",
-                            "1992-04-30",
-                            "1992-05-03",
-                            "1992-09-11",
-                            "1992-11-17",
+                            "1992-03-09",
+                            "1992-08-02",
+                            "1992-08-10",
+                            "1992-11-01",
+                            "1992-11-22",
                         ],
                     }
                 ),
             ),
             id="singular5",
+        ),
+        pytest.param(
+            (
+                avg_gap_prev_urgent_same_clerk,
+                None,
+                "avg_gap_prev_urgent_same_clerk",
+                lambda: pd.DataFrame({"avg_delta": [7.9820674]}),
+            ),
+            id="avg_gap_prev_urgent_same_clerk",
         ),
     ],
 )

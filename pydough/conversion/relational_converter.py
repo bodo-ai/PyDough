@@ -807,7 +807,7 @@ class RelTranslation:
     def translate_partition_child(
         self,
         node: HybridPartitionChild,
-        context: TranslationOutput,
+        context: TranslationOutput | None,
     ) -> TranslationOutput:
         """
         Converts a step into the child of a PARTITION node into a join between
@@ -829,6 +829,25 @@ class RelTranslation:
         child_output: TranslationOutput = self.rel_translation(
             None, node.subtree, len(node.subtree.pipeline) - 1
         )
+
+        if context is None:
+            return child_output
+
+        # Special case: when the context is the just-partitioned data, just
+        # return the child without bothering to join them.
+        if (
+            isinstance(context.relational_node, Aggregate)
+            and len(context.relational_node.aggregations) == 0
+        ):
+            new_expressions: dict[HybridExpr, ColumnReference] = dict(
+                child_output.expressions
+            )
+            for expr, column_ref in child_output.expressions.items():
+                shifted_expr: HybridExpr | None = expr.shift_back(1)
+                if shifted_expr is not None:
+                    new_expressions[shifted_expr] = column_ref
+            return TranslationOutput(child_output.relational_node, new_expressions)
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         assert node.subtree.agg_keys is not None
         for agg_key in sorted(node.subtree.agg_keys, key=str):
@@ -941,7 +960,6 @@ class RelTranslation:
                     else:
                         result = self.build_simple_table_scan(operation)
             case HybridPartitionChild():
-                assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_partition_child(operation, context)
             case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
@@ -1049,12 +1067,7 @@ def convert_ast_to_relational(
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
-    print()
-    print("Before decorrelation:")
-    print(hybrid)
     run_hybrid_decorrelation(hybrid)
-    print("After decorrelation:")
-    print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
