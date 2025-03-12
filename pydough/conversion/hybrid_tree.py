@@ -566,10 +566,30 @@ class HybridChildPullUp(HybridOperation):
     level.
     """
 
-    def __init__(self, child_idx: int, child: "HybridConnection"):
+    def __init__(self, parent_height: int, child_idx: int, child: "HybridConnection"):
         self.child_idx: int = child_idx
         self.child: HybridConnection = child
+        self.pullup_remapping: dict[HybridExpr, HybridExpr] = {}
+        terms: dict[str, HybridExpr] = {}
+        # print(child.terms)
         last_operation: HybridOperation = child.subtree.pipeline[-1]
+        super().__init__(
+            terms,
+            last_operation.renamings,
+            last_operation.orderings,
+            last_operation.unique_exprs,
+        )
+
+    def __repr__(self):
+        return f"PULLUP[${self.child_idx}: {self.pullup_remapping}]"
+
+
+class HybridNoop(HybridOperation):
+    """
+    Class for HybridOperation corresponding to a no-op.
+    """
+
+    def __init__(self, last_operation: HybridOperation):
         super().__init__(
             last_operation.terms,
             last_operation.renamings,
@@ -578,7 +598,7 @@ class HybridChildPullUp(HybridOperation):
         )
 
     def __repr__(self):
-        return f"PULLUP[${self.child_idx}]"
+        return "NOOP"
 
 
 class HybridPartition(HybridOperation):

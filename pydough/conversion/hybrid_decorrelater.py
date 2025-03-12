@@ -12,6 +12,7 @@ from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
     HybridCalculate,
+    HybridChildPullUp,
     HybridChildRefExpr,
     HybridColumnExpr,
     HybridConnection,
@@ -20,6 +21,7 @@ from .hybrid_tree import (
     HybridFilter,
     HybridFunctionExpr,
     HybridLiteralExpr,
+    HybridNoop,
     HybridPartition,
     HybridRefExpr,
     HybridTree,
@@ -285,6 +287,17 @@ class Decorrelater:
         if is_aggregate:
             child.subtree.agg_keys = new_agg_keys
 
+    def eliminate_redundant_parent(self, hybrid: HybridTree, child_idx: int) -> None:
+        """
+        TODO
+        """
+        child: HybridConnection = hybrid.children[child_idx]
+        pipeline_idx = child.required_steps
+        hybrid._parent = None
+        hybrid.pipeline[0] = HybridChildPullUp(-1, child_idx, child)
+        for i in range(1, pipeline_idx + 1):
+            hybrid.pipeline[i] = HybridNoop(hybrid.pipeline[i - 1])
+
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """
         The recursive procedure to remove unwanted correlated references from
@@ -330,7 +343,13 @@ class Decorrelater:
                         child.connection_type.is_aggregation,
                         skipped_levels,
                     )
-                    print(child.connection_type, end=" ")
+                    if child.connection_type.is_semi:
+                        print()
+                        print("BEFORE")
+                        print(hybrid)
+                        self.eliminate_redundant_parent(hybrid, idx)
+                        print("AFTER")
+                        print(hybrid)
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(
                         f"PyDough does not yet support correlated references with the {child.connection_type.name} pattern."

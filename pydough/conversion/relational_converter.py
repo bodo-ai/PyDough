@@ -49,6 +49,7 @@ from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
     HybridCalculate,
+    HybridChildPullUp,
     HybridChildRefExpr,
     HybridCollation,
     HybridCollectionAccess,
@@ -60,6 +61,7 @@ from .hybrid_tree import (
     HybridFunctionExpr,
     HybridLimit,
     HybridLiteralExpr,
+    HybridNoop,
     HybridOperation,
     HybridPartition,
     HybridPartitionChild,
@@ -848,6 +850,14 @@ class RelTranslation:
         )
         return result
 
+    def translate_child_pullup(self, node: HybridChildPullUp) -> TranslationOutput:
+        """
+        TODO
+        """
+        subtree: HybridTree = node.child.subtree
+        result = self.rel_translation(subtree, len(subtree.pipeline) - 1)
+        return result
+
     def rel_translation(
         self,
         hybrid: HybridTree,
@@ -959,6 +969,12 @@ class RelTranslation:
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
+            case HybridChildPullUp():
+                assert context is None, "Malformed HybridTree pattern."
+                return self.translate_child_pullup(operation)
+            case HybridNoop():
+                assert context is not None, "Malformed HybridTree pattern."
+                return context
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
