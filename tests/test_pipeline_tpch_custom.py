@@ -893,7 +893,7 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({}),
             ),
             id="singular6",
-            marks=pytest.mark.skip("BACK(4) error."),
+            # marks=pytest.mark.skip("BACK(4) error."),
         ),
         pytest.param(
             (

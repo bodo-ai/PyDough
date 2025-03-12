@@ -211,6 +211,7 @@ class RelTranslation:
                                 and back_expr.name == expr.name
                             ):
                                 return context.expressions[back_expr]
+                    breakpoint()
                     raise ValueError(f"Context does not contain expression {expr}")
                 return context.expressions[expr]
             case HybridFunctionExpr():
@@ -1061,7 +1062,13 @@ def convert_ast_to_relational(
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    print()
+    print("before decorrelation")
+    print(hybrid)
     run_hybrid_decorrelation(hybrid)
+    print()
+    print("after decorrelation")
+    print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
