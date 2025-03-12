@@ -526,17 +526,13 @@ def impl_defog_broker_gen3():
     joining to their first transaction. Ignore customers who haven't made
     any transactions.
     """
-    customer_dates = Transactions.CALCULATE(tx_date_time=date_time).customer
+    selected_customers = Customers.WHERE(HAS(transactions_made))  
 
-    first_dates = PARTITION(customer_dates, name="cd", by=(_id, join_date)).CALCULATE(
-        first_tx=MIN(cd.tx_date_time)
-    )
-
-    return first_dates.CALCULATE(
-        cust_id=_id,
-        DaysFromJoinToFirstTransaction=(DATEDIFF("seconds", join_date, first_tx))
-        / 86400.0,
-    )
+    return selected_customers.CALCULATE(  
+        cust_id = id,  
+        DaysFromJoinToFirstTransaction=(DATEDIFF("seconds", join_date, MIN(transactions_made.date_time)))  
+        / 86400.0  
+    )  
 
 
 def impl_defog_broker_gen4():
@@ -546,14 +542,13 @@ def impl_defog_broker_gen4():
     Return the customer who made the most sell transactions on 2023-04-01.
     Return the id, name and number of transactions.
     """
-    selected_transactions = Transactions.WHERE(
-        (DATEDIFF("days", date_time, "2023-04-01") == 0) & (transaction_type == "sell")
-    ).customer
-    return (
-        PARTITION(selected_transactions, name="c", by=(_id, name))
-        .CALCULATE(_id=_id, name=name, num_tx=COUNT(c))
-        .TOP_K(1, by=num_tx.DESC(na_pos="first"))
-    )
+    selected_transactions = transactions_made.WHERE(  
+        (DATEDIFF("days", date_time, "2023-04-01") == 0) & 
+        (transaction_type == "sell")  
+    )  
+    return Customers.CALCULATE(  
+        _id, name, num_tx=COUNT(selected_transactions)  
+    ).TOP_K(1, by=num_tx.ASC())  
 
 
 def impl_defog_broker_gen5():
@@ -567,10 +562,10 @@ def impl_defog_broker_gen5():
         (DATEDIFF("days", "2023-01-01", date_time) >= 0)
         & (DATEDIFF("days", date_time, "2023-03-31") >= 0)
         & (status == "success")
-    ).CALCULATE(_month=DATETIME(date_time, "start of month"))
+    ).CALCULATE(month=DATETIME(date_time, "start of month"))
 
     return (
-        PARTITION(selected_transactions, name="m", by=(_month))
-        .CALCULATE(_month=_month, avg_price=AVG(m.price))
-        .ORDER_BY(_month.ASC())
+        PARTITION(selected_transactions, name="m", by=(month))
+        .CALCULATE(month=month, avg_price=AVG(m.price))
+        .ORDER_BY(month.ASC())
     )
