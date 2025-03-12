@@ -548,7 +548,7 @@ from pydough.unqualified import (
       ├─── Where[key == 1]
       └─┬─ Singular
         ├─── SubCollection[orders]
-        ├─── Where[key == 1]
+        ├─── Where[key == 454791]
         └─── Singular
         """,
             id="singular2",
@@ -561,12 +561,10 @@ from pydough.unqualified import (
   ├─── TopK[5, name.ASC(na_pos='first')]
   ├─── Calculate[name=name]
   └─┬─ OrderBy[$1.order_date.ASC(na_pos='last')]
-    ├─┬─ AccessChild
-    │ ├─── SubCollection[orders]
-    │ ├─── Where[RANKING(by=(order_date.ASC(na_pos='first'))) == 1]
-    │ └─── Singular
-    ├─── SubCollection[orders]
-    └─── Calculate[name=name, key=key]
+    └─┬─ AccessChild
+      ├─── SubCollection[orders]
+      ├─── Where[RANKING(by=(total_price.DESC(na_pos='last')), levels=1) == 1]
+      └─── Singular
         """,
             id="singular3",
         ),
@@ -575,10 +573,12 @@ from pydough.unqualified import (
             """
 ──┬─ TPCH
   ├─── TableCollection[Customers]
+  ├─── Where[nation_key == 6]
   ├─┬─ TopK[5, $1.order_date.ASC(na_pos='last')]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[orders]
-  │   ├─── Where[RANKING(by=(order_date.ASC(na_pos='first'))) == 1]
+  │   ├─── Where[order_priority == '1-URGENT']
+  │   ├─── Where[RANKING(by=(total_price.DESC(na_pos='last')), levels=1) == 1]
   │   └─── Singular
   └─── Calculate[name=name]        
         """,
@@ -608,7 +608,7 @@ def test_qualify_node_to_ast_string(
 
 
 @pytest.mark.parametrize(
-    "impl, answer_tree_str, collation_default_asc, propogate_collation",
+    "impl, answer_tree_str, collation_default_asc, propagate_collation",
     [
         pytest.param(
             simple_collation,
@@ -692,7 +692,7 @@ def test_qualify_node_collation(
     impl: Callable[[], UnqualifiedNode],
     answer_tree_str: str,
     collation_default_asc: bool,
-    propogate_collation: bool,
+    propagate_collation: bool,
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
@@ -700,8 +700,8 @@ def test_qualify_node_collation(
     qualified DAG version, with the correct string representation.
     """
     custom_config: PyDoughConfigs = PyDoughConfigs()
-    setattr(custom_config, "collation_default_asc", collation_default_asc)
-    setattr(custom_config, "propogate_collation", propogate_collation)
+    custom_config.collation_default_asc = collation_default_asc
+    custom_config.propagate_collation = propagate_collation
     graph: GraphMetadata = get_sample_graph("TPCH")
     unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
     qualified: PyDoughQDAG = qualify_node(unqualified, graph, custom_config)

@@ -784,7 +784,7 @@ from pydough.unqualified import (
                             "UNITED KINGDOM",
                             "UNITED STATES",
                         ],
-                        "okey": [None] * 25,  # Creates a list of 25 None values
+                        "okey": [None] * 15 + [454791] + [None] * 9,
                     }
                 ),
             ),
@@ -817,11 +817,11 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000003",
-                            "Customer#000000006",
-                            "Customer#000000009",
-                            "Customer#000000012",
-                            "Customer#000000015",
+                            "Customer#000000018",
+                            "Customer#000000153",
+                            "Customer#000000204",
+                            "Customer#000000284",
+                            "Customer#000000312",
                         ]
                     }
                 ),
@@ -833,10 +833,11 @@ from pydough.unqualified import (
                 singular5,
                 None,
                 "singular5",
-                lambda: pd.DataFrame({}),
+                lambda: pd.DataFrame(
+                    {"container": ["0"] * 5, "highest_price_ship_date": ["0"] * 5}
+                ),
             ),
             id="singular5",
-            # marks=pytest.mark.skip(reason="Needs work on logic."),
         ),
     ],
 )
@@ -927,7 +928,6 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
-    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

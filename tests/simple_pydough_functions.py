@@ -1189,9 +1189,9 @@ def singular2():
     # Singular in CALCULATE & WHERE with multiple SINGULARs
     return Nations.CALCULATE(
         name,
-        okey=customers.WHERE(key == 454791)
+        okey=customers.WHERE(key == 1)
         .SINGULAR()
-        .orders.WHERE(key == 1)
+        .orders.WHERE(key == 454791)
         .SINGULAR()
         .key,
     )
@@ -1214,29 +1214,36 @@ def singular3():
 
 def singular4():
     # Singular in TOP_K
-    # Finds the names of the first 5 customers
-    # by the date of the most expensive order they ever made.
-    return Customers.TOP_K(
-        5,
-        by=orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
-        .SINGULAR()
-        .order_date.ASC(na_pos="last"),
-    ).CALCULATE(name)
+    # Finds the names of the first 5 customers from nation #6
+    # by the date of the most expensive high-priority order they ever made.
+    return (
+        Customers.WHERE(nation_key == 6)
+        .TOP_K(
+            5,
+            by=orders.WHERE(order_priority == "1-URGENT")
+            .WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+            .SINGULAR()
+            .order_date.ASC(na_pos="last"),
+        )
+        .CALCULATE(name)
+    )
 
 
 def singular5():
-    # Find the most expensive line item per each container presented in parts.
-    return PARTITION(
+    # Find the ship date of the most expensive line item per each container
+    # presented in parts (breaking ties in favor of the smaller ship date).
+    # Only consider the first 5 container types, alphabetically.
+    top_containers = PARTITION(
         Parts,
         name="parts",
         by=container,
-    ).CALCULATE(
+    ).TOP_K(5, by=container.ASC())
+    highest_price_line = parts.lines.WHERE(
+        RANKING(by=(extended_price.DESC(), ship_date.ASC()), levels=2) == 1
+    ).SINGULAR()
+    return top_containers.WHERE(HAS(highest_price_line)).CALCULATE(
         container,
-        highest_price_per_container=(
-            parts.lines.WHERE(RANKING(by=extended_price.DESC(), levels=2) == 1)
-            .SINGULAR()
-            .extended_price
-        ),
+        highest_price_ship_date=highest_price_line.ship_date,
     )
 
 

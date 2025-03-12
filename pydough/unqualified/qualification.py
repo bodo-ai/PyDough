@@ -508,10 +508,10 @@ class Qualifier:
         Coerces nodes to be collation terms if they are not already. For nodes
         that are not collation terms, uses configuration settings to determine
         if they should be ASC or DESC. The first term uses
-        `collation_default_asc` config. If `propogate_collation` is True,
-        subsequent terms use `propogate_collation` config to determine if they
+        `collation_default_asc` config. If `propagate_collation` is True,
+        subsequent terms use `propagate_collation` config to determine if they
         inherit the available collation from the previous term. If
-        `propogate_collation` is False, terms without an explicit collation will
+        `propagate_collation` is False, terms without an explicit collation will
         use the default from `collation_default_asc`.
 
         Args:
@@ -520,13 +520,13 @@ class Qualifier:
         Returns:
             The modified list of collation terms.
         """
-        is_collation_propogated: bool = self._configs.propogate_collation
+        is_collation_propagated: bool = self._configs.propagate_collation
         is_prev_asc: bool = self._configs.collation_default_asc
         modified_terms: list[UnqualifiedNode] = []
         for idx, term in enumerate(terms):
             if isinstance(term, UnqualifiedCollation):
                 modified_terms.append(term)
-                if is_collation_propogated:
+                if is_collation_propagated:
                     is_prev_asc = term._parcel[1]
             else:
                 if is_prev_asc:

@@ -441,7 +441,10 @@ class RelTranslation:
         return TranslationOutput(out_rel, out_columns)
 
     def handle_children(
-        self, context: TranslationOutput, hybrid: HybridTree, pipeline_idx: int
+        self,
+        context: TranslationOutput,
+        hybrid: HybridTree,
+        pipeline_idx: int,
     ) -> TranslationOutput:
         """
         Post-processes a TranslationOutput payload by finding any children of
@@ -454,6 +457,8 @@ class RelTranslation:
             `pipeline_idx`: the index of the element in the pipeline of
             `hybrid` that has just been defined, meaning any children that
             depend on it can now also be defined.
+            `partition_child`: if True, only translate the input argument for
+            a partition, not any other children.
 
         Returns:
             The augmented version of `context` with any children that are
@@ -526,6 +531,19 @@ class RelTranslation:
                                 context.expressions[child_expr] = null_column
                     case conn_type:
                         raise ValueError(f"Unsupported connection type {conn_type}")
+            # If handling the data for a partition, pull every aggregation key
+            # into the current context since it is now accessible as a normal
+            # ref instead of a child ref.
+            if isinstance(hybrid.pipeline[pipeline_idx], HybridPartition):
+                partition = hybrid.pipeline[pipeline_idx]
+                assert isinstance(partition, HybridPartition)
+                for key_name in partition.key_names:
+                    key_expr = partition.terms[key_name]
+                    assert isinstance(key_expr, HybridChildRefExpr)
+                    hybrid_ref: HybridRefExpr = HybridRefExpr(
+                        key_expr.name, key_expr.typ
+                    )
+                    context.expressions[hybrid_ref] = context.expressions[key_expr]
         return context
 
     def build_simple_table_scan(
@@ -667,17 +685,11 @@ class RelTranslation:
             shifted_expr: HybridExpr | None = expr.shift_back(1)
             if shifted_expr is not None:
                 expressions[shifted_expr] = ref
+        # Return the input data, which will be wrapped in an aggregation when
+        # handle_children is called on the output
         result: TranslationOutput = TranslationOutput(
             context.relational_node, expressions
         )
-        result = self.handle_children(result, hybrid, pipeline_idx)
-        # Pull every aggregation key into the current context since it is now
-        # accessible as a normal ref instead of a child ref.
-        for key_name in node.key_names:
-            key_expr = node.terms[key_name]
-            assert isinstance(key_expr, HybridChildRefExpr)
-            hybrid_ref: HybridRefExpr = HybridRefExpr(key_expr.name, key_expr.typ)
-            result.expressions[hybrid_ref] = result.expressions[key_expr]
         return result
 
     def translate_filter(
@@ -943,7 +955,7 @@ class RelTranslation:
                 result = self.translate_partition(
                     operation, context, hybrid, pipeline_idx
                 )
-                handled_children = True
+                # handled_children = True
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
@@ -1037,7 +1049,12 @@ def convert_ast_to_relational(
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    print()
+    print("Before decorrelation:")
+    print(hybrid)
     run_hybrid_decorrelation(hybrid)
+    print("After decorrelation:")
+    print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         None, hybrid, len(hybrid.pipeline) - 1
