@@ -29,6 +29,11 @@ __all__ = [
     "defog_sql_text_broker_basic7",
     "defog_sql_text_broker_basic8",
     "defog_sql_text_broker_basic9",
+    "defog_sql_text_broker_gen1",
+    "defog_sql_text_broker_gen2",
+    "defog_sql_text_broker_gen3",
+    "defog_sql_text_broker_gen4",
+    "defog_sql_text_broker_gen5",
 ]
 
 
@@ -562,4 +567,83 @@ def defog_sql_text_broker_basic10() -> str:
     LEFT JOIN sbDailyPrice AS dp
     ON tk.sbTickerId = dp.sbDpTickerId
     WHERE dp.sbDpTickerId IS NULL
+    """
+
+def defog_sql_text_broker_gen1():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return the lowest daily closest price for symbol `VTI` in the past 7 
+    days.
+    """
+    return """
+    SELECT MIN(sdp.sbDpClose) AS lowest_price
+    FROM sbDailyPrice AS sdp
+    JOIN sbTicker AS st ON sdp.sbDpTickerId = st.sbTickerId
+    WHERE st.sbTickerSymbol = 'VTI' AND sdp.sbDpDate >= date('now', '-7 days');
+    """
+
+def defog_sql_text_broker_gen2():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return the number of transactions by users who joined in the past 70 
+    days.
+    """
+    return """
+    SELECT COUNT(t.sbTxCustId) AS transaction_count
+    FROM sbTransaction AS t
+    JOIN sbCustomer AS c ON t.sbTxCustId = c.sbCustId
+    WHERE c.sbCustJoinDate >= date('now', '-70 days');
+    """
+
+def defog_sql_text_broker_gen3():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return the customer id and the difference between their time from 
+    joining to their first transaction. Ignore customers who haven't made
+    any transactions.
+    """
+    return """
+    SELECT c.sbCustId,
+    MIN(julianday(t.sbTxDateTime)) - julianday(c.sbCustJoinDate) AS DaysFromJoinToFirstTransaction
+    FROM sbCustomer AS c
+    JOIN sbTransaction AS t ON c.sbCustId = t.sbTxCustId
+    GROUP BY c.sbCustId;
+    """
+
+def defog_sql_text_broker_gen4():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return the customer who made the most sell transactions on 2023-04-01.
+    Return the id, name and number of transactions.
+    """
+    return """
+    WITH SellTransactions AS (
+        SELECT sbTxCustId, COUNT(*) AS num_tx
+        FROM sbTransaction
+        WHERE DATE(sbTxDateTime) = '2023-04-01' AND sbTxType = 'sell'
+        GROUP BY sbTxCustId
+    )
+    SELECT c.sbCustId, c.sbCustName, st.num_tx
+    FROM sbCustomer AS c
+    JOIN SellTransactions AS st ON c.sbCustId = st.sbTxCustId
+    ORDER BY st.num_tx DESC NULLS FIRST
+    LIMIT 1;
+    """
+
+def defog_sql_text_broker_gen5():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What is the monthly average transaction price for successful 
+    transactions in the 1st quarter of 2023?
+    """
+    return """
+    SELECT strftime('%Y-%m-01', sbTxDateTime) AS datetime, AVG(sbTxPrice) AS avg_price FROM sbTransaction
+    WHERE sbTxStatus = 'success' AND sbTxDateTime BETWEEN '2023-01-01' AND '2023-03-31'
+    GROUP BY datetime
+    ORDER BY datetime
     """
