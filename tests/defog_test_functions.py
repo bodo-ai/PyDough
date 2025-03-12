@@ -545,7 +545,7 @@ def impl_defog_broker_gen4():
     selected_transactions = transactions_made.WHERE(  
         (DATEDIFF("days", date_time, "2023-04-01") == 0) & 
         (transaction_type == "sell")  
-    )  
+    ) 
     return Customers.CALCULATE(  
         _id, name, num_tx=COUNT(selected_transactions)  
     ).TOP_K(1, by=num_tx.ASC())  
