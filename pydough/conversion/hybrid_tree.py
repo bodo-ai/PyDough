@@ -1336,6 +1336,31 @@ class HybridTranslator:
             snapshot: int = self.alias_counter
             self.alias_counter = 0
             subtree: HybridTree = self.make_hybrid_tree(child, hybrid)
+            back_exprs: dict[str, HybridExpr] = {}
+            for name in subtree.ancestral_mapping:
+                # Skip adding backrefs for terms that remain part of the
+                # ancestry through the PARTITION, since this creates an
+                # unecessary correlation.
+                if (
+                    name in hybrid.ancestral_mapping
+                    or name in hybrid.pipeline[-1].terms
+                ):
+                    continue
+                hybrid_back_expr = self.make_hybrid_expr(
+                    subtree,
+                    child.get_expr(name),
+                    {},
+                    False,
+                )
+                back_exprs[name] = hybrid_back_expr
+            if len(back_exprs):
+                subtree.pipeline.append(
+                    HybridCalculate(
+                        subtree.pipeline[-1],
+                        back_exprs,
+                        subtree.pipeline[-1].orderings,
+                    )
+                )
             self.alias_counter = snapshot
             # Infer how the child is used by the current operation based on
             # the expressions that the operator uses.
@@ -1992,11 +2017,9 @@ class HybridTranslator:
         subtree: HybridTree
         successor_hybrid: HybridTree
         expr: HybridExpr
-        hybrid_back_expr: HybridExpr
         child_ref_mapping: dict[int, int] = {}
         key_exprs: list[HybridExpr] = []
         join_key_exprs: list[tuple[HybridExpr, HybridExpr]] = []
-        back_exprs: dict[str, HybridExpr] = {}
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot(), node.ancestral_mapping)
@@ -2064,28 +2087,28 @@ class HybridTranslator:
                 hybrid.add_successor(successor_hybrid)
                 self.populate_children(successor_hybrid, node, child_ref_mapping)
                 partition_child_idx: int = child_ref_mapping[0]
-                subtree = successor_hybrid.children[partition_child_idx].subtree
-                for name in subtree.ancestral_mapping:
-                    # Skip adding backrefs for terms that remain part of the
-                    # ancestry through the PARTITION, since this creates an
-                    # unecessary correlation.
-                    if name in node.ancestor_context.ancestral_mapping:
-                        continue
-                    hybrid_back_expr = self.make_hybrid_expr(
-                        subtree,
-                        node.children[0].get_expr(name),
-                        {},
-                        False,
-                    )
-                    back_exprs[name] = hybrid_back_expr
-                if len(back_exprs):
-                    subtree.pipeline.append(
-                        HybridCalculate(
-                            subtree.pipeline[-1],
-                            back_exprs,
-                            subtree.pipeline[-1].orderings,
-                        )
-                    )
+                # subtree = successor_hybrid.children[partition_child_idx].subtree
+                # for name in subtree.ancestral_mapping:
+                #     # Skip adding backrefs for terms that remain part of the
+                #     # ancestry through the PARTITION, since this creates an
+                #     # unecessary correlation.
+                #     if name in node.ancestor_context.ancestral_mapping:
+                #         continue
+                #     hybrid_back_expr = self.make_hybrid_expr(
+                #         subtree,
+                #         node.children[0].get_expr(name),
+                #         {},
+                #         False,
+                #     )
+                #     back_exprs[name] = hybrid_back_expr
+                # if len(back_exprs):
+                #     subtree.pipeline.append(
+                #         HybridCalculate(
+                #             subtree.pipeline[-1],
+                #             back_exprs,
+                #             subtree.pipeline[-1].orderings,
+                #         )
+                #     )
                 for key_name in sorted(node.calc_terms, key=str):
                     key = node.get_expr(key_name)
                     expr = self.make_hybrid_expr(
@@ -2172,28 +2195,28 @@ class HybridTranslator:
                             )
                             partition.add_key(key_name, expr)
                             key_exprs.append(HybridRefExpr(key_name, expr.typ))
-                        subtree = successor_hybrid.children[partition_child_idx].subtree
-                        for name in subtree.ancestral_mapping:
-                            # Skip adding backrefs for terms that remain part of the
-                            # ancestry through the PARTITION, since this creates an
-                            # unecessary correlation.
-                            if name in node.ancestor_context.ancestral_mapping:
-                                continue
-                            hybrid_back_expr = self.make_hybrid_expr(
-                                subtree,
-                                node.child_access.children[0].get_expr(name),
-                                {},
-                                False,
-                            )
-                            back_exprs[name] = hybrid_back_expr
-                        if len(back_exprs):
-                            subtree.pipeline.append(
-                                HybridCalculate(
-                                    subtree.pipeline[-1],
-                                    back_exprs,
-                                    subtree.pipeline[-1].orderings,
-                                )
-                            )
+                        # subtree = successor_hybrid.children[partition_child_idx].subtree
+                        # for name in subtree.ancestral_mapping:
+                        #     # Skip adding backrefs for terms that remain part of the
+                        #     # ancestry through the PARTITION, since this creates an
+                        #     # unecessary correlation.
+                        #     if name in node.ancestor_context.ancestral_mapping:
+                        #         continue
+                        #     hybrid_back_expr = self.make_hybrid_expr(
+                        #         subtree,
+                        #         node.child_access.children[0].get_expr(name),
+                        #         {},
+                        #         False,
+                        #     )
+                        #     back_exprs[name] = hybrid_back_expr
+                        # if len(back_exprs):
+                        #     subtree.pipeline.append(
+                        #         HybridCalculate(
+                        #             subtree.pipeline[-1],
+                        #             back_exprs,
+                        #             subtree.pipeline[-1].orderings,
+                        #         )
+                        #     )
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs

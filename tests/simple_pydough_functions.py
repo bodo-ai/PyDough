@@ -1283,29 +1283,31 @@ def singular5():
 
 
 def singular6():
-    # For each customer, what is the first part they received the nation it
-    # came from (breaking ties in favor of the one with the largest revenue)?
-    # Include the 5 customers with the earliest such received parts (breaking
-    # ties alphabetically by customer name).
+    # For each customer in nation #4, what is the first part they received in
+    # an order handled by clerk #17, and the nation it came from (breaking ties
+    # in favor of the one with the largest revenue)? Include the 5 customers
+    # with the earliest such received parts (breaking ties alphabetically by
+    # customer name).
     revenue = extended_price * (1 - discount)
-
     lq = (
-        orders.lines.CALCULATE(receipt_date)
+        orders.WHERE(clerk == "Clerk#000000017")
+        .lines.CALCULATE(receipt_date)
         .WHERE(RANKING(by=(receipt_date.ASC(), revenue.DESC()), levels=2) == 1)
         .SINGULAR()
         .supplier.nation.CALCULATE(nation_name=name)
     )
-
-    return Customers.CALCULATE(name, lq.receipt_date, lq.nation_name).TOP_K(
+    selected_customers = Customers.WHERE((nation_key == 4) & HAS(lq))
+    return selected_customers.CALCULATE(name, lq.receipt_date, lq.nation_name).TOP_K(
         5, by=(receipt_date.ASC(), name.ASC())
     )
 
 
 def singular7():
-    # For each supplier, what is the most popular part they supplied in 1994
-    # (breaking ties alphabetically by part name)? Include the 5 suppliers
-    # along with name, part name, and number of orders of that part in 1994
-    # (breaking ties alphabetically by supplier name).
+    # For each supplier in nation #20, what is the most popular part (by # of
+    # purchases) they supplied in 1994 (breaking ties alphabetically by part
+    # name)? Include the 5 suppliers with the highest number of purchases along
+    # with part name, and number of orders (breaking ties alphabetically by
+    # supplier name).
     best_part = (
         supply_records.CALCULATE(
             n_orders=COUNT(lines.WHERE(YEAR(ship_date) == 1994)),
@@ -1314,8 +1316,12 @@ def singular7():
         .WHERE(RANKING(by=(n_orders.DESC(), part_name.ASC()), levels=1) == 1)
         .SINGULAR()
     )
-    return Suppliers.CALCULATE(
-        supplier_name=name,
-        part_name=best_part.part_name,
-        n_orders=best_part.n_orders,
-    ).TOP_K(5, by=(n_orders.DESC(), supplier_name.ASC()))
+    return (
+        Suppliers.WHERE(nation_key == 20)
+        .CALCULATE(
+            supplier_name=name,
+            part_name=best_part.part_name,
+            n_orders=best_part.n_orders,
+        )
+        .TOP_K(5, by=(n_orders.DESC(), supplier_name.ASC()))
+    )

@@ -890,10 +890,30 @@ from pydough.unqualified import (
                 singular6,
                 None,
                 "singular6",
-                lambda: pd.DataFrame({}),
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in [28763, 98677, 37480, 29545, 85243]
+                        ],
+                        "receipt_date": [
+                            "1992-02-03",
+                            "1992-02-18",
+                            "1992-04-03",
+                            "1992-07-21",
+                            "1992-08-15",
+                        ],
+                        "nation_name": [
+                            "ARGENTINA",
+                            "FRANCE",
+                            "FRANCE",
+                            "IRAQ",
+                            "UNITED KINGDOM",
+                        ],
+                    }
+                ),
             ),
             id="singular6",
-            # marks=pytest.mark.skip("BACK(4) error."),
         ),
         pytest.param(
             (
@@ -903,20 +923,20 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
-                            "Supplier#000000147",
-                            "Supplier#000000652",
                             "Supplier#000000687",
-                            "Supplier#000000979",
-                            "Supplier#000001097",
+                            "Supplier#000000565",
+                            "Supplier#000000977",
+                            "Supplier#000001251",
+                            "Supplier#000004625",
                         ],
                         "part_name": [
-                            "puff light sky hot azure",
-                            "olive lawn navy peru yellow",
                             "peach orange blanched firebrick ghost",
-                            "lawn spring bisque drab linen",
-                            "chocolate antique burlywood honeydew grey",
+                            "sienna lime mint frosted beige",
+                            "blanched goldenrod lawn metallic midnight",
+                            "seashell deep almond cyan lemon",
+                            "red ivory indian seashell deep",
                         ],
-                        "n_orders": [8, 8, 8, 8, 8],
+                        "n_orders": [8, 7, 7, 7, 7],
                     }
                 ),
             ),
