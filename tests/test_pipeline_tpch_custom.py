@@ -834,7 +834,22 @@ from pydough.unqualified import (
                 None,
                 "singular5",
                 lambda: pd.DataFrame(
-                    {"container": ["0"] * 5, "highest_price_ship_date": ["0"] * 5}
+                    {
+                        "container": [
+                            "SM PACK",
+                            "LG BOX",
+                            "MED JAR",
+                            "LG JAR",
+                            "JUMBO CAN",
+                        ],
+                        "highest_price_ship_date": [
+                            "1992-02-12",
+                            "1992-04-30",
+                            "1992-05-03",
+                            "1992-09-11",
+                            "1992-11-17",
+                        ],
+                    }
                 ),
             ),
             id="singular5",

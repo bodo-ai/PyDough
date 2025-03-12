@@ -1232,18 +1232,23 @@ def singular4():
 def singular5():
     # Find the ship date of the most expensive line item per each container
     # presented in parts (breaking ties in favor of the smaller ship date).
-    # Only consider the first 5 container types, alphabetically.
+    # Find the 5 containers with the earliest such date, breaking ties
+    # alphabetically.
     top_containers = PARTITION(
         Parts,
         name="parts",
         by=container,
-    ).TOP_K(5, by=container.ASC())
+    )
     highest_price_line = parts.lines.WHERE(
         RANKING(by=(extended_price.DESC(), ship_date.ASC()), levels=2) == 1
     ).SINGULAR()
-    return top_containers.WHERE(HAS(highest_price_line)).CALCULATE(
-        container,
-        highest_price_ship_date=highest_price_line.ship_date,
+    return (
+        top_containers.WHERE(HAS(highest_price_line))
+        .CALCULATE(
+            container,
+            highest_price_ship_date=highest_price_line.ship_date,
+        )
+        .TOP_K(5, by=(highest_price_ship_date.ASC(), container.ASC()))
     )
 
 
