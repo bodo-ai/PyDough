@@ -330,6 +330,7 @@ class Decorrelater:
                         child.connection_type.is_aggregation,
                         skipped_levels,
                     )
+                    print(child.connection_type, end=" ")
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(
                         f"PyDough does not yet support correlated references with the {child.connection_type.name} pattern."

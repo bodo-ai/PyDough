@@ -300,12 +300,14 @@ def correl_18():
         name="o",
         by=(customer_key, order_date),
     )
+    above_average_orders = o.WHERE(total_price >= 0.5 * total_price_sum)
     selected_groups = (
         cust_date_groups.WHERE(COUNT(o) > 1)
         .CALCULATE(
             total_price_sum=SUM(o.total_price),
         )
-        .CALCULATE(n_above_avg=COUNT(o.WHERE(total_price >= 0.5 * total_price_sum)))
+        .WHERE(HAS(above_average_orders))
+        .CALCULATE(n_above_avg=COUNT(above_average_orders))
     )
     return TPCH.CALCULATE(n=SUM(selected_groups.n_above_avg))
 
@@ -316,10 +318,11 @@ def correl_19():
     # higher account balance than that supplier. Pick the 5 suppliers with the
     # largest such count.
     # (This is a correlated aggregation access)
-    super_cust = customers.WHERE(acctbal > account_balance)
+    super_cust = nation.customers.WHERE(acctbal > account_balance)
     return (
-        Suppliers.CALCULATE(account_balance, supplier_name=name)
-        .nation.CALCULATE(supplier_name, n_super_cust=COUNT(super_cust))
+        Suppliers.CALCULATE(account_balance)
+        .WHERE(HAS(super_cust))
+        .CALCULATE(supplier_name=name, n_super_cust=COUNT(super_cust))
         .TOP_K(5, n_super_cust.DESC())
     )
 
@@ -330,11 +333,13 @@ def correl_20():
     # customer in the same nation, only counting instances where the order was
     # made in June of 1998.
     # (This is a correlated singular/semi access)
-    is_domestic = nation.CALCULATE(domestic=name == source_nation_name).domestic
     selected_orders = Nations.CALCULATE(source_nation_name=name).customers.orders.WHERE(
         (YEAR(order_date) == 1998) & (MONTH(order_date) == 6)
     )
-    instances = selected_orders.lines.supplier.WHERE(is_domestic)
+    supplier_nation = supplier.nation.CALCULATE(domestic=name == source_nation_name)
+    instances = selected_orders.lines.WHERE(
+        HAS(supplier_nation) & supplier_nation.domestic
+    )
     return TPCH.CALCULATE(n=COUNT(instances))
 
 

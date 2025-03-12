@@ -190,12 +190,13 @@ def first_order_per_customer():
     # when it was made. Pick the 5 customers with the highest such values.
     # If a customer ordered multiple orders on the first such day, pick the one
     # with the lowest key. Only consider customers with at least $9k in their
-    # account.
+    # account. Only look at customers with at least one order.
     # Using aggregations as a stopgap until SINGULAR is implemented
     # (TODO: PR#285).
     first_order = orders.WHERE(RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1)
     return (
         Customers.WHERE(acctbal >= 9000.0)
+        .WHERE(HAS(first_order))
         .CALCULATE(
             name,
             first_order_date=MIN(first_order.order_date),
@@ -253,7 +254,8 @@ def avg_order_diff_per_customer():
     order_info = orders.CALCULATE(
         day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
-    return Customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
+    selected_customers = Customers.WHERE(HAS(order_info))
+    return selected_customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
     )
 
@@ -291,7 +293,7 @@ def customer_largest_order_deltas():
     # For each customer, find the highest positive/negative difference in
     # revenue between one of their orders and and the most recent order before
     # it, ignoring their first ever order. Return the 5 customers with the
-    # largest such difference.
+    # largest such difference. Only consider customers with orders.
     line_revenue = extended_price * (1 - discount)
     order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
     previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), levels=1)
@@ -304,6 +306,7 @@ def customer_largest_order_deltas():
             max_diff=MAX(orders_info.revenue_delta),
             min_diff=MIN(orders_info.revenue_delta),
         )
+        .WHERE(HAS(orders_info))
         .CALCULATE(
             name,
             largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff),

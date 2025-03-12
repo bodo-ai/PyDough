@@ -559,6 +559,28 @@ class HybridFilter(HybridOperation):
         return self.predecessor.search_term_definition(name)
 
 
+class HybridChildPullUp(HybridOperation):
+    """
+    Class for HybridOperation corresponding to evaluating all of the logic from
+    a child subtree of the current pipeline then treating it as the current
+    level.
+    """
+
+    def __init__(self, child_idx: int, child: "HybridConnection"):
+        self.child_idx: int = child_idx
+        self.child: HybridConnection = child
+        last_operation: HybridOperation = child.subtree.pipeline[-1]
+        super().__init__(
+            last_operation.terms,
+            last_operation.renamings,
+            last_operation.orderings,
+            last_operation.unique_exprs,
+        )
+
+    def __repr__(self):
+        return f"PULLUP[${self.child_idx}]"
+
+
 class HybridPartition(HybridOperation):
     """
     Class for HybridOperation corresponding to a PARTITION operation.
