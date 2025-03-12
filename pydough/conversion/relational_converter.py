@@ -468,7 +468,7 @@ class RelTranslation:
             if child.required_steps == pipeline_idx:
                 self.stack.append(context)
                 child_output = self.rel_translation(
-                    child, child.subtree, len(child.subtree.pipeline) - 1
+                    child.subtree, len(child.subtree.pipeline) - 1
                 )
                 self.stack.pop()
                 assert child.subtree.join_keys is not None
@@ -816,8 +816,6 @@ class RelTranslation:
 
         Args:
             `node`: the node corresponding to the partition child access.
-            `parent`: the hybrid tree of the previous layer that the access
-            steps down from.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts.
@@ -827,7 +825,7 @@ class RelTranslation:
             aggregated partitions and the original partitioned data.
         """
         child_output: TranslationOutput = self.rel_translation(
-            None, node.subtree, len(node.subtree.pipeline) - 1
+            node.subtree, len(node.subtree.pipeline) - 1
         )
 
         if context is None:
@@ -864,7 +862,6 @@ class RelTranslation:
 
     def rel_translation(
         self,
-        connection: HybridConnection | None,
         hybrid: HybridTree,
         pipeline_idx: int,
     ) -> TranslationOutput:
@@ -873,9 +870,6 @@ class RelTranslation:
         into a TranslationOutput payload.
 
         Args:
-            `connection`: the HybridConnection instance that defines the
-            parent-child relationship containing the subtree being defined
-            (as the child), or None if this is the main path.
             `hybrid`: the current level of the hybrid tree to be derived,
             including all levels before it.
             `pipeline_idx`: the index of the operation in the pipeline of the
@@ -916,7 +910,7 @@ class RelTranslation:
             context = TranslationOutput(EmptySingleton(), {})
             context = self.handle_children(context, *preceding_hybrid)
         else:
-            context = self.rel_translation(connection, *preceding_hybrid)
+            context = self.rel_translation(*preceding_hybrid)
 
         # Then, dispatch onto the logic to transform from the context into the
         # new translation output.
@@ -1070,7 +1064,7 @@ def convert_ast_to_relational(
     run_hybrid_decorrelation(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
-        None, hybrid, len(hybrid.pipeline) - 1
+        hybrid, len(hybrid.pipeline) - 1
     )
     ordered_columns: list[tuple[str, RelationalExpression]] = []
     orderings: list[ExpressionSortInfo] | None = None
