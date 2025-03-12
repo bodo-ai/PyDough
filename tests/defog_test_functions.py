@@ -209,7 +209,7 @@ def impl_defog_broker_adv9():
         (date_time < DATETIME("now", "start_of_week"))
         & (date_time >= DATETIME("now", "start_of_week", "-8 weeks"))
     ).CALCULATE(
-        week=JOIN_STRINGS("-", YEAR(date_time, LPAD(WEEKOFYEAR(date_time), 2, "0"))),
+        week=DATETIME(date_time, "start of week"),
         is_weekend=ISIN(DAYOFWEEK(date_time), (0, 6)),
     )
     weeks = PARTITION(selected_transactions, name="txns", by=week)

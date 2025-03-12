@@ -170,7 +170,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="broker_adv9",
             marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK and WEEKOFYEAR functions"
+                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
             ),
         ),
         pytest.param(
