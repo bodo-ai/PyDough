@@ -445,20 +445,15 @@ class HybridCollectionAccess(HybridOperation):
     """
 
     def __init__(self, collection: CollectionAccess):
-        expr: PyDoughExpressionQDAG
         self.collection: CollectionAccess = collection
         terms: dict[str, HybridExpr] = {}
         for name in collection.calc_terms:
-            # Skip columns that are overloaded with a name from an ancestor,
-            # since they should not be used.
-            if name in collection.ancestral_mapping:
-                continue
-            expr = collection.get_expr(name)
-            assert isinstance(expr, ColumnProperty)
-            terms[name] = HybridColumnExpr(expr)
+            raw_expr = collection.get_term_from_property(name)
+            assert isinstance(raw_expr, ColumnProperty)
+            terms[name] = HybridColumnExpr(raw_expr)
         unique_exprs: list[HybridExpr] = []
         for name in sorted(collection.unique_terms, key=str):
-            expr = collection.get_expr(name)
+            expr: PyDoughExpressionQDAG = collection.get_expr(name)
             unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
         super().__init__(terms, {}, [], unique_exprs)
 
@@ -1169,6 +1164,8 @@ class HybridTranslator:
                     parent_tree.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
                 )
                 for rhs_name in subcollection_property.keys[lhs_name]:
+                    if rhs_name not in child_node.terms:
+                        breakpoint()
                     rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
                         rhs_name
                     )

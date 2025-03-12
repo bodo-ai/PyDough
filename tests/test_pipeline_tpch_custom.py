@@ -50,6 +50,7 @@ from simple_pydough_functions import (
     simple_scan,
     simple_scan_top_five,
     suppliers_bal_diffs,
+    top_customers_by_orders,
     triple_partition,
     year_month_nation_orders,
     yoy_change_in_num_orders,
@@ -769,15 +770,15 @@ from pydough.unqualified import (
             ),
             id="avg_gap_prev_urgent_same_clerk",
         ),
-        # pytest.param(
-        #     (
-        #         xxx,
-        #         None,
-        #         "xxx",
-        #         lambda: pd.DataFrame({"xxx": [7.9820674]}),
-        #     ),
-        #     id="xxx",
-        # ),
+        pytest.param(
+            (
+                top_customers_by_orders,
+                None,
+                "top_customers_by_orders",
+                lambda: pd.DataFrame({"customer_key": [0] * 5, "n_orders": [0] * 5}),
+            ),
+            id="top_customers_by_orders",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
