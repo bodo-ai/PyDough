@@ -72,6 +72,11 @@ second_units = ("seconds", "second", "s")
 The valid string representations of the second unit.
 """
 
+week_units = ("weeks", "week", "w")
+"""
+The valid string representations of the week unit.
+"""
+
 
 class DateTimeUnit(Enum):
     """
@@ -84,6 +89,7 @@ class DateTimeUnit(Enum):
     HOUR = "hour"
     MINUTE = "minute"
     SECOND = "second"
+    WEEK = "week"
 
     @staticmethod
     def from_string(unit: str) -> Union["DateTimeUnit", None]:
@@ -113,6 +119,8 @@ class DateTimeUnit(Enum):
             return DateTimeUnit.MINUTE
         elif unit in second_units:
             return DateTimeUnit.SECOND
+        elif unit in week_units:
+            return DateTimeUnit.WEEK
         else:
             return None
 
@@ -134,6 +142,8 @@ class DateTimeUnit(Enum):
                 return "'%Y-%m-%d %H:%M:00'"
             case DateTimeUnit.SECOND:
                 return "'%Y-%m-%d %H:%M:%S'"
+            case _:
+                raise ValueError(f"Unsupported date/time unit: {self}")
 
 
 def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
@@ -226,6 +236,9 @@ def apply_datetime_truncation(
                     this=base,
                     format=unit.truncation_string,
                 )
+            case DateTimeUnit.WEEK:
+                # implementation for week.
+                return sqlglot_expressions.Literal.number(1)
     else:
         # For other dialects, we can rely the DATE_TRUNC function.
         return sqlglot_expressions.DateTrunc(
