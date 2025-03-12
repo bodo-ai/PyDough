@@ -54,6 +54,8 @@ from simple_pydough_functions import (
     singular3,
     singular4,
     singular5,
+    singular6,
+    singular7,
     suppliers_bal_diffs,
     triple_partition,
     year_month_nation_orders,
@@ -882,6 +884,43 @@ from pydough.unqualified import (
                 ),
             ),
             id="singular5",
+        ),
+        pytest.param(
+            (
+                singular6,
+                None,
+                "singular6",
+                lambda: pd.DataFrame({}),
+            ),
+            id="singular6",
+            marks=pytest.mark.skip("BACK(4) error."),
+        ),
+        pytest.param(
+            (
+                singular7,
+                None,
+                "singular7",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_name": [
+                            "Supplier#000000147",
+                            "Supplier#000000652",
+                            "Supplier#000000687",
+                            "Supplier#000000979",
+                            "Supplier#000001097",
+                        ],
+                        "part_name": [
+                            "puff light sky hot azure",
+                            "olive lawn navy peru yellow",
+                            "peach orange blanched firebrick ghost",
+                            "lawn spring bisque drab linen",
+                            "chocolate antique burlywood honeydew grey",
+                        ],
+                        "n_orders": [8, 8, 8, 8, 8],
+                    }
+                ),
+            ),
+            id="singular7",
         ),
         pytest.param(
             (
