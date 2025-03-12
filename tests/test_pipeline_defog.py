@@ -357,7 +357,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "Broker",
                 defog_sql_text_broker_gen5,
             ),
-            id="broker_gen5",
+            id="broker_gen5",  
         ),
     ],
 )

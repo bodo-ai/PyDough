@@ -526,13 +526,15 @@ def impl_defog_broker_gen3():
     joining to their first transaction. Ignore customers who haven't made
     any transactions.
     """
-    selected_customers = Customers.WHERE(HAS(transactions_made))  
+    selected_customers = Customers.WHERE(HAS(transactions_made))
 
-    return selected_customers.CALCULATE(  
-        cust_id = id,  
-        DaysFromJoinToFirstTransaction=(DATEDIFF("seconds", join_date, MIN(transactions_made.date_time)))  
-        / 86400.0  
-    )  
+    return selected_customers.CALCULATE(
+        cust_id=_id,
+        DaysFromJoinToFirstTransaction=(
+            DATEDIFF("seconds", join_date, MIN(transactions_made.date_time))
+        )
+        / 86400.0,
+    )
 
 
 def impl_defog_broker_gen4():
@@ -542,13 +544,12 @@ def impl_defog_broker_gen4():
     Return the customer who made the most sell transactions on 2023-04-01.
     Return the id, name and number of transactions.
     """
-    selected_transactions = transactions_made.WHERE(  
-        (DATEDIFF("days", date_time, "2023-04-01") == 0) & 
-        (transaction_type == "sell")  
-    ) 
-    return Customers.CALCULATE(  
-        _id, name, num_tx=COUNT(selected_transactions)  
-    ).TOP_K(1, by=num_tx.ASC())  
+    selected_transactions = transactions_made.WHERE(
+        (DATEDIFF("days", date_time, "2023-04-01") == 0) & (transaction_type == "sell")
+    )
+    return Customers.CALCULATE(_id, name, num_tx=COUNT(selected_transactions)).TOP_K(
+        1, by=num_tx.DESC()
+    )
 
 
 def impl_defog_broker_gen5():
