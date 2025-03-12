@@ -1,0 +1,4 @@
+ROOT(columns=[('order_date', order_date), ('key', key)], orderings=[(ordering_0):asc_first])
+ PROJECT(columns={'key': key, 'order_date': order_date, 'ordering_0': order_date})
+  FILTER(condition=ABSENT(PREV(args=[order_date], partition=[], order=[(order_date):asc_last, (key):asc_last])) | YEAR(PREV(args=[order_date], partition=[], order=[(order_date):asc_last, (key):asc_last])) != YEAR(order_date), columns={'key': key, 'order_date': order_date})
+   SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_date': o_orderdate})

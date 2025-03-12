@@ -31,6 +31,80 @@ def simple_filter_top_five():
     )
 
 
+def simple_collation():
+    return (
+        Suppliers.CALCULATE(
+            p=PERCENTILE(
+                by=(
+                    COUNT(supply_records).ASC(),
+                    name,
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.DESC(),
+                    comment,
+                )
+            ),
+            r=RANKING(
+                by=(
+                    key,
+                    COUNT(supply_records),
+                    name.DESC(),
+                    address,
+                    nation_key,
+                    phone,
+                    account_balance.ASC(),
+                    comment,
+                )
+            ),
+        )
+        .ORDER_BY(
+            COUNT(supply_records).ASC(),
+            name,
+            address,
+            nation_key,
+            phone,
+            account_balance.DESC(),
+            comment,
+        )
+        .TOP_K(
+            5,
+            by=(
+                key,
+                COUNT(supply_records),
+                name.DESC(),
+                address,
+                nation_key,
+                phone,
+                account_balance.ASC(),
+                comment,
+            ),
+        )
+    )
+
+
+def year_month_nation_orders():
+    # Finds the 5 largest instances of numbers of orders made in a month of a
+    # year by customers in a nation, only looking at nations from Asia and
+    # Africa.
+    selected_regions = Regions.WHERE(ISIN(name, ("ASIA", "AFRICA")))
+    urgent_orders = (
+        selected_regions.nations.CALCULATE(nation_name=name)
+        .customers.orders.WHERE(order_priority == "1-URGENT")
+        .CALCULATE(
+            nation_name,
+            order_year=YEAR(order_date),
+            order_month=MONTH(order_date),
+        )
+    )
+    groups = PARTITION(
+        urgent_orders, name="u", by=(nation_name, order_year, order_month)
+    )
+    return groups.CALCULATE(
+        nation_name, order_year, order_month, n_orders=COUNT(u)
+    ).TOP_K(5, by=n_orders.DESC())
+
+
 def rank_a():
     return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 
@@ -97,6 +171,26 @@ def rank_with_filters_c():
     )
 
 
+def first_order_per_customer():
+    # For each customer, find the total price of the first order they made and
+    # when it was made. Pick the 5 customers with the highest such values.
+    # If a customer ordered multiple orders on the first such day, pick the one
+    # with the lowest key. Only consider customers with at least $9k in their
+    # account.
+    # Using aggregations as a stopgap until SINGULAR is implemented
+    # (TODO: PR#285).
+    first_order = orders.WHERE(RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1)
+    return (
+        Customers.WHERE(acctbal >= 9000.0)
+        .CALCULATE(
+            name,
+            first_order_date=MIN(first_order.order_date),
+            first_order_price=MIN(first_order.total_price),
+        )
+        .TOP_K(5, by=first_order_price.DESC())
+    )
+
+
 def percentile_nations():
     # For every nation, give its name & its bucket from 1-5 ordered by name
     # alphabetically
@@ -126,8 +220,142 @@ def regional_suppliers_percentile():
     )
 
 
+def prev_next_regions():
+    # Sorts the regions alphabetically and finds the previous and next regions'
+    # names in a rolling window.
+    return Regions.CALCULATE(
+        two_preceding=PREV(name, n=2, by=name.ASC()),
+        one_preceding=PREV(name, by=name.ASC()),
+        current=name,
+        one_following=NEXT(name, by=name.ASC()),
+        two_following=PREV(name, n=-2, by=name.ASC()),
+    ).ORDER_BY(current.ASC())
+
+
+def avg_order_diff_per_customer():
+    # Finds the 5 customers with the highest average difference in days between
+    # orders made.
+    prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), levels=1)
+    order_info = orders.CALCULATE(
+        day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
+    )
+    return Customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
+        5, by=avg_diff.DESC()
+    )
+
+
+def yoy_change_in_num_orders():
+    # For every year, counts the number of orders made in that year and the
+    # percentage change from the previous year.
+    years = PARTITION(
+        Orders.CALCULATE(year=YEAR(order_date)), name="orders_in_year", by=year
+    )
+    current_year_orders = COUNT(orders_in_year)
+    prev_year_orders = PREV(COUNT(orders_in_year), by=year.ASC())
+    return years.CALCULATE(
+        year,
+        current_year_orders=current_year_orders,
+        pct_change=100.0 * (current_year_orders - prev_year_orders) / prev_year_orders,
+    ).ORDER_BY(year.ASC())
+
+
+def first_order_in_year():
+    # Find all orders that do not have a previous order in the same year
+    # (breaking ties by order key).
+    previous_order_date = PREV(order_date, by=(order_date.ASC(), key.ASC()))
+    return (
+        Orders.WHERE(
+            ABSENT(previous_order_date)
+            | (YEAR(previous_order_date) != YEAR(order_date))
+        )
+        .CALCULATE(order_date, key)
+        .ORDER_BY(order_date.ASC())
+    )
+
+
+def customer_largest_order_deltas():
+    # For each customer, find the highest positive/negative difference in
+    # revenue between one of their orders and and the most recent order before
+    # it, ignoring their first ever order. Return the 5 customers with the
+    # largest such difference.
+    line_revenue = extended_price * (1 - discount)
+    order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
+    previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), levels=1)
+    orders_info = orders.WHERE(PRESENT(previous_order_revenue)).CALCULATE(
+        revenue_delta=order_revenue
+        - PREV(order_revenue, by=order_date.ASC(), levels=1),
+    )
+    return (
+        Customers.CALCULATE(
+            max_diff=MAX(orders_info.revenue_delta),
+            min_diff=MIN(orders_info.revenue_delta),
+        )
+        .CALCULATE(
+            name,
+            largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff),
+        )
+        .TOP_K(5, by=largest_diff.DESC())
+    )
+
+
+def suppliers_bal_diffs():
+    # Finds the 5 suppliers with the largest difference in account balance from
+    # the supplier with the next smallest account balance in the same region.
+    return (
+        Regions.CALCULATE(region_name=name)
+        .nations.suppliers.CALCULATE(
+            name,
+            region_name,
+            acctbal_delta=account_balance
+            - PREV(account_balance, by=account_balance.ASC(), levels=2),
+        )
+        .TOP_K(5, by=acctbal_delta.DESC())
+    )
+
+
+def month_year_sliding_windows():
+    # Finds all months where the total amount spent by customers on orders in
+    # that month was more than the preceding/following month, and the amount
+    # spent in that year was more than the following year.
+    ym_groups = PARTITION(
+        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)),
+        name="orders",
+        by=(year, month),
+    ).CALCULATE(month_total_spent=SUM(orders.total_price))
+    y_groups = (
+        PARTITION(ym_groups, name="months", by=year)
+        .CALCULATE(
+            curr_year_total_spent=SUM(months.month_total_spent),
+            next_year_total_spent=NEXT(
+                SUM(months.month_total_spent), by=year.ASC(), default=0.0
+            ),
+        )
+        .WHERE(curr_year_total_spent > next_year_total_spent)
+    )
+    return (
+        y_groups.months.WHERE(
+            (
+                month_total_spent
+                > PREV(month_total_spent, by=(year.ASC(), month.ASC()), default=0.0)
+            )
+            & (
+                month_total_spent
+                > NEXT(month_total_spent, by=(year.ASC(), month.ASC()), default=0.0)
+            )
+        )
+        .CALCULATE(year, month)
+        .ORDER_BY(year.ASC(), month.ASC())
+    )
+
+
 def function_sampler():
-    # Examples of using different functions
+    # Functions tested:
+    # JOIN_STRINGS,
+    # ROUND (with and without precision),
+    # KEEP_IF,
+    # PRESENT,
+    # ABSENT,
+    # MONOTONIC
     return (
         Regions.CALCULATE(region_name=name)
         .nations.CALCULATE(nation_name=name)
@@ -137,6 +365,7 @@ def function_sampler():
             c=KEEP_IF(name, phone[:1] == "3"),
             d=PRESENT(KEEP_IF(name, phone[1:2] == "1")),
             e=ABSENT(KEEP_IF(name, phone[14:] == "7")),
+            f=ROUND(acctbal),
         )
         .WHERE(MONOTONIC(0.0, acctbal, 100.0))
         .TOP_K(10, by=address.ASC())
@@ -894,6 +1123,62 @@ def step_slicing():
     )
 
 
+def sign():
+    return (
+        DailyPrices.CALCULATE(
+            high,
+            high_neg=-1 * high,
+            high_zero=0 * high,
+        )
+        .TOP_K(5, by=high.ASC())
+        .CALCULATE(
+            high,
+            high_neg,
+            high_zero,
+            sign_high=SIGN(high),
+            sign_high_neg=SIGN(high_neg),
+            sign_high_zero=SIGN(high_zero),
+        )
+    )
+
+
+def find():
+    return Customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        name,
+        idx_Alex=FIND(name, "Alex"),
+        idx_Rodriguez=FIND(name, "Rodriguez"),
+        idx_bob=FIND(name, "bob"),
+        idx_e=FIND(name, "e"),
+        idx_space=FIND(name, " "),
+        idx_of_R=FIND(name, "R"),
+        idx_of_Alex_Rodriguez=FIND(name, "Alex Rodriguez"),
+    )
+
+
+def strip():
+    return (
+        Customers.WHERE(name == "Alex Rodriguez")
+        .CALCULATE(
+            name,
+            alt_name1="  Alex Rodriguez  ",
+            alt_name2="aeiAlex Rodriguezaeiou",
+            alt_name3=";;Alex Rodriguez;;",
+            alt_name4="""
+    Alex Rodriguez
+        """,  # equivalent to "\n\tAlex Rodriguez\n"
+        )
+        .CALCULATE(
+            stripped_name=STRIP(name, "Alex Rodriguez"),
+            stripped_name1=STRIP(name),
+            stripped_name_with_chars=STRIP(name, "lAez"),
+            stripped_alt_name1=STRIP(alt_name1),
+            stripped_alt_name2=STRIP(alt_name2, "aeiou"),
+            stripped_alt_name3=STRIP(alt_name3, ";"),
+            stripped_alt_name4=STRIP(alt_name4),
+        )
+    )
+
+
 def singular1():
     # Singular in CALCULATE & WHERE
     nation_4 = nations.WHERE(key == 4).SINGULAR()
@@ -940,14 +1225,13 @@ def singular4():
 
 
 def singular5():
-    # Finds the highest line item price per container, along with the container
-    # name.
+    # Find the most expensive line item per each container presented in parts.
     return PARTITION(
         Parts,
         name="parts",
         by=container,
     ).CALCULATE(
-        container=container,
+        container,
         highest_price_per_container=(
             parts.lines.WHERE(RANKING(by=extended_price.DESC(), levels=2) == 1)
             .SINGULAR()

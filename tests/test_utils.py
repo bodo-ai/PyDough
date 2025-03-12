@@ -235,9 +235,9 @@ class WindowInfo(AstNodeTestInfo):
         context: PyDoughCollectionQDAG | None = None,
         children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on RankingInfo without providing a context"
+        assert context is not None, (
+            "Cannot call .build() on RankingInfo without providing a context"
+        )
         collation_args: list[CollationExpression] = []
         for arg in self.collation:
             expr = arg[0].build(builder, context, children_contexts)
@@ -247,6 +247,7 @@ class WindowInfo(AstNodeTestInfo):
             case "RANKING":
                 return builder.build_window_call(
                     pydop.RANKING,
+                    [],
                     collation_args,
                     self.levels,
                     self.kwargs,
@@ -274,9 +275,9 @@ class ReferenceInfo(AstNodeTestInfo):
         context: PyDoughCollectionQDAG | None = None,
         children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
+        assert context is not None, (
+            "Cannot call .build() on ReferenceInfo without providing a context"
+        )
         return builder.build_reference(context, self.name)
 
 
@@ -301,9 +302,9 @@ class BackReferenceExpressionInfo(AstNodeTestInfo):
         context: PyDoughCollectionQDAG | None = None,
         children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on BackReferenceExpressionInfo without providing a context"
+        assert context is not None, (
+            "Cannot call .build() on BackReferenceExpressionInfo without providing a context"
+        )
         return builder.build_back_reference_expression(context, self.name, self.levels)
 
 
@@ -328,9 +329,9 @@ class ChildReferenceExpressionInfo(AstNodeTestInfo):
         context: PyDoughCollectionQDAG | None = None,
         children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughQDAG:
-        assert (
-            children_contexts is not None
-        ), "Cannot call .build() on ChildReferenceExpressionInfo without providing a list of child contexts"
+        assert children_contexts is not None, (
+            "Cannot call .build() on ChildReferenceExpressionInfo without providing a list of child contexts"
+        )
         return builder.build_child_reference_expression(
             children_contexts, self.child_idx, self.name
         )
@@ -360,9 +361,9 @@ class CollectionTestInfo(AstNodeTestInfo):
         `self.succeed` is called, it uses `self` as the predecessor/parent
         when building `other`.
         """
-        assert isinstance(
-            other, CollectionTestInfo
-        ), f"can only use ** for pipelining collection info when the right hand side is a collection info, not {other.__class__.__name__}"
+        assert isinstance(other, CollectionTestInfo), (
+            f"can only use ** for pipelining collection info when the right hand side is a collection info, not {other.__class__.__name__}"
+        )
         self.successor = other
         return self
 
@@ -459,9 +460,9 @@ class SubCollectionInfo(TableCollectionInfo):
         context: PyDoughCollectionQDAG | None = None,
         children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
+        assert context is not None, (
+            "Cannot call .build() on ReferenceInfo without providing a context"
+        )
         return builder.build_child_access(self.name, context)
 
 
@@ -487,9 +488,9 @@ class ChildOperatorChildAccessInfo(CollectionTestInfo):
         context: PyDoughCollectionQDAG | None = None,
         children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ReferenceInfo without providing a context"
+        assert context is not None, (
+            "Cannot call .build() on ReferenceInfo without providing a context"
+        )
         access: PyDoughCollectionQDAG = self.child_info.local_build(
             builder, context, children_contexts
         )
@@ -518,12 +519,12 @@ class ChildReferenceCollectionInfo(CollectionTestInfo):
         context: PyDoughCollectionQDAG | None = None,
         children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
-        assert (
-            context is not None
-        ), "Cannot call .build() on ChildReferenceCollection without providing a context"
-        assert (
-            children_contexts is not None
-        ), "Cannot call .build() on ChildReferenceCollection without providing a list of child contexts"
+        assert context is not None, (
+            "Cannot call .build() on ChildReferenceCollection without providing a context"
+        )
+        assert children_contexts is not None, (
+            "Cannot call .build() on ChildReferenceCollection without providing a list of child contexts"
+        )
         return builder.build_child_reference_collection(
             context, children_contexts, self.idx
         )
@@ -610,8 +611,7 @@ class CalculateInfo(ChildOperatorInfo):
             builder,
             context,
         )
-        raw_calc = builder.build_calculate(context, children)
-        assert isinstance(raw_calc, Calculate)
+        raw_calc: Calculate = builder.build_calculate(context, children)
         args: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
@@ -649,8 +649,7 @@ class WhereInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_where = builder.build_where(context, children)
-        assert isinstance(raw_where, Where)
+        raw_where: Where = builder.build_where(context, children)
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionQDAG)
         return raw_where.with_condition(cond)
@@ -695,8 +694,7 @@ class OrderInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_order = builder.build_order(context, children)
-        assert isinstance(raw_order, OrderBy)
+        raw_order: OrderBy = builder.build_order(context, children)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
@@ -747,8 +745,7 @@ class TopKInfo(ChildOperatorInfo):
         children: MutableSequence[PyDoughCollectionQDAG] = self.build_children(
             builder, context
         )
-        raw_top_k = builder.build_top_k(context, children, self.records_to_keep)
-        assert isinstance(raw_top_k, TopK)
+        raw_top_k: TopK = builder.build_top_k(context, children, self.records_to_keep)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
@@ -791,8 +788,9 @@ class PartitionInfo(ChildOperatorInfo):
             builder, context
         )
         assert len(children) == 1
-        raw_partition = builder.build_partition(context, children[0], self.child_name)
-        assert isinstance(raw_partition, PartitionBy)
+        raw_partition: PartitionBy = builder.build_partition(
+            context, children[0], self.child_name
+        )
         keys: list[ChildReferenceExpression] = []
         for info in self.keys:
             expr = info.build(builder, context, children)

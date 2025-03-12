@@ -26,11 +26,14 @@ class WindowCall(PyDoughExpressionQDAG):
     def __init__(
         self,
         window_operator: ExpressionWindowOperator,
+        args: list[PyDoughExpressionQDAG],
         collation_args: list[CollationExpression],
         levels: int | None,
         kwargs: dict[str, object],
     ):
+        window_operator.verify_allows_args(args)
         self._window_operator: ExpressionWindowOperator = window_operator
+        self._args: list[PyDoughExpressionQDAG] = args
         self._collation_args: list[CollationExpression] = collation_args
         self._levels: int | None = levels
         self._kwargs: dict[str, object] = kwargs
@@ -41,6 +44,13 @@ class WindowCall(PyDoughExpressionQDAG):
         The window operator that is being applied.
         """
         return self._window_operator
+
+    @property
+    def args(self) -> list[PyDoughExpressionQDAG]:
+        """
+        The list of arguments used to as inputs to the window function.
+        """
+        return self._args
 
     @property
     def collation_args(self) -> list[CollationExpression]:
@@ -67,7 +77,7 @@ class WindowCall(PyDoughExpressionQDAG):
 
     @property
     def pydough_type(self) -> PyDoughType:
-        return self.window_operator.infer_return_type([])
+        return self.window_operator.infer_return_type(self.args)
 
     @property
     def is_aggregation(self) -> bool:
@@ -86,7 +96,8 @@ class WindowCall(PyDoughExpressionQDAG):
         return False
 
     def to_string(self, tree_form: bool = False) -> str:
-        arg_strings: list[str] = [
+        arg_strings: list[str] = [f"{arg.to_string(tree_form)}, " for arg in self.args]
+        collation_arg_strings: list[str] = [
             arg.to_string(tree_form) for arg in self.collation_args
         ]
         suffix: str = ""
@@ -94,13 +105,14 @@ class WindowCall(PyDoughExpressionQDAG):
             suffix += f", levels={self.levels}"
         for kwarg in self.kwargs:
             suffix += f", {kwarg}={self.kwargs.get(kwarg)!r}"
-        return f"{self.window_operator.function_name}(by=({', '.join(arg_strings)}){suffix})"
+        return f"{self.window_operator.function_name}({''.join(arg_strings)}by=({', '.join(collation_arg_strings)}){suffix})"
 
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, WindowCall)
             and (self.window_operator == other.window_operator)
+            and (self.args == other.args)
             and (self.collation_args == other.collation_args)
             and (self.levels == other.levels)
-            and (self.kwargs == other.kwargs)
+            and (repr(self.kwargs) == repr(other.kwargs))
         )

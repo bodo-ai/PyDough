@@ -1492,6 +1492,152 @@ def convert_sqlite_datediff(
             raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
 
+def convert_round(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for rounding a number to a specified precision.
+    If no precision is provided, the number is rounded to 0 decimal places.
+    If a precision is provided, it must be an integer literal.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `ROUND(number, precision)`.
+    """
+    assert len(sql_glot_args) == 1 or len(sql_glot_args) == 2
+    precision_glot: SQLGlotExpression
+    if len(sql_glot_args) == 1:
+        precision_glot = sqlglot_expressions.Literal.number(0)
+    else:
+        # Check if the second argument is a integer literal.
+        if (
+            not isinstance(sql_glot_args[1], sqlglot_expressions.Literal)
+            or sql_glot_args[1].is_string
+        ):
+            raise ValueError(
+                f"Unsupported argument {sql_glot_args[1]} for ROUND."
+                "The precision argument should be an integer literal."
+            )
+        try:
+            int(sql_glot_args[1].this)
+        except ValueError:
+            raise ValueError(
+                f"Unsupported argument {sql_glot_args[1]} for ROUND."
+                "The precision argument should be an integer literal."
+            )
+        precision_glot = sql_glot_args[1]
+    return sqlglot_expressions.Round(
+        this=sql_glot_args[0],
+        decimals=precision_glot,
+    )
+
+
+def convert_sign(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for getting the sign of the operand.
+    It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+    Returns:
+        The SQLGlot expression matching the functionality of `SIGN(X)`.
+    """
+    assert len(sql_glot_args) == 1
+    arg: SQLGlotExpression = sql_glot_args[0]
+    zero_glot: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+    one_glot: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
+    minus_one_glot: SQLGlotExpression = sqlglot_expressions.Literal.number(-1)
+    answer: SQLGlotExpression = convert_iff_case(
+        None,
+        [
+            sqlglot_expressions.EQ(this=arg, expression=zero_glot),
+            zero_glot,
+            apply_parens(
+                convert_iff_case(
+                    None,
+                    [
+                        sqlglot_expressions.LT(this=arg, expression=zero_glot),
+                        minus_one_glot,
+                        one_glot,
+                    ],
+                ),
+            ),
+        ],
+    )
+    return answer
+
+
+def convert_strip(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for removing all leading and trailing whitespace from a string.
+    If a second argument is provided, it is used as the set of characters
+    to remove from the leading and trailing ends of the first argument.
+
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+
+    Returns:
+        The SQLGlot expression matching the functionality of `STRIP(X, Y)`.
+        In Python, this is equivalent to `X.strip(Y)`.
+    """
+    assert 1 <= len(sql_glot_args) <= 2
+    to_strip: SQLGlotExpression = sql_glot_args[0]
+    strip_char_glot: SQLGlotExpression
+    if len(sql_glot_args) == 1:
+        strip_char_glot = sqlglot_expressions.Literal.string("\n\t ")
+    else:
+        strip_char_glot = sql_glot_args[1]
+    return sqlglot_expressions.Trim(
+        this=to_strip,
+        expression=strip_char_glot,
+    )
+
+
+def convert_find(
+    raw_args: Sequence[RelationalExpression] | None,
+    sql_glot_args: Sequence[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Support for getting the index of the first occurrence of a substring within a string.
+    The first argument is the string to search within,
+    and the second argument is the substring to search for.
+    Args:
+        `raw_args`: The operands passed to the function before they were converted to
+        SQLGlot expressions. (Not actively used in this implementation.)
+        `sql_glot_args`: The operands passed to the function after they were converted
+        to SQLGlot expressions.
+    Returns:
+        The SQLGlot expression matching the functionality of `FIND(this, expression)`,
+        i.e the index of the first occurrence of the second argument within
+        the first argument, or -1 if the second argument is not found.
+    """
+    assert len(sql_glot_args) == 2
+    answer: SQLGlotExpression = sqlglot_expressions.Sub(
+        this=sqlglot_expressions.StrPosition(
+            this=sql_glot_args[0], substr=sql_glot_args[1]
+        ),
+        expression=sqlglot_expressions.Literal.number(1),
+    )
+    return answer
+
+
 class SqlGlotTransformBindings:
     """
     Binding infrastructure used to associate PyDough operators with a procedure
@@ -1647,10 +1793,14 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws
         self.bindings[pydop.LPAD] = convert_lpad
         self.bindings[pydop.RPAD] = convert_rpad
+        self.bindings[pydop.FIND] = convert_find
+        self.bindings[pydop.STRIP] = convert_strip
 
         # Numeric functions
         self.bind_simple_function(pydop.ABS, sqlglot_expressions.Abs)
         self.bind_simple_function(pydop.ROUND, sqlglot_expressions.Round)
+        self.bindings[pydop.SIGN] = convert_sign
+        self.bindings[pydop.ROUND] = convert_round
 
         # Conditional functions
         self.bind_simple_function(pydop.DEFAULT_TO, sqlglot_expressions.Coalesce)

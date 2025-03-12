@@ -23,6 +23,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [JOIN_STRINGS](#join_strings)
    * [LPAD](#lpad)
    * [RPAD](#rpad)
+   * [FIND](#find)
+   * [STRIP](#strip)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -45,6 +47,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [ROUND](#round)
    * [POWER](#power)
    * [SQRT](#sqrt)
+   * [SIGN](#sign)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -57,6 +60,8 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Window Functions](#window-functions)
    * [RANKING](#ranking)
    * [PERCENTILE](#percentile)
+   * [PREV](#prev)
+   * [NEXT](#next)
 - [Banned Python Logic](#banned-python-logic)
    * [\_\_bool\_\_](#__bool__)
    * [\_\_call\_\_](#call_banned)
@@ -332,6 +337,47 @@ Here are examples on how it pads on string literals:
 | `RPAD("123", 2, "0")` | `"12"` |
 | `RPAD("123", 0, "0")` | `""` |
 
+<!-- TOC --><a name="find"></a>
+
+### FIND
+
+The `FIND` function returns the position (0-indexed) of the first occurrence of a substring within a string, or -1 if the substring is not found. The first argument is the string to search within, and the second argument is the substring to search for.
+
+```py
+Customers.WHERE(name == "Alex Rodriguez")
+         .CALCULATE(
+            idx_Alex = FIND(name, "Alex"), # 0
+            idx_Rodriguez = FIND(name, "Rodriguez"), # 5
+            idx_bob = FIND(name, "bob"), # -1
+            idx_e = FIND(name, "e"), # 2
+            idx_space = FIND(name, " "), # 4
+            idx_of_R = FIND(name, "R"), # 5
+            idx_of_Alex_Rodriguez = FIND(name, "Alex Rodriguez"), # 0
+)
+```
+
+<!-- TOC --><a name="strip"></a>
+
+### STRIP
+
+The `STRIP` function returns the first argument with all leading and trailing whitespace removed, including newlines, tabs, and spaces.
+If the second argument is provided, it is used as the set of characters to remove from the leading and trailing ends of the first argument.
+It continues removing characters until it encounters a character that is not in the set.
+This function is equivalent to python's `str.strip()` method.
+Note: This function is case-sensitive.
+
+```py
+Customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trailing whitespace
+Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
+```
+
+| **Input String (X)**       | **STRIP(X, Y)**                    | **Result**          |
+|-----------------------------|---------------------------------------|---------------------|
+| `'abcXYZcba'`              | `STRIP('abcXYZcba','abc')`        | `'XYZ'`            |
+| `'$$Hello$$'`              | `STRIP('$$Hello$$','$$')`          | `'Hello'`          |
+| `'---Test-String---'`      | `STRIP('---Test-String---','-')`  | `'Test-String'`    |
+| `'123456Hello654321'`      | `STRIP('123456Hello654321','123456')` | `'Hello'`         |
+
 <!-- TOC --><a name="datetime-functions"></a>
 
 ## Datetime Functions
@@ -568,12 +614,17 @@ Customers.CALCULATE(acct_magnitude = abs(acctbal))
 
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The Python builtin `round()` function can also be used to accomplish the same thing. 
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places. The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
 Parts.CALCULATE(rounded_price = ROUND(retail_price, 1))
 # The below statement is equivalent to above.
 Parts.CALCULATE(rounded_price = round(retail_price, 1))
+
+# The below statement takes the default precision as 0.
+Parts.CALCULATE(rounded_price = ROUND(retail_price))
+# The below statement is equivalent to above.
+Parts.CALCULATE(rounded_price = ROUND(retail_price,0))
 ```
 
 Note: The default precision for builtin `round` method is 0, to be in alignment with the Python implementation. The PyDough `ROUND` function requires the precision to be specified.
@@ -603,6 +654,16 @@ The `SQRT` function takes the square root of its input. It's equivalent to `POWE
 
 ```py
 Parts.CALCULATE(sqrt_price = SQRT(retail_price))
+```
+
+<!-- TOC --><a name="sign"></a>
+
+### SIGN
+
+The `SIGN` function returns the sign of its input. It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+
+```py
+Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>
@@ -731,10 +792,11 @@ Below is each window function currently supported in PyDough.
 
 The `RANKING` function returns ordinal position of the current record when all records in the current context are sorted by certain ordering keys. The arguments:
 
-- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
-- `levels`: same `levels` argument as all other window functions.
-- `allow_ties`: optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
-- `dense`: optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
+- `by`:1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `allow_ties` (optional): optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
+- `dense` (optional): optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 
 ```py
 # Rank customers per-nation by their account balance
@@ -752,9 +814,9 @@ Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) 
 
 The `PERCENTILE` function returns what index the current record belongs to if all records in the current context are ordered then split into evenly sized buckets. The arguments:
 
-- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
-- `levels`: same `levels` argument as all other window functions.
-- `n_buckets`: optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `n_buckets` (optional): optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
 
 ```py
 # Keep the top 0.1% of customers with the highest account balances.
@@ -763,6 +825,56 @@ Customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
 # For every region, find the top 5% of customers with the highest account balances.
 Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), levels=2) > 95)
 ```
+
+<!-- TOC --><a name="prev"></a>
+
+### PREV
+
+The `PREV` function returns the value of an expression from a preceding record in the collection. The arguments:
+
+- `expression`: the expression to return the shifted value of.
+- `n` (optional): optional argument (default `1`) how many records backwards to look.
+- `default` (optional): optional argument (default `None`) the value to output when there is no record `n` before the current record. This must be a valid literal.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+```py
+# Find the 10 customers with at least 5 orders with the largest average time
+# gap between their orders, in days.
+Customers.WHERE(COUNT(orders) > 5).CALCULATE(
+   name,
+   average_order_gap=DATEDIFF("days", PREV(order_date, by=order_date.ASC(), levels=1), order_date)
+).TOP_K(10, by=average_order_gap.DESC())
+
+# For every year/month, calculate the percent change in the number of
+# orders made in that month from the previous month.
+PARTITION(
+   Orders(year=YEAR(order_date), month=MONTH(order_date)),
+   name="orders",
+   by=(year, month)
+).CALCULATE(
+   year,
+   month,
+   n_orders=COUNT(orders),
+   pct_change=
+      100.0
+      * (COUNT(orders) - PREV(COUNT(orders), by=(year.ASC(), month.ASC())))
+      / PREV(COUNT(orders), by=(year.ASC(), month.ASC()))
+)
+```
+
+<!-- TOC --><a name="next"></a>
+
+### NEXT
+
+The `NEXT` function returns the value of an expression from a following record in the collection. In other words, `NEXT(expr, n)` is the same as `PREV(expr, -n)`. The arguments:
+
+- `expression`: the expression to return the shifted value of.
+- `n` (optional): optional argument (default `1`) how many records forward to look.
+- `default` (optional): optional argument (default `None`) the value to output when there is no record `n` after the current record. This must be a valid literal.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
 
 ## Banned Python Logic
 

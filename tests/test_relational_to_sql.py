@@ -704,9 +704,9 @@ def test_convert_relation_to_sqlite_sql(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            created_sql == expected_relational_string.strip()
-        ), "Mismatch between tree generated SQL text and expected SQL text"
+        assert created_sql == expected_relational_string.strip(), (
+            "Mismatch between tree generated SQL text and expected SQL text"
+        )
 
 
 @pytest.mark.parametrize(
@@ -753,9 +753,9 @@ def test_tpch_relational_to_sqlite_sql(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            created_sql == expected_relational_string.strip()
-        ), "Mismatch between tree generated SQL text and expected SQL text"
+        assert created_sql == expected_relational_string.strip(), (
+            "Mismatch between tree generated SQL text and expected SQL text"
+        )
 
 
 @pytest.mark.parametrize(
@@ -1134,6 +1134,6 @@ def test_function_to_sql(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            created_sql == expected_relational_string.strip()
-        ), "Mismatch between tree generated SQL text and expected SQL text"
+        assert created_sql == expected_relational_string.strip(), (
+            "Mismatch between tree generated SQL text and expected SQL text"
+        )

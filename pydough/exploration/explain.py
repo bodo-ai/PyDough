@@ -5,8 +5,9 @@ explanations of PyDough metadata objects and unqualified nodes.
 
 __all__ = ["explain"]
 
-
+import pydough
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
 from pydough.metadata.graphs import GraphMetadata
@@ -295,13 +296,13 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     """
     lines: list[str] = []
     qualified_node: PyDoughQDAG | None = None
-
+    config: PyDoughConfigs = pydough.active_session.config
     # Attempt to qualify the node, dumping an appropriate message if it could
     # not be qualified
     try:
         root: UnqualifiedRoot | None = find_unqualified_root(node)
         if root is not None:
-            qualified_node = qualify_node(node, root._parcel[0])
+            qualified_node = qualify_node(node, root._parcel[0], config)
         else:
             # If the root is None, it means that the node was an expression
             # without information about its context.
@@ -513,13 +514,17 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
 
         if not verbose:
             lines.append(
-                "\n" "Call pydough.explain(collection, verbose=True) for more details."
+                "\nCall pydough.explain(collection, verbose=True) for more details."
             )
 
     return "\n".join(lines)
 
 
-def explain(data: AbstractMetadata | UnqualifiedNode, verbose: bool = False) -> str:
+def explain(
+    data: AbstractMetadata | UnqualifiedNode,
+    verbose: bool = False,
+    config: PyDoughConfigs | None = None,
+) -> str:
     """
     Displays information about a PyDough metadata object or unqualified node.
     The metadata could be for a graph, collection, or property. An unqualified
@@ -530,10 +535,14 @@ def explain(data: AbstractMetadata | UnqualifiedNode, verbose: bool = False) -> 
         `data`: the metadata or unqualified node object being examined.
         `verbose`: if true, displays more detailed information about `data` and
         in a less compact format.
+        `config`: the configuration to use for the explanation. If not provided,
+        the active session's configuration will be used.
 
     Returns:
         An explanation of `data`.
     """
+    if config is None:
+        config = pydough.active_session.config
     match data:
         case GraphMetadata():
             return explain_graph(data, verbose)

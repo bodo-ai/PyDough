@@ -19,6 +19,7 @@ __all__ = [
     "DIV",
     "ENDSWITH",
     "EQU",
+    "FIND",
     "GEQ",
     "GRT",
     "HAS",
@@ -43,18 +44,22 @@ __all__ = [
     "MUL",
     "NDISTINCT",
     "NEQ",
+    "NEXT",
     "NOT",
     "PERCENTILE",
     "POW",
     "POWER",
     "PRESENT",
+    "PREV",
     "RANKING",
     "ROUND",
     "RPAD",
     "SECOND",
+    "SIGN",
     "SLICE",
     "SQRT",
     "STARTSWITH",
+    "STRIP",
     "SUB",
     "SUM",
     "UPPER",
@@ -64,6 +69,7 @@ __all__ = [
 from pydough.pydough_operators.type_inference import (
     AllowAny,
     ConstantType,
+    RequireArgRange,
     RequireMinArgs,
     RequireNumArgs,
     SelectArgumentType,
@@ -105,6 +111,9 @@ UPPER = ExpressionFunctionOperator(
 STARTSWITH = ExpressionFunctionOperator(
     "STARTSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
 )
+STRIP = ExpressionFunctionOperator(
+    "STRIP", False, RequireArgRange(1, 2), SelectArgumentType(0)
+)
 ENDSWITH = ExpressionFunctionOperator(
     "ENDSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
 )
@@ -123,6 +132,9 @@ POWER = ExpressionFunctionOperator(
 )
 SQRT = ExpressionFunctionOperator(
     "SQRT", False, RequireNumArgs(1), ConstantType(Float64Type())
+)
+SIGN = ExpressionFunctionOperator(
+    "SIGN", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
 HAS = ExpressionFunctionOperator("HAS", True, AllowAny(), ConstantType(BooleanType()))
@@ -168,6 +180,9 @@ LPAD = ExpressionFunctionOperator(
 RPAD = ExpressionFunctionOperator(
     "RPAD", False, RequireNumArgs(3), SelectArgumentType(0)
 )
+FIND = ExpressionFunctionOperator(
+    "FIND", False, RequireNumArgs(2), ConstantType(Int64Type())
+)
 NOT = ExpressionFunctionOperator(
     "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())
 )
@@ -181,7 +196,7 @@ PRESENT = ExpressionFunctionOperator(
     "PRESENT", False, RequireNumArgs(1), ConstantType(BooleanType())
 )
 ROUND = ExpressionFunctionOperator(
-    "ROUND", False, RequireNumArgs(2), SelectArgumentType(0)
+    "ROUND", False, RequireArgRange(1, 2), SelectArgumentType(0)
 )
 MONOTONIC = ExpressionFunctionOperator(
     "MONOTONIC", False, RequireMinArgs(1), ConstantType(BooleanType())
@@ -199,3 +214,5 @@ RANKING = ExpressionWindowOperator(
 PERCENTILE = ExpressionWindowOperator(
     "PERCENTILE", RequireNumArgs(0), ConstantType(Int64Type())
 )
+PREV = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
+NEXT = ExpressionWindowOperator("NEXT", RequireNumArgs(1), SelectArgumentType(0))

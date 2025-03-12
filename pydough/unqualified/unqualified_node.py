@@ -27,7 +27,7 @@ from typing import Any, Union
 
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
-from pydough.metadata.errors import is_bool, is_positive_int
+from pydough.metadata.errors import is_bool, is_integer, is_positive_int
 from pydough.types import (
     ArrayType,
     BinaryType,
@@ -92,9 +92,9 @@ class UnqualifiedNode(ABC):
             typ: PyDoughType = UnknownType()
             for elem in obj:
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(elem)
-                assert isinstance(
-                    coerced_elem, UnqualifiedLiteral
-                ), f"Can only coerce list of literals to a literal, not {elem}"
+                assert isinstance(coerced_elem, UnqualifiedLiteral), (
+                    f"Can only coerce list of literals to a literal, not {elem}"
+                )
                 elems.append(coerced_elem)
             return UnqualifiedLiteral(elems, ArrayType(typ))
         raise PyDoughUnqualifiedException(f"Cannot coerce {obj!r} to a PyDough node.")
@@ -457,17 +457,19 @@ def get_by_arg(
             f"The `by` argument to `{func_name}` must be provided"
         )
     by = kwargs.pop("by")
-    if isinstance(by, UnqualifiedCollation):
+    by_allowed_type = UnqualifiedNode
+    if isinstance(by, by_allowed_type):
         by = [by]
     elif not (
         isinstance(by, Sequence)
-        and all(isinstance(arg, UnqualifiedCollation) for arg in by)
+        and all(isinstance(arg, by_allowed_type) for arg in by)
         and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{func_name}` must be a single collation expression or a non-empty iterable of collation expressions"
+            f"The `by` argument to `{func_name}` must be a single expression or a non-empty iterable of expressions."
+            "Please refer to the config documentation for more information."
         )
-    return by
+    return list(by)
 
 
 class UnqualifiedOperator(UnqualifiedNode):
@@ -483,6 +485,9 @@ class UnqualifiedOperator(UnqualifiedNode):
         levels: int | None = None
         window_operator: pydop.ExpressionWindowOperator
         is_window: bool = True
+        operands: MutableSequence[UnqualifiedNode] = []
+        for arg in args:
+            operands.append(self.coerce_to_unqualified(arg))
         match self._parcel[0]:
             case "PERCENTILE":
                 window_operator = pydop.PERCENTILE
@@ -493,6 +498,13 @@ class UnqualifiedOperator(UnqualifiedNode):
                 window_operator = pydop.RANKING
                 is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
                 is_bool.verify(kwargs.get("dense", False), "`dense` argument")
+            case "PREV" | "NEXT":
+                window_operator = (
+                    pydop.PREV if self._parcel[0] == "PREV" else pydop.NEXT
+                )
+                is_integer.verify(kwargs.get("n", 1), "`n` argument")
+                if len(args) > 1:
+                    is_integer.verify(args[1], "`n` argument")
             case func:
                 is_window = False
                 if len(kwargs) > 0:
@@ -507,13 +519,11 @@ class UnqualifiedOperator(UnqualifiedNode):
                 levels = levels_arg
             return UnqualifiedWindow(
                 window_operator,
+                operands,
                 by,
                 levels,
                 kwargs,
             )
-        operands: MutableSequence[UnqualifiedNode] = []
-        for arg in args:
-            operands.append(self.coerce_to_unqualified(arg))
         return UnqualifiedOperation(self._parcel[0], operands)
 
 
@@ -538,6 +548,7 @@ class UnqualifiedWindow(UnqualifiedNode):
     def __init__(
         self,
         operator: pydop.ExpressionWindowOperator,
+        arguments: Iterable[UnqualifiedNode],
         by: Iterable[UnqualifiedNode],
         levels: int | None,
         kwargs: dict[str, object],
@@ -545,9 +556,10 @@ class UnqualifiedWindow(UnqualifiedNode):
         self._parcel: tuple[
             pydop.ExpressionWindowOperator,
             Iterable[UnqualifiedNode],
+            Iterable[UnqualifiedNode],
             int | None,
             dict[str, object],
-        ] = (operator, by, levels, kwargs)
+        ] = (operator, arguments, by, levels, kwargs)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -705,10 +717,13 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             )
             return f"{unqualified._parcel[0]}({operands_str})"
         case UnqualifiedWindow():
-            operands_str = f'by=({", ".join([display_raw(operand) for operand in unqualified._parcel[1]])}'
-            if unqualified._parcel[2] is not None:
-                operands_str += ", levels=" + str(unqualified._parcel[2])
-            for kwarg, val in unqualified._parcel[3].items():
+            operands_str = ""
+            for operand in unqualified._parcel[1]:
+                operands_str += f"{display_raw(operand)}, "
+            operands_str += f"by=({', '.join([display_raw(operand) for operand in unqualified._parcel[2]])}"
+            if unqualified._parcel[3] is not None:
+                operands_str += ", levels=" + str(unqualified._parcel[3])
+            for kwarg, val in unqualified._parcel[4].items():
                 operands_str += f", {kwarg}={val!r}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"
         case UnqualifiedBinaryOperation():

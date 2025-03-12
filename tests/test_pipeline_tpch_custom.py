@@ -25,12 +25,18 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    avg_order_diff_per_customer,
+    customer_largest_order_deltas,
     datetime_current,
     datetime_relative,
     double_partition,
+    first_order_in_year,
+    first_order_per_customer,
     function_sampler,
+    month_year_sliding_windows,
     percentile_customers_per_region,
     percentile_nations,
+    prev_next_regions,
     rank_nations_by_region,
     rank_nations_per_region_by_customers,
     rank_parts_per_supplier_region_by_size,
@@ -46,7 +52,10 @@ from simple_pydough_functions import (
     singular3,
     singular4,
     singular5,
+    suppliers_bal_diffs,
     triple_partition,
+    year_month_nation_orders,
+    yoy_change_in_num_orders,
 )
 from test_utils import (
     graph_fetcher,
@@ -376,10 +385,44 @@ from pydough.unqualified import (
                         + ["Customer#000057817"],
                         "d": [0, 0, 0, 1, 0, 0, 1, 1, 0, 0],
                         "e": [1] * 9 + [0],
+                        "f": [
+                            16.0,
+                            61.0,
+                            39.0,
+                            28.0,
+                            35.0,
+                            56.0,
+                            40.0,
+                            38.0,
+                            58.0,
+                            70.0,
+                        ],
                     }
                 ),
             ),
             id="function_sampler",
+        ),
+        pytest.param(
+            (
+                year_month_nation_orders,
+                None,
+                "year_month_nation_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "MOZAMBIQUE",
+                            "MOZAMBIQUE",
+                            "CHINA",
+                            "ALGERIA",
+                            "INDONESIA",
+                        ],
+                        "order_year": [1992, 1997, 1993, 1996, 1996],
+                        "order_month": [10, 7, 8, 4, 5],
+                        "n_orders": [198, 194, 188, 186, 185],
+                    }
+                ),
+            ),
+            id="year_month_nation_orders",
         ),
         pytest.param(
             (
@@ -501,6 +544,200 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
+                first_order_per_customer,
+                None,
+                "first_order_per_customer",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000097444",
+                            "Customer#000092695",
+                            "Customer#000142948",
+                            "Customer#000095797",
+                            "Customer#000050726",
+                        ],
+                        "first_order_date": [
+                            "1992-03-01",
+                            "1992-09-10",
+                            "1992-09-07",
+                            "1992-06-18",
+                            "1992-11-01",
+                        ],
+                        "first_order_price": [
+                            454639.91,
+                            448940.71,
+                            447699.76,
+                            446979.77,
+                            443394.94,
+                        ],
+                    }
+                ),
+            ),
+            id="first_order_per_customer",
+        ),
+        pytest.param(
+            (
+                prev_next_regions,
+                None,
+                "prev_next_regions",
+                lambda: pd.DataFrame(
+                    {
+                        "two_preceding": [None, None, "AFRICA", "AMERICA", "ASIA"],
+                        "one_preceding": [None, "AFRICA", "AMERICA", "ASIA", "EUROPE"],
+                        "current": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "one_following": [
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                            None,
+                        ],
+                        "two_following": ["ASIA", "EUROPE", "MIDDLE EAST", None, None],
+                    }
+                ),
+            ),
+            id="prev_next_regions",
+        ),
+        pytest.param(
+            (
+                avg_order_diff_per_customer,
+                None,
+                "avg_order_diff_per_customer",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000075872",
+                            "Customer#000004796",
+                            "Customer#000112880",
+                            "Customer#000041345",
+                            "Customer#000119474",
+                        ],
+                        "avg_diff": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
+                    }
+                ),
+            ),
+            id="avg_order_diff_per_customer",
+        ),
+        pytest.param(
+            (
+                yoy_change_in_num_orders,
+                None,
+                "yoy_change_in_num_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "year": range(1992, 1999),
+                        "current_year_orders": [
+                            227089,
+                            226645,
+                            227597,
+                            228637,
+                            228626,
+                            227783,
+                            133623,
+                        ],
+                        "pct_change": [
+                            None,
+                            -0.195518,
+                            0.420040,
+                            0.456948,
+                            -0.0048111,
+                            -0.368724,
+                            -41.337589,
+                        ],
+                    }
+                ),
+            ),
+            id="yoy_change_in_num_orders",
+        ),
+        pytest.param(
+            (
+                first_order_in_year,
+                None,
+                "first_order_in_year",
+                lambda: pd.DataFrame(
+                    {
+                        "order_date": [f"{yr}-01-01" for yr in range(1992, 1999)],
+                        "key": [3271, 15233, 290, 14178, 4640, 5895, 20064],
+                    }
+                ),
+            ),
+            id="first_order_in_year",
+        ),
+        pytest.param(
+            (
+                customer_largest_order_deltas,
+                None,
+                "customer_largest_order_deltas",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000054733",
+                            "Customer#000107128",
+                            "Customer#000019063",
+                            "Customer#000100810",
+                            "Customer#000127003",
+                        ],
+                        "largest_diff": [
+                            454753.9935,
+                            447181.8195,
+                            446706.3978,
+                            443366.9780,
+                            442893.6328,
+                        ],
+                    }
+                ),
+            ),
+            id="customer_largest_order_deltas",
+        ),
+        pytest.param(
+            (
+                suppliers_bal_diffs,
+                None,
+                "suppliers_bal_diffs",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Supplier#000004473",
+                            "Supplier#000000188",
+                            "Supplier#000005963",
+                            "Supplier#000004115",
+                            "Supplier#000007267",
+                        ],
+                        "region_name": [
+                            "ASIA",
+                            "MIDDLE EAST",
+                            "AMERICA",
+                            "EUROPE",
+                            "EUROPE",
+                        ],
+                        "acctbal_delta": [44.43, 43.25, 43.15, 41.54, 41.48],
+                    }
+                ),
+            ),
+            id="suppliers_bal_diffs",
+        ),
+        pytest.param(
+            (
+                month_year_sliding_windows,
+                None,
+                "month_year_sliding_windows",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1996] * 6 + [1997] * 4 + [1998] * 4,
+                        "month": [1, 3, 5, 8, 10, 12, 3, 5, 7, 10, 1, 3, 5, 7],
+                    }
+                ),
+            ),
+            id="month_year_sliding_windows",
+        ),
+        pytest.param(
+            (
                 singular1,
                 None,
                 "singular1",
@@ -561,82 +798,11 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000001",
-                            "Customer#000000001",
-                            "Customer#000000001",
-                            "Customer#000000001",
-                            "Customer#000000001",
-                            "Customer#000000001",
-                            "Customer#000000002",
-                            "Customer#000000002",
-                            "Customer#000000002",
-                            "Customer#000000002",
-                            "Customer#000000002",
-                            "Customer#000000002",
-                            "Customer#000000002",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
-                            "Customer#000000004",
+                            "Customer#000000003",
                             "Customer#000000005",
-                            "Customer#000000005",
-                            "Customer#000000005",
-                            "Customer#000000005",
-                        ],
-                        "key": [
-                            454791,
-                            579908,
-                            3868359,
-                            4273923,
-                            4808192,
-                            5133509,
-                            430243,
-                            1071617,
-                            1374019,
-                            1763205,
-                            1842406,
-                            2992930,
-                            3986496,
-                            164711,
-                            385825,
-                            1192231,
-                            1226497,
-                            1590469,
-                            1755398,
-                            1944711,
-                            1953441,
-                            1978756,
-                            2459619,
-                            2765152,
-                            2986913,
-                            3251169,
-                            3421092,
-                            3683623,
-                            3951331,
-                            4320612,
-                            4960614,
-                            5453440,
-                            5612065,
-                            224167,
-                            287619,
-                            905633,
-                            2630562,
+                            "Customer#000000001",
+                            "Customer#000000004",
+                            "Customer#000000002",
                         ],
                     }
                 ),
@@ -651,11 +817,11 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000001",
-                            "Customer#000000002",
                             "Customer#000000003",
-                            "Customer#000000004",
-                            "Customer#000000005",
+                            "Customer#000000006",
+                            "Customer#000000009",
+                            "Customer#000000012",
+                            "Customer#000000015",
                         ]
                     }
                 ),
@@ -670,7 +836,7 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({}),
             ),
             id="singular5",
-            marks=pytest.mark.skip(reason="Needs work on logic."),
+            # marks=pytest.mark.skip(reason="Needs work on logic."),
         ),
     ],
 )
@@ -722,10 +888,10 @@ def test_pipeline_until_relational_tpch_custom(
     graph: GraphMetadata = get_sample_graph("TPCH")
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph)
-    assert isinstance(
-        qualified, PyDoughCollectionQDAG
-    ), "Expected qualified answer to be a collection, not an expression"
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
+    assert isinstance(qualified, PyDoughCollectionQDAG), (
+        "Expected qualified answer to be a collection, not an expression"
+    )
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, _load_column_selection({"columns": columns}), default_config
     )
@@ -735,9 +901,9 @@ def test_pipeline_until_relational_tpch_custom(
     else:
         with open(file_path) as f:
             expected_relational_string: str = f.read()
-        assert (
-            relational.to_tree_string() == expected_relational_string.strip()
-        ), "Mismatch between tree string representation of relational node and expected Relational tree string"
+        assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between tree string representation of relational node and expected Relational tree string"
+        )
 
 
 @pytest.mark.execute

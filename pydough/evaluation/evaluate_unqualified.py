@@ -85,18 +85,18 @@ def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] |
         return None
     elif isinstance(columns_arg, list):
         for column in columns_arg:
-            assert isinstance(
-                column, str
-            ), f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
+            assert isinstance(column, str), (
+                f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
+            )
             result.append((column, column))
     elif isinstance(columns_arg, dict):
         for alias, column in columns_arg.items():
-            assert isinstance(
-                alias, str
-            ), f"Expected alias name in `columns` argument to be a string, found {column.__class__.__name__}"
-            assert isinstance(
-                column, str
-            ), f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
+            assert isinstance(alias, str), (
+                f"Expected alias name in `columns` argument to be a string, found {column.__class__.__name__}"
+            )
+            assert isinstance(column, str), (
+                f"Expected column name in `columns` argument to be a string, found {column.__class__.__name__}"
+            )
             result.append((alias, column))
     else:
         raise TypeError(
@@ -127,7 +127,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     database: DatabaseContext
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
     graph, config, database, bindings = _load_session_info(**kwargs)
-    qualified: PyDoughQDAG = qualify_node(node, graph)
+    qualified: PyDoughQDAG = qualify_node(node, graph, config)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
@@ -162,7 +162,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
     display_sql: bool = bool(kwargs.pop("display_sql", False))
     graph, config, database, bindings = _load_session_info(**kwargs)
-    qualified: PyDoughQDAG = qualify_node(node, graph)
+    qualified: PyDoughQDAG = qualify_node(node, graph, config)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
