@@ -49,6 +49,13 @@ from simple_pydough_functions import (
     simple_filter_top_five,
     simple_scan,
     simple_scan_top_five,
+    singular1,
+    singular2,
+    singular3,
+    singular4,
+    singular5,
+    singular6,
+    singular7,
     suppliers_bal_diffs,
     top_customers_by_orders,
     triple_partition,
@@ -760,6 +767,181 @@ from pydough.unqualified import (
                 ),
             ),
             id="month_year_sliding_windows",
+        ),
+        pytest.param(
+            (
+                singular1,
+                None,
+                "singular1",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "nation_4_name": [None, None, None, None, "EGYPT"],
+                    }
+                ),
+            ),
+            id="singular1",
+        ),
+        pytest.param(
+            (
+                singular2,
+                None,
+                "singular2",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                            "INDONESIA",
+                            "IRAN",
+                            "IRAQ",
+                            "JAPAN",
+                            "JORDAN",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "PERU",
+                            "CHINA",
+                            "ROMANIA",
+                            "SAUDI ARABIA",
+                            "VIETNAM",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                            "UNITED STATES",
+                        ],
+                        "okey": [None] * 15 + [454791] + [None] * 9,
+                    }
+                ),
+            ),
+            id="singular2",
+        ),
+        pytest.param(
+            (
+                singular3,
+                None,
+                "singular3",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000000003",
+                            "Customer#000000005",
+                            "Customer#000000001",
+                            "Customer#000000004",
+                            "Customer#000000002",
+                        ],
+                    }
+                ),
+            ),
+            id="singular3",
+        ),
+        pytest.param(
+            (
+                singular4,
+                None,
+                "singular4",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000000018",
+                            "Customer#000000153",
+                            "Customer#000000204",
+                            "Customer#000000284",
+                            "Customer#000000312",
+                        ]
+                    }
+                ),
+            ),
+            id="singular4",
+        ),
+        pytest.param(
+            (
+                singular5,
+                None,
+                "singular5",
+                lambda: pd.DataFrame(
+                    {
+                        "container": [
+                            "MED CAN",
+                            "LG JAR",
+                            "LG CASE",
+                            "WRAP CAN",
+                            "LG DRUM",
+                        ],
+                        "highest_price_ship_date": [
+                            "1992-03-09",
+                            "1992-08-02",
+                            "1992-08-10",
+                            "1992-11-01",
+                            "1992-11-22",
+                        ],
+                    }
+                ),
+            ),
+            id="singular5",
+        ),
+        pytest.param(
+            (
+                singular6,
+                None,
+                "singular6",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in [28763, 98677, 37480, 29545, 85243]
+                        ],
+                        "receipt_date": [
+                            "1992-02-03",
+                            "1992-02-18",
+                            "1992-04-03",
+                            "1992-07-21",
+                            "1992-08-15",
+                        ],
+                        "nation_name": [
+                            "ARGENTINA",
+                            "FRANCE",
+                            "FRANCE",
+                            "IRAQ",
+                            "UNITED KINGDOM",
+                        ],
+                    }
+                ),
+            ),
+            id="singular6",
+        ),
+        pytest.param(
+            (
+                singular7,
+                None,
+                "singular7",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_name": [
+                            "Supplier#000000687",
+                            "Supplier#000000565",
+                            "Supplier#000000977",
+                            "Supplier#000001251",
+                            "Supplier#000004625",
+                        ],
+                        "part_name": [
+                            "peach orange blanched firebrick ghost",
+                            "sienna lime mint frosted beige",
+                            "blanched goldenrod lawn metallic midnight",
+                            "seashell deep almond cyan lemon",
+                            "red ivory indian seashell deep",
+                        ],
+                        "n_orders": [8, 7, 7, 7, 7],
+                    }
+                ),
+            ),
+            id="singular7",
         ),
         pytest.param(
             (

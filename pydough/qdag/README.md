@@ -91,6 +91,29 @@ condition = builder.build_expression_function_call(
 where_node = builder.build_where(table_collection, [child_collection])
 where_node = where_node.with_condition(condition)
 
+# Build a SINGULAR node
+# Equivalent PyDough code: `Regions.CALCULATE(n_4_nation=nations.WHERE(key == 4).SINGULAR().name)`
+# Build base Regions collection
+global_context_node = builder.build_global_context()
+regions_collection = builder.build_child_access("Regions", global_context_node)
+# Access nations sub-collection
+nations_sub_collection = builder.build_child_access("nations", regions_collection)
+# Create WHERE(key == 4) condition
+key_ref = builder.build_reference(nations_sub_collection, "key")
+literal_4 = builder.build_literal(4, Int64Type())
+condition = builder.build_expression_function_call("EQU", [key_ref, literal_4])
+# Build WHERE node with condition
+where_node = builder.build_where(nations_sub_collection, [])
+where_node = where_node.with_condition(condition)
+# Create SINGULAR node from filtered result
+singular_node = builder.build_singular(where_node)
+# Build reference node for name
+reference_node = builder.build_reference(singular_node, "name")
+# Build CALCULATE node with calculated term
+calculate_node = builder.build_calc(regions_collection, [nations_sub_collection])
+calculate_node = calculate_node.with_terms([("n_4_nation", reference_node)])
+
+
 # Build an ORDER BY node
 # Equivalent PyDough code: `TPCH.Nations.ORDER_BY(name.ASC(na_pos='first'))`
 collation_expression = builder.build_collation_expression(

@@ -12,6 +12,7 @@ from pydough.metadata.properties import SubcollectionRelationshipMetadata
 
 from .collection_access import CollectionAccess
 from .collection_qdag import PyDoughCollectionQDAG
+from .singular import Singular
 
 
 class SubCollection(CollectionAccess):
@@ -51,7 +52,14 @@ class SubCollection(CollectionAccess):
         relative_ancestor: PyDoughCollectionQDAG = (
             self.ancestor_context.starting_predecessor
         )
-        return (context == relative_ancestor) or relative_ancestor.is_singular(context)
+        return (
+            (context == relative_ancestor)
+            or relative_ancestor.is_singular(context)
+            or (
+                isinstance(self.ancestor_context, Singular)
+                and self.ancestor_context.is_singular(context)
+            )
+        )
 
     @property
     def key(self) -> str:

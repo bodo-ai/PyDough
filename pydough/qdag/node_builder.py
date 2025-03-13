@@ -30,6 +30,7 @@ from .collections import (
     OrderBy,
     PartitionBy,
     PyDoughCollectionQDAG,
+    Singular,
     TopK,
     Where,
 )
@@ -389,3 +390,18 @@ class AstNodeBuilder:
         return ChildReferenceCollection(
             preceding_context, children[child_idx], child_idx
         )
+
+    def build_singular(
+        self,
+        preceding_context: PyDoughCollectionQDAG,
+    ) -> Singular:
+        """
+        Creates a SINGULAR instance.
+
+        Args:
+            `preceding_context`: the preceding collection.
+
+        Returns:
+            The newly created PyDough SINGULAR instance.
+        """
+        return Singular(preceding_context)
