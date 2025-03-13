@@ -385,3 +385,62 @@ def correl_23():
     return TPCH.CALCULATE(avg_n_combo=AVG(sizes.n_combos)).CALCULATE(
         n_sizes=COUNT(sizes.WHERE(n_combos > avg_n_combo)),
     )
+
+
+def correl_24():
+    # For every year/month before 1994, count how many orders that month had a
+    # total price that was between the average for that month and the previous
+    # month. Drop year/month combos that have no such orders.
+    # (This is a correlated semi/aggregation access)
+    order_info = Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)).WHERE(
+        year < 1994
+    )
+    month_info = PARTITION(order_info, name="orders", by=(year, month)).CALCULATE(
+        curr_month_avg_price=AVG(orders.total_price),
+        prev_month_avg_price=PREV(
+            AVG(orders.total_price), by=(year.ASC(), month.ASC())
+        ),
+    )
+    chosen_orders_from_month = orders.WHERE(
+        MONOTONIC(prev_month_avg_price, total_price, curr_month_avg_price)
+        | MONOTONIC(curr_month_avg_price, total_price, prev_month_avg_price)
+    )
+    return (
+        month_info.WHERE(HAS(chosen_orders_from_month))
+        .CALCULATE(year, month, n_orders_in_range=COUNT(chosen_orders_from_month))
+        .ORDER_BY(year, month)
+    )
+
+
+def correl_25():
+    # Return the region name/key, nation name/key, and customer name for the 5
+    # customers with the highest number of urgent semi-domestic rail-based
+    # orders made in 1996. An order meets these criteria if it was shipped in
+    # 1996, has priority of "1-URGENT", and has at least 1 lineitem shipped via
+    # rail from a supplier in a different nation from the same region as teh
+    # customer.
+    urgent_semi_domestic_rail_orders = (
+        orders.WHERE((order_priority == "1-URGENT") & (YEAR(order_date) == 1996))
+        .lines.CALCULATE(order_key)
+        .WHERE((ship_mode == "RAIL"))
+        .WHERE(
+            (supplier.nation.name != cust_nation_name)
+            & (supplier.nation.region.name == cust_region_name)
+        )
+    )
+    return (
+        Regions.CALCULATE(cust_region_name=name, cust_region_key=key)
+        .nations.CALCULATE(cust_nation_name=name, cust_nation_key=key)
+        .customers.WHERE(HAS(urgent_semi_domestic_rail_orders))
+        .CALCULATE(
+            cust_region_name,
+            cust_region_key,
+            cust_nation_name,
+            cust_nation_key,
+            customer_name=name,
+            n_urgent_semi_domestic_rail_orders=NDISTINCT(
+                urgent_semi_domestic_rail_orders.order_key
+            ),
+        )
+        .TOP_K(5, by=(n_urgent_semi_domestic_rail_orders.DESC(), name.ASC()))
+    )
