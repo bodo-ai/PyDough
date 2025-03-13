@@ -14,6 +14,7 @@ __all__ = [
     "OrderInfo",
     "PartitionInfo",
     "ReferenceInfo",
+    "SingularInfo",
     "SubCollectionInfo",
     "TableCollectionInfo",
     "TopKInfo",
@@ -40,6 +41,7 @@ from pydough.qdag import (
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
+    Singular,
     TopK,
     Where,
 )
@@ -653,6 +655,35 @@ class WhereInfo(ChildOperatorInfo):
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionQDAG)
         return raw_where.with_condition(cond)
+
+
+class SingularInfo(ChildOperatorInfo):
+    """
+    CollectionTestInfo implementation class to build a SINGULAR clause.
+    Contains the following fields:
+    - `condition`: a test info describing the predicate for the WHERE clause.
+
+    NOTE: must provide a `context` when building.
+    """
+
+    def __init__(
+        self,
+    ):
+        super().__init__([])
+
+    def local_string(self) -> str:
+        return f"SINGULAR[{self.child_strings()}]"
+
+    def local_build(
+        self,
+        builder: AstNodeBuilder,
+        context: PyDoughCollectionQDAG | None = None,
+        children_contexts: MutableSequence[PyDoughCollectionQDAG] | None = None,
+    ) -> PyDoughCollectionQDAG:
+        if context is None:
+            raise Exception("Must provide a context when building a Singular clause.")
+        raw_singular: Singular = builder.build_singular(context)
+        return raw_singular
 
 
 class OrderInfo(ChildOperatorInfo):

@@ -1300,6 +1300,7 @@ def singular6():
     return selected_customers.CALCULATE(name, lq.receipt_date, lq.nation_name).TOP_K(
         5, by=(receipt_date.ASC(), name.ASC())
     )
+    # return Nations.CALCULATE(name, okey=customers.WHERE(key == 1).SINGULAR().orders.key)
 
 
 def singular7():

@@ -14,6 +14,7 @@ from test_utils import (
     OrderInfo,
     PartitionInfo,
     ReferenceInfo,
+    SingularInfo,
     SubCollectionInfo,
     TableCollectionInfo,
     TopKInfo,
@@ -190,7 +191,20 @@ from pydough.qdag import AstNodeBuilder
             "Expected all terms in CALCULATE(container=container, balance=parts.suppliers_of_part.account_balance) to be singular, but encountered a plural expression: parts.suppliers_of_part.account_balance",
             id="bad_plural_i",
         ),
-        # TODO: Add test for Nations.CALCULATE(name, okey=customers.SINGULAR().orders.key)
+        pytest.param(
+            TableCollectionInfo("Nations")
+            ** CalculateInfo(
+                [
+                    SubCollectionInfo("customers")
+                    ** SingularInfo()
+                    ** SubCollectionInfo("orders")
+                ],
+                name=ReferenceInfo("name"),
+                okey=ChildReferenceExpressionInfo("key", 0),
+            ),
+            "Expected all terms in CALCULATE(name=name, okey=customers.SINGULAR.orders.key) to be singular, but encountered a plural expression: customers.SINGULAR.orders.key",
+            id="bad_plural_j",
+        ),
     ],
 )
 def test_malformed_collection_sequences(

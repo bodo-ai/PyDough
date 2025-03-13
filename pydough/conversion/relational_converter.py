@@ -211,7 +211,6 @@ class RelTranslation:
                                 and back_expr.name == expr.name
                             ):
                                 return context.expressions[back_expr]
-                    breakpoint()
                     raise ValueError(f"Context does not contain expression {expr}")
                 return context.expressions[expr]
             case HybridFunctionExpr():
