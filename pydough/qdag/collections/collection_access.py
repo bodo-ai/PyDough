@@ -105,9 +105,6 @@ class CollectionAccess(ChildAccess):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        from .compound_sub_collection import CompoundSubCollection
-        from .sub_collection import SubCollection
-
         # Special handling of terms down-streamed from an ancestor CALCULATE
         # clause.
         if term_name in self.ancestral_mapping:
@@ -136,6 +133,14 @@ class CollectionAccess(ChildAccess):
             raise PyDoughQDAGException(
                 f"Unrecognized term of {self.collection.error_name}: {term_name!r}"
             )
+        return self.get_term_from_property(term_name)
+
+    def get_term_from_property(self, term_name: str) -> PyDoughQDAG:
+        """
+        Fetch the QDAG node corresponding to a property of the collection.
+        """
+        from .compound_sub_collection import CompoundSubCollection
+        from .sub_collection import SubCollection
 
         property = self.collection.get_property(term_name)
         assert isinstance(property, PropertyMetadata)

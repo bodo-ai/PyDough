@@ -33,6 +33,11 @@ from defog_outputs import (
     defog_sql_text_broker_basic8,
     defog_sql_text_broker_basic9,
     defog_sql_text_broker_basic10,
+    defog_sql_text_broker_gen1,
+    defog_sql_text_broker_gen2,
+    defog_sql_text_broker_gen3,
+    defog_sql_text_broker_gen4,
+    defog_sql_text_broker_gen5,
 )
 from defog_test_functions import (
     impl_defog_broker_adv1,
@@ -61,6 +66,11 @@ from defog_test_functions import (
     impl_defog_broker_basic8,
     impl_defog_broker_basic9,
     impl_defog_broker_basic10,
+    impl_defog_broker_gen1,
+    impl_defog_broker_gen2,
+    impl_defog_broker_gen3,
+    impl_defog_broker_gen4,
+    impl_defog_broker_gen5,
 )
 from test_utils import (
     graph_fetcher,
@@ -170,7 +180,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="broker_adv9",
             marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK and WEEKOFYEAR functions"
+                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
             ),
         ),
         pytest.param(
@@ -308,6 +318,46 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_basic10,
             ),
             id="broker_basic10",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_gen1,
+                "Broker",
+                defog_sql_text_broker_gen1,
+            ),
+            id="broker_gen1",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_gen2,
+                "Broker",
+                defog_sql_text_broker_gen2,
+            ),
+            id="broker_gen2",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_gen3,
+                "Broker",
+                defog_sql_text_broker_gen3,
+            ),
+            id="broker_gen3",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_gen4,
+                "Broker",
+                defog_sql_text_broker_gen4,
+            ),
+            id="broker_gen4",
+        ),
+        pytest.param(
+            (
+                impl_defog_broker_gen5,
+                "Broker",
+                defog_sql_text_broker_gen5,
+            ),
+            id="broker_gen5",
         ),
     ],
 )

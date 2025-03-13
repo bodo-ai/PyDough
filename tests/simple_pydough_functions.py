@@ -31,6 +31,20 @@ def simple_filter_top_five():
     )
 
 
+def order_info_per_priority():
+    # Find information about the highest total price order for each priority
+    # type in 1992. Specifically, for each order priority, the key & total
+    # price of the order. Order the results by priority.
+    priorities = PARTITION(
+        Orders.WHERE(YEAR(order_date) == 1992), name="orders", by=order_priority
+    )
+    return (
+        priorities.orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+        .CALCULATE(order_priority, order_key=key, order_total_price=total_price)
+        .ORDER_BY(order_priority.ASC())
+    )
+
+
 def simple_collation():
     return (
         Suppliers.CALCULATE(
@@ -346,6 +360,27 @@ def month_year_sliding_windows():
         .CALCULATE(year, month)
         .ORDER_BY(year.ASC(), month.ASC())
     )
+
+
+def avg_gap_prev_urgent_same_clerk():
+    # Finds the average gap in days between each urgent order and the previous
+    # urgent order handled by the same clerk
+    urgent_orders = Orders.WHERE(order_priority == "1-URGENT")
+    clerks = PARTITION(urgent_orders, name="orders", by=clerk)
+    order_info = clerks.orders.CALCULATE(
+        delta=DATEDIFF(
+            "days", PREV(order_date, by=order_date.ASC(), levels=1), order_date
+        )
+    )
+    return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
+
+
+def top_customers_by_orders():
+    # Finds the keys of the 5 customers with the most orders.
+    return Customers.CALCULATE(
+        customer_key=key,
+        n_orders=COUNT(orders),
+    ).TOP_K(5, by=(COUNT(orders).DESC(), customer_key.ASC()))
 
 
 def function_sampler():

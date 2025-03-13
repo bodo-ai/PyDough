@@ -463,7 +463,7 @@ class RelTranslation:
             if child.required_steps == pipeline_idx:
                 self.stack.append(context)
                 child_output = self.rel_translation(
-                    child, child.subtree, len(child.subtree.pipeline) - 1
+                    child.subtree, len(child.subtree.pipeline) - 1
                 )
                 self.stack.pop()
                 assert child.subtree.join_keys is not None
@@ -795,7 +795,7 @@ class RelTranslation:
     def translate_partition_child(
         self,
         node: HybridPartitionChild,
-        context: TranslationOutput,
+        context: TranslationOutput | None,
     ) -> TranslationOutput:
         """
         Converts a step into the child of a PARTITION node into a join between
@@ -804,8 +804,6 @@ class RelTranslation:
 
         Args:
             `node`: the node corresponding to the partition child access.
-            `parent`: the hybrid tree of the previous layer that the access
-            steps down from.
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts.
@@ -815,8 +813,27 @@ class RelTranslation:
             aggregated partitions and the original partitioned data.
         """
         child_output: TranslationOutput = self.rel_translation(
-            None, node.subtree, len(node.subtree.pipeline) - 1
+            node.subtree, len(node.subtree.pipeline) - 1
         )
+
+        if context is None:
+            return child_output
+
+        # Special case: when the context is the just-partitioned data, just
+        # return the child without bothering to join them.
+        if (
+            isinstance(context.relational_node, Aggregate)
+            and len(context.relational_node.aggregations) == 0
+        ):
+            new_expressions: dict[HybridExpr, ColumnReference] = dict(
+                child_output.expressions
+            )
+            for expr, column_ref in child_output.expressions.items():
+                shifted_expr: HybridExpr | None = expr.shift_back(1)
+                if shifted_expr is not None:
+                    new_expressions[shifted_expr] = column_ref
+            return TranslationOutput(child_output.relational_node, new_expressions)
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         assert node.subtree.agg_keys is not None
         for agg_key in sorted(node.subtree.agg_keys, key=str):
@@ -833,7 +850,6 @@ class RelTranslation:
 
     def rel_translation(
         self,
-        connection: HybridConnection | None,
         hybrid: HybridTree,
         pipeline_idx: int,
     ) -> TranslationOutput:
@@ -842,9 +858,6 @@ class RelTranslation:
         into a TranslationOutput payload.
 
         Args:
-            `connection`: the HybridConnection instance that defines the
-            parent-child relationship containing the subtree being defined
-            (as the child), or None if this is the main path.
             `hybrid`: the current level of the hybrid tree to be derived,
             including all levels before it.
             `pipeline_idx`: the index of the operation in the pipeline of the
@@ -885,7 +898,7 @@ class RelTranslation:
             context = TranslationOutput(EmptySingleton(), {})
             context = self.handle_children(context, *preceding_hybrid)
         else:
-            context = self.rel_translation(connection, *preceding_hybrid)
+            context = self.rel_translation(*preceding_hybrid)
 
         # Then, dispatch onto the logic to transform from the context into the
         # new translation output.
@@ -929,7 +942,6 @@ class RelTranslation:
                     else:
                         result = self.build_simple_table_scan(operation)
             case HybridPartitionChild():
-                assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_partition_child(operation, context)
             case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
@@ -1040,7 +1052,7 @@ def convert_ast_to_relational(
     run_hybrid_decorrelation(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
-        None, hybrid, len(hybrid.pipeline) - 1
+        hybrid, len(hybrid.pipeline) - 1
     )
     ordered_columns: list[tuple[str, RelationalExpression]] = []
     orderings: list[ExpressionSortInfo] | None = None

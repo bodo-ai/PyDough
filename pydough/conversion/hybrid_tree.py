@@ -25,7 +25,6 @@ __all__ = [
     "HybridTree",
 ]
 
-import copy
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -446,20 +445,15 @@ class HybridCollectionAccess(HybridOperation):
     """
 
     def __init__(self, collection: CollectionAccess):
-        expr: PyDoughExpressionQDAG
         self.collection: CollectionAccess = collection
         terms: dict[str, HybridExpr] = {}
         for name in collection.calc_terms:
-            # Skip columns that are overloaded with a name from an ancestor,
-            # since they should not be used.
-            if name in collection.ancestral_mapping:
-                continue
-            expr = collection.get_expr(name)
-            assert isinstance(expr, ColumnProperty)
-            terms[name] = HybridColumnExpr(expr)
+            raw_expr = collection.get_term_from_property(name)
+            assert isinstance(raw_expr, ColumnProperty)
+            terms[name] = HybridColumnExpr(raw_expr)
         unique_exprs: list[HybridExpr] = []
         for name in sorted(collection.unique_terms, key=str):
-            expr = collection.get_expr(name)
+            expr: PyDoughExpressionQDAG = collection.get_expr(name)
             unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
         super().__init__(terms, {}, [], unique_exprs)
 
@@ -1077,16 +1071,21 @@ class HybridTree:
             The index of the newly inserted child (or the index of an existing
             child that matches it).
         """
-        connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}
-        )
         for idx, existing_connection in enumerate(self.children):
-            if child == existing_connection.subtree:
+            if (child == existing_connection.subtree) or (
+                isinstance(self.pipeline[0], HybridPartition)
+                and (child.parent is None)
+                and (len(child.pipeline) == 1)
+                and isinstance(child.pipeline[0], HybridPartitionChild)
+            ):
                 connection_type = connection_type.reconcile_connection_types(
                     existing_connection.connection_type
                 )
                 existing_connection.connection_type = connection_type
                 return idx
+        connection: HybridConnection = HybridConnection(
+            self, child, connection_type, len(self.pipeline) - 1, {}
+        )
         self._children.append(connection)
         return len(self.children) - 1
 
@@ -1165,6 +1164,8 @@ class HybridTranslator:
                     parent_tree.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
                 )
                 for rhs_name in subcollection_property.keys[lhs_name]:
+                    if rhs_name not in child_node.terms:
+                        breakpoint()
                     rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
                         rhs_name
                     )
@@ -2120,8 +2121,12 @@ class HybridTranslator:
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):
                             source = source.pipeline[0].subtree
-                        successor_hybrid = copy.deepcopy(source.children[0].subtree)
-                        successor_hybrid._ancestral_mapping = node.ancestral_mapping
+                        successor_hybrid = HybridTree(
+                            HybridPartitionChild(source.children[0].subtree),
+                            node.ancestral_mapping,
+                        )
+                        # successor_hybrid = copy.deepcopy(source.children[0].subtree)
+                        # successor_hybrid._ancestral_mapping = node.ancestral_mapping
                         partition_by = (
                             node.child_access.ancestor_context.starting_predecessor
                         )
