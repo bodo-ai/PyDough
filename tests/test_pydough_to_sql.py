@@ -86,6 +86,7 @@ def test_pydough_to_sql_tpch(
     actual_sql: str = to_sql(
         root, columns=columns, metadata=graph, database=empty_context_database
     ).strip()
+    breakpoint()
     file_path: str = get_sql_test_filename(test_name, empty_context_database.dialect)
     if update_tests:
         with open(file_path, "w") as f:
