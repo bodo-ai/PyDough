@@ -375,6 +375,14 @@ def avg_gap_prev_urgent_same_clerk():
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
 
 
+def top_customers_by_orders():
+    # Finds the keys of the 5 customers with the most orders.
+    return Customers.CALCULATE(
+        customer_key=key,
+        n_orders=COUNT(orders),
+    ).TOP_K(5, by=(COUNT(orders).DESC(), customer_key.ASC()))
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,

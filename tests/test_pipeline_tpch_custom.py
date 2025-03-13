@@ -57,6 +57,7 @@ from simple_pydough_functions import (
     singular6,
     singular7,
     suppliers_bal_diffs,
+    top_customers_by_orders,
     triple_partition,
     year_month_nation_orders,
     yoy_change_in_num_orders,
@@ -950,6 +951,20 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({"avg_delta": [7.9820674]}),
             ),
             id="avg_gap_prev_urgent_same_clerk",
+        ),
+        pytest.param(
+            (
+                top_customers_by_orders,
+                None,
+                "top_customers_by_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_key": [3451, 102004, 102022, 79300, 117082],
+                        "n_orders": [41, 41, 41, 40, 40],
+                    }
+                ),
+            ),
+            id="top_customers_by_orders",
         ),
     ],
 )
