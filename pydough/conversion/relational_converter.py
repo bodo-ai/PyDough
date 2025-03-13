@@ -213,7 +213,6 @@ class RelTranslation:
                                 and back_expr.name == expr.name
                             ):
                                 return context.expressions[back_expr]
-                    breakpoint()
                     raise ValueError(f"Context does not contain expression {expr}")
                 return context.expressions[expr]
             case HybridFunctionExpr():
@@ -871,16 +870,15 @@ class RelTranslation:
                 child_ref = HybridChildRefExpr(agg_name, node.child_idx, agg_call.typ)
                 local_ref = HybridRefExpr(agg_name, agg_call.typ)
                 new_expressions[child_ref] = child_result.expressions[local_ref]
+        else:
+            for child_name, child_term in node.child.subtree.pipeline[-1].terms.items():
+                local_ref = HybridChildRefExpr(
+                    child_name, node.child_idx, child_term.typ
+                )
+                child_ref = HybridRefExpr(child_name, child_term.typ)
+                new_expressions[local_ref] = child_result.expressions[child_ref]
         for local_ref, child_ref in node.pullup_remapping.items():
             new_expressions[local_ref] = child_result.expressions[child_ref]
-        # breakpoint()
-        for child_name, child_term in node.child.subtree.pipeline[-1].terms.items():
-            local_ref = HybridChildRefExpr(child_name, node.child_idx, child_term.typ)
-            child_ref = HybridRefExpr(child_name, child_term.typ)
-            new_expressions[local_ref] = child_result.expressions[child_ref]
-        # print(result.relational_node.to_tree_string())
-        # print(list(result.expressions))
-        # breakpoint()
         return TranslationOutput(child_result.relational_node, new_expressions)
 
     def rel_translation(

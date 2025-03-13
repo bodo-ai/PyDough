@@ -569,7 +569,6 @@ class HybridChildPullUp(HybridOperation):
     def __init__(
         self,
         hybrid: "HybridTree",
-        pipeline_idx: int,
         child_idx: int,
         original_child_height: int,
     ):
@@ -600,9 +599,10 @@ class HybridChildPullUp(HybridOperation):
 
         extra_height: int = 0
         while True:
-            for term_name in current_level.pipeline[-1].terms:
+            current_terms: dict[str, HybridExpr] = current_level.pipeline[-1].terms
+            for term_name in sorted(current_terms):
                 current_expr: HybridExpr = HybridRefExpr(
-                    term_name, terms[term_name].typ
+                    term_name, current_terms[term_name].typ
                 )
                 shifted_expr: HybridExpr | None = current_expr.shift_back(extra_height)
                 assert shifted_expr is not None
@@ -610,14 +610,29 @@ class HybridChildPullUp(HybridOperation):
                 back_expr: HybridExpr = HybridBackRefExpr(
                     term_name,
                     original_child_height + extra_height,
-                    terms[term_name].typ,
+                    current_terms[term_name].typ,
                 )
-                self.pullup_remapping[current_expr] = back_expr
+                if self.child.connection_type.is_aggregation:
+                    agg_idx: int = 0
+                    agg_name: str = f"agg_{agg_idx}"
+                    while (
+                        agg_name in self.child.aggs
+                        or agg_name in self.child.subtree.pipeline[-1].terms
+                    ):
+                        agg_idx += 1
+                        agg_name = f"agg_{agg_idx}"
+                    self.child.aggs[agg_name] = HybridFunctionExpr(
+                        pydop.MIN, [back_expr], back_expr.typ
+                    )
+                    self.pullup_remapping[current_expr] = HybridRefExpr(
+                        agg_name, back_expr.typ
+                    )
+                else:
+                    self.pullup_remapping[current_expr] = back_expr
             if current_level.parent is None:
                 break
             current_level = current_level.parent
             extra_height += 1
-        # breakpoint()
 
         super().__init__(terms, renamings, [], unique_exprs)
 

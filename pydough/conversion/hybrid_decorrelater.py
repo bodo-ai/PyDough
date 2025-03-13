@@ -285,13 +285,11 @@ class Decorrelater:
         # If aggregating, update the aggregation keys accordingly.
         if child.connection_type.is_aggregation:
             child.subtree.agg_keys = new_agg_keys
+        # If the child is such that we don't need to keep rows from the parent
+        # without a match, replace the parent & its ancestors with a
+        # HybridPullUp node.
         if child.connection_type.is_semi:
-            print()
-            print("BEFORE")
-            print(child.subtree)
             self.eliminate_redundant_parent(old_parent, child_idx, child_height)
-            print("AFTER")
-            print(child.subtree)
 
     def eliminate_redundant_parent(
         self, hybrid: HybridTree, child_idx: int, child_height: int
@@ -302,9 +300,7 @@ class Decorrelater:
         child: HybridConnection = hybrid.children[child_idx]
         pipeline_idx = child.required_steps
         hybrid._parent = None
-        hybrid.pipeline[0] = HybridChildPullUp(
-            hybrid, pipeline_idx, child_idx, child_height
-        )
+        hybrid.pipeline[0] = HybridChildPullUp(hybrid, child_idx, child_height)
         for i in range(1, pipeline_idx + 1):
             hybrid.pipeline[i] = HybridNoop(hybrid.pipeline[i - 1])
 
