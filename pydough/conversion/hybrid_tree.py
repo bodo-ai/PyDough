@@ -576,12 +576,16 @@ class HybridChildPullUp(HybridOperation):
         self.child_idx: int = child_idx
         self.pullup_remapping: dict[HybridExpr, HybridExpr] = {}
 
+        # Find the level from the child tree that is the equivalent of the
+        # level from the child tree that is being replaced.
         current_level: HybridTree = self.child.subtree
         for _ in range(original_child_height):
             assert current_level.parent is not None
             current_level = current_level.parent
-        renamings: dict[str, str] = current_level.pipeline[-1].renamings
 
+        # Snapshot the renamings from the current level, and use its unique
+        # terms as the unique terms for this level.
+        renamings: dict[str, str] = current_level.pipeline[-1].renamings
         unique_exprs: list[HybridExpr] = []
         for unique_expr in current_level.pipeline[-1].unique_exprs:
             new_unique_expr: HybridExpr | None = unique_expr.shift_back(
@@ -590,6 +594,8 @@ class HybridChildPullUp(HybridOperation):
             assert new_unique_expr is not None
             unique_exprs.append(new_unique_expr)
 
+        # Start by adding terms from the bottom level of the child as child ref
+        # expressions accessible from the parent.
         terms: dict[str, HybridExpr] = {}
         for term_name, term_expr in current_level.pipeline[-1].terms.items():
             child_ref: HybridChildRefExpr = HybridChildRefExpr(
@@ -597,10 +603,19 @@ class HybridChildPullUp(HybridOperation):
             )
             terms[term_name] = child_ref
 
+        # Iterate through the level identified earlier & its ancestors to find
+        # all of their terms and add them to the parent via accesses to
+        # backreferences from the child. These terms are placed in the pullup
+        # remapping dictionary so to provide hints on how to translate
+        # expressions with regards to the parent level into lookups from within
+        # the child subtree.
         extra_height: int = 0
+        agg_idx: int = 0
         while True:
             current_terms: dict[str, HybridExpr] = current_level.pipeline[-1].terms
             for term_name in sorted(current_terms):
+                # Identify the expression that is being accessed from one of
+                # the levels of the child subtree.
                 current_expr: HybridExpr = HybridRefExpr(
                     term_name, current_terms[term_name].typ
                 )
@@ -613,7 +628,9 @@ class HybridChildPullUp(HybridOperation):
                     current_terms[term_name].typ,
                 )
                 if self.child.connection_type.is_aggregation:
-                    agg_idx: int = 0
+                    # If aggregating, wrap the backreference in an ANYTHING
+                    # call that is added to the agg calls list so it can be
+                    # passed through the aggregation.
                     agg_name: str = f"agg_{agg_idx}"
                     while (
                         agg_name in self.child.aggs
@@ -628,6 +645,8 @@ class HybridChildPullUp(HybridOperation):
                         agg_name, back_expr.typ
                     )
                 else:
+                    # Otherwise, add an access to the backreference to the
+                    # pullup remapping.
                     self.pullup_remapping[current_expr] = back_expr
             if current_level.parent is None:
                 break

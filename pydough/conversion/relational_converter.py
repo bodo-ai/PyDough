@@ -852,16 +852,25 @@ class RelTranslation:
 
     def translate_child_pullup(self, node: HybridChildPullUp) -> TranslationOutput:
         """
-        TODO
+        Converts a HybridChildPullUp node into the relational tree for the
+        child it is pulling up, with a change in expressions to reflect the
+        different perspective in what each column means.
         """
+        # First, translate the child being pulled up
         subtree: HybridTree = node.child.subtree
         child_result: TranslationOutput = self.rel_translation(
             subtree, len(subtree.pipeline) - 1
         )
+
+        # Define the new expressions list differently depending on whether the
+        # child being pulled up was being aggregating or not.
         new_expressions: dict[HybridExpr, ColumnReference] = {}
         local_ref: HybridExpr
         child_ref: HybridExpr
         if node.child.connection_type.is_aggregation:
+            # If aggregating, first wrap the child relational node in an
+            # aggregate, then rephrase all of the aggregation calls to be child
+            # references.
             assert node.child.subtree.agg_keys is not None
             child_result = self.apply_aggregations(
                 node.child, child_result, node.child.subtree.agg_keys
@@ -871,14 +880,21 @@ class RelTranslation:
                 local_ref = HybridRefExpr(agg_name, agg_call.typ)
                 new_expressions[child_ref] = child_result.expressions[local_ref]
         else:
+            # Otherwise, just rephrase all of the columns to be child references.
             for child_name, child_term in node.child.subtree.pipeline[-1].terms.items():
                 local_ref = HybridChildRefExpr(
                     child_name, node.child_idx, child_term.typ
                 )
                 child_ref = HybridRefExpr(child_name, child_term.typ)
                 new_expressions[local_ref] = child_result.expressions[child_ref]
+
+        # For each expression that is being defined via pullup, map it to the
+        # corresponding expression within the child.
         for local_ref, child_ref in node.pullup_remapping.items():
             new_expressions[local_ref] = child_result.expressions[child_ref]
+
+        # Build the new output with the child relational tree and the new
+        # expressions mapping
         return TranslationOutput(child_result.relational_node, new_expressions)
 
     def rel_translation(

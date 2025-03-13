@@ -226,10 +226,9 @@ class Decorrelater:
     def decorrelate_child(
         self,
         old_parent: HybridTree,
-        new_parent: HybridTree,
-        child: HybridConnection,
-        skipped_levels: int,
         child_idx: int,
+        new_parent: HybridTree,
+        skipped_levels: int,
     ) -> None:
         """
         Runs the logic to de-correlate a child of a hybrid tree that contains
@@ -243,14 +242,13 @@ class Decorrelater:
         Args:
             `old_parent`: The correlated ancestor hybrid tree that the correlated
             references should point to when they are targeted for removal.
+            `child_idx`: Which child of the hybrid tree the child is.
             `new_parent`: The ancestor of `level` that removal should stop at.
-            `child`: The child of the hybrid tree that contains the correlated
-            nodes to be removed.
             `skipped_levels`: The number of ancestor layers that should be
             ignored when deriving backshifts of join/agg keys.
-            `child_idx`: Which child of the hybrid tree the child is.
         """
         # First, find the height of the child subtree & its top-most level.
+        child: HybridConnection = old_parent.children[child_idx]
         child_root: HybridTree = child.subtree
         child_height: int = 1
         while child_root.parent is not None:
@@ -287,22 +285,14 @@ class Decorrelater:
             child.subtree.agg_keys = new_agg_keys
         # If the child is such that we don't need to keep rows from the parent
         # without a match, replace the parent & its ancestors with a
-        # HybridPullUp node.
+        # HybridPullUp node (and replace any other deleted nodes with no-ops).
         if child.connection_type.is_semi:
-            self.eliminate_redundant_parent(old_parent, child_idx, child_height)
-
-    def eliminate_redundant_parent(
-        self, hybrid: HybridTree, child_idx: int, child_height: int
-    ) -> None:
-        """
-        TODO
-        """
-        child: HybridConnection = hybrid.children[child_idx]
-        pipeline_idx = child.required_steps
-        hybrid._parent = None
-        hybrid.pipeline[0] = HybridChildPullUp(hybrid, child_idx, child_height)
-        for i in range(1, pipeline_idx + 1):
-            hybrid.pipeline[i] = HybridNoop(hybrid.pipeline[i - 1])
+            old_parent._parent = None
+            old_parent.pipeline[0] = HybridChildPullUp(
+                old_parent, child_idx, child_height
+            )
+            for i in range(1, child.required_steps + 1):
+                old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """
@@ -344,10 +334,9 @@ class Decorrelater:
                     )
                     self.decorrelate_child(
                         hybrid,
-                        new_parent,
-                        child,
-                        skipped_levels,
                         idx,
+                        new_parent,
+                        skipped_levels,
                     )
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(
