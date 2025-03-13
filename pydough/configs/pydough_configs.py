@@ -4,6 +4,7 @@ Definitions of configuration settings for PyDough.
 
 __all__ = ["PyDoughConfigs"]
 
+from enum import Enum
 from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
@@ -83,3 +84,17 @@ class PyDoughConfigs:
         if name not in dir(self):
             raise AttributeError(f"Unrecognized PyDough config name: {name}")
         super().__setattr__(name, value)
+
+
+class DayOfWeek(Enum):
+    """
+    An enum to represent the day of the week.
+    """
+
+    SUNDAY = "SUNDAY"
+    MONDAY = "MONDAY"
+    TUESDAY = "TUESDAY"
+    WEDNESDAY = "WEDNESDAY"
+    THURSDAY = "THURSDAY"
+    FRIDAY = "FRIDAY"
+    SATURDAY = "SATURDAY"
