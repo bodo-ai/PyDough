@@ -622,7 +622,7 @@ class HybridChildPullUp(HybridOperation):
                         agg_idx += 1
                         agg_name = f"agg_{agg_idx}"
                     self.child.aggs[agg_name] = HybridFunctionExpr(
-                        pydop.MIN, [back_expr], back_expr.typ
+                        pydop.ANYTHING, [back_expr], back_expr.typ
                     )
                     self.pullup_remapping[current_expr] = HybridRefExpr(
                         agg_name, back_expr.typ

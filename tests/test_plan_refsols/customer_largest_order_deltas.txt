@@ -4,7 +4,7 @@ ROOT(columns=[('name', name), ('largest_diff', largest_diff)], orderings=[(order
    PROJECT(columns={'largest_diff': IFF(ABS(min_diff) > max_diff, min_diff, max_diff), 'name': agg_7})
     FILTER(condition=True:bool, columns={'agg_7': agg_7, 'max_diff': max_diff, 'min_diff': min_diff})
      PROJECT(columns={'agg_7': agg_7, 'max_diff': agg_0, 'min_diff': agg_1})
-      AGGREGATE(keys={'key': key}, aggregations={'agg_0': MAX(revenue_delta), 'agg_1': MIN(revenue_delta), 'agg_7': MIN(name)})
+      AGGREGATE(keys={'key': key}, aggregations={'agg_0': MAX(revenue_delta), 'agg_1': MIN(revenue_delta), 'agg_7': ANYTHING(name)})
        PROJECT(columns={'key': key, 'name': name, 'revenue_delta': DEFAULT_TO(agg_1, 0:int64) - PREV(args=[DEFAULT_TO(agg_2, 0:int64)], partition=[key], order=[(order_date):asc_last])})
         FILTER(condition=PRESENT(PREV(args=[DEFAULT_TO(agg_0, 0:int64)], partition=[key], order=[(order_date):asc_last])), columns={'agg_1': agg_1, 'agg_2': agg_2, 'key': key, 'name': name, 'order_date': order_date})
          JOIN(conditions=[t0.key_2 == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'key': t0.key, 'name': t0.name, 'order_date': t0.order_date})

@@ -6,6 +6,7 @@ __all__ = [
     "ABS",
     "ABSENT",
     "ADD",
+    "ANYTHING",
     "AVG",
     "BAN",
     "BOR",
@@ -143,6 +144,9 @@ HASNOT = ExpressionFunctionOperator(
 )
 NDISTINCT = ExpressionFunctionOperator(
     "NDISTINCT", True, AllowAny(), ConstantType(Int64Type())
+)
+ANYTHING = ExpressionFunctionOperator(
+    "ANYTHING", True, RequireNumArgs(1), SelectArgumentType(0)
 )
 MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
 MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))

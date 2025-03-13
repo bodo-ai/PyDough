@@ -3,7 +3,7 @@ ROOT(columns=[('supplier_name', supplier_name), ('n_super_cust', n_super_cust)],
   PROJECT(columns={'n_super_cust': n_super_cust, 'ordering_1': n_super_cust, 'supplier_name': supplier_name})
    PROJECT(columns={'n_super_cust': DEFAULT_TO(agg_0, 0:int64), 'supplier_name': agg_5})
     FILTER(condition=True:bool, columns={'agg_0': agg_0, 'agg_5': agg_5})
-     AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT(), 'agg_5': MIN(name)})
+     AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT(), 'agg_5': ANYTHING(name)})
       FILTER(condition=acctbal > account_balance, columns={'key': key, 'name': name})
        JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'account_balance': t0.account_balance, 'acctbal': t1.acctbal, 'key': t0.key, 'name': t0.name})
         JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'account_balance': t0.account_balance, 'key': t0.key, 'key_2': t1.key, 'name': t0.name})

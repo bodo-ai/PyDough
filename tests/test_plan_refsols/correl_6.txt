@@ -1,7 +1,7 @@
 ROOT(columns=[('name', name), ('n_prefix_nations', n_prefix_nations)], orderings=[])
  PROJECT(columns={'n_prefix_nations': DEFAULT_TO(agg_0, 0:int64), 'name': agg_3})
   FILTER(condition=True:bool, columns={'agg_0': agg_0, 'agg_3': agg_3})
-   AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT(), 'agg_3': MIN(name)})
+   AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT(), 'agg_3': ANYTHING(name)})
     FILTER(condition=SLICE(name_3, None:unknown, 1:int64, None:unknown) == SLICE(region_name, None:unknown, 1:int64, None:unknown), columns={'key': key, 'name': name})
      JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'name': t0.name, 'name_3': t1.name, 'region_name': t0.region_name})
       PROJECT(columns={'key': key, 'name': name, 'region_name': name})
