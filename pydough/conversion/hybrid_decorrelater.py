@@ -228,8 +228,8 @@ class Decorrelater:
         old_parent: HybridTree,
         new_parent: HybridTree,
         child: HybridConnection,
-        is_aggregate: bool,
         skipped_levels: int,
+        child_idx: int,
     ) -> None:
         """
         Runs the logic to de-correlate a child of a hybrid tree that contains
@@ -246,10 +246,9 @@ class Decorrelater:
             `new_parent`: The ancestor of `level` that removal should stop at.
             `child`: The child of the hybrid tree that contains the correlated
             nodes to be removed.
-            `is_aggregate`: Whether the child is being aggregated with regards
-            to its parent.
             `skipped_levels`: The number of ancestor layers that should be
             ignored when deriving backshifts of join/agg keys.
+            `child_idx`: Which child of the hybrid tree the child is.
         """
         # First, find the height of the child subtree & its top-most level.
         child_root: HybridTree = child.subtree
@@ -284,17 +283,28 @@ class Decorrelater:
             additional_levels += 1
         child.subtree.join_keys = new_join_keys
         # If aggregating, update the aggregation keys accordingly.
-        if is_aggregate:
+        if child.connection_type.is_aggregation:
             child.subtree.agg_keys = new_agg_keys
+        if child.connection_type.is_semi:
+            print()
+            print("BEFORE")
+            print(child.subtree)
+            self.eliminate_redundant_parent(old_parent, child_idx, child_height)
+            print("AFTER")
+            print(child.subtree)
 
-    def eliminate_redundant_parent(self, hybrid: HybridTree, child_idx: int) -> None:
+    def eliminate_redundant_parent(
+        self, hybrid: HybridTree, child_idx: int, child_height: int
+    ) -> None:
         """
         TODO
         """
         child: HybridConnection = hybrid.children[child_idx]
         pipeline_idx = child.required_steps
         hybrid._parent = None
-        hybrid.pipeline[0] = HybridChildPullUp(-1, child_idx, child)
+        hybrid.pipeline[0] = HybridChildPullUp(
+            hybrid, pipeline_idx, child_idx, child_height
+        )
         for i in range(1, pipeline_idx + 1):
             hybrid.pipeline[i] = HybridNoop(hybrid.pipeline[i - 1])
 
@@ -340,16 +350,9 @@ class Decorrelater:
                         hybrid,
                         new_parent,
                         child,
-                        child.connection_type.is_aggregation,
                         skipped_levels,
+                        idx,
                     )
-                    if child.connection_type.is_semi:
-                        print()
-                        print("BEFORE")
-                        print(hybrid)
-                        self.eliminate_redundant_parent(hybrid, idx)
-                        print("AFTER")
-                        print(hybrid)
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(
                         f"PyDough does not yet support correlated references with the {child.connection_type.name} pattern."

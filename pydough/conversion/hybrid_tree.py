@@ -183,7 +183,7 @@ class HybridRefExpr(HybridExpr):
             return HybridRefExpr(renamings[self.name], self.typ)
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr | None:
+    def shift_back(self, levels: int) -> HybridExpr:
         if levels == 0:
             return self
         return HybridBackRefExpr(self.name, levels, self.typ)
@@ -566,19 +566,60 @@ class HybridChildPullUp(HybridOperation):
     level.
     """
 
-    def __init__(self, parent_height: int, child_idx: int, child: "HybridConnection"):
+    def __init__(
+        self,
+        hybrid: "HybridTree",
+        pipeline_idx: int,
+        child_idx: int,
+        original_child_height: int,
+    ):
+        self.child: HybridConnection = hybrid.children[child_idx]
         self.child_idx: int = child_idx
-        self.child: HybridConnection = child
         self.pullup_remapping: dict[HybridExpr, HybridExpr] = {}
+
+        current_level: HybridTree = self.child.subtree
+        for _ in range(original_child_height):
+            assert current_level.parent is not None
+            current_level = current_level.parent
+        renamings: dict[str, str] = current_level.pipeline[-1].renamings
+
+        unique_exprs: list[HybridExpr] = []
+        for unique_expr in current_level.pipeline[-1].unique_exprs:
+            new_unique_expr: HybridExpr | None = unique_expr.shift_back(
+                original_child_height
+            )
+            assert new_unique_expr is not None
+            unique_exprs.append(new_unique_expr)
+
         terms: dict[str, HybridExpr] = {}
-        # print(child.terms)
-        last_operation: HybridOperation = child.subtree.pipeline[-1]
-        super().__init__(
-            terms,
-            last_operation.renamings,
-            last_operation.orderings,
-            last_operation.unique_exprs,
-        )
+        for term_name, term_expr in current_level.pipeline[-1].terms.items():
+            child_ref: HybridChildRefExpr = HybridChildRefExpr(
+                term_name, child_idx, term_expr.typ
+            )
+            terms[term_name] = child_ref
+
+        extra_height: int = 0
+        while True:
+            for term_name in current_level.pipeline[-1].terms:
+                current_expr: HybridExpr = HybridRefExpr(
+                    term_name, terms[term_name].typ
+                )
+                shifted_expr: HybridExpr | None = current_expr.shift_back(extra_height)
+                assert shifted_expr is not None
+                current_expr = shifted_expr
+                back_expr: HybridExpr = HybridBackRefExpr(
+                    term_name,
+                    original_child_height + extra_height,
+                    terms[term_name].typ,
+                )
+                self.pullup_remapping[current_expr] = back_expr
+            if current_level.parent is None:
+                break
+            current_level = current_level.parent
+            extra_height += 1
+        # breakpoint()
+
+        super().__init__(terms, renamings, [], unique_exprs)
 
     def __repr__(self):
         return f"PULLUP[${self.child_idx}: {self.pullup_remapping}]"
@@ -1206,8 +1247,6 @@ class HybridTranslator:
                     parent_tree.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
                 )
                 for rhs_name in subcollection_property.keys[lhs_name]:
-                    if rhs_name not in child_node.terms:
-                        breakpoint()
                     rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
                         rhs_name
                     )
