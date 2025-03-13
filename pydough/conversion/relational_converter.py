@@ -914,7 +914,6 @@ class RelTranslation:
 
         # Then, dispatch onto the logic to transform from the context into the
         # new translation output.
-        handled_children: bool = False
         match operation:
             case HybridCollectionAccess():
                 if isinstance(operation.collection, TableCollection):
@@ -967,7 +966,6 @@ class RelTranslation:
                 result = self.translate_partition(
                     operation, context, hybrid, pipeline_idx
                 )
-                # handled_children = True
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
@@ -975,8 +973,7 @@ class RelTranslation:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
                 )
-        if not handled_children:
-            result = self.handle_children(result, hybrid, pipeline_idx)
+        result = self.handle_children(result, hybrid, pipeline_idx)
         return result
 
     @staticmethod

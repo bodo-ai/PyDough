@@ -191,15 +191,15 @@ def first_order_per_customer():
     # If a customer ordered multiple orders on the first such day, pick the one
     # with the lowest key. Only consider customers with at least $9k in their
     # account.
-    # Using aggregations as a stopgap until SINGULAR is implemented
-    # (TODO: PR#285).
-    first_order = orders.WHERE(RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1)
+    first_order = orders.WHERE(
+        RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1
+    ).SINGULAR()
     return (
         Customers.WHERE(acctbal >= 9000.0)
         .CALCULATE(
             name,
-            first_order_date=MIN(first_order.order_date),
-            first_order_price=MIN(first_order.total_price),
+            first_order_date=first_order.order_date,
+            first_order_price=first_order.total_price,
         )
         .TOP_K(5, by=first_order_price.DESC())
     )

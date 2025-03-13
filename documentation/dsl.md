@@ -1225,6 +1225,20 @@ Addresses.CALCULATE(
 )
 ```
 
+**Bad Example #1**: This is invalid primarily because of two reasons:
+1. Each `Addresses` might have multiple `current_occupants` named `John`, therefore the use of `.SINGULAR()`, though it would not raise an exception, is invalid.
+2. Even if, `current_occupants` were non-plural after using `SINGULAR`, `packages` is a plural sub-collection of `current_occupants`, therefore, the data being accessed would be plural with regards to `Addresses`.
+
+
+```py
+%%pydough
+Addresses.CALCULATE(
+    package_id=current_occupants.WHERE(
+        first_name == "John"
+    ).SINGULAR().packages.package_id
+)
+```
+
 <!-- TOC --><a name="best"></a>
 ### BEST
 
