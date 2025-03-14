@@ -53,6 +53,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [AVG](#avg)
    * [MIN](#min)
    * [MAX](#max)
+   * [ANYTHING](#anything)
    * [COUNT](#count)
    * [NDISTINCT](#ndistinct)
    * [HAS](#has)
