@@ -444,3 +444,49 @@ def correl_25():
         )
         .TOP_K(5, by=(n_urgent_semi_domestic_rail_orders.DESC(), name.ASC()))
     )
+
+
+def correl_26():
+    # For every nation in EUROPE, count how many urggent purchases were made by
+    # customers in that nation from suppliers in the same nation in 1994.
+    # ASsumes each European nation has at least one such person.
+    selected_lines = customers.orders.WHERE(
+        (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
+    ).lines.WHERE(supplier.nation.name == nation_name)
+    return (
+        Nations.CALCULATE(nation_name=name)
+        .WHERE(region.name == "EUROPE")
+        .WHERE(HAS(selected_lines))
+        .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def correl_27():
+    # Variant of correl_26
+    selected_lines = customers.orders.WHERE(
+        (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
+    ).lines.WHERE(supplier.nation.name == nation_name)
+    return (
+        Nations.CALCULATE(nation_name=name)
+        .WHERE((region.name == "EUROPE") & HAS(selected_lines))
+        .WHERE(HAS(selected_lines))
+        .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def correl_28():
+    # For every nation in EUROPE, count how many urggent purchases were made by
+    # customers in that nation from suppliers in the same nation in 1994.
+    # ASsumes each European nation has at least one such person.
+    selected_lines = customers.orders.WHERE(
+        (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
+    ).lines.WHERE(supplier.nation.name == nation_name)
+    return (
+        Nations.CALCULATE(nation_name=name)
+        .WHERE(HAS(selected_lines))
+        .WHERE(region.name == "EUROPE")
+        .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
+        .ORDER_BY(nation_name.ASC())
+    )

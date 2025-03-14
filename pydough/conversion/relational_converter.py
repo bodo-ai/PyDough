@@ -462,6 +462,11 @@ class RelTranslation:
             possible to define brought into context.
         """
         for child_idx, child in enumerate(hybrid.children):
+            if (
+                isinstance(hybrid.pipeline[0], HybridChildPullUp)
+                and hybrid.pipeline[0].child_idx == child_idx
+            ):
+                continue
             if child.required_steps == pipeline_idx:
                 self.stack.append(context)
                 child_output = self.rel_translation(
@@ -1010,10 +1015,10 @@ class RelTranslation:
                 result = self.translate_limit(operation, context)
             case HybridChildPullUp():
                 assert context is None, "Malformed HybridTree pattern."
-                return self.translate_child_pullup(operation)
+                result = self.translate_child_pullup(operation)
             case HybridNoop():
                 assert context is not None, "Malformed HybridTree pattern."
-                return context
+                result = context
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
@@ -1104,7 +1109,12 @@ def convert_ast_to_relational(
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    print()
+    print("Before decorrelation:")
+    print(hybrid)
     run_hybrid_decorrelation(hybrid)
+    print("After decorrelation:")
+    print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1

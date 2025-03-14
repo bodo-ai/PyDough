@@ -293,6 +293,89 @@ class Decorrelater:
             )
             for i in range(1, child.required_steps + 1):
                 old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
+            self.remove_dead_children(old_parent)
+
+    def identify_children_used(
+        self, expr: HybridExpr, unused_children: set[int]
+    ) -> None:
+        """ """
+        match expr:
+            case HybridChildRefExpr():
+                unused_children.discard(expr.child_idx)
+            case HybridFunctionExpr():
+                for arg in expr.args:
+                    self.identify_children_used(arg, unused_children)
+            case HybridWindowExpr():
+                for arg in expr.args:
+                    self.identify_children_used(arg, unused_children)
+                for part_arg in expr.partition_args:
+                    self.identify_children_used(part_arg, unused_children)
+                for order_arg in expr.order_args:
+                    self.identify_children_used(order_arg.expr, unused_children)
+            case HybridCorrelExpr():
+                self.identify_children_used(expr.expr, unused_children)
+
+    def renumber_children_indices(
+        self, expr: HybridExpr, child_remapping: dict[int, int]
+    ) -> None:
+        """ """
+        match expr:
+            case HybridChildRefExpr():
+                assert expr.child_idx in child_remapping
+                expr.child_idx = child_remapping[expr.child_idx]
+            case HybridFunctionExpr():
+                for arg in expr.args:
+                    self.renumber_children_indices(arg, child_remapping)
+            case HybridWindowExpr():
+                for arg in expr.args:
+                    self.renumber_children_indices(arg, child_remapping)
+                for part_arg in expr.partition_args:
+                    self.renumber_children_indices(part_arg, child_remapping)
+                for order_arg in expr.order_args:
+                    self.renumber_children_indices(order_arg.expr, child_remapping)
+            case HybridCorrelExpr():
+                self.renumber_children_indices(expr.expr, child_remapping)
+
+    def remove_dead_children(self, hybrid: HybridTree):
+        """
+        Deletes any children of a hybrid tree that are no longer referenced
+        after de-correlation.
+        """
+        # Identify which children are no longer used
+        children_to_delete: set[int] = set(range(len(hybrid.children)))
+        for operation in hybrid.pipeline:
+            match operation:
+                case HybridChildPullUp():
+                    children_to_delete.discard(operation.child_idx)
+                case HybridFilter():
+                    self.identify_children_used(operation.condition, children_to_delete)
+                case HybridCalculate():
+                    for term in operation.new_expressions.values():
+                        self.identify_children_used(term, children_to_delete)
+                case _:
+                    for term in operation.terms.values():
+                        self.identify_children_used(term, children_to_delete)
+        if len(children_to_delete) == 0:
+            return
+        # Build a renumbering of the remaining children
+        child_remapping: dict[int, int] = {}
+        for i in range(len(hybrid.children)):
+            if i not in children_to_delete:
+                child_remapping[i] = len(child_remapping)
+        # Remove all the unused children (starting from the end)
+        for child_idx in sorted(children_to_delete, reverse=True):
+            hybrid.children.pop(child_idx)
+        for operation in hybrid.pipeline:
+            match operation:
+                case HybridChildPullUp():
+                    operation.child_idx = child_remapping[operation.child_idx]
+                case HybridFilter():
+                    self.renumber_children_indices(operation.condition, child_remapping)
+                case HybridCalculate():
+                    for term in operation.new_expressions.values():
+                        self.renumber_children_indices(term, child_remapping)
+                case _:
+                    continue
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """

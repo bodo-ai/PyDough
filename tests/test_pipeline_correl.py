@@ -33,6 +33,9 @@ from correlated_pydough_functions import (
     correl_23,
     correl_24,
     correl_25,
+    correl_26,
+    correl_27,
+    correl_28,
 )
 from test_utils import (
     graph_fetcher,
@@ -530,6 +533,66 @@ from pydough.unqualified import (
                 ),
             ),
             id="correl_25",
+        ),
+        pytest.param(
+            (
+                correl_26,
+                None,
+                "correl_26",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_26",
+        ),
+        pytest.param(
+            (
+                correl_27,
+                None,
+                "correl_27",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_27",
+        ),
+        pytest.param(
+            (
+                correl_28,
+                None,
+                "correl_28",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_28",
         ),
     ],
 )
