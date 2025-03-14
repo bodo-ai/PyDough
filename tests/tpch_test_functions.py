@@ -156,6 +156,7 @@ def impl_tpch_q5():
     return (
         Nations.CALCULATE(nation_name=name)
         .WHERE(region.name == "ASIA")
+        .WHERE(HAS(selected_lines))
         .CALCULATE(N_NAME=name, REVENUE=SUM(selected_lines.value))
         .ORDER_BY(REVENUE.DESC())
     )

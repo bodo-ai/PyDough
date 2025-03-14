@@ -1779,6 +1779,7 @@ class SqlGlotTransformBindings:
         self.bind_simple_function(pydop.COUNT, sqlglot_expressions.Count)
         self.bind_simple_function(pydop.MIN, sqlglot_expressions.Min)
         self.bind_simple_function(pydop.MAX, sqlglot_expressions.Max)
+        self.bind_simple_function(pydop.ANYTHING, sqlglot_expressions.AnyValue)
         self.bindings[pydop.NDISTINCT] = convert_ndistinct
 
         # String functions

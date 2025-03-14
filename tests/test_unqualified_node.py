@@ -346,7 +346,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q5,
-            "Nations.CALCULATE(nation_name=name).WHERE((region.name == 'ASIA')).CALCULATE(N_NAME=name, REVENUE=SUM(customers.orders.WHERE(((order_date >= datetime.date(1994, 1, 1)) & (order_date < datetime.date(1995, 1, 1)))).lines.WHERE((supplier.nation.name == nation_name)).CALCULATE(value=(extended_price * (1 - discount))).value)).ORDER_BY(REVENUE.DESC(na_pos='last'))",
+            "Nations.CALCULATE(nation_name=name).WHERE((region.name == 'ASIA')).WHERE(HAS(customers.orders.WHERE(((order_date >= datetime.date(1994, 1, 1)) & (order_date < datetime.date(1995, 1, 1)))).lines.WHERE((supplier.nation.name == nation_name)).CALCULATE(value=(extended_price * (1 - discount))))).CALCULATE(N_NAME=name, REVENUE=SUM(customers.orders.WHERE(((order_date >= datetime.date(1994, 1, 1)) & (order_date < datetime.date(1995, 1, 1)))).lines.WHERE((supplier.nation.name == nation_name)).CALCULATE(value=(extended_price * (1 - discount))).value)).ORDER_BY(REVENUE.DESC(na_pos='last'))",
             id="tpch_q5",
         ),
         pytest.param(

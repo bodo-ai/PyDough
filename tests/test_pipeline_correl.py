@@ -31,6 +31,11 @@ from correlated_pydough_functions import (
     correl_21,
     correl_22,
     correl_23,
+    correl_24,
+    correl_25,
+    correl_26,
+    correl_27,
+    correl_28,
 )
 from test_utils import (
     graph_fetcher,
@@ -458,6 +463,136 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({"n_sizes": [23]}),
             ),
             id="correl_23",
+        ),
+        pytest.param(
+            (
+                correl_24,
+                None,
+                "correl_24",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1992] * 11 + [1993] * 11,
+                        "month": list(range(2, 13)) + [1, 2, 3] + list(range(5, 13)),
+                        "n_orders_in_range": [
+                            45,
+                            7,
+                            28,
+                            36,
+                            46,
+                            43,
+                            64,
+                            83,
+                            136,
+                            26,
+                            40,
+                            2,
+                            47,
+                            14,
+                            22,
+                            27,
+                            79,
+                            104,
+                            97,
+                            43,
+                            39,
+                            103,
+                        ],
+                    }
+                ),
+            ),
+            id="correl_24",
+        ),
+        pytest.param(
+            (
+                correl_25,
+                None,
+                "correl_25",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_region_name": [
+                            "MIDDLE EAST",
+                            "AMERICA",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                        ],
+                        "cust_region_key": [4, 1, 4, 4, 4],
+                        "cust_nation_name": [
+                            "SAUDI ARABIA",
+                            "CANADA",
+                            "SAUDI ARABIA",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                        "cust_nation_key": [20, 3, 20, 13, 20],
+                        "customer_name": [
+                            f"Customer#{n:09}" for n in [361, 385, 956, 4703, 5248]
+                        ],
+                        "n_urgent_semi_domestic_rail_orders": [2, 2, 2, 2, 2],
+                    }
+                ),
+            ),
+            id="correl_25",
+        ),
+        pytest.param(
+            (
+                correl_26,
+                None,
+                "correl_26",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_26",
+        ),
+        pytest.param(
+            (
+                correl_27,
+                None,
+                "correl_27",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_27",
+        ),
+        pytest.param(
+            (
+                correl_28,
+                None,
+                "correl_28",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_28",
         ),
     ],
 )

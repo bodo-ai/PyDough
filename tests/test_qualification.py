@@ -162,6 +162,17 @@ from pydough.unqualified import (
   ├─┬─ Where[$1.name == 'ASIA']
   │ └─┬─ AccessChild
   │   └─── SubCollection[region]
+  ├─┬─ Where[HAS($1)]
+  │ └─┬─ AccessChild
+  │   └─┬─ SubCollection[customers]
+  │     ├─── SubCollection[orders]
+  │     └─┬─ Where[(order_date >= datetime.date(1994, 1, 1)) & (order_date < datetime.date(1995, 1, 1))]
+  │       ├─── SubCollection[lines]
+  │       ├─┬─ Where[$1.name == nation_name]
+  │       │ └─┬─ AccessChild
+  │       │   └─┬─ SubCollection[supplier]
+  │       │     └─── SubCollection[nation]
+  │       └─── Calculate[value=extended_price * (1 - discount)]
   ├─┬─ Calculate[N_NAME=name, REVENUE=SUM($1.value)]
   │ └─┬─ AccessChild
   │   └─┬─ SubCollection[customers]
