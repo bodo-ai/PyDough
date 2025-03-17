@@ -222,6 +222,7 @@ class Decorrelater:
             # Repeat the process on the ancestor until either loop guard
             # condition is no longer True.
             level = level.parent
+            child_height -= 1
 
     def decorrelate_child(
         self,

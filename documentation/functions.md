@@ -803,11 +803,11 @@ Below is each window function currently supported in PyDough.
 
 The `RANKING` function returns ordinal position of the current record when all records in the current context are sorted by certain ordering keys. The arguments:
 
-- `by`:1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+- `by`:1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
 - `allow_ties` (optional): optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
 - `dense` (optional): optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
-- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 
 ```py
 # Rank customers per-nation by their account balance
@@ -825,7 +825,7 @@ Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) 
 
 The `PERCENTILE` function returns what index the current record belongs to if all records in the current context are ordered then split into evenly sized buckets. The arguments:
 
-- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+- `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
 - `n_buckets` (optional): optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
 
