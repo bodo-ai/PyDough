@@ -757,9 +757,8 @@ def defog_sql_text_ewallet_basic5():
     """
     return """
     SELECT u.uid, u.username 
-    FROM users AS u 
-    LEFT JOIN notifications AS n 
-    u.uid = n.user_id 
+    FROM users AS u LEFT JOIN notifications AS n 
+    ON u.uid = n.user_id 
     WHERE n.id IS NULL;
     """
 

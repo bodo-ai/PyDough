@@ -42,6 +42,12 @@ from defog_outputs import (
     defog_sql_text_ewallet_basic2,
     defog_sql_text_ewallet_basic3,
     defog_sql_text_ewallet_basic4,
+    defog_sql_text_ewallet_basic5,
+    defog_sql_text_ewallet_basic6,
+    defog_sql_text_ewallet_basic7,
+    defog_sql_text_ewallet_basic8,
+    defog_sql_text_ewallet_basic9,
+    defog_sql_text_ewallet_basic10,
 )
 from defog_test_functions import (
     impl_defog_broker_adv1,
@@ -79,6 +85,12 @@ from defog_test_functions import (
     impl_defog_ewallet_basic2,
     impl_defog_ewallet_basic3,
     impl_defog_ewallet_basic4,
+    impl_defog_ewallet_basic5,
+    impl_defog_ewallet_basic6,
+    impl_defog_ewallet_basic7,
+    impl_defog_ewallet_basic8,
+    impl_defog_ewallet_basic9,
+    impl_defog_ewallet_basic10,
 )
 from test_utils import (
     graph_fetcher,
@@ -377,6 +389,14 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
         pytest.param(
             (
+                impl_defog_ewallet_basic10,
+                "Ewallet",
+                defog_sql_text_ewallet_basic10,
+            ),
+            id="ewallet_basic10",
+        ),
+        pytest.param(
+            (
                 impl_defog_ewallet_basic2,
                 "Ewallet",
                 defog_sql_text_ewallet_basic2,
@@ -398,6 +418,46 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_ewallet_basic4,
             ),
             id="ewallet_basic4",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic5,
+                "Ewallet",
+                defog_sql_text_ewallet_basic5,
+            ),
+            id="ewallet_basic5",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic6,
+                "Ewallet",
+                defog_sql_text_ewallet_basic6,
+            ),
+            id="ewallet_basic6",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic7,
+                "Ewallet",
+                defog_sql_text_ewallet_basic7,
+            ),
+            id="ewallet_basic7",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic8,
+                "Ewallet",
+                defog_sql_text_ewallet_basic8,
+            ),
+            id="ewallet_basic8",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic9,
+                "Ewallet",
+                defog_sql_text_ewallet_basic9,
+            ),
+            id="ewallet_basic9",
         ),
     ],
 )

@@ -703,15 +703,11 @@ def impl_defog_ewallet_basic8():
     What are the top 3 most frequently used coupon codes? Return the coupon
     code, total number of redemptions, and total amount redeemed.
     """
-    selected_customers = Customers.WHERE(HAS(transactions_made))
-
-    return selected_customers.CALCULATE(
-        cust_id=_id,
-        DaysFromJoinToFirstTransaction=(
-            DATEDIFF("seconds", join_date, MIN(transactions_made.date_time))
-        )
-        / 86400.0,
-    )
+    return Coupons.CALCULATE(
+        coupon_code=code,
+        redemption_count=COUNT(transaction_used_in.txid),
+        total_discount=SUM(transaction_used_in.amount),
+    ).TOP_K(3, redemption_count.DESC())
 
 
 def impl_defog_ewallet_basic9():
