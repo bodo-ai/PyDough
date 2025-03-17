@@ -303,7 +303,16 @@ class Decorrelater:
     def identify_children_used(
         self, expr: HybridExpr, unused_children: set[int]
     ) -> None:
-        """ """
+        """
+        Find all child indices used in an expression and remove them from
+        a set of indices.
+
+        Args:
+            `expr`: the expression being checked for child reference indices.
+            `unused_children`: the set of all children that are unused. This
+            starts out as the set of all children, and whenever a child
+            reference is found within `expr`, it is removed from the set.
+        """
         match expr:
             case HybridChildRefExpr():
                 unused_children.discard(expr.child_idx)
@@ -323,7 +332,16 @@ class Decorrelater:
     def renumber_children_indices(
         self, expr: HybridExpr, child_remapping: dict[int, int]
     ) -> None:
-        """ """
+        """
+        Replaces all child reference indices in a hybrid expression in-place
+        when the children list was shifted, therefore the index-to-child
+        correspondence must be re-numbered.
+
+        Args:
+            `expr`: the expression having its child references modified.
+            `child_remapping`: the mapping of old->new indices for child
+            references.
+        """
         match expr:
             case HybridChildRefExpr():
                 assert expr.child_idx in child_remapping
