@@ -291,9 +291,6 @@ class Decorrelater:
         # without a match, replace the parent & its ancestors with a
         # HybridPullUp node (and replace any other deleted nodes with no-ops).
         if child.connection_type.is_semi:
-            # Skip this optimization if there is already a pull-up operation
-            # on that level (TODO (gh #xxx): fix even when this is the case)
-            # if not isinstance(old_parent.pipeline[0], HybridChildPullUp):
             old_parent._parent = None
             old_parent.pipeline[0] = HybridChildPullUp(
                 old_parent, child_idx, child_height
