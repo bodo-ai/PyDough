@@ -1091,6 +1091,73 @@ def make_relational_ordering(
     return orderings
 
 
+def postprocess_root(
+    node: PyDoughCollectionQDAG,
+    columns: list[tuple[str, str]] | None,
+    hybrid: HybridTree,
+    relational_translation: TranslationOutput,
+) -> RelationalRoot:
+    """
+    Run several postprocessing steps after the relational conversion step to
+    build the relational root for the QDAG node.
+
+    Args:
+        `node`: the PyDough QDAG collection node to be translated.
+        `columns`: a list of tuples in the form `(alias, column)`
+        describing every column that should be in the output, in the order
+        they should appear, and the alias they should be given. If None, uses
+        the most recent CALCULATE in the node to determine the columns.
+        `hybrid`: the hybrid tree that `node` was translated into.
+        `relational_translation`: the TranslationOutput for the relational
+        node that `hybrid` was turned into.
+    """
+
+    ordered_columns: list[tuple[str, RelationalExpression]] = []
+    orderings: list[ExpressionSortInfo] | None = None
+    renamings: dict[str, str] = hybrid.pipeline[-1].renamings
+    hybrid_expr: HybridExpr
+    rel_expr: RelationalExpression
+    name: str
+    original_name: str
+    if columns is None:
+        for original_name in node.calc_terms:
+            name = renamings.get(original_name, original_name)
+            hybrid_expr = hybrid.pipeline[-1].terms[name]
+            rel_expr = relational_translation.expressions[hybrid_expr]
+            ordered_columns.append((original_name, rel_expr))
+        ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
+    else:
+        for alias, column in columns:
+            hybrid_expr = hybrid.pipeline[-1].terms[column]
+            rel_expr = relational_translation.expressions[hybrid_expr]
+            ordered_columns.append((alias, rel_expr))
+    hybrid_orderings: list[HybridCollation] = hybrid.pipeline[-1].orderings
+    if hybrid_orderings:
+        orderings = make_relational_ordering(
+            hybrid_orderings, relational_translation.expressions
+        )
+    return RelationalRoot(
+        relational_translation.relational_node, ordered_columns, orderings
+    )
+
+
+def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
+    """
+    Runs optimize on the relational tree, including pushing down filters and
+    pruning columns.
+
+    Args:
+        `root`: the relational root to optimize.
+
+    Returns:
+        The optimized relational root.
+    """
+
+    # Step 1: prune unused columns
+    root = ColumnPruner().prune_unused_columns(root)
+    return root
+
+
 def convert_ast_to_relational(
     node: PyDoughCollectionQDAG,
     columns: list[tuple[str, str]] | None,
@@ -1124,35 +1191,15 @@ def convert_ast_to_relational(
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
     run_hybrid_decorrelation(hybrid)
-    renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
     )
-    ordered_columns: list[tuple[str, RelationalExpression]] = []
-    orderings: list[ExpressionSortInfo] | None = None
 
     # Extract the relevant expressions for the final columns and ordering keys
     # so that the root node can be built from them.
-    hybrid_expr: HybridExpr
-    rel_expr: RelationalExpression
-    name: str
-    original_name: str
-    if columns is None:
-        for original_name in node.calc_terms:
-            name = renamings.get(original_name, original_name)
-            hybrid_expr = hybrid.pipeline[-1].terms[name]
-            rel_expr = output.expressions[hybrid_expr]
-            ordered_columns.append((original_name, rel_expr))
-        ordered_columns.sort(key=lambda col: node.get_expression_position(col[0]))
-    else:
-        for alias, column in columns:
-            hybrid_expr = hybrid.pipeline[-1].terms[column]
-            rel_expr = output.expressions[hybrid_expr]
-            ordered_columns.append((alias, rel_expr))
-    hybrid_orderings: list[HybridCollation] = hybrid.pipeline[-1].orderings
-    if hybrid_orderings:
-        orderings = make_relational_ordering(hybrid_orderings, output.expressions)
-    unpruned_result: RelationalRoot = RelationalRoot(
-        output.relational_node, ordered_columns, orderings
-    )
-    return ColumnPruner().prune_unused_columns(unpruned_result)
+    raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
+
+    # Invoke the optimization procedures on the result to clean up the tree.
+    optimized_result: RelationalRoot = optimize_relational_tree(raw_result)
+
+    return optimized_result
