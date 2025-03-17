@@ -505,11 +505,11 @@ def correl_29():
         Nations.CALCULATE(
             avg_cust_acctbal=AVG(customers.acctbal),
             avg_supp_acctbal=AVG(suppliers.account_balance),
-            region_name=LOWER(region.name),
+            region_key=region.key,
             nation_name=name,
         )
         .ORDER_BY(
-            region_name.ASC(),
+            region.name.ASC(),
             nation_name.ASC(),
         )
         .WHERE(
@@ -522,7 +522,6 @@ def correl_29():
             n_above_avg_suppliers=COUNT(above_avg_suppliers),
         )
         .CALCULATE(
-            region_key=region.key,
             min_cust_acctbal=MIN(customers.acctbal),
             max_cust_acctbal=MAX(customers.acctbal),
         )
