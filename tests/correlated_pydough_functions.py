@@ -501,25 +501,31 @@ def correl_29():
     # name.
     above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
     above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
+    selected_nations = region.CALCULATE(rkey=key, region_name=name).nations.WHERE(
+        name < nation_name
+    )
     return (
         Nations.CALCULATE(
-            avg_cust_acctbal=AVG(customers.acctbal),
-            avg_supp_acctbal=AVG(suppliers.account_balance),
-            region_key=region.key,
             nation_name=name,
         )
+        .CALCULATE(
+            region_key=ANYTHING(selected_nations.rkey),
+            region_name=ANYTHING(selected_nations.region_name),
+            avg_cust_acctbal=AVG(customers.acctbal),
+            avg_supp_acctbal=AVG(suppliers.account_balance),
+        )
         .ORDER_BY(
-            region.name.ASC(),
+            region_name.ASC(),
             nation_name.ASC(),
         )
-        .WHERE(
-            (~ISIN(region.name, ("MIDDLE EAST", "AFRICA", "ASIA")))
-            & HAS(region.nations.WHERE(name < nation_name))
-        )
-        .WHERE(HAS(above_avg_customers) & HAS(above_avg_suppliers))
         .CALCULATE(
             n_above_avg_customers=COUNT(above_avg_customers),
             n_above_avg_suppliers=COUNT(above_avg_suppliers),
+        )
+        .WHERE(HAS(above_avg_customers) & HAS(above_avg_suppliers))
+        .WHERE(
+            (~ISIN(region_name, ("MIDDLE EAST", "AFRICA", "ASIA")))
+            & HAS(selected_nations)
         )
         .CALCULATE(
             min_cust_acctbal=MIN(customers.acctbal),
