@@ -38,6 +38,10 @@ from defog_outputs import (
     defog_sql_text_broker_gen3,
     defog_sql_text_broker_gen4,
     defog_sql_text_broker_gen5,
+    defog_sql_text_ewallet_basic1,
+    defog_sql_text_ewallet_basic2,
+    defog_sql_text_ewallet_basic3,
+    defog_sql_text_ewallet_basic4,
 )
 from defog_test_functions import (
     impl_defog_broker_adv1,
@@ -71,6 +75,10 @@ from defog_test_functions import (
     impl_defog_broker_gen3,
     impl_defog_broker_gen4,
     impl_defog_broker_gen5,
+    impl_defog_ewallet_basic1,
+    impl_defog_ewallet_basic2,
+    impl_defog_ewallet_basic3,
+    impl_defog_ewallet_basic4,
 )
 from test_utils import (
     graph_fetcher,
@@ -358,6 +366,38 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_gen5,
             ),
             id="broker_gen5",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic1,
+                "Ewallet",
+                defog_sql_text_ewallet_basic1,
+            ),
+            id="ewallet_basic1",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic2,
+                "Ewallet",
+                defog_sql_text_ewallet_basic2,
+            ),
+            id="ewallet_basic2",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic3,
+                "Ewallet",
+                defog_sql_text_ewallet_basic3,
+            ),
+            id="ewallet_basic3",
+        ),
+        pytest.param(
+            (
+                impl_defog_ewallet_basic4,
+                "Ewallet",
+                defog_sql_text_ewallet_basic4,
+            ),
+            id="ewallet_basic4",
         ),
     ],
 )

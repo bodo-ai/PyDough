@@ -34,6 +34,16 @@ __all__ = [
     "defog_sql_text_broker_gen3",
     "defog_sql_text_broker_gen4",
     "defog_sql_text_broker_gen5",
+    "defog_sql_text_ewallet_basic1",
+    "defog_sql_text_ewallet_basic10",
+    "defog_sql_text_ewallet_basic2",
+    "defog_sql_text_ewallet_basic3",
+    "defog_sql_text_ewallet_basic4",
+    "defog_sql_text_ewallet_basic5",
+    "defog_sql_text_ewallet_basic6",
+    "defog_sql_text_ewallet_basic7",
+    "defog_sql_text_ewallet_basic8",
+    "defog_sql_text_ewallet_basic9",
 ]
 
 
@@ -651,4 +661,168 @@ def defog_sql_text_broker_gen5():
     WHERE sbTxStatus = 'success' AND sbTxDateTime BETWEEN '2023-01-01' AND '2023-03-31'
     GROUP BY datetime
     ORDER BY datetime 
+    """
+
+
+def defog_sql_text_ewallet_basic1():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    How many distinct active users sent money per month in 2023? Return the
+    number of active users per month (as a date), starting from the earliest
+    date. Do not include merchants in the query. Only include successful
+    transactions.
+    """
+    return """
+    SELECT strftime('%Y-%m-01', t.created_at) AS month, 
+    COUNT(DISTINCT t.sender_id) AS active_users 
+    FROM wallet_transactions_daily AS t 
+    JOIN users AS u ON t.sender_id = u.uid 
+    WHERE t.sender_type = 0 AND t.status = 'success' 
+    AND u.status = 'active' AND t.created_at >= '2023-01-01' 
+    AND t.created_at < '2024-01-01' 
+    GROUP BY month ORDER BY month;
+    """
+
+
+def defog_sql_text_ewallet_basic10():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Who are the top 2 merchants (receiver type 1) by total transaction amount
+    in the past 150 days (inclusive of 150 days ago)? Return the merchant name,
+    total number of transactions, and total transaction amount.
+    """
+    return """
+    SELECT m.name AS merchant_name, COUNT(t.txid) AS total_transactions, SUM(t.amount) AS total_amount 
+    FROM merchants AS m 
+    JOIN wallet_transactions_daily 
+    AS t ON m.mid = t.receiver_id 
+    WHERE t.receiver_type = 1 AND t.created_at >= DATE('now', '-150 days') 
+    GROUP BY m.name ORDER BY total_amount DESC LIMIT 2;
+    """
+
+
+def defog_sql_text_ewallet_basic2():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return merchants (merchant ID and name) who have not issued any coupons.
+    """
+    return """
+    SELECT m.mid AS merchant_id, m.name AS merchant_name 
+    FROM merchants AS m 
+    LEFT JOIN coupons AS c 
+    ON m.mid = c.merchant_id 
+    WHERE c.cid IS NULL;
+    """
+
+
+def defog_sql_text_ewallet_basic3():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return the distinct list of merchant IDs that have received money from a
+    transaction. Consider all transaction types in the results you return,
+    but only include the merchant ids in your final answer.
+    """
+    return """
+    SELECT DISTINCT m.mid AS merchant_id 
+    FROM merchants AS m 
+    JOIN wallet_transactions_daily AS t 
+    ON m.mid = t.receiver_id 
+    WHERE t.receiver_type = 1;
+    """
+
+
+def defog_sql_text_ewallet_basic4():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return the distinct list of user IDs who have received transaction
+    notifications.
+    """
+    return """
+    SELECT DISTINCT user_id 
+    FROM notifications 
+    WHERE type = 'transaction';
+    """
+
+
+def defog_sql_text_ewallet_basic5():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Return users (user ID and username) who have not received any notifications.
+    """
+    return """
+    SELECT u.uid, u.username 
+    FROM users AS u 
+    LEFT JOIN notifications AS n 
+    u.uid = n.user_id 
+    WHERE n.id IS NULL;
+    """
+
+
+def defog_sql_text_ewallet_basic6():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What are the top 2 most frequently used device types for user sessions
+    and their respective counts?
+    """
+    return """
+    SELECT device_type, COUNT(*) AS COUNT 
+    FROM user_sessions 
+    GROUP BY device_type 
+    ORDER BY CASE WHEN COUNT IS NULL THEN 1 ELSE 0 END DESC, COUNT DESC LIMIT 2;
+    """
+
+
+def defog_sql_text_ewallet_basic7():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What are the top 3 most common transaction statuses and their respective
+    counts?
+    """
+    return """
+    SELECT status, COUNT(*) AS COUNT 
+    FROM wallet_transactions_daily 
+    GROUP BY status 
+    ORDER BY CASE WHEN COUNT IS NULL THEN 1 ELSE 0 END DESC, COUNT DESC LIMIT 3;
+    """
+
+
+def defog_sql_text_ewallet_basic8():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    What are the top 3 most frequently used coupon codes? Return the coupon
+    code, total number of redemptions, and total amount redeemed.
+    """
+    return """
+    SELECT c.code AS coupon_code, COUNT(t.txid) AS redemption_count, SUM(t.amount) AS total_discount 
+    FROM coupons AS c 
+    JOIN wallet_transactions_daily AS t ON c.cid = t.coupon_id 
+    GROUP BY c.code 
+    ORDER BY CASE WHEN redemption_count IS NULL THEN 1 ELSE 0 END DESC, redemption_count DESC LIMIT 3;
+    """
+
+
+def defog_sql_text_ewallet_basic9():
+    """
+    SQLite query text for the following question for the Broker graph:
+
+    Which are the top 5 countries by total transaction amount sent by users,
+    sender_type = 0? Return the country, number of distinct users who sent,
+    and total transaction amount.
+    """
+    return """
+    SELECT u.country, COUNT(DISTINCT t.sender_id) AS user_count, SUM(t.amount) AS total_amount 
+    FROM users AS u 
+    JOIN wallet_transactions_daily AS t ON u.uid = t.sender_id 
+    WHERE t.sender_type = 0 
+    GROUP BY u.country 
+    ORDER BY CASE WHEN total_amount IS NULL THEN 1 ELSE 0 END DESC, total_amount DESC LIMIT 5;
     """
