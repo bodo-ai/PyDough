@@ -477,9 +477,7 @@ def correl_27():
 
 
 def correl_28():
-    # For every nation in EUROPE, count how many urggent purchases were made by
-    # customers in that nation from suppliers in the same nation in 1994.
-    # ASsumes each European nation has at least one such person.
+    # Variant of correl_26
     selected_lines = customers.orders.WHERE(
         (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
     ).lines.WHERE(supplier.nation.name == nation_name)
@@ -489,4 +487,75 @@ def correl_28():
         .WHERE(region.name == "EUROPE")
         .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
         .ORDER_BY(nation_name.ASC())
+    )
+
+
+def correl_29():
+    # Edge case for de-correlation behavior: for each nation not in Asia,
+    # Africa, or the Middle East, find its region key, nation name,
+    # number of customers/suppliers with an account balance above teh average
+    # for customers/suppliers in that nation, and the min/max account balance
+    # of customers in that nation. Only consider nations that have at least 1
+    # such customer/supplier and are not the first nation alphabetically in
+    # that region, and sort alphabetically by region name followed by nation
+    # name.
+    above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
+    above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
+    return (
+        Nations.CALCULATE(
+            avg_cust_acctbal=AVG(customers.acctbal),
+            avg_supp_acctbal=AVG(suppliers.account_balance),
+            region_name=LOWER(region.name),
+            nation_name=name,
+        )
+        .ORDER_BY(
+            region_name.ASC(),
+            nation_name.ASC(),
+        )
+        .WHERE(
+            (~ISIN(region.name, ("MIDDLE EAST", "AFRICA", "ASIA")))
+            & HAS(region.nations.WHERE(name < nation_name))
+        )
+        .WHERE(HAS(above_avg_customers) & HAS(above_avg_suppliers))
+        .CALCULATE(
+            n_above_avg_customers=COUNT(above_avg_customers),
+            n_above_avg_suppliers=COUNT(above_avg_suppliers),
+        )
+        .CALCULATE(
+            region_key=region.key,
+            min_cust_acctbal=MIN(customers.acctbal),
+            max_cust_acctbal=MAX(customers.acctbal),
+        )
+        .CALCULATE(
+            region_key,
+            nation_name,
+            n_above_avg_customers,
+            n_above_avg_suppliers,
+            min_cust_acctbal,
+            max_cust_acctbal,
+        )
+    )
+
+
+def correl_30():
+    # Edge case for de-correlation behavior: for each nation not in Asia,
+    # Africa, or the Middle East, count how many customers/suppliers have an
+    # above-average account balance.
+    above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
+    above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
+    return (
+        Nations.CALCULATE(
+            avg_cust_acctbal=AVG(customers.acctbal),
+            avg_supp_acctbal=AVG(suppliers.account_balance),
+            region_name=LOWER(region.name),
+        )
+        .WHERE(~ISIN(region.name, ("MIDDLE EAST", "AFRICA", "ASIA")))
+        .WHERE(HAS(above_avg_customers) & HAS(above_avg_suppliers))
+        .CALCULATE(
+            region_name,
+            nation_name=name,
+            n_above_avg_customers=COUNT(above_avg_customers),
+            n_above_avg_suppliers=COUNT(above_avg_suppliers),
+        )
+        .ORDER_BY(region_name.ASC(), nation_name.ASC())
     )

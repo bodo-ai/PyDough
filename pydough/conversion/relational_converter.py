@@ -6,6 +6,7 @@ nodes as an intermediary representation.
 __all__ = ["convert_ast_to_relational"]
 
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
@@ -138,9 +139,7 @@ class RelTranslation:
         relation.columns[name] = LiteralExpression(None, UnknownType())
         return ColumnReference(name, UnknownType())
 
-    def get_column_name(
-        self, name: str, existing_names: dict[str, RelationalExpression]
-    ) -> str:
+    def get_column_name(self, name: str, existing_names: Iterable[str]) -> str:
         """
         Replaces a name for a new column with another name if the name is
         already being used.
@@ -418,6 +417,7 @@ class RelTranslation:
         out_columns: dict[HybridExpr, ColumnReference] = {}
         keys: dict[str, ColumnReference] = {}
         aggregations: dict[str, CallExpression] = {}
+        used_names: set[str] = set()
         # First, propagate all key columns into the output, and add them to
         # the keys mapping of the aggregate.
         for agg_key in agg_keys:
@@ -425,13 +425,18 @@ class RelTranslation:
             assert isinstance(agg_key_expr, ColumnReference)
             out_columns[agg_key] = agg_key_expr
             keys[agg_key_expr.name] = agg_key_expr
+            used_names.add(agg_key_expr.name)
         # Then, add all of the agg calls to the aggregations mapping of the
         # the aggregate, and add references to the corresponding dummy-names
         # to the output.
         for agg_name, agg_func in connection.aggs.items():
-            assert agg_name not in keys
+            # Ensure there is no name conflict
+            in_agg_name: str = agg_name
+            if agg_name in keys:
+                agg_name = self.get_column_name(agg_name, used_names)
+            used_names.add(agg_name)
             col_ref: ColumnReference = ColumnReference(agg_name, agg_func.typ)
-            hybrid_expr: HybridExpr = HybridRefExpr(agg_name, agg_func.typ)
+            hybrid_expr: HybridExpr = HybridRefExpr(in_agg_name, agg_func.typ)
             out_columns[hybrid_expr] = col_ref
             args: list[RelationalExpression] = [
                 self.translate_expression(arg, context) for arg in agg_func.args
@@ -1109,12 +1114,7 @@ def convert_ast_to_relational(
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
     hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
-    print()
-    print("Before decorrelation:")
-    print(hybrid)
     run_hybrid_decorrelation(hybrid)
-    print("After decorrelation:")
-    print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
