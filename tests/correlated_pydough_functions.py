@@ -496,36 +496,27 @@ def correl_29():
     # number of customers/suppliers with an account balance above teh average
     # for customers/suppliers in that nation, and the min/max account balance
     # of customers in that nation. Only consider nations that have at least 1
-    # such customer/supplier and are not the first nation alphabetically in
-    # that region, and sort alphabetically by region name followed by nation
-    # name.
+    # such customer/supplier, and sort by region key followed by nation name.
     above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
     above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
-    selected_nations = region.CALCULATE(rkey=key, region_name=name).nations.WHERE(
-        name < nation_name
-    )
     return (
         Nations.CALCULATE(
             nation_name=name,
-        )
-        .CALCULATE(
-            region_key=ANYTHING(selected_nations.rkey),
-            region_name=ANYTHING(selected_nations.region_name),
             avg_cust_acctbal=AVG(customers.acctbal),
             avg_supp_acctbal=AVG(suppliers.account_balance),
         )
         .ORDER_BY(
-            region_name.ASC(),
+            region_key.ASC(),
             nation_name.ASC(),
         )
         .CALCULATE(
             n_above_avg_customers=COUNT(above_avg_customers),
             n_above_avg_suppliers=COUNT(above_avg_suppliers),
         )
-        .WHERE(HAS(above_avg_customers) & HAS(above_avg_suppliers))
         .WHERE(
-            (~ISIN(region_name, ("MIDDLE EAST", "AFRICA", "ASIA")))
-            & HAS(selected_nations)
+            HAS(above_avg_customers)
+            & HAS(above_avg_suppliers)
+            & ISIN(region_key, (1, 3))
         )
         .CALCULATE(
             min_cust_acctbal=MIN(customers.acctbal),
