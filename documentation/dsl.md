@@ -721,7 +721,7 @@ An expression becomes a collation expression when it is appended with `.ASC()` (
 
 If there are multiple `ORDER_BY` terms, the last one is the one that takes precedence. The terms in the collection are unchanged by the `ORDER_BY` clause, since the only change is the order of the records.
 
-PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 
 **Good Example #1**: Order every person alphabetically by last name, then first name, then middle name (people with no middle name going last).
 
@@ -791,21 +791,21 @@ People.ORDER_BY(first_name)
 ```
 
 **Good Example #8**: Sort every person by their first name in ascending order, last name in descending order, and the number of packages they have ordered in descending order.
-Let's keep the default behavior of `collation_default_asc` and set `propogate_collation` to `True`.  We can do this by setting the [Session Configs](./usage.md#session-configs).
+Let's keep the default behavior of `collation_default_asc` and set `propagate_collation` to `True`.  We can do this by setting the [Session Configs](./usage.md#session-configs).
 ```py
 %%pydough
 People.ORDER_BY(first_name, last_name.DESC(), COUNT(packages))
 ```
 
-This is valid because the collation term is by default ascending based on the `collation_default_asc` config. Setting the `propogate_collation` config to `True` will cause the collation to be propogated to the `COUNT(packages)` term. Hence its equivalent to:
+This is valid because the collation term is by default ascending based on the `collation_default_asc` config. Setting the `propagate_collation` config to `True` will cause the collation to be propagated to the `COUNT(packages)` term. Hence its equivalent to:
 
 ```py
 %%pydough
 People.ORDER_BY(first_name.ASC(), last_name.DESC(), COUNT(packages).DESC())
 ```
 
-`COUNT(packages)` becomes a descending term because `propogate_collation` is `True` and the previous term `last_name.DESC()` is descending.
-`first_name` is ascending because `collation_default_asc` is `True` and `first_name` is the first term. The `propogate_collation` config does not affect the collation of the first term.
+`COUNT(packages)` becomes a descending term because `propagate_collation` is `True` and the previous term `last_name.DESC()` is descending.
+`first_name` is ascending because `collation_default_asc` is `True` and `first_name` is the first term. The `propagate_collation` config does not affect the collation of the first term.
 
 **Bad Example #1**: Sort each person by their account balance in descending order. This is invalid because the `People` collection does not have an `account_balance` property.
 
@@ -848,7 +848,7 @@ A similar operation to `ORDER_BY` is `TOP_K`. The `TOP_K` operation also sorts a
 
 The syntax for this is `.TOP_K(k, by=...)` where `k` is a positive integer and the `by` clause is either a single collation term (as seen in `ORDER_BY`) or an iterable of collation terms (e.g. a list or tuple). The same restrictions as `ORDER_BY` apply to `TOP_K` regarding their collation terms.
 
-PyDough provides `collation_default_asc` and `propogate_collation` configs to control the default collation and whether to propogate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 
 The terms in the collection are unchanged by the `TOP_K` clause, since the only change is the order of the records and which ones are kept/dropped.
 
@@ -1192,12 +1192,9 @@ People.CALCULATE(ssn).PARTITION(
 <!-- TOC --><a name="singular"></a>
 ### SINGULAR
 
-> [!IMPORTANT]
-> This feature has not yet been implemented in PyDough
+In PyDough, it is required that if we are accessing a sub-collection in a collection context, the collection must be singular with regards to the sub-collection. Certain PyDough operations, such as specific filters, can cause plural data to become singular. In this case, PyDough will still ban the plural data from being treated as singular unless the `.SINGULAR()` modifier is used to tell PyDough that the data should be treated as singular. It is very important that this only be used if the user is certain that the data will be singular, since otherwise it can result in undefined behavior when the PyDough code is executed.
 
-Certain PyDough operations, such as specific filters, can cause plural data to become singular. In this case, PyDough will still ban the plural data from being treated as singular unless the `.SINGULAR()` modifier is used to tell PyDough that the data should be treated as singular. It is very important that this only be used if the user is certain that the data will be singular, since otherwise it can result in undefined behavior when the PyDough code is executed.
-
-**Good Example #1**: Access the package cost of the most recent package ordered by each person. This is valid because even though `.packages` is plural, the filter done on it will ensure that there is only one record for each record of `People`, so `.SINGULAR()` is valid.
+**Good Example #1**: Access the package cost of the most recent package ordered by each person. This is valid because even though `.packages` is plural with regards to `People`, the filter done will ensure that there is only one record for each record of `People`, so `.SINGULAR()` is valid. 
 
 ```py
 %%pydough
@@ -1225,6 +1222,20 @@ js = current_occupants.WHERE(
 Addresses.CALCULATE(
     address_id,
     john_smith_email=DEFAULT_TO(js.email, "NO JOHN SMITH LIVING HERE")
+)
+```
+
+**Bad Example #1**: This is invalid primarily because of two reasons:
+1. Each `Addresses` might have multiple `current_occupants` named `John`, therefore the use of `.SINGULAR()`, though it would not raise an exception, is invalid.
+2. Even if, `current_occupants` were non-plural after using `SINGULAR`, `packages` is a plural sub-collection of `current_occupants`, therefore, the data being accessed would be plural with regards to `Addresses`.
+
+
+```py
+%%pydough
+Addresses.CALCULATE(
+    package_id=current_occupants.WHERE(
+        first_name == "John"
+    ).SINGULAR().packages.package_id
 )
 ```
 
