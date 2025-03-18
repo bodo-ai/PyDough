@@ -177,25 +177,33 @@ def push_filters(
     pushable_filters: set[RelationalExpression]
     match node:
         case Filter():
-            filters.update(get_conjunctions(node.condition))
             remaining_filters, pushable_filters = partition_nodes(
-                filters, contains_window
+                get_conjunctions(node.condition), contains_window
             )
+            if remaining_filters:
+                remaining_filters.update(filters)
+                remaining_filters.update(pushable_filters)
+                pushable_filters = set()
+            else:
+                pushable_filters.update(filters)
             return build_filter(
                 push_filters(node.input, pushable_filters), remaining_filters
             )
         case Project():
-            allowed_cols: set[str] = set()
-            for name, expr in node.columns.items():
-                if isinstance(expr, ColumnReference):
-                    allowed_cols.add(name)
-            pushable_filters, remaining_filters = partition_nodes(
-                filters,
-                lambda expr: only_references_columns(expr, allowed_cols),
-            )
-            pushable_filters = {
-                transpose_node(expr, node.columns) for expr in pushable_filters
-            }
+            if any(contains_window(expr) for expr in node.columns.values()):
+                pushable_filters, remaining_filters = set(), filters
+            else:
+                allowed_cols: set[str] = set()
+                for name, expr in node.columns.items():
+                    if isinstance(expr, ColumnReference):
+                        allowed_cols.add(name)
+                pushable_filters, remaining_filters = partition_nodes(
+                    filters,
+                    lambda expr: only_references_columns(expr, allowed_cols),
+                )
+                pushable_filters = {
+                    transpose_node(expr, node.columns) for expr in pushable_filters
+                }
             node._input = push_filters(node.input, pushable_filters)
             return build_filter(node, remaining_filters)
         case Join():
