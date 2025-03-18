@@ -335,7 +335,6 @@ def test_pipeline_until_sql_tpch(
     unqualified_impl, file_name, _ = pydough_pipeline_tpch_test_data
     file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
     graph: GraphMetadata = get_sample_graph("TPCH")
-    UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
     sql_text: str = to_sql(
         unqualified,

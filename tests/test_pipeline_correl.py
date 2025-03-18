@@ -43,10 +43,10 @@ from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
@@ -782,6 +782,47 @@ def test_pipeline_until_relational_correlated(
         with open(file_path) as f:
             expected_relational_string: str = f.read()
         assert relational.to_tree_string() == expected_relational_string.strip(), (
+            "Mismatch between tree string representation of relational node and expected Relational tree string"
+        )
+
+
+def test_pipeline_until_sql_correlated(
+    pydough_pipeline_correl_test_data: tuple[
+        Callable[[], UnqualifiedNode],
+        dict[str, str] | list[str] | None,
+        str,
+        Callable[[], pd.DataFrame],
+    ],
+    get_sample_graph: graph_fetcher,
+    default_config: PyDoughConfigs,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Same as test_pipeline_until_relational_correlated, but for the generated SQL text.
+    """
+    # Run the query through the stages from unqualified node to qualified node
+    # to relational tree, and confirm the tree string matches the expected
+    # structure.
+    unqualified_impl, columns, file_name, _ = pydough_pipeline_correl_test_data
+    file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    sql_text: str = to_sql(
+        unqualified,
+        columns=columns,
+        metadata=graph,
+        database=empty_context_database,
+        config=default_config,
+    )
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(sql_text + "\n")
+    else:
+        with open(file_path) as f:
+            expected_sql_text: str = f.read()
+        assert sql_text == expected_sql_text.strip(), (
             "Mismatch between tree string representation of relational node and expected Relational tree string"
         )
 
