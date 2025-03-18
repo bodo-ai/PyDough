@@ -80,6 +80,34 @@ def only_references_columns(
             )
 
 
+def false_when_null_columns(
+    node: RelationalExpression, allowed_columns: set[str]
+) -> bool:
+    """
+    TODO
+    """
+    match node:
+        case LiteralExpression() | CorrelatedReference():
+            return False
+        case ColumnReference():
+            return node.name in allowed_columns
+        case CallExpression():
+            if node.op in (
+                pydop.EQU,
+                pydop.EQU,
+            ):
+                return any(
+                    false_when_null_columns(arg, allowed_columns) for arg in node.inputs
+                )
+            return False
+        case WindowCallExpression():
+            return False
+        case _:
+            raise NotImplementedError(
+                f"transpose_node not implemented for {node.__class__.__name__}"
+            )
+
+
 def contains_window(node: RelationalExpression) -> bool:
     """
     TODO
@@ -216,23 +244,19 @@ def push_filters(
                 input_idx = node.default_input_aliases.index(input_name)
                 input_cols[input_idx].add(name)
             for idx, child in enumerate(node.inputs):
-                if idx > 0 and node.join_types[idx - 1] != JoinType.INNER:
-                    node.inputs[idx] = push_filters(child, set())
-                    continue
-                pushable_filters, remaining_filters = partition_nodes(
-                    remaining_filters,
-                    lambda expr: only_references_columns(expr, input_cols[idx]),
-                )
-                # {Call(op=BinaryOperator[&], inputs=[Call(op=BinaryOperator[>=], inputs=[Column(name=ship_date, type=DateType()), Literal(value=datetime.date(1995, 1, 1), type=DateType())], return_type=BooleanType()), Call(op=BinaryOperator[<=], inputs=[Column(name=ship_date, type=DateType()), Literal(value=datetime.date(1996, 12, 31), type=DateType())], return_type=BooleanType()), Call(op=BinaryOperator[|], inputs=[Call(op=BinaryOperator[&], inputs=[Call(op=BinaryOperator[==], inputs=[Column(name=name_3, type=StringType()), Literal(value='FRANCE', type=StringType())], return_type=BooleanType()), Call(op=BinaryOperator[==], inputs=[Column(name=name_8, type=StringType()), Literal(value='GERMANY', type=StringType())], return_type=BooleanType())], return_type=BooleanType()), Call(op=BinaryOperator[&], inputs=[Call(op=BinaryOperator[==], inputs=[Column(name=name_3, type=StringType()), Literal(value='GERMANY', type=StringType())], return_type=BooleanType()), Call(op=BinaryOperator[==], inputs=[Column(name=name_8, type=StringType()), Literal(value='FRANCE', type=StringType())], return_type=BooleanType())], return_type=BooleanType())], return_type=BooleanType())], return_type=BooleanType())}
-                # print()
-                # print("***")
-                # print(filters)
-                # print(node.to_tree_string())
-                # print(idx, node.join_types)
-                # print(input_cols[idx])
-                # print(pushable_filters)
-                # print(remaining_filters)
-                # print("***")
+                if idx > 0 and node.join_types[idx - 1] == JoinType.LEFT:
+                    pushable_filters, remaining_filters = partition_nodes(
+                        remaining_filters,
+                        lambda expr: only_references_columns(expr, input_cols[idx])
+                        and false_when_null_columns(expr, input_cols[idx]),
+                    )
+                    if pushable_filters:
+                        node.join_types[idx - 1] = JoinType.INNER
+                else:
+                    pushable_filters, remaining_filters = partition_nodes(
+                        remaining_filters,
+                        lambda expr: only_references_columns(expr, input_cols[idx]),
+                    )
                 pushable_filters = {
                     transpose_node(expr, node.columns) for expr in pushable_filters
                 }
