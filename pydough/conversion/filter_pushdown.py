@@ -80,6 +80,40 @@ def only_references_columns(
             )
 
 
+null_propagating_operators = {
+    pydop.EQU,
+    pydop.LET,
+    pydop.LEQ,
+    pydop.GRT,
+    pydop.GEQ,
+    pydop.LET,
+    pydop.NEQ,
+    pydop.STARTSWITH,
+    pydop.ENDSWITH,
+    pydop.CONTAINS,
+    pydop.LIKE,
+    pydop.LOWER,
+    pydop.UPPER,
+    pydop.LENGTH,
+    pydop.YEAR,
+    pydop.MONTH,
+    pydop.DAY,
+    pydop.HOUR,
+    pydop.MINUTE,
+    pydop.SECOND,
+    pydop.DATETIME,
+    pydop.DATEDIFF,
+    pydop.JOIN_STRINGS,
+    pydop.ADD,
+    pydop.SUB,
+    pydop.MUL,
+    pydop.DIV,
+}
+"""
+TODO
+"""
+
+
 def false_when_null_columns(
     node: RelationalExpression, allowed_columns: set[str]
 ) -> bool:
@@ -92,10 +126,7 @@ def false_when_null_columns(
         case ColumnReference():
             return node.name in allowed_columns
         case CallExpression():
-            if node.op in (
-                pydop.EQU,
-                pydop.EQU,
-            ):
+            if node.op in null_propagating_operators:
                 return any(
                     false_when_null_columns(arg, allowed_columns) for arg in node.inputs
                 )
