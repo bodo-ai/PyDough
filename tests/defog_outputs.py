@@ -144,9 +144,6 @@ def defog_sql_text_broker_adv5() -> str:
     change in average closing price, which is calculated as:
     (avg_close_given_month - avg_close_previous_month) /
     avg_close_previous_month for each ticker symbol each month.
-
-    NOTE: added an ORDER BY clause at the end to ensure the results were
-    deterministic.
     """
     return """
     WITH monthly_price_stats AS (
@@ -169,7 +166,6 @@ def defog_sql_text_broker_adv5() -> str:
     FROM monthly_price_stats AS mps
     JOIN sbTicker AS t
     ON mps.sbDpTickerId = t.sbTickerId
-    ORDER BY sbTickerSymbol, month
     """
 
 
@@ -487,16 +483,12 @@ def defog_sql_text_broker_basic5() -> str:
     SQLite query text for the following question for the Broker graph:
 
     Return the distinct list of customer IDs who have made a 'buy' transaction.
-
-    NOTE: added an ORDER BY clause at the end to ensure the results were
-    deterministic.
     """
     return """
     SELECT DISTINCT c.sbCustId
     FROM sbCustomer AS c JOIN sbTransaction AS t
     ON c.sbCustId = t.sbTxCustId
     WHERE t.sbTxType = 'buy'
-    ORDER BY sbCustId
     """
 
 

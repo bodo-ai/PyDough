@@ -26,6 +26,7 @@ __all__ = [
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, MutableMapping, MutableSequence
+from dataclasses import dataclass
 from typing import Any
 
 import pydough.pydough_operators as pydop
@@ -900,3 +901,31 @@ def make_relational_ordering(
         ExpressionSortInfo: The column ordering information.
     """
     return ExpressionSortInfo(expr, ascending, nulls_first)
+
+
+@dataclass
+class PyDoughSQLComparisonTest:
+    """
+    The data needed to run the PyDough unit tests.
+    """
+
+    pydough_function: Callable[[], Any]
+    """
+    String containing the pydough code to be executed.
+    """
+
+    graph_name: str
+    """
+    The graph that the PyDough code will use.
+    """
+
+    sql_function: Callable[[], Any]
+    """
+    String containing the SQL code to be ran.
+    """
+
+    order_insensitive: bool = False
+    """
+    If True, the resulting data frames will be sorted so the order
+    of the results is not taken into account
+    """
