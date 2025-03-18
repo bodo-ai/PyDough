@@ -1154,11 +1154,11 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
         The optimized relational root.
     """
 
-    # Step 1: prune unused columns
-    root = ColumnPruner().prune_unused_columns(root)
-
-    # Step 2: push filters down as far as possible
+    # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
+
+    # Step 2: prune unused columns
+    root = ColumnPruner().prune_unused_columns(root)
 
     return root
 

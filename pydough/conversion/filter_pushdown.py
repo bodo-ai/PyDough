@@ -10,7 +10,9 @@ from pydough.relational import (
     Aggregate,
     CallExpression,
     ColumnReference,
+    CorrelatedReference,
     EmptySingleton,
+    ExpressionSortInfo,
     Filter,
     Join,
     JoinType,
@@ -20,6 +22,7 @@ from pydough.relational import (
     RelationalExpression,
     RelationalNode,
     Scan,
+    WindowCallExpression,
 )
 from pydough.relational.rel_util import get_conjunctions
 from pydough.types import BooleanType
@@ -43,19 +46,61 @@ def partition_nodes(
 
 
 def only_references_columns(
-    expr: RelationalExpression, allowed_columns: set[str]
+    node: RelationalExpression, allowed_columns: set[str]
 ) -> bool:
-    """ """
-    return False
+    """
+    TODO
+    """
+    match node:
+        case LiteralExpression() | CorrelatedReference():
+            return True
+        case ColumnReference():
+            return node.name in allowed_columns
+        case CallExpression():
+            return all(
+                only_references_columns(arg, allowed_columns) for arg in node.inputs
+            )
+        case WindowCallExpression():
+            return (
+                all(
+                    only_references_columns(arg, allowed_columns) for arg in node.inputs
+                )
+                and all(
+                    only_references_columns(arg, allowed_columns)
+                    for arg in node.partition_inputs
+                )
+                and all(
+                    only_references_columns(order_arg.expr, allowed_columns)
+                    for order_arg in node.order_inputs
+                )
+            )
+        case _:
+            raise NotImplementedError(
+                f"transpose_node not implemented for {node.__class__.__name__}"
+            )
 
 
-def contains_window(expr: RelationalExpression) -> bool:
-    """ """
-    return False
+def contains_window(node: RelationalExpression) -> bool:
+    """
+    TODO
+    """
+    match node:
+        case LiteralExpression() | CorrelatedReference() | ColumnReference():
+            return False
+        case CallExpression():
+            return any(contains_window(arg) for arg in node.inputs)
+        case WindowCallExpression():
+            return True
+        case _:
+            raise NotImplementedError(
+                f"transpose_node not implemented for {node.__class__.__name__}"
+            )
 
 
 def passthrough_column_mapping(node: RelationalNode) -> dict[str, RelationalExpression]:
-    """ """
+    """
+    TODO
+    """
     result: dict[str, RelationalExpression] = {}
     for name, expr in node.columns.items():
         result[name] = ColumnReference(name, expr.data_type)
@@ -85,7 +130,41 @@ def transpose_node(
     """
     TODO
     """
-    return node
+    match node:
+        case LiteralExpression() | CorrelatedReference():
+            return node
+        case ColumnReference():
+            new_column = columns.get(node.name)
+            assert isinstance(new_column, ColumnReference)
+            if new_column.input_name is not None:
+                new_column = new_column.with_input(None)
+            return new_column
+        case CallExpression():
+            return CallExpression(
+                node.op,
+                node.data_type,
+                [transpose_node(arg, columns) for arg in node.inputs],
+            )
+        case WindowCallExpression():
+            return WindowCallExpression(
+                node.op,
+                node.data_type,
+                [transpose_node(arg, columns) for arg in node.inputs],
+                [transpose_node(arg, columns) for arg in node.partition_inputs],
+                [
+                    ExpressionSortInfo(
+                        transpose_node(order_arg.expr, columns),
+                        order_arg.ascending,
+                        order_arg.nulls_first,
+                    )
+                    for order_arg in node.order_inputs
+                ],
+                node.kwargs,
+            )
+        case _:
+            raise NotImplementedError(
+                f"transpose_node not implemented for {node.__class__.__name__}"
+            )
 
 
 def push_filters(
@@ -102,9 +181,6 @@ def push_filters(
             remaining_filters, pushable_filters = partition_nodes(
                 filters, contains_window
             )
-            pushable_filters = {
-                transpose_node(expr, node.columns) for expr in pushable_filters
-            }
             return build_filter(
                 push_filters(node.input, pushable_filters), remaining_filters
             )
@@ -114,7 +190,7 @@ def push_filters(
                 if isinstance(expr, ColumnReference):
                     allowed_cols.add(name)
             pushable_filters, remaining_filters = partition_nodes(
-                remaining_filters,
+                filters,
                 lambda expr: only_references_columns(expr, allowed_cols),
             )
             pushable_filters = {
@@ -126,17 +202,29 @@ def push_filters(
             remaining_filters = filters
             input_cols: list[set[str]] = [set() for _ in range(len(node.inputs))]
             for name, expr in node.columns.items():
-                assert isinstance(expr, ColumnReference)
+                if not isinstance(expr, ColumnReference):
+                    continue
                 input_name: str | None = expr.input_name
                 input_idx = node.default_input_aliases.index(input_name)
                 input_cols[input_idx].add(name)
             for idx, child in enumerate(node.inputs):
                 if idx > 0 and node.join_types[idx - 1] != JoinType.INNER:
+                    node.inputs[idx] = push_filters(child, set())
                     continue
                 pushable_filters, remaining_filters = partition_nodes(
                     remaining_filters,
                     lambda expr: only_references_columns(expr, input_cols[idx]),
                 )
+                # {Call(op=BinaryOperator[&], inputs=[Call(op=BinaryOperator[>=], inputs=[Column(name=ship_date, type=DateType()), Literal(value=datetime.date(1995, 1, 1), type=DateType())], return_type=BooleanType()), Call(op=BinaryOperator[<=], inputs=[Column(name=ship_date, type=DateType()), Literal(value=datetime.date(1996, 12, 31), type=DateType())], return_type=BooleanType()), Call(op=BinaryOperator[|], inputs=[Call(op=BinaryOperator[&], inputs=[Call(op=BinaryOperator[==], inputs=[Column(name=name_3, type=StringType()), Literal(value='FRANCE', type=StringType())], return_type=BooleanType()), Call(op=BinaryOperator[==], inputs=[Column(name=name_8, type=StringType()), Literal(value='GERMANY', type=StringType())], return_type=BooleanType())], return_type=BooleanType()), Call(op=BinaryOperator[&], inputs=[Call(op=BinaryOperator[==], inputs=[Column(name=name_3, type=StringType()), Literal(value='GERMANY', type=StringType())], return_type=BooleanType()), Call(op=BinaryOperator[==], inputs=[Column(name=name_8, type=StringType()), Literal(value='FRANCE', type=StringType())], return_type=BooleanType())], return_type=BooleanType())], return_type=BooleanType())], return_type=BooleanType())}
+                # print()
+                # print("***")
+                # print(filters)
+                # print(node.to_tree_string())
+                # print(idx, node.join_types)
+                # print(input_cols[idx])
+                # print(pushable_filters)
+                # print(remaining_filters)
+                # print("***")
                 pushable_filters = {
                     transpose_node(expr, node.columns) for expr in pushable_filters
                 }
@@ -144,7 +232,7 @@ def push_filters(
             return build_filter(node, remaining_filters)
         case Aggregate():
             pushable_filters, remaining_filters = partition_nodes(
-                remaining_filters,
+                filters,
                 lambda expr: only_references_columns(expr, set(node.keys)),
             )
             pushable_filters = {
