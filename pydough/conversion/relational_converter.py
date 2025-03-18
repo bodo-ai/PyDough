@@ -45,6 +45,7 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
+from .filter_pushdown import push_filters
 from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
     ConnectionType,
@@ -1155,6 +1156,10 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
 
     # Step 1: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
+
+    # Step 2: push filters down as far as possible
+    root._input = push_filters(root.input, set())
+
     return root
 
 
