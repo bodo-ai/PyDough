@@ -40,6 +40,22 @@ def default_config() -> PyDoughConfigs:
     return config
 
 
+@pytest.fixture
+def defog_config() -> PyDoughConfigs:
+    """
+    The configuration of PyDoughConfigs used in testing defog.ai standard
+    queries. This is re-created with each request since a test function can
+    mutate this.
+    """
+    config: PyDoughConfigs = PyDoughConfigs()
+    # Set the defaults manually, in case they ever change.
+    config.sum_default_zero = True
+    config.avg_default_zero = False
+    config.start_of_week = DayOfWeek.MONDAY
+    config.start_week_as_zero = True
+    return config
+
+
 @pytest.fixture(scope="session")
 def sample_graph_path() -> str:
     """

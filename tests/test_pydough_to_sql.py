@@ -118,7 +118,7 @@ def test_pydough_to_sql_tpch(
         ),
         pytest.param(
             week_offset,
-            None,
+            "week_offset",
             "Broker",
             id="week_offset",
         ),
