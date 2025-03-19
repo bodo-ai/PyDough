@@ -53,8 +53,8 @@ FROM (
                     YEAR(order_date) = 1993
                 )
                 GROUP BY
-                  customer_key,
-                  order_date
+                  order_date,
+                  customer_key
               )
               WHERE
                 COALESCE(agg_0, 0) > 1

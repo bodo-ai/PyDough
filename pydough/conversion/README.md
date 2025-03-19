@@ -22,6 +22,7 @@ Hybrid expressions are used to represent various types of expressions within the
 - `HybridRefExpr`: Represents a reference to another expression.
 - `HybridBackRefExpr`: Represents a reference to another hybrid expression that exists in one of the successors of the current hybrid tree.
 - `HybridChildRefExpr`: Represents a reference to another hybrid expression that exists in one of the child connections of the current hybrid tree.
+- `HybridCorrelfExpr`: Represents a reference to another hybrid expression that exists in the parent hybrid tree containing the current hybrid tree as a child subtree. These references are correlated because they mean that one side of a join will depend on logic from the other side.
 
 ### Hybrid Connections
 
@@ -59,6 +60,12 @@ Hybrid operations represent the various operations that can be performed within 
 - `HybridLimit`: Represents a limit operation.
 - `HybridPartition`: Represents a partition operation.
 - `HybridPartitionChild`: Represents accessing the data of a partition as a child.
+- `HybridNoop`: Represents a do-nothing operation that propagates all of the data from the previous operation without any change.
+- `HybridChildPullup`: Represents an operation that accesses all of the data from a child hybrid tree as if one of its levels were the current level and its ancestors were the current levels ancestors, while the bottom level remain as child references.
+
+## Hybrid De-Correlation
+
+The file [hybrid_decorrelater.py](hybrid_decorrelater.py) contains the logic used to hunt for `HybridCorrelfExpr` outside of a semi/anti join and de-correlates them by snapshotting the hybrid tree and attatching the snapshot copy to the top of the child subtree, thus turning the correlated reference into a back reference. Also, for only-match patterns, replaces the original logic that was snapshotted with a single `HybridChildPullup` to avoid re-computing the same logic twice.
 
 ## Relational Conversion
 
