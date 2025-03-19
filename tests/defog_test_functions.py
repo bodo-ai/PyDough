@@ -213,6 +213,7 @@ def impl_defog_broker_adv9():
     selected_transactions = Transactions.WHERE(
         (date_time < DATETIME("now", "start of week"))
         & (date_time >= DATETIME("now", "start of week", "-8 weeks"))
+        & (ticker.ticker_type == "stock")
     ).CALCULATE(
         week=DATETIME(date_time, "start of week"),
         is_weekend=ISIN(DAYOFWEEK(date_time), (5, 6)),

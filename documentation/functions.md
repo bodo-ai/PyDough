@@ -527,6 +527,8 @@ The first argument in the `DATEDIFF` function supports the following aliases for
 
 The `DAYOFWEEK` function returns the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns an integer between 1 and 7,or between 0 and 6, depending on the `start_of_week` config and `start_week_as_zero` config. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
 
+In other words, `DAYOFWEEK` returns which day of the week is the given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config.
+
 ```py
 # Returns the day of the week for the current date
 Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
@@ -536,7 +538,7 @@ Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
 
 ### DAYNAME
 
-The `DAYNAME` function returns the name of the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns a string.
+The `DAYNAME` function returns the name of the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns a string, corresponding to the name of the day of the week. This returns one of the following: `"Monday"`, `"Tuesday"`, `"Wednesday"`, `"Thursday"`, `"Friday"`, `"Saturday"`, or `"Sunday"`.
 
 ```py
 # Returns the name of the day of the week for the current date
