@@ -128,8 +128,8 @@ FROM (
         )
       )
       GROUP BY
-        o_year,
-        nation_name
+        nation_name,
+        o_year
     )
   )
   ORDER BY

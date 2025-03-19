@@ -132,9 +132,9 @@ FROM (
       )
     )
     GROUP BY
-      supp_nation,
+      cust_nation,
       l_year,
-      cust_nation
+      supp_nation
   )
 )
 ORDER BY

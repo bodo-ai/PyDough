@@ -53,8 +53,8 @@ FROM (
                     CAST(STRFTIME('%Y', order_date) AS INTEGER) = 1993
                 )
                 GROUP BY
-                  order_date,
-                  customer_key
+                  customer_key,
+                  order_date
               )
               WHERE
                 COALESCE(agg_0, 0) > 1
@@ -88,8 +88,8 @@ FROM (
           )
       )
       GROUP BY
-        order_date,
-        customer_key
+        customer_key,
+        order_date
     )
   )
 )

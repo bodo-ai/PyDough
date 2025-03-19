@@ -91,9 +91,9 @@ FROM (
           ON key = order_key
       )
       GROUP BY
-        ship_priority,
+        order_date,
         order_key,
-        order_date
+        ship_priority
     )
   )
   ORDER BY

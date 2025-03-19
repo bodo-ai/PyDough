@@ -85,9 +85,9 @@ FROM (
         NOT comment_2 LIKE '%Customer%Complaints%'
     )
     GROUP BY
-      p_type,
+      p_brand,
       p_size,
-      p_brand
+      p_type
   )
   ORDER BY
     ordering_1 DESC,
