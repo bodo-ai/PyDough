@@ -349,7 +349,7 @@ def test_pipeline_until_sql_tpch(
         with open(file_path) as f:
             expected_sql_text: str = f.read()
         assert sql_text == expected_sql_text.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
+            "Mismatch between SQL text produced expected SQL text"
         )
 
 

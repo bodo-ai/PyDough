@@ -47,8 +47,8 @@ FROM (
               FROM tpch.PART
             )
             GROUP BY
-              part_type,
-              container
+              container,
+              part_type
           )
             ON TRUE
         )
