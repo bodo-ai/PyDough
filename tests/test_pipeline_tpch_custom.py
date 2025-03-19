@@ -463,13 +463,13 @@ from pydough.unqualified import (
                 "datetime_current",
                 lambda: pd.DataFrame(
                     {
-                        "d1": [f"{pd.Timestamp.now().year}-05-31"],
+                        "d1": [f"{pd.Timestamp.now(tz='UTC').year}-05-31"],
                         "d2": [
-                            f"{pd.Timestamp.now().year}-{pd.Timestamp.now().month:02}-02 00:00:00"
+                            f"{pd.Timestamp.now(tz='UTC').year}-{pd.Timestamp.now(tz='UTC').month:02}-02 00:00:00"
                         ],
                         "d3": [
                             (
-                                pd.Timestamp.now().normalize()
+                                pd.Timestamp.now(tz="UTC").normalize()
                                 + pd.Timedelta(hours=12, minutes=-150, seconds=2)
                             ).strftime("%Y-%m-%d %H:%M:%S")
                         ],
