@@ -86,7 +86,7 @@ class PyDoughConfigs:
     collation will default to `DESC`. The default is True.
     """
 
-    propogate_collation = ConfigProperty[bool](False)
+    propagate_collation = ConfigProperty[bool](False)
     """
     If True, each term, which does not have an explicit collation, will inherit
     the collation (ASC/DESC) from the previous specified term. If False, terms
