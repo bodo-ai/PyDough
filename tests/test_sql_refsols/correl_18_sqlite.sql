@@ -88,8 +88,8 @@ FROM (
           )
       )
       GROUP BY
-        customer_key,
-        order_date
+        order_date,
+        customer_key
     )
   )
 )

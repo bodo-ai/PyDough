@@ -236,9 +236,9 @@ FROM (
         name_19 = cust_region_name
     )
     GROUP BY
-      key_5,
+      key,
       key_2,
-      key
+      key_5
   )
   ORDER BY
     ordering_1 DESC,

@@ -5,77 +5,104 @@ SELECT
   O_SHIPPRIORITY
 FROM (
   SELECT
-    SUM(REVENUE) AS REVENUE,
     L_ORDERKEY,
     O_ORDERDATE,
-    O_SHIPPRIORITY
+    O_SHIPPRIORITY,
+    REVENUE,
+    ordering_1,
+    ordering_2,
+    ordering_3
   FROM (
     SELECT
-      L_ORDERKEY,
-      O_ORDERDATE,
-      O_SHIPPRIORITY,
-      REVENUE
+      COALESCE(agg_0, 0) AS REVENUE,
+      COALESCE(agg_0, 0) AS ordering_1,
+      order_date AS O_ORDERDATE,
+      order_date AS ordering_2,
+      order_key AS L_ORDERKEY,
+      order_key AS ordering_3,
+      ship_priority AS O_SHIPPRIORITY
     FROM (
       SELECT
-        L_EXTENDEDPRICE * (
-          1 - L_DISCOUNT
-        ) AS REVENUE,
-        L_ORDERKEY
+        SUM(extended_price * (
+          1 - discount
+        )) AS agg_0,
+        order_date,
+        order_key,
+        ship_priority
       FROM (
         SELECT
-          L_DISCOUNT,
-          L_EXTENDEDPRICE,
-          L_ORDERKEY
+          discount,
+          extended_price,
+          order_date,
+          order_key,
+          ship_priority
         FROM (
           SELECT
-            L_DISCOUNT,
-            L_EXTENDEDPRICE,
-            L_ORDERKEY,
-            L_SHIPDATE
-          FROM LINEITEM
+            _table_alias_0.key AS key,
+            order_date,
+            ship_priority
+          FROM (
+            SELECT
+              customer_key,
+              key,
+              order_date,
+              ship_priority
+            FROM (
+              SELECT
+                o_custkey AS customer_key,
+                o_orderdate AS order_date,
+                o_orderkey AS key,
+                o_shippriority AS ship_priority
+              FROM tpch.ORDERS
+            )
+            WHERE
+              order_date < '1995-03-15'
+          ) AS _table_alias_0
+          INNER JOIN (
+            SELECT
+              key
+            FROM (
+              SELECT
+                c_custkey AS key,
+                c_mktsegment AS mktsegment
+              FROM tpch.CUSTOMER
+            )
+            WHERE
+              mktsegment = 'BUILDING'
+          ) AS _table_alias_1
+            ON customer_key = _table_alias_1.key
         )
-        WHERE
-          L_SHIPDATE > '1995-03-15'
-      )
-    )
-    INNER JOIN (
-      SELECT
-        O_ORDERDATE,
-        O_ORDERKEY,
-        O_SHIPPRIORITY
-      FROM (
-        SELECT
-          O_CUSTKEY,
-          O_ORDERDATE,
-          O_ORDERKEY,
-          O_SHIPPRIORITY
-        FROM ORDERS
-        WHERE
-          O_ORDERDATE < '1995-03-15'
-      )
-      INNER JOIN (
-        SELECT
-          C_CUSTKEY
-        FROM (
+        INNER JOIN (
           SELECT
-            C_CUSTKEY,
-            C_MKTSEGMENT
-          FROM CUSTOMER
+            discount,
+            extended_price,
+            order_key
+          FROM (
+            SELECT
+              l_discount AS discount,
+              l_extendedprice AS extended_price,
+              l_orderkey AS order_key,
+              l_shipdate AS ship_date
+            FROM tpch.LINEITEM
+          )
+          WHERE
+            ship_date > '1995-03-15'
         )
-        WHERE
-          C_MKTSEGMENT = 'BUILDING'
+          ON key = order_key
       )
-        ON O_CUSTKEY = C_CUSTKEY
+      GROUP BY
+        ship_priority,
+        order_key,
+        order_date
     )
-      ON L_ORDERKEY = O_ORDERKEY
   )
-  GROUP BY
-    L_ORDERKEY,
-    O_ORDERDATE,
-    O_SHIPPRIORITY
+  ORDER BY
+    ordering_1 DESC,
+    ordering_2,
+    ordering_3
+  LIMIT 10
 )
 ORDER BY
-  REVENUE DESC,
-  O_ORDERDATE,
-  L_ORDERKEY
-LIMIT 10
+  ordering_1 DESC,
+  ordering_2,
+  ordering_3

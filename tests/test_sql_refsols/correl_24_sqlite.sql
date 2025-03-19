@@ -60,8 +60,8 @@ FROM (
                 year < 1994
             )
             GROUP BY
-              month,
-              year
+              year,
+              month
           )
         ) AS _table_alias_0
         INNER JOIN (
@@ -110,8 +110,8 @@ FROM (
         )
     )
     GROUP BY
-      month,
-      year
+      year,
+      month
   )
 )
 ORDER BY

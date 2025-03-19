@@ -66,8 +66,8 @@ FROM (
         ship_date <= DATE_STR_TO_DATE('1998-12-01')
     )
     GROUP BY
-      return_flag,
-      status
+      status,
+      return_flag
   )
 )
 ORDER BY

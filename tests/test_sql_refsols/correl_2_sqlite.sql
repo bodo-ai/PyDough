@@ -89,8 +89,8 @@ FROM (
           SUBSTRING(comment_7, 1, 1) = LOWER(SUBSTRING(region_name, 1, 1))
       )
       GROUP BY
-        key_5,
-        key
+        key,
+        key_5
     ) AS _table_alias_5
       ON (
         key_2 = key_5
