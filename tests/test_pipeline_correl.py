@@ -31,6 +31,13 @@ from correlated_pydough_functions import (
     correl_21,
     correl_22,
     correl_23,
+    correl_24,
+    correl_25,
+    correl_26,
+    correl_27,
+    correl_28,
+    correl_29,
+    correl_30,
 )
 from test_utils import (
     graph_fetcher,
@@ -458,6 +465,258 @@ from pydough.unqualified import (
                 lambda: pd.DataFrame({"n_sizes": [23]}),
             ),
             id="correl_23",
+        ),
+        pytest.param(
+            (
+                correl_24,
+                None,
+                "correl_24",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [1992] * 11 + [1993] * 11,
+                        "month": list(range(2, 13)) + [1, 2, 3] + list(range(5, 13)),
+                        "n_orders_in_range": [
+                            45,
+                            7,
+                            28,
+                            36,
+                            46,
+                            43,
+                            64,
+                            83,
+                            136,
+                            26,
+                            40,
+                            2,
+                            47,
+                            14,
+                            22,
+                            27,
+                            79,
+                            104,
+                            97,
+                            43,
+                            39,
+                            103,
+                        ],
+                    }
+                ),
+            ),
+            id="correl_24",
+        ),
+        pytest.param(
+            (
+                correl_25,
+                None,
+                "correl_25",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_region_name": [
+                            "MIDDLE EAST",
+                            "AMERICA",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                            "MIDDLE EAST",
+                        ],
+                        "cust_region_key": [4, 1, 4, 4, 4],
+                        "cust_nation_name": [
+                            "SAUDI ARABIA",
+                            "CANADA",
+                            "SAUDI ARABIA",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                        "cust_nation_key": [20, 3, 20, 13, 20],
+                        "customer_name": [
+                            f"Customer#{n:09}" for n in [361, 385, 956, 4703, 5248]
+                        ],
+                        "n_urgent_semi_domestic_rail_orders": [2, 2, 2, 2, 2],
+                    }
+                ),
+            ),
+            id="correl_25",
+        ),
+        pytest.param(
+            (
+                correl_26,
+                None,
+                "correl_26",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_26",
+        ),
+        pytest.param(
+            (
+                correl_27,
+                None,
+                "correl_27",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_27",
+        ),
+        pytest.param(
+            (
+                correl_28,
+                None,
+                "correl_28",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_selected_purchases": [310, 271, 291, 306, 282],
+                    }
+                ),
+            ),
+            id="correl_28",
+        ),
+        pytest.param(
+            (
+                correl_29,
+                None,
+                "correl_29",
+                lambda: pd.DataFrame(
+                    {
+                        "region_key": [1] * 5 + [3] * 5,
+                        "nation_name": [
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_above_avg_customers": [
+                            2957,
+                            2962,
+                            2978,
+                            2968,
+                            2999,
+                            3028,
+                            2924,
+                            3074,
+                            3066,
+                            3007,
+                        ],
+                        "n_above_avg_suppliers": [
+                            202,
+                            192,
+                            216,
+                            219,
+                            200,
+                            204,
+                            206,
+                            206,
+                            201,
+                            197,
+                        ],
+                        "min_cust_acctbal": [
+                            -993.95,
+                            -999.26,
+                            -999.65,
+                            -999.16,
+                            -999.85,
+                            -999.99,
+                            -995.92,
+                            -997.97,
+                            -999.42,
+                            -994.91,
+                        ],
+                        "max_cust_acctbal": [
+                            9994.84,
+                            9999.49,
+                            9998.32,
+                            9999.23,
+                            9999.72,
+                            9998.86,
+                            9999.74,
+                            9999.47,
+                            9998.09,
+                            9998.51,
+                        ],
+                    }
+                ),
+            ),
+            id="correl_29",
+        ),
+        pytest.param(
+            (
+                correl_30,
+                None,
+                "correl_30",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": ["america"] * 5 + ["europe"] * 5,
+                        "nation_name": [
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_above_avg_customers": [
+                            2957,
+                            2962,
+                            2978,
+                            2968,
+                            2999,
+                            3028,
+                            2924,
+                            3074,
+                            3066,
+                            3007,
+                        ],
+                        "n_above_avg_suppliers": [
+                            202,
+                            192,
+                            216,
+                            219,
+                            200,
+                            204,
+                            206,
+                            206,
+                            201,
+                            197,
+                        ],
+                    }
+                ),
+            ),
+            id="correl_30",
         ),
     ],
 )

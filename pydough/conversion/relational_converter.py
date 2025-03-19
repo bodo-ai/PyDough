@@ -6,6 +6,7 @@ nodes as an intermediary representation.
 __all__ = ["convert_ast_to_relational"]
 
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
@@ -49,6 +50,7 @@ from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
     HybridCalculate,
+    HybridChildPullUp,
     HybridChildRefExpr,
     HybridCollation,
     HybridCollectionAccess,
@@ -60,6 +62,7 @@ from .hybrid_tree import (
     HybridFunctionExpr,
     HybridLimit,
     HybridLiteralExpr,
+    HybridNoop,
     HybridOperation,
     HybridPartition,
     HybridPartitionChild,
@@ -136,9 +139,7 @@ class RelTranslation:
         relation.columns[name] = LiteralExpression(None, UnknownType())
         return ColumnReference(name, UnknownType())
 
-    def get_column_name(
-        self, name: str, existing_names: dict[str, RelationalExpression]
-    ) -> str:
+    def get_column_name(self, name: str, existing_names: Iterable[str]) -> str:
         """
         Replaces a name for a new column with another name if the name is
         already being used.
@@ -416,6 +417,7 @@ class RelTranslation:
         out_columns: dict[HybridExpr, ColumnReference] = {}
         keys: dict[str, ColumnReference] = {}
         aggregations: dict[str, CallExpression] = {}
+        used_names: set[str] = set()
         # First, propagate all key columns into the output, and add them to
         # the keys mapping of the aggregate.
         for agg_key in agg_keys:
@@ -423,13 +425,18 @@ class RelTranslation:
             assert isinstance(agg_key_expr, ColumnReference)
             out_columns[agg_key] = agg_key_expr
             keys[agg_key_expr.name] = agg_key_expr
+            used_names.add(agg_key_expr.name)
         # Then, add all of the agg calls to the aggregations mapping of the
         # the aggregate, and add references to the corresponding dummy-names
         # to the output.
         for agg_name, agg_func in connection.aggs.items():
-            assert agg_name not in keys
+            # Ensure there is no name conflict
+            in_agg_name: str = agg_name
+            if agg_name in keys:
+                agg_name = self.get_column_name(agg_name, used_names)
+            used_names.add(agg_name)
             col_ref: ColumnReference = ColumnReference(agg_name, agg_func.typ)
-            hybrid_expr: HybridExpr = HybridRefExpr(agg_name, agg_func.typ)
+            hybrid_expr: HybridExpr = HybridRefExpr(in_agg_name, agg_func.typ)
             out_columns[hybrid_expr] = col_ref
             args: list[RelationalExpression] = [
                 self.translate_expression(arg, context) for arg in agg_func.args
@@ -465,6 +472,11 @@ class RelTranslation:
             possible to define brought into context.
         """
         for child_idx, child in enumerate(hybrid.children):
+            if (
+                isinstance(hybrid.pipeline[0], HybridChildPullUp)
+                and hybrid.pipeline[0].child_idx == child_idx
+            ):
+                continue
             if child.required_steps == pipeline_idx:
                 self.stack.append(context)
                 child_output = self.rel_translation(
@@ -860,6 +872,53 @@ class RelTranslation:
         )
         return result
 
+    def translate_child_pullup(self, node: HybridChildPullUp) -> TranslationOutput:
+        """
+        Converts a HybridChildPullUp node into the relational tree for the
+        child it is pulling up, with a change in expressions to reflect the
+        different perspective in what each column means.
+        """
+        # First, translate the child being pulled up
+        subtree: HybridTree = node.child.subtree
+        child_result: TranslationOutput = self.rel_translation(
+            subtree, len(subtree.pipeline) - 1
+        )
+
+        # Define the new expressions list differently depending on whether the
+        # child being pulled up was being aggregating or not.
+        new_expressions: dict[HybridExpr, ColumnReference] = {}
+        local_ref: HybridExpr
+        child_ref: HybridExpr
+        if node.child.connection_type.is_aggregation:
+            # If aggregating, first wrap the child relational node in an
+            # aggregate, then rephrase all of the aggregation calls to be child
+            # references.
+            assert node.child.subtree.agg_keys is not None
+            child_result = self.apply_aggregations(
+                node.child, child_result, node.child.subtree.agg_keys
+            )
+            for agg_name, agg_call in node.child.aggs.items():
+                child_ref = HybridChildRefExpr(agg_name, node.child_idx, agg_call.typ)
+                local_ref = HybridRefExpr(agg_name, agg_call.typ)
+                new_expressions[child_ref] = child_result.expressions[local_ref]
+        else:
+            # Otherwise, just rephrase all of the columns to be child references.
+            for child_name, child_term in node.child.subtree.pipeline[-1].terms.items():
+                local_ref = HybridChildRefExpr(
+                    child_name, node.child_idx, child_term.typ
+                )
+                child_ref = HybridRefExpr(child_name, child_term.typ)
+                new_expressions[local_ref] = child_result.expressions[child_ref]
+
+        # For each expression that is being defined via pullup, map it to the
+        # corresponding expression within the child.
+        for local_ref, child_ref in node.pullup_remapping.items():
+            new_expressions[local_ref] = child_result.expressions[child_ref]
+
+        # Build the new output with the child relational tree and the new
+        # expressions mapping
+        return TranslationOutput(child_result.relational_node, new_expressions)
+
     def rel_translation(
         self,
         hybrid: HybridTree,
@@ -969,6 +1028,12 @@ class RelTranslation:
             case HybridLimit():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_limit(operation, context)
+            case HybridChildPullUp():
+                assert context is None, "Malformed HybridTree pattern."
+                result = self.translate_child_pullup(operation)
+            case HybridNoop():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = context
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
