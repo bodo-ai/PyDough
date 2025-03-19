@@ -6,7 +6,14 @@ into qualified DAG nodes.
 from collections.abc import Callable
 
 import pytest
-from simple_pydough_functions import partition_as_child, simple_collation
+from simple_pydough_functions import (
+    partition_as_child,
+    simple_collation,
+    singular1,
+    singular2,
+    singular3,
+    singular4,
+)
 from test_utils import (
     graph_fetcher,
 )
@@ -162,6 +169,17 @@ from pydough.unqualified import (
   ├─┬─ Where[$1.name == 'ASIA']
   │ └─┬─ AccessChild
   │   └─── SubCollection[region]
+  ├─┬─ Where[HAS($1)]
+  │ └─┬─ AccessChild
+  │   └─┬─ SubCollection[customers]
+  │     ├─── SubCollection[orders]
+  │     └─┬─ Where[(order_date >= datetime.date(1994, 1, 1)) & (order_date < datetime.date(1995, 1, 1))]
+  │       ├─── SubCollection[lines]
+  │       ├─┬─ Where[$1.name == nation_name]
+  │       │ └─┬─ AccessChild
+  │       │   └─┬─ SubCollection[supplier]
+  │       │     └─── SubCollection[nation]
+  │       └─── Calculate[value=extended_price * (1 - discount)]
   ├─┬─ Calculate[N_NAME=name, REVENUE=SUM($1.value)]
   │ └─┬─ AccessChild
   │   └─┬─ SubCollection[customers]
@@ -517,6 +535,66 @@ from pydough.unqualified import (
 """,
             id="tpch_q22",
         ),
+        pytest.param(
+            singular1,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calculate[name=name, nation_4_name=$1.name]
+    └─┬─ AccessChild
+      ├─── SubCollection[nations]
+      ├─── Where[key == 4]
+      └─── Singular
+         """,
+            id="singular1",
+        ),
+        pytest.param(
+            singular2,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Nations]
+  └─┬─ Calculate[name=name, okey=$1.key]
+    └─┬─ AccessChild
+      ├─── SubCollection[customers]
+      ├─── Where[key == 1]
+      └─┬─ Singular
+        ├─── SubCollection[orders]
+        ├─── Where[key == 454791]
+        └─── Singular
+        """,
+            id="singular2",
+        ),
+        pytest.param(
+            singular3,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  ├─── TopK[5, name.ASC(na_pos='first')]
+  ├─── Calculate[name=name]
+  └─┬─ OrderBy[$1.order_date.ASC(na_pos='last')]
+    └─┬─ AccessChild
+      ├─── SubCollection[orders]
+      ├─── Where[RANKING(by=(total_price.DESC(na_pos='last')), levels=1) == 1]
+      └─── Singular
+        """,
+            id="singular3",
+        ),
+        pytest.param(
+            singular4,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  ├─── Where[nation_key == 6]
+  ├─┬─ TopK[5, $1.order_date.ASC(na_pos='last')]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[orders]
+  │   ├─── Where[order_priority == '1-URGENT']
+  │   ├─── Where[RANKING(by=(total_price.DESC(na_pos='last')), levels=1) == 1]
+  │   └─── Singular
+  └─── Calculate[name=name]        
+        """,
+            id="singular4",
+        ),
     ],
 )
 def test_qualify_node_to_ast_string(
@@ -541,7 +619,7 @@ def test_qualify_node_to_ast_string(
 
 
 @pytest.mark.parametrize(
-    "impl, answer_tree_str, collation_default_asc, propogate_collation",
+    "impl, answer_tree_str, collation_default_asc, propagate_collation",
     [
         pytest.param(
             simple_collation,
@@ -625,7 +703,7 @@ def test_qualify_node_collation(
     impl: Callable[[], UnqualifiedNode],
     answer_tree_str: str,
     collation_default_asc: bool,
-    propogate_collation: bool,
+    propagate_collation: bool,
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
@@ -633,8 +711,8 @@ def test_qualify_node_collation(
     qualified DAG version, with the correct string representation.
     """
     custom_config: PyDoughConfigs = PyDoughConfigs()
-    setattr(custom_config, "collation_default_asc", collation_default_asc)
-    setattr(custom_config, "propogate_collation", propogate_collation)
+    custom_config.collation_default_asc = collation_default_asc
+    custom_config.propagate_collation = propagate_collation
     graph: GraphMetadata = get_sample_graph("TPCH")
     unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
     qualified: PyDoughQDAG = qualify_node(unqualified, graph, custom_config)

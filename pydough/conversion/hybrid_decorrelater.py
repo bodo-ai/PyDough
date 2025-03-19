@@ -12,6 +12,7 @@ from .hybrid_tree import (
     ConnectionType,
     HybridBackRefExpr,
     HybridCalculate,
+    HybridChildPullUp,
     HybridChildRefExpr,
     HybridColumnExpr,
     HybridConnection,
@@ -20,6 +21,7 @@ from .hybrid_tree import (
     HybridFilter,
     HybridFunctionExpr,
     HybridLiteralExpr,
+    HybridNoop,
     HybridPartition,
     HybridRefExpr,
     HybridTree,
@@ -220,15 +222,15 @@ class Decorrelater:
             # Repeat the process on the ancestor until either loop guard
             # condition is no longer True.
             level = level.parent
+            child_height -= 1
 
     def decorrelate_child(
         self,
         old_parent: HybridTree,
+        child_idx: int,
         new_parent: HybridTree,
-        child: HybridConnection,
-        is_aggregate: bool,
         skipped_levels: int,
-    ) -> None:
+    ) -> int:
         """
         Runs the logic to de-correlate a child of a hybrid tree that contains
         a correlated reference. This involves linking the child to a new parent
@@ -241,15 +243,17 @@ class Decorrelater:
         Args:
             `old_parent`: The correlated ancestor hybrid tree that the correlated
             references should point to when they are targeted for removal.
+            `child_idx`: Which child of the hybrid tree the child is.
             `new_parent`: The ancestor of `level` that removal should stop at.
-            `child`: The child of the hybrid tree that contains the correlated
-            nodes to be removed.
-            `is_aggregate`: Whether the child is being aggregated with regards
-            to its parent.
             `skipped_levels`: The number of ancestor layers that should be
             ignored when deriving backshifts of join/agg keys.
+
+        Returns:
+            The index of the child that was de-correlated, which is usually
+            the same as `child_idx` but could have been shifted.
         """
         # First, find the height of the child subtree & its top-most level.
+        child: HybridConnection = old_parent.children[child_idx]
         child_root: HybridTree = child.subtree
         child_height: int = 1
         while child_root.parent is not None:
@@ -269,7 +273,7 @@ class Decorrelater:
                 isinstance(current_level.pipeline[0], HybridPartition)
                 and child is current_level.children[0]
             )
-            for unique_key in sorted(current_level.pipeline[0].unique_exprs, key=str):
+            for unique_key in sorted(current_level.pipeline[-1].unique_exprs, key=str):
                 lhs_key: HybridExpr | None = unique_key.shift_back(additional_levels)
                 rhs_key: HybridExpr | None = unique_key.shift_back(
                     additional_levels + child_height - skipped_levels
@@ -282,8 +286,136 @@ class Decorrelater:
             additional_levels += 1
         child.subtree.join_keys = new_join_keys
         # If aggregating, update the aggregation keys accordingly.
-        if is_aggregate:
+        if child.connection_type.is_aggregation:
             child.subtree.agg_keys = new_agg_keys
+        # If the child is such that we don't need to keep rows from the parent
+        # without a match, replace the parent & its ancestors with a
+        # HybridPullUp node (and replace any other deleted nodes with no-ops).
+        if child.connection_type.is_semi:
+            old_parent._parent = None
+            old_parent.pipeline[0] = HybridChildPullUp(
+                old_parent, child_idx, child_height
+            )
+            for i in range(1, child.required_steps + 1):
+                old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
+            child_idx = self.remove_dead_children(old_parent, child_idx)
+        return child_idx
+
+    def identify_children_used(
+        self, expr: HybridExpr, unused_children: set[int]
+    ) -> None:
+        """
+        Find all child indices used in an expression and remove them from
+        a set of indices.
+
+        Args:
+            `expr`: the expression being checked for child reference indices.
+            `unused_children`: the set of all children that are unused. This
+            starts out as the set of all children, and whenever a child
+            reference is found within `expr`, it is removed from the set.
+        """
+        match expr:
+            case HybridChildRefExpr():
+                unused_children.discard(expr.child_idx)
+            case HybridFunctionExpr():
+                for arg in expr.args:
+                    self.identify_children_used(arg, unused_children)
+            case HybridWindowExpr():
+                for arg in expr.args:
+                    self.identify_children_used(arg, unused_children)
+                for part_arg in expr.partition_args:
+                    self.identify_children_used(part_arg, unused_children)
+                for order_arg in expr.order_args:
+                    self.identify_children_used(order_arg.expr, unused_children)
+            case HybridCorrelExpr():
+                self.identify_children_used(expr.expr, unused_children)
+
+    def renumber_children_indices(
+        self, expr: HybridExpr, child_remapping: dict[int, int]
+    ) -> None:
+        """
+        Replaces all child reference indices in a hybrid expression in-place
+        when the children list was shifted, therefore the index-to-child
+        correspondence must be re-numbered.
+
+        Args:
+            `expr`: the expression having its child references modified.
+            `child_remapping`: the mapping of old->new indices for child
+            references.
+        """
+        match expr:
+            case HybridChildRefExpr():
+                assert expr.child_idx in child_remapping
+                expr.child_idx = child_remapping[expr.child_idx]
+            case HybridFunctionExpr():
+                for arg in expr.args:
+                    self.renumber_children_indices(arg, child_remapping)
+            case HybridWindowExpr():
+                for arg in expr.args:
+                    self.renumber_children_indices(arg, child_remapping)
+                for part_arg in expr.partition_args:
+                    self.renumber_children_indices(part_arg, child_remapping)
+                for order_arg in expr.order_args:
+                    self.renumber_children_indices(order_arg.expr, child_remapping)
+            case HybridCorrelExpr():
+                self.renumber_children_indices(expr.expr, child_remapping)
+
+    def remove_dead_children(self, hybrid: HybridTree, pullup_child_idx: int) -> int:
+        """
+        Deletes any children of a hybrid tree that are no longer referenced
+        after de-correlation.
+
+        Args:
+            `hybrid`: The hybrid tree to remove unused children from.
+            `pullup_child_idx`: The index of the child that became a pull-up
+            node causing the removal.
+
+        Returns:
+            The index of the child that the pullup operation corresponds to.
+        """
+        # Identify which children are no longer used
+        children_to_delete: set[int] = set(range(len(hybrid.children)))
+        for operation in hybrid.pipeline:
+            match operation:
+                case HybridChildPullUp():
+                    children_to_delete.discard(operation.child_idx)
+                case HybridFilter():
+                    self.identify_children_used(operation.condition, children_to_delete)
+                case HybridCalculate():
+                    for term in operation.new_expressions.values():
+                        self.identify_children_used(term, children_to_delete)
+                case _:
+                    for term in operation.terms.values():
+                        self.identify_children_used(term, children_to_delete)
+        if len(children_to_delete) == 0:
+            return pullup_child_idx
+        # Build a renumbering of the remaining children
+        child_remapping: dict[int, int] = {}
+        for i in range(len(hybrid.children)):
+            if i not in children_to_delete:
+                child_remapping[i] = len(child_remapping)
+        # Remove all the unused children (starting from the end)
+        for child_idx in sorted(children_to_delete, reverse=True):
+            hybrid.children.pop(child_idx)
+        for operation in hybrid.pipeline:
+            match operation:
+                case HybridChildPullUp():
+                    operation.child_idx = child_remapping[operation.child_idx]
+                case HybridFilter():
+                    self.renumber_children_indices(operation.condition, child_remapping)
+                case HybridCalculate():
+                    for term in operation.new_expressions.values():
+                        self.renumber_children_indices(term, child_remapping)
+                case _:
+                    continue
+        # Renumber the correlated children
+        new_correlated_children: set[int] = set()
+        for correlated_idx in hybrid.correlated_children:
+            if correlated_idx in child_remapping:
+                new_correlated_children.add(child_remapping[correlated_idx])
+        hybrid._correlated_children = new_correlated_children
+
+        return child_remapping[pullup_child_idx]
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """
@@ -310,9 +442,12 @@ class Decorrelater:
         # Iterate across all the children, identify any that are correlated,
         # and transform any of the correlated ones that require decorrelation
         # due to the type of connection.
-        for idx, child in enumerate(hybrid.children):
-            if idx not in hybrid.correlated_children:
+        child_idx: int = 0
+        while child_idx < len(hybrid.children):
+            if child_idx not in hybrid.correlated_children:
+                child_idx += 1
                 continue
+            child = hybrid.children[child_idx]
             match child.connection_type:
                 case (
                     ConnectionType.SINGULAR
@@ -321,13 +456,12 @@ class Decorrelater:
                     | ConnectionType.AGGREGATION_ONLY_MATCH
                 ):
                     new_parent, skipped_levels = self.make_decorrelate_parent(
-                        hybrid, idx, hybrid.children[idx].required_steps
+                        hybrid, child_idx, hybrid.children[child_idx].required_steps
                     )
-                    self.decorrelate_child(
+                    child_idx = self.decorrelate_child(
                         hybrid,
+                        child_idx,
                         new_parent,
-                        child,
-                        child.connection_type.is_aggregation,
                         skipped_levels,
                     )
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
@@ -343,7 +477,8 @@ class Decorrelater:
                 ):
                     # These patterns do not require decorrelation since they
                     # are supported via correlated SEMI/ANTI joins.
-                    continue
+                    pass
+            child_idx += 1
         return hybrid
 
 

@@ -190,16 +190,17 @@ def first_order_per_customer():
     # when it was made. Pick the 5 customers with the highest such values.
     # If a customer ordered multiple orders on the first such day, pick the one
     # with the lowest key. Only consider customers with at least $9k in their
-    # account.
-    # Using aggregations as a stopgap until SINGULAR is implemented
-    # (TODO: PR#285).
-    first_order = orders.WHERE(RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1)
+    # account. Only look at customers with at least one order.
+    first_order = orders.WHERE(
+        RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1
+    ).SINGULAR()
     return (
         Customers.WHERE(acctbal >= 9000.0)
+        .WHERE(HAS(first_order))
         .CALCULATE(
             name,
-            first_order_date=MIN(first_order.order_date),
-            first_order_price=MIN(first_order.total_price),
+            first_order_date=first_order.order_date,
+            first_order_price=first_order.total_price,
         )
         .TOP_K(5, by=first_order_price.DESC())
     )
@@ -253,7 +254,8 @@ def avg_order_diff_per_customer():
     order_info = orders.CALCULATE(
         day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
-    return Customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
+    selected_customers = Customers.WHERE(HAS(order_info))
+    return selected_customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
     )
 
@@ -291,7 +293,7 @@ def customer_largest_order_deltas():
     # For each customer, find the highest positive/negative difference in
     # revenue between one of their orders and and the most recent order before
     # it, ignoring their first ever order. Return the 5 customers with the
-    # largest such difference.
+    # largest such difference. Only consider customers with orders.
     line_revenue = extended_price * (1 - discount)
     order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
     previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), levels=1)
@@ -304,6 +306,7 @@ def customer_largest_order_deltas():
             max_diff=MAX(orders_info.revenue_delta),
             min_diff=MIN(orders_info.revenue_delta),
         )
+        .WHERE(HAS(orders_info))
         .CALCULATE(
             name,
             largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff),
@@ -1211,4 +1214,125 @@ def strip():
             stripped_alt_name3=STRIP(alt_name3, ";"),
             stripped_alt_name4=STRIP(alt_name4),
         )
+    )
+
+
+def singular1():
+    # Singular in CALCULATE & WHERE
+    nation_4 = nations.WHERE(key == 4).SINGULAR()
+    return Regions.CALCULATE(name, nation_4_name=nation_4.name)
+
+
+def singular2():
+    # Singular in CALCULATE & WHERE with multiple SINGULARs
+    return Nations.CALCULATE(
+        name,
+        okey=customers.WHERE(key == 1)
+        .SINGULAR()
+        .orders.WHERE(key == 454791)
+        .SINGULAR()
+        .key,
+    )
+
+
+def singular3():
+    # Singular in ORDER_BY
+    # Finds the names of the first 5 customers alphabetically, and sorts them
+    # by the date of the most expensive order they ever made.
+    return (
+        Customers.TOP_K(5, by=name.ASC())
+        .CALCULATE(name)
+        .ORDER_BY(
+            orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+            .SINGULAR()
+            .order_date.ASC(na_pos="last")
+        )
+    )
+
+
+def singular4():
+    # Singular in TOP_K
+    # Finds the names of the first 5 customers from nation #6
+    # by the date of the most expensive high-priority order they ever made.
+    return (
+        Customers.WHERE(nation_key == 6)
+        .TOP_K(
+            5,
+            by=orders.WHERE(order_priority == "1-URGENT")
+            .WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+            .SINGULAR()
+            .order_date.ASC(na_pos="last"),
+        )
+        .CALCULATE(name)
+    )
+
+
+def singular5():
+    # Find the ship date of the most expensive line item per each container
+    # presented in parts (breaking ties in favor of the smaller ship date).
+    # Find the 5 containers with the earliest such date, breaking ties
+    # alphabetically. For the purpose of this question, only shipments made by
+    # rail and for parts from Brand#13.
+    top_containers = PARTITION(
+        Parts.WHERE(brand == "Brand#13"),
+        name="parts",
+        by=container,
+    )
+    highest_price_line = (
+        parts.lines.WHERE(ship_mode == "RAIL")
+        .WHERE(RANKING(by=(extended_price.DESC(), ship_date.ASC()), levels=2) == 1)
+        .SINGULAR()
+    )
+    return (
+        top_containers.WHERE(HAS(highest_price_line))
+        .CALCULATE(
+            container,
+            highest_price_ship_date=highest_price_line.ship_date,
+        )
+        .TOP_K(5, by=(highest_price_ship_date.ASC(), container.ASC()))
+    )
+
+
+def singular6():
+    # For each customer in nation #4, what is the first part they received in
+    # an order handled by clerk #17, and the nation it came from (breaking ties
+    # in favor of the one with the largest revenue)? Include the 5 customers
+    # with the earliest such received parts (breaking ties alphabetically by
+    # customer name).
+    revenue = extended_price * (1 - discount)
+    lq = (
+        orders.WHERE(clerk == "Clerk#000000017")
+        .lines.CALCULATE(receipt_date)
+        .WHERE(RANKING(by=(receipt_date.ASC(), revenue.DESC()), levels=2) == 1)
+        .SINGULAR()
+        .supplier.nation.CALCULATE(nation_name=name)
+    )
+    selected_customers = Customers.WHERE((nation_key == 4) & HAS(lq))
+    return selected_customers.CALCULATE(name, lq.receipt_date, lq.nation_name).TOP_K(
+        5, by=(receipt_date.ASC(), name.ASC())
+    )
+
+
+def singular7():
+    # For each supplier in nation #20, what is the most popular part (by # of
+    # purchases) they supplied in 1994 (breaking ties alphabetically by part
+    # name)? Include the 5 suppliers with the highest number of purchases along
+    # with part name, and number of orders (breaking ties alphabetically by
+    # supplier name).
+    best_part = (
+        supply_records.CALCULATE(
+            n_orders=COUNT(lines.WHERE(YEAR(ship_date) == 1994)),
+            part_name=part.name,
+        )
+        .WHERE(RANKING(by=(n_orders.DESC(), part_name.ASC()), levels=1) == 1)
+        .SINGULAR()
+    )
+    return (
+        Suppliers.WHERE(nation_key == 20)
+        .CALCULATE(
+            supplier_name=name,
+            part_name=best_part.part_name,
+            n_orders=best_part.n_orders,
+        )
+        .TOP_K(5, by=(n_orders.DESC(), supplier_name.ASC()))
     )
