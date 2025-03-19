@@ -651,7 +651,7 @@ def convert_dayname(dialect: DatabaseDialect) -> transform_binding:
                 ),
             )
             sqlite_if_eq_cond: SQLGlotExpression = sqlglot_expressions.EQ
-            sqlite_answer: SQLGlotExpression = (
+            sqlite_answer: SQLGlotExpression = apply_parens(
                 sqlglot_expressions.Case()
                 .when(
                     sqlite_if_eq_cond(
@@ -714,7 +714,7 @@ def convert_dayname(dialect: DatabaseDialect) -> transform_binding:
                 this=base
             )
             ansi_if_eq_cond: SQLGlotExpression = sqlglot_expressions.EQ
-            ansi_answer: SQLGlotExpression = (
+            ansi_answer: SQLGlotExpression = apply_parens(
                 sqlglot_expressions.Case()
                 .when(
                     ansi_if_eq_cond(
