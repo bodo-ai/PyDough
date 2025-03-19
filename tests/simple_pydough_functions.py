@@ -444,173 +444,169 @@ def datetime_sampler():
     # terms were generated via random combination selection of various ways
     # of augmenting the base/modifier terms.
     return Orders.CALCULATE(
-        # NEW `start of week`
-        # DATETIME("cUrReNt_Timestamp", "start of week", "+1 day", "start of s","+1 year"),
-        DATETIME("cUrReNt_Timestamp", "1 week"),
-        # ^ my stuff
-        # DATETIME("2025-07-04 12:58:45"),
-        # DATETIME("2024-12-31 11:59:00"),
-        # DATETIME("2025-01-01"),
-        # DATETIME("1999-03-14"),
-        # DATETIME("now"),
-        # DATETIME(" Now "),
-        # DATETIME("NOW\n\t\t\r"),
-        # DATETIME("current_date"),
-        # DATETIME(" Current_Date "),
-        # DATETIME("CURRENT_DATE\n\t\t\r"),
-        # DATETIME("cUrReNt_Timestamp"),
-        # DATETIME(" Current_Timestamp "),
-        # DATETIME("CURRENT_TIMESTAMP\n\t\t\r"),
-        # DATETIME("current date"),
-        # DATETIME(" Current Date "),
-        # DATETIME("CURRENT DATE\n\t\t\r"),
-        # DATETIME("current timestamp"),
-        # DATETIME(" Current Timestamp "),
-        # DATETIME("CURRENT TIMESTAMP\n\t\t\r"),
-        # DATETIME(order_date),
-        # DATETIME("CURRENT_DATE\n\t\t\r", "start of seconds"),
-        # DATETIME("current date", "\n  Start  Of\tY\n\n", "+8 minutes", "-141 mm"),
-        # DATETIME(
-        #     "CURRENT_TIMESTAMP\n\t\t\r",
-        #     "\tSTART\tOF\tmonth\t",
-        #     "\tSTART\tOF\tsecond\t",
-        #     "\tSTART\tOF\thour\t",
-        # ),
-        # DATETIME(
-        #     " Current Timestamp ",
-        #     "start of h",
-        #     "START of    SECOND",
-        #     "START of    HOUR",
-        # ),
-        # DATETIME("NOW\n\t\t\r", "- 96 H", "15 year"),
-        # DATETIME(
-        #     "CURRENT_TIMESTAMP\n\t\t\r",
-        #     "\n  Start  Of\tY\n\n",
-        #     "-3 years",
-        #     "\n  Start  Of\tM\n\n",
-        #     "+65 month",
-        # ),
-        # DATETIME(order_date, "-56 h", "start of year"),
-        # DATETIME(
-        #     "CURRENT_TIMESTAMP\n\t\t\r",
-        #     "-63 days",
-        #     "START of    MINUTE",
-        #     "start of seconds",
-        # ),
-        # DATETIME("CURRENT_DATE\n\t\t\r", "\n  Start  Of\tMonth\n\n"),
-        # DATETIME("NOW\n\t\t\r", "-312 hour", "start of s", " \n +\t48 \nYear \n\r "),
-        # DATETIME(
-        #     "CURRENT TIMESTAMP\n\t\t\r",
-        #     " 75 DAY",
-        #     "\n  Start  Of\tDays\n\n",
-        #     "+600 minutes",
-        #     " \n -\t294 \nDays \n\r ",
-        # ),
-        # DATETIME(
-        #     " Current Date ",
-        #     "\n  Start  Of\tMonths\n\n",
-        #     " \n +\t480 \nMm \n\r ",
-        #     " \n -\t45 \nY \n\r ",
-        # ),
-        # DATETIME(
-        #     " CuRrEnT dAtE ",
-        #     "- 270 MINUTES",
-        #     "- 34 SECONDS",
-        #     "\tSTART\tOF\td\t",
-        #     "start of second",
-        # ),
-        # DATETIME("current timestamp", "START of    MM", " \n \t213 \nS \n\r "),
-        # DATETIME(
-        #     " Now ", "\n  Start  Of\tMonth\n\n", "13 minute", "28 year", "+344 second"
-        # ),
-        # DATETIME("CURRENT_DATE\n\t\t\r", "\tSTART\tOF\tdays\t"),
-        # DATETIME("2025-01-01", "START of    H", "+ 49 MINUTE", "+91 y"),
-        # DATETIME("CURRENT_DATE\n\t\t\r", "START of    YEARS", "\tSTART\tOF\td\t"),
-        # DATETIME("NOW\n\t\t\r", "start of days", "START of    YEARS"),
-        # DATETIME("2025-07-04 12:58:45", "\tSTART\tOF\tmonths\t", " \n \t22 \nM \n\r "),
-        # DATETIME("current_date", "START of    YEAR"),
-        # DATETIME(
-        #     order_date,
-        #     "+ 82 S",
-        #     "415 second",
-        #     " \n -\t160 \nSecond \n\r ",
-        #     "START of    Y",
-        # ),
-        # DATETIME(" Current Date ", "192 months"),
-        # DATETIME(
-        #     "CURRENT TIMESTAMP\n\t\t\r",
-        #     "START of    H",
-        #     "start of minute",
-        #     "\n  Start  Of\tHours\n\n",
-        #     "+ 486 M",
-        # ),
-        # DATETIME(
-        #     "CURRENT_TIMESTAMP\n\t\t\r", "\n  Start  Of\tSeconds\n\n", "- 50 HOURS"
-        # ),
-        # DATETIME(
-        #     "CURRENT_TIMESTAMP\n\t\t\r",
-        #     " 297 D",
-        #     "72 months",
-        #     " \n -\t92 \nMonth \n\r ",
-        #     "\tSTART\tOF\thours\t",
-        # ),
-        # DATETIME("now", " \n +\t285 \nSeconds \n\r ", "\tSTART\tOF\tday\t"),
-        # DATETIME("1999-03-14", "+62 d"),
-        # DATETIME(
-        #     "current_date",
-        #     "START of    MM",
-        #     "+1 hour",
-        #     "start of mm",
-        #     " \n -\t21 \nDay \n\r ",
-        # ),
-        # DATETIME("current timestamp", "+212 minute", " \n +\t368 \nYears \n\r "),
-        # DATETIME(
-        #     "2024-12-31 11:59:00",
-        #     "\n  Start  Of\tMonths\n\n",
-        #     "\n  Start  Of\tYears\n\n",
-        #     "\n  Start  Of\tMinutes\n\n",
-        #     "start of m",
-        # ),
-        # DATETIME("1999-03-14", "START of    HOURS", "start of day"),
-        # DATETIME(
-        #     "now",
-        #     " \n -\t60 \nH \n\r ",
-        #     "START of    D",
-        #     "START of    MINUTE",
-        #     "+196 years",
-        # ),
-        # DATETIME(
-        #     "current timestamp",
-        #     "-40 hours",
-        #     " \n -\t385 \nDay \n\r ",
-        #     "start of m",
-        #     " \n +\t29 \nHour \n\r ",
-        # ),
-        # DATETIME(
-        #     " Current Date ", "+405 days", "start of hour", "\tSTART\tOF\tminutes\t"
-        # ),
-        # DATETIME(
-        #     " Current Timestamp ",
-        #     "\tSTART\tOF\tyear\t",
-        #     "\n  Start  Of\tS\n\n",
-        #     " \n +\t98 \nY \n\r ",
-        #     " \n \t96 \nMonth \n\r ",
-        # ),
-        # DATETIME(
-        #     " Now ",
-        #     "\tSTART\tOF\tminutes\t",
-        #     "\tSTART\tOF\ts\t",
-        #     "start of day",
-        #     "78 seconds",
-        # ),
-        # DATETIME(
-        #     " Current Date ",
-        #     " 136 HOURS",
-        #     " \n +\t104 \nM \n\r ",
-        #     "-104 months",
-        #     " \n \t312 \nD \n\r ",
-        # ),
-        # DATETIME(" Current_Date ", "+ 45 MM", "-135 s"),
+        DATETIME("2025-07-04 12:58:45"),
+        DATETIME("2024-12-31 11:59:00"),
+        DATETIME("2025-01-01"),
+        DATETIME("1999-03-14"),
+        DATETIME("now"),
+        DATETIME(" Now "),
+        DATETIME("NOW\n\t\t\r"),
+        DATETIME("current_date"),
+        DATETIME(" Current_Date "),
+        DATETIME("CURRENT_DATE\n\t\t\r"),
+        DATETIME("cUrReNt_Timestamp"),
+        DATETIME(" Current_Timestamp "),
+        DATETIME("CURRENT_TIMESTAMP\n\t\t\r"),
+        DATETIME("current date"),
+        DATETIME(" Current Date "),
+        DATETIME("CURRENT DATE\n\t\t\r"),
+        DATETIME("current timestamp"),
+        DATETIME(" Current Timestamp "),
+        DATETIME("CURRENT TIMESTAMP\n\t\t\r"),
+        DATETIME(order_date),
+        DATETIME("CURRENT_DATE\n\t\t\r", "start of seconds"),
+        DATETIME("current date", "\n  Start  Of\tY\n\n", "+8 minutes", "-141 mm"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "\tSTART\tOF\tmonth\t",
+            "\tSTART\tOF\tsecond\t",
+            "\tSTART\tOF\thour\t",
+        ),
+        DATETIME(
+            " Current Timestamp ",
+            "start of h",
+            "START of    SECOND",
+            "START of    HOUR",
+        ),
+        DATETIME("NOW\n\t\t\r", "- 96 H", "15 year"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "\n  Start  Of\tY\n\n",
+            "-3 years",
+            "\n  Start  Of\tM\n\n",
+            "+65 month",
+        ),
+        DATETIME(order_date, "-56 h", "start of year"),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            "-63 days",
+            "START of    MINUTE",
+            "start of seconds",
+        ),
+        DATETIME("CURRENT_DATE\n\t\t\r", "\n  Start  Of\tMonth\n\n"),
+        DATETIME("NOW\n\t\t\r", "-312 hour", "start of s", " \n +\t48 \nYear \n\r "),
+        DATETIME(
+            "CURRENT TIMESTAMP\n\t\t\r",
+            " 75 DAY",
+            "\n  Start  Of\tDays\n\n",
+            "+600 minutes",
+            " \n -\t294 \nDays \n\r ",
+        ),
+        DATETIME(
+            " Current Date ",
+            "\n  Start  Of\tMonths\n\n",
+            " \n +\t480 \nMm \n\r ",
+            " \n -\t45 \nY \n\r ",
+        ),
+        DATETIME(
+            " CuRrEnT dAtE ",
+            "- 270 MINUTES",
+            "- 34 SECONDS",
+            "\tSTART\tOF\td\t",
+            "start of second",
+        ),
+        DATETIME("current timestamp", "START of    MM", " \n \t213 \nS \n\r "),
+        DATETIME(
+            " Now ", "\n  Start  Of\tMonth\n\n", "13 minute", "28 year", "+344 second"
+        ),
+        DATETIME("CURRENT_DATE\n\t\t\r", "\tSTART\tOF\tdays\t"),
+        DATETIME("2025-01-01", "START of    H", "+ 49 MINUTE", "+91 y"),
+        DATETIME("CURRENT_DATE\n\t\t\r", "START of    YEARS", "\tSTART\tOF\td\t"),
+        DATETIME("NOW\n\t\t\r", "start of days", "START of    YEARS"),
+        DATETIME("2025-07-04 12:58:45", "\tSTART\tOF\tmonths\t", " \n \t22 \nM \n\r "),
+        DATETIME("current_date", "START of    YEAR"),
+        DATETIME(
+            order_date,
+            "+ 82 S",
+            "415 second",
+            " \n -\t160 \nSecond \n\r ",
+            "START of    Y",
+        ),
+        DATETIME(" Current Date ", "192 months"),
+        DATETIME(
+            "CURRENT TIMESTAMP\n\t\t\r",
+            "START of    H",
+            "start of minute",
+            "\n  Start  Of\tHours\n\n",
+            "+ 486 M",
+        ),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r", "\n  Start  Of\tSeconds\n\n", "- 50 HOURS"
+        ),
+        DATETIME(
+            "CURRENT_TIMESTAMP\n\t\t\r",
+            " 297 D",
+            "72 months",
+            " \n -\t92 \nMonth \n\r ",
+            "\tSTART\tOF\thours\t",
+        ),
+        DATETIME("now", " \n +\t285 \nSeconds \n\r ", "\tSTART\tOF\tday\t"),
+        DATETIME("1999-03-14", "+62 d"),
+        DATETIME(
+            "current_date",
+            "START of    MM",
+            "+1 hour",
+            "start of mm",
+            " \n -\t21 \nDay \n\r ",
+        ),
+        DATETIME("current timestamp", "+212 minute", " \n +\t368 \nYears \n\r "),
+        DATETIME(
+            "2024-12-31 11:59:00",
+            "\n  Start  Of\tMonths\n\n",
+            "\n  Start  Of\tYears\n\n",
+            "\n  Start  Of\tMinutes\n\n",
+            "start of m",
+        ),
+        DATETIME("1999-03-14", "START of    HOURS", "start of day"),
+        DATETIME(
+            "now",
+            " \n -\t60 \nH \n\r ",
+            "START of    D",
+            "START of    MINUTE",
+            "+196 years",
+        ),
+        DATETIME(
+            "current timestamp",
+            "-40 hours",
+            " \n -\t385 \nDay \n\r ",
+            "start of m",
+            " \n +\t29 \nHour \n\r ",
+        ),
+        DATETIME(
+            " Current Date ", "+405 days", "start of hour", "\tSTART\tOF\tminutes\t"
+        ),
+        DATETIME(
+            " Current Timestamp ",
+            "\tSTART\tOF\tyear\t",
+            "\n  Start  Of\tS\n\n",
+            " \n +\t98 \nY \n\r ",
+            " \n \t96 \nMonth \n\r ",
+        ),
+        DATETIME(
+            " Now ",
+            "\tSTART\tOF\tminutes\t",
+            "\tSTART\tOF\ts\t",
+            "start of day",
+            "78 seconds",
+        ),
+        DATETIME(
+            " Current Date ",
+            " 136 HOURS",
+            " \n +\t104 \nM \n\r ",
+            "-104 months",
+            " \n \t312 \nD \n\r ",
+        ),
+        DATETIME(" Current_Date ", "+ 45 MM", "-135 s"),
     )
 
 
@@ -1074,6 +1070,71 @@ def minutes_seconds_datediff():
             seconds_diff=DATEDIFF("s", date_time, y_datetime),
         )
         .TOP_K(30, by=x.DESC())
+    )
+
+
+def simple_week_sampler():
+    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
+    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
+    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
+    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
+    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
+    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
+    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
+    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
+    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
+    return Broker.CALCULATE(
+        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
+        sow=DATETIME(y_dt, "start of week"),
+        sow2=DATETIME(y_dt2, "start of week"),
+        sow3=DATETIME(y_dt3, "start of week"),
+        sow4=DATETIME(y_dt4, "start of week"),
+        sow5=DATETIME(y_dt5, "start of week"),
+        sow6=DATETIME(y_dt6, "start of week"),
+        sow7=DATETIME(y_dt7, "start of week"),
+        sow8=DATETIME(y_dt8, "start of week"),
+        dayname1=DAYNAME(y_dt),
+        dayname2=DAYNAME(y_dt2),
+        dayname3=DAYNAME(y_dt3),
+        dayname4=DAYNAME(y_dt4),
+        dayname5=DAYNAME(y_dt5),
+        dayname6=DAYNAME(y_dt6),
+        dayname7=DAYNAME(y_dt7),
+        dayname8=DAYNAME(y_dt8),
+        dayofweek1=DAYOFWEEK(y_dt),
+        dayofweek2=DAYOFWEEK(y_dt2),
+        dayofweek3=DAYOFWEEK(y_dt3),
+        dayofweek4=DAYOFWEEK(y_dt4),
+        dayofweek5=DAYOFWEEK(y_dt5),
+        dayofweek6=DAYOFWEEK(y_dt6),
+        dayofweek7=DAYOFWEEK(y_dt7),
+        dayofweek8=DAYOFWEEK(y_dt8),
+    )
+
+
+def transaction_week_sampler():
+    return Transactions.WHERE(
+        (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
+    ).CALCULATE(
+        sow=DATETIME(date_time, "start of week"),
+        dayname=DAYNAME(date_time),
+        dayofweek=DAYOFWEEK(date_time),
+    )
+
+
+def week_offset():
+    return Transactions.WHERE(
+        (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
+    ).CALCULATE(
+        date_time,
+        week_adj1=DATETIME(date_time, "1 week"),
+        week_adj2=DATETIME(date_time, "-1 week"),
+        week_adj3=DATETIME(date_time, "1 h", "2 w"),
+        week_adj4=DATETIME(date_time, "-1 s", "2 w"),
+        week_adj5=DATETIME(date_time, "1 d", "2 w"),
+        week_adj6=DATETIME(date_time, "-1 m", "2 w"),
+        week_adj7=DATETIME(date_time, "1 mm", "2 w"),
+        week_adj8=DATETIME(date_time, "1 y", "2 w"),
     )
 
 

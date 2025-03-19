@@ -2,12 +2,26 @@
 Definitions of configuration settings for PyDough.
 """
 
-__all__ = ["PyDoughConfigs"]
+__all__ = ["DayOfWeek", "PyDoughConfigs"]
 
 from enum import Enum
 from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
+
+
+class DayOfWeek(Enum):
+    """
+    An enum to represent the day of the week.
+    """
+
+    SUNDAY = "SUNDAY"
+    MONDAY = "MONDAY"
+    TUESDAY = "TUESDAY"
+    WEDNESDAY = "WEDNESDAY"
+    THURSDAY = "THURSDAY"
+    FRIDAY = "FRIDAY"
+    SATURDAY = "SATURDAY"
 
 
 class ConfigProperty(Generic[T]):
@@ -80,21 +94,19 @@ class PyDoughConfigs:
     `collation_default_asc`. The default is False.
     """
 
+    start_of_week = ConfigProperty[DayOfWeek](DayOfWeek.SUNDAY)
+    """
+    The day of the week that is considered the start of the week. The default
+    is Sunday.
+    """
+
+    start_week_as_zero = ConfigProperty[bool](True)
+    """
+    If True, then the week starts at zero. If False, then the week starts at one.
+    The default is True.
+    """
+
     def __setattr__(self, name: str, value: Any) -> None:
         if name not in dir(self):
             raise AttributeError(f"Unrecognized PyDough config name: {name}")
         super().__setattr__(name, value)
-
-
-class DayOfWeek(Enum):
-    """
-    An enum to represent the day of the week.
-    """
-
-    SUNDAY = "SUNDAY"
-    MONDAY = "MONDAY"
-    TUESDAY = "TUESDAY"
-    WEDNESDAY = "WEDNESDAY"
-    THURSDAY = "THURSDAY"
-    FRIDAY = "FRIDAY"
-    SATURDAY = "SATURDAY"

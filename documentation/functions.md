@@ -34,6 +34,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [MINUTE](#minute)
    * [SECOND](#second)
    * [DATEDIFF](#datediff)
+   * [DAYOFWEEK](#dayofweek)
+   * [DAYNAME](#dayname)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
    * [ISIN](#isin)
@@ -399,6 +401,7 @@ The modifier arguments can be the following (all of the options are case-insensi
    - **Years**: Supported aliases are `"years"`, `"year"`, and `"y"`.
    - **Months**: Supported aliases are `"months"`, `"month"`, and `"mm"`.
    - **Days**: Supported aliases are `"days"`, `"day"`, and `"d"`.
+   - **Weeks**: Supported aliases are `"weeks"`, `"week"`, and `"w"`.
    - **Hours**: Supported aliases are `"hours"`, `"hour"`, and `"h"`.
    - **Minutes**: Supported aliases are `"minutes"`, `"minute"`, and `"m"`.
    - **Seconds**: Supported aliases are `"seconds"`, `"second"`, and `"s"`.
@@ -498,6 +501,11 @@ Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`
 
 - `DATEDIFF("years", x, y)`: Returns the **number of full years since x that y occurred**. For example, if **x** is December 31, 2009, and **y** is January 1, 2010, it counts as **1 year apart**, even though they are only 1 day apart.
 - `DATEDIFF("months", x, y)`: Returns the **number of full months since x that y occurred**. For example, if **x** is January 31, 2014, and **y** is February 1, 2014, it counts as **1 month apart**, even though they are only 1 day apart.
+- `DATEDIFF("weeks", x, y)`: Returns the **number of full weeks since x that y occurred**. The dates x and y are first truncated to the start of week (as specified by the `start_of_week` config), then the difference in number of full weeks is calculated (a week is defined as 7 days). For example, if `start_of_week` is set to Saturday:
+  ```python
+  # If x is "2025-03-18" (Tuesday) and y is "2025-03-31" (Monday)
+  DATEDIFF("weeks", x, y) returns 2
+  ```
 - `DATEDIFF("days", x, y)`: Returns the **number of full days since x that y occurred**. For example, if **x** is 11:59 PM on one day, and **y** is 12:01 AM the next day, it counts as **1 day apart**, even though they are only 2 minutes apart.
 - `DATEDIFF("hours", x, y)`: Returns the **number of full hours since x that y occurred**. For example, if **x** is 6:59 PM and **y** is 7:01 PM on the same day, it counts as **1 hour apart**, even though the difference is only 2 minutes.
 - `DATEDIFF("minutes", x, y)`: Returns the **number of full minutes since x that y occurred**. For example, if **x** is 7:00 PM and **y** is 7:01 PM, it counts as **1 minute apart**, even though the difference is exactly 60 seconds.
@@ -511,7 +519,29 @@ Orders.CALCULATE(
 )
 ```
 
-The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown. See [`DATETIME`](#datetime) for the supported units and their aliases. Invalid or unrecognized units will result in an error. 
+The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown. See [`DATETIME`](#datetime) for the supported units and their aliases. Invalid or unrecognized units will result in an error.
+
+<!-- TOC --><a name="dayofweek"></a>
+
+### DAYOFWEEK
+
+The `DAYOFWEEK` function returns the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns an integer between 1 and 7,or between 0 and 6, depending on the `start_of_week` config and `start_week_as_zero` config. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+
+```py
+# Returns the day of the week for the current date
+Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
+```
+
+<!-- TOC --><a name="dayname"></a>
+
+### DAYNAME
+
+The `DAYNAME` function returns the name of the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns a string.
+
+```py
+# Returns the name of the day of the week for the current date
+Orders.CALCULATE(day_name = DAYNAME(order_date))
+```
 
 <!-- TOC --><a name="conditional-functions"></a>
 

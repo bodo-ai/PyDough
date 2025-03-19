@@ -16,6 +16,7 @@ from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
 
+from pydough.configs import PyDoughConfigs
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -52,7 +53,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     """
 
     def __init__(
-        self, dialect: SQLGlotDialect, bindings: SqlGlotTransformBindings
+        self,
+        dialect: SQLGlotDialect,
+        bindings: SqlGlotTransformBindings,
+        config: PyDoughConfigs,
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
@@ -60,7 +64,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
             SQLGlotRelationalExpressionVisitor(
-                dialect, bindings, self._correlated_names
+                dialect, bindings, self._correlated_names, config
             )
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (

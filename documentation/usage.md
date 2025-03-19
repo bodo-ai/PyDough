@@ -233,6 +233,34 @@ Suppliers.ORDER_BY(
   key.DESC(),
 )
 ```
+
+The following configs are used in the behavior of `DAYOFWEEK` and`DATEDIFF`:
+
+5. `start_of_week` (default=`DayOfWeek.SUNDAY`): Determines which day is considered the first day of the week. This affects functions like `DATEDIFF` and `DAYOFWEEK`. The value must be one of the following `DayOfWeek` enum values:
+
+   - `DayOfWeek.SUNDAY` (default)
+   - `DayOfWeek.MONDAY`  
+   - `DayOfWeek.TUESDAY`
+   - `DayOfWeek.WEDNESDAY`
+   - `DayOfWeek.THURSDAY`
+   - `DayOfWeek.FRIDAY`
+   - `DayOfWeek.SATURDAY`
+
+   The `DayOfWeek` enum is defined in the `pydough.configs` module.
+6. `start_week_as_zero` (default=True): if True, then the first day of the week is considered to be 0. If False, then the first day of the week is considered to be 1.
+
+```py
+import pydough
+from pydough.configs import DayOfWeek
+
+# The configs of the active session
+configs = pydough.active_session.config
+
+# Set the start of the week to Monday
+configs.start_of_week = DayOfWeek.MONDAY
+# TODO: Add examples of how to use the configs
+```
+
 <!-- TOC --><a name="session-database"></a>
 ### Session Database
 

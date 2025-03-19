@@ -13,6 +13,16 @@ The configs module provides functionality to manage various configuration settin
     - `avg_default_zero`: If True, the `AVG` function always defaults to 0 if there are no records to be averaged. If False, the output could be `NULL`. The default is False.
     - `collation_default_asc`: If True, the default collation is ascending. If False, the default collation is descending. The default is True.
     - `propogate_collation`: If True, the collation of the current expression, which does not have a collation, uses the most recent available collation in the nodes of the term. If False, the expression uses the default collation as specified by `collation_default_asc`. The default is False.
+    - `start_of_week`: The day of the week that is considered the start of the week. The default is `DayOfWeek.SUNDAY`.
+    - `start_week_as_zero`: If True, then the first day of the week is considered to be 0. If False, then the first day of the week is considered to be 1. The default is True.
+- `DayOfWeek`: Enum to represent the day of the week.
+    - `SUNDAY`: Sunday.
+    - `MONDAY`: Monday.
+    - `TUESDAY`: Tuesday.
+    - `WEDNESDAY`: Wednesday.
+    - `THURSDAY`: Thursday.
+    - `FRIDAY`: Friday.
+    - `SATURDAY`: Saturday.
 
 ### [session.py](session.py)
 

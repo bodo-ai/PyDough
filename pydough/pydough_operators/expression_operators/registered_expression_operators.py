@@ -15,6 +15,8 @@ __all__ = [
     "DATEDIFF",
     "DATETIME",
     "DAY",
+    "DAYNAME",
+    "DAYOFWEEK",
     "DEFAULT_TO",
     "DIV",
     "ENDSWITH",
@@ -158,6 +160,12 @@ MONTH = ExpressionFunctionOperator(
 )
 DAY = ExpressionFunctionOperator(
     "DAY", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+DAYOFWEEK = ExpressionFunctionOperator(
+    "DAYOFWEEK", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+DAYNAME = ExpressionFunctionOperator(
+    "DAYNAME", False, RequireNumArgs(1), ConstantType(StringType())
 )
 HOUR = ExpressionFunctionOperator(
     "HOUR", False, RequireNumArgs(1), ConstantType(Int64Type())

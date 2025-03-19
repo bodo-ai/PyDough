@@ -1164,10 +1164,9 @@ class HybridTranslator:
                     parent_tree.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
                 )
                 for rhs_name in subcollection_property.keys[lhs_name]:
-                    if rhs_name not in child_node.terms:
-                        rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
-                            rhs_name
-                        )
+                    rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
+                        rhs_name
+                    )
                     join_keys.append((lhs_key, rhs_key))
         elif not isinstance(subcollection_property, CartesianProductMetadata):
             raise NotImplementedError(

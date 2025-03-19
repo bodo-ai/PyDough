@@ -35,7 +35,6 @@ from tpch_test_functions import (
     impl_tpch_q22,
 )
 
-import pydough
 from pydough import init_pydough_context
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import GraphMetadata
@@ -523,6 +522,7 @@ def test_qualify_node_to_ast_string(
     impl: Callable[[], UnqualifiedNode],
     answer_tree_str: str,
     get_sample_graph: graph_fetcher,
+    default_config: PyDoughConfigs,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
@@ -530,8 +530,7 @@ def test_qualify_node_to_ast_string(
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
     unqualified: UnqualifiedNode = init_pydough_context(graph)(impl)()
-    config: PyDoughConfigs = pydough.active_session.config
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, config)
+    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
     assert isinstance(qualified, PyDoughCollectionQDAG), (
         "Expected qualified answer to be a collection, not an expression"
     )

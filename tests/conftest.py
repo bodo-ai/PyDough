@@ -13,7 +13,7 @@ from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
@@ -35,6 +35,8 @@ def default_config() -> PyDoughConfigs:
     # Set the defaults manually, in case they ever change.
     config.sum_default_zero = True
     config.avg_default_zero = False
+    config.start_of_week = DayOfWeek.SUNDAY
+    config.start_week_as_zero = True
     return config
 
 
