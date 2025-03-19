@@ -36,6 +36,22 @@ from defog_outputs import (
     defog_sql_text_broker_gen3,
     defog_sql_text_broker_gen4,
     defog_sql_text_broker_gen5,
+    defog_sql_text_ewallet_adv1,
+    defog_sql_text_ewallet_adv2,
+    defog_sql_text_ewallet_adv3,
+    defog_sql_text_ewallet_adv4,
+    defog_sql_text_ewallet_adv5,
+    defog_sql_text_ewallet_adv6,
+    defog_sql_text_ewallet_adv7,
+    defog_sql_text_ewallet_adv8,
+    defog_sql_text_ewallet_adv9,
+    defog_sql_text_ewallet_adv10,
+    defog_sql_text_ewallet_adv11,
+    defog_sql_text_ewallet_adv12,
+    defog_sql_text_ewallet_adv13,
+    defog_sql_text_ewallet_adv14,
+    defog_sql_text_ewallet_adv15,
+    defog_sql_text_ewallet_adv16,
     defog_sql_text_ewallet_basic1,
     defog_sql_text_ewallet_basic2,
     defog_sql_text_ewallet_basic3,
@@ -79,6 +95,22 @@ from defog_test_functions import (
     impl_defog_broker_gen3,
     impl_defog_broker_gen4,
     impl_defog_broker_gen5,
+    impl_defog_ewallet_adv1,
+    impl_defog_ewallet_adv2,
+    impl_defog_ewallet_adv3,
+    impl_defog_ewallet_adv4,
+    impl_defog_ewallet_adv5,
+    impl_defog_ewallet_adv6,
+    impl_defog_ewallet_adv7,
+    impl_defog_ewallet_adv8,
+    impl_defog_ewallet_adv9,
+    impl_defog_ewallet_adv10,
+    impl_defog_ewallet_adv11,
+    impl_defog_ewallet_adv12,
+    impl_defog_ewallet_adv13,
+    impl_defog_ewallet_adv14,
+    impl_defog_ewallet_adv15,
+    impl_defog_ewallet_adv16,
     impl_defog_ewallet_basic1,
     impl_defog_ewallet_basic2,
     impl_defog_ewallet_basic3,
@@ -379,6 +411,138 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_gen5,
             ),
             id="broker_gen5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv1,
+                "Ewallet",
+                defog_sql_text_ewallet_adv1,
+                order_insensitive=True,
+            ),
+            id="ewallet_adv1",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv2,
+                "Ewallet",
+                defog_sql_text_ewallet_adv2,
+            ),
+            id="ewallet_adv2",
+            marks=pytest.mark.skip(
+                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
+            ),
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv3,
+                "Ewallet",
+                defog_sql_text_ewallet_adv3,
+                order_insensitive=True,
+            ),
+            id="ewallet_adv3",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv4,
+                "Ewallet",
+                defog_sql_text_ewallet_adv4,
+            ),
+            id="ewallet_adv4",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv5,
+                "Ewallet",
+                defog_sql_text_ewallet_adv5,
+            ),
+            id="ewallet_adv5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv6,
+                "Ewallet",
+                defog_sql_text_ewallet_adv6,
+            ),
+            id="ewallet_adv6",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv7,
+                "Ewallet",
+                defog_sql_text_ewallet_adv7,
+            ),
+            id="ewallet_adv7",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv8,
+                "Ewallet",
+                defog_sql_text_ewallet_adv8,
+            ),
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv9,
+                "Ewallet",
+                defog_sql_text_ewallet_adv9,
+            ),
+            id="ewallet_adv9",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv10,
+                "Ewallet",
+                defog_sql_text_ewallet_adv10,
+            ),
+            id="ewallet_adv10",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv11,
+                "Ewallet",
+                defog_sql_text_ewallet_adv11,
+            ),
+            id="ewallet_adv11",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv12,
+                "Ewallet",
+                defog_sql_text_ewallet_adv12,
+            ),
+            id="ewallet_adv12",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv13,
+                "Ewallet",
+                defog_sql_text_ewallet_adv13,
+            ),
+            id="ewallet_adv13",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv14,
+                "Ewallet",
+                defog_sql_text_ewallet_adv14,
+            ),
+            id="ewallet_adv14",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv15,
+                "Ewallet",
+                defog_sql_text_ewallet_adv15,
+            ),
+            id="ewallet_adv15",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_adv16,
+                "Ewallet",
+                defog_sql_text_ewallet_adv16,
+            ),
+            id="ewallet_adv16",
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
