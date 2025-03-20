@@ -34,7 +34,9 @@ from simple_pydough_functions import (
     first_order_in_year,
     first_order_per_customer,
     function_sampler,
+    highest_priority_per_year,
     month_year_sliding_windows,
+    nation_best_order,
     nation_window_aggs,
     order_info_per_priority,
     percentile_customers_per_region,
@@ -58,6 +60,7 @@ from simple_pydough_functions import (
     singular5,
     singular6,
     singular7,
+    supplier_pct_national_qty,
     suppliers_bal_diffs,
     top_customers_by_orders,
     triple_partition,
@@ -1037,6 +1040,118 @@ from pydough.unqualified import (
                 ),
             ),
             id="region_nation_window_aggs",
+        ),
+        pytest.param(
+            (
+                supplier_pct_national_qty,
+                None,
+                "supplier_pct_national_qty",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_name": [
+                            "Supplier#000009271",
+                            "Supplier#000000543",
+                            "Supplier#000007718",
+                            "Supplier#000006460",
+                            "Supplier#000002509",
+                        ],
+                        "nation_name": [
+                            "MOZAMBIQUE",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "MOROCCO",
+                            "ETHIOPIA",
+                        ],
+                        "supplier_quantity": [
+                            49,
+                            46,
+                            39,
+                            27,
+                            68,
+                        ],
+                        "national_qty_pct": [
+                            41.88034188,
+                            36.80000000,
+                            33.33333333,
+                            21.60000000,
+                            21.58730159,
+                        ],
+                    }
+                ),
+            ),
+            id="supplier_pct_national_qty",
+        ),
+        pytest.param(
+            (
+                highest_priority_per_year,
+                None,
+                "highest_priority_per_year",
+                lambda: pd.DataFrame(
+                    {
+                        "order_year": range(1992, 1999),
+                        "highest_priority": [
+                            "4-NOT SPECIFIED",
+                            "5-LOW",
+                            "1-URGENT",
+                            "2-HIGH",
+                            "1-URGENT",
+                            "4-NOT SPECIFIED",
+                            "5-LOW",
+                        ],
+                        "priority_pct": [
+                            20.15817586,
+                            20.14074875,
+                            20.15711982,
+                            20.14109702,
+                            20.12631984,
+                            20.08666142,
+                            20.21358598,
+                        ],
+                    }
+                ),
+            ),
+            id="highest_priority_per_year",
+        ),
+        pytest.param(
+            (
+                nation_best_order,
+                None,
+                "nation_best_order",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "CHINA",
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "VIETNAM",
+                        ],
+                        "customer_name": [
+                            "Customer#000100978",
+                            "Customer#000131215",
+                            "Customer#000141403",
+                            "Customer#000100159",
+                            "Customer#000090235",
+                        ],
+                        "order_key": [3312576, 2854465, 5925477, 1395745, 5983202],
+                        "order_value": [
+                            472728.8,
+                            465198.5,
+                            435458.79,
+                            502742.76,
+                            447386.22,
+                        ],
+                        "value_percentage": [
+                            0.05775783,
+                            0.05645062,
+                            0.05276872,
+                            0.06349147,
+                            0.05597731,
+                        ],
+                    }
+                ),
+            ),
+            id="nation_best_order",
         ),
     ],
 )
