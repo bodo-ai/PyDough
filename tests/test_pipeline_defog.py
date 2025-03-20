@@ -62,6 +62,11 @@ from defog_outputs import (
     defog_sql_text_ewallet_basic8,
     defog_sql_text_ewallet_basic9,
     defog_sql_text_ewallet_basic10,
+    defog_sql_text_ewallet_gen1,
+    defog_sql_text_ewallet_gen2,
+    defog_sql_text_ewallet_gen3,
+    defog_sql_text_ewallet_gen4,
+    defog_sql_text_ewallet_gen5,
 )
 from defog_test_functions import (
     impl_defog_broker_adv1,
@@ -121,6 +126,11 @@ from defog_test_functions import (
     impl_defog_ewallet_basic8,
     impl_defog_ewallet_basic9,
     impl_defog_ewallet_basic10,
+    impl_defog_ewallet_gen1,
+    impl_defog_ewallet_gen2,
+    impl_defog_ewallet_gen3,
+    impl_defog_ewallet_gen4,
+    impl_defog_ewallet_gen5,
 )
 from test_utils import (
     PyDoughSQLComparisonTest,
@@ -625,6 +635,47 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_ewallet_basic9,
             ),
             id="ewallet_basic9",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_gen1,
+                "Ewallet",
+                defog_sql_text_ewallet_gen1,
+            ),
+            id="ewallet_gen1",
+            marks=pytest.mark.skip("Query pending"),
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_gen2,
+                "Ewallet",
+                defog_sql_text_ewallet_gen2,
+            ),
+            id="ewallet_gen2",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_gen3,
+                "Ewallet",
+                defog_sql_text_ewallet_gen3,
+            ),
+            id="ewallet_gen3",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_gen4,
+                "Ewallet",
+                defog_sql_text_ewallet_gen4,
+            ),
+            id="ewallet_gen4",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_ewallet_gen5,
+                "Ewallet",
+                defog_sql_text_ewallet_gen5,
+            ),
+            id="ewallet_gen5",
         ),
     ],
 )

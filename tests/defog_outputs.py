@@ -60,6 +60,11 @@ __all__ = [
     "defog_sql_text_ewallet_basic7",
     "defog_sql_text_ewallet_basic8",
     "defog_sql_text_ewallet_basic9",
+    "defog_sql_text_ewallet_gen1",
+    "defog_sql_text_ewallet_gen2",
+    "defog_sql_text_ewallet_gen3",
+    "defog_sql_text_ewallet_gen4",
+    "defog_sql_text_ewallet_gen5",
 ]
 
 
@@ -1123,4 +1128,108 @@ def defog_sql_text_ewallet_basic9():
     WHERE t.sender_type = 0 
     GROUP BY u.country 
     ORDER BY CASE WHEN total_amount IS NULL THEN 1 ELSE 0 END DESC, total_amount DESC LIMIT 5;
+    """
+
+
+def defog_sql_text_ewallet_gen1() -> str:
+    """
+    SQLite query text for the following question for the eWallet graph:
+
+    Give me today's median merchant wallet balance for all active merchants whose category contains 'retail'
+    """
+    return """
+    WITH retail_merchants AS (
+        SELECT mid
+        FROM merchants
+        WHERE LOWER(category) LIKE LOWER('%retail%')
+        AND status = 'active'
+    ), merchant_balances AS (
+        SELECT balance
+        FROM wallet_merchant_balance_daily AS wmbd
+        JOIN retail_merchants AS rm ON wmbd.merchant_id = rm.mid
+        WHERE DATE(wmbd.updated_at) = date('now')
+    )
+    SELECT AVG(balance) AS median_balance
+    FROM (
+        SELECT balance
+        FROM merchant_balances
+        ORDER BY balance
+        LIMIT 2 - (
+            SELECT COUNT(*)
+            FROM merchant_balances
+        ) % 2 OFFSET (
+            SELECT (COUNT(*) - 1) / 2
+            FROM merchant_balances
+        )
+    );
+    """
+
+
+def defog_sql_text_ewallet_gen2() -> str:
+    """
+    SQLite query text for the following question for the eWallet graph:
+
+    What was the average transaction daily and monthly limit for the earliest setting snapshot in 2023?
+    """
+    return """
+    SELECT AVG(tx_limit_daily) AS avg_daily_limit, AVG(tx_limit_monthly) AS avg_monthly_limit
+    FROM user_setting_snapshot
+    WHERE snapshot_date = (
+        SELECT MIN(snapshot_date)
+        FROM user_setting_snapshot
+        WHERE snapshot_date >= '2023-01-01'
+        AND snapshot_date < '2024-01-01'
+    );
+    """
+
+
+def defog_sql_text_ewallet_gen3() -> str:
+    """
+    SQLite query text for the following question for the eWallet graph:
+
+    what was the average user session duration in seconds split by device_type?
+    """
+    return """
+    SELECT device_type, AVG(strftime('%s', session_end_ts) - strftime('%s', session_start_ts)) AS avg_session_duration_seconds
+    FROM user_sessions
+    WHERE session_end_ts IS NOT NULL
+    GROUP BY device_type;
+    """
+
+
+def defog_sql_text_ewallet_gen4() -> str:
+    """
+    SQLite query text for the following question for the eWallet graph:
+
+    Which merchants earliest coupon start date was within a year of the merchant's
+    registration? Return the merchant id, registration date, and earliest coupon id and start date
+    """
+    return """
+    WITH earliest_coupons AS (
+        SELECT c.merchant_id, MIN(c.start_date) AS earliest_coupon_start_date
+        FROM coupons AS c
+        GROUP BY c.merchant_id
+    )
+    SELECT m.mid AS merchant_id, m.created_at AS merchant_registration_date, ec.earliest_coupon_start_date, c.cid AS earliest_coupon_id
+    FROM merchants AS m
+    JOIN earliest_coupons AS ec ON m.mid = ec.merchant_id
+    JOIN coupons AS c ON ec.merchant_id = c.merchant_id AND ec.earliest_coupon_start_date = c.start_date
+    WHERE ec.earliest_coupon_start_date <= date(m.created_at, '+1 year');
+    """
+
+
+def defog_sql_text_ewallet_gen5() -> str:
+    """
+    SQLite query text for the following question for the eWallet graph:
+
+    Which users did not get a notification within the first year of signing up?
+    Return their usernames, emails and signup dates.
+    """
+    return """
+    SELECT u.username, u.email, u.created_at 
+    FROM users AS u LEFT JOIN notifications AS n 
+    ON u.uid = n.user_id 
+    AND n.created_at BETWEEN u.created_at 
+    AND date(u.created_at, '+1 year') 
+    WHERE n.user_id IS NULL;
     """

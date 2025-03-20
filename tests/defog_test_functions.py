@@ -648,7 +648,7 @@ def impl_defog_ewallet_adv3():
     """
     PyDough implementation of the following question for the eWallet graph:
 
-        How many active retail merchants have issued coupons? Return the merchant name and the total number
+    How many active retail merchants have issued coupons? Return the merchant name and the total number
     of coupons issued. Merchant category should be matched case-insensitively
     """
     # Retrieve merchant summary for active merchants in the "retail" category who have coupons
@@ -1034,3 +1034,94 @@ def impl_defog_ewallet_basic9():
         )
         .TOP_K(5, total_amount.DESC())
     )
+
+
+def impl_defog_ewallet_gen1():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Give me today's median merchant wallet balance for all active merchants whose category contains 'retail'
+    """
+    return  # Query pending
+
+
+def impl_defog_ewallet_gen2():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What was the average transaction daily and monthly limit for the earliest setting snapshot in 2023?
+    """
+    snapshots_2023 = UserSettingSnapshots.WHERE(
+        DATEDIFF("years", snapshot_date, "2023-01-01") == 0
+    )
+
+    return Ewallet.CALCULATE(min_date=MIN(snapshots_2023.snapshot_date)).CALCULATE(
+        avg_daily_limit=AVG(
+            snapshots_2023.WHERE(min_date == snapshot_date).tx_limit_daily
+        ),
+        avg_monthly_limit=AVG(
+            snapshots_2023.WHERE(min_date == snapshot_date).tx_limit_monthly
+        ),
+    )
+
+
+def impl_defog_ewallet_gen3():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    what was the average user session duration in seconds split by device_type?
+    """
+    selected_user_sessions = UserSessions
+
+    return PARTITION(selected_user_sessions, name="usession", by=device_type).CALCULATE(
+        device_type=device_type,
+        avg_session_duration_seconds=AVG(
+            DATEDIFF("seconds", usession.session_start_ts, usession.session_end_ts)
+        ),
+    )
+
+
+def impl_defog_ewallet_gen4():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Which merchants earliest coupon start date was within a year of the merchant's registration?
+    Return the merchant id, registration date, and earliest coupon id and start date
+    """
+    selected_coupons = (
+        Merchants.CALCULATE(
+            merchant_registration_date=created_at,
+            merchants_id=mid,
+            earliest_coupon_start_date=MIN(coupons.start_date),
+        )
+        .CALCULATE(
+            earliest_coupon_id=MAX(
+                coupons.WHERE(earliest_coupon_start_date == start_date).cid
+            )
+        )
+        .coupons.WHERE(DATEDIFF("days", merchant_registration_date, start_date) <= 365)
+    )
+
+    return selected_coupons.CALCULATE(
+        merchants_id=merchants_id,
+        merchant_registration_date=merchant_registration_date,
+        earliest_coupon_start_date=earliest_coupon_start_date,
+        earliest_coupon_id=earliest_coupon_id,
+    )
+
+
+def impl_defog_ewallet_gen5():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Which users did not get a notification within the first year of signing up? Return their
+    usernames, emails and signup dates.
+    """
+    return Users.WHERE(
+        HASNOT(
+            notifications.WHERE(
+                (created_at >= user.created_at)
+                & (DATEDIFF("days", user.created_at, created_at) <= 365)
+            )
+        )
+    ).CALCULATE(username=username, email=email, created_at=created_at)
