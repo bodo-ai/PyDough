@@ -320,9 +320,9 @@ def impl_defog_broker_adv14():
     ACP = Average Closing Price of tickers in the last 7 days, inclusive of
     today.
     """
-    selected_updates = DailyPrices.WHERE(
-        DATEDIFF("days", date, DATETIME("now")) <= 7
-    ).CALCULATE(ticker_type=ticker.ticker_type)
+    selected_updates = DailyPrices.WHERE(DATEDIFF("days", date, "now") <= 7).CALCULATE(
+        ticker_type=ticker.ticker_type
+    )
 
     ticker_types = PARTITION(selected_updates, name="updates", by=ticker_type)
 
@@ -537,9 +537,7 @@ def impl_defog_broker_gen2():
     Return the number of transactions by users who joined in the past 70
     days.
     """
-    selected_tx = Transactions.WHERE(
-        (DATEDIFF("days", customer.join_date, "now") <= 70)
-    )
+    selected_tx = Transactions.WHERE(customer.join_date >= DATETIME("now", "-70 days"))
 
     return Broker.CALCULATE(transaction_count=COUNT(selected_tx.customer_id))
 
@@ -571,7 +569,8 @@ def impl_defog_broker_gen4():
     Return the id, name and number of transactions.
     """
     selected_transactions = transactions_made.WHERE(
-        (DATEDIFF("days", date_time, "2023-04-01") == 0) & (transaction_type == "sell")
+        (DATETIME(date_time, "start of day") == datetime.date(2023, 4, 1))
+        & (transaction_type == "sell")
     )
     return Customers.CALCULATE(_id, name, num_tx=COUNT(selected_transactions)).TOP_K(
         1, by=num_tx.DESC()
@@ -586,8 +585,7 @@ def impl_defog_broker_gen5():
     transactions in the 1st quarter of 2023?
     """
     selected_transactions = Transactions.WHERE(
-        (DATEDIFF("days", "2023-01-01", date_time) >= 0)
-        & (DATEDIFF("days", date_time, "2023-03-31") >= 0)
+        MONOTONIC(datetime.date(2023, 1, 1), date_time, datetime.date(2023, 3, 31))
         & (status == "success")
     ).CALCULATE(month=DATETIME(date_time, "start of month"))
 
@@ -1051,9 +1049,7 @@ def impl_defog_ewallet_gen2():
 
     What was the average transaction daily and monthly limit for the earliest setting snapshot in 2023?
     """
-    snapshots_2023 = UserSettingSnapshots.WHERE(
-        DATEDIFF("years", snapshot_date, "2023-01-01") == 0
-    )
+    snapshots_2023 = UserSettingSnapshots.WHERE(YEAR(snapshot_date) == 2023)
 
     return Ewallet.CALCULATE(min_date=MIN(snapshots_2023.snapshot_date)).CALCULATE(
         avg_daily_limit=AVG(
@@ -1099,7 +1095,7 @@ def impl_defog_ewallet_gen4():
                 coupons.WHERE(earliest_coupon_start_date == start_date).cid
             )
         )
-        .coupons.WHERE(DATEDIFF("days", merchant_registration_date, start_date) <= 365)
+        .coupons.WHERE(start_date <= DATETIME(merchant_registration_date, "+1 year"))
     )
 
     return selected_coupons.CALCULATE(
@@ -1121,7 +1117,7 @@ def impl_defog_ewallet_gen5():
         HASNOT(
             notifications.WHERE(
                 (created_at >= user.created_at)
-                & (DATEDIFF("days", user.created_at, created_at) <= 365)
+                & (DATETIME(user.created_at, "+1 year") >= created_at)
             )
         )
     ).CALCULATE(username=username, email=email, created_at=created_at)

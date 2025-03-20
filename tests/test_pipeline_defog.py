@@ -643,7 +643,9 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_ewallet_gen1,
             ),
             id="ewallet_gen1",
-            marks=pytest.mark.skip("Query pending"),
+            marks=pytest.mark.skip(
+                "TODO (gh #305): #305 Add support for MEDIAN aggregation function"
+            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
