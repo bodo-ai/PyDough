@@ -628,6 +628,42 @@ def datetime_sampler():
         SECOND("now"),
         SECOND(pd.Timestamp("2025-07-04 12:58:45")),
         SECOND("1999-03-14"),
+        DATEDIFF("year", "2018-02-14 12:41:06", "NOW"),
+        DATEDIFF("years", order_date, datetime.date(2022, 11, 24)),
+        DATEDIFF("month", datetime.date(2005, 6, 30), "1999-03-14"),
+        DATEDIFF(
+            "months", datetime.datetime(2006, 5, 1, 12, 0), datetime.date(2022, 11, 24)
+        ),
+        DATEDIFF("day", "CurrentTimestamp", "CURRENTDATE"),
+        DATEDIFF("days", "1999-03-14", "CURRENTDATE"),
+        DATEDIFF("hour", "NOW", "CURRENTDATE"),
+        DATEDIFF("hours", datetime.date(2005, 6, 30), order_date),
+        DATEDIFF("minute", "NOW", datetime.datetime(2006, 5, 1, 12, 0)),
+        DATEDIFF("minutes", order_date, pd.Timestamp("2021-01-01 07:35:00")),
+        DATEDIFF(
+            "second", datetime.date(2022, 11, 24), pd.Timestamp("2021-01-01 07:35:00")
+        ),
+        DATEDIFF("seconds", datetime.date(2005, 6, 30), "2018-02-14 12:41:06"),
+        DATEDIFF("year", order_date, datetime.datetime(2006, 5, 1, 12, 0)),
+        DATEDIFF("years", "2018-02-14 12:41:06", order_date),
+        DATEDIFF("month", order_date, datetime.datetime(2019, 7, 4, 11, 30)),
+        DATEDIFF(
+            "months", datetime.datetime(2019, 7, 4, 11, 30), "2018-02-14 12:41:06"
+        ),
+        DATEDIFF("day", "CURRENTDATE", order_date),
+        DATEDIFF("days", datetime.datetime(2019, 7, 4, 11, 30), "CURRENTDATE"),
+        DATEDIFF("hour", datetime.date(2022, 11, 24), "1999-03-14"),
+        DATEDIFF("hours", "2018-02-14 12:41:06", pd.Timestamp("2020-12-31 00:31:06")),
+        DATEDIFF(
+            "minute", datetime.date(2005, 6, 30), pd.Timestamp("2020-12-31 00:31:06")
+        ),
+        DATEDIFF("minutes", "CurrentTimestamp", "2018-02-14 12:41:06"),
+        DATEDIFF("second", "CURRENTDATE", "1999-03-14"),
+        DATEDIFF(
+            "seconds",
+            datetime.date(2022, 11, 24),
+            datetime.datetime(2019, 7, 4, 11, 30),
+        ),
     )
 
 
