@@ -506,6 +506,7 @@ Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`
   # If x is "2025-03-18" (Tuesday) and y is "2025-03-31" (Monday)
   DATEDIFF("weeks", x, y) returns 2
   ```
+ Please see the [Session Configs](./usage.md#session-configs) documentation for more details and in-depth examples.
 - `DATEDIFF("days", x, y)`: Returns the **number of full days since x that y occurred**. For example, if **x** is 11:59 PM on one day, and **y** is 12:01 AM the next day, it counts as **1 day apart**, even though they are only 2 minutes apart.
 - `DATEDIFF("hours", x, y)`: Returns the **number of full hours since x that y occurred**. For example, if **x** is 6:59 PM and **y** is 7:01 PM on the same day, it counts as **1 hour apart**, even though the difference is only 2 minutes.
 - `DATEDIFF("minutes", x, y)`: Returns the **number of full minutes since x that y occurred**. For example, if **x** is 7:00 PM and **y** is 7:01 PM, it counts as **1 minute apart**, even though the difference is exactly 60 seconds.
@@ -525,7 +526,7 @@ The first argument in the `DATEDIFF` function supports the following aliases for
 
 ### DAYOFWEEK
 
-The `DAYOFWEEK` function returns the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns an integer between 1 and 7,or between 0 and 6, depending on the `start_of_week` config and `start_week_as_zero` config. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
+The `DAYOFWEEK` function returns the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns an integer between 1 and 7, or between 0 and 6, depending on the `start_of_week` config and `start_week_as_zero` config. Please see the [Session Configs](./usage.md#session-configs) documentation for more details and in-depth examples.
 
 In other words, `DAYOFWEEK` returns which day of the week is the given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config.
 
@@ -533,6 +534,19 @@ In other words, `DAYOFWEEK` returns which day of the week is the given date/time
 # Returns the day of the week for the current date
 Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
 ```
+
+The following table shows the day of the week for a given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config and if the week starts at 0 or 1 decided by the `start_week_as_zero` config.
+
+| Day of Week  | Start is Sunday, Start at 0 | Start is Sunday, Start at 1 | Start is Monday, Start at 0 | Start is Monday, Start at 1 |
+|--------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| Sunday       | 0                           | 1                           | 6                           | 7                           |
+| Monday       | 1                           | 2                           | 0                           | 1                           |
+| Tuesday      | 2                           | 3                           | 1                           | 2                           |
+| Wednesday    | 3                           | 4                           | 2                           | 3                           |
+| Thursday     | 4                           | 5                           | 3                           | 4                           |
+| Friday       | 5                           | 6                           | 4                           | 5                           |
+| Saturday     | 6                           | 7                           | 5                           | 6                           |
+
 
 <!-- TOC --><a name="dayname"></a>
 

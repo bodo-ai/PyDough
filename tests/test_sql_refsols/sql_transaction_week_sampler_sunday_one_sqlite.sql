@@ -20,7 +20,6 @@ SELECT
       THEN 'Friday'
       WHEN CAST(STRFTIME('%w', date_time) AS INTEGER) = 6
       THEN 'Saturday'
-      ELSE NULL
     END
   ) AS dayname,
   (

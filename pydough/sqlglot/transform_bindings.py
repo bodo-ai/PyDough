@@ -56,6 +56,11 @@ month_units = ("months", "month", "mm")
 The valid string representations of the month unit.
 """
 
+week_units = ("weeks", "week", "w")
+"""
+The valid string representations of the week unit.
+"""
+
 day_units = ("days", "day", "d")
 """
 The valid string representations of the day unit.
@@ -76,11 +81,6 @@ second_units = ("seconds", "second", "s")
 The valid string representations of the second unit.
 """
 
-week_units = ("weeks", "week", "w")
-"""
-The valid string representations of the week unit.
-"""
-
 
 class DateTimeUnit(Enum):
     """
@@ -89,11 +89,11 @@ class DateTimeUnit(Enum):
 
     YEAR = "year"
     MONTH = "month"
+    WEEK = "week"
     DAY = "day"
     HOUR = "hour"
     MINUTE = "minute"
     SECOND = "second"
-    WEEK = "week"
 
     @staticmethod
     def from_string(unit: str) -> Union["DateTimeUnit", None]:
@@ -115,6 +115,8 @@ class DateTimeUnit(Enum):
             return DateTimeUnit.YEAR
         elif unit in month_units:
             return DateTimeUnit.MONTH
+        elif unit in week_units:
+            return DateTimeUnit.WEEK
         elif unit in day_units:
             return DateTimeUnit.DAY
         elif unit in hour_units:
@@ -123,8 +125,6 @@ class DateTimeUnit(Enum):
             return DateTimeUnit.MINUTE
         elif unit in second_units:
             return DateTimeUnit.SECOND
-        elif unit in week_units:
-            return DateTimeUnit.WEEK
         else:
             return None
 
@@ -147,7 +147,9 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.SECOND:
                 return "'%Y-%m-%d %H:%M:%S'"
             case _:
-                raise ValueError(f"Unsupported date/time unit: {self}")
+                raise ValueError(
+                    f"Unsupported date/time unit for truncation_string: {self}"
+                )
 
 
 def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
@@ -644,66 +646,29 @@ def convert_dayname(dialect: DatabaseDialect) -> transform_binding:
             # By default start of week is Sunday
             # Week starts at 0
             # Sunday = 0, Monday = 1, ..., Saturday = 6
-            sqlite_base_week_day: SQLGlotExpression = sqlglot_expressions.Cast(
-                this=sqlglot_expressions.TimeToStr(this=base, format="'%w'"),
-                to=sqlglot_expressions.DataType(
-                    this=sqlglot_expressions.DataType.Type.INT
-                ),
-            )
-            sqlite_if_eq_cond: SQLGlotExpression = sqlglot_expressions.EQ
-            sqlite_answer: SQLGlotExpression = apply_parens(
-                sqlglot_expressions.Case()
-                .when(
-                    sqlite_if_eq_cond(
+            sqlite_base_week_day: SQLGlotExpression = convert_sqlite_datetime_extract(
+                "'%w'"
+            )(None, [base], config)
+            sqlite_answer: SQLGlotExpression = sqlglot_expressions.Case()
+            for dow, dayname in enumerate(
+                [
+                    "Sunday",
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                ]
+            ):
+                sqlite_answer = sqlite_answer.when(
+                    sqlglot_expressions.EQ(
                         this=sqlite_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(0),
+                        expression=sqlglot_expressions.Literal.number(dow),
                     ),
-                    sqlglot_expressions.Literal.string("Sunday"),
+                    sqlglot_expressions.Literal.string(dayname),
                 )
-                .when(
-                    sqlite_if_eq_cond(
-                        this=sqlite_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(1),
-                    ),
-                    sqlglot_expressions.Literal.string("Monday"),
-                )
-                .when(
-                    sqlite_if_eq_cond(
-                        this=sqlite_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(2),
-                    ),
-                    sqlglot_expressions.Literal.string("Tuesday"),
-                )
-                .when(
-                    sqlite_if_eq_cond(
-                        this=sqlite_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(3),
-                    ),
-                    sqlglot_expressions.Literal.string("Wednesday"),
-                )
-                .when(
-                    sqlite_if_eq_cond(
-                        this=sqlite_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(4),
-                    ),
-                    sqlglot_expressions.Literal.string("Thursday"),
-                )
-                .when(
-                    sqlite_if_eq_cond(
-                        this=sqlite_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(5),
-                    ),
-                    sqlglot_expressions.Literal.string("Friday"),
-                )
-                .when(
-                    sqlite_if_eq_cond(
-                        this=sqlite_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(6),
-                    ),
-                    sqlglot_expressions.Literal.string("Saturday"),
-                )
-                .else_(sqlglot_expressions.Null())
-            )
+            sqlite_answer = apply_parens(sqlite_answer)
             return sqlite_answer
         else:
             # ANSI implementation
@@ -713,60 +678,26 @@ def convert_dayname(dialect: DatabaseDialect) -> transform_binding:
             ansi_base_week_day: SQLGlotExpression = sqlglot_expressions.DayOfWeek(
                 this=base
             )
-            ansi_if_eq_cond: SQLGlotExpression = sqlglot_expressions.EQ
-            ansi_answer: SQLGlotExpression = apply_parens(
-                sqlglot_expressions.Case()
-                .when(
-                    ansi_if_eq_cond(
+            ansi_answer: SQLGlotExpression = sqlglot_expressions.Case()
+            for dow, dayname in enumerate(
+                [
+                    "Sunday",
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                ]
+            ):
+                ansi_answer = ansi_answer.when(
+                    sqlglot_expressions.EQ(
                         this=ansi_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(0),
+                        expression=sqlglot_expressions.Literal.number(dow),
                     ),
-                    sqlglot_expressions.Literal.string("Sunday"),
+                    sqlglot_expressions.Literal.string(dayname),
                 )
-                .when(
-                    ansi_if_eq_cond(
-                        this=ansi_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(1),
-                    ),
-                    sqlglot_expressions.Literal.string("Monday"),
-                )
-                .when(
-                    ansi_if_eq_cond(
-                        this=ansi_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(2),
-                    ),
-                    sqlglot_expressions.Literal.string("Tuesday"),
-                )
-                .when(
-                    ansi_if_eq_cond(
-                        this=ansi_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(3),
-                    ),
-                    sqlglot_expressions.Literal.string("Wednesday"),
-                )
-                .when(
-                    ansi_if_eq_cond(
-                        this=ansi_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(4),
-                    ),
-                    sqlglot_expressions.Literal.string("Thursday"),
-                )
-                .when(
-                    ansi_if_eq_cond(
-                        this=ansi_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(5),
-                    ),
-                    sqlglot_expressions.Literal.string("Friday"),
-                )
-                .when(
-                    ansi_if_eq_cond(
-                        this=ansi_base_week_day,
-                        expression=sqlglot_expressions.Literal.number(6),
-                    ),
-                    sqlglot_expressions.Literal.string("Saturday"),
-                )
-                .else_(sqlglot_expressions.Null())
-            )
+            ansi_answer = apply_parens(ansi_answer)
             return ansi_answer
 
     return impl
@@ -1865,8 +1796,6 @@ def convert_sqlite_datediff(
             return answer
         case "days" | "day" | "d":
             # Extracts the start of date from the datetime and subtracts the dates.
-            # We use Date instead of Datetime as the converted SQL does not have
-            # the 'start of day' function for Datetime.
             date_x = sqlglot_expressions.Date(
                 this=sql_glot_args[1],
                 expressions=[

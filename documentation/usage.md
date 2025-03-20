@@ -266,20 +266,22 @@ configs = pydough.active_session.config
 configs.start_of_week = DayOfWeek.MONDAY
 # Set start of week to be 1
 configs.start_week_as_zero = False
-# This would return dow = 4, as March 20, 2025 is a Thursday and is the 4th day of the week
-# when the start of week is considered to be Monday
+# This would return dow = 4, as March 20, 2025 is a Thursday and is the 4th day 
+# of the week when the start of week is considered to be Monday
 TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 4
-# If start_week_as_zero is set to True (configs.start_week_as_zero = True), then DAYOFWEEK("2025-03-20") = 3
+# If start_week_as_zero is set to True (configs.start_week_as_zero = True), 
+# then DAYOFWEEK("2025-03-20") = 3
 configs.start_week_as_zero = True
 TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 3
 
 # Now, start_of_week is set to Thursday,
 configs.start_of_week = DayOfWeek.Thursday
 configs.start_week_as_zero = False
-# This would return dow = 1, as March 20, 2025 is a Thursday and is the 1st day of the week
-# when the start of week is considered to be Thursday.
+# This would return dow = 1, as March 20, 2025 is a Thursday and is the 1st day
+# of the week when the start of week is considered to be Thursday.
 TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 1
-# If start_week_as_zero is set to True (configs.start_week_as_zero = True), then DAYOFWEEK("2025-03-20") = 0
+# If start_week_as_zero is set to True (configs.start_week_as_zero = True), 
+# then DAYOFWEEK("2025-03-20") = 0
 configs.start_week_as_zero = True
 TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 0
 
@@ -287,29 +289,37 @@ TPCH.calculate(dow = DAYOFWEEK("2025-03-20")) # dow = 0
 # Understanding the behavior of DATETIME with `start of week`
 # Set the start of the week to Monday
 configs.start_of_week = DayOfWeek.MONDAY
-# This would set `dt` to the start of the week for March 20, 2025 (which is a Wednesday)
+# This would set `dt` to the start of the week for March 20, 2025 (Wednesday)
 # to be March 17, 2025 (recent Monday)
 TPCH.calculate(dt = DATETIME("2025-03-20", "start of week")) # dt = 2025-03-17
+
 # start_of_week is set to Thursday,
 configs.start_of_week = DayOfWeek.Thursday
-# This would set `dt` to the start of the week for March 20, 2025 (which is a Thursday)
+# This would set `dt` to the start of the week for March 20, 2025 (Thursday)
 # to be March 20, 2025 (recent Thursday)
 TPCH.calculate(dt = DATETIME("2025-03-20", "start of week")) # dt = 2025-03-20
+# Note: DATETIME function related to week does not depend on the 
+# `start_week_as_zero` config.
 
 
 # Understanding the behavior of DATEDIFF with `start of week`
 # Set the start of the week to Monday
 configs.start_of_week = DayOfWeek.MONDAY
-# This would return 0, as the difference between March 20, 2025(Thursday) and March 17, 2025(Monday) is 0 weeks
-# when the start of week is considered to be Monday. This is because both these dates fall on the same week.
+# This would return 0, as the difference between March 20, 2025(Thursday) and 
+# March 17, 2025(Monday) is 0 weeks when the start of week is considered to be 
+# Monday. This is because both these dates fall on the same week.
 TPCH.calculate(diff = DATEDIFF("2025-03-17", "2025-03-20", "week")) # diff = 0
 
 # Set the start of the week to Thursday
 configs.start_of_week = DayOfWeek.Thursday
-# This would return 1, as the difference between March 20, 2025(Thursday) and March 17, 2025(Monday) is 1 week
-# when the start of week is considered to be Thursday. This is because March 17, 2025 belongs to the week starting
-# from March 13, 2025 (the recent Thursday for it) and March 20, 2025 belongs to the week starting from March 20, 2025 (the recent Thursday).
+# This would return 1, as the difference between March 20, 2025 (Thursday)
+# and March 17, 2025 (Monday) is 1 week when the start of week is considered 
+# to be Thursday. This is because March 17, 2025 belongs to the week starting
+# from March 13, 2025 (the recent Thursday for it) and March 20, 2025 belongs 
+# to the week starting from March 20, 2025 (the recent Thursday).
 TPCH.calculate(diff = DATEDIFF("2025-03-17", "2025-03-20", "week")) # diff = 1
+# Note: DATEDIFF function related to week does not depend on the 
+# `start_week_as_zero` config.
 ```
 
 <!-- TOC --><a name="session-database"></a>

@@ -16,7 +16,6 @@ SELECT
       THEN 'Friday'
       WHEN DAY_OF_WEEK(date_time) = 6
       THEN 'Saturday'
-      ELSE NULL
     END
   ) AS dayname,
   CAST(DAY_OF_WEEK(date_time) AS INT) AS dayofweek

@@ -156,126 +156,25 @@ def test_pydough_to_sql_defog(
 
 
 @pytest.mark.parametrize(
-    "pydough_code,test_name,graph_name,start_of_week_config,start_week_as_zero_config",
+    "start_week_as_zero_config",
     [
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_sunday_zero",
-            "Broker",
-            DayOfWeek.SUNDAY,
-            True,
-            id="transaction_week_sampler_sunday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_monday_zero",
-            "Broker",
-            DayOfWeek.MONDAY,
-            True,
-            id="transaction_week_sampler_monday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_tuesday_zero",
-            "Broker",
-            DayOfWeek.TUESDAY,
-            True,
-            id="transaction_week_sampler_tuesday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_wednesday_zero",
-            "Broker",
-            DayOfWeek.WEDNESDAY,
-            True,
-            id="transaction_week_sampler_wednesday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_thursday_zero",
-            "Broker",
-            DayOfWeek.THURSDAY,
-            True,
-            id="transaction_week_sampler_thursday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_friday_zero",
-            "Broker",
-            DayOfWeek.FRIDAY,
-            True,
-            id="transaction_week_sampler_friday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_saturday_zero",
-            "Broker",
-            DayOfWeek.SATURDAY,
-            True,
-            id="transaction_week_sampler_saturday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_sunday_one",
-            "Broker",
-            DayOfWeek.SUNDAY,
-            False,
-            id="transaction_week_sampler_sunday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_monday_one",
-            "Broker",
-            DayOfWeek.MONDAY,
-            False,
-            id="transaction_week_sampler_monday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_tuesday_one",
-            "Broker",
-            DayOfWeek.TUESDAY,
-            False,
-            id="transaction_week_sampler_tuesday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_wednesday_one",
-            "Broker",
-            DayOfWeek.WEDNESDAY,
-            False,
-            id="transaction_week_sampler_wednesday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_thursday_one",
-            "Broker",
-            DayOfWeek.THURSDAY,
-            False,
-            id="transaction_week_sampler_thursday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_friday_one",
-            "Broker",
-            DayOfWeek.FRIDAY,
-            False,
-            id="transaction_week_sampler_friday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "sql_transaction_week_sampler_saturday_one",
-            "Broker",
-            DayOfWeek.SATURDAY,
-            False,
-            id="transaction_week_sampler_saturday_one",
-        ),
+        pytest.param(True, id="zero"),
+        pytest.param(False, id="one"),
+    ],
+)
+@pytest.mark.parametrize(
+    "start_of_week_config",
+    [
+        pytest.param(DayOfWeek.SUNDAY, id="sunday"),
+        pytest.param(DayOfWeek.MONDAY, id="monday"),
+        pytest.param(DayOfWeek.TUESDAY, id="tuesday"),
+        pytest.param(DayOfWeek.WEDNESDAY, id="wednesday"),
+        pytest.param(DayOfWeek.THURSDAY, id="thursday"),
+        pytest.param(DayOfWeek.FRIDAY, id="friday"),
+        pytest.param(DayOfWeek.SATURDAY, id="saturday"),
     ],
 )
 def test_pydough_to_sql_defog_custom_week(
-    pydough_code: Callable[[], UnqualifiedNode],
-    test_name: str,
-    graph_name: str,
     start_of_week_config: DayOfWeek,
     start_week_as_zero_config: bool,
     defog_graphs: graph_fetcher,
@@ -290,8 +189,11 @@ def test_pydough_to_sql_defog_custom_week(
     """
     setattr(default_config, "start_of_week", start_of_week_config)
     setattr(default_config, "start_week_as_zero", start_week_as_zero_config)
-    graph: GraphMetadata = defog_graphs(graph_name)
-    root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
+    graph: GraphMetadata = defog_graphs("Broker")
+    root: UnqualifiedNode = init_pydough_context(graph)(transaction_week_sampler)()
+    test_name: str = "sql_transaction_week_sampler"
+    test_name += f"_{start_of_week_config.name.lower()}"
+    test_name += f"_{'zero' if start_week_as_zero_config else 'one'}"
     actual_sql: str = to_sql(
         root, metadata=graph, database=empty_context_database, config=default_config
     ).strip()
