@@ -100,10 +100,10 @@ FROM (
                 )
                 WHERE
                   (
-                    order_date < DATE_STR_TO_DATE('1995-01-01')
+                    order_date < CAST('1995-01-01' AS DATE)
                   )
                   AND (
-                    order_date >= DATE_STR_TO_DATE('1994-01-01')
+                    order_date >= CAST('1994-01-01' AS DATE)
                   )
               ) AS _table_alias_5
                 ON key_5 = customer_key

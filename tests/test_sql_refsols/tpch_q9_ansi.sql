@@ -23,6 +23,7 @@ FROM (
         o_year
       FROM (
         SELECT
+          EXTRACT(YEAR FROM order_date) AS o_year,
           (
             extended_price * (
               1 - discount
@@ -30,7 +31,6 @@ FROM (
           ) - (
             supplycost * quantity
           ) AS value,
-          YEAR(order_date) AS o_year,
           nation_name
         FROM (
           SELECT

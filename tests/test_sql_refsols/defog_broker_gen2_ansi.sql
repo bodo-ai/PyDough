@@ -18,7 +18,7 @@ FROM (
       FROM main.sbCustomer
     )
     WHERE
-      DATEDIFF('now', join_date, DAY) <= 70
+      DATEDIFF(CURRENT_TIMESTAMP(), join_date, DAY) <= 70
   )
     ON customer_id = _id
 )

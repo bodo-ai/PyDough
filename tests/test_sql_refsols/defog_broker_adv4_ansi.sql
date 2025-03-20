@@ -42,10 +42,10 @@ FROM (
           )
           WHERE
             (
-              date <= DATE_STR_TO_DATE('2023-04-04')
+              date <= CAST('2023-04-04' AS DATE)
             )
             AND (
-              date >= DATE_STR_TO_DATE('2023-04-01')
+              date >= CAST('2023-04-01' AS DATE)
             )
         )
         GROUP BY

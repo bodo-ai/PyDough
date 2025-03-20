@@ -70,10 +70,10 @@ FROM (
                   )
                   WHERE
                     (
-                      ship_date < DATE_STR_TO_DATE('1996-04-01')
+                      ship_date < CAST('1996-04-01' AS DATE)
                     )
                     AND (
-                      ship_date >= DATE_STR_TO_DATE('1996-01-01')
+                      ship_date >= CAST('1996-01-01' AS DATE)
                     )
                 )
                 GROUP BY
@@ -114,10 +114,10 @@ FROM (
           )
           WHERE
             (
-              ship_date < DATE_STR_TO_DATE('1996-04-01')
+              ship_date < CAST('1996-04-01' AS DATE)
             )
             AND (
-              ship_date >= DATE_STR_TO_DATE('1996-01-01')
+              ship_date >= CAST('1996-01-01' AS DATE)
             )
         )
         GROUP BY

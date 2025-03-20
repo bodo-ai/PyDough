@@ -41,7 +41,7 @@ FROM (
           )
           WHERE
             (
-              DATEDIFF('2023-04-01', date_time, DAY) = 0
+              DATEDIFF(CAST('2023-04-01' AS TIMESTAMP), date_time, DAY) = 0
             )
             AND (
               transaction_type = 'sell'

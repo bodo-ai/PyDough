@@ -32,6 +32,15 @@ The types of SQLGlot expressions that need to be wrapped in parenthesis for the
 sake of precedence.
 """
 
+
+current_ts_pattern: re.Pattern = re.compile(
+    r"\s*((now)|(current[ _]?timestamp)|(current[ _]?date))\s*", re.IGNORECASE
+)
+"""
+The REGEX pattern used to detect a valid alias of a string requesting the current
+timestamp.
+"""
+
 trunc_pattern = re.compile(r"\s*start\s+of\s+(\w+)\s*", re.IGNORECASE)
 """
 The REGEX pattern for truncation modifiers in DATETIME call.
@@ -175,10 +184,11 @@ def convert_sqlite_datetime_extract(format_str: str) -> transform_binding:
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
     ) -> SQLGlotExpression:
+        dt_expr: SQLGlotExpression = make_datetime_arg(
+            sql_glot_args[0], DatabaseDialect.SQLITE
+        )
         return sqlglot_expressions.Cast(
-            this=sqlglot_expressions.TimeToStr(
-                this=sql_glot_args[0], format=format_str
-            ),
+            this=sqlglot_expressions.TimeToStr(this=dt_expr, format=format_str),
             to=sqlglot_expressions.DataType(this=sqlglot_expressions.DataType.Type.INT),
         )
 
@@ -293,19 +303,17 @@ def handle_datetime_base_arg(
     # values (ignoring case & leading/trailing spaces) indicating the current
     # datetime should be used.
     if isinstance(arg, sqlglot_expressions.Literal) and arg.is_string:
-        if str(arg.this).lower().strip() in (
-            "now",
-            "current_timestamp",
-            "current_date",
-            "current timestamp",
-            "current date",
-        ):
+        if current_ts_pattern.fullmatch(arg.this):
             if dialect == DatabaseDialect.SQLITE:
                 return sqlglot_expressions.Datetime(
                     this=[sqlglot_expressions.convert("now")]
                 )
             else:
                 return sqlglot_expressions.CurrentTimestamp()
+    if dialect != DatabaseDialect.SQLITE:
+        return sqlglot_expressions.Cast(
+            this=arg, to=sqlglot_expressions.DataType.build("TIMESTAMP")
+        )
     return sqlglot_expressions.Datetime(this=[arg])
 
 
@@ -1207,20 +1215,19 @@ def convert_ndistinct(
     )
 
 
-def create_convert_time_unit_function(unit: str):
+def create_convert_datetime_unit_function(unit: str):
     """
-    Creates a function that extracts a specific time unit
-    (e.g., HOUR, MINUTE, SECOND) from a SQLGlot expression.
+    Creates a function that extracts a specific date/time unit from a SQLGlot
+    expression.
 
     Args:
-        `unit`: The time unit to extract. Must be one of 'HOUR', 'MINUTE',
-                or 'SECOND'.
+        `unit`: The time unit to extract.
     Returns:
         A function that can convert operands into a SQLGlot expression matching
         the functionality of `EXTRACT(unit FROM expression)`.
     """
 
-    def convert_time_unit(
+    def convert_datetime_unit(
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
     ) -> SQLGlotExpression:
@@ -1240,10 +1247,13 @@ def create_convert_time_unit_function(unit: str):
             from the first operand.
         """
         return sqlglot_expressions.Extract(
-            this=sqlglot_expressions.Var(this=unit), expression=sql_glot_args[0]
+            this=sqlglot_expressions.Var(this=unit),
+            expression=make_datetime_arg(
+                sql_glot_args[0], dialect=DatabaseDialect.ANSI
+            ),
         )
 
-    return convert_time_unit
+    return convert_datetime_unit
 
 
 def convert_sqrt(
@@ -1267,6 +1277,20 @@ def convert_sqrt(
     return sqlglot_expressions.Pow(
         this=sql_glot_args[0], expression=sqlglot_expressions.Literal.number(0.5)
     )
+
+
+def make_datetime_arg(
+    expr: SQLGlotExpression, dialect: DatabaseDialect
+) -> SQLGlotExpression:
+    """
+    Converts a SQLGlot expression to a datetime argument, if needed, including:
+    - Converting a string literal for "now" or similar aliases into a call to
+    get the current timestamp.
+    - Converting a string literal for a datetime into a datetime expression.
+    """
+    if isinstance(expr, sqlglot_expressions.Literal) and expr.is_string:
+        return handle_datetime_base_arg(expr, dialect)
+    return expr
 
 
 def convert_datediff(
@@ -1298,8 +1322,8 @@ def convert_datediff(
             f"Unsupported argument {sql_glot_args[0]} for DATEDIFF."
             "It should be a string."
         )
-    x = sql_glot_args[1]
-    y = sql_glot_args[2]
+    x = make_datetime_arg(sql_glot_args[1], DatabaseDialect.ANSI)
+    y = make_datetime_arg(sql_glot_args[2], DatabaseDialect.ANSI)
     unit: DateTimeUnit | None = DateTimeUnit.from_string(sql_glot_args[0].this)
     if unit is None:
         raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
@@ -1339,14 +1363,20 @@ def convert_sqlite_datediff(
             "It should be a string."
         )
     unit: str = sql_glot_args[0].this
+    dt_x: SQLGlotExpression = make_datetime_arg(
+        sql_glot_args[1], DatabaseDialect.SQLITE
+    )
+    dt_y: SQLGlotExpression = make_datetime_arg(
+        sql_glot_args[2], DatabaseDialect.SQLITE
+    )
     match unit.lower():
         case "years" | "year" | "y":
             # Extracts the year from the date and subtracts the years.
             year_x: SQLGlotExpression = convert_sqlite_datetime_extract("'%Y'")(
-                None, [sql_glot_args[1]]
+                None, [dt_x]
             )
             year_y: SQLGlotExpression = convert_sqlite_datetime_extract("'%Y'")(
-                None, [sql_glot_args[2]]
+                None, [dt_y]
             )
             # equivalent to: expression - this
             years_diff: SQLGlotExpression = sqlglot_expressions.Sub(
@@ -1362,8 +1392,8 @@ def convert_sqlite_datediff(
             # On expansion: (year_y - year_x) * 12 + month_y - month_x
             sql_glot_args_hours = [
                 sqlglot_expressions.Literal(this="years", is_string=True),
-                sql_glot_args[1],
-                sql_glot_args[2],
+                dt_x,
+                dt_y,
             ]
             _years_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_hours
@@ -1384,13 +1414,13 @@ def convert_sqlite_datediff(
         case "days" | "day" | "d":
             # Extracts the start of date from the datetime and subtracts the dates.
             date_x = sqlglot_expressions.Date(
-                this=sql_glot_args[1],
+                this=dt_x,
                 expressions=[
                     sqlglot_expressions.Literal(this="start of day", is_string=True)
                 ],
             )
             date_y = sqlglot_expressions.Date(
-                this=sql_glot_args[2],
+                this=dt_y,
                 expressions=[
                     sqlglot_expressions.Literal(this="start of day", is_string=True)
                 ],
@@ -1411,8 +1441,8 @@ def convert_sqlite_datediff(
             # On expansion: (( day_y - day_x ) * 24 + hours_y) - hours_x
             sql_glot_args_days = [
                 sqlglot_expressions.Literal(this="days", is_string=True),
-                sql_glot_args[1],
-                sql_glot_args[2],
+                dt_x,
+                dt_y,
             ]
             _days_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_days
@@ -1422,10 +1452,10 @@ def convert_sqlite_datediff(
                 expression=sqlglot_expressions.Literal.number(24),
             )
             hours_x: SQLGlotExpression = convert_sqlite_datetime_extract("'%H'")(
-                None, [sql_glot_args[1]]
+                None, [dt_x]
             )
             hours_y: SQLGlotExpression = convert_sqlite_datetime_extract("'%H'")(
-                None, [sql_glot_args[2]]
+                None, [dt_y]
             )
             hours_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(
@@ -1443,8 +1473,8 @@ def convert_sqlite_datediff(
             # On expansion: (( hours_y - hours_x )*60 + minutes_y) - minutes_x
             sql_glot_args_hours = [
                 sqlglot_expressions.Literal(this="hours", is_string=True),
-                sql_glot_args[1],
-                sql_glot_args[2],
+                dt_x,
+                dt_y,
             ]
             _hours_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_hours
@@ -1469,8 +1499,8 @@ def convert_sqlite_datediff(
             # On expansion: (( mins_y - mins_x )*60 + seconds_y) - seconds_x
             sql_glot_args_minutes = [
                 sqlglot_expressions.Literal(this="minutes", is_string=True),
-                sql_glot_args[1],
-                sql_glot_args[2],
+                dt_x,
+                dt_y,
             ]
             _mins_diff: SQLGlotExpression = convert_sqlite_datediff(
                 raw_args, sql_glot_args_minutes
@@ -1813,12 +1843,12 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.MONOTONIC] = convert_monotonic
 
         # Datetime functions
-        self.bind_unop(pydop.YEAR, sqlglot_expressions.Year)
-        self.bind_unop(pydop.MONTH, sqlglot_expressions.Month)
-        self.bind_unop(pydop.DAY, sqlglot_expressions.Day)
-        self.bindings[pydop.HOUR] = create_convert_time_unit_function("HOUR")
-        self.bindings[pydop.MINUTE] = create_convert_time_unit_function("MINUTE")
-        self.bindings[pydop.SECOND] = create_convert_time_unit_function("SECOND")
+        self.bindings[pydop.YEAR] = create_convert_datetime_unit_function("YEAR")
+        self.bindings[pydop.MONTH] = create_convert_datetime_unit_function("MONTH")
+        self.bindings[pydop.DAY] = create_convert_datetime_unit_function("DAY")
+        self.bindings[pydop.HOUR] = create_convert_datetime_unit_function("HOUR")
+        self.bindings[pydop.MINUTE] = create_convert_datetime_unit_function("MINUTE")
+        self.bindings[pydop.SECOND] = create_convert_datetime_unit_function("SECOND")
         self.bindings[pydop.DATEDIFF] = convert_datediff
         self.bindings[pydop.DATETIME] = convert_datetime(DatabaseDialect.ANSI)
 

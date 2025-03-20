@@ -90,10 +90,10 @@ FROM (
                 )
                 WHERE
                   (
-                    order_date < DATE_STR_TO_DATE('1994-01-01')
+                    order_date < CAST('1994-01-01' AS DATE)
                   )
                   AND (
-                    order_date >= DATE_STR_TO_DATE('1993-10-01')
+                    order_date >= CAST('1993-10-01' AS DATE)
                   )
               )
               INNER JOIN (
