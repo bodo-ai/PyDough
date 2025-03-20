@@ -378,6 +378,38 @@ def avg_gap_prev_urgent_same_clerk():
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
 
 
+def nation_window_aggs():
+    # Calculating multiple global windowed aggregations for each nation, only
+    # considering nations whose names do not start with a vowel.
+    return (
+        Nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        .CALCULATE(
+            nation_name=name,
+            key_sum=RELSUM(key),
+            key_avg=RELAVG(key),
+            n_short_comment=RELCOUNT(KEEP_IF(comment, LENGTH(comment) < 75)),
+            n_nations=RELSIZE(),
+        )
+        .ORDER_BY(region_key.ASC(), nation_name.ASC())
+    )
+
+
+def region_nation_window_aggs():
+    # Calculating multiple global windowed aggregations for each nation, only
+    # per-region, considering nations whose names do not start with a vowel.
+    return (
+        Regions.nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        .CALCULATE(
+            nation_name=name,
+            key_sum=RELSUM(key, levels=1),
+            key_avg=RELAVG(key, levels=1),
+            n_short_comment=RELCOUNT(KEEP_IF(comment, LENGTH(comment) < 75), levels=1),
+            n_nations=RELSIZE(levels=1),
+        )
+        .ORDER_BY(region_key.ASC(), nation_name.ASC())
+    )
+
+
 def top_customers_by_orders():
     # Finds the keys of the 5 customers with the most orders.
     return Customers.CALCULATE(

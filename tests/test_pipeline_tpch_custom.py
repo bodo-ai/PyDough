@@ -35,6 +35,7 @@ from simple_pydough_functions import (
     first_order_per_customer,
     function_sampler,
     month_year_sliding_windows,
+    nation_window_aggs,
     order_info_per_priority,
     percentile_customers_per_region,
     percentile_nations,
@@ -45,6 +46,7 @@ from simple_pydough_functions import (
     rank_with_filters_a,
     rank_with_filters_b,
     rank_with_filters_c,
+    region_nation_window_aggs,
     regional_suppliers_percentile,
     simple_filter_top_five,
     simple_scan,
@@ -965,6 +967,76 @@ from pydough.unqualified import (
                 ),
             ),
             id="top_customers_by_orders",
+        ),
+        pytest.param(
+            (
+                nation_window_aggs,
+                None,
+                "nation_window_aggs",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "CHINA",
+                            "JAPAN",
+                            "VIETNAM",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                        "key_sum": [205] * 15,
+                        "key_avg": [13.666666] * 15,
+                        "n_short_comment": [6] * 15,
+                        "n_nations": [15] * 15,
+                    }
+                ),
+            ),
+            id="nation_window_aggs",
+        ),
+        pytest.param(
+            (
+                region_nation_window_aggs,
+                None,
+                "region_nation_window_aggs",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "CHINA",
+                            "JAPAN",
+                            "VIETNAM",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                        "key_sum": [45] * 3 + [22] * 3 + [51] * 3 + [54] * 4 + [33] * 2,
+                        "key_avg": [15.0] * 3
+                        + [7.333333] * 3
+                        + [17.0] * 3
+                        + [13.5] * 4
+                        + [16.5] * 2,
+                        "n_short_comment": [1] * 3 + [0] * 3 + [2] * 7 + [1] * 2,
+                        "n_nations": [3] * 9 + [4] * 4 + [2] * 2,
+                    }
+                ),
+            ),
+            id="region_nation_window_aggs",
         ),
     ],
 )
