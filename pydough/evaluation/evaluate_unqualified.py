@@ -133,7 +133,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(
-        qualified, column_selection, config
+        qualified, column_selection, config, database.dialect
     )
     return convert_relation_to_sql(
         relational, convert_dialect_to_sqlglot(database.dialect), bindings
@@ -168,6 +168,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(
-        qualified, column_selection, config
+        qualified, column_selection, config, database.dialect
     )
+    print(relational.to_tree_string())
     return execute_df(relational, database, bindings, display_sql)

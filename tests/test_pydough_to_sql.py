@@ -9,6 +9,7 @@ from simple_pydough_functions import (
     datediff,
     datetime_sampler,
     hour_minute_day,
+    nation_acctbal_breakdown,
     rank_a,
     rank_b,
     rank_c,
@@ -65,6 +66,12 @@ from pydough.unqualified import (
             None,
             "datetime_sampler",
             id="datetime_sampler",
+        ),
+        pytest.param(
+            nation_acctbal_breakdown,
+            None,
+            "nation_acctbal_breakdown",
+            id="nation_acctbal_breakdown",
         ),
     ],
 )

@@ -32,6 +32,7 @@ from typing import Any, Optional
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
     CartesianProductMetadata,
     SimpleJoinMetadata,
@@ -66,7 +67,7 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.relational import JoinType
-from pydough.types import BooleanType, Int64Type, PyDoughType
+from pydough.types import BooleanType, Float64Type, Int64Type, PyDoughType
 
 
 class HybridExpr(ABC):
@@ -1270,7 +1271,7 @@ class HybridTranslator:
     Class used to translate PyDough QDAG nodes into the HybridTree structure.
     """
 
-    def __init__(self, configs: PyDoughConfigs):
+    def __init__(self, configs: PyDoughConfigs, dialect: DatabaseDialect):
         self.configs = configs
         # An index used for creating fake column names for aliases
         self.alias_counter: int = 0
@@ -1278,6 +1279,9 @@ class HybridTranslator:
         # as as subtree of the previous element, and the current tree is
         # being derived as the subtree of the last element.
         self.stack: list[HybridTree] = []
+        # If True, rewrites MEDIAN calls into an average of the 1-2 median rows
+        # via window functions, otherwise leaves as-is.
+        self.rewrite_median: bool = dialect not in {DatabaseDialect.ANSI}
 
     @staticmethod
     def get_join_keys(
@@ -1801,6 +1805,101 @@ class HybridTranslator:
         joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
         return self.postprocess_agg_output(hybrid_call, result_ref, joins_can_nullify)
 
+    def make_median_call(
+        self,
+        hybrid: HybridTree,
+        expr: ExpressionFunctionCall,
+        args: list[HybridExpr],
+    ) -> HybridExpr:
+        """
+        Variant of `make_agg_call` specifically for rewriting MEDIAN calls into
+        an AVG of the 1-2 median rows (obtained via window functions).
+
+        Args:
+            `hybrid`: the hybrid tree that should be used to derive the
+            translation of the aggregation call.
+            `expr`: the aggregation function QDAG expression to be converted.
+            `args`: the converted arguments to the aggregation call.
+        """
+        child_indices: set[int] = set()
+        converted_args: list[HybridExpr] = [
+            self.convert_agg_arg(arg, child_indices) for arg in args
+        ]
+        if len(child_indices) != 1:
+            raise ValueError(
+                f"Expected aggregation call to contain references to exactly one child collection, but found {len(child_indices)} in {expr}"
+            )
+        # Identify the child connection that the aggregation call is pushed
+        # into, and its height
+        child_idx: int = child_indices.pop()
+        child_connection: HybridConnection = hybrid.children[child_idx]
+        child_height: int = 1
+        subtree: HybridTree = child_connection.subtree
+        while subtree.parent is not None:
+            child_height += 1
+            subtree = subtree.parent
+
+        # Build an expression that makes all rows null except the 1-2 median
+        # rows.
+        assert len(converted_args) == 1
+        data_expr: HybridExpr = converted_args[0]
+        one: HybridExpr = HybridLiteralExpr(Literal(1.0, Float64Type()))
+        two: HybridExpr = HybridLiteralExpr(Literal(2.0, Float64Type()))
+        partition_args: list[HybridExpr] = []
+        self.stack.append(hybrid)
+        self.add_unique_terms(child_connection.subtree, child_height, 0, partition_args)
+        self.stack.pop()
+        order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
+        rank: HybridExpr = HybridWindowExpr(
+            pydop.RANKING, [], partition_args, order_args, Int64Type(), {}
+        )
+        rows: HybridExpr = HybridWindowExpr(
+            pydop.RELCOUNT, [data_expr], partition_args, [], Int64Type(), {}
+        )
+        adjusted_rank: HybridExpr = HybridFunctionExpr(
+            pydop.SUB, [rank, one], Float64Type()
+        )
+        adjusted_rows: HybridExpr = HybridFunctionExpr(
+            pydop.SUB, [rows, one], Float64Type()
+        )
+        centerpoint: HybridExpr = HybridFunctionExpr(
+            pydop.DIV, [adjusted_rows, two], Float64Type()
+        )
+        distance_from_center = HybridFunctionExpr(
+            pydop.ABS,
+            [
+                HybridFunctionExpr(
+                    pydop.SUB, [adjusted_rank, centerpoint], Float64Type()
+                )
+            ],
+            Float64Type(),
+        )
+        is_median_row: HybridExpr = HybridFunctionExpr(
+            pydop.LET, [distance_from_center, one], BooleanType()
+        )
+        median_rows_arg: HybridExpr = HybridFunctionExpr(
+            pydop.KEEP_IF, [data_expr, is_median_row], expr.pydough_type
+        )
+        # Build a call to AVG on those 1-2 rows.
+        avg_call: HybridFunctionExpr = HybridFunctionExpr(
+            pydop.AVG, [median_rows_arg], expr.pydough_type
+        )
+
+        # If the aggregation already exists in the child, use a child reference
+        # to it.
+        agg_name: str
+        if avg_call in child_connection.aggs.values():
+            agg_name = child_connection.fetch_agg_name(avg_call)
+        else:
+            # Otherwise, Generate a unique name for the agg call to push into the
+            # child connection.
+            agg_name = self.gen_agg_name(child_connection)
+            child_connection.aggs[agg_name] = avg_call
+
+        # Return the reference to the aggregation call that is the eqiuvvalent
+        # to MEDIAN.
+        return HybridChildRefExpr(agg_name, child_idx, expr.pydough_type)
+
     def make_hybrid_correl_expr(
         self,
         back_expr: BackReferenceExpression,
@@ -2071,7 +2170,9 @@ class HybridTranslator:
                             inside_agg or expr.operator.is_aggregation,
                         )
                     )
-                if expr.operator.is_aggregation:
+                if expr.operator == pydop.MEDIAN and self.rewrite_median:
+                    return self.make_median_call(hybrid, expr, args)
+                elif expr.operator.is_aggregation:
                     return self.make_agg_call(hybrid, expr, args)
                 else:
                     return HybridFunctionExpr(expr.operator, args, expr.pydough_type)
