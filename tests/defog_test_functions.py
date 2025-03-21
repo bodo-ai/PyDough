@@ -59,10 +59,6 @@ __all__ = [
 ]
 
 import datetime
-from pydough.unqualified import (
-    UnqualifiedNode,
-)
-
 
 # ruff: noqa
 # mypy: ignore-errors
@@ -1053,7 +1049,7 @@ def impl_defog_ewallet_basic9():
     )
 
 
-def impl_defog_ewallet_gen1() -> UnqualifiedNode:
+def impl_defog_ewallet_gen1():
     """
     PyDough implementation of the following question for the eWallet graph:
 
@@ -1072,7 +1068,7 @@ def impl_defog_ewallet_gen1() -> UnqualifiedNode:
     return Ewallet.CALCULATE(MEDIAN(active_merchants.latest_balance_today.balance))
 
 
-def impl_defog_ewallet_gen2() -> UnqualifiedNode:
+def impl_defog_ewallet_gen2():
     """
     PyDough implementation of the following question for the eWallet graph:
 
@@ -1091,7 +1087,7 @@ def impl_defog_ewallet_gen2() -> UnqualifiedNode:
     )
 
 
-def impl_defog_ewallet_gen3() -> UnqualifiedNode:
+def impl_defog_ewallet_gen3():
     """
     PyDough implementation of the following question for the eWallet graph:
 
@@ -1107,7 +1103,7 @@ def impl_defog_ewallet_gen3() -> UnqualifiedNode:
     )
 
 
-def impl_defog_ewallet_gen4() -> UnqualifiedNode:
+def impl_defog_ewallet_gen4():
     """
     PyDough implementation of the following question for the eWallet graph:
 
@@ -1137,7 +1133,7 @@ def impl_defog_ewallet_gen4() -> UnqualifiedNode:
     )
 
 
-def impl_defog_ewallet_gen5() -> UnqualifiedNode:
+def impl_defog_ewallet_gen5():
     """
     PyDough implementation of the following question for the eWallet graph:
 
