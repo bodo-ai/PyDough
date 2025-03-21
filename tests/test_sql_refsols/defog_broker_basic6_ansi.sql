@@ -15,6 +15,6 @@ SEMI JOIN (
     FROM main.sbDailyPrice
   )
   WHERE
-    date >= DATE_STR_TO_DATE('2023-04-01')
+    date >= CAST('2023-04-01' AS DATE)
 )
   ON _id = ticker_id

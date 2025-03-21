@@ -18,7 +18,7 @@ FROM (
       FROM main.sbCustomer
     )
     WHERE
-      CAST((JULIANDAY(DATE('now', 'start of day')) - JULIANDAY(DATE(join_date, 'start of day'))) AS INTEGER) <= 70
+      CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(join_date, 'start of day'))) AS INTEGER) <= 70
   )
     ON customer_id = _id
 )

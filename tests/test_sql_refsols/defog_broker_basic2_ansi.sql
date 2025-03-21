@@ -29,10 +29,10 @@ FROM (
       )
       WHERE
         (
-          date_time <= DATE_STR_TO_DATE('2023-03-31')
+          date_time <= CAST('2023-03-31' AS DATE)
         )
         AND (
-          date_time >= DATE_STR_TO_DATE('2023-01-01')
+          date_time >= CAST('2023-01-01' AS DATE)
         )
     )
     GROUP BY

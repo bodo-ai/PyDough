@@ -56,7 +56,7 @@ FROM (
               FROM tpch.ORDERS
             )
             WHERE
-              order_date < DATE_STR_TO_DATE('1995-03-15')
+              order_date < CAST('1995-03-15' AS DATE)
           ) AS _table_alias_0
           INNER JOIN (
             SELECT
@@ -86,7 +86,7 @@ FROM (
             FROM tpch.LINEITEM
           )
           WHERE
-            ship_date > DATE_STR_TO_DATE('1995-03-15')
+            ship_date > CAST('1995-03-15' AS DATE)
         )
           ON key = order_key
       )

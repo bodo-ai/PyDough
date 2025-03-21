@@ -20,12 +20,12 @@ FROM (
       supp_nation
     FROM (
       SELECT
+        EXTRACT(YEAR FROM ship_date) AS l_year,
         name_3 AS supp_nation,
         name_8 AS cust_nation,
         extended_price * (
           1 - discount
-        ) AS volume,
-        YEAR(ship_date) AS l_year
+        ) AS volume
       FROM (
         SELECT
           discount,
@@ -58,10 +58,10 @@ FROM (
             )
             WHERE
               (
-                ship_date <= DATE_STR_TO_DATE('1996-12-31')
+                ship_date <= CAST('1996-12-31' AS DATE)
               )
               AND (
-                ship_date >= DATE_STR_TO_DATE('1995-01-01')
+                ship_date >= CAST('1995-01-01' AS DATE)
               )
           )
           LEFT JOIN (

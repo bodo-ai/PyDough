@@ -36,6 +36,7 @@ from simple_pydough_functions import (
     function_sampler,
     month_year_sliding_windows,
     order_info_per_priority,
+    parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
     prev_next_regions,
@@ -942,6 +943,25 @@ from pydough.unqualified import (
                 ),
             ),
             id="singular7",
+        ),
+        pytest.param(
+            (
+                parts_quantity_increase_95_96,
+                None,
+                "parts_quantity_increase_95_96",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "spring wheat sandy cornsilk cornflower",
+                            "cyan almond peach honeydew medium",
+                            "royal blush forest papaya navajo",
+                        ],
+                        "qty_95": [11, 8, 30],
+                        "qty_96": [156, 152, 167],
+                    }
+                ),
+            ),
+            id="parts_quantity_increase_95_96",
         ),
         pytest.param(
             (

@@ -26,13 +26,13 @@ FROM (
           quantity < 24
         )
         AND (
-          ship_date < DATE_STR_TO_DATE('1995-01-01')
+          ship_date < CAST('1995-01-01' AS DATE)
         )
         AND (
           discount >= 0.05
         )
         AND (
-          ship_date >= DATE_STR_TO_DATE('1994-01-01')
+          ship_date >= CAST('1994-01-01' AS DATE)
         )
     )
   )

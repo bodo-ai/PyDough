@@ -15,7 +15,7 @@ FROM (
       FROM main.sbDailyPrice
     )
     WHERE
-      CAST((JULIANDAY(DATE('now', 'start of day')) - JULIANDAY(DATE(date, 'start of day'))) AS INTEGER) <= 7
+      CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(date, 'start of day'))) AS INTEGER) <= 7
   )
   INNER JOIN (
     SELECT

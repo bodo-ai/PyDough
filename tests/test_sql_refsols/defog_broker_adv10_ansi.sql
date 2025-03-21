@@ -40,8 +40,8 @@ FROM (
               join_year
             FROM (
               SELECT
-                MONTH(join_date) AS join_month,
-                YEAR(join_date) AS join_year,
+                EXTRACT(MONTH FROM join_date) AS join_month,
+                EXTRACT(YEAR FROM join_date) AS join_year,
                 _id
               FROM (
                 SELECT
@@ -60,9 +60,10 @@ FROM (
           )
           WHERE
             (
-              MONTH(date_time) = join_month
-            ) AND (
-              YEAR(date_time) = join_year
+              EXTRACT(MONTH FROM date_time) = join_month
+            )
+            AND (
+              EXTRACT(YEAR FROM date_time) = join_year
             )
         )
         GROUP BY

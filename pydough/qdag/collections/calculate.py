@@ -148,8 +148,7 @@ class Calculate(AugmentingChildOperator):
             raise PyDoughQDAGException(f"Unrecognized CALCULATE term: {expr_name!r}")
         return self.calc_term_indices[expr_name]
 
-    @cache
-    def get_term(self, term_name: str) -> PyDoughQDAG:
+    def get_term(self, term_name: str) -> PyDoughQDAG:  # type: ignore
         if term_name in self.calc_term_values:
             return self.calc_term_values[term_name]
         else:

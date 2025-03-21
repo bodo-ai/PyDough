@@ -15,7 +15,7 @@ FROM (
       FROM main.sbDailyPrice
     )
     WHERE
-      DATEDIFF('now', date, DAY) <= 7
+      DATEDIFF(CURRENT_TIMESTAMP(), date, DAY) <= 7
   )
   INNER JOIN (
     SELECT

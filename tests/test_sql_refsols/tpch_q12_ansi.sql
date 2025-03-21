@@ -43,13 +43,13 @@ FROM (
               commit_date < receipt_date
             )
             AND (
-              receipt_date < DATE_STR_TO_DATE('1995-01-01')
+              receipt_date < CAST('1995-01-01' AS DATE)
             )
             AND (
               ship_date < commit_date
             )
             AND (
-              receipt_date >= DATE_STR_TO_DATE('1994-01-01')
+              receipt_date >= CAST('1994-01-01' AS DATE)
             )
             AND (
               (

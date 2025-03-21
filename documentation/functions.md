@@ -392,8 +392,13 @@ The `DATETIME` function is used to build/augment date/timestamp values. The firs
 
 The base argument can be one of the following:
 
-- A string literal indicating that the current timestamp should be built, which has to be one of the following: `now`, `current_date`, `current_timestamp`, `current date`, `current timestamp`. All of these aliases are equivalent, case-insensitive, and ignore leading/trailing whitespace.
+- A string literal indicating that the current timestamp should be built, which has to be one of the following: `now`, `current_date`, `current_timestamp`, `current date`, `current timestamp`, `currentdate` or `currenttimestamp`. All of these aliases are equivalent, case-insensitive, and ignore leading/trailing whitespace.
+- A string literal representing datetime data (e.g. `"2024-01-01"` or `199-12-31 12:59:30`).
+- A datetime literal (e.g. `datetime.date`, `datetime.datetime`, or a `pd.Timestamp` from pandas).
 - A column of datetime data.
+
+> [!NOTE]
+> Other datetime functions ([DATEDIFF](#datediff), [YEAR](#year), [MONTH](#month), [DAY](#day), [HOUR](#hour), [MINUTE](#minute) or [SECOND](#second)) also allow any of the base arguments above as datetime values. For example, you can call `YEAR("now")`, `DATEDIFF("months", dt, pd.Timestamp("2024-03-14")))`, `MONTH("1999-06-13")`, or `DATEDIFF("days", datetime.date(2025, 1, 1), "now")`.
 
 The modifier arguments can be the following (all of the options are case-insensitive and ignore leading/trailing/extra whitespace):
 - A string literal in the format `start of <UNIT>` indicating to truncate the datetime value to a certain unit, which can be the following:
