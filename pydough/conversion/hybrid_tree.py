@@ -1936,7 +1936,11 @@ class HybridTranslator:
                 # A reference to an expression from a child subcollection
                 # becomes a reference to one of the terms of one of the child
                 # subtrees of the current hybrid tree.
-                hybrid_child_index: int = child_ref_mapping[expr.child_idx]
+                try:
+                    hybrid_child_index: int = child_ref_mapping[expr.child_idx]
+                except Exception as e:
+                    # breakpoint()
+                    raise e
                 child_connection = hybrid.children[hybrid_child_index]
                 expr_name = child_connection.subtree.pipeline[-1].renamings.get(
                     expr.term_name, expr.term_name
@@ -2186,7 +2190,12 @@ class HybridTranslator:
                 return hybrid
             case Where():
                 hybrid = self.make_hybrid_tree(node.preceding_context, parent)
+                # print("*")
+                # print(hybrid)
                 self.populate_children(hybrid, node, child_ref_mapping)
+                # print("$")
+                # print(hybrid)
+                # breakpoint()
                 expr = self.make_hybrid_expr(
                     hybrid, node.condition, child_ref_mapping, False
                 )
