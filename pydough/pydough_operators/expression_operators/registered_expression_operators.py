@@ -37,6 +37,7 @@ __all__ = [
     "LOWER",
     "LPAD",
     "MAX",
+    "MEDIAN",
     "MIN",
     "MINUTE",
     "MOD",
@@ -131,6 +132,9 @@ LIKE = ExpressionFunctionOperator(
 SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
 AVG = ExpressionFunctionOperator(
     "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
+)
+MEDIAN = ExpressionFunctionOperator(
+    "MEDIAN", True, RequireNumArgs(1), ConstantType(Float64Type())
 )
 POWER = ExpressionFunctionOperator(
     "POWER", False, RequireNumArgs(2), ConstantType(Float64Type())

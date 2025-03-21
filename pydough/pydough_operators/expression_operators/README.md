@@ -119,10 +119,11 @@ These functions can be called on plural data to aggregate it into a singular exp
 
 ##### Simple Aggregations
 
-- `SUM`: returns the result of adding all of the values of a plural expression.
-- `AVG`: returns the result of taking the average of the values of a plural expression.
-- `MIN`: returns the largest out of the values of a plural expression.
-- `MAX`: returns the smallest out of the values of a plural expression.
+- `SUM`: returns the result of adding all of the non-null values of a plural expression.
+- `AVG`: returns the result of taking the average of the non-null values of a plural expression.
+- `AVG`: returns the result of taking the median of the non-null values of a plural expression.
+- `MIN`: returns the largest out of the non-null values of a plural expression.
+- `MAX`: returns the smallest out of the non-null values of a plural expression.
 - `ANYTHING`: returns an arbitrary entry from the values of a plural expression.
 - `COUNT`: counts how many non-null values exist in a plural expression (special: see collection aggregations).
 - `NDISTINCT`: counts how many unique values exist in a plural expression (special: see collection aggregations).

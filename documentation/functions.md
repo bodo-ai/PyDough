@@ -51,6 +51,7 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
+   * [MEDIAN](#median)
    * [MIN](#min)
    * [MAX](#max)
    * [ANYTHING](#anything)
@@ -697,6 +698,20 @@ The `AVG` function takes the average of the plural set of numerical values it is
 
 ```py
 Parts.CALCULATE(average_shipment_size = AVG(lines.quantity))
+```
+
+<!-- TOC --><a name="median"></a>
+
+### MEDIAN
+
+The `MEDIAN` function takes the median of the plural set of numerical values it is called on.
+Note: absent records are ignored when deriving the median.
+
+```py
+Customers.CALCULATE(
+   name,
+   median_order_price = MEDIAN(orders.total_price)
+)
 ```
 
 <!-- TOC --><a name="min"></a>

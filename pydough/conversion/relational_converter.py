@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
     SimpleTableMetadata,
 )
@@ -1095,6 +1096,7 @@ def convert_ast_to_relational(
     node: PyDoughCollectionQDAG,
     columns: list[tuple[str, str]] | None,
     configs: PyDoughConfigs,
+    dialect: DatabaseDialect = DatabaseDialect.ANSI,
 ) -> RelationalRoot:
     """
     Main API for converting from the collection QDAG form into relational
@@ -1107,6 +1109,7 @@ def convert_ast_to_relational(
         they should appear, and the alias they should be given. If None, uses
         the most recent CALCULATE in the node to determine the columns.
         `configs`: the configuration settings to use during translation.
+        `dialect`: the database dialect being used.
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
@@ -1122,8 +1125,14 @@ def convert_ast_to_relational(
     # Convert the QDAG node to the hybrid form, decorrelate it, then invoke
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
-    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    hybrid: HybridTree = HybridTranslator(configs, dialect).make_hybrid_tree(node, None)
+    print()
+    print("BEFORE")
+    print(hybrid)
     run_hybrid_decorrelation(hybrid)
+    print()
+    print("AFTER")
+    print(hybrid)
     renamings: dict[str, str] = hybrid.pipeline[-1].renamings
     output: TranslationOutput = translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
