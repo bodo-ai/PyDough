@@ -164,7 +164,12 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         )
 
         # Special handling: insert cast calls for ansi casting of date/time
-        # instead of relying on SQLGlot conversion functions.
+        # instead of relying on SQLGlot conversion functions. This is because
+        # the default handling in SQLGlot without a dialect is to produce a
+        # nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
+        # specific dialect is responsible for translating into its own logic.
+        # Rather than have that logic show up in the ANSI sql text, we will
+        # instead create the CAST calls ourselves.
         if self._bindings.dialect == DatabaseDialect.ANSI:
             if isinstance(literal_expression.value, datetime.date):
                 date: datetime.date = literal_expression.value
