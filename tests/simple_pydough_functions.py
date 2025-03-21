@@ -491,6 +491,29 @@ def nation_best_order():
     )
 
 
+def nation_acctbal_breakdown():
+    # For each American nation, identify the number of customers with negative
+    # versus non-negative account balances, the median account balance for each
+    # as well as the median account balance of all customers in the nation.
+    customer_info = customers.CALCULATE(
+        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
+        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    )
+    return (
+        Nations.WHERE(region.name == "AMERICA")
+        .WHERE(HAS(customer_info))
+        .CALCULATE(
+            nation_name=name,
+            n_red_acctbal=COUNT(customer_info.negative_acctbal),
+            n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
+            median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
+            median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
+            media_overall_acctbal=MEDIAN(customer_info.acctbal),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
 def top_customers_by_orders():
     # Finds the keys of the 5 customers with the most orders.
     return Customers.CALCULATE(

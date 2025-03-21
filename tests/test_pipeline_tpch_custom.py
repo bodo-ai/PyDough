@@ -36,6 +36,7 @@ from simple_pydough_functions import (
     function_sampler,
     highest_priority_per_year,
     month_year_sliding_windows,
+    nation_acctbal_breakdown,
     nation_best_order,
     nation_window_aggs,
     order_info_per_priority,
@@ -1152,6 +1153,48 @@ from pydough.unqualified import (
                 ),
             ),
             id="nation_best_order",
+        ),
+        pytest.param(
+            (
+                nation_acctbal_breakdown,
+                None,
+                "nation_acctbal_breakdown",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                        ],
+                        "n_red_acctbal": [551, 536, 567, 560, 540],
+                        "n_black_acctbal": [5424, 5463, 5453, 5415, 5443],
+                        "median_red_acctbal": [
+                            -508.82,
+                            -472.575,
+                            -510.96,
+                            -493.74,
+                            -505.86,
+                        ],
+                        "median_black_acctbal": [
+                            4928.855,
+                            4871.61,
+                            4909.01,
+                            4906.32,
+                            5121.41,
+                        ],
+                        "median_overall_acctbal": [
+                            4433.16,
+                            4413.11,
+                            4436.05,
+                            4399.28,
+                            4582.11,
+                        ],
+                    }
+                ),
+            ),
+            id="nation_acctbal_breakdown",
         ),
     ],
 )
