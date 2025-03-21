@@ -119,6 +119,20 @@ def year_month_nation_orders():
     ).TOP_K(5, by=n_orders.DESC())
 
 
+def parts_quantity_increase_95_96():
+    # Find the 3 parts with the largest increase in quantity ordered by
+    # rail from 1995 to 1996, breaking ties alphabetically by name.
+    # Only consider parts with a small size and that have at least one
+    # qualifying order from both years.
+    orders_95 = lines.WHERE((YEAR(order.order_date) == 1995) & (ship_mode == "RAIL"))
+    orders_96 = lines.WHERE((YEAR(order.order_date) == 1996) & (ship_mode == "RAIL"))
+    return (
+        Parts.WHERE(STARTSWITH(container, "SM") & HAS(orders_95) & HAS(orders_96))
+        .CALCULATE(name, qty_95=SUM(orders_95.quantity), qty_96=SUM(orders_96.quantity))
+        .TOP_K(3, by=((qty_96 - qty_95).DESC(), name.ASC()))
+    )
+
+
 def rank_a():
     return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 
@@ -190,12 +204,13 @@ def first_order_per_customer():
     # when it was made. Pick the 5 customers with the highest such values.
     # If a customer ordered multiple orders on the first such day, pick the one
     # with the lowest key. Only consider customers with at least $9k in their
-    # account.
+    # account. Only look at customers with at least one order.
     first_order = orders.WHERE(
         RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1
     ).SINGULAR()
     return (
         Customers.WHERE(acctbal >= 9000.0)
+        .WHERE(HAS(first_order))
         .CALCULATE(
             name,
             first_order_date=first_order.order_date,
@@ -253,7 +268,8 @@ def avg_order_diff_per_customer():
     order_info = orders.CALCULATE(
         day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
-    return Customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
+    selected_customers = Customers.WHERE(HAS(order_info))
+    return selected_customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
     )
 
@@ -291,7 +307,7 @@ def customer_largest_order_deltas():
     # For each customer, find the highest positive/negative difference in
     # revenue between one of their orders and and the most recent order before
     # it, ignoring their first ever order. Return the 5 customers with the
-    # largest such difference.
+    # largest such difference. Only consider customers with orders.
     line_revenue = extended_price * (1 - discount)
     order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
     previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), levels=1)
@@ -304,6 +320,7 @@ def customer_largest_order_deltas():
             max_diff=MAX(orders_info.revenue_delta),
             min_diff=MIN(orders_info.revenue_delta),
         )
+        .WHERE(HAS(orders_info))
         .CALCULATE(
             name,
             largest_diff=IFF(ABS(min_diff) > max_diff, min_diff, max_diff),

@@ -7,6 +7,7 @@ from pydough.relational.relational_expressions import (
     ColumnReferenceFinder,
     CorrelatedReference,
     CorrelatedReferenceFinder,
+    RelationalExpression,
 )
 
 from .abstract_node import RelationalNode
@@ -158,6 +159,29 @@ class ColumnPruner:
             and output.join_types in ([JoinType.INNER], [JoinType.LEFT])
         ):
             return output.inputs[1], correl_refs
+
+        # Special case: replace LEFT join where RHS is unused with LHS (only
+        # possible if the join is used to bring 1:1 data into the rows of the
+        # LHS, which is unecessary if no data is being brought).
+        if isinstance(output, Join) and output.join_types == [JoinType.LEFT]:
+            uses_rhs: bool = False
+            for column in output.columns.values():
+                if (
+                    isinstance(column, ColumnReference)
+                    and column.input_name == output.default_input_aliases[1]
+                ):
+                    uses_rhs = True
+                    break
+            if not uses_rhs:
+                new_columns: dict[str, RelationalExpression] = {}
+                for column_name, column_val in output.columns.items():
+                    assert isinstance(column_val, ColumnReference)
+                    new_columns[column_name] = output.inputs[0].columns[column_val.name]
+                if isinstance(output.inputs[0], Aggregate):
+                    for key in output.inputs[0].keys:
+                        new_columns[key] = output.inputs[0].keys[key]
+                output = output.inputs[0].copy(columns=new_columns)
+
         return output, correl_refs
 
     def prune_unused_columns(self, root: RelationalRoot) -> RelationalRoot:

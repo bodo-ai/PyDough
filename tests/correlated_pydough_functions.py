@@ -300,12 +300,14 @@ def correl_18():
         name="o",
         by=(customer_key, order_date),
     )
+    above_average_orders = o.WHERE(total_price >= 0.5 * total_price_sum)
     selected_groups = (
         cust_date_groups.WHERE(COUNT(o) > 1)
         .CALCULATE(
             total_price_sum=SUM(o.total_price),
         )
-        .CALCULATE(n_above_avg=COUNT(o.WHERE(total_price >= 0.5 * total_price_sum)))
+        .WHERE(HAS(above_average_orders))
+        .CALCULATE(n_above_avg=COUNT(above_average_orders))
     )
     return TPCH.CALCULATE(n=SUM(selected_groups.n_above_avg))
 
@@ -316,10 +318,11 @@ def correl_19():
     # higher account balance than that supplier. Pick the 5 suppliers with the
     # largest such count.
     # (This is a correlated aggregation access)
-    super_cust = customers.WHERE(acctbal > account_balance)
+    super_cust = nation.customers.WHERE(acctbal > account_balance)
     return (
-        Suppliers.CALCULATE(account_balance, supplier_name=name)
-        .nation.CALCULATE(supplier_name, n_super_cust=COUNT(super_cust))
+        Suppliers.CALCULATE(account_balance)
+        .WHERE(HAS(super_cust))
+        .CALCULATE(supplier_name=name, n_super_cust=COUNT(super_cust))
         .TOP_K(5, n_super_cust.DESC())
     )
 
@@ -330,11 +333,13 @@ def correl_20():
     # customer in the same nation, only counting instances where the order was
     # made in June of 1998.
     # (This is a correlated singular/semi access)
-    is_domestic = nation.CALCULATE(domestic=name == source_nation_name).domestic
     selected_orders = Nations.CALCULATE(source_nation_name=name).customers.orders.WHERE(
         (YEAR(order_date) == 1998) & (MONTH(order_date) == 6)
     )
-    instances = selected_orders.lines.supplier.WHERE(is_domestic)
+    supplier_nation = supplier.nation.CALCULATE(domestic=name == source_nation_name)
+    instances = selected_orders.lines.WHERE(
+        HAS(supplier_nation) & supplier_nation.domestic
+    )
     return TPCH.CALCULATE(n=COUNT(instances))
 
 
@@ -379,4 +384,174 @@ def correl_23():
     sizes = PARTITION(combos, name="c", by=size).CALCULATE(n_combos=COUNT(c))
     return TPCH.CALCULATE(avg_n_combo=AVG(sizes.n_combos)).CALCULATE(
         n_sizes=COUNT(sizes.WHERE(n_combos > avg_n_combo)),
+    )
+
+
+def correl_24():
+    # For every year/month before 1994, count how many orders that month had a
+    # total price that was between the average for that month and the previous
+    # month. Drop year/month combos that have no such orders.
+    # (This is a correlated semi/aggregation access)
+    order_info = Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)).WHERE(
+        year < 1994
+    )
+    month_info = PARTITION(order_info, name="orders", by=(year, month)).CALCULATE(
+        curr_month_avg_price=AVG(orders.total_price),
+        prev_month_avg_price=PREV(
+            AVG(orders.total_price), by=(year.ASC(), month.ASC())
+        ),
+    )
+    chosen_orders_from_month = orders.WHERE(
+        MONOTONIC(prev_month_avg_price, total_price, curr_month_avg_price)
+        | MONOTONIC(curr_month_avg_price, total_price, prev_month_avg_price)
+    )
+    return (
+        month_info.WHERE(HAS(chosen_orders_from_month))
+        .CALCULATE(year, month, n_orders_in_range=COUNT(chosen_orders_from_month))
+        .ORDER_BY(year, month)
+    )
+
+
+def correl_25():
+    # Return the region name/key, nation name/key, and customer name for the 5
+    # customers with the highest number of urgent semi-domestic rail-based
+    # orders made in 1996. An order meets these criteria if it was shipped in
+    # 1996, has priority of "1-URGENT", and has at least 1 lineitem shipped via
+    # rail from a supplier in a different nation from the same region as teh
+    # customer.
+    urgent_semi_domestic_rail_orders = (
+        orders.WHERE((order_priority == "1-URGENT") & (YEAR(order_date) == 1996))
+        .lines.CALCULATE(order_key)
+        .WHERE((ship_mode == "RAIL"))
+        .WHERE(
+            (supplier.nation.name != cust_nation_name)
+            & (supplier.nation.region.name == cust_region_name)
+        )
+    )
+    return (
+        Regions.CALCULATE(cust_region_name=name, cust_region_key=key)
+        .nations.CALCULATE(cust_nation_name=name, cust_nation_key=key)
+        .customers.WHERE(HAS(urgent_semi_domestic_rail_orders))
+        .CALCULATE(
+            cust_region_name,
+            cust_region_key,
+            cust_nation_name,
+            cust_nation_key,
+            customer_name=name,
+            n_urgent_semi_domestic_rail_orders=NDISTINCT(
+                urgent_semi_domestic_rail_orders.order_key
+            ),
+        )
+        .TOP_K(5, by=(n_urgent_semi_domestic_rail_orders.DESC(), name.ASC()))
+    )
+
+
+def correl_26():
+    # For every nation in EUROPE, count how many urggent purchases were made by
+    # customers in that nation from suppliers in the same nation in 1994.
+    # ASsumes each European nation has at least one such person.
+    selected_lines = customers.orders.WHERE(
+        (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
+    ).lines.WHERE(supplier.nation.name == nation_name)
+    return (
+        Nations.CALCULATE(nation_name=name)
+        .WHERE(region.name == "EUROPE")
+        .WHERE(HAS(selected_lines))
+        .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def correl_27():
+    # Variant of correl_26
+    selected_lines = customers.orders.WHERE(
+        (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
+    ).lines.WHERE(supplier.nation.name == nation_name)
+    return (
+        Nations.CALCULATE(nation_name=name)
+        .WHERE((region.name == "EUROPE") & HAS(selected_lines))
+        .WHERE(HAS(selected_lines))
+        .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def correl_28():
+    # Variant of correl_26
+    selected_lines = customers.orders.WHERE(
+        (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
+    ).lines.WHERE(supplier.nation.name == nation_name)
+    return (
+        Nations.CALCULATE(nation_name=name)
+        .WHERE(HAS(selected_lines))
+        .WHERE(region.name == "EUROPE")
+        .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def correl_29():
+    # Edge case for de-correlation behavior: for each nation not in Asia,
+    # Africa, or the Middle East, find its region key, nation name,
+    # number of customers/suppliers with an account balance above teh average
+    # for customers/suppliers in that nation, and the min/max account balance
+    # of customers in that nation. Only consider nations that have at least 1
+    # such customer/supplier, and sort by region key followed by nation name.
+    above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
+    above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
+    return (
+        Nations.CALCULATE(
+            nation_name=name,
+            avg_cust_acctbal=AVG(customers.acctbal),
+            avg_supp_acctbal=AVG(suppliers.account_balance),
+        )
+        .ORDER_BY(
+            region_key.ASC(),
+            nation_name.ASC(),
+        )
+        .CALCULATE(
+            n_above_avg_customers=COUNT(above_avg_customers),
+            n_above_avg_suppliers=COUNT(above_avg_suppliers),
+        )
+        .WHERE(
+            HAS(above_avg_customers)
+            & HAS(above_avg_suppliers)
+            & ISIN(region_key, (1, 3))
+        )
+        .CALCULATE(
+            min_cust_acctbal=MIN(customers.acctbal),
+            max_cust_acctbal=MAX(customers.acctbal),
+        )
+        .CALCULATE(
+            region_key,
+            nation_name,
+            n_above_avg_customers,
+            n_above_avg_suppliers,
+            min_cust_acctbal,
+            max_cust_acctbal,
+        )
+    )
+
+
+def correl_30():
+    # Edge case for de-correlation behavior: for each nation not in Asia,
+    # Africa, or the Middle East, count how many customers/suppliers have an
+    # above-average account balance.
+    above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
+    above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
+    return (
+        Nations.CALCULATE(
+            avg_cust_acctbal=AVG(customers.acctbal),
+            avg_supp_acctbal=AVG(suppliers.account_balance),
+            region_name=LOWER(region.name),
+        )
+        .WHERE(~ISIN(region.name, ("MIDDLE EAST", "AFRICA", "ASIA")))
+        .WHERE(HAS(above_avg_customers) & HAS(above_avg_suppliers))
+        .CALCULATE(
+            region_name,
+            nation_name=name,
+            n_above_avg_customers=COUNT(above_avg_customers),
+            n_above_avg_suppliers=COUNT(above_avg_suppliers),
+        )
+        .ORDER_BY(region_name.ASC(), nation_name.ASC())
     )

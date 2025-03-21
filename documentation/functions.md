@@ -53,6 +53,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [AVG](#avg)
    * [MIN](#min)
    * [MAX](#max)
+   * [ANYTHING](#anything)
    * [COUNT](#count)
    * [NDISTINCT](#ndistinct)
    * [HAS](#has)
@@ -698,7 +699,7 @@ Parts.CALCULATE(average_shipment_size = AVG(lines.quantity))
 
 ### MIN
 
-The `MIN` function returns the smallest value from the set of numerical values it is called on.
+The `MIN` function returns the smallest value from the set of values it is called on.
 
 ```py
 Suppliers.CALCULATE(cheapest_part_supplied = MIN(supply_records.supply_cost))
@@ -708,10 +709,20 @@ Suppliers.CALCULATE(cheapest_part_supplied = MIN(supply_records.supply_cost))
 
 ### MAX
 
-The `MAX` function returns the largest value from the set of numerical values it is called on.
+The `MAX` function returns the largest value from the set of values it is called on.
 
 ```py
 Suppliers.CALCULATE(most_expensive_part_supplied = MAX(supply_records.supply_cost))
+```
+
+<!-- TOC --><a name="anything"></a>
+
+### ANYTHING
+
+The `ANYTHING` function returns an arbitrary value from the set of values it is called on.
+
+```py
+Suppliers.CALCULATE(chosen_part_name = ANYTHING(supply_records.part.name))
 ```
 
 <!-- TOC --><a name="count"></a>
