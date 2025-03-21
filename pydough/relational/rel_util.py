@@ -106,8 +106,7 @@ def only_references_columns(
     expr: RelationalExpression, allowed_columns: set[str]
 ) -> bool:
     """
-    Returns whether a relational does not contain any column references except
-    for those in a set of allowed columns.
+    Checks if a relational expression contains only column references from the set of allowed columns.
 
     Args:
         `expr`: The expression to check.
