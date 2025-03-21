@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 from test_utils import make_relational_column_reference, make_relational_ordering
 
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.pydough_operators import (
     AVG,
@@ -34,6 +35,7 @@ pytestmark = [pytest.mark.execute]
 def test_person_total_salary(
     sqlite_people_jobs_context: DatabaseContext,
     sqlite_bindings: SqlGlotTransformBindings,
+    default_config: PyDoughConfigs,
 ) -> None:
     """
     Tests a simple join and aggregate to compute the total salary for each
@@ -92,7 +94,9 @@ def test_person_total_salary(
             join_types=[JoinType.LEFT],
         ),
     )
-    output: list[Any] = execute_df(result, sqlite_people_jobs_context, sqlite_bindings)
+    output: list[Any] = execute_df(
+        result, sqlite_people_jobs_context, sqlite_bindings, default_config
+    )
     people_results: list[str] = [f"Person {i}" for i in range(10)]
     salary_results: list[float] = [
         sum((i + j + 5.7) * 1000 for j in range(2)) for i in range(10)
@@ -106,6 +110,7 @@ def test_person_total_salary(
 def test_person_jobs_multi_join(
     sqlite_people_jobs_context: DatabaseContext,
     sqlite_bindings: SqlGlotTransformBindings,
+    default_config: PyDoughConfigs,
 ) -> None:
     """
     Tests an example of a query that uses a join relational node to
@@ -197,7 +202,7 @@ def test_person_jobs_multi_join(
         ),
     )
     output: pd.DataFrame = execute_df(
-        result, sqlite_people_jobs_context, sqlite_bindings
+        result, sqlite_people_jobs_context, sqlite_bindings, default_config
     )
     # By construction salaries are increasing with person_id so we
     # select the top half of the people.

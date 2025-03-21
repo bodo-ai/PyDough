@@ -214,7 +214,7 @@ def defog_sql_text_broker_adv8() -> str:
     total transaction amount.
     """
     return """
-    SELECT COUNT(DISTINCT sb.sbTxId) AS num_transactions, SUM(sb.sbTxAmount) AS total_transaction_amount
+    SELECT COUNT(DISTINCT sb.sbTxId) AS num_transactions, COALESCE(SUM(sb.sbTxAmount), 0) AS total_transaction_amount
     FROM sbTransaction AS sb
     JOIN sbCustomer AS sc
     ON sb.sbTxCustId = sc.sbCustId

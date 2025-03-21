@@ -39,6 +39,7 @@ from test_utils import (
     make_relational_ordering,
 )
 
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.pydough_operators import (
     ABS,
@@ -79,7 +80,8 @@ def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
     dialect: Dialect = SQLiteDialect()
     bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
     bindings.set_dialect(DatabaseDialect.SQLITE)
-    return SQLGlotRelationalVisitor(dialect, bindings)
+    config: PyDoughConfigs = PyDoughConfigs()
+    return SQLGlotRelationalVisitor(dialect, bindings, config)
 
 
 @dataclass

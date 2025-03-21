@@ -136,7 +136,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
         qualified, column_selection, config
     )
     return convert_relation_to_sql(
-        relational, convert_dialect_to_sqlglot(database.dialect), bindings
+        relational, convert_dialect_to_sqlglot(database.dialect), bindings, config
     )
 
 
@@ -170,4 +170,4 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, column_selection, config
     )
-    return execute_df(relational, database, bindings, display_sql)
+    return execute_df(relational, database, bindings, config, display_sql)

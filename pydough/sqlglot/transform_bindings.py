@@ -4,7 +4,6 @@ implementations of how to convert them to SQLGlot expressions
 """
 
 __all__ = ["SqlGlotTransformBindings"]
-
 import re
 import sqlite3
 from collections.abc import Callable, Sequence
@@ -17,12 +16,17 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Func as SQLGlotFunction
 
 import pydough.pydough_operators as pydop
+from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.relational.relational_expressions import RelationalExpression
 
 operator = pydop.PyDoughOperator
 transform_binding = Callable[
-    [Sequence[RelationalExpression] | None, Sequence[SQLGlotExpression]],
+    [
+        Sequence[RelationalExpression] | None,
+        Sequence[SQLGlotExpression],
+        PyDoughConfigs,
+    ],
     SQLGlotExpression,
 ]
 
@@ -50,6 +54,11 @@ The valid string representations of the year unit.
 month_units = ("months", "month", "mm")
 """
 The valid string representations of the month unit.
+"""
+
+week_units = ("weeks", "week", "w")
+"""
+The valid string representations of the week unit.
 """
 
 day_units = ("days", "day", "d")
@@ -80,6 +89,7 @@ class DateTimeUnit(Enum):
 
     YEAR = "year"
     MONTH = "month"
+    WEEK = "week"
     DAY = "day"
     HOUR = "hour"
     MINUTE = "minute"
@@ -105,6 +115,8 @@ class DateTimeUnit(Enum):
             return DateTimeUnit.YEAR
         elif unit in month_units:
             return DateTimeUnit.MONTH
+        elif unit in week_units:
+            return DateTimeUnit.WEEK
         elif unit in day_units:
             return DateTimeUnit.DAY
         elif unit in hour_units:
@@ -134,6 +146,10 @@ class DateTimeUnit(Enum):
                 return "'%Y-%m-%d %H:%M:00'"
             case DateTimeUnit.SECOND:
                 return "'%Y-%m-%d %H:%M:%S'"
+            case _:
+                raise ValueError(
+                    f"Unsupported date/time unit for truncation_string: {self}"
+                )
 
 
 def apply_parens(expression: SQLGlotExpression) -> SQLGlotExpression:
@@ -174,6 +190,7 @@ def convert_sqlite_datetime_extract(format_str: str) -> transform_binding:
     def impl(
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
+        config: PyDoughConfigs,
     ) -> SQLGlotExpression:
         return sqlglot_expressions.Cast(
             this=sqlglot_expressions.TimeToStr(
@@ -185,8 +202,134 @@ def convert_sqlite_datetime_extract(format_str: str) -> transform_binding:
     return impl
 
 
+def convert_sqlite_days_from_start_of_week(
+    base: SQLGlotExpression, config: PyDoughConfigs
+) -> SQLGlotExpression:
+    """
+    Calculates the number of days between a date and the start of its week in SQLite.
+
+    For example, if Monday is configured as the start of the week:
+    - For a Monday date, returns 0
+    - For a Tuesday date, returns 1
+    - For a Sunday date, returns 6
+
+    The calculation uses SQLite's STRFTIME('%w', date) which returns 0-6 for Sun-Sat.
+    An offset is applied to shift the result based on the configured start of week.
+
+    The formula is: ((STRFTIME('%w', date) + offset) % 7)
+
+    Note: This assumes SQLite's STRFTIME follows POSIX convention where:
+    - Sunday = 0
+    - Monday = 1
+    - Saturday = 6
+
+    Args:
+        `base`: The base date/time expression to calculate the start of the week
+        from.
+        `config`: The PyDough configuration to use to determine the start of the
+        week.
+
+    Returns:
+        The SQLGlot expression to calculating the number of days from `base` to
+        the start of the week. This number is always positive.
+    """
+    start_of_week: DayOfWeek = config.start_of_week
+    offset: int = 0
+    match start_of_week:
+        case DayOfWeek.SUNDAY:
+            return convert_sqlite_datetime_extract("'%w'")(None, [base], config)
+        case DayOfWeek.MONDAY:
+            offset = 6
+        case DayOfWeek.TUESDAY:
+            offset = 5
+        case DayOfWeek.WEDNESDAY:
+            offset = 4
+        case DayOfWeek.THURSDAY:
+            offset = 3
+        case DayOfWeek.FRIDAY:
+            offset = 2
+        case DayOfWeek.SATURDAY:
+            offset = 1
+        case _:
+            raise ValueError(f"Unsupported start of week: {start_of_week}")
+    answer: SQLGlotExpression = sqlglot_expressions.Mod(
+        this=apply_parens(
+            sqlglot_expressions.Add(
+                this=convert_sqlite_datetime_extract("'%w'")(None, [base], config),
+                expression=sqlglot_expressions.Literal.number(offset),
+            )
+        ),
+        expression=sqlglot_expressions.Literal.number(7),
+    )
+    return answer
+
+
+def convert_days_from_start_of_week(
+    base: SQLGlotExpression, config: PyDoughConfigs
+) -> SQLGlotExpression:
+    """
+    Calculates the number of days between a given date and the start of its week.
+
+    The start of week is configured via `config.start_of_week`. For example, if
+    start of week is Monday and the date is Wednesday, this returns 2.
+
+    The calculation uses the formula: (weekday + offset) % 7
+
+    This assumes the underlying database follows POSIX conventions where:
+    - Sunday is day 0
+    - Days increment sequentially (Mon=1, Tue=2, etc.)
+
+    Args:
+        `base`: The base date/time expression to calculate the start of the week
+        from.
+        `config`: The PyDough configuration to use to determine the start of the
+        week.
+
+    Returns:
+        The SQLGlot expression to calculating the number of days from `base` to
+        the start of the week. This number is always positive.
+    """
+    start_of_week: DayOfWeek = config.start_of_week
+    offset: int = 0
+    match start_of_week:
+        case DayOfWeek.SUNDAY:
+            return sqlglot_expressions.Cast(
+                this=sqlglot_expressions.DayOfWeek(this=base),
+                to=sqlglot_expressions.DataType(
+                    this=sqlglot_expressions.DataType.Type.INT
+                ),
+            )
+        case DayOfWeek.MONDAY:
+            offset = 6
+        case DayOfWeek.TUESDAY:
+            offset = 5
+        case DayOfWeek.WEDNESDAY:
+            offset = 4
+        case DayOfWeek.THURSDAY:
+            offset = 3
+        case DayOfWeek.FRIDAY:
+            offset = 2
+        case DayOfWeek.SATURDAY:
+            offset = 1
+        case _:
+            raise ValueError(f"Unsupported start of week: {start_of_week}")
+    answer: SQLGlotExpression = sqlglot_expressions.Mod(
+        this=apply_parens(
+            sqlglot_expressions.Add(
+                this=sqlglot_expressions.DayOfWeek(this=base),
+                expression=sqlglot_expressions.Literal.number(offset),
+            )
+        ),
+        expression=sqlglot_expressions.Literal.number(7),
+    )
+    return answer
+
+
 def apply_datetime_truncation(
-    base: SQLGlotExpression, unit: DateTimeUnit, dialect: DatabaseDialect
+    base: SQLGlotExpression,
+    unit: DateTimeUnit,
+    dialect: DatabaseDialect,
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Applies a truncation operation to a date/time expression by a certain unit.
@@ -226,6 +369,40 @@ def apply_datetime_truncation(
                     this=base,
                     format=unit.truncation_string,
                 )
+            case DateTimeUnit.WEEK:
+                # Implementation for week.
+                # Assumption: By default start of week is Sunday
+                # Week starts at 0
+                # Sunday = 0, Monday = 1, ..., Saturday = 6
+                str1_glot: SQLGlotExpression = sqlglot_expressions.Literal.string("-")
+                shifted_weekday: SQLGlotExpression = (
+                    convert_sqlite_days_from_start_of_week(base, config)
+                )
+                # string glot for ' days'
+                str3_glot: SQLGlotExpression = sqlglot_expressions.Literal.string(
+                    " days"
+                )
+                # This expression is equivalent to  "- ((STRFTIME('%w', base) + offset) % 7) days"
+                offset_expr: SQLGlotExpression = convert_concat(
+                    None, [str1_glot, shifted_weekday, str3_glot], config
+                )
+                start_of_day_expr: SQLGlotExpression = (
+                    sqlglot_expressions.Literal.string("start of day")
+                )
+                # Apply the "- <offset> days", then truncate to the start of the day
+                if isinstance(base, sqlglot_expressions.Date):
+                    base.this.extend([offset_expr, start_of_day_expr])
+                    return base
+                if (
+                    isinstance(base, sqlglot_expressions.Datetime)
+                    and len(base.this) == 1
+                ):
+                    return sqlglot_expressions.Date(
+                        this=base.this + [offset_expr, start_of_day_expr],
+                    )
+                return sqlglot_expressions.Date(
+                    this=[base, offset_expr, start_of_day_expr],
+                )
     else:
         # For other dialects, we can rely the DATE_TRUNC function.
         return sqlglot_expressions.DateTrunc(
@@ -253,17 +430,30 @@ def apply_datetime_offset(
     """
     if dialect == DatabaseDialect.SQLITE:
         # For sqlite, use the DATETIME operator to add the interval
+        # Convert weeks to days by multiplying by 7
+        if unit == DateTimeUnit.WEEK:
+            amt *= 7
+            unit = DateTimeUnit.DAY
         offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
             f"{amt} {unit.value}"
         )
-        if isinstance(base, sqlglot_expressions.Datetime) or (
-            isinstance(base, sqlglot_expressions.Date)
-            and unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY)
-        ):
-            base.this.append(offset_expr)
-            return base
+        if unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY):
+            if isinstance(base, sqlglot_expressions.Date) or (
+                isinstance(base, sqlglot_expressions.Datetime)
+            ):
+                base.this.append(offset_expr)
+                return base
+        else:
+            assert unit in (
+                DateTimeUnit.HOUR,
+                DateTimeUnit.MINUTE,
+                DateTimeUnit.SECOND,
+            )
+            if isinstance(base, sqlglot_expressions.Datetime):
+                base.this.append(offset_expr)
+                return base
         return sqlglot_expressions.Datetime(
-            this=[base, sqlglot_expressions.convert(f"{amt} {unit.value}")],
+            this=[base, offset_expr],
         )
     else:
         # For other dialects, we can rely the DATEADD function.
@@ -323,6 +513,7 @@ def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
     def impl(
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
+        config: PyDoughConfigs,
     ):
         # Handle the first argument
         assert len(sql_glot_args) > 0
@@ -347,7 +538,7 @@ def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
                     raise ValueError(
                         f"Unsupported DATETIME modifier string: {arg.this!r}"
                     )
-                result = apply_datetime_truncation(result, unit, dialect)
+                result = apply_datetime_truncation(result, unit, dialect, config)
             elif offset_match is not None:
                 # If the string is in the form `±<amt> <unit>`, apply an
                 # offset.
@@ -367,9 +558,155 @@ def convert_datetime(dialect: DatabaseDialect) -> transform_binding:
     return impl
 
 
+def convert_dayofweek(dialect: DatabaseDialect) -> transform_binding:
+    """
+    Converts a call to the `DAYOFWEEK` function to a SQLGlot expression.
+    This function creates the expression for retrieving the day of the week
+    from a date/time expression, taking into account the start of the week.
+    Start of week is defined by the `config.start_of_week` setting.
+    The day of the week is returned as an integer between 0 and 6, or between
+    1 and 7 if the week starts at 1. This is handled by the
+    `config.start_week_as_zero` setting.
+    For example, if the start of the week is Monday, then the day of the week
+    for March 18, 2025 is 1 because March 17, 2025 is a Monday.
+
+    Args:
+        `dialect`: The dialect being used to generate the SQL.
+
+    Returns:
+        A new transform binding that corresponds to a DAYOFWEEK function call.
+    """
+
+    def impl(
+        raw_args: Sequence[RelationalExpression] | None,
+        sql_glot_args: Sequence[SQLGlotExpression],
+        config: PyDoughConfigs,
+    ):
+        assert len(sql_glot_args) == 1
+        if dialect == DatabaseDialect.SQLITE:
+            # By default start of week is Sunday
+            # Week starts at 0
+            # Sunday = 0, Monday = 1, ..., Saturday = 6
+            base = sql_glot_args[0]
+            start_week_as_zero = config.start_week_as_zero
+            # Expression for ((STRFTIME('%w', base) + offset) % 7)
+            sqlite_shifted_weekday: SQLGlotExpression = (
+                convert_sqlite_days_from_start_of_week(base, config)
+            )
+            # If the week does not start at zero, we need to add 1 to the result
+            if not start_week_as_zero:
+                sqlite_shifted_weekday = sqlglot_expressions.Add(
+                    this=apply_parens(sqlite_shifted_weekday),
+                    expression=sqlglot_expressions.Literal.number(1),
+                )
+            sqlite_answer: SQLGlotExpression = apply_parens(sqlite_shifted_weekday)
+            return sqlite_answer
+        else:
+            # ANSI implementation
+            # By default start of week is Sunday
+            # Week starts at 0
+            # Sunday = 0, Monday = 1, ..., Saturday = 6
+            base = sql_glot_args[0]
+            start_week_as_zero = config.start_week_as_zero
+            # Expression for ((STRFTIME('%w', base) + offset) % 7)
+            ansi_shifted_weekday: SQLGlotExpression = convert_days_from_start_of_week(
+                base, config
+            )
+            # If the week does not start at zero, we need to add 1 to the result
+            if not start_week_as_zero:
+                ansi_shifted_weekday = sqlglot_expressions.Add(
+                    this=apply_parens(ansi_shifted_weekday),
+                    expression=sqlglot_expressions.Literal.number(1),
+                )
+            ansi_answer: SQLGlotExpression = apply_parens(ansi_shifted_weekday)
+            return ansi_answer
+
+    return impl
+
+
+def convert_dayname(dialect: DatabaseDialect) -> transform_binding:
+    """
+    Converts a call to the `DAYNAME` function to a SQLGlot expression.
+
+    Args:
+        `dialect`: The dialect being used to generate the SQL.
+
+    Returns:
+        A new transform binding that corresponds to a DAYNAME function call.
+    """
+
+    def impl(
+        raw_args: Sequence[RelationalExpression] | None,
+        sql_glot_args: Sequence[SQLGlotExpression],
+        config: PyDoughConfigs,
+    ):
+        assert len(sql_glot_args) == 1
+        base = sql_glot_args[0]
+        if dialect == DatabaseDialect.SQLITE:
+            # By default start of week is Sunday
+            # Week starts at 0
+            # Sunday = 0, Monday = 1, ..., Saturday = 6
+            sqlite_base_week_day: SQLGlotExpression = convert_sqlite_datetime_extract(
+                "'%w'"
+            )(None, [base], config)
+            sqlite_answer: SQLGlotExpression = sqlglot_expressions.Case()
+            for dow, dayname in enumerate(
+                [
+                    "Sunday",
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                ]
+            ):
+                sqlite_answer = sqlite_answer.when(
+                    sqlglot_expressions.EQ(
+                        this=sqlite_base_week_day,
+                        expression=sqlglot_expressions.Literal.number(dow),
+                    ),
+                    sqlglot_expressions.Literal.string(dayname),
+                )
+            sqlite_answer = apply_parens(sqlite_answer)
+            return sqlite_answer
+        else:
+            # ANSI implementation
+            # Assumption: start of week is Sunday
+            # Week starts at 0
+            # Sunday = 0, Monday = 1, ..., Saturday = 6
+            ansi_base_week_day: SQLGlotExpression = sqlglot_expressions.DayOfWeek(
+                this=base
+            )
+            ansi_answer: SQLGlotExpression = sqlglot_expressions.Case()
+            for dow, dayname in enumerate(
+                [
+                    "Sunday",
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                ]
+            ):
+                ansi_answer = ansi_answer.when(
+                    sqlglot_expressions.EQ(
+                        this=ansi_base_week_day,
+                        expression=sqlglot_expressions.Literal.number(dow),
+                    ),
+                    sqlglot_expressions.Literal.string(dayname),
+                )
+            ansi_answer = apply_parens(ansi_answer)
+            return ansi_answer
+
+    return impl
+
+
 def convert_iff_case(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for converting the expression `IFF(a, b, c)` to the expression
@@ -395,6 +732,7 @@ def convert_iff_case(
 def convert_absent(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for converting the expression `ABSENT(X)` to the expression
@@ -417,6 +755,7 @@ def convert_absent(
 def convert_present(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for converting the expression `PRESENT(X)` to the expression
@@ -432,13 +771,14 @@ def convert_present(
         The `IS NOT NULL` call corresponding to the `PRESENT` call.
     """
     return sqlglot_expressions.Not(
-        this=apply_parens(convert_absent(raw_args, sql_glot_args))
+        this=apply_parens(convert_absent(raw_args, sql_glot_args, config))
     )
 
 
 def convert_keep_if(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for converting the expression `KEEP_IF(X, Y)` to the expression
@@ -453,13 +793,16 @@ def convert_keep_if(
         The SQLGlot case expression equivalent to the `KEEP_IF` call.
     """
     return convert_iff_case(
-        None, [sql_glot_args[1], sql_glot_args[0], sqlglot_expressions.Null()]
+        None,
+        [sql_glot_args[1], sql_glot_args[0], sqlglot_expressions.Null()],
+        config,
     )
 
 
 def convert_monotonic(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for converting the expression `MONOTONIC(A, B, C, ...)` to an
@@ -493,6 +836,7 @@ def convert_monotonic(
 def convert_concat(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for generating a `CONCAT` expression from a list of arguments.
@@ -549,6 +893,7 @@ def positive_index(
 def convert_slice(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for generating a `SLICE` expression from a list of arguments.
@@ -674,6 +1019,7 @@ def convert_slice(
                             sql_one,  # If true, use index 1 (start from beginning)
                             start_idx_glot,  # If false, use the calculated positive index
                         ],
+                        config,
                     ),
                 )
                 return answer
@@ -707,6 +1053,7 @@ def convert_slice(
                             sql_zero,  # If true, length is 0 (empty string)
                             stop_idx_glot,  # If false, use index position as length
                         ],
+                        config,
                     ),
                 )
         case _:
@@ -734,6 +1081,7 @@ def convert_slice(
                         sql_one,  # If calculated position < 1, use position 1
                         start_idx_glot,  # Otherwise use calculated position
                     ],
+                    config,
                 )
 
                 # Convert positive stop_idx to 1-based indexing by adding 1
@@ -762,6 +1110,7 @@ def convert_slice(
                                 expression=start_idx_adjusted_glot,
                             ),
                         ],
+                        config,
                     ),
                 )
                 return answer
@@ -802,8 +1151,10 @@ def convert_slice(
                                         expression=start_idx_adjusted_glot,
                                     ),
                                 ],
+                                config,
                             ),
                         ],
+                        config,
                     ),
                 )
                 return answer
@@ -827,6 +1178,7 @@ def convert_slice(
                         sql_one,  # If calculated position < 1, use position 1
                         pos_start_idx_glot,  # Otherwise use calculated position
                     ],
+                    config,
                 )
 
                 # Convert negative stop index to positive equivalent
@@ -849,6 +1201,7 @@ def convert_slice(
                                 expression=start_idx_adjusted_glot,
                             ),
                         ],
+                        config,
                     ),
                 )
 
@@ -856,6 +1209,7 @@ def convert_slice(
 def convert_concat_ws(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for generating a `CONCAT_WS` expression from a list of arguments.
@@ -875,6 +1229,7 @@ def convert_concat_ws(
 def convert_concat_ws_to_concat(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Converts an expression equivalent to a `CONCAT_WS` call into a chain of
@@ -900,6 +1255,7 @@ def convert_concat_ws_to_concat(
 def convert_like(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for generating a `LIKE` expression from a list of arguments.
@@ -922,6 +1278,7 @@ def convert_like(
 def convert_startswith(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Convert a `STARTSWITH` call expression to a SQLGlot expression. This
@@ -943,13 +1300,15 @@ def convert_startswith(
     pattern: SQLGlotExpression = convert_concat(
         None,
         [sql_glot_args[1], sqlglot_expressions.convert("%")],
+        config,
     )
-    return convert_like(None, [column, pattern])
+    return convert_like(None, [column, pattern], config)
 
 
 def convert_endswith(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Convert a `ENDSWITH` call expression to a SQLGlot expression. This
@@ -971,13 +1330,15 @@ def convert_endswith(
     pattern: SQLGlotExpression = convert_concat(
         None,
         [sqlglot_expressions.convert("%"), sql_glot_args[1]],
+        config,
     )
-    return convert_like(None, [column, pattern])
+    return convert_like(None, [column, pattern], config)
 
 
 def convert_contains(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Convert a `CONTAINS` call expression to a SQLGlot expression. This
@@ -1004,8 +1365,9 @@ def convert_contains(
             sql_glot_args[1],
             sqlglot_expressions.convert("%"),
         ],
+        config,
     )
-    return convert_like(None, [column, pattern])
+    return convert_like(None, [column, pattern], config)
 
 
 def pad_helper(
@@ -1075,6 +1437,7 @@ def pad_helper(
 def convert_lpad(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Converts and pads the string to the left till the string is the specified length.
@@ -1109,7 +1472,7 @@ def convert_lpad(
                 length=required_len_glot,
             ),
             sqlglot_expressions.Substring(
-                this=convert_concat(None, [pad_string_glot, col_glot]),
+                this=convert_concat(None, [pad_string_glot, col_glot], config),
                 start=apply_parens(
                     sqlglot_expressions.Mul(
                         this=required_len_glot,
@@ -1118,6 +1481,7 @@ def convert_lpad(
                 ),
             ),
         ],
+        config,
     )
     return answer
 
@@ -1125,6 +1489,7 @@ def convert_lpad(
 def convert_rpad(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Converts and pads the string to the right to the specified length.
@@ -1150,7 +1515,7 @@ def convert_rpad(
         return sqlglot_expressions.convert("")
 
     answer = sqlglot_expressions.Substring(
-        this=convert_concat(None, [col_glot, pad_string_glot]),
+        this=convert_concat(None, [col_glot, pad_string_glot], config),
         start=sqlglot_expressions.convert(1),
         length=required_len_glot,
     )
@@ -1160,6 +1525,7 @@ def convert_rpad(
 def convert_isin(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Convert an `ISIN` call expression to a SQLGlot expression. This is done
@@ -1187,6 +1553,7 @@ def convert_isin(
 def convert_ndistinct(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Converts a `NDISTINCT` call expression to a SQLGlot expression.
@@ -1223,6 +1590,7 @@ def create_convert_time_unit_function(unit: str):
     def convert_time_unit(
         raw_args: Sequence[RelationalExpression] | None,
         sql_glot_args: Sequence[SQLGlotExpression],
+        config: PyDoughConfigs,
     ) -> SQLGlotExpression:
         """
         Converts and extracts the specific time unit from a SQLGlot expression.
@@ -1249,6 +1617,7 @@ def create_convert_time_unit_function(unit: str):
 def convert_sqrt(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for getting the square root of the operand.
@@ -1272,6 +1641,7 @@ def convert_sqrt(
 def convert_datediff(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for getting the difference between two dates in sqlite.
@@ -1312,6 +1682,7 @@ def convert_datediff(
 def convert_sqlite_datediff(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for getting the difference between two dates in sqlite.
@@ -1343,10 +1714,10 @@ def convert_sqlite_datediff(
         case "years" | "year" | "y":
             # Extracts the year from the date and subtracts the years.
             year_x: SQLGlotExpression = convert_sqlite_datetime_extract("'%Y'")(
-                None, [sql_glot_args[1]]
+                None, [sql_glot_args[1]], config
             )
             year_y: SQLGlotExpression = convert_sqlite_datetime_extract("'%Y'")(
-                None, [sql_glot_args[2]]
+                None, [sql_glot_args[2]], config
             )
             # equivalent to: expression - this
             years_diff: SQLGlotExpression = sqlglot_expressions.Sub(
@@ -1366,14 +1737,18 @@ def convert_sqlite_datediff(
                 sql_glot_args[2],
             ]
             _years_diff: SQLGlotExpression = convert_sqlite_datediff(
-                raw_args, sql_glot_args_hours
+                raw_args, sql_glot_args_hours, config
             )
             years_diff_in_months = sqlglot_expressions.Mul(
                 this=apply_parens(_years_diff),
                 expression=sqlglot_expressions.Literal.number(12),
             )
-            month_x = convert_sqlite_datetime_extract("'%m'")(None, [sql_glot_args[1]])
-            month_y = convert_sqlite_datetime_extract("'%m'")(None, [sql_glot_args[2]])
+            month_x = convert_sqlite_datetime_extract("'%m'")(
+                None, [sql_glot_args[1]], config
+            )
+            month_y = convert_sqlite_datetime_extract("'%m'")(
+                None, [sql_glot_args[2]], config
+            )
             months_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(
                     this=years_diff_in_months, expression=month_y
@@ -1381,6 +1756,44 @@ def convert_sqlite_datediff(
                 expression=month_x,
             )
             return months_diff
+        case "weeks" | "week" | "w":
+            # DATEDIFF('week', A, B)
+            #   = DATEDIFF('day', DATETIME(A, 'start of week'),
+            #               DATETIME(B, 'start of week')) / 7
+            dt1 = convert_datetime(DatabaseDialect.SQLITE)(
+                None,
+                [
+                    sql_glot_args[1],
+                    sqlglot_expressions.Literal(this="start of week", is_string=True),
+                ],
+                config,
+            )
+            dt2 = convert_datetime(DatabaseDialect.SQLITE)(
+                None,
+                [
+                    sql_glot_args[2],
+                    sqlglot_expressions.Literal(this="start of week", is_string=True),
+                ],
+                config,
+            )
+            sql_glot_args_days = [
+                sqlglot_expressions.Literal(this="days", is_string=True),
+                dt1,
+                dt2,
+            ]
+            weeks_days_diff: SQLGlotExpression = convert_sqlite_datediff(
+                raw_args, sql_glot_args_days, config
+            )
+            answer: SQLGlotExpression = sqlglot_expressions.Cast(
+                this=sqlglot_expressions.Div(
+                    this=apply_parens(weeks_days_diff),
+                    expression=sqlglot_expressions.Literal.number(7),
+                ),
+                to=sqlglot_expressions.DataType(
+                    this=sqlglot_expressions.DataType.Type.INT
+                ),
+            )
+            return answer
         case "days" | "day" | "d":
             # Extracts the start of date from the datetime and subtracts the dates.
             date_x = sqlglot_expressions.Date(
@@ -1415,17 +1828,17 @@ def convert_sqlite_datediff(
                 sql_glot_args[2],
             ]
             _days_diff: SQLGlotExpression = convert_sqlite_datediff(
-                raw_args, sql_glot_args_days
+                raw_args, sql_glot_args_days, config
             )
             days_diff_in_hours = sqlglot_expressions.Mul(
                 this=apply_parens(_days_diff),
                 expression=sqlglot_expressions.Literal.number(24),
             )
             hours_x: SQLGlotExpression = convert_sqlite_datetime_extract("'%H'")(
-                None, [sql_glot_args[1]]
+                None, [sql_glot_args[1]], config
             )
             hours_y: SQLGlotExpression = convert_sqlite_datetime_extract("'%H'")(
-                None, [sql_glot_args[2]]
+                None, [sql_glot_args[2]], config
             )
             hours_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(
@@ -1447,14 +1860,18 @@ def convert_sqlite_datediff(
                 sql_glot_args[2],
             ]
             _hours_diff: SQLGlotExpression = convert_sqlite_datediff(
-                raw_args, sql_glot_args_hours
+                raw_args, sql_glot_args_hours, config
             )
             hours_diff_in_mins = sqlglot_expressions.Mul(
                 this=apply_parens(_hours_diff),
                 expression=sqlglot_expressions.Literal.number(60),
             )
-            min_x = convert_sqlite_datetime_extract("'%M'")(None, [sql_glot_args[1]])
-            min_y = convert_sqlite_datetime_extract("'%M'")(None, [sql_glot_args[2]])
+            min_x = convert_sqlite_datetime_extract("'%M'")(
+                None, [sql_glot_args[1]], config
+            )
+            min_y = convert_sqlite_datetime_extract("'%M'")(
+                None, [sql_glot_args[2]], config
+            )
             mins_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(this=hours_diff_in_mins, expression=min_y),
                 expression=min_x,
@@ -1473,14 +1890,18 @@ def convert_sqlite_datediff(
                 sql_glot_args[2],
             ]
             _mins_diff: SQLGlotExpression = convert_sqlite_datediff(
-                raw_args, sql_glot_args_minutes
+                raw_args, sql_glot_args_minutes, config
             )
             minutes_diff_in_secs = sqlglot_expressions.Mul(
                 this=apply_parens(_mins_diff),
                 expression=sqlglot_expressions.Literal.number(60),
             )
-            sec_x = convert_sqlite_datetime_extract("'%S'")(None, [sql_glot_args[1]])
-            sec_y = convert_sqlite_datetime_extract("'%S'")(None, [sql_glot_args[2]])
+            sec_x = convert_sqlite_datetime_extract("'%S'")(
+                None, [sql_glot_args[1]], config
+            )
+            sec_y = convert_sqlite_datetime_extract("'%S'")(
+                None, [sql_glot_args[2]], config
+            )
             secs_diff: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=sqlglot_expressions.Add(
                     this=minutes_diff_in_secs, expression=sec_y
@@ -1495,6 +1916,7 @@ def convert_sqlite_datediff(
 def convert_round(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for rounding a number to a specified precision.
@@ -1541,6 +1963,7 @@ def convert_round(
 def convert_sign(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for getting the sign of the operand.
@@ -1571,9 +1994,11 @@ def convert_sign(
                         minus_one_glot,
                         one_glot,
                     ],
+                    config,
                 ),
             ),
         ],
+        config,
     )
     return answer
 
@@ -1581,6 +2006,7 @@ def convert_sign(
 def convert_strip(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for removing all leading and trailing whitespace from a string.
@@ -1613,6 +2039,7 @@ def convert_strip(
 def convert_find(
     raw_args: Sequence[RelationalExpression] | None,
     sql_glot_args: Sequence[SQLGlotExpression],
+    config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
     Support for getting the index of the first occurrence of a substring within a string.
@@ -1675,6 +2102,7 @@ class SqlGlotTransformBindings:
         operator: pydop.PyDoughOperator,
         raw_args: Sequence[RelationalExpression],
         sql_glot_args: Sequence[SQLGlotExpression],
+        config: PyDoughConfigs,
     ) -> SQLGlotExpression:
         """
         Converts an invocation of a PyDough operator into a SQLGlot expression
@@ -1697,7 +2125,7 @@ class SqlGlotTransformBindings:
             # TODO: (gh #169) add support for UDFs
             raise ValueError(f"Unsupported function {operator}")
         binding: transform_binding = self.bindings[operator]
-        return binding(raw_args, sql_glot_args)
+        return binding(raw_args, sql_glot_args, config)
 
     def bind_simple_function(
         self, operator: pydop.PyDoughOperator, func: SQLGlotFunction
@@ -1714,6 +2142,7 @@ class SqlGlotTransformBindings:
         def impl(
             raw_args: Sequence[RelationalExpression] | None,
             sql_glot_args: Sequence[SQLGlotExpression],
+            config: PyDoughConfigs,
         ) -> SQLGlotExpression:
             return func.from_arg_list(sql_glot_args)
 
@@ -1735,6 +2164,7 @@ class SqlGlotTransformBindings:
         def impl(
             raw_args: Sequence[RelationalExpression] | None,
             sql_glot_args: Sequence[SQLGlotExpression],
+            config: PyDoughConfigs,
         ) -> SQLGlotExpression:
             assert len(sql_glot_args) >= 2
             # Note: SQLGlot explicit inserts parentheses for binary operations
@@ -1762,6 +2192,7 @@ class SqlGlotTransformBindings:
         def impl(
             raw_args: Sequence[RelationalExpression] | None,
             sql_glot_args: Sequence[SQLGlotExpression],
+            config: PyDoughConfigs,
         ) -> SQLGlotExpression:
             assert len(sql_glot_args) == 1
             return func(this=sql_glot_args[0])
@@ -1821,6 +2252,8 @@ class SqlGlotTransformBindings:
         self.bindings[pydop.SECOND] = create_convert_time_unit_function("SECOND")
         self.bindings[pydop.DATEDIFF] = convert_datediff
         self.bindings[pydop.DATETIME] = convert_datetime(DatabaseDialect.ANSI)
+        self.bindings[pydop.DAYOFWEEK] = convert_dayofweek(DatabaseDialect.ANSI)
+        self.bindings[pydop.DAYNAME] = convert_dayname(DatabaseDialect.ANSI)
 
         # Binary operators
         self.bind_binop(pydop.ADD, sqlglot_expressions.Add)
@@ -1852,6 +2285,8 @@ class SqlGlotTransformBindings:
             self.bind_simple_function(pydop.IFF, sqlglot_expressions.If)
 
         self.bindings[pydop.DATETIME] = convert_datetime(DatabaseDialect.SQLITE)
+        self.bindings[pydop.DAYOFWEEK] = convert_dayofweek(DatabaseDialect.SQLITE)
+        self.bindings[pydop.DAYNAME] = convert_dayname(DatabaseDialect.SQLITE)
 
         # Datetime function overrides
         self.bindings[pydop.YEAR] = convert_sqlite_datetime_extract("'%Y'")

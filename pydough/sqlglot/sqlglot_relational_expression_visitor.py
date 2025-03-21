@@ -10,6 +10,7 @@ from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 
+from pydough.configs import PyDoughConfigs
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -37,6 +38,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         dialect: SQLGlotDialect,
         bindings: SqlGlotTransformBindings,
         correlated_names: dict[str, str],
+        config: PyDoughConfigs,
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
@@ -44,6 +46,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._dialect: SQLGlotDialect = dialect
         self._bindings: SqlGlotTransformBindings = bindings
         self._correlated_names: dict[str, str] = correlated_names
+        self._config: PyDoughConfigs = config
 
     def reset(self) -> None:
         """
@@ -59,7 +62,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             self._stack.pop() for _ in range(len(call_expression.inputs))
         ]
         output_expr: SQLGlotExpression = self._bindings.call(
-            call_expression.op, call_expression.inputs, input_exprs
+            call_expression.op, call_expression.inputs, input_exprs, self._config
         )
         self._stack.append(output_expr)
 

@@ -77,6 +77,7 @@ from test_utils import (
 )
 
 from pydough import init_pydough_context, to_df
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
@@ -168,9 +169,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv8,
             ),
             id="broker_adv8",
-            marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function"
-            ),
         ),
         pytest.param(
             (
@@ -179,9 +177,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_broker_adv9,
             ),
             id="broker_adv9",
-            marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
-            ),
         ),
         pytest.param(
             (
@@ -380,6 +375,7 @@ def test_defog_e2e(
     defog_test_data: tuple[Callable[[], UnqualifiedNode], str, Callable[[], str]],
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
+    defog_config: PyDoughConfigs,
 ):
     """
     Test executing the defog analytical questions on the sqlite database,
@@ -389,7 +385,9 @@ def test_defog_e2e(
     unqualified_impl, graph_name, query_impl = defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_defog_connection)
+    result: pd.DataFrame = to_df(
+        root, metadata=graph, database=sqlite_defog_connection, config=defog_config
+    )
     sqlite_query: str = query_impl()
     refsol: pd.DataFrame = sqlite_defog_connection.connection.execute_query_df(
         sqlite_query
