@@ -392,6 +392,119 @@ def avg_gap_prev_urgent_same_clerk():
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
 
 
+def nation_window_aggs():
+    # Calculating multiple global windowed aggregations for each nation, only
+    # considering nations whose names do not start with a vowel.
+    return (
+        Nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        .CALCULATE(
+            nation_name=name,
+            key_sum=RELSUM(key),
+            key_avg=RELAVG(key),
+            n_short_comment=RELCOUNT(KEEP_IF(comment, LENGTH(comment) < 75)),
+            n_nations=RELSIZE(),
+        )
+        .ORDER_BY(region_key.ASC(), nation_name.ASC())
+    )
+
+
+def region_nation_window_aggs():
+    # Calculating multiple global windowed aggregations for each nation, only
+    # per-region, considering nations whose names do not start with a vowel.
+    return (
+        Regions.nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        .CALCULATE(
+            nation_name=name,
+            key_sum=RELSUM(key, levels=1),
+            key_avg=RELAVG(key, levels=1),
+            n_short_comment=RELCOUNT(KEEP_IF(comment, LENGTH(comment) < 75), levels=1),
+            n_nations=RELSIZE(levels=1),
+        )
+        .ORDER_BY(region_key.ASC(), nation_name.ASC())
+    )
+
+
+def supplier_pct_national_qty():
+    # Find the 5 African suppliers with the highest percentage of total
+    # quantity of product shipped from them out of all suppliers in that nation
+    # meeting certain criteria. Include for each such supplier their name,
+    # nation name, the quantity, and the percentage. The criteria are that the
+    # shipments were done in 1998, they were shipped by ship, the part shipped
+    # had  had "tomato" in the name and was a large container. Also, when
+    # finding the sum for each naiton and the best suppliers, ignore all
+    # suppliers with a negative account balance and whose comments do not
+    # contain the word "careful".
+    selected_lines = lines.WHERE(
+        (YEAR(ship_date) == 1995)
+        & (ship_mode == "SHIP")
+        & CONTAINS(part.name, "tomato")
+        & STARTSWITH(part.container, "LG")
+    )
+    supp_qty = SUM(selected_lines.quantity)
+    return (
+        Nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
+        .CALCULATE(nation_name=name)
+        .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
+        .CALCULATE(
+            supplier_name=name,
+            nation_name=name,
+            supplier_quantity=supp_qty,
+            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, levels=1),
+        )
+        .TOP_K(5, by=national_qty_pct.DESC())
+    )
+
+
+def highest_priority_per_year():
+    # For each year, identify the priority with the highest percentage of
+    # made in that year with that priority, listing the year, priority, and
+    # percentage. Sort the results by year.
+    order_info = Orders.CALCULATE(order_year=YEAR(order_date))
+    year_priorities = PARTITION(
+        order_info, name="orders", by=(order_priority, order_year)
+    ).CALCULATE(n_orders=COUNT(orders))
+    years = PARTITION(year_priorities, name="priorities", by=order_year)
+    return (
+        years.priorities.CALCULATE(
+            order_year,
+            highest_priority=order_priority,
+            priority_pct=100.0 * n_orders / RELSUM(n_orders, levels=1),
+        )
+        .WHERE(RANKING(by=priority_pct.DESC(), levels=1) == 1)
+        .ORDER_BY(order_year.ASC())
+    )
+
+
+def nation_best_order():
+    # For each Asian nation, identify the most expensive order made by a
+    # customer in that nation in 1998, listing the nation name, customer
+    # name, order key, the order's price, and percentage of the price of
+    # all orders made in 1998. Order the nations alphabetically.
+    selected_nations = Nations.WHERE(region.name == "ASIA")
+    best_order = (
+        customers.CALCULATE(customer_name=name)
+        .orders.WHERE(YEAR(order_date) == 1998)
+        .CALCULATE(
+            order_value=total_price,
+            value_percentage=100.0 * total_price / RELSUM(total_price, levels=2),
+            order_key=key,
+        )
+        .WHERE(RANKING(by=order_value.DESC(), levels=2) == 1)
+        .SINGULAR()
+    )
+    return (
+        selected_nations.WHERE(HAS(best_order))
+        .CALCULATE(
+            nation_name=name,
+            customer_name=best_order.customer_name,
+            order_key=best_order.order_key,
+            order_value=best_order.order_value,
+            value_percentage=best_order.value_percentage,
+        )
+        .ORDER_BY(name.ASC())
+    )
+
+
 def top_customers_by_orders():
     # Finds the keys of the 5 customers with the most orders.
     return Customers.CALCULATE(

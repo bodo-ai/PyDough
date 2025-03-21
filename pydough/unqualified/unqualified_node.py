@@ -433,7 +433,7 @@ class UnqualifiedCollation(UnqualifiedNode):
 
 def get_by_arg(
     kwargs: dict[str, object],
-    func_name: str,
+    window_operator: pydop.ExpressionWindowOperator,
 ) -> Sequence[UnqualifiedNode]:
     """
     Extracts the `by` argument from the keyword arguments to a window function,
@@ -442,7 +442,7 @@ def get_by_arg(
 
     Args:
         `kwargs`: the keyword arguments.
-        `func_name`: the function whose `by` argument being extracted.
+        `window_operator`: the function whose `by` argument being extracted.
 
     Returns:
         The list of unqualified nodes represented by the `by` argument, which
@@ -453,8 +453,15 @@ def get_by_arg(
         wrong type.
     """
     if "by" not in kwargs:
+        if window_operator.requires_order:
+            raise PyDoughUnqualifiedException(
+                f"The `by` argument to `{window_operator.function_name}` must be provided"
+            )
+        else:
+            return []
+    elif not window_operator.allows_order:
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{func_name}` must be provided"
+            f"The `{window_operator.function_name}` function does not allow a `by` argument"
         )
     by = kwargs.pop("by")
     by_allowed_type = UnqualifiedNode
@@ -466,7 +473,7 @@ def get_by_arg(
         and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{func_name}` must be a single expression or a non-empty iterable of expressions."
+            f"The `by` argument to `{window_operator.function_name}` must be a single expression or a non-empty iterable of expressions."
             "Please refer to the config documentation for more information."
         )
     return list(by)
@@ -505,6 +512,14 @@ class UnqualifiedOperator(UnqualifiedNode):
                 is_integer.verify(kwargs.get("n", 1), "`n` argument")
                 if len(args) > 1:
                     is_integer.verify(args[1], "`n` argument")
+            case "RELSUM":
+                window_operator = pydop.RELSUM
+            case "RELAVG":
+                window_operator = pydop.RELAVG
+            case "RELCOUNT":
+                window_operator = pydop.RELCOUNT
+            case "RELSIZE":
+                window_operator = pydop.RELSIZE
             case func:
                 is_window = False
                 if len(kwargs) > 0:
@@ -512,7 +527,7 @@ class UnqualifiedOperator(UnqualifiedNode):
                         f"PyDough function call {func} does not support keyword arguments at this time"
                     )
         if is_window:
-            by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, self._parcel[0])
+            by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
             if "levels" in kwargs:
                 levels_arg = kwargs.pop("levels")
                 is_positive_int.verify(levels_arg, "`levels` argument")

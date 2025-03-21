@@ -252,10 +252,6 @@ class Qualifier:
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
         # Use the qualified children & collation to create a new ORDER BY node.
-        if not qualified_collations:
-            raise PyDoughUnqualifiedException(
-                "Window calls require a non-empty 'by' clause to be specified."
-            )
         return self.builder.build_window_call(
             window_operator, qualified_args, qualified_collations, levels, kwargs
         )

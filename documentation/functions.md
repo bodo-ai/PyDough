@@ -63,6 +63,10 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [PERCENTILE](#percentile)
    * [PREV](#prev)
    * [NEXT](#next)
+   * [RELSUM](#relsum)
+   * [RELAVG](#relavg)
+   * [RELCOUNT](#relcount)
+   * [RELSIZE](#relsize)
 - [Banned Python Logic](#banned-python-logic)
    * [\_\_bool\_\_](#__bool__)
    * [\_\_call\_\_](#call_banned)
@@ -884,6 +888,45 @@ The `NEXT` function returns the value of an expression from a following record i
 - `n` (optional): optional argument (default `1`) how many records forward to look.
 - `default` (optional): optional argument (default `None`) the value to output when there is no record `n` after the current record. This must be a valid literal.
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+<!-- TOC --><a name="relsum"></a>
+
+### RELSUM
+
+The `RELSUM` function returns the sum of multiple rows of a singular expression within the same collection, e.g. the global sum across all rows, or the sum of rows per an ancestor of a sub-collection. The arguments:
+
+- `expression`: the singular expression to take the sum of across multiple rows.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+<!-- TOC --><a name="relavg"></a>
+
+### RELAVG
+
+The `RELAVG` function returns the average of multiple rows of a singular expression within the same collection, e.g. the global average across all rows, or the average of rows per an ancestor of a sub-collection. The arguments:
+
+- `expression`: the singular expression to take the average of across multiple rows.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+<!-- TOC --><a name="relcount"></a>
+
+### RELCOUNT
+
+The `RELCOUNT` function returns the number of non-null records in multiple rows of a singular expression within the same collection, e.g. the count of all non-null rows, or the number of non-null rows per an ancestor of a sub-collection. The arguments:
+
+- `expression`: the singular expression to count the number of non-null entries across multiple rows.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+<!-- TOC --><a name="relsize"></a>
+
+### RELSIZE
+
+The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection rows per some ancestor collection. The arguments:
+
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
 
 
