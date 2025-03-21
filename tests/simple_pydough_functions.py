@@ -119,6 +119,20 @@ def year_month_nation_orders():
     ).TOP_K(5, by=n_orders.DESC())
 
 
+def parts_quantity_increase_95_96():
+    # Find the 3 parts with the largest increase in quantity ordered by
+    # rail from 1995 to 1996, breaking ties alphabetically by name.
+    # Only consider parts with a small size and that have at least one
+    # qualifying order from both years.
+    orders_95 = lines.WHERE((YEAR(order.order_date) == 1995) & (ship_mode == "RAIL"))
+    orders_96 = lines.WHERE((YEAR(order.order_date) == 1996) & (ship_mode == "RAIL"))
+    return (
+        Parts.WHERE(STARTSWITH(container, "SM") & HAS(orders_95) & HAS(orders_96))
+        .CALCULATE(name, qty_95=SUM(orders_95.quantity), qty_96=SUM(orders_96.quantity))
+        .TOP_K(3, by=((qty_96 - qty_95).DESC(), name.ASC()))
+    )
+
+
 def rank_a():
     return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 
