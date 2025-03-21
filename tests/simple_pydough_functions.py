@@ -501,7 +501,6 @@ def nation_acctbal_breakdown():
     )
     return (
         Nations.WHERE(region.name == "AMERICA")
-        .WHERE(HAS(customer_info))
         .CALCULATE(
             nation_name=name,
             n_red_acctbal=COUNT(customer_info.negative_acctbal),
