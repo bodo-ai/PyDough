@@ -1,6 +1,6 @@
 ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
- FILTER(condition=DEFAULT_TO(agg_2, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_3, 0:int64), columns={'name': name, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
-  PROJECT(columns={'agg_2': agg_2, 'agg_3': agg_3, 'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_1, 0:int64)})
+ PROJECT(columns={'name': name, 'suppliers_in_black': DEFAULT_TO(agg_0, 0:int64), 'total_suppliers': DEFAULT_TO(agg_1, 0:int64)})
+  FILTER(condition=DEFAULT_TO(agg_2, 0:int64) > 0.5:float64 * DEFAULT_TO(agg_3, 0:int64), columns={'agg_0': agg_0, 'agg_1': agg_1, 'name': name})
    JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'agg_2': t0.agg_2, 'agg_3': t1.agg_3, 'name': t0.name})
     JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_2': t1.agg_2, 'key': t0.key, 'name': t0.name})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})

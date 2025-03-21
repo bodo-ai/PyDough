@@ -476,7 +476,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             )
         if keys:
             if aggregations:
-                query = query.group_by(*keys)
+                query = query.group_by(*sorted(keys, key=repr))
             else:
                 query = query.distinct()
         self._stack.append(query)

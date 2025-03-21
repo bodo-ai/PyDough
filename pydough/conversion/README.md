@@ -76,4 +76,8 @@ The methodology for converting hybrid nodes into relational nodes is implemented
 3. **Relational Translation**: The hybrid nodes are recursively converted into relational nodes by starting at the last pipeline operator of the bottom of the hybrid tree, working backwards, and building onto the previous result. The accumulated result is both the relational tree of the answer so far and a mapping of hybrid expressions to the corresponding column in the answer that corresponds to their value. Operations such as filter or limit just wrap the previous result in another relational node, but several other translations have more steps:
    - When stepping down from one level of the HybridTree to the next level, e.g. by accessing a subcollection, the result of the previous level is inner joined to reach the new level, and all expressions from the previous level are back-shifted up by 1.
    - All child references are resolved by calculating the relational translation of the child and joining it onto the current result so that its expressions are accessible as child expressions. The type of join depends on the type of `HybridConnection`, but the result is that every row in the current relation matches to at most 1 row in the child relational tree, either because it is already guaranteed to be singular or because it has been aggregated in a manner that ensures so.
-4. **Finalization**: The final relational structure is created, and any unused columns are pruned.
+4. **Finalization**: The final relational structure is created, and extra optimizations are run such as filter pushdown and column pruning.
+
+## Hybrid De-Correlation
+
+The file [filter_pushdown.py](filter_pushdown.py) contains the logic used to push filters further down into the relational tree.

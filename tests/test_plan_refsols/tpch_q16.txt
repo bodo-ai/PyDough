@@ -7,7 +7,7 @@ ROOT(columns=[('P_BRAND', P_BRAND), ('P_TYPE', P_TYPE), ('P_SIZE', P_SIZE), ('SU
       JOIN(conditions=[t0.supplier_key == t1.key], types=['left'], columns={'comment_2': t1.comment, 'p_brand': t0.p_brand, 'p_size': t0.p_size, 'p_type': t0.p_type, 'supplier_key': t0.supplier_key})
        JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'p_brand': t0.p_brand, 'p_size': t0.p_size, 'p_type': t0.p_type, 'supplier_key': t1.supplier_key})
         PROJECT(columns={'key': key, 'p_brand': brand, 'p_size': size, 'p_type': part_type})
-         FILTER(condition=brand != 'BRAND#45':string & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%':string)) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9]:array[unknown]), columns={'brand': brand, 'key': key, 'part_type': part_type, 'size': size})
+         FILTER(condition=brand != 'BRAND#45':string & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9]:array[unknown]) & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%':string)), columns={'brand': brand, 'key': key, 'part_type': part_type, 'size': size})
           SCAN(table=tpch.PART, columns={'brand': p_brand, 'key': p_partkey, 'part_type': p_type, 'size': p_size})
         SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
        SCAN(table=tpch.SUPPLIER, columns={'comment': s_comment, 'key': s_suppkey})

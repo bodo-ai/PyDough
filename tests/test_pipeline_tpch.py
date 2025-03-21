@@ -58,10 +58,10 @@ from tpch_test_functions import (
     impl_tpch_q22,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -314,6 +314,45 @@ def test_pipeline_until_relational_tpch(
         )
 
 
+def test_pipeline_until_sql_tpch(
+    pydough_pipeline_tpch_test_data: tuple[
+        Callable[[], UnqualifiedNode],
+        str,
+        Callable[[], pd.DataFrame],
+    ],
+    get_sample_graph: graph_fetcher,
+    default_config: PyDoughConfigs,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
+    """
+    # Run the query through the stages from unqualified node to qualified node
+    # to relational tree, and confirm the tree string matches the expected
+    # structure.
+    unqualified_impl, file_name, _ = pydough_pipeline_tpch_test_data
+    file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    sql_text: str = to_sql(
+        unqualified,
+        metadata=graph,
+        database=empty_context_database,
+        config=default_config,
+    )
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(sql_text + "\n")
+    else:
+        with open(file_path) as f:
+            expected_sql_text: str = f.read()
+        assert sql_text == expected_sql_text.strip(), (
+            "Mismatch between SQL text produced expected SQL text"
+        )
+
+
 @pytest.mark.execute
 def test_pipeline_e2e_tpch(
     pydough_pipeline_tpch_test_data: tuple[
@@ -323,6 +362,7 @@ def test_pipeline_e2e_tpch(
     ],
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
+    default_config: PyDoughConfigs,
 ):
     """
     Test executing the TPC-H queries from the original code generation.
@@ -330,5 +370,7 @@ def test_pipeline_e2e_tpch(
     unqualified_impl, _, answer_impl = pydough_pipeline_tpch_test_data
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_tpch_db_context)
+    result: pd.DataFrame = to_df(
+        root, metadata=graph, database=sqlite_tpch_db_context, config=default_config
+    )
     pd.testing.assert_frame_equal(result, answer_impl())

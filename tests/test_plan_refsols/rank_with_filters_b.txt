@@ -1,5 +1,4 @@
 ROOT(columns=[('n', n), ('r', r)], orderings=[])
- FILTER(condition=ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
-  FILTER(condition=r <= 30:int64, columns={'n': n, 'name': name, 'r': r})
-   PROJECT(columns={'n': name, 'name': name, 'r': RANKING(args=[], partition=[], order=[(acctbal):desc_first])})
-    SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
+ FILTER(condition=r <= 30:int64 & ENDSWITH(name, '0':string), columns={'n': n, 'r': r})
+  PROJECT(columns={'n': name, 'name': name, 'r': RANKING(args=[], partition=[], order=[(acctbal):desc_first])})
+   SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
