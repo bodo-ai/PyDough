@@ -54,6 +54,9 @@ from pydough.relational import (
     Scan,
 )
 from pydough.types import PyDoughType, UnknownType
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
 
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
@@ -906,12 +909,15 @@ def make_relational_ordering(
 @dataclass
 class PyDoughSQLComparisonTest:
     """
-    The data needed to run the PyDough unit tests.
+    The data packet encapsulating the information to run a PyDough e2e test
+    that compares the result against a reference answer derived by executing a
+    SQL query.
     """
 
-    pydough_function: Callable[[], Any]
+    pydough_function: Callable[[], UnqualifiedNode]
     """
-    String containing the pydough code to be executed.
+    Function that returns the PyDough code evaluated by the unit test.
+
     """
 
     graph_name: str
@@ -919,9 +925,10 @@ class PyDoughSQLComparisonTest:
     The graph that the PyDough code will use.
     """
 
-    sql_function: Callable[[], Any]
+    sql_function: Callable[[], str]
     """
-    String containing the SQL code to be ran.
+    Function that returns the SQL code that should be executed on the database
+    to derive the reference solution.
     """
 
     order_insensitive: bool = False

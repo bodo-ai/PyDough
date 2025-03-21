@@ -2,6 +2,9 @@
 -- https://github.com/defog-ai/defog-data/blob/main/defog_data/broker/broker.sql
 -- changed slightly to use SQLite dialect instead of postgress.
 
+-------------------------------------------------------------------------------
+--BROKER SCHEMA 
+
 -- Dimension tables
 CREATE TABLE sbCustomer (
   sbCustId varchar(20) PRIMARY KEY,
@@ -221,6 +224,10 @@ INSERT INTO sbTransaction (sbTxId, sbTxCustId, sbTxTickerId, sbTxDateTime, sbTxT
 ('TX054', 'C018', 'T004', DATE('now', 'start of month', '2 months', '4 days'), 'sell', 30, 180.00, 5400.00, 'USD', 27.00, 5.00, 'KP054', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-2 months', '+4 days')), 'success'),
 ('TX055', 'C019', 'T005', DATE('now', 'start of month', '1 month', '5 days'), 'buy', 10, 2500.00, 25000.00, 'USD', 125.00, 15.00, 'KP055', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-1 months', '+5 days')), 'success'),
 ('TX056', 'C002', 'T006', DATE('now', 'start of month', '1 day'), 'sell', 20, 200.00, 4000.00, 'USD', 20.00, 10.00, 'KP056', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '+1 day')), 'success');
+
+
+-------------------------------------------------------------------------------
+--EWALLET SCHEMA 
 
 -- Dimension tables
 CREATE TABLE users (uid INTEGER, username TEXT(50) NOT NULL, email TEXT(100) NOT NULL, phone_number TEXT(20),

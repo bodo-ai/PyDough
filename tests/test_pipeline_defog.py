@@ -685,12 +685,8 @@ def defog_test_data(
     request,
 ) -> PyDoughSQLComparisonTest:
     """
-    Test data for `test_defog_e2e`. Returns a dataclass that contains the following
-    arguments:
-    1. `pydough_function`: a PyDough implementation function.
-    2. `graph_name`: the name of the graph from the defog database to use.
-    3. `sql_function`: a function that takes in nothing and returns the sqlite query
-    text for a defog query.
+    Returns a dataclass encapsulating all of the information needed to run the
+    PyDough code and compare the result against a refsol derived via SQL.
     """
     return request.param
 
@@ -717,6 +713,7 @@ def test_defog_e2e(
     )
     assert len(result.columns) == len(refsol.columns)
     refsol.columns = result.columns
+    # If the query is order-insensitive, sort the DataFrames before comparison
     if defog_test_data.order_insensitive:
         result = result.sort_values(by=list(refsol.columns)).reset_index(drop=True)
         refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)

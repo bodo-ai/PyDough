@@ -593,7 +593,7 @@ def defog_sql_text_broker_basic10() -> str:
     """
 
 
-def defog_sql_text_broker_gen1():
+def defog_sql_text_broker_gen1() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -608,7 +608,7 @@ def defog_sql_text_broker_gen1():
     """
 
 
-def defog_sql_text_broker_gen2():
+def defog_sql_text_broker_gen2() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -623,7 +623,7 @@ def defog_sql_text_broker_gen2():
     """
 
 
-def defog_sql_text_broker_gen3():
+def defog_sql_text_broker_gen3() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -640,7 +640,7 @@ def defog_sql_text_broker_gen3():
     """
 
 
-def defog_sql_text_broker_gen4():
+def defog_sql_text_broker_gen4() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -662,7 +662,7 @@ def defog_sql_text_broker_gen4():
     """
 
 
-def defog_sql_text_broker_gen5():
+def defog_sql_text_broker_gen5() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -681,8 +681,9 @@ def defog_sql_text_ewallet_adv1() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    Calculate the CPUR for each merchant, considering only successful transactions. Return the merchant name and CPUR.
-    CPUR (coupon usage rate) = number of distinct coupons used / number of distinct transactions
+    Calculate the CPUR for each merchant, considering only successful
+    transactions. Return the merchant name and CPUR. CPUR (coupon usage
+    rate) = number of distinct coupons used / number of distinct transactions
     """
     return """
     SELECT m.name, (COUNT(DISTINCT wtd.coupon_id) * 1.0 / NULLIF(COUNT(DISTINCT wtd.txid), 0)) AS CPUR 
@@ -698,9 +699,10 @@ def defog_sql_text_ewallet_adv2() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    For users in the US and Canada, how many total notifications were sent in each of the last 3 weeks
-    excluding the current week? How many of those were sent on weekends? Weekends are Saturdays and Sundays.
-    Truncate created_at to week for aggregation.
+    For users in the US and Canada, how many total notifications were sent in
+    each of the last 3 weeks excluding the current week? How many of those
+    were sent on weekends? Weekends are Saturdays and Sundays. Truncate
+    created_at to week for aggregation.
     """
     return """
     SELECT date(n.created_at,  '-' || ((strftime('%w', n.created_at) + 6) % 7) || ' days') AS WEEK, 
@@ -718,8 +720,9 @@ def defog_sql_text_ewallet_adv3() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    How many active retail merchants have issued coupons? Return the merchant name and the total number
-    of coupons issued. Merchant category should be matched case-insensitively
+    How many active retail merchants have issued coupons? Return the merchant
+    name and the total number of coupons issued. Merchant category should be
+    matched case-insensitively.
     """
     return """
     SELECT m.name, COUNT(c.cid) AS total_coupons
@@ -735,10 +738,11 @@ def defog_sql_text_ewallet_adv4() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    How many wallet transactions were made by users from the US in the last 7 days inclusive of today?
-    Return the number of transactions and total transaction amount.
-    Last 7 days = DATE('now', -'7 days') to DATE('now'). Always join wallet_transactions_daily
-    with users before using the wallet_transactions_daily table.
+    How many wallet transactions were made by users from the US in the last 7
+    days inclusive of today? Return the number of transactions and total
+    transaction amount. Last 7 days = DATE('now', -'7 days') to DATE('now').
+    Always join wallet_transactions_daily with users before using the
+    wallet_transactions_daily table.
     """
     return """
     SELECT COUNT(*) AS num_transactions, SUM(amount) AS total_amount 
@@ -753,8 +757,9 @@ def defog_sql_text_ewallet_adv5() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the average AMB for user wallets updated in the past week, inclusive of 7 days ago?
-    Return the average balance. AMB = average balance per user (for the given time duration)
+    What is the average AMB for user wallets updated in the past week,
+    inclusive of 7 days ago? Return the average balance. AMB = average balance
+    per user (for the given time duration).
     """
     return """
     SELECT AVG(balance) AS AMB
@@ -767,7 +772,8 @@ def defog_sql_text_ewallet_adv6() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the LUB for each user. LUB = Latest User Balance, which is the most recent balance for each user
+    What is the LUB for each user. LUB = Latest User Balance, which is the most
+    recent balance for each user
     """
     return """
     WITH user_balances AS (
@@ -785,8 +791,9 @@ def defog_sql_text_ewallet_adv7() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the marketing opt-in preference for each user? Return the user ID and boolean opt-in value.
-    To get any user's settings, only select the latest snapshot of user_setting_snapshot for each user
+    What is the marketing opt-in preference for each user? Return the user ID
+    and boolean opt-in value. To get any user's settings, only select the
+    latest snapshot of user_setting_snapshot for each user.
     """
     return """
     WITH user_latest_setting AS (
@@ -805,8 +812,9 @@ def defog_sql_text_ewallet_adv8() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the MRR for each merchant? Return the merchant name, category, revenue amount, and revenue rank.
-    MRR = Merchant Revenue Rank, which ranks merchants based on amounts from successfully received transactions only.
+    What is the MRR for each merchant? Return the merchant name, category,
+    revenue amount, and revenue rank. MRR = Merchant Revenue Rank, which ranks
+    merchants based on amounts from successfully received transactions only.
     """
     return """
     WITH merchant_revenue AS (
@@ -825,8 +833,10 @@ def defog_sql_text_ewallet_adv9() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the PMDAU (Per Month Daily Active Users) for wallet transactions in the last 2 months excluding the current month?
-    PMDAU (Per Month Daily Active Users) = COUNT(DISTINCT(sender_id) ... WHERE t.sender_type = 0. Truncate created_at to month for aggregation.
+    What is the PMDAU (Per Month Daily Active Users) for wallet transactions in
+    the last 2 months excluding the current month? PMDAU (Per Month Daily
+    Active Users) = COUNT(DISTINCT(sender_id) ... WHERE t.sender_type = 0.
+    Truncate created_at to month for aggregation.
     """
     return """
     SELECT strftime('%Y-%m-01', t.created_at) AS month, COUNT(DISTINCT t.sender_id) AS active_users
@@ -842,8 +852,8 @@ def defog_sql_text_ewallet_adv10() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the total number of wallet transactions sent by each user that is not a merchant?
-    Return the user ID and total transaction count.
+    What is the total number of wallet transactions sent by each user that is
+    not a merchant? Return the user ID and total transaction count.
     """
     return """
     WITH user_transactions AS (
@@ -862,8 +872,10 @@ def defog_sql_text_ewallet_adv11() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the total session duration in seconds for each user between 2023-06-01 inclusive and 2023-06-08 exclusive?
-    Return the user ID and their total duration as an integer sorted by total duration with the longest duration first
+    What is the total session duration in seconds for each user between
+    2023-06-01 inclusive and 2023-06-08 exclusive? Return the user ID and their
+    total duration as an integer sorted by total duration with the longest
+    duration first.
     """
     return """
     WITH user_session_duration AS (
@@ -884,7 +896,8 @@ def defog_sql_text_ewallet_adv12() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the total transaction amount for each coupon offered by merchant with ID 1? Return the coupon ID and total amount transacted with it.
+    What is the total transaction amount for each coupon offered by merchant
+    with ID 1? Return the coupon ID and total amount transacted with it.
     """
     return """
     WITH merchant_coupon_usage AS (
@@ -899,12 +912,12 @@ def defog_sql_text_ewallet_adv12() -> str:
     """
 
 
-def defog_sql_text_ewallet_adv13():
+def defog_sql_text_ewallet_adv13() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What is the TUC in the past month, inclusive of 1 month ago? Return the total count.
-    TUC = Total number of user sessions in the past month
+    What is the TUC in the past month, inclusive of 1 month ago? Return the
+    total count. TUC = Total number of user sessions in the past month
     """
     return """
     SELECT COUNT(*) AS TUC
@@ -914,12 +927,13 @@ def defog_sql_text_ewallet_adv13():
     """
 
 
-def defog_sql_text_ewallet_adv14():
+def defog_sql_text_ewallet_adv14() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What was the STR for wallet transactions in the previous month?
-    STR (success transaction rate) = number of successful transactions / total number of transactions
+    What was the STR for wallet transactions in the previous month? STR
+    (success transaction rate) = number of successful transactions / total
+    number of transactions.
     """
     return """
     SELECT (SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) * 1.0 / COUNT(*)) AS STR
@@ -932,8 +946,10 @@ def defog_sql_text_ewallet_adv15() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    WWhich merchant created the highest number of coupons within the same month that the merchant was created
-    (coupon or merchant can be created earlier than the other)? Return the number of coupons along with the merchant's id and name.
+    Which merchant created the highest number of coupons within the same month
+    that the merchant was created (coupon or merchant can be created earlier
+    than the other)? Return the number of coupons along with the merchant's id
+    and name.
     """
     return """
     WITH coupons_per_merchant AS (
@@ -954,8 +970,10 @@ def defog_sql_text_ewallet_adv16() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    Which users from the US have unread promotional notifications? Return the username and the total number of unread promotional notifications.
-    User country should be matched case-insensitively, e.g., LOWER(users.country) = 'us'. Notification type and status should be matched exactly.
+    Which users from the US have unread promotional notifications? Return the
+    username and the total number of unread promotional notifications. User
+    country should be matched case-insensitively, e.g., LOWER(users.country) =
+    'us'. Notification type and status should be matched exactly.
     """
     return """
     SELECT u.username, COUNT(n.id) AS total_notifications
@@ -968,7 +986,7 @@ def defog_sql_text_ewallet_adv16() -> str:
     """
 
 
-def defog_sql_text_ewallet_basic1():
+def defog_sql_text_ewallet_basic1() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -989,7 +1007,7 @@ def defog_sql_text_ewallet_basic1():
     """
 
 
-def defog_sql_text_ewallet_basic10():
+def defog_sql_text_ewallet_basic10() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1007,7 +1025,7 @@ def defog_sql_text_ewallet_basic10():
     """
 
 
-def defog_sql_text_ewallet_basic2():
+def defog_sql_text_ewallet_basic2() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1022,7 +1040,7 @@ def defog_sql_text_ewallet_basic2():
     """
 
 
-def defog_sql_text_ewallet_basic3():
+def defog_sql_text_ewallet_basic3() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1039,7 +1057,7 @@ def defog_sql_text_ewallet_basic3():
     """
 
 
-def defog_sql_text_ewallet_basic4():
+def defog_sql_text_ewallet_basic4() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1053,11 +1071,12 @@ def defog_sql_text_ewallet_basic4():
     """
 
 
-def defog_sql_text_ewallet_basic5():
+def defog_sql_text_ewallet_basic5() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
-    Return users (user ID and username) who have not received any notifications.
+    Return users (user ID and username) who have not received any
+    notifications.
     """
     return """
     SELECT u.uid, u.username 
@@ -1067,7 +1086,7 @@ def defog_sql_text_ewallet_basic5():
     """
 
 
-def defog_sql_text_ewallet_basic6():
+def defog_sql_text_ewallet_basic6() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1082,7 +1101,7 @@ def defog_sql_text_ewallet_basic6():
     """
 
 
-def defog_sql_text_ewallet_basic7():
+def defog_sql_text_ewallet_basic7() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1097,7 +1116,7 @@ def defog_sql_text_ewallet_basic7():
     """
 
 
-def defog_sql_text_ewallet_basic8():
+def defog_sql_text_ewallet_basic8() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1113,7 +1132,7 @@ def defog_sql_text_ewallet_basic8():
     """
 
 
-def defog_sql_text_ewallet_basic9():
+def defog_sql_text_ewallet_basic9() -> str:
     """
     SQLite query text for the following question for the Broker graph:
 
@@ -1135,7 +1154,8 @@ def defog_sql_text_ewallet_gen1() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    Give me today's median merchant wallet balance for all active merchants whose category contains 'retail'
+    Give me today's median merchant wallet balance for all active merchants
+    whose category contains 'retail'.
     """
     return """
     WITH retail_merchants AS (
@@ -1169,7 +1189,8 @@ def defog_sql_text_ewallet_gen2() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    What was the average transaction daily and monthly limit for the earliest setting snapshot in 2023?
+    What was the average transaction daily and monthly limit for the earliest
+    setting snapshot in 2023?
     """
     return """
     SELECT AVG(tx_limit_daily) AS avg_daily_limit, AVG(tx_limit_monthly) AS avg_monthly_limit
@@ -1201,8 +1222,9 @@ def defog_sql_text_ewallet_gen4() -> str:
     """
     SQLite query text for the following question for the eWallet graph:
 
-    Which merchants earliest coupon start date was within a year of the merchant's
-    registration? Return the merchant id, registration date, and earliest coupon id and start date
+    Which merchants earliest coupon start date was within a year of the
+    merchant's registration? Return the merchant id, registration date, and
+    earliest coupon id and start date
     """
     return """
     WITH earliest_coupons AS (
