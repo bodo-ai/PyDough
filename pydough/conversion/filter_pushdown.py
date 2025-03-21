@@ -60,7 +60,7 @@ def push_filters(
                 # this point.
                 pushable_filters, remaining_filters = set(), filters
             else:
-                # Otherwise push all filters that only depend on on columns in
+                # Otherwise push all filters that only depend on columns in
                 # the project that are pass-through of another column.
                 allowed_cols: set[str] = set()
                 for name, expr in node.columns.items():
