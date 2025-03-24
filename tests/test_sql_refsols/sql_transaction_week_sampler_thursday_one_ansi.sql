@@ -1,5 +1,5 @@
 SELECT
-  DATE_TRUNC('WEEK', DATETIME(date_time)) AS sow,
+  DATE_TRUNC('WEEK', CAST(date_time AS TIMESTAMP)) AS sow,
   (
     CASE
       WHEN DAY_OF_WEEK(date_time) = 0
@@ -35,8 +35,9 @@ FROM (
   )
   WHERE
     (
-      YEAR(date_time) < 2025
-    ) AND (
-      DAY(date_time) > 1
+      EXTRACT(YEAR FROM date_time) < 2025
+    )
+    AND (
+      EXTRACT(DAY FROM date_time) > 1
     )
 )

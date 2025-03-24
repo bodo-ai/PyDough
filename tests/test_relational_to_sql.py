@@ -14,11 +14,6 @@ from test_utils import (
     make_relational_literal,
     make_relational_ordering,
 )
-from tpch_relational_plans import (
-    tpch_query_1_plan,
-    tpch_query_3_plan,
-    tpch_query_6_plan,
-)
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
@@ -697,58 +692,6 @@ def test_convert_relation_to_sqlite_sql(
 ) -> None:
     """
     Test converting a relational tree to SQL text in the SQLite dialect.
-    """
-    file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
-    created_sql: str = convert_relation_to_sql(
-        root, sqlite_dialect, sqlite_bindings, default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(created_sql + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert created_sql == expected_relational_string.strip(), (
-            "Mismatch between tree generated SQL text and expected SQL text"
-        )
-
-
-@pytest.mark.parametrize(
-    "root, test_name",
-    [
-        pytest.param(
-            tpch_query_1_plan(),
-            "tpch_q1",
-            id="tpch_q1",
-        ),
-        pytest.param(
-            tpch_query_3_plan(),
-            "tpch_q3",
-            id="tpch_q3",
-        ),
-        pytest.param(
-            tpch_query_6_plan(),
-            "tpch_q6",
-            id="tpch_q6",
-        ),
-    ],
-)
-def test_tpch_relational_to_sqlite_sql(
-    root: RelationalRoot,
-    test_name: str,
-    sqlite_dialect: SQLiteDialect,
-    sqlite_bindings: SqlGlotTransformBindings,
-    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
-    update_tests: bool,
-    default_config: PyDoughConfigs,
-) -> None:
-    """
-    Test that we can take possible relational trees from select TPCH queries
-    and convert them to reasonable SQL text. This will not be 1:1 in the result,
-    but should be consistent SQL.
-
-    These plans are generated from a couple simple plans we built with
-    Apache Calcite in Bodo's SQL optimizer.
     """
     file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
     created_sql: str = convert_relation_to_sql(

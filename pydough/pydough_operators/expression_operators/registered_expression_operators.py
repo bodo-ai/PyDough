@@ -6,6 +6,7 @@ __all__ = [
     "ABS",
     "ABSENT",
     "ADD",
+    "ANYTHING",
     "AVG",
     "BAN",
     "BOR",
@@ -54,6 +55,10 @@ __all__ = [
     "PRESENT",
     "PREV",
     "RANKING",
+    "RELAVG",
+    "RELCOUNT",
+    "RELSIZE",
+    "RELSUM",
     "ROUND",
     "RPAD",
     "SECOND",
@@ -146,6 +151,9 @@ HASNOT = ExpressionFunctionOperator(
 NDISTINCT = ExpressionFunctionOperator(
     "NDISTINCT", True, AllowAny(), ConstantType(Int64Type())
 )
+ANYTHING = ExpressionFunctionOperator(
+    "ANYTHING", True, RequireNumArgs(1), SelectArgumentType(0)
+)
 MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
 MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
@@ -224,3 +232,15 @@ PERCENTILE = ExpressionWindowOperator(
 )
 PREV = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
 NEXT = ExpressionWindowOperator("NEXT", RequireNumArgs(1), SelectArgumentType(0))
+RELSUM = ExpressionWindowOperator(
+    "RELSUM", RequireNumArgs(1), SelectArgumentType(0), False, False
+)
+RELAVG = ExpressionWindowOperator(
+    "RELAVG", RequireNumArgs(1), SelectArgumentType(0), False, False
+)
+RELCOUNT = ExpressionWindowOperator(
+    "RELCOUNT", RequireNumArgs(1), ConstantType(Int64Type()), False, False
+)
+RELSIZE = ExpressionWindowOperator(
+    "RELSIZE", RequireNumArgs(0), ConstantType(Int64Type()), False, False
+)

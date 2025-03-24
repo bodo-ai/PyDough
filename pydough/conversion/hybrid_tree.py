@@ -184,7 +184,7 @@ class HybridRefExpr(HybridExpr):
             return HybridRefExpr(renamings[self.name], self.typ)
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr | None:
+    def shift_back(self, levels: int) -> HybridExpr:
         if levels == 0:
             return self
         return HybridBackRefExpr(self.name, levels, self.typ)
@@ -560,6 +560,130 @@ class HybridFilter(HybridOperation):
         return self.predecessor.search_term_definition(name)
 
 
+class HybridChildPullUp(HybridOperation):
+    """
+    Class for HybridOperation corresponding to evaluating all of the logic from
+    a child subtree of the current pipeline then treating it as the current
+    level.
+    """
+
+    def __init__(
+        self,
+        hybrid: "HybridTree",
+        child_idx: int,
+        original_child_height: int,
+    ):
+        self.child: HybridConnection = hybrid.children[child_idx]
+        self.child_idx: int = child_idx
+        self.pullup_remapping: dict[HybridExpr, HybridExpr] = {}
+
+        # Find the level from the child tree that is the equivalent of the
+        # level from the child tree that is being replaced.
+        current_level: HybridTree = self.child.subtree
+        for _ in range(original_child_height):
+            assert current_level.parent is not None
+            current_level = current_level.parent
+
+        # Snapshot the renamings from the current level, and use its unique
+        # terms as the unique terms for this level.
+        renamings: dict[str, str] = current_level.pipeline[-1].renamings
+        unique_exprs: list[HybridExpr] = []
+        for unique_expr in current_level.pipeline[-1].unique_exprs:
+            new_unique_expr: HybridExpr | None = unique_expr.shift_back(
+                original_child_height
+            )
+            assert new_unique_expr is not None
+            unique_exprs.append(new_unique_expr)
+
+        # Start by adding terms from the bottom level of the child as child ref
+        # expressions accessible from the parent.
+        terms: dict[str, HybridExpr] = {}
+        for term_name, term_expr in current_level.pipeline[-1].terms.items():
+            child_ref: HybridChildRefExpr = HybridChildRefExpr(
+                term_name, child_idx, term_expr.typ
+            )
+            terms[term_name] = child_ref
+
+        # Iterate through the level identified earlier & its ancestors to find
+        # all of their terms and add them to the parent via accesses to
+        # backreferences from the child. These terms are placed in the pullup
+        # remapping dictionary so to provide hints on how to translate
+        # expressions with regards to the parent level into lookups from within
+        # the child subtree.
+        extra_height: int = 0
+        agg_idx: int = 0
+        while True:
+            current_terms: dict[str, HybridExpr] = current_level.pipeline[-1].terms
+            for term_name in sorted(current_terms):
+                # Identify the expression that is being accessed from one of
+                # the levels of the child subtree.
+                current_expr: HybridExpr = HybridRefExpr(
+                    term_name, current_terms[term_name].typ
+                )
+                shifted_expr: HybridExpr | None = current_expr.shift_back(extra_height)
+                assert shifted_expr is not None
+                current_expr = shifted_expr
+                back_expr: HybridExpr = HybridBackRefExpr(
+                    term_name,
+                    original_child_height + extra_height,
+                    current_terms[term_name].typ,
+                )
+                if self.child.connection_type.is_aggregation:
+                    # If aggregating, wrap the backreference in an ANYTHING
+                    # call that is added to the agg calls list so it can be
+                    # passed through the aggregation.
+                    passthrough_agg: HybridFunctionExpr = HybridFunctionExpr(
+                        pydop.ANYTHING, [back_expr], back_expr.typ
+                    )
+                    agg_name: str
+                    # If the aggregation already exists, use it. Otherwise
+                    # insert a new aggregation.
+                    if passthrough_agg in self.child.aggs.values():
+                        agg_name = self.child.fetch_agg_name(passthrough_agg)
+                    else:
+                        agg_name = f"agg_{agg_idx}"
+                        while (
+                            agg_name in self.child.aggs
+                            or agg_name in self.child.subtree.pipeline[-1].terms
+                        ):
+                            agg_idx += 1
+                            agg_name = f"agg_{agg_idx}"
+                        self.child.aggs[agg_name] = passthrough_agg
+                        self.pullup_remapping[current_expr] = HybridRefExpr(
+                            agg_name, back_expr.typ
+                        )
+                else:
+                    # Otherwise, add an access to the backreference to the
+                    # pullup remapping.
+                    self.pullup_remapping[current_expr] = back_expr
+            if current_level.parent is None:
+                break
+            current_level = current_level.parent
+            extra_height += 1
+
+        super().__init__(terms, renamings, [], unique_exprs)
+
+    def __repr__(self):
+        return f"PULLUP[${self.child_idx}: {self.pullup_remapping}]"
+
+
+class HybridNoop(HybridOperation):
+    """
+    Class for HybridOperation corresponding to a no-op.
+    """
+
+    def __init__(self, last_operation: HybridOperation):
+        super().__init__(
+            last_operation.terms,
+            last_operation.renamings,
+            last_operation.orderings,
+            last_operation.unique_exprs,
+        )
+
+    def __repr__(self):
+        return "NOOP"
+
+
 class HybridPartition(HybridOperation):
     """
     Class for HybridOperation corresponding to a PARTITION operation.
@@ -910,6 +1034,26 @@ class HybridConnection:
     connection_type: ConnectionType
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
+
+    def fetch_agg_name(self, call: HybridFunctionExpr) -> str:
+        """
+        Returns the name of an aggregation call within the connection. Throws
+        an error if the aggregation call is not found.
+
+        Args:
+            `call`: The aggregation call whose name within the child connection
+            is being sought.
+
+        Returns:
+            The string `name` such that `self.aggs[name]` returns call.
+
+        Raises:
+            `ValueError`: if the aggregation call is not found.
+        """
+        try:
+            return next(name for name, agg in self.aggs.items() if agg == call)
+        except StopIteration:
+            raise ValueError(f"Aggregation call {call} not found in {self.aggs}")
 
 
 class HybridTree:
@@ -1425,7 +1569,7 @@ class HybridTranslator:
             )
         return agg_ref
 
-    def get_agg_name(self, connection: "HybridConnection") -> str:
+    def gen_agg_name(self, connection: "HybridConnection") -> str:
         """
         Generates a unique name for an aggregation function's output that
         is not already used.
@@ -1505,9 +1649,13 @@ class HybridTranslator:
         child_idx: int = child_ref_mapping[collection_arg.child_idx]
         child_connection: HybridConnection = hybrid.children[child_idx]
         # Generate a unique name for the agg call to push into the child
-        # connection.
-        agg_name: str = self.get_agg_name(child_connection)
-        child_connection.aggs[agg_name] = count_call
+        # connection. If the call already exists, reuse the existing name.
+        agg_name: str
+        if count_call in child_connection.aggs.values():
+            agg_name = child_connection.fetch_agg_name(count_call)
+        else:
+            agg_name = self.gen_agg_name(child_connection)
+            child_connection.aggs[agg_name] = count_call
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
         )
@@ -1637,10 +1785,16 @@ class HybridTranslator:
         # into.
         child_idx: int = child_indices.pop()
         child_connection: HybridConnection = hybrid.children[child_idx]
-        # Generate a unique name for the agg call to push into the child
-        # connection.
-        agg_name: str = self.get_agg_name(child_connection)
-        child_connection.aggs[agg_name] = hybrid_call
+        # If the aggregation already exists in the child, use a child reference
+        # to it.
+        agg_name: str
+        if hybrid_call in child_connection.aggs.values():
+            agg_name = child_connection.fetch_agg_name(hybrid_call)
+        else:
+            # Otherwise, Generate a unique name for the agg call to push into the
+            # child connection.
+            agg_name = self.gen_agg_name(child_connection)
+            child_connection.aggs[agg_name] = hybrid_call
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
         )

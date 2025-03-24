@@ -30,6 +30,32 @@ __all__ = [
     "impl_defog_broker_gen3",
     "impl_defog_broker_gen4",
     "impl_defog_broker_gen5",
+    "impl_defog_ewallet_adv1",
+    "impl_defog_ewallet_adv10",
+    "impl_defog_ewallet_adv11",
+    "impl_defog_ewallet_adv12",
+    "impl_defog_ewallet_adv13",
+    "impl_defog_ewallet_adv14",
+    "impl_defog_ewallet_adv15",
+    "impl_defog_ewallet_adv16",
+    "impl_defog_ewallet_adv2",
+    "impl_defog_ewallet_adv3",
+    "impl_defog_ewallet_adv4",
+    "impl_defog_ewallet_adv5",
+    "impl_defog_ewallet_adv6",
+    "impl_defog_ewallet_adv7",
+    "impl_defog_ewallet_adv8",
+    "impl_defog_ewallet_adv9",
+    "impl_defog_ewallet_basic1",
+    "impl_defog_ewallet_basic10",
+    "impl_defog_ewallet_basic2",
+    "impl_defog_ewallet_basic3",
+    "impl_defog_ewallet_basic4",
+    "impl_defog_ewallet_basic5",
+    "impl_defog_ewallet_basic6",
+    "impl_defog_ewallet_basic7",
+    "impl_defog_ewallet_basic8",
+    "impl_defog_ewallet_basic9",
 ]
 
 import datetime
@@ -196,7 +222,7 @@ def impl_defog_broker_adv8():
         & (date_time >= DATETIME("now", "start of week", "-1 week"))
     )
     return Broker.CALCULATE(
-        n_transactions=COUNT(selected_txns),
+        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) > 0),
         total_amount=SUM(selected_txns.amount),
     )
 
@@ -295,9 +321,9 @@ def impl_defog_broker_adv14():
     ACP = Average Closing Price of tickers in the last 7 days, inclusive of
     today.
     """
-    selected_updates = DailyPrices.WHERE(
-        DATEDIFF("days", date, DATETIME("now")) <= 7
-    ).CALCULATE(ticker_type=ticker.ticker_type)
+    selected_updates = DailyPrices.WHERE(DATEDIFF("days", date, "now") <= 7).CALCULATE(
+        ticker_type=ticker.ticker_type
+    )
 
     ticker_types = PARTITION(selected_updates, name="updates", by=ticker_type)
 
@@ -512,9 +538,7 @@ def impl_defog_broker_gen2():
     Return the number of transactions by users who joined in the past 70
     days.
     """
-    selected_tx = Transactions.WHERE(
-        (DATEDIFF("days", customer.join_date, "now") <= 70)
-    )
+    selected_tx = Transactions.WHERE(customer.join_date >= DATETIME("now", "-70 days"))
 
     return Broker.CALCULATE(transaction_count=COUNT(selected_tx.customer_id))
 
@@ -546,7 +570,8 @@ def impl_defog_broker_gen4():
     Return the id, name and number of transactions.
     """
     selected_transactions = transactions_made.WHERE(
-        (DATEDIFF("days", date_time, "2023-04-01") == 0) & (transaction_type == "sell")
+        (DATETIME(date_time, "start of day") == datetime.date(2023, 4, 1))
+        & (transaction_type == "sell")
     )
     return Customers.CALCULATE(_id, name, num_tx=COUNT(selected_transactions)).TOP_K(
         1, by=num_tx.DESC()
@@ -561,8 +586,7 @@ def impl_defog_broker_gen5():
     transactions in the 1st quarter of 2023?
     """
     selected_transactions = Transactions.WHERE(
-        (DATEDIFF("days", "2023-01-01", date_time) >= 0)
-        & (DATEDIFF("days", date_time, "2023-03-31") >= 0)
+        MONOTONIC(datetime.date(2023, 1, 1), date_time, datetime.date(2023, 3, 31))
         & (status == "success")
     ).CALCULATE(month=DATETIME(date_time, "start of month"))
 
@@ -571,3 +595,557 @@ def impl_defog_broker_gen5():
         .CALCULATE(month=month, avg_price=AVG(m.price))
         .ORDER_BY(month.ASC())
     )
+
+
+def impl_defog_ewallet_adv1():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Calculate the CPUR for each merchant, considering only successful
+    transactions. Return the merchant name and CPUR. CPUR (coupon usage
+    rate) = number of distinct coupons used / number of distinct transactions
+    """
+    # Filter the transactions to get only successful ones
+    successful_transactions = transactions_received.WHERE(status == "success")
+
+    # Calculate the CPUR for the merchant
+    return Merchants.WHERE(HAS(successful_transactions)).CALCULATE(
+        name=name,
+        CPUR=NDISTINCT(successful_transactions.coupon_id)
+        * 1.0
+        / NDISTINCT(successful_transactions.txid),
+    )
+
+
+def impl_defog_ewallet_adv2():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    For users in the US and Canada, how many total notifications were sent in
+    each of the last 3 weeks excluding the current week? How many of those
+    were sent on weekends? Weekends are Saturdays and Sundays. Truncate
+    created_at to week for aggregation.
+    """
+    past_notifs = (
+        Users.WHERE(ISIN(country, ("US", "CA")))
+        .notifications.WHERE(
+            (created_at < DATETIME("now", "start_of_week"))
+            & (created_at >= DATETIME("now", "start_of_week", "-3 weeks"))
+        )
+        .CALCULATE(
+            week=DATETIME(created_at, "start of week"),
+            is_weekend=ISIN(DAYOFWEEK(created_at), (5, 6)),
+        )
+    )
+    weeks = PARTITION(past_notifs, name="notifs", by=week)
+    return weeks.CALCULATE(
+        week,
+        num_notifs=COUNT(past_notifs),
+        weekend_notifs=SUM(past_notifs.is_weekend),
+    )
+
+
+def impl_defog_ewallet_adv3():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    How many active retail merchants have issued coupons? Return the merchant
+    name and the total number of coupons issued. Merchant category should be
+    matched case-insensitively.
+    """
+    # Retrieve merchant summary for active merchants in the "retail" category who have coupons
+    return Merchants.WHERE(
+        (status == "active") & (CONTAINS(LOWER(category), "%retail%")) & HAS(coupons)
+    ).CALCULATE(merchant_name=name, total_coupons=COUNT(coupons))
+
+
+def impl_defog_ewallet_adv4():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    How many wallet transactions were made by users from the US in the last 7
+    days inclusive of today? Return the number of transactions and total
+    transaction amount. Last 7 days = DATE('now', -'7 days') to DATE('now').
+    Always join wallet_transactions_daily with users before using the
+    wallet_transactions_daily table.
+    """
+    # Filter transactions based on the creation date and sending user's country
+    us_transactions = Transactions.WHERE(
+        (DATEDIFF("days", created_at, "now") <= 7) & (sending_user.country == "US")
+    )
+    # Calculate the number of transactions and the total amount for the filtered transactions
+    return Ewallet.CALCULATE(
+        num_transactions=COUNT(us_transactions),
+        total_amount=KEEP_IF(SUM(us_transactions.amount), COUNT(us_transactions) > 0),
+    )
+
+
+def impl_defog_ewallet_adv5():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the average AMB for user wallets updated in the past week,
+    inclusive of 7 days ago? Return the average balance. AMB = average balance
+    per user (for the given time duration).
+    """
+    selected_user_balances = UserBalances.WHERE(
+        DATEDIFF("days", updated_at, "now") <= 7
+    )
+
+    return Ewallet.CALCULATE(AMB=AVG(selected_user_balances.balance))
+
+
+def impl_defog_ewallet_adv6():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the LUB for each user. LUB = Latest User Balance, which is the most
+    recent balance for each user
+    """
+    latest_balance_record = balances.WHERE(
+        RANKING(by=updated_at.DESC(), levels=1) == 1
+    ).SINGULAR()
+
+    return Users.WHERE(HAS(balances)).CALCULATE(
+        user_id=uid, latest_balance=latest_balance_record.balance
+    )
+
+
+def impl_defog_ewallet_adv7():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the marketing opt-in preference for each user? Return the user ID
+    and boolean opt-in value. To get any user's settings, only select the
+    latest snapshot of user_setting_snapshot for each user.
+    """
+    latest_snapshot = setting_snapshots.WHERE(
+        RANKING(by=created_at.DESC(), levels=1) == 1
+    ).SINGULAR()
+
+    return Users.WHERE(HAS(latest_snapshot)).CALCULATE(
+        uid=uid, marketing_opt_in=latest_snapshot.marketing_opt_in
+    )
+
+
+def impl_defog_ewallet_adv8():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the MRR for each merchant? Return the merchant name, category,
+    revenue amount, and revenue rank. MRR = Merchant Revenue Rank, which ranks
+    merchants based on amounts from successfully received transactions only.
+    """
+    successful_transactions = transactions_received.WHERE(
+        (receiver_type == 1) & (status == "success")
+    )
+    transaction_SUM = SUM(successful_transactions.amount)
+
+    return Merchants.WHERE(HAS(successful_transactions)).CALCULATE(
+        merchants_id=mid,
+        merchants_name=name,
+        category=category,
+        total_revenue=transaction_SUM,
+        mrr=RANKING(by=transaction_SUM.DESC(), levels=1),
+    )
+
+
+def impl_defog_ewallet_adv9():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the PMDAU (Per Month Daily Active Users) for wallet transactions in
+    the last 2 months excluding the current month? PMDAU (Per Month Daily
+    Active Users) = COUNT(DISTINCT(sender_id) ... WHERE t.sender_type = 0.
+    Truncate created_at to month for aggregation.
+
+    """
+    # Define the start date (2 months before the start of the current month)
+    start_date = DATETIME("now", "start of month", "-2 months")
+
+    # Define the end date (start of the current month)
+    end_date = DATETIME("now", "start of month")
+
+    # Filter successful transactions based on sender type and creation date range
+    successful_transactions = Transactions.WHERE(
+        (sender_type == 0) & (created_at >= start_date) & (created_at < end_date)
+    ).CALCULATE(year_month=DATETIME(created_at, "start of month"))
+
+    # Group transactions by month and calculate the number of distinct active users
+    return PARTITION(successful_transactions, name="transc", by=year_month).CALCULATE(
+        year_month=year_month, active_users=NDISTINCT(transc.sender_id)
+    )
+
+
+def impl_defog_ewallet_adv10():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the total number of wallet transactions sent by each user that is
+    not a merchant? Return the user ID and total transaction count.
+    """
+    successful_transactions = transactions_sent.WHERE(sender_type == 0)
+    # Group users who have successful transactions and calculate the number of distinct transactions per user
+    return Users.WHERE(HAS(successful_transactions)).CALCULATE(
+        user_id=uid, total_transactions=COUNT(successful_transactions)
+    )
+
+
+def impl_defog_ewallet_adv11():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the total session duration in seconds for each user between
+    2023-06-01 inclusive and 2023-06-08 exclusive? Return the user ID and their
+    total duration as an integer sorted by total duration with the longest
+    duration first.
+    """
+    selected_sessions = sessions.WHERE(
+        (session_start_ts >= "2023-06-01") & (session_end_ts < "2023-06-08")
+    ).CALCULATE(
+        duration=DATEDIFF("seconds", session_start_ts, session_end_ts)
+    )  # Pydough cannot convert dates to seconds directly, DATEDIFF
+
+    # Calculate the total session duration for each user and order by the total duration in descending order
+    return (
+        Users.CALCULATE(uid=uid, total_duration=SUM(selected_sessions.duration))
+        .ORDER_BY(total_duration.DESC())
+        .WHERE(HAS(selected_sessions))
+    )
+
+
+def impl_defog_ewallet_adv12():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the total transaction amount for each coupon offered by merchant
+    with ID 1? Return the coupon ID and total amount transacted with it.
+    """
+    return Coupons.WHERE(merchant_id == "1").CALCULATE(
+        coupon_id=cid, total_discount=SUM(transaction_used_in.amount)
+    )
+
+
+def impl_defog_ewallet_adv13():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What is the TUC in the past month, inclusive of 1 month ago? Return the
+    total count. TUC = Total number of user sessions in the past month
+    """
+    selected_sessions = UserSessions.WHERE(
+        session_start_ts >= DATETIME("now", "-1 month", "start of day")
+    )
+
+    return Ewallet.CALCULATE(TUC=COUNT(selected_sessions))
+
+
+def impl_defog_ewallet_adv14():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What was the STR for wallet transactions in the previous month? STR
+    (success transaction rate) = number of successful transactions / total
+    number of transactions.
+    """
+    past_month_transactions = Transactions.WHERE(
+        DATEDIFF("months", created_at, "now") == 1
+    )
+
+    successful_transactions = past_month_transactions.WHERE(status == "success")
+
+    return Ewallet.CALCULATE(
+        SUM(past_month_transactions.status == "success")
+        / COUNT(past_month_transactions)
+    )
+
+
+def impl_defog_ewallet_adv15():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Which merchant created the highest number of coupons within the same month
+    that the merchant was created (coupon or merchant can be created earlier
+    than the other)? Return the number of coupons along with the merchant's id
+    and name.
+    """
+    return Merchants.CALCULATE(
+        merchant_id=mid,
+        merchant_name=name,
+        coupons_per_merchant=COUNT(
+            coupons.WHERE(DATEDIFF("months", merchant.created_at, created_at) == 0)
+        ),
+    ).TOP_K(1, by=coupons_per_merchant.DESC())
+
+
+def impl_defog_ewallet_adv16():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Which users from the US have unread promotional notifications? Return the
+    username and the total number of unread promotional notifications. User
+    country should be matched case-insensitively, e.g., LOWER(users.country) =
+    'us'. Notification type and status should be matched exactly.
+    """
+    unread_notifs = notifications.WHERE(
+        (notification_type == "promotion") & (status == "unread")
+    )
+
+    return Users.WHERE((LOWER(country) == "us") & HAS(unread_notifs)).CALCULATE(
+        username=username, total_unread_notifs=COUNT(unread_notifs)
+    )
+
+
+def impl_defog_ewallet_basic1():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    How many distinct active users sent money per month in 2023? Return the
+    number of active users per month (as a date), starting from the earliest
+    date. Do not include merchants in the query. Only include successful
+    transactions.
+    """
+    selected_transactions = Transactions.WHERE(
+        (status == "success")
+        & (YEAR(created_at) == 2023)
+        & (sending_user.status == "active")
+        & (sender_type == 0)
+    ).CALCULATE(month=DATETIME(created_at, "start of month"))
+
+    return PARTITION(selected_transactions, name="t", by=month).CALCULATE(
+        month, active_users=NDISTINCT(t.sender_id)
+    )
+
+
+def impl_defog_ewallet_basic10():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Who are the top 2 merchants (receiver type 1) by total transaction amount
+    in the past 150 days (inclusive of 150 days ago)? Return the merchant name,
+    total number of transactions, and total transaction amount.
+    """
+    selected_transactions = transactions_received.WHERE(
+        (receiver_type == 1)
+        & (created_at >= DATETIME("now", "-150 days", "start of day"))
+    )
+
+    return Merchants.CALCULATE(
+        merchant_name=name,
+        total_transactions=COUNT(selected_transactions),
+        total_amount=SUM(selected_transactions.amount),
+    ).TOP_K(2, by=total_amount.DESC())
+
+
+def impl_defog_ewallet_basic2():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Return merchants (merchant ID and name) who have not issued any coupons.
+    """
+    return Merchants.WHERE(HASNOT(coupons)).CALCULATE(
+        merchant_id=mid, merchant_name=name
+    )
+
+
+def impl_defog_ewallet_basic3():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Return the distinct list of merchant IDs that have received money from a
+    transaction. Consider all transaction types in the results you return,
+    but only include the merchant ids in your final answer.
+    """
+    return Merchants.WHERE(
+        HAS(transactions_received.WHERE(receiver_type == 1))
+    ).CALCULATE(merchant=mid)
+
+
+def impl_defog_ewallet_basic4():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Return the distinct list of user IDs who have received transaction
+    notifications.
+    """
+    return Users.WHERE(
+        HAS(notifications.WHERE(notification_type == "transaction"))
+    ).CALCULATE(user_id=uid)
+
+
+def impl_defog_ewallet_basic5():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Return users (user ID and username) who have not received any
+    notifications.
+    """
+    return Users.WHERE(HASNOT(notifications)).CALCULATE(uid, username)
+
+
+def impl_defog_ewallet_basic6():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What are the top 2 most frequently used device types for user sessions
+    and their respective counts?
+    """
+    selected_sessions = PARTITION(
+        UserSessions, name="usession", by=device_type
+    ).CALCULATE(device_type=device_type, count=COUNT(usession))
+
+    return selected_sessions.TOP_K(2, count.DESC())
+
+
+def impl_defog_ewallet_basic7():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What are the top 3 most common transaction statuses and their respective
+    counts?
+    """
+    return (
+        PARTITION(Transactions, name="t", by=status)
+        .CALCULATE(status=status, count=COUNT(t))
+        .TOP_K(3, count.DESC())
+    )
+
+
+def impl_defog_ewallet_basic8():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What are the top 3 most frequently used coupon codes? Return the coupon
+    code, total number of redemptions, and total amount redeemed.
+    """
+    return Coupons.CALCULATE(
+        coupon_code=code,
+        redemption_count=COUNT(transaction_used_in.txid),
+        total_discount=SUM(transaction_used_in.amount),
+    ).TOP_K(3, redemption_count.DESC())
+
+
+def impl_defog_ewallet_basic9():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Which are the top 5 countries by total transaction amount sent by users,
+    sender_type = 0? Return the country, number of distinct users who sent,
+    and total transaction amount.
+    """
+    transactions_by_sending_users = (
+        Transactions.WHERE(sender_type == 0)
+        .CALCULATE(sender_id=sender_id, amount=amount)
+        .sending_user
+    )
+
+    return (
+        PARTITION(transactions_by_sending_users, name="t", by=country)
+        .CALCULATE(
+            country=country,
+            user_count=NDISTINCT(t.sender_id),
+            total_amount=SUM(t.amount),
+        )
+        .TOP_K(5, total_amount.DESC())
+    )
+
+
+def impl_defog_ewallet_gen1():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Give me today's median merchant wallet balance for all active merchants
+    whose category contains 'retail'
+    """
+    active_merchants = Merchants.WHERE(
+        (CONTAINS(LOWER(category), "%retail%")) & (status == "active")
+    )
+
+    latest_balance_today = balances.WHERE(
+        DATE(updated_at)
+        == DATE(DATETIME("now")) & (RANKING(updated_at.DESC(), levels=1) == 1)
+    )
+
+    return Ewallet.CALCULATE(MEDIAN(active_merchants.latest_balance_today.balance))
+
+
+def impl_defog_ewallet_gen2():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    What was the average transaction daily and monthly limit for the earliest
+    setting snapshot in 2023?
+    """
+    snapshots_2023 = UserSettingSnapshots.WHERE(YEAR(snapshot_date) == 2023)
+
+    return Ewallet.CALCULATE(min_date=MIN(snapshots_2023.snapshot_date)).CALCULATE(
+        avg_daily_limit=AVG(
+            snapshots_2023.WHERE(min_date == snapshot_date).tx_limit_daily
+        ),
+        avg_monthly_limit=AVG(
+            snapshots_2023.WHERE(min_date == snapshot_date).tx_limit_monthly
+        ),
+    )
+
+
+def impl_defog_ewallet_gen3():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    what was the average user session duration in seconds split by device_type?
+    """
+    selected_user_sessions = UserSessions
+
+    return PARTITION(selected_user_sessions, name="usession", by=device_type).CALCULATE(
+        device_type=device_type,
+        avg_session_duration_seconds=AVG(
+            DATEDIFF("seconds", usession.session_start_ts, usession.session_end_ts)
+        ),
+    )
+
+
+def impl_defog_ewallet_gen4():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Which merchants earliest coupon start date was within a year of the
+    merchant's registration? Return the merchant id, registration date, and
+    earliest coupon id and start date
+    """
+    selected_coupons = (
+        Merchants.CALCULATE(
+            merchant_registration_date=created_at,
+            merchants_id=mid,
+            earliest_coupon_start_date=MIN(coupons.start_date),
+        )
+        .CALCULATE(
+            earliest_coupon_id=MAX(
+                coupons.WHERE(earliest_coupon_start_date == start_date).cid
+            )
+        )
+        .coupons.WHERE(start_date <= DATETIME(merchant_registration_date, "+1 year"))
+    )
+
+    return selected_coupons.CALCULATE(
+        merchants_id,
+        merchant_registration_date,
+        earliest_coupon_start_date,
+        earliest_coupon_id,
+    )
+
+
+def impl_defog_ewallet_gen5():
+    """
+    PyDough implementation of the following question for the eWallet graph:
+
+    Which users did not get a notification within the first year of signing up?
+    Return their usernames, emails and signup dates.
+    """
+    return Users.WHERE(
+        HASNOT(
+            notifications.WHERE(
+                (created_at >= user.created_at)
+                & (DATETIME(user.created_at, "+1 year") >= created_at)
+            )
+        )
+    ).CALCULATE(username=username, email=email, created_at=created_at)

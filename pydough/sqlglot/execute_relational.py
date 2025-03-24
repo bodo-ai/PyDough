@@ -40,7 +40,7 @@ def convert_relation_to_sql(
     Returns:
         str: The SQL string representing the relational tree.
     """
-    # TODO (gh #205): use simplify/optimize from sqlglo to rewrite the
+    # TODO (gh #205): use simplify/optimize from sqlglot to rewrite the
     # generated SQL.
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings, config

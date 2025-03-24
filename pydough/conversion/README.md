@@ -22,6 +22,7 @@ Hybrid expressions are used to represent various types of expressions within the
 - `HybridRefExpr`: Represents a reference to another expression.
 - `HybridBackRefExpr`: Represents a reference to another hybrid expression that exists in one of the successors of the current hybrid tree.
 - `HybridChildRefExpr`: Represents a reference to another hybrid expression that exists in one of the child connections of the current hybrid tree.
+- `HybridCorrelfExpr`: Represents a reference to another hybrid expression that exists in the parent hybrid tree containing the current hybrid tree as a child subtree. These references are correlated because they mean that one side of a join will depend on logic from the other side.
 
 ### Hybrid Connections
 
@@ -59,6 +60,12 @@ Hybrid operations represent the various operations that can be performed within 
 - `HybridLimit`: Represents a limit operation.
 - `HybridPartition`: Represents a partition operation.
 - `HybridPartitionChild`: Represents accessing the data of a partition as a child.
+- `HybridNoop`: Represents a do-nothing operation that propagates all of the data from the previous operation without any change.
+- `HybridChildPullup`: Represents an operation that accesses all of the data from a child hybrid tree as if one of its levels were the current level and its ancestors were the current levels ancestors, while the bottom level remain as child references.
+
+## Hybrid De-Correlation
+
+The file [hybrid_decorrelater.py](hybrid_decorrelater.py) contains the logic used to hunt for `HybridCorrelfExpr` outside of a semi/anti join and de-correlates them by snapshotting the hybrid tree and attatching the snapshot copy to the top of the child subtree, thus turning the correlated reference into a back reference. Also, for only-match patterns, replaces the original logic that was snapshotted with a single `HybridChildPullup` to avoid re-computing the same logic twice.
 
 ## Relational Conversion
 
@@ -69,4 +76,8 @@ The methodology for converting hybrid nodes into relational nodes is implemented
 3. **Relational Translation**: The hybrid nodes are recursively converted into relational nodes by starting at the last pipeline operator of the bottom of the hybrid tree, working backwards, and building onto the previous result. The accumulated result is both the relational tree of the answer so far and a mapping of hybrid expressions to the corresponding column in the answer that corresponds to their value. Operations such as filter or limit just wrap the previous result in another relational node, but several other translations have more steps:
    - When stepping down from one level of the HybridTree to the next level, e.g. by accessing a subcollection, the result of the previous level is inner joined to reach the new level, and all expressions from the previous level are back-shifted up by 1.
    - All child references are resolved by calculating the relational translation of the child and joining it onto the current result so that its expressions are accessible as child expressions. The type of join depends on the type of `HybridConnection`, but the result is that every row in the current relation matches to at most 1 row in the child relational tree, either because it is already guaranteed to be singular or because it has been aggregated in a manner that ensures so.
-4. **Finalization**: The final relational structure is created, and any unused columns are pruned.
+4. **Finalization**: The final relational structure is created, and extra optimizations are run such as filter pushdown and column pruning.
+
+## Hybrid De-Correlation
+
+The file [filter_pushdown.py](filter_pushdown.py) contains the logic used to push filters further down into the relational tree.

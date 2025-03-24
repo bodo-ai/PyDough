@@ -126,6 +126,7 @@ These functions can be called on plural data to aggregate it into a singular exp
 - `AVG`: returns the result of taking the average of the values of a plural expression.
 - `MIN`: returns the largest out of the values of a plural expression.
 - `MAX`: returns the smallest out of the values of a plural expression.
+- `ANYTHING`: returns an arbitrary entry from the values of a plural expression.
 - `COUNT`: counts how many non-null values exist in a plural expression (special: see collection aggregations).
 - `NDISTINCT`: counts how many unique values exist in a plural expression (special: see collection aggregations).
 
@@ -142,6 +143,13 @@ These functions return an expression and use logic that produces a value that de
 
 - `RANKING(by=..., levels=None, allow_ties=False, dense=False)`: returns the ordinal position of the current record when all records are sorted by the collation expressions in the `by` argument. By default, uses the same semantics as `ROW_NUMBER`. If `allow_ties=True`, instead uses `RANK`. If `allow_ties=True` and `dense=True`, instead uses `DENSE_RANK`.
 - `PERCENTILE(by=..., levels=None, n_buckets=100)`: splits the data into `n_buckets` equal sized sections by ordering the data by the `by` arguments, where bucket `1` is the smallest data and bucket `n_buckets` is the largest. This is useful for understanding the relative position of a value within a group, like finding the top 10% of performers in a class.
+- `PREV(expr, n=1, default=None, by=..., levels=None)`: returns the nth-preceding value of `expr` within the group of data specified by the `levels` argument, when sorted by the `by` argument. If there are not `n` preceding values, returns `default` instead.
+- `NEXT(expr, n=1, default=None, by=..., levels=None)`: same as `PREV` but in the opposite direction.
+- `RELSUM(expr, levels=None)`: returns the sum of the values of `expr` within the group of data specified by `levels`.
+- `RELAVG(expr, levels=None)`: returns the average of the values of `expr` within the group of data specified by `levels`.
+- `RELCOUNT(expr, levels=None)`: returns the number of non-null values of `expr` within the group of data specified by `levels`.
+- `RELSIZE(expr, levels=None)`: returns the number of records of `expr` (null or non-null) within the group of data specified by `levels`.
+
 
 For an example of how `levels` works, when doing `Regions.nations.customers.CALCULATE(r=RANKING(by=...))`:
 

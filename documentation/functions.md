@@ -55,6 +55,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [AVG](#avg)
    * [MIN](#min)
    * [MAX](#max)
+   * [ANYTHING](#anything)
    * [COUNT](#count)
    * [NDISTINCT](#ndistinct)
    * [HAS](#has)
@@ -64,6 +65,10 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [PERCENTILE](#percentile)
    * [PREV](#prev)
    * [NEXT](#next)
+   * [RELSUM](#relsum)
+   * [RELAVG](#relavg)
+   * [RELCOUNT](#relcount)
+   * [RELSIZE](#relsize)
 - [Banned Python Logic](#banned-python-logic)
    * [\_\_bool\_\_](#__bool__)
    * [\_\_call\_\_](#call_banned)
@@ -393,8 +398,13 @@ The `DATETIME` function is used to build/augment date/timestamp values. The firs
 
 The base argument can be one of the following:
 
-- A string literal indicating that the current timestamp should be built, which has to be one of the following: `now`, `current_date`, `current_timestamp`, `current date`, `current timestamp`. All of these aliases are equivalent, case-insensitive, and ignore leading/trailing whitespace.
+- A string literal indicating that the current timestamp should be built, which has to be one of the following: `now`, `current_date`, `current_timestamp`, `current date`, `current timestamp`, `currentdate` or `currenttimestamp`. All of these aliases are equivalent, case-insensitive, and ignore leading/trailing whitespace.
+- A string literal representing datetime data (e.g. `"2024-01-01"` or `199-12-31 12:59:30`).
+- A datetime literal (e.g. `datetime.date`, `datetime.datetime`, or a `pd.Timestamp` from pandas).
 - A column of datetime data.
+
+> [!NOTE]
+> Other datetime functions ([DATEDIFF](#datediff), [YEAR](#year), [MONTH](#month), [DAY](#day), [HOUR](#hour), [MINUTE](#minute) or [SECOND](#second)) also allow any of the base arguments above as datetime values. For example, you can call `YEAR("now")`, `DATEDIFF("months", dt, pd.Timestamp("2024-03-14")))`, `MONTH("1999-06-13")`, or `DATEDIFF("days", datetime.date(2025, 1, 1), "now")`.
 
 The modifier arguments can be the following (all of the options are case-insensitive and ignore leading/trailing/extra whitespace):
 - A string literal in the format `start of <UNIT>` indicating to truncate the datetime value to a certain unit, which can be the following:
@@ -744,7 +754,7 @@ Parts.CALCULATE(average_shipment_size = AVG(lines.quantity))
 
 ### MIN
 
-The `MIN` function returns the smallest value from the set of numerical values it is called on.
+The `MIN` function returns the smallest value from the set of values it is called on.
 
 ```py
 Suppliers.CALCULATE(cheapest_part_supplied = MIN(supply_records.supply_cost))
@@ -754,10 +764,20 @@ Suppliers.CALCULATE(cheapest_part_supplied = MIN(supply_records.supply_cost))
 
 ### MAX
 
-The `MAX` function returns the largest value from the set of numerical values it is called on.
+The `MAX` function returns the largest value from the set of values it is called on.
 
 ```py
 Suppliers.CALCULATE(most_expensive_part_supplied = MAX(supply_records.supply_cost))
+```
+
+<!-- TOC --><a name="anything"></a>
+
+### ANYTHING
+
+The `ANYTHING` function returns an arbitrary value from the set of values it is called on.
+
+```py
+Suppliers.CALCULATE(chosen_part_name = ANYTHING(supply_records.part.name))
 ```
 
 <!-- TOC --><a name="count"></a>
@@ -920,6 +940,88 @@ The `NEXT` function returns the value of an expression from a following record i
 - `default` (optional): optional argument (default `None`) the value to output when there is no record `n` after the current record. This must be a valid literal.
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+<!-- TOC --><a name="relsum"></a>
+
+### RELSUM
+
+The `RELSUM` function returns the sum of multiple rows of a singular expression within the same collection, e.g. the global sum across all rows, or the sum of rows per an ancestor of a sub-collection. The arguments:
+
+- `expression`: the singular expression to take the sum of across multiple rows.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+For example:
+
+```py
+# Finds the ratio between each customer's account balance and the global
+# sum of all customers' account balances.
+Customers.CALCULATE(ratio=acctbal / RELSUM(acctbal))
+
+# Finds the ratio between each customer's account balance and the sum of all
+# all customers' account balances within that nation.
+Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, levels=1))
+```
+
+
+<!-- TOC --><a name="relavg"></a>
+
+### RELAVG
+
+The `RELAVG` function returns the average of multiple rows of a singular expression within the same collection, e.g. the global average across all rows, or the average of rows per an ancestor of a sub-collection. The arguments:
+
+- `expression`: the singular expression to take the average of across multiple rows.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+```py
+# Finds all customers whose account balance is above the global average of all
+# customers' account balances.
+Customers.WHERE(acctbal > RELAVG(acctbal))
+
+# Finds all customers whose account balance is above the average of all
+# ustomers' account balances within that nation.
+Nations.customers.WHERE(acctbal > RELAVG(acctbal, levels=1))
+```
+
+
+<!-- TOC --><a name="relcount"></a>
+
+### RELCOUNT
+
+The `RELCOUNT` function returns the number of non-null records in multiple rows of a singular expression within the same collection, e.g. the count of all non-null rows, or the number of non-null rows per an ancestor of a sub-collection. The arguments:
+
+- `expression`: the singular expression to count the number of non-null entries across multiple rows.
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+```py
+# Divides each customer's account balance by the total number of positive
+# account balances globally.
+Customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
+
+# Divides each customer's account balance by the total number of positive
+# account balances in the same nation.
+Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), levels=1))
+```
+
+
+<!-- TOC --><a name="relsize"></a>
+
+### RELSIZE
+
+The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection rows per some ancestor collection. The arguments:
+
+- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+```py
+# Divides each customer's account balance by the number of total customers.
+Customers.CALCULATE(ratio = acctbal / RELSIZE())
+
+# Divides each customer's account balance by the number of total customers in
+# that nation.
+Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(levels=1))
+```
 
 
 ## Banned Python Logic

@@ -140,3 +140,7 @@ root_node = RelationalRoot(limit_node, [("column_name", ColumnReference("column_
 # Convert the root node to a string
 root_node_str = root_node.to_string()
 ```
+
+## [Relational Utilities](rel_util.py)
+
+The rel_util file contains a myriad of useful utilities for dealing with relational nodes and relational expressions.

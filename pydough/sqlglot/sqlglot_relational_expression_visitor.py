@@ -3,14 +3,17 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+import datetime
 import warnings
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
+from sqlglot.expressions import Star as SQLGlotStar
 
 from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -146,16 +149,26 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                         window_expression.kwargs.get("default")
                     )
                 this = func(**lag_args)
+            case "RELSUM":
+                this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
+            case "RELAVG":
+                this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)
+            case "RELCOUNT":
+                this = sqlglot_expressions.Count.from_arg_list(arg_exprs)
+            case "RELSIZE":
+                this = sqlglot_expressions.Count.from_arg_list([SQLGlotStar()])
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"
                 )
-        window_call: sqlglot_expressions.Window = sqlglot_expressions.Window(
-            this=this,
-            partition_by=partition_exprs,
-            order=sqlglot_expressions.Order(this=None, expressions=order_exprs),
-        )
-        self._stack.append(window_call)
+        window_args: dict[str, object] = {"this": this}
+        if partition_exprs:
+            window_args["partition_by"] = partition_exprs
+        if order_exprs:
+            window_args["order"] = sqlglot_expressions.Order(
+                this=None, expressions=order_exprs
+            )
+        self._stack.append(sqlglot_expressions.Window(**window_args))
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed
@@ -163,6 +176,31 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         literal: SQLGlotExpression = sqlglot_expressions.convert(
             literal_expression.value
         )
+
+        # Special handling: insert cast calls for ansi casting of date/time
+        # instead of relying on SQLGlot conversion functions. This is because
+        # the default handling in SQLGlot without a dialect is to produce a
+        # nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
+        # specific dialect is responsible for translating into its own logic.
+        # Rather than have that logic show up in the ANSI sql text, we will
+        # instead create the CAST calls ourselves.
+        if self._bindings.dialect == DatabaseDialect.ANSI:
+            if isinstance(literal_expression.value, datetime.date):
+                date: datetime.date = literal_expression.value
+                literal = sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                    to=sqlglot_expressions.DataType.build("DATE"),
+                )
+            if isinstance(literal_expression.value, datetime.datetime):
+                dt: datetime.datetime = literal_expression.value
+                if dt.tzinfo is not None:
+                    raise ValueError(
+                        "PyDough does not yet support datetime values with a timezone"
+                    )
+                literal = sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.convert(dt.isoformat(sep=" ")),
+                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
         self._stack.append(literal)
 
     def visit_correlated_reference(
