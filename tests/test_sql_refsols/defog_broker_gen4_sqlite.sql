@@ -41,7 +41,7 @@ FROM (
           )
           WHERE
             (
-              CAST((JULIANDAY(DATE(DATETIME('2023-04-01'), 'start of day')) - JULIANDAY(DATE(date_time, 'start of day'))) AS INTEGER) = 0
+              DATE(date_time, 'start of day') = '2023-04-01'
             )
             AND (
               transaction_type = 'sell'
