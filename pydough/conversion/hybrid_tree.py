@@ -632,19 +632,26 @@ class HybridChildPullUp(HybridOperation):
                     # If aggregating, wrap the backreference in an ANYTHING
                     # call that is added to the agg calls list so it can be
                     # passed through the aggregation.
-                    agg_name: str = f"agg_{agg_idx}"
-                    while (
-                        agg_name in self.child.aggs
-                        or agg_name in self.child.subtree.pipeline[-1].terms
-                    ):
-                        agg_idx += 1
-                        agg_name = f"agg_{agg_idx}"
-                    self.child.aggs[agg_name] = HybridFunctionExpr(
+                    passthrough_agg: HybridFunctionExpr = HybridFunctionExpr(
                         pydop.ANYTHING, [back_expr], back_expr.typ
                     )
-                    self.pullup_remapping[current_expr] = HybridRefExpr(
-                        agg_name, back_expr.typ
-                    )
+                    agg_name: str
+                    # If the aggregation already exists, use it. Otherwise
+                    # insert a new aggregation.
+                    if passthrough_agg in self.child.aggs.values():
+                        agg_name = self.child.fetch_agg_name(passthrough_agg)
+                    else:
+                        agg_name = f"agg_{agg_idx}"
+                        while (
+                            agg_name in self.child.aggs
+                            or agg_name in self.child.subtree.pipeline[-1].terms
+                        ):
+                            agg_idx += 1
+                            agg_name = f"agg_{agg_idx}"
+                        self.child.aggs[agg_name] = passthrough_agg
+                        self.pullup_remapping[current_expr] = HybridRefExpr(
+                            agg_name, back_expr.typ
+                        )
                 else:
                     # Otherwise, add an access to the backreference to the
                     # pullup remapping.
@@ -1027,6 +1034,26 @@ class HybridConnection:
     connection_type: ConnectionType
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
+
+    def fetch_agg_name(self, call: HybridFunctionExpr) -> str:
+        """
+        Returns the name of an aggregation call within the connection. Throws
+        an error if the aggregation call is not found.
+
+        Args:
+            `call`: The aggregation call whose name within the child connection
+            is being sought.
+
+        Returns:
+            The string `name` such that `self.aggs[name]` returns call.
+
+        Raises:
+            `ValueError`: if the aggregation call is not found.
+        """
+        try:
+            return next(name for name, agg in self.aggs.items() if agg == call)
+        except StopIteration:
+            raise ValueError(f"Aggregation call {call} not found in {self.aggs}")
 
 
 class HybridTree:
@@ -1542,7 +1569,7 @@ class HybridTranslator:
             )
         return agg_ref
 
-    def get_agg_name(self, connection: "HybridConnection") -> str:
+    def gen_agg_name(self, connection: "HybridConnection") -> str:
         """
         Generates a unique name for an aggregation function's output that
         is not already used.
@@ -1622,9 +1649,13 @@ class HybridTranslator:
         child_idx: int = child_ref_mapping[collection_arg.child_idx]
         child_connection: HybridConnection = hybrid.children[child_idx]
         # Generate a unique name for the agg call to push into the child
-        # connection.
-        agg_name: str = self.get_agg_name(child_connection)
-        child_connection.aggs[agg_name] = count_call
+        # connection. If the call already exists, reuse the existing name.
+        agg_name: str
+        if count_call in child_connection.aggs.values():
+            agg_name = child_connection.fetch_agg_name(count_call)
+        else:
+            agg_name = self.gen_agg_name(child_connection)
+            child_connection.aggs[agg_name] = count_call
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
         )
@@ -1754,10 +1785,16 @@ class HybridTranslator:
         # into.
         child_idx: int = child_indices.pop()
         child_connection: HybridConnection = hybrid.children[child_idx]
-        # Generate a unique name for the agg call to push into the child
-        # connection.
-        agg_name: str = self.get_agg_name(child_connection)
-        child_connection.aggs[agg_name] = hybrid_call
+        # If the aggregation already exists in the child, use a child reference
+        # to it.
+        agg_name: str
+        if hybrid_call in child_connection.aggs.values():
+            agg_name = child_connection.fetch_agg_name(hybrid_call)
+        else:
+            # Otherwise, Generate a unique name for the agg call to push into the
+            # child connection.
+            agg_name = self.gen_agg_name(child_connection)
+            child_connection.aggs[agg_name] = hybrid_call
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
         )
