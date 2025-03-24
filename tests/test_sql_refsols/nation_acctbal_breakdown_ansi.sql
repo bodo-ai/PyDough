@@ -4,13 +4,13 @@ SELECT
   n_black_acctbal,
   median_red_acctbal,
   median_black_acctbal,
-  media_overall_acctbal
+  median_overall_acctbal
 FROM (
   SELECT
     COALESCE(agg_3, 0) AS n_black_acctbal,
     COALESCE(agg_4, 0) AS n_red_acctbal,
-    agg_0 AS media_overall_acctbal,
-    agg_1 AS median_black_acctbal,
+    agg_0 AS median_black_acctbal,
+    agg_1 AS median_overall_acctbal,
     agg_2 AS median_red_acctbal,
     name AS nation_name,
     name AS ordering_5
@@ -51,9 +51,9 @@ FROM (
       SELECT
         COUNT(negative_acctbal) AS agg_4,
         COUNT(non_negative_acctbal) AS agg_3,
-        MEDIAN(acctbal) AS agg_0,
+        MEDIAN(acctbal) AS agg_1,
         MEDIAN(negative_acctbal) AS agg_2,
-        MEDIAN(non_negative_acctbal) AS agg_1,
+        MEDIAN(non_negative_acctbal) AS agg_0,
         nation_key
       FROM (
         SELECT

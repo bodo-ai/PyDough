@@ -413,7 +413,7 @@ The modifier arguments can be the following (all of the options are case-insensi
    - **Hours**: Supported aliases are `"hours"`, `"hour"`, and `"h"`.
    - **Minutes**: Supported aliases are `"minutes"`, `"minute"`, and `"m"`.
    - **Seconds**: Supported aliases are `"seconds"`, `"second"`, and `"s"`.
-- A string literal in the form `±<AMT> <UNIT>` indicating to add/subtract a date/time interval to the datetime value. The sign can be `+` or `-`, and if omitted the default is `+`. The amount must be an integer. The unit must be one of the same unit strings allowed for trucation.
+- A string literal in the form `±<AMT> <UNIT>` indicating to add/subtract a date/time interval to the datetime value. The sign can be `+` or `-`, and if omitted the default is `+`. The amount must be an integer. The unit must be one of the same unit strings allowed for truncation.
 
 For example, `"Days"`, `"DAYS"`, and `"d"` are all treated the same due to case insensitivity.
 
@@ -948,7 +948,7 @@ The `RELAVG` function returns the average of multiple rows of a singular express
 Customers.WHERE(acctbal > RELAVG(acctbal))
 
 # Finds all customers whose account balance is above the average of all
-# ustomers' account balances within that nation.
+# customers' account balances within that nation.
 Nations.customers.WHERE(acctbal > RELAVG(acctbal, levels=1))
 ```
 

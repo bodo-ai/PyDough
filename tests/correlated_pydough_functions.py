@@ -118,7 +118,7 @@ def correl_7():
 
 def correl_8():
     # Correlated back reference example #8: non-agg correlated reference
-    # For each nation, fetch the name of its region, but filter the reigon
+    # For each nation, fetch the name of its region, but filter the region
     # so it only keeps it if it starts with the same letter as the nation
     # (otherwise, returns NULL). This is a true correlated join doing an
     # access without aggregation without requiring the RHS be
@@ -133,7 +133,7 @@ def correl_8():
 
 def correl_9():
     # Correlated back reference example #9: non-agg correlated reference
-    # For each nation, fetch the name of its region, but filter the reigon
+    # For each nation, fetch the name of its region, but filter the region
     # so it only keeps it if it starts with the same letter as the nation
     # (otherwise, omit the nation). This is a true correlated join doing an
     # access that also requires the RHS records be present.
@@ -148,7 +148,7 @@ def correl_9():
 
 def correl_10():
     # Correlated back reference example #10: deleted correlated reference
-    # For each nation, fetch the name of its region, but filter the reigon
+    # For each nation, fetch the name of its region, but filter the region
     # so it only keeps it if it starts with the same letter as the nation
     # (otherwise, returns NULL), and also filter the nations to only keep
     # records where the region is NULL. The true correlated join is trumped by

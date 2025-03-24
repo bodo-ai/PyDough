@@ -521,7 +521,7 @@ def nation_acctbal_breakdown():
             n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
             median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
             median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
-            media_overall_acctbal=MEDIAN(customer_info.acctbal),
+            median_overall_acctbal=MEDIAN(customer_info.acctbal),
         )
         .ORDER_BY(nation_name.ASC())
     )
@@ -1004,7 +1004,7 @@ def multi_partition_access_3():
 
 
 def multi_partition_access_4():
-    # Find all transacitons that were the largest for a customer of that ticker
+    # Find all transactions that were the largest for a customer of that ticker
     # (by number of shares) but not the largest for that customer overall.
     cust_ticker_groups = PARTITION(
         Transactions, name="data", by=(customer_id, ticker_id)
@@ -1026,7 +1026,7 @@ def multi_partition_access_5():
     # that ticker were of that type, but less than 20% of all transactions of
     # that type were from that ticker. List the transaction ID, the number of
     # transactions of that ticker/type, ticker, and type. Sort by the number of
-    # transactions of that ticker/type, breaking ties by trnasaction ID.
+    # transactions of that ticker/type, breaking ties by transaction ID.
     ticker_type_groups = PARTITION(
         Transactions, name="data", by=(ticker_id, transaction_type)
     ).CALCULATE(n_ticker_type_trans=COUNT(data))

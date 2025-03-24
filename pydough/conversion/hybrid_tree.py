@@ -26,9 +26,10 @@ __all__ = [
 ]
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
@@ -1426,7 +1427,7 @@ class HybridTranslator:
                 else:
                     for arg in expr.args:
                         if isinstance(arg, ChildReferenceCollection):
-                            # If the argument is a refernece to a child,
+                            # If the argument is a reference to a child,
                             # collection, e.g. `COUNT(X)`, treat as an
                             # aggregation reference if it refers to the child
                             # in question.
@@ -1445,6 +1446,71 @@ class HybridTranslator:
                             )
             case _:
                 return
+
+    def inject_expression(
+        self, hybrid: HybridTree, expr: HybridExpr, create_new_calc: bool
+    ) -> HybridExpr:
+        """
+        Injects a hybrid expression into the HybridTree's terms, returning
+        the new name it was injected with.
+
+        Args:
+            `hybrid`: the base of the HybridTree to inject the expression into.
+            `expr`: the expression to be injected.
+            `create_new_calc`: if True, injects the expression into a new
+            CALCULATE operation. If False, injects the expression into the
+            last CALCULATE operation in the pipeline, if there is one at the
+            end, otherwise creates a new one.
+
+        Returns:
+            The HybridExpr corresponding to the injected expression.
+        """
+        name: str = self.get_internal_name("expr", [hybrid.pipeline[-1].terms])
+        if isinstance(hybrid.pipeline[-1], HybridCalculate) and not create_new_calc:
+            hybrid.pipeline[-1].terms[name] = expr
+            hybrid.pipeline[-1].new_expressions[name] = expr
+        else:
+            hybrid.pipeline.append(
+                HybridCalculate(
+                    hybrid.pipeline[-1],
+                    {name: expr},
+                    hybrid.pipeline[-1].orderings,
+                )
+            )
+        return HybridRefExpr(name, expr.typ)
+
+    def eject_aggregate_inputs(self, hybrid: HybridTree) -> None:
+        """
+        Ensures that any inputs to aggregation calls are only references to
+        columns from the subtree of the hybrid connection being aggregated.
+
+        Args:
+            `hybrid`: the base of the HybridTree to eject the aggregate inputs
+            from. The ancestors & children of `hybrid` must also be processed.
+        """
+        if hybrid.parent is not None:
+            self.eject_aggregate_inputs(hybrid.parent)
+        for child in hybrid.children:
+            self.eject_aggregate_inputs(child.subtree)
+            create_new_calc: bool = True
+            for agg_name, agg_call in sorted(child.aggs.items()):
+                rewritten: bool = False
+                new_args: list[HybridExpr] = []
+                for arg in agg_call.args:
+                    if isinstance(arg, HybridRefExpr):
+                        new_args.append(arg)
+                    else:
+                        rewritten = True
+                        new_args.append(
+                            self.inject_expression(child.subtree, arg, create_new_calc)
+                        )
+                        create_new_calc = False
+                if rewritten:
+                    child.aggs[agg_name] = HybridFunctionExpr(
+                        agg_call.operator,
+                        new_args,
+                        agg_call.typ,
+                    )
 
     def populate_children(
         self,
@@ -1594,7 +1660,7 @@ class HybridTranslator:
         return self.get_internal_name("ordering", [hybrid.pipeline[-1].terms])
 
     def get_internal_name(
-        self, prefix: str, reserved_names: list[dict[str, Any]]
+        self, prefix: str, reserved_names: list[Iterable[str]]
     ) -> str:
         """
         Generates a name to be used in the terms of a HybridTree with a
@@ -1847,7 +1913,9 @@ class HybridTranslator:
         two: HybridExpr = HybridLiteralExpr(Literal(2.0, Float64Type()))
         partition_args: list[HybridExpr] = []
         self.stack.append(hybrid)
-        self.add_unique_terms(child_connection.subtree, child_height, 0, partition_args)
+        self.add_unique_terms(
+            child_connection.subtree, child_height, 0, partition_args, child_idx
+        )
         self.stack.pop()
         order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
         rank: HybridExpr = HybridWindowExpr(
@@ -1896,7 +1964,7 @@ class HybridTranslator:
             agg_name = self.gen_agg_name(child_connection)
             child_connection.aggs[agg_name] = avg_call
 
-        # Return the reference to the aggregation call that is the eqiuvvalent
+        # Return the reference to the aggregation call that is the equivalent
         # to MEDIAN.
         return HybridChildRefExpr(agg_name, child_idx, expr.pydough_type)
 
@@ -1935,7 +2003,7 @@ class HybridTranslator:
         )
         if partition_edge_case:
             assert parent_tree.parent is not None
-            # Treat the partition's parent as the conext for the back
+            # Treat the partition's parent as the context for the back
             # to step into, as opposed to the partition itself (so the back
             # levels are consistent)
             self.stack.append(parent_tree.parent)
@@ -1974,7 +2042,7 @@ class HybridTranslator:
         if not isinstance(parent_result, HybridCorrelExpr):
             parent_tree.correlated_children.add(len(parent_tree.children))
         # Restore parent_tree back onto the stack, since evaluating `back_expr`
-        # does not change the program's current placement in the sutbtrees.
+        # does not change the program's current placement in the subtrees.
         self.stack.append(parent_tree)
         # Create the correlated reference to the expression with regards to
         # the parent tree, which could also be a correlated expression.
@@ -1986,6 +2054,7 @@ class HybridTranslator:
         levels_remaining: int,
         levels_so_far: int,
         partition_args: list[HybridExpr],
+        child_idx: int | None,
     ) -> None:
         """
         Populates a list of partition keys with the unique terms of an ancestor
@@ -2000,6 +2069,9 @@ class HybridTranslator:
             so far.
             `partition_args`: the list of partition keys that is being
             populated with the unique terms of the ancestor level.
+            `child_idx`: the index to use when identifying that a child node
+            has become correlated. If not provided, uses the value from the
+            top of the stack.
         """
         # When the number of levels remaining to step back is 0, we have
         # reached the targeted ancestor, so we add the unique terms.
@@ -2016,17 +2088,26 @@ class HybridTranslator:
                 raise ValueError("Window function references too far back")
             prev_hybrid: HybridTree = self.stack.pop()
             correl_args: list[HybridExpr] = []
-            self.add_unique_terms(prev_hybrid, levels_remaining - 1, 0, correl_args)
+            self.add_unique_terms(
+                prev_hybrid, levels_remaining - 1, 0, correl_args, child_idx
+            )
             for arg in correl_args:
                 if not isinstance(arg, HybridCorrelExpr):
-                    prev_hybrid.correlated_children.add(len(prev_hybrid.children))
+                    if child_idx is not None:
+                        prev_hybrid.correlated_children.add(child_idx)
+                    else:
+                        prev_hybrid.correlated_children.add(len(prev_hybrid.children))
                 partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
             self.stack.append(prev_hybrid)
         else:
             # Otherwise, we hae to step back further, so we recursively
             # repeat the procedure one level further up in the hybrid tree.
             self.add_unique_terms(
-                hybrid.parent, levels_remaining - 1, levels_so_far + 1, partition_args
+                hybrid.parent,
+                levels_remaining - 1,
+                levels_so_far + 1,
+                partition_args,
+                child_idx,
             )
 
     def make_hybrid_expr(
@@ -2047,7 +2128,7 @@ class HybridTranslator:
             `child_ref_mapping`: mapping of indices used by child references in
             the original expressions to the index of the child hybrid tree
             relative to the current level.
-            `inside_agg`: True if `expr` is beign derived is inside of an
+            `inside_agg`: True if `expr` is being derived is inside of an
             aggregation call, False otherwise.
 
         Returns:
@@ -2182,7 +2263,7 @@ class HybridTranslator:
                 # If the levels argument was provided, find the partition keys
                 # for that ancestor level.
                 if expr.levels is not None:
-                    self.add_unique_terms(hybrid, expr.levels, 0, partition_args)
+                    self.add_unique_terms(hybrid, expr.levels, 0, partition_args, None)
                 # Convert all of the window function arguments to hybrid
                 # expressions.
                 for arg in expr.args:

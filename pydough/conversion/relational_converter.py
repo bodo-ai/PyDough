@@ -168,7 +168,7 @@ class RelTranslation:
 
         Args:
             `context`: the context containing the relational subtree being
-            referrenced in a correlated variable access.
+            referenced in a correlated variable access.
 
         Returns:
             The name used to refer to the context in a correlated reference.
@@ -1191,21 +1191,17 @@ def convert_ast_to_relational(
     """
     # Pre-process the QDAG node so the final CALCULATE includes any ordering
     # keys.
-    translator: RelTranslation = RelTranslation()
-    node = translator.preprocess_root(node, columns)
+    rel_translator: RelTranslation = RelTranslation()
+    node = rel_translator.preprocess_root(node, columns)
 
     # Convert the QDAG node to the hybrid form, decorrelate it, then invoke
     # the relational conversion procedure. The first element in the returned
     # list is the final rel node.
-    hybrid: HybridTree = HybridTranslator(configs, dialect).make_hybrid_tree(node, None)
-    print()
-    print("BEFORE")
-    print(hybrid)
+    hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
+    hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
+    hybrid_translator.eject_aggregate_inputs(hybrid)
     run_hybrid_decorrelation(hybrid)
-    print()
-    print("AFTER")
-    print(hybrid)
-    output: TranslationOutput = translator.rel_translation(
+    output: TranslationOutput = rel_translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
     )
 

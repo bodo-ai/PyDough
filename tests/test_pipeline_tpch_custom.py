@@ -1181,7 +1181,7 @@ from pydough.unqualified import (
                 "nation_acctbal_breakdown",
                 lambda: pd.DataFrame(
                     {
-                        "name": [
+                        "nation_name": [
                             "ARGENTINA",
                             "BRAZIL",
                             "CANADA",
