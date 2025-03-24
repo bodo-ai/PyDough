@@ -67,13 +67,19 @@ def get_conjunctions(expr: RelationalExpression) -> set[RelationalExpression]:
         The set of filter conditions whose conjunction forms `expr`.
     """
     if isinstance(expr, LiteralExpression) and expr.value:
+        # If the expression is a true literal, there are no predicates as the
+        # conjunction is always True.
         return set()
-    if isinstance(expr, CallExpression) and expr.op == pydop.BAN:
+    elif isinstance(expr, CallExpression) and expr.op == pydop.BAN:
+        # If the expression is an AND call, flatten to obtain the conjunction
+        # by gathering the conjunction of all of the inputs.
         result = set()
         for arg in expr.inputs:
             result.update(get_conjunctions(arg))
         return result
-    return {expr}
+    else:
+        # Otherwise, the expression itself is the conjunction.
+        return {expr}
 
 
 def partition_expressions(
@@ -106,8 +112,7 @@ def only_references_columns(
     expr: RelationalExpression, allowed_columns: set[str]
 ) -> bool:
     """
-    Returns whether a relational does not contain any column references except
-    for those in a set of allowed columns.
+    Checks if a relational expression contains only column references from the set of allowed columns.
 
     Args:
         `expr`: The expression to check.
@@ -141,7 +146,7 @@ def only_references_columns(
             )
         case _:
             raise NotImplementedError(
-                f"transpose_expression not implemented for {expr.__class__.__name__}"
+                f"only_references_columns not implemented for {expr.__class__.__name__}"
             )
 
 
@@ -172,7 +177,7 @@ def false_when_null_columns(expr: RelationalExpression, null_columns: set[str]) 
             return False
         case _:
             raise NotImplementedError(
-                f"transpose_expression not implemented for {expr.__class__.__name__}"
+                f"false_when_null_columns not implemented for {expr.__class__.__name__}"
             )
 
 
@@ -247,10 +252,11 @@ def transpose_expression(
     expr: RelationalExpression, columns: Mapping[str, RelationalExpression]
 ) -> RelationalExpression:
     """
-    Translates an expression to rephrase its columns of a column mapping so
-    that the expression can be pushed beneath the node that the column mapping
-    came from (e.g. if the node renamed some columns, so the expression needs
-    to switch from using the new names to the old names).
+    Rewrites an expression by replacing its column references based on a given
+    column mapping, allowing the expression to be pushed beneath the node that
+    introduced the mapping. For example, if a node renamed columns, this
+    function translates the expression from the new column names back to the
+    original names.
 
     Args:
         `expr`: The expression to transposed.
@@ -258,7 +264,7 @@ def transpose_expression(
         expressions.
 
     Returns:
-        The transposed expression.
+        The transposed expression with updated column references.
     """
     match expr:
         case LiteralExpression() | CorrelatedReference():
