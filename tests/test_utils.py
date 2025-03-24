@@ -26,6 +26,7 @@ __all__ = [
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, MutableMapping, MutableSequence
+from dataclasses import dataclass
 from typing import Any
 
 import pydough.pydough_operators as pydop
@@ -53,6 +54,9 @@ from pydough.relational import (
     Scan,
 )
 from pydough.types import PyDoughType, UnknownType
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
 
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
@@ -900,3 +904,40 @@ def make_relational_ordering(
         ExpressionSortInfo: The column ordering information.
     """
     return ExpressionSortInfo(expr, ascending, nulls_first)
+
+
+@dataclass
+class PyDoughSQLComparisonTest:
+    """
+    The data packet encapsulating the information to run a PyDough e2e test
+    that compares the result against a reference answer derived by executing a
+    SQL query.
+    """
+
+    pydough_function: Callable[[], UnqualifiedNode]
+    """
+    Function that returns the PyDough code evaluated by the unit test.
+
+    """
+
+    graph_name: str
+    """
+    The graph that the PyDough code will use.
+    """
+
+    sql_function: Callable[[], str]
+    """
+    Function that returns the SQL code that should be executed on the database
+    to derive the reference solution.
+    """
+
+    test_name: str
+    """
+    The name of the unit test
+    """
+
+    order_insensitive: bool = False
+    """
+    If True, the resulting data frames will be sorted so the order
+    of the results is not taken into account
+    """
