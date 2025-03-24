@@ -397,8 +397,13 @@ The `DATETIME` function is used to build/augment date/timestamp values. The firs
 
 The base argument can be one of the following:
 
-- A string literal indicating that the current timestamp should be built, which has to be one of the following: `now`, `current_date`, `current_timestamp`, `current date`, `current timestamp`. All of these aliases are equivalent, case-insensitive, and ignore leading/trailing whitespace.
+- A string literal indicating that the current timestamp should be built, which has to be one of the following: `now`, `current_date`, `current_timestamp`, `current date`, `current timestamp`, `currentdate` or `currenttimestamp`. All of these aliases are equivalent, case-insensitive, and ignore leading/trailing whitespace.
+- A string literal representing datetime data (e.g. `"2024-01-01"` or `199-12-31 12:59:30`).
+- A datetime literal (e.g. `datetime.date`, `datetime.datetime`, or a `pd.Timestamp` from pandas).
 - A column of datetime data.
+
+> [!NOTE]
+> Other datetime functions ([DATEDIFF](#datediff), [YEAR](#year), [MONTH](#month), [DAY](#day), [HOUR](#hour), [MINUTE](#minute) or [SECOND](#second)) also allow any of the base arguments above as datetime values. For example, you can call `YEAR("now")`, `DATEDIFF("months", dt, pd.Timestamp("2024-03-14")))`, `MONTH("1999-06-13")`, or `DATEDIFF("days", datetime.date(2025, 1, 1), "now")`.
 
 The modifier arguments can be the following (all of the options are case-insensitive and ignore leading/trailing/extra whitespace):
 - A string literal in the format `start of <UNIT>` indicating to truncate the datetime value to a certain unit, which can be the following:
@@ -915,6 +920,18 @@ The `RELSUM` function returns the sum of multiple rows of a singular expression 
 - `expression`: the singular expression to take the sum of across multiple rows.
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
 
+For example:
+
+```py
+# Finds the ratio between each customer's account balance and the global
+# sum of all customers' account balances.
+Customers.CALCULATE(ratio=acctbal / RELSUM(acctbal))
+
+# Finds the ratio between each customer's account balance and the sum of all
+# all customers' account balances within that nation.
+Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, levels=1))
+```
+
 
 <!-- TOC --><a name="relavg"></a>
 
@@ -924,6 +941,16 @@ The `RELAVG` function returns the average of multiple rows of a singular express
 
 - `expression`: the singular expression to take the average of across multiple rows.
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+```py
+# Finds all customers whose account balance is above the global average of all
+# customers' account balances.
+Customers.WHERE(acctbal > RELAVG(acctbal))
+
+# Finds all customers whose account balance is above the average of all
+# ustomers' account balances within that nation.
+Nations.customers.WHERE(acctbal > RELAVG(acctbal, levels=1))
+```
 
 
 <!-- TOC --><a name="relcount"></a>
@@ -936,6 +963,17 @@ The `RELCOUNT` function returns the number of non-null records in multiple rows 
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
 
 
+```py
+# Divides each customer's account balance by the total number of positive
+# account balances globally.
+Customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
+
+# Divides each customer's account balance by the total number of positive
+# account balances in the same nation.
+Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), levels=1))
+```
+
+
 <!-- TOC --><a name="relsize"></a>
 
 ### RELSIZE
@@ -943,6 +981,16 @@ The `RELCOUNT` function returns the number of non-null records in multiple rows 
 The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection rows per some ancestor collection. The arguments:
 
 - `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+
+
+```py
+# Divides each customer's account balance by the number of total customers.
+Customers.CALCULATE(ratio = acctbal / RELSIZE())
+
+# Divides each customer's account balance by the number of total customers in
+# that nation.
+Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(levels=1))
+```
 
 
 ## Banned Python Logic

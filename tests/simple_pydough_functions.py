@@ -119,6 +119,20 @@ def year_month_nation_orders():
     ).TOP_K(5, by=n_orders.DESC())
 
 
+def parts_quantity_increase_95_96():
+    # Find the 3 parts with the largest increase in quantity ordered by
+    # rail from 1995 to 1996, breaking ties alphabetically by name.
+    # Only consider parts with a small size and that have at least one
+    # qualifying order from both years.
+    orders_95 = lines.WHERE((YEAR(order.order_date) == 1995) & (ship_mode == "RAIL"))
+    orders_96 = lines.WHERE((YEAR(order.order_date) == 1996) & (ship_mode == "RAIL"))
+    return (
+        Parts.WHERE(STARTSWITH(container, "SM") & HAS(orders_95) & HAS(orders_96))
+        .CALCULATE(name, qty_95=SUM(orders_95.quantity), qty_96=SUM(orders_96.quantity))
+        .TOP_K(3, by=((qty_96 - qty_95).DESC(), name.ASC()))
+    )
+
+
 def rank_a():
     return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 
@@ -745,6 +759,60 @@ def datetime_sampler():
             " \n \t312 \nD \n\r ",
         ),
         DATETIME(" Current_Date ", "+ 45 MM", "-135 s"),
+        YEAR("Current Date"),
+        YEAR(pd.Timestamp("2025-07-04 12:58:45")),
+        YEAR("1999-03-14"),
+        MONTH("Current Date"),
+        MONTH(datetime.date(2001, 6, 30)),
+        MONTH("1999-03-14"),
+        DAY("Current Date"),
+        DAY(pd.Timestamp("2025-07-04 12:58:45")),
+        DAY("2025-07-04 12:58:45"),
+        HOUR("CURRENT_TIMESTAMP"),
+        HOUR(datetime.date(2001, 6, 30)),
+        HOUR("2024-01-01"),
+        MINUTE("CURRENT_TIMESTAMP"),
+        MINUTE(pd.Timestamp("2024-12-25 20:30:59")),
+        MINUTE("2024-01-01"),
+        SECOND("now"),
+        SECOND(pd.Timestamp("2025-07-04 12:58:45")),
+        SECOND("1999-03-14"),
+        DATEDIFF("year", "2018-02-14 12:41:06", "NOW"),
+        DATEDIFF("years", order_date, datetime.date(2022, 11, 24)),
+        DATEDIFF("month", datetime.date(2005, 6, 30), "1999-03-14"),
+        DATEDIFF(
+            "months", datetime.datetime(2006, 5, 1, 12, 0), datetime.date(2022, 11, 24)
+        ),
+        DATEDIFF("day", "CurrentTimestamp", "CURRENTDATE"),
+        DATEDIFF("days", "1999-03-14", "CURRENTDATE"),
+        DATEDIFF("hour", "NOW", "CURRENTDATE"),
+        DATEDIFF("hours", datetime.date(2005, 6, 30), order_date),
+        DATEDIFF("minute", "NOW", datetime.datetime(2006, 5, 1, 12, 0)),
+        DATEDIFF("minutes", order_date, pd.Timestamp("2021-01-01 07:35:00")),
+        DATEDIFF(
+            "second", datetime.date(2022, 11, 24), pd.Timestamp("2021-01-01 07:35:00")
+        ),
+        DATEDIFF("seconds", datetime.date(2005, 6, 30), "2018-02-14 12:41:06"),
+        DATEDIFF("year", order_date, datetime.datetime(2006, 5, 1, 12, 0)),
+        DATEDIFF("years", "2018-02-14 12:41:06", order_date),
+        DATEDIFF("month", order_date, datetime.datetime(2019, 7, 4, 11, 30)),
+        DATEDIFF(
+            "months", datetime.datetime(2019, 7, 4, 11, 30), "2018-02-14 12:41:06"
+        ),
+        DATEDIFF("day", "CURRENTDATE", order_date),
+        DATEDIFF("days", datetime.datetime(2019, 7, 4, 11, 30), "CURRENTDATE"),
+        DATEDIFF("hour", datetime.date(2022, 11, 24), "1999-03-14"),
+        DATEDIFF("hours", "2018-02-14 12:41:06", pd.Timestamp("2020-12-31 00:31:06")),
+        DATEDIFF(
+            "minute", datetime.date(2005, 6, 30), pd.Timestamp("2020-12-31 00:31:06")
+        ),
+        DATEDIFF("minutes", "CurrentTimestamp", "2018-02-14 12:41:06"),
+        DATEDIFF("second", "CURRENTDATE", "1999-03-14"),
+        DATEDIFF(
+            "seconds",
+            datetime.date(2022, 11, 24),
+            datetime.datetime(2019, 7, 4, 11, 30),
+        ),
     )
 
 

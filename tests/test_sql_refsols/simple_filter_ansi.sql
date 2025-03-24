@@ -1,13 +1,13 @@
 SELECT
   order_date,
-  o_orderkey,
-  o_totalprice
+  key AS o_orderkey,
+  total_price AS o_totalprice
 FROM (
   SELECT
     o_orderdate AS order_date,
-    o_orderkey AS o_orderkey,
-    o_totalprice AS o_totalprice
+    o_orderkey AS key,
+    o_totalprice AS total_price
   FROM tpch.ORDERS
 )
 WHERE
-  o_totalprice < 1000.0
+  total_price < 1000.0
