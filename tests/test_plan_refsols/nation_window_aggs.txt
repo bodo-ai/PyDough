@@ -1,0 +1,5 @@
+ROOT(columns=[('nation_name', nation_name), ('key_sum', key_sum), ('key_avg', key_avg), ('n_short_comment', n_short_comment), ('n_nations', n_nations)], orderings=[(ordering_0):asc_first, (ordering_1):asc_first])
+ PROJECT(columns={'key_avg': key_avg, 'key_sum': key_sum, 'n_nations': n_nations, 'n_short_comment': n_short_comment, 'nation_name': nation_name, 'ordering_0': region_key, 'ordering_1': nation_name})
+  PROJECT(columns={'key_avg': RELAVG(args=[key], partition=[], order=[]), 'key_sum': RELSUM(args=[key], partition=[], order=[]), 'n_nations': RELSIZE(args=[], partition=[], order=[]), 'n_short_comment': RELCOUNT(args=[KEEP_IF(comment, LENGTH(comment) < 75:int64)], partition=[], order=[]), 'nation_name': name, 'region_key': region_key})
+   FILTER(condition=NOT(ISIN(SLICE(name, None:unknown, 1:int64, None:unknown), ['A', 'E', 'I', 'O', 'U']:array[unknown])), columns={'comment': comment, 'key': key, 'name': name, 'region_key': region_key})
+    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
