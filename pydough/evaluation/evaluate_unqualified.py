@@ -170,5 +170,4 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, column_selection, config, database.dialect
     )
-    print(relational.to_tree_string())
     return execute_df(relational, database, bindings, display_sql)

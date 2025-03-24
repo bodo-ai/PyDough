@@ -34,6 +34,7 @@ from simple_pydough_functions import (
     first_order_in_year,
     first_order_per_customer,
     function_sampler,
+    global_acctbal_breakdown,
     highest_priority_per_year,
     month_year_sliding_windows,
     nation_acctbal_breakdown,
@@ -50,6 +51,7 @@ from simple_pydough_functions import (
     rank_with_filters_a,
     rank_with_filters_b,
     rank_with_filters_c,
+    region_acctbal_breakdown,
     region_nation_window_aggs,
     regional_suppliers_percentile,
     simple_filter_top_five,
@@ -1215,6 +1217,65 @@ from pydough.unqualified import (
                 ),
             ),
             id="nation_acctbal_breakdown",
+        ),
+        pytest.param(
+            (
+                region_acctbal_breakdown,
+                None,
+                "region_acctbal_breakdown",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_red_acctbal": [2739, 2754, 2729, 2726, 2744],
+                        "n_black_acctbal": [27025, 27198, 27454, 27471, 27160],
+                        "median_red_acctbal": [
+                            -504.68,
+                            -496.385,
+                            -480.64,
+                            -515.045,
+                            -494.435,
+                        ],
+                        "median_black_acctbal": [
+                            5005.21,
+                            4941.92,
+                            5008.5,
+                            4993.3,
+                            4990.1,
+                        ],
+                        "median_overall_acctbal": [
+                            4498.735,
+                            4449.68,
+                            4500.78,
+                            4494.33,
+                            4448.26,
+                        ],
+                    }
+                ),
+            ),
+            id="region_acctbal_breakdown",
+        ),
+        pytest.param(
+            (
+                global_acctbal_breakdown,
+                None,
+                "global_acctbal_breakdown",
+                lambda: pd.DataFrame(
+                    {
+                        "n_red_acctbal": [13692],
+                        "n_black_acctbal": [136308],
+                        "median_red_acctbal": [-496.59],
+                        "median_black_acctbal": [4988.755],
+                        "median_overall_acctbal": [4477.3],
+                    }
+                ),
+            ),
+            id="global_acctbal_breakdown",
         ),
     ],
 )
