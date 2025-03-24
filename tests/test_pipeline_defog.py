@@ -76,8 +76,8 @@ from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df
-from pydough.database_connectors import DatabaseContext
+from pydough import init_pydough_context, to_df, to_sql
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -373,6 +373,38 @@ def defog_test_data(
     text for a defog query.
     """
     return request.param
+
+
+def test_defog_until_sql(
+    defog_test_data: tuple[Callable[[], UnqualifiedNode], str, Callable[[], str]],
+    defog_graphs: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+):
+    """
+    Tests the conversion of the defog analytical questions to SQL.
+    """
+    unqualified_impl, graph_name, _ = defog_test_data
+    test_name: str = unqualified_impl.__name__.split("_")[-1]
+    file_name: str = f"defog_{graph_name.lower()}_{test_name}"
+    file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
+    graph: GraphMetadata = defog_graphs(graph_name)
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    sql_text: str = to_sql(
+        unqualified,
+        metadata=graph,
+        database=empty_context_database,
+    )
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(sql_text + "\n")
+    else:
+        with open(file_path) as f:
+            expected_sql_text: str = f.read()
+        assert sql_text == expected_sql_text.strip(), (
+            "Mismatch between SQL text produced expected SQL text"
+        )
 
 
 @pytest.mark.execute
