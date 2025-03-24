@@ -38,10 +38,10 @@ FROM (
         )
         WHERE
           (
-            ship_date < DATE_STR_TO_DATE('1995-10-01')
+            ship_date < CAST('1995-10-01' AS DATE)
           )
           AND (
-            ship_date >= DATE_STR_TO_DATE('1995-09-01')
+            ship_date >= CAST('1995-09-01' AS DATE)
           )
       )
       LEFT JOIN (

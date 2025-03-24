@@ -14,7 +14,7 @@ FROM (
     FROM (
       SELECT
         CASE WHEN nation_name = 'BRAZIL' THEN volume ELSE 0 END AS brazil_volume,
-        YEAR(order_date) AS o_year,
+        EXTRACT(YEAR FROM order_date) AS o_year,
         customer_key,
         volume
       FROM (
@@ -117,10 +117,10 @@ FROM (
           )
           WHERE
             (
-              order_date <= DATE_STR_TO_DATE('1996-12-31')
+              order_date <= CAST('1996-12-31' AS DATE)
             )
             AND (
-              order_date >= DATE_STR_TO_DATE('1995-01-01')
+              order_date >= CAST('1995-01-01' AS DATE)
             )
         )
           ON order_key = key

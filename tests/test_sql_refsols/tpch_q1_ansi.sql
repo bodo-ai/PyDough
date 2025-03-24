@@ -63,7 +63,7 @@ FROM (
         FROM tpch.LINEITEM
       )
       WHERE
-        ship_date <= DATE_STR_TO_DATE('1998-12-01')
+        ship_date <= CAST('1998-12-01' AS DATE)
     )
     GROUP BY
       return_flag,

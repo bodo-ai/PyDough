@@ -3,6 +3,7 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+import datetime
 import warnings
 
 import sqlglot.expressions as sqlglot_expressions
@@ -10,6 +11,7 @@ from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 
+from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -160,6 +162,31 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         literal: SQLGlotExpression = sqlglot_expressions.convert(
             literal_expression.value
         )
+
+        # Special handling: insert cast calls for ansi casting of date/time
+        # instead of relying on SQLGlot conversion functions. This is because
+        # the default handling in SQLGlot without a dialect is to produce a
+        # nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
+        # specific dialect is responsible for translating into its own logic.
+        # Rather than have that logic show up in the ANSI sql text, we will
+        # instead create the CAST calls ourselves.
+        if self._bindings.dialect == DatabaseDialect.ANSI:
+            if isinstance(literal_expression.value, datetime.date):
+                date: datetime.date = literal_expression.value
+                literal = sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.convert(date.strftime("%Y-%m-%d")),
+                    to=sqlglot_expressions.DataType.build("DATE"),
+                )
+            if isinstance(literal_expression.value, datetime.datetime):
+                dt: datetime.datetime = literal_expression.value
+                if dt.tzinfo is not None:
+                    raise ValueError(
+                        "PyDough does not yet support datetime values with a timezone"
+                    )
+                literal = sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.convert(dt.isoformat(sep=" ")),
+                    to=sqlglot_expressions.DataType.build("TIMESTAMP"),
+                )
         self._stack.append(literal)
 
     def visit_correlated_reference(

@@ -26,10 +26,10 @@ FROM (
           status = 'success'
         )
         AND (
-          CAST((JULIANDAY(DATE('2023-03-31', 'start of day')) - JULIANDAY(DATE(date_time, 'start of day'))) AS INTEGER) >= 0
+          CAST((JULIANDAY(DATE(DATETIME('2023-03-31'), 'start of day')) - JULIANDAY(DATE(date_time, 'start of day'))) AS INTEGER) >= 0
         )
         AND (
-          CAST((JULIANDAY(DATE(date_time, 'start of day')) - JULIANDAY(DATE('2023-01-01', 'start of day'))) AS INTEGER) >= 0
+          CAST((JULIANDAY(DATE(date_time, 'start of day')) - JULIANDAY(DATE(DATETIME('2023-01-01'), 'start of day'))) AS INTEGER) >= 0
         )
     )
   )

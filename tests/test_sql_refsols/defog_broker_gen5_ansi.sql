@@ -8,7 +8,7 @@ FROM (
     month
   FROM (
     SELECT
-      DATE_TRUNC('MONTH', DATETIME(date_time)) AS month,
+      DATE_TRUNC('MONTH', CAST(date_time AS TIMESTAMP)) AS month,
       price
     FROM (
       SELECT
@@ -26,10 +26,10 @@ FROM (
           status = 'success'
         )
         AND (
-          DATEDIFF('2023-03-31', date_time, DAY) >= 0
+          DATEDIFF(CAST('2023-03-31' AS TIMESTAMP), date_time, DAY) >= 0
         )
         AND (
-          DATEDIFF(date_time, '2023-01-01', DAY) >= 0
+          DATEDIFF(date_time, CAST('2023-01-01' AS TIMESTAMP), DAY) >= 0
         )
     )
   )

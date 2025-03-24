@@ -15,7 +15,7 @@ FROM (
       FROM main.sbCustomer
     )
     WHERE
-      join_date >= DATE_STR_TO_DATE('2023-01-01')
+      join_date >= CAST('2023-01-01' AS DATE)
   )
   GROUP BY
     country

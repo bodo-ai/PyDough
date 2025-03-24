@@ -22,11 +22,11 @@ FROM (
       SELECT
         CONCAT_WS(
           '-',
-          YEAR(date),
+          EXTRACT(YEAR FROM date),
           CASE
-            WHEN LENGTH(MONTH(date)) >= 2
-            THEN SUBSTRING(MONTH(date), 1, 2)
-            ELSE SUBSTRING(CONCAT('00', MONTH(date)), (
+            WHEN LENGTH(EXTRACT(MONTH FROM date)) >= 2
+            THEN SUBSTRING(EXTRACT(MONTH FROM date), 1, 2)
+            ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM date)), (
               2 * -1
             ))
           END
@@ -63,11 +63,11 @@ FROM (
       SELECT
         CONCAT_WS(
           '-',
-          YEAR(date),
+          EXTRACT(YEAR FROM date),
           CASE
-            WHEN LENGTH(MONTH(date)) >= 2
-            THEN SUBSTRING(MONTH(date), 1, 2)
-            ELSE SUBSTRING(CONCAT('00', MONTH(date)), (
+            WHEN LENGTH(EXTRACT(MONTH FROM date)) >= 2
+            THEN SUBSTRING(EXTRACT(MONTH FROM date), 1, 2)
+            ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM date)), (
               2 * -1
             ))
           END

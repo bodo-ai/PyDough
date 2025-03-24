@@ -15,11 +15,11 @@ FROM (
       SELECT
         CONCAT_WS(
           '-',
-          YEAR(join_date),
+          EXTRACT(YEAR FROM join_date),
           CASE
-            WHEN LENGTH(MONTH(join_date)) >= 2
-            THEN SUBSTRING(MONTH(join_date), 1, 2)
-            ELSE SUBSTRING(CONCAT('00', MONTH(join_date)), (
+            WHEN LENGTH(EXTRACT(MONTH FROM join_date)) >= 2
+            THEN SUBSTRING(EXTRACT(MONTH FROM join_date), 1, 2)
+            ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM join_date)), (
               2 * -1
             ))
           END
@@ -63,17 +63,17 @@ FROM (
           SELECT
             CONCAT_WS(
               '-',
-              YEAR(join_date),
+              EXTRACT(YEAR FROM join_date),
               CASE
-                WHEN LENGTH(MONTH(join_date)) >= 2
-                THEN SUBSTRING(MONTH(join_date), 1, 2)
-                ELSE SUBSTRING(CONCAT('00', MONTH(join_date)), (
+                WHEN LENGTH(EXTRACT(MONTH FROM join_date)) >= 2
+                THEN SUBSTRING(EXTRACT(MONTH FROM join_date), 1, 2)
+                ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM join_date)), (
                   2 * -1
                 ))
               END
             ) AS month,
-            MONTH(join_date) AS join_month,
-            YEAR(join_date) AS join_year,
+            EXTRACT(MONTH FROM join_date) AS join_month,
+            EXTRACT(YEAR FROM join_date) AS join_year,
             _id
           FROM (
             SELECT
@@ -105,9 +105,10 @@ FROM (
       )
       WHERE
         (
-          MONTH(date_time) = join_month
-        ) AND (
-          YEAR(date_time) = join_year
+          EXTRACT(MONTH FROM date_time) = join_month
+        )
+        AND (
+          EXTRACT(YEAR FROM date_time) = join_year
         )
     )
     GROUP BY
