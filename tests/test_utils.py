@@ -931,6 +931,11 @@ class PyDoughSQLComparisonTest:
     to derive the reference solution.
     """
 
+    test_name: str
+    """
+    The name of the unit test
+    """
+
     order_insensitive: bool = False
     """
     If True, the resulting data frames will be sorted so the order
