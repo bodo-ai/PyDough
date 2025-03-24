@@ -2,6 +2,8 @@
 Integration tests for the PyDough workflow on the defog.ai queries.
 """
 
+from collections.abc import Callable
+
 import pandas as pd
 import pytest
 from defog_outputs import (
@@ -692,7 +694,7 @@ def defog_test_data(
 
 
 def test_defog_until_sql(
-    defog_test_data: tuple[Callable[[], UnqualifiedNode], str, Callable[[], str]],
+    defog_test_data: PyDoughSQLComparisonTest,
     defog_graphs: graph_fetcher,
     empty_context_database: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
@@ -701,7 +703,8 @@ def test_defog_until_sql(
     """
     Tests the conversion of the defog analytical questions to SQL.
     """
-    unqualified_impl, graph_name, _ = defog_test_data
+    unqualified_impl: Callable[[], UnqualifiedNode] = defog_test_data.pydough_function
+    graph_name: str = defog_test_data.graph_name
     test_name: str = unqualified_impl.__name__.split("_")[-1]
     file_name: str = f"defog_{graph_name.lower()}_{test_name}"
     file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)

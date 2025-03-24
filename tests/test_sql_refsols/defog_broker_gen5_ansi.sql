@@ -26,10 +26,12 @@ FROM (
           status = 'success'
         )
         AND (
-          DATEDIFF(CAST('2023-03-31' AS TIMESTAMP), date_time, DAY) >= 0
-        )
-        AND (
-          DATEDIFF(date_time, CAST('2023-01-01' AS TIMESTAMP), DAY) >= 0
+          (
+            CAST('2023-01-01' AS DATE) <= date_time
+          )
+          AND (
+            date_time <= CAST('2023-03-31' AS DATE)
+          )
         )
     )
   )
