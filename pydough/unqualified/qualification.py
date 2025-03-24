@@ -49,7 +49,6 @@ from .unqualified_node import (
     UnqualifiedTopK,
     UnqualifiedWhere,
     UnqualifiedWindow,
-    display_raw,
 )
 
 
@@ -58,7 +57,6 @@ class Qualifier:
         self._graph: GraphMetadata = graph
         self._configs: PyDoughConfigs = configs
         self._builder: AstNodeBuilder = AstNodeBuilder(graph)
-        self._memo: dict[tuple[str, PyDoughCollectionQDAG], PyDoughQDAG] = {}
 
     @property
     def graph(self) -> GraphMetadata:
@@ -74,50 +72,6 @@ class Qualifier:
         The builder used by the qualifier to create QDAG nodes.
         """
         return self._builder
-
-    def lookup_if_already_qualified(
-        self,
-        unqualified_str: str,
-        context: PyDoughCollectionQDAG,
-    ) -> PyDoughQDAG | None:
-        """
-        Fetches the qualified definition of an unqualified node (by string) if
-        it has already been defined within a certain context. Returns None
-        if it has not.
-
-        Args:
-            `unqualified_str`: the string representation of the unqualified
-            node (used for lookups since true equality is unsupported on
-            unqualified nodes).
-            `context`: the collection context in which the qualification is
-            being done.
-
-        Returns:
-            The stored answer if one has already been computed, otherwise None.
-        """
-        return self._memo.get((unqualified_str, context), None)
-
-    def add_definition(
-        self,
-        unqualified_str: str,
-        context: PyDoughCollectionQDAG,
-        qualified_node: PyDoughQDAG,
-    ):
-        """
-        Persists the qualified definition of an unqualified node (by string)
-        once it has been defined within a certain context so that the answer
-        can be instantly fetched if required again..
-
-        Args:
-            `unqualified_str`: the string representation of the unqualified
-            node (used for lookups since true equality is unsupported on
-            unqualified nodes).
-            `context`: the collection context in which the qualification is
-            being done.
-            `qualifeid_node`: the qualified definition of the unqualified node
-            when placed within the context.
-        """
-        self._memo[unqualified_str, context] = qualified_node
 
     def qualify_literal(self, unqualified: UnqualifiedLiteral) -> PyDoughExpressionQDAG:
         """
@@ -824,12 +778,6 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        unqualified_str: str = display_raw(unqualified)
-        lookup: PyDoughQDAG | None = self.lookup_if_already_qualified(
-            unqualified_str, context
-        )
-        if lookup is not None:
-            return lookup
         answer: PyDoughQDAG
         match unqualified:
             case UnqualifiedRoot():
@@ -864,8 +812,6 @@ class Qualifier:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"
                 )
-        # Store the answer for cached lookup, then return it.
-        self.add_definition(unqualified_str, context, answer)
         return answer
 
 
