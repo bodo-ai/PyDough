@@ -5,6 +5,7 @@ the query on the database.
 """
 
 import pandas as pd
+from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -38,11 +39,33 @@ def convert_relation_to_sql(
     Returns:
         str: The SQL string representing the relational tree.
     """
-    # TODO (gh #205): use simplify/optimize from sqlglot to rewrite the
-    # generated SQL.
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings
     ).relational_to_sqlglot(relational)
+    glot_expr = parse_one(glot_expr.sql(dialect))
+    print(glot_expr.sql(dialect, pretty=True))
+    breakpoint()
+    import inspect
+
+    from sqlglot.optimizer import RULES as rules
+
+    rules = rules[:1] + rules[2:10] + rules[11:]
+    for rule in rules:
+        kwargs = {}
+        rule_params = inspect.getfullargspec(rule).args
+        if "dialect" in rule_params:
+            kwargs["dialect"] = dialect
+        if "quote_identifiers" in rule_params:
+            kwargs["quote_identifiers"] = False
+        if "leave_tables_isolated" in rule_params:
+            kwargs["leave_tables_isolated"] = True
+        glot_expr = rule(glot_expr, **kwargs)
+        print("*" * 50)
+        print(rule.__name__)
+        print(glot_expr.sql(dialect, pretty=True))
+    # glot_expr = optimize(glot_expr, rules=rules, dialect=dialect)
+    # glot_expr = optimize(parse_one(glot_expr.sql(dialect)), dialect=dialect)
+    breakpoint()
     return glot_expr.sql(dialect, pretty=True)
 
 

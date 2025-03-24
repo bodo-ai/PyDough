@@ -11,7 +11,7 @@ from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier, Select, Subquery, values
+from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
@@ -308,7 +308,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if sort:
             column_exprs = sorted(column_exprs, key=repr)
         return (
-            Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
+            Select()
+            .select(*column_exprs)
+            .from_(Subquery(this=input_expr, alias=TableAlias(this=alias)))
         )
 
     def contains_window(self, exp: RelationalExpression) -> bool:
@@ -362,10 +364,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
             input_name = join.default_input_aliases[i]
-            if input_name not in alias_map and kept_names.intersection(
-                join.inputs[i].columns.keys()
-            ):
-                alias_map[input_name] = self._generate_table_alias()
+            alias_map[input_name] = self._generate_table_alias()
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
@@ -384,7 +383,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
         for i in range(1, len(inputs)):
             subquery: Subquery = Subquery(
-                this=inputs[i], alias=alias_map.get(join.default_input_aliases[i], None)
+                this=inputs[i],
+                alias=TableAlias(
+                    this=alias_map.get(join.default_input_aliases[i], None)
+                ),
             )
             cond: RelationalExpression = (
                 join.conditions[i - 1]

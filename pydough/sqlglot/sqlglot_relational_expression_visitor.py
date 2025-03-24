@@ -166,7 +166,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self, correlated_reference: CorrelatedReference
     ) -> None:
         full_name: str = f"{self._correlated_names[correlated_reference.correl_name]}.{correlated_reference.name}"
-        self._stack.append(Identifier(this=full_name))
+        self._stack.append(Identifier(this=full_name, quoted=False))
 
     @staticmethod
     def make_sqlglot_column(
@@ -185,7 +185,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             full_name = f"{column_reference.input_name}.{column_reference.name}"
         else:
             full_name = column_reference.name
-        return Identifier(this=full_name)
+        return Identifier(this=full_name, quoted=False)
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         self._stack.append(self.make_sqlglot_column(column_reference))
