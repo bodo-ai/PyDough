@@ -39,12 +39,17 @@ def push_filters(
         `node`: The current node of the relational tree.
         `filters`: The set of filter conditions to push down representing
         predicates from ancestor nodes that can be pushed this far down.
+
+    Returns:
+        The transformed version of `node` with the conditions of `filters`
+        pushed down as far as possible, either materializing them above the
+        node or into one of its inputs, or possibly both if there are multiple
+        filters.
     """
     remaining_filters: set[RelationalExpression]
     pushable_filters: set[RelationalExpression]
     match node:
         case Filter():
-            remaining_filters = set()
             # Add all of the conditions from the filters pushed down this far
             # with the filters from the current node. If there is a window
             # function, materialize all of them at this point, otherwise push
@@ -62,6 +67,11 @@ def push_filters(
             else:
                 # Otherwise push all filters that only depend on on columns in
                 # the project that are pass-through of another column.
+                # For example consider the following:
+                # `filters`: `{a > 0, b > 0, a > b}`
+                # `node`: `Project(columns={"a": "x", "b": "LENGTH(y)"})`
+                # Then the only filter that can be pushed down is `a > 0`,
+                # which becomes `x > 0`.
                 allowed_cols: set[str] = set()
                 for name, expr in node.columns.items():
                     if isinstance(expr, ColumnReference):
