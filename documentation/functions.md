@@ -531,7 +531,7 @@ The `DAYOFWEEK` function returns the day of the week for a given date/timestamp.
 In other words, `DAYOFWEEK` returns which day of the week is the given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config.
 
 ```py
-# Returns the day of the week for the current date
+# Returns the day of the week for the order date
 Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
 ```
 
@@ -555,7 +555,7 @@ The following table shows the day of the week for a given date/timestamp, where 
 The `DAYNAME` function returns the name of the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns a string, corresponding to the name of the day of the week. This returns one of the following: `"Monday"`, `"Tuesday"`, `"Wednesday"`, `"Thursday"`, `"Friday"`, `"Saturday"`, or `"Sunday"`.
 
 ```py
-# Returns the name of the day of the week for the current date
+# Returns the name of the day of the week for the order date
 Orders.CALCULATE(day_name = DAYNAME(order_date))
 ```
 

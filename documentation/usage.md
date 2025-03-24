@@ -236,8 +236,8 @@ Suppliers.ORDER_BY(
 
 The following configs are used in the behavior of `DAYOFWEEK`, `DATETIME`, and `DATEDIFF`:
 
-5. `start_of_week` (default=`DayOfWeek.SUNDAY`): Determines which day is considered the first day of the week. This affects functions like 
-- `DAYOFWEEK` : An integer that returns the number of days since the start of the week. Start of week is relative to the `start_of_week` config.
+5. `start_of_week` (default=`DayOfWeek.SUNDAY`): Determines which day is considered the first day of the week. This affects the following functions:
+- `DAYOFWEEK` : A function that returns the number of days since the start of the week. Start of week is relative to the `start_of_week` config.
 - `DATETIME` : This function also supports the `start of week` unit, which is relative to the `start_of_week` config.
 - `DATEDIFF` : This function also supports difference between two dates in terms of weeks, which is relative to the `start_of_week` config.
 
