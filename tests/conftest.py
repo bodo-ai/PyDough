@@ -48,7 +48,7 @@ def defog_config() -> PyDoughConfigs:
     mutate this.
     """
     config: PyDoughConfigs = PyDoughConfigs()
-    # Set the defaults manually, in case they ever change.
+    # Set the config values to match the defog.ai queries.
     config.sum_default_zero = True
     config.avg_default_zero = False
     config.start_of_week = DayOfWeek.MONDAY
