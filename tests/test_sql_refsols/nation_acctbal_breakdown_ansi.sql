@@ -24,30 +24,28 @@ FROM (
       name
     FROM (
       SELECT
-        key,
+        _table_alias_0.key AS key,
         name
       FROM (
         SELECT
-          _table_alias_0.key AS key,
-          _table_alias_0.name AS name,
-          _table_alias_1.name AS name_3
+          n_nationkey AS key,
+          n_name AS name,
+          n_regionkey AS region_key
+        FROM tpch.NATION
+      ) AS _table_alias_0
+      INNER JOIN (
+        SELECT
+          key
         FROM (
           SELECT
-            n_nationkey AS key,
-            n_name AS name,
-            n_regionkey AS region_key
-          FROM tpch.NATION
-        ) AS _table_alias_0
-        LEFT JOIN (
-          SELECT
-            r_regionkey AS key,
-            r_name AS name
+            r_name AS name,
+            r_regionkey AS key
           FROM tpch.REGION
-        ) AS _table_alias_1
-          ON region_key = _table_alias_1.key
-      )
-      WHERE
-        name_3 = 'AMERICA'
+        )
+        WHERE
+          name = 'AMERICA'
+      ) AS _table_alias_1
+        ON region_key = _table_alias_1.key
     )
     LEFT JOIN (
       SELECT
