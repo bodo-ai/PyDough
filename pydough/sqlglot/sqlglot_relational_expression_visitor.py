@@ -10,6 +10,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
+from sqlglot.expressions import Star as SQLGlotStar
 
 from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
@@ -145,16 +146,26 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                         window_expression.kwargs.get("default")
                     )
                 this = func(**lag_args)
+            case "RELSUM":
+                this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
+            case "RELAVG":
+                this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)
+            case "RELCOUNT":
+                this = sqlglot_expressions.Count.from_arg_list(arg_exprs)
+            case "RELSIZE":
+                this = sqlglot_expressions.Count.from_arg_list([SQLGlotStar()])
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"
                 )
-        window_call: sqlglot_expressions.Window = sqlglot_expressions.Window(
-            this=this,
-            partition_by=partition_exprs,
-            order=sqlglot_expressions.Order(this=None, expressions=order_exprs),
-        )
-        self._stack.append(window_call)
+        window_args: dict[str, object] = {"this": this}
+        if partition_exprs:
+            window_args["partition_by"] = partition_exprs
+        if order_exprs:
+            window_args["order"] = sqlglot_expressions.Order(
+                this=None, expressions=order_exprs
+            )
+        self._stack.append(sqlglot_expressions.Window(**window_args))
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed

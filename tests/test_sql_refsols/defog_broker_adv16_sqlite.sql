@@ -3,7 +3,7 @@ SELECT
   SPM
 FROM (
   SELECT
-    symbol AS ordering_3,
+    symbol AS ordering_2,
     SPM,
     symbol
   FROM (
@@ -12,13 +12,12 @@ FROM (
         100.0 * (
           COALESCE(agg_0, 0) - COALESCE(agg_1, 0)
         )
-      ) AS REAL) / COALESCE(agg_2, 0) AS SPM,
+      ) AS REAL) / COALESCE(agg_0, 0) AS SPM,
       symbol
     FROM (
       SELECT
         agg_0,
         agg_1,
-        agg_2,
         symbol
       FROM (
         SELECT
@@ -30,7 +29,6 @@ FROM (
         SELECT
           SUM(tax + commission) AS agg_1,
           SUM(amount) AS agg_0,
-          SUM(amount) AS agg_2,
           ticker_id
         FROM (
           SELECT
@@ -68,4 +66,4 @@ FROM (
     )
 )
 ORDER BY
-  ordering_3
+  ordering_2
