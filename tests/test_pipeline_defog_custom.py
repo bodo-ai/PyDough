@@ -977,7 +977,7 @@ def test_pipeline_e2e_defog_custom(
         pytest.param(
             bad_round2,
             "Broker",
-            "Invalid operator invocation 'ROUND\(high, -0.5, 2\)':"
+            r"Invalid operator invocation 'ROUND\(high, -0.5, 2\)':"
             " Expected between 1 and 2 arguments inclusive,received 3.",
             id="bad_round2",
         ),

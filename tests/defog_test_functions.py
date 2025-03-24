@@ -145,14 +145,14 @@ def impl_defog_broker_adv5():
         month=JOIN_STRINGS("-", YEAR(date), LPAD(MONTH(date), 2, "0")),
         symbol=ticker.symbol,
     )
-    ticker_months = PARTITION(price_info, name="updates", by=(symbol, month))
-    months = PARTITION(ticker_months, name="months", by=symbol).months
+    ticker_months = PARTITION(price_info, name="months", by=(symbol, month))
+    months = PARTITION(ticker_months, name="symbol", by=symbol).months
     month_stats = months.CALCULATE(
-        avg_close=AVG(updates.close),
-        max_high=MAX(updates.high),
-        min_low=MIN(updates.low),
+        avg_close=AVG(DailyPrices.close),
+        max_high=MAX(DailyPrices.high),
+        min_low=MIN(DailyPrices.low),
     )
-    prev_month_avg_close = PREV(avg_close, by=month.ASC(), levels=1)
+    prev_month_avg_close = PREV(avg_close, by=month.ASC(), per="symbol")
     return month_stats.CALCULATE(
         symbol,
         month,
@@ -196,11 +196,11 @@ def impl_defog_broker_adv7():
         join_month=MONTH(join_date),
         month=JOIN_STRINGS("-", YEAR(join_date), LPAD(MONTH(join_date), 2, "0")),
     )
-    months = PARTITION(selected_customers, name="custs", by=month)
-    selected_txns = custs.transactions_made.WHERE(
+    month_groups = PARTITION(selected_customers, name="months", by=month)
+    selected_txns = Customers.transactions_made.WHERE(
         (YEAR(date_time) == join_year) & (MONTH(date_time) == join_month)
     )
-    return months.CALCULATE(
+    return month_groups.CALCULATE(
         month,
         customer_signups=COUNT(custs),
         avg_tx_amount=AVG(selected_txns.amount),
@@ -243,11 +243,11 @@ def impl_defog_broker_adv9():
         week=DATETIME(date_time, "start of week"),
         is_weekend=ISIN(DAYOFWEEK(date_time), (0, 6)),
     )
-    weeks = PARTITION(selected_transactions, name="txns", by=week)
+    weeks = PARTITION(selected_transactions, name="weeks", by=week)
     return weeks.CALCULATE(
         week,
-        num_transactions=COUNT(txns),
-        weekend_transactions=SUM(txns.is_weekend),
+        num_transactions=COUNT(Transactions),
+        weekend_transactions=SUM(Transactions.is_weekend),
     )
 
 
@@ -307,8 +307,8 @@ def impl_defog_broker_adv13():
     Customers who joined on or after January 1, 2023.
     """
     selected_customers = Customers.WHERE(join_date >= datetime.date(2023, 1, 1))
-    countries = PARTITION(selected_customers, name="custs", by=country)
-    return countries.CALCULATE(cust_country=country, TAC=COUNT(custs))
+    countries = PARTITION(selected_customers, name="countries", by=country)
+    return countries.CALCULATE(cust_country=country, TAC=COUNT(Customers))
 
 
 def impl_defog_broker_adv14():
@@ -324,9 +324,9 @@ def impl_defog_broker_adv14():
         ticker_type=ticker.ticker_type
     )
 
-    ticker_types = PARTITION(selected_updates, name="updates", by=ticker_type)
+    ticker_types = PARTITION(selected_updates, name="ticker_types", by=ticker_type)
 
-    return ticker_types.CALCULATE(ticker_type, ACP=AVG(updates.close))
+    return ticker_types.CALCULATE(ticker_type, ACP=AVG(DailyPrices.close))
 
 
 def impl_defog_broker_adv15():
@@ -340,9 +340,9 @@ def impl_defog_broker_adv15():
     selected_customers = Customers.WHERE(
         (join_date >= "2022-01-01") & (join_date <= "2022-12-31")
     )
-    countries = PARTITION(selected_customers, name="custs", by=country)
-    n_active = SUM(custs.status == "active")
-    n_custs = COUNT(custs)
+    countries = PARTITION(selected_customers, name="countries", by=country)
+    n_active = SUM(Customers.status == "active")
+    n_custs = COUNT(Customers)
     return countries.CALCULATE(
         country,
         ar=100 * DEFAULT_TO(n_active / n_custs, 0.0),
@@ -380,14 +380,14 @@ def impl_defog_broker_basic1():
     days, inclusive of 30 days ago? Return the country name, number of
     transactions and total transaction amount.
     """
-    counries = PARTITION(Customers, name="custs", by=country)
+    counries = PARTITION(Customers, name="countries", by=country)
     selected_txns = custs.transactions_made.WHERE(
         date_time >= DATETIME("now", "-30 days", "start of day")
     )
     return counries.CALCULATE(
         country,
-        num_transactions=COUNT(selected_txns),
-        total_amount=SUM(selected_txns.amount),
+        num_transactions=COUNT(transactions_made),
+        total_amount=SUM(transactions_made.amount),
     )
 
 
@@ -404,11 +404,11 @@ def impl_defog_broker_basic2():
         (date_time >= datetime.date(2023, 1, 1))
         & (date_time <= datetime.date(2023, 3, 31))
     )
-    txn_types = PARTITION(selected_txns, name="txns", by=transaction_type)
+    txn_types = PARTITION(selected_txns, name="transaction_types", by=transaction_type)
     return txn_types.CALCULATE(
         transaction_type,
-        num_customers=NDISTINCT(txns.customer_id),
-        avg_shares=AVG(txns.shares),
+        num_customers=NDISTINCT(Transactions.customer_id),
+        avg_shares=AVG(Transactions.shares),
     ).TOP_K(3, by=num_customers.DESC())
 
 
@@ -434,13 +434,15 @@ def impl_defog_broker_basic4():
     number of transactions? Return the customer state, ticker type and number
     of transactions.
     """
-    data = Customers.CALCULATE(state=state).transactions_made.ticker
+    data = Customers.CALCULATE(state=state).transactions_made.CALCULATE(
+        ticker_type=ticker.ticker_type
+    )
     return (
-        PARTITION(data, name="combo", by=(state, ticker_type))
+        PARTITION(data, name="combinations", by=(state, ticker_type))
         .CALCULATE(
             state,
             ticker_type,
-            num_transactions=COUNT(combo),
+            num_transactions=COUNT(transactions_made),
         )
         .TOP_K(5, by=num_transactions.DESC())
     )
@@ -476,8 +478,8 @@ def impl_defog_broker_basic7():
     the status and number of transactions.
     """
     return (
-        PARTITION(Transactions, name="status_group", by=status)
-        .CALCULATE(status, num_transactions=COUNT(status_group))
+        PARTITION(Transactions, name="statuses", by=status)
+        .CALCULATE(status, num_transactions=COUNT(Transactions))
         .TOP_K(3, by=num_transactions.DESC())
     )
 
@@ -490,8 +492,8 @@ def impl_defog_broker_basic8():
     name and number of customers.
     """
     return (
-        PARTITION(Customers, name="custs", by=country)
-        .CALCULATE(country, num_customers=COUNT(custs))
+        PARTITION(Customers, name="countries", by=country)
+        .CALCULATE(country, num_customers=COUNT(Customers))
         .TOP_K(5, by=num_customers.DESC())
     )
 
@@ -590,8 +592,8 @@ def impl_defog_broker_gen5():
     ).CALCULATE(month=DATETIME(date_time, "start of month"))
 
     return (
-        PARTITION(selected_transactions, name="m", by=(month))
-        .CALCULATE(month=month, avg_price=AVG(m.price))
+        PARTITION(selected_transactions, name="months", by=month)
+        .CALCULATE(month=month, avg_price=AVG(Transactions.price))
         .ORDER_BY(month.ASC())
     )
 
@@ -636,11 +638,11 @@ def impl_defog_ewallet_adv2():
             is_weekend=ISIN(DAYOFWEEK(created_at), (5, 6)),
         )
     )
-    weeks = PARTITION(past_notifs, name="notifs", by=week)
+    weeks = PARTITION(past_notifs, name="weeks", by=week)
     return weeks.CALCULATE(
         week,
-        num_notifs=COUNT(past_notifs),
-        weekend_notifs=SUM(past_notifs.is_weekend),
+        num_notifs=COUNT(notifications),
+        weekend_notifs=SUM(notifications.is_weekend),
     )
 
 
@@ -702,7 +704,7 @@ def impl_defog_ewallet_adv6():
     recent balance for each user
     """
     latest_balance_record = balances.WHERE(
-        RANKING(by=updated_at.DESC(), levels=1) == 1
+        RANKING(by=updated_at.DESC(), per="Users") == 1
     ).SINGULAR()
 
     return Users.WHERE(HAS(balances)).CALCULATE(
@@ -719,7 +721,7 @@ def impl_defog_ewallet_adv7():
     latest snapshot of user_setting_snapshot for each user.
     """
     latest_snapshot = setting_snapshots.WHERE(
-        RANKING(by=created_at.DESC(), levels=1) == 1
+        RANKING(by=created_at.DESC(), per="Users") == 1
     ).SINGULAR()
 
     return Users.WHERE(HAS(latest_snapshot)).CALCULATE(
@@ -745,7 +747,7 @@ def impl_defog_ewallet_adv8():
         merchants_name=name,
         category=category,
         total_revenue=transaction_SUM,
-        mrr=RANKING(by=transaction_SUM.DESC(), levels=1),
+        mrr=RANKING(by=transaction_SUM.DESC()),
     )
 
 
@@ -771,8 +773,8 @@ def impl_defog_ewallet_adv9():
     ).CALCULATE(year_month=DATETIME(created_at, "start of month"))
 
     # Group transactions by month and calculate the number of distinct active users
-    return PARTITION(successful_transactions, name="transc", by=year_month).CALCULATE(
-        year_month=year_month, active_users=NDISTINCT(transc.sender_id)
+    return PARTITION(successful_transactions, name="months", by=year_month).CALCULATE(
+        year_month=year_month, active_users=NDISTINCT(Transactions.sender_id)
     )
 
 
@@ -911,8 +913,8 @@ def impl_defog_ewallet_basic1():
         & (sender_type == 0)
     ).CALCULATE(month=DATETIME(created_at, "start of month"))
 
-    return PARTITION(selected_transactions, name="t", by=month).CALCULATE(
-        month, active_users=NDISTINCT(t.sender_id)
+    return PARTITION(selected_transactions, name="months", by=month).CALCULATE(
+        month, active_users=NDISTINCT(Transactions.sender_id)
     )
 
 
@@ -990,8 +992,8 @@ def impl_defog_ewallet_basic6():
     and their respective counts?
     """
     selected_sessions = PARTITION(
-        UserSessions, name="usession", by=device_type
-    ).CALCULATE(device_type=device_type, count=COUNT(usession))
+        UserSessions, name="device_types", by=device_type
+    ).CALCULATE(device_type=device_type, count=COUNT(UserSessions))
 
     return selected_sessions.TOP_K(2, count.DESC())
 
@@ -1004,8 +1006,8 @@ def impl_defog_ewallet_basic7():
     counts?
     """
     return (
-        PARTITION(Transactions, name="t", by=status)
-        .CALCULATE(status=status, count=COUNT(t))
+        PARTITION(Transactions, name="statuses", by=status)
+        .CALCULATE(status=status, count=COUNT(Transactions))
         .TOP_K(3, count.DESC())
     )
 
@@ -1032,18 +1034,16 @@ def impl_defog_ewallet_basic9():
     sender_type = 0? Return the country, number of distinct users who sent,
     and total transaction amount.
     """
-    transactions_by_sending_users = (
-        Transactions.WHERE(sender_type == 0)
-        .CALCULATE(sender_id=sender_id, amount=amount)
-        .sending_user
+    transactions_by_sending_users = Transactions.WHERE(sender_type == 0).CALCULATE(
+        country=sending_user.country
     )
 
     return (
-        PARTITION(transactions_by_sending_users, name="t", by=country)
+        PARTITION(transactions_by_sending_users, name="countries", by=country)
         .CALCULATE(
             country=country,
-            user_count=NDISTINCT(t.sender_id),
-            total_amount=SUM(t.amount),
+            user_count=NDISTINCT(sending_user.sender_id),
+            total_amount=SUM(sending_user.amount),
         )
         .TOP_K(5, total_amount.DESC())
     )
@@ -1062,7 +1062,7 @@ def impl_defog_ewallet_gen1():
 
     latest_balance_today = balances.WHERE(
         DATE(updated_at)
-        == DATE(DATETIME("now")) & (RANKING(updated_at.DESC(), levels=1) == 1)
+        == DATE(DATETIME("now")) & (RANKING(updated_at.DESC(), per="Merchants") == 1)
     )
 
     return Ewallet.CALCULATE(MEDIAN(active_merchants.latest_balance_today.balance))
@@ -1095,7 +1095,9 @@ def impl_defog_ewallet_gen3():
     """
     selected_user_sessions = UserSessions
 
-    return PARTITION(selected_user_sessions, name="usession", by=device_type).CALCULATE(
+    return PARTITION(
+        selected_user_sessions, name="device_types", by=device_type
+    ).CALCULATE(
         device_type=device_type,
         avg_session_duration_seconds=AVG(
             DATEDIFF("seconds", usession.session_start_ts, usession.session_end_ts)

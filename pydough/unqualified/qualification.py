@@ -235,7 +235,7 @@ class Qualifier:
         unqualified_args: Iterable[UnqualifiedNode] = unqualified._parcel[1]
         unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_by = self._expressions_to_collations(unqualified_by)
-        levels: int | None = unqualified._parcel[3]
+        per: str | None = unqualified._parcel[3]
         kwargs: dict[str, object] = unqualified._parcel[4]
         # Qualify all of the function args, storing the children built along
         # the way.
@@ -251,6 +251,39 @@ class Qualifier:
             )
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
+        levels: int | None = None
+        if per is not None:
+            components: list[str] = per.split(":")
+            ancestral_names: list[str] = context.get_ancestral_names()
+            ancestor_name: str
+            ancestor_idx: int | None
+            if len(components) == 1:
+                ancestor_name = components[0]
+                ancestor_idx = 1
+            elif len(components) == 2:
+                ancestor_name = components[0]
+                if not components[1].isdigit():
+                    raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+                ancestor_idx = int(components[1])
+                if ancestor_idx <= 0:
+                    raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+            else:
+                raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+            if ancestor_name not in ancestral_names:
+                raise PyDoughUnqualifiedException(
+                    f"Per string refers to unrecognized ancestor {ancestor_name!r} of {context!r}"
+                )
+            if ancestor_idx is None and ancestral_names.count(ancestor_name) > 1:
+                raise PyDoughUnqualifiedException(
+                    f"Per string {per!r} is ambiguous for {context!r}. Use the form '{per}:index' to disambiguate, where '{per}:1' refers to the most recent ancestor."
+                )
+            levels = 1
+            for i in range(len(ancestral_names) - 1, -1, -1):
+                if ancestral_names[i] == ancestor_name:
+                    ancestor_idx -= 1
+                    if ancestor_idx == 0:
+                        break
+                levels += 1
         # Use the qualified children & collation to create a new ORDER BY node.
         return self.builder.build_window_call(
             window_operator, qualified_args, qualified_collations, levels, kwargs

@@ -786,22 +786,40 @@ Customers.WHERE(HASNOT(orders))
 
 Window functions are special functions whose output depends on other records in the same context.A common example of this is finding the ranking of each record if all of the records were to be sorted.
 
-Window functions in PyDough have an optional `levels` argument. If this argument is omitted, it means that the window function applies to all records of the current collection (e.g. rank all customers). If it is provided, it should be a value that can be used as an argument to `BACK`, and in that case it means that the set of values used by the window function should be per-record of the correspond ancestor (e.g. rank all customers within each nation).
+Window functions in PyDough have an optional `per` argument. If this argument is omitted, it means that the window function applies to all records of the current collection (e.g. rank all customers). If it is provided, it should be a string that describes which ancestor of the current context the window function should be calculated with regards to, and in that case it means that the set of values used by the window function should be per-record of the correspond ancestor (e.g. rank all customers per-nation).
 
 For example, if using the `RANKING` window function, consider the following examples:
 
 ```py
-# (no levels) rank every customer relative to all other customers
-Regions.nations.customers.CALCULATE(r=RANKING(...))
+# Rank every customer relative to all other customers byacctbal
+Regions.nations.customers.CALCULATE(r=RANKING(by=acctbal.DESC()))
 
-# (levels=1) rank every customer relative to other customers in the same nation
-Regions.nations.customers.CALCULATE(r=RANKING(..., levels=1))
+# Rank every customer relative to other customers in the same nation, by acctbal
+Regions.nations.customers.CALCULATE(r=RANKING(by=acctbal.DESC(), per="nations"))
 
-# (levels=2) rank every customer relative to other customers in the same region
-Regions.nations.customers.CALCULATE(r=RANKING(..., levels=2))
+# Rank every customer relative to other customers in the same region, by acctbal
+Regions.nations.customers.CALCULATE(r=RANKING(by=acctbal.DESC(), per="Regions"))
+```
 
-# (levels=3) rank every customer relative to all other customers
-Regions.nations.customers.CALCULATE(r=RANKING(..., levels=3))
+If there are multiple ancestors of the current context with the same name, the `per` string should include a suffix `:idx` where `idx` specifies which ancestor with that name to use (`1` = the most recent, `2` = the 2nd most recent, etc.) For example, consider the following:
+
+```py
+order_info = Orders.CALCULATE(y=YEAR(order_date), m=MONTH(order_date))
+p1 = PARTITION(order_info, name="groups", by=(y, m))
+p2 = PARTITION(p1, name="groups", by=(y))
+data = p2.groups.Orders
+
+# Ranks each order per year/month by its total price.
+# The full ancestry is p2 [name=groups] -> p1 [name=groups] -> order_info [name=Orders],
+# So "groups:1" means the window function should be computed with regards to p1
+# since it is the most recent ancestor with the name "groups".
+data.CALCULATE(r=RANKING(by=total_price.DESC(), per="groups:1"))
+
+# Ranks each order per year by its total price.
+# The full ancestry is p2 [name=groups] -> p1 [name=groups] -> order_info [name=Orders],
+# So "groups:2" means the window function should be computed with regards to p2
+# since it is the 2nd most recent ancestor with the name "groups".
+data.CALCULATE(r=RANKING(by=total_price.DESC(), per="groups:2"))
 ```
 
 Below is each window function currently supported in PyDough.
@@ -813,7 +831,7 @@ Below is each window function currently supported in PyDough.
 The `RANKING` function returns ordinal position of the current record when all records in the current context are sorted by certain ordering keys. The arguments:
 
 - `by`:1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 - `allow_ties` (optional): optional argument (default False) specifying to allow values that are tied according to the `by` expressions to have the same rank value. If False, tied values have different rank values where ties are broken arbitrarily.
 - `dense` (optional): optional argument (default False) specifying that if `allow_ties` is True and a tie is found, should the next value after the ties be the current ranking value plus 1, as opposed to jumping to a higher value based on the number of ties that were there. For example, with the values `[a, a, b, b, b, c]`, the values with `dense=True` would be `[1, 1, 2, 2, 2, 3]`, but with `dense=False` they would be `[1, 1, 3, 3, 3, 6]`.
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
@@ -821,11 +839,11 @@ The `RANKING` function returns ordinal position of the current record when all r
 ```py
 # Rank customers per-nation by their account balance
 # (highest = rank #1, no ties)
-Nations.customers.CALCULATE(r = RANKING(by=acctbal.DESC(), levels=1))
+Nations.customers.CALCULATE(r = RANKING(by=acctbal.DESC(), per="Nations"))
 
 # For every customer, finds their most recent order
 # (ties allowed)
-Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) == 1)
+Customers.orders.WHERE(RANKING(by=order_date.DESC(), per="Customers", allow_ties=True) == 1)
 ```
 
 <!-- TOC --><a name="percentile"></a>
@@ -835,7 +853,7 @@ Customers.orders.WHERE(RANKING(by=order_date.DESC(), levels=1, allow_ties=True) 
 The `PERCENTILE` function returns what index the current record belongs to if all records in the current context are ordered then split into evenly sized buckets. The arguments:
 
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. PyDough provides `collation_default_asc` and `propagate_collation` configs to control the default collation and whether to propagate the collation if the current expression is not a collation expression. Please see the [Session Configs](./usage.md#session-configs) documentation for more details.
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 - `n_buckets` (optional): optional argument (default 100) specifying the number of buckets to use. The first values according to the sort order are assigned bucket `1`, and the last values are assigned bucket `n_buckets`.
 
 ```py
@@ -843,7 +861,7 @@ The `PERCENTILE` function returns what index the current record belongs to if al
 Customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
 
 # For every region, find the top 5% of customers with the highest account balances.
-Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), levels=2) > 95)
+Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), per="Regions") > 95)
 ```
 
 <!-- TOC --><a name="prev"></a>
@@ -856,14 +874,17 @@ The `PREV` function returns the value of an expression from a preceding record i
 - `n` (optional): optional argument (default `1`) how many records backwards to look.
 - `default` (optional): optional argument (default `None`) the value to output when there is no record `n` before the current record. This must be a valid literal.
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 
 ```py
 # Find the 10 customers with at least 5 orders with the largest average time
 # gap between their orders, in days.
+order_info = orders.CALCULATE(
+   day_diff=DATEDIFF("days", PREV(order_date, by=order_date.ASC(), per="Customers"), order_date)
+)
 Customers.WHERE(COUNT(orders) > 5).CALCULATE(
    name,
-   average_order_gap=DATEDIFF("days", PREV(order_date, by=order_date.ASC(), levels=1), order_date)
+   average_order_gap=AVG(order_info.day_diff)
 ).TOP_K(10, by=average_order_gap.DESC())
 
 # For every year/month, calculate the percent change in the number of
@@ -893,7 +914,7 @@ The `NEXT` function returns the value of an expression from a following record i
 - `n` (optional): optional argument (default `1`) how many records forward to look.
 - `default` (optional): optional argument (default `None`) the value to output when there is no record `n` after the current record. This must be a valid literal.
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 
 
 <!-- TOC --><a name="relsum"></a>
@@ -903,7 +924,7 @@ The `NEXT` function returns the value of an expression from a following record i
 The `RELSUM` function returns the sum of multiple rows of a singular expression within the same collection, e.g. the global sum across all rows, or the sum of rows per an ancestor of a sub-collection. The arguments:
 
 - `expression`: the singular expression to take the sum of across multiple rows.
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 
 For example:
 
@@ -914,7 +935,7 @@ Customers.CALCULATE(ratio=acctbal / RELSUM(acctbal))
 
 # Finds the ratio between each customer's account balance and the sum of all
 # all customers' account balances within that nation.
-Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, levels=1))
+Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, per="Nations"))
 ```
 
 
@@ -925,7 +946,7 @@ Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, levels=1))
 The `RELAVG` function returns the average of multiple rows of a singular expression within the same collection, e.g. the global average across all rows, or the average of rows per an ancestor of a sub-collection. The arguments:
 
 - `expression`: the singular expression to take the average of across multiple rows.
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 
 ```py
 # Finds all customers whose account balance is above the global average of all
@@ -934,7 +955,7 @@ Customers.WHERE(acctbal > RELAVG(acctbal))
 
 # Finds all customers whose account balance is above the average of all
 # ustomers' account balances within that nation.
-Nations.customers.WHERE(acctbal > RELAVG(acctbal, levels=1))
+Nations.customers.WHERE(acctbal > RELAVG(acctbal, per="Nations"))
 ```
 
 
@@ -945,7 +966,7 @@ Nations.customers.WHERE(acctbal > RELAVG(acctbal, levels=1))
 The `RELCOUNT` function returns the number of non-null records in multiple rows of a singular expression within the same collection, e.g. the count of all non-null rows, or the number of non-null rows per an ancestor of a sub-collection. The arguments:
 
 - `expression`: the singular expression to count the number of non-null entries across multiple rows.
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 
 
 ```py
@@ -955,7 +976,7 @@ Customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
 
 # Divides each customer's account balance by the total number of positive
 # account balances in the same nation.
-Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), levels=1))
+Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), per="Nations"))
 ```
 
 
@@ -965,7 +986,7 @@ Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal 
 
 The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection rows per some ancestor collection. The arguments:
 
-- `levels` (optional): optional argument (default `None`) for the same `levels` argument as all other window functions.
+- `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 
 
 ```py
@@ -974,7 +995,7 @@ Customers.CALCULATE(ratio = acctbal / RELSIZE())
 
 # Divides each customer's account balance by the number of total customers in
 # that nation.
-Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(levels=1))
+Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
 ```
 
 

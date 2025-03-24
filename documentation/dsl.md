@@ -1199,7 +1199,7 @@ In PyDough, it is required that if we are accessing a sub-collection in a collec
 ```py
 %%pydough
 most_recent_package = packages.WHERE(
-    RANKING(by=order_date.DESC(), levels=1) == 1
+    RANKING(by=order_date.DESC(), per="People") == 1
 ).SINGULAR()
 People.CALCULATE(
     ssn,

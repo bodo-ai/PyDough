@@ -127,6 +127,22 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     return root.Lineitems.CALCULATE(value=root.extended_price * root.tax)
 
 
+def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
+    # TODO: complete this
+    # Non-existent per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.order_key.ASC(), per="custs")
+    )
+
+
+def bad_pydough_impl_10(root: UnqualifiedNode) -> UnqualifiedNode:
+    # TODO: complete this
+    # Bad index of valid per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.order_key.ASC(), per="Customers:2")
+    )
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -169,6 +185,16 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_pydough_impl_08,
             "PyDough objects do not yet support writing properties to them.",
             id="08",
+        ),
+        pytest.param(
+            bad_pydough_impl_09,
+            "TODO",
+            id="09",
+        ),
+        pytest.param(
+            bad_pydough_impl_10,
+            "TODO",
+            id="10",
         ),
     ],
 )

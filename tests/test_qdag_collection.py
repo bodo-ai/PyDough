@@ -1290,25 +1290,25 @@ def test_collections_calc_terms(
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts"),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
             ),
-            "TPCH.Partition(Parts, name='parts', by=container).CALCULATE(container=container, total_price=SUM(parts.retail_price))",
+            "TPCH.Partition(Parts, name='containers', by=container).CALCULATE(container=container, total_price=SUM(Parts.retail_price))",
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='parts', by=container]
+  ├─┬─ Partition[name='containers', by=container]
   │ └─┬─ AccessChild
   │   └─── TableCollection[Parts]
   └─┬─ Calculate[container=container, total_price=SUM($1.retail_price)]
     └─┬─ AccessChild
-      └─── PartitionChild[parts]
+      └─── PartitionChild[Parts]
 """,
             id="partition_part",
         ),
@@ -1330,24 +1330,24 @@ def test_collections_calc_terms(
                     region_name=ChildReferenceExpressionInfo("name", 0),
                     part_type=ChildReferenceExpressionInfo("part_type", 1),
                 ),
-                "lines",
+                "Lineitems",
                 [
                     ChildReferenceExpressionInfo("region_name", 0),
                     ChildReferenceExpressionInfo("part_type", 0),
                 ],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("lines")],
+                [SubCollectionInfo("Lineitems")],
                 region_name=ReferenceInfo("region_name"),
                 part_type=ReferenceInfo("part_type"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
                 ),
             ),
-            "TPCH.Partition(Lineitems.WHERE(tax == 0).CALCULATE(region_name=order.shipping_region.name, part_type=part.part_type), name='lines', by=('region_name', 'part_type')).CALCULATE(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
+            "TPCH.Partition(Lineitems.WHERE(tax == 0).CALCULATE(region_name=order.shipping_region.name, part_type=part.part_type), name='groups', by=('region_name', 'part_type')).CALCULATE(region_name=region_name, part_type=part_type, total_price=SUM(Lineitems.extended_price))",
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='lines', by=(region_name, part_type)]
+  ├─┬─ Partition[name='groups', by=(region_name, part_type)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   ├─── Where[tax == 0]
@@ -1359,33 +1359,33 @@ def test_collections_calc_terms(
   │       └─── SubCollection[part]
   └─┬─ Calculate[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
     └─┬─ AccessChild
-      └─── PartitionChild[lines]
+      └─── PartitionChild[groups]
 """,
             id="partition_nested",
         ),
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts"),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
             )
             ** OrderInfo([], (ReferenceInfo("total_price"), False, True)),
-            "TPCH.Partition(Parts, name='parts', by=container).CALCULATE(container=container, total_price=SUM(parts.retail_price)).ORDER_BY(total_price.DESC(na_pos='last'))",
+            "TPCH.Partition(Parts, name='containers', by=container).CALCULATE(container=container, total_price=SUM(Parts.retail_price)).ORDER_BY(total_price.DESC(na_pos='last'))",
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='parts', by=container]
+  ├─┬─ Partition[name='containers', by=container]
   │ └─┬─ AccessChild
   │   └─── TableCollection[Parts]
   ├─┬─ Calculate[container=container, total_price=SUM($1.retail_price)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[parts]
+  │   └─── PartitionChild[Parts]
   └─── OrderBy[total_price.DESC(na_pos='last')]
 """,
             id="partition_with_order_part",
@@ -1394,17 +1394,17 @@ def test_collections_calc_terms(
             PartitionInfo(
                 TableCollectionInfo("Parts")
                 ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
             )
-            ** SubCollectionInfo("parts")
+            ** SubCollectionInfo("Parts")
             ** CalculateInfo(
                 [],
                 part_name=ReferenceInfo("name"),
@@ -1417,7 +1417,7 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='parts', by=container).CALCULATE(container=container, total_price=SUM(parts.retail_price)).parts.CALCULATE(part_name=name, container=container, ratio=retail_price / total_price)",
+            "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='containers', by=container).CALCULATE(container=container, total_price=SUM(pPartsarts.retail_price)).Parts.CALCULATE(part_name=name, container=container, ratio=retail_price / total_price)",
             """
 ──┬─ TPCH
   ├─┬─ Partition[name='parts', by=container]
