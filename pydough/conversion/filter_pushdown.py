@@ -65,7 +65,7 @@ def push_filters(
                 # this point.
                 pushable_filters, remaining_filters = set(), filters
             else:
-                # Otherwise push all filters that only depend on on columns in
+                # Otherwise push all filters that only depend on columns in
                 # the project that are pass-through of another column.
                 # For example consider the following:
                 # `filters`: `{a > 0, b > 0, a > b}`
