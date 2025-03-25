@@ -4,10 +4,13 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
+from collections.abc import MutableSequence
+
 import pandas as pd
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.expressions import Alias
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.database_connectors import (
@@ -16,6 +19,9 @@ from pydough.database_connectors import (
 )
 from pydough.logger import get_logger
 from pydough.relational import RelationalRoot
+from pydough.relational.relational_expressions import (
+    RelationalExpression,
+)
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 from .transform_bindings import SqlGlotTransformBindings
@@ -66,7 +72,38 @@ def convert_relation_to_sql(
     # glot_expr = optimize(glot_expr, rules=rules, dialect=dialect)
     # glot_expr = optimize(parse_one(glot_expr.sql(dialect)), dialect=dialect)
     breakpoint()
+    fix_column_case(glot_expr, relational.ordered_columns)
+    breakpoint()
     return glot_expr.sql(dialect, pretty=True)
+
+
+def fix_column_case(
+    glot_expr: SQLGlotExpression,
+    ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
+) -> None:
+    """
+    Fixes the column names in the SQLGlot expression to match the case in the original RelationalRoot.
+
+    Args:
+        glot_expr: The SQLGlot expression to fix
+        ordered_columns: The ordered columns from the RelationalRoot
+    """
+    # Create a mapping of lowercase column names to their original case
+    column_case_map = {col_name.lower(): col_name for col_name, _ in ordered_columns}
+
+    # Fix column names in the top-level SELECT expressions
+    if hasattr(glot_expr, "expressions"):
+        for expr in glot_expr.expressions:
+            # Handle expressions with aliases
+            if isinstance(expr, Alias):
+                alias_lower = expr.this.lower()
+                if alias_lower in column_case_map:
+                    expr.set("this", column_case_map[alias_lower])
+            # Handle direct column references
+            if hasattr(expr, "this") and isinstance(expr.this, str):
+                col_lower = expr.this.lower()
+                if col_lower in column_case_map:
+                    expr.set("this", column_case_map[col_lower])
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
