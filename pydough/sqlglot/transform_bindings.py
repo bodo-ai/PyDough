@@ -216,15 +216,17 @@ def convert_sqlite_days_from_start_of_week(
     base: SQLGlotExpression, config: PyDoughConfigs
 ) -> SQLGlotExpression:
     """
-    Calculates the number of days between a date and the start of its week in SQLite.
+    Calculates the number of days between a date and the start of its week
+    in SQLite.
 
     For example, if Monday is configured as the start of the week:
     - For a Monday date, returns 0
     - For a Tuesday date, returns 1
     - For a Sunday date, returns 6
 
-    The calculation uses SQLite's STRFTIME('%w', date) which returns 0-6 for Sun-Sat.
-    An offset is applied to shift the result based on the configured start of week.
+    The calculation uses SQLite's STRFTIME('%w', date) which returns 0-6 for
+    Sunday-Saturday. An offset is applied to shift the result based on the
+    configured start of week.
 
     The formula is: ((STRFTIME('%w', date) + offset) % 7)
 
@@ -725,6 +727,7 @@ def convert_iff_case(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `IFF`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         A `CASE` expression equivalent to the input `IFF` call.
@@ -751,6 +754,7 @@ def convert_absent(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `ABSENT`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The `IS NULL` call corresponding to the `ABSENT` call.
@@ -774,6 +778,7 @@ def convert_present(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `PRESENT`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The `IS NOT NULL` call corresponding to the `PRESENT` call.
@@ -796,6 +801,7 @@ def convert_keep_if(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `KEEP_IF`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot case expression equivalent to the `KEEP_IF` call.
@@ -821,6 +827,7 @@ def convert_monotonic(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `MONOTONIC`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression equivalent to the `MONOTONIC` call.
@@ -856,6 +863,7 @@ def convert_concat(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `CONCAT`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         A `CONCAT` expression, or equivalent string literal.
@@ -915,10 +923,12 @@ def convert_slice(
         - Returns the string as is.
     - Case 2: `(start, None)`
         - Positive `start`: Convert to 1-based indexing and slice from `start`.
-        - Negative `start`: Compute `LENGTH(string) + start + 1`; clamp to `1` if less than `1`.
+        - Negative `start`: Compute `LENGTH(string) + start + 1`; clamp to `1`
+         if less than `1`.
     - Case 3: `(None, stop)`
         - Positive `stop`: Slice from position `1` to `stop`.
-        - Negative `stop`: Compute `LENGTH(string) + stop`; clamp to `0` if less than `0` (empty slice).
+        - Negative `stop`: Compute `LENGTH(string) + stop`; clamp to `0` if
+         less than `0` (empty slice).
     - Case 4: `(start, stop)`
         - 1. Both `start` & `stop` >= 0:
             - Convert `start` to 1-based.
@@ -940,7 +950,7 @@ def convert_slice(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `SLICE`, after they were
         converted to SQLGlot expressions.
-
+        `config`: The PyDough configuration.
     Returns:
         The SQLGlot expression matching the functionality of Python based string slicing
         with the caveat that it only supports a step of 1.
@@ -1227,6 +1237,7 @@ def convert_concat_ws(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `CONCAT_WS`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `CONCAT_WS`.
@@ -1248,6 +1259,7 @@ def convert_concat_ws_to_concat(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `CONCAT_WS`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `CONCAT_WS`.
@@ -1274,6 +1286,7 @@ def convert_like(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `LIKE`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `LIKE`.
@@ -1298,6 +1311,7 @@ def convert_startswith(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `STARTSWITH`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `STARTSWITH`
@@ -1328,6 +1342,7 @@ def convert_endswith(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `ENDSWITH`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `ENDSWITH`
@@ -1358,6 +1373,7 @@ def convert_contains(
         converted to SQLGlot expressions.
         `sql_glot_args`: The operands to `CONTAINS`, after they were
         converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `CONTAINS`
@@ -1448,16 +1464,20 @@ def convert_lpad(
     config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
-    Converts and pads the string to the left till the string is the specified length.
+    Converts and pads the string to the left till the string is the specified
+    length.
     If length is 0, return an empty string.
     If length is negative, raise an error.
     If length is positive, pad the string on the left to the specified length.
 
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions. The first operand is expected to be a string.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions. The first operand is expected to be
+        a string.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of
@@ -1506,10 +1526,13 @@ def convert_rpad(
     If length is positive, pad the string on the right to the specified length.
 
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions. The first operand is expected to be a string.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions. The first operand is expected to be
+        a string.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of
@@ -1544,6 +1567,7 @@ def convert_isin(
         SQLGlot expressions.
         `sql_glot_args`: The operands to `ISIN`, after they were converted to
         SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `ISIN`
@@ -1571,6 +1595,7 @@ def convert_ndistinct(
         SQLGlot expressions.
         `sql_glot_args`: The operands to `NDISTINCT`, after they were converted
         to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `NDISTINCT`
@@ -1600,19 +1625,20 @@ def create_convert_datetime_unit_function(unit: str):
         config: PyDoughConfigs,
     ) -> SQLGlotExpression:
         """
-        Converts and extracts the specific time unit from a SQLGlot expression.
+            Converts and extracts the specific time unit from a SQLGlot expression.
 
         Args:
-            `raw_args`: The operands passed to the function before they were converted to
-            SQLGlot expressions. (Not actively used in this implementation.)
-            `sql_glot_args`: The operands passed to the function after they were converted
-            to SQLGlot expressions. The first operand is expected to be a timestamp or
-                                    datetime.
+            `raw_args`: The operands passed to the function before they were
+            converted to SQLGlot expressions. (Not actively used in this
+            implementation.)
+            `sql_glot_args`: The operands passed to the function after they were
+            converted to SQLGlot expressions.
+            `config`: The PyDough configuration.
 
-        Returns:
-            The SQLGlot expression matching the functionality of
-            `EXTRACT(unit FROM expression)` by extracting the specified time unit
-            from the first operand.
+            Returns:
+                The SQLGlot expression matching the functionality of
+                `EXTRACT(unit FROM expression)` by extracting the specified time unit
+                from the first operand.
         """
         return sqlglot_expressions.Extract(
             this=sqlglot_expressions.Var(this=unit),
@@ -1633,10 +1659,12 @@ def convert_sqrt(
     Support for getting the square root of the operand.
 
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of
@@ -1671,10 +1699,12 @@ def convert_datediff(
     Support for getting the difference between two dates in sqlite.
 
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of
@@ -1712,14 +1742,16 @@ def convert_sqlite_datediff(
     Support for getting the difference between two dates in sqlite.
 
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of
-        `DATEDIFF(unit, y, x)`,i.e the difference between two dates.
+        `DATEDIFF(unit, y, x)`, i.e the difference between two dates.
     """
     assert len(sql_glot_args) == 3
     # Check if unit is a string.
@@ -1954,13 +1986,16 @@ def convert_round(
     If a precision is provided, it must be an integer literal.
 
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
-        The SQLGlot expression matching the functionality of `ROUND(number, precision)`.
+        The SQLGlot expression matching the functionality of
+        `ROUND(number, precision)`.
     """
     assert len(sql_glot_args) == 1 or len(sql_glot_args) == 2
     precision_glot: SQLGlotExpression
@@ -1997,12 +2032,16 @@ def convert_sign(
 ) -> SQLGlotExpression:
     """
     Support for getting the sign of the operand.
-    It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+    It returns 1 if the input is positive, -1 if the input is negative,
+    and 0 if the input is zero.
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
+
     Returns:
         The SQLGlot expression matching the functionality of `SIGN(X)`.
     """
@@ -2048,6 +2087,7 @@ def convert_strip(
         SQLGlot expressions. (Not actively used in this implementation.)
         `sql_glot_args`: The operands passed to the function after they were converted
         to SQLGlot expressions.
+        `config`: The PyDough configuration.
 
     Returns:
         The SQLGlot expression matching the functionality of `STRIP(X, Y)`.
@@ -2072,18 +2112,22 @@ def convert_find(
     config: PyDoughConfigs,
 ) -> SQLGlotExpression:
     """
-    Support for getting the index of the first occurrence of a substring within a string.
-    The first argument is the string to search within,
-    and the second argument is the substring to search for.
+    Support for getting the index of the first occurrence of a substring within
+    a string. The first argument is the string to search within, and the second
+    argument is the substring to search for.
     Args:
-        `raw_args`: The operands passed to the function before they were converted to
-        SQLGlot expressions. (Not actively used in this implementation.)
-        `sql_glot_args`: The operands passed to the function after they were converted
-        to SQLGlot expressions.
+        `raw_args`: The operands passed to the function before they were
+        converted to SQLGlot expressions. (Not actively used in this
+        implementation.)
+        `sql_glot_args`: The operands passed to the function after they were
+        converted to SQLGlot expressions.
+        `config`: The PyDough configuration.
+
     Returns:
-        The SQLGlot expression matching the functionality of `FIND(this, expression)`,
-        i.e the index of the first occurrence of the second argument within
-        the first argument, or -1 if the second argument is not found.
+        The SQLGlot expression matching the functionality of
+        `FIND(this, expression)`,i.e the index of the first occurrence of
+        the second argument within the first argument, or -1 if the second
+        argument is not found.
     """
     assert len(sql_glot_args) == 2
     answer: SQLGlotExpression = sqlglot_expressions.Sub(
@@ -2146,6 +2190,7 @@ class SqlGlotTransformBindings:
             converted to SQLGlot expressions.
             `sql_glot_args`: the operands to the function, after they were
             converted to SQLGlot expressions.
+            `config`: The PyDough configuration.
 
         Returns:
             The SQLGlot expression corresponding to the operator invocation on

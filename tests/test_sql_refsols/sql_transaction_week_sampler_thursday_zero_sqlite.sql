@@ -1,4 +1,5 @@
 SELECT
+  date_time,
   DATE(
     date_time,
     '-' || (

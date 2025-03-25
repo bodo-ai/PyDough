@@ -22,7 +22,7 @@ from test_utils import (
 )
 
 from pydough import init_pydough_context, to_sql
-from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
@@ -155,47 +155,27 @@ def test_pydough_to_sql_defog(
         )
 
 
-@pytest.mark.parametrize(
-    "start_week_as_zero_config",
-    [
-        pytest.param(True, id="zero"),
-        pytest.param(False, id="one"),
-    ],
-)
-@pytest.mark.parametrize(
-    "start_of_week_config",
-    [
-        pytest.param(DayOfWeek.SUNDAY, id="sunday"),
-        pytest.param(DayOfWeek.MONDAY, id="monday"),
-        pytest.param(DayOfWeek.TUESDAY, id="tuesday"),
-        pytest.param(DayOfWeek.WEDNESDAY, id="wednesday"),
-        pytest.param(DayOfWeek.THURSDAY, id="thursday"),
-        pytest.param(DayOfWeek.FRIDAY, id="friday"),
-        pytest.param(DayOfWeek.SATURDAY, id="saturday"),
-    ],
-)
 def test_pydough_to_sql_defog_custom_week(
-    start_of_week_config: DayOfWeek,
-    start_week_as_zero_config: bool,
     defog_graphs: graph_fetcher,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     empty_context_database: DatabaseContext,
     update_tests: bool,
-    default_config: PyDoughConfigs,
+    week_handling_config: PyDoughConfigs,
 ) -> None:
     """
     Tests that a PyDough unqualified node can be correctly translated to its
     sql, with the correct string representation.
     """
-    setattr(default_config, "start_of_week", start_of_week_config)
-    setattr(default_config, "start_week_as_zero", start_week_as_zero_config)
     graph: GraphMetadata = defog_graphs("Broker")
     root: UnqualifiedNode = init_pydough_context(graph)(transaction_week_sampler)()
     test_name: str = "sql_transaction_week_sampler"
-    test_name += f"_{start_of_week_config.name.lower()}"
-    test_name += f"_{'zero' if start_week_as_zero_config else 'one'}"
+    test_name += f"_{week_handling_config.start_of_week.name.lower()}"
+    test_name += f"_{'zero' if week_handling_config.start_week_as_zero else 'one'}"
     actual_sql: str = to_sql(
-        root, metadata=graph, database=empty_context_database, config=default_config
+        root,
+        metadata=graph,
+        database=empty_context_database,
+        config=week_handling_config,
     ).strip()
     file_path: str = get_sql_test_filename(test_name, empty_context_database.dialect)
     if update_tests:

@@ -1,4 +1,5 @@
 SELECT
+  date_time,
   DATE_TRUNC('WEEK', CAST(date_time AS TIMESTAMP)) AS sow,
   (
     CASE

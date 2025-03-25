@@ -1,4 +1,5 @@
 SELECT
+  date_time,
   DATE(
     date_time,
     '-' || CAST(STRFTIME('%w', DATETIME(date_time)) AS INTEGER) || ' days',
