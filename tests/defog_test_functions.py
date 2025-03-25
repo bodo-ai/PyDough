@@ -202,7 +202,7 @@ def impl_defog_broker_adv7():
     )
     return month_groups.CALCULATE(
         month,
-        customer_signups=COUNT(custs),
+        customer_signups=COUNT(Customers),
         avg_tx_amount=AVG(selected_txns.amount),
     )
 
@@ -381,13 +381,13 @@ def impl_defog_broker_basic1():
     transactions and total transaction amount.
     """
     counries = PARTITION(Customers, name="countries", by=country)
-    selected_txns = custs.transactions_made.WHERE(
+    selected_txns = Customers.transactions_made.WHERE(
         date_time >= DATETIME("now", "-30 days", "start of day")
     )
     return counries.CALCULATE(
         country,
-        num_transactions=COUNT(transactions_made),
-        total_amount=SUM(transactions_made.amount),
+        num_transactions=COUNT(selected_txns),
+        total_amount=SUM(selected_txns.amount),
     )
 
 
@@ -1042,8 +1042,8 @@ def impl_defog_ewallet_basic9():
         PARTITION(transactions_by_sending_users, name="countries", by=country)
         .CALCULATE(
             country=country,
-            user_count=NDISTINCT(sending_user.sender_id),
-            total_amount=SUM(sending_user.amount),
+            user_count=NDISTINCT(Transactions.sender_id),
+            total_amount=SUM(Transactions.amount),
         )
         .TOP_K(5, total_amount.DESC())
     )
@@ -1093,14 +1093,12 @@ def impl_defog_ewallet_gen3():
 
     what was the average user session duration in seconds split by device_type?
     """
-    selected_user_sessions = UserSessions
-
-    return PARTITION(
-        selected_user_sessions, name="device_types", by=device_type
-    ).CALCULATE(
+    return PARTITION(UserSessions, name="device_types", by=device_type).CALCULATE(
         device_type=device_type,
         avg_session_duration_seconds=AVG(
-            DATEDIFF("seconds", usession.session_start_ts, usession.session_end_ts)
+            DATEDIFF(
+                "seconds", UserSessions.session_start_ts, UserSessions.session_end_ts
+            )
         ),
     )
 

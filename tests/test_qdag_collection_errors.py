@@ -166,29 +166,29 @@ from pydough.qdag import AstNodeBuilder
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts"),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 price=ChildReferenceExpressionInfo("retail_price", 0),
             ),
-            "Expected all terms in CALCULATE(container=container, price=parts.retail_price) to be singular, but encountered a plural expression: parts.retail_price",
+            "Expected all terms in CALCULATE(container=container, price=Parts.retail_price) to be singular, but encountered a plural expression: Parts.retail_price",
             id="bad_plural_h",
         ),
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts"),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
+                [SubCollectionInfo("Parts") ** SubCollectionInfo("suppliers_of_part")],
                 container=ReferenceInfo("container"),
                 balance=ChildReferenceExpressionInfo("account_balance", 0),
             ),
-            "Expected all terms in CALCULATE(container=container, balance=parts.suppliers_of_part.account_balance) to be singular, but encountered a plural expression: parts.suppliers_of_part.account_balance",
+            "Expected all terms in CALCULATE(container=container, balance=Parts.suppliers_of_part.account_balance) to be singular, but encountered a plural expression: Parts.suppliers_of_part.account_balance",
             id="bad_plural_i",
         ),
         pytest.param(

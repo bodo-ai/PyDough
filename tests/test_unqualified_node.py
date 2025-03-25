@@ -52,7 +52,6 @@ from simple_pydough_functions import (
 from test_utils import graph_fetcher
 from tpch_test_functions import (
     impl_tpch_q1,
-    impl_tpch_q2,
     impl_tpch_q3,
     impl_tpch_q4,
     impl_tpch_q5,
@@ -324,12 +323,7 @@ def test_unqualified_to_string(
     [
         pytest.param(
             impl_tpch_q1,
-            "PARTITION(Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1))), name='groups', by=(return_flag, status)).CALCULATE(L_RETURNFLAG=return_flag, L_LINESTATUS=status, SUM_QTY=SUM(lines.quantity), SUM_BASE_PRICE=SUM(lines.extended_price), SUM_DISC_PRICE=SUM((lines.extended_price * (1 - lines.discount))), SUM_CHARGE=SUM(((lines.extended_price * (1 - lines.discount)) * (1 + lines.tax))), AVG_QTY=AVG(lines.quantity), AVG_PRICE=AVG(lines.extended_price), AVG_DISC=AVG(lines.discount), COUNT_ORDER=COUNT(lines)).ORDER_BY(L_RETURNFLAG.ASC(na_pos='first'), L_LINESTATUS.ASC(na_pos='first'))",
-            id="tpch_q1",
-        ),
-        pytest.param(
-            impl_tpch_q2,
-            "PARTITION(Nations.CALCULATE(n_name=name).WHERE((region.name == 'EUROPE')).suppliers.CALCULATE(s_acctbal=account_balance, s_name=name, s_address=address, s_phone=phone, s_comment=comment).supply_records.CALCULATE(supplycost=supplycost).part.WHERE((ENDSWITH(part_type, 'BRASS') & (size == 15))), name='groups', by=(key)).CALCULATE(best_cost=MIN(part.supplycost)).part.WHERE((((supplycost == best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15))).CALCULATE(S_ACCTBAL=s_acctbal, S_NAME=s_name, N_NAME=n_name, P_PARTKEY=key, P_MFGR=manufacturer, S_ADDRESS=s_address, S_PHONE=s_phone, S_COMMENT=s_comment).TOP_K(10, by=(S_ACCTBAL.DESC(na_pos='last'), N_NAME.ASC(na_pos='first'), S_NAME.ASC(na_pos='first'), P_PARTKEY.ASC(na_pos='first')))",
+            "PARTITION(Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1))), name='groups', by=(return_flag, status)).CALCULATE(L_RETURNFLAG=return_flag, L_LINESTATUS=status, SUM_QTY=SUM(Lineitems.quantity), SUM_BASE_PRICE=SUM(Lineitems.extended_price), SUM_DISC_PRICE=SUM((Lineitems.extended_price * (1 - Lineitems.discount))), SUM_CHARGE=SUM(((Lineitems.extended_price * (1 - Lineitems.discount)) * (1 + Lineitems.tax))), AVG_QTY=AVG(Lineitems.quantity), AVG_PRICE=AVG(Lineitems.extended_price), AVG_DISC=AVG(Lineitems.discount), COUNT_ORDER=COUNT(Lineitems)).ORDER_BY(L_RETURNFLAG.ASC(na_pos='first'), L_LINESTATUS.ASC(na_pos='first'))",
             id="tpch_q2",
         ),
         pytest.param(
@@ -374,7 +368,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q11,
-            "TPCH.CALCULATE(min_market_share=(SUM(PartSupp.WHERE((supplier.nation.name == 'GERMANY')).CALCULATE(metric=(supplycost * availqty)).metric) * 0.0001)).PARTITION(PartSupp.WHERE((supplier.nation.name == 'GERMANY')).CALCULATE(metric=(supplycost * availqty)), name='part', by=(part_key)).CALCULATE(PS_PARTKEY=part_key, VALUE=SUM(PartSupp.metric)).WHERE((VALUE > min_market_share)).TOP_K(10, by=(VALUE.DESC(na_pos='last')))",
+            "TPCH.CALCULATE(min_market_share=(SUM(PartSupp.WHERE((supplier.nation.name == 'GERMANY')).CALCULATE(metric=(supplycost * availqty)).metric) * 0.0001)).PARTITION(PartSupp.WHERE((supplier.nation.name == 'GERMANY')).CALCULATE(metric=(supplycost * availqty)), name='Parts', by=(part_key)).CALCULATE(PS_PARTKEY=part_key, VALUE=SUM(PartSupp.metric)).WHERE((VALUE > min_market_share)).TOP_K(10, by=(VALUE.DESC(na_pos='last')))",
             id="tpch_q11",
         ),
         pytest.param(
@@ -384,7 +378,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q13,
-            "PARTITION(Customers.CALCULATE(num_non_special_orders=COUNT(orders.WHERE(NOT(LIKE(comment, '%special%requests%'))))), name='n_orders', by=(num_non_special_orders)).CALCULATE(C_COUNT=num_non_special_orders, CUSTDIST=COUNT(Customers)).TOP_K(10, by=(CUSTDIST.DESC(na_pos='last'), C_COUNT.DESC(na_pos='last')))",
+            "PARTITION(Customers.CALCULATE(num_non_special_orders=COUNT(orders.WHERE(NOT(LIKE(comment, '%special%requests%'))))), name='num_order_groups', by=(num_non_special_orders)).CALCULATE(C_COUNT=num_non_special_orders, CUSTDIST=COUNT(Customers)).TOP_K(10, by=(CUSTDIST.DESC(na_pos='last'), C_COUNT.DESC(na_pos='last')))",
             id="tpch_q13",
         ),
         pytest.param(

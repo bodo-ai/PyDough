@@ -298,7 +298,7 @@ def impl_tpch_q11():
     )
     return (
         TPCH.CALCULATE(min_market_share=SUM(selected_records.metric) * 0.0001)
-        .PARTITION(selected_records, name="part", by=part_key)
+        .PARTITION(selected_records, name="Parts", by=part_key)
         .CALCULATE(PS_PARTKEY=part_key, VALUE=SUM(PartSupp.metric))
         .WHERE(VALUE > min_market_share)
         .TOP_K(10, by=VALUE.DESC())
@@ -337,7 +337,7 @@ def impl_tpch_q13():
     selected_orders = orders.WHERE(~(LIKE(comment, "%special%requests%")))
     customer_info = Customers.CALCULATE(num_non_special_orders=COUNT(selected_orders))
     return (
-        PARTITION(customer_info, name="n_orders", by=num_non_special_orders)
+        PARTITION(customer_info, name="num_order_groups", by=num_non_special_orders)
         .CALCULATE(C_COUNT=num_non_special_orders, CUSTDIST=COUNT(Customers))
         .TOP_K(10, by=(CUSTDIST.DESC(), C_COUNT.DESC()))
     )

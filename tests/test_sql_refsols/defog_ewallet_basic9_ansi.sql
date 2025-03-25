@@ -38,7 +38,7 @@ FROM (
           WHERE
             sender_type = 0
         )
-        INNER JOIN (
+        LEFT JOIN (
           SELECT
             country,
             uid

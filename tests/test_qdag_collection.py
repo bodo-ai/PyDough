@@ -683,35 +683,35 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts"),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
             ),
             {"container": 0, "total_price": 1},
-            {"container", "total_price", "parts"},
+            {"container", "total_price", "Parts"},
             id="partition_with_order_part",
         ),
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts")
                 ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
             )
-            ** SubCollectionInfo("parts")
+            ** SubCollectionInfo("Parts")
             ** CalculateInfo(
                 [],
                 part_name=ReferenceInfo("name"),
@@ -1330,7 +1330,7 @@ def test_collections_calc_terms(
                     region_name=ChildReferenceExpressionInfo("name", 0),
                     part_type=ChildReferenceExpressionInfo("part_type", 1),
                 ),
-                "Lineitems",
+                "groups",
                 [
                     ChildReferenceExpressionInfo("region_name", 0),
                     ChildReferenceExpressionInfo("part_type", 0),
@@ -1359,7 +1359,7 @@ def test_collections_calc_terms(
   │       └─── SubCollection[part]
   └─┬─ Calculate[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
     └─┬─ AccessChild
-      └─── PartitionChild[groups]
+      └─── PartitionChild[Lineitems]
 """,
             id="partition_nested",
         ),
@@ -1417,17 +1417,17 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='containers', by=container).CALCULATE(container=container, total_price=SUM(pPartsarts.retail_price)).Parts.CALCULATE(part_name=name, container=container, ratio=retail_price / total_price)",
+            "TPCH.Partition(Parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='containers', by=container).CALCULATE(container=container, total_price=SUM(Parts.retail_price)).Parts.CALCULATE(part_name=name, container=container, ratio=retail_price / total_price)",
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='parts', by=container]
+  ├─┬─ Partition[name='containers', by=container]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Parts]
   │   └─── OrderBy[retail_price.DESC(na_pos='last')]
   └─┬─ Calculate[container=container, total_price=SUM($1.retail_price)]
     ├─┬─ AccessChild
-    │ └─── PartitionChild[parts]
-    ├─── PartitionChild[parts]
+    │ └─── PartitionChild[Parts]
+    ├─── PartitionChild[Parts]
     └─── Calculate[part_name=name, container=container, ratio=retail_price / total_price]
 """,
             id="partition_data_with_data_order",
@@ -2234,11 +2234,11 @@ def test_collections_to_string(
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts"),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
@@ -2250,11 +2250,11 @@ def test_collections_to_string(
         pytest.param(
             PartitionInfo(
                 TableCollectionInfo("Parts"),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
@@ -2268,11 +2268,11 @@ def test_collections_to_string(
             PartitionInfo(
                 TableCollectionInfo("Parts")
                 ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
@@ -2285,17 +2285,17 @@ def test_collections_to_string(
             PartitionInfo(
                 TableCollectionInfo("Parts")
                 ** OrderInfo([], (ReferenceInfo("retail_price"), False, True)),
-                "parts",
+                "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts")],
+                [SubCollectionInfo("Parts")],
                 container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
             )
-            ** SubCollectionInfo("parts")
+            ** SubCollectionInfo("Parts")
             ** CalculateInfo(
                 [],
                 part_name=ReferenceInfo("name"),
