@@ -235,7 +235,7 @@ class Qualifier:
         unqualified_args: Iterable[UnqualifiedNode] = unqualified._parcel[1]
         unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_by = self._expressions_to_collations(unqualified_by)
-        levels: int | None = unqualified._parcel[3]
+        per: str | None = unqualified._parcel[3]
         kwargs: dict[str, object] = unqualified._parcel[4]
         # Qualify all of the function args, storing the children built along
         # the way.
@@ -251,6 +251,61 @@ class Qualifier:
             )
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
+        levels: int | None = None
+        # If the per argument exists, parse it to identify which ancestor
+        # of the current context the window funciton is being done with
+        # regards to, and converting it to a `levels` integer (indicating
+        # the number of ancestor levels to go up to).
+        if per is not None:
+            ancestral_names: list[str] = context.get_ancestral_names()
+            ancestor_name: str
+            ancestor_idx: int | None
+            # Break down the per string into its components, which is either
+            # `[name]`, or `[name, index]`, where `index` must be a positive
+            # integer.
+            components: list[str] = per.split(":")
+            if len(components) == 1:
+                ancestor_name = components[0]
+                ancestor_idx = None
+            elif len(components) == 2:
+                ancestor_name = components[0]
+                if not components[1].isdigit():
+                    raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+                ancestor_idx = int(components[1])
+                if ancestor_idx <= 0:
+                    raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+            else:
+                raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+            # Verify that `name` corresponds to one of the ancestors of the
+            # current context.
+            if ancestor_name not in ancestral_names:
+                raise PyDoughUnqualifiedException(
+                    f"Per string refers to unrecognized ancestor {ancestor_name!r} of {context!r}"
+                )
+            # Verify that `name` is only present exactly one time in the
+            # ancestors of the current context, unless an index was provided.
+            if ancestor_idx is None:
+                if ancestral_names.count(ancestor_name) > 1:
+                    raise PyDoughUnqualifiedException(
+                        f"Per string {per!r} is ambiguous for {context!r}. Use the form '{per}:index' to disambiguate, where '{per}:1' refers to the most recent ancestor."
+                    )
+            elif ancestral_names.count(ancestor_name) < ancestor_idx:
+                # If an index was provided, ensure that there are that many
+                # ancestors with that name.
+                raise PyDoughUnqualifiedException(
+                    f"Per string {per!r} invalid as there are not {ancestor_idx} ancestors of the current context with name {ancestor_name!r}."
+                )
+
+            # Find how many levels upward need to be traversed to find the
+            # targeted ancestor by finding the nth ancestor matching the
+            # name, at the end of the ancestral_names.
+            levels = 1
+            for i in range(len(ancestral_names) - 1, -1, -1):
+                if ancestral_names[i] == ancestor_name:
+                    if ancestor_idx is None or ancestor_idx == 10:
+                        break
+                    ancestor_idx -= 1
+                levels += 1
         # Use the qualified children & collation to create a new ORDER BY node.
         return self.builder.build_window_call(
             window_operator, qualified_args, qualified_collations, levels, kwargs

@@ -27,7 +27,7 @@ from typing import Any, Union
 
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
-from pydough.metadata.errors import is_bool, is_integer, is_positive_int
+from pydough.metadata.errors import is_bool, is_integer, is_positive_int, is_string
 from pydough.types import (
     ArrayType,
     BinaryType,
@@ -489,7 +489,7 @@ class UnqualifiedOperator(UnqualifiedNode):
         self._parcel: tuple[str] = (name,)
 
     def __call__(self, *args, **kwargs):
-        levels: int | None = None
+        per: str | None = None
         window_operator: pydop.ExpressionWindowOperator
         is_window: bool = True
         operands: MutableSequence[UnqualifiedNode] = []
@@ -528,15 +528,15 @@ class UnqualifiedOperator(UnqualifiedNode):
                     )
         if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
-            if "levels" in kwargs:
-                levels_arg = kwargs.pop("levels")
-                is_positive_int.verify(levels_arg, "`levels` argument")
-                levels = levels_arg
+            if "per" in kwargs:
+                per_arg = kwargs.pop("per")
+                is_string.verify(per_arg, "`per` argument")
+                per = per_arg
             return UnqualifiedWindow(
                 window_operator,
                 operands,
                 by,
-                levels,
+                per,
                 kwargs,
             )
         return UnqualifiedOperation(self._parcel[0], operands)
@@ -565,16 +565,16 @@ class UnqualifiedWindow(UnqualifiedNode):
         operator: pydop.ExpressionWindowOperator,
         arguments: Iterable[UnqualifiedNode],
         by: Iterable[UnqualifiedNode],
-        levels: int | None,
+        per: str | None,
         kwargs: dict[str, object],
     ):
         self._parcel: tuple[
             pydop.ExpressionWindowOperator,
             Iterable[UnqualifiedNode],
             Iterable[UnqualifiedNode],
-            int | None,
+            str | None,
             dict[str, object],
-        ] = (operator, arguments, by, levels, kwargs)
+        ] = (operator, arguments, by, per, kwargs)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -737,7 +737,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 operands_str += f"{display_raw(operand)}, "
             operands_str += f"by=({', '.join([display_raw(operand) for operand in unqualified._parcel[2]])}"
             if unqualified._parcel[3] is not None:
-                operands_str += ", levels=" + str(unqualified._parcel[3])
+                operands_str += f", per={unqualified._parcel[3]!r}"
             for kwarg, val in unqualified._parcel[4].items():
                 operands_str += f", {kwarg}={val!r}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"

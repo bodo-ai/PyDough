@@ -282,7 +282,6 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     - The structure of the collection, once qualified.
     - What operation the most recent operation of the collection is doing.
     - Any child collections that are derived by the collection.
-    - How many BACK levels can be accessed.
     - The subcollections & expressions that are accessible from the collection.
     - The expressions that would be included if the collection was executed.
 
@@ -460,7 +459,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
                         for key in qualified_node.keys:
                             lines.append(f"  {key.expr.to_string(True)}")
                         lines.append(
-                            f"Note: the subcollection of this collection containing records from the unpartitioned data is called '{qualified_node.child_name}'."
+                            f"Note: the subcollection of this collection containing records from the unpartitioned data is called '{qualified_node.child.name}'."
                         )
                     case _:
                         raise NotImplementedError(qualified_node.__class__.__name__)

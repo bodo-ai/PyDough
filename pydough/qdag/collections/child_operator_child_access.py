@@ -30,6 +30,10 @@ class ChildOperatorChildAccess(ChildAccess):
         super().__init__(ancestor)
         self._child_access: PyDoughCollectionQDAG = child_access
 
+    @property
+    def name(self) -> str:
+        return self.child_access.name
+
     def clone_with_parent(self, new_ancestor: PyDoughCollectionQDAG) -> ChildAccess:
         raise NotImplementedError
 
