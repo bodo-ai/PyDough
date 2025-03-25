@@ -9,7 +9,7 @@ FROM (
     uid,
     username
   FROM main.users
-)
+) AS _table_alias_2
 ANTI JOIN (
   SELECT
     user_id
@@ -31,7 +31,7 @@ ANTI JOIN (
       FROM main.users
     ) AS _table_alias_1
       ON user_id = uid
-  )
+  ) AS _t0
   WHERE
     (
       DATE_ADD(CAST(created_at_1 AS TIMESTAMP), 1, 'YEAR') >= created_at
@@ -39,5 +39,5 @@ ANTI JOIN (
     AND (
       created_at >= created_at_1
     )
-)
+) AS _table_alias_3
   ON uid = user_id

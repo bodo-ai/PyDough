@@ -36,12 +36,12 @@ FROM (
               n_name AS name,
               n_nationkey AS key
             FROM tpch.NATION
-          )
+          ) AS _t3
           WHERE
             name = 'SAUDI ARABIA'
         ) AS _table_alias_1
           ON nation_key = _table_alias_1.key
-      )
+      ) AS _table_alias_8
       LEFT JOIN (
         SELECT
           COUNT() AS agg_0,
@@ -71,10 +71,10 @@ FROM (
                     l_receiptdate AS receipt_date,
                     l_suppkey AS supplier_key
                   FROM tpch.LINEITEM
-                )
+                ) AS _t5
                 WHERE
                   receipt_date > commit_date
-              )
+              ) AS _table_alias_4
               INNER JOIN (
                 SELECT
                   key
@@ -83,10 +83,10 @@ FROM (
                     o_orderkey AS key,
                     o_orderstatus AS order_status
                   FROM tpch.ORDERS
-                )
+                ) AS _t6
                 WHERE
                   order_status = 'F'
-              )
+              ) AS _table_alias_5
                 ON order_key = key
             ) AS _table_alias_3
             WHERE
@@ -101,10 +101,10 @@ FROM (
                       l_orderkey AS order_key,
                       l_suppkey AS supplier_key
                     FROM tpch.LINEITEM
-                  )
+                  ) AS _t7
                   WHERE
                     supplier_key <> _table_alias_3.original_key
-                )
+                ) AS _table_alias_6
                 WHERE
                   key = order_key
               )
@@ -123,7 +123,7 @@ FROM (
                     l_receiptdate AS receipt_date,
                     l_suppkey AS supplier_key
                   FROM tpch.LINEITEM
-                )
+                ) AS _t8
                 WHERE
                   (
                     supplier_key <> _table_alias_2.original_key
@@ -131,22 +131,22 @@ FROM (
                   AND (
                     receipt_date > commit_date
                   )
-              )
+              ) AS _table_alias_7
               WHERE
                 key = order_key
             )
-        )
+        ) AS _t4
         GROUP BY
           supplier_key
-      )
+      ) AS _table_alias_9
         ON key = supplier_key
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC,
     ordering_2
   LIMIT 10
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC,
   ordering_2

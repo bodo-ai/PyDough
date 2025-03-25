@@ -24,7 +24,7 @@ FROM (
           sbCustId AS _id,
           sbCustName AS name
         FROM main.sbCustomer
-      )
+      ) AS _table_alias_0
       LEFT JOIN (
         SELECT
           COUNT() AS agg_0,
@@ -38,7 +38,7 @@ FROM (
               sbTxDateTime AS date_time,
               sbTxType AS transaction_type
             FROM main.sbTransaction
-          )
+          ) AS _t4
           WHERE
             (
               DATE(date_time, 'start of day') = '2023-04-01'
@@ -46,16 +46,16 @@ FROM (
             AND (
               transaction_type = 'sell'
             )
-        )
+        ) AS _t3
         GROUP BY
           customer_id
-      )
+      ) AS _table_alias_1
         ON _id = customer_id
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC
   LIMIT 1
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC

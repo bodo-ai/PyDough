@@ -17,10 +17,10 @@ FROM (
         a,
         b
       FROM table
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   WHERE
     r >= 3
-)
+) AS _t0
 WHERE
   b = 0

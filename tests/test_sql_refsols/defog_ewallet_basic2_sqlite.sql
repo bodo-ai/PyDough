@@ -6,7 +6,7 @@ FROM (
     mid,
     name
   FROM main.merchants
-)
+) AS _table_alias_0
 WHERE
   NOT EXISTS(
     SELECT
@@ -15,7 +15,7 @@ WHERE
       SELECT
         merchant_id
       FROM main.coupons
-    )
+    ) AS _table_alias_1
     WHERE
       mid = merchant_id
   )

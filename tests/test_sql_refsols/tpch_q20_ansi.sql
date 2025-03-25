@@ -38,7 +38,7 @@ FROM (
           FROM tpch.NATION
         ) AS _table_alias_1
           ON nation_key = _table_alias_1.key
-      )
+      ) AS _table_alias_6
       LEFT JOIN (
         SELECT
           COUNT() AS agg_0,
@@ -62,7 +62,7 @@ FROM (
                   ps_partkey AS part_key,
                   ps_suppkey AS supplier_key
                 FROM tpch.PARTSUPP
-              )
+              ) AS _table_alias_2
               INNER JOIN (
                 SELECT
                   key
@@ -71,12 +71,12 @@ FROM (
                     p_name AS name,
                     p_partkey AS key
                   FROM tpch.PART
-                )
+                ) AS _t5
                 WHERE
                   name LIKE 'forest%'
-              )
+              ) AS _table_alias_3
                 ON part_key = key
-            )
+            ) AS _table_alias_4
             LEFT JOIN (
               SELECT
                 SUM(quantity) AS agg_0,
@@ -91,7 +91,7 @@ FROM (
                     l_quantity AS quantity,
                     l_shipdate AS ship_date
                   FROM tpch.LINEITEM
-                )
+                ) AS _t7
                 WHERE
                   (
                     ship_date < CAST('1995-01-01' AS DATE)
@@ -99,32 +99,32 @@ FROM (
                   AND (
                     ship_date >= CAST('1994-01-01' AS DATE)
                   )
-              )
+              ) AS _t6
               GROUP BY
                 part_key
-            )
+            ) AS _table_alias_5
               ON key = part_key
-          )
+          ) AS _t4
           WHERE
             availqty > (
               COALESCE(agg_0, 0) * 0.5
             )
-        )
+        ) AS _t3
         GROUP BY
           supplier_key
-      )
+      ) AS _table_alias_7
         ON key = supplier_key
-    )
+    ) AS _t2
     WHERE
       (
         (
           name_3 = 'CANADA'
         ) AND COALESCE(agg_0, 0)
       ) > 0
-  )
+  ) AS _t1
   ORDER BY
     ordering_1
   LIMIT 10
-)
+) AS _t0
 ORDER BY
   ordering_1

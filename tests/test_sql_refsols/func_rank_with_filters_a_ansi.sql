@@ -12,9 +12,9 @@ FROM (
       a,
       b
     FROM table
-  )
+  ) AS _t1
   WHERE
     b = 0
-)
+) AS _t0
 WHERE
   r >= 3

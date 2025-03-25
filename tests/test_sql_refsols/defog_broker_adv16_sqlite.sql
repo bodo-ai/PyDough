@@ -24,7 +24,7 @@ FROM (
           sbTickerId AS _id,
           sbTickerSymbol AS symbol
         FROM main.sbTicker
-      )
+      ) AS _table_alias_0
       LEFT JOIN (
         SELECT
           SUM(tax + commission) AS agg_1,
@@ -45,7 +45,7 @@ FROM (
               sbTxTickerId AS ticker_id,
               sbTxType AS transaction_type
             FROM main.sbTransaction
-          )
+          ) AS _t4
           WHERE
             (
               transaction_type = 'sell'
@@ -53,17 +53,17 @@ FROM (
             AND (
               date_time >= DATETIME('now', '-1 month')
             )
-        )
+        ) AS _t3
         GROUP BY
           ticker_id
-      )
+      ) AS _table_alias_1
         ON _id = ticker_id
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   WHERE
     NOT (
       SPM IS NULL
     )
-)
+) AS _t0
 ORDER BY
   ordering_2

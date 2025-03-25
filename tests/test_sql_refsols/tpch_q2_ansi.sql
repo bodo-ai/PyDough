@@ -79,7 +79,7 @@ FROM (
                       r_name AS name,
                       r_regionkey AS key
                     FROM tpch.REGION
-                  )
+                  ) AS _t4
                   WHERE
                     name = 'EUROPE'
                 ) AS _table_alias_1
@@ -92,16 +92,16 @@ FROM (
                 FROM tpch.SUPPLIER
               ) AS _table_alias_3
                 ON _table_alias_2.key = nation_key
-            )
+            ) AS _table_alias_4
             INNER JOIN (
               SELECT
                 ps_partkey AS part_key,
                 ps_suppkey AS supplier_key,
                 ps_supplycost AS supplycost
               FROM tpch.PARTSUPP
-            )
+            ) AS _table_alias_5
               ON key_5 = supplier_key
-          )
+          ) AS _table_alias_6
           INNER JOIN (
             SELECT
               key
@@ -111,19 +111,19 @@ FROM (
                 p_size AS size,
                 p_type AS part_type
               FROM tpch.PART
-            )
+            ) AS _t5
             WHERE
               (
                 size = 15
               ) AND (
                 part_type LIKE '%BRASS'
               )
-          )
+          ) AS _table_alias_7
             ON part_key = key
-        )
+        ) AS _t3
         GROUP BY
           key_9
-      )
+      ) AS _table_alias_16
       INNER JOIN (
         SELECT
           key AS key_19,
@@ -147,7 +147,7 @@ FROM (
             supplycost
           FROM (
             SELECT
-              _table_alias_7.key AS key_15,
+              _table_alias_11.key AS key_15,
               account_balance AS s_acctbal,
               address AS s_address,
               comment AS s_comment,
@@ -156,7 +156,7 @@ FROM (
               n_name
             FROM (
               SELECT
-                _table_alias_4.key AS key,
+                _table_alias_8.key AS key,
                 n_name
               FROM (
                 SELECT
@@ -164,7 +164,7 @@ FROM (
                   n_nationkey AS key,
                   n_regionkey AS region_key
                 FROM tpch.NATION
-              ) AS _table_alias_4
+              ) AS _table_alias_8
               INNER JOIN (
                 SELECT
                   key
@@ -173,12 +173,12 @@ FROM (
                     r_name AS name,
                     r_regionkey AS key
                   FROM tpch.REGION
-                )
+                ) AS _t6
                 WHERE
                   name = 'EUROPE'
-              ) AS _table_alias_5
-                ON region_key = _table_alias_5.key
-            ) AS _table_alias_6
+              ) AS _table_alias_9
+                ON region_key = _table_alias_9.key
+            ) AS _table_alias_10
             INNER JOIN (
               SELECT
                 s_acctbal AS account_balance,
@@ -189,18 +189,18 @@ FROM (
                 s_nationkey AS nation_key,
                 s_phone AS phone
               FROM tpch.SUPPLIER
-            ) AS _table_alias_7
-              ON _table_alias_6.key = nation_key
-          )
+            ) AS _table_alias_11
+              ON _table_alias_10.key = nation_key
+          ) AS _table_alias_12
           INNER JOIN (
             SELECT
               ps_partkey AS part_key,
               ps_suppkey AS supplier_key,
               ps_supplycost AS supplycost
             FROM tpch.PARTSUPP
-          )
+          ) AS _table_alias_13
             ON key_15 = supplier_key
-        )
+        ) AS _table_alias_14
         INNER JOIN (
           SELECT
             key,
@@ -212,28 +212,28 @@ FROM (
               p_size AS size,
               p_type AS part_type
             FROM tpch.PART
-          )
+          ) AS _t7
           WHERE
             (
               size = 15
             ) AND (
               part_type LIKE '%BRASS'
             )
-        )
+        ) AS _table_alias_15
           ON part_key = key
-      )
+      ) AS _table_alias_17
         ON key_9 = key_19
-    )
+    ) AS _t2
     WHERE
       supplycost_27 = best_cost
-  )
+  ) AS _t1
   ORDER BY
     ordering_1 DESC,
     ordering_2,
     ordering_3,
     ordering_4
   LIMIT 10
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC,
   ordering_2,

@@ -6,4 +6,4 @@ FROM (
     o_orderkey AS key,
     o_orderpriority AS order_priority
   FROM tpch.ORDERS
-)
+) AS _t0

@@ -7,10 +7,9 @@ the query on the database.
 from collections.abc import MutableSequence
 
 import pandas as pd
-from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
-from sqlglot.expressions import Alias
+from sqlglot.expressions import Alias, Column
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.database_connectors import (
@@ -48,32 +47,31 @@ def convert_relation_to_sql(
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings
     ).relational_to_sqlglot(relational)
-    glot_expr = parse_one(glot_expr.sql(dialect))
-    print(glot_expr.sql(dialect, pretty=True))
-    breakpoint()
-    import inspect
+    # glot_expr = parse_one(glot_expr.sql(dialect))
+    # print(glot_expr.sql(dialect, pretty=True))
+    # breakpoint()
 
     from sqlglot.optimizer import RULES as rules
 
-    rules = rules[:1] + rules[2:10] + rules[11:]
-    for rule in rules:
-        kwargs = {}
-        rule_params = inspect.getfullargspec(rule).args
-        if "dialect" in rule_params:
-            kwargs["dialect"] = dialect
-        if "quote_identifiers" in rule_params:
-            kwargs["quote_identifiers"] = False
-        if "leave_tables_isolated" in rule_params:
-            kwargs["leave_tables_isolated"] = True
-        glot_expr = rule(glot_expr, **kwargs)
-        print("*" * 50)
-        print(rule.__name__)
-        print(glot_expr.sql(dialect, pretty=True))
-    # glot_expr = optimize(glot_expr, rules=rules, dialect=dialect)
-    # glot_expr = optimize(parse_one(glot_expr.sql(dialect)), dialect=dialect)
-    breakpoint()
-    fix_column_case(glot_expr, relational.ordered_columns)
-    breakpoint()
+    rules = rules[:1] + rules[2:7] + rules[8:10] + rules[11:]
+    # rules = rules[:1] + rules[2:10] + rules[11:]
+    # for rule in rules:
+    #     kwargs = {}
+    #     rule_params = inspect.getfullargspec(rule).args
+    #     if "dialect" in rule_params:
+    #         kwargs["dialect"] = dialect
+    #     if "quote_identifiers" in rule_params:
+    #         kwargs["quote_identifiers"] = False
+    #     if "leave_tables_isolated" in rule_params:
+    #         kwargs["leave_tables_isolated"] = True
+    #     glot_expr = rule(glot_expr, **kwargs)
+    #     print("*" * 50)
+    #     print(rule.__name__)
+    #     print(glot_expr.sql(dialect, pretty=True))
+    # # glot_expr = optimize(glot_expr, rules=rules, dialect=dialect)
+    # # glot_expr = optimize(parse_one(glot_expr.sql(dialect)), dialect=dialect)
+    # fix_column_case(glot_expr, relational.ordered_columns)
+    # breakpoint()
     return glot_expr.sql(dialect, pretty=True)
 
 
@@ -90,18 +88,17 @@ def fix_column_case(
     """
     # Create a mapping of lowercase column names to their original case
     column_case_map = {col_name.lower(): col_name for col_name, _ in ordered_columns}
-
     # Fix column names in the top-level SELECT expressions
     if hasattr(glot_expr, "expressions"):
         for expr in glot_expr.expressions:
             # Handle expressions with aliases
             if isinstance(expr, Alias):
-                alias_lower = expr.this.lower()
+                identifier = expr.args.get("alias")
+                alias_lower = identifier.this.lower()
                 if alias_lower in column_case_map:
-                    expr.set("this", column_case_map[alias_lower])
-            # Handle direct column references
-            if hasattr(expr, "this") and isinstance(expr.this, str):
-                col_lower = expr.this.lower()
+                    identifier.set("this", column_case_map[alias_lower])
+            elif isinstance(expr, Column):
+                col_lower = expr.this.this.lower()
                 if col_lower in column_case_map:
                     expr.set("this", column_case_map[col_lower])
 

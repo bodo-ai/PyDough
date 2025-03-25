@@ -6,4 +6,4 @@ FROM (
     c_acctbal AS acctbal,
     c_custkey AS key
   FROM tpch.CUSTOMER
-)
+) AS _t0

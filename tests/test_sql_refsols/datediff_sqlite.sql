@@ -47,14 +47,14 @@ FROM (
         SELECT
           sbTxDateTime AS date_time
         FROM main.sbTransaction
-      )
+      ) AS _t3
       WHERE
         CAST(STRFTIME('%Y', date_time) AS INTEGER) < 2025
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_0
   LIMIT 30
-)
+) AS _t0
 ORDER BY
   ordering_0

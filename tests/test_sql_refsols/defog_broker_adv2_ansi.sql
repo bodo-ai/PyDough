@@ -20,7 +20,7 @@ FROM (
           sbTickerId AS _id,
           sbTickerSymbol AS symbol
         FROM main.sbTicker
-      )
+      ) AS _table_alias_0
       LEFT JOIN (
         SELECT
           COUNT() AS agg_0,
@@ -34,7 +34,7 @@ FROM (
               sbTxTickerId AS ticker_id,
               sbTxType AS transaction_type
             FROM main.sbTransaction
-          )
+          ) AS _t4
           WHERE
             (
               transaction_type = 'buy'
@@ -42,16 +42,16 @@ FROM (
             AND (
               date_time >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -10, 'DAY'))
             )
-        )
+        ) AS _t3
         GROUP BY
           ticker_id
-      )
+      ) AS _table_alias_1
         ON _id = ticker_id
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC
   LIMIT 2
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC

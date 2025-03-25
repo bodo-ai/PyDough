@@ -9,7 +9,7 @@ FROM (
     SELECT
       uid
     FROM main.users
-  )
+  ) AS _table_alias_0
   INNER JOIN (
     SELECT
       COUNT() AS agg_0,
@@ -22,12 +22,12 @@ FROM (
           sender_id,
           sender_type
         FROM main.wallet_transactions_daily
-      )
+      ) AS _t2
       WHERE
         sender_type = 0
-    )
+    ) AS _t1
     GROUP BY
       sender_id
-  )
+  ) AS _table_alias_1
     ON uid = sender_id
-)
+) AS _t0

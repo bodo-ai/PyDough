@@ -55,7 +55,7 @@ FROM (
                 l_shipdate AS ship_date,
                 l_suppkey AS supplier_key
               FROM tpch.LINEITEM
-            )
+            ) AS _t4
             WHERE
               (
                 ship_date <= CAST('1996-12-31' AS DATE)
@@ -63,7 +63,7 @@ FROM (
               AND (
                 ship_date >= CAST('1995-01-01' AS DATE)
               )
-          )
+          ) AS _table_alias_2
           LEFT JOIN (
             SELECT
               _table_alias_0.key AS key,
@@ -81,39 +81,39 @@ FROM (
               FROM tpch.NATION
             ) AS _table_alias_1
               ON nation_key = _table_alias_1.key
-          )
+          ) AS _table_alias_3
             ON supplier_key = key
-        )
+        ) AS _table_alias_8
         LEFT JOIN (
           SELECT
-            _table_alias_4.key AS key,
+            _table_alias_6.key AS key,
             name AS name_8
           FROM (
             SELECT
-              _table_alias_2.key AS key,
+              _table_alias_4.key AS key,
               nation_key
             FROM (
               SELECT
                 o_custkey AS customer_key,
                 o_orderkey AS key
               FROM tpch.ORDERS
-            ) AS _table_alias_2
+            ) AS _table_alias_4
             INNER JOIN (
               SELECT
                 c_custkey AS key,
                 c_nationkey AS nation_key
               FROM tpch.CUSTOMER
-            ) AS _table_alias_3
-              ON customer_key = _table_alias_3.key
-          ) AS _table_alias_4
+            ) AS _table_alias_5
+              ON customer_key = _table_alias_5.key
+          ) AS _table_alias_6
           INNER JOIN (
             SELECT
               n_nationkey AS key,
               n_name AS name
             FROM tpch.NATION
-          ) AS _table_alias_5
-            ON nation_key = _table_alias_5.key
-        )
+          ) AS _table_alias_7
+            ON nation_key = _table_alias_7.key
+        ) AS _table_alias_9
           ON order_key = key
         WHERE
           (
@@ -130,14 +130,14 @@ FROM (
               name_8 = 'FRANCE'
             )
           )
-      )
-    )
+      ) AS _t3
+    ) AS _t2
     GROUP BY
       cust_nation,
       l_year,
       supp_nation
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_1,
   ordering_2,

@@ -35,7 +35,7 @@ FROM (
             l_partkey AS part_key,
             l_shipdate AS ship_date
           FROM tpch.LINEITEM
-        )
+        ) AS _t3
         WHERE
           (
             ship_date < CAST('1995-10-01' AS DATE)
@@ -43,14 +43,14 @@ FROM (
           AND (
             ship_date >= CAST('1995-09-01' AS DATE)
           )
-      )
+      ) AS _table_alias_0
       LEFT JOIN (
         SELECT
           p_partkey AS key,
           p_type AS part_type
         FROM tpch.PART
-      )
+      ) AS _table_alias_1
         ON part_key = key
-    )
-  )
-)
+    ) AS _t2
+  ) AS _t1
+) AS _t0

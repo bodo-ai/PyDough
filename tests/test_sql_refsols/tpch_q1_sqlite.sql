@@ -61,15 +61,15 @@ FROM (
           l_shipdate AS ship_date,
           l_tax AS tax
         FROM tpch.LINEITEM
-      )
+      ) AS _t3
       WHERE
         ship_date <= '1998-12-01'
-    )
+    ) AS _t2
     GROUP BY
       return_flag,
       status
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_8,
   ordering_9

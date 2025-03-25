@@ -13,10 +13,10 @@ FROM (
         sbCustCountry AS country,
         sbCustJoinDate AS join_date
       FROM main.sbCustomer
-    )
+    ) AS _t2
     WHERE
       join_date >= CAST('2023-01-01' AS DATE)
-  )
+  ) AS _t1
   GROUP BY
     country
-)
+) AS _t0

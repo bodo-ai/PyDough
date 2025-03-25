@@ -62,31 +62,31 @@ FROM (
                             c_acctbal AS acctbal,
                             c_phone AS phone
                           FROM tpch.CUSTOMER
-                        )
+                        ) AS _t10
                         WHERE
                           acctbal > 0.0
-                      )
-                    )
+                      ) AS _t9
+                    ) AS _t8
                     WHERE
                       cntry_code IN ('13', '31', '23', '29', '30', '18', '17')
-                  )
-                )
+                  ) AS _t7
+                ) AS _table_alias_0
                 INNER JOIN (
                   SELECT
                     c_acctbal AS acctbal,
                     c_custkey AS key,
                     c_phone AS phone
                   FROM tpch.CUSTOMER
-                )
+                ) AS _table_alias_1
                   ON TRUE
-              )
+              ) AS _t6
               WHERE
                 acctbal > global_avg_balance
-            )
-          )
+            ) AS _t5
+          ) AS _t4
           WHERE
             cntry_code IN ('13', '31', '23', '29', '30', '18', '17')
-        )
+        ) AS _table_alias_2
         LEFT JOIN (
           SELECT
             COUNT() AS agg_0,
@@ -95,18 +95,18 @@ FROM (
             SELECT
               o_custkey AS customer_key
             FROM tpch.ORDERS
-          )
+          ) AS _t11
           GROUP BY
             customer_key
-        )
+        ) AS _table_alias_3
           ON key = customer_key
-      )
+      ) AS _t3
       WHERE
         COALESCE(agg_0, 0) = 0
-    )
+    ) AS _t2
     GROUP BY
       cntry_code
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_3

@@ -26,20 +26,20 @@ FROM (
           sbTxShares AS shares,
           sbTxType AS transaction_type
         FROM main.sbTransaction
-      )
+      ) AS _t3
       WHERE
         (
           date_time <= '2023-03-31'
         ) AND (
           date_time >= '2023-01-01'
         )
-    )
+    ) AS _t2
     GROUP BY
       transaction_type
-  )
+  ) AS _t1
   ORDER BY
     ordering_2 DESC
   LIMIT 3
-)
+) AS _t0
 ORDER BY
   ordering_2 DESC

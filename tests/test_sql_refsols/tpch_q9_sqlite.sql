@@ -77,16 +77,16 @@ FROM (
                     FROM tpch.SUPPLIER
                   ) AS _table_alias_1
                     ON _table_alias_0.key = nation_key
-                )
+                ) AS _table_alias_2
                 INNER JOIN (
                   SELECT
                     ps_partkey AS part_key,
                     ps_suppkey AS supplier_key,
                     ps_supplycost AS supplycost
                   FROM tpch.PARTSUPP
-                )
+                ) AS _table_alias_3
                   ON key_2 = supplier_key
-              )
+              ) AS _table_alias_4
               INNER JOIN (
                 SELECT
                   key
@@ -95,12 +95,12 @@ FROM (
                     p_name AS name,
                     p_partkey AS key
                   FROM tpch.PART
-                )
+                ) AS _t5
                 WHERE
                   name LIKE '%green%'
-              )
+              ) AS _table_alias_5
                 ON part_key = key
-            ) AS _table_alias_2
+            ) AS _table_alias_6
             INNER JOIN (
               SELECT
                 l_discount AS discount,
@@ -110,33 +110,33 @@ FROM (
                 l_quantity AS quantity,
                 l_suppkey AS supplier_key
               FROM tpch.LINEITEM
-            ) AS _table_alias_3
+            ) AS _table_alias_7
               ON (
-                _table_alias_2.part_key = _table_alias_3.part_key
+                _table_alias_6.part_key = _table_alias_7.part_key
               )
               AND (
-                _table_alias_2.supplier_key = _table_alias_3.supplier_key
+                _table_alias_6.supplier_key = _table_alias_7.supplier_key
               )
-          )
+          ) AS _table_alias_8
           LEFT JOIN (
             SELECT
               o_orderkey AS key,
               o_orderdate AS order_date
             FROM tpch.ORDERS
-          )
+          ) AS _table_alias_9
             ON order_key = key
-        )
-      )
+        ) AS _t4
+      ) AS _t3
       GROUP BY
         nation_name,
         o_year
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1,
     ordering_2 DESC
   LIMIT 10
-)
+) AS _t0
 ORDER BY
   ordering_1,
   ordering_2 DESC

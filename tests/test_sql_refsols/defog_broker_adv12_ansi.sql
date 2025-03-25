@@ -9,7 +9,7 @@ FROM (
       sbCustName AS name,
       sbCustState AS state
     FROM main.sbCustomer
-  )
+  ) AS _t1
   WHERE
     (
       (
@@ -21,4 +21,4 @@ FROM (
     AND (
       LOWER(state) LIKE '%a'
     )
-)
+) AS _t0

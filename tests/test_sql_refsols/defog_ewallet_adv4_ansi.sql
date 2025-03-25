@@ -18,10 +18,10 @@ FROM (
           created_at,
           sender_id
         FROM main.wallet_transactions_daily
-      )
+      ) AS _t2
       WHERE
         DATEDIFF(CURRENT_TIMESTAMP(), created_at, DAY) <= 7
-    )
+    ) AS _table_alias_0
     INNER JOIN (
       SELECT
         uid
@@ -30,10 +30,10 @@ FROM (
           country,
           uid
         FROM main.users
-      )
+      ) AS _t3
       WHERE
         country = 'US'
-    )
+    ) AS _table_alias_1
       ON sender_id = uid
-  )
-)
+  ) AS _t1
+) AS _t0

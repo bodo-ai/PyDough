@@ -24,7 +24,7 @@ FROM (
           mid,
           name
         FROM main.merchants
-      )
+      ) AS _table_alias_2
       LEFT JOIN (
         SELECT
           COUNT() AS agg_0,
@@ -50,19 +50,19 @@ FROM (
               FROM main.merchants
             ) AS _table_alias_1
               ON merchant_id = mid
-          )
+          ) AS _t4
           WHERE
             DATEDIFF(created_at, created_at_1, MONTH) = 0
-        )
+        ) AS _t3
         GROUP BY
           merchant_id
-      )
+      ) AS _table_alias_3
         ON mid = merchant_id
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC
   LIMIT 1
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC

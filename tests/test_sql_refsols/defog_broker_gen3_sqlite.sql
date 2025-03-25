@@ -17,7 +17,7 @@ FROM (
       sbCustId AS _id,
       sbCustJoinDate AS join_date
     FROM main.sbCustomer
-  )
+  ) AS _table_alias_0
   INNER JOIN (
     SELECT
       MIN(date_time) AS agg_0,
@@ -27,9 +27,9 @@ FROM (
         sbTxCustId AS customer_id,
         sbTxDateTime AS date_time
       FROM main.sbTransaction
-    )
+    ) AS _t1
     GROUP BY
       customer_id
-  )
+  ) AS _table_alias_1
     ON _id = customer_id
-)
+) AS _t0

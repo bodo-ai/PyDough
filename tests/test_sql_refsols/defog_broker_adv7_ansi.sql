@@ -4,7 +4,7 @@ SELECT
   agg_0 AS avg_tx_amount
 FROM (
   SELECT
-    _table_alias_0.month AS month,
+    _table_alias_2.month AS month,
     agg_0,
     agg_1
   FROM (
@@ -31,7 +31,7 @@ FROM (
           SELECT
             sbCustJoinDate AS join_date
           FROM main.sbCustomer
-        )
+        ) AS _t3
         WHERE
           (
             join_date < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
@@ -39,11 +39,11 @@ FROM (
           AND (
             join_date >= DATE_TRUNC('MONTH', DATE_ADD(CURRENT_TIMESTAMP(), -6, 'MONTH'))
           )
-      )
-    )
+      ) AS _t2
+    ) AS _t1
     GROUP BY
       month
-  ) AS _table_alias_0
+  ) AS _table_alias_2
   LEFT JOIN (
     SELECT
       AVG(amount) AS agg_0,
@@ -84,7 +84,7 @@ FROM (
                 sbCustId AS _id,
                 sbCustJoinDate AS join_date
               FROM main.sbCustomer
-            )
+            ) AS _t7
             WHERE
               (
                 join_date < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
@@ -92,17 +92,17 @@ FROM (
               AND (
                 join_date >= DATE_TRUNC('MONTH', DATE_ADD(CURRENT_TIMESTAMP(), -6, 'MONTH'))
               )
-          )
-        )
+          ) AS _t6
+        ) AS _table_alias_0
         INNER JOIN (
           SELECT
             sbTxAmount AS amount,
             sbTxCustId AS customer_id,
             sbTxDateTime AS date_time
           FROM main.sbTransaction
-        )
+        ) AS _table_alias_1
           ON _id = customer_id
-      )
+      ) AS _t5
       WHERE
         (
           EXTRACT(MONTH FROM date_time) = join_month
@@ -110,9 +110,9 @@ FROM (
         AND (
           EXTRACT(YEAR FROM date_time) = join_year
         )
-    )
+    ) AS _t4
     GROUP BY
       month
-  ) AS _table_alias_1
-    ON _table_alias_0.month = _table_alias_1.month
-)
+  ) AS _table_alias_3
+    ON _table_alias_2.month = _table_alias_3.month
+) AS _t0

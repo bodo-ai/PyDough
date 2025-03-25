@@ -30,18 +30,18 @@ FROM (
           sbTxId AS transaction_id,
           sbTxTickerId AS ticker_id
         FROM main.sbTransaction
-      )
-    )
+      ) AS _t2
+    ) AS _table_alias_0
     LEFT JOIN (
       SELECT
         sbTickerId AS _id,
         sbTickerSymbol AS symbol
       FROM main.sbTicker
-    )
+    ) AS _table_alias_1
       ON ticker_id = _id
-  )
+  ) AS _t1
   WHERE
     symbol IN ('AAPL', 'GOOGL', 'NFLX')
-)
+) AS _t0
 ORDER BY
   ordering_0

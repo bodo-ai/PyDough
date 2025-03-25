@@ -20,8 +20,8 @@ FROM (
         FROM main.user_setting_snapshot
         WHERE
           EXTRACT(YEAR FROM snapshot_date) = 2023
-      )
-    )
+      ) AS _t2
+    ) AS _table_alias_0
     INNER JOIN (
       SELECT
         snapshot_date,
@@ -30,9 +30,9 @@ FROM (
       FROM main.user_setting_snapshot
       WHERE
         EXTRACT(YEAR FROM snapshot_date) = 2023
-    )
+    ) AS _table_alias_1
       ON TRUE
-  )
+  ) AS _t1
   WHERE
     min_date = snapshot_date
-)
+) AS _t0

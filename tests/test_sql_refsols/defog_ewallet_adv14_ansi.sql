@@ -12,8 +12,8 @@ FROM (
         created_at,
         status
       FROM main.wallet_transactions_daily
-    )
+    ) AS _t2
     WHERE
       DATEDIFF(CURRENT_TIMESTAMP(), created_at, MONTH) = 1
-  )
-)
+  ) AS _t1
+) AS _t0

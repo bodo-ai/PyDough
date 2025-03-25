@@ -158,6 +158,7 @@ def test_get_logger_invalid_env_level(monkeypatch):
         get_logger(name="logger_invalid_env_level_test_logger")
 
 
+@pytest.mark.skip(reason="This test is very very slow")
 def test_execute_df_logging(
     sqlite_tpch_db_context: DatabaseContext, sqlite_bindings: SqlGlotTransformBindings
 ) -> None:

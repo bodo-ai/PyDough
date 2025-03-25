@@ -204,6 +204,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self, correlated_reference: CorrelatedReference
     ) -> None:
         full_name: str = f"{self._correlated_names[correlated_reference.correl_name]}.{correlated_reference.name}"
+        # breakpoint()
         self._stack.append(Identifier(this=full_name, quoted=False))
 
     @staticmethod

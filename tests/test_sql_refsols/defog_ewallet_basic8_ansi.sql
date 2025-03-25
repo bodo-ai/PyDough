@@ -24,7 +24,7 @@ FROM (
           cid,
           code
         FROM main.coupons
-      )
+      ) AS _table_alias_0
       LEFT JOIN (
         SELECT
           COUNT(txid) AS agg_0,
@@ -36,16 +36,16 @@ FROM (
             coupon_id,
             txid
           FROM main.wallet_transactions_daily
-        )
+        ) AS _t3
         GROUP BY
           coupon_id
-      )
+      ) AS _table_alias_1
         ON cid = coupon_id
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_2 DESC
   LIMIT 3
-)
+) AS _t0
 ORDER BY
   ordering_2 DESC

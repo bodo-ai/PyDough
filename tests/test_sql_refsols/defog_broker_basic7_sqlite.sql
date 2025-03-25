@@ -19,14 +19,14 @@ FROM (
         SELECT
           sbTxStatus AS status
         FROM main.sbTransaction
-      )
+      ) AS _t3
       GROUP BY
         status
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC
   LIMIT 3
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC

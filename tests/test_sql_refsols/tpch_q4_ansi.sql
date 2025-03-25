@@ -23,7 +23,7 @@ FROM (
             o_orderkey AS key,
             o_orderpriority AS order_priority
           FROM tpch.ORDERS
-        )
+        ) AS _t3
         WHERE
           (
             order_date < CAST('1993-10-01' AS DATE)
@@ -31,7 +31,7 @@ FROM (
           AND (
             order_date >= CAST('1993-07-01' AS DATE)
           )
-      )
+      ) AS _table_alias_0
       SEMI JOIN (
         SELECT
           order_key
@@ -41,15 +41,15 @@ FROM (
             l_orderkey AS order_key,
             l_receiptdate AS receipt_date
           FROM tpch.LINEITEM
-        )
+        ) AS _t4
         WHERE
           commit_date < receipt_date
-      )
+      ) AS _table_alias_1
         ON key = order_key
-    )
+    ) AS _t2
     GROUP BY
       order_priority
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_1

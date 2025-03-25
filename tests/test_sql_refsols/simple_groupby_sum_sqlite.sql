@@ -6,6 +6,6 @@ FROM (
     a,
     b
   FROM table
-)
+) AS _t0
 GROUP BY
   b

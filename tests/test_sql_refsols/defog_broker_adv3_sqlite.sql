@@ -20,7 +20,7 @@ FROM (
         sbCustId AS _id,
         sbCustName AS name
       FROM main.sbCustomer
-    )
+    ) AS _table_alias_0
     LEFT JOIN (
       SELECT
         COUNT() AS agg_0,
@@ -31,14 +31,14 @@ FROM (
           sbTxCustId AS customer_id,
           sbTxStatus AS status
         FROM main.sbTransaction
-      )
+      ) AS _t2
       GROUP BY
         customer_id
-    )
+    ) AS _table_alias_1
       ON _id = customer_id
     WHERE
       COALESCE(agg_0, 0) >= 5
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_2

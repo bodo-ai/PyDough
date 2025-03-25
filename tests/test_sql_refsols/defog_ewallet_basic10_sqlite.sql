@@ -24,7 +24,7 @@ FROM (
           mid,
           name
         FROM main.merchants
-      )
+      ) AS _table_alias_0
       LEFT JOIN (
         SELECT
           COUNT() AS agg_1,
@@ -41,7 +41,7 @@ FROM (
               receiver_id,
               receiver_type
             FROM main.wallet_transactions_daily
-          )
+          ) AS _t4
           WHERE
             (
               receiver_type = 1
@@ -49,16 +49,16 @@ FROM (
             AND (
               created_at >= DATE(DATETIME('now', '-150 day'), 'start of day')
             )
-        )
+        ) AS _t3
         GROUP BY
           receiver_id
-      )
+      ) AS _table_alias_1
         ON mid = receiver_id
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_2 DESC
   LIMIT 2
-)
+) AS _t0
 ORDER BY
   ordering_2 DESC

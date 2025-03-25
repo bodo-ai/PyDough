@@ -19,14 +19,14 @@ FROM (
         SELECT
           device_type
         FROM main.user_sessions
-      )
+      ) AS _t3
       GROUP BY
         device_type
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC
   LIMIT 2
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC

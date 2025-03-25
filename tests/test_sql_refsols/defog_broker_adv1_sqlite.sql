@@ -20,7 +20,7 @@ FROM (
           sbCustId AS _id,
           sbCustName AS name
         FROM main.sbCustomer
-      )
+      ) AS _table_alias_0
       LEFT JOIN (
         SELECT
           SUM(amount) AS agg_0,
@@ -30,16 +30,16 @@ FROM (
             sbTxAmount AS amount,
             sbTxCustId AS customer_id
           FROM main.sbTransaction
-        )
+        ) AS _t3
         GROUP BY
           customer_id
-      )
+      ) AS _table_alias_1
         ON _id = customer_id
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC
   LIMIT 5
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC

@@ -54,7 +54,7 @@ FROM (
                 o_orderkey AS key,
                 o_shippriority AS ship_priority
               FROM tpch.ORDERS
-            )
+            ) AS _t4
             WHERE
               order_date < CAST('1995-03-15' AS DATE)
           ) AS _table_alias_0
@@ -66,12 +66,12 @@ FROM (
                 c_custkey AS key,
                 c_mktsegment AS mktsegment
               FROM tpch.CUSTOMER
-            )
+            ) AS _t5
             WHERE
               mktsegment = 'BUILDING'
           ) AS _table_alias_1
             ON customer_key = _table_alias_1.key
-        )
+        ) AS _table_alias_2
         INNER JOIN (
           SELECT
             discount,
@@ -84,24 +84,24 @@ FROM (
               l_orderkey AS order_key,
               l_shipdate AS ship_date
             FROM tpch.LINEITEM
-          )
+          ) AS _t6
           WHERE
             ship_date > CAST('1995-03-15' AS DATE)
-        )
+        ) AS _table_alias_3
           ON key = order_key
-      )
+      ) AS _t3
       GROUP BY
         order_date,
         order_key,
         ship_priority
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC,
     ordering_2,
     ordering_3
   LIMIT 10
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC,
   ordering_2,

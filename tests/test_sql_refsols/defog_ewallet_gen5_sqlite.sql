@@ -9,7 +9,7 @@ FROM (
     uid,
     username
   FROM main.users
-)
+) AS _table_alias_2
 WHERE
   NOT EXISTS(
     SELECT
@@ -35,7 +35,7 @@ WHERE
           FROM main.users
         ) AS _table_alias_1
           ON user_id = uid
-      )
+      ) AS _t0
       WHERE
         (
           DATETIME(created_at_1, '1 year') >= created_at
@@ -43,7 +43,7 @@ WHERE
         AND (
           created_at >= created_at_1
         )
-    )
+    ) AS _table_alias_3
     WHERE
       uid = user_id
   )

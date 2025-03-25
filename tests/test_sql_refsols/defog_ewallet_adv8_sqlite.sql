@@ -16,7 +16,7 @@ FROM (
       mid,
       name
     FROM main.merchants
-  )
+  ) AS _table_alias_0
   INNER JOIN (
     SELECT
       SUM(amount) AS agg_0,
@@ -32,16 +32,16 @@ FROM (
           receiver_type,
           status
         FROM main.wallet_transactions_daily
-      )
+      ) AS _t2
       WHERE
         (
           receiver_type = 1
         ) AND (
           status = 'success'
         )
-    )
+    ) AS _t1
     GROUP BY
       receiver_id
-  )
+  ) AS _table_alias_1
     ON mid = receiver_id
-)
+) AS _t0

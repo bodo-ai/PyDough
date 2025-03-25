@@ -16,7 +16,7 @@ FROM (
       name
     FROM (
       SELECT
-        _table_alias_0._id AS _id,
+        _table_alias_2._id AS _id,
         agg_0,
         name
       FROM (
@@ -24,7 +24,7 @@ FROM (
           sbCustId AS _id,
           sbCustName AS name
         FROM main.sbCustomer
-      ) AS _table_alias_0
+      ) AS _table_alias_2
       LEFT JOIN (
         SELECT
           COUNT() AS agg_0,
@@ -48,16 +48,16 @@ FROM (
                   sbCustId AS _id,
                   sbCustJoinDate AS join_date
                 FROM main.sbCustomer
-              )
-            )
+              ) AS _t5
+            ) AS _table_alias_0
             INNER JOIN (
               SELECT
                 sbTxCustId AS customer_id,
                 sbTxDateTime AS date_time
               FROM main.sbTransaction
-            )
+            ) AS _table_alias_1
               ON _id = customer_id
-          )
+          ) AS _t4
           WHERE
             (
               EXTRACT(MONTH FROM date_time) = join_month
@@ -65,16 +65,16 @@ FROM (
             AND (
               EXTRACT(YEAR FROM date_time) = join_year
             )
-        )
+        ) AS _t3
         GROUP BY
           _id
-      ) AS _table_alias_1
-        ON _table_alias_0._id = _table_alias_1._id
-    )
-  )
+      ) AS _table_alias_3
+        ON _table_alias_2._id = _table_alias_3._id
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC
   LIMIT 1
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC

@@ -17,7 +17,7 @@ FROM (
           l_quantity AS quantity,
           l_shipdate AS ship_date
         FROM tpch.LINEITEM
-      )
+      ) AS _t3
       WHERE
         (
           discount <= 0.07
@@ -34,6 +34,6 @@ FROM (
         AND (
           ship_date >= CAST('1994-01-01' AS DATE)
         )
-    )
-  )
-)
+    ) AS _t2
+  ) AS _t1
+) AS _t0

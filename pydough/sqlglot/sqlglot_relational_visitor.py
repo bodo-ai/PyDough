@@ -352,6 +352,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             alias = self._generate_table_alias()
             alias_map[input_name] = alias
             self._correlated_names[join.correl_name] = alias
+        # breakpoint()
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
@@ -364,7 +365,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
             input_name = join.default_input_aliases[i]
-            alias_map[input_name] = self._generate_table_alias()
+            # if input_name not in alias_map:
+            #     alias_map[input_name] = self._generate_table_alias()
+            if join.correl_name is None:
+                alias_map[input_name] = self._generate_table_alias()
+        # breakpoint()
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {

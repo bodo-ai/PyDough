@@ -8,6 +8,6 @@ FROM (
     o_orderkey AS key,
     o_totalprice AS total_price
   FROM tpch.ORDERS
-)
+) AS _t0
 WHERE
   total_price < 1000.0

@@ -1,5 +1,5 @@
 SELECT
-  _table_alias_0.uid AS user_id,
+  _table_alias_6.uid AS user_id,
   balance AS latest_balance
 FROM (
   SELECT
@@ -8,7 +8,7 @@ FROM (
     SELECT
       uid
     FROM main.users
-  )
+  ) AS _table_alias_0
   WHERE
     EXISTS(
       SELECT
@@ -17,11 +17,11 @@ FROM (
         SELECT
           user_id
         FROM main.wallet_user_balance_daily
-      )
+      ) AS _table_alias_1
       WHERE
         uid = user_id
     )
-) AS _table_alias_0
+) AS _table_alias_6
 LEFT JOIN (
   SELECT
     balance,
@@ -45,7 +45,7 @@ LEFT JOIN (
             SELECT
               uid
             FROM main.users
-          )
+          ) AS _table_alias_2
           WHERE
             EXISTS(
               SELECT
@@ -54,23 +54,23 @@ LEFT JOIN (
                 SELECT
                   user_id
                 FROM main.wallet_user_balance_daily
-              )
+              ) AS _table_alias_3
               WHERE
                 uid = user_id
             )
-        )
+        ) AS _table_alias_4
         INNER JOIN (
           SELECT
             balance,
             updated_at,
             user_id
           FROM main.wallet_user_balance_daily
-        )
+        ) AS _table_alias_5
           ON uid = user_id
-      )
+      ) AS _t1
     ) AS _t
     WHERE
       _w = 1
-  )
-) AS _table_alias_1
-  ON _table_alias_0.uid = _table_alias_1.uid
+  ) AS _t0
+) AS _table_alias_7
+  ON _table_alias_6.uid = _table_alias_7.uid

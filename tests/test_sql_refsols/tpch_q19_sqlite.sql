@@ -32,12 +32,12 @@ FROM (
             l_shipinstruct AS ship_instruct,
             l_shipmode AS ship_mode
           FROM tpch.LINEITEM
-        )
+        ) AS _t3
         WHERE
           (
             ship_instruct = 'DELIVER IN PERSON'
           ) AND ship_mode IN ('AIR', 'AIR REG')
-      )
+      ) AS _table_alias_0
       INNER JOIN (
         SELECT
           brand,
@@ -51,12 +51,12 @@ FROM (
             p_partkey AS key,
             p_size AS size
           FROM tpch.PART
-        )
+        ) AS _t4
         WHERE
           size >= 1
-      )
+      ) AS _table_alias_1
         ON part_key = key
-    )
+    ) AS _t2
     WHERE
       (
         (
@@ -105,5 +105,5 @@ FROM (
           brand = 'Brand#34'
         )
       )
-  )
-)
+  ) AS _t1
+) AS _t0

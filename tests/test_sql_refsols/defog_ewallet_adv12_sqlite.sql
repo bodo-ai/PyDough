@@ -13,10 +13,10 @@ FROM (
         cid,
         merchant_id
       FROM main.coupons
-    )
+    ) AS _t1
     WHERE
       merchant_id = '1'
-  )
+  ) AS _table_alias_0
   LEFT JOIN (
     SELECT
       SUM(amount) AS agg_0,
@@ -26,9 +26,9 @@ FROM (
         amount,
         coupon_id
       FROM main.wallet_transactions_daily
-    )
+    ) AS _t2
     GROUP BY
       coupon_id
-  )
+  ) AS _table_alias_1
     ON cid = coupon_id
-)
+) AS _t0

@@ -63,7 +63,7 @@ FROM (
             FROM tpch.CUSTOMER
           ) AS _table_alias_1
             ON customer_key = _table_alias_1.key
-        )
+        ) AS _table_alias_2
         LEFT JOIN (
           SELECT
             SUM(quantity) AS agg_0,
@@ -73,21 +73,21 @@ FROM (
               l_orderkey AS order_key,
               l_quantity AS quantity
             FROM tpch.LINEITEM
-          )
+          ) AS _t4
           GROUP BY
             order_key
-        )
+        ) AS _table_alias_3
           ON key = order_key
-      )
-    )
+      ) AS _t3
+    ) AS _t2
     WHERE
       TOTAL_QUANTITY > 300
-  )
+  ) AS _t1
   ORDER BY
     ordering_1 DESC,
     ordering_2
   LIMIT 10
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC,
   ordering_2

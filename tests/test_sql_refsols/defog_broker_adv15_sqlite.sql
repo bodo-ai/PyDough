@@ -16,14 +16,14 @@ FROM (
         sbCustJoinDate AS join_date,
         sbCustStatus AS status
       FROM main.sbCustomer
-    )
+    ) AS _t2
     WHERE
       (
         join_date <= '2022-12-31'
       ) AND (
         join_date >= '2022-01-01'
       )
-  )
+  ) AS _t1
   GROUP BY
     country
-)
+) AS _t0

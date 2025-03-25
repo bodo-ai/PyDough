@@ -163,4 +163,4 @@ FROM (
   SELECT
     o_orderdate AS order_date
   FROM tpch.ORDERS
-)
+) AS _t0

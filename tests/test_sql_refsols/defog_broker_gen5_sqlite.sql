@@ -20,7 +20,7 @@ FROM (
           sbTxPrice AS price,
           sbTxStatus AS status
         FROM main.sbTransaction
-      )
+      ) AS _t3
       WHERE
         (
           status = 'success'
@@ -32,10 +32,10 @@ FROM (
             date_time <= '2023-03-31'
           )
         )
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   GROUP BY
     month
-)
+) AS _t0
 ORDER BY
   ordering_1

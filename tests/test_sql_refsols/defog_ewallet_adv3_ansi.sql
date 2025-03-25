@@ -16,14 +16,14 @@ FROM (
         name,
         status
       FROM main.merchants
-    )
+    ) AS _t1
     WHERE
       (
         status = 'active'
       ) AND (
         LOWER(category) LIKE '%%retail%%'
       )
-  )
+  ) AS _table_alias_0
   INNER JOIN (
     SELECT
       COUNT() AS agg_0,
@@ -32,9 +32,9 @@ FROM (
       SELECT
         merchant_id
       FROM main.coupons
-    )
+    ) AS _t2
     GROUP BY
       merchant_id
-  )
+  ) AS _table_alias_1
     ON mid = merchant_id
-)
+) AS _t0

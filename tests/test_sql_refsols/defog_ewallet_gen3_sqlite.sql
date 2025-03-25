@@ -13,6 +13,6 @@ FROM (
     session_end_ts,
     session_start_ts
   FROM main.user_sessions
-)
+) AS _t0
 GROUP BY
   device_type

@@ -63,15 +63,15 @@ FROM (
                     FROM tpch.SUPPLIER
                   ) AS _table_alias_1
                     ON _table_alias_0.key = nation_key
-                )
+                ) AS _table_alias_2
                 INNER JOIN (
                   SELECT
                     ps_partkey AS part_key,
                     ps_suppkey AS supplier_key
                   FROM tpch.PARTSUPP
-                )
+                ) AS _table_alias_3
                   ON key_2 = supplier_key
-              )
+              ) AS _table_alias_4
               INNER JOIN (
                 SELECT
                   key
@@ -80,12 +80,12 @@ FROM (
                     p_partkey AS key,
                     p_type AS part_type
                   FROM tpch.PART
-                )
+                ) AS _t4
                 WHERE
                   part_type = 'ECONOMY ANODIZED STEEL'
-              )
+              ) AS _table_alias_5
                 ON part_key = key
-            ) AS _table_alias_2
+            ) AS _table_alias_6
             INNER JOIN (
               SELECT
                 l_discount AS discount,
@@ -94,15 +94,15 @@ FROM (
                 l_partkey AS part_key,
                 l_suppkey AS supplier_key
               FROM tpch.LINEITEM
-            ) AS _table_alias_3
+            ) AS _table_alias_7
               ON (
-                _table_alias_2.part_key = _table_alias_3.part_key
+                _table_alias_6.part_key = _table_alias_7.part_key
               )
               AND (
-                _table_alias_2.supplier_key = _table_alias_3.supplier_key
+                _table_alias_6.supplier_key = _table_alias_7.supplier_key
               )
-          )
-        )
+          ) AS _t3
+        ) AS _table_alias_8
         INNER JOIN (
           SELECT
             customer_key,
@@ -114,7 +114,7 @@ FROM (
               o_orderdate AS order_date,
               o_orderkey AS key
             FROM tpch.ORDERS
-          )
+          ) AS _t5
           WHERE
             (
               order_date <= CAST('1996-12-31' AS DATE)
@@ -122,31 +122,31 @@ FROM (
             AND (
               order_date >= CAST('1995-01-01' AS DATE)
             )
-        )
+        ) AS _table_alias_9
           ON order_key = key
-      )
-    )
+      ) AS _t2
+    ) AS _table_alias_14
     INNER JOIN (
       SELECT
-        _table_alias_6.key AS key
+        _table_alias_12.key AS key
       FROM (
         SELECT
-          _table_alias_4.key AS key,
+          _table_alias_10.key AS key,
           region_key
         FROM (
           SELECT
             c_custkey AS key,
             c_nationkey AS nation_key
           FROM tpch.CUSTOMER
-        ) AS _table_alias_4
+        ) AS _table_alias_10
         INNER JOIN (
           SELECT
             n_nationkey AS key,
             n_regionkey AS region_key
           FROM tpch.NATION
-        ) AS _table_alias_5
-          ON nation_key = _table_alias_5.key
-      ) AS _table_alias_6
+        ) AS _table_alias_11
+          ON nation_key = _table_alias_11.key
+      ) AS _table_alias_12
       INNER JOIN (
         SELECT
           key
@@ -155,14 +155,14 @@ FROM (
             r_name AS name,
             r_regionkey AS key
           FROM tpch.REGION
-        )
+        ) AS _t6
         WHERE
           name = 'AMERICA'
-      ) AS _table_alias_7
-        ON region_key = _table_alias_7.key
-    )
+      ) AS _table_alias_13
+        ON region_key = _table_alias_13.key
+    ) AS _table_alias_15
       ON customer_key = key
-  )
+  ) AS _t1
   GROUP BY
     o_year
-)
+) AS _t0

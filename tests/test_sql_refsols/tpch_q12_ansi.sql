@@ -37,7 +37,7 @@ FROM (
               l_shipdate AS ship_date,
               l_shipmode AS ship_mode
             FROM tpch.LINEITEM
-          )
+          ) AS _t4
           WHERE
             (
               commit_date < receipt_date
@@ -58,19 +58,19 @@ FROM (
                 ship_mode = 'SHIP'
               )
             )
-        )
+        ) AS _table_alias_0
         LEFT JOIN (
           SELECT
             o_orderkey AS key,
             o_orderpriority AS order_priority
           FROM tpch.ORDERS
-        )
+        ) AS _table_alias_1
           ON order_key = key
-      )
-    )
+      ) AS _t3
+    ) AS _t2
     GROUP BY
       ship_mode
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_2

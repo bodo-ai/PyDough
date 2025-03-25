@@ -33,9 +33,9 @@ FROM (
       phone AS C_PHONE
     FROM (
       SELECT
-        _table_alias_0.key AS key,
-        _table_alias_0.name AS name,
-        _table_alias_1.name AS name_4,
+        _table_alias_4.key AS key,
+        _table_alias_4.name AS name,
+        _table_alias_5.name AS name_4,
         acctbal,
         address,
         agg_0,
@@ -61,7 +61,7 @@ FROM (
             c_nationkey AS nation_key,
             c_phone AS phone
           FROM tpch.CUSTOMER
-        )
+        ) AS _table_alias_2
         LEFT JOIN (
           SELECT
             SUM(amt) AS agg_0,
@@ -87,14 +87,14 @@ FROM (
                     o_orderdate AS order_date,
                     o_orderkey AS key
                   FROM tpch.ORDERS
-                )
+                ) AS _t5
                 WHERE
                   (
                     order_date < '1994-01-01'
                   ) AND (
                     order_date >= '1993-10-01'
                   )
-              )
+              ) AS _table_alias_0
               INNER JOIN (
                 SELECT
                   discount,
@@ -107,32 +107,32 @@ FROM (
                     l_orderkey AS order_key,
                     l_returnflag AS return_flag
                   FROM tpch.LINEITEM
-                )
+                ) AS _t6
                 WHERE
                   return_flag = 'R'
-              )
+              ) AS _table_alias_1
                 ON key = order_key
-            )
-          )
+            ) AS _t4
+          ) AS _t3
           GROUP BY
             customer_key
-        )
+        ) AS _table_alias_3
           ON key = customer_key
-      ) AS _table_alias_0
+      ) AS _table_alias_4
       LEFT JOIN (
         SELECT
           n_nationkey AS key,
           n_name AS name
         FROM tpch.NATION
-      ) AS _table_alias_1
-        ON nation_key = _table_alias_1.key
-    )
-  )
+      ) AS _table_alias_5
+        ON nation_key = _table_alias_5.key
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_1 DESC,
     ordering_2
   LIMIT 20
-)
+) AS _t0
 ORDER BY
   ordering_1 DESC,
   ordering_2

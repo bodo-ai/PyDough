@@ -14,7 +14,7 @@ FROM (
       SELECT
         uid
       FROM main.users
-    )
+    ) AS _table_alias_0
     INNER JOIN (
       SELECT
         SUM(duration) AS agg_0,
@@ -39,13 +39,13 @@ FROM (
             ) AND (
               session_start_ts >= '2023-06-01'
             )
-        )
-      )
+        ) AS _t3
+      ) AS _t2
       GROUP BY
         user_id
-    )
+    ) AS _table_alias_1
       ON uid = user_id
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_1 DESC

@@ -15,7 +15,7 @@ FROM (
         sender_id,
         sender_type
       FROM main.wallet_transactions_daily
-    )
+    ) AS _t2
     WHERE
       (
         created_at < DATE('now', 'start of month')
@@ -26,7 +26,7 @@ FROM (
       AND (
         created_at >= DATE('now', 'start of month', '-2 month')
       )
-  )
-)
+  ) AS _t1
+) AS _t0
 GROUP BY
   year_month

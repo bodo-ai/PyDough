@@ -10,7 +10,7 @@ FROM (
       a,
       b
     FROM table
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   c

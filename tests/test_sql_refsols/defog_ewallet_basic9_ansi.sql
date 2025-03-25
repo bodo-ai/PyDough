@@ -34,25 +34,25 @@ FROM (
               sender_id,
               sender_type
             FROM main.wallet_transactions_daily
-          )
+          ) AS _t4
           WHERE
             sender_type = 0
-        )
+        ) AS _table_alias_0
         INNER JOIN (
           SELECT
             country,
             uid
           FROM main.users
-        )
+        ) AS _table_alias_1
           ON sender_id = uid
-      )
+      ) AS _t3
       GROUP BY
         country
-    )
-  )
+    ) AS _t2
+  ) AS _t1
   ORDER BY
     ordering_2 DESC
   LIMIT 5
-)
+) AS _t0
 ORDER BY
   ordering_2 DESC

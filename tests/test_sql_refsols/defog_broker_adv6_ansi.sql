@@ -13,7 +13,7 @@ FROM (
       sbCustId AS _id,
       sbCustName AS name
     FROM main.sbCustomer
-  )
+  ) AS _table_alias_0
   INNER JOIN (
     SELECT
       COUNT() AS agg_1,
@@ -24,9 +24,9 @@ FROM (
         sbTxAmount AS amount,
         sbTxCustId AS customer_id
       FROM main.sbTransaction
-    )
+    ) AS _t1
     GROUP BY
       customer_id
-  )
+  ) AS _table_alias_1
     ON _id = customer_id
-)
+) AS _t0

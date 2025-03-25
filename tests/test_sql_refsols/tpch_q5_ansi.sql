@@ -26,7 +26,7 @@ FROM (
           name
         FROM (
           SELECT
-            _table_alias_8.key AS key,
+            _table_alias_10.key AS key,
             discount,
             extended_price,
             name,
@@ -73,7 +73,7 @@ FROM (
                         r_name AS name,
                         r_regionkey AS key
                       FROM tpch.REGION
-                    )
+                    ) AS _t5
                     WHERE
                       name = 'ASIA'
                   ) AS _table_alias_1
@@ -97,7 +97,7 @@ FROM (
                     o_orderdate AS order_date,
                     o_orderkey AS key
                   FROM tpch.ORDERS
-                )
+                ) AS _t6
                 WHERE
                   (
                     order_date < CAST('1995-01-01' AS DATE)
@@ -107,7 +107,7 @@ FROM (
                   )
               ) AS _table_alias_5
                 ON key_5 = customer_key
-            )
+            ) AS _table_alias_6
             INNER JOIN (
               SELECT
                 l_discount AS discount,
@@ -115,36 +115,36 @@ FROM (
                 l_orderkey AS order_key,
                 l_suppkey AS supplier_key
               FROM tpch.LINEITEM
-            )
+            ) AS _table_alias_7
               ON key_8 = order_key
-          ) AS _table_alias_8
+          ) AS _table_alias_10
           LEFT JOIN (
             SELECT
-              _table_alias_6.key AS key,
+              _table_alias_8.key AS key,
               name AS name_12
             FROM (
               SELECT
                 s_suppkey AS key,
                 s_nationkey AS nation_key
               FROM tpch.SUPPLIER
-            ) AS _table_alias_6
+            ) AS _table_alias_8
             INNER JOIN (
               SELECT
                 n_nationkey AS key,
                 n_name AS name
               FROM tpch.NATION
-            ) AS _table_alias_7
-              ON nation_key = _table_alias_7.key
-          ) AS _table_alias_9
-            ON supplier_key = _table_alias_9.key
-        )
+            ) AS _table_alias_9
+              ON nation_key = _table_alias_9.key
+          ) AS _table_alias_11
+            ON supplier_key = _table_alias_11.key
+        ) AS _t4
         WHERE
           name_12 = nation_name
-      )
-    )
+      ) AS _t3
+    ) AS _t2
     GROUP BY
       key
-  )
-)
+  ) AS _t1
+) AS _t0
 ORDER BY
   ordering_1 DESC
