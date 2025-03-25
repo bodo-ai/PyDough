@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow on custom queries using the defog.ai
 schemas.
 """
 
+import datetime
 from collections.abc import Callable
 
 import pandas as pd
@@ -64,6 +65,85 @@ from pydough.unqualified import (
     UnqualifiedRoot,
     qualify_node,
 )
+
+
+# Helper functions for week calculations
+def get_day_to_int_mapping():
+    """
+    Return mapping of DayOfWeek enum to integer (0-6 for Monday-Sunday)
+    which maps to the defaults that pd.Timestamp uses for the day of week.
+    """
+    return {
+        DayOfWeek.MONDAY: 0,
+        DayOfWeek.TUESDAY: 1,
+        DayOfWeek.WEDNESDAY: 2,
+        DayOfWeek.THURSDAY: 3,
+        DayOfWeek.FRIDAY: 4,
+        DayOfWeek.SATURDAY: 5,
+        DayOfWeek.SUNDAY: 6,
+    }
+
+
+def get_start_of_week(dt: pd.Timestamp | str, start_of_week: DayOfWeek):
+    """
+    Calculate the start of week date for a given datetime
+    Args:
+        dt : The datetime to find the start of week for
+        start_of_week: Enum value representing which day is considered
+                        the start of the week (e.g., DayOfWeek.MONDAY)
+
+    Returns:
+        The start of the week for the given datetime
+    """
+    # Convert to pandas datetime if not already
+    dt_ts: pd.Timestamp = pd.to_datetime(dt)
+    # Get the day of week (0-6, where 0 is Monday)
+    weekday: int = dt_ts.weekday()
+    # Calculate days to subtract to get to start of week
+    day_to_int: dict[DayOfWeek, int] = get_day_to_int_mapping()
+    days_to_subtract: int = (weekday - day_to_int[start_of_week]) % 7
+    # Get start of week and set to midnight
+    sow: pd.Timestamp = dt_ts - pd.Timedelta(days=days_to_subtract)
+    # Return only year, month, day
+    return pd.Timestamp(sow.year, sow.month, sow.day)
+
+
+def get_day_name(dt: pd.Timestamp):
+    """
+    Get the name of the day for a given datetime
+    Args:
+        dt: The datetime to get the day name for
+    Returns:
+        The name of the day for the given datetime
+    """
+    day_names: list[str] = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    return day_names[dt.weekday()]
+
+
+def get_day_of_week(
+    dt: pd.Timestamp, start_of_week: DayOfWeek, start_week_as_zero: bool
+):
+    """
+    Calculate day of week (0-based or 1-based depending on configuration)
+    Args:
+        dt: The datetime to get the day of week for
+        start_of_week: Enum value representing which day is considered
+                        the start of the week (e.g., DayOfWeek.MONDAY)
+        start_week_as_zero: Whether to start counting from 0 or 1
+    """
+    # Get days since start of week
+    start_of_week_date: pd.Timestamp = get_start_of_week(dt, start_of_week)
+    days_since_start: int = (dt - start_of_week_date).days
+    # Adjust based on whether we start counting from 0 or 1
+    return days_since_start if start_week_as_zero else days_since_start + 1
 
 
 @pytest.fixture(
@@ -1278,999 +1358,160 @@ def test_defog_e2e_errors(
 
 
 @pytest.mark.execute
-@pytest.mark.parametrize(
-    "unqualified_impl, graph_name, answer_impl, start_of_week_config, start_week_as_zero_config",
-    [
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [0],
-                    "sow": ["2025-03-10"],
-                    "sow2": ["2025-03-10"],
-                    "sow3": ["2025-03-10"],
-                    "sow4": ["2025-03-17"],
-                    "sow5": ["2025-03-17"],
-                    "sow6": ["2025-03-17"],
-                    "sow7": ["2025-03-17"],
-                    "sow8": ["2025-03-17"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [5],
-                    "dayofweek2": [6],
-                    "dayofweek3": [7],
-                    "dayofweek4": [1],
-                    "dayofweek5": [2],
-                    "dayofweek6": [3],
-                    "dayofweek7": [4],
-                    "dayofweek8": [5],
-                }
-            ),
-            DayOfWeek.MONDAY,
-            False,
-            id="simple_week_sampler_monday_not_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-11"],
-                    "sow2": ["2025-03-11"],
-                    "sow3": ["2025-03-11"],
-                    "sow4": ["2025-03-11"],
-                    "sow5": ["2025-03-18"],
-                    "sow6": ["2025-03-18"],
-                    "sow7": ["2025-03-18"],
-                    "sow8": ["2025-03-18"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [4],
-                    "dayofweek2": [5],
-                    "dayofweek3": [6],
-                    "dayofweek4": [7],
-                    "dayofweek5": [1],
-                    "dayofweek6": [2],
-                    "dayofweek7": [3],
-                    "dayofweek8": [4],
-                }
-            ),
-            DayOfWeek.TUESDAY,
-            False,
-            id="simple_week_sampler_tuesday_not_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-12"],
-                    "sow2": ["2025-03-12"],
-                    "sow3": ["2025-03-12"],
-                    "sow4": ["2025-03-12"],
-                    "sow5": ["2025-03-12"],
-                    "sow6": ["2025-03-19"],
-                    "sow7": ["2025-03-19"],
-                    "sow8": ["2025-03-19"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [3],
-                    "dayofweek2": [4],
-                    "dayofweek3": [5],
-                    "dayofweek4": [6],
-                    "dayofweek5": [7],
-                    "dayofweek6": [1],
-                    "dayofweek7": [2],
-                    "dayofweek8": [3],
-                }
-            ),
-            DayOfWeek.WEDNESDAY,
-            False,
-            id="simple_week_sampler_wednesday_not_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-13"],
-                    "sow2": ["2025-03-13"],
-                    "sow3": ["2025-03-13"],
-                    "sow4": ["2025-03-13"],
-                    "sow5": ["2025-03-13"],
-                    "sow6": ["2025-03-13"],
-                    "sow7": ["2025-03-20"],
-                    "sow8": ["2025-03-20"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [2],
-                    "dayofweek2": [3],
-                    "dayofweek3": [4],
-                    "dayofweek4": [5],
-                    "dayofweek5": [6],
-                    "dayofweek6": [7],
-                    "dayofweek7": [1],
-                    "dayofweek8": [2],
-                }
-            ),
-            DayOfWeek.THURSDAY,
-            False,
-            id="simple_week_sampler_thursday_not_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-14"],
-                    "sow2": ["2025-03-14"],
-                    "sow3": ["2025-03-14"],
-                    "sow4": ["2025-03-14"],
-                    "sow5": ["2025-03-14"],
-                    "sow6": ["2025-03-14"],
-                    "sow7": ["2025-03-14"],
-                    "sow8": ["2025-03-21"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [1],
-                    "dayofweek2": [2],
-                    "dayofweek3": [3],
-                    "dayofweek4": [4],
-                    "dayofweek5": [5],
-                    "dayofweek6": [6],
-                    "dayofweek7": [7],
-                    "dayofweek8": [1],
-                }
-            ),
-            DayOfWeek.FRIDAY,
-            False,
-            id="simple_week_sampler_friday_not_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [0],
-                    "sow": ["2025-03-08"],
-                    "sow2": ["2025-03-15"],
-                    "sow3": ["2025-03-15"],
-                    "sow4": ["2025-03-15"],
-                    "sow5": ["2025-03-15"],
-                    "sow6": ["2025-03-15"],
-                    "sow7": ["2025-03-15"],
-                    "sow8": ["2025-03-15"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [7],
-                    "dayofweek2": [1],
-                    "dayofweek3": [2],
-                    "dayofweek4": [3],
-                    "dayofweek5": [4],
-                    "dayofweek6": [5],
-                    "dayofweek7": [6],
-                    "dayofweek8": [7],
-                }
-            ),
-            DayOfWeek.SATURDAY,
-            False,
-            id="simple_week_sampler_saturday_not_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [0],
-                    "sow": ["2025-03-09"],
-                    "sow2": ["2025-03-09"],
-                    "sow3": ["2025-03-16"],
-                    "sow4": ["2025-03-16"],
-                    "sow5": ["2025-03-16"],
-                    "sow6": ["2025-03-16"],
-                    "sow7": ["2025-03-16"],
-                    "sow8": ["2025-03-16"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [6],
-                    "dayofweek2": [7],
-                    "dayofweek3": [1],
-                    "dayofweek4": [2],
-                    "dayofweek5": [3],
-                    "dayofweek6": [4],
-                    "dayofweek7": [5],
-                    "dayofweek8": [6],
-                }
-            ),
-            DayOfWeek.SUNDAY,
-            False,
-            id="simple_week_sampler_sunday_not_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [0],
-                    "sow": ["2025-03-10"],
-                    "sow2": ["2025-03-10"],
-                    "sow3": ["2025-03-10"],
-                    "sow4": ["2025-03-17"],
-                    "sow5": ["2025-03-17"],
-                    "sow6": ["2025-03-17"],
-                    "sow7": ["2025-03-17"],
-                    "sow8": ["2025-03-17"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [4],
-                    "dayofweek2": [5],
-                    "dayofweek3": [6],
-                    "dayofweek4": [0],
-                    "dayofweek5": [1],
-                    "dayofweek6": [2],
-                    "dayofweek7": [3],
-                    "dayofweek8": [4],
-                }
-            ),
-            DayOfWeek.MONDAY,
-            True,
-            id="simple_week_sampler_monday_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-11"],
-                    "sow2": ["2025-03-11"],
-                    "sow3": ["2025-03-11"],
-                    "sow4": ["2025-03-11"],
-                    "sow5": ["2025-03-18"],
-                    "sow6": ["2025-03-18"],
-                    "sow7": ["2025-03-18"],
-                    "sow8": ["2025-03-18"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [3],
-                    "dayofweek2": [4],
-                    "dayofweek3": [5],
-                    "dayofweek4": [6],
-                    "dayofweek5": [0],
-                    "dayofweek6": [1],
-                    "dayofweek7": [2],
-                    "dayofweek8": [3],
-                }
-            ),
-            DayOfWeek.TUESDAY,
-            True,
-            id="simple_week_sampler_tuesday_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-12"],
-                    "sow2": ["2025-03-12"],
-                    "sow3": ["2025-03-12"],
-                    "sow4": ["2025-03-12"],
-                    "sow5": ["2025-03-12"],
-                    "sow6": ["2025-03-19"],
-                    "sow7": ["2025-03-19"],
-                    "sow8": ["2025-03-19"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [2],
-                    "dayofweek2": [3],
-                    "dayofweek3": [4],
-                    "dayofweek4": [5],
-                    "dayofweek5": [6],
-                    "dayofweek6": [0],
-                    "dayofweek7": [1],
-                    "dayofweek8": [2],
-                }
-            ),
-            DayOfWeek.WEDNESDAY,
-            True,
-            id="simple_week_sampler_wednesday_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-13"],
-                    "sow2": ["2025-03-13"],
-                    "sow3": ["2025-03-13"],
-                    "sow4": ["2025-03-13"],
-                    "sow5": ["2025-03-13"],
-                    "sow6": ["2025-03-13"],
-                    "sow7": ["2025-03-20"],
-                    "sow8": ["2025-03-20"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [1],
-                    "dayofweek2": [2],
-                    "dayofweek3": [3],
-                    "dayofweek4": [4],
-                    "dayofweek5": [5],
-                    "dayofweek6": [6],
-                    "dayofweek7": [0],
-                    "dayofweek8": [1],
-                }
-            ),
-            DayOfWeek.THURSDAY,
-            True,
-            id="simple_week_sampler_thursday_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [1],
-                    "sow": ["2025-03-14"],
-                    "sow2": ["2025-03-14"],
-                    "sow3": ["2025-03-14"],
-                    "sow4": ["2025-03-14"],
-                    "sow5": ["2025-03-14"],
-                    "sow6": ["2025-03-14"],
-                    "sow7": ["2025-03-14"],
-                    "sow8": ["2025-03-21"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [0],
-                    "dayofweek2": [1],
-                    "dayofweek3": [2],
-                    "dayofweek4": [3],
-                    "dayofweek5": [4],
-                    "dayofweek6": [5],
-                    "dayofweek7": [6],
-                    "dayofweek8": [0],
-                }
-            ),
-            DayOfWeek.FRIDAY,
-            True,
-            id="simple_week_sampler_friday_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [0],
-                    "sow": ["2025-03-08"],
-                    "sow2": ["2025-03-15"],
-                    "sow3": ["2025-03-15"],
-                    "sow4": ["2025-03-15"],
-                    "sow5": ["2025-03-15"],
-                    "sow6": ["2025-03-15"],
-                    "sow7": ["2025-03-15"],
-                    "sow8": ["2025-03-15"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [6],
-                    "dayofweek2": [0],
-                    "dayofweek3": [1],
-                    "dayofweek4": [2],
-                    "dayofweek5": [3],
-                    "dayofweek6": [4],
-                    "dayofweek7": [5],
-                    "dayofweek8": [6],
-                }
-            ),
-            DayOfWeek.SATURDAY,
-            True,
-            id="simple_week_sampler_saturday_zero",
-        ),
-        pytest.param(
-            simple_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "weeks_diff": [0],
-                    "sow": ["2025-03-09"],
-                    "sow2": ["2025-03-09"],
-                    "sow3": ["2025-03-16"],
-                    "sow4": ["2025-03-16"],
-                    "sow5": ["2025-03-16"],
-                    "sow6": ["2025-03-16"],
-                    "sow7": ["2025-03-16"],
-                    "sow8": ["2025-03-16"],
-                    "dayname1": ["Friday"],
-                    "dayname2": ["Saturday"],
-                    "dayname3": ["Sunday"],
-                    "dayname4": ["Monday"],
-                    "dayname5": ["Tuesday"],
-                    "dayname6": ["Wednesday"],
-                    "dayname7": ["Thursday"],
-                    "dayname8": ["Friday"],
-                    "dayofweek1": [5],
-                    "dayofweek2": [6],
-                    "dayofweek3": [0],
-                    "dayofweek4": [1],
-                    "dayofweek5": [2],
-                    "dayofweek6": [3],
-                    "dayofweek7": [4],
-                    "dayofweek8": [5],
-                }
-            ),
-            DayOfWeek.SUNDAY,
-            True,
-            id="simple_week_sampler_sunday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-04-02"] * 20
-                    + [
-                        "2023-01-15",
-                        "2023-01-15",
-                        "2023-02-19",
-                        "2023-03-19",
-                        "2023-01-29",
-                        "2023-02-26",
-                        "2023-03-26",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [0] * 10 + [1] * 10 + [0, 1, 1, 6, 1, 2, 4],
-                }
-            ),
-            DayOfWeek.SUNDAY,
-            True,
-            id="transaction_week_sampler_sunday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-27"] * 10
-                    + ["2023-04-03"] * 10
-                    + [
-                        "2023-01-09",
-                        "2023-01-16",
-                        "2023-02-20",
-                        "2023-03-20",
-                        "2023-01-30",
-                        "2023-02-27",
-                        "2023-03-27",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [6] * 10 + [0] * 10 + [6, 0, 0, 5, 0, 1, 3],
-                }
-            ),
-            DayOfWeek.MONDAY,
-            True,
-            id="transaction_week_sampler_monday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-28"] * 20
-                    + [
-                        "2023-01-10",
-                        "2023-01-10",
-                        "2023-02-14",
-                        "2023-03-21",
-                        "2023-01-24",
-                        "2023-02-28",
-                        "2023-03-28",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [5] * 10 + [6] * 10 + [5, 6, 6, 4, 6, 0, 2],
-                }
-            ),
-            DayOfWeek.TUESDAY,
-            True,
-            id="transaction_week_sampler_tuesday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-29"] * 20
-                    + [
-                        "2023-01-11",
-                        "2023-01-11",
-                        "2023-02-15",
-                        "2023-03-22",
-                        "2023-01-25",
-                        "2023-02-22",
-                        "2023-03-29",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [4] * 10 + [5] * 10 + [4, 5, 5, 3, 5, 6, 1],
-                }
-            ),
-            DayOfWeek.WEDNESDAY,
-            True,
-            id="transaction_week_sampler_wednesday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-30"] * 20
-                    + [
-                        "2023-01-12",
-                        "2023-01-12",
-                        "2023-02-16",
-                        "2023-03-23",
-                        "2023-01-26",
-                        "2023-02-23",
-                        "2023-03-30",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [3] * 10 + [4] * 10 + [3, 4, 4, 2, 4, 5, 0],
-                }
-            ),
-            DayOfWeek.THURSDAY,
-            True,
-            id="transaction_week_sampler_thursday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-31"] * 20
-                    + [
-                        "2023-01-13",
-                        "2023-01-13",
-                        "2023-02-17",
-                        "2023-03-24",
-                        "2023-01-27",
-                        "2023-02-24",
-                        "2023-03-24",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [2] * 10 + [3] * 10 + [2, 3, 3, 1, 3, 4, 6],
-                }
-            ),
-            DayOfWeek.FRIDAY,
-            True,
-            id="transaction_week_sampler_friday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-04-01"] * 20
-                    + [
-                        "2023-01-14",
-                        "2023-01-14",
-                        "2023-02-18",
-                        "2023-03-25",
-                        "2023-01-28",
-                        "2023-02-25",
-                        "2023-03-25",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [1] * 10 + [2] * 10 + [1, 2, 2, 0, 2, 3, 5],
-                }
-            ),
-            DayOfWeek.SATURDAY,
-            True,
-            id="transaction_week_sampler_saturday_zero",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-04-02"] * 20
-                    + [
-                        "2023-01-15",
-                        "2023-01-15",
-                        "2023-02-19",
-                        "2023-03-19",
-                        "2023-01-29",
-                        "2023-02-26",
-                        "2023-03-26",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [1] * 10 + [2] * 10 + [1, 2, 2, 7, 2, 3, 5],
-                }
-            ),
-            DayOfWeek.SUNDAY,
-            False,
-            id="transaction_week_sampler_sunday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-27"] * 10
-                    + ["2023-04-03"] * 10
-                    + [
-                        "2023-01-09",
-                        "2023-01-16",
-                        "2023-02-20",
-                        "2023-03-20",
-                        "2023-01-30",
-                        "2023-02-27",
-                        "2023-03-27",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [7] * 10 + [1] * 10 + [7, 1, 1, 6, 1, 2, 4],
-                }
-            ),
-            DayOfWeek.MONDAY,
-            False,
-            id="transaction_week_sampler_monday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-28"] * 20
-                    + [
-                        "2023-01-10",
-                        "2023-01-10",
-                        "2023-02-14",
-                        "2023-03-21",
-                        "2023-01-24",
-                        "2023-02-28",
-                        "2023-03-28",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [6] * 10 + [7] * 10 + [6, 7, 7, 5, 7, 1, 3],
-                }
-            ),
-            DayOfWeek.TUESDAY,
-            False,
-            id="transaction_week_sampler_tuesday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-29"] * 20
-                    + [
-                        "2023-01-11",
-                        "2023-01-11",
-                        "2023-02-15",
-                        "2023-03-22",
-                        "2023-01-25",
-                        "2023-02-22",
-                        "2023-03-29",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [5] * 10 + [6] * 10 + [5, 6, 6, 4, 6, 7, 2],
-                }
-            ),
-            DayOfWeek.WEDNESDAY,
-            False,
-            id="transaction_week_sampler_wednesday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-30"] * 20
-                    + [
-                        "2023-01-12",
-                        "2023-01-12",
-                        "2023-02-16",
-                        "2023-03-23",
-                        "2023-01-26",
-                        "2023-02-23",
-                        "2023-03-30",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [4] * 10 + [5] * 10 + [4, 5, 5, 3, 5, 6, 1],
-                }
-            ),
-            DayOfWeek.THURSDAY,
-            False,
-            id="transaction_week_sampler_thursday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-03-31"] * 20
-                    + [
-                        "2023-01-13",
-                        "2023-01-13",
-                        "2023-02-17",
-                        "2023-03-24",
-                        "2023-01-27",
-                        "2023-02-24",
-                        "2023-03-24",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [3] * 10 + [4] * 10 + [3, 4, 4, 2, 4, 5, 7],
-                }
-            ),
-            DayOfWeek.FRIDAY,
-            False,
-            id="transaction_week_sampler_friday_one",
-        ),
-        pytest.param(
-            transaction_week_sampler,
-            "Broker",
-            lambda: pd.DataFrame(
-                {
-                    "sow": ["2023-04-01"] * 20
-                    + [
-                        "2023-01-14",
-                        "2023-01-14",
-                        "2023-02-18",
-                        "2023-03-25",
-                        "2023-01-28",
-                        "2023-02-25",
-                        "2023-03-25",
-                    ],
-                    "dayname": ["Sunday"] * 10
-                    + ["Monday"] * 10
-                    + [
-                        "Sunday",
-                        "Monday",
-                        "Monday",
-                        "Saturday",
-                        "Monday",
-                        "Tuesday",
-                        "Thursday",
-                    ],
-                    "dayofweek": [2] * 10 + [3] * 10 + [2, 3, 3, 1, 3, 4, 6],
-                }
-            ),
-            DayOfWeek.SATURDAY,
-            False,
-            id="transaction_week_sampler_saturday_one",
-        ),
-    ],
-)
-def test_pipeline_e2e_defog_custom_week(
-    unqualified_impl: Callable[[], UnqualifiedNode],
-    graph_name: str,
-    answer_impl: pd.DataFrame,
+def test_pipeline_e2e_defog_simple_week(
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
-    start_of_week_config: DayOfWeek,
-    start_week_as_zero_config: bool,
-    default_config: PyDoughConfigs,
+    week_handling_config: PyDoughConfigs,
 ):
     """
-    Test executing custom "week" functions using the defog.ai schemas,
-    comparing against the result of running the reference SQL query text on the
-    same database connector.
+    Test executing simple_week_sampler using the defog.ai schemas with different
+    week configurations, comparing against expected results.
     """
-    setattr(default_config, "start_of_week", start_of_week_config)
-    setattr(default_config, "start_week_as_zero", start_week_as_zero_config)
-    graph: GraphMetadata = defog_graphs(graph_name)
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    graph: GraphMetadata = defog_graphs("Broker")
+    root: UnqualifiedNode = init_pydough_context(graph)(simple_week_sampler)()
     result: pd.DataFrame = to_df(
-        root, metadata=graph, database=sqlite_defog_connection, config=default_config
+        root,
+        metadata=graph,
+        database=sqlite_defog_connection,
+        config=week_handling_config,
     )
-    pd.testing.assert_frame_equal(result, answer_impl())
+
+    # Generate expected DataFrame based on week_handling_config
+    start_of_week = week_handling_config.start_of_week
+    start_week_as_zero = week_handling_config.start_week_as_zero
+
+    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
+    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
+    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
+    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
+    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
+    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
+    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
+    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
+    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
+
+    # Calculate start of week for each date
+    sow = get_start_of_week(y_dt, start_of_week).strftime("%Y-%m-%d")
+    sow2 = get_start_of_week(y_dt2, start_of_week).strftime("%Y-%m-%d")
+    sow3 = get_start_of_week(y_dt3, start_of_week).strftime("%Y-%m-%d")
+    sow4 = get_start_of_week(y_dt4, start_of_week).strftime("%Y-%m-%d")
+    sow5 = get_start_of_week(y_dt5, start_of_week).strftime("%Y-%m-%d")
+    sow6 = get_start_of_week(y_dt6, start_of_week).strftime("%Y-%m-%d")
+    sow7 = get_start_of_week(y_dt7, start_of_week).strftime("%Y-%m-%d")
+    sow8 = get_start_of_week(y_dt8, start_of_week).strftime("%Y-%m-%d")
+
+    # Calculate weeks difference
+    x_sow = get_start_of_week(x_dt, start_of_week)
+    y_sow = get_start_of_week(y_dt, start_of_week)
+    weeks_diff = (y_sow - x_sow).days // 7
+
+    # Get day names
+    dayname1 = get_day_name(y_dt)
+    dayname2 = get_day_name(y_dt2)
+    dayname3 = get_day_name(y_dt3)
+    dayname4 = get_day_name(y_dt4)
+    dayname5 = get_day_name(y_dt5)
+    dayname6 = get_day_name(y_dt6)
+    dayname7 = get_day_name(y_dt7)
+    dayname8 = get_day_name(y_dt8)
+
+    # Calculate day of week
+    dayofweek1 = get_day_of_week(y_dt, start_of_week, start_week_as_zero)
+    dayofweek2 = get_day_of_week(y_dt2, start_of_week, start_week_as_zero)
+    dayofweek3 = get_day_of_week(y_dt3, start_of_week, start_week_as_zero)
+    dayofweek4 = get_day_of_week(y_dt4, start_of_week, start_week_as_zero)
+    dayofweek5 = get_day_of_week(y_dt5, start_of_week, start_week_as_zero)
+    dayofweek6 = get_day_of_week(y_dt6, start_of_week, start_week_as_zero)
+    dayofweek7 = get_day_of_week(y_dt7, start_of_week, start_week_as_zero)
+    dayofweek8 = get_day_of_week(y_dt8, start_of_week, start_week_as_zero)
+
+    # Create DataFrame with expected results
+    expected_df = pd.DataFrame(
+        {
+            "weeks_diff": [weeks_diff],
+            "sow": [sow],
+            "sow2": [sow2],
+            "sow3": [sow3],
+            "sow4": [sow4],
+            "sow5": [sow5],
+            "sow6": [sow6],
+            "sow7": [sow7],
+            "sow8": [sow8],
+            "dayname1": [dayname1],
+            "dayname2": [dayname2],
+            "dayname3": [dayname3],
+            "dayname4": [dayname4],
+            "dayname5": [dayname5],
+            "dayname6": [dayname6],
+            "dayname7": [dayname7],
+            "dayname8": [dayname8],
+            "dayofweek1": [dayofweek1],
+            "dayofweek2": [dayofweek2],
+            "dayofweek3": [dayofweek3],
+            "dayofweek4": [dayofweek4],
+            "dayofweek5": [dayofweek5],
+            "dayofweek6": [dayofweek6],
+            "dayofweek7": [dayofweek7],
+            "dayofweek8": [dayofweek8],
+        }
+    )
+    pd.testing.assert_frame_equal(result, expected_df)
+
+
+@pytest.mark.execute
+def test_pipeline_e2e_defog_transaction_week(
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+    week_handling_config: PyDoughConfigs,
+):
+    """
+    Test executing transaction_week_sampler using the defog.ai schemas with
+    different week configurations, comparing against expected results.
+    """
+    graph: GraphMetadata = defog_graphs("Broker")
+    root: UnqualifiedNode = init_pydough_context(graph)(transaction_week_sampler)()
+    result: pd.DataFrame = to_df(
+        root,
+        metadata=graph,
+        database=sqlite_defog_connection,
+        config=week_handling_config,
+    )
+
+    # Generate expected DataFrame based on week_handling_config
+    start_of_week = week_handling_config.start_of_week
+    start_week_as_zero = week_handling_config.start_week_as_zero
+
+    # Sample dates from the result DataFrame
+    date_times = result["date_time"].tolist()
+
+    # Calculate expected values for each date
+    expected_sows = []
+    expected_daynames = []
+    expected_dayofweeks = []
+
+    for dt in date_times:
+        dt = pd.to_datetime(dt)
+
+        # Calculate start of week
+        sow = get_start_of_week(dt, start_of_week).strftime("%Y-%m-%d")
+        expected_sows.append(sow)
+
+        # Get day name
+        dayname = get_day_name(dt)
+        expected_daynames.append(dayname)
+
+        # Calculate day of week
+        dayofweek = get_day_of_week(dt, start_of_week, start_week_as_zero)
+        expected_dayofweeks.append(dayofweek)
+
+    # Create DataFrame with expected results
+    expected_df = pd.DataFrame(
+        {
+            "date_time": date_times,
+            "sow": expected_sows,
+            "dayname": expected_daynames,
+            "dayofweek": expected_dayofweeks,
+        }
+    )
+
+    pd.testing.assert_frame_equal(result, expected_df)

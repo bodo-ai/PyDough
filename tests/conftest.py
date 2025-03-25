@@ -97,6 +97,23 @@ def sample_graph_names(request) -> str:
     return request.param
 
 
+@pytest.fixture(
+    params=[
+        pytest.param((sow, swaz), id=f"{sow.name.lower()}-{'zero' if swaz else 'one'}")
+        for sow in list(DayOfWeek)
+        for swaz in (True, False)
+    ]
+)
+def week_handling_config(request, defog_config):
+    """
+    Fixture which sets the start of week and start week as zero configuration.
+    """
+    start_of_week_config, start_week_as_zero_config = request.param
+    defog_config.start_of_week = start_of_week_config
+    defog_config.start_week_as_zero = start_week_as_zero_config
+    return defog_config
+
+
 @pytest.fixture
 def get_sample_graph(
     sample_graph_path: str,

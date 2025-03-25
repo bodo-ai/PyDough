@@ -1300,6 +1300,7 @@ def transaction_week_sampler():
     return Transactions.WHERE(
         (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
     ).CALCULATE(
+        date_time,
         sow=DATETIME(date_time, "start of week"),
         dayname=DAYNAME(date_time),
         dayofweek=DAYOFWEEK(date_time),
