@@ -1269,7 +1269,7 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    └─┬─ Partition[name='p', by=part_type]
+    └─┬─ Partition[name='part_types', by=part_type]
       └─┬─ AccessChild
         └─── TableCollection[Parts]
 
@@ -1279,7 +1279,7 @@ This node first derives the following children before doing its main task:
 
 The main task of this node is to partition the child data on the following keys:
   $1.part_type
-Note: the subcollection of this collection containing records from the unpartitioned data is called 'p'.
+Note: the subcollection of this collection containing records from the unpartitioned data is called 'Parts'.
 
 The following terms will be included in the result if this collection is executed:
   part_type
@@ -1288,7 +1288,7 @@ The collection has access to the following expressions:
   part_type
 
 The collection has access to the following collections:
-  p
+  Parts
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1299,13 +1299,13 @@ This node first derives the following children before doing its main task:
 
 The main task of this node is to partition the child data on the following keys:
   $1.part_type
-Note: the subcollection of this collection containing records from the unpartitioned data is called 'p'.
+Note: the subcollection of this collection containing records from the unpartitioned data is called 'Parts'.
 
 The collection has access to the following expressions:
   part_type
 
 The collection has access to the following collections:
-  p
+  Parts
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1322,16 +1322,16 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    ├─┬─ Partition[name='p', by=part_type]
+    ├─┬─ Partition[name='part_types', by=part_type]
     │ └─┬─ AccessChild
     │   └─── TableCollection[Parts]
     ├─┬─ Calculate[part_type=part_type, avg_price=AVG($1.retail_price)]
     │ └─┬─ AccessChild
-    │   └─── PartitionChild[p]
+    │   └─── PartitionChild[Parts]
     └─┬─ Where[avg_price >= 27.5]
-      └─── PartitionChild[p]
+      └─── PartitionChild[Parts]
 
-This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
+This node, specifically, accesses the unpartitioned data of a partitioning (child name: Parts).
 
 The following terms will be included in the result if this collection is executed:
   brand, comment, container, key, manufacturer, name, part_type, retail_price, size
@@ -1346,7 +1346,7 @@ Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
                 """,
                 """
-This node, specifically, accesses the unpartitioned data of a partitioning (child name: p).
+This node, specifically, accesses the unpartitioned data of a partitioning (child name: Parts).
 
 The collection has access to the following expressions:
   avg_price, brand, comment, container, key, manufacturer, name, part_type, retail_price, size
@@ -1739,35 +1739,35 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 """
 Collection:
   ──┬─ TPCH
-    └─┬─ Partition[name='p', by=part_type]
+    └─┬─ Partition[name='part_types', by=part_type]
       └─┬─ AccessChild
         └─── TableCollection[Parts]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
-    └─── PartitionChild[p]
+    └─── PartitionChild[Parts]
 
 The term is the following expression: AVG($1.retail_price)
 
 This expression calls the function 'AVG' on the following arguments, aggregating them into a single value for each record of the collection:
-  p.retail_price
+  Parts.retail_price
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Partition(Parts, name='p', by=part_type).CALCULATE(AVG(p.retail_price))
+  TPCH.Partition(Parts, name='part_types', by=part_type).CALCULATE(AVG(Parts.retail_price))
         """,
                 """
-Collection: TPCH.Partition(Parts, name='p', by=part_type)
+Collection: TPCH.Partition(Parts, name='part_types', by=part_type)
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
-  child $1: p
+  child $1: Parts
 
 The term is the following expression: AVG($1.retail_price)
 
 This expression calls the function 'AVG' on the following arguments, aggregating them into a single value for each record of the collection:
-  p.retail_price
+  Parts.retail_price
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
         """,
@@ -1781,31 +1781,31 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 """
 Collection:
   ──┬─ TPCH
-    ├─┬─ Partition[name='p', by=part_type]
+    ├─┬─ Partition[name='part_types', by=part_type]
     │ └─┬─ AccessChild
     │   └─── TableCollection[Parts]
     └─┬─ Where[AVG($1.retail_price) >= 27.5]
       └─┬─ AccessChild
-        └─── PartitionChild[p]
+        └─── PartitionChild[Parts]
 
 The term is the following child of the collection:
   └─┬─ AccessChild
-    └─── PartitionChild[p]
+    └─── PartitionChild[Parts]
 
 This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
 For example, the following are valid:
-  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).CALCULATE(COUNT(p.brand))
-  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).WHERE(HAS(p))
-  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).ORDER_BY(COUNT(p).DESC())
+  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).CALCULATE(COUNT(Parts.brand))
+  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).WHERE(HAS(Parts))
+  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).ORDER_BY(COUNT(Parts).DESC())
 
 To learn more about this child, you can try calling pydough.explain on the following:
-  TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5).p
+  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).Parts
         """,
                 """
-Collection: TPCH.Partition(Parts, name='p', by=part_type).WHERE(AVG(p.retail_price) >= 27.5)
+Collection: TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5)
 
 The term is the following child of the collection:
-  p
+  Parts
         """,
             ),
             id="agg_parts-child",
