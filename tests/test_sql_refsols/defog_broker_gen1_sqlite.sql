@@ -5,15 +5,9 @@ FROM (
     close
   FROM (
     SELECT
-      close,
-      ticker_id
-    FROM (
-      SELECT
-        sbDpClose AS close,
-        sbDpDate AS date,
-        sbDpTickerId AS ticker_id
-      FROM main.sbDailyPrice
-    )
+      sbDpClose AS close,
+      sbDpTickerId AS ticker_id
+    FROM main.sbDailyPrice
     WHERE
       CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(date, 'start of day'))) AS INTEGER) <= 7
   )

@@ -12,13 +12,7 @@ FROM (
       SELECT
         amount,
         sender_id
-      FROM (
-        SELECT
-          amount,
-          created_at,
-          sender_id
-        FROM main.wallet_transactions_daily
-      )
+      FROM main.wallet_transactions_daily
       WHERE
         CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(created_at, 'start of day'))) AS INTEGER) <= 7
     )

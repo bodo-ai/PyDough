@@ -16,14 +16,22 @@ from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
-from pydough.types import BooleanType, Int64Type, PyDoughType, StringType
+from pydough.types import BooleanType, DateType, Int64Type, PyDoughType, StringType
 
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
 """
 The types of SQLGlot expressions that need to be wrapped in parenthesis for the
 sake of precedence.
+"""
+
+current_ts_pattern: re.Pattern = re.compile(
+    r"\s*((now)|(current[ _]?timestamp)|(current[ _]?date))\s*", re.IGNORECASE
+)
+"""
+The REGEX pattern used to detect a valid alias of a string requesting the current
+timestamp.
 """
 
 trunc_pattern = re.compile(r"\s*start\s+of\s+(\w+)\s*", re.IGNORECASE)
@@ -44,6 +52,11 @@ The valid string representations of the year unit.
 month_units = ("months", "month", "mm")
 """
 The valid string representations of the month unit.
+"""
+
+week_units = ("weeks", "week", "w")
+"""
+The valid string representations of the week unit.
 """
 
 day_units = ("days", "day", "d")
@@ -74,6 +87,7 @@ class DateTimeUnit(Enum):
 
     YEAR = "year"
     MONTH = "month"
+    WEEK = "week"
     DAY = "day"
     HOUR = "hour"
     MINUTE = "minute"
@@ -99,6 +113,8 @@ class DateTimeUnit(Enum):
             return DateTimeUnit.YEAR
         elif unit in month_units:
             return DateTimeUnit.MONTH
+        elif unit in week_units:
+            return DateTimeUnit.WEEK
         elif unit in day_units:
             return DateTimeUnit.DAY
         elif unit in hour_units:
@@ -128,6 +144,8 @@ class DateTimeUnit(Enum):
                 return "'%Y-%m-%d %H:%M:00'"
             case DateTimeUnit.SECOND:
                 return "'%Y-%m-%d %H:%M:%S'"
+            case DateTimeUnit.WEEK:
+                raise ValueError("Week unit does not have a truncation string.")
 
     @property
     def extraction_string(self) -> str:
@@ -138,7 +156,9 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.YEAR:
                 return "'%Y'"
             case DateTimeUnit.MONTH:
-                return "%m'"
+                return "'%m'"
+            case DateTimeUnit.WEEK:
+                return "'%w'"
             case DateTimeUnit.DAY:
                 return "'%d'"
             case DateTimeUnit.HOUR:
@@ -278,6 +298,49 @@ class BaseTransformBindings:
             case _:
                 raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
+    @property
+    def dialect_start_of_week(self) -> DayOfWeek:
+        """
+        Which day of the week is considered the start of the week within the
+        SQL dialect. Individual dialects may override this.
+        """
+        return DayOfWeek.SUNDAY
+
+    @property
+    def start_of_week_offset(self) -> int:
+        """
+        The number of days to add to the start of the week within the
+        SQL dialect to obtain the start of week referenced by the configs.
+        """
+        dows: list[DayOfWeek] = [
+            DayOfWeek.SUNDAY,
+            DayOfWeek.MONDAY,
+            DayOfWeek.TUESDAY,
+            DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY,
+            DayOfWeek.FRIDAY,
+            DayOfWeek.SATURDAY,
+        ]
+        dialect_index: int = dows.index(self.dialect_start_of_week)
+        config_index: int = dows.index(self.configs.start_of_week)
+        return (config_index - dialect_index) % 7
+
+    @property
+    def dialect_dow_mapping(self) -> dict[str, int]:
+        """
+        A mapping of each day of week string to its corresponding integer value
+        in the dialect when converted to a day of week.
+        """
+        return {
+            "Sunday": 0,
+            "Monday": 1,
+            "Tuesday": 2,
+            "Wednesday": 3,
+            "Thursday": 4,
+            "Friday": 5,
+            "Saturday": 6,
+        }
+
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
@@ -286,15 +349,14 @@ class BaseTransformBindings:
         pydop.COUNT: sqlglot_expressions.Count,
         pydop.MIN: sqlglot_expressions.Min,
         pydop.MAX: sqlglot_expressions.Max,
+        pydop.ANYTHING: sqlglot_expressions.AnyValue,
         pydop.LOWER: sqlglot_expressions.Lower,
         pydop.UPPER: sqlglot_expressions.Upper,
         pydop.LENGTH: sqlglot_expressions.Length,
         pydop.ABS: sqlglot_expressions.Abs,
-        pydop.ROUND: sqlglot_expressions.Round,
         pydop.DEFAULT_TO: sqlglot_expressions.Coalesce,
         pydop.POWER: sqlglot_expressions.Pow,
         pydop.IFF: sqlglot_expressions.If,
-        pydop.JOIN_STRINGS: sqlglot_expressions.ConcatWs,
     }
     """
     TODO
@@ -303,9 +365,6 @@ class BaseTransformBindings:
     standard_unop_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
-        pydop.YEAR: sqlglot_expressions.Year,
-        pydop.MONTH: sqlglot_expressions.Month,
-        pydop.DAY: sqlglot_expressions.Day,
         pydop.NOT: sqlglot_expressions.Not,
     }
     """
@@ -375,6 +434,8 @@ class BaseTransformBindings:
                 return self.convert_like(args, types)
             case pydop.SLICE:
                 return self.convert_slice(args, types)
+            case pydop.JOIN_STRINGS:
+                return self.convert_join_strings(args, types)
             case pydop.LPAD:
                 return self.convert_lpad(args, types)
             case pydop.RPAD:
@@ -412,13 +473,28 @@ class BaseTransformBindings:
             case pydop.SECOND:
                 return self.convert_extract_datetime(args, types, DateTimeUnit.SECOND)
             case pydop.DATEDIFF:
-                return self.convert_datediff
+                return self.convert_datediff(args, types)
             case pydop.DATETIME:
-                return self.convert_datetime
+                return self.convert_datetime(args, types)
+            case pydop.DAYOFWEEK:
+                return self.convert_dayofweek(args, types)
+            case pydop.DAYNAME:
+                return self.convert_dayname(args, types)
             case _:
                 raise NotImplementedError(
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
                 )
+
+    def make_datetime_arg(self, expr: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Converts a SQLGlot expression to a datetime argument, if needed, including:
+        - Converting a string literal for "now" or similar aliases into a call to
+        get the current timestamp.
+        - Converting a string literal for a datetime into a datetime expression.
+        """
+        if isinstance(expr, sqlglot_expressions.Literal) and expr.is_string:
+            return self.handle_datetime_base_arg(expr)
+        return expr
 
     def convert_find(
         self,
@@ -883,6 +959,15 @@ class BaseTransformBindings:
         pattern: SQLGlotExpression = apply_parens(args[1])
         return sqlglot_expressions.Like(this=column, expression=pattern)
 
+    def convert_join_strings(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        TODO
+        """
+        assert len(args) > 2
+        return sqlglot_expressions.ConcatWs(expressions=args)
+
     def convert_lpad(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
@@ -975,7 +1060,7 @@ class BaseTransformBindings:
         TODO
         """
         assert len(args) == 3
-        return Case(this=args[0], expressions=[(args[1], args[2])])
+        return sqlglot_expressions.Case().when(args[0], args[1]).else_(args[2])
 
     def convert_concat(
         self,
@@ -1181,8 +1266,8 @@ class BaseTransformBindings:
             raise ValueError(
                 f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
             )
-        x = args[1]
-        y = args[2]
+        x = self.make_datetime_arg(args[1])
+        y = self.make_datetime_arg(args[2])
         unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
         if unit is None:
             raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
@@ -1207,20 +1292,23 @@ class BaseTransformBindings:
         # values (ignoring case & leading/trailing spaces) indicating the current
         # datetime should be used.
         if isinstance(arg, sqlglot_expressions.Literal) and arg.is_string:
-            if str(arg.this).lower().strip() in (
-                "now",
-                "current_timestamp",
-                "current_date",
-                "current timestamp",
-                "current date",
-            ):
-                if isinstance(self, SQLiteTransformBindings):
-                    return sqlglot_expressions.Datetime(
-                        this=[sqlglot_expressions.convert("now")]
-                    )
-                else:
-                    return sqlglot_expressions.CurrentTimestamp()
-        return sqlglot_expressions.Datetime(this=[arg])
+            if current_ts_pattern.fullmatch(arg.this):
+                return self.convert_current_timestamp()
+        return self.coerce_to_timestamp(arg)
+
+    def convert_current_timestamp(self) -> SQLGlotExpression:
+        """
+        TODO
+        """
+        return sqlglot_expressions.CurrentTimestamp()
+
+    def coerce_to_timestamp(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        TODO
+        """
+        return sqlglot_expressions.Cast(
+            this=base, to=sqlglot_expressions.DataType.build("TIMESTAMP")
+        )
 
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
@@ -1236,7 +1324,7 @@ class BaseTransformBindings:
             The SQLGlot expression to truncate `base`.
         """
         return sqlglot_expressions.DateTrunc(
-            this=base,
+            this=self.make_datetime_arg(base),
             unit=sqlglot_expressions.Var(this=unit.value),
         )
 
@@ -1321,8 +1409,99 @@ class BaseTransformBindings:
         """
         assert len(args) == 1
         return sqlglot_expressions.Extract(
-            this=sqlglot_expressions.Var(this=unit.value), expression=args[0]
+            this=sqlglot_expressions.Var(this=unit.value.upper()),
+            expression=self.make_datetime_arg(args[0]),
         )
+
+    def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Gets the day of the week, as an integer, for the `base` argument in
+        terms of its dialect.
+
+        Args:
+            `base`: The base date/time expression to calculate the day of week
+            from.
+
+        Returns:
+            The SQLGlot expression to calculating the day of week of `base` in
+            terms of the dialect's start of week.
+        """
+        return sqlglot_expressions.DayOfWeek(this=base)
+
+    def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Calculates the number of days between a given date and the start of its
+        week. The start of week is configured via `start_of_week`. For example,
+        if start of week is Monday and the date is Wednesday, this returns a
+        SQLGlot expression that will return the number 2.
+
+        The calculation uses the formula: (weekday + offset) % 7
+
+        The default behavior assumes the underlying database follows POSIX
+        conventions where:
+        - Sunday is day 0
+        - Days increment sequentially (Mon=1, Tue=2, etc.)
+
+        Args:
+            `base`: The base date/time expression to calculate the start of the week
+            from.
+
+        Returns:
+            The SQLGlot expression to calculating the number of days from `base` to
+            the start of the week. This number is always positive.
+        """
+        offset: int = (-self.start_of_week_offset) % 7
+        dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
+        if offset == 0:
+            return dow_expr
+        return sqlglot_expressions.Mod(
+            this=apply_parens(
+                sqlglot_expressions.Add(
+                    this=dow_expr,
+                    expression=sqlglot_expressions.Literal.number(offset),
+                )
+            ),
+            expression=sqlglot_expressions.Literal.number(7),
+        )
+
+    def convert_dayofweek(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        TODO
+        """
+        # Expression for ((STRFTIME('%w', base) + offset) % 7)
+        shifted_weekday: SQLGlotExpression = self.days_from_start_of_week(args[0])
+        # If the week does not start at zero, we need to add 1 to the result
+        if not self.configs.start_week_as_zero:
+            shifted_weekday = sqlglot_expressions.Add(
+                this=apply_parens(shifted_weekday),
+                expression=sqlglot_expressions.Literal.number(1),
+            )
+        return apply_parens(shifted_weekday)
+
+    def convert_dayname(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ):
+        """
+        TODO
+        """
+        assert len(args) == 1
+        base = args[0]
+        raw_day_of_week: SQLGlotExpression = self.dialect_day_of_week(base)
+        answer: SQLGlotExpression = sqlglot_expressions.Case()
+        for dayname, dow in self.dialect_dow_mapping.items():
+            answer = answer.when(
+                sqlglot_expressions.EQ(
+                    this=raw_day_of_week,
+                    expression=sqlglot_expressions.Literal.number(dow),
+                ),
+                sqlglot_expressions.Literal.string(dayname),
+            )
+        answer = apply_parens(answer)
+        return answer
 
 
 class SQLiteTransformBindings(BaseTransformBindings):
@@ -1355,7 +1534,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
         assert len(args) == 1
         return sqlglot_expressions.Cast(
             this=sqlglot_expressions.TimeToStr(
-                this=args[0], format=unit.extraction_string
+                this=self.make_datetime_arg(args[0]), format=unit.extraction_string
             ),
             to=sqlglot_expressions.DataType(this=sqlglot_expressions.DataType.Type.INT),
         )
@@ -1376,6 +1555,11 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
             )
         unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
+        args = [
+            args[0],
+            self.make_datetime_arg(args[1]),
+            self.make_datetime_arg(args[2]),
+        ]
         match unit:
             case DateTimeUnit.YEAR:
                 # Extracts the year from the date and subtracts the years.
@@ -1398,8 +1582,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 # (years_diff * 12 + month_y) - month_x
                 # On expansion: (year_y - year_x) * 12 + month_y - month_x
                 years_diff = self.convert_datediff(
-                    sqlglot_expressions.Literal(this="years", is_string=True)
-                    + args[1:],
+                    [sqlglot_expressions.convert("year")] + args[1:],
                     types,
                 )
                 years_diff_in_months = sqlglot_expressions.Mul(
@@ -1419,19 +1602,43 @@ class SQLiteTransformBindings(BaseTransformBindings):
                     expression=month_x,
                 )
                 return months_diff
+            case DateTimeUnit.WEEK:
+                # DATEDIFF('week', A, B)
+                #   = DATEDIFF('day', DATETIME(A, 'start of week'),
+                #               DATETIME(B, 'start of week')) / 7
+                dt1 = self.convert_datetime(
+                    [
+                        args[1],
+                        sqlglot_expressions.convert("start of week"),
+                    ],
+                    [types[1], types[0]],
+                )
+                dt2 = self.convert_datetime(
+                    [
+                        args[2],
+                        sqlglot_expressions.convert("start of week"),
+                    ],
+                    [types[1], types[0]],
+                )
+                weeks_days_diff: SQLGlotExpression = self.convert_datediff(
+                    [sqlglot_expressions.convert("days"), dt1, dt2], types
+                )
+                return sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Div(
+                        this=apply_parens(weeks_days_diff),
+                        expression=sqlglot_expressions.Literal.number(7),
+                    ),
+                    to=sqlglot_expressions.DataType(
+                        this=sqlglot_expressions.DataType.Type.INT
+                    ),
+                )
             case DateTimeUnit.DAY:
                 # Extracts the start of date from the datetime and subtracts the dates.
                 date_x = sqlglot_expressions.Date(
-                    this=args[1],
-                    expressions=[
-                        sqlglot_expressions.Literal(this="start of day", is_string=True)
-                    ],
+                    this=[args[1], sqlglot_expressions.convert("start of day")],
                 )
                 date_y = sqlglot_expressions.Date(
-                    this=args[2],
-                    expressions=[
-                        sqlglot_expressions.Literal(this="start of day", is_string=True)
-                    ],
+                    this=[args[2], sqlglot_expressions.convert("start of day")],
                 )
                 # This calculates 'this-expression'.
                 answer = sqlglot_expressions.DateDiff(
@@ -1448,7 +1655,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 # (days_diff*24 + hours_y) - hours_x
                 # On expansion: (( day_y - day_x ) * 24 + hours_y) - hours_x
                 days_diff: SQLGlotExpression = self.convert_datediff(
-                    sqlglot_expressions.Literal(this="days", is_string=True) + args[1:],
+                    [sqlglot_expressions.convert("days")] + args[1:],
                     types,
                 )
                 days_diff_in_hours = sqlglot_expressions.Mul(
@@ -1476,8 +1683,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 # (hours_diff*60 + minutes_y) - minutes_x
                 # On expansion: (( hours_y - hours_x )*60 + minutes_y) - minutes_x
                 hours_diff = self.convert_datediff(
-                    sqlglot_expressions.Literal(this="hours", is_string=True)
-                    + args[1:],
+                    [sqlglot_expressions.convert("hours")] + args[1:],
                     types,
                 )
                 hours_diff_in_mins = sqlglot_expressions.Mul(
@@ -1505,8 +1711,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 # (mins_diff*60 + seconds_y) - seconds_x
                 # On expansion: (( mins_y - mins_x )*60 + seconds_y) - seconds_x
                 mins_diff = self.convert_datediff(
-                    sqlglot_expressions.Literal(this="minutes", is_string=True)
-                    + args[1:],
+                    [sqlglot_expressions.convert("minutes")] + args[1:],
                     types,
                 )
                 minutes_diff_in_secs = sqlglot_expressions.Mul(
@@ -1529,6 +1734,21 @@ class SQLiteTransformBindings(BaseTransformBindings):
             case _:
                 raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
+    def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Gets the day of the week, as an integer, for the `base` argument in
+        terms of its dialect.
+
+        Args:
+            `base`: The base date/time expression to calculate the day of week
+            from.
+
+        Returns:
+            The SQLGlot expression to calculating the day of week of `base` in
+            terms of the dialect's start of week.
+        """
+        return self.convert_extract_datetime([base], [DateType()], DateTimeUnit.WEEK)
+
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
     ) -> SQLGlotExpression:
@@ -1542,6 +1762,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
         Returns:
             The SQLGlot expression to truncate `base`.
         """
+        base = self.make_datetime_arg(base)
         match unit:
             # For y/m/d, use the `start of` modifier in SQLite.
             case DateTimeUnit.YEAR | DateTimeUnit.MONTH | DateTimeUnit.DAY:
@@ -1561,6 +1782,40 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
                 )
+            case DateTimeUnit.WEEK:
+                # Implementation for week.
+                # Assumption: By default start of week is Sunday
+                # Week starts at 0
+                # Sunday = 0, Monday = 1, ..., Saturday = 6
+                shifted_weekday: SQLGlotExpression = self.days_from_start_of_week(base)
+                # This expression is equivalent to  "- ((STRFTIME('%w', base) + offset) % 7) days"
+                offset_expr: SQLGlotExpression = self.convert_concat(
+                    [
+                        sqlglot_expressions.convert("-"),
+                        shifted_weekday,
+                        sqlglot_expressions.convert(" days"),
+                    ],
+                    [StringType()] * 3,
+                )
+                start_of_day_expr: SQLGlotExpression = (
+                    sqlglot_expressions.Literal.string("start of day")
+                )
+                # Apply the "- <offset> days", then truncate to the start of the day
+                if isinstance(base, sqlglot_expressions.Date):
+                    base.this.extend(
+                        [offset_expr, sqlglot_expressions.convert("start of day")]
+                    )
+                    return base
+                if (
+                    isinstance(base, sqlglot_expressions.Datetime)
+                    and len(base.this) == 1
+                ):
+                    return sqlglot_expressions.Date(
+                        this=base.this + [offset_expr, start_of_day_expr],
+                    )
+                return sqlglot_expressions.Date(
+                    this=[base, offset_expr, start_of_day_expr],
+                )
             # SQLite does not have `start of` modifiers for hours, minutes, or
             # seconds, so we use `strftime` to truncate to the unit.
             case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
@@ -1572,6 +1827,9 @@ class SQLiteTransformBindings(BaseTransformBindings):
     def apply_datetime_offset(
         self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
     ) -> SQLGlotExpression:
+        # Convert "+n weeks" to "+7n days"
+        if unit == DateTimeUnit.WEEK:
+            return self.apply_datetime_offset(base, amt * 7, DateTimeUnit.DAY)
         # For sqlite, use the DATETIME operator to add the interval
         offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
             f"{amt} {unit.value}"
@@ -1585,3 +1843,12 @@ class SQLiteTransformBindings(BaseTransformBindings):
         return sqlglot_expressions.Datetime(
             this=[base, sqlglot_expressions.convert(f"{amt} {unit.value}")],
         )
+
+    def convert_current_timestamp(self) -> SQLGlotExpression:
+        return sqlglot_expressions.Datetime(this=[sqlglot_expressions.convert("now")])
+
+    def coerce_to_timestamp(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        TODO
+        """
+        return sqlglot_expressions.Datetime(this=[base])

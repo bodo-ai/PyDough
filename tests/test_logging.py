@@ -10,7 +10,7 @@ from tpch_relational_plans import (
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.logger import get_logger
-from pydough.sqlglot import SqlGlotTransformBindings, execute_df
+from pydough.sqlglot import execute_df
 
 pytestmark = [pytest.mark.execute]
 
@@ -161,7 +161,6 @@ def test_get_logger_invalid_env_level(monkeypatch):
 
 def test_execute_df_logging(
     sqlite_tpch_db_context: DatabaseContext,
-    sqlite_bindings: SqlGlotTransformBindings,
     default_config: PyDoughConfigs,
 ) -> None:
     """
@@ -176,7 +175,6 @@ def test_execute_df_logging(
         execute_df(
             root,
             sqlite_tpch_db_context,
-            sqlite_bindings,
             default_config,
             display_sql=True,
         )
