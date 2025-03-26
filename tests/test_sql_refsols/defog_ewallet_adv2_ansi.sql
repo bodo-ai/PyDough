@@ -10,7 +10,13 @@ FROM (
   FROM (
     SELECT
       DATE_TRUNC('WEEK', CAST(created_at_1 AS TIMESTAMP)) AS week,
-      CAST(DAY_OF_WEEK(created_at_1) AS INT) IN (5, 6) AS is_weekend
+      (
+        (
+          (
+            DAY_OF_WEEK(created_at_1) + 6
+          ) % 7
+        )
+      ) IN (5, 6) AS is_weekend
     FROM (
       SELECT
         created_at AS created_at_1

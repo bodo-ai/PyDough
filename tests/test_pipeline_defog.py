@@ -751,6 +751,7 @@ def test_defog_until_sql(
     defog_test_data: PyDoughSQLComparisonTest,
     defog_graphs: graph_fetcher,
     empty_context_database: DatabaseContext,
+    defog_config: PyDoughConfigs,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ):
@@ -768,6 +769,7 @@ def test_defog_until_sql(
         unqualified,
         metadata=graph,
         database=empty_context_database,
+        config=defog_config,
     )
     if update_tests:
         with open(file_path, "w") as f:

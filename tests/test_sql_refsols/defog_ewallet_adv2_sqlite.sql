@@ -11,10 +11,20 @@ FROM (
     SELECT
       DATE(
         created_at_1,
-        '-' || CAST(STRFTIME('%w', DATETIME(created_at_1)) AS INTEGER) || ' days',
+        '-' || (
+          (
+            CAST(STRFTIME('%w', DATETIME(created_at_1)) AS INTEGER) + 6
+          ) % 7
+        ) || ' days',
         'start of day'
       ) AS week,
-      CAST(STRFTIME('%w', created_at_1) AS INTEGER) IN (5, 6) AS is_weekend
+      (
+        (
+          (
+            CAST(STRFTIME('%w', created_at_1) AS INTEGER) + 6
+          ) % 7
+        )
+      ) IN (5, 6) AS is_weekend
     FROM (
       SELECT
         created_at AS created_at_1
@@ -39,14 +49,22 @@ FROM (
           (
             created_at < DATE(
               'now',
-              '-' || CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) || ' days',
+              '-' || (
+                (
+                  CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
+                ) % 7
+              ) || ' days',
               'start of day'
             )
           )
           AND (
             created_at >= DATE(
               'now',
-              '-' || CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) || ' days',
+              '-' || (
+                (
+                  CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
+                ) % 7
+              ) || ' days',
               'start of day',
               '-21 day'
             )
