@@ -3,7 +3,6 @@ Integration tests for the PyDough workflow on custom queries using the defog.ai
 schemas.
 """
 
-import datetime
 from collections.abc import Callable
 
 import pandas as pd
@@ -68,22 +67,6 @@ from pydough.unqualified import (
 
 
 # Helper functions for week calculations
-def get_day_to_int_mapping():
-    """
-    Return mapping of DayOfWeek enum to integer (0-6 for Monday-Sunday)
-    which maps to the defaults that pd.Timestamp uses for the day of week.
-    """
-    return {
-        DayOfWeek.MONDAY: 0,
-        DayOfWeek.TUESDAY: 1,
-        DayOfWeek.WEDNESDAY: 2,
-        DayOfWeek.THURSDAY: 3,
-        DayOfWeek.FRIDAY: 4,
-        DayOfWeek.SATURDAY: 5,
-        DayOfWeek.SUNDAY: 6,
-    }
-
-
 def get_start_of_week(dt: pd.Timestamp | str, start_of_week: DayOfWeek):
     """
     Calculate the start of week date for a given datetime
@@ -100,8 +83,7 @@ def get_start_of_week(dt: pd.Timestamp | str, start_of_week: DayOfWeek):
     # Get the day of week (0-6, where 0 is Monday)
     weekday: int = dt_ts.weekday()
     # Calculate days to subtract to get to start of week
-    day_to_int: dict[DayOfWeek, int] = get_day_to_int_mapping()
-    days_to_subtract: int = (weekday - day_to_int[start_of_week]) % 7
+    days_to_subtract: int = (weekday - start_of_week.pandas_dow) % 7
     # Get start of week and set to midnight
     sow: pd.Timestamp = dt_ts - pd.Timedelta(days=days_to_subtract)
     # Return only year, month, day
@@ -1380,81 +1362,58 @@ def test_pipeline_e2e_defog_simple_week(
     start_of_week = week_handling_config.start_of_week
     start_week_as_zero = week_handling_config.start_week_as_zero
 
-    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
-    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
-    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
-    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
-    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
-    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
-    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
-    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
-    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
-
-    # Calculate start of week for each date
-    sow = get_start_of_week(y_dt, start_of_week).strftime("%Y-%m-%d")
-    sow2 = get_start_of_week(y_dt2, start_of_week).strftime("%Y-%m-%d")
-    sow3 = get_start_of_week(y_dt3, start_of_week).strftime("%Y-%m-%d")
-    sow4 = get_start_of_week(y_dt4, start_of_week).strftime("%Y-%m-%d")
-    sow5 = get_start_of_week(y_dt5, start_of_week).strftime("%Y-%m-%d")
-    sow6 = get_start_of_week(y_dt6, start_of_week).strftime("%Y-%m-%d")
-    sow7 = get_start_of_week(y_dt7, start_of_week).strftime("%Y-%m-%d")
-    sow8 = get_start_of_week(y_dt8, start_of_week).strftime("%Y-%m-%d")
+    x_dt = pd.Timestamp(2025, 3, 10, 11, 0, 0)
+    y_dt = pd.Timestamp(2025, 3, 14, 11, 0, 0)
+    y_dt2 = pd.Timestamp(2025, 3, 15, 11, 0, 0)
+    y_dt3 = pd.Timestamp(2025, 3, 16, 11, 0, 0)
+    y_dt4 = pd.Timestamp(2025, 3, 17, 11, 0, 0)
+    y_dt5 = pd.Timestamp(2025, 3, 18, 11, 0, 0)
+    y_dt6 = pd.Timestamp(2025, 3, 19, 11, 0, 0)
+    y_dt7 = pd.Timestamp(2025, 3, 20, 11, 0, 0)
+    y_dt8 = pd.Timestamp(2025, 3, 21, 11, 0, 0)
 
     # Calculate weeks difference
     x_sow = get_start_of_week(x_dt, start_of_week)
     y_sow = get_start_of_week(y_dt, start_of_week)
     weeks_diff = (y_sow - x_sow).days // 7
 
-    # Get day names
-    dayname1 = get_day_name(y_dt)
-    dayname2 = get_day_name(y_dt2)
-    dayname3 = get_day_name(y_dt3)
-    dayname4 = get_day_name(y_dt4)
-    dayname5 = get_day_name(y_dt5)
-    dayname6 = get_day_name(y_dt6)
-    dayname7 = get_day_name(y_dt7)
-    dayname8 = get_day_name(y_dt8)
+    # Create lists to store calculated values
+    dates = [y_dt, y_dt2, y_dt3, y_dt4, y_dt5, y_dt6, y_dt7, y_dt8]
+    sows = []
+    daynames = []
+    dayofweeks = []
 
-    # Calculate day of week
-    dayofweek1 = get_day_of_week(y_dt, start_of_week, start_week_as_zero)
-    dayofweek2 = get_day_of_week(y_dt2, start_of_week, start_week_as_zero)
-    dayofweek3 = get_day_of_week(y_dt3, start_of_week, start_week_as_zero)
-    dayofweek4 = get_day_of_week(y_dt4, start_of_week, start_week_as_zero)
-    dayofweek5 = get_day_of_week(y_dt5, start_of_week, start_week_as_zero)
-    dayofweek6 = get_day_of_week(y_dt6, start_of_week, start_week_as_zero)
-    dayofweek7 = get_day_of_week(y_dt7, start_of_week, start_week_as_zero)
-    dayofweek8 = get_day_of_week(y_dt8, start_of_week, start_week_as_zero)
+    # Calculate values for each date in a loop
+    for dt in dates:
+        # Calculate start of week
+        sow = get_start_of_week(dt, start_of_week).strftime("%Y-%m-%d")
+        sows.append(sow)
+
+        # Get day name
+        dayname = dt.day_name()
+        daynames.append(dayname)
+
+        # Calculate day of week
+        dayofweek = get_day_of_week(dt, start_of_week, start_week_as_zero)
+        dayofweeks.append(dayofweek)
+
+    # Create dictionary for DataFrame
+    data_dict = {"weeks_diff": [weeks_diff]}
+
+    # Add start of week columns
+    for i in range(len(dates)):
+        data_dict[f"sow{i + 1}"] = [sows[i]]
+
+    # Add day name columns
+    for i in range(len(dates)):
+        data_dict[f"dayname{i + 1}"] = [daynames[i]]
+
+    # Add day of week columns
+    for i in range(len(dates)):
+        data_dict[f"dayofweek{i + 1}"] = [dayofweeks[i]]
 
     # Create DataFrame with expected results
-    expected_df = pd.DataFrame(
-        {
-            "weeks_diff": [weeks_diff],
-            "sow": [sow],
-            "sow2": [sow2],
-            "sow3": [sow3],
-            "sow4": [sow4],
-            "sow5": [sow5],
-            "sow6": [sow6],
-            "sow7": [sow7],
-            "sow8": [sow8],
-            "dayname1": [dayname1],
-            "dayname2": [dayname2],
-            "dayname3": [dayname3],
-            "dayname4": [dayname4],
-            "dayname5": [dayname5],
-            "dayname6": [dayname6],
-            "dayname7": [dayname7],
-            "dayname8": [dayname8],
-            "dayofweek1": [dayofweek1],
-            "dayofweek2": [dayofweek2],
-            "dayofweek3": [dayofweek3],
-            "dayofweek4": [dayofweek4],
-            "dayofweek5": [dayofweek5],
-            "dayofweek6": [dayofweek6],
-            "dayofweek7": [dayofweek7],
-            "dayofweek8": [dayofweek8],
-        }
-    )
+    expected_df = pd.DataFrame(data_dict)
     pd.testing.assert_frame_equal(result, expected_df)
 
 

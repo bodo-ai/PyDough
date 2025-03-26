@@ -1269,7 +1269,7 @@ def simple_week_sampler():
     y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
     return Broker.CALCULATE(
         weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
-        sow=DATETIME(y_dt, "start of week"),
+        sow1=DATETIME(y_dt, "start of week"),
         sow2=DATETIME(y_dt2, "start of week"),
         sow3=DATETIME(y_dt3, "start of week"),
         sow4=DATETIME(y_dt4, "start of week"),

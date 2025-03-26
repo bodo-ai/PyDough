@@ -23,6 +23,24 @@ class DayOfWeek(Enum):
     FRIDAY = "FRIDAY"
     SATURDAY = "SATURDAY"
 
+    @property
+    def pandas_dow(self) -> int:
+        match self:
+            case DayOfWeek.SUNDAY:
+                return 6
+            case DayOfWeek.MONDAY:
+                return 0
+            case DayOfWeek.TUESDAY:
+                return 1
+            case DayOfWeek.WEDNESDAY:
+                return 2
+            case DayOfWeek.THURSDAY:
+                return 3
+            case DayOfWeek.FRIDAY:
+                return 4
+            case DayOfWeek.SATURDAY:
+                return 5
+
 
 class ConfigProperty(Generic[T]):
     """
