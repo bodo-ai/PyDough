@@ -218,11 +218,11 @@ def impl_defog_broker_adv8():
     is_american = HAS(customer.WHERE(LOWER(country) == "usa"))
     selected_txns = Transactions.WHERE(
         is_american
-        & (date_time < DATETIME("now", "start_of_week"))
-        & (date_time >= DATETIME("now", "start_of_week", "-1 week"))
+        & (date_time < DATETIME("now", "start of week"))
+        & (date_time >= DATETIME("now", "start of week", "-1 week"))
     )
     return Broker.CALCULATE(
-        n_transactions=COUNT(selected_txns),
+        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) > 0),
         total_amount=SUM(selected_txns.amount),
     )
 
@@ -237,11 +237,12 @@ def impl_defog_broker_adv9():
     aggregation.
     """
     selected_transactions = Transactions.WHERE(
-        (date_time < DATETIME("now", "start_of_week"))
-        & (date_time >= DATETIME("now", "start_of_week", "-8 weeks"))
+        (date_time < DATETIME("now", "start of week"))
+        & (date_time >= DATETIME("now", "start of week", "-8 weeks"))
+        & (ticker.ticker_type == "stock")
     ).CALCULATE(
         week=DATETIME(date_time, "start of week"),
-        is_weekend=ISIN(DAYOFWEEK(date_time), (0, 6)),
+        is_weekend=ISIN(DAYOFWEEK(date_time), (5, 6)),
     )
     weeks = PARTITION(selected_transactions, name="txns", by=week)
     return weeks.CALCULATE(
