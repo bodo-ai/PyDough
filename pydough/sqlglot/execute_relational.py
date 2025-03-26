@@ -12,6 +12,7 @@ from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.expressions import Alias, Column
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
@@ -32,6 +33,7 @@ def convert_relation_to_sql(
     relational: RelationalRoot,
     dialect: SQLGlotDialect,
     bindings: SqlGlotTransformBindings,
+    config: PyDoughConfigs,
 ) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
@@ -45,7 +47,7 @@ def convert_relation_to_sql(
         str: The SQL string representing the relational tree.
     """
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
-        dialect, bindings
+        dialect, bindings, config
     ).relational_to_sqlglot(relational)
     # glot_expr = parse_one(glot_expr.sql(dialect))
     # print(glot_expr.sql(dialect, pretty=True))
@@ -126,6 +128,7 @@ def execute_df(
     relational: RelationalRoot,
     ctx: DatabaseContext,
     bindings: SqlGlotTransformBindings,
+    config: PyDoughConfigs,
     display_sql: bool = False,
 ) -> pd.DataFrame:
     """
@@ -144,7 +147,7 @@ def execute_df(
         The result of the query as a Pandas DataFrame
     """
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
-    sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings)
+    sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings, config)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
