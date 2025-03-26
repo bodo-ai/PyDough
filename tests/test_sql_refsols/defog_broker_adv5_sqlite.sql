@@ -1,114 +1,80 @@
-SELECT
-  symbol,
-  month,
-  avg_close,
-  max_high,
-  min_low,
-  CAST((
-    avg_close - LAG(avg_close, 1) OVER (PARTITION BY symbol ORDER BY month)
-  ) AS REAL) / LAG(avg_close, 1) OVER (PARTITION BY symbol ORDER BY month) AS momc
-FROM (
+WITH _table_alias_0 AS (
   SELECT
-    _table_alias_4.month AS month,
-    _table_alias_4.symbol AS symbol,
-    agg_0 AS avg_close,
-    agg_1 AS max_high,
-    agg_2 AS min_low
-  FROM (
-    SELECT DISTINCT
-      month,
-      symbol
-    FROM (
-      SELECT
-        CONCAT_WS(
-          '-',
-          CAST(STRFTIME('%Y', date) AS INTEGER),
-          CASE
-            WHEN LENGTH(CAST(STRFTIME('%m', date) AS INTEGER)) >= 2
-            THEN SUBSTRING(CAST(STRFTIME('%m', date) AS INTEGER), 1, 2)
-            ELSE SUBSTRING('00' || CAST(STRFTIME('%m', date) AS INTEGER), (
-              2 * -1
-            ))
-          END
-        ) AS month,
-        symbol
-      FROM (
-        SELECT
-          date,
-          symbol
-        FROM (
-          SELECT
-            sbDpDate AS date,
-            sbDpTickerId AS ticker_id
-          FROM main.sbDailyPrice
-        ) AS _table_alias_0
-        LEFT JOIN (
-          SELECT
-            sbTickerId AS _id,
-            sbTickerSymbol AS symbol
-          FROM main.sbTicker
-        ) AS _table_alias_1
-          ON ticker_id = _id
-      ) AS _t2
-    ) AS _t1
-  ) AS _table_alias_4
-  LEFT JOIN (
-    SELECT
-      AVG(close) AS agg_0,
-      MAX(high) AS agg_1,
-      MIN(low) AS agg_2,
-      month,
-      symbol
-    FROM (
-      SELECT
-        CONCAT_WS(
-          '-',
-          CAST(STRFTIME('%Y', date) AS INTEGER),
-          CASE
-            WHEN LENGTH(CAST(STRFTIME('%m', date) AS INTEGER)) >= 2
-            THEN SUBSTRING(CAST(STRFTIME('%m', date) AS INTEGER), 1, 2)
-            ELSE SUBSTRING('00' || CAST(STRFTIME('%m', date) AS INTEGER), (
-              2 * -1
-            ))
-          END
-        ) AS month,
-        close,
-        high,
-        low,
-        symbol
-      FROM (
-        SELECT
-          close,
-          date,
-          high,
-          low,
-          symbol
-        FROM (
-          SELECT
-            sbDpClose AS close,
-            sbDpDate AS date,
-            sbDpHigh AS high,
-            sbDpLow AS low,
-            sbDpTickerId AS ticker_id
-          FROM main.sbDailyPrice
-        ) AS _table_alias_2
-        LEFT JOIN (
-          SELECT
-            sbTickerId AS _id,
-            sbTickerSymbol AS symbol
-          FROM main.sbTicker
-        ) AS _table_alias_3
-          ON ticker_id = _id
-      ) AS _t4
-    ) AS _t3
-    GROUP BY
-      month,
-      symbol
-  ) AS _table_alias_5
-    ON (
-      _table_alias_4.symbol = _table_alias_5.symbol
-    )
-    AND (
-      _table_alias_4.month = _table_alias_5.month
-    )
-) AS _t0
+    sbdailyprice.sbdpdate AS date,
+    sbdailyprice.sbdptickerid AS ticker_id
+  FROM main.sbdailyprice AS sbdailyprice
+), _table_alias_1 AS (
+  SELECT
+    sbticker.sbtickerid AS _id,
+    sbticker.sbtickersymbol AS symbol
+  FROM main.sbticker AS sbticker
+), _table_alias_4 AS (
+  SELECT DISTINCT
+    CONCAT_WS(
+      '-',
+      CAST(STRFTIME('%Y', _table_alias_0.date) AS INTEGER),
+      CASE
+        WHEN LENGTH(CAST(STRFTIME('%m', _table_alias_0.date) AS INTEGER)) >= 2
+        THEN SUBSTRING(CAST(STRFTIME('%m', _table_alias_0.date) AS INTEGER), 1, 2)
+        ELSE SUBSTRING('00' || CAST(STRFTIME('%m', _table_alias_0.date) AS INTEGER), -2)
+      END
+    ) AS month,
+    _table_alias_1.symbol AS symbol
+  FROM _table_alias_0 AS _table_alias_0
+  LEFT JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_0.ticker_id = _table_alias_1._id
+), _table_alias_2 AS (
+  SELECT
+    sbdailyprice.sbdpclose AS close,
+    sbdailyprice.sbdpdate AS date,
+    sbdailyprice.sbdphigh AS high,
+    sbdailyprice.sbdplow AS low,
+    sbdailyprice.sbdptickerid AS ticker_id
+  FROM main.sbdailyprice AS sbdailyprice
+), _table_alias_5 AS (
+  SELECT
+    AVG(_table_alias_2.close) AS agg_0,
+    MAX(_table_alias_2.high) AS agg_1,
+    MIN(_table_alias_2.low) AS agg_2,
+    CONCAT_WS(
+      '-',
+      CAST(STRFTIME('%Y', _table_alias_2.date) AS INTEGER),
+      CASE
+        WHEN LENGTH(CAST(STRFTIME('%m', _table_alias_2.date) AS INTEGER)) >= 2
+        THEN SUBSTRING(CAST(STRFTIME('%m', _table_alias_2.date) AS INTEGER), 1, 2)
+        ELSE SUBSTRING('00' || CAST(STRFTIME('%m', _table_alias_2.date) AS INTEGER), (
+          2 * -1
+        ))
+      END
+    ) AS month,
+    _table_alias_3.symbol AS symbol
+  FROM _table_alias_2 AS _table_alias_2
+  LEFT JOIN _table_alias_1 AS _table_alias_3
+    ON _table_alias_2.ticker_id = _table_alias_3._id
+  GROUP BY
+    CONCAT_WS(
+      '-',
+      CAST(STRFTIME('%Y', _table_alias_2.date) AS INTEGER),
+      CASE
+        WHEN LENGTH(CAST(STRFTIME('%m', _table_alias_2.date) AS INTEGER)) >= 2
+        THEN SUBSTRING(CAST(STRFTIME('%m', _table_alias_2.date) AS INTEGER), 1, 2)
+        ELSE SUBSTRING('00' || CAST(STRFTIME('%m', _table_alias_2.date) AS INTEGER), (
+          2 * -1
+        ))
+      END
+    ),
+    _table_alias_3.symbol
+)
+SELECT
+  _table_alias_4.symbol AS symbol,
+  _table_alias_4.month AS month,
+  _table_alias_5.agg_0 AS avg_close,
+  _table_alias_5.agg_1 AS max_high,
+  _table_alias_5.agg_2 AS min_low,
+  CAST((
+    _table_alias_5.agg_0 - LAG(_table_alias_5.agg_0, 1) OVER (PARTITION BY _table_alias_4.symbol ORDER BY _table_alias_4.month)
+  ) AS REAL) / LAG(_table_alias_5.agg_0, 1) OVER (PARTITION BY _table_alias_4.symbol ORDER BY _table_alias_4.month) AS momc
+FROM _table_alias_4 AS _table_alias_4
+LEFT JOIN _table_alias_5 AS _table_alias_5
+  ON _table_alias_4.month = _table_alias_5.month
+  AND _table_alias_4.symbol = _table_alias_5.symbol

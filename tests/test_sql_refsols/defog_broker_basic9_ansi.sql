@@ -1,15 +1,16 @@
+WITH _table_alias_0 AS (
+  SELECT
+    sbcustomer.sbcustid AS _id,
+    sbcustomer.sbcustname AS name
+  FROM main.sbcustomer AS sbcustomer
+), _table_alias_1 AS (
+  SELECT
+    sbtransaction.sbtxcustid AS customer_id
+  FROM main.sbtransaction AS sbtransaction
+)
 SELECT
-  _id,
-  name
-FROM (
-  SELECT
-    sbCustId AS _id,
-    sbCustName AS name
-  FROM main.sbCustomer
-) AS _table_alias_0
-ANTI JOIN (
-  SELECT
-    sbTxCustId AS customer_id
-  FROM main.sbTransaction
-) AS _table_alias_1
-  ON _id = customer_id
+  _table_alias_0._id AS _id,
+  _table_alias_0.name AS name
+FROM _table_alias_0 AS _table_alias_0
+JOIN _table_alias_1 AS _table_alias_1
+  ON _table_alias_0._id = _table_alias_1.customer_id

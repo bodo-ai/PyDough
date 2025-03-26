@@ -1,33 +1,19 @@
-SELECT
-  MIN(close) AS lowest_price
-FROM (
+WITH _table_alias_0 AS (
   SELECT
-    close
-  FROM (
-    SELECT
-      close,
-      ticker_id
-    FROM (
-      SELECT
-        sbDpClose AS close,
-        sbDpDate AS date,
-        sbDpTickerId AS ticker_id
-      FROM main.sbDailyPrice
-    ) AS _t1
-    WHERE
-      DATEDIFF(CURRENT_TIMESTAMP(), date, DAY) <= 7
-  ) AS _table_alias_0
-  INNER JOIN (
-    SELECT
-      _id
-    FROM (
-      SELECT
-        sbTickerId AS _id,
-        sbTickerSymbol AS symbol
-      FROM main.sbTicker
-    ) AS _t2
-    WHERE
-      symbol = 'VTI'
-  ) AS _table_alias_1
-    ON ticker_id = _id
-) AS _t0
+    sbdailyprice.sbdpclose AS close,
+    sbdailyprice.sbdptickerid AS ticker_id
+  FROM main.sbdailyprice AS sbdailyprice
+  WHERE
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(sbdailyprice.sbdpdate AS DATETIME), DAY) <= 7
+), _table_alias_1 AS (
+  SELECT
+    sbticker.sbtickerid AS _id
+  FROM main.sbticker AS sbticker
+  WHERE
+    sbticker.sbtickersymbol = 'VTI'
+)
+SELECT
+  MIN(_table_alias_0.close) AS lowest_price
+FROM _table_alias_0 AS _table_alias_0
+JOIN _table_alias_1 AS _table_alias_1
+  ON _table_alias_0.ticker_id = _table_alias_1._id

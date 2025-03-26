@@ -1,68 +1,50 @@
-SELECT
-  merchant_id_6 AS merchant_id,
-  merchant_name,
-  coupons_per_merchant
-FROM (
+WITH _table_alias_2 AS (
   SELECT
-    merchant_id_5 AS merchant_id_6,
-    coupons_per_merchant,
-    merchant_name,
-    ordering_1
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS coupons_per_merchant,
-      COALESCE(agg_0, 0) AS ordering_1,
-      mid AS merchant_id_5,
-      name AS merchant_name
-    FROM (
-      SELECT
-        agg_0,
-        mid,
-        name
-      FROM (
-        SELECT
-          mid,
-          name
-        FROM main.merchants
-      ) AS _table_alias_2
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
-          merchant_id
-        FROM (
-          SELECT
-            merchant_id
-          FROM (
-            SELECT
-              _table_alias_0.created_at AS created_at,
-              _table_alias_1.created_at AS created_at_1,
-              merchant_id
-            FROM (
-              SELECT
-                created_at,
-                merchant_id
-              FROM main.coupons
-            ) AS _table_alias_0
-            LEFT JOIN (
-              SELECT
-                created_at,
-                mid
-              FROM main.merchants
-            ) AS _table_alias_1
-              ON merchant_id = mid
-          ) AS _t4
-          WHERE
-            DATEDIFF(created_at, created_at_1, MONTH) = 0
-        ) AS _t3
-        GROUP BY
-          merchant_id
-      ) AS _table_alias_3
-        ON mid = merchant_id
-    ) AS _t2
-  ) AS _t1
+    merchants.mid AS mid,
+    merchants.name AS name
+  FROM main.merchants AS merchants
+), _table_alias_0 AS (
+  SELECT
+    coupons.created_at AS created_at,
+    coupons.merchant_id AS merchant_id
+  FROM main.coupons AS coupons
+), _table_alias_1 AS (
+  SELECT
+    merchants.created_at AS created_at,
+    merchants.mid AS mid
+  FROM main.merchants AS merchants
+), _table_alias_3 AS (
+  SELECT
+    COUNT() AS agg_0,
+    _table_alias_0.merchant_id AS merchant_id
+  FROM _table_alias_0 AS _table_alias_0
+  LEFT JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_0.merchant_id = _table_alias_1.mid
+  WHERE
+    DATEDIFF(
+      CAST(_table_alias_0.created_at AS DATETIME),
+      CAST(_table_alias_1.created_at AS DATETIME),
+      MONTH
+    ) = 0
+  GROUP BY
+    _table_alias_0.merchant_id
+), _t0 AS (
+  SELECT
+    _table_alias_2.mid AS merchant_id_6,
+    COALESCE(_table_alias_3.agg_0, 0) AS coupons_per_merchant,
+    _table_alias_2.name AS merchant_name,
+    COALESCE(_table_alias_3.agg_0, 0) AS ordering_1
+  FROM _table_alias_2 AS _table_alias_2
+  LEFT JOIN _table_alias_3 AS _table_alias_3
+    ON _table_alias_2.mid = _table_alias_3.merchant_id
   ORDER BY
     ordering_1 DESC
   LIMIT 1
-) AS _t0
+)
+SELECT
+  _t0.merchant_id_6 AS merchant_id,
+  _t0.merchant_name AS merchant_name,
+  _t0.coupons_per_merchant AS coupons_per_merchant
+FROM _t0 AS _t0
 ORDER BY
-  ordering_1 DESC
+  _t0.ordering_1 DESC

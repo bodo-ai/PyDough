@@ -1,19 +1,11 @@
-SELECT
-  COALESCE(agg_0, 0) / agg_1 AS _expr0
-FROM (
+WITH _t0 AS (
   SELECT
     COUNT() AS agg_1,
-    SUM(status = 'success') AS agg_0
-  FROM (
-    SELECT
-      status
-    FROM (
-      SELECT
-        created_at,
-        status
-      FROM main.wallet_transactions_daily
-    ) AS _t2
-    WHERE
-      DATEDIFF(CURRENT_TIMESTAMP(), created_at, MONTH) = 1
-  ) AS _t1
-) AS _t0
+    SUM(wallet_transactions_daily.status = 'success') AS agg_0
+  FROM main.wallet_transactions_daily AS wallet_transactions_daily
+  WHERE
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(wallet_transactions_daily.created_at AS DATETIME), MONTH) = 1
+)
+SELECT
+  COALESCE(_t0.agg_0, 0) / _t0.agg_1 AS _expr0
+FROM _t0 AS _t0

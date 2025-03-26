@@ -1,5 +1,5 @@
 SELECT
-  b
-FROM table
+  table.b AS b
+FROM table AS table
 WHERE
-  b IN (1, 2, 3)
+  table.b IN (1, 2, 3)

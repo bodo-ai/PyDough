@@ -1,57 +1,33 @@
-SELECT
-  symbol,
-  tx_count
-FROM (
+WITH _table_alias_0 AS (
   SELECT
-    ordering_1,
-    symbol,
-    tx_count
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS ordering_1,
-      COALESCE(agg_0, 0) AS tx_count,
-      symbol
-    FROM (
-      SELECT
-        agg_0,
-        symbol
-      FROM (
-        SELECT
-          sbTickerId AS _id,
-          sbTickerSymbol AS symbol
-        FROM main.sbTicker
-      ) AS _table_alias_0
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
-          ticker_id
-        FROM (
-          SELECT
-            ticker_id
-          FROM (
-            SELECT
-              sbTxDateTime AS date_time,
-              sbTxTickerId AS ticker_id,
-              sbTxType AS transaction_type
-            FROM main.sbTransaction
-          ) AS _t4
-          WHERE
-            (
-              transaction_type = 'buy'
-            )
-            AND (
-              date_time >= DATE(DATETIME('now', '-10 day'), 'start of day')
-            )
-        ) AS _t3
-        GROUP BY
-          ticker_id
-      ) AS _table_alias_1
-        ON _id = ticker_id
-    ) AS _t2
-  ) AS _t1
+    sbticker.sbtickerid AS _id,
+    sbticker.sbtickersymbol AS symbol
+  FROM main.sbticker AS sbticker
+), _table_alias_1 AS (
+  SELECT
+    COUNT() AS agg_0,
+    sbtransaction.sbtxtickerid AS ticker_id
+  FROM main.sbtransaction AS sbtransaction
+  WHERE
+    sbtransaction.sbtxdatetime >= DATE(DATETIME('now', '-10 day'), 'start of day')
+    AND sbtransaction.sbtxtype = 'buy'
+  GROUP BY
+    sbtransaction.sbtxtickerid
+), _t0 AS (
+  SELECT
+    COALESCE(_table_alias_1.agg_0, 0) AS ordering_1,
+    _table_alias_0.symbol AS symbol,
+    COALESCE(_table_alias_1.agg_0, 0) AS tx_count
+  FROM _table_alias_0 AS _table_alias_0
+  LEFT JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_0._id = _table_alias_1.ticker_id
   ORDER BY
     ordering_1 DESC
   LIMIT 2
-) AS _t0
+)
+SELECT
+  _t0.symbol AS symbol,
+  _t0.tx_count AS tx_count
+FROM _t0 AS _t0
 ORDER BY
-  ordering_1 DESC
+  _t0.ordering_1 DESC

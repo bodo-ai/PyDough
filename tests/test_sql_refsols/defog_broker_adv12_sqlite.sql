@@ -1,24 +1,8 @@
 SELECT
   COUNT() AS n_customers
-FROM (
-  SELECT
-    _id
-  FROM (
-    SELECT
-      sbCustId AS _id,
-      sbCustName AS name,
-      sbCustState AS state
-    FROM main.sbCustomer
-  ) AS _t1
-  WHERE
-    (
-      (
-        LOWER(name) LIKE 'j%'
-      ) OR (
-        LOWER(name) LIKE '%ez'
-      )
-    )
-    AND (
-      LOWER(state) LIKE '%a'
-    )
-) AS _t0
+FROM main.sbcustomer AS sbcustomer
+WHERE
+  (
+    LOWER(sbcustomer.sbcustname) LIKE '%ez' OR LOWER(sbcustomer.sbcustname) LIKE 'j%'
+  )
+  AND LOWER(sbcustomer.sbcuststate) LIKE '%a'

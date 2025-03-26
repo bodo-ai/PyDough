@@ -1,14 +1,5 @@
 SELECT
-  AVG(balance) AS AMB
-FROM (
-  SELECT
-    balance
-  FROM (
-    SELECT
-      balance,
-      updated_at
-    FROM main.wallet_user_balance_daily
-  ) AS _t1
-  WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), updated_at, DAY) <= 7
-) AS _t0
+  AVG(wallet_user_balance_daily.balance) AS AMB
+FROM main.wallet_user_balance_daily AS wallet_user_balance_daily
+WHERE
+  DATEDIFF(CURRENT_TIMESTAMP(), CAST(wallet_user_balance_daily.updated_at AS DATETIME), DAY) <= 7

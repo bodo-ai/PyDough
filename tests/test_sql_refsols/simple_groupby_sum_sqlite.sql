@@ -1,11 +1,6 @@
 SELECT
-  SUM(a) AS a,
-  b
-FROM (
-  SELECT
-    a,
-    b
-  FROM table
-) AS _t0
+  SUM(table.a) AS a,
+  table.b AS b
+FROM table AS table
 GROUP BY
-  b
+  table.b

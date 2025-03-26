@@ -1,52 +1,30 @@
-SELECT
-  week,
-  COALESCE(agg_0, 0) AS num_transactions,
-  COALESCE(agg_1, 0) AS weekend_transactions
-FROM (
+WITH _table_alias_0 AS (
+  SELECT
+    sbtransaction.sbtxdatetime AS date_time,
+    sbtransaction.sbtxtickerid AS ticker_id
+  FROM main.sbtransaction AS sbtransaction
+  WHERE
+    sbtransaction.sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
+    AND sbtransaction.sbtxdatetime >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -8, 'WEEK')
+), _table_alias_1 AS (
+  SELECT
+    sbticker.sbtickerid AS _id
+  FROM main.sbticker AS sbticker
+  WHERE
+    sbticker.sbtickertype = 'stock'
+), _t0 AS (
   SELECT
     COUNT() AS agg_0,
-    SUM(is_weekend) AS agg_1,
-    week
-  FROM (
-    SELECT
-      DATE_TRUNC('WEEK', CAST(date_time AS TIMESTAMP)) AS week,
-      CAST(DAY_OF_WEEK(date_time) AS INT) IN (5, 6) AS is_weekend
-    FROM (
-      SELECT
-        date_time
-      FROM (
-        SELECT
-          date_time,
-          ticker_id
-        FROM (
-          SELECT
-            sbTxDateTime AS date_time,
-            sbTxTickerId AS ticker_id
-          FROM main.sbTransaction
-        )
-        WHERE
-          (
-            date_time < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
-          )
-          AND (
-            date_time >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -8, 'WEEK')
-          )
-      )
-      INNER JOIN (
-        SELECT
-          _id
-        FROM (
-          SELECT
-            sbTickerId AS _id,
-            sbTickerType AS ticker_type
-          FROM main.sbTicker
-        )
-        WHERE
-          ticker_type = 'stock'
-      )
-        ON ticker_id = _id
-    )
-  )
+    SUM(CAST(DAY_OF_WEEK(_table_alias_0.date_time) AS INT) IN (5, 6)) AS agg_1,
+    DATE_TRUNC('WEEK', CAST(_table_alias_0.date_time AS TIMESTAMP)) AS week
+  FROM _table_alias_0 AS _table_alias_0
+  JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_0.ticker_id = _table_alias_1._id
   GROUP BY
-    week
+    DATE_TRUNC('WEEK', CAST(_table_alias_0.date_time AS TIMESTAMP))
 )
+SELECT
+  _t0.week AS week,
+  COALESCE(_t0.agg_0, 0) AS num_transactions,
+  COALESCE(_t0.agg_1, 0) AS weekend_transactions
+FROM _t0 AS _t0

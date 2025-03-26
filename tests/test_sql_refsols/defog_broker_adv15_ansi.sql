@@ -1,29 +1,16 @@
-SELECT
-  country,
-  100 * COALESCE(COALESCE(agg_0, 0) / COALESCE(agg_1, 0), 0.0) AS ar
-FROM (
+WITH _t0 AS (
   SELECT
     COUNT() AS agg_1,
-    SUM(status = 'active') AS agg_0,
-    country
-  FROM (
-    SELECT
-      country,
-      status
-    FROM (
-      SELECT
-        sbCustCountry AS country,
-        sbCustJoinDate AS join_date,
-        sbCustStatus AS status
-      FROM main.sbCustomer
-    ) AS _t2
-    WHERE
-      (
-        join_date <= '2022-12-31'
-      ) AND (
-        join_date >= '2022-01-01'
-      )
-  ) AS _t1
+    SUM(sbcustomer.sbcuststatus = 'active') AS agg_0,
+    sbcustomer.sbcustcountry AS country
+  FROM main.sbcustomer AS sbcustomer
+  WHERE
+    sbcustomer.sbcustjoindate <= '2022-12-31'
+    AND sbcustomer.sbcustjoindate >= '2022-01-01'
   GROUP BY
-    country
-) AS _t0
+    sbcustomer.sbcustcountry
+)
+SELECT
+  _t0.country AS country,
+  100 * COALESCE(COALESCE(_t0.agg_0, 0) / COALESCE(_t0.agg_1, 0), 0.0) AS ar
+FROM _t0 AS _t0

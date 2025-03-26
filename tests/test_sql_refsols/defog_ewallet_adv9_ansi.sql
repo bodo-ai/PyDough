@@ -1,32 +1,10 @@
 SELECT
-  year_month,
-  COUNT(DISTINCT sender_id) AS active_users
-FROM (
-  SELECT
-    DATE_TRUNC('MONTH', CAST(created_at AS TIMESTAMP)) AS year_month,
-    sender_id
-  FROM (
-    SELECT
-      created_at,
-      sender_id
-    FROM (
-      SELECT
-        created_at,
-        sender_id,
-        sender_type
-      FROM main.wallet_transactions_daily
-    ) AS _t2
-    WHERE
-      (
-        created_at < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
-      )
-      AND (
-        sender_type = 0
-      )
-      AND (
-        created_at >= DATE_ADD(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), -2, 'MONTH')
-      )
-  ) AS _t1
-) AS _t0
+  DATE_TRUNC('MONTH', CAST(wallet_transactions_daily.created_at AS TIMESTAMP)) AS year_month,
+  COUNT(DISTINCT wallet_transactions_daily.sender_id) AS active_users
+FROM main.wallet_transactions_daily AS wallet_transactions_daily
+WHERE
+  wallet_transactions_daily.created_at < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
+  AND wallet_transactions_daily.created_at >= DATE_ADD(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), -2, 'MONTH')
+  AND wallet_transactions_daily.sender_type = 0
 GROUP BY
-  year_month
+  DATE_TRUNC('MONTH', CAST(wallet_transactions_daily.created_at AS TIMESTAMP))

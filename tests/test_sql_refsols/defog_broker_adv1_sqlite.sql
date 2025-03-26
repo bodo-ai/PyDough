@@ -1,45 +1,30 @@
-SELECT
-  name,
-  total_amount
-FROM (
+WITH _table_alias_0 AS (
   SELECT
-    name,
-    ordering_1,
-    total_amount
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS ordering_1,
-      COALESCE(agg_0, 0) AS total_amount,
-      name
-    FROM (
-      SELECT
-        agg_0,
-        name
-      FROM (
-        SELECT
-          sbCustId AS _id,
-          sbCustName AS name
-        FROM main.sbCustomer
-      ) AS _table_alias_0
-      LEFT JOIN (
-        SELECT
-          SUM(amount) AS agg_0,
-          customer_id
-        FROM (
-          SELECT
-            sbTxAmount AS amount,
-            sbTxCustId AS customer_id
-          FROM main.sbTransaction
-        ) AS _t3
-        GROUP BY
-          customer_id
-      ) AS _table_alias_1
-        ON _id = customer_id
-    ) AS _t2
-  ) AS _t1
+    sbcustomer.sbcustid AS _id,
+    sbcustomer.sbcustname AS name
+  FROM main.sbcustomer AS sbcustomer
+), _table_alias_1 AS (
+  SELECT
+    SUM(sbtransaction.sbtxamount) AS agg_0,
+    sbtransaction.sbtxcustid AS customer_id
+  FROM main.sbtransaction AS sbtransaction
+  GROUP BY
+    sbtransaction.sbtxcustid
+), _t0 AS (
+  SELECT
+    _table_alias_0.name AS name,
+    COALESCE(_table_alias_1.agg_0, 0) AS ordering_1,
+    COALESCE(_table_alias_1.agg_0, 0) AS total_amount
+  FROM _table_alias_0 AS _table_alias_0
+  LEFT JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_0._id = _table_alias_1.customer_id
   ORDER BY
     ordering_1 DESC
   LIMIT 5
-) AS _t0
+)
+SELECT
+  _t0.name AS name,
+  _t0.total_amount AS total_amount
+FROM _t0 AS _t0
 ORDER BY
-  ordering_1 DESC
+  _t0.ordering_1 DESC

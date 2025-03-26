@@ -1,20 +1,21 @@
-SELECT
-  _id
-FROM (
+WITH _table_alias_0 AS (
   SELECT
-    sbTickerId AS _id
-  FROM main.sbTicker
-) AS _table_alias_0
-SEMI JOIN (
+    sbticker.sbtickerid AS _id
+  FROM main.sbticker AS sbticker
+), _t0 AS (
   SELECT
-    ticker_id
-  FROM (
-    SELECT
-      sbDpDate AS date,
-      sbDpTickerId AS ticker_id
-    FROM main.sbDailyPrice
-  ) AS _t0
+    sbdailyprice.sbdpdate AS date,
+    sbdailyprice.sbdptickerid AS ticker_id
+  FROM main.sbdailyprice AS sbdailyprice
   WHERE
-    date >= CAST('2023-04-01' AS DATE)
-) AS _table_alias_1
-  ON _id = ticker_id
+    sbdailyprice.sbdpdate >= CAST('2023-04-01' AS DATE)
+), _table_alias_1 AS (
+  SELECT
+    _t0.ticker_id AS ticker_id
+  FROM _t0 AS _t0
+)
+SELECT
+  _table_alias_0._id AS _id
+FROM _table_alias_0 AS _table_alias_0
+JOIN _table_alias_1 AS _table_alias_1
+  ON _table_alias_0._id = _table_alias_1.ticker_id

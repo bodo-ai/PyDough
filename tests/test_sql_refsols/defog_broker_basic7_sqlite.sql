@@ -1,32 +1,23 @@
-SELECT
-  status,
-  num_transactions
-FROM (
+WITH _t2 AS (
   SELECT
-    num_transactions,
-    ordering_1,
-    status
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS num_transactions,
-      COALESCE(agg_0, 0) AS ordering_1,
-      status
-    FROM (
-      SELECT
-        COUNT() AS agg_0,
-        status
-      FROM (
-        SELECT
-          sbTxStatus AS status
-        FROM main.sbTransaction
-      ) AS _t3
-      GROUP BY
-        status
-    ) AS _t2
-  ) AS _t1
+    COUNT() AS agg_0,
+    sbtransaction.sbtxstatus AS status
+  FROM main.sbtransaction AS sbtransaction
+  GROUP BY
+    sbtransaction.sbtxstatus
+), _t0 AS (
+  SELECT
+    COALESCE(_t2.agg_0, 0) AS num_transactions,
+    COALESCE(_t2.agg_0, 0) AS ordering_1,
+    _t2.status AS status
+  FROM _t2 AS _t2
   ORDER BY
     ordering_1 DESC
   LIMIT 3
-) AS _t0
+)
+SELECT
+  _t0.status AS status,
+  _t0.num_transactions AS num_transactions
+FROM _t0 AS _t0
 ORDER BY
-  ordering_1 DESC
+  _t0.ordering_1 DESC

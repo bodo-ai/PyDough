@@ -4,9 +4,11 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
+import inspect
 from collections.abc import MutableSequence
 
 import pandas as pd
+from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.expressions import Alias, Column
@@ -18,11 +20,12 @@ from pydough.database_connectors import (
     DatabaseDialect,
 )
 from pydough.logger import get_logger
-from pydough.relational import RelationalRoot
+from pydough.relational import JoinType, RelationalRoot
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
+from .join_type_relational_visitor import JoinTypeRelationalVisitor
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 from .transform_bindings import SqlGlotTransformBindings
 
@@ -49,31 +52,35 @@ def convert_relation_to_sql(
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings, config
     ).relational_to_sqlglot(relational)
-    # glot_expr = parse_one(glot_expr.sql(dialect))
-    # print(glot_expr.sql(dialect, pretty=True))
-    # breakpoint()
 
     from sqlglot.optimizer import RULES as rules
 
-    rules = rules[:1] + rules[2:7] + rules[8:10] + rules[11:]
-    # rules = rules[:1] + rules[2:10] + rules[11:]
-    # for rule in rules:
-    #     kwargs = {}
-    #     rule_params = inspect.getfullargspec(rule).args
-    #     if "dialect" in rule_params:
-    #         kwargs["dialect"] = dialect
-    #     if "quote_identifiers" in rule_params:
-    #         kwargs["quote_identifiers"] = False
-    #     if "leave_tables_isolated" in rule_params:
-    #         kwargs["leave_tables_isolated"] = True
-    #     glot_expr = rule(glot_expr, **kwargs)
-    #     print("*" * 50)
-    #     print(rule.__name__)
-    #     print(glot_expr.sql(dialect, pretty=True))
-    # # glot_expr = optimize(glot_expr, rules=rules, dialect=dialect)
-    # # glot_expr = optimize(parse_one(glot_expr.sql(dialect)), dialect=dialect)
-    # fix_column_case(glot_expr, relational.ordered_columns)
-    # breakpoint()
+    # Indicies of rules to skip from the RULES list in the optimizer of sqlglot
+    rules_to_skip = [1, 10]  # [pushdown_projections,quote_identifiers]
+
+    join_types = set(JoinTypeRelationalVisitor().get_join_types(relational))
+    if JoinType.ANTI in join_types or JoinType.SEMI in join_types:
+        rules_to_skip.append(7)  # merge_subqueries
+
+    glot_expr = parse_one(glot_expr.sql(dialect))
+    # print(glot_expr.sql(dialect, pretty=True))
+
+    for idx, rule in enumerate(rules):
+        if idx in rules_to_skip:
+            continue
+        kwargs = {}
+        rule_params = inspect.getfullargspec(rule).args
+        if "dialect" in rule_params:
+            kwargs["dialect"] = dialect
+        if "quote_identifiers" in rule_params:
+            kwargs["quote_identifiers"] = False
+        if "leave_tables_isolated" in rule_params:
+            kwargs["leave_tables_isolated"] = True
+        glot_expr = rule(glot_expr, **kwargs)
+        # print("*" * 50)
+        # print(rule.__name__)
+        # print(glot_expr.sql(dialect, pretty=True))
+    fix_column_case(glot_expr, relational.ordered_columns)
     return glot_expr.sql(dialect, pretty=True)
 
 

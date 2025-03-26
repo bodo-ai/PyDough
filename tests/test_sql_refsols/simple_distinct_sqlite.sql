@@ -1,3 +1,3 @@
 SELECT DISTINCT
-  b
-FROM table
+  table.b AS b
+FROM table AS table

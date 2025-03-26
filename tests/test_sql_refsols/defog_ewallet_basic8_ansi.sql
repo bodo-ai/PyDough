@@ -1,51 +1,33 @@
-SELECT
-  coupon_code,
-  redemption_count,
-  total_discount
-FROM (
+WITH _table_alias_0 AS (
   SELECT
-    coupon_code,
-    ordering_2,
-    redemption_count,
-    total_discount
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS ordering_2,
-      COALESCE(agg_0, 0) AS redemption_count,
-      COALESCE(agg_1, 0) AS total_discount,
-      code AS coupon_code
-    FROM (
-      SELECT
-        agg_0,
-        agg_1,
-        code
-      FROM (
-        SELECT
-          cid,
-          code
-        FROM main.coupons
-      ) AS _table_alias_0
-      LEFT JOIN (
-        SELECT
-          COUNT(txid) AS agg_0,
-          SUM(amount) AS agg_1,
-          coupon_id
-        FROM (
-          SELECT
-            amount,
-            coupon_id,
-            txid
-          FROM main.wallet_transactions_daily
-        ) AS _t3
-        GROUP BY
-          coupon_id
-      ) AS _table_alias_1
-        ON cid = coupon_id
-    ) AS _t2
-  ) AS _t1
+    coupons.cid AS cid,
+    coupons.code AS code
+  FROM main.coupons AS coupons
+), _table_alias_1 AS (
+  SELECT
+    COUNT(wallet_transactions_daily.txid) AS agg_0,
+    SUM(wallet_transactions_daily.amount) AS agg_1,
+    wallet_transactions_daily.coupon_id AS coupon_id
+  FROM main.wallet_transactions_daily AS wallet_transactions_daily
+  GROUP BY
+    wallet_transactions_daily.coupon_id
+), _t0 AS (
+  SELECT
+    _table_alias_0.code AS coupon_code,
+    COALESCE(_table_alias_1.agg_0, 0) AS ordering_2,
+    COALESCE(_table_alias_1.agg_0, 0) AS redemption_count,
+    COALESCE(_table_alias_1.agg_1, 0) AS total_discount
+  FROM _table_alias_0 AS _table_alias_0
+  LEFT JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_0.cid = _table_alias_1.coupon_id
   ORDER BY
     ordering_2 DESC
   LIMIT 3
-) AS _t0
+)
+SELECT
+  _t0.coupon_code AS coupon_code,
+  _t0.redemption_count AS redemption_count,
+  _t0.total_discount AS total_discount
+FROM _t0 AS _t0
 ORDER BY
-  ordering_2 DESC
+  _t0.ordering_2 DESC
