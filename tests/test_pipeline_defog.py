@@ -38,6 +38,21 @@ from defog_outputs import (
     defog_sql_text_broker_gen3,
     defog_sql_text_broker_gen4,
     defog_sql_text_broker_gen5,
+    defog_sql_text_dealership_basic1,
+    defog_sql_text_dealership_basic2,
+    defog_sql_text_dealership_basic3,
+    defog_sql_text_dealership_basic4,
+    defog_sql_text_dealership_basic5,
+    defog_sql_text_dealership_basic6,
+    defog_sql_text_dealership_basic7,
+    defog_sql_text_dealership_basic8,
+    defog_sql_text_dealership_basic9,
+    defog_sql_text_dealership_basic10,
+    defog_sql_text_dealership_gen1,
+    defog_sql_text_dealership_gen2,
+    defog_sql_text_dealership_gen3,
+    defog_sql_text_dealership_gen4,
+    defog_sql_text_dealership_gen5,
     defog_sql_text_ewallet_adv1,
     defog_sql_text_ewallet_adv2,
     defog_sql_text_ewallet_adv3,
@@ -102,6 +117,21 @@ from defog_test_functions import (
     impl_defog_broker_gen3,
     impl_defog_broker_gen4,
     impl_defog_broker_gen5,
+    impl_defog_dealership_basic1,
+    impl_defog_dealership_basic2,
+    impl_defog_dealership_basic3,
+    impl_defog_dealership_basic4,
+    impl_defog_dealership_basic5,
+    impl_defog_dealership_basic6,
+    impl_defog_dealership_basic7,
+    impl_defog_dealership_basic8,
+    impl_defog_dealership_basic9,
+    impl_defog_dealership_basic10,
+    impl_defog_dealership_gen1,
+    impl_defog_dealership_gen2,
+    impl_defog_dealership_gen3,
+    impl_defog_dealership_gen4,
+    impl_defog_dealership_gen5,
     impl_defog_ewallet_adv1,
     impl_defog_ewallet_adv2,
     impl_defog_ewallet_adv3,
@@ -454,6 +484,151 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "broker_gen5",
             ),
             id="broker_gen5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic1,
+                "Dealership",
+                defog_sql_text_dealership_basic1,
+                "dealership_basic1",
+            ),
+            id="dealership_basic1",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic2,
+                "Dealership",
+                defog_sql_text_dealership_basic2,
+                "dealership_basic2",
+                order_insensitive=True,
+            ),
+            id="dealership_basic2",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic3,
+                "Dealership",
+                defog_sql_text_dealership_basic3,
+                "dealership_basic3",
+                order_insensitive=True,
+            ),
+            id="dealership_basic3",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic4,
+                "Dealership",
+                defog_sql_text_dealership_basic4,
+                "dealership_basic4",
+            ),
+            id="dealership_basic4",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic5,
+                "Dealership",
+                defog_sql_text_dealership_basic5,
+                "dealership_basic5",
+                order_insensitive=True,
+            ),
+            id="dealership_basic5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic6,
+                "Dealership",
+                defog_sql_text_dealership_basic6,
+                "dealership_basic6",
+            ),
+            id="dealership_basic6",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic7,
+                "Dealership",
+                defog_sql_text_dealership_basic7,
+                "dealership_basic7",
+            ),
+            id="dealership_basic7",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic8,
+                "Dealership",
+                defog_sql_text_dealership_basic8,
+                "dealership_basic8",
+            ),
+            id="dealership_basic8",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic9,
+                "Dealership",
+                defog_sql_text_dealership_basic9,
+                "dealership_basic9",
+            ),
+            id="dealership_basic9",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_basic10,
+                "Dealership",
+                defog_sql_text_dealership_basic10,
+                "dealership_basic10",
+            ),
+            id="dealership_basic10",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_gen1,
+                "Dealership",
+                defog_sql_text_dealership_gen1,
+                "dealership_gen1",
+            ),
+            id="dealership_gen1",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_gen2,
+                "Dealership",
+                defog_sql_text_dealership_gen2,
+                "dealership_gen2",
+            ),
+            id="dealership_gen2",
+            marks=pytest.mark.skip(
+                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
+            ),
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_gen3,
+                "Dealership",
+                defog_sql_text_dealership_gen3,
+                "dealership_gen3",
+            ),
+            id="dealership_gen3",
+            marks=pytest.mark.skip(
+                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
+            ),
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_gen4,
+                "Dealership",
+                defog_sql_text_dealership_gen4,
+                "dealership_gen4",
+            ),
+            id="dealership_gen4",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dealership_gen5,
+                "Dealership",
+                defog_sql_text_dealership_gen5,
+                "dealership_gen5",
+            ),
+            id="dealership_gen5",
+            marks=pytest.mark.skip("TODO: Finish query"),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(

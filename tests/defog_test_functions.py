@@ -30,6 +30,21 @@ __all__ = [
     "impl_defog_broker_gen3",
     "impl_defog_broker_gen4",
     "impl_defog_broker_gen5",
+    "impl_defog_dealership_basic1",
+    "impl_defog_dealership_basic10",
+    "impl_defog_dealership_basic2",
+    "impl_defog_dealership_basic3",
+    "impl_defog_dealership_basic4",
+    "impl_defog_dealership_basic5",
+    "impl_defog_dealership_basic6",
+    "impl_defog_dealership_basic7",
+    "impl_defog_dealership_basic8",
+    "impl_defog_dealership_basic9",
+    "impl_defog_dealership_gen1",
+    "impl_defog_dealership_gen2",
+    "impl_defog_dealership_gen3",
+    "impl_defog_dealership_gen4",
+    "impl_defog_dealership_gen5",
     "impl_defog_ewallet_adv1",
     "impl_defog_ewallet_adv10",
     "impl_defog_ewallet_adv11",
@@ -594,6 +609,237 @@ def impl_defog_broker_gen5():
         .CALCULATE(month=month, avg_price=AVG(m.price))
         .ORDER_BY(month.ASC())
     )
+
+
+def impl_defog_dealership_basic1():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the car ID, make, model and year for cars that have no sales
+    records, by doing a left join from the cars to sales table.
+    """
+    return Cars.WHERE(HASNOT(sale_records)).CALCULATE(_id, make, model, year)
+
+
+def impl_defog_dealership_basic2():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the distinct list of customer IDs that have made a purchase, based
+    on joining the customers and sales tables.
+    """
+    return Customers.WHERE(HAS(car_purchases)).CALCULATE(_id)
+
+
+def impl_defog_dealership_basic3():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the distinct list of salesperson IDs that have received a cash
+    payment, based on joining the salespersons, sales and payments_received
+    tables.
+    """
+    return Salespersons.WHERE(
+        HAS(sales_made.WHERE(HAS(payment.WHERE(payment_method == "cash"))))
+    ).CALCULATE(salesperson_id=_id)
+
+
+def impl_defog_dealership_basic4():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the salesperson ID, first name and last name for salespersons that
+    have no sales records, by doing a left join from the salespersons to sales
+    table.
+    """
+    return Salespersons.WHERE(HASNOT(sales_made)).CALCULATE(_id, first_name, last_name)
+
+
+def impl_defog_dealership_basic5():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the top 5 salespersons by number of sales in the past 30 days?
+    Return their first and last name, total sales count and total revenue
+    amount.
+    """
+    latest_sales = sales_made.WHERE(sale_date >= DATETIME("current_date", "-30 days"))
+
+    sales_person_last_month = Salespersons.WHERE(HAS(latest_sales))
+
+    return sales_person_last_month.CALCULATE(
+        first_name,
+        last_name,
+        total_sales=COUNT(latest_sales),
+        total_revenue=SUM(latest_sales.sale_price),
+    ).TOP_K(5, by=total_sales.DESC())
+
+
+def impl_defog_dealership_basic6():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the top 5 states by total revenue, showing the number of unique
+    customers and total revenue (based on sale price) for each state.
+    """
+    Customers_with_purchases = Customers.WHERE(HAS(car_purchases))
+
+    customers_by_state = PARTITION(Customers_with_purchases, name="custs", by=state)
+
+    return customers_by_state.CALCULATE(
+        state,
+        unique_customers=NDISTINCT(custs.WHERE(_id != "NULL")._id),
+        total_revenue=SUM(custs.car_purchases.sale_price),
+    ).TOP_K(5, by=total_revenue.DESC())
+
+
+def impl_defog_dealership_basic7():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the top 3 payment methods by total payment amount received? Return
+    the payment method, total number of payments and total amount.
+    """
+    return (
+        PARTITION(PaymentsReceived, name="p", by=payment_method)
+        .CALCULATE(
+            payment_method,
+            total_payments=COUNT(p._id),
+            total_amount=SUM(p.payment_amount),
+        )
+        .TOP_K(3, by=total_amount.DESC())
+    )
+
+
+def impl_defog_dealership_basic8():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the top 5 best selling car models by total revenue? Return the
+    make, model, total number of sales and total revenue.
+    """
+    return Cars.CALCULATE(
+        make,
+        model,
+        total_sales=COUNT(sale_records._id),
+        total_revenue=SUM(sale_records.sale_price),
+    ).TOP_K(5, by=total_revenue.DESC())
+
+
+def impl_defog_dealership_basic9():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the total number of customer signups for the top 2 states? Return
+    the state and total signups, starting from the top.
+    """
+    return (
+        PARTITION(Customers, name="grouped", by=state)
+        .CALCULATE(state, total_signups=COUNT(grouped._id))
+        .TOP_K(2, by=total_signups.DESC())
+    )
+
+
+def impl_defog_dealership_basic10():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Who were the top 3 sales representatives by total revenue in the past 3
+    months, inclusive of today's date? Return their first name, last name,
+    total number of sales and total revenue. Note that revenue refers to the
+    sum of sale_price in the sales table.
+    """
+    return Salespersons.CALCULATE(
+        first_name,
+        last_name,
+        total_sales=COUNT(
+            sales_made.WHERE(DATEDIFF("months", sale_date, "now") < 3)._id
+        ),
+        total_revenue=SUM(
+            sales_made.WHERE(DATEDIFF("months", sale_date, "now") < 3).sale_price
+        ),
+    ).TOP_K(3, by=total_revenue.DESC())
+
+
+def impl_defog_dealership_gen1():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the name and phone number of the salesperson with the shortest time
+    from being hired to getting fired. Return the number of days he/she was
+    employed for.
+    """
+    return (
+        Salespersons.WHERE(PRESENT(termination_date))
+        .CALCULATE(
+            first_name,
+            last_name,
+            phone,
+            days_employed=DATEDIFF("days", hire_date, termination_date) * 1.0,
+        )
+        .WHERE(RANKING(by=days_employed.ASC(), levels=1) == 1)
+    )
+
+
+def impl_defog_dealership_gen2():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the number of payments made on weekends to the vendor named 'Utility
+    Company'
+    """
+    return "Query pending"
+
+
+def impl_defog_dealership_gen3():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Show me the daily total amount of payments received in the whole of the
+    previous ISO week not including the current week, split by the
+    payment_method.
+    """
+    return "Query pending"
+
+
+def impl_defog_dealership_gen4():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What were the total quarterly sales in 2023 grouped by customer's state?
+    Represent each quarter as the first date in the quarter.
+    """
+    filtered_sales = Sales.WHERE(YEAR(sale_date) == 2023).CALCULATE(
+        sale_price,
+        quarter=IFF(
+            MONTH(sale_date) <= 3,
+            "2023-01-01",
+            IFF(
+                MONTH(sale_date) <= 6,
+                "2023-04-01",
+                IFF(MONTH(sale_date) <= 9, "2023-07-01", "2023-10-01"),
+            ),
+        ),
+        customer_state=customer.state,
+    )
+
+    return (
+        PARTITION(filtered_sales, name="s", by=(quarter, customer_state))
+        .CALCULATE(quarter, customer_state, total_sales=SUM(s.sale_price))
+        .WHERE(total_sales > 0)
+        .ORDER_BY(quarter.ASC(), customer_state.ASC())
+    )
+
+
+def impl_defog_dealership_gen5():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Which cars were in inventory in the latest snapshot for march 2023? Return
+    the car id, make, model, and year. Cars are considered to be in inventory"
+    if is_in_inventory is True."
+    """
+    return "Query pending"
 
 
 def impl_defog_ewallet_adv1():
