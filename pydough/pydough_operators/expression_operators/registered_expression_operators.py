@@ -16,6 +16,8 @@ __all__ = [
     "DATEDIFF",
     "DATETIME",
     "DAY",
+    "DAYNAME",
+    "DAYOFWEEK",
     "DEFAULT_TO",
     "DIV",
     "ENDSWITH",
@@ -53,6 +55,10 @@ __all__ = [
     "PRESENT",
     "PREV",
     "RANKING",
+    "RELAVG",
+    "RELCOUNT",
+    "RELSIZE",
+    "RELSUM",
     "ROUND",
     "RPAD",
     "SECOND",
@@ -163,6 +169,12 @@ MONTH = ExpressionFunctionOperator(
 DAY = ExpressionFunctionOperator(
     "DAY", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
+DAYOFWEEK = ExpressionFunctionOperator(
+    "DAYOFWEEK", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+DAYNAME = ExpressionFunctionOperator(
+    "DAYNAME", False, RequireNumArgs(1), ConstantType(StringType())
+)
 HOUR = ExpressionFunctionOperator(
     "HOUR", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
@@ -220,3 +232,15 @@ PERCENTILE = ExpressionWindowOperator(
 )
 PREV = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
 NEXT = ExpressionWindowOperator("NEXT", RequireNumArgs(1), SelectArgumentType(0))
+RELSUM = ExpressionWindowOperator(
+    "RELSUM", RequireNumArgs(1), SelectArgumentType(0), False, False
+)
+RELAVG = ExpressionWindowOperator(
+    "RELAVG", RequireNumArgs(1), SelectArgumentType(0), False, False
+)
+RELCOUNT = ExpressionWindowOperator(
+    "RELCOUNT", RequireNumArgs(1), ConstantType(Int64Type()), False, False
+)
+RELSIZE = ExpressionWindowOperator(
+    "RELSIZE", RequireNumArgs(0), ConstantType(Int64Type()), False, False
+)

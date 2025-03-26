@@ -7,6 +7,7 @@ from tpch_relational_plans import (
     tpch_query_1_plan,
 )
 
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.logger import get_logger
 from pydough.sqlglot import SqlGlotTransformBindings, execute_df
@@ -159,7 +160,9 @@ def test_get_logger_invalid_env_level(monkeypatch):
 
 
 def test_execute_df_logging(
-    sqlite_tpch_db_context: DatabaseContext, sqlite_bindings: SqlGlotTransformBindings
+    sqlite_tpch_db_context: DatabaseContext,
+    sqlite_bindings: SqlGlotTransformBindings,
+    default_config: PyDoughConfigs,
 ) -> None:
     """
     Test the example TPC-H relational trees executed on a
@@ -170,7 +173,13 @@ def test_execute_df_logging(
     output_capture = io.StringIO()
     # Redirect stdout to the buffer
     with redirect_stdout(output_capture):
-        execute_df(root, sqlite_tpch_db_context, sqlite_bindings, display_sql=True)
+        execute_df(
+            root,
+            sqlite_tpch_db_context,
+            sqlite_bindings,
+            default_config,
+            display_sql=True,
+        )
     # Retrieve the output from the buffer
     captured_output = output_capture.getvalue()
     required_op = """
@@ -243,8 +252,8 @@ FROM (
     )
   )
   GROUP BY
-    L_RETURNFLAG,
-    L_LINESTATUS
+    L_LINESTATUS,
+    L_RETURNFLAG
 )
 ORDER BY
   L_RETURNFLAG,

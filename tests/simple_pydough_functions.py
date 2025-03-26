@@ -119,6 +119,20 @@ def year_month_nation_orders():
     ).TOP_K(5, by=n_orders.DESC())
 
 
+def parts_quantity_increase_95_96():
+    # Find the 3 parts with the largest increase in quantity ordered by
+    # rail from 1995 to 1996, breaking ties alphabetically by name.
+    # Only consider parts with a small size and that have at least one
+    # qualifying order from both years.
+    orders_95 = lines.WHERE((YEAR(order.order_date) == 1995) & (ship_mode == "RAIL"))
+    orders_96 = lines.WHERE((YEAR(order.order_date) == 1996) & (ship_mode == "RAIL"))
+    return (
+        Parts.WHERE(STARTSWITH(container, "SM") & HAS(orders_95) & HAS(orders_96))
+        .CALCULATE(name, qty_95=SUM(orders_95.quantity), qty_96=SUM(orders_96.quantity))
+        .TOP_K(3, by=((qty_96 - qty_95).DESC(), name.ASC()))
+    )
+
+
 def rank_a():
     return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
 
@@ -378,6 +392,119 @@ def avg_gap_prev_urgent_same_clerk():
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
 
 
+def nation_window_aggs():
+    # Calculating multiple global windowed aggregations for each nation, only
+    # considering nations whose names do not start with a vowel.
+    return (
+        Nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        .CALCULATE(
+            nation_name=name,
+            key_sum=RELSUM(key),
+            key_avg=RELAVG(key),
+            n_short_comment=RELCOUNT(KEEP_IF(comment, LENGTH(comment) < 75)),
+            n_nations=RELSIZE(),
+        )
+        .ORDER_BY(region_key.ASC(), nation_name.ASC())
+    )
+
+
+def region_nation_window_aggs():
+    # Calculating multiple global windowed aggregations for each nation, only
+    # per-region, considering nations whose names do not start with a vowel.
+    return (
+        Regions.nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        .CALCULATE(
+            nation_name=name,
+            key_sum=RELSUM(key, levels=1),
+            key_avg=RELAVG(key, levels=1),
+            n_short_comment=RELCOUNT(KEEP_IF(comment, LENGTH(comment) < 75), levels=1),
+            n_nations=RELSIZE(levels=1),
+        )
+        .ORDER_BY(region_key.ASC(), nation_name.ASC())
+    )
+
+
+def supplier_pct_national_qty():
+    # Find the 5 African suppliers with the highest percentage of total
+    # quantity of product shipped from them out of all suppliers in that nation
+    # meeting certain criteria. Include for each such supplier their name,
+    # nation name, the quantity, and the percentage. The criteria are that the
+    # shipments were done in 1998, they were shipped by ship, the part shipped
+    # had  had "tomato" in the name and was a large container. Also, when
+    # finding the sum for each naiton and the best suppliers, ignore all
+    # suppliers with a negative account balance and whose comments do not
+    # contain the word "careful".
+    selected_lines = lines.WHERE(
+        (YEAR(ship_date) == 1995)
+        & (ship_mode == "SHIP")
+        & CONTAINS(part.name, "tomato")
+        & STARTSWITH(part.container, "LG")
+    )
+    supp_qty = SUM(selected_lines.quantity)
+    return (
+        Nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
+        .CALCULATE(nation_name=name)
+        .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
+        .CALCULATE(
+            supplier_name=name,
+            nation_name=name,
+            supplier_quantity=supp_qty,
+            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, levels=1),
+        )
+        .TOP_K(5, by=national_qty_pct.DESC())
+    )
+
+
+def highest_priority_per_year():
+    # For each year, identify the priority with the highest percentage of
+    # made in that year with that priority, listing the year, priority, and
+    # percentage. Sort the results by year.
+    order_info = Orders.CALCULATE(order_year=YEAR(order_date))
+    year_priorities = PARTITION(
+        order_info, name="orders", by=(order_priority, order_year)
+    ).CALCULATE(n_orders=COUNT(orders))
+    years = PARTITION(year_priorities, name="priorities", by=order_year)
+    return (
+        years.priorities.CALCULATE(
+            order_year,
+            highest_priority=order_priority,
+            priority_pct=100.0 * n_orders / RELSUM(n_orders, levels=1),
+        )
+        .WHERE(RANKING(by=priority_pct.DESC(), levels=1) == 1)
+        .ORDER_BY(order_year.ASC())
+    )
+
+
+def nation_best_order():
+    # For each Asian nation, identify the most expensive order made by a
+    # customer in that nation in 1998, listing the nation name, customer
+    # name, order key, the order's price, and percentage of the price of
+    # all orders made in 1998. Order the nations alphabetically.
+    selected_nations = Nations.WHERE(region.name == "ASIA")
+    best_order = (
+        customers.CALCULATE(customer_name=name)
+        .orders.WHERE(YEAR(order_date) == 1998)
+        .CALCULATE(
+            order_value=total_price,
+            value_percentage=100.0 * total_price / RELSUM(total_price, levels=2),
+            order_key=key,
+        )
+        .WHERE(RANKING(by=order_value.DESC(), levels=2) == 1)
+        .SINGULAR()
+    )
+    return (
+        selected_nations.WHERE(HAS(best_order))
+        .CALCULATE(
+            nation_name=name,
+            customer_name=best_order.customer_name,
+            order_key=best_order.order_key,
+            order_value=best_order.order_value,
+            value_percentage=best_order.value_percentage,
+        )
+        .ORDER_BY(name.ASC())
+    )
+
+
 def top_customers_by_orders():
     # Finds the keys of the 5 customers with the most orders.
     return Customers.CALCULATE(
@@ -610,6 +737,60 @@ def datetime_sampler():
             " \n \t312 \nD \n\r ",
         ),
         DATETIME(" Current_Date ", "+ 45 MM", "-135 s"),
+        YEAR("Current Date"),
+        YEAR(pd.Timestamp("2025-07-04 12:58:45")),
+        YEAR("1999-03-14"),
+        MONTH("Current Date"),
+        MONTH(datetime.date(2001, 6, 30)),
+        MONTH("1999-03-14"),
+        DAY("Current Date"),
+        DAY(pd.Timestamp("2025-07-04 12:58:45")),
+        DAY("2025-07-04 12:58:45"),
+        HOUR("CURRENT_TIMESTAMP"),
+        HOUR(datetime.date(2001, 6, 30)),
+        HOUR("2024-01-01"),
+        MINUTE("CURRENT_TIMESTAMP"),
+        MINUTE(pd.Timestamp("2024-12-25 20:30:59")),
+        MINUTE("2024-01-01"),
+        SECOND("now"),
+        SECOND(pd.Timestamp("2025-07-04 12:58:45")),
+        SECOND("1999-03-14"),
+        DATEDIFF("year", "2018-02-14 12:41:06", "NOW"),
+        DATEDIFF("years", order_date, datetime.date(2022, 11, 24)),
+        DATEDIFF("month", datetime.date(2005, 6, 30), "1999-03-14"),
+        DATEDIFF(
+            "months", datetime.datetime(2006, 5, 1, 12, 0), datetime.date(2022, 11, 24)
+        ),
+        DATEDIFF("day", "CurrentTimestamp", "CURRENTDATE"),
+        DATEDIFF("days", "1999-03-14", "CURRENTDATE"),
+        DATEDIFF("hour", "NOW", "CURRENTDATE"),
+        DATEDIFF("hours", datetime.date(2005, 6, 30), order_date),
+        DATEDIFF("minute", "NOW", datetime.datetime(2006, 5, 1, 12, 0)),
+        DATEDIFF("minutes", order_date, pd.Timestamp("2021-01-01 07:35:00")),
+        DATEDIFF(
+            "second", datetime.date(2022, 11, 24), pd.Timestamp("2021-01-01 07:35:00")
+        ),
+        DATEDIFF("seconds", datetime.date(2005, 6, 30), "2018-02-14 12:41:06"),
+        DATEDIFF("year", order_date, datetime.datetime(2006, 5, 1, 12, 0)),
+        DATEDIFF("years", "2018-02-14 12:41:06", order_date),
+        DATEDIFF("month", order_date, datetime.datetime(2019, 7, 4, 11, 30)),
+        DATEDIFF(
+            "months", datetime.datetime(2019, 7, 4, 11, 30), "2018-02-14 12:41:06"
+        ),
+        DATEDIFF("day", "CURRENTDATE", order_date),
+        DATEDIFF("days", datetime.datetime(2019, 7, 4, 11, 30), "CURRENTDATE"),
+        DATEDIFF("hour", datetime.date(2022, 11, 24), "1999-03-14"),
+        DATEDIFF("hours", "2018-02-14 12:41:06", pd.Timestamp("2020-12-31 00:31:06")),
+        DATEDIFF(
+            "minute", datetime.date(2005, 6, 30), pd.Timestamp("2020-12-31 00:31:06")
+        ),
+        DATEDIFF("minutes", "CurrentTimestamp", "2018-02-14 12:41:06"),
+        DATEDIFF("second", "CURRENTDATE", "1999-03-14"),
+        DATEDIFF(
+            "seconds",
+            datetime.date(2022, 11, 24),
+            datetime.datetime(2019, 7, 4, 11, 30),
+        ),
     )
 
 
@@ -1073,6 +1254,72 @@ def minutes_seconds_datediff():
             seconds_diff=DATEDIFF("s", date_time, y_datetime),
         )
         .TOP_K(30, by=x.DESC())
+    )
+
+
+def simple_week_sampler():
+    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
+    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
+    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
+    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
+    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
+    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
+    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
+    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
+    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
+    return Broker.CALCULATE(
+        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
+        sow1=DATETIME(y_dt, "start of week"),
+        sow2=DATETIME(y_dt2, "start of week"),
+        sow3=DATETIME(y_dt3, "start of week"),
+        sow4=DATETIME(y_dt4, "start of week"),
+        sow5=DATETIME(y_dt5, "start of week"),
+        sow6=DATETIME(y_dt6, "start of week"),
+        sow7=DATETIME(y_dt7, "start of week"),
+        sow8=DATETIME(y_dt8, "start of week"),
+        dayname1=DAYNAME(y_dt),
+        dayname2=DAYNAME(y_dt2),
+        dayname3=DAYNAME(y_dt3),
+        dayname4=DAYNAME(y_dt4),
+        dayname5=DAYNAME(y_dt5),
+        dayname6=DAYNAME(y_dt6),
+        dayname7=DAYNAME(y_dt7),
+        dayname8=DAYNAME(y_dt8),
+        dayofweek1=DAYOFWEEK(y_dt),
+        dayofweek2=DAYOFWEEK(y_dt2),
+        dayofweek3=DAYOFWEEK(y_dt3),
+        dayofweek4=DAYOFWEEK(y_dt4),
+        dayofweek5=DAYOFWEEK(y_dt5),
+        dayofweek6=DAYOFWEEK(y_dt6),
+        dayofweek7=DAYOFWEEK(y_dt7),
+        dayofweek8=DAYOFWEEK(y_dt8),
+    )
+
+
+def transaction_week_sampler():
+    return Transactions.WHERE(
+        (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
+    ).CALCULATE(
+        date_time,
+        sow=DATETIME(date_time, "start of week"),
+        dayname=DAYNAME(date_time),
+        dayofweek=DAYOFWEEK(date_time),
+    )
+
+
+def week_offset():
+    return Transactions.WHERE(
+        (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
+    ).CALCULATE(
+        date_time,
+        week_adj1=DATETIME(date_time, "1 week"),
+        week_adj2=DATETIME(date_time, "-1 week"),
+        week_adj3=DATETIME(date_time, "1 h", "2 w"),
+        week_adj4=DATETIME(date_time, "-1 s", "2 w"),
+        week_adj5=DATETIME(date_time, "1 d", "2 w"),
+        week_adj6=DATETIME(date_time, "-1 m", "2 w"),
+        week_adj7=DATETIME(date_time, "1 mm", "2 w"),
+        week_adj8=DATETIME(date_time, "1 y", "2 w"),
     )
 
 
