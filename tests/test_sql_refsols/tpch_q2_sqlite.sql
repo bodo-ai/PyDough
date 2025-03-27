@@ -1,174 +1,241 @@
-WITH _table_alias_0 AS (
+SELECT
+  S_ACCTBAL,
+  S_NAME,
+  N_NAME,
+  P_PARTKEY,
+  P_MFGR,
+  S_ADDRESS,
+  S_PHONE,
+  S_COMMENT
+FROM (
   SELECT
-    nation.n_nationkey AS key,
-    nation.n_regionkey AS region_key
-  FROM tpch.nation AS nation
-), _t4 AS (
-  SELECT
-    region.r_name AS name,
-    region.r_regionkey AS key
-  FROM tpch.region AS region
-  WHERE
-    region.r_name = 'EUROPE'
-), _table_alias_1 AS (
-  SELECT
-    _t4.key AS key
-  FROM _t4 AS _t4
-), _table_alias_2 AS (
-  SELECT
-    _table_alias_0.key AS key
-  FROM _table_alias_0 AS _table_alias_0
-  JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.region_key = _table_alias_1.key
-), _table_alias_3 AS (
-  SELECT
-    supplier.s_suppkey AS key,
-    supplier.s_nationkey AS nation_key
-  FROM tpch.supplier AS supplier
-), _table_alias_4 AS (
-  SELECT
-    _table_alias_3.key AS key_5
-  FROM _table_alias_2 AS _table_alias_2
-  JOIN _table_alias_3 AS _table_alias_3
-    ON _table_alias_2.key = _table_alias_3.nation_key
-), _table_alias_5 AS (
-  SELECT
-    partsupp.ps_partkey AS part_key,
-    partsupp.ps_suppkey AS supplier_key,
-    partsupp.ps_supplycost AS supplycost
-  FROM tpch.partsupp AS partsupp
-), _table_alias_6 AS (
-  SELECT
-    _table_alias_5.part_key AS part_key,
-    _table_alias_5.supplycost AS supplycost
-  FROM _table_alias_4 AS _table_alias_4
-  JOIN _table_alias_5 AS _table_alias_5
-    ON _table_alias_4.key_5 = _table_alias_5.supplier_key
-), _table_alias_7 AS (
-  SELECT
-    part.p_partkey AS key
-  FROM tpch.part AS part
-  WHERE
-    part.p_size = 15 AND part.p_type LIKE '%BRASS'
-), _table_alias_16 AS (
-  SELECT
-    MIN(_table_alias_6.supplycost) AS best_cost,
-    _table_alias_7.key AS key_9
-  FROM _table_alias_6 AS _table_alias_6
-  JOIN _table_alias_7 AS _table_alias_7
-    ON _table_alias_6.part_key = _table_alias_7.key
-  GROUP BY
-    _table_alias_7.key
-), _table_alias_8 AS (
-  SELECT
-    nation.n_name AS n_name,
-    nation.n_nationkey AS key,
-    nation.n_regionkey AS region_key
-  FROM tpch.nation AS nation
-), _table_alias_9 AS (
-  SELECT
-    _t6.key AS key
-  FROM _t4 AS _t6
-), _table_alias_10 AS (
-  SELECT
-    _table_alias_8.key AS key,
-    _table_alias_8.n_name AS n_name
-  FROM _table_alias_8 AS _table_alias_8
-  JOIN _table_alias_9 AS _table_alias_9
-    ON _table_alias_8.region_key = _table_alias_9.key
-), _table_alias_11 AS (
-  SELECT
-    supplier.s_acctbal AS account_balance,
-    supplier.s_address AS address,
-    supplier.s_comment AS comment,
-    supplier.s_suppkey AS key,
-    supplier.s_name AS name,
-    supplier.s_nationkey AS nation_key,
-    supplier.s_phone AS phone
-  FROM tpch.supplier AS supplier
-), _table_alias_12 AS (
-  SELECT
-    _table_alias_11.key AS key_15,
-    _table_alias_11.account_balance AS s_acctbal,
-    _table_alias_11.address AS s_address,
-    _table_alias_11.comment AS s_comment,
-    _table_alias_11.name AS s_name,
-    _table_alias_11.phone AS s_phone,
-    _table_alias_10.n_name AS n_name
-  FROM _table_alias_10 AS _table_alias_10
-  JOIN _table_alias_11 AS _table_alias_11
-    ON _table_alias_10.key = _table_alias_11.nation_key
-), _table_alias_14 AS (
-  SELECT
-    _table_alias_12.n_name AS n_name,
-    _table_alias_13.part_key AS part_key,
-    _table_alias_12.s_acctbal AS s_acctbal,
-    _table_alias_12.s_address AS s_address,
-    _table_alias_12.s_comment AS s_comment,
-    _table_alias_12.s_name AS s_name,
-    _table_alias_12.s_phone AS s_phone,
-    _table_alias_13.supplycost AS supplycost
-  FROM _table_alias_12 AS _table_alias_12
-  JOIN _table_alias_5 AS _table_alias_13
-    ON _table_alias_12.key_15 = _table_alias_13.supplier_key
-), _table_alias_15 AS (
-  SELECT
-    part.p_partkey AS key,
-    part.p_mfgr AS manufacturer
-  FROM tpch.part AS part
-  WHERE
-    part.p_size = 15 AND part.p_type LIKE '%BRASS'
-), _table_alias_17 AS (
-  SELECT
-    _table_alias_15.key AS key_19,
-    _table_alias_15.manufacturer AS manufacturer,
-    _table_alias_14.n_name AS n_name,
-    _table_alias_14.s_acctbal AS s_acctbal,
-    _table_alias_14.s_address AS s_address,
-    _table_alias_14.s_comment AS s_comment,
-    _table_alias_14.s_name AS s_name,
-    _table_alias_14.s_phone AS s_phone,
-    _table_alias_14.supplycost AS supplycost
-  FROM _table_alias_14 AS _table_alias_14
-  JOIN _table_alias_15 AS _table_alias_15
-    ON _table_alias_14.part_key = _table_alias_15.key
-), _t0 AS (
-  SELECT
-    _table_alias_17.n_name AS n_name,
-    _table_alias_17.manufacturer AS p_mfgr,
-    _table_alias_17.key_19 AS p_partkey,
-    _table_alias_17.s_acctbal AS s_acctbal,
-    _table_alias_17.s_address AS s_address,
-    _table_alias_17.s_comment AS s_comment,
-    _table_alias_17.s_name AS s_name,
-    _table_alias_17.s_phone AS s_phone,
-    _table_alias_17.s_acctbal AS ordering_1,
-    _table_alias_17.n_name AS ordering_2,
-    _table_alias_17.s_name AS ordering_3,
-    _table_alias_17.key_19 AS ordering_4
-  FROM _table_alias_16 AS _table_alias_16
-  JOIN _table_alias_17 AS _table_alias_17
-    ON _table_alias_16.best_cost = _table_alias_17.supplycost
-    AND _table_alias_16.key_9 = _table_alias_17.key_19
+    N_NAME,
+    P_MFGR,
+    P_PARTKEY,
+    S_ACCTBAL,
+    S_ADDRESS,
+    S_COMMENT,
+    S_NAME,
+    S_PHONE,
+    ordering_1,
+    ordering_2,
+    ordering_3,
+    ordering_4
+  FROM (
+    SELECT
+      key_19 AS P_PARTKEY,
+      key_19 AS ordering_4,
+      manufacturer AS P_MFGR,
+      n_name_21 AS N_NAME,
+      n_name_21 AS ordering_2,
+      s_acctbal_22 AS S_ACCTBAL,
+      s_acctbal_22 AS ordering_1,
+      s_address_23 AS S_ADDRESS,
+      s_comment_24 AS S_COMMENT,
+      s_name_25 AS S_NAME,
+      s_name_25 AS ordering_3,
+      s_phone_26 AS S_PHONE
+    FROM (
+      SELECT
+        n_name AS n_name_21,
+        s_acctbal AS s_acctbal_22,
+        s_address AS s_address_23,
+        s_comment AS s_comment_24,
+        s_name AS s_name_25,
+        s_phone AS s_phone_26,
+        supplycost AS supplycost_27,
+        best_cost,
+        key_19,
+        manufacturer
+      FROM (
+        SELECT
+          MIN(supplycost) AS best_cost,
+          key_9
+        FROM (
+          SELECT
+            key AS key_9,
+            supplycost
+          FROM (
+            SELECT
+              part_key,
+              supplycost
+            FROM (
+              SELECT
+                _table_alias_3.key AS key_5
+              FROM (
+                SELECT
+                  _table_alias_0.key AS key
+                FROM (
+                  SELECT
+                    n_nationkey AS key,
+                    n_regionkey AS region_key
+                  FROM tpch.NATION
+                ) AS _table_alias_0
+                INNER JOIN (
+                  SELECT
+                    key
+                  FROM (
+                    SELECT
+                      r_name AS name,
+                      r_regionkey AS key
+                    FROM tpch.REGION
+                  ) AS _t4
+                  WHERE
+                    name = 'EUROPE'
+                ) AS _table_alias_1
+                  ON region_key = _table_alias_1.key
+              ) AS _table_alias_2
+              INNER JOIN (
+                SELECT
+                  s_suppkey AS key,
+                  s_nationkey AS nation_key
+                FROM tpch.SUPPLIER
+              ) AS _table_alias_3
+                ON _table_alias_2.key = nation_key
+            ) AS _table_alias_4
+            INNER JOIN (
+              SELECT
+                ps_partkey AS part_key,
+                ps_suppkey AS supplier_key,
+                ps_supplycost AS supplycost
+              FROM tpch.PARTSUPP
+            ) AS _table_alias_5
+              ON key_5 = supplier_key
+          ) AS _table_alias_6
+          INNER JOIN (
+            SELECT
+              key
+            FROM (
+              SELECT
+                p_partkey AS key,
+                p_size AS size,
+                p_type AS part_type
+              FROM tpch.PART
+            ) AS _t5
+            WHERE
+              (
+                size = 15
+              ) AND (
+                part_type LIKE '%BRASS'
+              )
+          ) AS _table_alias_7
+            ON part_key = key
+        ) AS _t3
+        GROUP BY
+          key_9
+      ) AS _table_alias_16
+      INNER JOIN (
+        SELECT
+          key AS key_19,
+          manufacturer,
+          n_name,
+          s_acctbal,
+          s_address,
+          s_comment,
+          s_name,
+          s_phone,
+          supplycost
+        FROM (
+          SELECT
+            n_name,
+            part_key,
+            s_acctbal,
+            s_address,
+            s_comment,
+            s_name,
+            s_phone,
+            supplycost
+          FROM (
+            SELECT
+              _table_alias_11.key AS key_15,
+              account_balance AS s_acctbal,
+              address AS s_address,
+              comment AS s_comment,
+              name AS s_name,
+              phone AS s_phone,
+              n_name
+            FROM (
+              SELECT
+                _table_alias_8.key AS key,
+                n_name
+              FROM (
+                SELECT
+                  n_name AS n_name,
+                  n_nationkey AS key,
+                  n_regionkey AS region_key
+                FROM tpch.NATION
+              ) AS _table_alias_8
+              INNER JOIN (
+                SELECT
+                  key
+                FROM (
+                  SELECT
+                    r_name AS name,
+                    r_regionkey AS key
+                  FROM tpch.REGION
+                ) AS _t6
+                WHERE
+                  name = 'EUROPE'
+              ) AS _table_alias_9
+                ON region_key = _table_alias_9.key
+            ) AS _table_alias_10
+            INNER JOIN (
+              SELECT
+                s_acctbal AS account_balance,
+                s_address AS address,
+                s_comment AS comment,
+                s_suppkey AS key,
+                s_name AS name,
+                s_nationkey AS nation_key,
+                s_phone AS phone
+              FROM tpch.SUPPLIER
+            ) AS _table_alias_11
+              ON _table_alias_10.key = nation_key
+          ) AS _table_alias_12
+          INNER JOIN (
+            SELECT
+              ps_partkey AS part_key,
+              ps_suppkey AS supplier_key,
+              ps_supplycost AS supplycost
+            FROM tpch.PARTSUPP
+          ) AS _table_alias_13
+            ON key_15 = supplier_key
+        ) AS _table_alias_14
+        INNER JOIN (
+          SELECT
+            key,
+            manufacturer
+          FROM (
+            SELECT
+              p_mfgr AS manufacturer,
+              p_partkey AS key,
+              p_size AS size,
+              p_type AS part_type
+            FROM tpch.PART
+          ) AS _t7
+          WHERE
+            (
+              size = 15
+            ) AND (
+              part_type LIKE '%BRASS'
+            )
+        ) AS _table_alias_15
+          ON part_key = key
+      ) AS _table_alias_17
+        ON key_9 = key_19
+    ) AS _t2
+    WHERE
+      supplycost_27 = best_cost
+  ) AS _t1
   ORDER BY
     ordering_1 DESC,
     ordering_2,
     ordering_3,
     ordering_4
   LIMIT 10
-)
-SELECT
-  _t0.s_acctbal AS S_ACCTBAL,
-  _t0.s_name AS S_NAME,
-  _t0.n_name AS N_NAME,
-  _t0.p_partkey AS P_PARTKEY,
-  _t0.p_mfgr AS P_MFGR,
-  _t0.s_address AS S_ADDRESS,
-  _t0.s_phone AS S_PHONE,
-  _t0.s_comment AS S_COMMENT
-FROM _t0 AS _t0
+) AS _t0
 ORDER BY
-  _t0.ordering_1 DESC,
-  _t0.ordering_2,
-  _t0.ordering_3,
-  _t0.ordering_4
+  ordering_1 DESC,
+  ordering_2,
+  ordering_3,
+  ordering_4

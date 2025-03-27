@@ -369,10 +369,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
             input_name = join.default_input_aliases[i]
-            # if input_name not in alias_map:
-            #     alias_map[input_name] = self._generate_table_alias()
-            if join.correl_name is None:
+            if input_name not in alias_map:
                 alias_map[input_name] = self._generate_table_alias()
+            # if join.correl_name is None:
+            #     alias_map[input_name] = self._generate_table_alias()
         # breakpoint()
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)

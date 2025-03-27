@@ -1,86 +1,130 @@
-WITH _table_alias_0 AS (
+SELECT
+  S_NAME,
+  S_ADDRESS
+FROM (
   SELECT
-    supplier.s_address AS s_address,
-    supplier.s_name AS s_name,
-    supplier.s_nationkey AS nation_key,
-    supplier.s_suppkey AS key
-  FROM tpch.supplier AS supplier
-), _table_alias_1 AS (
-  SELECT
-    nation.n_nationkey AS key,
-    nation.n_name AS name
-  FROM tpch.nation AS nation
-), _table_alias_6 AS (
-  SELECT
-    _table_alias_0.key AS key,
-    _table_alias_1.name AS name_3,
-    _table_alias_0.s_address AS s_address,
-    _table_alias_0.s_name AS s_name
-  FROM _table_alias_0 AS _table_alias_0
-  LEFT JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.nation_key = _table_alias_1.key
-), _table_alias_2 AS (
-  SELECT
-    partsupp.ps_availqty AS availqty,
-    partsupp.ps_partkey AS part_key,
-    partsupp.ps_suppkey AS supplier_key
-  FROM tpch.partsupp AS partsupp
-), _table_alias_3 AS (
-  SELECT
-    part.p_partkey AS key
-  FROM tpch.part AS part
-  WHERE
-    part.p_name LIKE 'forest%'
-), _table_alias_4 AS (
-  SELECT
-    _table_alias_2.availqty AS availqty,
-    _table_alias_3.key AS key,
-    _table_alias_2.supplier_key AS supplier_key
-  FROM _table_alias_2 AS _table_alias_2
-  JOIN _table_alias_3 AS _table_alias_3
-    ON _table_alias_2.part_key = _table_alias_3.key
-), _table_alias_5 AS (
-  SELECT
-    SUM(lineitem.l_quantity) AS agg_0,
-    lineitem.l_partkey AS part_key
-  FROM tpch.lineitem AS lineitem
-  WHERE
-    lineitem.l_shipdate < CAST('1995-01-01' AS DATE)
-    AND lineitem.l_shipdate >= CAST('1994-01-01' AS DATE)
-  GROUP BY
-    lineitem.l_partkey
-), _table_alias_7 AS (
-  SELECT
-    COUNT() AS agg_0,
-    _table_alias_4.supplier_key AS supplier_key
-  FROM _table_alias_4 AS _table_alias_4
-  LEFT JOIN _table_alias_5 AS _table_alias_5
-    ON _table_alias_4.key = _table_alias_5.part_key
-  WHERE
-    _table_alias_4.availqty > (
-      COALESCE(_table_alias_5.agg_0, 0) * 0.5
-    )
-  GROUP BY
-    _table_alias_4.supplier_key
-), _t0 AS (
-  SELECT
-    _table_alias_6.s_address AS s_address,
-    _table_alias_6.s_name AS s_name,
-    _table_alias_6.s_name AS ordering_1
-  FROM _table_alias_6 AS _table_alias_6
-  LEFT JOIN _table_alias_7 AS _table_alias_7
-    ON _table_alias_6.key = _table_alias_7.supplier_key
-  WHERE
-    (
-      COALESCE(_table_alias_7.agg_0 <> 0, FALSE) AND _table_alias_6.name_3 = 'CANADA'
-    ) > 0
+    S_ADDRESS,
+    S_NAME,
+    ordering_1
+  FROM (
+    SELECT
+      S_NAME AS ordering_1,
+      S_ADDRESS,
+      S_NAME
+    FROM (
+      SELECT
+        S_ADDRESS,
+        S_NAME,
+        agg_0,
+        name_3
+      FROM (
+        SELECT
+          _table_alias_0.key AS key,
+          name AS name_3,
+          S_ADDRESS,
+          S_NAME
+        FROM (
+          SELECT
+            s_address AS S_ADDRESS,
+            s_name AS S_NAME,
+            s_nationkey AS nation_key,
+            s_suppkey AS key
+          FROM tpch.SUPPLIER
+        ) AS _table_alias_0
+        LEFT JOIN (
+          SELECT
+            n_nationkey AS key,
+            n_name AS name
+          FROM tpch.NATION
+        ) AS _table_alias_1
+          ON nation_key = _table_alias_1.key
+      ) AS _table_alias_6
+      LEFT JOIN (
+        SELECT
+          COUNT() AS agg_0,
+          supplier_key
+        FROM (
+          SELECT
+            supplier_key
+          FROM (
+            SELECT
+              agg_0,
+              availqty,
+              supplier_key
+            FROM (
+              SELECT
+                availqty,
+                key,
+                supplier_key
+              FROM (
+                SELECT
+                  ps_availqty AS availqty,
+                  ps_partkey AS part_key,
+                  ps_suppkey AS supplier_key
+                FROM tpch.PARTSUPP
+              ) AS _table_alias_2
+              INNER JOIN (
+                SELECT
+                  key
+                FROM (
+                  SELECT
+                    p_name AS name,
+                    p_partkey AS key
+                  FROM tpch.PART
+                ) AS _t5
+                WHERE
+                  name LIKE 'forest%'
+              ) AS _table_alias_3
+                ON part_key = key
+            ) AS _table_alias_4
+            LEFT JOIN (
+              SELECT
+                SUM(quantity) AS agg_0,
+                part_key
+              FROM (
+                SELECT
+                  part_key,
+                  quantity
+                FROM (
+                  SELECT
+                    l_partkey AS part_key,
+                    l_quantity AS quantity,
+                    l_shipdate AS ship_date
+                  FROM tpch.LINEITEM
+                ) AS _t7
+                WHERE
+                  (
+                    ship_date < CAST('1995-01-01' AS DATE)
+                  )
+                  AND (
+                    ship_date >= CAST('1994-01-01' AS DATE)
+                  )
+              ) AS _t6
+              GROUP BY
+                part_key
+            ) AS _table_alias_5
+              ON key = part_key
+          ) AS _t4
+          WHERE
+            availqty > (
+              COALESCE(agg_0, 0) * 0.5
+            )
+        ) AS _t3
+        GROUP BY
+          supplier_key
+      ) AS _table_alias_7
+        ON key = supplier_key
+    ) AS _t2
+    WHERE
+      (
+        (
+          name_3 = 'CANADA'
+        ) AND COALESCE(agg_0, 0)
+      ) > 0
+  ) AS _t1
   ORDER BY
     ordering_1
   LIMIT 10
-)
-SELECT
-  _t0.s_name AS S_NAME,
-  _t0.s_address AS S_ADDRESS
-FROM _t0 AS _t0
+) AS _t0
 ORDER BY
-  _t0.ordering_1
+  ordering_1
