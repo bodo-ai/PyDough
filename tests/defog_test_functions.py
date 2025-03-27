@@ -629,8 +629,8 @@ def impl_defog_ewallet_adv2():
     past_notifs = (
         Users.WHERE(ISIN(country, ("US", "CA")))
         .notifications.WHERE(
-            (created_at < DATETIME("now", "start_of_week"))
-            & (created_at >= DATETIME("now", "start_of_week", "-3 weeks"))
+            (created_at < DATETIME("now", "start of week"))
+            & (created_at >= DATETIME("now", "start of week", "-3 weeks"))
         )
         .CALCULATE(
             week=DATETIME(created_at, "start of week"),
@@ -640,8 +640,8 @@ def impl_defog_ewallet_adv2():
     weeks = PARTITION(past_notifs, name="notifs", by=week)
     return weeks.CALCULATE(
         week,
-        num_notifs=COUNT(past_notifs),
-        weekend_notifs=SUM(past_notifs.is_weekend),
+        num_notifs=COUNT(notifs),
+        weekend_notifs=SUM(notifs.is_weekend),
     )
 
 

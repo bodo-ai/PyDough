@@ -56,6 +56,24 @@ def defog_config() -> PyDoughConfigs:
     return config
 
 
+@pytest.fixture(
+    params=[
+        pytest.param((sow, swaz), id=f"{sow.name.lower()}-{'zero' if swaz else 'one'}")
+        for sow in list(DayOfWeek)
+        for swaz in (True, False)
+    ]
+)
+def week_handling_config(request):
+    """
+    Fixture which sets the start of week and start week as zero configuration.
+    """
+    config: PyDoughConfigs = PyDoughConfigs()
+    start_of_week_config, start_week_as_zero_config = request.param
+    config.start_of_week = start_of_week_config
+    config.start_week_as_zero = start_week_as_zero_config
+    return config
+
+
 @pytest.fixture(scope="session")
 def sample_graph_path() -> str:
     """
@@ -95,23 +113,6 @@ def sample_graph_names(request) -> str:
     Fixture for the names that each of the sample graphs can be accessed.
     """
     return request.param
-
-
-@pytest.fixture(
-    params=[
-        pytest.param((sow, swaz), id=f"{sow.name.lower()}-{'zero' if swaz else 'one'}")
-        for sow in list(DayOfWeek)
-        for swaz in (True, False)
-    ]
-)
-def week_handling_config(request, defog_config):
-    """
-    Fixture which sets the start of week and start week as zero configuration.
-    """
-    start_of_week_config, start_week_as_zero_config = request.param
-    defog_config.start_of_week = start_of_week_config
-    defog_config.start_week_as_zero = start_week_as_zero_config
-    return defog_config
 
 
 @pytest.fixture
