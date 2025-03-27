@@ -23,14 +23,14 @@ FROM (
         (
           date_time < DATE(
             'now',
-            '-' || CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) || ' days',
+            '-' || CAST(CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) AS TEXT) || ' days',
             'start of day'
           )
         )
         AND (
           date_time >= DATE(
             'now',
-            '-' || CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) || ' days',
+            '-' || CAST(CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) AS TEXT) || ' days',
             'start of day',
             '-7 day'
           )

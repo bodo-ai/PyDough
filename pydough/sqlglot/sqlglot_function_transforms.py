@@ -1792,7 +1792,10 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 offset_expr: SQLGlotExpression = self.convert_concat(
                     [
                         sqlglot_expressions.convert("-"),
-                        shifted_weekday,
+                        sqlglot_expressions.Cast(
+                            this=shifted_weekday,
+                            to=sqlglot_expressions.DataType.build("TEXT"),
+                        ),
                         sqlglot_expressions.convert(" days"),
                     ],
                     [StringType()] * 3,
