@@ -24,7 +24,7 @@ from pydough.relational import (
 )
 from pydough.types import PyDoughType
 
-from .sqlglot_function_transforms import BaseTransformBindings
+from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_helpers import set_glot_alias
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
