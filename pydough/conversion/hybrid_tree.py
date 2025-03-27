@@ -1905,7 +1905,7 @@ class HybridTranslator:
         """
         Transforms a MEDIAN call into an into an AVG of the 1-2 median rows
         (obtained via window functions). This step must be done after
-        de-correlation because it invokes the aggregation keys use for the
+        de-correlation because it invokes the aggregation keys used for the
         child connection, which may change during de-correlation.
 
         Args:
