@@ -51,29 +51,34 @@ FROM (
               )
               LEFT JOIN (
                 SELECT
-                  SUM(extended_price * (
-                    1 - discount
-                  )) AS agg_0,
+                  SUM(expr_3) AS agg_0,
                   supplier_key
                 FROM (
                   SELECT
-                    discount,
-                    extended_price,
+                    extended_price * (
+                      1 - discount
+                    ) AS expr_3,
                     supplier_key
                   FROM (
                     SELECT
-                      l_discount AS discount,
-                      l_extendedprice AS extended_price,
-                      l_shipdate AS ship_date,
-                      l_suppkey AS supplier_key
-                    FROM tpch.LINEITEM
-                  )
-                  WHERE
-                    (
-                      ship_date < '1996-04-01'
-                    ) AND (
-                      ship_date >= '1996-01-01'
+                      discount,
+                      extended_price,
+                      supplier_key
+                    FROM (
+                      SELECT
+                        l_discount AS discount,
+                        l_extendedprice AS extended_price,
+                        l_shipdate AS ship_date,
+                        l_suppkey AS supplier_key
+                      FROM tpch.LINEITEM
                     )
+                    WHERE
+                      (
+                        ship_date < '1996-04-01'
+                      ) AND (
+                        ship_date >= '1996-01-01'
+                      )
+                  )
                 )
                 GROUP BY
                   supplier_key
@@ -94,29 +99,34 @@ FROM (
       )
       LEFT JOIN (
         SELECT
-          SUM(extended_price * (
-            1 - discount
-          )) AS agg_1,
+          SUM(expr_4) AS agg_1,
           supplier_key
         FROM (
           SELECT
-            discount,
-            extended_price,
+            extended_price * (
+              1 - discount
+            ) AS expr_4,
             supplier_key
           FROM (
             SELECT
-              l_discount AS discount,
-              l_extendedprice AS extended_price,
-              l_shipdate AS ship_date,
-              l_suppkey AS supplier_key
-            FROM tpch.LINEITEM
-          )
-          WHERE
-            (
-              ship_date < '1996-04-01'
-            ) AND (
-              ship_date >= '1996-01-01'
+              discount,
+              extended_price,
+              supplier_key
+            FROM (
+              SELECT
+                l_discount AS discount,
+                l_extendedprice AS extended_price,
+                l_shipdate AS ship_date,
+                l_suppkey AS supplier_key
+              FROM tpch.LINEITEM
             )
+            WHERE
+              (
+                ship_date < '1996-04-01'
+              ) AND (
+                ship_date >= '1996-01-01'
+              )
+          )
         )
         GROUP BY
           supplier_key

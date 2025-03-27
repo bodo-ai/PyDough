@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
     SimpleTableMetadata,
 )
@@ -167,7 +168,7 @@ class RelTranslation:
 
         Args:
             `context`: the context containing the relational subtree being
-            referrenced in a correlated variable access.
+            referenced in a correlated variable access.
 
         Returns:
             The name used to refer to the context in a correlated reference.
@@ -1167,6 +1168,7 @@ def convert_ast_to_relational(
     node: PyDoughCollectionQDAG,
     columns: list[tuple[str, str]] | None,
     configs: PyDoughConfigs,
+    dialect: DatabaseDialect = DatabaseDialect.ANSI,
 ) -> RelationalRoot:
     """
     Main API for converting from the collection QDAG form into relational
@@ -1179,6 +1181,7 @@ def convert_ast_to_relational(
         they should appear, and the alias they should be given. If None, uses
         the most recent CALCULATE in the node to determine the columns.
         `configs`: the configuration settings to use during translation.
+        `dialect`: the database dialect being used.
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
@@ -1188,15 +1191,24 @@ def convert_ast_to_relational(
     """
     # Pre-process the QDAG node so the final CALCULATE includes any ordering
     # keys.
-    translator: RelTranslation = RelTranslation()
-    node = translator.preprocess_root(node, columns)
+    rel_translator: RelTranslation = RelTranslation()
+    node = rel_translator.preprocess_root(node, columns)
 
-    # Convert the QDAG node to the hybrid form, decorrelate it, then invoke
-    # the relational conversion procedure. The first element in the returned
-    # list is the final rel node.
-    hybrid: HybridTree = HybridTranslator(configs).make_hybrid_tree(node, None)
+    # Convert the QDAG node to the hybrid form and run a series of
+    # transformations:
+    # 1. Eject any arguments from the aggregate inputs
+    # 2. Run the de-correlation procedure
+    # 3. Run any final rewrites, such as turning MEDIAN into an average of the
+    #    1-2 median rows, that must happen after de-correlation.
+    hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
+    hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
+    hybrid_translator.eject_aggregate_inputs(hybrid)
     run_hybrid_decorrelation(hybrid)
-    output: TranslationOutput = translator.rel_translation(
+    hybrid_translator.run_rewrites(hybrid)
+
+    # Then, invoke relational conversion procedure. The first element in the
+    # returned list is the final relational tree.
+    output: TranslationOutput = rel_translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
     )
 

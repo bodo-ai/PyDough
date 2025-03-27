@@ -505,6 +505,67 @@ def nation_best_order():
     )
 
 
+def nation_acctbal_breakdown():
+    # For each American nation, identify the number of customers with negative
+    # versus non-negative account balances, the median account balance for each
+    # as well as the median account balance of all customers in the nation.
+    customer_info = customers.CALCULATE(
+        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
+        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    )
+    return (
+        Nations.WHERE(region.name == "AMERICA")
+        .CALCULATE(
+            nation_name=name,
+            n_red_acctbal=COUNT(customer_info.negative_acctbal),
+            n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
+            median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
+            median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
+            median_overall_acctbal=MEDIAN(customer_info.acctbal),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def region_acctbal_breakdown():
+    # For each region identify the number of customers with negative versus
+    # non-negative account balances, the median account balance for each
+    # as well as the median account balance of all customers in the nation.
+    customer_info = nations.customers.CALCULATE(
+        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
+        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    )
+    return (
+        Regions.CALCULATE(region_name=name)
+        .CALCULATE(
+            region_name,
+            n_red_acctbal=COUNT(customer_info.negative_acctbal),
+            n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
+            median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
+            median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
+            median_overall_acctbal=MEDIAN(customer_info.acctbal),
+        )
+        .ORDER_BY(region_name.ASC())
+    )
+
+
+def global_acctbal_breakdown():
+    # Count the number of customers with negative versus non-negative account
+    # balances, the median account balance for each as well as the median
+    # account balance of all customers in the nation.
+    customer_info = Customers.CALCULATE(
+        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
+        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    )
+    return TPCH.CALCULATE(
+        n_red_acctbal=COUNT(customer_info.negative_acctbal),
+        n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
+        median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
+        median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
+        median_overall_acctbal=MEDIAN(customer_info.acctbal),
+    )
+
+
 def top_customers_by_orders():
     # Finds the keys of the 5 customers with the most orders.
     return Customers.CALCULATE(
@@ -982,7 +1043,7 @@ def multi_partition_access_3():
 
 
 def multi_partition_access_4():
-    # Find all transacitons that were the largest for a customer of that ticker
+    # Find all transactions that were the largest for a customer of that ticker
     # (by number of shares) but not the largest for that customer overall.
     cust_ticker_groups = PARTITION(
         Transactions, name="data", by=(customer_id, ticker_id)
@@ -1004,7 +1065,7 @@ def multi_partition_access_5():
     # that ticker were of that type, but less than 20% of all transactions of
     # that type were from that ticker. List the transaction ID, the number of
     # transactions of that ticker/type, ticker, and type. Sort by the number of
-    # transactions of that ticker/type, breaking ties by trnasaction ID.
+    # transactions of that ticker/type, breaking ties by transaction ID.
     ticker_type_groups = PARTITION(
         Transactions, name="data", by=(ticker_id, transaction_type)
     ).CALCULATE(n_ticker_type_trans=COUNT(data))
