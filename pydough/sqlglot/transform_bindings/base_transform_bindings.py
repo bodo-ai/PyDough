@@ -111,15 +111,6 @@ class BaseTransformBindings:
     arguments.
     """
 
-    standard_unop_bindings: dict[
-        pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
-    ] = {
-        pydop.NOT: sqlglot_expressions.Not,
-    }
-    """
-    TODO
-    """
-
     standard_binop_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
@@ -138,7 +129,8 @@ class BaseTransformBindings:
         pydop.NEQ: sqlglot_expressions.NEQ,
     }
     """
-    TODO
+    Variant of `standard_func_bindings` for binary operators which have a
+    slightly different (yet still mass-reproducible) pattern of invocation.
     """
 
     def convert_call_to_sqlglot(
@@ -148,16 +140,25 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+        The main procedure for converting relational function calls to SQLGlot
+        AST expressions.
+
+        Args:
+            `operator`: the PyDough operator of the function call being
+            transformed into SQLGlot.
+            `args`: The arguments to the arguments of the function call,
+            already translated from relational expressions to SQLGlot AST
+            expressions.
+            `types`: The PyDough types of the arguments to the function call.
+
+        Returns:
+            The SQLGlot expression corresponding to invoking `operator` on the
+            provided arguments.
         """
         func: sqlglot_expressions.Func
         if operator in self.standard_func_bindings:
             func = self.standard_func_bindings[operator]
             return func.from_arg_list(args)
-        if operator in self.standard_unop_bindings:
-            assert len(args) == 1
-            func = self.standard_unop_bindings[operator]
-            return func(this=args[0])
         if operator in self.standard_binop_bindings:
             assert len(args) >= 2
             func = self.standard_binop_bindings[operator]
@@ -169,6 +170,8 @@ class BaseTransformBindings:
                 output_expr = func(this=output_expr, expression=apply_parens(arg))
             return output_expr
         match operator:
+            case pydop.NOT:
+                return sqlglot_expressions.Not(this=args[0])
             case pydop.NDISTINCT:
                 return sqlglot_expressions.Count(
                     this=sqlglot_expressions.Distinct(expressions=[args[0]])
@@ -701,7 +704,15 @@ class BaseTransformBindings:
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        TODO
+        Creates a SQLGlot expression for `A LIKE B`.
+
+        Args:
+            `args`: The operands to `LIKE`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `LIKE`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `LIKE`.
         """
         assert len(args) == 2
         column: SQLGlotExpression = apply_parens(args[0])
@@ -712,7 +723,15 @@ class BaseTransformBindings:
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        TODO
+        Creates a SQLGlot expression for `CONCAT_WS(delim, A, B, ...)`.
+
+        Args:
+            `args`: The operands to `CONCAT_WS`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `CONCAT_WS`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `CONCAT_WS`.
         """
         assert len(args) > 2
         return sqlglot_expressions.ConcatWs(expressions=args)
@@ -806,7 +825,15 @@ class BaseTransformBindings:
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        TODO
+        Creates a SQLGlot expression for `CASE WHEN A THEN B ELSE C END`.
+
+        Args:
+            `args`: The operands to the `CASE`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to the `CASE`.
+
+        Returns:
+            The SQLGlot expression matching the specified `CASE` pattern.
         """
         assert len(args) == 3
         return sqlglot_expressions.Case().when(args[0], args[1]).else_(args[2])
@@ -817,7 +844,16 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `A || B || C || ...`.
+
+        Args:
+            `args`: The operands to the concatenation, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to the concatenation.
+
+        Returns:
+            The SQLGlot expression matching the specified concatenation.
         """
         # Fast path for all arguments as string literals.
         if all(
@@ -829,26 +865,21 @@ class BaseTransformBindings:
             inputs: list[SQLGlotExpression] = [apply_parens(arg) for arg in args]
             return Concat(expressions=inputs)
 
-    def convert_concat_ws_to_concat(
-        self, args: list[SQLGlotExpression], types: list[PyDoughType]
-    ) -> SQLGlotExpression:
-        """
-        TODO
-        """
-        new_args: list[SQLGlotExpression] = []
-        for i in range(1, len(args)):
-            if i > 1:
-                new_args.append(args[0])
-            new_args.append(args[i])
-        return sqlglot_expressions.Concat(expressions=new_args)
-
     def convert_absent(
         self,
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+        Creates a SQLGlot expression for `X IS NULL`.
+
+        Args:
+            `args`: The operands to `IS NULL`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `IS NULL`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `IS NULL`.
         """
         return sqlglot_expressions.Is(
             this=apply_parens(args[0]), expression=sqlglot_expressions.Null()
@@ -860,7 +891,16 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `X IS NOT NULL`.
+
+        Args:
+            `args`: The operands to `IS NOT NULL`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `IS NOT NULL`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `IS NOT NULL`.
         """
         return sqlglot_expressions.Not(
             this=apply_parens(self.convert_absent(args, types))
@@ -872,7 +912,15 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+        Creates a SQLGlot expression for `CASE WHEN Y THEN X END`.
+
+        Args:
+            `args`: The operands to the `CASE`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to the `CASE`.
+
+        Returns:
+            The SQLGlot expression matching the specified `CASE` pattern.
         """
         return self.convert_iff_case(
             [args[1], args[0], sqlglot_expressions.Null()],
@@ -885,7 +933,16 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `(A <= B) AND (B <= C) AND ...`.
+
+        Args:
+            `args`: The operands to the inequalities, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to the inequalities
+
+        Returns:
+            The SQLGlot expression matching the specified inequality pattern.
         """
         if len(args) < 2:
             return sqlglot_expressions.convert(True)
@@ -907,7 +964,16 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `A IN B`.
+
+        Args:
+            `args`: The operands to `IN`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `IN`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `IN`.
         """
         column: SQLGlotExpression = apply_parens(args[0])
         # Note: We only handle the case with multiple literals where all
@@ -924,7 +990,16 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `SQRT(X)`.
+
+        Args:
+            `args`: The operands to `SQRT`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `SQRT`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `SQRT`.
         """
         assert len(args) == 1
         return sqlglot_expressions.Pow(
@@ -937,7 +1012,17 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression that returns either 1, 0, or -1 depending
+        on the sign of the input.
+
+        Args:
+            `args`: The operands to the sign operation, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to the sign operation.
+
+        Returns:
+            The SQLGlot expression matching the specified sign calculation.
         """
         assert len(args) == 1
         arg: SQLGlotExpression = args[0]
@@ -969,7 +1054,16 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `ROUND(X, Y)`.
+
+        Args:
+            `args`: The operands to `ROUND`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `ROUND`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `ROUND`.
         """
         assert len(args) == 1 or len(args) == 2
         precision_glot: SQLGlotExpression
@@ -1004,17 +1098,21 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+        Creates a SQLGlot expression for `DATEDIFF(unit, X, Y)`.
+
+        Args:
+            `args`: The operands to `DATEDIFF`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `DATEDIFF`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `DATEDIFF`.
         """
         assert len(args) == 3
         # Check if unit is a string.
-        if not isinstance(args[0], sqlglot_expressions.Literal):
+        if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):
             raise ValueError(
-                f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
-            )
-        elif not args[0].is_string:
-            raise ValueError(
-                f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
+                f"Unsupported argument for DATEDIFF: {args[0]!r}. It should be a string literal."
             )
         x = self.make_datetime_arg(args[1])
         y = self.make_datetime_arg(args[2])
@@ -1106,7 +1204,18 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-        TODO
+        Creates a SQLGlot expression for the PyDough `DATETIME` function, which
+        treats its first argument as a datetime expression and then applies a
+        series of modifiers (passed in as string literals) to add/subtract
+        various offsets and/or truncate to specified units.
+
+        Args:
+            `args`: The operands to `DATETIME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `DATETIME`.
+
+        Returns:
+            The SQLGlot expression applying the specified `DATETIME` logic.
         """
         # Handle the first argument
         assert len(args) > 0
@@ -1155,7 +1264,16 @@ class BaseTransformBindings:
         unit: DateTimeUnit,
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `EXTRACT(unit FROM X)`.
+
+        Args:
+            `args`: The operands to `EXTRACT`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `EXTRACT`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `EXTRACT`.
         """
         assert len(args) == 1
         return sqlglot_expressions.Extract(
@@ -1218,7 +1336,16 @@ class BaseTransformBindings:
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        TODO
+
+        Creates a SQLGlot expression for `DAYOFWEEK(X)`.
+
+        Args:
+            `args`: The operands to `DAYOFWEEK`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `DAYOFWEEK`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `DAYOFWEEK`.
         """
         # Expression for ((STRFTIME('%w', base) + offset) % 7)
         shifted_weekday: SQLGlotExpression = self.days_from_start_of_week(args[0])
@@ -1236,7 +1363,15 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ):
         """
-        TODO
+        Creates a SQLGlot expression for `DAYNAME(X)`.
+
+        Args:
+            `args`: The operands to `DAYNAME`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `DAYNAME`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `DAYNAME`.
         """
         assert len(args) == 1
         base = args[0]

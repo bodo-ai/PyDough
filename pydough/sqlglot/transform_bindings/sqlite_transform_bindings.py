@@ -37,6 +37,30 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 return self.convert_concat_ws_to_concat(args, types)
         return super().convert_call_to_sqlglot(operator, args, types)
 
+    def convert_concat_ws_to_concat(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Transforms the arguments of a `CONCAT_WS` function into an equivalent
+        `CONCAT`, e.g. `CONCAT_WS(x, A, B, C)` becomes `A || x || B || x || C`.
+
+
+        Args:
+            `args`: The operands to `CONCAT_WS`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `CONCAT_WS`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `CONCAT_WS` as
+            a `CONCAT`.
+        """
+        new_args: list[SQLGlotExpression] = []
+        for i in range(1, len(args)):
+            if i > 1:
+                new_args.append(args[0])
+            new_args.append(args[i])
+        return sqlglot_expressions.Concat(expressions=new_args)
+
     def convert_extract_datetime(
         self,
         args: list[SQLGlotExpression],
@@ -343,7 +367,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         # Convert "+n weeks" to "+7n days"
         if unit == DateTimeUnit.WEEK:
-            return self.apply_datetime_offset(base, amt * 7, DateTimeUnit.DAY)
+            amt, unit = amt * 7, DateTimeUnit.DAY
         # For sqlite, use the DATETIME operator to add the interval
         offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
             f"{amt} {unit.value}"
@@ -362,7 +386,4 @@ class SQLiteTransformBindings(BaseTransformBindings):
         return sqlglot_expressions.Datetime(this=[sqlglot_expressions.convert("now")])
 
     def coerce_to_timestamp(self, base: SQLGlotExpression) -> SQLGlotExpression:
-        """
-        TODO
-        """
         return sqlglot_expressions.Datetime(this=[base])
