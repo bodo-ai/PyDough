@@ -1194,13 +1194,20 @@ def convert_ast_to_relational(
     rel_translator: RelTranslation = RelTranslation()
     node = rel_translator.preprocess_root(node, columns)
 
-    # Convert the QDAG node to the hybrid form, decorrelate it, then invoke
-    # the relational conversion procedure. The first element in the returned
-    # list is the final rel node.
+    # Convert the QDAG node to the hybrid form and run a series of
+    # transformations:
+    # 1. Eject any arguments from the aggregate inputs
+    # 2. Run the de-correlatation procedure
+    # 3. Run any final rewrites, such as turning MEDIAN into an average of the
+    # 1-2 median rows.
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)
     run_hybrid_decorrelation(hybrid)
+    hybrid_translator.run_rewrites(hybrid)
+
+    # Then, invoke relational conversion procedure. The first element in the
+    # returned list is the final relational tree.
     output: TranslationOutput = rel_translator.rel_translation(
         hybrid, len(hybrid.pipeline) - 1
     )

@@ -46,7 +46,7 @@ FROM (
           name = 'AMERICA'
       ) AS _table_alias_1
         ON region_key = _table_alias_1.key
-    ) AS _table_alias_4
+    )
     LEFT JOIN (
       SELECT
         AVG(expr_6) AS agg_0,
@@ -54,98 +54,85 @@ FROM (
         AVG(expr_8) AS agg_2,
         COUNT(negative_acctbal) AS agg_4,
         COUNT(non_negative_acctbal) AS agg_3,
-        key
+        nation_key
       FROM (
         SELECT
           CASE
             WHEN ABS(
               (
-                ROW_NUMBER() OVER (PARTITION BY key ORDER BY acctbal DESC) - 1.0
+                ROW_NUMBER() OVER (PARTITION BY nation_key ORDER BY negative_acctbal DESC) - 1.0
               ) - (
                 CAST((
-                  COUNT(acctbal) OVER (PARTITION BY key) - 1.0
-                ) AS REAL) / 2.0
-              )
-            ) < 1.0
-            THEN acctbal
-            ELSE NULL
-          END AS expr_7,
-          CASE
-            WHEN ABS(
-              (
-                ROW_NUMBER() OVER (PARTITION BY key ORDER BY negative_acctbal DESC) - 1.0
-              ) - (
-                CAST((
-                  COUNT(negative_acctbal) OVER (PARTITION BY key) - 1.0
+                  COUNT(negative_acctbal) OVER (PARTITION BY nation_key) - 1.0
                 ) AS REAL) / 2.0
               )
             ) < 1.0
             THEN negative_acctbal
             ELSE NULL
           END AS expr_8,
-          CASE
-            WHEN ABS(
-              (
-                ROW_NUMBER() OVER (PARTITION BY key ORDER BY non_negative_acctbal DESC) - 1.0
-              ) - (
-                CAST((
-                  COUNT(non_negative_acctbal) OVER (PARTITION BY key) - 1.0
-                ) AS REAL) / 2.0
-              )
-            ) < 1.0
-            THEN non_negative_acctbal
-            ELSE NULL
-          END AS expr_6,
-          key,
+          expr_6,
+          expr_7,
+          nation_key,
           negative_acctbal,
           non_negative_acctbal
         FROM (
           SELECT
-            CASE WHEN acctbal >= 0 THEN acctbal ELSE NULL END AS non_negative_acctbal,
-            CASE WHEN acctbal < 0 THEN acctbal ELSE NULL END AS negative_acctbal,
-            acctbal,
-            key
+            CASE
+              WHEN ABS(
+                (
+                  ROW_NUMBER() OVER (PARTITION BY nation_key ORDER BY acctbal DESC) - 1.0
+                ) - (
+                  CAST((
+                    COUNT(acctbal) OVER (PARTITION BY nation_key) - 1.0
+                  ) AS REAL) / 2.0
+                )
+              ) < 1.0
+              THEN acctbal
+              ELSE NULL
+            END AS expr_7,
+            expr_6,
+            nation_key,
+            negative_acctbal,
+            non_negative_acctbal
           FROM (
             SELECT
+              CASE
+                WHEN ABS(
+                  (
+                    ROW_NUMBER() OVER (PARTITION BY nation_key ORDER BY non_negative_acctbal DESC) - 1.0
+                  ) - (
+                    CAST((
+                      COUNT(non_negative_acctbal) OVER (PARTITION BY nation_key) - 1.0
+                    ) AS REAL) / 2.0
+                  )
+                ) < 1.0
+                THEN non_negative_acctbal
+                ELSE NULL
+              END AS expr_6,
               acctbal,
-              key
+              nation_key,
+              negative_acctbal,
+              non_negative_acctbal
             FROM (
               SELECT
-                _table_alias_2.key AS key
+                CASE WHEN acctbal >= 0 THEN acctbal ELSE NULL END AS non_negative_acctbal,
+                CASE WHEN acctbal < 0 THEN acctbal ELSE NULL END AS negative_acctbal,
+                acctbal,
+                nation_key
               FROM (
                 SELECT
-                  n_nationkey AS key,
-                  n_regionkey AS region_key
-                FROM tpch.NATION
-              ) AS _table_alias_2
-              INNER JOIN (
-                SELECT
-                  key
-                FROM (
-                  SELECT
-                    r_name AS name,
-                    r_regionkey AS key
-                  FROM tpch.REGION
-                )
-                WHERE
-                  name = 'AMERICA'
-              ) AS _table_alias_3
-                ON region_key = _table_alias_3.key
+                  c_acctbal AS acctbal,
+                  c_nationkey AS nation_key
+                FROM tpch.CUSTOMER
+              )
             )
-            INNER JOIN (
-              SELECT
-                c_acctbal AS acctbal,
-                c_nationkey AS nation_key
-              FROM tpch.CUSTOMER
-            )
-              ON key = nation_key
           )
         )
       )
       GROUP BY
-        key
-    ) AS _table_alias_5
-      ON _table_alias_4.key = _table_alias_5.key
+        nation_key
+    )
+      ON key = nation_key
   )
 )
 ORDER BY
