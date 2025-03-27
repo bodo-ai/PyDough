@@ -1188,8 +1188,9 @@ def convert_isin(
     # literals are in the same literal expression. This code will need
     # to change when we support PyDough expressions like:
     # Collection.WHERE(ISIN(name, plural_subcollection.name))
-    values: SQLGlotExpression = sql_glot_args[1]
-    return sqlglot_expressions.In(this=column, expressions=values)
+    values = sql_glot_args[1]
+    assert isinstance(values, sqlglot_expressions.Array)
+    return sqlglot_expressions.In(this=column, expressions=values.expressions)
 
 
 def convert_ndistinct(
