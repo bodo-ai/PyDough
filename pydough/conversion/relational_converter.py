@@ -1197,9 +1197,9 @@ def convert_ast_to_relational(
     # Convert the QDAG node to the hybrid form and run a series of
     # transformations:
     # 1. Eject any arguments from the aggregate inputs
-    # 2. Run the de-correlatation procedure
+    # 2. Run the de-correlation procedure
     # 3. Run any final rewrites, such as turning MEDIAN into an average of the
-    # 1-2 median rows.
+    #    1-2 median rows, that must happen after de-correlation.
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)

@@ -1532,7 +1532,6 @@ class HybridTranslator:
             for child in hybrid.children:
                 for agg_name, agg_call in child.aggs.items():
                     if agg_call.operator == pydop.MEDIAN:
-                        create_new_calc = False
                         child.aggs[agg_name] = self.rewrite_median_call(
                             child, agg_call, create_new_calc
                         )
