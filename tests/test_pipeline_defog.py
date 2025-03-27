@@ -468,9 +468,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "ewallet_adv2",
             ),
             id="ewallet_adv2",
-            marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
-            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
@@ -755,6 +752,7 @@ def test_defog_until_sql(
     defog_test_data: PyDoughSQLComparisonTest,
     defog_graphs: graph_fetcher,
     empty_context_database: DatabaseContext,
+    defog_config: PyDoughConfigs,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ):
@@ -772,6 +770,7 @@ def test_defog_until_sql(
         unqualified,
         metadata=graph,
         database=empty_context_database,
+        config=defog_config,
     )
     if update_tests:
         with open(file_path, "w") as f:
