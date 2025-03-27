@@ -110,6 +110,7 @@ class BaseTransformBindings:
         pydop.MIN: sqlglot_expressions.Min,
         pydop.MAX: sqlglot_expressions.Max,
         pydop.ANYTHING: sqlglot_expressions.AnyValue,
+        pydop.MEDIAN: sqlglot_expressions.Median,
         pydop.LOWER: sqlglot_expressions.Lower,
         pydop.UPPER: sqlglot_expressions.Upper,
         pydop.LENGTH: sqlglot_expressions.Length,
@@ -925,8 +926,9 @@ class BaseTransformBindings:
         # literals are in the same literal expression. This code will need
         # to change when we support PyDough expressions like:
         # Collection.WHERE(ISIN(name, plural_subcollection.name))
-        values: SQLGlotExpression = args[1]
-        return sqlglot_expressions.In(this=column, expressions=values)
+        values = args[1]
+        assert isinstance(values, sqlglot_expressions.Array)
+        return sqlglot_expressions.In(this=column, expressions=values.expressions)
 
     def convert_sqrt(
         self,

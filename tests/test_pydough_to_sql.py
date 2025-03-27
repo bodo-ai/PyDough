@@ -8,10 +8,13 @@ import pytest
 from simple_pydough_functions import (
     datediff,
     datetime_sampler,
+    global_acctbal_breakdown,
     hour_minute_day,
+    nation_acctbal_breakdown,
     rank_a,
     rank_b,
     rank_c,
+    region_acctbal_breakdown,
     simple_filter,
     simple_scan,
     transaction_week_sampler,
@@ -68,6 +71,24 @@ from pydough.unqualified import (
             None,
             "datetime_sampler",
             id="datetime_sampler",
+        ),
+        pytest.param(
+            nation_acctbal_breakdown,
+            None,
+            "nation_acctbal_breakdown",
+            id="nation_acctbal_breakdown",
+        ),
+        pytest.param(
+            region_acctbal_breakdown,
+            None,
+            "region_acctbal_breakdown",
+            id="region_acctbal_breakdown",
+        ),
+        pytest.param(
+            global_acctbal_breakdown,
+            None,
+            "global_acctbal_breakdown",
+            id="global_acctbal_breakdown",
         ),
     ],
 )

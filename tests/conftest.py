@@ -170,7 +170,7 @@ def sample_graphs(
 @pytest.fixture
 def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
     """
-    Builds a QDAG node builder using the TPCH graoh.
+    Builds a QDAG node builder using the TPCH graph.
     """
     return AstNodeBuilder(get_sample_graph("TPCH"))
 

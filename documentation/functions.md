@@ -53,6 +53,7 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
+   * [MEDIAN](#median)
    * [MIN](#min)
    * [MAX](#max)
    * [ANYTHING](#anything)
@@ -415,7 +416,7 @@ The modifier arguments can be the following (all of the options are case-insensi
    - **Hours**: Supported aliases are `"hours"`, `"hour"`, and `"h"`.
    - **Minutes**: Supported aliases are `"minutes"`, `"minute"`, and `"m"`.
    - **Seconds**: Supported aliases are `"seconds"`, `"second"`, and `"s"`.
-- A string literal in the form `±<AMT> <UNIT>` indicating to add/subtract a date/time interval to the datetime value. The sign can be `+` or `-`, and if omitted the default is `+`. The amount must be an integer. The unit must be one of the same unit strings allowed for trucation.
+- A string literal in the form `±<AMT> <UNIT>` indicating to add/subtract a date/time interval to the datetime value. The sign can be `+` or `-`, and if omitted the default is `+`. The amount must be an integer. The unit must be one of the same unit strings allowed for truncation.
 
 For example, `"Days"`, `"DAYS"`, and `"d"` are all treated the same due to case insensitivity.
 
@@ -750,6 +751,20 @@ The `AVG` function takes the average of the plural set of numerical values it is
 Parts.CALCULATE(average_shipment_size = AVG(lines.quantity))
 ```
 
+<!-- TOC --><a name="median"></a>
+
+### MEDIAN
+
+The `MEDIAN` function takes the median of the plural set of numerical values it is called on.
+Note: absent records are ignored when deriving the median.
+
+```py
+Customers.CALCULATE(
+   name,
+   median_order_price = MEDIAN(orders.total_price)
+)
+```
+
 <!-- TOC --><a name="min"></a>
 
 ### MIN
@@ -979,7 +994,7 @@ The `RELAVG` function returns the average of multiple rows of a singular express
 Customers.WHERE(acctbal > RELAVG(acctbal))
 
 # Finds all customers whose account balance is above the average of all
-# ustomers' account balances within that nation.
+# customers' account balances within that nation.
 Nations.customers.WHERE(acctbal > RELAVG(acctbal, levels=1))
 ```
 
