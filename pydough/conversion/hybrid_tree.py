@@ -2102,7 +2102,7 @@ class HybridTranslator:
                 partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
             self.stack.append(prev_hybrid)
         else:
-            # Otherwise, we hae to step back further, so we recursively
+            # Otherwise, we have to step back further, so we recursively
             # repeat the procedure one level further up in the hybrid tree.
             self.add_unique_terms(
                 hybrid.parent,
