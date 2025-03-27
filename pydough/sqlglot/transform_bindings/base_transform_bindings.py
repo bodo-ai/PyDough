@@ -13,7 +13,6 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
-from pydough.database_connectors import DatabaseDialect
 from pydough.types import BooleanType, Int64Type, PyDoughType, StringType
 
 from .sqlglot_transform_utils import (
@@ -43,32 +42,6 @@ class BaseTransformBindings:
         The PyDough configuration settings used during the SQLGlot conversion.
         """
         return self._configs
-
-    @staticmethod
-    def from_dialect(
-        dialect: DatabaseDialect, configs: PyDoughConfigs
-    ) -> "BaseTransformBindings":
-        """
-        Returns a binding instance corresponding to a specific database
-        dialect.
-
-        Args:
-            `dialect`: the database dialect that the bindings should be
-            created for.
-            `configs`: the settings being used during hte conversion.
-
-        Returns:
-            A binding instance for the specified dialect.
-        """
-        match dialect:
-            case DatabaseDialect.ANSI:
-                return BaseTransformBindings(configs)
-            case DatabaseDialect.SQLITE:
-                from .sqlite_transform_bindings import SQLiteTransformBindings
-
-                return SQLiteTransformBindings(configs)
-            case _:
-                raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
     @property
     def dialect_start_of_week(self) -> DayOfWeek:

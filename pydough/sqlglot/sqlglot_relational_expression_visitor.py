@@ -24,8 +24,8 @@ from pydough.relational import (
 )
 from pydough.types import PyDoughType
 
-from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_helpers import set_glot_alias
+from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
@@ -48,9 +48,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._dialect: DatabaseDialect = dialect
         self._correlated_names: dict[str, str] = correlated_names
         self._config: PyDoughConfigs = config
-        self._bindings: BaseTransformBindings = BaseTransformBindings.from_dialect(
-            dialect, config
-        )
+        self._bindings: BaseTransformBindings = bindings_from_dialect(dialect, config)
 
     def reset(self) -> None:
         """
