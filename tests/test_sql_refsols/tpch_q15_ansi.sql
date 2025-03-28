@@ -43,13 +43,13 @@ FROM (
             )
             LEFT JOIN (
               SELECT
-                SUM(expr_3) AS agg_0,
+                SUM(expr_2) AS agg_0,
                 supplier_key
               FROM (
                 SELECT
                   extended_price * (
                     1 - discount
-                  ) AS expr_3,
+                  ) AS expr_2,
                   supplier_key
                 FROM (
                   SELECT
@@ -92,13 +92,13 @@ FROM (
     )
     LEFT JOIN (
       SELECT
-        SUM(expr_4) AS agg_1,
+        SUM(expr_3) AS agg_1,
         supplier_key
       FROM (
         SELECT
           extended_price * (
             1 - discount
-          ) AS expr_4,
+          ) AS expr_3,
           supplier_key
         FROM (
           SELECT

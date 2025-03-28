@@ -9,12 +9,12 @@ FROM (
     ship_mode AS L_SHIPMODE
   FROM (
     SELECT
-      SUM(expr_3) AS agg_1,
+      SUM(expr_2) AS agg_1,
       SUM(is_high_priority) AS agg_0,
       ship_mode
     FROM (
       SELECT
-        NOT is_high_priority AS expr_3,
+        NOT is_high_priority AS expr_2,
         is_high_priority,
         ship_mode
       FROM (

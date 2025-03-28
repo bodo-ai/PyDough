@@ -48,9 +48,9 @@ FROM (
     )
     LEFT JOIN (
       SELECT
-        AVG(expr_6) AS agg_0,
-        AVG(expr_7) AS agg_1,
-        AVG(expr_8) AS agg_2,
+        AVG(expr_5) AS agg_0,
+        AVG(expr_6) AS agg_1,
+        AVG(expr_7) AS agg_2,
         COUNT(negative_acctbal) AS agg_4,
         COUNT(non_negative_acctbal) AS agg_3,
         nation_key
@@ -68,7 +68,7 @@ FROM (
             ) < 1.0
             THEN acctbal
             ELSE NULL
-          END AS expr_7,
+          END AS expr_6,
           CASE
             WHEN ABS(
               (
@@ -81,7 +81,7 @@ FROM (
             ) < 1.0
             THEN negative_acctbal
             ELSE NULL
-          END AS expr_8,
+          END AS expr_7,
           CASE
             WHEN ABS(
               (
@@ -94,7 +94,7 @@ FROM (
             ) < 1.0
             THEN non_negative_acctbal
             ELSE NULL
-          END AS expr_6,
+          END AS expr_5,
           nation_key,
           negative_acctbal,
           non_negative_acctbal

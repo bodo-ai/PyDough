@@ -1,5 +1,5 @@
-ROOT(columns=[('name', name_11), ('n_selected_custs', n_selected_custs)], orderings=[(name_11):asc_first])
- PROJECT(columns={'n_selected_custs': DEFAULT_TO(agg_0, 0:int64), 'name_11': name_3})
+ROOT(columns=[('name', name_12), ('n_selected_custs', n_selected_custs)], orderings=[(name_12):asc_first])
+ PROJECT(columns={'n_selected_custs': DEFAULT_TO(agg_0, 0:int64), 'name_12': name_3})
   JOIN(conditions=[t0.key_2 == t1.key_5 & t0.key == t1.key], types=['left'], columns={'agg_0': t1.agg_0, 'name_3': t0.name_3})
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'name_3': t1.name})
     FILTER(condition=NOT(STARTSWITH(name, 'A':string)), columns={'key': key})

@@ -23,11 +23,11 @@ FROM (
     LEFT JOIN (
       SELECT
         SUM(amount) AS agg_0,
-        SUM(expr_3) AS agg_1,
+        SUM(expr_2) AS agg_1,
         ticker_id
       FROM (
         SELECT
-          tax + commission AS expr_3,
+          tax + commission AS expr_2,
           amount,
           ticker_id
         FROM (

@@ -3,60 +3,51 @@ SELECT
   price_change
 FROM (
   SELECT
-    ordering_2,
-    price_change,
+    agg_0 - agg_1 AS price_change,
     symbol
   FROM (
     SELECT
-      agg_0 - agg_1 AS ordering_2,
-      agg_0 - agg_1 AS price_change,
+      agg_0,
+      agg_1,
       symbol
     FROM (
       SELECT
-        agg_0,
-        agg_1,
-        symbol
+        sbTickerId AS _id,
+        sbTickerSymbol AS symbol
+      FROM main.sbTicker
+    )
+    LEFT JOIN (
+      SELECT
+        MAX(high) AS agg_0,
+        MIN(low) AS agg_1,
+        ticker_id
       FROM (
         SELECT
-          sbTickerId AS _id,
-          sbTickerSymbol AS symbol
-        FROM main.sbTicker
-      )
-      LEFT JOIN (
-        SELECT
-          MAX(high) AS agg_0,
-          MIN(low) AS agg_1,
+          high,
+          low,
           ticker_id
         FROM (
           SELECT
-            high,
-            low,
-            ticker_id
-          FROM (
-            SELECT
-              sbDpDate AS date,
-              sbDpHigh AS high,
-              sbDpLow AS low,
-              sbDpTickerId AS ticker_id
-            FROM main.sbDailyPrice
-          )
-          WHERE
-            (
-              date <= CAST('2023-04-04' AS DATE)
-            )
-            AND (
-              date >= CAST('2023-04-01' AS DATE)
-            )
+            sbDpDate AS date,
+            sbDpHigh AS high,
+            sbDpLow AS low,
+            sbDpTickerId AS ticker_id
+          FROM main.sbDailyPrice
         )
-        GROUP BY
-          ticker_id
+        WHERE
+          (
+            date <= CAST('2023-04-04' AS DATE)
+          )
+          AND (
+            date >= CAST('2023-04-01' AS DATE)
+          )
       )
-        ON _id = ticker_id
+      GROUP BY
+        ticker_id
     )
+      ON _id = ticker_id
   )
-  ORDER BY
-    ordering_2 DESC
-  LIMIT 3
 )
 ORDER BY
-  ordering_2 DESC
+  price_change DESC
+LIMIT 3

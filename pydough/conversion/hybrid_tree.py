@@ -2316,12 +2316,17 @@ class HybridTranslator:
         """
         new_expressions: dict[str, HybridExpr] = {}
         hybrid_orderings: list[HybridCollation] = []
+        name: str
+        expr: HybridExpr
         for collation in collations:
-            name = self.get_ordering_name(hybrid)
-            expr = self.make_hybrid_expr(
-                hybrid, collation.expr, child_ref_mapping, False
-            )
-            new_expressions[name] = expr
+            if type(collation.expr) is Reference:
+                name = collation.expr.term_name
+            else:
+                name = self.get_ordering_name(hybrid)
+                expr = self.make_hybrid_expr(
+                    hybrid, collation.expr, child_ref_mapping, False
+                )
+                new_expressions[name] = expr
             new_collation: HybridCollation = HybridCollation(
                 HybridRefExpr(name, collation.expr.pydough_type),
                 collation.asc,

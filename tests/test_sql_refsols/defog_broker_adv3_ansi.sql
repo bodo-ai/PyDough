@@ -21,11 +21,11 @@ FROM (
     LEFT JOIN (
       SELECT
         COUNT() AS agg_0,
-        SUM(expr_3) AS agg_1,
+        SUM(expr_2) AS agg_1,
         customer_id
       FROM (
         SELECT
-          status = 'success' AS expr_3,
+          status = 'success' AS expr_2,
           customer_id
         FROM (
           SELECT
