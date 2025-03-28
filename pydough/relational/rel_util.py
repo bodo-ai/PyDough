@@ -2,6 +2,19 @@
 A mixture of utility functions for relational nodes and expressions.
 """
 
+__all__ = [
+    "add_expr_uses",
+    "build_filter",
+    "contains_window",
+    "false_when_null_columns",
+    "get_conjunctions",
+    "only_references_columns",
+    "partition_expressions",
+    "passthrough_column_mapping",
+    "transpose_expression",
+]
+
+from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 
 import pydough.pydough_operators as pydop
@@ -304,3 +317,36 @@ def transpose_expression(
             raise NotImplementedError(
                 f"transpose_expression not implemented for {expr.__class__.__name__}"
             )
+
+
+def add_expr_uses(
+    expr: RelationalExpression,
+    n_uses: defaultdict[RelationalExpression, int],
+    top_level: bool,
+) -> None:
+    """
+    Count the number of times nontrivial expressions are used in an expression
+    and add them to a mapping of such counts.
+
+    Args:
+        `expr`: The expression to count the nontrivial expressions of.
+        `n_uses`: A dictionary mapping column names to their reference counts.
+        This is modified in-place by the function call.
+        `bool`: If True, does not count the expression itself (only its
+        subexpressions) because it is a top-level reference rather than a
+        subexpression.
+    """
+    if isinstance(expr, CallExpression):
+        if not top_level:
+            n_uses[expr] += 1
+        for arg in expr.inputs:
+            add_expr_uses(arg, n_uses, False)
+    if isinstance(expr, WindowCallExpression):
+        if not top_level:
+            n_uses[expr] += 1
+        for arg in expr.inputs:
+            add_expr_uses(arg, n_uses, False)
+        for partition_arg in expr.partition_inputs:
+            add_expr_uses(partition_arg, n_uses, False)
+        for order_arg in expr.order_inputs:
+            add_expr_uses(order_arg.expr, n_uses, False)

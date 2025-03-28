@@ -29,33 +29,6 @@ FROM (
       region_key
     FROM (
       SELECT
-        CASE WHEN acctbal >= 0 THEN acctbal ELSE NULL END AS non_negative_acctbal,
-        CASE
-          WHEN ABS(
-            (
-              ROW_NUMBER() OVER (PARTITION BY region_key ORDER BY CASE WHEN acctbal >= 0 THEN acctbal ELSE NULL END DESC) - 1.0
-            ) - (
-              CAST((
-                COUNT(CASE WHEN acctbal >= 0 THEN acctbal ELSE NULL END) OVER (PARTITION BY region_key) - 1.0
-              ) AS REAL) / 2.0
-            )
-          ) < 1.0
-          THEN CASE WHEN acctbal >= 0 THEN acctbal ELSE NULL END
-          ELSE NULL
-        END AS expr_5,
-        CASE
-          WHEN ABS(
-            (
-              ROW_NUMBER() OVER (PARTITION BY region_key ORDER BY CASE WHEN acctbal < 0 THEN acctbal ELSE NULL END DESC) - 1.0
-            ) - (
-              CAST((
-                COUNT(CASE WHEN acctbal < 0 THEN acctbal ELSE NULL END) OVER (PARTITION BY region_key) - 1.0
-              ) AS REAL) / 2.0
-            )
-          ) < 1.0
-          THEN CASE WHEN acctbal < 0 THEN acctbal ELSE NULL END
-          ELSE NULL
-        END AS expr_7,
         CASE
           WHEN ABS(
             (
@@ -69,25 +42,59 @@ FROM (
           THEN acctbal
           ELSE NULL
         END AS expr_6,
-        CASE WHEN acctbal < 0 THEN acctbal ELSE NULL END AS negative_acctbal,
+        CASE
+          WHEN ABS(
+            (
+              ROW_NUMBER() OVER (PARTITION BY region_key ORDER BY negative_acctbal DESC) - 1.0
+            ) - (
+              CAST((
+                COUNT(negative_acctbal) OVER (PARTITION BY region_key) - 1.0
+              ) AS REAL) / 2.0
+            )
+          ) < 1.0
+          THEN negative_acctbal
+          ELSE NULL
+        END AS expr_7,
+        CASE
+          WHEN ABS(
+            (
+              ROW_NUMBER() OVER (PARTITION BY region_key ORDER BY non_negative_acctbal DESC) - 1.0
+            ) - (
+              CAST((
+                COUNT(non_negative_acctbal) OVER (PARTITION BY region_key) - 1.0
+              ) AS REAL) / 2.0
+            )
+          ) < 1.0
+          THEN non_negative_acctbal
+          ELSE NULL
+        END AS expr_5,
+        negative_acctbal,
+        non_negative_acctbal,
         region_key
       FROM (
         SELECT
+          CASE WHEN acctbal >= 0 THEN acctbal ELSE NULL END AS non_negative_acctbal,
+          CASE WHEN acctbal < 0 THEN acctbal ELSE NULL END AS negative_acctbal,
           acctbal,
           region_key
         FROM (
           SELECT
-            n_nationkey AS key,
-            n_regionkey AS region_key
-          FROM tpch.NATION
+            acctbal,
+            region_key
+          FROM (
+            SELECT
+              n_nationkey AS key,
+              n_regionkey AS region_key
+            FROM tpch.NATION
+          )
+          INNER JOIN (
+            SELECT
+              c_acctbal AS acctbal,
+              c_nationkey AS nation_key
+            FROM tpch.CUSTOMER
+          )
+            ON key = nation_key
         )
-        INNER JOIN (
-          SELECT
-            c_acctbal AS acctbal,
-            c_nationkey AS nation_key
-          FROM tpch.CUSTOMER
-        )
-          ON key = nation_key
       )
     )
     GROUP BY

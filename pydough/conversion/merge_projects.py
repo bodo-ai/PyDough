@@ -5,56 +5,34 @@ Logic used to merge adjacent projections in relational trees when convenient.
 __all__ = ["merge_projects"]
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import MutableMapping
 
 from pydough.relational import (
-    CallExpression,
     ColumnReference,
     ExpressionSortInfo,
     Project,
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
-    WindowCallExpression,
 )
 from pydough.relational.rel_util import (
+    add_expr_uses,
     transpose_expression,
 )
 
 
-def add_expr_uses(
-    expr: RelationalExpression, n_uses: defaultdict[RelationalExpression, int]
-) -> None:
+def merging_doesnt_create_convolution(
+    columns_a: MutableMapping[str, RelationalExpression],
+    columns_b: MutableMapping[str, RelationalExpression],
+) -> bool:
     """
-    Count the number of times nontrivial expressions are used in an expression
-    and add them to a mapping of suchc ounts.
-
-    Args:
-        `expr`: The expression to count the nontrivial expressions of.
-        `n_uses`: A dictionary mapping column names to their reference counts.
-        This is modified in-place by the function call.
-    """
-    if isinstance(expr, CallExpression):
-        n_uses[expr] += 1
-        for arg in expr.inputs:
-            add_expr_uses(arg, n_uses)
-    if isinstance(expr, WindowCallExpression):
-        n_uses[expr] += 1
-        for arg in expr.inputs:
-            add_expr_uses(arg, n_uses)
-        for partition_arg in expr.partition_inputs:
-            add_expr_uses(partition_arg, n_uses)
-        for order_arg in expr.order_inputs:
-            add_expr_uses(order_arg.expr, n_uses)
-
-
-def all_refs_single_use(exprs: Iterable[RelationalExpression]) -> bool:
-    """
-    TODO
+    Confirms whether merging two projections results in any complex expressions
+    being calculated more than once, ignoring any top-level expressions.
     """
     n_uses: defaultdict[RelationalExpression, int] = defaultdict(int)
-    for expr in exprs:
-        add_expr_uses(expr, n_uses)
+    for expr in columns_a.values():
+        expr = transpose_expression(expr, columns_b)
+        add_expr_uses(expr, n_uses, top_level=True)
     return len(n_uses) == 0 or max(n_uses.values()) == 1
 
 
@@ -70,27 +48,39 @@ def merge_projects(node: RelationalNode) -> RelationalNode:
         into one when the top project never references nodes from the bottom
         more than once.
     """
+    # Recursively invoke the procedure on all inputs to the node.
     for idx, input in enumerate(node.inputs):
         node.inputs[idx] = merge_projects(input)
     expr: RelationalExpression
     new_expr: RelationalExpression
+    # Invoke the main merging step if the current node is a root/projection,
+    # potentially multiple times if the projection below it that gets deleted
+    # reveals another projection below it.
     if isinstance(node, (RelationalRoot, Project)):
         while isinstance(node.input, Project):
             child_project: Project = node.input
             if isinstance(node, RelationalRoot):
-                # TODO: add comment
+                # The columns of the projection can be sucked into the root
+                # above it if they are all pass-through/renamings, or if there
+                # is no convolution created (only allowed if there are no
+                # ordering expressions).
                 if all(
                     isinstance(expr, ColumnReference)
                     for expr in child_project.columns.values()
                 ) or (
-                    all_refs_single_use(node.columns.values())
-                    and len(node.orderings) == 0
+                    len(node.orderings) == 0
+                    and merging_doesnt_create_convolution(
+                        node.columns, child_project.columns
+                    )
                 ):
+                    # Replace all column references in the root's columns with
+                    # the expressions from the child projection..
                     for idx, (name, expr) in enumerate(node.ordered_columns):
                         assert isinstance(expr, ColumnReference)
                         new_expr = transpose_expression(expr, child_project.columns)
                         node.columns[name] = new_expr
                         node.ordered_columns[idx] = (name, new_expr)
+                    # Do the same with the sort expressions.
                     for idx, sort_info in enumerate(node.orderings):
                         new_expr = transpose_expression(
                             sort_info.expr, child_project.columns
@@ -98,19 +88,31 @@ def merge_projects(node: RelationalNode) -> RelationalNode:
                         node.orderings[idx] = ExpressionSortInfo(
                             new_expr, sort_info.ascending, sort_info.nulls_first
                         )
+                    # Delete the child projection from the tree, replacing it
+                    # with its input.
                     node._input = child_project.input
                 else:
+                    # Otherwise, halt the merging process since it is no longer
+                    # possible to merge the children of this root into it.
                     break
             elif isinstance(node, Project):
-                # TODO: add comment
+                # The columns of the projection can be sucked into the
+                # projection above it if they are all pass-through/renamings
+                # or if there is no convolution created.
                 if all(
                     isinstance(expr, ColumnReference)
                     for expr in child_project.columns.values()
-                ) or all_refs_single_use(node.columns.values()):
+                ) or merging_doesnt_create_convolution(
+                    node.columns, child_project.columns
+                ):
                     for name, expr in node.columns.items():
                         new_expr = transpose_expression(expr, child_project.columns)
                         node.columns[name] = new_expr
+                    # Delete the child projection from the tree, replacing it
+                    # with its input.
                     node._input = child_project.input
                 else:
+                    # Otherwise, halt the merging process since it is no longer
+                    # possible to merge the children of this project into it.
                     break
     return node
