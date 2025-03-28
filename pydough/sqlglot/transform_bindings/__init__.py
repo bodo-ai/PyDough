@@ -31,8 +31,6 @@ def bindings_from_dialect(
         case DatabaseDialect.ANSI:
             return BaseTransformBindings(configs)
         case DatabaseDialect.SQLITE:
-            from .sqlite_transform_bindings import SQLiteTransformBindings
-
             return SQLiteTransformBindings(configs)
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
