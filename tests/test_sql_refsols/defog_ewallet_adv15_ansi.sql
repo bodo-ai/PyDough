@@ -1,11 +1,11 @@
 SELECT
-  merchant_id_6 AS merchant_id,
+  merchant_id_5 AS merchant_id,
   merchant_name,
   coupons_per_merchant
 FROM (
   SELECT
-    merchant_id_5 AS merchant_id_6,
     coupons_per_merchant,
+    merchant_id_5,
     merchant_name,
     ordering_1
   FROM (

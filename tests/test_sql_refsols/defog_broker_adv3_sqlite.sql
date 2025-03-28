@@ -5,9 +5,6 @@ FROM (
   SELECT
     CAST((
       100.0 * COALESCE(agg_1, 0)
-    ) AS REAL) / COALESCE(agg_0, 0) AS ordering_2,
-    CAST((
-      100.0 * COALESCE(agg_1, 0)
     ) AS REAL) / COALESCE(agg_0, 0) AS success_rate,
     name
   FROM (
@@ -46,4 +43,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_2
+  success_rate

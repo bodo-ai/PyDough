@@ -6,8 +6,7 @@ FROM (
   SELECT
     COALESCE(agg_0, 0) AS HIGH_LINE_COUNT,
     COALESCE(agg_1, 0) AS LOW_LINE_COUNT,
-    ship_mode AS L_SHIPMODE,
-    ship_mode AS ordering_2
+    ship_mode AS L_SHIPMODE
   FROM (
     SELECT
       SUM(expr_3) AS agg_1,
@@ -79,4 +78,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_2
+  L_SHIPMODE

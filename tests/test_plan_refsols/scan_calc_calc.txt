@@ -1,3 +1,2 @@
-ROOT(columns=[('fizz', fizz), ('buzz', buzz)], orderings=[])
- PROJECT(columns={'buzz': key, 'fizz': name})
-  SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+ROOT(columns=[('fizz', name), ('buzz', key)], orderings=[])
+ SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})

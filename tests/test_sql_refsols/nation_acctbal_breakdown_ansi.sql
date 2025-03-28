@@ -12,8 +12,7 @@ FROM (
     agg_0 AS median_black_acctbal,
     agg_1 AS median_overall_acctbal,
     agg_2 AS median_red_acctbal,
-    name AS nation_name,
-    name AS ordering_5
+    name AS nation_name
   FROM (
     SELECT
       agg_0,
@@ -75,4 +74,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_5
+  nation_name

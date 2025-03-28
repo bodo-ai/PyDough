@@ -74,6 +74,7 @@ from .hybrid_tree import (
     HybridTree,
     HybridWindowExpr,
 )
+from .merge_projects import merge_projects
 
 
 @dataclass
@@ -1160,6 +1161,11 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
 
     # Step 2: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
+
+    # Step 3: merge adjacent projections, when clearcut
+    merged_root = merge_projects(root)
+    assert isinstance(merged_root, RelationalRoot)
+    root = merged_root
 
     return root
 

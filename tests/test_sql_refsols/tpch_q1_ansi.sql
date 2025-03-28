@@ -20,9 +20,7 @@ FROM (
     agg_1 AS AVG_PRICE,
     agg_2 AS AVG_QTY,
     return_flag AS L_RETURNFLAG,
-    return_flag AS ordering_8,
-    status AS L_LINESTATUS,
-    status AS ordering_9
+    status AS L_LINESTATUS
   FROM (
     SELECT
       AVG(discount) AS agg_0,
@@ -81,5 +79,5 @@ FROM (
   )
 )
 ORDER BY
-  ordering_8,
-  ordering_9
+  L_RETURNFLAG,
+  L_LINESTATUS

@@ -1,42 +1,36 @@
 SELECT
   month,
-  avg_price
+  AVG(price) AS avg_price
 FROM (
   SELECT
-    AVG(price) AS avg_price,
-    month AS ordering_1,
-    month
+    DATE_TRUNC('MONTH', CAST(date_time AS TIMESTAMP)) AS month,
+    price
   FROM (
     SELECT
-      DATE_TRUNC('MONTH', CAST(date_time AS TIMESTAMP)) AS month,
+      date_time,
       price
     FROM (
       SELECT
-        date_time,
-        price
-      FROM (
-        SELECT
-          sbTxDateTime AS date_time,
-          sbTxPrice AS price,
-          sbTxStatus AS status
-        FROM main.sbTransaction
+        sbTxDateTime AS date_time,
+        sbTxPrice AS price,
+        sbTxStatus AS status
+      FROM main.sbTransaction
+    )
+    WHERE
+      (
+        status = 'success'
       )
-      WHERE
+      AND (
         (
-          status = 'success'
+          CAST('2023-01-01' AS DATE) <= date_time
         )
         AND (
-          (
-            CAST('2023-01-01' AS DATE) <= date_time
-          )
-          AND (
-            date_time <= CAST('2023-03-31' AS DATE)
-          )
+          date_time <= CAST('2023-03-31' AS DATE)
         )
-    )
+      )
   )
-  GROUP BY
-    month
 )
+GROUP BY
+  month
 ORDER BY
-  ordering_1
+  month

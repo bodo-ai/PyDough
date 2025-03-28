@@ -4,8 +4,7 @@ SELECT
 FROM (
   SELECT
     COALESCE(agg_0, 0) AS ORDER_COUNT,
-    order_priority AS O_ORDERPRIORITY,
-    order_priority AS ordering_1
+    order_priority AS O_ORDERPRIORITY
   FROM (
     SELECT
       COUNT() AS agg_0,
@@ -57,4 +56,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_1
+  O_ORDERPRIORITY
