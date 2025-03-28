@@ -4,7 +4,7 @@ WITH _t0 AS (
     SUM(wallet_transactions_daily.status = 'success') AS agg_0
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), CAST(wallet_transactions_daily.created_at AS DATETIME), MONTH) = 1
+    DATEDIFF(CURRENT_TIMESTAMP(), wallet_transactions_daily.created_at, MONTH) = 1
 )
 SELECT
   COALESCE(_t0.agg_0, 0) / _t0.agg_1 AS _expr0

@@ -2,28 +2,17 @@ WITH _table_alias_2 AS (
   SELECT DISTINCT
     sbcustomer.sbcustcountry AS country
   FROM main.sbcustomer AS sbcustomer
-), _table_alias_0 AS (
-  SELECT
-    sbcustomer.sbcustid AS _id,
-    sbcustomer.sbcustcountry AS country
-  FROM main.sbcustomer AS sbcustomer
-), _table_alias_1 AS (
-  SELECT
-    sbtransaction.sbtxamount AS amount,
-    sbtransaction.sbtxcustid AS customer_id
-  FROM main.sbtransaction AS sbtransaction
-  WHERE
-    sbtransaction.sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -30, 'DAY'))
 ), _table_alias_3 AS (
   SELECT
     COUNT() AS agg_0,
-    SUM(_table_alias_1.amount) AS agg_1,
-    _table_alias_0.country AS country
-  FROM _table_alias_0 AS _table_alias_0
-  JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0._id = _table_alias_1.customer_id
+    SUM(sbtransaction.sbtxamount) AS agg_1,
+    sbcustomer.sbcustcountry AS country
+  FROM main.sbcustomer AS sbcustomer
+  JOIN main.sbtransaction AS sbtransaction
+    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
+    AND sbtransaction.sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -30, 'DAY'))
   GROUP BY
-    _table_alias_0.country
+    sbcustomer.sbcustcountry
 )
 SELECT
   _table_alias_2.country AS country,

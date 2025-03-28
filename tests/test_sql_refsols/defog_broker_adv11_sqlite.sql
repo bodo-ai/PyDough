@@ -32,20 +32,18 @@ WITH _t1 AS (
   SELECT
     _t2.customer_id AS customer_id
   FROM _t2 AS _t2
-), _u_0 AS (
-  SELECT
-    _table_alias_3.customer_id AS _u_1
-  FROM _table_alias_3 AS _table_alias_3
-  GROUP BY
-    _table_alias_3.customer_id
 ), _t0 AS (
   SELECT
     _table_alias_2._id AS _id
   FROM _table_alias_2 AS _table_alias_2
-  LEFT JOIN _u_0 AS _u_0
-    ON _table_alias_2._id = _u_0._u_1
   WHERE
-    NOT _u_0._u_1 IS NULL
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_3 AS _table_alias_3
+      WHERE
+        _table_alias_2._id = _table_alias_3.customer_id
+    )
 )
 SELECT
   COUNT() AS n_customers

@@ -1,9 +1,4 @@
-WITH _table_alias_0 AS (
-  SELECT
-    sbticker.sbtickerid AS _id,
-    sbticker.sbtickersymbol AS symbol
-  FROM main.sbticker AS sbticker
-), _table_alias_1 AS (
+WITH _table_alias_1 AS (
   SELECT
     MAX(sbdailyprice.sbdphigh) AS agg_0,
     MIN(sbdailyprice.sbdplow) AS agg_1,
@@ -17,10 +12,10 @@ WITH _table_alias_0 AS (
   SELECT
     _table_alias_1.agg_0 - _table_alias_1.agg_1 AS ordering_2,
     _table_alias_1.agg_0 - _table_alias_1.agg_1 AS price_change,
-    _table_alias_0.symbol AS symbol
-  FROM _table_alias_0 AS _table_alias_0
+    sbticker.sbtickersymbol AS symbol
+  FROM main.sbticker AS sbticker
   LEFT JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0._id = _table_alias_1.ticker_id
+    ON _table_alias_1.ticker_id = sbticker.sbtickerid
   ORDER BY
     ordering_2 DESC
   LIMIT 3

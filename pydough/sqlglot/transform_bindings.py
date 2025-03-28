@@ -368,9 +368,7 @@ def apply_datetime_truncation(
                     isinstance(base, sqlglot_expressions.Datetime)
                     and len(base.this) == 1
                 ):
-                    return sqlglot_expressions.Date(
-                        this=base.this + [trunc_expr],
-                    )
+                    return sqlglot_expressions.Date(this=[base, trunc_expr])
                 return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
                 )
@@ -413,7 +411,7 @@ def apply_datetime_truncation(
                     and len(base.this) == 1
                 ):
                     return sqlglot_expressions.Date(
-                        this=base.this + [offset_expr, start_of_day_expr],
+                        this=[base, offset_expr, start_of_day_expr]
                     )
                 return sqlglot_expressions.Date(
                     this=[base, offset_expr, start_of_day_expr],
@@ -454,7 +452,7 @@ def apply_datetime_offset(
         )
         if unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY):
             if isinstance(base, sqlglot_expressions.Date):
-                base.this.append(offset_expr)
+                base = sqlglot_expressions.Date(this=[base, offset_expr])
                 return base
             if isinstance(base, sqlglot_expressions.Datetime):
                 return sqlglot_expressions.Datetime(this=[base], expression=offset_expr)
@@ -1095,7 +1093,9 @@ def convert_slice(
                 start_idx_adjusted_glot = convert_iff_case(
                     None,
                     [
-                        sqlglot_expressions.LT(this=start_idx_glot, expression=sql_one),
+                        sqlglot_expressions.LT(
+                            this=apply_parens(start_idx_glot), expression=sql_one
+                        ),
                         sql_one,  # If calculated position < 1, use position 1
                         start_idx_glot,  # Otherwise use calculated position
                     ],
@@ -1115,9 +1115,11 @@ def convert_slice(
                         [
                             # Check if the length (stop - start) is negative or zero
                             sqlglot_expressions.LTE(
-                                this=sqlglot_expressions.Sub(
-                                    this=stop_idx_adjusted_glot,
-                                    expression=start_idx_adjusted_glot,
+                                this=apply_parens(
+                                    sqlglot_expressions.Sub(
+                                        this=stop_idx_adjusted_glot,
+                                        expression=start_idx_adjusted_glot,
+                                    )
                                 ),
                                 expression=sql_zero,
                             ),
@@ -1157,9 +1159,11 @@ def convert_slice(
                                 None,
                                 [  # Second check: Is the length negative?
                                     sqlglot_expressions.LTE(
-                                        this=sqlglot_expressions.Sub(
-                                            this=stop_idx_adjusted_glot,
-                                            expression=start_idx_adjusted_glot,
+                                        this=apply_parens(
+                                            sqlglot_expressions.Sub(
+                                                this=stop_idx_adjusted_glot,
+                                                expression=start_idx_adjusted_glot,
+                                            )
                                         ),
                                         expression=sql_zero,
                                     ),

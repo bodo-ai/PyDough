@@ -36,8 +36,14 @@ WITH _t1 AS (
   SELECT
     _table_alias_2._id AS _id
   FROM _table_alias_2 AS _table_alias_2
-  JOIN _table_alias_3 AS _table_alias_3
-    ON _table_alias_2._id = _table_alias_3.customer_id
+  WHERE
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_3 AS _table_alias_3
+      WHERE
+        _table_alias_2._id = _table_alias_3.customer_id
+    )
 )
 SELECT
   COUNT() AS n_customers

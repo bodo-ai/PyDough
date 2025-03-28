@@ -1,27 +1,17 @@
-WITH _table_alias_0 AS (
+WITH _t0 AS (
   SELECT
-    sbtransaction.sbtxdatetime AS date_time,
-    sbtransaction.sbtxtickerid AS ticker_id
+    COUNT() AS agg_0,
+    SUM(CAST(DAY_OF_WEEK(sbtransaction.sbtxdatetime) AS INT) IN (5, 6)) AS agg_1,
+    DATE_TRUNC('WEEK', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) AS week
   FROM main.sbtransaction AS sbtransaction
+  JOIN main.sbticker AS sbticker
+    ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
+    AND sbticker.sbtickertype = 'stock'
   WHERE
     sbtransaction.sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
     AND sbtransaction.sbtxdatetime >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -8, 'WEEK')
-), _table_alias_1 AS (
-  SELECT
-    sbticker.sbtickerid AS _id
-  FROM main.sbticker AS sbticker
-  WHERE
-    sbticker.sbtickertype = 'stock'
-), _t0 AS (
-  SELECT
-    COUNT() AS agg_0,
-    SUM(CAST(DAY_OF_WEEK(_table_alias_0.date_time) AS INT) IN (5, 6)) AS agg_1,
-    DATE_TRUNC('WEEK', CAST(_table_alias_0.date_time AS TIMESTAMP)) AS week
-  FROM _table_alias_0 AS _table_alias_0
-  JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.ticker_id = _table_alias_1._id
   GROUP BY
-    DATE_TRUNC('WEEK', CAST(_table_alias_0.date_time AS TIMESTAMP))
+    DATE_TRUNC('WEEK', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
 )
 SELECT
   _t0.week AS week,

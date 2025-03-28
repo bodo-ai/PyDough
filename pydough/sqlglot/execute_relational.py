@@ -7,6 +7,7 @@ the query on the database.
 from collections.abc import MutableSequence
 
 import pandas as pd
+from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.expressions import Alias, Column
@@ -51,35 +52,45 @@ def convert_relation_to_sql(
         dialect, bindings, config
     ).relational_to_sqlglot(relational)
 
-    # Indicies of rules to skip from the RULES list in the optimizer of sqlglot
-    rules_to_skip = [1, 10]  # [pushdown_projections,quote_identifiers]
+    glot_expr = parse_one(glot_expr.sql(dialect))
+    glot_expr = apply_sqlglot_optimizer(glot_expr, relational, dialect)
+
+    return glot_expr.sql(dialect, pretty=True)
+
+
+def apply_sqlglot_optimizer(
+    glot_expr: SQLGlotExpression, relational: RelationalRoot, dialect: SQLGlotDialect
+) -> SQLGlotExpression:
+    from sqlglot.optimizer.annotate_types import annotate_types
+    from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
+    from sqlglot.optimizer.eliminate_joins import eliminate_joins
+    from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
+    from sqlglot.optimizer.merge_subqueries import merge_subqueries
+    from sqlglot.optimizer.normalize import normalize
+    from sqlglot.optimizer.optimize_joins import optimize_joins
+    from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
+    from sqlglot.optimizer.qualify import qualify
+    from sqlglot.optimizer.simplify import simplify
+
+    # Apply each rule explicitly with appropriate kwargs
+    glot_expr = qualify(
+        glot_expr, dialect=dialect, quote_identifiers=False, isolate_tables=True
+    )
+    glot_expr = normalize(glot_expr)
+    glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
+    glot_expr = optimize_joins(glot_expr)
+    glot_expr = eliminate_subqueries(glot_expr)
 
     join_types = set(JoinTypeRelationalVisitor().get_join_types(relational))
-    if JoinType.ANTI in join_types or JoinType.SEMI in join_types:
-        rules_to_skip.append(7)  # merge_subqueries
+    if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
+        glot_expr = merge_subqueries(glot_expr)
 
-    # # print(glot_expr.sql(dialect, pretty=True))
-    # glot_expr = parse_one(glot_expr.sql(dialect))
-    # # breakpoint()
-    # for idx, rule in enumerate(rules):
-    #     if idx in rules_to_skip:
-    #         continue
-    #     kwargs = {}
-    #     rule_params = inspect.getfullargspec(rule).args
-    #     if "dialect" in rule_params:
-    #         kwargs["dialect"] = dialect
-    #     if "quote_identifiers" in rule_params:
-    #         kwargs["quote_identifiers"] = False
-    #     if "leave_tables_isolated" in rule_params:
-    #         kwargs["leave_tables_isolated"] = True
-    #     glot_expr = rule(glot_expr, **kwargs)
-    #     print("*" * 50)
-    #     print(rule.__name__)
-    #     print(glot_expr.sql(dialect, pretty=True))
-    # # breakpoint()
-    # fix_column_case(glot_expr, relational.ordered_columns)
-    # # breakpoint()
-    return glot_expr.sql(dialect, pretty=True)
+    glot_expr = eliminate_joins(glot_expr)
+    glot_expr = eliminate_ctes(glot_expr)
+    glot_expr = annotate_types(glot_expr, dialect=dialect)
+    glot_expr = simplify(glot_expr, dialect=dialect)
+    fix_column_case(glot_expr, relational.ordered_columns)
+    return glot_expr
 
 
 def fix_column_case(

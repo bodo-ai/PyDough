@@ -1,30 +1,25 @@
-WITH _table_alias_0 AS (
-  SELECT
-    sbticker.sbtickerid AS _id,
-    sbticker.sbtickersymbol AS symbol
-  FROM main.sbticker AS sbticker
-), _table_alias_1 AS (
+WITH _table_alias_1 AS (
   SELECT
     SUM(sbtransaction.sbtxtax + sbtransaction.sbtxcommission) AS agg_1,
     SUM(sbtransaction.sbtxamount) AS agg_0,
     sbtransaction.sbtxtickerid AS ticker_id
   FROM main.sbtransaction AS sbtransaction
   WHERE
-    sbtransaction.sbtxdatetime >= DATETIME('now', '-1 month')
+    sbtransaction.sbtxdatetime >= DATETIME(DATETIME('now'), '-1 month')
     AND sbtransaction.sbtxtype = 'sell'
   GROUP BY
     sbtransaction.sbtxtickerid
 )
 SELECT
-  _table_alias_0.symbol AS symbol,
+  sbticker.sbtickersymbol AS symbol,
   CAST((
     100.0 * (
       COALESCE(_table_alias_1.agg_0, 0) - COALESCE(_table_alias_1.agg_1, 0)
     )
   ) AS REAL) / COALESCE(_table_alias_1.agg_0, 0) AS SPM
-FROM _table_alias_0 AS _table_alias_0
+FROM main.sbticker AS sbticker
 LEFT JOIN _table_alias_1 AS _table_alias_1
-  ON _table_alias_0._id = _table_alias_1.ticker_id
+  ON _table_alias_1.ticker_id = sbticker.sbtickerid
 WHERE
   NOT CAST((
     100.0 * (
@@ -32,4 +27,4 @@ WHERE
     )
   ) AS REAL) / COALESCE(_table_alias_1.agg_0, 0) IS NULL
 ORDER BY
-  _table_alias_0.symbol
+  sbticker.sbtickersymbol

@@ -1,8 +1,4 @@
-WITH _table_alias_0 AS (
-  SELECT
-    users.uid AS uid
-  FROM main.users AS users
-), _table_alias_1 AS (
+WITH _table_alias_1 AS (
   SELECT
     SUM(
       (
@@ -22,10 +18,10 @@ WITH _table_alias_0 AS (
     user_sessions.user_id
 )
 SELECT
-  _table_alias_0.uid AS uid,
+  users.uid AS uid,
   COALESCE(_table_alias_1.agg_0, 0) AS total_duration
-FROM _table_alias_0 AS _table_alias_0
+FROM main.users AS users
 JOIN _table_alias_1 AS _table_alias_1
-  ON _table_alias_0.uid = _table_alias_1.user_id
+  ON _table_alias_1.user_id = users.uid
 ORDER BY
   COALESCE(_table_alias_1.agg_0, 0) DESC

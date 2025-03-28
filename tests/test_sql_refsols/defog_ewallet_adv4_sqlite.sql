@@ -1,25 +1,14 @@
-WITH _table_alias_0 AS (
+WITH _t0 AS (
   SELECT
-    wallet_transactions_daily.amount AS amount,
-    wallet_transactions_daily.sender_id AS sender_id
+    COUNT() AS agg_0,
+    SUM(wallet_transactions_daily.amount) AS agg_1
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
+  JOIN main.users AS users
+    ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
   WHERE
     CAST((
       JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(wallet_transactions_daily.created_at, 'start of day'))
     ) AS INTEGER) <= 7
-), _table_alias_1 AS (
-  SELECT
-    users.uid AS uid
-  FROM main.users AS users
-  WHERE
-    users.country = 'US'
-), _t0 AS (
-  SELECT
-    COUNT() AS agg_0,
-    SUM(_table_alias_0.amount) AS agg_1
-  FROM _table_alias_0 AS _table_alias_0
-  JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.sender_id = _table_alias_1.uid
 )
 SELECT
   _t0.agg_0 AS num_transactions,

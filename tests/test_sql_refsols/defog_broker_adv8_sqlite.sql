@@ -6,14 +6,16 @@ WITH _t2 AS (
   FROM main.sbtransaction AS sbtransaction
   WHERE
     sbtransaction.sbtxdatetime < DATE(
-      'now',
-      '-' || CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) || ' days',
+      DATETIME('now'),
+      '-' || CAST(CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) AS TEXT) || ' days',
       'start of day'
     )
     AND sbtransaction.sbtxdatetime >= DATE(
-      'now',
-      '-' || CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) || ' days',
-      'start of day',
+      DATE(
+        DATETIME('now'),
+        '-' || CAST(CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) AS TEXT) || ' days',
+        'start of day'
+      ),
       '-7 day'
     )
 ), _table_alias_0 AS (
@@ -32,20 +34,18 @@ WITH _t2 AS (
   SELECT
     _t3._id AS _id
   FROM _t3 AS _t3
-), _u_0 AS (
-  SELECT
-    _table_alias_1._id AS _u_1
-  FROM _table_alias_1 AS _table_alias_1
-  GROUP BY
-    _table_alias_1._id
 ), _t1 AS (
   SELECT
     _table_alias_0.amount AS amount
   FROM _table_alias_0 AS _table_alias_0
-  LEFT JOIN _u_0 AS _u_0
-    ON _table_alias_0.customer_id = _u_0._u_1
   WHERE
-    NOT _u_0._u_1 IS NULL
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_1 AS _table_alias_1
+      WHERE
+        _table_alias_0.customer_id = _table_alias_1._id
+    )
 ), _t0 AS (
   SELECT
     COUNT() AS agg_0,

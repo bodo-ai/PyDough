@@ -1,10 +1,4 @@
-WITH _table_alias_0 AS (
-  SELECT
-    coupons.cid AS cid
-  FROM main.coupons AS coupons
-  WHERE
-    coupons.merchant_id = '1'
-), _table_alias_1 AS (
+WITH _table_alias_1 AS (
   SELECT
     SUM(wallet_transactions_daily.amount) AS agg_0,
     wallet_transactions_daily.coupon_id AS coupon_id
@@ -13,8 +7,10 @@ WITH _table_alias_0 AS (
     wallet_transactions_daily.coupon_id
 )
 SELECT
-  _table_alias_0.cid AS coupon_id,
+  coupons.cid AS coupon_id,
   COALESCE(_table_alias_1.agg_0, 0) AS total_discount
-FROM _table_alias_0 AS _table_alias_0
+FROM main.coupons AS coupons
 LEFT JOIN _table_alias_1 AS _table_alias_1
-  ON _table_alias_0.cid = _table_alias_1.coupon_id
+  ON _table_alias_1.coupon_id = coupons.cid
+WHERE
+  coupons.merchant_id = '1'

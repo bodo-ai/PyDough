@@ -10,14 +10,26 @@ WITH _table_alias_0 AS (
   SELECT
     _table_alias_0.uid AS uid
   FROM _table_alias_0 AS _table_alias_0
-  JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.uid = _table_alias_1.user_id
+  WHERE
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_1 AS _table_alias_1
+      WHERE
+        _table_alias_0.uid = _table_alias_1.user_id
+    )
 ), _table_alias_4 AS (
   SELECT
     _table_alias_2.uid AS uid
   FROM _table_alias_0 AS _table_alias_2
-  JOIN _table_alias_1 AS _table_alias_3
-    ON _table_alias_2.uid = _table_alias_3.user_id
+  WHERE
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_1 AS _table_alias_3
+      WHERE
+        _table_alias_2.uid = _table_alias_3.user_id
+    )
 ), _table_alias_5 AS (
   SELECT
     wallet_user_balance_daily.balance AS balance,

@@ -10,5 +10,5 @@ SELECT
   DATE_ADD(DATE_ADD(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP), 1, 'YEAR'), 2, 'WEEK') AS week_adj8
 FROM main.sbtransaction AS sbtransaction
 WHERE
-  EXTRACT(DAY FROM CAST(sbtransaction.sbtxdatetime AS DATETIME)) > 1
-  AND EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS DATETIME)) < 2025
+  EXTRACT(DAY FROM sbtransaction.sbtxdatetime) > 1
+  AND EXTRACT(YEAR FROM sbtransaction.sbtxdatetime) < 2025

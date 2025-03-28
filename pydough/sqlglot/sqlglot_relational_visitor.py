@@ -15,6 +15,7 @@ from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
+from sqlglot.transforms import eliminate_semi_and_anti_joins
 
 from pydough.configs import PyDoughConfigs
 from pydough.relational import (
@@ -356,7 +357,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             alias = self._generate_table_alias()
             alias_map[input_name] = alias
             self._correlated_names[join.correl_name] = alias
-        # breakpoint()
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
@@ -371,9 +371,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             input_name = join.default_input_aliases[i]
             if input_name not in alias_map:
                 alias_map[input_name] = self._generate_table_alias()
-            # if join.correl_name is None:
-            #     alias_map[input_name] = self._generate_table_alias()
-        # breakpoint()
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
@@ -409,6 +406,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             joins.append((subquery, cond_expr, join_type))
         for subquery, cond_expr, join_type in joins:
             query = query.join(subquery, on=cond_expr, join_type=join_type)
+            query = eliminate_semi_and_anti_joins(query)
         self._stack.append(query)
 
     def visit_project(self, project: Project) -> None:

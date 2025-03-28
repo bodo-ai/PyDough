@@ -1,10 +1,10 @@
 SELECT
   sbtransaction.sbtxdatetime AS date_time,
   DATE(
-    sbtransaction.sbtxdatetime,
-    '-' || (
+    DATETIME(sbtransaction.sbtxdatetime),
+    '-' || CAST((
       CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 1
-    ) % 7 || ' days',
+    ) % 7 AS TEXT) || ' days',
     'start of day'
   ) AS sow,
   CASE

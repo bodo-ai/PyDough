@@ -27,8 +27,14 @@ WITH _t2 AS (
   SELECT
     _table_alias_0.amount AS amount
   FROM _table_alias_0 AS _table_alias_0
-  JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.customer_id = _table_alias_1._id
+  WHERE
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_1 AS _table_alias_1
+      WHERE
+        _table_alias_0.customer_id = _table_alias_1._id
+    )
 ), _t0 AS (
   SELECT
     COUNT() AS agg_0,

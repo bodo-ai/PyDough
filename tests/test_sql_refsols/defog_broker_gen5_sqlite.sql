@@ -1,15 +1,15 @@
 WITH _t0 AS (
   SELECT
     AVG(sbtransaction.sbtxprice) AS avg_price,
-    DATE(sbtransaction.sbtxdatetime, 'start of month') AS ordering_1,
-    DATE(sbtransaction.sbtxdatetime, 'start of month') AS month
+    DATE(DATETIME(sbtransaction.sbtxdatetime), 'start of month') AS ordering_1,
+    DATE(DATETIME(sbtransaction.sbtxdatetime), 'start of month') AS month
   FROM main.sbtransaction AS sbtransaction
   WHERE
     sbtransaction.sbtxdatetime <= '2023-03-31'
     AND sbtransaction.sbtxdatetime >= '2023-01-01'
     AND sbtransaction.sbtxstatus = 'success'
   GROUP BY
-    DATE(sbtransaction.sbtxdatetime, 'start of month')
+    DATE(DATETIME(sbtransaction.sbtxdatetime), 'start of month')
 )
 SELECT
   _t0.month AS month,

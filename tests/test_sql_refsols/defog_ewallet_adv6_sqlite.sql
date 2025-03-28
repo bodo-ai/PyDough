@@ -6,34 +6,30 @@ WITH _table_alias_0 AS (
   SELECT
     wallet_user_balance_daily.user_id AS user_id
   FROM main.wallet_user_balance_daily AS wallet_user_balance_daily
-), _u_0 AS (
-  SELECT
-    _table_alias_1.user_id AS _u_1
-  FROM _table_alias_1 AS _table_alias_1
-  GROUP BY
-    _table_alias_1.user_id
 ), _table_alias_6 AS (
   SELECT
     _table_alias_0.uid AS uid
   FROM _table_alias_0 AS _table_alias_0
-  LEFT JOIN _u_0 AS _u_0
-    ON _table_alias_0.uid = _u_0._u_1
   WHERE
-    NOT _u_0._u_1 IS NULL
-), _u_2 AS (
-  SELECT
-    _table_alias_3.user_id AS _u_3
-  FROM _table_alias_1 AS _table_alias_3
-  GROUP BY
-    _table_alias_3.user_id
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_1 AS _table_alias_1
+      WHERE
+        _table_alias_0.uid = _table_alias_1.user_id
+    )
 ), _table_alias_4 AS (
   SELECT
     _table_alias_2.uid AS uid
   FROM _table_alias_0 AS _table_alias_2
-  LEFT JOIN _u_2 AS _u_2
-    ON _table_alias_2.uid = _u_2._u_3
   WHERE
-    NOT _u_2._u_3 IS NULL
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _table_alias_1 AS _table_alias_3
+      WHERE
+        _table_alias_2.uid = _table_alias_3.user_id
+    )
 ), _table_alias_5 AS (
   SELECT
     wallet_user_balance_daily.balance AS balance,

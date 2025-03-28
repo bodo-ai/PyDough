@@ -1,25 +1,15 @@
-WITH _table_alias_0 AS (
+WITH _t2 AS (
   SELECT
-    wallet_transactions_daily.amount AS amount,
-    wallet_transactions_daily.sender_id AS sender_id
+    COUNT(DISTINCT wallet_transactions_daily.sender_id) AS agg_1,
+    SUM(wallet_transactions_daily.amount) AS agg_0,
+    users.country AS country
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
+  JOIN main.users AS users
+    ON users.uid = wallet_transactions_daily.sender_id
   WHERE
     wallet_transactions_daily.sender_type = 0
-), _table_alias_1 AS (
-  SELECT
-    users.country AS country,
-    users.uid AS uid
-  FROM main.users AS users
-), _t2 AS (
-  SELECT
-    COUNT(DISTINCT _table_alias_0.sender_id) AS agg_1,
-    SUM(_table_alias_0.amount) AS agg_0,
-    _table_alias_1.country AS country
-  FROM _table_alias_0 AS _table_alias_0
-  JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.sender_id = _table_alias_1.uid
   GROUP BY
-    _table_alias_1.country
+    users.country
 ), _t0 AS (
   SELECT
     _t2.country AS country,

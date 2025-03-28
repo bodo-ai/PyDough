@@ -1,8 +1,4 @@
-WITH _table_alias_0 AS (
-  SELECT
-    users.uid AS uid
-  FROM main.users AS users
-), _table_alias_1 AS (
+WITH _table_alias_1 AS (
   SELECT
     COUNT() AS agg_0,
     wallet_transactions_daily.sender_id AS sender_id
@@ -13,8 +9,8 @@ WITH _table_alias_0 AS (
     wallet_transactions_daily.sender_id
 )
 SELECT
-  _table_alias_0.uid AS user_id,
+  users.uid AS user_id,
   COALESCE(_table_alias_1.agg_0, 0) AS total_transactions
-FROM _table_alias_0 AS _table_alias_0
+FROM main.users AS users
 JOIN _table_alias_1 AS _table_alias_1
-  ON _table_alias_0.uid = _table_alias_1.sender_id
+  ON _table_alias_1.sender_id = users.uid

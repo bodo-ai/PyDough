@@ -1,42 +1,27 @@
-WITH _table_alias_2 AS (
-  SELECT
-    merchants.mid AS mid,
-    merchants.name AS name
-  FROM main.merchants AS merchants
-), _table_alias_0 AS (
-  SELECT
-    coupons.created_at AS created_at,
-    coupons.merchant_id AS merchant_id
-  FROM main.coupons AS coupons
-), _table_alias_1 AS (
-  SELECT
-    merchants.created_at AS created_at,
-    merchants.mid AS mid
-  FROM main.merchants AS merchants
-), _table_alias_3 AS (
+WITH _table_alias_3 AS (
   SELECT
     COUNT() AS agg_0,
-    _table_alias_0.merchant_id AS merchant_id
-  FROM _table_alias_0 AS _table_alias_0
-  LEFT JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.merchant_id = _table_alias_1.mid
+    coupons.merchant_id AS merchant_id
+  FROM main.coupons AS coupons
+  LEFT JOIN main.merchants AS merchants
+    ON coupons.merchant_id = merchants.mid
   WHERE
     (
       (
-        CAST(STRFTIME('%Y', _table_alias_0.created_at) AS INTEGER) - CAST(STRFTIME('%Y', _table_alias_1.created_at) AS INTEGER)
-      ) * 12 + CAST(STRFTIME('%m', _table_alias_0.created_at) AS INTEGER) - CAST(STRFTIME('%m', _table_alias_1.created_at) AS INTEGER)
+        CAST(STRFTIME('%Y', coupons.created_at) AS INTEGER) - CAST(STRFTIME('%Y', merchants.created_at) AS INTEGER)
+      ) * 12 + CAST(STRFTIME('%m', coupons.created_at) AS INTEGER) - CAST(STRFTIME('%m', merchants.created_at) AS INTEGER)
     ) = 0
   GROUP BY
-    _table_alias_0.merchant_id
+    coupons.merchant_id
 ), _t0 AS (
   SELECT
-    _table_alias_2.mid AS merchant_id_6,
+    merchants.mid AS merchant_id_6,
     COALESCE(_table_alias_3.agg_0, 0) AS coupons_per_merchant,
-    _table_alias_2.name AS merchant_name,
+    merchants.name AS merchant_name,
     COALESCE(_table_alias_3.agg_0, 0) AS ordering_1
-  FROM _table_alias_2 AS _table_alias_2
+  FROM main.merchants AS merchants
   LEFT JOIN _table_alias_3 AS _table_alias_3
-    ON _table_alias_2.mid = _table_alias_3.merchant_id
+    ON _table_alias_3.merchant_id = merchants.mid
   ORDER BY
     ordering_1 DESC
   LIMIT 1

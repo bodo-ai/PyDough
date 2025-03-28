@@ -29,6 +29,7 @@ from sqlglot.expressions import (
     Subquery,
     Sum,
     Table,
+    TableAlias,
     Window,
 )
 from sqlglot.expressions import Identifier as Ident
@@ -139,7 +140,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     from_value = _from.input
     from_alias = _from.alias
     if isinstance(from_value, Select):
-        from_result = Subquery(this=from_value, alias=from_alias)
+        from_result = Subquery(this=from_value, alias=TableAlias(this=from_alias))
     else:
         assert from_alias is None, "Alias is only allowed for subqueries"
         from_result = from_value
@@ -968,65 +969,6 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         ],
                     )
                 ],
-                join_types=[JoinType.INNER],
-                columns={
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t1"),
-                },
-            ),
-            mkglot(
-                expressions=[
-                    set_glot_alias(Ident(this="_table_alias_0.a", quoted=False), "a"),
-                    set_glot_alias(Ident(this="_table_alias_1.b", quoted=False), "b"),
-                ],
-                _from=GlotFrom(
-                    mkglot(
-                        expressions=[
-                            Ident(this="a", quoted=False),
-                            Ident(this="b", quoted=False),
-                        ],
-                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
-                    ),
-                    alias="_table_alias_0",
-                ),
-                join=GlotJoin(
-                    right_query=GlotFrom(
-                        mkglot(
-                            expressions=[
-                                Ident(this="a", quoted=False),
-                                Ident(this="b", quoted=False),
-                            ],
-                            _from=GlotFrom(
-                                Table(this=Ident(this="table", quoted=False))
-                            ),
-                        ),
-                        alias="_table_alias_1",
-                    ),
-                    on=mkglot_func(
-                        EQ,
-                        [
-                            Ident(this="_table_alias_0.a", quoted=False),
-                            Ident(this="_table_alias_1.a", quoted=False),
-                        ],
-                    ),
-                    join_type="inner",
-                ),
-            ),
-            id="simple_join",
-        ),
-        pytest.param(
-            Join(
-                inputs=[build_simple_scan(), build_simple_scan()],
-                conditions=[
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
                 join_types=[JoinType.SEMI],
                 columns={
                     "a": make_relational_column_reference("a", input_name="t0"),
@@ -1038,11 +980,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[
-                            Ident(this="a", quoted=False),
-                            Ident(this="b", quoted=False),
-                        ],
-                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                        expressions=[Ident(this="a"), Ident(this="b")],
+                        _from=GlotFrom(Table(this=Ident(this="table"))),
                     ),
                     alias="_table_alias_0",
                 ),
@@ -1207,7 +1146,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                         Table(this=Ident(this="table", quoted=False))
                                     ),
                                 ),
-                                alias="_table_alias_1",
+                                alias=TableAlias(this="_table_alias_1"),
                             ),
                             on=mkglot_func(
                                 EQ,
@@ -1232,7 +1171,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                 Table(this=Ident(this="table", quoted=False))
                             ),
                         ),
-                        alias="_table_alias_3",
+                        alias=TableAlias(this="_table_alias_3"),
                     ),
                     on=mkglot_func(
                         EQ,
@@ -1316,7 +1255,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                         Table(this=Ident(this="table", quoted=False))
                                     ),
                                 ),
-                                alias="_table_alias_1",
+                                alias=TableAlias(this="_table_alias_1"),
                             ),
                             on=mkglot_func(
                                 EQ,
@@ -1661,7 +1600,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                 Table(this=Ident(this="table", quoted=False))
                             ),
                         ),
-                        alias="_table_alias_1",
+                        alias=TableAlias(this="_table_alias_1"),
                     ),
                     on=mkglot_func(
                         EQ,
@@ -1787,7 +1726,6 @@ def test_node_to_sqlglot(
     sqlglot_relational_visitor.reset()
     node.accept(sqlglot_relational_visitor)
     actual = sqlglot_relational_visitor.get_sqlglot_result()
-    # breakpoint()
     assert actual == sqlglot_expr
 
 

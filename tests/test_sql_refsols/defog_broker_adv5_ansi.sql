@@ -1,9 +1,4 @@
-WITH _table_alias_0 AS (
-  SELECT
-    sbdailyprice.sbdpdate AS date,
-    sbdailyprice.sbdptickerid AS ticker_id
-  FROM main.sbdailyprice AS sbdailyprice
-), _table_alias_1 AS (
+WITH _table_alias_1 AS (
   SELECT
     sbticker.sbtickerid AS _id,
     sbticker.sbtickersymbol AS symbol
@@ -12,61 +7,47 @@ WITH _table_alias_0 AS (
   SELECT DISTINCT
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM CAST(_table_alias_0.date AS DATETIME)),
+      EXTRACT(YEAR FROM sbdailyprice.sbdpdate),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(_table_alias_0.date AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_table_alias_0.date AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_table_alias_0.date AS DATETIME))), -2)
+        WHEN LENGTH(EXTRACT(MONTH FROM sbdailyprice.sbdpdate)) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM sbdailyprice.sbdpdate), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdailyprice.sbdpdate)), -2)
       END
     ) AS month,
     _table_alias_1.symbol AS symbol
-  FROM _table_alias_0 AS _table_alias_0
-  LEFT JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.ticker_id = _table_alias_1._id
-), _table_alias_2 AS (
-  SELECT
-    sbdailyprice.sbdpclose AS close,
-    sbdailyprice.sbdpdate AS date,
-    sbdailyprice.sbdphigh AS high,
-    sbdailyprice.sbdplow AS low,
-    sbdailyprice.sbdptickerid AS ticker_id
   FROM main.sbdailyprice AS sbdailyprice
+  LEFT JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_1._id = sbdailyprice.sbdptickerid
 ), _table_alias_5 AS (
   SELECT
-    AVG(_table_alias_2.close) AS agg_0,
-    MAX(_table_alias_2.high) AS agg_1,
-    MIN(_table_alias_2.low) AS agg_2,
+    AVG(sbdailyprice.sbdpclose) AS agg_0,
+    MAX(sbdailyprice.sbdphigh) AS agg_1,
+    MIN(sbdailyprice.sbdplow) AS agg_2,
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM CAST(_table_alias_2.date AS DATETIME)),
+      EXTRACT(YEAR FROM sbdailyprice.sbdpdate),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(_table_alias_2.date AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_table_alias_2.date AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(
-          CONCAT('00', EXTRACT(MONTH FROM CAST(_table_alias_2.date AS DATETIME))),
-          (
-            2 * -1
-          )
-        )
+        WHEN LENGTH(EXTRACT(MONTH FROM sbdailyprice.sbdpdate)) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM sbdailyprice.sbdpdate), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdailyprice.sbdpdate)), (
+          2 * -1
+        ))
       END
     ) AS month,
     _table_alias_3.symbol AS symbol
-  FROM _table_alias_2 AS _table_alias_2
+  FROM main.sbdailyprice AS sbdailyprice
   LEFT JOIN _table_alias_1 AS _table_alias_3
-    ON _table_alias_2.ticker_id = _table_alias_3._id
+    ON _table_alias_3._id = sbdailyprice.sbdptickerid
   GROUP BY
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM CAST(_table_alias_2.date AS DATETIME)),
+      EXTRACT(YEAR FROM sbdailyprice.sbdpdate),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(_table_alias_2.date AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_table_alias_2.date AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(
-          CONCAT('00', EXTRACT(MONTH FROM CAST(_table_alias_2.date AS DATETIME))),
-          (
-            2 * -1
-          )
-        )
+        WHEN LENGTH(EXTRACT(MONTH FROM sbdailyprice.sbdpdate)) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM sbdailyprice.sbdpdate), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdailyprice.sbdpdate)), (
+          2 * -1
+        ))
       END
     ),
     _table_alias_3.symbol

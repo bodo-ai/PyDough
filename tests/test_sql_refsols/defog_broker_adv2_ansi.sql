@@ -1,9 +1,4 @@
-WITH _table_alias_0 AS (
-  SELECT
-    sbticker.sbtickerid AS _id,
-    sbticker.sbtickersymbol AS symbol
-  FROM main.sbticker AS sbticker
-), _table_alias_1 AS (
+WITH _table_alias_1 AS (
   SELECT
     COUNT() AS agg_0,
     sbtransaction.sbtxtickerid AS ticker_id
@@ -16,11 +11,11 @@ WITH _table_alias_0 AS (
 ), _t0 AS (
   SELECT
     COALESCE(_table_alias_1.agg_0, 0) AS ordering_1,
-    _table_alias_0.symbol AS symbol,
+    sbticker.sbtickersymbol AS symbol,
     COALESCE(_table_alias_1.agg_0, 0) AS tx_count
-  FROM _table_alias_0 AS _table_alias_0
+  FROM main.sbticker AS sbticker
   LEFT JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0._id = _table_alias_1.ticker_id
+    ON _table_alias_1.ticker_id = sbticker.sbtickerid
   ORDER BY
     ordering_1 DESC
   LIMIT 2
