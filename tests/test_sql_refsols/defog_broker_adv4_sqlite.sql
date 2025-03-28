@@ -8,13 +8,13 @@ FROM (
     symbol
   FROM (
     SELECT
-      high - low AS ordering_2,
-      high - low AS price_change,
+      agg_0 - agg_1 AS ordering_2,
+      agg_0 - agg_1 AS price_change,
       symbol
     FROM (
       SELECT
-        agg_0 AS high,
-        agg_1 AS low,
+        agg_0,
+        agg_1,
         symbol
       FROM (
         SELECT

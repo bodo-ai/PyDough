@@ -271,8 +271,11 @@ def transpose_expression(
             return expr
         case ColumnReference():
             new_column = columns.get(expr.name)
-            assert isinstance(new_column, ColumnReference)
-            if new_column.input_name is not None:
+            assert new_column is not None
+            if (
+                isinstance(new_column, ColumnReference)
+                and new_column.input_name is not None
+            ):
                 new_column = new_column.with_input(None)
             return new_column
         case CallExpression():
