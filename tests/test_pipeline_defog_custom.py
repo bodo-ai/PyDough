@@ -1414,6 +1414,7 @@ def test_pipeline_e2e_defog_simple_week(
 
     # Create DataFrame with expected results
     expected_df = pd.DataFrame(data_dict)
+    # breakpoint()
     pd.testing.assert_frame_equal(result, expected_df)
 
 

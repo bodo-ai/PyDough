@@ -368,9 +368,7 @@ def apply_datetime_truncation(
                     isinstance(base, sqlglot_expressions.Datetime)
                     and len(base.this) == 1
                 ):
-                    return sqlglot_expressions.Date(
-                        this=base.this + [trunc_expr],
-                    )
+                    return sqlglot_expressions.Date(this=[base, trunc_expr])
                 return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
                 )
@@ -387,8 +385,11 @@ def apply_datetime_truncation(
                 # Week starts at 0
                 # Sunday = 0, Monday = 1, ..., Saturday = 6
                 str1_glot: SQLGlotExpression = sqlglot_expressions.Literal.string("-")
-                shifted_weekday: SQLGlotExpression = (
-                    convert_sqlite_days_from_start_of_week(base, config)
+                shifted_weekday: SQLGlotExpression = sqlglot_expressions.Cast(
+                    this=convert_sqlite_days_from_start_of_week(base, config),
+                    to=sqlglot_expressions.DataType(
+                        this=sqlglot_expressions.DataType.Type.TEXT
+                    ),
                 )
                 # string glot for ' days'
                 str3_glot: SQLGlotExpression = sqlglot_expressions.Literal.string(
@@ -410,7 +411,7 @@ def apply_datetime_truncation(
                     and len(base.this) == 1
                 ):
                     return sqlglot_expressions.Date(
-                        this=base.this + [offset_expr, start_of_day_expr],
+                        this=[base, offset_expr, start_of_day_expr]
                     )
                 return sqlglot_expressions.Date(
                     this=[base, offset_expr, start_of_day_expr],
@@ -450,11 +451,11 @@ def apply_datetime_offset(
             f"{amt} {unit.value}"
         )
         if unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY):
-            if isinstance(base, sqlglot_expressions.Date) or (
-                isinstance(base, sqlglot_expressions.Datetime)
-            ):
-                base.this.append(offset_expr)
+            if isinstance(base, sqlglot_expressions.Date):
+                base = sqlglot_expressions.Date(this=[base, offset_expr])
                 return base
+            if isinstance(base, sqlglot_expressions.Datetime):
+                return sqlglot_expressions.Datetime(this=[base], expression=offset_expr)
         else:
             assert unit in (
                 DateTimeUnit.HOUR,
@@ -462,11 +463,8 @@ def apply_datetime_offset(
                 DateTimeUnit.SECOND,
             )
             if isinstance(base, sqlglot_expressions.Datetime):
-                base.this.append(offset_expr)
-                return base
-        return sqlglot_expressions.Datetime(
-            this=[base, offset_expr],
-        )
+                return sqlglot_expressions.Datetime(this=[base], expression=offset_expr)
+        return sqlglot_expressions.Datetime(this=[base], expression=offset_expr)
     else:
         # For other dialects, we can rely the DATEADD function.
         return sqlglot_expressions.DateAdd(
@@ -1095,7 +1093,9 @@ def convert_slice(
                 start_idx_adjusted_glot = convert_iff_case(
                     None,
                     [
-                        sqlglot_expressions.LT(this=start_idx_glot, expression=sql_one),
+                        sqlglot_expressions.LT(
+                            this=apply_parens(start_idx_glot), expression=sql_one
+                        ),
                         sql_one,  # If calculated position < 1, use position 1
                         start_idx_glot,  # Otherwise use calculated position
                     ],
@@ -1115,9 +1115,11 @@ def convert_slice(
                         [
                             # Check if the length (stop - start) is negative or zero
                             sqlglot_expressions.LTE(
-                                this=sqlglot_expressions.Sub(
-                                    this=stop_idx_adjusted_glot,
-                                    expression=start_idx_adjusted_glot,
+                                this=apply_parens(
+                                    sqlglot_expressions.Sub(
+                                        this=stop_idx_adjusted_glot,
+                                        expression=start_idx_adjusted_glot,
+                                    )
                                 ),
                                 expression=sql_zero,
                             ),
@@ -1157,9 +1159,11 @@ def convert_slice(
                                 None,
                                 [  # Second check: Is the length negative?
                                     sqlglot_expressions.LTE(
-                                        this=sqlglot_expressions.Sub(
-                                            this=stop_idx_adjusted_glot,
-                                            expression=start_idx_adjusted_glot,
+                                        this=apply_parens(
+                                            sqlglot_expressions.Sub(
+                                                this=stop_idx_adjusted_glot,
+                                                expression=start_idx_adjusted_glot,
+                                            )
                                         ),
                                         expression=sql_zero,
                                     ),
@@ -1860,16 +1864,16 @@ def convert_sqlite_datediff(
         case "days" | "day" | "d":
             # Extracts the start of date from the datetime and subtracts the dates.
             date_x = sqlglot_expressions.Date(
-                this=dt_x,
-                expressions=[
-                    sqlglot_expressions.Literal(this="start of day", is_string=True)
-                ],
+                this=[
+                    dt_x,
+                    sqlglot_expressions.Literal(this="start of day", is_string=True),
+                ]
             )
             date_y = sqlglot_expressions.Date(
-                this=dt_y,
-                expressions=[
-                    sqlglot_expressions.Literal(this="start of day", is_string=True)
-                ],
+                this=[
+                    dt_y,
+                    sqlglot_expressions.Literal(this="start of day", is_string=True),
+                ]
             )
             # This calculates 'this-expression'.
             answer = sqlglot_expressions.DateDiff(

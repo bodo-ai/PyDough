@@ -1,80 +1,31 @@
-SELECT
-  _id,
-  name,
-  num_transactions
-FROM (
+WITH _table_alias_3 AS (
   SELECT
-    _id,
-    name,
-    num_transactions,
-    ordering_1
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS num_transactions,
-      COALESCE(agg_0, 0) AS ordering_1,
-      _id,
-      name
-    FROM (
-      SELECT
-        _table_alias_0._id AS _id,
-        agg_0,
-        name
-      FROM (
-        SELECT
-          sbCustId AS _id,
-          sbCustName AS name
-        FROM main.sbCustomer
-      ) AS _table_alias_0
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
-          _id
-        FROM (
-          SELECT
-            _id
-          FROM (
-            SELECT
-              _id,
-              date_time,
-              join_month,
-              join_year
-            FROM (
-              SELECT
-                EXTRACT(MONTH FROM join_date) AS join_month,
-                EXTRACT(YEAR FROM join_date) AS join_year,
-                _id
-              FROM (
-                SELECT
-                  sbCustId AS _id,
-                  sbCustJoinDate AS join_date
-                FROM main.sbCustomer
-              )
-            )
-            INNER JOIN (
-              SELECT
-                sbTxCustId AS customer_id,
-                sbTxDateTime AS date_time
-              FROM main.sbTransaction
-            )
-              ON _id = customer_id
-          )
-          WHERE
-            (
-              EXTRACT(MONTH FROM date_time) = join_month
-            )
-            AND (
-              EXTRACT(YEAR FROM date_time) = join_year
-            )
-        )
-        GROUP BY
-          _id
-      ) AS _table_alias_1
-        ON _table_alias_0._id = _table_alias_1._id
-    )
-  )
+    COUNT() AS agg_0,
+    sbcustomer.sbcustid AS _id
+  FROM main.sbcustomer AS sbcustomer
+  JOIN main.sbtransaction AS sbtransaction
+    ON EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
+    AND EXTRACT(YEAR FROM sbcustomer.sbcustjoindate) = EXTRACT(YEAR FROM sbtransaction.sbtxdatetime)
+    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
+  GROUP BY
+    sbcustomer.sbcustid
+), _t0 AS (
+  SELECT
+    sbcustomer.sbcustid AS _id,
+    sbcustomer.sbcustname AS name,
+    COALESCE(_table_alias_3.agg_0, 0) AS num_transactions,
+    COALESCE(_table_alias_3.agg_0, 0) AS ordering_1
+  FROM main.sbcustomer AS sbcustomer
+  LEFT JOIN _table_alias_3 AS _table_alias_3
+    ON _table_alias_3._id = sbcustomer.sbcustid
   ORDER BY
     ordering_1 DESC
   LIMIT 1
 )
+SELECT
+  _t0._id AS _id,
+  _t0.name AS name,
+  _t0.num_transactions AS num_transactions
+FROM _t0 AS _t0
 ORDER BY
-  ordering_1 DESC
+  _t0.ordering_1 DESC

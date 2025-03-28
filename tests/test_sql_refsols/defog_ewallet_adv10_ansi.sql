@@ -1,33 +1,16 @@
-SELECT
-  uid AS user_id,
-  COALESCE(agg_0, 0) AS total_transactions
-FROM (
+WITH _table_alias_1 AS (
   SELECT
-    agg_0,
-    uid
-  FROM (
-    SELECT
-      uid
-    FROM main.users
-  )
-  INNER JOIN (
-    SELECT
-      COUNT() AS agg_0,
-      sender_id
-    FROM (
-      SELECT
-        sender_id
-      FROM (
-        SELECT
-          sender_id,
-          sender_type
-        FROM main.wallet_transactions_daily
-      )
-      WHERE
-        sender_type = 0
-    )
-    GROUP BY
-      sender_id
-  )
-    ON uid = sender_id
+    COUNT() AS agg_0,
+    wallet_transactions_daily.sender_id AS sender_id
+  FROM main.wallet_transactions_daily AS wallet_transactions_daily
+  WHERE
+    wallet_transactions_daily.sender_type = 0
+  GROUP BY
+    wallet_transactions_daily.sender_id
 )
+SELECT
+  users.uid AS user_id,
+  COALESCE(_table_alias_1.agg_0, 0) AS total_transactions
+FROM main.users AS users
+JOIN _table_alias_1 AS _table_alias_1
+  ON _table_alias_1.sender_id = users.uid

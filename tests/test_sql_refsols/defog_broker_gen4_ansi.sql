@@ -1,61 +1,31 @@
-SELECT
-  _id,
-  name,
-  num_tx
-FROM (
+WITH _table_alias_1 AS (
   SELECT
-    _id,
-    name,
-    num_tx,
-    ordering_1
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS num_tx,
-      COALESCE(agg_0, 0) AS ordering_1,
-      _id,
-      name
-    FROM (
-      SELECT
-        _id,
-        agg_0,
-        name
-      FROM (
-        SELECT
-          sbCustId AS _id,
-          sbCustName AS name
-        FROM main.sbCustomer
-      )
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
-          customer_id
-        FROM (
-          SELECT
-            customer_id
-          FROM (
-            SELECT
-              sbTxCustId AS customer_id,
-              sbTxDateTime AS date_time,
-              sbTxType AS transaction_type
-            FROM main.sbTransaction
-          )
-          WHERE
-            (
-              DATE_TRUNC('DAY', CAST(date_time AS TIMESTAMP)) = CAST('2023-04-01' AS DATE)
-            )
-            AND (
-              transaction_type = 'sell'
-            )
-        )
-        GROUP BY
-          customer_id
-      )
-        ON _id = customer_id
-    )
-  )
+    COUNT() AS agg_0,
+    sbtransaction.sbtxcustid AS customer_id
+  FROM main.sbtransaction AS sbtransaction
+  WHERE
+    CAST(sbtransaction.sbtxdatetime AS TIMESTAMP) < CAST('2023-04-02' AS DATE)
+    AND CAST(sbtransaction.sbtxdatetime AS TIMESTAMP) >= CAST('2023-04-01' AS DATE)
+    AND sbtransaction.sbtxtype = 'sell'
+  GROUP BY
+    sbtransaction.sbtxcustid
+), _t0 AS (
+  SELECT
+    sbcustomer.sbcustid AS _id,
+    sbcustomer.sbcustname AS name,
+    COALESCE(_table_alias_1.agg_0, 0) AS num_tx,
+    COALESCE(_table_alias_1.agg_0, 0) AS ordering_1
+  FROM main.sbcustomer AS sbcustomer
+  LEFT JOIN _table_alias_1 AS _table_alias_1
+    ON _table_alias_1.customer_id = sbcustomer.sbcustid
   ORDER BY
     ordering_1 DESC
   LIMIT 1
 )
+SELECT
+  _t0._id AS _id,
+  _t0.name AS name,
+  _t0.num_tx AS num_tx
+FROM _t0 AS _t0
 ORDER BY
-  ordering_1 DESC
+  _t0.ordering_1 DESC

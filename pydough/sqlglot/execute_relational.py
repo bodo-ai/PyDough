@@ -4,9 +4,13 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
+from collections.abc import MutableSequence
+
 import pandas as pd
+from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.expressions import Alias, Column
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.configs import PyDoughConfigs
@@ -15,8 +19,12 @@ from pydough.database_connectors import (
     DatabaseDialect,
 )
 from pydough.logger import get_logger
-from pydough.relational import RelationalRoot
+from pydough.relational import JoinType, RelationalRoot
+from pydough.relational.relational_expressions import (
+    RelationalExpression,
+)
 
+from .join_type_relational_visitor import JoinTypeRelationalVisitor
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 from .transform_bindings import SqlGlotTransformBindings
 
@@ -40,12 +48,88 @@ def convert_relation_to_sql(
     Returns:
         str: The SQL string representing the relational tree.
     """
-    # TODO (gh #205): use simplify/optimize from sqlglot to rewrite the
-    # generated SQL.
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, bindings, config
     ).relational_to_sqlglot(relational)
+
+    glot_expr = parse_one(glot_expr.sql(dialect))
+    glot_expr = apply_sqlglot_optimizer(glot_expr, relational, dialect)
+
     return glot_expr.sql(dialect, pretty=True)
+
+
+def apply_sqlglot_optimizer(
+    glot_expr: SQLGlotExpression, relational: RelationalRoot, dialect: SQLGlotDialect
+) -> SQLGlotExpression:
+    """
+    Apply the SQLGlot optimizer to the given SQLGlot expression.
+
+    Args:
+        glot_expr: The SQLGlot expression to optimize.
+        relational: The relational tree to optimize the expression for.
+        dialect: The dialect to use for the optimization.
+
+    Returns:
+        The optimized SQLGlot expression.
+    """
+    from sqlglot.optimizer.annotate_types import annotate_types
+    from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
+    from sqlglot.optimizer.eliminate_joins import eliminate_joins
+    from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
+    from sqlglot.optimizer.merge_subqueries import merge_subqueries
+    from sqlglot.optimizer.normalize import normalize
+    from sqlglot.optimizer.optimize_joins import optimize_joins
+    from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
+    from sqlglot.optimizer.qualify import qualify
+    from sqlglot.optimizer.simplify import simplify
+
+    # Apply each rule explicitly with appropriate kwargs
+    glot_expr = qualify(
+        glot_expr, dialect=dialect, quote_identifiers=False, isolate_tables=True
+    )
+    glot_expr = normalize(glot_expr)
+    glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
+    glot_expr = optimize_joins(glot_expr)
+    glot_expr = eliminate_subqueries(glot_expr)
+
+    join_types = set(JoinTypeRelationalVisitor().get_join_types(relational))
+    if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
+        glot_expr = merge_subqueries(glot_expr)
+
+    glot_expr = eliminate_joins(glot_expr)
+    glot_expr = eliminate_ctes(glot_expr)
+    glot_expr = annotate_types(glot_expr, dialect=dialect)
+    glot_expr = simplify(glot_expr, dialect=dialect)
+    fix_column_case(glot_expr, relational.ordered_columns)
+    return glot_expr
+
+
+def fix_column_case(
+    glot_expr: SQLGlotExpression,
+    ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
+) -> None:
+    """
+    Fixes the column names in the SQLGlot expression to match the case in the original RelationalRoot.
+
+    Args:
+        glot_expr: The SQLGlot expression to fix
+        ordered_columns: The ordered columns from the RelationalRoot
+    """
+    # Create a mapping of lowercase column names to their original case
+    column_case_map = {col_name.lower(): col_name for col_name, _ in ordered_columns}
+    # Fix column names in the top-level SELECT expressions
+    if hasattr(glot_expr, "expressions"):
+        for expr in glot_expr.expressions:
+            # Handle expressions with aliases
+            if isinstance(expr, Alias):
+                identifier = expr.args.get("alias")
+                alias_lower = identifier.this.lower()
+                if alias_lower in column_case_map:
+                    identifier.set("this", column_case_map[alias_lower])
+            elif isinstance(expr, Column):
+                col_lower = expr.this.this.lower()
+                if col_lower in column_case_map:
+                    expr.set("this", column_case_map[col_lower])
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:

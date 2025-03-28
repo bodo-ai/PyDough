@@ -29,6 +29,7 @@ from sqlglot.expressions import (
     Subquery,
     Sum,
     Table,
+    TableAlias,
     Window,
 )
 from sqlglot.expressions import Identifier as Ident
@@ -139,7 +140,7 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     from_value = _from.input
     from_alias = _from.alias
     if isinstance(from_value, Select):
-        from_result = Subquery(this=from_value, alias=from_alias)
+        from_result = Subquery(this=from_value, alias=TableAlias(this=from_alias))
     else:
         assert from_alias is None, "Alias is only allowed for subqueries"
         from_result = from_value
@@ -193,8 +194,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="simple_scan"))),
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="simple_scan", quoted=False))),
             ),
             id="simple_scan",
         ),
@@ -207,8 +211,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="simple_project",
         ),
@@ -220,8 +227,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[Ident(this="b", quoted=False)],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="column_pruning",
         ),
@@ -235,10 +242,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    set_glot_alias(Ident(this="a"), "c"),
-                    Ident(this="b"),
+                    set_glot_alias(Ident(this="a", quoted=False), "c"),
+                    Ident(this="b", quoted=False),
                 ],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="column_renaming",
         ),
@@ -254,10 +261,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_glot_alias(mk_literal(1, False), "c"),
-                    Ident(this="a"),
-                    Ident(this="b"),
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
                 ],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="literal_addition",
         ),
@@ -280,7 +287,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_glot_alias(
-                        mkglot_func(Length, [Ident(this="col1")]),
+                        mkglot_func(Length, [Ident(this="col1", quoted=False)]),
                         "col2",
                     ),
                 ],
@@ -288,14 +295,19 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     mkglot(
                         expressions=[
                             set_glot_alias(
-                                mkglot_func(Lower, [Ident(this="a")]),
+                                mkglot_func(Lower, [Ident(this="a", quoted=False)]),
                                 "col1",
                             ),
                         ],
                         _from=GlotFrom(
                             mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             )
                         ),
                     ),
@@ -320,9 +332,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ),
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
-                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                where=mkglot_func(
+                    EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
+                ),
             ),
             id="simple_filter",
         ),
@@ -356,13 +373,20 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ),
             ),
             mkglot(
-                expressions=[Ident(this="a")],
-                where=mkglot_func(GTE, [Ident(this="b"), mk_literal(5, False)]),
+                expressions=[Ident(this="a", quoted=False)],
+                where=mkglot_func(
+                    GTE, [Ident(this="b", quoted=False), mk_literal(5, False)]
+                ),
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
-                        where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                        where=mkglot_func(
+                            EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
+                        ),
                     )
                 ),
             ),
@@ -403,23 +427,34 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="c"), mk_literal(1, False)]),
+                expressions=[Ident(this="b", quoted=False)],
+                where=mkglot_func(
+                    EQ, [Ident(this="c", quoted=False), mk_literal(1, False)]
+                ),
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
                             set_glot_alias(
                                 mkglot_func(
-                                    Add, [Ident(this="a"), mk_literal(1, False)]
+                                    Add,
+                                    [
+                                        Ident(this="a", quoted=False),
+                                        mk_literal(1, False),
+                                    ],
                                 ),
                                 "c",
                             ),
-                            Ident(this="b"),
+                            Ident(this="b", quoted=False),
                         ],
                         _from=GlotFrom(
                             mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             )
                         ),
                     )
@@ -437,8 +472,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                 limit=mk_literal(1, False),
             ),
             id="simple_limit",
@@ -465,11 +503,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                 order_by=[
-                    Ident(this="a").asc(nulls_first=True),
-                    Ident(this="b").desc(nulls_first=False),
+                    Ident(this="a", quoted=False).asc(nulls_first=True),
+                    Ident(this="b", quoted=False).desc(nulls_first=False),
                 ],
                 limit=mk_literal(1, False),
             ),
@@ -495,10 +536,12 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="a")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[Ident(this="a", quoted=False)],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                 order_by=[
-                    mkglot_func(Abs, [Ident(this="a")]).asc(nulls_first=True),
+                    mkglot_func(Abs, [Ident(this="a", quoted=False)]).asc(
+                        nulls_first=True
+                    ),
                 ],
                 limit=mk_literal(1, False),
             ),
@@ -527,10 +570,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="a")],
-                order_by=[Ident(this="b").asc(nulls_first=True)],
+                expressions=[Ident(this="a", quoted=False)],
+                order_by=[Ident(this="b", quoted=False).asc(nulls_first=True)],
                 limit=mk_literal(2, False),
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="nested_limits",
         ),
@@ -556,13 +599,18 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                expressions=[Ident(this="b", quoted=False)],
+                where=mkglot_func(
+                    EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
+                ),
                 limit=mk_literal(2, False),
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     )
                 ),
             ),
@@ -591,12 +639,17 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                expressions=[Ident(this="b", quoted=False)],
+                where=mkglot_func(
+                    EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
+                ),
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                         limit=mk_literal(2, False),
                     )
                 ),
@@ -620,9 +673,9 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_glot_alias(mk_literal(1, False), "c"),
-                    Ident(this="b"),
+                    Ident(this="b", quoted=False),
                 ],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                 limit=mk_literal(2, False),
             ),
             id="project_limit_combine",
@@ -637,8 +690,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 aggregations={},
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                 distinct=True,
             ),
             id="simple_distinct",
@@ -656,14 +712,17 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_glot_alias(
-                        mkglot_func(Sum, [Ident(this="a")]),
+                        mkglot_func(Sum, [Ident(this="a", quoted=False)]),
                         "a",
                     )
                 ],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     )
                 ),
             ),
@@ -684,16 +743,19 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_glot_alias(
-                        mkglot_func(Sum, [Ident(this="a")]),
+                        mkglot_func(Sum, [Ident(this="a", quoted=False)]),
                         "a",
                     ),
-                    Ident(this="b"),
+                    Ident(this="b", quoted=False),
                 ],
-                group_by=[Ident(this="b")],
+                group_by=[Ident(this="b", quoted=False)],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     )
                 ),
             ),
@@ -721,13 +783,18 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 aggregations={},
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
+                expressions=[Ident(this="b", quoted=False)],
+                where=mkglot_func(
+                    EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
+                ),
                 distinct=True,
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     )
                 ),
             ),
@@ -759,22 +826,29 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                where=mkglot_func(GTE, [Ident(this="a"), mk_literal(20, False)]),
+                expressions=[Ident(this="b", quoted=False)],
+                where=mkglot_func(
+                    GTE, [Ident(this="a", quoted=False), mk_literal(20, False)]
+                ),
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
                             set_glot_alias(
-                                mkglot_func(Sum, [Ident(this="a")]),
+                                mkglot_func(Sum, [Ident(this="a", quoted=False)]),
                                 "a",
                             ),
-                            Ident(this="b"),
+                            Ident(this="b", quoted=False),
                         ],
-                        group_by=[Ident(this="b")],
+                        group_by=[Ident(this="b", quoted=False)],
                         _from=GlotFrom(
                             mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             )
                         ),
                     )
@@ -798,12 +872,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 aggregations={},
             ),
             mkglot(
-                expressions=[Ident(this="b")],
+                expressions=[Ident(this="b", quoted=False)],
                 distinct=True,
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                         limit=mk_literal(10, False),
                     )
                 ),
@@ -832,10 +909,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[Ident(this="b", quoted=False)],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                 distinct=True,
-                order_by=[Ident(this="b").desc(nulls_first=False)],
+                order_by=[Ident(this="b", quoted=False).desc(nulls_first=False)],
                 limit=mk_literal(10, False),
             ),
             id="limit_after_aggregate",
@@ -863,70 +940,21 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             mkglot(
                 expressions=[
                     set_glot_alias(
-                        mkglot_func(Sub, [Ident(this="b"), mk_literal(1, False)]),
+                        mkglot_func(
+                            Sub, [Ident(this="b", quoted=False), mk_literal(1, False)]
+                        ),
                         "b",
                     ),
                 ],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[Ident(this="b", quoted=False)],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                         distinct=True,
                     )
                 ),
             ),
             id="project_after_aggregate",
-        ),
-        pytest.param(
-            Join(
-                inputs=[build_simple_scan(), build_simple_scan()],
-                conditions=[
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                join_types=[JoinType.INNER],
-                columns={
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t1"),
-                },
-            ),
-            mkglot(
-                expressions=[
-                    set_glot_alias(Ident(this="_table_alias_0.a"), "a"),
-                    set_glot_alias(Ident(this="_table_alias_1.b"), "b"),
-                ],
-                _from=GlotFrom(
-                    mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
-                    ),
-                    alias="_table_alias_0",
-                ),
-                join=GlotJoin(
-                    right_query=GlotFrom(
-                        mkglot(
-                            expressions=[Ident(this="a"), Ident(this="b")],
-                            _from=GlotFrom(Table(this=Ident(this="table"))),
-                        ),
-                        alias="_table_alias_1",
-                    ),
-                    on=mkglot_func(
-                        EQ,
-                        [
-                            Ident(this="_table_alias_0.a"),
-                            Ident(this="_table_alias_1.a"),
-                        ],
-                    ),
-                    join_type="inner",
-                ),
-            ),
-            id="simple_join",
         ),
         pytest.param(
             Join(
@@ -948,7 +976,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    set_glot_alias(Ident(this="_table_alias_0.a"), "a"),
+                    set_glot_alias(Ident(this="_table_alias_0.a", quoted=False), "a"),
                 ],
                 _from=GlotFrom(
                     mkglot(
@@ -960,16 +988,21 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 join=GlotJoin(
                     right_query=GlotFrom(
                         mkglot(
-                            expressions=[Ident(this="a"), Ident(this="b")],
-                            _from=GlotFrom(Table(this=Ident(this="table"))),
+                            expressions=[
+                                Ident(this="a", quoted=False),
+                                Ident(this="b", quoted=False),
+                            ],
+                            _from=GlotFrom(
+                                Table(this=Ident(this="table", quoted=False))
+                            ),
                         ),
                         alias="_table_alias_1",
                     ),
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_table_alias_0.a"),
-                            Ident(this="_table_alias_1.a"),
+                            Ident(this="_table_alias_0.a", quoted=False),
+                            Ident(this="_table_alias_1.a", quoted=False),
                         ],
                     ),
                     join_type="semi",
@@ -997,28 +1030,36 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    set_glot_alias(Ident(this="_table_alias_1.b"), "b"),
+                    set_glot_alias(Ident(this="_table_alias_1.b", quoted=False), "b"),
                 ],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     ),
                     alias="_table_alias_0",
                 ),
                 join=GlotJoin(
                     right_query=GlotFrom(
                         mkglot(
-                            expressions=[Ident(this="a"), Ident(this="b")],
-                            _from=GlotFrom(Table(this=Ident(this="table"))),
+                            expressions=[
+                                Ident(this="a", quoted=False),
+                                Ident(this="b", quoted=False),
+                            ],
+                            _from=GlotFrom(
+                                Table(this=Ident(this="table", quoted=False))
+                            ),
                         ),
                         alias="_table_alias_1",
                     ),
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_table_alias_0.a"),
-                            Ident(this="_table_alias_1.a"),
+                            Ident(this="_table_alias_0.a", quoted=False),
+                            Ident(this="_table_alias_1.a", quoted=False),
                         ],
                     ),
                     join_type="anti",
@@ -1069,33 +1110,49 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[set_glot_alias(Ident(this="_table_alias_2.b"), "d")],
+                expressions=[
+                    set_glot_alias(Ident(this="_table_alias_2.b", quoted=False), "d")
+                ],
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            set_glot_alias(Ident(this="_table_alias_0.a"), "a"),
-                            set_glot_alias(Ident(this="_table_alias_1.b"), "b"),
+                            set_glot_alias(
+                                Ident(this="_table_alias_0.a", quoted=False), "a"
+                            ),
+                            set_glot_alias(
+                                Ident(this="_table_alias_1.b", quoted=False), "b"
+                            ),
                         ],
                         _from=GlotFrom(
                             mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             ),
                             alias="_table_alias_0",
                         ),
                         join=GlotJoin(
                             right_query=GlotFrom(
                                 mkglot(
-                                    expressions=[Ident(this="a"), Ident(this="b")],
-                                    _from=GlotFrom(Table(this=Ident(this="table"))),
+                                    expressions=[
+                                        Ident(this="a", quoted=False),
+                                        Ident(this="b", quoted=False),
+                                    ],
+                                    _from=GlotFrom(
+                                        Table(this=Ident(this="table", quoted=False))
+                                    ),
                                 ),
-                                alias="_table_alias_1",
+                                alias=TableAlias(this="_table_alias_1"),
                             ),
                             on=mkglot_func(
                                 EQ,
                                 [
-                                    Ident(this="_table_alias_0.a"),
-                                    Ident(this="_table_alias_1.a"),
+                                    Ident(this="_table_alias_0.a", quoted=False),
+                                    Ident(this="_table_alias_1.a", quoted=False),
                                 ],
                             ),
                             join_type="inner",
@@ -1106,16 +1163,21 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 join=GlotJoin(
                     right_query=GlotFrom(
                         mkglot(
-                            expressions=[Ident(this="a"), Ident(this="b")],
-                            _from=GlotFrom(Table(this=Ident(this="table"))),
+                            expressions=[
+                                Ident(this="a", quoted=False),
+                                Ident(this="b", quoted=False),
+                            ],
+                            _from=GlotFrom(
+                                Table(this=Ident(this="table", quoted=False))
+                            ),
                         ),
-                        alias="_table_alias_3",
+                        alias=TableAlias(this="_table_alias_3"),
                     ),
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_table_alias_2.a"),
-                            Ident(this="_table_alias_3.a"),
+                            Ident(this="_table_alias_2.a", quoted=False),
+                            Ident(this="_table_alias_3.a", quoted=False),
                         ],
                     ),
                     join_type="left",
@@ -1156,34 +1218,50 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="a")],
-                where=mkglot_func(GTE, [Ident(this="a"), mk_literal(5, False)]),
+                expressions=[Ident(this="a", quoted=False)],
+                where=mkglot_func(
+                    GTE, [Ident(this="a", quoted=False), mk_literal(5, False)]
+                ),
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            set_glot_alias(Ident(this="_table_alias_0.a"), "a"),
-                            set_glot_alias(Ident(this="_table_alias_1.b"), "b"),
+                            set_glot_alias(
+                                Ident(this="_table_alias_0.a", quoted=False), "a"
+                            ),
+                            set_glot_alias(
+                                Ident(this="_table_alias_1.b", quoted=False), "b"
+                            ),
                         ],
                         _from=GlotFrom(
                             mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             ),
                             alias="_table_alias_0",
                         ),
                         join=GlotJoin(
                             right_query=GlotFrom(
                                 mkglot(
-                                    expressions=[Ident(this="a"), Ident(this="b")],
-                                    _from=GlotFrom(Table(this=Ident(this="table"))),
+                                    expressions=[
+                                        Ident(this="a", quoted=False),
+                                        Ident(this="b", quoted=False),
+                                    ],
+                                    _from=GlotFrom(
+                                        Table(this=Ident(this="table", quoted=False))
+                                    ),
                                 ),
-                                alias="_table_alias_1",
+                                alias=TableAlias(this="_table_alias_1"),
                             ),
                             on=mkglot_func(
                                 EQ,
                                 [
-                                    Ident(this="_table_alias_0.a"),
-                                    Ident(this="_table_alias_1.a"),
+                                    Ident(this="_table_alias_0.a", quoted=False),
+                                    Ident(this="_table_alias_1.a", quoted=False),
                                 ],
                             ),
                             join_type="inner",
@@ -1202,8 +1280,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b"), Ident(this="a")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[
+                    Ident(this="b", quoted=False),
+                    Ident(this="a", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="simple_scan_root",
         ),
@@ -1223,9 +1304,12 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
-                order_by=[Ident(this="a").asc(nulls_first=True)],
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                order_by=[Ident(this="a", quoted=False).asc(nulls_first=True)],
             ),
             id="simple_ordering_scan_root",
         ),
@@ -1237,8 +1321,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="a")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[Ident(this="a", quoted=False)],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="pruning_root",
         ),
@@ -1257,12 +1341,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                order_by=[Ident(this="a").asc(nulls_first=True)],
+                expressions=[Ident(this="b", quoted=False)],
+                order_by=[Ident(this="a", quoted=False).asc(nulls_first=True)],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     )
                 ),
             ),
@@ -1297,24 +1384,33 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                order_by=[Ident(this="c").asc(nulls_first=True)],
+                expressions=[Ident(this="b", quoted=False)],
+                order_by=[Ident(this="c", quoted=False).asc(nulls_first=True)],
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
                             set_glot_alias(
                                 mkglot_func(
-                                    Add, [Ident(this="a"), mk_literal(1, False)]
+                                    Add,
+                                    [
+                                        Ident(this="a", quoted=False),
+                                        mk_literal(1, False),
+                                    ],
                                 ),
                                 "c",
                             ),
-                            Ident(this="a"),
-                            Ident(this="b"),
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
                         ],
                         _from=GlotFrom(
                             mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             )
                         ),
                     )
@@ -1344,9 +1440,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[Ident(this="b", quoted=False)],
+                where=mkglot_func(
+                    EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
+                ),
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="root_after_filter",
         ),
@@ -1380,13 +1478,19 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b"), Ident(this="a")],
-                order_by=[Ident(this="a").asc(nulls_first=True)],
+                expressions=[
+                    Ident(this="b", quoted=False),
+                    Ident(this="a", quoted=False),
+                ],
+                order_by=[Ident(this="a", quoted=False).asc(nulls_first=True)],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
-                        order_by=[Ident(this="b").asc(nulls_first=True)],
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                        order_by=[Ident(this="b", quoted=False).asc(nulls_first=True)],
                         limit=mk_literal(10, False),
                     )
                 ),
@@ -1418,22 +1522,27 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="a")],
-                order_by=[Ident(this="a").asc(nulls_first=True)],
+                expressions=[Ident(this="a", quoted=False)],
+                order_by=[Ident(this="a", quoted=False).asc(nulls_first=True)],
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
                             set_glot_alias(
-                                mkglot_func(Sum, [Ident(this="a")]),
+                                mkglot_func(Sum, [Ident(this="a", quoted=False)]),
                                 "a",
                             ),
-                            Ident(this="b"),
+                            Ident(this="b", quoted=False),
                         ],
-                        group_by=[Ident(this="b")],
+                        group_by=[Ident(this="b", quoted=False)],
                         _from=GlotFrom(
                             mkglot(
-                                expressions=[Ident(this="a"), Ident(this="b")],
-                                _from=GlotFrom(Table(this=Ident(this="table"))),
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             )
                         ),
                     ),
@@ -1467,27 +1576,37 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[set_glot_alias(Ident(this="_table_alias_1.b"), "b")],
+                expressions=[
+                    set_glot_alias(Ident(this="_table_alias_1.b", quoted=False), "b")
+                ],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     ),
                     alias="_table_alias_0",
                 ),
                 join=GlotJoin(
                     right_query=GlotFrom(
                         mkglot(
-                            expressions=[Ident(this="a"), Ident(this="b")],
-                            _from=GlotFrom(Table(this=Ident(this="table"))),
+                            expressions=[
+                                Ident(this="a", quoted=False),
+                                Ident(this="b", quoted=False),
+                            ],
+                            _from=GlotFrom(
+                                Table(this=Ident(this="table", quoted=False))
+                            ),
                         ),
-                        alias="_table_alias_1",
+                        alias=TableAlias(this="_table_alias_1"),
                     ),
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_table_alias_0.a"),
-                            Ident(this="_table_alias_1.a"),
+                            Ident(this="_table_alias_0.a", quoted=False),
+                            Ident(this="_table_alias_1.a", quoted=False),
                         ],
                     ),
                     join_type="inner",
@@ -1514,9 +1633,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="a")],
-                order_by=[mkglot_func(Abs, [Ident(this="a")]).asc(nulls_first=True)],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[Ident(this="a", quoted=False)],
+                order_by=[
+                    mkglot_func(Abs, [Ident(this="a", quoted=False)]).asc(
+                        nulls_first=True
+                    )
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="root_with_expr_ordering",
         ),
@@ -1550,13 +1673,19 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[Ident(this="a"), Ident(this="b")],
+                expressions=[
+                    Ident(this="a", quoted=False),
+                    Ident(this="b", quoted=False),
+                ],
                 _from=GlotFrom(
                     mkglot(
                         [Star()],
                         _from=GlotFrom(
                             mkglot(
-                                [Ident(this="a"), Ident(this="b")],
+                                [
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
                                 _from=GlotFrom(
                                     Table(this=Ident(this="table", quoted=False))
                                 ),
@@ -1568,7 +1697,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                 partition=[],
                                 order=Order(
                                     this=None,
-                                    expressions=[Ident(this="a").asc(nulls_first=True)],
+                                    expressions=[
+                                        Ident(this="a", quoted=False).asc(
+                                            nulls_first=True
+                                        )
+                                    ],
                                 ),
                             ),
                             expression=mk_literal(3, False),
@@ -1643,8 +1776,11 @@ def test_expression_identifiers(expr: Expression, expected: set[Ident]) -> None:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b"), Ident(this="a")],
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[
+                    Ident(this="b", quoted=False),
+                    Ident(this="a", quoted=False),
+                ],
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="simple_scan_root",
         ),
@@ -1670,9 +1806,11 @@ def test_expression_identifiers(expr: Expression, expected: set[Ident]) -> None:
                 ],
             ),
             mkglot(
-                expressions=[Ident(this="b")],
-                where=mkglot_func(EQ, [Ident(this="a"), mk_literal(1, False)]),
-                _from=GlotFrom(Table(this=Ident(this="table"))),
+                expressions=[Ident(this="b", quoted=False)],
+                where=mkglot_func(
+                    EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
+                ),
+                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
             ),
             id="root_after_filter",
         ),
