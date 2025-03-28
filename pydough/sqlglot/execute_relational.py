@@ -61,6 +61,17 @@ def convert_relation_to_sql(
 def apply_sqlglot_optimizer(
     glot_expr: SQLGlotExpression, relational: RelationalRoot, dialect: SQLGlotDialect
 ) -> SQLGlotExpression:
+    """
+    Apply the SQLGlot optimizer to the given SQLGlot expression.
+
+    Args:
+        glot_expr: The SQLGlot expression to optimize.
+        relational: The relational tree to optimize the expression for.
+        dialect: The dialect to use for the optimization.
+
+    Returns:
+        The optimized SQLGlot expression.
+    """
     from sqlglot.optimizer.annotate_types import annotate_types
     from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
     from sqlglot.optimizer.eliminate_joins import eliminate_joins
