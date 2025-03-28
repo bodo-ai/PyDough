@@ -19,7 +19,7 @@ SELECT
       THEN 'Saturday'
     END
   ) AS dayname,
-  CAST(DAY_OF_WEEK(date_time) AS INT) AS dayofweek
+  DAY_OF_WEEK(date_time) AS dayofweek
 FROM (
   SELECT
     date_time

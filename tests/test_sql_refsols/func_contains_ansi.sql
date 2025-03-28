@@ -1,6 +1,11 @@
 SELECT
   b
-FROM table
+FROM (
+  SELECT
+    a,
+    b
+  FROM table
+)
 WHERE
   (
     b LIKE '%a%'

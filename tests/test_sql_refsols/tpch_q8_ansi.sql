@@ -13,8 +13,8 @@ FROM (
       volume
     FROM (
       SELECT
-        CASE WHEN nation_name = 'BRAZIL' THEN volume ELSE 0 END AS brazil_volume,
         EXTRACT(YEAR FROM order_date) AS o_year,
+        CASE WHEN nation_name = 'BRAZIL' THEN volume ELSE 0 END AS brazil_volume,
         customer_key,
         volume
       FROM (

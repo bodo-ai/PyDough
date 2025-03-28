@@ -9,7 +9,6 @@ The SQLGlot module provides the following notable APIs:
 - `convert_relation_to_sql`: Converts a PyDough relational tree to a SQL string using a specified SQL dialect.
 - `execute_df`: Executes a PyDough relational tree on a given database context and returns the result as a Pandas DataFrame.
 - `convert_dialect_to_sqlglot`: Converts a PyDough `DatabaseDialect` to the corresponding SQLGlot dialect.
-- `SqlGlotTransformBindings`: Class for binding PyDough operators to SQLGlot expressions.
 - `SQLGlotRelationalVisitor`: Visitor pattern for creating SQLGlot expressions from the relational tree.
 - `SQLGlotRelationalExpressionVisitor`: Visitor pattern for creating SQLGlot expressions from relational expressions.
 - `find_identifiers`: Finds all unique identifiers in a SQLGlot expression.
@@ -25,27 +24,23 @@ The SQLGlot module provides the following notable APIs:
 To convert a PyDough relational tree to a SQL string, use the `convert_relation_to_sql` function. For example:
 
 ```python
-from pydough.sqlglot import convert_relation_to_sql, SqlGlotTransformBindings
+import pydough
 from pydough.relational import RelationalRoot
 from pydough.database_connectors import DatabaseDialect
 from sqlglot.dialects import Dialect
 
+config = pydough.active_session.config
+
 # Define the relational tree
 relational_tree = RelationalRoot(...)
 
-# Choose the SQLGlot dialect and set the function bindings to override any
-# default bindings with the ones for the chosen dialect.
+# Convert the relational tree to SQL using the dialect from the context.
+sql = convert_relation_to_sql(relational_tree, ctx.dialect, config)
 ctx = DatabaseContext(...)
-dialect = Dialect(...)
-bindings = SqlGlotTransformBindings()
-bindings.set_dialect(ctx.dialect)
-
-# Convert the relational tree to SQL
-sql = convert_relation_to_sql(relational_tree, dialect, bindings)
 print(sql)
 
 # Execute the relational tree and get the result as a DataFrame
-df = execute_df(relational_tree, ctx, bindings)
+df = execute_df(relational_tree, ctx, config)
 print(df)
 ```
 

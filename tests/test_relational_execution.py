@@ -26,7 +26,7 @@ from pydough.relational import (
     RelationalRoot,
     Scan,
 )
-from pydough.sqlglot import SqlGlotTransformBindings, execute_df
+from pydough.sqlglot import execute_df
 from pydough.types import BooleanType, UnknownType
 
 pytestmark = [pytest.mark.execute]
@@ -34,7 +34,6 @@ pytestmark = [pytest.mark.execute]
 
 def test_person_total_salary(
     sqlite_people_jobs_context: DatabaseContext,
-    sqlite_bindings: SqlGlotTransformBindings,
     default_config: PyDoughConfigs,
 ) -> None:
     """
@@ -94,9 +93,7 @@ def test_person_total_salary(
             join_types=[JoinType.LEFT],
         ),
     )
-    output: list[Any] = execute_df(
-        result, sqlite_people_jobs_context, sqlite_bindings, default_config
-    )
+    output: list[Any] = execute_df(result, sqlite_people_jobs_context, default_config)
     people_results: list[str] = [f"Person {i}" for i in range(10)]
     salary_results: list[float] = [
         sum((i + j + 5.7) * 1000 for j in range(2)) for i in range(10)
@@ -109,7 +106,6 @@ def test_person_total_salary(
 
 def test_person_jobs_multi_join(
     sqlite_people_jobs_context: DatabaseContext,
-    sqlite_bindings: SqlGlotTransformBindings,
     default_config: PyDoughConfigs,
 ) -> None:
     """
@@ -202,7 +198,7 @@ def test_person_jobs_multi_join(
         ),
     )
     output: pd.DataFrame = execute_df(
-        result, sqlite_people_jobs_context, sqlite_bindings, default_config
+        result, sqlite_people_jobs_context, default_config
     )
     # By construction salaries are increasing with person_id so we
     # select the top half of the people.

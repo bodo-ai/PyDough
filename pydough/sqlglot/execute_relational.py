@@ -18,15 +18,13 @@ from pydough.logger import get_logger
 from pydough.relational import RelationalRoot
 
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
-from .transform_bindings import SqlGlotTransformBindings
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
 
 
 def convert_relation_to_sql(
     relational: RelationalRoot,
-    dialect: SQLGlotDialect,
-    bindings: SqlGlotTransformBindings,
+    dialect: DatabaseDialect,
     config: PyDoughConfigs,
 ) -> str:
     """
@@ -35,7 +33,6 @@ def convert_relation_to_sql(
     Args:
         `relational`: The relational tree to convert.
         `dialect`: The dialect to use for the conversion.
-        `bindings`: The function bindings used for conversion.
 
     Returns:
         str: The SQL string representing the relational tree.
@@ -43,9 +40,10 @@ def convert_relation_to_sql(
     # TODO (gh #205): use simplify/optimize from sqlglot to rewrite the
     # generated SQL.
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
-        dialect, bindings, config
+        dialect, config
     ).relational_to_sqlglot(relational)
-    return glot_expr.sql(dialect, pretty=True)
+    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(dialect)
+    return glot_expr.sql(sqlglot_dialect, pretty=True)
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
@@ -70,7 +68,6 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
 def execute_df(
     relational: RelationalRoot,
     ctx: DatabaseContext,
-    bindings: SqlGlotTransformBindings,
     config: PyDoughConfigs,
     display_sql: bool = False,
 ) -> pd.DataFrame:
@@ -81,16 +78,13 @@ def execute_df(
     Args:
         `relational`: The relational tree to execute.
         `ctx`: The database context to execute the query in.
-        `bindings`: The function transformation bindings used to convert
-        PyDough operators into SQLGlot expressions.
         `display_sql`: if True, prints out the SQL that will be run before
         it is executed.
 
     Returns:
         The result of the query as a Pandas DataFrame
     """
-    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(ctx.dialect)
-    sql: str = convert_relation_to_sql(relational, sqlglot_dialect, bindings, config)
+    sql: str = convert_relation_to_sql(relational, ctx.dialect, config)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")

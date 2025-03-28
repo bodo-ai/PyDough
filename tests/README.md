@@ -66,7 +66,6 @@ The testing module uses `pytest` for running tests. The `conftest.py` file defin
 - `sqlite_tpch_db_path`: Path to the TPCH database.
 - `sqlite_tpch_db`: Returns a connection to the SQLite TPCH database. By default it assumes tpch.db to be present in the root directory of PyDough.
 - `sqlite_tpch_db_context`: Returns a DatabaseContext for the SQLite TPCH database.
-- `sqlite_bindings`: Returns a function transformation bindings instance for SQLite.
 
 ### Common Testing Utilities
 
