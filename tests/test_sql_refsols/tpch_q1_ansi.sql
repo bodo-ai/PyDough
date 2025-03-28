@@ -20,17 +20,15 @@ FROM (
     agg_1 AS AVG_PRICE,
     agg_2 AS AVG_QTY,
     return_flag AS L_RETURNFLAG,
-    return_flag AS ordering_8,
-    status AS L_LINESTATUS,
-    status AS ordering_9
+    status AS L_LINESTATUS
   FROM (
     SELECT
       AVG(discount) AS agg_0,
       AVG(extended_price) AS agg_1,
       AVG(quantity) AS agg_2,
       COUNT() AS agg_3,
-      SUM(expr_10) AS agg_5,
-      SUM(expr_11) AS agg_6,
+      SUM(expr_8) AS agg_5,
+      SUM(expr_9) AS agg_6,
       SUM(extended_price) AS agg_4,
       SUM(quantity) AS agg_7,
       return_flag,
@@ -39,14 +37,14 @@ FROM (
       SELECT
         extended_price * (
           1 - discount
-        ) AS expr_11,
+        ) AS expr_9,
         (
           extended_price * (
             1 - discount
           )
         ) * (
           1 + tax
-        ) AS expr_10,
+        ) AS expr_8,
         discount,
         extended_price,
         quantity,
@@ -81,5 +79,5 @@ FROM (
   )
 )
 ORDER BY
-  ordering_8,
-  ordering_9
+  L_RETURNFLAG,
+  L_LINESTATUS

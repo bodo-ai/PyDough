@@ -1,19 +1,19 @@
 SELECT
   symbol,
   month,
-  avg_close,
-  max_high,
-  min_low,
+  agg_0 AS avg_close,
+  agg_1 AS max_high,
+  agg_2 AS min_low,
   (
-    avg_close - LAG(avg_close, 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST)
-  ) / LAG(avg_close, 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST) AS momc
+    agg_0 - LAG(agg_0, 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST)
+  ) / LAG(agg_0, 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST) AS momc
 FROM (
   SELECT
     _table_alias_0.month AS month,
     _table_alias_0.symbol AS symbol,
-    agg_0 AS avg_close,
-    agg_1 AS max_high,
-    agg_2 AS min_low
+    agg_0,
+    agg_1,
+    agg_2
   FROM (
     SELECT DISTINCT
       month,

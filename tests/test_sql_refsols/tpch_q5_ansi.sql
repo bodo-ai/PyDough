@@ -4,7 +4,6 @@ SELECT
 FROM (
   SELECT
     COALESCE(agg_0, 0) AS REVENUE,
-    COALESCE(agg_0, 0) AS ordering_1,
     agg_3 AS N_NAME
   FROM (
     SELECT
@@ -147,4 +146,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_1 DESC
+  REVENUE DESC

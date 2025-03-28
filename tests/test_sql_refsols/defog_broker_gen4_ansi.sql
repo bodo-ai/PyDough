@@ -4,58 +4,48 @@ SELECT
   num_tx
 FROM (
   SELECT
+    COALESCE(agg_0, 0) AS num_tx,
     _id,
-    name,
-    num_tx,
-    ordering_1
+    name
   FROM (
     SELECT
-      COALESCE(agg_0, 0) AS num_tx,
-      COALESCE(agg_0, 0) AS ordering_1,
       _id,
+      agg_0,
       name
     FROM (
       SELECT
-        _id,
-        agg_0,
-        name
+        sbCustId AS _id,
+        sbCustName AS name
+      FROM main.sbCustomer
+    )
+    LEFT JOIN (
+      SELECT
+        COUNT() AS agg_0,
+        customer_id
       FROM (
         SELECT
-          sbCustId AS _id,
-          sbCustName AS name
-        FROM main.sbCustomer
-      )
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
           customer_id
         FROM (
           SELECT
-            customer_id
-          FROM (
-            SELECT
-              sbTxCustId AS customer_id,
-              sbTxDateTime AS date_time,
-              sbTxType AS transaction_type
-            FROM main.sbTransaction
-          )
-          WHERE
-            (
-              DATE_TRUNC('DAY', CAST(date_time AS TIMESTAMP)) = CAST('2023-04-01' AS DATE)
-            )
-            AND (
-              transaction_type = 'sell'
-            )
+            sbTxCustId AS customer_id,
+            sbTxDateTime AS date_time,
+            sbTxType AS transaction_type
+          FROM main.sbTransaction
         )
-        GROUP BY
-          customer_id
+        WHERE
+          (
+            DATE_TRUNC('DAY', CAST(date_time AS TIMESTAMP)) = CAST('2023-04-01' AS DATE)
+          )
+          AND (
+            transaction_type = 'sell'
+          )
       )
-        ON _id = customer_id
+      GROUP BY
+        customer_id
     )
+      ON _id = customer_id
   )
-  ORDER BY
-    ordering_1 DESC
-  LIMIT 1
 )
 ORDER BY
-  ordering_1 DESC
+  num_tx DESC
+LIMIT 1

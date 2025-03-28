@@ -3,7 +3,6 @@ SELECT
   total_duration
 FROM (
   SELECT
-    COALESCE(agg_0, 0) AS ordering_1,
     COALESCE(agg_0, 0) AS total_duration,
     uid
   FROM (
@@ -44,4 +43,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_1 DESC
+  total_duration DESC

@@ -6,8 +6,7 @@ FROM (
   SELECT
     COALESCE(agg_1, 0) AS NUM_CUSTS,
     COALESCE(agg_2, 0) AS TOTACCTBAL,
-    cntry_code AS CNTRY_CODE,
-    cntry_code AS ordering_3
+    cntry_code AS CNTRY_CODE
   FROM (
     SELECT
       COUNT() AS agg_1,
@@ -109,4 +108,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_3
+  CNTRY_CODE

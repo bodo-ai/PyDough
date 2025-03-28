@@ -1,4 +1,3 @@
-ROOT(columns=[('symbol', symbol)], orderings=[(ordering_0):asc_first])
- LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'ordering_0': ordering_0, 'symbol': symbol}, orderings=[(ordering_0):asc_first])
-  PROJECT(columns={'ordering_0': symbol, 'symbol': symbol})
-   SCAN(table=main.sbTicker, columns={'symbol': sbTickerSymbol})
+ROOT(columns=[('symbol', symbol)], orderings=[(symbol):asc_first])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'symbol': symbol}, orderings=[(symbol):asc_first])
+  SCAN(table=main.sbTicker, columns={'symbol': sbTickerSymbol})

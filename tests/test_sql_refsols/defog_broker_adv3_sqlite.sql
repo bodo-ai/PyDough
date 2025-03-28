@@ -5,9 +5,6 @@ FROM (
   SELECT
     CAST((
       100.0 * COALESCE(agg_1, 0)
-    ) AS REAL) / COALESCE(agg_0, 0) AS ordering_2,
-    CAST((
-      100.0 * COALESCE(agg_1, 0)
     ) AS REAL) / COALESCE(agg_0, 0) AS success_rate,
     name
   FROM (
@@ -24,11 +21,11 @@ FROM (
     LEFT JOIN (
       SELECT
         COUNT() AS agg_0,
-        SUM(expr_3) AS agg_1,
+        SUM(expr_2) AS agg_1,
         customer_id
       FROM (
         SELECT
-          status = 'success' AS expr_3,
+          status = 'success' AS expr_2,
           customer_id
         FROM (
           SELECT
@@ -46,4 +43,4 @@ FROM (
   )
 )
 ORDER BY
-  ordering_2
+  success_rate

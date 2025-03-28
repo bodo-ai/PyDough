@@ -7,11 +7,8 @@ FROM (
   SELECT
     COALESCE(agg_0, 0) AS REVENUE,
     cust_nation AS CUST_NATION,
-    cust_nation AS ordering_2,
     l_year AS L_YEAR,
-    l_year AS ordering_3,
-    supp_nation AS SUPP_NATION,
-    supp_nation AS ordering_1
+    supp_nation AS SUPP_NATION
   FROM (
     SELECT
       SUM(volume) AS agg_0,
@@ -138,6 +135,6 @@ FROM (
   )
 )
 ORDER BY
-  ordering_1,
-  ordering_2,
-  ordering_3
+  SUPP_NATION,
+  CUST_NATION,
+  L_YEAR

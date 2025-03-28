@@ -3,30 +3,21 @@ SELECT
   num_customers
 FROM (
   SELECT
-    country,
-    num_customers,
-    ordering_1
+    COALESCE(agg_0, 0) AS num_customers,
+    country
   FROM (
     SELECT
-      COALESCE(agg_0, 0) AS num_customers,
-      COALESCE(agg_0, 0) AS ordering_1,
+      COUNT() AS agg_0,
       country
     FROM (
       SELECT
-        COUNT() AS agg_0,
-        country
-      FROM (
-        SELECT
-          sbCustCountry AS country
-        FROM main.sbCustomer
-      )
-      GROUP BY
-        country
+        sbCustCountry AS country
+      FROM main.sbCustomer
     )
+    GROUP BY
+      country
   )
-  ORDER BY
-    ordering_1 DESC
-  LIMIT 5
 )
 ORDER BY
-  ordering_1 DESC
+  num_customers DESC
+LIMIT 5

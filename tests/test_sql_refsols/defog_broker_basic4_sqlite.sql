@@ -4,59 +4,49 @@ SELECT
   num_transactions
 FROM (
   SELECT
-    num_transactions,
-    ordering_1,
+    COALESCE(agg_0, 0) AS num_transactions,
     state,
     ticker_type
   FROM (
     SELECT
-      COALESCE(agg_0, 0) AS num_transactions,
-      COALESCE(agg_0, 0) AS ordering_1,
+      COUNT() AS agg_0,
       state,
       ticker_type
     FROM (
       SELECT
-        COUNT() AS agg_0,
         state,
         ticker_type
       FROM (
         SELECT
           state,
-          ticker_type
+          ticker_id
         FROM (
           SELECT
-            state,
-            ticker_id
-          FROM (
-            SELECT
-              sbCustId AS _id,
-              sbCustState AS state
-            FROM main.sbCustomer
-          )
-          INNER JOIN (
-            SELECT
-              sbTxCustId AS customer_id,
-              sbTxTickerId AS ticker_id
-            FROM main.sbTransaction
-          )
-            ON _id = customer_id
+            sbCustId AS _id,
+            sbCustState AS state
+          FROM main.sbCustomer
         )
         INNER JOIN (
           SELECT
-            sbTickerId AS _id,
-            sbTickerType AS ticker_type
-          FROM main.sbTicker
+            sbTxCustId AS customer_id,
+            sbTxTickerId AS ticker_id
+          FROM main.sbTransaction
         )
-          ON ticker_id = _id
+          ON _id = customer_id
       )
-      GROUP BY
-        state,
-        ticker_type
+      INNER JOIN (
+        SELECT
+          sbTickerId AS _id,
+          sbTickerType AS ticker_type
+        FROM main.sbTicker
+      )
+        ON ticker_id = _id
     )
+    GROUP BY
+      state,
+      ticker_type
   )
-  ORDER BY
-    ordering_1 DESC
-  LIMIT 5
 )
 ORDER BY
-  ordering_1 DESC
+  num_transactions DESC
+LIMIT 5
