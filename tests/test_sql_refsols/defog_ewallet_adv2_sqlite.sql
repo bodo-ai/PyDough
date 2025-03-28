@@ -4,30 +4,27 @@ WITH _t0 AS (
     SUM(
       (
         (
-          CAST(STRFTIME('%w', sbtransaction.sbtxdatetime) AS INTEGER) + 6
+          CAST(STRFTIME('%w', notifications.created_at) AS INTEGER) + 6
         ) % 7
       ) IN (5, 6)
     ) AS agg_1,
     DATE(
-      DATETIME(sbtransaction.sbtxdatetime),
+      DATETIME(notifications.created_at),
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(notifications.created_at)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     ) AS week
-  FROM main.sbtransaction AS sbtransaction
-  JOIN main.sbticker AS sbticker
-    ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
-    AND sbticker.sbtickertype = 'stock'
-  WHERE
-    sbtransaction.sbtxdatetime < DATE(
+  FROM main.users AS users
+  JOIN main.notifications AS notifications
+    ON notifications.created_at < DATE(
       DATETIME('now'),
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
-    AND sbtransaction.sbtxdatetime >= DATE(
+    AND notifications.created_at >= DATE(
       DATE(
         DATETIME('now'),
         '-' || CAST((
@@ -35,19 +32,22 @@ WITH _t0 AS (
         ) % 7 AS TEXT) || ' days',
         'start of day'
       ),
-      '-56 day'
+      '-21 day'
     )
+    AND notifications.user_id = users.uid
+  WHERE
+    users.country IN ('US', 'CA')
   GROUP BY
     DATE(
-      DATETIME(sbtransaction.sbtxdatetime),
+      DATETIME(notifications.created_at),
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(notifications.created_at)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
 )
 SELECT
   _t0.week AS week,
-  COALESCE(_t0.agg_0, 0) AS num_transactions,
-  COALESCE(_t0.agg_1, 0) AS weekend_transactions
+  COALESCE(_t0.agg_0, 0) AS num_notifs,
+  COALESCE(_t0.agg_1, 0) AS weekend_notifs
 FROM _t0 AS _t0

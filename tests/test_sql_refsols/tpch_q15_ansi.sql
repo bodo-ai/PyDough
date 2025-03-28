@@ -1,4 +1,4 @@
-WITH _t6 AS (
+WITH _t7 AS (
   SELECT
     lineitem.l_discount AS discount,
     lineitem.l_extendedprice AS extended_price,
@@ -10,13 +10,13 @@ WITH _t6 AS (
     AND lineitem.l_shipdate >= CAST('1996-01-01' AS DATE)
 ), _table_alias_1 AS (
   SELECT
-    SUM(_t6.extended_price * (
-      1 - _t6.discount
+    SUM(_t7.extended_price * (
+      1 - _t7.discount
     )) AS agg_0,
-    _t6.supplier_key AS supplier_key
-  FROM _t6 AS _t6
+    _t7.supplier_key AS supplier_key
+  FROM _t7 AS _t7
   GROUP BY
-    _t6.supplier_key
+    _t7.supplier_key
 ), _table_alias_2 AS (
   SELECT
     MAX(COALESCE(_table_alias_1.agg_0, 0)) AS max_revenue
@@ -25,13 +25,13 @@ WITH _t6 AS (
     ON _table_alias_1.supplier_key = supplier.s_suppkey
 ), _table_alias_5 AS (
   SELECT
-    SUM(_t8.extended_price * (
-      1 - _t8.discount
+    SUM(_t10.extended_price * (
+      1 - _t10.discount
     )) AS agg_1,
-    _t8.supplier_key AS supplier_key
-  FROM _t6 AS _t8
+    _t10.supplier_key AS supplier_key
+  FROM _t7 AS _t10
   GROUP BY
-    _t8.supplier_key
+    _t10.supplier_key
 )
 SELECT
   supplier.s_suppkey AS S_SUPPKEY,

@@ -1,7 +1,7 @@
 WITH _table_alias_1 AS (
   SELECT
-    SUM(sbtransaction.sbtxtax + sbtransaction.sbtxcommission) AS agg_1,
     SUM(sbtransaction.sbtxamount) AS agg_0,
+    SUM(sbtransaction.sbtxtax + sbtransaction.sbtxcommission) AS agg_1,
     sbtransaction.sbtxtickerid AS ticker_id
   FROM main.sbtransaction AS sbtransaction
   WHERE

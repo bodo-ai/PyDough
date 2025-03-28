@@ -38,6 +38,8 @@ from correlated_pydough_functions import (
     correl_28,
     correl_29,
     correl_30,
+    correl_31,
+    correl_32,
 )
 from test_utils import (
     graph_fetcher,
@@ -717,6 +719,59 @@ from pydough.unqualified import (
                 ),
             ),
             id="correl_30",
+        ),
+        pytest.param(
+            (
+                correl_31,
+                None,
+                "correl_31",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "mean_rev": [
+                            49658.994,
+                            24775.3189,
+                            2352.0536,
+                            80866.6208,
+                            22315.0414,
+                        ],
+                        "median_rev": [
+                            49658.994,
+                            32136.624,
+                            2352.0536,
+                            80866.6208,
+                            23984.22,
+                        ],
+                    }
+                ),
+            ),
+            id="correl_31",
+        ),
+        pytest.param(
+            (
+                correl_32,
+                None,
+                "correl_32",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_name": [
+                            "Customer#000109717",
+                            "Customer#000076752",
+                            "Customer#000011666",
+                            "Customer#000137694",
+                            "Customer#000136251",
+                        ],
+                        "delta": [2.075, 4.1, 4.37, 4.435, 5.025],
+                    }
+                ),
+            ),
+            id="correl_32",
         ),
     ],
 )

@@ -1582,8 +1582,9 @@ def convert_isin(
     # literals are in the same literal expression. This code will need
     # to change when we support PyDough expressions like:
     # Collection.WHERE(ISIN(name, plural_subcollection.name))
-    values: SQLGlotExpression = sql_glot_args[1]
-    return sqlglot_expressions.In(this=column, expressions=values)
+    values = sql_glot_args[1]
+    assert isinstance(values, sqlglot_expressions.Array)
+    return sqlglot_expressions.In(this=column, expressions=values.expressions)
 
 
 def convert_ndistinct(
@@ -2286,6 +2287,7 @@ class SqlGlotTransformBindings:
         # Aggregation functions
         self.bind_simple_function(pydop.SUM, sqlglot_expressions.Sum)
         self.bind_simple_function(pydop.AVG, sqlglot_expressions.Avg)
+        self.bind_simple_function(pydop.MEDIAN, sqlglot_expressions.Median)
         self.bind_simple_function(pydop.COUNT, sqlglot_expressions.Count)
         self.bind_simple_function(pydop.MIN, sqlglot_expressions.Min)
         self.bind_simple_function(pydop.MAX, sqlglot_expressions.Max)
@@ -2379,3 +2381,7 @@ class SqlGlotTransformBindings:
         # String function overrides
         if sqlite3.sqlite_version < "3.44.1":
             self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws_to_concat
+
+        # Remove MEDIAN binding if present, since it's not supported in SQLite
+        # and should have been expanded in an earlier stage.
+        self.bindings.pop(pydop.MEDIAN, None)

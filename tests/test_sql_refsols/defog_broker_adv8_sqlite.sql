@@ -7,13 +7,17 @@ WITH _t2 AS (
   WHERE
     sbtransaction.sbtxdatetime < DATE(
       DATETIME('now'),
-      '-' || CAST(CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) AS TEXT) || ' days',
+      '-' || CAST((
+        CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
+      ) % 7 AS TEXT) || ' days',
       'start of day'
     )
     AND sbtransaction.sbtxdatetime >= DATE(
       DATE(
         DATETIME('now'),
-        '-' || CAST(CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) AS TEXT) || ' days',
+        '-' || CAST((
+          CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
+        ) % 7 AS TEXT) || ' days',
         'start of day'
       ),
       '-7 day'

@@ -4,11 +4,6 @@ WITH _t1 AS (
     AVG(lineitem.l_extendedprice) AS agg_1,
     AVG(lineitem.l_quantity) AS agg_2,
     COUNT() AS agg_3,
-    SUM(lineitem.l_extendedprice) AS agg_4,
-    SUM(lineitem.l_quantity) AS agg_7,
-    SUM(lineitem.l_extendedprice * (
-      1 - lineitem.l_discount
-    )) AS agg_6,
     SUM(
       lineitem.l_extendedprice * (
         1 - lineitem.l_discount
@@ -16,6 +11,11 @@ WITH _t1 AS (
         1 + lineitem.l_tax
       )
     ) AS agg_5,
+    SUM(lineitem.l_extendedprice * (
+      1 - lineitem.l_discount
+    )) AS agg_6,
+    SUM(lineitem.l_extendedprice) AS agg_4,
+    SUM(lineitem.l_quantity) AS agg_7,
     lineitem.l_returnflag AS return_flag,
     lineitem.l_linestatus AS status
   FROM tpch.lineitem AS lineitem
