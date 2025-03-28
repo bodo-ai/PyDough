@@ -22,36 +22,39 @@ from pydough.relational.rel_util import (
 )
 
 
-def count_ref_uses(expr: RelationalExpression, n_uses: defaultdict[str, int]) -> None:
+def add_expr_uses(
+    expr: RelationalExpression, n_uses: defaultdict[RelationalExpression, int]
+) -> None:
     """
-    Count the number of times a column reference is used in an expression.
+    Count the number of times nontrivial expressions are used in an expression
+    and add them to a mapping of suchc ounts.
 
     Args:
-        `expr`: The expression to count references in.
+        `expr`: The expression to count the nontrivial expressions of.
         `n_uses`: A dictionary mapping column names to their reference counts.
         This is modified in-place by the function call.
     """
-    if isinstance(expr, ColumnReference):
-        n_uses[expr.name] += 1
     if isinstance(expr, CallExpression):
+        n_uses[expr] += 1
         for arg in expr.inputs:
-            count_ref_uses(arg, n_uses)
+            add_expr_uses(arg, n_uses)
     if isinstance(expr, WindowCallExpression):
+        n_uses[expr] += 1
         for arg in expr.inputs:
-            count_ref_uses(arg, n_uses)
+            add_expr_uses(arg, n_uses)
         for partition_arg in expr.partition_inputs:
-            count_ref_uses(partition_arg, n_uses)
+            add_expr_uses(partition_arg, n_uses)
         for order_arg in expr.order_inputs:
-            count_ref_uses(order_arg.expr, n_uses)
+            add_expr_uses(order_arg.expr, n_uses)
 
 
 def all_refs_single_use(exprs: Iterable[RelationalExpression]) -> bool:
     """
     TODO
     """
-    n_uses: defaultdict[str, int] = defaultdict(int)
+    n_uses: defaultdict[RelationalExpression, int] = defaultdict(int)
     for expr in exprs:
-        count_ref_uses(expr, n_uses)
+        add_expr_uses(expr, n_uses)
     return len(n_uses) == 0 or max(n_uses.values()) == 1
 
 

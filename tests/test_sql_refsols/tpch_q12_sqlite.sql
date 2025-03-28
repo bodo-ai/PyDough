@@ -14,63 +14,62 @@ FROM (
       ship_mode
     FROM (
       SELECT
-        NOT is_high_priority AS expr_2,
-        is_high_priority,
+        NOT (
+          order_priority = '1-URGENT'
+        ) OR (
+          order_priority = '2-HIGH'
+        ) AS expr_2,
+        (
+          order_priority = '1-URGENT'
+        ) OR (
+          order_priority = '2-HIGH'
+        ) AS is_high_priority,
         ship_mode
       FROM (
         SELECT
-          (
-            order_priority = '1-URGENT'
-          ) OR (
-            order_priority = '2-HIGH'
-          ) AS is_high_priority,
+          order_priority,
           ship_mode
         FROM (
           SELECT
-            order_priority,
+            order_key,
             ship_mode
           FROM (
             SELECT
-              order_key,
-              ship_mode
-            FROM (
-              SELECT
-                l_commitdate AS commit_date,
-                l_orderkey AS order_key,
-                l_receiptdate AS receipt_date,
-                l_shipdate AS ship_date,
-                l_shipmode AS ship_mode
-              FROM tpch.LINEITEM
+              l_commitdate AS commit_date,
+              l_orderkey AS order_key,
+              l_receiptdate AS receipt_date,
+              l_shipdate AS ship_date,
+              l_shipmode AS ship_mode
+            FROM tpch.LINEITEM
+          )
+          WHERE
+            (
+              commit_date < receipt_date
             )
-            WHERE
+            AND (
+              receipt_date < '1995-01-01'
+            )
+            AND (
+              ship_date < commit_date
+            )
+            AND (
+              receipt_date >= '1994-01-01'
+            )
+            AND (
               (
-                commit_date < receipt_date
+                ship_mode = 'MAIL'
+              ) OR (
+                ship_mode = 'SHIP'
               )
-              AND (
-                receipt_date < '1995-01-01'
-              )
-              AND (
-                ship_date < commit_date
-              )
-              AND (
-                receipt_date >= '1994-01-01'
-              )
-              AND (
-                (
-                  ship_mode = 'MAIL'
-                ) OR (
-                  ship_mode = 'SHIP'
-                )
-              )
-          )
-          LEFT JOIN (
-            SELECT
-              o_orderkey AS key,
-              o_orderpriority AS order_priority
-            FROM tpch.ORDERS
-          )
-            ON order_key = key
+            )
         )
+        LEFT JOIN (
+          SELECT
+            o_orderkey AS key,
+            o_orderpriority AS order_priority
+          FROM tpch.ORDERS
+        )
+          ON order_key = key
       )
     )
     GROUP BY
