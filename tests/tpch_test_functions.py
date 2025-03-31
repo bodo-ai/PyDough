@@ -36,7 +36,7 @@ def impl_tpch_q1():
     """
     selected_lines = Lineitems.WHERE((ship_date <= datetime.date(1998, 12, 1)))
     return (
-        PARTITION(selected_lines, name="groups", by=(return_flag, status))
+        selected_lines.PARTITION(name="groups", by=(return_flag, status))
         .CALCULATE(
             L_RETURNFLAG=return_flag,
             L_LINESTATUS=status,
@@ -78,7 +78,7 @@ def impl_tpch_q2():
     )
 
     return (
-        PARTITION(selected_parts, name="groups", by=key)
+        selected_parts.PARTITION(name="groups", by=key)
         .CALCULATE(best_cost=MIN(part.supplycost))
         .part.WHERE(
             (supplycost == best_cost) & ENDSWITH(part_type, "BRASS") & (size == 15)
@@ -114,8 +114,8 @@ def impl_tpch_q3():
     )
 
     return (
-        PARTITION(
-            selected_lines, name="groups", by=(order_key, order_date, ship_priority)
+        selected_lines.PARTITION(
+            name="groups", by=(order_key, order_date, ship_priority)
         )
         .CALCULATE(
             L_ORDERKEY=order_key,
@@ -138,7 +138,7 @@ def impl_tpch_q4():
         & HAS(selected_lines)
     )
     return (
-        PARTITION(selected_orders, name="priorities", by=order_priority)
+        selected_orders.PARTITION(name="priorities", by=order_priority)
         .CALCULATE(
             O_ORDERPRIORITY=order_priority,
             ORDER_COUNT=COUNT(Orders),
@@ -201,7 +201,7 @@ def impl_tpch_q7():
     )
 
     return (
-        PARTITION(line_info, name="groups", by=(supp_nation, cust_nation, l_year))
+        line_info.PARTITION(name="groups", by=(supp_nation, cust_nation, l_year))
         .CALCULATE(
             SUPP_NATION=supp_nation,
             CUST_NATION=cust_nation,
@@ -235,7 +235,7 @@ def impl_tpch_q8():
         )
     )
 
-    return PARTITION(volume_data, name="years", by=o_year).CALCULATE(
+    return volume_data.PARTITION(name="years", by=o_year).CALCULATE(
         O_YEAR=o_year,
         MKT_SHARE=SUM(order.brazil_volume) / SUM(order.volume),
     )
@@ -255,7 +255,7 @@ def impl_tpch_q9():
         )
     )
     return (
-        PARTITION(selected_lines, name="groups", by=(nation_name, o_year))
+        selected_lines.PARTITION(name="groups", by=(nation_name, o_year))
         .CALCULATE(NATION=nation_name, O_YEAR=o_year, AMOUNT=SUM(lines.value))
         .TOP_K(
             10,
@@ -298,8 +298,11 @@ def impl_tpch_q11():
     )
     return (
         TPCH.CALCULATE(min_market_share=SUM(selected_records.metric) * 0.0001)
-        .PARTITION(selected_records, name="Parts", by=part_key)
-        .CALCULATE(PS_PARTKEY=part_key, VALUE=SUM(PartSupp.metric))
+        .PartSupp.WHERE(is_german_supplier)
+        .PARTITION(name="parts", by=part_key)
+        .CALCULATE(
+            PS_PARTKEY=part_key, VALUE=SUM(PartSupp.supplycost * PartSupp.availqty)
+        )
         .WHERE(VALUE > min_market_share)
         .TOP_K(10, by=VALUE.DESC())
     )
@@ -320,7 +323,7 @@ def impl_tpch_q12():
         | (order.order_priority == "2-HIGH"),
     )
     return (
-        PARTITION(selected_lines, "modes", by=ship_mode)
+        selected_lines.PARTITION("modes", by=ship_mode)
         .CALCULATE(
             L_SHIPMODE=ship_mode,
             HIGH_LINE_COUNT=SUM(Lineitems.is_high_priority),
@@ -337,7 +340,7 @@ def impl_tpch_q13():
     selected_orders = orders.WHERE(~(LIKE(comment, "%special%requests%")))
     customer_info = Customers.CALCULATE(num_non_special_orders=COUNT(selected_orders))
     return (
-        PARTITION(customer_info, name="num_order_groups", by=num_non_special_orders)
+        customer_info.PARTITION(name="num_order_groups", by=num_non_special_orders)
         .CALCULATE(C_COUNT=num_non_special_orders, CUSTDIST=COUNT(Customers))
         .TOP_K(10, by=(CUSTDIST.DESC(), C_COUNT.DESC()))
     )
@@ -405,7 +408,7 @@ def impl_tpch_q16():
         .supply_records.WHERE(~LIKE(supplier.comment, "%Customer%Complaints%"))
     )
     return (
-        PARTITION(selected_records, name="groups", by=(p_brand, p_type, p_size))
+        selected_records.PARTITION(name="groups", by=(p_brand, p_type, p_size))
         .CALCULATE(
             P_BRAND=p_brand,
             P_TYPE=p_type,
@@ -549,17 +552,17 @@ def impl_tpch_q22():
     """
     PyDough implementation of TPCH Q22.
     """
+    is_selected_code = ISIN(cntry_code, ("13", "31", "23", "29", "30", "18", "17"))
     selected_customers = Customers.CALCULATE(cntry_code=phone[:2]).WHERE(
-        ISIN(cntry_code, ("13", "31", "23", "29", "30", "18", "17"))
+        is_selected_code
     )
     return (
         TPCH.CALCULATE(
             global_avg_balance=AVG(selected_customers.WHERE(acctbal > 0.0).acctbal)
         )
+        .customers.CALCULATE(cntry_code=phone[:2])
+        .WHERE(is_selected_code & (acctbal > global_avg_balance) & (COUNT(orders) == 0))
         .PARTITION(
-            selected_customers.WHERE(
-                (acctbal > global_avg_balance) & (COUNT(orders) == 0)
-            ),
             name="countries",
             by=cntry_code,
         )

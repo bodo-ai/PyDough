@@ -805,8 +805,8 @@ If there are multiple ancestors of the current context with the same name, the `
 
 ```py
 order_info = Orders.CALCULATE(y=YEAR(order_date), m=MONTH(order_date))
-p1 = PARTITION(order_info, name="groups", by=(y, m))
-p2 = PARTITION(p1, name="groups", by=(y))
+p1 = order_info.PARTITION(name="groups", by=(y, m))
+p2 = p1.(name="groups", by=(y))
 data = p2.groups.Orders
 
 # Ranks each order per year/month by its total price.
