@@ -91,10 +91,13 @@ These functions must be called on singular data as a function.
 - `DATEDIFF("unit",x,y)`: Returns the difference between two dates (y-x) in one of 
             - **Years**: `"years"`, `"year"`, `"y"`
             - **Months**: `"months"`, `"month"`, `"mm"`
+            - **Weeks**: `"weeks"`, `"week"`, `"w"`
             - **Days**: `"days"`, `"day"`, `"d"`
             - **Hours**: `"hours"`, `"hour"`, `"h"`
             - **Minutes**: `"minutes"`, `"minute"`, `"m"`
             - **Seconds**: `"seconds"`, `"second"`, `"s"`.
+- `DAYOFWEEK`: returns the day of the week of a datetime in integer form. The config `start_of_week` determines which day is considered the first day of the week. The config `start_week_as_zero` determines whether the week starts at 0 or 1.
+- `DAYNAME`: returns the name of the day of the week of a week day represented as an integer. The config `start_of_week` determines which day is considered the first day of the week. The config `start_week_as_zero` determines whether the week starts at 0 or 1.
 
 ##### Conditional Functions
 
@@ -119,10 +122,11 @@ These functions can be called on plural data to aggregate it into a singular exp
 
 ##### Simple Aggregations
 
-- `SUM`: returns the result of adding all of the values of a plural expression.
-- `AVG`: returns the result of taking the average of the values of a plural expression.
-- `MIN`: returns the largest out of the values of a plural expression.
-- `MAX`: returns the smallest out of the values of a plural expression.
+- `SUM`: returns the result of adding all of the non-null values of a plural expression.
+- `AVG`: returns the result of taking the average of the non-null values of a plural expression.
+- `MEDIAN`: returns the result of taking the median of the non-null values of a plural expression.
+- `MIN`: returns the largest out of the non-null values of a plural expression.
+- `MAX`: returns the smallest out of the non-null values of a plural expression.
 - `ANYTHING`: returns an arbitrary entry from the values of a plural expression.
 - `COUNT`: counts how many non-null values exist in a plural expression (special: see collection aggregations).
 - `NDISTINCT`: counts how many unique values exist in a plural expression (special: see collection aggregations).

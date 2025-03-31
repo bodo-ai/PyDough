@@ -27,32 +27,38 @@ FROM (
       )
       LEFT JOIN (
         SELECT
-          SUM(tax + commission) AS agg_1,
           SUM(amount) AS agg_0,
+          SUM(expr_3) AS agg_1,
           ticker_id
         FROM (
           SELECT
+            tax + commission AS expr_3,
             amount,
-            commission,
-            tax,
             ticker_id
           FROM (
             SELECT
-              sbTxAmount AS amount,
-              sbTxCommission AS commission,
-              sbTxDateTime AS date_time,
-              sbTxTax AS tax,
-              sbTxTickerId AS ticker_id,
-              sbTxType AS transaction_type
-            FROM main.sbTransaction
+              amount,
+              commission,
+              tax,
+              ticker_id
+            FROM (
+              SELECT
+                sbTxAmount AS amount,
+                sbTxCommission AS commission,
+                sbTxDateTime AS date_time,
+                sbTxTax AS tax,
+                sbTxTickerId AS ticker_id,
+                sbTxType AS transaction_type
+              FROM main.sbTransaction
+            )
+            WHERE
+              (
+                transaction_type = 'sell'
+              )
+              AND (
+                date_time >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')
+              )
           )
-          WHERE
-            (
-              transaction_type = 'sell'
-            )
-            AND (
-              date_time >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')
-            )
         )
         GROUP BY
           ticker_id

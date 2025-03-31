@@ -13,7 +13,7 @@ from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
@@ -35,6 +35,42 @@ def default_config() -> PyDoughConfigs:
     # Set the defaults manually, in case they ever change.
     config.sum_default_zero = True
     config.avg_default_zero = False
+    config.start_of_week = DayOfWeek.SUNDAY
+    config.start_week_as_zero = True
+    return config
+
+
+@pytest.fixture
+def defog_config() -> PyDoughConfigs:
+    """
+    The configuration of PyDoughConfigs used in testing defog.ai standard
+    queries. This is re-created with each request since a test function can
+    mutate this.
+    """
+    config: PyDoughConfigs = PyDoughConfigs()
+    # Set the config values to match the defog.ai queries.
+    config.sum_default_zero = True
+    config.avg_default_zero = False
+    config.start_of_week = DayOfWeek.MONDAY
+    config.start_week_as_zero = True
+    return config
+
+
+@pytest.fixture(
+    params=[
+        pytest.param((sow, swaz), id=f"{sow.name.lower()}-{'zero' if swaz else 'one'}")
+        for sow in list(DayOfWeek)
+        for swaz in (True, False)
+    ]
+)
+def week_handling_config(request):
+    """
+    Fixture which sets the start of week and start week as zero configuration.
+    """
+    config: PyDoughConfigs = PyDoughConfigs()
+    start_of_week_config, start_week_as_zero_config = request.param
+    config.start_of_week = start_of_week_config
+    config.start_week_as_zero = start_week_as_zero_config
     return config
 
 
@@ -135,7 +171,7 @@ def sample_graphs(
 @pytest.fixture
 def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
     """
-    Builds a QDAG node builder using the TPCH graoh.
+    Builds a QDAG node builder using the TPCH graph.
     """
     return AstNodeBuilder(get_sample_graph("TPCH"))
 

@@ -2,11 +2,44 @@
 Definitions of configuration settings for PyDough.
 """
 
-__all__ = ["PyDoughConfigs"]
+__all__ = ["DayOfWeek", "PyDoughConfigs"]
 
+from enum import Enum
 from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
+
+
+class DayOfWeek(Enum):
+    """
+    An enum to represent the day of the week.
+    """
+
+    SUNDAY = "SUNDAY"
+    MONDAY = "MONDAY"
+    TUESDAY = "TUESDAY"
+    WEDNESDAY = "WEDNESDAY"
+    THURSDAY = "THURSDAY"
+    FRIDAY = "FRIDAY"
+    SATURDAY = "SATURDAY"
+
+    @property
+    def pandas_dow(self) -> int:
+        match self:
+            case DayOfWeek.SUNDAY:
+                return 6
+            case DayOfWeek.MONDAY:
+                return 0
+            case DayOfWeek.TUESDAY:
+                return 1
+            case DayOfWeek.WEDNESDAY:
+                return 2
+            case DayOfWeek.THURSDAY:
+                return 3
+            case DayOfWeek.FRIDAY:
+                return 4
+            case DayOfWeek.SATURDAY:
+                return 5
 
 
 class ConfigProperty(Generic[T]):
@@ -77,6 +110,18 @@ class PyDoughConfigs:
     the collation (ASC/DESC) from the previous specified term. If False, terms
     without an explicit collation will use the default from
     `collation_default_asc`. The default is False.
+    """
+
+    start_of_week = ConfigProperty[DayOfWeek](DayOfWeek.SUNDAY)
+    """
+    The day of the week that is considered the start of the week. The default
+    is Sunday.
+    """
+
+    start_week_as_zero = ConfigProperty[bool](True)
+    """
+    If True, then the week starts at zero. If False, then the week starts at one.
+    The default is True.
     """
 
     def __setattr__(self, name: str, value: Any) -> None:

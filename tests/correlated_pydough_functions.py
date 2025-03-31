@@ -118,7 +118,7 @@ def correl_7():
 
 def correl_8():
     # Correlated back reference example #8: non-agg correlated reference
-    # For each nation, fetch the name of its region, but filter the reigon
+    # For each nation, fetch the name of its region, but filter the region
     # so it only keeps it if it starts with the same letter as the nation
     # (otherwise, returns NULL). This is a true correlated join doing an
     # access without aggregation without requiring the RHS be
@@ -133,7 +133,7 @@ def correl_8():
 
 def correl_9():
     # Correlated back reference example #9: non-agg correlated reference
-    # For each nation, fetch the name of its region, but filter the reigon
+    # For each nation, fetch the name of its region, but filter the region
     # so it only keeps it if it starts with the same letter as the nation
     # (otherwise, omit the nation). This is a true correlated join doing an
     # access that also requires the RHS records be present.
@@ -148,7 +148,7 @@ def correl_9():
 
 def correl_10():
     # Correlated back reference example #10: deleted correlated reference
-    # For each nation, fetch the name of its region, but filter the reigon
+    # For each nation, fetch the name of its region, but filter the region
     # so it only keeps it if it starts with the same letter as the nation
     # (otherwise, returns NULL), and also filter the nations to only keep
     # records where the region is NULL. The true correlated join is trumped by
@@ -556,4 +556,57 @@ def correl_30():
             n_above_avg_suppliers=COUNT(above_avg_suppliers),
         )
         .ORDER_BY(region_name.ASC(), nation_name.ASC())
+    )
+
+
+def correl_31():
+    # Edge case for de-correlation behavior: for each European nation,
+    # identify the mean and median revenue from all purchases made by customers
+    # in that nation where the supplier is in the same nation in the first
+    # month of 1996, where the purchase was shipped by truck, the tax was below
+    # 5%, and the priority was 1-URGENT. Only consider nations with at least
+    # one qualifying lineitem.
+    selected_lines = (
+        customers.orders.WHERE(
+            (YEAR(order_date) == 1996)
+            & (MONTH(order_date) == 1)
+            & (order_priority == "1-URGENT")
+        )
+        .lines.WHERE(
+            (supplier.nation_key == cust_nation_key)
+            & (ship_mode == "TRUCK")
+            & (tax < 0.05)
+        )
+        .CALCULATE(revenue=extended_price * (1 - discount))
+    )
+    return (
+        Nations.CALCULATE(cust_nation_key=key)
+        .WHERE(region.name == "EUROPE")
+        .WHERE(HAS(selected_lines))
+        .CALCULATE(
+            nation_name=name,
+            mean_rev=AVG(selected_lines.revenue),
+            median_rev=MEDIAN(selected_lines.revenue),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def correl_32():
+    # Finds the 5 customers whose account balances are the closest to the
+    # median account balance for all suppliers in their nation with the same
+    # last digit in their phone number. Only consider customers whose market
+    # segment is automobiles, and nations in the middle east.
+    selected_suppliers = nation.WHERE(region.name == "MIDDLE EAST").suppliers.WHERE(
+        phone[-1:] == cust_phone[-1:]
+    )
+    return (
+        Customers.CALCULATE(cust_phone=phone)
+        .WHERE(mktsegment == "AUTOMOBILE")
+        .WHERE(HAS(selected_suppliers))
+        .CALCULATE(
+            customer_name=name,
+            delta=ABS(acctbal - MEDIAN(selected_suppliers.account_balance)),
+        )
+        .TOP_K(5, by=delta.ASC())
     )

@@ -507,6 +507,67 @@ def nation_best_order():
     )
 
 
+def nation_acctbal_breakdown():
+    # For each American nation, identify the number of customers with negative
+    # versus non-negative account balances, the median account balance for each
+    # as well as the median account balance of all customers in the nation.
+    customer_info = customers.CALCULATE(
+        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
+        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    )
+    return (
+        Nations.WHERE(region.name == "AMERICA")
+        .CALCULATE(
+            nation_name=name,
+            n_red_acctbal=COUNT(customer_info.negative_acctbal),
+            n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
+            median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
+            median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
+            median_overall_acctbal=MEDIAN(customer_info.acctbal),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def region_acctbal_breakdown():
+    # For each region identify the number of customers with negative versus
+    # non-negative account balances, the median account balance for each
+    # as well as the median account balance of all customers in the nation.
+    customer_info = nations.customers.CALCULATE(
+        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
+        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    )
+    return (
+        Regions.CALCULATE(region_name=name)
+        .CALCULATE(
+            region_name,
+            n_red_acctbal=COUNT(customer_info.negative_acctbal),
+            n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
+            median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
+            median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
+            median_overall_acctbal=MEDIAN(customer_info.acctbal),
+        )
+        .ORDER_BY(region_name.ASC())
+    )
+
+
+def global_acctbal_breakdown():
+    # Count the number of customers with negative versus non-negative account
+    # balances, the median account balance for each as well as the median
+    # account balance of all customers in the nation.
+    customer_info = Customers.CALCULATE(
+        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
+        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    )
+    return TPCH.CALCULATE(
+        n_red_acctbal=COUNT(customer_info.negative_acctbal),
+        n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
+        median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
+        median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
+        median_overall_acctbal=MEDIAN(customer_info.acctbal),
+    )
+
+
 def top_customers_by_orders():
     # Finds the keys of the 5 customers with the most orders.
     return Customers.CALCULATE(
@@ -986,7 +1047,7 @@ def multi_partition_access_3():
 
 
 def multi_partition_access_4():
-    # Find all transacitons that were the largest for a customer of that ticker
+    # Find all transactions that were the largest for a customer of that ticker
     # (by number of shares) but not the largest for that customer overall.
     cust_ticker_groups = PARTITION(
         Transactions, name="groups", by=(customer_id, ticker_id)
@@ -1008,7 +1069,7 @@ def multi_partition_access_5():
     # that ticker were of that type, but less than 20% of all transactions of
     # that type were from that ticker. List the transaction ID, the number of
     # transactions of that ticker/type, ticker, and type. Sort by the number of
-    # transactions of that ticker/type, breaking ties by trnasaction ID.
+    # transactions of that ticker/type, breaking ties by transaction ID.
     ticker_type_groups = PARTITION(
         Transactions, name="groups", by=(ticker_id, transaction_type)
     ).CALCULATE(n_ticker_type_trans=COUNT(Transactions))
@@ -1258,6 +1319,72 @@ def minutes_seconds_datediff():
             seconds_diff=DATEDIFF("s", date_time, y_datetime),
         )
         .TOP_K(30, by=x.DESC())
+    )
+
+
+def simple_week_sampler():
+    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
+    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
+    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
+    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
+    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
+    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
+    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
+    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
+    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
+    return Broker.CALCULATE(
+        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
+        sow1=DATETIME(y_dt, "start of week"),
+        sow2=DATETIME(y_dt2, "start of week"),
+        sow3=DATETIME(y_dt3, "start of week"),
+        sow4=DATETIME(y_dt4, "start of week"),
+        sow5=DATETIME(y_dt5, "start of week"),
+        sow6=DATETIME(y_dt6, "start of week"),
+        sow7=DATETIME(y_dt7, "start of week"),
+        sow8=DATETIME(y_dt8, "start of week"),
+        dayname1=DAYNAME(y_dt),
+        dayname2=DAYNAME(y_dt2),
+        dayname3=DAYNAME(y_dt3),
+        dayname4=DAYNAME(y_dt4),
+        dayname5=DAYNAME(y_dt5),
+        dayname6=DAYNAME(y_dt6),
+        dayname7=DAYNAME(y_dt7),
+        dayname8=DAYNAME(y_dt8),
+        dayofweek1=DAYOFWEEK(y_dt),
+        dayofweek2=DAYOFWEEK(y_dt2),
+        dayofweek3=DAYOFWEEK(y_dt3),
+        dayofweek4=DAYOFWEEK(y_dt4),
+        dayofweek5=DAYOFWEEK(y_dt5),
+        dayofweek6=DAYOFWEEK(y_dt6),
+        dayofweek7=DAYOFWEEK(y_dt7),
+        dayofweek8=DAYOFWEEK(y_dt8),
+    )
+
+
+def transaction_week_sampler():
+    return Transactions.WHERE(
+        (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
+    ).CALCULATE(
+        date_time,
+        sow=DATETIME(date_time, "start of week"),
+        dayname=DAYNAME(date_time),
+        dayofweek=DAYOFWEEK(date_time),
+    )
+
+
+def week_offset():
+    return Transactions.WHERE(
+        (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
+    ).CALCULATE(
+        date_time,
+        week_adj1=DATETIME(date_time, "1 week"),
+        week_adj2=DATETIME(date_time, "-1 week"),
+        week_adj3=DATETIME(date_time, "1 h", "2 w"),
+        week_adj4=DATETIME(date_time, "-1 s", "2 w"),
+        week_adj5=DATETIME(date_time, "1 d", "2 w"),
+        week_adj6=DATETIME(date_time, "-1 m", "2 w"),
+        week_adj7=DATETIME(date_time, "1 mm", "2 w"),
+        week_adj8=DATETIME(date_time, "1 y", "2 w"),
     )
 
 
