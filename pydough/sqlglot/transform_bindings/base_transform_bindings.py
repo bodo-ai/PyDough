@@ -57,15 +57,7 @@ class BaseTransformBindings:
         The number of days to add to the start of the week within the
         SQL dialect to obtain the start of week referenced by the configs.
         """
-        dows: list[DayOfWeek] = [
-            DayOfWeek.SUNDAY,
-            DayOfWeek.MONDAY,
-            DayOfWeek.TUESDAY,
-            DayOfWeek.WEDNESDAY,
-            DayOfWeek.THURSDAY,
-            DayOfWeek.FRIDAY,
-            DayOfWeek.SATURDAY,
-        ]
+        dows: list[DayOfWeek] = list(DayOfWeek)
         dialect_index: int = dows.index(self.dialect_start_of_week)
         config_index: int = dows.index(self.configs.start_of_week)
         return (config_index - dialect_index) % 7

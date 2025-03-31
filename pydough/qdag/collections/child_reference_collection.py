@@ -113,7 +113,7 @@ class ChildReferenceCollection(ChildAccess):
 
     def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
-            and isinstance(other, ChildReferenceCollection)
+            isinstance(other, ChildReferenceCollection)
+            and super().equals(other)
             and self.collection == other.collection
         )

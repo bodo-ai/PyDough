@@ -95,12 +95,8 @@ class OrderBy(AugmentingChildOperator):
         return f"OrderBy[{collation_str}]"
 
     def equals(self, other: object) -> bool:
-        if self._collation is None:
-            raise PyDoughQDAGException(
-                "Cannot invoke `equals` before calling `with_collation`"
-            )
         return (
-            super().equals(other)
-            and isinstance(other, OrderBy)
+            isinstance(other, OrderBy)
             and self._collation == other._collation
+            and super().equals(other)
         )

@@ -71,6 +71,6 @@ class Reference(PyDoughExpressionQDAG):
     def equals(self, other: object) -> bool:
         return (
             isinstance(other, Reference)
-            and self.collection.equals(other.collection)
             and self.term_name == other.term_name
+            and self.collection.equals(other.collection)
         )

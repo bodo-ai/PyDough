@@ -160,7 +160,7 @@ class CollectionAccess(ChildAccess):
 
     def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
-            and isinstance(other, CollectionAccess)
+            isinstance(other, CollectionAccess)
+            and super().equals(other)
             and self.collection == other.collection
         )
