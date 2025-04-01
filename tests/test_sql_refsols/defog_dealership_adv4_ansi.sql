@@ -1,6 +1,6 @@
 SELECT
   COALESCE(agg_0, 0) AS num_sales,
-  COALESCE(agg_1, 0) AS total_revenue
+  CASE WHEN COALESCE(agg_1, 0) > 0 THEN COALESCE(agg_1, 0) ELSE NULL END AS total_revenue
 FROM (
   SELECT
     agg_0,

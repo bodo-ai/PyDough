@@ -688,9 +688,13 @@ def impl_defog_dealership_adv4():
     """
     date_threshold = DATETIME("now", "-30 days")
 
+    selected_sales = sale_records.WHERE(sale_date >= date_threshold)
+
     return Cars.WHERE(LIKE(LOWER(make), "%toyota%")).CALCULATE(
-        num_sales=COUNT(sale_records.WHERE(sale_date >= date_threshold)._id),
-        total_revenue=SUM(sale_records.WHERE(sale_date >= date_threshold).sale_price),
+        num_sales=COUNT(selected_sales._id),
+        total_revenue=KEEP_IF(
+            SUM(selected_sales.sale_price), SUM(selected_sales.sale_price) > 0
+        ),
     )
 
 
