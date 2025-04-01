@@ -363,6 +363,7 @@ def correl_22():
         TPCH.CALCULATE(global_avg_price=AVG(Parts.retail_price))
         .Parts.PARTITION(name="groups", by=(container, part_type))
         .CALCULATE(avg_price=AVG(Parts.retail_price))
+        .WHERE(avg_price > global_avg_price)
         .PARTITION(
             name="containers",
             by=container,
