@@ -123,7 +123,7 @@ class ChildOperatorChildAccess(ChildAccess):
 
     def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
-            and isinstance(other, ChildOperatorChildAccess)
+            isinstance(other, ChildOperatorChildAccess)
+            and super().equals(other)
             and self.child_access.equals(other.child_access)
         )

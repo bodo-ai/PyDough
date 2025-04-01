@@ -7,6 +7,7 @@ import json
 import os
 import sqlite3
 from collections.abc import Callable, MutableMapping
+from functools import cache
 
 import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
@@ -22,7 +23,6 @@ from pydough.database_connectors import (
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
-from pydough.sqlglot import SqlGlotTransformBindings
 
 
 @pytest.fixture
@@ -115,7 +115,7 @@ def sample_graph_names(request) -> str:
     return request.param
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def get_sample_graph(
     sample_graph_path: str,
     valid_sample_graph_names: set[str],
@@ -125,6 +125,7 @@ def get_sample_graph(
     graph names and returns the metadata for that PyDough graph.
     """
 
+    @cache
     def impl(name: str) -> GraphMetadata:
         if name not in valid_sample_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
@@ -168,7 +169,7 @@ def sample_graphs(
     return get_sample_graph(sample_graph_names)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
     """
     Builds a QDAG node builder using the TPCH graph.
@@ -349,23 +350,14 @@ def sqlite_tpch_db_context(sqlite_tpch_db_path: str, sqlite_tpch_db) -> Database
     return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
 
 
-@pytest.fixture
-def sqlite_bindings() -> SqlGlotTransformBindings:
-    """
-    Return a function transformation bindings instance for SQLite.
-    """
-    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
-    bindings.set_dialect(DatabaseDialect.SQLITE)
-    return bindings
-
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def defog_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database.
     """
     # Setup the directory to be the main PyDough directory.
 
+    @cache
     def impl(name: str) -> GraphMetadata:
         path: str = f"{os.path.dirname(__file__)}/test_metadata/defog_graphs.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)

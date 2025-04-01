@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
-from sqlglot.dialects import Dialect
-from sqlglot.dialects.sqlite import SQLite as SQLiteDialect
 from sqlglot.expressions import (
     EQ,
     GTE,
@@ -68,7 +66,6 @@ from pydough.relational import (
 )
 from pydough.sqlglot import (
     SQLGlotRelationalVisitor,
-    SqlGlotTransformBindings,
     find_identifiers,
     set_glot_alias,
 )
@@ -77,11 +74,8 @@ from pydough.types import BooleanType, Int64Type, StringType
 
 @pytest.fixture(scope="module")
 def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
-    dialect: Dialect = SQLiteDialect()
-    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
-    bindings.set_dialect(DatabaseDialect.SQLITE)
     config: PyDoughConfigs = PyDoughConfigs()
-    return SQLGlotRelationalVisitor(dialect, bindings, config)
+    return SQLGlotRelationalVisitor(DatabaseDialect.SQLITE, config)
 
 
 @dataclass

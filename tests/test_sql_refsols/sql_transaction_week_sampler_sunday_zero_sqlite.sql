@@ -2,7 +2,7 @@ SELECT
   date_time,
   DATE(
     date_time,
-    '-' || CAST(STRFTIME('%w', DATETIME(date_time)) AS INTEGER) || ' days',
+    '-' || CAST(CAST(STRFTIME('%w', DATETIME(date_time)) AS INTEGER) AS TEXT) || ' days',
     'start of day'
   ) AS sow,
   (

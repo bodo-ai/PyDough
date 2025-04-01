@@ -522,6 +522,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 defog_sql_text_ewallet_adv8,
                 "ewallet_adv8",
             ),
+            id="ewallet_adv8",
         ),
         pytest.param(
             PyDoughSQLComparisonTest(

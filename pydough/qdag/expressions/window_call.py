@@ -5,7 +5,6 @@ expressions.
 
 __all__ = ["WindowCall"]
 
-from functools import cache
 
 from pydough.pydough_operators.expression_operators import (
     ExpressionWindowOperator,
@@ -83,12 +82,14 @@ class WindowCall(PyDoughExpressionQDAG):
     def is_aggregation(self) -> bool:
         return False
 
-    @cache
     def is_singular(self, context: PyDoughQDAG) -> bool:
-        # Window function calls are singular if all of their collation
-        # arguments are singular
-        for arg in self.collation_args:
-            if not arg.expr.is_singular(context):
+        # Window function calls are singular if all of their arguments and
+        # collation arguments are singular
+        for arg in self.args:
+            if not arg.is_singular(context):
+                return False
+        for order_arg in self.collation_args:
+            if not order_arg.expr.is_singular(context):
                 return False
         return True
 

@@ -20,7 +20,7 @@ SELECT
     END
   ) AS dayname,
   (
-    CAST(DAY_OF_WEEK(date_time) AS INT) + 1
+    DAY_OF_WEEK(date_time) + 1
   ) AS dayofweek
 FROM (
   SELECT

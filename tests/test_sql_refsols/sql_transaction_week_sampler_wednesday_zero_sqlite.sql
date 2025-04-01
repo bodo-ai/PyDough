@@ -2,11 +2,9 @@ SELECT
   date_time,
   DATE(
     date_time,
-    '-' || (
-      (
-        CAST(STRFTIME('%w', DATETIME(date_time)) AS INTEGER) + 4
-      ) % 7
-    ) || ' days',
+    '-' || CAST((
+      CAST(STRFTIME('%w', DATETIME(date_time)) AS INTEGER) + 4
+    ) % 7 AS TEXT) || ' days',
     'start of day'
   ) AS sow,
   (
