@@ -947,31 +947,35 @@ Addresses.TOP_K(300, by=())
 <!-- TOC --><a name="partition"></a>
 ### PARTITION
 
-The `PARTITION` operation is used to create a new collection by partitioning the records of another collection based on 1+ partitioning terms. Every unique combination values of those partitioning terms corresponds to a single record in the new collection. The terms of the new collection are the partitioning terms, and a single sub-collection mapping back to the bucketed terms of the original data.
+The `PARTITION` operation is used to create a new collection by grouping the records of another collection based on 1+ partitioning terms. Every unique combination values of those partitioning terms corresponds to a single record in the new collection. The terms of the new collection are the partitioning terms, and a single sub-collection mapping back to the bucketed terms of the original data.
 
-The syntax for this is `PARTITION(data, name="...", by=...)`. The `data` argument is the PyDough collection that is to be partitioned. The `name` argument is a string indicating the name that is given to the new collection for the `PARTITION`, and the `by` argument is either a single partitioning key, or an iterable of 1+ partitioning keys.
+The syntax for this is `data.PARTITION(name="...", by=...)`. The `data` argument is the PyDough collection that is to be partitioned. The `name` argument is a string indicating the name that is given to the new collection for the `PARTITION`, and the `by` argument is either a single partitioning key, or an iterable of 1+ partitioning keys. The new collection inserts itself into the ancestry of `data`, just below the graph-level context.
 
 > [!WARNING]
 > PyDough currently only supports using references to scalar expressions from the `data` collection itself as partition keys, not an ancestor term, or a term from a child collection, or the result of a function call.
 
 The partitioned data can be accessed using its original name, which is determined by the most recent collection/sub-collection access' name. For example, if partitioning `People.packages.WHERE(shipping_address.state == "CA")`, the data can be accessed as a sub-collection with the name `packages`.
 
-If the partitioned data is accessed, its original ancestry is lost. Instead, it inherits the ancestry from the `PARTITION` clause. The default ancestor of `PARTITION`, if not specified, is the entire graph (just like for table collections). The partitioned data still has access to any of the down-streamed terms from its original ancestry.
+If the partitioned data is accessed, its original ancestry is replaced with the ancestry of the `PARTITION` clause, including any down-streamed terms it has access to. The partitioned data still has access to any of the down-streamed terms from its original ancestry. For example, consider `GRAPH.CALCULATE(x=42).People.CALCULATE(name).current_address.PARTITION(by=country, name="countries").CALCULATE(n_addr=COUNT(current_address)).current_address`:
 
-The ancestry of the `PARTITION` clause can be changed by prepending it with another collection, separated by a dot. However, this is currently only supported in PyDough when the collection before the dot is just an augmented version of the graph context, as opposed to another collection (e.g. `GRAPH.CALCULATE(x=42).PARTITION(...)` is supported, but `People.PARTITION(...)` is not).
+- The original data has a hierarchy of collections where `GRAPH.CALCULATE(x=42)` is the parent of `People.CALCULATE(name)`, which is the parent of `current_address`.
+After the `.PARTITION(by=country, name="countries")`, we now have a new collection `countries` that is a child of `GRAPH.CALCULATE(x=42)` (and can therefore access `x`), and has `current_address` (which contains the data from `People.CALCULATE(name).current_address`) as a child. The child is called `current_address` because that was the name at the bottom of the hierarchy when it was partitioned.
+- The `countries` collection has three terms: `x` (down-streamed from its ancestor), `current_addreses` (pointing to the child data), and `country` (the partitioning key). The clause `.CALCULATE(n_addr=COUNT(current_address))` adds a fourth term `n_addr` that counts how many addresses exist in each country by aggregating the `current_address`.
+- When `.current_address` is invoked at the end, we step into the original data, but now with an altered ancestry. It now has all of the original terms of `GRAPH.CALCULATE(x=42).People.CALCULATE(name).current_address` (the `Addresses` collection, as well as the `name` term that was down-streamed from `People` and the `x` term down-streamed from the `GRAPH` calculate), but it also has access to the `n_addr` term that was down-streamed from its `countries` ancestor.
+- The ancestry of `current_address` is now `GRAPH` -> `countries` ->  `current_address`.
 
 **Good Example #1**: Find every unique state.
 
 ```py
 %%pydough
-PARTITION(Addresses, name="states", by=state).CALCULATE(Addresses)
+Addresses.PARTITION(name="states", by=state).CALCULATE(Addresses)
 ```
 
 **Good Example #2**: For every state, count how many addresses are in that state.
 
 ```py
 %%pydough
-PARTITION(Addresses, name="states", by=state).CALCULATE(
+Addresses.PARTITION(name="states", by=state).CALCULATE(
     state,
     n_addr=COUNT(Addresses)
 )
@@ -981,7 +985,7 @@ PARTITION(Addresses, name="states", by=state).CALCULATE(
 
 ```py
 %%pydough
-PARTITION(Addresses, name="cities", by=(city, state)).CALCULATE(
+Addresses.PARTITION(name="cities", by=(city, state)).CALCULATE(
     state,
     city,
     n_people=COUNT(Addresses.current_occupants)
@@ -995,7 +999,7 @@ PARTITION(Addresses, name="cities", by=(city, state)).CALCULATE(
 yahoo_people = People.CALCULATE(
     birth_year=YEAR(birth_date)
 ).WHERE(ENDSWITH(email, "@yahoo.com"))
-PARTITION(yahoo_people, name="years", by=birth_year).CALCULATE(
+yahoo_people.PARTITION(name="years", by=birth_year).CALCULATE(
     birth_year,
     n_people=COUNT(People)
 ).TOP_K(5, by=n_people.DESC())
@@ -1006,7 +1010,7 @@ PARTITION(yahoo_people, name="years", by=birth_year).CALCULATE(
 ```py
 %%pydough
 package_info = Packages.CALCULATE(order_year=YEAR(order_date), order_month=MONTH(order_date))
-PARTITION(package_info, name="months", by=(order_year, order_month)).CALCULATE(
+package_info.PARTITION(name="months", by=(order_year, order_month)).CALCULATE(
     avg_package_cost=AVG(Packages.package_cost)
 ).Packages.WHERE(
     package_cost < avg_package_cost
@@ -1017,7 +1021,7 @@ PARTITION(package_info, name="months", by=(order_year, order_month)).CALCULATE(
 
 ```py
 %%pydough
-PARTITION(Addresses, name="cities", by=(city, state)).CALCULATE(
+Addresses.PARTITION(name="cities", by=(city, state)).CALCULATE(
     total_packages=COUNT(Addresses.current_occupants.packages)
 ).Addresses.CALCULATE(city, state).current_occupants.CALCULATE(
     first_name,
@@ -1034,7 +1038,7 @@ PARTITION(Addresses, name="cities", by=(city, state)).CALCULATE(
 %%pydough
 GRAPH.CALCULATE(
     total_packages=COUNT(Packages)
-).PARTITION(Addresses, name="states", by=state).CALCULATE(
+).Addresses.PARTITION(name="states", by=state).CALCULATE(
     state,
     pct_of_packages=100.0 * COUNT(Addresses.current_occupants.package) / total_packages
 ).WHERE(pct_of_packages >= 1.0)
@@ -1045,7 +1049,7 @@ GRAPH.CALCULATE(
 ```py
 %%pydough
 pack_info = Packages.CALCULATE(order_month=MONTH(order_date))
-month_info = PARTITION(pack_info, name="months", by=order_month).CALCULATE(
+month_info = pack_info.PARTITION(name="months", by=order_month).CALCULATE(
     n_packages=COUNT(Packages)
 )
 GRAPH.CALCULATE(
@@ -1062,7 +1066,7 @@ GRAPH.CALCULATE(
 people_info = Addresses.CALCULATE(state).current_occupants.CALCULATE(
     first_letter=first_name[:1],
 )
-PARTITION(people_info, name="combinations", by=(state, first_letter)).CALCULATE(
+people_info.PARTITION(name="combinations", by=(state, first_letter)).CALCULATE(
     state,
     first_letter,
     n_people=COUNT(current_occupants),
@@ -1077,7 +1081,7 @@ people_info = People.CALCULATE(
     state=DEFAULT_TO(current_address.state, "N/A"),
     first_letter=first_name[:1],
 )
-PARTITION(people_info, name="combinations", by=(state, first_letter)).CALCULATE(
+people_info.PARTITION(name="state_letter_combos", by=(state, first_letter)).CALCULATE(
     state,
     first_letter,
     n_people=COUNT(People),
@@ -1089,7 +1093,7 @@ PARTITION(people_info, name="combinations", by=(state, first_letter)).CALCULATE(
 ```py
 %%pydough
 people_info = Addresses.CALCULATE(state).current_occupants.CALCULATE(birth_year=YEAR(birth_date))
-GRAPH.PARTITION(people_info, name="years", by=birth_year).WHERE(
+people_info.PARTITION(name="years", by=birth_year).WHERE(
     COUNT(current_occupants) >= 10000
 ).current_occupants.CALCULATE(
     first_name,
@@ -1102,15 +1106,14 @@ GRAPH.PARTITION(people_info, name="years", by=birth_year).WHERE(
 
 ```py
 %%pydough
-package_info = Packages.CALCULATE(
+GRAPH.CALCULATE(
+    avg_cost=AVG(Packages.package_cost),
+    final_year=MAX(Packages.order_year),
+).Packages.CALCULATE(
     order_year=YEAR(order_date),
     shipping_state=shipping_address.state
-)
-GRAPH.CALCULATE(
-    avg_cost=AVG(package_info.package_cost),
-    final_year=MAX(package_info.order_year),
+).WHERE(order_year == final_year
 ).PARTITION(
-    package_info.WHERE(order_year == final_year),
     name="states",
     by=shipping_state
 ).WHERE(
@@ -1129,40 +1132,40 @@ GRAPH.CALCULATE(
 ```py
 %%pydough
 pack_info = Addresses.CALCULATE(city, state).packages_shipped_to
-city_groups = PARTITION(
-    packages_shipped_to, name="cities", by=(city, state)
+city_groups = pack_info.PARTITION(
+    name="cities", by=(city, state)
 ).CALCULATE(n_packages=COUNT(packages_shipped_to))
-PARTITION(
-    city_groups, name="states", by=state
-).CALcULATE(state, max_packs=MAX(cities.n_packages))
+city_groups.PARTITION(
+    name="states", by=state
+).CALCULATE(state, max_packs=MAX(cities.n_packages))
 ```
 
 **Bad Example #1**: Partition a collection `Products` that does not exist in the graph.
 
 ```py
 %%pydough
-PARTITION(Products, name="types", by=product_type)
+Products.PARTITION(name="types", by=product_type)
 ```
 
 **Bad Example #2**: Does not provide a valid `name` when partitioning `Addresses` by the state.
 
 ```py
 %%pydough
-PARTITION(Addresses, by=state)
+Addresses.PARTITION(by=state)
 ```
 
 **Bad Example #3**: Does not provide a `by` argument to partition `People`.
 
 ```py
 %%pydough
-PARTITION(People, name="groups")
+People.PARTITION(,name="groups")
 ```
 
 **Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed to be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
 
 ```py
 %%pydough
-PARTITION(Packages, name="years", by=YEAR(order_date)).CALCULATE(
+Packages.PARTITION(name="years", by=YEAR(order_date)).CALCULATE(
     n_packages=COUNT(Packages)
 )
 ```
@@ -1171,7 +1174,7 @@ PARTITION(Packages, name="years", by=YEAR(order_date)).CALCULATE(
 
 ```py
 %%pydough
-PARTITION(People, name="state", by=current_address.state).CALCULATE(
+People.PARTITION(name="state", by=current_address.state).CALCULATE(
     n_packages=COUNT(People)
 )
 ```
@@ -1180,7 +1183,7 @@ PARTITION(People, name="state", by=current_address.state).CALCULATE(
 
 ```py
 %%pydough
-PARTITION(Addresses.current_occupants, name="combinations", by=(state, first_name[:1])).CALCULATE(
+Addresses.current_occupants.PARTITION(name="combinations", by=(state, first_name[:1])).CALCULATE(
     state,
     first_name[:1],
     n_people=COUNT(current_occupants),
@@ -1191,36 +1194,21 @@ PARTITION(Addresses.current_occupants, name="combinations", by=(state, first_nam
 
 ```py
 %%pydough
-PARTITION(People.CALCULATE(birth_year=YEAR(birth_date)), name="years", by=birth_year).CALCULATE(
+People.CALCULATE(birth_year=YEAR(birth_date)).PARTITION(name="years", by=birth_year).CALCULATE(
     birth_year,
     email,
     n_people=COUNT(People)
 )
 ```
 
-**Bad Example #8**: For each person & year, count how many times that person ordered a packaged in that year. This is invalid because doing `.PARTITION` after `People` is unsupported, since `People` is not a graph-level collection like `GRAPH.CALCULATE(...)`.
+**Bad Example #8**: Partition people by their birth year to find the number of people born in each year. Invalid because the `People.email` property is referenced, which is plural with regards to the `years` collection and thus cannot be referenced in a calculate unless it is aggregated.
 
 ```py
 %%pydough
-People.CALCULATE(ssn).PARTITION(
-    packages.CALCULATE(year=YEAR(order_date)), name="years", by=year
-).CALCULATE(
-    ssn=ssn,
-    year=year,
-    n_packs=COUNT(People)
-)
-```
-
-**Bad Example #8**: For each person & year, count how many times that person ordered a packaged in that year. This is invalid because doing `.PARTITION` after `People` is unsupported, since `People` is not a graph-level collection like `GRAPH.CALCULATE(...)`.
-
-```py
-%%pydough
-People.CALCULATE(ssn).PARTITION(
-    packages.CALCULATE(year=YEAR(order_date)), name="years", by=year
-).CALCULATE(
-    ssn=ssn,
-    year=year,
-    n_packs=COUNT(People)
+People.CALCULATE(birth_year=YEAR(birth_date)).PARTITION(name="years", by=birth_year).CALCULATE(
+    birth_year,
+    People.email,
+    n_people=COUNT(People)
 )
 ```
 
@@ -1231,7 +1219,7 @@ People.CALCULATE(ssn).PARTITION(
 people_info = Addresses.CALCULATE(state).current_occupants.CALCULATE(
     first_letter=first_name[:1],
 )
-PARTITION(people_info, name="combinations", by=(state, first_letter)).CALCULATE(
+people_info.PARTITION(name="combinations", by=(state, first_letter)).CALCULATE(
     state,
     first_letter,
     n_people=COUNT(Addresses),
