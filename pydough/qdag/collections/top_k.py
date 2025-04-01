@@ -54,7 +54,7 @@ class TopK(OrderBy):
 
     def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
-            and isinstance(other, TopK)
+            isinstance(other, TopK)
             and self._records_to_keep == other._records_to_keep
+            and super().equals(other)
         )

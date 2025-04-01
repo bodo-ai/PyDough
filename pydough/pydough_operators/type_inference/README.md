@@ -18,6 +18,7 @@ This subdirectory of the PyDough operators directory deals with utilities used f
 - `RequireNumArgs`: Type verifier implementation class that requires an exact number of arguments.
 - `RequireMinArgs`: Type verifier implementation class that requires a minimum number of arguments.
 - `RequireArgRange`: Type verifier implementation class that requires the number of arguments to be between a minimum and maximum number inclusive on both ends.
+- `RequireCollection`: type verifier implementation class that requires a single argument that is a collection, as opposed to an expression.
 
 ## Usage
 

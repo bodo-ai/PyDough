@@ -7,7 +7,6 @@ import sqlite3
 from collections.abc import Callable
 
 import pytest
-from sqlglot.dialects import SQLite as SQLiteDialect
 from test_utils import (
     build_simple_scan,
     make_relational_column_reference,
@@ -15,6 +14,7 @@ from test_utils import (
     make_relational_ordering,
 )
 
+from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.pydough_operators import (
     ABS,
@@ -46,13 +46,8 @@ from pydough.relational import (
     RelationalRoot,
     WindowCallExpression,
 )
-from pydough.sqlglot import SqlGlotTransformBindings, convert_relation_to_sql
+from pydough.sqlglot import convert_relation_to_sql
 from pydough.types import BooleanType, Int64Type, StringType, UnknownType
-
-
-@pytest.fixture(scope="module")
-def sqlite_dialect() -> SQLiteDialect:
-    return SQLiteDialect()
 
 
 @pytest.mark.parametrize(
@@ -683,16 +678,17 @@ def sqlite_dialect() -> SQLiteDialect:
 def test_convert_relation_to_sqlite_sql(
     root: RelationalRoot,
     test_name: str,
-    sqlite_dialect: SQLiteDialect,
-    sqlite_bindings: SqlGlotTransformBindings,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
+    default_config: PyDoughConfigs,
 ) -> None:
     """
     Test converting a relational tree to SQL text in the SQLite dialect.
     """
     file_path: str = get_sql_test_filename(test_name, DatabaseDialect.SQLITE)
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, DatabaseDialect.SQLITE, default_config
+    )
     if update_tests:
         with open(file_path, "w") as f:
             f.write(created_sql + "\n")
@@ -1063,17 +1059,18 @@ def test_convert_relation_to_sqlite_sql(
 def test_function_to_sql(
     root: RelationalRoot,
     test_name: str,
-    sqlite_dialect: SQLiteDialect,
-    sqlite_bindings: SqlGlotTransformBindings,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
+    default_config: PyDoughConfigs,
 ) -> None:
     """
     Tests that should be small as we need to just test converting a function
     to SQL.
     """
     file_path: str = get_sql_test_filename(f"func_{test_name}", DatabaseDialect.ANSI)
-    created_sql: str = convert_relation_to_sql(root, sqlite_dialect, sqlite_bindings)
+    created_sql: str = convert_relation_to_sql(
+        root, DatabaseDialect.SQLITE, default_config
+    )
     if update_tests:
         with open(file_path, "w") as f:
             f.write(created_sql + "\n")

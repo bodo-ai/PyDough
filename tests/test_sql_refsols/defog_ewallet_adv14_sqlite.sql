@@ -3,21 +3,25 @@ SELECT
 FROM (
   SELECT
     COUNT() AS agg_1,
-    SUM(status = 'success') AS agg_0
+    SUM(expr_2) AS agg_0
   FROM (
     SELECT
-      status
+      status = 'success' AS expr_2
     FROM (
       SELECT
-        created_at,
         status
-      FROM main.wallet_transactions_daily
-    )
-    WHERE
-      (
+      FROM (
+        SELECT
+          created_at,
+          status
+        FROM main.wallet_transactions_daily
+      )
+      WHERE
         (
-          CAST(STRFTIME('%Y', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%Y', created_at) AS INTEGER)
-        ) * 12 + CAST(STRFTIME('%m', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%m', created_at) AS INTEGER)
-      ) = 1
+          (
+            CAST(STRFTIME('%Y', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%Y', created_at) AS INTEGER)
+          ) * 12 + CAST(STRFTIME('%m', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%m', created_at) AS INTEGER)
+        ) = 1
+    )
   )
 )

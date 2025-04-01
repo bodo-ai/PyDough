@@ -65,6 +65,32 @@ from pydough.types import Int64Type
             "Expected 2 arguments, received 3",
             id="require_one-two_arg",
         ),
+        pytest.param(
+            pydop.RequireMinArgs(1),
+            [],
+            "Expected at least 1 argument, received 0",
+            id="require_min_one-empty_args",
+        ),
+        pytest.param(
+            pydop.RequireArgRange(2, 3),
+            [LiteralInfo(10, Int64Type())],
+            "Expected between 2 and 3 arguments inclusive, received 1.",
+            id="require_two_three-one_arg",
+        ),
+        pytest.param(
+            pydop.RequireArgRange(2, 3),
+            [LiteralInfo(10, Int64Type())] * 5,
+            "Expected between 2 and 3 arguments inclusive, received 5.",
+            id="require_two_three-five_args",
+        ),
+        pytest.param(
+            pydop.RequireCollection(),
+            [
+                LiteralInfo(3, Int64Type()),
+            ],
+            "Expected a collection as an argument, received an expression",
+            id="require_collection-expression",
+        ),
     ],
 )
 def test_verification(

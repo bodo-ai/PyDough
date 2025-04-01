@@ -3,17 +3,21 @@ SELECT
 FROM (
   SELECT
     COUNT() AS agg_1,
-    SUM(status = 'success') AS agg_0
+    SUM(expr_2) AS agg_0
   FROM (
     SELECT
-      status
+      status = 'success' AS expr_2
     FROM (
       SELECT
-        created_at,
         status
-      FROM main.wallet_transactions_daily
+      FROM (
+        SELECT
+          created_at,
+          status
+        FROM main.wallet_transactions_daily
+      )
+      WHERE
+        DATEDIFF(CURRENT_TIMESTAMP(), created_at, MONTH) = 1
     )
-    WHERE
-      DATEDIFF(CURRENT_TIMESTAMP(), created_at, MONTH) = 1
   )
 )

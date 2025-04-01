@@ -249,11 +249,11 @@ def impl_defog_broker_adv8():
     is_american = HAS(customer.WHERE(LOWER(country) == "usa"))
     selected_txns = Transactions.WHERE(
         is_american
-        & (date_time < DATETIME("now", "start_of_week"))
-        & (date_time >= DATETIME("now", "start_of_week", "-1 week"))
+        & (date_time < DATETIME("now", "start of week"))
+        & (date_time >= DATETIME("now", "start of week", "-1 week"))
     )
     return Broker.CALCULATE(
-        n_transactions=COUNT(selected_txns),
+        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) > 0),
         total_amount=SUM(selected_txns.amount),
     )
 
@@ -268,11 +268,12 @@ def impl_defog_broker_adv9():
     aggregation.
     """
     selected_transactions = Transactions.WHERE(
-        (date_time < DATETIME("now", "start_of_week"))
-        & (date_time >= DATETIME("now", "start_of_week", "-8 weeks"))
+        (date_time < DATETIME("now", "start of week"))
+        & (date_time >= DATETIME("now", "start of week", "-8 weeks"))
+        & (ticker.ticker_type == "stock")
     ).CALCULATE(
         week=DATETIME(date_time, "start of week"),
-        is_weekend=ISIN(DAYOFWEEK(date_time), (0, 6)),
+        is_weekend=ISIN(DAYOFWEEK(date_time), (5, 6)),
     )
     weeks = PARTITION(selected_transactions, name="txns", by=week)
     return weeks.CALCULATE(
@@ -411,11 +412,11 @@ def impl_defog_broker_basic1():
     days, inclusive of 30 days ago? Return the country name, number of
     transactions and total transaction amount.
     """
-    counries = PARTITION(Customers, name="custs", by=country)
+    countries = PARTITION(Customers, name="custs", by=country)
     selected_txns = custs.transactions_made.WHERE(
         date_time >= DATETIME("now", "-30 days", "start of day")
     )
-    return counries.CALCULATE(
+    return countries.CALCULATE(
         country,
         num_transactions=COUNT(selected_txns),
         total_amount=SUM(selected_txns.amount),
@@ -1178,8 +1179,8 @@ def impl_defog_ewallet_adv2():
     past_notifs = (
         Users.WHERE(ISIN(country, ("US", "CA")))
         .notifications.WHERE(
-            (created_at < DATETIME("now", "start_of_week"))
-            & (created_at >= DATETIME("now", "start_of_week", "-3 weeks"))
+            (created_at < DATETIME("now", "start of week"))
+            & (created_at >= DATETIME("now", "start of week", "-3 weeks"))
         )
         .CALCULATE(
             week=DATETIME(created_at, "start of week"),
@@ -1189,8 +1190,8 @@ def impl_defog_ewallet_adv2():
     weeks = PARTITION(past_notifs, name="notifs", by=week)
     return weeks.CALCULATE(
         week,
-        num_notifs=COUNT(past_notifs),
-        weekend_notifs=SUM(past_notifs.is_weekend),
+        num_notifs=COUNT(notifs),
+        weekend_notifs=SUM(notifs.is_weekend),
     )
 
 
@@ -1607,15 +1608,15 @@ def impl_defog_ewallet_gen1():
     whose category contains 'retail'
     """
     active_merchants = Merchants.WHERE(
-        (CONTAINS(LOWER(category), "%retail%")) & (status == "active")
+        (CONTAINS(LOWER(category), "retail")) & (status == "active")
     )
 
-    latest_balance_today = balances.WHERE(
-        DATE(updated_at)
-        == DATE(DATETIME("now")) & (RANKING(updated_at.DESC(), levels=1) == 1)
+    latest_balance_today = active_merchants.balances.WHERE(
+        (DATETIME(updated_at, "start of day") == DATETIME("now", "start of day"))
+        & (RANKING(by=updated_at.DESC(), levels=1) == 1)
     )
 
-    return Ewallet.CALCULATE(MEDIAN(active_merchants.latest_balance_today.balance))
+    return Ewallet.CALCULATE(MEDIAN(latest_balance_today.balance))
 
 
 def impl_defog_ewallet_gen2():

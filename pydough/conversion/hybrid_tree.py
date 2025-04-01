@@ -26,12 +26,14 @@ __all__ = [
 ]
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
     CartesianProductMetadata,
     SimpleJoinMetadata,
@@ -66,7 +68,7 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.relational import JoinType
-from pydough.types import BooleanType, Int64Type, PyDoughType
+from pydough.types import BooleanType, Float64Type, Int64Type, PyDoughType
 
 
 class HybridExpr(ABC):
@@ -1270,7 +1272,7 @@ class HybridTranslator:
     Class used to translate PyDough QDAG nodes into the HybridTree structure.
     """
 
-    def __init__(self, configs: PyDoughConfigs):
+    def __init__(self, configs: PyDoughConfigs, dialect: DatabaseDialect):
         self.configs = configs
         # An index used for creating fake column names for aliases
         self.alias_counter: int = 0
@@ -1278,6 +1280,9 @@ class HybridTranslator:
         # as as subtree of the previous element, and the current tree is
         # being derived as the subtree of the last element.
         self.stack: list[HybridTree] = []
+        # If True, rewrites MEDIAN calls into an average of the 1-2 median rows
+        # via window functions, otherwise leaves as-is.
+        self.rewrite_median: bool = dialect not in {DatabaseDialect.ANSI}
 
     @staticmethod
     def get_join_keys(
@@ -1422,7 +1427,7 @@ class HybridTranslator:
                 else:
                     for arg in expr.args:
                         if isinstance(arg, ChildReferenceCollection):
-                            # If the argument is a refernece to a child,
+                            # If the argument is a reference to a child,
                             # collection, e.g. `COUNT(X)`, treat as an
                             # aggregation reference if it refers to the child
                             # in question.
@@ -1441,6 +1446,96 @@ class HybridTranslator:
                             )
             case _:
                 return
+
+    def inject_expression(
+        self, hybrid: HybridTree, expr: HybridExpr, create_new_calc: bool
+    ) -> HybridExpr:
+        """
+        Injects a hybrid expression into the HybridTree's terms, returning
+        the new name it was injected with.
+
+        Args:
+            `hybrid`: the base of the HybridTree to inject the expression into.
+            `expr`: the expression to be injected.
+            `create_new_calc`: if True, injects the expression into a new
+            CALCULATE operation. If False, injects the expression into the
+            last CALCULATE operation in the pipeline, if there is one at the
+            end, otherwise creates a new one.
+
+        Returns:
+            The HybridExpr corresponding to the injected expression.
+        """
+        name: str = self.get_internal_name("expr", [hybrid.pipeline[-1].terms])
+        if isinstance(hybrid.pipeline[-1], HybridCalculate) and not create_new_calc:
+            hybrid.pipeline[-1].terms[name] = expr
+            hybrid.pipeline[-1].new_expressions[name] = expr
+        else:
+            hybrid.pipeline.append(
+                HybridCalculate(
+                    hybrid.pipeline[-1],
+                    {name: expr},
+                    hybrid.pipeline[-1].orderings,
+                )
+            )
+        return HybridRefExpr(name, expr.typ)
+
+    def eject_aggregate_inputs(self, hybrid: HybridTree) -> None:
+        """
+        Ensures that any inputs to aggregation calls are only references to
+        columns from the subtree of the hybrid connection being aggregated.
+
+        Args:
+            `hybrid`: the base of the HybridTree to eject the aggregate inputs
+            from. The ancestors & children of `hybrid` must also be processed.
+        """
+        if hybrid.parent is not None:
+            self.eject_aggregate_inputs(hybrid.parent)
+        for child in hybrid.children:
+            self.eject_aggregate_inputs(child.subtree)
+            create_new_calc: bool = True
+            for agg_name, agg_call in sorted(child.aggs.items()):
+                rewritten: bool = False
+                new_args: list[HybridExpr] = []
+                for arg in agg_call.args:
+                    if isinstance(arg, HybridRefExpr):
+                        new_args.append(arg)
+                    else:
+                        rewritten = True
+                        new_args.append(
+                            self.inject_expression(child.subtree, arg, create_new_calc)
+                        )
+                        create_new_calc = False
+                if rewritten:
+                    child.aggs[agg_name] = HybridFunctionExpr(
+                        agg_call.operator,
+                        new_args,
+                        agg_call.typ,
+                    )
+
+    def run_rewrites(self, hybrid: HybridTree):
+        """
+        Run any rewrite procedures that must occur after de-correlation, such
+        as converting MEDIAN to an average of the 1-2 median rows.
+
+        Args:
+            `hybrid`: the bottom of the hybrid tree to rewrite.
+        """
+        # Recursively proceed on the ancestors & children
+        if hybrid.parent is not None:
+            self.run_rewrites(hybrid.parent)
+        for child in hybrid.children:
+            self.run_rewrites(child.subtree)
+
+        create_new_calc: bool = True
+        # Rewrite any MEDIAN calls
+        if self.rewrite_median:
+            for child in hybrid.children:
+                for agg_name, agg_call in child.aggs.items():
+                    if agg_call.operator == pydop.MEDIAN:
+                        child.aggs[agg_name] = self.rewrite_median_call(
+                            child, agg_call, create_new_calc
+                        )
+                        create_new_calc = False
 
     def populate_children(
         self,
@@ -1590,7 +1685,7 @@ class HybridTranslator:
         return self.get_internal_name("ordering", [hybrid.pipeline[-1].terms])
 
     def get_internal_name(
-        self, prefix: str, reserved_names: list[dict[str, Any]]
+        self, prefix: str, reserved_names: list[Iterable[str]]
     ) -> str:
         """
         Generates a name to be used in the terms of a HybridTree with a
@@ -1801,6 +1896,80 @@ class HybridTranslator:
         joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
         return self.postprocess_agg_output(hybrid_call, result_ref, joins_can_nullify)
 
+    def rewrite_median_call(
+        self,
+        child_connection: HybridConnection,
+        expr: HybridFunctionExpr,
+        create_new_calc: bool,
+    ) -> HybridFunctionExpr:
+        """
+        Transforms a MEDIAN call into an AVG of the 1-2 median rows
+        (obtained via window functions). This step must be done after
+        de-correlation because it invokes the aggregation keys used for the
+        child connection, which may change during de-correlation.
+
+        Args:
+            `child`: the child connection containing the aggregate call to
+            MEDIAN as one of its aggs.
+            `expr`: the aggregation function QDAG expression to be converted.
+            `create_new_calc`: if True, creates a new CALCULATE when injecting
+            the inputs to the AVG call into the child.
+        """
+        assert expr.operator == pydop.MEDIAN
+        # Build an expression that makes all rows null except the 1-2 median
+        # rows. The formula to find the kept rows is the following:
+        #   ABS((r - 1) - (n - 1) / 2) < 1
+        # Where `r` is the row number (sorted by the median column) and `n`
+        # is the number of non-null rows of the median column. The window
+        # functions are computed with the same partitioning keys that will be
+        # used to aggregate the child connection.
+        assert len(expr.args) == 1
+        data_expr: HybridExpr = expr.args[0]
+        one: HybridExpr = HybridLiteralExpr(Literal(1.0, Float64Type()))
+        two: HybridExpr = HybridLiteralExpr(Literal(2.0, Float64Type()))
+        assert child_connection.subtree.agg_keys is not None
+        partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
+        order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
+        rank: HybridExpr = HybridWindowExpr(
+            pydop.RANKING, [], partition_args, order_args, Int64Type(), {}
+        )
+        rows: HybridExpr = HybridWindowExpr(
+            pydop.RELCOUNT, [data_expr], partition_args, [], Int64Type(), {}
+        )
+        adjusted_rank: HybridExpr = HybridFunctionExpr(
+            pydop.SUB, [rank, one], Float64Type()
+        )
+        adjusted_rows: HybridExpr = HybridFunctionExpr(
+            pydop.SUB, [rows, one], Float64Type()
+        )
+        centerpoint: HybridExpr = HybridFunctionExpr(
+            pydop.DIV, [adjusted_rows, two], Float64Type()
+        )
+        distance_from_center = HybridFunctionExpr(
+            pydop.ABS,
+            [
+                HybridFunctionExpr(
+                    pydop.SUB, [adjusted_rank, centerpoint], Float64Type()
+                )
+            ],
+            Float64Type(),
+        )
+        is_median_row: HybridExpr = HybridFunctionExpr(
+            pydop.LET, [distance_from_center, one], BooleanType()
+        )
+        median_rows_arg: HybridExpr = HybridFunctionExpr(
+            pydop.KEEP_IF, [data_expr, is_median_row], data_expr.typ
+        )
+        # Build a call to AVG on those 1-2 rows.
+        median_rows_arg = self.inject_expression(
+            child_connection.subtree, median_rows_arg, create_new_calc
+        )
+        avg_call: HybridFunctionExpr = HybridFunctionExpr(
+            pydop.AVG, [median_rows_arg], expr.typ
+        )
+
+        return avg_call
+
     def make_hybrid_correl_expr(
         self,
         back_expr: BackReferenceExpression,
@@ -1836,7 +2005,7 @@ class HybridTranslator:
         )
         if partition_edge_case:
             assert parent_tree.parent is not None
-            # Treat the partition's parent as the conext for the back
+            # Treat the partition's parent as the context for the back
             # to step into, as opposed to the partition itself (so the back
             # levels are consistent)
             self.stack.append(parent_tree.parent)
@@ -1875,7 +2044,7 @@ class HybridTranslator:
         if not isinstance(parent_result, HybridCorrelExpr):
             parent_tree.correlated_children.add(len(parent_tree.children))
         # Restore parent_tree back onto the stack, since evaluating `back_expr`
-        # does not change the program's current placement in the sutbtrees.
+        # does not change the program's current placement in the subtrees.
         self.stack.append(parent_tree)
         # Create the correlated reference to the expression with regards to
         # the parent tree, which could also be a correlated expression.
@@ -1887,6 +2056,7 @@ class HybridTranslator:
         levels_remaining: int,
         levels_so_far: int,
         partition_args: list[HybridExpr],
+        child_idx: int | None,
     ) -> None:
         """
         Populates a list of partition keys with the unique terms of an ancestor
@@ -1901,6 +2071,9 @@ class HybridTranslator:
             so far.
             `partition_args`: the list of partition keys that is being
             populated with the unique terms of the ancestor level.
+            `child_idx`: the index to use when identifying that a child node
+            has become correlated. If not provided, uses the value from the
+            top of the stack.
         """
         # When the number of levels remaining to step back is 0, we have
         # reached the targeted ancestor, so we add the unique terms.
@@ -1917,17 +2090,26 @@ class HybridTranslator:
                 raise ValueError("Window function references too far back")
             prev_hybrid: HybridTree = self.stack.pop()
             correl_args: list[HybridExpr] = []
-            self.add_unique_terms(prev_hybrid, levels_remaining - 1, 0, correl_args)
+            self.add_unique_terms(
+                prev_hybrid, levels_remaining - 1, 0, correl_args, child_idx
+            )
             for arg in correl_args:
                 if not isinstance(arg, HybridCorrelExpr):
-                    prev_hybrid.correlated_children.add(len(prev_hybrid.children))
+                    if child_idx is not None:
+                        prev_hybrid.correlated_children.add(child_idx)
+                    else:
+                        prev_hybrid.correlated_children.add(len(prev_hybrid.children))
                 partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
             self.stack.append(prev_hybrid)
         else:
-            # Otherwise, we hae to step back further, so we recursively
+            # Otherwise, we have to step back further, so we recursively
             # repeat the procedure one level further up in the hybrid tree.
             self.add_unique_terms(
-                hybrid.parent, levels_remaining - 1, levels_so_far + 1, partition_args
+                hybrid.parent,
+                levels_remaining - 1,
+                levels_so_far + 1,
+                partition_args,
+                child_idx,
             )
 
     def make_hybrid_expr(
@@ -1948,7 +2130,7 @@ class HybridTranslator:
             `child_ref_mapping`: mapping of indices used by child references in
             the original expressions to the index of the child hybrid tree
             relative to the current level.
-            `inside_agg`: True if `expr` is beign derived is inside of an
+            `inside_agg`: True if `expr` is being derived is inside of an
             aggregation call, False otherwise.
 
         Returns:
@@ -2081,7 +2263,7 @@ class HybridTranslator:
                 # If the levels argument was provided, find the partition keys
                 # for that ancestor level.
                 if expr.levels is not None:
-                    self.add_unique_terms(hybrid, expr.levels, 0, partition_args)
+                    self.add_unique_terms(hybrid, expr.levels, 0, partition_args, None)
                 # Convert all of the window function arguments to hybrid
                 # expressions.
                 for arg in expr.args:

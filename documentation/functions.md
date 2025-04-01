@@ -34,6 +34,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [MINUTE](#minute)
    * [SECOND](#second)
    * [DATEDIFF](#datediff)
+   * [DAYOFWEEK](#dayofweek)
+   * [DAYNAME](#dayname)
 - [Conditional Functions](#conditional-functions)
    * [IFF](#iff)
    * [ISIN](#isin)
@@ -51,6 +53,7 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
+   * [MEDIAN](#median)
    * [MIN](#min)
    * [MAX](#max)
    * [ANYTHING](#anything)
@@ -409,10 +412,11 @@ The modifier arguments can be the following (all of the options are case-insensi
    - **Years**: Supported aliases are `"years"`, `"year"`, and `"y"`.
    - **Months**: Supported aliases are `"months"`, `"month"`, and `"mm"`.
    - **Days**: Supported aliases are `"days"`, `"day"`, and `"d"`.
+   - **Weeks**: Supported aliases are `"weeks"`, `"week"`, and `"w"`.
    - **Hours**: Supported aliases are `"hours"`, `"hour"`, and `"h"`.
    - **Minutes**: Supported aliases are `"minutes"`, `"minute"`, and `"m"`.
    - **Seconds**: Supported aliases are `"seconds"`, `"second"`, and `"s"`.
-- A string literal in the form `±<AMT> <UNIT>` indicating to add/subtract a date/time interval to the datetime value. The sign can be `+` or `-`, and if omitted the default is `+`. The amount must be an integer. The unit must be one of the same unit strings allowed for trucation.
+- A string literal in the form `±<AMT> <UNIT>` indicating to add/subtract a date/time interval to the datetime value. The sign can be `+` or `-`, and if omitted the default is `+`. The amount must be an integer. The unit must be one of the same unit strings allowed for truncation.
 
 For example, `"Days"`, `"DAYS"`, and `"d"` are all treated the same due to case insensitivity.
 
@@ -508,6 +512,12 @@ Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`
 
 - `DATEDIFF("years", x, y)`: Returns the **number of full years since x that y occurred**. For example, if **x** is December 31, 2009, and **y** is January 1, 2010, it counts as **1 year apart**, even though they are only 1 day apart.
 - `DATEDIFF("months", x, y)`: Returns the **number of full months since x that y occurred**. For example, if **x** is January 31, 2014, and **y** is February 1, 2014, it counts as **1 month apart**, even though they are only 1 day apart.
+- `DATEDIFF("weeks", x, y)`: Returns the **number of full weeks since x that y occurred**. The dates x and y are first truncated to the start of week (as specified by the `start_of_week` config), then the difference in number of full weeks is calculated (a week is defined as 7 days). For example, if `start_of_week` is set to Saturday:
+  ```python
+  # If x is "2025-03-18" (Tuesday) and y is "2025-03-31" (Monday)
+  DATEDIFF("weeks", x, y) returns 2
+  ```
+ Please see the [Session Configs](./usage.md#session-configs) documentation for more details and in-depth examples.
 - `DATEDIFF("days", x, y)`: Returns the **number of full days since x that y occurred**. For example, if **x** is 11:59 PM on one day, and **y** is 12:01 AM the next day, it counts as **1 day apart**, even though they are only 2 minutes apart.
 - `DATEDIFF("hours", x, y)`: Returns the **number of full hours since x that y occurred**. For example, if **x** is 6:59 PM and **y** is 7:01 PM on the same day, it counts as **1 hour apart**, even though the difference is only 2 minutes.
 - `DATEDIFF("minutes", x, y)`: Returns the **number of full minutes since x that y occurred**. For example, if **x** is 7:00 PM and **y** is 7:01 PM, it counts as **1 minute apart**, even though the difference is exactly 60 seconds.
@@ -521,7 +531,44 @@ Orders.CALCULATE(
 )
 ```
 
-The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown. See [`DATETIME`](#datetime) for the supported units and their aliases. Invalid or unrecognized units will result in an error. 
+The first argument in the `DATEDIFF` function supports the following aliases for each unit of time. The argument is **case-insensitive**, and if a unit is not one of the provided options, an error will be thrown. See [`DATETIME`](#datetime) for the supported units and their aliases. Invalid or unrecognized units will result in an error.
+
+<!-- TOC --><a name="dayofweek"></a>
+
+### DAYOFWEEK
+
+The `DAYOFWEEK` function returns the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns an integer between 1 and 7, or between 0 and 6, depending on the `start_of_week` config and `start_week_as_zero` config. Please see the [Session Configs](./usage.md#session-configs) documentation for more details and in-depth examples.
+
+In other words, `DAYOFWEEK` returns which day of the week is the given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config.
+
+```py
+# Returns the day of the week for the order date
+Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
+```
+
+The following table shows the day of the week for a given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config and if the week starts at 0 or 1 decided by the `start_week_as_zero` config.
+
+| Day of Week  | Start is Sunday, Start at 0 | Start is Sunday, Start at 1 | Start is Monday, Start at 0 | Start is Monday, Start at 1 |
+|--------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| Sunday       | 0                           | 1                           | 6                           | 7                           |
+| Monday       | 1                           | 2                           | 0                           | 1                           |
+| Tuesday      | 2                           | 3                           | 1                           | 2                           |
+| Wednesday    | 3                           | 4                           | 2                           | 3                           |
+| Thursday     | 4                           | 5                           | 3                           | 4                           |
+| Friday       | 5                           | 6                           | 4                           | 5                           |
+| Saturday     | 6                           | 7                           | 5                           | 6                           |
+
+
+<!-- TOC --><a name="dayname"></a>
+
+### DAYNAME
+
+The `DAYNAME` function returns the name of the day of the week for a given date/timestamp. It takes a single argument, which is a date/timestamp, and returns a string, corresponding to the name of the day of the week. This returns one of the following: `"Monday"`, `"Tuesday"`, `"Wednesday"`, `"Thursday"`, `"Friday"`, `"Saturday"`, or `"Sunday"`.
+
+```py
+# Returns the name of the day of the week for the order date
+Orders.CALCULATE(day_name = DAYNAME(order_date))
+```
 
 <!-- TOC --><a name="conditional-functions"></a>
 
@@ -702,6 +749,20 @@ The `AVG` function takes the average of the plural set of numerical values it is
 
 ```py
 Parts.CALCULATE(average_shipment_size = AVG(lines.quantity))
+```
+
+<!-- TOC --><a name="median"></a>
+
+### MEDIAN
+
+The `MEDIAN` function takes the median of the plural set of numerical values it is called on.
+Note: absent records are ignored when deriving the median.
+
+```py
+Customers.CALCULATE(
+   name,
+   median_order_price = MEDIAN(orders.total_price)
+)
 ```
 
 <!-- TOC --><a name="min"></a>
@@ -933,7 +994,7 @@ The `RELAVG` function returns the average of multiple rows of a singular express
 Customers.WHERE(acctbal > RELAVG(acctbal))
 
 # Finds all customers whose account balance is above the average of all
-# ustomers' account balances within that nation.
+# customers' account balances within that nation.
 Nations.customers.WHERE(acctbal > RELAVG(acctbal, levels=1))
 ```
 

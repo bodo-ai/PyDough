@@ -7,13 +7,14 @@ import json
 import os
 import sqlite3
 from collections.abc import Callable, MutableMapping
+from functools import cache
 
 import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
@@ -22,7 +23,6 @@ from pydough.database_connectors import (
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
-from pydough.sqlglot import SqlGlotTransformBindings
 
 
 @pytest.fixture
@@ -35,6 +35,42 @@ def default_config() -> PyDoughConfigs:
     # Set the defaults manually, in case they ever change.
     config.sum_default_zero = True
     config.avg_default_zero = False
+    config.start_of_week = DayOfWeek.SUNDAY
+    config.start_week_as_zero = True
+    return config
+
+
+@pytest.fixture
+def defog_config() -> PyDoughConfigs:
+    """
+    The configuration of PyDoughConfigs used in testing defog.ai standard
+    queries. This is re-created with each request since a test function can
+    mutate this.
+    """
+    config: PyDoughConfigs = PyDoughConfigs()
+    # Set the config values to match the defog.ai queries.
+    config.sum_default_zero = True
+    config.avg_default_zero = False
+    config.start_of_week = DayOfWeek.MONDAY
+    config.start_week_as_zero = True
+    return config
+
+
+@pytest.fixture(
+    params=[
+        pytest.param((sow, swaz), id=f"{sow.name.lower()}-{'zero' if swaz else 'one'}")
+        for sow in list(DayOfWeek)
+        for swaz in (True, False)
+    ]
+)
+def week_handling_config(request):
+    """
+    Fixture which sets the start of week and start week as zero configuration.
+    """
+    config: PyDoughConfigs = PyDoughConfigs()
+    start_of_week_config, start_week_as_zero_config = request.param
+    config.start_of_week = start_of_week_config
+    config.start_week_as_zero = start_week_as_zero_config
     return config
 
 
@@ -79,7 +115,7 @@ def sample_graph_names(request) -> str:
     return request.param
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def get_sample_graph(
     sample_graph_path: str,
     valid_sample_graph_names: set[str],
@@ -89,6 +125,7 @@ def get_sample_graph(
     graph names and returns the metadata for that PyDough graph.
     """
 
+    @cache
     def impl(name: str) -> GraphMetadata:
         if name not in valid_sample_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
@@ -132,10 +169,10 @@ def sample_graphs(
     return get_sample_graph(sample_graph_names)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tpch_node_builder(get_sample_graph) -> AstNodeBuilder:
     """
-    Builds a QDAG node builder using the TPCH graoh.
+    Builds a QDAG node builder using the TPCH graph.
     """
     return AstNodeBuilder(get_sample_graph("TPCH"))
 
@@ -313,23 +350,14 @@ def sqlite_tpch_db_context(sqlite_tpch_db_path: str, sqlite_tpch_db) -> Database
     return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
 
 
-@pytest.fixture
-def sqlite_bindings() -> SqlGlotTransformBindings:
-    """
-    Return a function transformation bindings instance for SQLite.
-    """
-    bindings: SqlGlotTransformBindings = SqlGlotTransformBindings()
-    bindings.set_dialect(DatabaseDialect.SQLITE)
-    return bindings
-
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def defog_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database.
     """
     # Setup the directory to be the main PyDough directory.
 
+    @cache
     def impl(name: str) -> GraphMetadata:
         path: str = f"{os.path.dirname(__file__)}/test_metadata/defog_graphs.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)

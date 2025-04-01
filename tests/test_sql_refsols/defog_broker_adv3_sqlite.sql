@@ -24,13 +24,18 @@ FROM (
     LEFT JOIN (
       SELECT
         COUNT() AS agg_0,
-        SUM(status = 'success') AS agg_1,
+        SUM(expr_3) AS agg_1,
         customer_id
       FROM (
         SELECT
-          sbTxCustId AS customer_id,
-          sbTxStatus AS status
-        FROM main.sbTransaction
+          status = 'success' AS expr_3,
+          customer_id
+        FROM (
+          SELECT
+            sbTxCustId AS customer_id,
+            sbTxStatus AS status
+          FROM main.sbTransaction
+        )
       )
       GROUP BY
         customer_id

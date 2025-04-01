@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow on custom queries using the defog.ai
 schemas.
 """
 
+import re
 from collections.abc import Callable
 
 import pandas as pd
@@ -40,8 +41,11 @@ from simple_pydough_functions import (
     multi_partition_access_6,
     padding_functions,
     sign,
+    simple_week_sampler,
     step_slicing,
     strip,
+    transaction_week_sampler,
+    week_offset,
     years_months_days_hours_datediff,
 )
 from test_utils import (
@@ -49,7 +53,7 @@ from test_utils import (
 )
 
 from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
+from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
@@ -61,6 +65,68 @@ from pydough.unqualified import (
     UnqualifiedRoot,
     qualify_node,
 )
+
+
+# Helper functions for week calculations
+def get_start_of_week(dt: pd.Timestamp | str, start_of_week: DayOfWeek):
+    """
+    Calculate the start of week date for a given datetime
+    Args:
+        dt : The datetime to find the start of week for
+        start_of_week: Enum value representing which day is considered
+                        the start of the week (e.g., DayOfWeek.MONDAY)
+
+    Returns:
+        The start of the week for the given datetime
+    """
+    # Convert to pandas datetime if not already
+    dt_ts: pd.Timestamp = pd.to_datetime(dt)
+    # Get the day of week (0-6, where 0 is Monday)
+    weekday: int = dt_ts.weekday()
+    # Calculate days to subtract to get to start of week
+    days_to_subtract: int = (weekday - start_of_week.pandas_dow) % 7
+    # Get start of week and set to midnight
+    sow: pd.Timestamp = dt_ts - pd.Timedelta(days=days_to_subtract)
+    # Return only year, month, day
+    return pd.Timestamp(sow.year, sow.month, sow.day)
+
+
+def get_day_name(dt: pd.Timestamp):
+    """
+    Get the name of the day for a given datetime
+    Args:
+        dt: The datetime to get the day name for
+    Returns:
+        The name of the day for the given datetime
+    """
+    day_names: list[str] = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    return day_names[dt.weekday()]
+
+
+def get_day_of_week(
+    dt: pd.Timestamp, start_of_week: DayOfWeek, start_week_as_zero: bool
+):
+    """
+    Calculate day of week (0-based or 1-based depending on configuration)
+    Args:
+        dt: The datetime to get the day of week for
+        start_of_week: Enum value representing which day is considered
+                        the start of the week (e.g., DayOfWeek.MONDAY)
+        start_week_as_zero: Whether to start counting from 0 or 1
+    """
+    # Get days since start of week
+    start_of_week_date: pd.Timestamp = get_start_of_week(dt, start_of_week)
+    days_since_start: int = (dt - start_of_week_date).days
+    # Adjust based on whether we start counting from 0 or 1
+    return days_since_start if start_week_as_zero else days_since_start + 1
 
 
 @pytest.fixture(
@@ -775,6 +841,280 @@ from pydough.unqualified import (
             ),
             id="strip",
         ),
+        pytest.param(
+            (
+                week_offset,
+                None,
+                "Broker",
+                "week_offset",
+                lambda: pd.DataFrame(
+                    {
+                        "date_time": [
+                            "2023-04-02 09:30:00",
+                            "2023-04-02 10:15:00",
+                            "2023-04-02 11:00:00",
+                            "2023-04-02 11:45:00",
+                            "2023-04-02 12:30:00",
+                            "2023-04-02 13:15:00",
+                            "2023-04-02 14:00:00",
+                            "2023-04-02 14:45:00",
+                            "2023-04-02 15:30:00",
+                            "2023-04-02 16:15:00",
+                            "2023-04-03 09:30:00",
+                            "2023-04-03 10:15:00",
+                            "2023-04-03 11:00:00",
+                            "2023-04-03 11:45:00",
+                            "2023-04-03 12:30:00",
+                            "2023-04-03 13:15:00",
+                            "2023-04-03 14:00:00",
+                            "2023-04-03 14:45:00",
+                            "2023-04-03 15:30:00",
+                            "2023-04-03 16:15:00",
+                            "2023-01-15 10:00:00",
+                            "2023-01-16 10:30:00",
+                            "2023-02-20 11:30:00",
+                            "2023-03-25 14:45:00",
+                            "2023-01-30 13:15:00",
+                            "2023-02-28 16:00:00",
+                            "2023-03-30 09:45:00",
+                        ],
+                        "week_adj1": [
+                            "2023-04-09 09:30:00",
+                            "2023-04-09 10:15:00",
+                            "2023-04-09 11:00:00",
+                            "2023-04-09 11:45:00",
+                            "2023-04-09 12:30:00",
+                            "2023-04-09 13:15:00",
+                            "2023-04-09 14:00:00",
+                            "2023-04-09 14:45:00",
+                            "2023-04-09 15:30:00",
+                            "2023-04-09 16:15:00",
+                            "2023-04-10 09:30:00",
+                            "2023-04-10 10:15:00",
+                            "2023-04-10 11:00:00",
+                            "2023-04-10 11:45:00",
+                            "2023-04-10 12:30:00",
+                            "2023-04-10 13:15:00",
+                            "2023-04-10 14:00:00",
+                            "2023-04-10 14:45:00",
+                            "2023-04-10 15:30:00",
+                            "2023-04-10 16:15:00",
+                            "2023-01-22 10:00:00",
+                            "2023-01-23 10:30:00",
+                            "2023-02-27 11:30:00",
+                            "2023-04-01 14:45:00",
+                            "2023-02-06 13:15:00",
+                            "2023-03-07 16:00:00",
+                            "2023-04-06 09:45:00",
+                        ],
+                        "week_adj2": [
+                            "2023-03-26 09:30:00",
+                            "2023-03-26 10:15:00",
+                            "2023-03-26 11:00:00",
+                            "2023-03-26 11:45:00",
+                            "2023-03-26 12:30:00",
+                            "2023-03-26 13:15:00",
+                            "2023-03-26 14:00:00",
+                            "2023-03-26 14:45:00",
+                            "2023-03-26 15:30:00",
+                            "2023-03-26 16:15:00",
+                            "2023-03-27 09:30:00",
+                            "2023-03-27 10:15:00",
+                            "2023-03-27 11:00:00",
+                            "2023-03-27 11:45:00",
+                            "2023-03-27 12:30:00",
+                            "2023-03-27 13:15:00",
+                            "2023-03-27 14:00:00",
+                            "2023-03-27 14:45:00",
+                            "2023-03-27 15:30:00",
+                            "2023-03-27 16:15:00",
+                            "2023-01-08 10:00:00",
+                            "2023-01-09 10:30:00",
+                            "2023-02-13 11:30:00",
+                            "2023-03-18 14:45:00",
+                            "2023-01-23 13:15:00",
+                            "2023-02-21 16:00:00",
+                            "2023-03-23 09:45:00",
+                        ],
+                        "week_adj3": [
+                            "2023-04-16 10:30:00",
+                            "2023-04-16 11:15:00",
+                            "2023-04-16 12:00:00",
+                            "2023-04-16 12:45:00",
+                            "2023-04-16 13:30:00",
+                            "2023-04-16 14:15:00",
+                            "2023-04-16 15:00:00",
+                            "2023-04-16 15:45:00",
+                            "2023-04-16 16:30:00",
+                            "2023-04-16 17:15:00",
+                            "2023-04-17 10:30:00",
+                            "2023-04-17 11:15:00",
+                            "2023-04-17 12:00:00",
+                            "2023-04-17 12:45:00",
+                            "2023-04-17 13:30:00",
+                            "2023-04-17 14:15:00",
+                            "2023-04-17 15:00:00",
+                            "2023-04-17 15:45:00",
+                            "2023-04-17 16:30:00",
+                            "2023-04-17 17:15:00",
+                            "2023-01-29 11:00:00",
+                            "2023-01-30 11:30:00",
+                            "2023-03-06 12:30:00",
+                            "2023-04-08 15:45:00",
+                            "2023-02-13 14:15:00",
+                            "2023-03-14 17:00:00",
+                            "2023-04-13 10:45:00",
+                        ],
+                        "week_adj4": [
+                            "2023-04-16 09:29:59",
+                            "2023-04-16 10:14:59",
+                            "2023-04-16 10:59:59",
+                            "2023-04-16 11:44:59",
+                            "2023-04-16 12:29:59",
+                            "2023-04-16 13:14:59",
+                            "2023-04-16 13:59:59",
+                            "2023-04-16 14:44:59",
+                            "2023-04-16 15:29:59",
+                            "2023-04-16 16:14:59",
+                            "2023-04-17 09:29:59",
+                            "2023-04-17 10:14:59",
+                            "2023-04-17 10:59:59",
+                            "2023-04-17 11:44:59",
+                            "2023-04-17 12:29:59",
+                            "2023-04-17 13:14:59",
+                            "2023-04-17 13:59:59",
+                            "2023-04-17 14:44:59",
+                            "2023-04-17 15:29:59",
+                            "2023-04-17 16:14:59",
+                            "2023-01-29 09:59:59",
+                            "2023-01-30 10:29:59",
+                            "2023-03-06 11:29:59",
+                            "2023-04-08 14:44:59",
+                            "2023-02-13 13:14:59",
+                            "2023-03-14 15:59:59",
+                            "2023-04-13 09:44:59",
+                        ],
+                        "week_adj5": [
+                            "2023-04-17 09:30:00",
+                            "2023-04-17 10:15:00",
+                            "2023-04-17 11:00:00",
+                            "2023-04-17 11:45:00",
+                            "2023-04-17 12:30:00",
+                            "2023-04-17 13:15:00",
+                            "2023-04-17 14:00:00",
+                            "2023-04-17 14:45:00",
+                            "2023-04-17 15:30:00",
+                            "2023-04-17 16:15:00",
+                            "2023-04-18 09:30:00",
+                            "2023-04-18 10:15:00",
+                            "2023-04-18 11:00:00",
+                            "2023-04-18 11:45:00",
+                            "2023-04-18 12:30:00",
+                            "2023-04-18 13:15:00",
+                            "2023-04-18 14:00:00",
+                            "2023-04-18 14:45:00",
+                            "2023-04-18 15:30:00",
+                            "2023-04-18 16:15:00",
+                            "2023-01-30 10:00:00",
+                            "2023-01-31 10:30:00",
+                            "2023-03-07 11:30:00",
+                            "2023-04-09 14:45:00",
+                            "2023-02-14 13:15:00",
+                            "2023-03-15 16:00:00",
+                            "2023-04-14 09:45:00",
+                        ],
+                        "week_adj6": [
+                            "2023-04-16 09:29:00",
+                            "2023-04-16 10:14:00",
+                            "2023-04-16 10:59:00",
+                            "2023-04-16 11:44:00",
+                            "2023-04-16 12:29:00",
+                            "2023-04-16 13:14:00",
+                            "2023-04-16 13:59:00",
+                            "2023-04-16 14:44:00",
+                            "2023-04-16 15:29:00",
+                            "2023-04-16 16:14:00",
+                            "2023-04-17 09:29:00",
+                            "2023-04-17 10:14:00",
+                            "2023-04-17 10:59:00",
+                            "2023-04-17 11:44:00",
+                            "2023-04-17 12:29:00",
+                            "2023-04-17 13:14:00",
+                            "2023-04-17 13:59:00",
+                            "2023-04-17 14:44:00",
+                            "2023-04-17 15:29:00",
+                            "2023-04-17 16:14:00",
+                            "2023-01-29 09:59:00",
+                            "2023-01-30 10:29:00",
+                            "2023-03-06 11:29:00",
+                            "2023-04-08 14:44:00",
+                            "2023-02-13 13:14:00",
+                            "2023-03-14 15:59:00",
+                            "2023-04-13 09:44:00",
+                        ],
+                        "week_adj7": [
+                            "2023-05-16 09:30:00",
+                            "2023-05-16 10:15:00",
+                            "2023-05-16 11:00:00",
+                            "2023-05-16 11:45:00",
+                            "2023-05-16 12:30:00",
+                            "2023-05-16 13:15:00",
+                            "2023-05-16 14:00:00",
+                            "2023-05-16 14:45:00",
+                            "2023-05-16 15:30:00",
+                            "2023-05-16 16:15:00",
+                            "2023-05-17 09:30:00",
+                            "2023-05-17 10:15:00",
+                            "2023-05-17 11:00:00",
+                            "2023-05-17 11:45:00",
+                            "2023-05-17 12:30:00",
+                            "2023-05-17 13:15:00",
+                            "2023-05-17 14:00:00",
+                            "2023-05-17 14:45:00",
+                            "2023-05-17 15:30:00",
+                            "2023-05-17 16:15:00",
+                            "2023-03-01 10:00:00",
+                            "2023-03-02 10:30:00",
+                            "2023-04-03 11:30:00",
+                            "2023-05-09 14:45:00",
+                            "2023-03-16 13:15:00",
+                            "2023-04-11 16:00:00",
+                            "2023-05-14 09:45:00",
+                        ],
+                        "week_adj8": [
+                            "2024-04-16 09:30:00",
+                            "2024-04-16 10:15:00",
+                            "2024-04-16 11:00:00",
+                            "2024-04-16 11:45:00",
+                            "2024-04-16 12:30:00",
+                            "2024-04-16 13:15:00",
+                            "2024-04-16 14:00:00",
+                            "2024-04-16 14:45:00",
+                            "2024-04-16 15:30:00",
+                            "2024-04-16 16:15:00",
+                            "2024-04-17 09:30:00",
+                            "2024-04-17 10:15:00",
+                            "2024-04-17 11:00:00",
+                            "2024-04-17 11:45:00",
+                            "2024-04-17 12:30:00",
+                            "2024-04-17 13:15:00",
+                            "2024-04-17 14:00:00",
+                            "2024-04-17 14:45:00",
+                            "2024-04-17 15:30:00",
+                            "2024-04-17 16:15:00",
+                            "2024-01-29 10:00:00",
+                            "2024-01-30 10:30:00",
+                            "2024-03-05 11:30:00",
+                            "2024-04-08 14:45:00",
+                            "2024-02-13 13:15:00",
+                            "2024-03-13 16:00:00",
+                            "2024-04-13 09:45:00",
+                        ],
+                    }
+                ),
+            ),
+            id="week_offset",
+        ),
     ],
 )
 def custom_defog_test_data(
@@ -977,8 +1317,7 @@ def test_pipeline_e2e_defog_custom(
         pytest.param(
             bad_round2,
             "Broker",
-            "Invalid operator invocation 'ROUND\(high, -0.5, 2\)':"
-            " Expected between 1 and 2 arguments inclusive,received 3.",
+            "Invalid operator invocation 'ROUND(high, -0.5, 2)': Expected between 1 and 2 arguments inclusive, received 3.",
             id="bad_round2",
         ),
     ],
@@ -995,6 +1334,143 @@ def test_defog_e2e_errors(
     a certain error is raised for defog database.
     """
     graph: GraphMetadata = defog_graphs(graph_name)
-    with pytest.raises(Exception, match=error_msg):
+    with pytest.raises(Exception, match=re.escape(error_msg)):
         root: UnqualifiedNode = init_pydough_context(graph)(impl)()
         to_sql(root, metadata=graph, database=sqlite_defog_connection)
+
+
+@pytest.mark.execute
+def test_pipeline_e2e_defog_simple_week(
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+    week_handling_config: PyDoughConfigs,
+):
+    """
+    Test executing simple_week_sampler using the defog.ai schemas with different
+    week configurations, comparing against expected results.
+    """
+    graph: GraphMetadata = defog_graphs("Broker")
+    root: UnqualifiedNode = init_pydough_context(graph)(simple_week_sampler)()
+    result: pd.DataFrame = to_df(
+        root,
+        metadata=graph,
+        database=sqlite_defog_connection,
+        config=week_handling_config,
+    )
+
+    # Generate expected DataFrame based on week_handling_config
+    start_of_week = week_handling_config.start_of_week
+    start_week_as_zero = week_handling_config.start_week_as_zero
+
+    x_dt = pd.Timestamp(2025, 3, 10, 11, 0, 0)
+    y_dt = pd.Timestamp(2025, 3, 14, 11, 0, 0)
+    y_dt2 = pd.Timestamp(2025, 3, 15, 11, 0, 0)
+    y_dt3 = pd.Timestamp(2025, 3, 16, 11, 0, 0)
+    y_dt4 = pd.Timestamp(2025, 3, 17, 11, 0, 0)
+    y_dt5 = pd.Timestamp(2025, 3, 18, 11, 0, 0)
+    y_dt6 = pd.Timestamp(2025, 3, 19, 11, 0, 0)
+    y_dt7 = pd.Timestamp(2025, 3, 20, 11, 0, 0)
+    y_dt8 = pd.Timestamp(2025, 3, 21, 11, 0, 0)
+
+    # Calculate weeks difference
+    x_sow = get_start_of_week(x_dt, start_of_week)
+    y_sow = get_start_of_week(y_dt, start_of_week)
+    weeks_diff = (y_sow - x_sow).days // 7
+
+    # Create lists to store calculated values
+    dates = [y_dt, y_dt2, y_dt3, y_dt4, y_dt5, y_dt6, y_dt7, y_dt8]
+    sows = []
+    daynames = []
+    dayofweeks = []
+
+    # Calculate values for each date in a loop
+    for dt in dates:
+        # Calculate start of week
+        sow = get_start_of_week(dt, start_of_week).strftime("%Y-%m-%d")
+        sows.append(sow)
+
+        # Get day name
+        dayname = dt.day_name()
+        daynames.append(dayname)
+
+        # Calculate day of week
+        dayofweek = get_day_of_week(dt, start_of_week, start_week_as_zero)
+        dayofweeks.append(dayofweek)
+
+    # Create dictionary for DataFrame
+    data_dict = {"weeks_diff": [weeks_diff]}
+
+    # Add start of week columns
+    for i in range(len(dates)):
+        data_dict[f"sow{i + 1}"] = [sows[i]]
+
+    # Add day name columns
+    for i in range(len(dates)):
+        data_dict[f"dayname{i + 1}"] = [daynames[i]]
+
+    # Add day of week columns
+    for i in range(len(dates)):
+        data_dict[f"dayofweek{i + 1}"] = [dayofweeks[i]]
+
+    # Create DataFrame with expected results
+    expected_df = pd.DataFrame(data_dict)
+    pd.testing.assert_frame_equal(result, expected_df)
+
+
+@pytest.mark.execute
+def test_pipeline_e2e_defog_transaction_week(
+    defog_graphs: graph_fetcher,
+    sqlite_defog_connection: DatabaseContext,
+    week_handling_config: PyDoughConfigs,
+):
+    """
+    Test executing transaction_week_sampler using the defog.ai schemas with
+    different week configurations, comparing against expected results.
+    """
+    graph: GraphMetadata = defog_graphs("Broker")
+    root: UnqualifiedNode = init_pydough_context(graph)(transaction_week_sampler)()
+    result: pd.DataFrame = to_df(
+        root,
+        metadata=graph,
+        database=sqlite_defog_connection,
+        config=week_handling_config,
+    )
+
+    # Generate expected DataFrame based on week_handling_config
+    start_of_week = week_handling_config.start_of_week
+    start_week_as_zero = week_handling_config.start_week_as_zero
+
+    # Sample dates from the result DataFrame
+    date_times = result["date_time"].tolist()
+
+    # Calculate expected values for each date
+    expected_sows = []
+    expected_daynames = []
+    expected_dayofweeks = []
+
+    for dt in date_times:
+        dt = pd.to_datetime(dt)
+
+        # Calculate start of week
+        sow = get_start_of_week(dt, start_of_week).strftime("%Y-%m-%d")
+        expected_sows.append(sow)
+
+        # Get day name
+        dayname = get_day_name(dt)
+        expected_daynames.append(dayname)
+
+        # Calculate day of week
+        dayofweek = get_day_of_week(dt, start_of_week, start_week_as_zero)
+        expected_dayofweeks.append(dayofweek)
+
+    # Create DataFrame with expected results
+    expected_df = pd.DataFrame(
+        {
+            "date_time": date_times,
+            "sow": expected_sows,
+            "dayname": expected_daynames,
+            "dayofweek": expected_dayofweeks,
+        }
+    )
+
+    pd.testing.assert_frame_equal(result, expected_df)

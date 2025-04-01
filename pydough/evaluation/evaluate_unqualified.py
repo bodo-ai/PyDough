@@ -16,8 +16,6 @@ from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
 from pydough.sqlglot import (
-    SqlGlotTransformBindings,
-    convert_dialect_to_sqlglot,
     convert_relation_to_sql,
     execute_df,
 )
@@ -28,7 +26,7 @@ __all__ = ["to_df", "to_sql"]
 
 def _load_session_info(
     **kwargs,
-) -> tuple[GraphMetadata, PyDoughConfigs, DatabaseContext, SqlGlotTransformBindings]:
+) -> tuple[GraphMetadata, PyDoughConfigs, DatabaseContext]:
     """
     Load the session information from the active session unless it is found
     in the keyword arguments.
@@ -37,8 +35,7 @@ def _load_session_info(
         **kwargs: The keyword arguments to load the session information from.
 
     Returns:
-      The metadata graph, configuration settings, Database context, and
-      function call transformation bindings to use for translations.
+      The metadata graph, configuration settings and Database context.
     """
     metadata: GraphMetadata
     if "metadata" in kwargs:
@@ -61,9 +58,7 @@ def _load_session_info(
     else:
         database = pydough.active_session.database
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
-    bindings: SqlGlotTransformBindings = pydough.active_session.bindings
-    bindings.set_dialect(database.dialect)
-    return metadata, config, database, bindings
+    return metadata, config, database
 
 
 def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] | None:
@@ -126,18 +121,16 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     config: PyDoughConfigs
     database: DatabaseContext
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
-    graph, config, database, bindings = _load_session_info(**kwargs)
+    graph, config, database = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph, config)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(
-        qualified, column_selection, config
+        qualified, column_selection, config, database.dialect
     )
-    return convert_relation_to_sql(
-        relational, convert_dialect_to_sqlglot(database.dialect), bindings
-    )
+    return convert_relation_to_sql(relational, database.dialect, config)
 
 
 def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
@@ -161,13 +154,13 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     database: DatabaseContext
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
     display_sql: bool = bool(kwargs.pop("display_sql", False))
-    graph, config, database, bindings = _load_session_info(**kwargs)
+    graph, config, database = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph, config)
     if not isinstance(qualified, PyDoughCollectionQDAG):
         raise TypeError(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(
-        qualified, column_selection, config
+        qualified, column_selection, config, database.dialect
     )
-    return execute_df(relational, database, bindings, display_sql)
+    return execute_df(relational, database, config, display_sql)

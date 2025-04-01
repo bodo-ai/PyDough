@@ -10,8 +10,8 @@ from hashlib import sha256
 
 class PyDoughQDAG(ABC):
     """
-    Base class used for PyDough collection, expression, and opertor QDAG
-    nodes. Mostly exists for isinstance checks & type annotation.
+    Base class used for PyDough collection and expression nodes.
+    Mostly exists for isinstance checks & type annotation.
     """
 
     def __eq__(self, other):
