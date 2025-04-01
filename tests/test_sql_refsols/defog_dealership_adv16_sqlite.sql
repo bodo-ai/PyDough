@@ -1,26 +1,26 @@
 SELECT
+  _id,
   first_name,
   last_name,
-  total_sales,
-  total_revenue
+  total
 FROM (
   SELECT
+    _id,
     first_name,
     last_name,
-    ordering_2,
-    total_revenue,
-    total_sales
+    ordering_1,
+    total
   FROM (
     SELECT
-      COALESCE(agg_0, 0) AS ordering_2,
-      COALESCE(agg_0, 0) AS total_revenue,
-      COALESCE(agg_1, 0) AS total_sales,
+      COALESCE(agg_0, 0) AS ordering_1,
+      COALESCE(agg_0, 0) AS total,
+      _id,
       first_name,
       last_name
     FROM (
       SELECT
+        _id,
         agg_0,
-        agg_1,
         first_name,
         last_name
       FROM (
@@ -32,24 +32,13 @@ FROM (
       )
       LEFT JOIN (
         SELECT
-          COUNT(_id) AS agg_1,
           SUM(sale_price) AS agg_0,
           salesperson_id
         FROM (
           SELECT
-            _id,
             sale_price,
             salesperson_id
-          FROM (
-            SELECT
-              _id,
-              sale_date,
-              sale_price,
-              salesperson_id
-            FROM main.sales
-          )
-          WHERE
-            sale_date >= DATE_ADD(CURRENT_TIMESTAMP(), -3, 'MONTH')
+          FROM main.sales
         )
         GROUP BY
           salesperson_id
@@ -58,8 +47,8 @@ FROM (
     )
   )
   ORDER BY
-    ordering_2 DESC
-  LIMIT 3
+    ordering_1 DESC
+  LIMIT 5
 )
 ORDER BY
-  ordering_2 DESC
+  ordering_1 DESC

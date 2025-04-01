@@ -30,6 +30,22 @@ __all__ = [
     "impl_defog_broker_gen3",
     "impl_defog_broker_gen4",
     "impl_defog_broker_gen5",
+    "impl_defog_dealership_adv1",
+    "impl_defog_dealership_adv10",
+    "impl_defog_dealership_adv11",
+    "impl_defog_dealership_adv12",
+    "impl_defog_dealership_adv13",
+    "impl_defog_dealership_adv14",
+    "impl_defog_dealership_adv15",
+    "impl_defog_dealership_adv16",
+    "impl_defog_dealership_adv2",
+    "impl_defog_dealership_adv3",
+    "impl_defog_dealership_adv4",
+    "impl_defog_dealership_adv5",
+    "impl_defog_dealership_adv6",
+    "impl_defog_dealership_adv7",
+    "impl_defog_dealership_adv8",
+    "impl_defog_dealership_adv9",
     "impl_defog_dealership_basic1",
     "impl_defog_dealership_basic10",
     "impl_defog_dealership_basic2",
@@ -611,6 +627,278 @@ def impl_defog_broker_gen5():
     )
 
 
+def impl_defog_dealership_adv1():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    For sales with sale price over $30,000, how many payments were received in
+    total and on weekends in each of the last 8 calendar weeks (excluding the
+    current week)? Return the week (as a date), total payments received, and
+    weekend payments received in ascending order.
+    """
+    return "Query pending"
+
+
+def impl_defog_dealership_adv2():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    How many sales did each salesperson make in the past 30 days, inclusive of
+    today's date? Return their ID, first name, last name and number of sales
+    made, ordered from most to least sales.
+    """
+    return (
+        Salespersons.WHERE(
+            HAS(sales_made.WHERE(DATEDIFF("days", sale_date, "now") <= 30))
+        )
+        .CALCULATE(
+            _id,
+            first_name,
+            last_name,
+            num_sales=COUNT(
+                sales_made.WHERE(DATEDIFF("days", sale_date, "now") <= 30)._id
+            ),
+        )
+        .ORDER_BY(num_sales.DESC())
+    )
+
+
+def impl_defog_dealership_adv3():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    How many sales were made for each car model that has 'M5' in its VIN
+    number? Return the make, model and number of sales. When using car makes,
+    model names, engine_type and vin_number, match case-insensitively and allow
+    partial matches using LIKE with wildcards.
+    """
+    return (
+        Cars.CALCULATE(make, model, num_sales=COUNT(sale_records._id))
+        .WHERE(LIKE(vin_number, "%m5%"))
+        .ORDER_BY(num_sales.DESC())
+    )
+
+
+def impl_defog_dealership_adv4():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    How many Toyota cars were sold in the last 30 days inclusive of today?
+    Return the number of sales and total revenue.
+    """
+    date_threshold = DATETIME("now", "-30 days")
+
+    return Cars.WHERE(LIKE(LOWER(make), "%toyota%")).CALCULATE(
+        num_sales=COUNT(sale_records.WHERE(sale_date >= date_threshold)._id),
+        total_revenue=SUM(sale_records.WHERE(sale_date >= date_threshold).sale_price),
+    )
+
+
+def impl_defog_dealership_adv5():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the first name, last name, total sales amount, number of sales, and
+    SR for each salesperson. SR = sales rank of each salesperson ordered by
+    their total sales amount descending
+    """
+    total_sales = SUM(sales_made.sale_price)
+
+    return (
+        Salespersons.WHERE(HAS(sales_made))
+        .CALCULATE(
+            first_name,
+            last_name,
+            total_sales=total_sales,
+            num_sales=COUNT(sales_made._id),
+            sales_rank=RANKING(by=total_sales.DESC()),
+        )
+        .ORDER_BY(total_sales.DESC())
+    )
+
+
+def impl_defog_dealership_adv6():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the highest sale price for each make and model of cars that have
+    been sold and are no longer in inventory, ordered by the sale price from
+    highest to lowest. Use the most recent date in the inventory_snapshots
+    table to determine that car's inventory status. When getting a car's
+    inventory status, always take the latest status from the
+    inventory_snapshots table
+    """
+    latest_snapshot = inventory_snapshots.WHERE(
+        RANKING(by=snapshot_date.DESC(), levels=1) == 1
+    ).SINGULAR()
+
+    return (
+        Cars.WHERE(HAS(latest_snapshot) & (latest_snapshot.is_in_inventory == 0))
+        .CALCULATE(make, model, highest_sale_price=MAX(sale_records.sale_price))
+        .ORDER_BY(highest_sale_price.DESC())
+    )
+
+
+def impl_defog_dealership_adv7():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the details and average sale price for cars that have 'Ford' in
+    their make name or 'Mustang' in the model name? Return make, model, year,
+    color, vin_number and avg_sale_price. When using car makes, model names,
+    engine_type and vin_number, match case-insensitively and allow partial
+    matches using LIKE with wildcards.
+    """
+    return Cars.WHERE(
+        LIKE(LOWER(make), "%ford%") | LIKE(LOWER(model), "%mustang%")
+    ).CALCULATE(
+        make,
+        model,
+        year,
+        color,
+        vin_number,
+        avg_sale_price=AVG(sale_records.sale_price),
+    )
+
+
+def impl_defog_dealership_adv8():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the PMSPS and PMSR in the last 6 months excluding the current
+    month, for salespersons hired between 2022 and 2023 (both inclusive)?
+    Return all months in your answer, including those where metrics are 0.
+    Order by month ascending. PMSPS = per month salesperson sales count. PMSR =
+    per month sales revenue in dollars. Truncate date to month for aggregation.
+    """
+    return "Query pending"
+
+
+def impl_defog_dealership_adv9():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What is the ASP for sales made in the first quarter of 2023? ASP = Average
+    Sale Price in the first quarter of 2023.
+    """
+    return Dealership.CALCULATE(
+        ASP=AVG(
+            Sales.WHERE(
+                (sale_date >= "2023-01-01") & (sale_date <= "2023-03-31")
+            ).sale_price
+        )
+    )
+
+
+def impl_defog_dealership_adv10():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What is the average number of days between the sale date and payment
+    received date, rounded to 2 decimal places?
+    """
+    sale_payments = PARTITION(Sales, name="s", by=(_id, sale_date)).CALCULATE(
+        sale_pay_diff=DATEDIFF("days", sale_date, MAX(s.payment.payment_date))
+    )
+
+    return Dealership.CALCULATE(
+        avg_days_to_payment=ROUND(AVG(sale_payments.sale_pay_diff), 2)
+    )
+
+
+def impl_defog_dealership_adv11():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What is the GPM for all car sales in 2023? GPM (gross profit margin) =
+    (total revenue - total cost) / total cost * 100
+    """
+    sales_2023 = Sales.WHERE(YEAR(sale_date) == 2023)
+
+    return Dealership.CALCULATE(
+        GPM=(
+            (SUM(sales_2023.sale_price) - SUM(sales_2023.car.cost))
+            / SUM(sales_2023.car.cost)
+        )
+        * 100
+    )
+
+
+def impl_defog_dealership_adv12():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What is the make, model and sale price of the car with the highest sale
+    price that was sold on the same day it went out of inventory?
+    """
+    same_date_sold_car = (
+        car.inventory_snapshots.WHERE(
+            (snapshot_date == sale_date) & (is_in_inventory == 0)
+        )
+        .SINGULAR()
+        .car
+    )
+
+    return (
+        Sales.CALCULATE(sale_date=sale_date)
+        .WHERE(HAS(same_date_sold_car))
+        .CALCULATE(
+            make=same_date_sold_car.make,
+            model=same_date_sold_car.model,
+            sale_price=sale_price,
+        )
+        .TOP_K(1, by=sale_price.DESC())
+    )
+
+
+def impl_defog_dealership_adv13():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What is the total payments received per month? Also calculate the MoM
+    change for each month. MoM change = (current month value - prev month
+    value). Return all months in your answer, including those where there were
+    no payments.
+    """
+    return "Query pending"
+
+
+def impl_defog_dealership_adv14():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What is the TSC in the past 7 days, inclusive of today? TSC = Total Sales
+    Count.
+    """
+    return Dealership.CALCULATE(
+        TSC=COUNT(Sales.WHERE(DATEDIFF("DAYS", sale_date, "now") <= 7)._id)
+    )
+
+
+def impl_defog_dealership_adv15():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Who are the top 3 salespersons by ASP? Return their first name, last name
+    and ASP. ASP (average selling price) = total sales amount / number of sales
+    """
+    return Salespersons.CALCULATE(
+        first_name, last_name, ASP=AVG(sales_made.sale_price)
+    ).TOP_K(3, by=ASP.DESC())
+
+
+def impl_defog_dealership_adv16():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Who are the top 5 salespersons by total sales amount? Return their ID,
+    first name, last name and total sales amount.
+    """
+    return Salespersons.CALCULATE(
+        _id, first_name, last_name, total=SUM(sales_made.sale_price)
+    ).TOP_K(5, by=total.DESC())
+
+
 def impl_defog_dealership_basic1():
     """
     PyDough implementation of the following question for the Car Dealership graph:
@@ -749,15 +1037,13 @@ def impl_defog_dealership_basic10():
     total number of sales and total revenue. Note that revenue refers to the
     sum of sale_price in the sales table.
     """
+    date_threshold = DATETIME("now", "-3 months")
+
     return Salespersons.CALCULATE(
         first_name,
         last_name,
-        total_sales=COUNT(
-            sales_made.WHERE(DATEDIFF("months", sale_date, "now") < 3)._id
-        ),
-        total_revenue=SUM(
-            sales_made.WHERE(DATEDIFF("months", sale_date, "now") < 3).sale_price
-        ),
+        total_sales=COUNT(sales_made.WHERE(sale_date >= date_threshold)._id),
+        total_revenue=SUM(sales_made.WHERE(sale_date >= date_threshold).sale_price),
     ).TOP_K(3, by=total_revenue.DESC())
 
 
@@ -768,6 +1054,8 @@ def impl_defog_dealership_gen1():
     Return the name and phone number of the salesperson with the shortest time
     from being hired to getting fired. Return the number of days he/she was
     employed for.
+
+    NOTE: Code adjusted by multiplying by 1.0 to match result type
     """
     return (
         Salespersons.WHERE(PRESENT(termination_date))
@@ -839,7 +1127,19 @@ def impl_defog_dealership_gen5():
     the car id, make, model, and year. Cars are considered to be in inventory"
     if is_in_inventory is True."
     """
-    return "Query pending"
+    global_info = Dealership.CALCULATE(
+        last_snapshot_date=MAX(
+            InventorySnapshots.WHERE(
+                (snapshot_date >= "2023-03-01") & (snapshot_date <= "2023-03-31")
+            ).snapshot_date
+        )
+    )
+    selected_snapshot = inventory_snapshots.WHERE(
+        snapshot_date == last_snapshot_date
+    ).SINGULAR()
+    return global_info.Cars.WHERE(
+        HAS(selected_snapshot) & (selected_snapshot.is_in_inventory == 1)
+    ).CALCULATE(_id, make, model, year)
 
 
 def impl_defog_ewallet_adv1():

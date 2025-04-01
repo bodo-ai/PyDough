@@ -49,11 +49,7 @@ FROM (
             FROM main.sales
           )
           WHERE
-            (
-              (
-                CAST(STRFTIME('%Y', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%Y', sale_date) AS INTEGER)
-              ) * 12 + CAST(STRFTIME('%m', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%m', sale_date) AS INTEGER)
-            ) < 3
+            sale_date >= DATETIME('now', '-3 month')
         )
         GROUP BY
           salesperson_id
