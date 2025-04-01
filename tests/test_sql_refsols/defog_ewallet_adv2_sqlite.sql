@@ -11,11 +11,9 @@ FROM (
     SELECT
       DATE(
         created_at_1,
-        '-' || (
-          (
-            CAST(STRFTIME('%w', DATETIME(created_at_1)) AS INTEGER) + 6
-          ) % 7
-        ) || ' days',
+        '-' || CAST((
+          CAST(STRFTIME('%w', DATETIME(created_at_1)) AS INTEGER) + 6
+        ) % 7 AS TEXT) || ' days',
         'start of day'
       ) AS week,
       (
@@ -49,22 +47,18 @@ FROM (
           (
             created_at < DATE(
               'now',
-              '-' || (
-                (
-                  CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
-                ) % 7
-              ) || ' days',
+              '-' || CAST((
+                CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
+              ) % 7 AS TEXT) || ' days',
               'start of day'
             )
           )
           AND (
             created_at >= DATE(
               'now',
-              '-' || (
-                (
-                  CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
-                ) % 7
-              ) || ' days',
+              '-' || CAST((
+                CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
+              ) % 7 AS TEXT) || ' days',
               'start of day',
               '-21 day'
             )

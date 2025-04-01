@@ -24,6 +24,10 @@ def _visit_expression(expr: SQLGlotExpression, identifiers: set[Identifier]) -> 
         for arg in expr.args.values():
             if isinstance(arg, SQLGlotExpression):
                 _visit_expression(arg, identifiers)
+            if isinstance(arg, list):
+                for item in arg:
+                    if isinstance(item, SQLGlotExpression):
+                        _visit_expression(item, identifiers)
 
 
 def find_identifiers(expr: SQLGlotExpression) -> set[Identifier]:

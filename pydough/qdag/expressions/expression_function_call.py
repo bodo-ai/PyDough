@@ -4,7 +4,6 @@ Definition of PyDough QDAG nodes for function calls that return expressions.
 
 __all__ = ["ExpressionFunctionCall"]
 
-from functools import cache
 
 from pydough.pydough_operators.expression_operators.expression_operator import (
     PyDoughExpressionOperator,
@@ -55,7 +54,6 @@ class ExpressionFunctionCall(PyDoughExpressionQDAG):
     def is_aggregation(self) -> bool:
         return self.operator.is_aggregation
 
-    @cache
     def is_singular(self, context: PyDoughQDAG) -> bool:
         # Function calls are singular if they are aggregations or if all of
         # their operands are also singular.
