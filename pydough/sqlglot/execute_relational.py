@@ -12,6 +12,18 @@ from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.expressions import Alias, Column
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.optimizer.annotate_types import annotate_types
+from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
+from sqlglot.optimizer.eliminate_joins import eliminate_joins
+from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
+from sqlglot.optimizer.merge_subqueries import merge_subqueries
+from sqlglot.optimizer.normalize import normalize
+from sqlglot.optimizer.optimize_joins import optimize_joins
+from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
+from sqlglot.optimizer.pushdown_projections import pushdown_projections
+from sqlglot.optimizer.qualify import qualify
+from sqlglot.optimizer.qualify_columns import quote_identifiers
+from sqlglot.optimizer.simplify import simplify
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
@@ -52,7 +64,7 @@ def convert_relation_to_sql(
         dialect, bindings, config
     ).relational_to_sqlglot(relational)
 
-    glot_expr = parse_one(glot_expr.sql(dialect))
+    glot_expr = parse_one(glot_expr.sql(dialect), dialect=dialect)
     glot_expr = apply_sqlglot_optimizer(glot_expr, relational, dialect)
 
     return glot_expr.sql(dialect, pretty=True)
@@ -72,24 +84,31 @@ def apply_sqlglot_optimizer(
     Returns:
         The optimized SQLGlot expression.
     """
-    from sqlglot.optimizer.annotate_types import annotate_types
-    from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
-    from sqlglot.optimizer.eliminate_joins import eliminate_joins
-    from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
-    from sqlglot.optimizer.merge_subqueries import merge_subqueries
-    from sqlglot.optimizer.normalize import normalize
-    from sqlglot.optimizer.optimize_joins import optimize_joins
-    from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
-    from sqlglot.optimizer.qualify import qualify
-    from sqlglot.optimizer.simplify import simplify
-
     # Apply each rule explicitly with appropriate kwargs
+    # Rewrite sqlglot AST to have normalized and qualified tables and columns.
     glot_expr = qualify(
         glot_expr, dialect=dialect, quote_identifiers=False, isolate_tables=True
     )
+
+    # Rewrite sqlglot AST to remove unused columns projections.
+    glot_expr = pushdown_projections(glot_expr)
+
+    # Rewrite sqlglot AST into conjunctive normal form
     glot_expr = normalize(glot_expr)
+
+    # print(glot_expr.sql(dialect, pretty=True))
+    # print("-"*100)
+    # # Rewrite sqlglot AST to convert some predicates with subqueries into joins.
+    # # Convert scalar subqueries into cross joins.
+    # # Convert correlated or vectorized subqueries into a group by so it is not a many to many left join.
+    # glot_expr = unnest_subqueries(glot_expr)
+    # print(glot_expr.sql(dialect, pretty=True))
+
+    # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS
     glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
+
     glot_expr = optimize_joins(glot_expr)
+
     glot_expr = eliminate_subqueries(glot_expr)
 
     join_types = set(JoinTypeRelationalVisitor().get_join_types(relational))
@@ -98,8 +117,25 @@ def apply_sqlglot_optimizer(
 
     glot_expr = eliminate_joins(glot_expr)
     glot_expr = eliminate_ctes(glot_expr)
+
+    # NEW: Makes sure all identifiers that need to be quoted are quoted.
+    glot_expr = quote_identifiers(glot_expr, dialect=dialect)
+
+    # Infers the types of an expression, annotating its AST accordingly.
+    # depends on the schema.
     glot_expr = annotate_types(glot_expr, dialect=dialect)
+
+    # Converts a sql expression into a standard form.
+    # This method relies on annotate_types because many of the
+    # conversions rely on type inference.
+    # glot_expr = canonicalize(glot_expr, dialect=dialect)
+
+    # Rewrite sqlglot AST to simplify expressions.
     glot_expr = simplify(glot_expr, dialect=dialect)
+
+    # Fix column names in the top-level SELECT expressions.
+    # The optimizer changes the cases of column names, so we need to
+    # match the alias in the relational tree.
     fix_column_case(glot_expr, relational.ordered_columns)
     return glot_expr
 

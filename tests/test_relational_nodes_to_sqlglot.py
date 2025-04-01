@@ -16,11 +16,13 @@ from sqlglot.expressions import (
     Abs,
     Add,
     Binary,
+    Exists,
     Expression,
     From,
     Length,
     Literal,
     Lower,
+    Not,
     Order,
     RowNumber,
     Select,
@@ -980,32 +982,37 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
                 _from=GlotFrom(
                     mkglot(
-                        expressions=[Ident(this="a"), Ident(this="b")],
-                        _from=GlotFrom(Table(this=Ident(this="table"))),
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     ),
                     alias="_table_alias_0",
                 ),
-                join=GlotJoin(
-                    right_query=GlotFrom(
-                        mkglot(
-                            expressions=[
-                                Ident(this="a", quoted=False),
-                                Ident(this="b", quoted=False),
-                            ],
-                            _from=GlotFrom(
-                                Table(this=Ident(this="table", quoted=False))
+                where=Exists(
+                    this=mkglot(
+                        expressions=[Literal(this=1, is_string=False)],
+                        _from=GlotFrom(
+                            mkglot(
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
                             ),
+                            alias="_table_alias_1",
                         ),
-                        alias="_table_alias_1",
-                    ),
-                    on=mkglot_func(
-                        EQ,
-                        [
-                            Ident(this="_table_alias_0.a", quoted=False),
-                            Ident(this="_table_alias_1.a", quoted=False),
-                        ],
-                    ),
-                    join_type="semi",
+                        where=mkglot_func(
+                            EQ,
+                            [
+                                Ident(this="_table_alias_0.a", quoted=False),
+                                Ident(this="_table_alias_1.a", quoted=False),
+                            ],
+                        ),
+                    )
                 ),
             ),
             id="simple_semi_join",
@@ -1042,27 +1049,31 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                     alias="_table_alias_0",
                 ),
-                join=GlotJoin(
-                    right_query=GlotFrom(
-                        mkglot(
-                            expressions=[
-                                Ident(this="a", quoted=False),
-                                Ident(this="b", quoted=False),
-                            ],
+                where=Not(
+                    this=Exists(
+                        this=mkglot(
+                            expressions=[Literal(this=1, is_string=False)],
                             _from=GlotFrom(
-                                Table(this=Ident(this="table", quoted=False))
+                                mkglot(
+                                    expressions=[
+                                        Ident(this="a", quoted=False),
+                                        Ident(this="b", quoted=False),
+                                    ],
+                                    _from=GlotFrom(
+                                        Table(this=Ident(this="table", quoted=False))
+                                    ),
+                                ),
+                                alias="_table_alias_1",
                             ),
-                        ),
-                        alias="_table_alias_1",
-                    ),
-                    on=mkglot_func(
-                        EQ,
-                        [
-                            Ident(this="_table_alias_0.a", quoted=False),
-                            Ident(this="_table_alias_1.a", quoted=False),
-                        ],
-                    ),
-                    join_type="anti",
+                            where=mkglot_func(
+                                EQ,
+                                [
+                                    Ident(this="_table_alias_0.a", quoted=False),
+                                    Ident(this="_table_alias_1.a", quoted=False),
+                                ],
+                            ),
+                        )
+                    )
                 ),
             ),
             id="simple_anti_join",
@@ -1726,6 +1737,7 @@ def test_node_to_sqlglot(
     sqlglot_relational_visitor.reset()
     node.accept(sqlglot_relational_visitor)
     actual = sqlglot_relational_visitor.get_sqlglot_result()
+    breakpoint()
     assert actual == sqlglot_expr
 
 
