@@ -2,7 +2,7 @@ SELECT
   COUNT() AS n_customers
 FROM (
   SELECT
-    _id
+    (NULL)
   FROM (
     SELECT
       _id

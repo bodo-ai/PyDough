@@ -2,10 +2,9 @@ SELECT
   COUNT() AS n_customers
 FROM (
   SELECT
-    _id
+    (NULL)
   FROM (
     SELECT
-      sbCustId AS _id,
       sbCustName AS name,
       sbCustState AS state
     FROM main.sbCustomer

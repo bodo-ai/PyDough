@@ -92,14 +92,14 @@ class ColumnPruner:
         # (e.g. a COUNT(*)), arbitrarily mark one of them as used.
         # TODO: (gh #196) optimize this functionality so it doesn't keep an
         # unnecessary column.
-        if isinstance(node, Aggregate) and len(found_identifiers) == 0:
-            arbitrary_column_name: str = min(node.input.columns)
-            found_identifiers.add(
-                ColumnReference(
-                    arbitrary_column_name,
-                    node.input.columns[arbitrary_column_name].data_type,
-                )
-            )
+        # if isinstance(node, Aggregate) and len(found_identifiers) == 0:
+        #     arbitrary_column_name: str = min(node.input.columns)
+        #     found_identifiers.add(
+        #         ColumnReference(
+        #             arbitrary_column_name,
+        #             node.input.columns[arbitrary_column_name].data_type,
+        #         )
+        #     )
 
         # Determine which identifiers to pass to each input.
         new_inputs: list[RelationalNode] = []

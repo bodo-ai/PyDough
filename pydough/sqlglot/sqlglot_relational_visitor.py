@@ -308,6 +308,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         """
         if sort:
             column_exprs = sorted(column_exprs, key=repr)
+        if len(column_exprs) == 0:
+            column_exprs = [sqlglot_convert((None,))]
         return (
             Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
         )
@@ -341,6 +343,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in sorted(scan.columns.items())
         ]
+        if len(exprs) == 0:
+            exprs = [sqlglot_convert((None,))]
         query: Select = Select().select(*exprs).from_(scan.table_name)
         self._stack.append(query)
 
