@@ -312,15 +312,14 @@ from pydough.unqualified import (
   │ │   └─┬─ SubCollection[supplier]
   │ │     └─── SubCollection[nation]
   │ └─── Calculate[metric=supplycost * availqty]
-  ├─┬─ Partition[name='Parts', by=part_key]
+  ├─┬─ Partition[name='parts', by=part_key]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[PartSupp]
-  │   ├─┬─ Where[$1.name == 'GERMANY']
-  │   │ └─┬─ AccessChild
-  │   │   └─┬─ SubCollection[supplier]
-  │   │     └─── SubCollection[nation]
-  │   └─── Calculate[metric=supplycost * availqty]
-  ├─┬─ Calculate[PS_PARTKEY=part_key, VALUE=SUM($1.metric)]
+  │   └─┬─ Where[$1.name == 'GERMANY']
+  │     └─┬─ AccessChild
+  │       └─┬─ SubCollection[supplier]
+  │         └─── SubCollection[nation]
+  ├─┬─ Calculate[PS_PARTKEY=part_key, VALUE=SUM($1.supplycost * $1.availqty)]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[PartSupp]
   ├─── Where[VALUE > min_market_share]
@@ -523,8 +522,7 @@ from pydough.unqualified import (
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Customers]
   │   ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
-  │   ├─── Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17'])]
-  │   └─┬─ Where[(acctbal > global_avg_balance) & (COUNT($1) == 0)]
+  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (acctbal > global_avg_balance) & (COUNT($1) == 0)]
   │     └─┬─ AccessChild
   │       └─── SubCollection[orders]
   ├─┬─ Calculate[CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT($1), TOTACCTBAL=SUM($1.acctbal)]

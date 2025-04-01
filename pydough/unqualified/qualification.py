@@ -647,6 +647,105 @@ class Qualifier:
         )
         return topk.with_collation(qualified_collations)
 
+    def split_partition_ancestry(
+        self, node: UnqualifiedNode, partition_ancestor: str | None = None
+    ) -> tuple[UnqualifiedNode, UnqualifiedNode, list[str]]:
+        """
+        TODO
+        """
+        if isinstance(node, UnqualifiedRoot):
+            return node, UnqualifiedRoot(self.graph), []
+
+        new_ancestry: UnqualifiedNode
+        new_child: UnqualifiedNode
+        ancestry_names: list[str]
+
+        match node:
+            case (
+                UnqualifiedAccess()
+                | UnqualifiedCalculate()
+                | UnqualifiedWhere()
+                | UnqualifiedTopK()
+                | UnqualifiedOrderBy()
+                | UnqualifiedSingular()
+                | UnqualifiedPartition()
+            ):
+                parent: UnqualifiedNode = node._parcel[0]
+                new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
+                    parent, partition_ancestor
+                )
+            case _:
+                raise PyDoughUnqualifiedException(
+                    f"Unsupported collection node: {node.__class__.__name__}"
+                )
+
+        if (
+            isinstance(new_child, UnqualifiedRoot)
+            and (
+                isinstance(node, UnqualifiedPartition)
+                or (
+                    isinstance(node, UnqualifiedAccess)
+                    and node._parcel[1] != self.graph.name
+                )
+            )
+            and ((partition_ancestor is None) or (partition_ancestor in ancestry_names))
+        ):
+            if isinstance(node, UnqualifiedAccess):
+                new_child = UnqualifiedAccess(
+                    UnqualifiedRoot(self.graph), *node._parcel[1:]
+                )
+            else:
+                new_child = UnqualifiedPartition(
+                    UnqualifiedRoot(self.graph), *node._parcel[1:]
+                )
+            ancestry_names.append(node._parcel[1])
+            # print("***")
+            # print(new_ancestry)
+            # print(new_child)
+            return new_ancestry, new_child, ancestry_names
+
+        appending_to_ancestor: bool = isinstance(new_child, UnqualifiedRoot)
+
+        build_node: list[UnqualifiedNode] = [
+            new_ancestry if appending_to_ancestor else new_child
+        ]
+
+        # print()
+        # print(new_ancestry)
+        # print(new_child)
+        # print("->", node)
+        # print(appending_to_ancestor, type(new_child))
+        # print()
+
+        match node:
+            case UnqualifiedAccess():
+                ancestry_names.append(node._parcel[1])
+                build_node[0] = UnqualifiedAccess(build_node[0], *node._parcel[1:])
+            case UnqualifiedPartition():
+                ancestry_names.append(node._parcel[1])
+                build_node[0] = UnqualifiedPartition(build_node[0], *node._parcel[1:])
+            case UnqualifiedWhere():
+                build_node[0] = UnqualifiedWhere(build_node[0], *node._parcel[1:])
+            case UnqualifiedCalculate():
+                build_node[0] = UnqualifiedCalculate(build_node[0], *node._parcel[1:])
+            case UnqualifiedTopK():
+                build_node[0] = UnqualifiedTopK(build_node[0], *node._parcel[1:])
+            case UnqualifiedOrderBy():
+                build_node[0] = UnqualifiedOrderBy(build_node[0], *node._parcel[1:])
+            case UnqualifiedSingular():
+                build_node[0] = UnqualifiedSingular(build_node[0], *node._parcel[1:])
+            case _:
+                raise PyDoughUnqualifiedException(
+                    f"Unsupported collection node: {node.__class__.__name__}"
+                )
+
+        if appending_to_ancestor:
+            new_ancestry = build_node[0]
+        else:
+            new_child = build_node[0]
+
+        return new_ancestry, new_child, ancestry_names
+
     def qualify_partition(
         self,
         unqualified: UnqualifiedPartition,
@@ -673,14 +772,16 @@ class Qualifier:
             qualified or is not recognized.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        unqualified_child: UnqualifiedNode = unqualified._parcel[1]
-        child_name: str = unqualified._parcel[2]
-        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[3]
-        # Qualify all both the parent collection and the child that is being
-        # partitioned, using the qualified parent as the context for the
-        # child.
+        child_name: str = unqualified._parcel[1]
+        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[2]
+        # Split the ancestor tree of unqualified nodes into the ancestor vs
+        # child of the PARTITION, qualifying the former then the latter with
+        # the former as its context.
+        unqualified_parent, unqualified_child, _ = self.split_partition_ancestry(
+            unqualified_parent, None
+        )
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child
+            unqualified_parent, context, True
         )
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child, qualified_parent, True

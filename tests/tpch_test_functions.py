@@ -560,7 +560,7 @@ def impl_tpch_q22():
         TPCH.CALCULATE(
             global_avg_balance=AVG(selected_customers.WHERE(acctbal > 0.0).acctbal)
         )
-        .customers.CALCULATE(cntry_code=phone[:2])
+        .Customers.CALCULATE(cntry_code=phone[:2])
         .WHERE(is_selected_code & (acctbal > global_avg_balance) & (COUNT(orders) == 0))
         .PARTITION(
             name="countries",

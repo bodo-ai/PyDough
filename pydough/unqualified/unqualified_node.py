@@ -368,7 +368,6 @@ class UnqualifiedNode(ABC):
 
     def PARTITION(
         self,
-        data: "UnqualifiedNode",
         name: str,
         by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
     ) -> "UnqualifiedPartition":
@@ -376,9 +375,9 @@ class UnqualifiedNode(ABC):
         Method used to create a PARTITION node.
         """
         if isinstance(by, UnqualifiedNode):
-            return UnqualifiedPartition(self, data, name, [by])
+            return UnqualifiedPartition(self, name, [by])
         else:
-            return UnqualifiedPartition(self, data, name, list(by))
+            return UnqualifiedPartition(self, name, list(by))
 
     def SINGULAR(self) -> "UnqualifiedSingular":
         """
@@ -669,15 +668,11 @@ class UnqualifiedPartition(UnqualifiedNode):
     def __init__(
         self,
         parent: UnqualifiedNode,
-        data: UnqualifiedNode,
         name: str,
         keys: MutableSequence[UnqualifiedNode],
     ):
-        self._parcel: tuple[
-            UnqualifiedNode, UnqualifiedNode, str, MutableSequence[UnqualifiedNode]
-        ] = (
+        self._parcel: tuple[UnqualifiedNode, str, MutableSequence[UnqualifiedNode]] = (
             parent,
-            data,
             name,
             keys,
         )
@@ -704,6 +699,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         The string representation of the unqualified node.
     """
     term_strings: list[str] = []
+    result: str
     operands_str: str
     match unqualified:
         case UnqualifiedRoot():
@@ -768,11 +764,12 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 term_strings.append(display_raw(node))
             return f"{display_raw(unqualified._parcel[0])}.ORDER_BY({', '.join(term_strings)})"
         case UnqualifiedPartition():
-            for node in unqualified._parcel[3]:
+            for node in unqualified._parcel[2]:
                 term_strings.append(display_raw(node))
-            if isinstance(unqualified._parcel[0], UnqualifiedRoot):
-                return f"PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
-            return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
+            result = f"PARTITION(name={unqualified._parcel[1]!r}, by=({', '.join(term_strings)}))"
+            if not isinstance(unqualified._parcel[0], UnqualifiedRoot):
+                result = f"{display_raw(unqualified._parcel[0])}.{result}"
+            return result
         case UnqualifiedSingular():
             return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
         case _:
