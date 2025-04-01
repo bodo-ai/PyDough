@@ -30,6 +30,10 @@ class SubCollection(CollectionAccess):
         self._subcollection_property: SubcollectionRelationshipMetadata
         self._subcollection_property = subcollection_property
 
+    @property
+    def name(self) -> str:
+        return self.subcollection_property.name
+
     def clone_with_parent(
         self, new_ancestor: PyDoughCollectionQDAG
     ) -> CollectionAccess:

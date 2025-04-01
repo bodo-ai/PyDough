@@ -140,25 +140,23 @@ These functions can be called on plural data to aggregate it into a singular exp
 
 #### Window Functions
 
-These functions return an expression and use logic that produces a value that depends on other records in the collection. Each of these functions has an optional `levels` argument. If it is absent, it means that the operation is done by examining all records globally. If `levels` is provided, it must be a valid argument to `BACK`, and if so it indicates that the operation is only done comparing the record against other records that are subcollection entries of the same ancestor collection, where the `levels` argument indicates how many `BACK` levels to find that ancestor. 
+These functions return an expression and use logic that produces a value that depends on other records in the collection. Each of these functions has an optional `per` argument. If it is absent, it means that the operation is done by examining all records globally. If `per` is provided, it must be a string describing the name of one of the ancestors of the current context, and if so it indicates that the operation is only done comparing the record against other records that are subcollection entries of the same ancestor collection. If there are multiple ancestors with that name, a suffix `:idx` is included to specify which one is used, with smaller numbers indicating more recent ancestors (e.g. `sizes:1` means look for the most recent ancestor with the name `sizes`, and `nations:2` means look for the 2nd most recent ancestor witht he name `nations`).
 
-- `RANKING(by=..., levels=None, allow_ties=False, dense=False)`: returns the ordinal position of the current record when all records are sorted by the collation expressions in the `by` argument. By default, uses the same semantics as `ROW_NUMBER`. If `allow_ties=True`, instead uses `RANK`. If `allow_ties=True` and `dense=True`, instead uses `DENSE_RANK`.
-- `PERCENTILE(by=..., levels=None, n_buckets=100)`: splits the data into `n_buckets` equal sized sections by ordering the data by the `by` arguments, where bucket `1` is the smallest data and bucket `n_buckets` is the largest. This is useful for understanding the relative position of a value within a group, like finding the top 10% of performers in a class.
-- `PREV(expr, n=1, default=None, by=..., levels=None)`: returns the nth-preceding value of `expr` within the group of data specified by the `levels` argument, when sorted by the `by` argument. If there are not `n` preceding values, returns `default` instead.
-- `NEXT(expr, n=1, default=None, by=..., levels=None)`: same as `PREV` but in the opposite direction.
-- `RELSUM(expr, levels=None)`: returns the sum of the values of `expr` within the group of data specified by `levels`.
-- `RELAVG(expr, levels=None)`: returns the average of the values of `expr` within the group of data specified by `levels`.
-- `RELCOUNT(expr, levels=None)`: returns the number of non-null values of `expr` within the group of data specified by `levels`.
-- `RELSIZE(expr, levels=None)`: returns the number of records of `expr` (null or non-null) within the group of data specified by `levels`.
+- `RANKING(by=..., per=None, allow_ties=False, dense=False)`: returns the ordinal position of the current record when all records are sorted by the collation expressions in the `by` argument. By default, uses the same semantics as `ROW_NUMBER`. If `allow_ties=True`, instead uses `RANK`. If `allow_ties=True` and `dense=True`, instead uses `DENSE_RANK`.
+- `PERCENTILE(by=..., per=None, n_buckets=100)`: splits the data into `n_buckets` equal sized sections by ordering the data by the `by` arguments, where bucket `1` is the smallest data and bucket `n_buckets` is the largest. This is useful for understanding the relative position of a value within a group, like finding the top 10% of performers in a class.
+- `PREV(expr, n=1, default=None, by=..., per=None)`: returns the nth-preceding value of `expr` within the group of data specified by the `per` argument, when sorted by the `by` argument. If there are not `n` preceding values, returns `default` instead.
+- `NEXT(expr, n=1, default=None, by=..., per=None)`: same as `PREV` but in the opposite direction.
+- `RELSUM(expr, per=None)`: returns the sum of the values of `expr` within the group of data specified by `per`.
+- `RELAVG(expr, per=None)`: returns the average of the values of `expr` within the group of data specified by `per`.
+- `RELCOUNT(expr, per=None)`: returns the number of non-null values of `expr` within the group of data specified by `per`.
+- `RELSIZE(per=None)`: returns the number of records of `expr` (null or non-null) within the group of data specified by `per`.
 
 
-For an example of how `levels` works, when doing `Regions.nations.customers.CALCULATE(r=RANKING(by=...))`:
+For an example of how `per` works, when doing `Regions.nations.customers.CALCULATE(r=RANKING(by=...))`:
 
-- If `levels=None` or `levels=3`, `r` is the ranking across all `customers`.
-- If `levels=1`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).
-- If `levels=2`, `r` is the ranking of customers per-region (meaning the ranking resets to 1 within each region).
-
-Note: this feature is still experimental, and the `levels` argument may be renamed. 
+- If `per=None`, `r` is the ranking across all `customers`.
+- If `per="nations"`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).
+- If `per="Regions"`, `r` is the ranking of customers per-region (meaning the ranking resets to 1 within each region).
 
 ## Interaction with Type Inference
 

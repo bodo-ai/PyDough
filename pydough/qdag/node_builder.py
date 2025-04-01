@@ -346,7 +346,7 @@ class AstNodeBuilder:
         self,
         preceding_context: PyDoughCollectionQDAG,
         child: PyDoughCollectionQDAG,
-        child_name: str,
+        name: str,
     ) -> PartitionBy:
         """
         Creates a PARTITION BY instance, but `with_keys` still needs to be called on
@@ -355,12 +355,12 @@ class AstNodeBuilder:
         Args:
             `preceding_context`: the preceding collection.
             `child`: the child that is the input to the PARTITION BY term.
-            `child_name`: the name that is used to access `child`.
+            `name`: the name that is used to refer to the partitioned data.
 
         Returns:
             The newly created PyDough PARTITION BY instance.
         """
-        return PartitionBy(preceding_context, child, child_name)
+        return PartitionBy(preceding_context, child, name)
 
     def build_child_reference_collection(
         self,

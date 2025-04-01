@@ -36,6 +36,10 @@ class ChildReferenceCollection(ChildAccess):
         return ChildReferenceCollection(new_ancestor, self.collection, self.child_idx)
 
     @property
+    def name(self) -> str:
+        return self.collection.name
+
+    @property
     def collection(self) -> PyDoughCollectionQDAG:
         """
         The collection that the ChildReferenceCollection collection comes from.

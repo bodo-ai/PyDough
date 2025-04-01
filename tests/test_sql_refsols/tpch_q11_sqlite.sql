@@ -71,11 +71,11 @@ FROM (
         )
         LEFT JOIN (
           SELECT
-            SUM(metric) AS agg_1,
+            SUM(expr_3) AS agg_1,
             part_key
           FROM (
             SELECT
-              supplycost * availqty AS metric,
+              supplycost * availqty AS expr_3,
               part_key
             FROM (
               SELECT

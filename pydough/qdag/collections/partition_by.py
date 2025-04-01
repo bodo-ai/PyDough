@@ -33,19 +33,23 @@ class PartitionBy(ChildOperator):
         self,
         ancestor: PyDoughCollectionQDAG,
         child: PyDoughCollectionQDAG,
-        child_name: str,
+        name: str,
     ):
         super().__init__([child])
         self._ancestor_context: PyDoughCollectionQDAG = ancestor
         self._child: PyDoughCollectionQDAG = child
-        self._child_name: str = child_name
+        self._name: str = name
         self._keys: list[PartitionKey] | None = None
         self._key_name_indices: dict[str, int] = {}
         self._ancestral_mapping: dict[str, int] = {
             name: level + 1 for name, level in ancestor.ancestral_mapping.items()
         }
         self._calc_terms: set[str] = set()
-        self._all_terms: set[str] = set(self.ancestral_mapping) | {self.child_name}
+        self._all_terms: set[str] = set(self.ancestral_mapping) | {self.child.name}
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def with_keys(self, keys: list[ChildReferenceExpression]) -> "PartitionBy":
         """
@@ -113,14 +117,6 @@ class PartitionBy(ChildOperator):
         return self._child
 
     @property
-    def child_name(self) -> str:
-        """
-        The name that should be used to refer to the input collection that is
-        being partitioned.
-        """
-        return self._child_name
-
-    @property
     def key(self) -> str:
         return f"{self.ancestor_context.key}.PARTITION({self.child.key})"
 
@@ -162,7 +158,7 @@ class PartitionBy(ChildOperator):
             keys_str = self.keys[0].expr.term_name
         else:
             keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
-        return f"Partition({self.child.to_string()}, name={self.child_name!r}, by={keys_str})"
+        return f"Partition({self.child.to_string()}, name={self.name!r}, by={keys_str})"
 
     @cache
     def to_string(self) -> str:
@@ -175,7 +171,7 @@ class PartitionBy(ChildOperator):
             keys_str = self.keys[0].expr.term_name
         else:
             keys_str = f"({', '.join([expr.expr.term_name for expr in self.keys])})"
-        return f"Partition[name={self.child_name!r}, by={keys_str}]"
+        return f"Partition[name={self.name!r}, by={keys_str}]"
 
     def get_expression_position(self, expr_name: str) -> int:
         return self.key_name_indices[expr_name]
@@ -189,8 +185,8 @@ class PartitionBy(ChildOperator):
         elif term_name in self._key_name_indices:
             term: PartitionKey = self.keys[self._key_name_indices[term_name]]
             return term
-        elif term_name == self.child_name:
-            return PartitionChild(self.child, self.child_name, self)
+        elif term_name == self.child.name:
+            return PartitionChild(self.child, self.child.name, self)
         else:
             raise PyDoughQDAGException(f"Unrecognized term: {term_name!r}")
 

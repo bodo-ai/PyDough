@@ -41,7 +41,7 @@ FROM (
           )
             ON _id = customer_id
         )
-        INNER JOIN (
+        LEFT JOIN (
           SELECT
             sbTickerId AS _id,
             sbTickerType AS ticker_type
