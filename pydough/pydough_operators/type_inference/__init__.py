@@ -8,6 +8,8 @@ __all__ = [
     "ConstantType",
     "ExpressionTypeDeducer",
     "RequireArgRange",
+    "RequireArgRange",
+    "RequireCollection",
     "RequireMinArgs",
     "RequireNumArgs",
     "SelectArgumentType",
@@ -22,6 +24,7 @@ from .expression_type_deducer import (
 from .type_verifier import (
     AllowAny,
     RequireArgRange,
+    RequireCollection,
     RequireMinArgs,
     RequireNumArgs,
     TypeVerifier,

@@ -78,6 +78,7 @@ from pydough.pydough_operators.type_inference import (
     AllowAny,
     ConstantType,
     RequireArgRange,
+    RequireCollection,
     RequireMinArgs,
     RequireNumArgs,
     SelectArgumentType,
@@ -148,9 +149,11 @@ SIGN = ExpressionFunctionOperator(
     "SIGN", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
-HAS = ExpressionFunctionOperator("HAS", True, AllowAny(), ConstantType(BooleanType()))
+HAS = ExpressionFunctionOperator(
+    "HAS", True, RequireCollection(), ConstantType(BooleanType())
+)
 HASNOT = ExpressionFunctionOperator(
-    "HASNOT", True, AllowAny(), ConstantType(BooleanType())
+    "HASNOT", True, RequireCollection(), ConstantType(BooleanType())
 )
 NDISTINCT = ExpressionFunctionOperator(
     "NDISTINCT", True, AllowAny(), ConstantType(Int64Type())
