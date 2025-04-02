@@ -17,7 +17,7 @@ SELECT
     WHEN DAY_OF_WEEK("sbtransaction"."sbtxdatetime") = 6
     THEN 'Saturday'
   END AS "dayname",
-  CAST(DAY_OF_WEEK("sbtransaction"."sbtxdatetime") AS INT) + 1 AS "dayofweek"
+  DAY_OF_WEEK("sbtransaction"."sbtxdatetime") + 1 AS "dayofweek"
 FROM "main"."sbtransaction" AS "sbtransaction"
 WHERE
   EXTRACT(DAY FROM "sbtransaction"."sbtxdatetime") > 1

@@ -81,12 +81,8 @@ class Where(AugmentingChildOperator):
         return f"Where[{self.condition.to_string(True)}]"
 
     def equals(self, other: object) -> bool:
-        if self._condition is None:
-            raise PyDoughQDAGException(
-                "Cannot invoke `equals` before calling `with_condition`"
-            )
         return (
-            super().equals(other)
-            and isinstance(other, Where)
+            isinstance(other, Where)
             and self._condition == other._condition
+            and super().equals(other)
         )

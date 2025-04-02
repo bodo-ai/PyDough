@@ -7,7 +7,6 @@ import datetime
 import warnings
 
 import sqlglot.expressions as sqlglot_expressions
-from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 from sqlglot.expressions import Star as SQLGlotStar
@@ -23,9 +22,10 @@ from pydough.relational import (
     RelationalExpressionVisitor,
     WindowCallExpression,
 )
+from pydough.types import PyDoughType
 
 from .sqlglot_helpers import set_glot_alias
-from .transform_bindings import SqlGlotTransformBindings
+from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
 __all__ = ["SQLGlotRelationalExpressionVisitor"]
 
@@ -38,18 +38,17 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     def __init__(
         self,
-        dialect: SQLGlotDialect,
-        bindings: SqlGlotTransformBindings,
+        dialect: DatabaseDialect,
         correlated_names: dict[str, str],
         config: PyDoughConfigs,
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
-        self._dialect: SQLGlotDialect = dialect
-        self._bindings: SqlGlotTransformBindings = bindings
+        self._dialect: DatabaseDialect = dialect
         self._correlated_names: dict[str, str] = correlated_names
         self._config: PyDoughConfigs = config
+        self._bindings: BaseTransformBindings = bindings_from_dialect(dialect, config)
 
     def reset(self) -> None:
         """
@@ -64,8 +63,11 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         input_exprs: list[SQLGlotExpression] = [
             self._stack.pop() for _ in range(len(call_expression.inputs))
         ]
-        output_expr: SQLGlotExpression = self._bindings.call(
-            call_expression.op, call_expression.inputs, input_exprs, self._config
+        input_types: list[PyDoughType] = [
+            arg.data_type for arg in call_expression.inputs
+        ]
+        output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
+            call_expression.op, input_exprs, input_types
         )
         self._stack.append(output_expr)
 
@@ -89,7 +91,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             glot_expr: SQLGlotExpression = self._stack.pop()
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
-            if self._dialect.__class__.__name__ == "SQLite":
+            if self._dialect == DatabaseDialect.SQLITE:
                 if order_arg.ascending:
                     if not order_arg.nulls_first:
                         warnings.warn(
@@ -184,7 +186,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # specific dialect is responsible for translating into its own logic.
         # Rather than have that logic show up in the ANSI sql text, we will
         # instead create the CAST calls ourselves.
-        if self._bindings.dialect == DatabaseDialect.ANSI:
+        if self._dialect == DatabaseDialect.ANSI:
             if isinstance(literal_expression.value, datetime.date):
                 date: datetime.date = literal_expression.value
                 literal = sqlglot_expressions.Cast(

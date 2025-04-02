@@ -7,7 +7,6 @@ import warnings
 from collections import defaultdict
 from collections.abc import MutableMapping, MutableSequence
 
-from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -18,6 +17,7 @@ from sqlglot.expressions import convert as sqlglot_convert
 from sqlglot.transforms import eliminate_semi_and_anti_joins
 
 from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -42,7 +42,6 @@ from pydough.relational import (
 from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
 from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
-from .transform_bindings import SqlGlotTransformBindings
 
 __all__ = ["SQLGlotRelationalVisitor"]
 
@@ -55,18 +54,16 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
     def __init__(
         self,
-        dialect: SQLGlotDialect,
-        bindings: SqlGlotTransformBindings,
+        dialect: DatabaseDialect,
         config: PyDoughConfigs,
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
+        self._dialect: DatabaseDialect = dialect
         self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(
-                dialect, bindings, self._correlated_names, config
-            )
+            SQLGlotRelationalExpressionVisitor(dialect, self._correlated_names, config)
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
@@ -244,7 +241,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
-            if self._expr_visitor._dialect.__class__.__name__ == "SQLite":
+            if self._dialect == DatabaseDialect.SQLITE:
                 if col.ascending:
                     if not col.nulls_first:
                         warnings.warn(

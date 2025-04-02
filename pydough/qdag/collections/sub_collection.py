@@ -75,9 +75,9 @@ class SubCollection(CollectionAccess):
 
     def equals(self, other: object) -> bool:
         return (
-            super().equals(other)
-            and type(other) is type(self)
-            and isinstance(other, SubCollection)
+            isinstance(other, SubCollection)
             and self.preceding_context == other.preceding_context
             and self.subcollection_property == other.subcollection_property
+            and super().equals(other)
+            and type(other) is type(self)
         )
