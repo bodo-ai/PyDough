@@ -2098,12 +2098,15 @@ class HybridTranslator:
             )
             for arg in correl_args:
                 if arg in join_remapping:
+                    # Special case: if the uniqueness key is also a join key
+                    # from the LHS, use the equivalent key from the RHS.
                     equivalent_key: HybridExpr | None = join_remapping[arg].shift_back(
                         levels_so_far
                     )
                     assert equivalent_key is not None
                     partition_args.append(equivalent_key)
                 else:
+                    # Otherwise, create a correlated reference to the term.
                     if not isinstance(arg, HybridCorrelExpr):
                         if child_idx is not None:
                             prev_hybrid.correlated_children.add(child_idx)
