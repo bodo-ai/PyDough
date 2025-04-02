@@ -386,6 +386,71 @@ class UnqualifiedNode(ABC):
         """
         return UnqualifiedSingular(self)
 
+    def BEST(
+        self,
+        node: "UnqualifiedNode",
+        by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+        allow_ties: bool = False,
+        n_best: int = 1,
+    ) -> "UnqualifiedNode":
+        """
+        Method used to create the BEST logic, where x.BEST(y, by=z) is expanded
+        into `x.y.WHERE(RANKING(by=z) == 1, levels=...).SINGULAR()`, where the
+        levels is the height of y. There are also the following variations:
+        - If `allow_ties` is True: `x.y.WHERE(RANKING(by=z, allow_ties=True) == 1, levels=...)`
+        - If `n_best` > 1 : `x.y.WHERE(RANKING(by=z) <= n_best, levels=...)`
+
+        Args:
+            `node`: the data to find the best entry of with regards to the
+            current node.
+            `by`: the collation terms to order by in the `RANKING` call.
+            `allow_ties`: whether to allow ties in the ranking. If True, it
+            means that if there are multiple entries with the same rank, they
+            will all be considered as "best" candidates. This cannot be used
+            with `n_best > 1`.
+            `n_best`: the number of best entries to consider. If greater than
+            1, it will find all entries with a rank less than or equal to
+            `n_best`. This cannot be used when `allow_ties` is True.
+
+        Returns:
+            The unqualified node for the relevant expression.
+        """
+        # Verify the n_best & allow_ties arguments are well formed
+        if n_best < 1:
+            raise PyDoughUnqualifiedException(f"Invalid n_best value: {n_best}")
+        if n_best > 1 and allow_ties:
+            raise PyDoughUnqualifiedException(
+                "Cannot allow ties when multiple best values are requested"
+            )
+
+        # Identify how many levels to use so that the ranking is derived per
+        # record of `self`.
+        height: int | None = get_node_height(node)
+        if height is None or height == 0:
+            raise PyDoughUnqualifiedException(
+                f"Invalid data argument to `BEST`: {node}"
+            )
+
+        # Generate the ranking/comparison call
+        rank: UnqualifiedNode = UnqualifiedOperator("RANKING")(
+            by=by, allow_ties=allow_ties, levels=height
+        )
+        cond: UnqualifiedNode
+        if n_best == 1:
+            cond = rank == n_best
+        else:
+            cond = rank <= n_best
+
+        # Change the root of `node` to point to `self`.
+        link_to_ancestor(self, node)
+
+        # Build the final expanded window-based filter, with `SINGULAR` added
+        # if-applicable.
+        result: UnqualifiedNode = node.WHERE(cond)
+        if n_best == 1 and not allow_ties:
+            result = result.SINGULAR()
+        return result
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -778,4 +843,68 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         case _:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node: {unqualified.__class__.__name__}"
+            )
+
+
+def get_node_height(node: UnqualifiedNode) -> int | None:
+    """
+    Identifies the number of levels in an unqualified node when it is converted
+    to QDAG. For example, `?.customers.WHERE(...).orders` has a height of 2.
+
+    Args:
+        `node`: the node to find the height of, e.g. how many depth-changing
+        operations occur before finding the root level.
+
+    Returns:
+        The number of levels, or None if malformed.
+    """
+    match node:
+        case UnqualifiedRoot():
+            return 0
+        case (
+            UnqualifiedSingular()
+            | UnqualifiedCalculate()
+            | UnqualifiedWhere()
+            | UnqualifiedOrderBy()
+            | UnqualifiedTopK()
+        ):
+            return get_node_height(node._parcel[0])
+        case UnqualifiedAccess() | UnqualifiedPartition():
+            result: int | None = get_node_height(node._parcel[0])
+            return 1 + result if result is not None else result
+        case (
+            UnqualifiedWindow()
+            | UnqualifiedBinaryOperation()
+            | UnqualifiedOperation()
+            | UnqualifiedCollation()
+        ):
+            return None
+        case _:
+            raise PyDoughUnqualifiedException(
+                f"Unsupported unqualified node: {node.__class__.__name__}"
+            )
+
+
+def link_to_ancestor(ancestor: UnqualifiedNode, node: UnqualifiedNode) -> None:
+    """
+    Traverses the ancestors of an unqualified node to find where its ancestor
+    is an unqualified root, and replaces it with the ancestor argument.
+    """
+    match node:
+        case (
+            UnqualifiedSingular()
+            | UnqualifiedCalculate()
+            | UnqualifiedWhere()
+            | UnqualifiedOrderBy()
+            | UnqualifiedTopK()
+        ):
+            if isinstance(node._parcel[0], UnqualifiedRoot):
+                node._parcel = (ancestor, *node._parcel[1:])
+            else:
+                link_to_ancestor(ancestor, node._parcel[0])
+        case UnqualifiedAccess() | UnqualifiedPartition():
+            link_to_ancestor(ancestor, node._parcel[0])
+        case _:
+            raise PyDoughUnqualifiedException(
+                f"Unsupported unqualified node for `link_to_ancestor`: {node.__class__.__name__}"
             )
