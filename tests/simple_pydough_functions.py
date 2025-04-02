@@ -392,6 +392,67 @@ def avg_gap_prev_urgent_same_clerk():
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
 
 
+def customer_most_recent_orders():
+    # Finds the 3 customers with the highest total value from their 5 most
+    # recent urgent orders, breaking ties in favor of the lower order key.
+    most_recent_orders = BEST(orders, by=(order_date.DESC(), key.ASC()), n_best=5)
+    return (
+        Customers.WHERE(HAS(most_recent_orders))
+        .CALCULATE(name, total_recent_value=SUM(most_recent_orders.total_price))
+        .TOP_K(3, by=total_recent_value.DESC())
+    )
+
+
+def richest_customer_per_region():
+    # Identifies the name of the customer with the largest account balance in
+    # every region, breaking ties by the customer's name alphabetically, and
+    # including the name of the customer's nation.
+    return (
+        Regions.CALCULATE(region_name=name)
+        .BEST(
+            nations.CALCULATE(nation_name=name).customers,
+            by=(acctbal.DESC(), name.ASC()),
+        )
+        .CALCULATE(region_name, nation_name, customer_name=name, balance=acctbal)
+    )
+
+
+def n_orders_first_day():
+    # Counts how many orders were made on the first recorded day of orders.
+    first_day_orders = BEST(Orders, by=order_date.ASC(), allow_ties=True)
+    return TPCH.CALCULATE(n_orders=COUNT(first_day_orders))
+
+
+def wealthiest_supplier():
+    # Identifies the richest supplier globally, breaking ties alphabetically.
+    return BEST(Suppliers, by=(account_balance.DESC(), name.ASC())).CALCULATE(
+        name, account_balance
+    )
+
+
+def supplier_best_part():
+    # For each French supplier, identifies the part that the supplier shipped
+    # the largest quantity of in 1994, ignoring shipments that were taxed. List
+    # out the supplier name, part name, quantity and number of such shipments
+    # for the 3 suppliers with the highest such quantities, breaking ties alphabetically.
+    selected_suppliers = Suppliers.WHERE(nation.name == "FRANCE")
+    selected_lines = lines.WHERE((YEAR(ship_date) == 1994) & (tax == 0))
+    best_part_supplied = BEST(
+        supply_records.WHERE(HAS(selected_lines)).CALCULATE(
+            part_name=part.name,
+            quantity=SUM(selected_lines.quantity),
+            n_shipments=COUNT(selected_lines),
+        ),
+        by=quantity.DESC(),
+    )
+    return selected_suppliers.CALCULATE(
+        supplier_name=name,
+        part_name=best_part_supplied.part_name,
+        total_quantity=best_part_supplied.quantity,
+        n_shipments=best_part_supplied.n_shipments,
+    ).TOP_K(3, by=(total_quantity.DESC(), supplier_name.ASC()))
+
+
 def nation_window_aggs():
     # Calculating multiple global windowed aggregations for each nation, only
     # considering nations whose names do not start with a vowel.

@@ -28,6 +28,7 @@ from simple_pydough_functions import (
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
     customer_largest_order_deltas,
+    customer_most_recent_orders,
     datetime_current,
     datetime_relative,
     double_partition,
@@ -37,6 +38,7 @@ from simple_pydough_functions import (
     global_acctbal_breakdown,
     highest_priority_per_year,
     month_year_sliding_windows,
+    n_orders_first_day,
     nation_acctbal_breakdown,
     nation_best_order,
     nation_window_aggs,
@@ -54,6 +56,7 @@ from simple_pydough_functions import (
     region_acctbal_breakdown,
     region_nation_window_aggs,
     regional_suppliers_percentile,
+    richest_customer_per_region,
     simple_filter_top_five,
     simple_scan,
     simple_scan_top_five,
@@ -64,10 +67,12 @@ from simple_pydough_functions import (
     singular5,
     singular6,
     singular7,
+    supplier_best_part,
     supplier_pct_national_qty,
     suppliers_bal_diffs,
     top_customers_by_orders,
     triple_partition,
+    wealthiest_supplier,
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
@@ -993,6 +998,143 @@ from pydough.unqualified import (
                 ),
             ),
             id="top_customers_by_orders",
+        ),
+        pytest.param(
+            (
+                customer_most_recent_orders,
+                None,
+                "customer_most_recent_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000036487",
+                            "Customer#000088562",
+                            "Customer#000059543",
+                        ],
+                        "total_recent_value": [1614134.33, 1592016.2, 1565721.92],
+                    }
+                ),
+            ),
+            id="customer_most_recent_orders",
+        ),
+        pytest.param(
+            (
+                richest_customer_per_region,
+                None,
+                "richest_customer_per_region",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nation_name": [
+                            "MOROCCO",
+                            "UNITED STATES",
+                            "VIETNAM",
+                            "GERMANY",
+                            "SAUDI ARABIA",
+                        ],
+                        "customer_name": [
+                            "Customer#000061453",
+                            "Customer#000002487",
+                            "Customer#000081976",
+                            "Customer#000144232",
+                            "Customer#000076011",
+                        ],
+                        "balance": [9999.99, 9999.72, 9998.36, 9999.74, 9998.68],
+                    }
+                ),
+            ),
+            id="richest_customer_per_region",
+        ),
+        pytest.param(
+            (
+                n_orders_first_day,
+                None,
+                "n_orders_first_day",
+                lambda: pd.DataFrame(
+                    {
+                        "n_orders": [621],
+                    }
+                ),
+            ),
+            id="n_orders_first_day",
+        ),
+        pytest.param(
+            (
+                wealthiest_supplier,
+                None,
+                "wealthiest_supplier",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["Supplier#000009450"],
+                        "account_balance": [9999.72],
+                    }
+                ),
+            ),
+            id="wealthiest_supplier",
+        ),
+        pytest.param(
+            (
+                richest_customer_per_region,
+                None,
+                "richest_customer_per_region",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nation_name": [
+                            "MOROCCO",
+                            "UNITED STATES",
+                            "VIETNAM",
+                            "GERMANY",
+                            "SAUDI ARABIA",
+                        ],
+                        "customer_name": [
+                            "Customer#000061453",
+                            "Customer#000002487",
+                            "Customer#000081976",
+                            "Customer#000144232",
+                            "Customer#000076011",
+                        ],
+                        "balance": [9999.99, 9999.72, 9998.36, 9999.74, 9998.68],
+                    }
+                ),
+            ),
+            id="richest_customer_per_region",
+        ),
+        pytest.param(
+            (
+                supplier_best_part,
+                None,
+                "supplier_best_part",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_name": [
+                            "Supplier#000006340",
+                            "Supplier#000000580",
+                            "Supplier#000006090",
+                        ],
+                        "part_name": [
+                            "black sky red lavender navy",
+                            "dark red antique mint gainsboro",
+                            "cream navajo thistle dodger red",
+                        ],
+                        "total_quantity": [131, 103, 99],
+                        "n_shipments": [4, 3, 3],
+                    }
+                ),
+            ),
+            id="supplier_best_part",
         ),
         pytest.param(
             (
