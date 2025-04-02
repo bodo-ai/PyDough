@@ -368,7 +368,9 @@ def apply_datetime_truncation(
                     isinstance(base, sqlglot_expressions.Datetime)
                     and len(base.this) == 1
                 ):
-                    return sqlglot_expressions.Date(this=[base, trunc_expr])
+                    return sqlglot_expressions.Date(
+                        this=base.this + [trunc_expr],
+                    )
                 return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
                 )
@@ -411,7 +413,7 @@ def apply_datetime_truncation(
                     and len(base.this) == 1
                 ):
                     return sqlglot_expressions.Date(
-                        this=[base, offset_expr, start_of_day_expr]
+                        this=base.this + [offset_expr, start_of_day_expr],
                     )
                 return sqlglot_expressions.Date(
                     this=[base, offset_expr, start_of_day_expr],
@@ -451,11 +453,11 @@ def apply_datetime_offset(
             f"{amt} {unit.value}"
         )
         if unit in (DateTimeUnit.YEAR, DateTimeUnit.MONTH, DateTimeUnit.DAY):
-            if isinstance(base, sqlglot_expressions.Date):
-                base = sqlglot_expressions.Date(this=[base, offset_expr])
+            if isinstance(base, sqlglot_expressions.Date) or (
+                isinstance(base, sqlglot_expressions.Datetime)
+            ):
+                base.this.append(offset_expr)
                 return base
-            if isinstance(base, sqlglot_expressions.Datetime):
-                return sqlglot_expressions.Datetime(this=[base], expression=offset_expr)
         else:
             assert unit in (
                 DateTimeUnit.HOUR,
@@ -463,8 +465,11 @@ def apply_datetime_offset(
                 DateTimeUnit.SECOND,
             )
             if isinstance(base, sqlglot_expressions.Datetime):
-                return sqlglot_expressions.Datetime(this=[base], expression=offset_expr)
-        return sqlglot_expressions.Datetime(this=[base], expression=offset_expr)
+                base.this.append(offset_expr)
+                return base
+        return sqlglot_expressions.Datetime(
+            this=[base, offset_expr],
+        )
     else:
         # For other dialects, we can rely the DATEADD function.
         return sqlglot_expressions.DateAdd(
@@ -1864,16 +1869,16 @@ def convert_sqlite_datediff(
         case "days" | "day" | "d":
             # Extracts the start of date from the datetime and subtracts the dates.
             date_x = sqlglot_expressions.Date(
-                this=[
-                    dt_x,
-                    sqlglot_expressions.Literal(this="start of day", is_string=True),
-                ]
+                this=dt_x,
+                expressions=[
+                    sqlglot_expressions.Literal(this="start of day", is_string=True)
+                ],
             )
             date_y = sqlglot_expressions.Date(
-                this=[
-                    dt_y,
-                    sqlglot_expressions.Literal(this="start of day", is_string=True),
-                ]
+                this=dt_y,
+                expressions=[
+                    sqlglot_expressions.Literal(this="start of day", is_string=True)
+                ],
             )
             # This calculates 'this-expression'.
             answer = sqlglot_expressions.DateDiff(
@@ -2381,7 +2386,6 @@ class SqlGlotTransformBindings:
         # String function overrides
         if sqlite3.sqlite_version < "3.44.1":
             self.bindings[pydop.JOIN_STRINGS] = convert_concat_ws_to_concat
-
         # Remove MEDIAN binding if present, since it's not supported in SQLite
         # and should have been expanded in an earlier stage.
         self.bindings.pop(pydop.MEDIAN, None)

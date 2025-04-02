@@ -1414,7 +1414,6 @@ def test_pipeline_e2e_defog_simple_week(
 
     # Create DataFrame with expected results
     expected_df = pd.DataFrame(data_dict)
-    # breakpoint()
     pd.testing.assert_frame_equal(result, expected_df)
 
 
@@ -1431,6 +1430,13 @@ def test_pipeline_e2e_defog_transaction_week(
     graph: GraphMetadata = defog_graphs("Broker")
     root: UnqualifiedNode = init_pydough_context(graph)(transaction_week_sampler)()
     result: pd.DataFrame = to_df(
+        root,
+        metadata=graph,
+        database=sqlite_defog_connection,
+        config=week_handling_config,
+    )
+
+    to_sql(
         root,
         metadata=graph,
         database=sqlite_defog_connection,
@@ -1473,5 +1479,5 @@ def test_pipeline_e2e_defog_transaction_week(
             "dayofweek": expected_dayofweeks,
         }
     )
-
+    # breakpoint()
     pd.testing.assert_frame_equal(result, expected_df)

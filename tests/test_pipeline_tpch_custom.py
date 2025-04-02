@@ -1366,8 +1366,6 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
-    # ans = to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
-    # breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

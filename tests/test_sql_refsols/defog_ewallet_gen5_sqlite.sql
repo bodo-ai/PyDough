@@ -1,46 +1,46 @@
-WITH _table_alias_0 AS (
+WITH "_t0" AS (
   SELECT
-    notifications.created_at AS created_at,
-    notifications.user_id AS user_id
-  FROM main.notifications AS notifications
-), _table_alias_1 AS (
+    "notifications"."created_at" AS "created_at",
+    "notifications"."user_id" AS "user_id"
+  FROM "main"."notifications" AS "notifications"
+), "_t1" AS (
   SELECT
-    users.created_at AS created_at,
-    users.uid AS uid
-  FROM main.users AS users
-), _t0 AS (
+    "users"."created_at" AS "created_at",
+    "users"."uid" AS "uid"
+  FROM "main"."users" AS "users"
+), "_t0_2" AS (
   SELECT
-    _table_alias_0.created_at AS created_at,
-    _table_alias_1.created_at AS created_at_1,
-    _table_alias_0.user_id AS user_id
-  FROM _table_alias_0 AS _table_alias_0
-  LEFT JOIN _table_alias_1 AS _table_alias_1
-    ON _table_alias_0.user_id = _table_alias_1.uid
+    "_t0"."created_at" AS "created_at",
+    "_t1"."created_at" AS "created_at_1",
+    "_t0"."user_id" AS "user_id"
+  FROM "_t0" AS "_t0"
+  LEFT JOIN "_t1" AS "_t1"
+    ON "_t0"."user_id" = "_t1"."uid"
   WHERE
-    _table_alias_0.created_at <= DATETIME(DATETIME(_table_alias_1.created_at), '1 year')
-    AND _table_alias_0.created_at >= _table_alias_1.created_at
-), _table_alias_3 AS (
+    "_t0"."created_at" <= DATETIME("_t1"."created_at", '1 year')
+    AND "_t0"."created_at" >= "_t1"."created_at"
+), "_t3" AS (
   SELECT
-    _t0.user_id AS user_id
-  FROM _t0 AS _t0
-), _table_alias_2 AS (
+    "_t0"."user_id" AS "user_id"
+  FROM "_t0_2" AS "_t0"
+), "_t2" AS (
   SELECT
-    users.created_at AS created_at,
-    users.email AS email,
-    users.uid AS uid,
-    users.username AS username
-  FROM main.users AS users
+    "users"."created_at" AS "created_at",
+    "users"."email" AS "email",
+    "users"."uid" AS "uid",
+    "users"."username" AS "username"
+  FROM "main"."users" AS "users"
 )
 SELECT
-  _table_alias_2.username AS username,
-  _table_alias_2.email AS email,
-  _table_alias_2.created_at AS created_at
-FROM _table_alias_2 AS _table_alias_2
+  "_t2"."username" AS "username",
+  "_t2"."email" AS "email",
+  "_t2"."created_at" AS "created_at"
+FROM "_t2" AS "_t2"
 WHERE
   NOT EXISTS(
     SELECT
       1 AS "1"
-    FROM _table_alias_3 AS _table_alias_3
+    FROM "_t3" AS "_t3"
     WHERE
-      _table_alias_2.uid = _table_alias_3.user_id
+      "_t2"."uid" = "_t3"."user_id"
   )

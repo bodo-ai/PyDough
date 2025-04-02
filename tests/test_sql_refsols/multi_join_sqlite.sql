@@ -1,13 +1,12 @@
-WITH _table_alias_0 AS (
+WITH "_t0" AS (
   SELECT
-    table.a AS a,
-    table.b AS b
-  FROM table AS table
+    "table"."a" AS "a"
+  FROM "table" AS "table"
 )
 SELECT
-  _table_alias_0.a AS a
-FROM _table_alias_0 AS _table_alias_0
-JOIN _table_alias_0 AS _table_alias_1
-  ON _table_alias_0.a = _table_alias_1.a
-JOIN _table_alias_0 AS _table_alias_2
-  ON _table_alias_0.a = _table_alias_2.a
+  "_t0"."a" AS "a"
+FROM "_t0" AS "_t0"
+JOIN "_t0" AS "_t1"
+  ON "_t0"."a" = "_t1"."a"
+JOIN "_t0" AS "_t2"
+  ON "_t0"."a" = "_t2"."a"

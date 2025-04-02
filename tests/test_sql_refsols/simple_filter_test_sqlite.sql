@@ -1,6 +1,6 @@
 SELECT
-  table.a AS a,
-  table.b AS b
-FROM table AS table
+  "table"."a" AS "a",
+  "table"."b" AS "b"
+FROM "table" AS "table"
 WHERE
-  table.a = 1
+  "table"."a" = 1

@@ -978,7 +978,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    set_glot_alias(Ident(this="_table_alias_0.a", quoted=False), "a"),
+                    set_glot_alias(Ident(this="_t0.a", quoted=False), "a"),
                 ],
                 _from=GlotFrom(
                     mkglot(
@@ -988,7 +988,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         ],
                         _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     ),
-                    alias="_table_alias_0",
+                    alias="_t0",
                 ),
                 where=Exists(
                     this=mkglot(
@@ -1003,13 +1003,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                     Table(this=Ident(this="table", quoted=False))
                                 ),
                             ),
-                            alias="_table_alias_1",
+                            alias="_t1",
                         ),
                         where=mkglot_func(
                             EQ,
                             [
-                                Ident(this="_table_alias_0.a", quoted=False),
-                                Ident(this="_table_alias_1.a", quoted=False),
+                                Ident(this="_t0.a", quoted=False),
+                                Ident(this="_t1.a", quoted=False),
                             ],
                         ),
                     )
@@ -1037,7 +1037,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    set_glot_alias(Ident(this="_table_alias_1.b", quoted=False), "b"),
+                    set_glot_alias(Ident(this="_t1.b", quoted=False), "b"),
                 ],
                 _from=GlotFrom(
                     mkglot(
@@ -1047,7 +1047,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         ],
                         _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     ),
-                    alias="_table_alias_0",
+                    alias="_t0",
                 ),
                 where=Not(
                     this=Exists(
@@ -1063,13 +1063,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                         Table(this=Ident(this="table", quoted=False))
                                     ),
                                 ),
-                                alias="_table_alias_1",
+                                alias="_t1",
                             ),
                             where=mkglot_func(
                                 EQ,
                                 [
-                                    Ident(this="_table_alias_0.a", quoted=False),
-                                    Ident(this="_table_alias_1.a", quoted=False),
+                                    Ident(this="_t0.a", quoted=False),
+                                    Ident(this="_t1.a", quoted=False),
                                 ],
                             ),
                         )
@@ -1121,18 +1121,12 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[
-                    set_glot_alias(Ident(this="_table_alias_2.b", quoted=False), "d")
-                ],
+                expressions=[set_glot_alias(Ident(this="_t2.b", quoted=False), "d")],
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            set_glot_alias(
-                                Ident(this="_table_alias_0.a", quoted=False), "a"
-                            ),
-                            set_glot_alias(
-                                Ident(this="_table_alias_1.b", quoted=False), "b"
-                            ),
+                            set_glot_alias(Ident(this="_t0.a", quoted=False), "a"),
+                            set_glot_alias(Ident(this="_t1.b", quoted=False), "b"),
                         ],
                         _from=GlotFrom(
                             mkglot(
@@ -1144,7 +1138,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                     Table(this=Ident(this="table", quoted=False))
                                 ),
                             ),
-                            alias="_table_alias_0",
+                            alias="_t0",
                         ),
                         join=GlotJoin(
                             right_query=GlotFrom(
@@ -1157,19 +1151,19 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                         Table(this=Ident(this="table", quoted=False))
                                     ),
                                 ),
-                                alias=TableAlias(this="_table_alias_1"),
+                                alias=TableAlias(this="_t1"),
                             ),
                             on=mkglot_func(
                                 EQ,
                                 [
-                                    Ident(this="_table_alias_0.a", quoted=False),
-                                    Ident(this="_table_alias_1.a", quoted=False),
+                                    Ident(this="_t0.a", quoted=False),
+                                    Ident(this="_t1.a", quoted=False),
                                 ],
                             ),
                             join_type="inner",
                         ),
                     ),
-                    alias="_table_alias_2",
+                    alias="_t2",
                 ),
                 join=GlotJoin(
                     right_query=GlotFrom(
@@ -1182,13 +1176,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                 Table(this=Ident(this="table", quoted=False))
                             ),
                         ),
-                        alias=TableAlias(this="_table_alias_3"),
+                        alias=TableAlias(this="_t3"),
                     ),
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_table_alias_2.a", quoted=False),
-                            Ident(this="_table_alias_3.a", quoted=False),
+                            Ident(this="_t2.a", quoted=False),
+                            Ident(this="_t3.a", quoted=False),
                         ],
                     ),
                     join_type="left",
@@ -1236,12 +1230,8 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            set_glot_alias(
-                                Ident(this="_table_alias_0.a", quoted=False), "a"
-                            ),
-                            set_glot_alias(
-                                Ident(this="_table_alias_1.b", quoted=False), "b"
-                            ),
+                            set_glot_alias(Ident(this="_t0.a", quoted=False), "a"),
+                            set_glot_alias(Ident(this="_t1.b", quoted=False), "b"),
                         ],
                         _from=GlotFrom(
                             mkglot(
@@ -1253,7 +1243,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                     Table(this=Ident(this="table", quoted=False))
                                 ),
                             ),
-                            alias="_table_alias_0",
+                            alias="_t0",
                         ),
                         join=GlotJoin(
                             right_query=GlotFrom(
@@ -1266,13 +1256,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                         Table(this=Ident(this="table", quoted=False))
                                     ),
                                 ),
-                                alias=TableAlias(this="_table_alias_1"),
+                                alias=TableAlias(this="_t1"),
                             ),
                             on=mkglot_func(
                                 EQ,
                                 [
-                                    Ident(this="_table_alias_0.a", quoted=False),
-                                    Ident(this="_table_alias_1.a", quoted=False),
+                                    Ident(this="_t0.a", quoted=False),
+                                    Ident(this="_t1.a", quoted=False),
                                 ],
                             ),
                             join_type="inner",
@@ -1587,9 +1577,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[
-                    set_glot_alias(Ident(this="_table_alias_1.b", quoted=False), "b")
-                ],
+                expressions=[set_glot_alias(Ident(this="_t1.b", quoted=False), "b")],
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
@@ -1598,7 +1586,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         ],
                         _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
                     ),
-                    alias="_table_alias_0",
+                    alias="_t0",
                 ),
                 join=GlotJoin(
                     right_query=GlotFrom(
@@ -1611,13 +1599,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                                 Table(this=Ident(this="table", quoted=False))
                             ),
                         ),
-                        alias=TableAlias(this="_table_alias_1"),
+                        alias=TableAlias(this="_t1"),
                     ),
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_table_alias_0.a", quoted=False),
-                            Ident(this="_table_alias_1.a", quoted=False),
+                            Ident(this="_t0.a", quoted=False),
+                            Ident(this="_t1.a", quoted=False),
                         ],
                     ),
                     join_type="inner",
@@ -1737,7 +1725,6 @@ def test_node_to_sqlglot(
     sqlglot_relational_visitor.reset()
     node.accept(sqlglot_relational_visitor)
     actual = sqlglot_relational_visitor.get_sqlglot_result()
-    breakpoint()
     assert actual == sqlglot_expr
 
 

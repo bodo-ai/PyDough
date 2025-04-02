@@ -1,23 +1,23 @@
-WITH _table_alias_2 AS (
+WITH "_t2" AS (
   SELECT DISTINCT
-    sbcustomer.sbcustcountry AS country
-  FROM main.sbcustomer AS sbcustomer
-), _table_alias_3 AS (
+    "sbcustomer"."sbcustcountry" AS "country"
+  FROM "main"."sbcustomer" AS "sbcustomer"
+), "_t3_2" AS (
   SELECT
-    COUNT() AS agg_0,
-    SUM(sbtransaction.sbtxamount) AS agg_1,
-    sbcustomer.sbcustcountry AS country
-  FROM main.sbcustomer AS sbcustomer
-  JOIN main.sbtransaction AS sbtransaction
-    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
-    AND sbtransaction.sbtxdatetime >= DATE(DATETIME(DATETIME('now'), '-30 day'), 'start of day')
+    COUNT() AS "agg_0",
+    SUM("sbtransaction"."sbtxamount") AS "agg_1",
+    "sbcustomer"."sbcustcountry" AS "country"
+  FROM "main"."sbcustomer" AS "sbcustomer"
+  JOIN "main"."sbtransaction" AS "sbtransaction"
+    ON "sbcustomer"."sbcustid" = "sbtransaction"."sbtxcustid"
+    AND "sbtransaction"."sbtxdatetime" >= DATE(DATETIME('now', '-30 day'), 'start of day')
   GROUP BY
-    sbcustomer.sbcustcountry
+    "sbcustomer"."sbcustcountry"
 )
 SELECT
-  _table_alias_2.country AS country,
-  COALESCE(_table_alias_3.agg_0, 0) AS num_transactions,
-  COALESCE(_table_alias_3.agg_1, 0) AS total_amount
-FROM _table_alias_2 AS _table_alias_2
-LEFT JOIN _table_alias_3 AS _table_alias_3
-  ON _table_alias_2.country = _table_alias_3.country
+  "_t2"."country" AS "country",
+  COALESCE("_t3"."agg_0", 0) AS "num_transactions",
+  COALESCE("_t3"."agg_1", 0) AS "total_amount"
+FROM "_t2" AS "_t2"
+LEFT JOIN "_t3_2" AS "_t3"
+  ON "_t2"."country" = "_t3"."country"

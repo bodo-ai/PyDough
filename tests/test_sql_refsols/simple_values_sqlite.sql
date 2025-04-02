@@ -1,5 +1,5 @@
 SELECT
-  42 AS A,
-  'foo' AS B
+  42 AS "A",
+  'foo' AS "B"
 FROM (VALUES
-  (NULL)) AS _q_0
+  (NULL)) AS "_q_0"

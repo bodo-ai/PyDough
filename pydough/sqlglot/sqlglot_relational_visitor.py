@@ -86,7 +86,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         Returns:
             str: A unique table alias.
         """
-        alias = f"_table_alias_{self._alias_counter}"
+        alias = f"_t{self._alias_counter}"
         self._alias_counter += 1
         return alias
 
