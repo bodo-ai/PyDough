@@ -897,13 +897,13 @@ def link_to_ancestor(ancestor: UnqualifiedNode, node: UnqualifiedNode) -> None:
             | UnqualifiedWhere()
             | UnqualifiedOrderBy()
             | UnqualifiedTopK()
+            | UnqualifiedAccess()
+            | UnqualifiedPartition()
         ):
             if isinstance(node._parcel[0], UnqualifiedRoot):
                 node._parcel = (ancestor, *node._parcel[1:])
             else:
                 link_to_ancestor(ancestor, node._parcel[0])
-        case UnqualifiedAccess() | UnqualifiedPartition():
-            link_to_ancestor(ancestor, node._parcel[0])
         case _:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node for `link_to_ancestor`: {node.__class__.__name__}"

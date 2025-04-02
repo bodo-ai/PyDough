@@ -279,6 +279,34 @@ answer = x.TOP_K(100)\
             "Parts.CALCULATE(name=name, rank=RANKING(by=(retail_price.DESC(na_pos='last'), levels=2, allow_ties=True, dense=True))",
             id="ranking_4",
         ),
+        pytest.param(
+            "answer = _ROOT.BEST(_ROOT.Nations.CALCULATE(name=_ROOT.name, num_customers=_ROOT.COUNT(_ROOT.customers)), by=_ROOT.num_customers.DESC())",
+            "Nations.CALCULATE(name=name, num_customers=COUNT(customers)).WHERE((RANKING(by=(num_customers.DESC(na_pos='last'), levels=1, allow_ties=False) == 1)).SINGULAR()",
+            id="best_global",
+        ),
+        pytest.param(
+            "answer = _ROOT.Nations.CALCULATE(nation_name=_ROOT.name).BEST(_ROOT.Suppliers, by=_ROOT.account_balance.DESC()).CALCULATE(nation_name=_ROOT.nation_name, supplier_name=_ROOT.name, supplier_balance=_ROOT.account_balance)",
+            "Nations.CALCULATE(nation_name=name).Suppliers.WHERE((RANKING(by=(account_balance.DESC(na_pos='last'), levels=1, allow_ties=False) == 1)).SINGULAR().CALCULATE(nation_name=nation_name, supplier_name=name, supplier_balance=account_balance)",
+            id="best_access",
+        ),
+        pytest.param(
+            """\
+richest_customer = _ROOT.BEST(_ROOT.customers, by=_ROOT.acct_bal.DESC())
+answer = _ROOT.Nations.CALCULATE(name=_ROOT.name, richest_customer_name=richest_customer.name)
+""",
+            "Nations.CALCULATE(name=name, richest_customer_name=customers.WHERE((RANKING(by=(acct_bal.DESC(na_pos='last'), levels=1, allow_ties=False) == 1)).SINGULAR().name)",
+            id="best_child",
+        ),
+        pytest.param(
+            "answer = _ROOT.Customers.BEST(_ROOT.orders.lines, by=_ROOT.ship_date.DESC(), allow_ties=True)",
+            "Customers.orders.lines.WHERE((RANKING(by=(ship_date.DESC(na_pos='last'), levels=2, allow_ties=True) == 1))",
+            id="best_ties",
+        ),
+        pytest.param(
+            "answer = _ROOT.Customers.BEST(_ROOT.orders.lines, by=_ROOT.ship_date.DESC(), n_best=5)",
+            "Customers.orders.lines.WHERE((RANKING(by=(ship_date.DESC(na_pos='last'), levels=2, allow_ties=False) <= 5))",
+            id="best_multiple",
+        ),
     ],
 )
 def test_unqualified_to_string(
