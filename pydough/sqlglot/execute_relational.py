@@ -60,8 +60,16 @@ def convert_relation_to_sql(
         dialect, config
     ).relational_to_sqlglot(relational)
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(dialect)
+
+    # Convert the SQLGlot AST to a SQL string and back to an AST hoping that
+    # SQLGlot will "clean" up the AST to make it more compatible with the
+    # optimizer.
     glot_expr = parse_one(glot_expr.sql(sqlglot_dialect), dialect=sqlglot_dialect)
+
+    # Apply the SQLGlot optimizer to the AST.
     glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
+
+    # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
 
 
