@@ -445,12 +445,16 @@ def supplier_best_part():
         ),
         by=quantity.DESC(),
     )
-    return selected_suppliers.CALCULATE(
-        supplier_name=name,
-        part_name=best_part_supplied.part_name,
-        total_quantity=best_part_supplied.quantity,
-        n_shipments=best_part_supplied.n_shipments,
-    ).TOP_K(3, by=(total_quantity.DESC(), supplier_name.ASC()))
+    return (
+        selected_suppliers.WHERE(HAS(best_part_supplied))
+        .CALCULATE(
+            supplier_name=name,
+            part_name=best_part_supplied.part_name,
+            total_quantity=best_part_supplied.quantity,
+            n_shipments=best_part_supplied.n_shipments,
+        )
+        .TOP_K(3, by=(total_quantity.DESC(), supplier_name.ASC()))
+    )
 
 
 def nation_window_aggs():
