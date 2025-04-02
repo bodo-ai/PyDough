@@ -986,7 +986,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ),
                 where=Exists(
                     this=mkglot(
-                        expressions=[Literal(this=1, is_string=False)],
+                        expressions=[mk_literal(1, False)],
                         _from=GlotFrom(
                             mkglot(
                                 expressions=[
@@ -1046,7 +1046,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 where=Not(
                     this=Exists(
                         this=mkglot(
-                            expressions=[Literal(this=1, is_string=False)],
+                            expressions=[mk_literal(1, False)],
                             _from=GlotFrom(
                                 mkglot(
                                     expressions=[
