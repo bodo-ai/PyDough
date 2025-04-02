@@ -1242,12 +1242,9 @@ Addresses.CALCULATE(
 <!-- TOC --><a name="best"></a>
 ### BEST
 
-> [!IMPORTANT]
-> This feature has not yet been implemented in PyDough
-
 PyDough supports identifying a specific record from a sub-collection that is optimal with regards to some metric, per-record of the current collection. This is done by using `BEST` instead of directly accessing the sub-collection. The first argument to `BEST` is the sub-collection to be accessed, and the second is a `by` argument used to find the optimal record of the sub-collection. The rules for the `by` argument are the same as `PREV`, `NEXT`, `TOP_K`, etc.: it must be either a single collation term, or an iterable of 1+ collation terms.
 
-A call to `BEST` can either be done with `.` syntax, to step from a parent collection to a child collection, or can be a freestanding accessor used inside of a collection operator, just like `BACK`, `PREV` or `NEXT`. For example, both `Parent.BEST(child, by=...)` and `Parent(x=BEST(child, by=...).y)` are allowed.
+A call to `BEST` can either be done with `.` syntax, to step from a parent collection to a child collection, or can be a freestanding accessor used inside of a collection operator. For example, both `Parent.BEST(child, by=...)` and `Parent(x=BEST(child, by=...).y)` are allowed.
 
 The original ancestry of the sub-collection is intact, so any down-streaming is preserved.
 
