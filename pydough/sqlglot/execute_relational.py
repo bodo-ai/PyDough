@@ -22,7 +22,6 @@ from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
 from sqlglot.optimizer.pushdown_projections import pushdown_projections
 from sqlglot.optimizer.qualify import qualify
-from sqlglot.optimizer.qualify_columns import quote_identifiers
 from sqlglot.optimizer.simplify import simplify
 
 from pydough.configs import PyDoughConfigs
@@ -89,8 +88,8 @@ def apply_sqlglot_optimizer(
     """
     # Apply each rule explicitly with appropriate kwargs
     # TODO: (gh #313) - Two rules that sqlglot optimizer provides are skipped
-    # (unnest_subqueries and canonicalize). Additionally, the rule `merge_subqueries`
-    # is skipped if the AST has a `semi` or `anti` join.
+    # (unnest_subqueries and canonicalize). Additionally, the rule
+    # `merge_subqueries` is skipped if the AST has a `semi` or `anti` join.
 
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
     glot_expr = qualify(
@@ -134,7 +133,7 @@ def apply_sqlglot_optimizer(
     glot_expr = eliminate_ctes(glot_expr)
 
     # NEW: Makes sure all identifiers that need to be quoted are quoted.
-    glot_expr = quote_identifiers(glot_expr, dialect=dialect)
+    # glot_expr = quote_identifiers(glot_expr, dialect=dialect)
 
     # Infers the types of an expression, annotating its AST accordingly.
     # depends on the schema.
