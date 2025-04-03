@@ -34,7 +34,7 @@ class Singular(AugmentingChildOperator):
         return "Singular"
 
     def equals(self, other: object) -> bool:
-        return super().equals(other) and isinstance(other, Singular)
+        return isinstance(other, Singular) and super().equals(other)
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # SINGULAR node is always singular with regards to the parent context.

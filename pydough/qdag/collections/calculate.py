@@ -184,13 +184,9 @@ class Calculate(AugmentingChildOperator):
         return f"Calculate[{self.calc_kwarg_strings(True)}]"
 
     def equals(self, other: object) -> bool:
-        if self._calc_term_indices is None:
-            raise PyDoughQDAGException(
-                "Cannot invoke `equals` before calling `with_terms`"
-            )
         return (
-            super().equals(other)
-            and isinstance(other, Calculate)
+            isinstance(other, Calculate)
             and self._calc_term_indices == other._calc_term_indices
             and self._calc_term_values == other._calc_term_values
+            and super().equals(other)
         )
