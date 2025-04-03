@@ -14,6 +14,7 @@ from pydough.relational import (
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
+    Scan,
 )
 from pydough.relational.rel_util import (
     add_expr_uses,
@@ -115,4 +116,18 @@ def merge_projects(node: RelationalNode) -> RelationalNode:
                     # Otherwise, halt the merging process since it is no longer
                     # possible to merge the children of this project into it.
                     break
+    # Final round: if there is a project on top of a scan that only does
+    # column pruning/renaming, just push it into the scan.
+    if (
+        isinstance(node, Project)
+        and isinstance(node.input, Scan)
+        and all(isinstance(expr, ColumnReference) for expr in node.columns.values())
+    ):
+        return Scan(
+            node.input.table_name,
+            {
+                name: transpose_expression(expr, node.input.columns)
+                for name, expr in node.columns.items()
+            },
+        )
     return node
