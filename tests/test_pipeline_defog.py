@@ -774,7 +774,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "dealership_gen2",
             ),
             id="dealership_gen2",
-            marks=pytest.mark.skip("TODO: add PaymentsMade table to the metadata"),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(

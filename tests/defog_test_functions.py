@@ -1108,7 +1108,14 @@ def impl_defog_dealership_gen2():
     Return the number of payments made on weekends to the vendor named 'Utility
     Company'
     """
-    return "Query pending"
+    return Dealership.CALCULATE(
+        weekend_payments=COUNT(
+            PaymentsMade.WHERE(
+                (vendor_name == "Utility Company")
+                & ((DAYOFWEEK(payment_date) == 5) | (DAYOFWEEK(payment_date) == 6))
+            )
+        )
+    )
 
 
 def impl_defog_dealership_gen3():
