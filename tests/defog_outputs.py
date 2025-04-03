@@ -34,6 +34,37 @@ __all__ = [
     "defog_sql_text_broker_gen3",
     "defog_sql_text_broker_gen4",
     "defog_sql_text_broker_gen5",
+    "defog_sql_text_dealership_adv1",
+    "defog_sql_text_dealership_adv10",
+    "defog_sql_text_dealership_adv11",
+    "defog_sql_text_dealership_adv12",
+    "defog_sql_text_dealership_adv13",
+    "defog_sql_text_dealership_adv14",
+    "defog_sql_text_dealership_adv15",
+    "defog_sql_text_dealership_adv16",
+    "defog_sql_text_dealership_adv2",
+    "defog_sql_text_dealership_adv3",
+    "defog_sql_text_dealership_adv4",
+    "defog_sql_text_dealership_adv5",
+    "defog_sql_text_dealership_adv6",
+    "defog_sql_text_dealership_adv7",
+    "defog_sql_text_dealership_adv8",
+    "defog_sql_text_dealership_adv9",
+    "defog_sql_text_dealership_basic1",
+    "defog_sql_text_dealership_basic10",
+    "defog_sql_text_dealership_basic2",
+    "defog_sql_text_dealership_basic3",
+    "defog_sql_text_dealership_basic4",
+    "defog_sql_text_dealership_basic5",
+    "defog_sql_text_dealership_basic6",
+    "defog_sql_text_dealership_basic7",
+    "defog_sql_text_dealership_basic8",
+    "defog_sql_text_dealership_basic9",
+    "defog_sql_text_dealership_gen1",
+    "defog_sql_text_dealership_gen2",
+    "defog_sql_text_dealership_gen3",
+    "defog_sql_text_dealership_gen4",
+    "defog_sql_text_dealership_gen5",
     "defog_sql_text_ewallet_adv1",
     "defog_sql_text_ewallet_adv10",
     "defog_sql_text_ewallet_adv11",
@@ -674,6 +705,638 @@ def defog_sql_text_broker_gen5() -> str:
     WHERE sbTxStatus = 'success' AND sbTxDateTime BETWEEN '2023-01-01' AND '2023-03-31'
     GROUP BY datetime
     ORDER BY datetime 
+    """
+
+
+def defog_sql_text_dealership_adv1() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    For sales with sale price over $30,000, how many payments were received in
+    total and on weekends in each of the last 8 calendar weeks (excluding the
+    current week)? Return the week (as a date), total payments received, and
+    weekend payments received in ascending order.
+    """
+    return """
+    SELECT date(p.payment_date, '-' || ((strftime('%w', p.payment_date) + 6) % 7) || ' days') AS week, 
+        COUNT(p._id) AS total_payments, 
+        COUNT(CASE WHEN strftime('%w', p.payment_date) IN ('0', '6') THEN 1 END) AS weekend_payments
+    FROM payments_received AS p
+    JOIN sales AS s ON p.sale_id = s._id
+    WHERE s.sale_price > 30000
+    AND p.payment_date >= date('now', '-' || ((strftime('%w', 'now') + 6) % 7) || ' days', '-56 days')
+    AND p.payment_date < date('now', '-' || ((strftime('%w', 'now') + 6) % 7) || ' days')
+    GROUP BY week
+    ORDER BY week ASC;
+    """
+
+
+def defog_sql_text_dealership_adv2() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    How many sales did each salesperson make in the past 30 days, inclusive of
+    today's date? Return their ID, first name, last name and number of sales
+    made, ordered from most to least sales.
+    """
+    return """
+    WITH recent_sales AS (
+        SELECT sp._id, sp.first_name, sp.last_name, COUNT(s._id) AS num_sales
+        FROM salespersons AS sp
+        LEFT JOIN sales AS s ON sp._id = s.salesperson_id
+        WHERE s.sale_date >= DATE('now', '-30 days')
+        GROUP BY sp._id
+    ) 
+    SELECT _id, first_name, last_name, num_sales FROM recent_sales
+    ORDER BY num_sales DESC;
+    """
+
+
+def defog_sql_text_dealership_adv3() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    How many sales were made for each car model that has 'M5' in its VIN
+    number? Return the make, model and number of sales. When using car makes,
+    model names, engine_type and vin_number, match case-insensitively and allow
+    partial matches using LIKE with wildcards.
+    """
+    return """
+    SELECT c.make, c.model, COUNT(s._id) AS num_sales 
+    FROM cars AS c 
+    LEFT JOIN sales AS s ON c._id = s.car_id 
+    WHERE LOWER(c.vin_number) 
+    LIKE '%m5%' 
+    GROUP BY c.make, c.model;
+    """
+
+
+def defog_sql_text_dealership_adv4() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    How many Toyota cars were sold in the last 30 days inclusive of today?
+    Return the number of sales and total revenue.
+    """
+    return """
+    SELECT COUNT(s._id) AS num_sales, SUM(s.sale_price) AS total_revenue FROM sales AS s 
+    JOIN cars AS c 
+    ON s.car_id = c._id
+    WHERE c.make = 'toyota' AND s.sale_date BETWEEN DATE('now', '-30 days') AND DATE('now');
+    """
+
+
+def defog_sql_text_dealership_adv5() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the highest sale price for each make and model of cars that have
+    been sold and are no longer in inventory, ordered by the sale price from
+    highest to lowest. Use the most recent date in the inventory_snapshots
+    table to determine that car's inventory status. When getting a car's
+    inventory status, always take the latest status from the
+    inventory_snapshots table
+    """
+    return """
+    WITH salesperson_sales AS (
+        SELECT 
+            salesperson_id, 
+            SUM(sale_price) AS total_sales, 
+            COUNT(*) AS num_sales 
+        FROM sales 
+        GROUP BY salesperson_id
+    ) 
+    SELECT 
+        s.first_name, 
+        s.last_name, 
+        ss.total_sales, 
+        ss.num_sales, 
+        RANK() OVER (
+            ORDER BY 
+                CASE WHEN ss.total_sales IS NULL THEN 1 ELSE 0 END DESC, 
+                ss.total_sales DESC
+        ) AS sales_rank 
+    FROM salesperson_sales AS ss 
+    JOIN salespersons AS s ON ss.salesperson_id = s._id;
+    """
+
+
+def defog_sql_text_dealership_adv6() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the customer name, number of transactions, total transaction amount,
+    and CR for all customers. CR = customer rank by total transaction amount,
+    with rank 1 being the customer with the highest total transaction amount.
+    """
+    return """
+    WITH latest_inventory_status AS (
+        SELECT 
+            car_id, 
+            is_in_inventory, 
+            ROW_NUMBER() OVER (
+                PARTITION BY car_id 
+                ORDER BY 
+                    CASE WHEN snapshot_date IS NULL THEN 1 ELSE 0 END DESC, 
+                    snapshot_date DESC
+            ) AS rn
+        FROM inventory_snapshots
+    ) 
+    SELECT 
+        c.make, 
+        c.model, 
+        MAX(s.sale_price) AS highest_sale_price 
+    FROM cars AS c 
+    JOIN sales AS s ON c._id = s.car_id 
+    JOIN latest_inventory_status AS lis ON c._id = lis.car_id 
+    WHERE lis.is_in_inventory = FALSE 
+    AND lis.rn = 1 
+    GROUP BY c.make, c.model 
+    ORDER BY 
+        CASE WHEN highest_sale_price IS NULL THEN 1 ELSE 0 END DESC, 
+        highest_sale_price DESC;
+    """
+
+
+def defog_sql_text_dealership_adv7() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What are the details and average sale price for cars that have 'Ford' in
+    their make name or 'Mustang' in the model name? Return make, model, year,
+    color, vin_number and avg_sale_price. When using car makes, model names,
+    engine_type and vin_number, match case-insensitively and allow partial
+    matches using LIKE with wildcards.
+    """
+    return """
+    SELECT c.make, c.model, c.year, c.color, c.vin_number, AVG(s.sale_price) AS avg_sale_price 
+    FROM cars AS c 
+    JOIN sales AS s 
+    ON c._id = s.car_id
+    WHERE LOWER(c.make) LIKE '%ford%' OR LOWER(c.model) LIKE '%mustang%' 
+    GROUP BY c.make, c.model, c.year, c.color, c.vin_number;
+    """
+
+
+def defog_sql_text_dealership_adv8() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What are the PMSPS and PMSR in the last 6 months excluding the current
+    month, for salespersons hired between 2022 and 2023 (both inclusive)?
+    Return all months in your answer, including those where metrics are 0.
+    Order by month ascending. PMSPS = per month salesperson sales count. PMSR =
+    per month sales revenue in dollars. Truncate date to month for aggregation.
+    """
+    return """
+    WITH RECURSIVE date_range(month_start) AS (
+        SELECT DATE('now', '-6 months', 'start of month') AS month_start
+        UNION ALL
+        SELECT DATE(month_start, '+1 month')
+        FROM date_range
+        WHERE month_start < DATE('now', '-1 month', 'start of month')
+    ),
+    sales_metrics AS (
+        SELECT 
+            strftime('%Y-%m', s.sale_date) AS sale_month,
+            COUNT(s._id) AS PMSPS,
+            SUM(s.sale_price) AS PMSR
+        FROM sales AS s
+        JOIN salespersons AS sp ON s.salesperson_id = sp._id
+        WHERE 
+            strftime('%Y', sp.hire_date) BETWEEN '2022' AND '2023'
+            AND s.sale_date >= DATE('now', '-6 months', 'start of month')
+            AND s.sale_date < DATE('now', 'start of month')
+        GROUP BY sale_month
+    )
+    SELECT 
+        dr.month_start,
+        COALESCE(sm.PMSPS, 0) AS PMSPS,
+        COALESCE(sm.PMSR, 0) AS PMSR
+    FROM date_range AS dr
+    LEFT JOIN sales_metrics AS sm 
+        ON strftime('%Y-%m', dr.month_start) = sm.sale_month
+    ORDER BY dr.month_start ASC;
+    """
+
+
+def defog_sql_text_dealership_adv9() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What is the ASP for sales made in the first quarter of 2023? ASP = Average
+    Sale Price in the first quarter of 2023.
+    """
+    return """
+    SELECT AVG(sale_price) AS ASP 
+    FROM sales 
+    WHERE sale_date >= '2023-01-01' AND sale_date <= '2023-03-31';
+    """
+
+
+def defog_sql_text_dealership_adv10() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What is the average number of days between the sale date and payment
+    received date, rounded to 2 decimal places?
+    """
+    return """
+    WITH sale_payments AS (SELECT s._id AS sale_id, s.sale_date, MAX(p.payment_date) AS latest_payment_date 
+    FROM sales AS s 
+    JOIN payments_received AS p 
+    ON s._id = p.sale_id 
+    GROUP BY s._id, s.sale_date) 
+    SELECT ROUND(AVG(julianday(latest_payment_date) - julianday(sale_date)), 2) AS avg_days_to_payment
+    FROM sale_payments;
+    """
+
+
+def defog_sql_text_dealership_adv11() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What is the GPM for all car sales in 2023? GPM (gross profit margin) =
+    (total revenue - total cost) / total cost * 100
+    """
+    return """ 
+    SELECT (SUM(sale_price) - SUM(cars.cost)) / SUM(cars.cost) * 100 AS gpm 
+    FROM sales JOIN cars 
+    ON sales.car_id = cars._id 
+    WHERE strftime('%Y', sale_date) = '2023';
+    """
+
+
+def defog_sql_text_dealership_adv12() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What is the make, model and sale price of the car with the highest sale
+    price that was sold on the same day it went out of inventory?
+    """
+    return """
+    SELECT c.make, c.model, s.sale_price 
+    FROM cars AS c 
+    JOIN sales AS s ON c._id = s.car_id 
+    JOIN inventory_snapshots AS i 
+    ON c._id = i.car_id AND DATE(s.sale_date) = DATE(i.snapshot_date) 
+    WHERE i.is_in_inventory = 0 ORDER BY s.sale_price DESC LIMIT 1;
+    """
+
+
+def defog_sql_text_dealership_adv13():
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What is the total payments received per month? Also calculate the MoM
+    change for each month. MoM change = (current month value - prev month
+    value). Return all months in your answer, including those where there were
+    no payments.
+    """
+    return """
+    WITH monthly_totals AS (
+        SELECT 
+            strftime('%Y-%m-01 00:00:00', payment_date) AS dt,
+            SUM(payment_amount) AS total_payments
+        FROM payments_received
+        GROUP BY dt
+    ),
+    monthly_totals_with_zero AS (
+        SELECT dt, total_payments FROM monthly_totals
+        UNION ALL
+        SELECT 
+            strftime('%Y-%m-01 00:00:00', date(payment_date, 'start of month', '+' || (n || ' month'))) AS dt,
+            0 AS total_payments
+        FROM payments_received, 
+        (
+            SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL 
+            SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL 
+            SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL 
+            SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11
+        )
+        WHERE strftime('%Y-%m-01 00:00:00', date(payment_date, 'start of month', '+' || (n || ' month'))) 
+            <= strftime('%Y-%m-01 00:00:00', 'now')
+        GROUP BY dt
+    )
+    SELECT 
+        dt AS MONTH, 
+        SUM(total_payments) AS total_payments,
+        SUM(total_payments) - LAG(SUM(total_payments), 1) OVER (ORDER BY dt) AS mom_change
+    FROM monthly_totals_with_zero
+    GROUP BY dt
+    ORDER BY dt;
+    """
+
+
+def defog_sql_text_dealership_adv14():
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What is the TSC in the past 7 days, inclusive of today? TSC = Total Sales
+    Count.
+    """
+    return """
+    SELECT COUNT(_id) AS TSC 
+    FROM sales 
+    WHERE sale_date >= DATE('now', '-7 days');
+    """
+
+
+def defog_sql_text_dealership_adv15() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Who are the top 3 salespersons by ASP? Return their first name, last name
+    and ASP. ASP (average selling price) = total sales amount / number of sales
+    """
+    return """
+    SELECT salespersons.first_name, salespersons.last_name, AVG(sales.sale_price) AS ASP 
+    FROM sales JOIN salespersons ON sales.salesperson_id = salespersons._id 
+    GROUP BY salespersons.first_name, salespersons.last_name 
+    ORDER BY ASP DESC LIMIT 3;
+    """
+
+
+def defog_sql_text_dealership_adv16() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Who are the top 5 salespersons by total sales amount? Return their ID,
+    first name, last name and total sales amount.
+    """
+    return """
+    WITH salesperson_sales AS (SELECT s._id, s.first_name, s.last_name, SUM(sa.sale_price) AS total_sales 
+    FROM salespersons AS s 
+    LEFT JOIN sales AS sa 
+    ON s._id = sa.salesperson_id 
+    GROUP BY s._id) 
+    SELECT _id, first_name, last_name, total_sales 
+    FROM salesperson_sales
+    ORDER BY total_sales DESC LIMIT 5;
+    """
+
+
+def defog_sql_text_dealership_basic1() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the car ID, make, model and year for cars that have no sales
+    records, by doing a left join from the cars to sales table.
+    """
+    return """
+    SELECT c._id AS car_id, c.make, c.model, c.year 
+    FROM cars AS c 
+    LEFT JOIN sales AS s 
+    ON c._id = s.car_id 
+    WHERE s.car_id IS NULL;
+    """
+
+
+def defog_sql_text_dealership_basic2() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the distinct list of customer IDs that have made a purchase, based
+    on joining the customers and sales tables.
+    """
+    return """
+    SELECT DISTINCT c._id AS customer_id 
+    FROM customers  AS c 
+    JOIN sales  AS s 
+    ON c._id = s.customer_id;
+    """
+
+
+def defog_sql_text_dealership_basic3() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the distinct list of salesperson IDs that have received a cash
+    payment, based on joining the salespersons, sales and payments_received
+    tables.
+    """
+    return """
+    SELECT DISTINCT s._id AS salesperson_id 
+    FROM salespersons AS s 
+    JOIN sales AS sa 
+    ON s._id = sa.salesperson_id 
+    JOIN payments_received AS p 
+    ON sa._id = p.sale_id 
+    WHERE p.payment_method = 'cash';
+    """
+
+
+def defog_sql_text_dealership_basic4() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the salesperson ID, first name and last name for salespersons that
+    have no sales records, by doing a left join from the salespersons to sales
+    table.
+    """
+    return """
+    SELECT s._id AS salesperson_id, s.first_name, s.last_name 
+    FROM salespersons AS s 
+    LEFT JOIN sales AS sa 
+    ON s._id = sa.salesperson_id 
+    WHERE sa.salesperson_id IS NULL;
+    """
+
+
+def defog_sql_text_dealership_basic5() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the top 5 salespersons by number of sales in the past 30 days?
+    Return their first and last name, total sales count and total revenue
+    amount.
+    """
+    return """
+    SELECT sp.first_name, sp.last_name, COUNT(s._id) AS total_sales, SUM(s.sale_price) AS total_revenue 
+    FROM sales AS s 
+    JOIN salespersons AS sp 
+    ON s.salesperson_id = sp._id 
+    WHERE s.sale_date >= DATE('now', '-30 days') 
+    GROUP BY sp.first_name, sp.last_name, sp._id 
+    ORDER BY total_sales DESC LIMIT 5;
+    """
+
+
+def defog_sql_text_dealership_basic6() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the top 5 states by total revenue, showing the number of unique
+    customers and total revenue (based on sale price) for each state.
+    """
+    return """
+    SELECT c.state, COUNT(DISTINCT s.customer_id) AS unique_customers, SUM(s.sale_price) AS total_revenue 
+    FROM sales AS s 
+    JOIN customers AS c 
+    ON s.customer_id = c._id 
+    GROUP BY c.state 
+    ORDER BY CASE WHEN total_revenue IS NULL THEN 1 ELSE 0 END DESC, total_revenue DESC LIMIT 5;
+    """
+
+
+def defog_sql_text_dealership_basic7() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What are the top 3 payment methods by total payment amount received? Return
+    the payment method, total number of payments and total amount.
+    """
+    return """
+    SELECT payment_method, COUNT(*) AS total_payments, 
+    SUM(payment_amount) AS total_amount 
+    FROM payments_received 
+    GROUP BY payment_method 
+    ORDER BY CASE WHEN total_amount IS NULL THEN 1 ELSE 0 END DESC, total_amount DESC LIMIT 3;
+    """
+
+
+def defog_sql_text_dealership_basic8() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What are the top 5 best selling car models by total revenue? Return the
+    make, model, total number of sales and total revenue.
+    """
+    return """
+    SELECT c.make, c.model, COUNT(s._id) AS total_sales, 
+    SUM(s.sale_price) AS total_revenue 
+    FROM sales AS s 
+    JOIN cars AS c 
+    ON s.car_id = c._id 
+    GROUP BY c.make, c.model 
+    ORDER BY CASE WHEN total_revenue IS NULL THEN 1 ELSE 0 END DESC, total_revenue DESC LIMIT 5;
+    """
+
+
+def defog_sql_text_dealership_basic9() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What are the total number of customer signups for the top 2 states? Return
+    the state and total signups, starting from the top.
+    """
+    return """
+    SELECT state, COUNT(*) AS total_signups 
+    FROM customers 
+    GROUP BY state 
+    ORDER BY CASE WHEN total_signups IS NULL THEN 1 ELSE 0 END DESC, total_signups DESC LIMIT 2;
+    """
+
+
+def defog_sql_text_dealership_basic10() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Who were the top 3 sales representatives by total revenue in the past 3
+    months, inclusive of today's date? Return their first name, last name,
+    total number of sales and total revenue. Note that revenue refers to the
+    sum of sale_price in the sales table.
+    """
+    return """
+    SELECT c.first_name, c.last_name, COUNT(s._id) AS total_sales, 
+    SUM(s.sale_price) AS total_revenue 
+    FROM sales AS s 
+    JOIN salespersons AS c ON s.salesperson_id = c._id 
+    WHERE s.sale_date >= DATE('now', '-3 months') 
+    GROUP BY c.first_name, c.last_name 
+    ORDER BY total_revenue DESC LIMIT 3;
+    """
+
+
+def defog_sql_text_dealership_gen1() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the name and phone number of the salesperson with the shortest time
+    from being hired to getting fired. Return the number of days he/she was
+    employed for.
+    """
+    return """
+    SELECT s.first_name, s.last_name, s.phone, julianday(s.termination_date) - julianday(s.hire_date) AS days_employed 
+    FROM salespersons AS s 
+    ORDER BY CASE WHEN days_employed IS NULL THEN 1 ELSE 0 END, days_employed ASC LIMIT 1;
+    """
+
+
+def defog_sql_text_dealership_gen2() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Return the number of payments made on weekends to the vendor named 'Utility
+    Company'
+    """
+    return """
+    SELECT COUNT(*) AS weekend_payments 
+    FROM payments_made 
+    WHERE vendor_name = 'Utility Company' 
+    AND strftime('%w', payment_date) IN ('0', '6');
+    """
+
+
+def defog_sql_text_dealership_gen3() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Show me the daily total amount of payments received in the whole of the
+    previous ISO week not including the current week, split by the
+    payment_method.
+    """
+    return """
+    SELECT payment_date, payment_method, SUM(payment_amount) AS total_amount 
+    FROM payments_received 
+    WHERE payment_date >= DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days', '-7 days') 
+    AND payment_date < DATE('now',  '-' || ((strftime('%w', 'now') + 6) % 7) || ' days') 
+    GROUP BY payment_date, payment_method ORDER BY payment_date DESC, payment_method ASC;
+    """
+
+
+def defog_sql_text_dealership_gen4() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    What were the total quarterly sales in 2023 grouped by customer's state?
+    Represent each quarter as the first date in the quarter.
+    """
+    return """
+    SELECT CASE WHEN strftime('%m', s.sale_date) BETWEEN '01' AND '03' THEN '2023-01-01' 
+    WHEN strftime('%m', s.sale_date) BETWEEN '04' AND '06' THEN '2023-04-01' 
+    WHEN strftime('%m', s.sale_date) BETWEEN '07' AND '09' THEN '2023-07-01' ELSE '2023-10-01' END AS quarter, 
+    c.state, SUM(s.sale_price) AS total_sales 
+    FROM sales AS s 
+    JOIN customers AS c 
+    ON s.customer_id = c._id 
+    WHERE strftime('%Y', s.sale_date) = '2023' 
+    GROUP BY c.state, quarter 
+    HAVING SUM(s.sale_price) > 0 
+    ORDER BY quarter, c.state;
+    """
+
+
+def defog_sql_text_dealership_gen5() -> str:
+    """
+    SQLite query text for the following question for the Car Dealership graph:
+
+    Which cars were in inventory in the latest snapshot for march 2023? Return
+    the car id, make, model, and year. Cars are considered to be in inventory"
+    if is_in_inventory is True."
+    """
+    return """
+    WITH latest_snapshot AS (SELECT MAX(snapshot_date) AS snapshot_date 
+    FROM inventory_snapshots 
+    WHERE snapshot_date BETWEEN '2023-03-01' AND '2023-03-31'), latest_snapshot_data AS 
+    (SELECT inv.car_id 
+    FROM inventory_snapshots AS inv 
+    JOIN latest_snapshot AS ls 
+    ON inv.snapshot_date = ls.snapshot_date WHERE inv.is_in_inventory = TRUE) 
+    SELECT c._id, c.make, c.model, c.year 
+    FROM cars AS c 
+    JOIN latest_snapshot_data AS lsd 
+    ON c._id = lsd.car_id;
     """
 
 

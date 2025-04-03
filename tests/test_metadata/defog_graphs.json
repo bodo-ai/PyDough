@@ -480,6 +480,58 @@
         }
       }
     },
+    "PaymentsMade": {
+      "type": "simple_table",
+      "table_path": "main.payments_made",
+      "unique_properties": ["_id"],
+      "properties": {
+        "_id": {
+          "type": "table_column",
+          "column_name": "_id",
+          "data_type": "int32"
+        },
+        "vendor_name": {
+          "type": "table_column",
+          "column_name": "vendor_name",
+          "data_type": "string"
+        },
+        "payment_date": {
+          "type": "table_column",
+          "column_name": "payment_date",
+          "data_type": "date"
+        },
+        "payment_amount": {
+          "type": "table_column",
+          "column_name": "payment_amount",
+          "data_type": "decimal[10,2]"
+        },
+        "payment_method": {
+          "type": "table_column",
+          "column_name": "payment_method",
+          "data_type": "string"
+        },
+        "invoice_number": {
+          "type": "table_column",
+          "column_name": "invoice_number",
+          "data_type": "string"
+        },
+        "invoice_date": {
+          "type": "table_column",
+          "column_name": "invoice_date",
+          "data_type": "date"
+        },
+        "due_date": {
+          "type": "table_column",
+          "column_name": "due_date",
+          "data_type": "date"
+        },
+        "crtd_ts": {
+          "type": "table_column",
+          "column_name": "crtd_ts",
+          "data_type": "timestamp[3]"
+        }
+      }
+    },
     "PaymentsReceived": {
       "type": "simple_table",
       "table_path": "main.payments_received",
