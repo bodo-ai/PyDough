@@ -43,6 +43,7 @@ from simple_pydough_functions import (
     nation_best_order,
     nation_window_aggs,
     order_info_per_priority,
+    orders_versus_first_orders,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -55,6 +56,8 @@ from simple_pydough_functions import (
     rank_with_filters_c,
     region_acctbal_breakdown,
     region_nation_window_aggs,
+    region_orders_from_nations_richest,
+    regional_first_order_best_line_part,
     regional_suppliers_percentile,
     richest_customer_per_region,
     simple_filter_top_five,
@@ -1080,40 +1083,6 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
-                richest_customer_per_region,
-                None,
-                "richest_customer_per_region",
-                lambda: pd.DataFrame(
-                    {
-                        "region_name": [
-                            "AFRICA",
-                            "AMERICA",
-                            "ASIA",
-                            "EUROPE",
-                            "MIDDLE EAST",
-                        ],
-                        "nation_name": [
-                            "MOROCCO",
-                            "UNITED STATES",
-                            "VIETNAM",
-                            "GERMANY",
-                            "SAUDI ARABIA",
-                        ],
-                        "customer_name": [
-                            "Customer#000061453",
-                            "Customer#000002487",
-                            "Customer#000081976",
-                            "Customer#000144232",
-                            "Customer#000076011",
-                        ],
-                        "balance": [9999.99, 9999.72, 9998.36, 9999.74, 9998.68],
-                    }
-                ),
-            ),
-            id="richest_customer_per_region",
-        ),
-        pytest.param(
-            (
                 supplier_best_part,
                 None,
                 "supplier_best_part",
@@ -1135,6 +1104,73 @@ from pydough.unqualified import (
                 ),
             ),
             id="supplier_best_part",
+        ),
+        pytest.param(
+            (
+                region_orders_from_nations_richest,
+                None,
+                "region_orders_from_nations_richest",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_orders": [74, 19, 62, 73, 41],
+                    }
+                ),
+            ),
+            id="region_orders_from_nations_richest",
+        ),
+        pytest.param(
+            (
+                regional_first_order_best_line_part,
+                None,
+                "regional_first_order_best_line_part",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "part_name": [
+                            "tomato saddle brown cornsilk khaki",
+                            "coral midnight cyan burlywood maroon",
+                            "azure peru burnished seashell green",
+                            "ivory peach linen lemon powder",
+                            "cyan sienna ivory powder forest",
+                        ],
+                    }
+                ),
+            ),
+            id="regional_first_order_best_line_part",
+        ),
+        pytest.param(
+            (
+                orders_versus_first_orders,
+                None,
+                "orders_versus_first_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_name": [
+                            "Customer#000063541",
+                            "Customer#000066847",
+                            "Customer#000072955",
+                            "Customer#000082832",
+                            "Customer#000003661",
+                        ],
+                        "order_key": [985892, 4451681, 2699750, 2005667, 4447044],
+                        "days_since_first_order": [2399, 2399, 2398, 2398, 2396],
+                    }
+                ),
+            ),
+            id="orders_versus_first_orders",
         ),
         pytest.param(
             (

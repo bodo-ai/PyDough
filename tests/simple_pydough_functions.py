@@ -473,6 +473,50 @@ def nation_window_aggs():
     )
 
 
+def region_orders_from_nations_richest():
+    # Find the orders from the wealthiest customer in each nation, breaking
+    # ties alphabetically by customer name.
+    nations_richest_customers = nations.BEST(
+        customers, by=(acctbal.DESC(), name.ASC())
+    ).orders
+    return Regions.CALCULATE(
+        region_name=name, n_orders=COUNT(nations_richest_customers)
+    ).ORDER_BY(region_name.ASC())
+
+
+def regional_first_order_best_line_part():
+    # For each region, identify the first order made by a customer in that region,
+    # (breaking ties by order key), and the name of the part from that order
+    # witht he largest quantity shipped, breaking ties by line number within
+    # the order.
+    first_order = BEST(nations.customers.orders, by=(order_date.ASC(), key.ASC()))
+    largest_quantity_line = BEST(
+        first_order.lines, by=(quantity.DESC(), line_number.ASC())
+    )
+    return Regions.CALCULATE(
+        region_name=name, part_name=largest_quantity_line.part.name
+    ).ORDER_BY(region_name.ASC())
+
+
+def orders_versus_first_orders():
+    # Identify the 5 biggest day gaps between an order and the customer's first
+    # order. Include the customer name, the day gap, and the key or the order.
+    # Break ties alphabetically by customer name. Only consider customers from
+    # Vietnam.
+    first_order_from_cust = (
+        customer.WHERE(nation.name == "VIETNAM")
+        .CALCULATE(customer_name=name)
+        .BEST(orders, by=(order_date.ASC(), key.ASC()))
+    )
+    return Orders.CALCULATE(
+        customer_name=first_order_from_cust.customer_name,
+        order_key=key,
+        days_since_first_order=DATEDIFF(
+            "days", first_order_from_cust.order_date, order_date
+        ),
+    ).TOP_K(5, by=(days_since_first_order.DESC(), customer_name.ASC()))
+
+
 def region_nation_window_aggs():
     # Calculating multiple global windowed aggregations for each nation, only
     # per-region, considering nations whose names do not start with a vowel.
