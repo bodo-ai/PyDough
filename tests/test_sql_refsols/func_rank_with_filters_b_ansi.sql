@@ -1,26 +1,14 @@
-SELECT
-  a,
-  b,
-  r
-FROM (
+WITH "_t1" AS (
   SELECT
-    a,
-    b,
-    r
-  FROM (
-    SELECT
-      RANK() OVER (ORDER BY a) AS r,
-      a,
-      b
-    FROM (
-      SELECT
-        a,
-        b
-      FROM table
-    )
-  )
-  WHERE
-    r >= 3
+    RANK() OVER (ORDER BY "table"."a") AS "r",
+    "table"."a" AS "a",
+    "table"."b" AS "b"
+  FROM "table" AS "table"
 )
+SELECT
+  "_t1"."a" AS "a",
+  "_t1"."b" AS "b",
+  "_t1"."r" AS "r"
+FROM "_t1" AS "_t1"
 WHERE
-  b = 0
+  "_t1"."b" = 0 AND "_t1"."r" >= 3

@@ -1,83 +1,33 @@
-SELECT
-  P_BRAND,
-  P_TYPE,
-  P_SIZE,
-  SUPPLIER_COUNT
-FROM (
+WITH "_t0_2" AS (
   SELECT
-    COUNT(DISTINCT supplier_key) AS SUPPLIER_COUNT,
-    p_brand AS P_BRAND,
-    p_size AS P_SIZE,
-    p_type AS P_TYPE
-  FROM (
-    SELECT
-      p_brand,
-      p_size,
-      p_type,
-      supplier_key
-    FROM (
-      SELECT
-        comment AS comment_2,
-        p_brand,
-        p_size,
-        p_type,
-        supplier_key
-      FROM (
-        SELECT
-          p_brand,
-          p_size,
-          p_type,
-          supplier_key
-        FROM (
-          SELECT
-            brand AS p_brand,
-            part_type AS p_type,
-            size AS p_size,
-            key
-          FROM (
-            SELECT
-              p_brand AS brand,
-              p_partkey AS key,
-              p_size AS size,
-              p_type AS part_type
-            FROM tpch.PART
-          )
-          WHERE
-            (
-              brand <> 'BRAND#45'
-            )
-            AND size IN (49, 14, 23, 45, 19, 3, 36, 9)
-            AND (
-              NOT part_type LIKE 'MEDIUM POLISHED%%'
-            )
-        )
-        INNER JOIN (
-          SELECT
-            ps_partkey AS part_key,
-            ps_suppkey AS supplier_key
-          FROM tpch.PARTSUPP
-        )
-          ON key = part_key
-      )
-      LEFT JOIN (
-        SELECT
-          s_comment AS comment,
-          s_suppkey AS key
-        FROM tpch.SUPPLIER
-      )
-        ON supplier_key = key
-    )
-    WHERE
-      NOT comment_2 LIKE '%Customer%Complaints%'
-  )
+    COUNT(DISTINCT "partsupp"."ps_suppkey") AS "supplier_count",
+    "part"."p_brand" AS "p_brand",
+    "part"."p_size" AS "p_size",
+    "part"."p_type" AS "p_type"
+  FROM "tpch"."part" AS "part"
+  JOIN "tpch"."partsupp" AS "partsupp"
+    ON "part"."p_partkey" = "partsupp"."ps_partkey"
+  LEFT JOIN "tpch"."supplier" AS "supplier"
+    ON "partsupp"."ps_suppkey" = "supplier"."s_suppkey"
+  WHERE
+    "part"."p_brand" <> 'BRAND#45'
+    AND "part"."p_size" IN (49, 14, 23, 45, 19, 3, 36, 9)
+    AND NOT "part"."p_type" LIKE 'MEDIUM POLISHED%%'
+    AND NOT "supplier"."s_comment" LIKE '%Customer%Complaints%'
   GROUP BY
-    p_brand,
-    p_size,
-    p_type
+    "part"."p_brand",
+    "part"."p_size",
+    "part"."p_type"
 )
+SELECT
+  "_t0"."p_brand" AS "P_BRAND",
+  "_t0"."p_type" AS "P_TYPE",
+  "_t0"."p_size" AS "P_SIZE",
+  "_t0"."supplier_count" AS "SUPPLIER_COUNT"
+FROM "_t0_2" AS "_t0"
 ORDER BY
-  SUPPLIER_COUNT DESC,
-  P_BRAND,
-  P_TYPE,
-  P_SIZE
+  "supplier_count" DESC,
+  "p_brand",
+  "p_type",
+  "p_size"
 LIMIT 10

@@ -1,36 +1,12 @@
 SELECT
-  month,
-  AVG(price) AS avg_price
-FROM (
-  SELECT
-    DATE_TRUNC('MONTH', CAST(date_time AS TIMESTAMP)) AS month,
-    price
-  FROM (
-    SELECT
-      date_time,
-      price
-    FROM (
-      SELECT
-        sbTxDateTime AS date_time,
-        sbTxPrice AS price,
-        sbTxStatus AS status
-      FROM main.sbTransaction
-    )
-    WHERE
-      (
-        status = 'success'
-      )
-      AND (
-        (
-          CAST('2023-01-01' AS DATE) <= date_time
-        )
-        AND (
-          date_time <= CAST('2023-03-31' AS DATE)
-        )
-      )
-  )
-)
+  DATE_TRUNC('MONTH', CAST("sbtransaction"."sbtxdatetime" AS TIMESTAMP)) AS "month",
+  AVG("sbtransaction"."sbtxprice") AS "avg_price"
+FROM "main"."sbtransaction" AS "sbtransaction"
+WHERE
+  "sbtransaction"."sbtxdatetime" <= CAST('2023-03-31' AS DATE)
+  AND "sbtransaction"."sbtxdatetime" >= CAST('2023-01-01' AS DATE)
+  AND "sbtransaction"."sbtxstatus" = 'success'
 GROUP BY
-  month
+  DATE_TRUNC('MONTH', CAST("sbtransaction"."sbtxdatetime" AS TIMESTAMP))
 ORDER BY
-  month
+  "month"

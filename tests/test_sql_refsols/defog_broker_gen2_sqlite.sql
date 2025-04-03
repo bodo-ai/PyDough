@@ -1,24 +1,6 @@
 SELECT
-  COUNT(customer_id) AS transaction_count
-FROM (
-  SELECT
-    customer_id
-  FROM (
-    SELECT
-      sbTxCustId AS customer_id
-    FROM main.sbTransaction
-  )
-  INNER JOIN (
-    SELECT
-      _id
-    FROM (
-      SELECT
-        sbCustId AS _id,
-        sbCustJoinDate AS join_date
-      FROM main.sbCustomer
-    )
-    WHERE
-      join_date >= DATETIME('now', '-70 day')
-  )
-    ON customer_id = _id
-)
+  COUNT("sbtransaction"."sbtxcustid") AS "transaction_count"
+FROM "main"."sbtransaction" AS "sbtransaction"
+JOIN "main"."sbcustomer" AS "sbcustomer"
+  ON "sbcustomer"."sbcustid" = "sbtransaction"."sbtxcustid"
+  AND "sbcustomer"."sbcustjoindate" >= DATETIME('now', '-70 day')

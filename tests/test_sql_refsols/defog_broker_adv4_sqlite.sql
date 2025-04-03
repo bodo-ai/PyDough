@@ -1,52 +1,21 @@
-SELECT
-  symbol,
-  price_change
-FROM (
+WITH "_t1" AS (
   SELECT
-    agg_0 - agg_1 AS price_change,
-    symbol
-  FROM (
-    SELECT
-      agg_0,
-      agg_1,
-      symbol
-    FROM (
-      SELECT
-        sbTickerId AS _id,
-        sbTickerSymbol AS symbol
-      FROM main.sbTicker
-    )
-    LEFT JOIN (
-      SELECT
-        MAX(high) AS agg_0,
-        MIN(low) AS agg_1,
-        ticker_id
-      FROM (
-        SELECT
-          high,
-          low,
-          ticker_id
-        FROM (
-          SELECT
-            sbDpDate AS date,
-            sbDpHigh AS high,
-            sbDpLow AS low,
-            sbDpTickerId AS ticker_id
-          FROM main.sbDailyPrice
-        )
-        WHERE
-          (
-            date <= '2023-04-04'
-          ) AND (
-            date >= '2023-04-01'
-          )
-      )
-      GROUP BY
-        ticker_id
-    )
-      ON _id = ticker_id
-  )
+    MAX("sbdailyprice"."sbdphigh") AS "agg_0",
+    MIN("sbdailyprice"."sbdplow") AS "agg_1",
+    "sbdailyprice"."sbdptickerid" AS "ticker_id"
+  FROM "main"."sbdailyprice" AS "sbdailyprice"
+  WHERE
+    "sbdailyprice"."sbdpdate" <= '2023-04-04'
+    AND "sbdailyprice"."sbdpdate" >= '2023-04-01'
+  GROUP BY
+    "sbdailyprice"."sbdptickerid"
 )
+SELECT
+  "sbticker"."sbtickersymbol" AS "symbol",
+  "_t1"."agg_0" - "_t1"."agg_1" AS "price_change"
+FROM "main"."sbticker" AS "sbticker"
+LEFT JOIN "_t1" AS "_t1"
+  ON "_t1"."ticker_id" = "sbticker"."sbtickerid"
 ORDER BY
-  price_change DESC
+  "price_change" DESC
 LIMIT 3

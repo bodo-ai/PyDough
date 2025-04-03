@@ -1,70 +1,22 @@
-SELECT
-  _id,
-  name,
-  num_transactions
-FROM (
+WITH "_t3_2" AS (
   SELECT
-    COALESCE(agg_0, 0) AS num_transactions,
-    _id,
-    name
-  FROM (
-    SELECT
-      _table_alias_0._id AS _id,
-      agg_0,
-      name
-    FROM (
-      SELECT
-        sbCustId AS _id,
-        sbCustName AS name
-      FROM main.sbCustomer
-    ) AS _table_alias_0
-    LEFT JOIN (
-      SELECT
-        COUNT() AS agg_0,
-        _id
-      FROM (
-        SELECT
-          _id
-        FROM (
-          SELECT
-            _id,
-            date_time,
-            join_month,
-            join_year
-          FROM (
-            SELECT
-              EXTRACT(MONTH FROM join_date) AS join_month,
-              EXTRACT(YEAR FROM join_date) AS join_year,
-              _id
-            FROM (
-              SELECT
-                sbCustId AS _id,
-                sbCustJoinDate AS join_date
-              FROM main.sbCustomer
-            )
-          )
-          INNER JOIN (
-            SELECT
-              sbTxCustId AS customer_id,
-              sbTxDateTime AS date_time
-            FROM main.sbTransaction
-          )
-            ON _id = customer_id
-        )
-        WHERE
-          (
-            EXTRACT(MONTH FROM date_time) = join_month
-          )
-          AND (
-            EXTRACT(YEAR FROM date_time) = join_year
-          )
-      )
-      GROUP BY
-        _id
-    ) AS _table_alias_1
-      ON _table_alias_0._id = _table_alias_1._id
-  )
+    COUNT() AS "agg_0",
+    "sbcustomer"."sbcustid" AS "_id"
+  FROM "main"."sbcustomer" AS "sbcustomer"
+  JOIN "main"."sbtransaction" AS "sbtransaction"
+    ON "sbcustomer"."sbcustid" = "sbtransaction"."sbtxcustid"
+    AND EXTRACT(MONTH FROM "sbcustomer"."sbcustjoindate") = EXTRACT(MONTH FROM "sbtransaction"."sbtxdatetime")
+    AND EXTRACT(YEAR FROM "sbcustomer"."sbcustjoindate") = EXTRACT(YEAR FROM "sbtransaction"."sbtxdatetime")
+  GROUP BY
+    "sbcustomer"."sbcustid"
 )
+SELECT
+  "sbcustomer"."sbcustid" AS "_id",
+  "sbcustomer"."sbcustname" AS "name",
+  COALESCE("_t3"."agg_0", 0) AS "num_transactions"
+FROM "main"."sbcustomer" AS "sbcustomer"
+LEFT JOIN "_t3_2" AS "_t3"
+  ON "_t3"."_id" = "sbcustomer"."sbcustid"
 ORDER BY
-  num_transactions DESC
+  "num_transactions" DESC
 LIMIT 1

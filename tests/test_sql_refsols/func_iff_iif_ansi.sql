@@ -1,8 +1,3 @@
 SELECT
-  IIF(b >= 0, 'Positive', 'Negative') AS a
-FROM (
-  SELECT
-    a,
-    b
-  FROM table
-)
+  IIF("table"."b" >= 0, 'Positive', 'Negative') AS "a"
+FROM "table" AS "table"

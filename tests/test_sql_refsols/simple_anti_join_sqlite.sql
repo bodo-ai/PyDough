@@ -1,21 +1,16 @@
-SELECT
-  _table_alias_0.a AS a
-FROM (
+WITH "_t1" AS (
   SELECT
-    a,
-    b
-  FROM table
-) AS _table_alias_0
+    "table"."a" AS "a"
+  FROM "table" AS "table"
+)
+SELECT
+  "_t0"."a" AS "a"
+FROM "_t1" AS "_t0"
 WHERE
   NOT EXISTS(
     SELECT
-      1
-    FROM (
-      SELECT
-        a,
-        b
-      FROM table
-    ) AS _table_alias_1
+      1 AS "1"
+    FROM "_t1" AS "_t1"
     WHERE
-      _table_alias_0.a = _table_alias_1.a
+      "_t0"."a" = "_t1"."a"
   )

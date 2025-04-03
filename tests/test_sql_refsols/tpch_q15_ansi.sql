@@ -1,134 +1,49 @@
-SELECT
-  S_SUPPKEY,
-  S_NAME,
-  S_ADDRESS,
-  S_PHONE,
-  TOTAL_REVENUE
-FROM (
+WITH "_t6" AS (
   SELECT
-    COALESCE(agg_1, 0) AS TOTAL_REVENUE,
-    address AS S_ADDRESS,
-    key AS S_SUPPKEY,
-    name AS S_NAME,
-    phone AS S_PHONE,
-    max_revenue
-  FROM (
-    SELECT
-      address,
-      agg_1,
-      key,
-      max_revenue,
-      name,
-      phone
-    FROM (
-      SELECT
-        address,
-        key,
-        max_revenue,
-        name,
-        phone
-      FROM (
-        SELECT
-          MAX(total_revenue) AS max_revenue
-        FROM (
-          SELECT
-            COALESCE(agg_0, 0) AS total_revenue
-          FROM (
-            SELECT
-              agg_0
-            FROM (
-              SELECT
-                s_suppkey AS key
-              FROM tpch.SUPPLIER
-            )
-            LEFT JOIN (
-              SELECT
-                SUM(expr_2) AS agg_0,
-                supplier_key
-              FROM (
-                SELECT
-                  extended_price * (
-                    1 - discount
-                  ) AS expr_2,
-                  supplier_key
-                FROM (
-                  SELECT
-                    discount,
-                    extended_price,
-                    supplier_key
-                  FROM (
-                    SELECT
-                      l_discount AS discount,
-                      l_extendedprice AS extended_price,
-                      l_shipdate AS ship_date,
-                      l_suppkey AS supplier_key
-                    FROM tpch.LINEITEM
-                  )
-                  WHERE
-                    (
-                      ship_date < CAST('1996-04-01' AS DATE)
-                    )
-                    AND (
-                      ship_date >= CAST('1996-01-01' AS DATE)
-                    )
-                )
-              )
-              GROUP BY
-                supplier_key
-            )
-              ON key = supplier_key
-          )
-        )
-      )
-      INNER JOIN (
-        SELECT
-          s_address AS address,
-          s_suppkey AS key,
-          s_name AS name,
-          s_phone AS phone
-        FROM tpch.SUPPLIER
-      )
-        ON TRUE
-    )
-    LEFT JOIN (
-      SELECT
-        SUM(expr_3) AS agg_1,
-        supplier_key
-      FROM (
-        SELECT
-          extended_price * (
-            1 - discount
-          ) AS expr_3,
-          supplier_key
-        FROM (
-          SELECT
-            discount,
-            extended_price,
-            supplier_key
-          FROM (
-            SELECT
-              l_discount AS discount,
-              l_extendedprice AS extended_price,
-              l_shipdate AS ship_date,
-              l_suppkey AS supplier_key
-            FROM tpch.LINEITEM
-          )
-          WHERE
-            (
-              ship_date < CAST('1996-04-01' AS DATE)
-            )
-            AND (
-              ship_date >= CAST('1996-01-01' AS DATE)
-            )
-        )
-      )
-      GROUP BY
-        supplier_key
-    )
-      ON key = supplier_key
-  )
+    "lineitem"."l_discount" AS "discount",
+    "lineitem"."l_extendedprice" AS "extended_price",
+    "lineitem"."l_shipdate" AS "ship_date",
+    "lineitem"."l_suppkey" AS "supplier_key"
+  FROM "tpch"."lineitem" AS "lineitem"
+  WHERE
+    "lineitem"."l_shipdate" < CAST('1996-04-01' AS DATE)
+    AND "lineitem"."l_shipdate" >= CAST('1996-01-01' AS DATE)
+), "_t1" AS (
+  SELECT
+    SUM("_t6"."extended_price" * (
+      1 - "_t6"."discount"
+    )) AS "agg_0",
+    "_t6"."supplier_key" AS "supplier_key"
+  FROM "_t6" AS "_t6"
+  GROUP BY
+    "_t6"."supplier_key"
+), "_t2_2" AS (
+  SELECT
+    MAX(COALESCE("_t1"."agg_0", 0)) AS "max_revenue"
+  FROM "tpch"."supplier" AS "supplier"
+  LEFT JOIN "_t1" AS "_t1"
+    ON "_t1"."supplier_key" = "supplier"."s_suppkey"
+), "_t5_2" AS (
+  SELECT
+    SUM("_t9"."extended_price" * (
+      1 - "_t9"."discount"
+    )) AS "agg_1",
+    "_t9"."supplier_key" AS "supplier_key"
+  FROM "_t6" AS "_t9"
+  GROUP BY
+    "_t9"."supplier_key"
 )
+SELECT
+  "supplier"."s_suppkey" AS "S_SUPPKEY",
+  "supplier"."s_name" AS "S_NAME",
+  "supplier"."s_address" AS "S_ADDRESS",
+  "supplier"."s_phone" AS "S_PHONE",
+  COALESCE("_t5"."agg_1", 0) AS "TOTAL_REVENUE"
+FROM "_t2_2" AS "_t2"
+CROSS JOIN "tpch"."supplier" AS "supplier"
+LEFT JOIN "_t5_2" AS "_t5"
+  ON "_t5"."supplier_key" = "supplier"."s_suppkey"
 WHERE
-  TOTAL_REVENUE = max_revenue
+  "_t2"."max_revenue" = COALESCE("_t5"."agg_1", 0)
 ORDER BY
-  S_SUPPKEY
+  "s_suppkey"

@@ -1,51 +1,21 @@
-SELECT
-  _id,
-  name,
-  num_tx
-FROM (
+WITH "_t1" AS (
   SELECT
-    COALESCE(agg_0, 0) AS num_tx,
-    _id,
-    name
-  FROM (
-    SELECT
-      _id,
-      agg_0,
-      name
-    FROM (
-      SELECT
-        sbCustId AS _id,
-        sbCustName AS name
-      FROM main.sbCustomer
-    )
-    LEFT JOIN (
-      SELECT
-        COUNT() AS agg_0,
-        customer_id
-      FROM (
-        SELECT
-          customer_id
-        FROM (
-          SELECT
-            sbTxCustId AS customer_id,
-            sbTxDateTime AS date_time,
-            sbTxType AS transaction_type
-          FROM main.sbTransaction
-        )
-        WHERE
-          (
-            DATE(date_time, 'start of day') = '2023-04-01'
-          )
-          AND (
-            transaction_type = 'sell'
-          )
-      )
-      GROUP BY
-        customer_id
-    )
-      ON _id = customer_id
-  )
+    COUNT() AS "agg_0",
+    "sbtransaction"."sbtxcustid" AS "customer_id"
+  FROM "main"."sbtransaction" AS "sbtransaction"
+  WHERE
+    "sbtransaction"."sbtxtype" = 'sell'
+    AND DATE("sbtransaction"."sbtxdatetime", 'start of day') = '2023-04-01'
+  GROUP BY
+    "sbtransaction"."sbtxcustid"
 )
+SELECT
+  "sbcustomer"."sbcustid" AS "_id",
+  "sbcustomer"."sbcustname" AS "name",
+  COALESCE("_t1"."agg_0", 0) AS "num_tx"
+FROM "main"."sbcustomer" AS "sbcustomer"
+LEFT JOIN "_t1" AS "_t1"
+  ON "_t1"."customer_id" = "sbcustomer"."sbcustid"
 ORDER BY
-  num_tx DESC
+  "num_tx" DESC
 LIMIT 1

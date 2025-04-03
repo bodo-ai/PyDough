@@ -1,22 +1,14 @@
-SELECT
-  country AS cust_country,
-  COALESCE(agg_0, 0) AS TAC
-FROM (
+WITH "_t0" AS (
   SELECT
-    COUNT() AS agg_0,
-    country
-  FROM (
-    SELECT
-      country
-    FROM (
-      SELECT
-        sbCustCountry AS country,
-        sbCustJoinDate AS join_date
-      FROM main.sbCustomer
-    )
-    WHERE
-      join_date >= CAST('2023-01-01' AS DATE)
-  )
+    COUNT() AS "agg_0",
+    "sbcustomer"."sbcustcountry" AS "country"
+  FROM "main"."sbcustomer" AS "sbcustomer"
+  WHERE
+    "sbcustomer"."sbcustjoindate" >= CAST('2023-01-01' AS DATE)
   GROUP BY
-    country
+    "sbcustomer"."sbcustcountry"
 )
+SELECT
+  "_t0"."country" AS "cust_country",
+  COALESCE("_t0"."agg_0", 0) AS "TAC"
+FROM "_t0" AS "_t0"

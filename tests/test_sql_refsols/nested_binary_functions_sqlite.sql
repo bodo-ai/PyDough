@@ -1,13 +1,8 @@
 SELECT
-  a * (
-    b + 1
-  ) AS a,
-  a + (
-    b * 1
-  ) AS b
-FROM (
-  SELECT
-    a,
-    b
-  FROM table
-)
+  "table"."a" * (
+    "table"."b" + 1
+  ) AS "a",
+  "table"."a" * (
+    "table"."b" + 1
+  ) + "table"."b" * 1 AS "b"
+FROM "table" AS "table"

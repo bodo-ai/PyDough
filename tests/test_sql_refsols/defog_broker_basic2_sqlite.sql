@@ -1,35 +1,20 @@
-SELECT
-  transaction_type,
-  num_customers,
-  avg_shares
-FROM (
+WITH "_t0" AS (
   SELECT
-    AVG(shares) AS avg_shares,
-    COUNT(DISTINCT customer_id) AS num_customers,
-    transaction_type
-  FROM (
-    SELECT
-      customer_id,
-      shares,
-      transaction_type
-    FROM (
-      SELECT
-        sbTxCustId AS customer_id,
-        sbTxDateTime AS date_time,
-        sbTxShares AS shares,
-        sbTxType AS transaction_type
-      FROM main.sbTransaction
-    )
-    WHERE
-      (
-        date_time <= '2023-03-31'
-      ) AND (
-        date_time >= '2023-01-01'
-      )
-  )
+    AVG("sbtransaction"."sbtxshares") AS "avg_shares",
+    COUNT(DISTINCT "sbtransaction"."sbtxcustid") AS "num_customers",
+    "sbtransaction"."sbtxtype" AS "transaction_type"
+  FROM "main"."sbtransaction" AS "sbtransaction"
+  WHERE
+    "sbtransaction"."sbtxdatetime" <= '2023-03-31'
+    AND "sbtransaction"."sbtxdatetime" >= '2023-01-01'
   GROUP BY
-    transaction_type
+    "sbtransaction"."sbtxtype"
 )
+SELECT
+  "_t0"."transaction_type" AS "transaction_type",
+  "_t0"."num_customers" AS "num_customers",
+  "_t0"."avg_shares" AS "avg_shares"
+FROM "_t0" AS "_t0"
 ORDER BY
-  num_customers DESC
+  "num_customers" DESC
 LIMIT 3
