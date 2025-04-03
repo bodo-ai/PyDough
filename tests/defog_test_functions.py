@@ -706,7 +706,7 @@ def impl_defog_ewallet_adv6():
         RANKING(by=updated_at.DESC(), levels=1) == 1
     ).SINGULAR()
 
-    return Users.WHERE(HAS(balances)).CALCULATE(
+    return Users.WHERE(HAS(latest_balance_record)).CALCULATE(
         user_id=uid, latest_balance=latest_balance_record.balance
     )
 

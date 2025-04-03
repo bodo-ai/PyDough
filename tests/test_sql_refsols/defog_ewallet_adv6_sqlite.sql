@@ -4,25 +4,9 @@ SELECT
 FROM (
   SELECT
     uid
-  FROM (
-    SELECT
-      uid
-    FROM main.users
-  )
-  WHERE
-    EXISTS(
-      SELECT
-        1
-      FROM (
-        SELECT
-          user_id
-        FROM main.wallet_user_balance_daily
-      )
-      WHERE
-        uid = user_id
-    )
+  FROM main.users
 )
-LEFT JOIN (
+INNER JOIN (
   SELECT
     balance,
     user_id

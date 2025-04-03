@@ -4,19 +4,9 @@ SELECT
 FROM (
   SELECT
     uid
-  FROM (
-    SELECT
-      uid
-    FROM main.users
-  )
-  SEMI JOIN (
-    SELECT
-      user_id
-    FROM main.wallet_user_balance_daily
-  )
-    ON uid = user_id
+  FROM main.users
 )
-LEFT JOIN (
+INNER JOIN (
   SELECT
     balance,
     user_id
