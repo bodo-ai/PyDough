@@ -3,31 +3,30 @@ SELECT
   marketing_opt_in
 FROM (
   SELECT
-    *
+    uid
+  FROM main.users
+)
+INNER JOIN (
+  SELECT
+    marketing_opt_in,
+    user_id
   FROM (
     SELECT
-      *,
-      ROW_NUMBER() OVER (PARTITION BY uid ORDER BY created_at_1 DESC) AS _w
+      *
     FROM (
       SELECT
-        created_at AS created_at_1,
-        marketing_opt_in,
-        uid
+        *,
+        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS _w
       FROM (
-        SELECT
-          uid
-        FROM main.users
-      )
-      INNER JOIN (
         SELECT
           created_at,
           marketing_opt_in,
           user_id
         FROM main.user_setting_snapshot
       )
-        ON uid = user_id
-    )
-  ) AS _t
-  WHERE
-    _w = 1
+    ) AS _t
+    WHERE
+      _w = 1
+  )
 )
+  ON uid = user_id

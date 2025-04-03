@@ -36,12 +36,14 @@ from pydough.types import PyDoughType
 from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
     UnqualifiedAccess,
+    UnqualifiedBest,
     UnqualifiedBinaryOperation,
     UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedLiteral,
     UnqualifiedNode,
     UnqualifiedOperation,
+    UnqualifiedOperator,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
     UnqualifiedRoot,
@@ -745,6 +747,74 @@ class Qualifier:
         )
         return self.builder.build_singular(answer)
 
+    def qualify_best(
+        self,
+        unqualified: UnqualifiedBest,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+    ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedBEST` into a PyDoughCollectionQDAG node by
+        expanding it into a WHERE call with RANKING, possibly followed by a
+        SINGULAR call.
+
+        Args:
+            `unqualified`: the UnqualifiedBest instance to be transformed.
+            `context`: the collection QDAG whose context the singular is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+
+        Returns:
+            The PyDough QDAG object for the qualified singular node.
+        """
+
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        unqualified_child: UnqualifiedNode = unqualified._parcel[1]
+        by: Iterable[UnqualifiedNode] = unqualified._parcel[2]
+        levels: int = unqualified._parcel[3]
+        allow_ties: bool = unqualified._parcel[4]
+        n_best: int = unqualified._parcel[5]
+
+        # Qualify the parent context, then qualify the child data with regards
+        # to the parent.
+        qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+        qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_child,
+            qualified_parent,
+            is_child and isinstance(unqualified_parent, UnqualifiedRoot),
+        )
+
+        # Generate the ranking/comparison call to append an appropriate WHERE
+        # clause to the end of the result.
+        rank: UnqualifiedNode = UnqualifiedOperator("RANKING")(
+            by=by, levels=levels, allow_ties=allow_ties
+        )
+        unqualified_cond: UnqualifiedNode = (
+            (rank == n_best) if n_best == 1 else (rank <= n_best)
+        )
+        children: list[PyDoughCollectionQDAG] = []
+        qualified_cond: PyDoughExpressionQDAG = self.qualify_expression(
+            unqualified_cond, qualified_child, children
+        )
+        qualified_child = self.builder.build_where(
+            qualified_child, children
+        ).with_condition(qualified_cond)
+        # breakpoint()
+
+        # Build the final expanded window-based filter, with `SINGULAR` added
+        # if-applicable (not allowing ties, not keeping multiple bests, not in
+        # the form `x.BEST(y)` unless as a child & the x is already singular).
+        if n_best == 1 and not allow_ties and is_child:
+            base: PyDoughCollectionQDAG = qualified_parent.starting_predecessor
+            relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
+            if base is relative_ancestor or base.is_singular(relative_ancestor):
+                qualified_child = self.builder.build_singular(qualified_child)
+
+        return qualified_child
+
     def qualify_node(
         self,
         unqualified: UnqualifiedNode,
@@ -804,6 +874,8 @@ class Qualifier:
                 answer = self.qualify_collation(unqualified, context, children)
             case UnqualifiedSingular():
                 answer = self.qualify_singular(unqualified, context, is_child)
+            case UnqualifiedBest():
+                answer = self.qualify_best(unqualified, context, is_child)
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"
