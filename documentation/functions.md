@@ -50,6 +50,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [POWER](#power)
    * [SQRT](#sqrt)
    * [SIGN](#sign)
+   * [SMALLEST](#smallest)
+   * [LARGEST](#largest)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -721,6 +723,26 @@ The `SIGN` function returns the sign of its input. It returns 1 if the input is 
 
 ```py
 Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
+```
+
+<!-- TOC --><a name="smallest"></a>
+
+### SMALLEST
+
+The `SMALLEST` function returns the smallest value from the set of values it is called on.
+
+```py
+TODO
+```
+
+<!-- TOC --><a name="largest"></a>
+
+### LARGEST
+
+The `LARGEST` function returns the largest value from the set of values it is called on.
+
+```py
+TODO
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>
