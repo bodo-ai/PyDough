@@ -637,7 +637,19 @@ def impl_defog_dealership_adv1():
     current week)? Return the week (as a date), total payments received, and
     weekend payments received in ascending order.
     """
-    return "Query pending"
+    payment_weeks = PaymentsReceived.WHERE(
+        (DATEDIFF("weeks", payment_date, DATETIME("now", "start of week")) <= 8)
+        & (DATEDIFF("weeks", payment_date, "now") >= 1)
+        & (sale_record.sale_price > 30000)
+    ).CALCULATE(_id, payment_week=DATETIME(payment_date, "start of week"))
+
+    weekend_payments = p.WHERE(
+        (DAYOFWEEK(payment_date) == 6) | (DAYOFWEEK(payment_date) == 7)
+    )
+
+    return PARTITION(payment_weeks, name="p", by=payment_week).CALCULATE(
+        payment_week, total_payments=COUNT(p), weekend_payments=COUNT(weekend_payments)
+    )
 
 
 def impl_defog_dealership_adv2():
@@ -694,7 +706,7 @@ def impl_defog_dealership_adv4():
     return Cars.WHERE(LIKE(LOWER(make), "%toyota%")).CALCULATE(
         num_sales=COUNT(selected_sales._id),
         total_revenue=KEEP_IF(
-            SUM(selected_sales.sale_price), SUM(selected_sales.sale_price) > 0
+            SUM(selected_sales.sale_price), COUNT(selected_sales.sale_price) > 0
         ),
     )
 
@@ -865,7 +877,22 @@ def impl_defog_dealership_adv13():
     value). Return all months in your answer, including those where there were
     no payments.
     """
-    return "Query pending"
+    filtered_payments = PaymentsReceived.CALCULATE(
+        payment_amount,
+        month=DATETIME(payment_date, "start of month"),
+    )
+
+    monthly_totals = PARTITION(filtered_payments, name="p", by=month).CALCULATE(
+        total_payments=SUM(p.payment_amount)
+    )
+
+    # Code to add the months with 0 payments is needed
+
+    return monthly_totals.CALCULATE(
+        month,
+        total_payments,
+        MoM_change=total_payments - PREV(total_payments, by=month.ASC(), levels=1),
+    ).ORDER_BY(month.ASC())
 
 
 def impl_defog_dealership_adv14():
@@ -1092,7 +1119,13 @@ def impl_defog_dealership_gen3():
     previous ISO week not including the current week, split by the
     payment_method.
     """
-    return "Query pending"
+    payments = PaymentsReceived.WHERE((DATEDIFF("week", payment_date, "now") == 1))
+
+    return (
+        PARTITION(payments, name="p", by=(payment_date, payment_method))
+        .CALCULATE(payment_date, payment_method, total_amount=SUM(p.payment_amount))
+        .ORDER_BY(payment_date.DESC(), payment_method.ASC())
+    )
 
 
 def impl_defog_dealership_gen4():

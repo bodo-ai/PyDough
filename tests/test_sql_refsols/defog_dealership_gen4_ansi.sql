@@ -21,6 +21,7 @@ FROM (
         quarter
       FROM (
         SELECT
+          state AS customer_state,
           CASE
             WHEN EXTRACT(MONTH FROM sale_date) <= 3
             THEN '2023-01-01'
@@ -30,7 +31,6 @@ FROM (
               ELSE CASE WHEN EXTRACT(MONTH FROM sale_date) <= 9 THEN '2023-07-01' ELSE '2023-10-01' END
             END
           END AS quarter,
-          state AS customer_state,
           sale_price
         FROM (
           SELECT

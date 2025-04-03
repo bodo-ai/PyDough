@@ -520,9 +520,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "dealership_adv1",
             ),
             id="dealership_adv1",
-            marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
-            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
@@ -588,7 +585,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="dealership_adv8",
             marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function"
+                "TODO (gh #162): add user created collections support to PyDough"
             ),
         ),
         pytest.param(
@@ -599,9 +596,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "dealership_adv9",
             ),
             id="dealership_adv9",
-            marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
-            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
@@ -639,7 +633,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
             ),
             id="dealership_adv13",
             marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
+                "TODO (gh #162): add user created collections support to PyDough"
             ),
         ),
         pytest.param(
@@ -780,9 +774,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "dealership_gen2",
             ),
             id="dealership_gen2",
-            marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
-            ),
+            marks=pytest.mark.skip("TODO: add PaymentsMade table to the metadata"),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
@@ -792,9 +784,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "dealership_gen3",
             ),
             id="dealership_gen3",
-            marks=pytest.mark.skip(
-                "TODO (gh #271): add 'week' support to PyDough DATETIME function and DAYOFWEEK functions"
-            ),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
@@ -813,7 +802,6 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "dealership_gen5",
             ),
             id="dealership_gen5",
-            marks=pytest.mark.skip("TODO: Finish query"),
         ),
         pytest.param(
             PyDoughSQLComparisonTest(
