@@ -46,6 +46,7 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
+from .agg_split import split_partial_aggregates
 from .filter_pushdown import push_filters
 from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
@@ -1156,15 +1157,23 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
         The optimized relational root.
     """
 
+    temp_root: RelationalNode
+
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
     # Step 2: merge adjacent projections, when clearcut
-    merged_root = merge_projects(root)
-    assert isinstance(merged_root, RelationalRoot)
-    root = merged_root
+    temp_root = merge_projects(root)
+    assert isinstance(temp_root, RelationalRoot)
+    root = temp_root
 
-    # Step 3: prune unused columns
+    # Step 3: split aggregations on top of joins so part of the aggregate
+    # happens underneath the join.
+    temp_root = split_partial_aggregates(root)
+    assert isinstance(temp_root, RelationalRoot)
+    root = temp_root
+
+    # Step 4: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
 
     return root
