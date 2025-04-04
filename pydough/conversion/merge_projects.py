@@ -42,7 +42,7 @@ def merging_doesnt_create_convolution(
 
 def project_join_transpose(project: Project) -> RelationalNode:
     """
-    TODO
+    TODO ADD DOCSTRING
     """
     if any(contains_window(expr) for expr in project.columns.values()):
         # If the project contains window functions, do not push it down
@@ -105,39 +105,39 @@ def project_join_transpose(project: Project) -> RelationalNode:
 
     new_columns: dict[str, RelationalExpression] = {}
 
+    # TODO: ADD COMMENTS
     for idx, join_input in enumerate(join.inputs):
         input_name: str | None = join.default_input_aliases[idx]
         new_input_cols: dict[str, RelationalExpression] = new_input_col_sets[idx]
         for name, expr in pushable_columns[idx]:
             input_expr_name: str = name
             counter: int = 0
+            # TODO: ADD COMMENTS
             while input_expr_name in new_input_cols:
                 if expr == new_input_cols[name]:
                     break
                 input_expr_name += f"_{counter}"
                 counter += 1
+            # TODO: ADD COMMENTS
             new_input_cols[input_expr_name] = transpose_expression(expr, join.columns)
             new_columns[name] = ColumnReference(
                 input_expr_name, expr.data_type, input_name=input_name
             )
+        # TODO: ADD COMMENTS
         if new_input_cols != join_input.columns:
             join.inputs[idx] = Project(join_input, new_input_cols)
 
     join._columns = new_columns
-
-    # print(">>>")
-    # print(join.to_tree_string())
-    # breakpoint()
-
     return join
 
 
 def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
     """
-    TODO
+    TODO ADD DOCSTRING
     """
     expr: RelationalExpression
     new_expr: RelationalExpression
+    # TODO: ADD COMMENTS
     while isinstance(node.input, Project):
         child_project: Project = node.input
         if isinstance(node, RelationalRoot):
@@ -229,10 +229,7 @@ def merge_projects(node: RelationalNode) -> RelationalNode:
         node = project_join_transpose(node)
 
     # Recursively invoke the procedure on all inputs to the node.
-    for idx, input in enumerate(node.inputs):
-        node = node.copy(
-            inputs=node.inputs[:idx] + [merge_projects(input)] + node.inputs[idx + 1 :]
-        )
+    node = node.copy(inputs=[merge_projects(input) for input in node.inputs])
 
     # Invoke the main merging step if the current node is a root/projection,
     # potentially multiple times if the projection below it that gets deleted
