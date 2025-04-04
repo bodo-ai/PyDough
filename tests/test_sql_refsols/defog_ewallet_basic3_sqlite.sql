@@ -11,11 +11,12 @@ WITH "_t0" AS (
   FROM "_t0" AS "_t0"
 ), "_t0_2" AS (
   SELECT
+    "merchants"."mid" AS "merchant",
     "merchants"."mid" AS "mid"
   FROM "main"."merchants" AS "merchants"
 )
 SELECT
-  "_t0"."mid" AS "merchant"
+  "_t0"."merchant" AS "merchant"
 FROM "_t0_2" AS "_t0"
 WHERE
   EXISTS(

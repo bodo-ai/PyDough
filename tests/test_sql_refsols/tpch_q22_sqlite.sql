@@ -34,4 +34,4 @@ SELECT
   COALESCE("_t1"."agg_2", 0) AS "TOTACCTBAL"
 FROM "_t1_2" AS "_t1"
 ORDER BY
-  "_t1"."cntry_code"
+  "cntry_code"

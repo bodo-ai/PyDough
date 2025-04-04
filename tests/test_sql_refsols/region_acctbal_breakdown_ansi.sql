@@ -1,4 +1,4 @@
-WITH "_t3_2" AS (
+WITH "_t3" AS (
   SELECT
     COUNT(CASE WHEN "customer"."c_acctbal" < 0 THEN "customer"."c_acctbal" ELSE NULL END) AS "agg_4",
     COUNT(CASE WHEN "customer"."c_acctbal" >= 0 THEN "customer"."c_acctbal" ELSE NULL END) AS "agg_3",
@@ -20,7 +20,7 @@ SELECT
   "_t3"."agg_0" AS "median_black_acctbal",
   "_t3"."agg_1" AS "median_overall_acctbal"
 FROM "tpch"."region" AS "region"
-LEFT JOIN "_t3_2" AS "_t3"
+LEFT JOIN "_t3" AS "_t3"
   ON "_t3"."region_key" = "region"."r_regionkey"
 ORDER BY
-  "region"."r_name"
+  "region_name"

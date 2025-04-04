@@ -1,4 +1,4 @@
-WITH "_t2_2" AS (
+WITH "_t1_2" AS (
   SELECT
     SUM(
       "lineitem"."l_extendedprice" * (
@@ -22,24 +22,13 @@ WITH "_t2_2" AS (
   GROUP BY
     "nation"."n_name",
     CAST(STRFTIME('%Y', "orders"."o_orderdate") AS INTEGER)
-), "_t0_2" AS (
-  SELECT
-    COALESCE("_t2"."agg_0", 0) AS "amount",
-    "_t2"."nation_name" AS "nation",
-    "_t2"."o_year" AS "o_year",
-    "_t2"."nation_name" AS "ordering_1",
-    "_t2"."o_year" AS "ordering_2"
-  FROM "_t2_2" AS "_t2"
-  ORDER BY
-    "ordering_1",
-    "ordering_2" DESC
-  LIMIT 10
 )
 SELECT
-  "_t0"."nation" AS "NATION",
-  "_t0"."o_year" AS "O_YEAR",
-  "_t0"."amount" AS "AMOUNT"
-FROM "_t0_2" AS "_t0"
+  "_t1"."nation_name" AS "NATION",
+  "_t1"."o_year" AS "O_YEAR",
+  COALESCE("_t1"."agg_0", 0) AS "AMOUNT"
+FROM "_t1_2" AS "_t1"
 ORDER BY
-  "_t0"."ordering_1",
-  "_t0"."ordering_2" DESC
+  "nation",
+  "o_year" DESC
+LIMIT 10

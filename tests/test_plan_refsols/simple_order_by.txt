@@ -1,3 +1,2 @@
-ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_0):asc_last])
- PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_0': name})
-  SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):asc_last])
+ SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})

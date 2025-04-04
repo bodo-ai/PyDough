@@ -27,4 +27,4 @@ WHERE
     )
   ) AS REAL) / COALESCE("_t1"."agg_0", 0) IS NULL
 ORDER BY
-  "sbticker"."sbtickersymbol"
+  "symbol"

@@ -29,4 +29,4 @@ SELECT
   COALESCE("_t1"."agg_0", 0) AS "REVENUE"
 FROM "_t1_2" AS "_t1"
 ORDER BY
-  COALESCE("_t1"."agg_0", 0) DESC
+  "revenue" DESC

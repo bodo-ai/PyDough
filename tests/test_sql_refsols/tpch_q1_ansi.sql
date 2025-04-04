@@ -38,5 +38,5 @@ SELECT
   COALESCE("_t1"."agg_3", 0) AS "COUNT_ORDER"
 FROM "_t1" AS "_t1"
 ORDER BY
-  "_t1"."return_flag",
-  "_t1"."status"
+  "l_returnflag",
+  "l_linestatus"

@@ -23,4 +23,4 @@ JOIN "tpch"."region" AS "region"
 LEFT JOIN "_t3_2" AS "_t3"
   ON "_t3"."nation_key" = "nation"."n_nationkey"
 ORDER BY
-  "nation"."n_name"
+  "nation_name"

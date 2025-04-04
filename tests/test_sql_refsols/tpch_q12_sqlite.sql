@@ -32,4 +32,4 @@ SELECT
   COALESCE("_t1"."agg_1", 0) AS "LOW_LINE_COUNT"
 FROM "_t1_2" AS "_t1"
 ORDER BY
-  "_t1"."ship_mode"
+  "l_shipmode"

@@ -9,23 +9,14 @@ WITH "_t1" AS (
     AND "wallet_transactions_daily"."receiver_type" = 1
   GROUP BY
     "wallet_transactions_daily"."receiver_id"
-), "_t0_2" AS (
-  SELECT
-    "merchants"."name" AS "merchant_name",
-    COALESCE("_t1"."agg_0", 0) AS "ordering_2",
-    COALESCE("_t1"."agg_0", 0) AS "total_amount",
-    COALESCE("_t1"."agg_1", 0) AS "total_transactions"
-  FROM "main"."merchants" AS "merchants"
-  LEFT JOIN "_t1" AS "_t1"
-    ON "_t1"."receiver_id" = "merchants"."mid"
-  ORDER BY
-    "ordering_2" DESC
-  LIMIT 2
 )
 SELECT
-  "_t0"."merchant_name" AS "merchant_name",
-  "_t0"."total_transactions" AS "total_transactions",
-  "_t0"."total_amount" AS "total_amount"
-FROM "_t0_2" AS "_t0"
+  "merchants"."name" AS "merchant_name",
+  COALESCE("_t1"."agg_1", 0) AS "total_transactions",
+  COALESCE("_t1"."agg_0", 0) AS "total_amount"
+FROM "main"."merchants" AS "merchants"
+LEFT JOIN "_t1" AS "_t1"
+  ON "_t1"."receiver_id" = "merchants"."mid"
 ORDER BY
-  "_t0"."ordering_2" DESC
+  "total_amount" DESC
+LIMIT 2

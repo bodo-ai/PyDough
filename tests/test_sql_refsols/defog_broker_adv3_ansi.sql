@@ -18,6 +18,4 @@ LEFT JOIN "_t1" AS "_t1"
 WHERE
   "_t1"."agg_0" >= 5 AND NOT "_t1"."agg_0" IS NULL
 ORDER BY
-  (
-    100.0 * COALESCE("_t1"."agg_1", 0)
-  ) / COALESCE("_t1"."agg_0", 0)
+  "success_rate"

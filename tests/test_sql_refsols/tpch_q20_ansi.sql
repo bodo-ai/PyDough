@@ -8,7 +8,7 @@ WITH "_t5_2" AS (
     AND "lineitem"."l_shipdate" >= CAST('1994-01-01' AS DATE)
   GROUP BY
     "lineitem"."l_partkey"
-), "_t7_2" AS (
+), "_t7" AS (
   SELECT
     COUNT() AS "agg_0",
     "partsupp"."ps_suppkey" AS "supplier_key"
@@ -23,27 +23,19 @@ WITH "_t5_2" AS (
     )
   GROUP BY
     "partsupp"."ps_suppkey"
-), "_t0_2" AS (
-  SELECT
-    "supplier"."s_address" AS "s_address",
-    "supplier"."s_name" AS "s_name",
-    "supplier"."s_name" AS "ordering_1"
-  FROM "tpch"."supplier" AS "supplier"
-  LEFT JOIN "tpch"."nation" AS "nation"
-    ON "nation"."n_nationkey" = "supplier"."s_nationkey"
-  LEFT JOIN "_t7_2" AS "_t7"
-    ON "_t7"."supplier_key" = "supplier"."s_suppkey"
-  WHERE
-    (
-      "nation"."n_name" = 'CANADA' AND COALESCE("_t7"."agg_0", 0)
-    ) > 0
-  ORDER BY
-    "ordering_1"
-  LIMIT 10
 )
 SELECT
-  "_t0"."s_name" AS "S_NAME",
-  "_t0"."s_address" AS "S_ADDRESS"
-FROM "_t0_2" AS "_t0"
+  "supplier"."s_name" AS "S_NAME",
+  "supplier"."s_address" AS "S_ADDRESS"
+FROM "tpch"."supplier" AS "supplier"
+LEFT JOIN "tpch"."nation" AS "nation"
+  ON "nation"."n_nationkey" = "supplier"."s_nationkey"
+LEFT JOIN "_t7" AS "_t7"
+  ON "_t7"."supplier_key" = "supplier"."s_suppkey"
+WHERE
+  (
+    "nation"."n_name" = 'CANADA' AND COALESCE("_t7"."agg_0", 0)
+  ) > 0
 ORDER BY
-  "_t0"."ordering_1"
+  "s_name"
+LIMIT 10

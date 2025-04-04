@@ -49,6 +49,6 @@ SELECT
   COALESCE("_t1"."agg_0", 0) AS "REVENUE"
 FROM "_t1_2" AS "_t1"
 ORDER BY
-  "_t1"."supp_nation",
-  "_t1"."cust_nation",
-  "_t1"."l_year"
+  "supp_nation",
+  "cust_nation",
+  "l_year"

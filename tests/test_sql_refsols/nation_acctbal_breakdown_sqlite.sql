@@ -12,7 +12,7 @@ WITH "_t3" AS (
       ) < 1.0
       THEN "customer"."c_acctbal"
       ELSE NULL
-    END AS "expr_7",
+    END AS "expr_6",
     CASE
       WHEN ABS(
         (
@@ -25,7 +25,7 @@ WITH "_t3" AS (
       ) < 1.0
       THEN CASE WHEN "customer"."c_acctbal" < 0 THEN "customer"."c_acctbal" ELSE NULL END
       ELSE NULL
-    END AS "expr_8",
+    END AS "expr_7",
     CASE
       WHEN ABS(
         (
@@ -38,16 +38,16 @@ WITH "_t3" AS (
       ) < 1.0
       THEN CASE WHEN "customer"."c_acctbal" >= 0 THEN "customer"."c_acctbal" ELSE NULL END
       ELSE NULL
-    END AS "expr_6",
+    END AS "expr_5",
     "customer"."c_nationkey" AS "nation_key",
     CASE WHEN "customer"."c_acctbal" < 0 THEN "customer"."c_acctbal" ELSE NULL END AS "negative_acctbal",
     CASE WHEN "customer"."c_acctbal" >= 0 THEN "customer"."c_acctbal" ELSE NULL END AS "non_negative_acctbal"
   FROM "tpch"."customer" AS "customer"
 ), "_t3_2" AS (
   SELECT
-    AVG("_t3"."expr_6") AS "agg_0",
-    AVG("_t3"."expr_7") AS "agg_1",
-    AVG("_t3"."expr_8") AS "agg_2",
+    AVG("_t3"."expr_5") AS "agg_0",
+    AVG("_t3"."expr_6") AS "agg_1",
+    AVG("_t3"."expr_7") AS "agg_2",
     COUNT("_t3"."negative_acctbal") AS "agg_4",
     COUNT("_t3"."non_negative_acctbal") AS "agg_3",
     "_t3"."nation_key" AS "nation_key"
@@ -68,4 +68,4 @@ JOIN "tpch"."region" AS "region"
 LEFT JOIN "_t3_2" AS "_t3"
   ON "_t3"."nation_key" = "nation"."n_nationkey"
 ORDER BY
-  "nation"."n_name"
+  "nation_name"

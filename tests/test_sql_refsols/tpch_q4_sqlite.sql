@@ -45,8 +45,7 @@ WITH "_t3" AS (
 ), "_t0_2" AS (
   SELECT
     COALESCE("_t1"."agg_0", 0) AS "order_count",
-    "_t1"."order_priority" AS "o_orderpriority",
-    "_t1"."order_priority" AS "ordering_1"
+    "_t1"."order_priority" AS "o_orderpriority"
   FROM "_t1_2" AS "_t1"
 )
 SELECT
@@ -54,4 +53,4 @@ SELECT
   "_t0"."order_count" AS "ORDER_COUNT"
 FROM "_t0_2" AS "_t0"
 ORDER BY
-  "_t0"."ordering_1"
+  "o_orderpriority"

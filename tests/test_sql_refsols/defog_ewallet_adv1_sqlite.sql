@@ -1,4 +1,4 @@
-WITH "_t1_2" AS (
+WITH "_t0_2" AS (
   SELECT
     COUNT(DISTINCT "wallet_transactions_daily"."coupon_id") AS "agg_0",
     COUNT(DISTINCT "wallet_transactions_daily"."txid") AS "agg_1",
@@ -12,8 +12,8 @@ WITH "_t1_2" AS (
 SELECT
   "merchants"."name" AS "name",
   CAST((
-    "_t1"."agg_0" * 1.0
-  ) AS REAL) / "_t1"."agg_1" AS "CPUR"
+    "_t0"."agg_0" * 1.0
+  ) AS REAL) / "_t0"."agg_1" AS "CPUR"
 FROM "main"."merchants" AS "merchants"
-JOIN "_t1_2" AS "_t1"
-  ON "_t1"."receiver_id" = "merchants"."mid"
+JOIN "_t0_2" AS "_t0"
+  ON "_t0"."receiver_id" = "merchants"."mid"

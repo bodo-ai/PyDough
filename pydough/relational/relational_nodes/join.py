@@ -3,7 +3,6 @@ Representation of the a join node in a relational tree.
 This node is responsible for holding all types of joins.
 """
 
-from collections.abc import MutableMapping, MutableSequence
 from enum import Enum
 
 from pydough.relational.relational_expressions import RelationalExpression
@@ -45,10 +44,10 @@ class Join(RelationalNode):
 
     def __init__(
         self,
-        inputs: MutableSequence[RelationalNode],
+        inputs: list[RelationalNode],
         conditions: list[RelationalExpression],
         join_types: list[JoinType],
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
         correl_name: str | None = None,
     ) -> None:
         super().__init__(columns)
@@ -91,7 +90,7 @@ class Join(RelationalNode):
         return self._join_types
 
     @property
-    def inputs(self) -> MutableSequence[RelationalNode]:
+    def inputs(self) -> list[RelationalNode]:
         return self._inputs
 
     @property
@@ -130,7 +129,7 @@ class Join(RelationalNode):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         return Join(inputs, self.conditions, self.join_types, columns, self.correl_name)
