@@ -31,6 +31,8 @@ from .relational_expressions import (
 )
 from .relational_nodes import (
     Filter,
+    Join,
+    JoinType,
     RelationalNode,
 )
 
@@ -250,6 +252,22 @@ def build_filter(
         the set of filters is empty, just returns `node`. Ignores any filter
         condition that is always True.
     """
+    # If the node is a single inner/semi join, we can add the filter to its
+    # condition (unless the condition contains a window function)
+    push_into_join: bool = (
+        isinstance(node, Join)
+        and node.join_types in ([JoinType.INNER], [JoinType.SEMI])
+        and not any(contains_window(cond) for cond in filters)
+    )
+
+    if push_into_join:
+        assert isinstance(node, Join)
+        filters = {
+            transpose_expression(cond, node.columns, keep_input_names=True)
+            for cond in filters
+        }
+        filters.update(node.conditions)
+
     filters.discard(LiteralExpression(True, BooleanType()))
     condition: RelationalExpression
     if len(filters) == 0:
@@ -258,11 +276,19 @@ def build_filter(
         condition = filters.pop()
     else:
         condition = CallExpression(pydop.BAN, BooleanType(), sorted(filters, key=repr))
-    return Filter(node, condition, passthrough_column_mapping(node))
+
+    if push_into_join:
+        assert isinstance(node, Join)
+        node._conditions[0] = condition
+        return node
+    else:
+        return Filter(node, condition, passthrough_column_mapping(node))
 
 
 def transpose_expression(
-    expr: RelationalExpression, columns: Mapping[str, RelationalExpression]
+    expr: RelationalExpression,
+    columns: Mapping[str, RelationalExpression],
+    keep_input_names: bool = False,
 ) -> RelationalExpression:
     """
     Rewrites an expression by replacing its column references based on a given
@@ -275,6 +301,8 @@ def transpose_expression(
         `expr`: The expression to transposed.
         `columns`: The mapping of column names to their corresponding
         expressions.
+        `keep_input_names`: If True, keeps the input names in the column
+        references.
 
     Returns:
         The transposed expression with updated column references.
@@ -288,6 +316,7 @@ def transpose_expression(
             if (
                 isinstance(new_column, ColumnReference)
                 and new_column.input_name is not None
+                and not keep_input_names
             ):
                 new_column = new_column.with_input(None)
             return new_column
@@ -295,14 +324,23 @@ def transpose_expression(
             return CallExpression(
                 expr.op,
                 expr.data_type,
-                [transpose_expression(arg, columns) for arg in expr.inputs],
+                [
+                    transpose_expression(arg, columns, keep_input_names)
+                    for arg in expr.inputs
+                ],
             )
         case WindowCallExpression():
             return WindowCallExpression(
                 expr.op,
                 expr.data_type,
-                [transpose_expression(arg, columns) for arg in expr.inputs],
-                [transpose_expression(arg, columns) for arg in expr.partition_inputs],
+                [
+                    transpose_expression(arg, columns, keep_input_names)
+                    for arg in expr.inputs
+                ],
+                [
+                    transpose_expression(arg, columns, keep_input_names)
+                    for arg in expr.partition_inputs
+                ],
                 [
                     ExpressionSortInfo(
                         transpose_expression(order_arg.expr, columns),

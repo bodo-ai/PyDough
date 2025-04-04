@@ -1,4 +1,4 @@
-WITH "_t3" AS (
+WITH "_t1" AS (
   SELECT
     "region"."r_name" AS "name",
     "region"."r_regionkey" AS "key"
@@ -16,8 +16,8 @@ WITH "_t3" AS (
     MIN("_t5"."supplycost") AS "best_cost",
     "part"."p_partkey" AS "key_9"
   FROM "tpch"."nation" AS "nation"
-  JOIN "_t3" AS "_t3_2"
-    ON "_t3_2"."key" = "nation"."n_regionkey"
+  JOIN "_t1" AS "_t1"
+    ON "_t1"."key" = "nation"."n_regionkey"
   JOIN "tpch"."supplier" AS "supplier"
     ON "nation"."n_nationkey" = "supplier"."s_nationkey"
   JOIN "_t5" AS "_t5"
@@ -30,18 +30,19 @@ WITH "_t3" AS (
     "part"."p_partkey"
 ), "_t17" AS (
   SELECT
-    "part"."p_partkey" AS "key_19",
-    "part"."p_mfgr" AS "manufacturer",
+    "part"."p_partkey" AS "p_partkey",
+    "part"."p_mfgr" AS "p_mfgr",
     "nation"."n_name" AS "n_name",
     "supplier"."s_acctbal" AS "s_acctbal",
     "supplier"."s_address" AS "s_address",
     "supplier"."s_comment" AS "s_comment",
     "supplier"."s_name" AS "s_name",
     "supplier"."s_phone" AS "s_phone",
+    "part"."p_partkey" AS "key_19",
     "_t13"."supplycost" AS "supplycost"
   FROM "tpch"."nation" AS "nation"
-  JOIN "_t3" AS "_t5"
-    ON "_t5"."key" = "nation"."n_regionkey"
+  JOIN "_t1" AS "_t3"
+    ON "_t3"."key" = "nation"."n_regionkey"
   JOIN "tpch"."supplier" AS "supplier"
     ON "nation"."n_nationkey" = "supplier"."s_nationkey"
   JOIN "_t5" AS "_t13"
@@ -55,8 +56,8 @@ SELECT
   "_t17"."s_acctbal" AS "S_ACCTBAL",
   "_t17"."s_name" AS "S_NAME",
   "_t17"."n_name" AS "N_NAME",
-  "_t17"."key_19" AS "P_PARTKEY",
-  "_t17"."manufacturer" AS "P_MFGR",
+  "_t17"."p_partkey" AS "P_PARTKEY",
+  "_t17"."p_mfgr" AS "P_MFGR",
   "_t17"."s_address" AS "S_ADDRESS",
   "_t17"."s_phone" AS "S_PHONE",
   "_t17"."s_comment" AS "S_COMMENT"
