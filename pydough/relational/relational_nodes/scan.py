@@ -5,8 +5,6 @@ represents any "base table" in relational algebra. As we expand to more types of
 class for more specific implementations.
 """
 
-from collections.abc import MutableMapping, MutableSequence
-
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
@@ -23,13 +21,13 @@ class Scan(RelationalNode):
     """
 
     def __init__(
-        self, table_name: str, columns: MutableMapping[str, RelationalExpression]
+        self, table_name: str, columns: dict[str, RelationalExpression]
     ) -> None:
         super().__init__(columns)
         self.table_name: str = table_name
 
     @property
-    def inputs(self) -> MutableSequence[RelationalNode]:
+    def inputs(self) -> list[RelationalNode]:
         # A scan is required to be the leaf node of the relational tree.
         return []
 
@@ -44,8 +42,8 @@ class Scan(RelationalNode):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert not inputs, "Scan node should have 0 inputs"
         return Scan(self.table_name, columns)

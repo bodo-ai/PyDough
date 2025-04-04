@@ -1,17 +1,8 @@
 SELECT
-  device_type,
-  AVG(expr_1) AS avg_session_duration_seconds
-FROM (
-  SELECT
-    DATEDIFF(session_end_ts, session_start_ts, SECOND) AS expr_1,
-    device_type
-  FROM (
-    SELECT
-      device_type,
-      session_end_ts,
-      session_start_ts
-    FROM main.user_sessions
-  )
-)
+  "user_sessions"."device_type" AS "device_type",
+  AVG(
+    DATEDIFF("user_sessions"."session_end_ts", "user_sessions"."session_start_ts", SECOND)
+  ) AS "avg_session_duration_seconds"
+FROM "main"."user_sessions" AS "user_sessions"
 GROUP BY
-  device_type
+  "user_sessions"."device_type"

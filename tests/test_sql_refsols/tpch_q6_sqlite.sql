@@ -1,39 +1,14 @@
-SELECT
-  COALESCE(agg_0, 0) AS REVENUE
-FROM (
+WITH "_t0" AS (
   SELECT
-    SUM(amt) AS agg_0
-  FROM (
-    SELECT
-      extended_price * discount AS amt
-    FROM (
-      SELECT
-        discount,
-        extended_price
-      FROM (
-        SELECT
-          l_discount AS discount,
-          l_extendedprice AS extended_price,
-          l_quantity AS quantity,
-          l_shipdate AS ship_date
-        FROM tpch.LINEITEM
-      )
-      WHERE
-        (
-          discount <= 0.07
-        )
-        AND (
-          quantity < 24
-        )
-        AND (
-          ship_date < '1995-01-01'
-        )
-        AND (
-          discount >= 0.05
-        )
-        AND (
-          ship_date >= '1994-01-01'
-        )
-    )
-  )
+    SUM("lineitem"."l_extendedprice" * "lineitem"."l_discount") AS "agg_0"
+  FROM "tpch"."lineitem" AS "lineitem"
+  WHERE
+    "lineitem"."l_discount" <= 0.07
+    AND "lineitem"."l_discount" >= 0.05
+    AND "lineitem"."l_quantity" < 24
+    AND "lineitem"."l_shipdate" < '1995-01-01'
+    AND "lineitem"."l_shipdate" >= '1994-01-01'
 )
+SELECT
+  COALESCE("_t0"."agg_0", 0) AS "REVENUE"
+FROM "_t0" AS "_t0"

@@ -1,27 +1,12 @@
+WITH "_t0" AS (
+  SELECT
+    "table"."a" AS "a"
+  FROM "table" AS "table"
+)
 SELECT
-  _table_alias_2.b AS d
-FROM (
-  SELECT
-    _table_alias_0.a AS a,
-    _table_alias_1.b AS b
-  FROM (
-    SELECT
-      a,
-      b
-    FROM table
-  ) AS _table_alias_0
-  INNER JOIN (
-    SELECT
-      a,
-      b
-    FROM table
-  ) AS _table_alias_1
-    ON _table_alias_0.a = _table_alias_1.a
-) AS _table_alias_2
-LEFT JOIN (
-  SELECT
-    a,
-    b
-  FROM table
-) AS _table_alias_3
-  ON _table_alias_2.a = _table_alias_3.a
+  "table"."b" AS "d"
+FROM "_t0" AS "_t0"
+JOIN "table" AS "table"
+  ON "_t0"."a" = "table"."a"
+LEFT JOIN "_t0" AS "_t3"
+  ON "_t0"."a" = "_t3"."a"

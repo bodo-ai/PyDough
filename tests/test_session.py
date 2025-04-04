@@ -126,8 +126,8 @@ def test_active_session_to_sql(sample_graph_path: str) -> None:
     """
     output_query: str = """
 SELECT
-  o_orderkey AS key
-FROM tpch.ORDERS
+  "orders"."o_orderkey" AS "key"
+FROM "tpch"."orders" AS "orders"
 """
     try:
         # Load metadata for the session

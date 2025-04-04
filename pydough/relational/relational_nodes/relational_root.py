@@ -4,7 +4,7 @@ This node is responsible for enforcing the final orderings and columns as well
 as any other traits that impact the shape/display of the final output.
 """
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
@@ -81,8 +81,8 @@ class RelationalRoot(SingleRelational):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Root node should have exactly one input"
         assert columns == self.columns, "Root columns should not be modified"

@@ -1,32 +1,15 @@
-SELECT
-  status,
-  count
-FROM (
+WITH "_t1" AS (
   SELECT
-    count,
-    ordering_1,
-    status
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS count,
-      COALESCE(agg_0, 0) AS ordering_1,
-      status
-    FROM (
-      SELECT
-        COUNT() AS agg_0,
-        status
-      FROM (
-        SELECT
-          status
-        FROM main.wallet_transactions_daily
-      )
-      GROUP BY
-        status
-    )
-  )
-  ORDER BY
-    ordering_1 DESC
-  LIMIT 3
+    COUNT() AS "agg_0",
+    "wallet_transactions_daily"."status" AS "status"
+  FROM "main"."wallet_transactions_daily" AS "wallet_transactions_daily"
+  GROUP BY
+    "wallet_transactions_daily"."status"
 )
+SELECT
+  "_t1"."status" AS "status",
+  COALESCE("_t1"."agg_0", 0) AS "count"
+FROM "_t1" AS "_t1"
 ORDER BY
-  ordering_1 DESC
+  "count" DESC
+LIMIT 3

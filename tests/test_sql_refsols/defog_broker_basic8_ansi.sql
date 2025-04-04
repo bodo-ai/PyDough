@@ -1,32 +1,15 @@
-SELECT
-  country,
-  num_customers
-FROM (
+WITH "_t1" AS (
   SELECT
-    country,
-    num_customers,
-    ordering_1
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS num_customers,
-      COALESCE(agg_0, 0) AS ordering_1,
-      country
-    FROM (
-      SELECT
-        COUNT() AS agg_0,
-        country
-      FROM (
-        SELECT
-          sbCustCountry AS country
-        FROM main.sbCustomer
-      )
-      GROUP BY
-        country
-    )
-  )
-  ORDER BY
-    ordering_1 DESC
-  LIMIT 5
+    COUNT() AS "agg_0",
+    "sbcustomer"."sbcustcountry" AS "country"
+  FROM "main"."sbcustomer" AS "sbcustomer"
+  GROUP BY
+    "sbcustomer"."sbcustcountry"
 )
+SELECT
+  "_t1"."country" AS "country",
+  COALESCE("_t1"."agg_0", 0) AS "num_customers"
+FROM "_t1" AS "_t1"
 ORDER BY
-  ordering_1 DESC
+  "num_customers" DESC
+LIMIT 5

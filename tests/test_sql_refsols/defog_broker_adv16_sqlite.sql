@@ -1,75 +1,30 @@
-SELECT
-  symbol,
-  SPM
-FROM (
+WITH "_t1" AS (
   SELECT
-    symbol AS ordering_2,
-    SPM,
-    symbol
-  FROM (
-    SELECT
-      CAST((
-        100.0 * (
-          COALESCE(agg_0, 0) - COALESCE(agg_1, 0)
-        )
-      ) AS REAL) / COALESCE(agg_0, 0) AS SPM,
-      symbol
-    FROM (
-      SELECT
-        agg_0,
-        agg_1,
-        symbol
-      FROM (
-        SELECT
-          sbTickerId AS _id,
-          sbTickerSymbol AS symbol
-        FROM main.sbTicker
-      )
-      LEFT JOIN (
-        SELECT
-          SUM(amount) AS agg_0,
-          SUM(expr_3) AS agg_1,
-          ticker_id
-        FROM (
-          SELECT
-            tax + commission AS expr_3,
-            amount,
-            ticker_id
-          FROM (
-            SELECT
-              amount,
-              commission,
-              tax,
-              ticker_id
-            FROM (
-              SELECT
-                sbTxAmount AS amount,
-                sbTxCommission AS commission,
-                sbTxDateTime AS date_time,
-                sbTxTax AS tax,
-                sbTxTickerId AS ticker_id,
-                sbTxType AS transaction_type
-              FROM main.sbTransaction
-            )
-            WHERE
-              (
-                transaction_type = 'sell'
-              )
-              AND (
-                date_time >= DATETIME('now', '-1 month')
-              )
-          )
-        )
-        GROUP BY
-          ticker_id
-      )
-        ON _id = ticker_id
-    )
-  )
+    SUM("sbtransaction"."sbtxamount") AS "agg_0",
+    SUM("sbtransaction"."sbtxtax" + "sbtransaction"."sbtxcommission") AS "agg_1",
+    "sbtransaction"."sbtxtickerid" AS "ticker_id"
+  FROM "main"."sbtransaction" AS "sbtransaction"
   WHERE
-    NOT (
-      SPM IS NULL
-    )
+    "sbtransaction"."sbtxdatetime" >= DATETIME('now', '-1 month')
+    AND "sbtransaction"."sbtxtype" = 'sell'
+  GROUP BY
+    "sbtransaction"."sbtxtickerid"
 )
+SELECT
+  "sbticker"."sbtickersymbol" AS "symbol",
+  CAST((
+    100.0 * (
+      COALESCE("_t1"."agg_0", 0) - COALESCE("_t1"."agg_1", 0)
+    )
+  ) AS REAL) / COALESCE("_t1"."agg_0", 0) AS "SPM"
+FROM "main"."sbticker" AS "sbticker"
+LEFT JOIN "_t1" AS "_t1"
+  ON "_t1"."ticker_id" = "sbticker"."sbtickerid"
+WHERE
+  NOT CAST((
+    100.0 * (
+      COALESCE("_t1"."agg_0", 0) - COALESCE("_t1"."agg_1", 0)
+    )
+  ) AS REAL) / COALESCE("_t1"."agg_0", 0) IS NULL
 ORDER BY
-  ordering_2
+  "symbol"

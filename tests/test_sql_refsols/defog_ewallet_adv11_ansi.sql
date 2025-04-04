@@ -1,47 +1,21 @@
-SELECT
-  uid,
-  total_duration
-FROM (
+WITH "_t0_2" AS (
   SELECT
-    COALESCE(agg_0, 0) AS ordering_1,
-    COALESCE(agg_0, 0) AS total_duration,
-    uid
-  FROM (
-    SELECT
-      agg_0,
-      uid
-    FROM (
-      SELECT
-        uid
-      FROM main.users
-    )
-    INNER JOIN (
-      SELECT
-        SUM(duration) AS agg_0,
-        user_id
-      FROM (
-        SELECT
-          DATEDIFF(session_end_ts, session_start_ts, SECOND) AS duration,
-          user_id
-        FROM (
-          SELECT
-            session_end_ts,
-            session_start_ts,
-            user_id
-          FROM main.user_sessions
-          WHERE
-            (
-              session_end_ts < '2023-06-08'
-            ) AND (
-              session_start_ts >= '2023-06-01'
-            )
-        )
-      )
-      GROUP BY
-        user_id
-    )
-      ON uid = user_id
-  )
+    SUM(
+      DATEDIFF("user_sessions"."session_end_ts", "user_sessions"."session_start_ts", SECOND)
+    ) AS "agg_0",
+    "user_sessions"."user_id" AS "user_id"
+  FROM "main"."user_sessions" AS "user_sessions"
+  WHERE
+    "user_sessions"."session_end_ts" < '2023-06-08'
+    AND "user_sessions"."session_start_ts" >= '2023-06-01'
+  GROUP BY
+    "user_sessions"."user_id"
 )
+SELECT
+  "users"."uid" AS "uid",
+  COALESCE("_t0"."agg_0", 0) AS "total_duration"
+FROM "main"."users" AS "users"
+JOIN "_t0_2" AS "_t0"
+  ON "_t0"."user_id" = "users"."uid"
 ORDER BY
-  ordering_1 DESC
+  "total_duration" DESC

@@ -1,8 +1,8 @@
 SELECT
-  a,
-  b
-FROM table
+  "table"."a" AS "a",
+  "table"."b" AS "b"
+FROM "table" AS "table"
 ORDER BY
-  a,
-  b DESC
+  "a",
+  "b" DESC
 LIMIT 10

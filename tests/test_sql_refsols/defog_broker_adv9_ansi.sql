@@ -1,58 +1,24 @@
-SELECT
-  week,
-  COALESCE(agg_0, 0) AS num_transactions,
-  COALESCE(agg_1, 0) AS weekend_transactions
-FROM (
+WITH "_t0_2" AS (
   SELECT
-    COUNT() AS agg_0,
-    SUM(is_weekend) AS agg_1,
-    week
-  FROM (
-    SELECT
-      DATE_TRUNC('WEEK', CAST(date_time AS TIMESTAMP)) AS week,
+    COUNT() AS "agg_0",
+    SUM((
       (
-        (
-          (
-            DAY_OF_WEEK(date_time) + 6
-          ) % 7
-        )
-      ) IN (5, 6) AS is_weekend
-    FROM (
-      SELECT
-        date_time
-      FROM (
-        SELECT
-          date_time,
-          ticker_id
-        FROM (
-          SELECT
-            sbTxDateTime AS date_time,
-            sbTxTickerId AS ticker_id
-          FROM main.sbTransaction
-        )
-        WHERE
-          (
-            date_time < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
-          )
-          AND (
-            date_time >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -8, 'WEEK')
-          )
-      )
-      INNER JOIN (
-        SELECT
-          _id
-        FROM (
-          SELECT
-            sbTickerId AS _id,
-            sbTickerType AS ticker_type
-          FROM main.sbTicker
-        )
-        WHERE
-          ticker_type = 'stock'
-      )
-        ON ticker_id = _id
-    )
-  )
+        DAY_OF_WEEK("sbtransaction"."sbtxdatetime") + 6
+      ) % 7
+    ) IN (5, 6)) AS "agg_1",
+    DATE_TRUNC('WEEK', CAST("sbtransaction"."sbtxdatetime" AS TIMESTAMP)) AS "week"
+  FROM "main"."sbtransaction" AS "sbtransaction"
+  JOIN "main"."sbticker" AS "sbticker"
+    ON "sbticker"."sbtickerid" = "sbtransaction"."sbtxtickerid"
+    AND "sbticker"."sbtickertype" = 'stock'
+  WHERE
+    "sbtransaction"."sbtxdatetime" < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
+    AND "sbtransaction"."sbtxdatetime" >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -8, 'WEEK')
   GROUP BY
-    week
+    DATE_TRUNC('WEEK', CAST("sbtransaction"."sbtxdatetime" AS TIMESTAMP))
 )
+SELECT
+  "_t0"."week" AS "week",
+  COALESCE("_t0"."agg_0", 0) AS "num_transactions",
+  COALESCE("_t0"."agg_1", 0) AS "weekend_transactions"
+FROM "_t0_2" AS "_t0"

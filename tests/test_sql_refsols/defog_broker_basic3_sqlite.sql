@@ -1,50 +1,19 @@
-SELECT
-  symbol,
-  num_transactions,
-  total_amount
-FROM (
+WITH "_t1" AS (
   SELECT
-    num_transactions,
-    ordering_2,
-    symbol,
-    total_amount
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS num_transactions,
-      COALESCE(agg_1, 0) AS ordering_2,
-      COALESCE(agg_1, 0) AS total_amount,
-      symbol
-    FROM (
-      SELECT
-        agg_0,
-        agg_1,
-        symbol
-      FROM (
-        SELECT
-          sbTickerId AS _id,
-          sbTickerSymbol AS symbol
-        FROM main.sbTicker
-      )
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
-          SUM(amount) AS agg_1,
-          ticker_id
-        FROM (
-          SELECT
-            sbTxAmount AS amount,
-            sbTxTickerId AS ticker_id
-          FROM main.sbTransaction
-        )
-        GROUP BY
-          ticker_id
-      )
-        ON _id = ticker_id
-    )
-  )
-  ORDER BY
-    ordering_2 DESC
-  LIMIT 10
+    COUNT() AS "agg_0",
+    SUM("sbtransaction"."sbtxamount") AS "agg_1",
+    "sbtransaction"."sbtxtickerid" AS "ticker_id"
+  FROM "main"."sbtransaction" AS "sbtransaction"
+  GROUP BY
+    "sbtransaction"."sbtxtickerid"
 )
+SELECT
+  "sbticker"."sbtickersymbol" AS "symbol",
+  COALESCE("_t1"."agg_0", 0) AS "num_transactions",
+  COALESCE("_t1"."agg_1", 0) AS "total_amount"
+FROM "main"."sbticker" AS "sbticker"
+LEFT JOIN "_t1" AS "_t1"
+  ON "_t1"."ticker_id" = "sbticker"."sbtickerid"
 ORDER BY
-  ordering_2 DESC
+  "total_amount" DESC
+LIMIT 10

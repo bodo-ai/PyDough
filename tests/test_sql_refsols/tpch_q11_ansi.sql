@@ -1,133 +1,45 @@
-SELECT
-  PS_PARTKEY,
-  VALUE
-FROM (
+WITH "_t0" AS (
   SELECT
-    PS_PARTKEY,
-    VALUE,
-    ordering_2
-  FROM (
-    SELECT
-      VALUE AS ordering_2,
-      PS_PARTKEY,
-      VALUE
-    FROM (
-      SELECT
-        COALESCE(agg_1, 0) AS VALUE,
-        part_key AS PS_PARTKEY,
-        min_market_share
-      FROM (
-        SELECT
-          agg_1,
-          min_market_share,
-          part_key
-        FROM (
-          SELECT
-            COALESCE(agg_0, 0) * 0.0001 AS min_market_share
-          FROM (
-            SELECT
-              SUM(metric) AS agg_0
-            FROM (
-              SELECT
-                supplycost * availqty AS metric
-              FROM (
-                SELECT
-                  availqty,
-                  supplycost
-                FROM (
-                  SELECT
-                    ps_availqty AS availqty,
-                    ps_suppkey AS supplier_key,
-                    ps_supplycost AS supplycost
-                  FROM tpch.PARTSUPP
-                )
-                INNER JOIN (
-                  SELECT
-                    _table_alias_0.key AS key
-                  FROM (
-                    SELECT
-                      s_suppkey AS key,
-                      s_nationkey AS nation_key
-                    FROM tpch.SUPPLIER
-                  ) AS _table_alias_0
-                  INNER JOIN (
-                    SELECT
-                      key
-                    FROM (
-                      SELECT
-                        n_name AS name,
-                        n_nationkey AS key
-                      FROM tpch.NATION
-                    )
-                    WHERE
-                      name = 'GERMANY'
-                  ) AS _table_alias_1
-                    ON nation_key = _table_alias_1.key
-                )
-                  ON supplier_key = key
-              )
-            )
-          )
-        )
-        LEFT JOIN (
-          SELECT
-            SUM(metric) AS agg_1,
-            part_key
-          FROM (
-            SELECT
-              supplycost * availqty AS metric,
-              part_key
-            FROM (
-              SELECT
-                availqty,
-                part_key,
-                supplycost
-              FROM (
-                SELECT
-                  ps_availqty AS availqty,
-                  ps_partkey AS part_key,
-                  ps_suppkey AS supplier_key,
-                  ps_supplycost AS supplycost
-                FROM tpch.PARTSUPP
-              )
-              INNER JOIN (
-                SELECT
-                  _table_alias_2.key AS key
-                FROM (
-                  SELECT
-                    s_suppkey AS key,
-                    s_nationkey AS nation_key
-                  FROM tpch.SUPPLIER
-                ) AS _table_alias_2
-                INNER JOIN (
-                  SELECT
-                    key
-                  FROM (
-                    SELECT
-                      n_name AS name,
-                      n_nationkey AS key
-                    FROM tpch.NATION
-                  )
-                  WHERE
-                    name = 'GERMANY'
-                ) AS _table_alias_3
-                  ON nation_key = _table_alias_3.key
-              )
-                ON supplier_key = key
-            )
-          )
-          GROUP BY
-            part_key
-        )
-          ON TRUE
-      )
-    )
-    WHERE
-      VALUE > min_market_share
-  )
-  ORDER BY
-    ordering_2 DESC
-  LIMIT 10
+    "supplier"."s_suppkey" AS "key",
+    "supplier"."s_nationkey" AS "nation_key"
+  FROM "tpch"."supplier" AS "supplier"
+), "_t5" AS (
+  SELECT
+    "nation"."n_name" AS "name",
+    "nation"."n_nationkey" AS "key"
+  FROM "tpch"."nation" AS "nation"
+  WHERE
+    "nation"."n_name" = 'GERMANY'
+), "_t2_2" AS (
+  SELECT
+    SUM("partsupp"."ps_supplycost" * "partsupp"."ps_availqty") AS "agg_0"
+  FROM "tpch"."partsupp" AS "partsupp"
+  JOIN "_t0" AS "_t0"
+    ON "_t0"."key" = "partsupp"."ps_suppkey"
+  JOIN "_t5" AS "_t5"
+    ON "_t0"."nation_key" = "_t5"."key"
+), "_t9" AS (
+  SELECT
+    SUM("partsupp"."ps_supplycost" * "partsupp"."ps_availqty") AS "agg_1",
+    "partsupp"."ps_partkey" AS "part_key"
+  FROM "tpch"."partsupp" AS "partsupp"
+  JOIN "_t0" AS "_t4"
+    ON "_t4"."key" = "partsupp"."ps_suppkey"
+  JOIN "_t5" AS "_t8"
+    ON "_t4"."nation_key" = "_t8"."key"
+  GROUP BY
+    "partsupp"."ps_partkey"
 )
+SELECT
+  "_t9"."part_key" AS "PS_PARTKEY",
+  COALESCE("_t9"."agg_1", 0) AS "VALUE"
+FROM "_t2_2" AS "_t2"
+LEFT JOIN "_t9" AS "_t9"
+  ON TRUE
+WHERE
+  (
+    COALESCE("_t2"."agg_0", 0) * 0.0001
+  ) < COALESCE("_t9"."agg_1", 0)
 ORDER BY
-  ordering_2 DESC
+  "value" DESC
+LIMIT 10

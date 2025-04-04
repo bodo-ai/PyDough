@@ -1,51 +1,26 @@
+WITH "_t0_2" AS (
+  SELECT
+    SUM(
+      IIF(
+        "part"."p_type" LIKE 'PROMO%',
+        "lineitem"."l_extendedprice" * (
+          1 - "lineitem"."l_discount"
+        ),
+        0
+      )
+    ) AS "agg_0",
+    SUM("lineitem"."l_extendedprice" * (
+      1 - "lineitem"."l_discount"
+    )) AS "agg_1"
+  FROM "tpch"."lineitem" AS "lineitem"
+  LEFT JOIN "tpch"."part" AS "part"
+    ON "lineitem"."l_partkey" = "part"."p_partkey"
+  WHERE
+    "lineitem"."l_shipdate" < '1995-10-01'
+    AND "lineitem"."l_shipdate" >= '1995-09-01'
+)
 SELECT
   CAST((
-    100.0 * COALESCE(agg_0, 0)
-  ) AS REAL) / COALESCE(agg_1, 0) AS PROMO_REVENUE
-FROM (
-  SELECT
-    SUM(promo_value) AS agg_0,
-    SUM(value) AS agg_1
-  FROM (
-    SELECT
-      IIF(part_type LIKE 'PROMO%', extended_price * (
-        1 - discount
-      ), 0) AS promo_value,
-      extended_price * (
-        1 - discount
-      ) AS value
-    FROM (
-      SELECT
-        discount,
-        extended_price,
-        part_type
-      FROM (
-        SELECT
-          discount,
-          extended_price,
-          part_key
-        FROM (
-          SELECT
-            l_discount AS discount,
-            l_extendedprice AS extended_price,
-            l_partkey AS part_key,
-            l_shipdate AS ship_date
-          FROM tpch.LINEITEM
-        )
-        WHERE
-          (
-            ship_date < '1995-10-01'
-          ) AND (
-            ship_date >= '1995-09-01'
-          )
-      )
-      LEFT JOIN (
-        SELECT
-          p_partkey AS key,
-          p_type AS part_type
-        FROM tpch.PART
-      )
-        ON part_key = key
-    )
-  )
-)
+    100.0 * COALESCE("_t0"."agg_0", 0)
+  ) AS REAL) / COALESCE("_t0"."agg_1", 0) AS "PROMO_REVENUE"
+FROM "_t0_2" AS "_t0"
