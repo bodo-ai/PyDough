@@ -2,7 +2,7 @@ ROOT(columns=[('customer_name', customer_name), ('delta', delta)], orderings=[(d
  LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'customer_name': customer_name, 'delta': delta}, orderings=[(delta):asc_first])
   PROJECT(columns={'customer_name': agg_7, 'delta': ABS(agg_1 - agg_0)})
    AGGREGATE(keys={'key': key}, aggregations={'agg_0': MEDIAN(account_balance), 'agg_1': ANYTHING(acctbal), 'agg_7': ANYTHING(name)})
-    JOIN(conditions=[t0.key_2 == t1.nation_key & SLICE(t1.phone, -1:int64, None:unknown, None:unknown) == SLICE(t0.cust_phone, -1:int64, None:unknown, None:unknown)], types=['inner'], columns={'account_balance': t1.account_balance, 'acctbal': t0.acctbal, 'key': t0.key, 'name': t0.name})
+    JOIN(conditions=[SLICE(t1.phone, -1:int64, None:unknown, None:unknown) == SLICE(t0.cust_phone, -1:int64, None:unknown, None:unknown) & t0.key_2 == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'acctbal': t0.acctbal, 'key': t0.key, 'name': t0.name})
      JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'acctbal': t0.acctbal, 'cust_phone': t0.cust_phone, 'key': t0.key, 'key_2': t0.key_2, 'name': t0.name})
       JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'acctbal': t0.acctbal, 'cust_phone': t0.cust_phone, 'key': t0.key, 'key_2': t1.key, 'name': t0.name, 'region_key': t1.region_key})
        PROJECT(columns={'acctbal': acctbal, 'cust_phone': phone, 'key': key, 'name': name, 'nation_key': nation_key})

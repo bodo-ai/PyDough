@@ -3,6 +3,6 @@ ROOT(columns=[('region_name', region_name), ('n_prefix_nations', n_prefix_nation
   JOIN(conditions=[t0.key == t1.key], types=['left'], columns={'agg_0': t1.agg_0, 'region_name': t0.region_name})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'region_name': r_name})
    AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT()})
-    JOIN(conditions=[t0.key == t1.region_key & SLICE(t1.name, None:unknown, 1:int64, None:unknown) == SLICE(t0.region_name, None:unknown, 1:int64, None:unknown)], types=['inner'], columns={'key': t0.key})
+    JOIN(conditions=[SLICE(t1.name, None:unknown, 1:int64, None:unknown) == SLICE(t0.region_name, None:unknown, 1:int64, None:unknown) & t0.key == t1.region_key], types=['inner'], columns={'key': t0.key})
      SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'region_name': r_name})
      SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})

@@ -1,6 +1,6 @@
 ROOT(columns=[('AVG_YEARLY', DEFAULT_TO(agg_0, 0:int64) / 7.0:float64)], orderings=[])
  AGGREGATE(keys={}, aggregations={'agg_0': SUM(extended_price)})
-  JOIN(conditions=[t0.key == t1.part_key & t1.quantity < 0.2:float64 * t0.part_avg_quantity], types=['inner'], columns={'extended_price': t1.extended_price})
+  JOIN(conditions=[t1.quantity < 0.2:float64 * t0.part_avg_quantity & t0.key == t1.part_key], types=['inner'], columns={'extended_price': t1.extended_price})
    PROJECT(columns={'key': key, 'part_avg_quantity': agg_0})
     JOIN(conditions=[t0.key == t1.part_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
      FILTER(condition=brand == 'Brand#23':string & container == 'MED BOX':string, columns={'key': key})

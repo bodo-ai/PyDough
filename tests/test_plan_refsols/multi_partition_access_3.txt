@@ -1,5 +1,5 @@
 ROOT(columns=[('symbol', symbol_9), ('close', close)], orderings=[(symbol_9):asc_first])
- JOIN(conditions=[t0.ticker_type_3 == t1.ticker_type_6 & t1.close < t0.type_high_price], types=['inner'], columns={'close': t1.close, 'symbol_9': t1.symbol_9})
+ JOIN(conditions=[t1.close < t0.type_high_price & t0.ticker_type_3 == t1.ticker_type_6], types=['inner'], columns={'close': t1.close, 'symbol_9': t1.symbol_9})
   PROJECT(columns={'ticker_type_3': ticker_type_3, 'type_high_price': agg_0})
    AGGREGATE(keys={'ticker_type_3': ticker_type_3}, aggregations={'agg_0': MAX(close)})
     JOIN(conditions=[t0.ticker_id == t1.ticker_id], types=['inner'], columns={'close': t1.close, 'ticker_type_3': t1.ticker_type})

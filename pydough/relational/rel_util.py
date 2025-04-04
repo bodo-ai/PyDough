@@ -252,6 +252,22 @@ def build_filter(
         the set of filters is empty, just returns `node`. Ignores any filter
         condition that is always True.
     """
+    # If the node is a single inner/semi join, we can add the filter to its
+    # condition (unless the condition contains a window function)
+    push_into_join: bool = (
+        isinstance(node, Join)
+        and node.join_types in ([JoinType.INNER], [JoinType.SEMI])
+        and not any(contains_window(cond) for cond in filters)
+    )
+
+    if push_into_join:
+        assert isinstance(node, Join)
+        filters = {
+            transpose_expression(cond, node.columns, keep_input_names=True)
+            for cond in filters
+        }
+        filters.update(node.conditions)
+
     filters.discard(LiteralExpression(True, BooleanType()))
     condition: RelationalExpression
     if len(filters) == 0:
@@ -261,21 +277,12 @@ def build_filter(
     else:
         condition = CallExpression(pydop.BAN, BooleanType(), sorted(filters, key=repr))
 
-    # If the node is a single inner/semi join, we can add the filter to its
-    # condition (unless the condition contains a window function)
-    if (
-        isinstance(node, Join)
-        and node.join_types in ([JoinType.INNER], [JoinType.SEMI])
-        and not contains_window(condition)
-    ):
-        new_condition: RelationalExpression = transpose_expression(
-            condition, node.columns, keep_input_names=True
-        )
-        node._conditions[0] = CallExpression(
-            pydop.BAN, BooleanType(), [node._conditions[0], new_condition]
-        )
+    if push_into_join:
+        assert isinstance(node, Join)
+        node._conditions[0] = condition
         return node
-    return Filter(node, condition, passthrough_column_mapping(node))
+    else:
+        return Filter(node, condition, passthrough_column_mapping(node))
 
 
 def transpose_expression(
