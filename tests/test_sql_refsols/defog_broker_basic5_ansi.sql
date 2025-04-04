@@ -1,20 +1,27 @@
-SELECT
-  _id
-FROM (
+WITH _t0 AS (
   SELECT
-    sbCustId AS _id
-  FROM main.sbCustomer
-)
-SEMI JOIN (
-  SELECT
-    customer_id
-  FROM (
-    SELECT
-      sbTxCustId AS customer_id,
-      sbTxType AS transaction_type
-    FROM main.sbTransaction
-  )
+    sbtxcustid AS customer_id,
+    sbtxtype AS transaction_type
+  FROM main.sbtransaction
   WHERE
-    transaction_type = 'buy'
+    sbtxtype = 'buy'
+), _t1 AS (
+  SELECT
+    customer_id AS customer_id
+  FROM _t0
+), _t0_2 AS (
+  SELECT
+    sbcustid AS _id
+  FROM main.sbcustomer
 )
-  ON _id = customer_id
+SELECT
+  _t0._id AS _id
+FROM _t0_2 AS _t0
+WHERE
+  EXISTS(
+    SELECT
+      1 AS "1"
+    FROM _t1
+    WHERE
+      _id = customer_id
+  )

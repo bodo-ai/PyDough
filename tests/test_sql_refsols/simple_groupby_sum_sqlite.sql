@@ -1,11 +1,6 @@
 SELECT
   SUM(a) AS a,
-  b
-FROM (
-  SELECT
-    a,
-    b
-  FROM table
-)
+  b AS b
+FROM table
 GROUP BY
   b

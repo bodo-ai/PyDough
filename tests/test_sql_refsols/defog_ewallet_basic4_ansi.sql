@@ -1,20 +1,27 @@
-SELECT
-  uid AS user_id
-FROM (
+WITH _t0 AS (
   SELECT
-    uid
+    type AS notification_type,
+    user_id AS user_id
+  FROM main.notifications
+  WHERE
+    type = 'transaction'
+), _t1 AS (
+  SELECT
+    user_id AS user_id
+  FROM _t0
+), _t0_2 AS (
+  SELECT
+    uid AS uid
   FROM main.users
 )
-SEMI JOIN (
-  SELECT
-    user_id
-  FROM (
+SELECT
+  _t0.uid AS user_id
+FROM _t0_2 AS _t0
+WHERE
+  EXISTS(
     SELECT
-      type AS notification_type,
-      user_id
-    FROM main.notifications
+      1 AS "1"
+    FROM _t1
+    WHERE
+      uid = user_id
   )
-  WHERE
-    notification_type = 'transaction'
-)
-  ON uid = user_id

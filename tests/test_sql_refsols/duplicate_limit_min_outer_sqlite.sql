@@ -1,6 +1,6 @@
 SELECT
-  a,
-  b
+  a AS a,
+  b AS b
 FROM table
 ORDER BY
   a,

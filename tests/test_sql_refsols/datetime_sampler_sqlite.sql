@@ -18,7 +18,7 @@ SELECT
   DATETIME('now') AS _expr16,
   DATETIME('now') AS _expr17,
   DATETIME('now') AS _expr18,
-  DATETIME(order_date) AS _expr19,
+  DATETIME(o_orderdate) AS _expr19,
   STRFTIME('%Y-%m-%d %H:%M:%S', DATETIME('now')) AS _expr20,
   DATETIME(DATE('now', 'start of year'), '8 minute', '-141 month') AS _expr21,
   STRFTIME('%Y-%m-%d %H:00:00', STRFTIME('%Y-%m-%d %H:%M:%S', DATE('now', 'start of month'))) AS _expr22,
@@ -28,7 +28,7 @@ SELECT
   ) AS _expr23,
   DATETIME('now', '-96 hour', '15 year') AS _expr24,
   DATETIME(STRFTIME('%Y-%m-%d %H:%M:00', DATE('now', 'start of year', '-3 year')), '65 month') AS _expr25,
-  DATE(DATETIME(order_date, '-56 hour'), 'start of year') AS _expr26,
+  DATE(DATETIME(o_orderdate, '-56 hour'), 'start of year') AS _expr26,
   STRFTIME('%Y-%m-%d %H:%M:%S', STRFTIME('%Y-%m-%d %H:%M:00', DATETIME('now', '-63 day'))) AS _expr27,
   DATE('now', 'start of month') AS _expr28,
   DATETIME(STRFTIME('%Y-%m-%d %H:%M:%S', DATETIME('now', '-312 hour')), '48 year') AS _expr29,
@@ -46,7 +46,7 @@ SELECT
   DATE('now', 'start of day', 'start of year') AS _expr38,
   DATETIME(DATE('2025-07-04 12:58:45', 'start of month'), '22 minute') AS _expr39,
   DATE('now', 'start of year') AS _expr40,
-  DATE(DATETIME(order_date, '82 second', '415 second', '-160 second'), 'start of year') AS _expr41,
+  DATE(DATETIME(o_orderdate, '82 second', '415 second', '-160 second'), 'start of year') AS _expr41,
   DATETIME('now', '192 month') AS _expr42,
   DATETIME(
     STRFTIME(
@@ -104,63 +104,91 @@ SELECT
   CAST(STRFTIME('%S', '2025-07-04 12:58:45') AS INTEGER) AS _expr75,
   CAST(STRFTIME('%S', DATETIME('1999-03-14')) AS INTEGER) AS _expr76,
   CAST(STRFTIME('%Y', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%Y', DATETIME('2018-02-14 12:41:06')) AS INTEGER) AS _expr77,
-  CAST(STRFTIME('%Y', '2022-11-24') AS INTEGER) - CAST(STRFTIME('%Y', order_date) AS INTEGER) AS _expr78,
+  CAST(STRFTIME('%Y', '2022-11-24') AS INTEGER) - CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS _expr78,
   (
     CAST(STRFTIME('%Y', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%Y', '2005-06-30') AS INTEGER)
   ) * 12 + CAST(STRFTIME('%m', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%m', '2005-06-30') AS INTEGER) AS _expr79,
   (
     CAST(STRFTIME('%Y', '2022-11-24') AS INTEGER) - CAST(STRFTIME('%Y', '2006-05-01 12:00:00') AS INTEGER)
   ) * 12 + CAST(STRFTIME('%m', '2022-11-24') AS INTEGER) - CAST(STRFTIME('%m', '2006-05-01 12:00:00') AS INTEGER) AS _expr80,
-  CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))) AS INTEGER) AS _expr81,
-  CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(DATETIME('1999-03-14'), 'start of day'))) AS INTEGER) AS _expr82,
-  CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER) AS _expr83,
-  CAST((JULIANDAY(DATE(order_date, 'start of day')) - JULIANDAY(DATE('2005-06-30', 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', order_date) AS INTEGER) - CAST(STRFTIME('%H', '2005-06-30') AS INTEGER) AS _expr84,
+  CAST((
+    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))
+  ) AS INTEGER) AS _expr81,
+  CAST((
+    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(DATETIME('1999-03-14'), 'start of day'))
+  ) AS INTEGER) AS _expr82,
+  CAST((
+    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))
+  ) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER) AS _expr83,
+  CAST((
+    JULIANDAY(DATE(o_orderdate, 'start of day')) - JULIANDAY(DATE('2005-06-30', 'start of day'))
+  ) AS INTEGER) * 24 + CAST(STRFTIME('%H', o_orderdate) AS INTEGER) - CAST(STRFTIME('%H', '2005-06-30') AS INTEGER) AS _expr84,
   (
-    CAST((JULIANDAY(DATE('2006-05-01 12:00:00', 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2006-05-01 12:00:00') AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER)
+    CAST((
+      JULIANDAY(DATE('2006-05-01 12:00:00', 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))
+    ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2006-05-01 12:00:00') AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER)
   ) * 60 + CAST(STRFTIME('%M', '2006-05-01 12:00:00') AS INTEGER) - CAST(STRFTIME('%M', DATETIME('now')) AS INTEGER) AS _expr85,
   (
-    CAST((JULIANDAY(DATE('2021-01-01 07:35:00', 'start of day')) - JULIANDAY(DATE(order_date, 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%H', order_date) AS INTEGER)
-  ) * 60 + CAST(STRFTIME('%M', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%M', order_date) AS INTEGER) AS _expr86,
+    CAST((
+      JULIANDAY(DATE('2021-01-01 07:35:00', 'start of day')) - JULIANDAY(DATE(o_orderdate, 'start of day'))
+    ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%H', o_orderdate) AS INTEGER)
+  ) * 60 + CAST(STRFTIME('%M', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%M', o_orderdate) AS INTEGER) AS _expr86,
   (
     (
-      CAST((JULIANDAY(DATE('2021-01-01 07:35:00', 'start of day')) - JULIANDAY(DATE('2022-11-24', 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%H', '2022-11-24') AS INTEGER)
+      CAST((
+        JULIANDAY(DATE('2021-01-01 07:35:00', 'start of day')) - JULIANDAY(DATE('2022-11-24', 'start of day'))
+      ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%H', '2022-11-24') AS INTEGER)
     ) * 60 + CAST(STRFTIME('%M', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%M', '2022-11-24') AS INTEGER)
   ) * 60 + CAST(STRFTIME('%S', '2021-01-01 07:35:00') AS INTEGER) - CAST(STRFTIME('%S', '2022-11-24') AS INTEGER) AS _expr87,
   (
     (
-      CAST((JULIANDAY(DATE(DATETIME('2018-02-14 12:41:06'), 'start of day')) - JULIANDAY(DATE('2005-06-30', 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%H', '2005-06-30') AS INTEGER)
+      CAST((
+        JULIANDAY(DATE(DATETIME('2018-02-14 12:41:06'), 'start of day')) - JULIANDAY(DATE('2005-06-30', 'start of day'))
+      ) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%H', '2005-06-30') AS INTEGER)
     ) * 60 + CAST(STRFTIME('%M', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%M', '2005-06-30') AS INTEGER)
   ) * 60 + CAST(STRFTIME('%S', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%S', '2005-06-30') AS INTEGER) AS _expr88,
-  CAST(STRFTIME('%Y', '2006-05-01 12:00:00') AS INTEGER) - CAST(STRFTIME('%Y', order_date) AS INTEGER) AS _expr89,
-  CAST(STRFTIME('%Y', order_date) AS INTEGER) - CAST(STRFTIME('%Y', DATETIME('2018-02-14 12:41:06')) AS INTEGER) AS _expr90,
+  CAST(STRFTIME('%Y', '2006-05-01 12:00:00') AS INTEGER) - CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS _expr89,
+  CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) - CAST(STRFTIME('%Y', DATETIME('2018-02-14 12:41:06')) AS INTEGER) AS _expr90,
   (
-    CAST(STRFTIME('%Y', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%Y', order_date) AS INTEGER)
-  ) * 12 + CAST(STRFTIME('%m', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%m', order_date) AS INTEGER) AS _expr91,
+    CAST(STRFTIME('%Y', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%Y', o_orderdate) AS INTEGER)
+  ) * 12 + CAST(STRFTIME('%m', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS _expr91,
   (
     CAST(STRFTIME('%Y', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%Y', '2019-07-04 11:30:00') AS INTEGER)
   ) * 12 + CAST(STRFTIME('%m', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%m', '2019-07-04 11:30:00') AS INTEGER) AS _expr92,
-  CAST((JULIANDAY(DATE(order_date, 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))) AS INTEGER) AS _expr93,
-  CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE('2019-07-04 11:30:00', 'start of day'))) AS INTEGER) AS _expr94,
-  CAST((JULIANDAY(DATE(DATETIME('1999-03-14'), 'start of day')) - JULIANDAY(DATE('2022-11-24', 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%H', '2022-11-24') AS INTEGER) AS _expr95,
-  CAST((JULIANDAY(DATE('2020-12-31 00:31:06', 'start of day')) - JULIANDAY(DATE(DATETIME('2018-02-14 12:41:06'), 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2020-12-31 00:31:06') AS INTEGER) - CAST(STRFTIME('%H', DATETIME('2018-02-14 12:41:06')) AS INTEGER) AS _expr96,
+  CAST((
+    JULIANDAY(DATE(o_orderdate, 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))
+  ) AS INTEGER) AS _expr93,
+  CAST((
+    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE('2019-07-04 11:30:00', 'start of day'))
+  ) AS INTEGER) AS _expr94,
+  CAST((
+    JULIANDAY(DATE(DATETIME('1999-03-14'), 'start of day')) - JULIANDAY(DATE('2022-11-24', 'start of day'))
+  ) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%H', '2022-11-24') AS INTEGER) AS _expr95,
+  CAST((
+    JULIANDAY(DATE('2020-12-31 00:31:06', 'start of day')) - JULIANDAY(DATE(DATETIME('2018-02-14 12:41:06'), 'start of day'))
+  ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2020-12-31 00:31:06') AS INTEGER) - CAST(STRFTIME('%H', DATETIME('2018-02-14 12:41:06')) AS INTEGER) AS _expr96,
   (
-    CAST((JULIANDAY(DATE('2020-12-31 00:31:06', 'start of day')) - JULIANDAY(DATE('2005-06-30', 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2020-12-31 00:31:06') AS INTEGER) - CAST(STRFTIME('%H', '2005-06-30') AS INTEGER)
+    CAST((
+      JULIANDAY(DATE('2020-12-31 00:31:06', 'start of day')) - JULIANDAY(DATE('2005-06-30', 'start of day'))
+    ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2020-12-31 00:31:06') AS INTEGER) - CAST(STRFTIME('%H', '2005-06-30') AS INTEGER)
   ) * 60 + CAST(STRFTIME('%M', '2020-12-31 00:31:06') AS INTEGER) - CAST(STRFTIME('%M', '2005-06-30') AS INTEGER) AS _expr97,
   (
-    CAST((JULIANDAY(DATE(DATETIME('2018-02-14 12:41:06'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER)
+    CAST((
+      JULIANDAY(DATE(DATETIME('2018-02-14 12:41:06'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))
+    ) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER)
   ) * 60 + CAST(STRFTIME('%M', DATETIME('2018-02-14 12:41:06')) AS INTEGER) - CAST(STRFTIME('%M', DATETIME('now')) AS INTEGER) AS _expr98,
   (
     (
-      CAST((JULIANDAY(DATE(DATETIME('1999-03-14'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER)
+      CAST((
+        JULIANDAY(DATE(DATETIME('1999-03-14'), 'start of day')) - JULIANDAY(DATE(DATETIME('now'), 'start of day'))
+      ) AS INTEGER) * 24 + CAST(STRFTIME('%H', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%H', DATETIME('now')) AS INTEGER)
     ) * 60 + CAST(STRFTIME('%M', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%M', DATETIME('now')) AS INTEGER)
   ) * 60 + CAST(STRFTIME('%S', DATETIME('1999-03-14')) AS INTEGER) - CAST(STRFTIME('%S', DATETIME('now')) AS INTEGER) AS _expr99,
   (
     (
-      CAST((JULIANDAY(DATE('2019-07-04 11:30:00', 'start of day')) - JULIANDAY(DATE('2022-11-24', 'start of day'))) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%H', '2022-11-24') AS INTEGER)
+      CAST((
+        JULIANDAY(DATE('2019-07-04 11:30:00', 'start of day')) - JULIANDAY(DATE('2022-11-24', 'start of day'))
+      ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%H', '2022-11-24') AS INTEGER)
     ) * 60 + CAST(STRFTIME('%M', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%M', '2022-11-24') AS INTEGER)
   ) * 60 + CAST(STRFTIME('%S', '2019-07-04 11:30:00') AS INTEGER) - CAST(STRFTIME('%S', '2022-11-24') AS INTEGER) AS _expr100
-FROM (
-  SELECT
-    o_orderdate AS order_date
-  FROM tpch.ORDERS
-)
+FROM tpch.orders

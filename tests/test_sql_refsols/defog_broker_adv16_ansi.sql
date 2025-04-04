@@ -1,75 +1,29 @@
-SELECT
-  symbol,
-  SPM
-FROM (
+WITH _t1 AS (
   SELECT
-    symbol AS ordering_2,
-    SPM,
-    symbol
-  FROM (
-    SELECT
-      (
-        100.0 * (
-          COALESCE(agg_0, 0) - COALESCE(agg_1, 0)
-        )
-      ) / COALESCE(agg_0, 0) AS SPM,
-      symbol
-    FROM (
-      SELECT
-        agg_0,
-        agg_1,
-        symbol
-      FROM (
-        SELECT
-          sbTickerId AS _id,
-          sbTickerSymbol AS symbol
-        FROM main.sbTicker
-      )
-      LEFT JOIN (
-        SELECT
-          SUM(amount) AS agg_0,
-          SUM(expr_3) AS agg_1,
-          ticker_id
-        FROM (
-          SELECT
-            tax + commission AS expr_3,
-            amount,
-            ticker_id
-          FROM (
-            SELECT
-              amount,
-              commission,
-              tax,
-              ticker_id
-            FROM (
-              SELECT
-                sbTxAmount AS amount,
-                sbTxCommission AS commission,
-                sbTxDateTime AS date_time,
-                sbTxTax AS tax,
-                sbTxTickerId AS ticker_id,
-                sbTxType AS transaction_type
-              FROM main.sbTransaction
-            )
-            WHERE
-              (
-                transaction_type = 'sell'
-              )
-              AND (
-                date_time >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')
-              )
-          )
-        )
-        GROUP BY
-          ticker_id
-      )
-        ON _id = ticker_id
-    )
-  )
+    SUM(sbtxamount) AS agg_0,
+    SUM(sbtxtax + sbtxcommission) AS agg_1,
+    sbtxtickerid AS ticker_id
+  FROM main.sbtransaction
   WHERE
-    NOT (
-      SPM IS NULL
-    )
+    sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH') AND sbtxtype = 'sell'
+  GROUP BY
+    sbtxtickerid
 )
+SELECT
+  sbticker.sbtickersymbol AS symbol,
+  (
+    100.0 * (
+      COALESCE(_t1.agg_0, 0) - COALESCE(_t1.agg_1, 0)
+    )
+  ) / COALESCE(_t1.agg_0, 0) AS SPM
+FROM main.sbticker AS sbticker
+LEFT JOIN _t1 AS _t1
+  ON _t1.ticker_id = sbticker.sbtickerid
+WHERE
+  NOT (
+    100.0 * (
+      COALESCE(_t1.agg_0, 0) - COALESCE(_t1.agg_1, 0)
+    )
+  ) / COALESCE(_t1.agg_0, 0) IS NULL
 ORDER BY
-  ordering_2
+  sbticker.sbtickersymbol

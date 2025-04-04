@@ -1,3 +1,3 @@
 SELECT DISTINCT
-  b
+  b AS b
 FROM table

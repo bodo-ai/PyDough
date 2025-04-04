@@ -1,49 +1,23 @@
-SELECT
-  name,
-  success_rate
-FROM (
+WITH _t1 AS (
   SELECT
-    CAST((
-      100.0 * COALESCE(agg_1, 0)
-    ) AS REAL) / COALESCE(agg_0, 0) AS ordering_2,
-    CAST((
-      100.0 * COALESCE(agg_1, 0)
-    ) AS REAL) / COALESCE(agg_0, 0) AS success_rate,
-    name
-  FROM (
-    SELECT
-      agg_0,
-      agg_1,
-      name
-    FROM (
-      SELECT
-        sbCustId AS _id,
-        sbCustName AS name
-      FROM main.sbCustomer
-    )
-    LEFT JOIN (
-      SELECT
-        COUNT() AS agg_0,
-        SUM(expr_3) AS agg_1,
-        customer_id
-      FROM (
-        SELECT
-          status = 'success' AS expr_3,
-          customer_id
-        FROM (
-          SELECT
-            sbTxCustId AS customer_id,
-            sbTxStatus AS status
-          FROM main.sbTransaction
-        )
-      )
-      GROUP BY
-        customer_id
-    )
-      ON _id = customer_id
-    WHERE
-      COALESCE(agg_0, 0) >= 5
-  )
+    COUNT() AS agg_0,
+    SUM(sbtxstatus = 'success') AS agg_1,
+    sbtxcustid AS customer_id
+  FROM main.sbtransaction
+  GROUP BY
+    sbtxcustid
 )
+SELECT
+  sbcustomer.sbcustname AS name,
+  CAST((
+    100.0 * COALESCE(_t1.agg_1, 0)
+  ) AS REAL) / COALESCE(_t1.agg_0, 0) AS success_rate
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _t1 AS _t1
+  ON _t1.customer_id = sbcustomer.sbcustid
+WHERE
+  NOT _t1.agg_0 IS NULL AND _t1.agg_0 >= 5
 ORDER BY
-  ordering_2
+  CAST((
+    100.0 * COALESCE(_t1.agg_1, 0)
+  ) AS REAL) / COALESCE(_t1.agg_0, 0)

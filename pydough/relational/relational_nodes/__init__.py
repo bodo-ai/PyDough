@@ -10,6 +10,7 @@ __all__ = [
     "Filter",
     "Join",
     "JoinType",
+    "JoinTypeRelationalVisitor",
     "Limit",
     "Project",
     "RelationalExpressionDispatcher",
@@ -24,6 +25,7 @@ from .column_pruner import ColumnPruner
 from .empty_singleton import EmptySingleton
 from .filter import Filter
 from .join import Join, JoinType
+from .join_type_relational_visitor import JoinTypeRelationalVisitor
 from .limit import Limit
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher

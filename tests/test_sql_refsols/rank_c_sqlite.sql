@@ -1,8 +1,4 @@
 SELECT
-  order_date,
-  DENSE_RANK() OVER (ORDER BY order_date) AS rank
-FROM (
-  SELECT
-    o_orderdate AS order_date
-  FROM tpch.ORDERS
-)
+  o_orderdate AS order_date,
+  DENSE_RANK() OVER (ORDER BY o_orderdate) AS rank
+FROM tpch.orders

@@ -1,26 +1,27 @@
-SELECT
-  _id
-FROM (
+WITH _t0 AS (
   SELECT
-    sbTickerId AS _id
-  FROM main.sbTicker
+    sbdpdate AS date,
+    sbdptickerid AS ticker_id
+  FROM main.sbdailyprice
+  WHERE
+    sbdpdate >= '2023-04-01'
+), _t1 AS (
+  SELECT
+    ticker_id AS ticker_id
+  FROM _t0
+), _t0_2 AS (
+  SELECT
+    sbtickerid AS _id
+  FROM main.sbticker
 )
+SELECT
+  _t0._id AS _id
+FROM _t0_2 AS _t0
 WHERE
   EXISTS(
     SELECT
-      1
-    FROM (
-      SELECT
-        ticker_id
-      FROM (
-        SELECT
-          sbDpDate AS date,
-          sbDpTickerId AS ticker_id
-        FROM main.sbDailyPrice
-      )
-      WHERE
-        date >= '2023-04-01'
-    )
+      1 AS "1"
+    FROM _t1
     WHERE
       _id = ticker_id
   )
