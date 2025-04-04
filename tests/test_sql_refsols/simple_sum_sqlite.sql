@@ -1,3 +1,3 @@
 SELECT
-  SUM("table"."a") AS "a"
-FROM "table" AS "table"
+  SUM(a) AS a
+FROM table

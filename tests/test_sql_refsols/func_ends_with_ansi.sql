@@ -1,7 +1,7 @@
 SELECT
-  "table"."b" AS "b"
-FROM "table" AS "table"
+  b AS b
+FROM table
 WHERE
-  "table"."b" LIKE '%a' AND "table"."b" LIKE (
-    '%' || "table"."a"
+  b LIKE '%a' AND b LIKE (
+    '%' || a
   )

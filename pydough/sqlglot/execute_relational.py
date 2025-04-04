@@ -10,8 +10,9 @@ import pandas as pd
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
-from sqlglot.expressions import Alias, Column
+from sqlglot.expressions import Alias, Column, Select, Table
 from sqlglot.expressions import Expression as SQLGlotExpression
+from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
@@ -60,11 +61,6 @@ def convert_relation_to_sql(
     ).relational_to_sqlglot(relational)
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(dialect)
 
-    # Convert the SQLGlot AST to a SQL string and back to an AST hoping that
-    # SQLGlot will "clean" up the AST to make it more compatible with the
-    # optimizer.
-    glot_expr = parse_one(glot_expr.sql(sqlglot_dialect), dialect=sqlglot_dialect)
-
     # Apply the SQLGlot optimizer to the AST.
     glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
 
@@ -86,6 +82,11 @@ def apply_sqlglot_optimizer(
     Returns:
         The optimized SQLGlot expression.
     """
+    # Convert the SQLGlot AST to a SQL string and back to an AST hoping that
+    # SQLGlot will "clean" up the AST to make it more compatible with the
+    # optimizer.
+    glot_expr = parse_one(glot_expr.sql(dialect), dialect=dialect)
+
     # Apply each rule explicitly with appropriate kwargs
     # TODO: (gh #313) - Two rules that sqlglot optimizer provides are skipped
     # (unnest_subqueries and canonicalize). Additionally, the rule
@@ -132,9 +133,6 @@ def apply_sqlglot_optimizer(
     # Remove unused CTEs from an expression.
     glot_expr = eliminate_ctes(glot_expr)
 
-    # NEW: Makes sure all identifiers that need to be quoted are quoted.
-    # glot_expr = quote_identifiers(glot_expr, dialect=dialect)
-
     # Infers the types of an expression, annotating its AST accordingly.
     # depends on the schema.
     glot_expr = annotate_types(glot_expr, dialect=dialect)
@@ -152,6 +150,10 @@ def apply_sqlglot_optimizer(
     # The optimizer changes the cases of column names, so we need to
     # match the alias in the relational tree.
     fix_column_case(glot_expr, relational.ordered_columns)
+
+    # Remove table aliases if there is only one Table source in the FROM clause.
+    remove_table_aliases_conditional(glot_expr)
+
     return glot_expr
 
 
@@ -176,6 +178,57 @@ def fix_column_case(
                 identifier.set("this", col_name)
             elif isinstance(expr, Column):
                 expr.this.this.set("this", col_name)
+
+
+def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
+    """
+    Visits the AST and removes table aliases if there is only one Table
+    source in the FROM clause. Specifically, it removes the alias if the
+    table name and alias are the same. It also updates the column names to
+    be unqualified if the above condition is met.
+
+    Args:
+        expr: The SQLGlot expression to visit.
+
+    Returns:
+        None (The AST is modified in place.)
+    """
+    if isinstance(expr, Select) and (
+        expr.args.get("joins") is None or len(expr.args.get("joins")) == 0
+    ):
+        from_clause = expr.args.get("from")
+        if from_clause is not None:
+            if not isinstance(from_clause.this, Table):
+                return
+            # Table(this=Identifier(this=..),..)
+            table = from_clause.this
+            actual_table_name = table.name
+            # Table(this=..,alias=TableAlias(this=Identifier(this=..)))
+            alias = table.alias
+            if str(actual_table_name) == str(alias):
+                # Remove cases like `..FROM t1 as t1..`
+                table.args.pop("alias")
+
+                # "Scope" represents the current context of a Select statement.
+                # For example, if we have a SELECT statement with a FROM clause
+                # that contains a subquery, there are two scopes:
+                # 1. The scope of the subquery.
+                # 2. The scope of the outer query.
+                # This loop is used to find all the columns in the scope of
+                # the outer query and replace the qualified column names with
+                # the unqualified column names.
+                for column in find_all_in_scope(expr, Column):
+                    for part in column.parts[:-1]:
+                        part.pop()
+
+    # Recursively visit the AST.
+    for arg in expr.args.values():
+        if isinstance(arg, SQLGlotExpression):
+            remove_table_aliases_conditional(arg)
+        if isinstance(arg, list):
+            for item in arg:
+                if isinstance(item, SQLGlotExpression):
+                    remove_table_aliases_conditional(item)
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:

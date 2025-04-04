@@ -1,47 +1,47 @@
-WITH "_t2" AS (
+WITH _t2 AS (
   SELECT
-    "sbtransaction"."sbtxamount" AS "amount",
-    "sbtransaction"."sbtxcustid" AS "customer_id",
-    "sbtransaction"."sbtxdatetime" AS "date_time"
-  FROM "main"."sbtransaction" AS "sbtransaction"
+    sbtxamount AS amount,
+    sbtxcustid AS customer_id,
+    sbtxdatetime AS date_time
+  FROM main.sbtransaction
   WHERE
-    "sbtransaction"."sbtxdatetime" < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
-    AND "sbtransaction"."sbtxdatetime" >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
-), "_t0" AS (
+    sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
+    AND sbtxdatetime >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
+), _t0 AS (
   SELECT
-    "_t2"."amount" AS "amount",
-    "_t2"."customer_id" AS "customer_id"
-  FROM "_t2" AS "_t2"
-), "_t3" AS (
+    amount AS amount,
+    customer_id AS customer_id
+  FROM _t2
+), _t3 AS (
   SELECT
-    "sbcustomer"."sbcustcountry" AS "country",
-    "sbcustomer"."sbcustid" AS "_id"
-  FROM "main"."sbcustomer" AS "sbcustomer"
+    sbcustcountry AS country,
+    sbcustid AS _id
+  FROM main.sbcustomer
   WHERE
-    LOWER("sbcustomer"."sbcustcountry") = 'usa'
-), "_t1" AS (
+    LOWER(sbcustcountry) = 'usa'
+), _t1 AS (
   SELECT
-    "_t3"."_id" AS "_id"
-  FROM "_t3" AS "_t3"
-), "_t1_2" AS (
+    _id AS _id
+  FROM _t3
+), _t1_2 AS (
   SELECT
-    "_t0"."amount" AS "amount"
-  FROM "_t0" AS "_t0"
+    amount AS amount
+  FROM _t0
   WHERE
     EXISTS(
       SELECT
         1 AS "1"
-      FROM "_t1" AS "_t1"
+      FROM _t1
       WHERE
-        "_t0"."customer_id" = "_t1"."_id"
+        customer_id = _id
     )
-), "_t0_2" AS (
+), _t0_2 AS (
   SELECT
-    COUNT() AS "agg_0",
-    SUM("_t1"."amount") AS "agg_1"
-  FROM "_t1_2" AS "_t1"
+    COUNT() AS agg_0,
+    SUM(_t1.amount) AS agg_1
+  FROM _t1_2 AS _t1
 )
 SELECT
-  CASE WHEN "_t0"."agg_0" > 0 THEN "_t0"."agg_0" ELSE NULL END AS "n_transactions",
-  COALESCE("_t0"."agg_1", 0) AS "total_amount"
-FROM "_t0_2" AS "_t0"
+  CASE WHEN _t0.agg_0 > 0 THEN _t0.agg_0 ELSE NULL END AS n_transactions,
+  COALESCE(_t0.agg_1, 0) AS total_amount
+FROM _t0_2 AS _t0

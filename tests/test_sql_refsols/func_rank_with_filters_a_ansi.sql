@@ -1,16 +1,16 @@
-WITH "_t0" AS (
+WITH _t0 AS (
   SELECT
-    RANK() OVER (ORDER BY "table"."a") AS "r",
-    "table"."a" AS "a",
-    "table"."b" AS "b"
-  FROM "table" AS "table"
+    RANK() OVER (ORDER BY a) AS r,
+    a AS a,
+    b AS b
+  FROM table
   WHERE
-    "table"."b" = 0
+    b = 0
 )
 SELECT
-  "_t0"."a" AS "a",
-  "_t0"."b" AS "b",
-  "_t0"."r" AS "r"
-FROM "_t0" AS "_t0"
+  a AS a,
+  b AS b,
+  r AS r
+FROM _t0
 WHERE
-  "_t0"."r" >= 3
+  r >= 3

@@ -1,5 +1,5 @@
 SELECT
-  "table"."a" AS "a"
-FROM "table" AS "table"
+  a AS a
+FROM table
 ORDER BY
-  ABS("a")
+  ABS(a)

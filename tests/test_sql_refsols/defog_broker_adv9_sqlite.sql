@@ -1,33 +1,33 @@
-WITH "_t0_2" AS (
+WITH _t0_2 AS (
   SELECT
-    COUNT() AS "agg_0",
+    COUNT() AS agg_0,
     SUM(
       (
         (
-          CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) + 6
+          CAST(STRFTIME('%w', sbtransaction.sbtxdatetime) AS INTEGER) + 6
         ) % 7
       ) IN (5, 6)
-    ) AS "agg_1",
+    ) AS agg_1,
     DATE(
-      "sbtransaction"."sbtxdatetime",
+      sbtransaction.sbtxdatetime,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME("sbtransaction"."sbtxdatetime")) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
-    ) AS "week"
-  FROM "main"."sbtransaction" AS "sbtransaction"
-  JOIN "main"."sbticker" AS "sbticker"
-    ON "sbticker"."sbtickerid" = "sbtransaction"."sbtxtickerid"
-    AND "sbticker"."sbtickertype" = 'stock'
+    ) AS week
+  FROM main.sbtransaction AS sbtransaction
+  JOIN main.sbticker AS sbticker
+    ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
+    AND sbticker.sbtickertype = 'stock'
   WHERE
-    "sbtransaction"."sbtxdatetime" < DATE(
+    sbtransaction.sbtxdatetime < DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
-    AND "sbtransaction"."sbtxdatetime" >= DATE(
+    AND sbtransaction.sbtxdatetime >= DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
@@ -37,15 +37,15 @@ WITH "_t0_2" AS (
     )
   GROUP BY
     DATE(
-      "sbtransaction"."sbtxdatetime",
+      sbtransaction.sbtxdatetime,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME("sbtransaction"."sbtxdatetime")) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
 )
 SELECT
-  "_t0"."week" AS "week",
-  COALESCE("_t0"."agg_0", 0) AS "num_transactions",
-  COALESCE("_t0"."agg_1", 0) AS "weekend_transactions"
-FROM "_t0_2" AS "_t0"
+  _t0.week AS week,
+  COALESCE(_t0.agg_0, 0) AS num_transactions,
+  COALESCE(_t0.agg_1, 0) AS weekend_transactions
+FROM _t0_2 AS _t0

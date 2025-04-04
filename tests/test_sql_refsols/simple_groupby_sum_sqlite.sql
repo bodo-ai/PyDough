@@ -1,6 +1,6 @@
 SELECT
-  SUM("table"."a") AS "a",
-  "table"."b" AS "b"
-FROM "table" AS "table"
+  SUM(a) AS a,
+  b AS b
+FROM table
 GROUP BY
-  "table"."b"
+  b
