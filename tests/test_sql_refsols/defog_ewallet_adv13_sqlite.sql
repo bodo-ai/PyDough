@@ -2,10 +2,9 @@ SELECT
   COUNT() AS TUC
 FROM (
   SELECT
-    device_id
+    (NULL)
   FROM (
     SELECT
-      device_id,
       session_start_ts
     FROM main.user_sessions
   )
