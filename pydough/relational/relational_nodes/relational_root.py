@@ -82,7 +82,7 @@ class RelationalRoot(SingleRelational):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Root node should have exactly one input"
         assert columns == self.columns, "Root columns should not be modified"

@@ -3,7 +3,7 @@ Base abstract class for relational nodes that have a single input.
 This is done to reduce code duplication.
 """
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping
 
 from pydough.relational.relational_expressions import RelationalExpression
 
@@ -24,7 +24,7 @@ class SingleRelational(RelationalNode):
         self._input: RelationalNode = input
 
     @property
-    def inputs(self) -> MutableSequence[RelationalNode]:
+    def inputs(self) -> list[RelationalNode]:
         return [self._input]
 
     @property

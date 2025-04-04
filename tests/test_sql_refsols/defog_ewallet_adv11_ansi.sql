@@ -1,4 +1,4 @@
-WITH "_t1" AS (
+WITH "_t0_2" AS (
   SELECT
     SUM(
       DATEDIFF("user_sessions"."session_end_ts", "user_sessions"."session_start_ts", SECOND)
@@ -13,9 +13,9 @@ WITH "_t1" AS (
 )
 SELECT
   "users"."uid" AS "uid",
-  COALESCE("_t1"."agg_0", 0) AS "total_duration"
+  COALESCE("_t0"."agg_0", 0) AS "total_duration"
 FROM "main"."users" AS "users"
-JOIN "_t1" AS "_t1"
-  ON "_t1"."user_id" = "users"."uid"
+JOIN "_t0_2" AS "_t0"
+  ON "_t0"."user_id" = "users"."uid"
 ORDER BY
   "total_duration" DESC

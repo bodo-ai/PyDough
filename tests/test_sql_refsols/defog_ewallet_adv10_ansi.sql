@@ -1,4 +1,4 @@
-WITH "_t1_2" AS (
+WITH "_t0_2" AS (
   SELECT
     COUNT() AS "agg_0",
     "wallet_transactions_daily"."sender_id" AS "sender_id"
@@ -10,7 +10,7 @@ WITH "_t1_2" AS (
 )
 SELECT
   "users"."uid" AS "user_id",
-  COALESCE("_t1"."agg_0", 0) AS "total_transactions"
+  COALESCE("_t0"."agg_0", 0) AS "total_transactions"
 FROM "main"."users" AS "users"
-JOIN "_t1_2" AS "_t1"
-  ON "_t1"."sender_id" = "users"."uid"
+JOIN "_t0_2" AS "_t0"
+  ON "_t0"."sender_id" = "users"."uid"

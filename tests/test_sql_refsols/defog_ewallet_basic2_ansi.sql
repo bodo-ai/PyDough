@@ -4,13 +4,14 @@ WITH "_t1" AS (
   FROM "main"."coupons" AS "coupons"
 ), "_t0" AS (
   SELECT
-    "merchants"."mid" AS "mid",
-    "merchants"."name" AS "name"
+    "merchants"."mid" AS "merchant_id",
+    "merchants"."name" AS "merchant_name",
+    "merchants"."mid" AS "mid"
   FROM "main"."merchants" AS "merchants"
 )
 SELECT
-  "_t0"."mid" AS "merchant_id",
-  "_t0"."name" AS "merchant_name"
+  "_t0"."merchant_id" AS "merchant_id",
+  "_t0"."merchant_name" AS "merchant_name"
 FROM "_t0" AS "_t0"
 WHERE
   NOT EXISTS(

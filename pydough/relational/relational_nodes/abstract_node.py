@@ -6,7 +6,7 @@ ordering and other properties of the relational expression.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping
 from typing import Any
 
 from pydough.relational.relational_expressions import RelationalExpression
@@ -25,12 +25,12 @@ class RelationalNode(ABC):
 
     @property
     @abstractmethod
-    def inputs(self) -> MutableSequence["RelationalNode"]:
+    def inputs(self) -> list["RelationalNode"]:
         """
         Returns any inputs to the current relational expression.
 
         Returns:
-            MutableSequence["Relational"]: The list of inputs, each of which must
+            list["RelationalNode"]: The list of inputs, each of which must
             be a relational expression.
         """
 
@@ -149,7 +149,7 @@ class RelationalNode(ABC):
     def node_copy(
         self,
         columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence["RelationalNode"],
+        inputs: list["RelationalNode"],
     ) -> "RelationalNode":
         """
         Copy the given relational node with the provided columns and/or
@@ -160,7 +160,7 @@ class RelationalNode(ABC):
         Args:
             columns (MutableMapping[str, RelationalExpression]): The columns
                 to copy.
-            inputs (MutableSequence[Relational]): The inputs to copy.
+            inputs (list[RelationalNode]): The inputs to copy.
 
         Returns:
             Relational: The copied relational node.
@@ -169,7 +169,7 @@ class RelationalNode(ABC):
     def copy(
         self,
         columns: MutableMapping[str, RelationalExpression] | None = None,
-        inputs: MutableSequence["RelationalNode"] | None = None,
+        inputs: list["RelationalNode"] | None = None,
     ) -> "RelationalNode":
         """
         Copy the given relational node with the provided columns and/or
@@ -180,7 +180,7 @@ class RelationalNode(ABC):
         Args:
             columns (MutableMapping[str, RelationalExpression] | None): The
                 columns to copy.
-            inputs (MutableSequence[Relational] | None): The inputs to copy.
+            inputs (list[RelationalNode] | None): The inputs to copy.
 
         Returns:
             Relational: The copied relational node.

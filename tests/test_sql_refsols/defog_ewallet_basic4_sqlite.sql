@@ -11,11 +11,12 @@ WITH "_t0" AS (
   FROM "_t0" AS "_t0"
 ), "_t0_2" AS (
   SELECT
-    "users"."uid" AS "uid"
+    "users"."uid" AS "uid",
+    "users"."uid" AS "user_id"
   FROM "main"."users" AS "users"
 )
 SELECT
-  "_t0"."uid" AS "user_id"
+  "_t0"."user_id" AS "user_id"
 FROM "_t0_2" AS "_t0"
 WHERE
   EXISTS(
