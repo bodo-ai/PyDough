@@ -4,7 +4,7 @@ This is the relational representation of top-n selection and typically depends
 on explicit ordering of the input relation.
 """
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
@@ -28,7 +28,7 @@ class Limit(SingleRelational):
         self,
         input: RelationalNode,
         limit: RelationalExpression,
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
         orderings: MutableSequence[ExpressionSortInfo] | None = None,
     ) -> None:
         super().__init__(input, columns)
@@ -76,7 +76,7 @@ class Limit(SingleRelational):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
         inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Limit node should have exactly one input"

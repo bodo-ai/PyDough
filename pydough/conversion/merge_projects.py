@@ -5,7 +5,6 @@ Logic used to merge adjacent projections in relational trees when convenient.
 __all__ = ["merge_projects"]
 
 from collections import defaultdict
-from collections.abc import MutableMapping
 
 from pydough.relational import (
     ColumnReference,
@@ -27,8 +26,8 @@ from pydough.relational.rel_util import (
 
 
 def merging_doesnt_create_convolution(
-    columns_a: MutableMapping[str, RelationalExpression],
-    columns_b: MutableMapping[str, RelationalExpression],
+    columns_a: dict[str, RelationalExpression],
+    columns_b: dict[str, RelationalExpression],
 ) -> bool:
     """
     Confirms whether merging two projections results in any complex expressions

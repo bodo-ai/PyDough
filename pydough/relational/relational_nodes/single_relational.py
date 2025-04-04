@@ -3,8 +3,6 @@ Base abstract class for relational nodes that have a single input.
 This is done to reduce code duplication.
 """
 
-from collections.abc import MutableMapping
-
 from pydough.relational.relational_expressions import RelationalExpression
 
 from .abstract_node import RelationalNode
@@ -18,7 +16,7 @@ class SingleRelational(RelationalNode):
     def __init__(
         self,
         input: RelationalNode,
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
     ) -> None:
         super().__init__(columns)
         self._input: RelationalNode = input

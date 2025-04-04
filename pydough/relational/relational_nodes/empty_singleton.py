@@ -3,8 +3,6 @@ This file contains the relational implementation for an dummy relational node
 with 1 row and 0 columns.
 """
 
-from collections.abc import MutableMapping
-
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
@@ -37,7 +35,7 @@ class EmptySingleton(RelationalNode):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
         inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(columns) == 0, "EmptySingleton has no columns"

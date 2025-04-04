@@ -20,8 +20,8 @@ class RelationalNode(ABC):
     structure of all relational nodes in the PyDough system.
     """
 
-    def __init__(self, columns: MutableMapping[str, RelationalExpression]) -> None:
-        self._columns: MutableMapping[str, RelationalExpression] = columns
+    def __init__(self, columns: dict[str, RelationalExpression]) -> None:
+        self._columns: dict[str, RelationalExpression] = columns
 
     @property
     @abstractmethod
@@ -49,12 +49,12 @@ class RelationalNode(ABC):
         return [None for i in range(len(self.inputs))]
 
     @property
-    def columns(self) -> MutableMapping[str, RelationalExpression]:
+    def columns(self) -> dict[str, RelationalExpression]:
         """
         Returns the columns of the relational expression.
 
         Returns:
-            MutableMapping[str, RelationalExpression]: The columns of the relational expression.
+            dict[str, RelationalExpression]: The columns of the relational expression.
                 This does not have a defined ordering.
         """
         return self._columns
@@ -148,7 +148,7 @@ class RelationalNode(ABC):
     @abstractmethod
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
         inputs: list["RelationalNode"],
     ) -> "RelationalNode":
         """
@@ -158,7 +158,7 @@ class RelationalNode(ABC):
         this directly.
 
         Args:
-            columns (MutableMapping[str, RelationalExpression]): The columns
+            columns (dict[str, RelationalExpression]): The columns
                 to copy.
             inputs (list[RelationalNode]): The inputs to copy.
 
@@ -168,7 +168,7 @@ class RelationalNode(ABC):
 
     def copy(
         self,
-        columns: MutableMapping[str, RelationalExpression] | None = None,
+        columns: dict[str, RelationalExpression] | None = None,
         inputs: list["RelationalNode"] | None = None,
     ) -> "RelationalNode":
         """
@@ -178,7 +178,7 @@ class RelationalNode(ABC):
         will grab those fields from the current node.
 
         Args:
-            columns (MutableMapping[str, RelationalExpression] | None): The
+            columns (dict[str, RelationalExpression] | None): The
                 columns to copy.
             inputs (list[RelationalNode] | None): The inputs to copy.
 
