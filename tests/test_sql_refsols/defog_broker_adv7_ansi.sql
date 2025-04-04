@@ -54,61 +54,56 @@ FROM (
         month
       FROM (
         SELECT
-          amount,
-          date_time,
-          join_month,
-          join_year,
-          month
+          CONCAT_WS(
+            '-',
+            EXTRACT(YEAR FROM join_date),
+            CASE
+              WHEN LENGTH(EXTRACT(MONTH FROM join_date)) >= 2
+              THEN SUBSTRING(EXTRACT(MONTH FROM join_date), 1, 2)
+              ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM join_date)), (
+                2 * -1
+              ))
+            END
+          ) AS month,
+          EXTRACT(MONTH FROM join_date) AS join_month,
+          EXTRACT(YEAR FROM join_date) AS join_year,
+          _id
         FROM (
           SELECT
-            CONCAT_WS(
-              '-',
-              EXTRACT(YEAR FROM join_date),
-              CASE
-                WHEN LENGTH(EXTRACT(MONTH FROM join_date)) >= 2
-                THEN SUBSTRING(EXTRACT(MONTH FROM join_date), 1, 2)
-                ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM join_date)), (
-                  2 * -1
-                ))
-              END
-            ) AS month,
-            EXTRACT(MONTH FROM join_date) AS join_month,
-            EXTRACT(YEAR FROM join_date) AS join_year,
-            _id
+            _id,
+            join_date
           FROM (
             SELECT
-              _id,
-              join_date
-            FROM (
-              SELECT
-                sbCustId AS _id,
-                sbCustJoinDate AS join_date
-              FROM main.sbCustomer
-            )
-            WHERE
-              (
-                join_date < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
-              )
-              AND (
-                join_date >= DATE_TRUNC('MONTH', DATE_ADD(CURRENT_TIMESTAMP(), -6, 'MONTH'))
-              )
+              sbCustId AS _id,
+              sbCustJoinDate AS join_date
+            FROM main.sbCustomer
           )
+          WHERE
+            (
+              join_date < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
+            )
+            AND (
+              join_date >= DATE_TRUNC('MONTH', DATE_ADD(CURRENT_TIMESTAMP(), -6, 'MONTH'))
+            )
         )
-        INNER JOIN (
-          SELECT
-            sbTxAmount AS amount,
-            sbTxCustId AS customer_id,
-            sbTxDateTime AS date_time
-          FROM main.sbTransaction
-        )
-          ON _id = customer_id
       )
-      WHERE
-        (
-          EXTRACT(MONTH FROM date_time) = join_month
+      INNER JOIN (
+        SELECT
+          sbTxAmount AS amount,
+          sbTxCustId AS customer_id,
+          sbTxDateTime AS date_time
+        FROM main.sbTransaction
+      )
+        ON (
+          _id = customer_id
         )
         AND (
-          EXTRACT(YEAR FROM date_time) = join_year
+          (
+            EXTRACT(MONTH FROM date_time) = join_month
+          )
+          AND (
+            EXTRACT(YEAR FROM date_time) = join_year
+          )
         )
     )
     GROUP BY

@@ -54,61 +54,56 @@ FROM (
         month
       FROM (
         SELECT
-          amount,
-          date_time,
-          join_month,
-          join_year,
-          month
+          CAST(STRFTIME('%Y', join_date) AS INTEGER) AS join_year,
+          CAST(STRFTIME('%m', join_date) AS INTEGER) AS join_month,
+          CONCAT_WS(
+            '-',
+            CAST(STRFTIME('%Y', join_date) AS INTEGER),
+            CASE
+              WHEN LENGTH(CAST(STRFTIME('%m', join_date) AS INTEGER)) >= 2
+              THEN SUBSTRING(CAST(STRFTIME('%m', join_date) AS INTEGER), 1, 2)
+              ELSE SUBSTRING('00' || CAST(STRFTIME('%m', join_date) AS INTEGER), (
+                2 * -1
+              ))
+            END
+          ) AS month,
+          _id
         FROM (
           SELECT
-            CAST(STRFTIME('%Y', join_date) AS INTEGER) AS join_year,
-            CAST(STRFTIME('%m', join_date) AS INTEGER) AS join_month,
-            CONCAT_WS(
-              '-',
-              CAST(STRFTIME('%Y', join_date) AS INTEGER),
-              CASE
-                WHEN LENGTH(CAST(STRFTIME('%m', join_date) AS INTEGER)) >= 2
-                THEN SUBSTRING(CAST(STRFTIME('%m', join_date) AS INTEGER), 1, 2)
-                ELSE SUBSTRING('00' || CAST(STRFTIME('%m', join_date) AS INTEGER), (
-                  2 * -1
-                ))
-              END
-            ) AS month,
-            _id
+            _id,
+            join_date
           FROM (
             SELECT
-              _id,
-              join_date
-            FROM (
-              SELECT
-                sbCustId AS _id,
-                sbCustJoinDate AS join_date
-              FROM main.sbCustomer
-            )
-            WHERE
-              (
-                join_date < DATE('now', 'start of month')
-              )
-              AND (
-                join_date >= DATE(DATETIME('now', '-6 month'), 'start of month')
-              )
+              sbCustId AS _id,
+              sbCustJoinDate AS join_date
+            FROM main.sbCustomer
           )
+          WHERE
+            (
+              join_date < DATE('now', 'start of month')
+            )
+            AND (
+              join_date >= DATE(DATETIME('now', '-6 month'), 'start of month')
+            )
         )
-        INNER JOIN (
-          SELECT
-            sbTxAmount AS amount,
-            sbTxCustId AS customer_id,
-            sbTxDateTime AS date_time
-          FROM main.sbTransaction
-        )
-          ON _id = customer_id
       )
-      WHERE
-        (
-          CAST(STRFTIME('%m', date_time) AS INTEGER) = join_month
+      INNER JOIN (
+        SELECT
+          sbTxAmount AS amount,
+          sbTxCustId AS customer_id,
+          sbTxDateTime AS date_time
+        FROM main.sbTransaction
+      )
+        ON (
+          _id = customer_id
         )
         AND (
-          CAST(STRFTIME('%Y', date_time) AS INTEGER) = join_year
+          (
+            CAST(STRFTIME('%m', date_time) AS INTEGER) = join_month
+          )
+          AND (
+            CAST(STRFTIME('%Y', date_time) AS INTEGER) = join_year
+          )
         )
     )
     GROUP BY

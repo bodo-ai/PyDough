@@ -34,36 +34,32 @@ FROM (
             _id
           FROM (
             SELECT
-              _id,
-              date_time,
-              join_month,
-              join_year
+              EXTRACT(MONTH FROM join_date) AS join_month,
+              EXTRACT(YEAR FROM join_date) AS join_year,
+              _id
             FROM (
               SELECT
-                EXTRACT(MONTH FROM join_date) AS join_month,
-                EXTRACT(YEAR FROM join_date) AS join_year,
-                _id
-              FROM (
-                SELECT
-                  sbCustId AS _id,
-                  sbCustJoinDate AS join_date
-                FROM main.sbCustomer
-              )
+                sbCustId AS _id,
+                sbCustJoinDate AS join_date
+              FROM main.sbCustomer
             )
-            INNER JOIN (
-              SELECT
-                sbTxCustId AS customer_id,
-                sbTxDateTime AS date_time
-              FROM main.sbTransaction
-            )
-              ON _id = customer_id
           )
-          WHERE
-            (
-              EXTRACT(MONTH FROM date_time) = join_month
+          INNER JOIN (
+            SELECT
+              sbTxCustId AS customer_id,
+              sbTxDateTime AS date_time
+            FROM main.sbTransaction
+          )
+            ON (
+              _id = customer_id
             )
             AND (
-              EXTRACT(YEAR FROM date_time) = join_year
+              (
+                EXTRACT(MONTH FROM date_time) = join_month
+              )
+              AND (
+                EXTRACT(YEAR FROM date_time) = join_year
+              )
             )
         )
         GROUP BY

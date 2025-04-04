@@ -34,36 +34,32 @@ FROM (
             _id
           FROM (
             SELECT
-              _id,
-              date_time,
-              join_month,
-              join_year
+              CAST(STRFTIME('%Y', join_date) AS INTEGER) AS join_year,
+              CAST(STRFTIME('%m', join_date) AS INTEGER) AS join_month,
+              _id
             FROM (
               SELECT
-                CAST(STRFTIME('%Y', join_date) AS INTEGER) AS join_year,
-                CAST(STRFTIME('%m', join_date) AS INTEGER) AS join_month,
-                _id
-              FROM (
-                SELECT
-                  sbCustId AS _id,
-                  sbCustJoinDate AS join_date
-                FROM main.sbCustomer
-              )
+                sbCustId AS _id,
+                sbCustJoinDate AS join_date
+              FROM main.sbCustomer
             )
-            INNER JOIN (
-              SELECT
-                sbTxCustId AS customer_id,
-                sbTxDateTime AS date_time
-              FROM main.sbTransaction
-            )
-              ON _id = customer_id
           )
-          WHERE
-            (
-              CAST(STRFTIME('%m', date_time) AS INTEGER) = join_month
+          INNER JOIN (
+            SELECT
+              sbTxCustId AS customer_id,
+              sbTxDateTime AS date_time
+            FROM main.sbTransaction
+          )
+            ON (
+              _id = customer_id
             )
             AND (
-              CAST(STRFTIME('%Y', date_time) AS INTEGER) = join_year
+              (
+                CAST(STRFTIME('%m', date_time) AS INTEGER) = join_month
+              )
+              AND (
+                CAST(STRFTIME('%Y', date_time) AS INTEGER) = join_year
+              )
             )
         )
         GROUP BY

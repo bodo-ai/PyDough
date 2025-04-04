@@ -39,49 +39,42 @@ FROM (
                 phone
               FROM (
                 SELECT
-                  acctbal,
-                  global_avg_balance,
-                  key,
-                  phone
+                  AVG(acctbal) AS global_avg_balance
                 FROM (
                   SELECT
-                    AVG(acctbal) AS global_avg_balance
+                    acctbal
                   FROM (
                     SELECT
+                      SUBSTRING(phone, 1, 2) AS cntry_code,
                       acctbal
                     FROM (
                       SELECT
-                        SUBSTRING(phone, 1, 2) AS cntry_code,
-                        acctbal
+                        acctbal,
+                        phone
                       FROM (
                         SELECT
-                          acctbal,
-                          phone
-                        FROM (
-                          SELECT
-                            c_acctbal AS acctbal,
-                            c_phone AS phone
-                          FROM tpch.CUSTOMER
-                        )
-                        WHERE
-                          acctbal > 0.0
+                          c_acctbal AS acctbal,
+                          c_phone AS phone
+                        FROM tpch.CUSTOMER
                       )
+                      WHERE
+                        acctbal > 0.0
                     )
-                    WHERE
-                      cntry_code IN ('13', '31', '23', '29', '30', '18', '17')
                   )
+                  WHERE
+                    cntry_code IN ('13', '31', '23', '29', '30', '18', '17')
                 )
-                INNER JOIN (
-                  SELECT
-                    c_acctbal AS acctbal,
-                    c_custkey AS key,
-                    c_phone AS phone
-                  FROM tpch.CUSTOMER
-                )
-                  ON TRUE
               )
-              WHERE
-                acctbal > global_avg_balance
+              INNER JOIN (
+                SELECT
+                  c_acctbal AS acctbal,
+                  c_custkey AS key,
+                  c_phone AS phone
+                FROM tpch.CUSTOMER
+              )
+                ON TRUE AND (
+                  acctbal > global_avg_balance
+                )
             )
           )
           WHERE
