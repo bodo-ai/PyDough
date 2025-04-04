@@ -308,6 +308,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         """
         if sort:
             column_exprs = sorted(column_exprs, key=repr)
+        # If the subquery has no columns(because of PyDough's column pruning), add a NULL column to make it valid.
         if len(column_exprs) == 0:
             column_exprs = [sqlglot_convert((None,))]
         return (
@@ -343,6 +344,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             self._expr_visitor.relational_to_sqlglot(col, alias)
             for alias, col in sorted(scan.columns.items())
         ]
+        # If the subquery has no columns(because of PyDough's column pruning), add a NULL column to make it valid.
         if len(exprs) == 0:
             exprs = [sqlglot_convert((None,))]
         query: Select = Select().select(*exprs).from_(scan.table_name)
