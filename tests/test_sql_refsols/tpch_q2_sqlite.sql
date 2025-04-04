@@ -30,9 +30,9 @@ WITH "_t1" AS (
     "part"."p_partkey"
 ), "_t17" AS (
   SELECT
-    "nation"."n_name" AS "n_name",
-    "part"."p_mfgr" AS "p_mfgr",
     "part"."p_partkey" AS "p_partkey",
+    "part"."p_mfgr" AS "p_mfgr",
+    "nation"."n_name" AS "n_name",
     "supplier"."s_acctbal" AS "s_acctbal",
     "supplier"."s_address" AS "s_address",
     "supplier"."s_comment" AS "s_comment",
