@@ -166,10 +166,10 @@ ANYTHING = ExpressionFunctionOperator(
 MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
 MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
 SMALLEST = ExpressionFunctionOperator(
-    "SMALLEST", True, RequireMinArgs(1), SelectArgumentType(0)
+    "SMALLEST", False, RequireMinArgs(1), SelectArgumentType(0)
 )
 LARGEST = ExpressionFunctionOperator(
-    "LARGEST", True, RequireMinArgs(1), SelectArgumentType(0)
+    "LARGEST", False, RequireMinArgs(1), SelectArgumentType(0)
 )
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
 DATETIME = ExpressionFunctionOperator(
