@@ -391,6 +391,20 @@ class SQLiteTransformBindings(BaseTransformBindings):
     def convert_smallest_or_largest(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
     ) -> SQLGlotExpression:
+        """
+        Uses the `MAX` or `MIN` function to return the largest or smallest value
+        from the set of values it is called on.
+
+        Args:
+            `args`: The operands to `SMALLEST` or `LARGEST`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `SMALLEST` or `LARGEST`.
+            `largest`: A boolean indicating whether to return the largest
+            or smallest value.
+
+        Returns:
+            The SQLGlot expression to calculate the smallest or largest value.
+        """
         if largest:
             return sqlglot_expressions.Max(this=args[0], expressions=args[1:])
         else:
