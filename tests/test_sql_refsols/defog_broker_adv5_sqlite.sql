@@ -14,7 +14,7 @@ WITH _t1 AS (
         ELSE SUBSTRING('00' || CAST(STRFTIME('%m', sbdailyprice.sbdpdate) AS INTEGER), -2)
       END
     ) AS month,
-    _t1.symbol AS symbol
+    _t1.symbol
   FROM main.sbdailyprice AS sbdailyprice
   LEFT JOIN _t1 AS _t1
     ON _t1._id = sbdailyprice.sbdptickerid
@@ -34,7 +34,7 @@ WITH _t1 AS (
         ))
       END
     ) AS month,
-    _t3.symbol AS symbol
+    _t3.symbol
   FROM main.sbdailyprice AS sbdailyprice
   LEFT JOIN _t1 AS _t3
     ON _t3._id = sbdailyprice.sbdptickerid
@@ -53,8 +53,8 @@ WITH _t1 AS (
     _t3.symbol
 )
 SELECT
-  _t4.symbol AS symbol,
-  _t4.month AS month,
+  _t4.symbol,
+  _t4.month,
   _t5.agg_0 AS avg_close,
   _t5.agg_1 AS max_high,
   _t5.agg_2 AS min_low,

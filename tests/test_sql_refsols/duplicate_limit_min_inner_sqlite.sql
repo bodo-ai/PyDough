@@ -1,5 +1,5 @@
 SELECT
-  a AS a,
-  b AS b
+  a,
+  b
 FROM table
 LIMIT 1

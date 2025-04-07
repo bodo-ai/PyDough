@@ -12,8 +12,8 @@ WITH _t0 AS (
     DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP))
 )
 SELECT
-  month AS month,
-  avg_price AS avg_price
+  month,
+  avg_price
 FROM _t0
 ORDER BY
   ordering_1

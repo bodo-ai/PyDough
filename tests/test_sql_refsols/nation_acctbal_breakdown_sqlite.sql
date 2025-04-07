@@ -50,7 +50,7 @@ WITH _t3 AS (
     AVG(expr_8) AS agg_2,
     COUNT(negative_acctbal) AS agg_4,
     COUNT(non_negative_acctbal) AS agg_3,
-    nation_key AS nation_key
+    nation_key
   FROM _t3
   GROUP BY
     nation_key

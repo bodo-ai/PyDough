@@ -198,8 +198,8 @@ def test_execute_df_logging(
     ) * (
       1 + l_tax
     )) AS sum_charge,
-    l_linestatus AS l_linestatus,
-    l_returnflag AS l_returnflag
+    l_linestatus,
+    l_returnflag
   FROM lineitem
   WHERE
     l_shipdate <= '1998-12-01'

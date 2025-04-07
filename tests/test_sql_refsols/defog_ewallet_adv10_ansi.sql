@@ -1,7 +1,7 @@
 WITH _t1_2 AS (
   SELECT
     COUNT() AS agg_0,
-    sender_id AS sender_id
+    sender_id
   FROM main.wallet_transactions_daily
   WHERE
     sender_type = 0

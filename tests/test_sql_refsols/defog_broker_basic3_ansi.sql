@@ -20,9 +20,9 @@ WITH _t1 AS (
   LIMIT 10
 )
 SELECT
-  _t0.symbol AS symbol,
-  _t0.num_transactions AS num_transactions,
-  _t0.total_amount AS total_amount
-FROM _t0_2 AS _t0
+  symbol,
+  num_transactions,
+  total_amount
+FROM _t0_2
 ORDER BY
-  _t0.ordering_2 DESC
+  ordering_2 DESC

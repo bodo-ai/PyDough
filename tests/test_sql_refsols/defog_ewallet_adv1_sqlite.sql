@@ -2,7 +2,7 @@ WITH _t1_2 AS (
   SELECT
     COUNT(DISTINCT coupon_id) AS agg_0,
     COUNT(DISTINCT txid) AS agg_1,
-    receiver_id AS receiver_id
+    receiver_id
   FROM main.wallet_transactions_daily
   WHERE
     status = 'success'
@@ -10,7 +10,7 @@ WITH _t1_2 AS (
     receiver_id
 )
 SELECT
-  merchants.name AS name,
+  merchants.name,
   CAST((
     _t1.agg_0 * 1.0
   ) AS REAL) / _t1.agg_1 AS CPUR

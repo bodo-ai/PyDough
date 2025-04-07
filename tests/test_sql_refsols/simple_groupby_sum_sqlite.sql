@@ -1,6 +1,6 @@
 SELECT
   SUM(a) AS a,
-  b AS b
+  b
 FROM table
 GROUP BY
   b

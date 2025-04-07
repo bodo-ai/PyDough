@@ -18,7 +18,7 @@ WITH _t0_2 AS (
     DATE_TRUNC('WEEK', CAST(notifications.created_at AS TIMESTAMP))
 )
 SELECT
-  _t0.week AS week,
-  COALESCE(_t0.agg_0, 0) AS num_notifs,
-  COALESCE(_t0.agg_1, 0) AS weekend_notifs
-FROM _t0_2 AS _t0
+  week,
+  COALESCE(agg_0, 0) AS num_notifs,
+  COALESCE(agg_1, 0) AS weekend_notifs
+FROM _t0_2

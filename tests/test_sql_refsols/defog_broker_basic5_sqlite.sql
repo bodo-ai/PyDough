@@ -1,18 +1,18 @@
 WITH _t0 AS (
   SELECT
-    sbtxcustid AS customer_id,
-    sbtxtype AS transaction_type
-  FROM main.sbtransaction
+    sbtransaction.sbtxcustid AS customer_id,
+    sbtransaction.sbtxtype AS transaction_type
+  FROM main.sbtransaction AS sbtransaction
   WHERE
-    sbtxtype = 'buy'
+    sbtransaction.sbtxtype = 'buy'
 ), _t1 AS (
   SELECT
-    customer_id AS customer_id
-  FROM _t0
+    _t0.customer_id AS customer_id
+  FROM _t0 AS _t0
 ), _t0_2 AS (
   SELECT
-    sbcustid AS _id
-  FROM main.sbcustomer
+    sbcustomer.sbcustid AS _id
+  FROM main.sbcustomer AS sbcustomer
 )
 SELECT
   _t0._id AS _id
@@ -21,7 +21,7 @@ WHERE
   EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1
+    FROM _t1 AS _t1
     WHERE
-      _id = customer_id
+      _t0._id = _t1.customer_id
   )

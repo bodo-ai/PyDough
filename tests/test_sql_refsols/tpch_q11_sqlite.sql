@@ -46,8 +46,8 @@ WITH _t0 AS (
   LIMIT 10
 )
 SELECT
-  _t0.ps_partkey AS PS_PARTKEY,
-  _t0.value AS VALUE
-FROM _t0_2 AS _t0
+  ps_partkey AS PS_PARTKEY,
+  value AS VALUE
+FROM _t0_2
 ORDER BY
-  _t0.ordering_2 DESC
+  ordering_2 DESC

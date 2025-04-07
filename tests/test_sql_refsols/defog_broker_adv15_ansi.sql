@@ -10,6 +10,6 @@ WITH _t0 AS (
     sbcustcountry
 )
 SELECT
-  country AS country,
+  country,
   100 * COALESCE(COALESCE(agg_0, 0) / COALESCE(agg_1, 0), 0.0) AS ar
 FROM _t0

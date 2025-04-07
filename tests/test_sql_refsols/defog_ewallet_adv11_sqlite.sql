@@ -9,7 +9,7 @@ WITH _t1 AS (
         ) * 60 + CAST(STRFTIME('%M', session_end_ts) AS INTEGER) - CAST(STRFTIME('%M', session_start_ts) AS INTEGER)
       ) * 60 + CAST(STRFTIME('%S', session_end_ts) AS INTEGER) - CAST(STRFTIME('%S', session_start_ts) AS INTEGER)
     ) AS agg_0,
-    user_id AS user_id
+    user_id
   FROM main.user_sessions
   WHERE
     session_end_ts < '2023-06-08' AND session_start_ts >= '2023-06-01'
@@ -17,7 +17,7 @@ WITH _t1 AS (
     user_id
 )
 SELECT
-  users.uid AS uid,
+  users.uid,
   COALESCE(_t1.agg_0, 0) AS total_duration
 FROM main.users AS users
 JOIN _t1 AS _t1

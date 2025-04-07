@@ -29,9 +29,9 @@ WITH _t1 AS (
   LIMIT 10
 )
 SELECT
-  _t0.c_count AS C_COUNT,
-  _t0.custdist AS CUSTDIST
-FROM _t0_2 AS _t0
+  c_count AS C_COUNT,
+  custdist AS CUSTDIST
+FROM _t0_2
 ORDER BY
-  _t0.ordering_1 DESC,
-  _t0.ordering_2 DESC
+  ordering_1 DESC,
+  ordering_2 DESC

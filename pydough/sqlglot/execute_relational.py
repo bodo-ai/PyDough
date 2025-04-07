@@ -152,7 +152,12 @@ def apply_sqlglot_optimizer(
     fix_column_case(glot_expr, relational.ordered_columns)
 
     # Remove table aliases if there is only one Table source in the FROM clause.
-    # remove_table_aliases_conditional(glot_expr)
+    # Skip for Semi and Anti joins. We do this because this function will remove
+    # the table alias of the outer query even if it is used in the exists clause.
+    # Because, the exists clause is in another "scope" and we are not currently
+    # dealing with pan-scope updates.
+    if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
+        remove_table_aliases_conditional(glot_expr)
 
     return glot_expr
 
@@ -221,6 +226,14 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
                 # the outer query and replace the qualified column names with
                 # the unqualified column names.
                 for column in find_all_in_scope(expr, Column):
+                    skip: bool = False
+                    # Skip if the table alias is not present in the qualified
+                    # column name(check correl_11).
+                    for part in column.parts[:-1]:
+                        if alias != part.name:
+                            skip = True
+                    if skip:
+                        continue
                     for part in column.parts[:-1]:
                         part.pop()
 

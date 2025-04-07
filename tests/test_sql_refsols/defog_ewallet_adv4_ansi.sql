@@ -9,6 +9,6 @@ WITH _t0_2 AS (
     DATEDIFF(CURRENT_TIMESTAMP(), wallet_transactions_daily.created_at, DAY) <= 7
 )
 SELECT
-  _t0.agg_0 AS num_transactions,
-  CASE WHEN _t0.agg_0 > 0 THEN COALESCE(_t0.agg_1, 0) ELSE NULL END AS total_amount
-FROM _t0_2 AS _t0
+  agg_0 AS num_transactions,
+  CASE WHEN agg_0 > 0 THEN COALESCE(agg_1, 0) ELSE NULL END AS total_amount
+FROM _t0_2

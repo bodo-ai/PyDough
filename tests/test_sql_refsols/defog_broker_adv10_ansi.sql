@@ -23,9 +23,9 @@ WITH _t3_2 AS (
   LIMIT 1
 )
 SELECT
-  _t0._id AS _id,
-  _t0.name AS name,
-  _t0.num_transactions AS num_transactions
-FROM _t0_2 AS _t0
+  _id,
+  name,
+  num_transactions
+FROM _t0_2
 ORDER BY
-  _t0.ordering_1 DESC
+  ordering_1 DESC

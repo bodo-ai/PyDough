@@ -1,22 +1,22 @@
 WITH _t0 AS (
   SELECT
-    uid AS uid
-  FROM main.users
+    users.uid AS uid
+  FROM main.users AS users
 ), _t1 AS (
   SELECT
-    user_id AS user_id
-  FROM main.wallet_user_balance_daily
+    wallet_user_balance_daily.user_id AS user_id
+  FROM main.wallet_user_balance_daily AS wallet_user_balance_daily
 ), _t6 AS (
   SELECT
-    uid AS uid
-  FROM _t0
+    _t0.uid AS uid
+  FROM _t0 AS _t0
   WHERE
     EXISTS(
       SELECT
         1 AS "1"
-      FROM _t1
+      FROM _t1 AS _t1
       WHERE
-        uid = user_id
+        _t0.uid = _t1.user_id
     )
 ), _t4 AS (
   SELECT
@@ -32,10 +32,10 @@ WITH _t0 AS (
     )
 ), _t5 AS (
   SELECT
-    balance AS balance,
-    updated_at AS updated_at,
-    user_id AS user_id
-  FROM main.wallet_user_balance_daily
+    wallet_user_balance_daily.balance AS balance,
+    wallet_user_balance_daily.updated_at AS updated_at,
+    wallet_user_balance_daily.user_id AS user_id
+  FROM main.wallet_user_balance_daily AS wallet_user_balance_daily
 ), _t1_2 AS (
   SELECT
     _t5.balance AS balance,

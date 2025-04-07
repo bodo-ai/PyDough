@@ -25,8 +25,8 @@ WITH _t1_2 AS (
     nation.n_nationkey
 )
 SELECT
-  _t1.agg_3 AS N_NAME,
-  COALESCE(_t1.agg_0, 0) AS REVENUE
-FROM _t1_2 AS _t1
+  agg_3 AS N_NAME,
+  COALESCE(agg_0, 0) AS REVENUE
+FROM _t1_2
 ORDER BY
-  COALESCE(_t1.agg_0, 0) DESC
+  COALESCE(agg_0, 0) DESC

@@ -1,18 +1,18 @@
 WITH _t0 AS (
   SELECT
-    type AS notification_type,
-    user_id AS user_id
-  FROM main.notifications
+    notifications.type AS notification_type,
+    notifications.user_id AS user_id
+  FROM main.notifications AS notifications
   WHERE
-    type = 'transaction'
+    notifications.type = 'transaction'
 ), _t1 AS (
   SELECT
-    user_id AS user_id
-  FROM _t0
+    _t0.user_id AS user_id
+  FROM _t0 AS _t0
 ), _t0_2 AS (
   SELECT
-    uid AS uid
-  FROM main.users
+    users.uid AS uid
+  FROM main.users AS users
 )
 SELECT
   _t0.uid AS user_id
@@ -21,7 +21,7 @@ WHERE
   EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1
+    FROM _t1 AS _t1
     WHERE
-      uid = user_id
+      _t0.uid = _t1.user_id
   )

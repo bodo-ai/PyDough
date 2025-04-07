@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     COUNT(txid) AS agg_0,
     SUM(amount) AS agg_1,
-    coupon_id AS coupon_id
+    coupon_id
   FROM main.wallet_transactions_daily
   GROUP BY
     coupon_id
@@ -20,9 +20,9 @@ WITH _t1 AS (
   LIMIT 3
 )
 SELECT
-  _t0.coupon_code AS coupon_code,
-  _t0.redemption_count AS redemption_count,
-  _t0.total_discount AS total_discount
-FROM _t0_2 AS _t0
+  coupon_code,
+  redemption_count,
+  total_discount
+FROM _t0_2
 ORDER BY
-  _t0.ordering_2 DESC
+  ordering_2 DESC

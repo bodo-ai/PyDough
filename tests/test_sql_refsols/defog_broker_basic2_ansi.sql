@@ -12,19 +12,19 @@ WITH _t1 AS (
     sbtxtype
 ), _t0 AS (
   SELECT
-    avg_shares AS avg_shares,
-    num_customers AS num_customers,
-    ordering_2 AS ordering_2,
-    transaction_type AS transaction_type
+    avg_shares,
+    num_customers,
+    ordering_2,
+    transaction_type
   FROM _t1
   ORDER BY
     ordering_2 DESC
   LIMIT 3
 )
 SELECT
-  transaction_type AS transaction_type,
-  num_customers AS num_customers,
-  avg_shares AS avg_shares
+  transaction_type,
+  num_customers,
+  avg_shares
 FROM _t0
 ORDER BY
   ordering_2 DESC

@@ -1,18 +1,18 @@
 WITH _t0 AS (
   SELECT
-    sbdpdate AS date,
-    sbdptickerid AS ticker_id
-  FROM main.sbdailyprice
+    sbdailyprice.sbdpdate AS date,
+    sbdailyprice.sbdptickerid AS ticker_id
+  FROM main.sbdailyprice AS sbdailyprice
   WHERE
-    sbdpdate >= CAST('2023-04-01' AS DATE)
+    sbdailyprice.sbdpdate >= CAST('2023-04-01' AS DATE)
 ), _t1 AS (
   SELECT
-    ticker_id AS ticker_id
-  FROM _t0
+    _t0.ticker_id AS ticker_id
+  FROM _t0 AS _t0
 ), _t0_2 AS (
   SELECT
-    sbtickerid AS _id
-  FROM main.sbticker
+    sbticker.sbtickerid AS _id
+  FROM main.sbticker AS sbticker
 )
 SELECT
   _t0._id AS _id
@@ -21,7 +21,7 @@ WHERE
   EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1
+    FROM _t1 AS _t1
     WHERE
-      _id = ticker_id
+      _t0._id = _t1.ticker_id
   )

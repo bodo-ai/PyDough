@@ -30,13 +30,13 @@ WITH _t4 AS (
   SELECT
     part.p_partkey AS key_19,
     part.p_mfgr AS manufacturer,
-    nation.n_name AS n_name,
-    supplier.s_acctbal AS s_acctbal,
-    supplier.s_address AS s_address,
-    supplier.s_comment AS s_comment,
-    supplier.s_name AS s_name,
-    supplier.s_phone AS s_phone,
-    _t13.supplycost AS supplycost
+    nation.n_name,
+    supplier.s_acctbal,
+    supplier.s_address,
+    supplier.s_comment,
+    supplier.s_name,
+    supplier.s_phone,
+    _t13.supplycost
   FROM tpch.nation AS nation
   JOIN _t4 AS _t6
     ON _t6.key = nation.n_regionkey
@@ -48,14 +48,14 @@ WITH _t4 AS (
     ON _t13.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
 ), _t0_2 AS (
   SELECT
-    _t17.n_name AS n_name,
+    _t17.n_name,
     _t17.manufacturer AS p_mfgr,
     _t17.key_19 AS p_partkey,
-    _t17.s_acctbal AS s_acctbal,
-    _t17.s_address AS s_address,
-    _t17.s_comment AS s_comment,
-    _t17.s_name AS s_name,
-    _t17.s_phone AS s_phone,
+    _t17.s_acctbal,
+    _t17.s_address,
+    _t17.s_comment,
+    _t17.s_name,
+    _t17.s_phone,
     _t17.s_acctbal AS ordering_1,
     _t17.n_name AS ordering_2,
     _t17.s_name AS ordering_3,
@@ -71,17 +71,17 @@ WITH _t4 AS (
   LIMIT 10
 )
 SELECT
-  _t0.s_acctbal AS S_ACCTBAL,
-  _t0.s_name AS S_NAME,
-  _t0.n_name AS N_NAME,
-  _t0.p_partkey AS P_PARTKEY,
-  _t0.p_mfgr AS P_MFGR,
-  _t0.s_address AS S_ADDRESS,
-  _t0.s_phone AS S_PHONE,
-  _t0.s_comment AS S_COMMENT
-FROM _t0_2 AS _t0
+  s_acctbal AS S_ACCTBAL,
+  s_name AS S_NAME,
+  n_name AS N_NAME,
+  p_partkey AS P_PARTKEY,
+  p_mfgr AS P_MFGR,
+  s_address AS S_ADDRESS,
+  s_phone AS S_PHONE,
+  s_comment AS S_COMMENT
+FROM _t0_2
 ORDER BY
-  _t0.ordering_1 DESC,
-  _t0.ordering_2,
-  _t0.ordering_3,
-  _t0.ordering_4
+  ordering_1 DESC,
+  ordering_2,
+  ordering_3,
+  ordering_4

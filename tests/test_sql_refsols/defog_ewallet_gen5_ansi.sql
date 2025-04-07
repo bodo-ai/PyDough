@@ -1,13 +1,13 @@
 WITH _t0 AS (
   SELECT
-    created_at AS created_at,
-    user_id AS user_id
-  FROM main.notifications
+    notifications.created_at AS created_at,
+    notifications.user_id AS user_id
+  FROM main.notifications AS notifications
 ), _t1 AS (
   SELECT
-    created_at AS created_at,
-    uid AS uid
-  FROM main.users
+    users.created_at AS created_at,
+    users.uid AS uid
+  FROM main.users AS users
 ), _t0_2 AS (
   SELECT
     _t0.created_at AS created_at,
@@ -25,22 +25,22 @@ WITH _t0 AS (
   FROM _t0_2 AS _t0
 ), _t2 AS (
   SELECT
-    created_at AS created_at,
-    email AS email,
-    uid AS uid,
-    username AS username
-  FROM main.users
+    users.created_at AS created_at,
+    users.email AS email,
+    users.uid AS uid,
+    users.username AS username
+  FROM main.users AS users
 )
 SELECT
-  username AS username,
-  email AS email,
-  created_at AS created_at
-FROM _t2
+  _t2.username AS username,
+  _t2.email AS email,
+  _t2.created_at AS created_at
+FROM _t2 AS _t2
 WHERE
   NOT EXISTS(
     SELECT
       1 AS "1"
-    FROM _t3
+    FROM _t3 AS _t3
     WHERE
-      uid = user_id
+      _t2.uid = _t3.user_id
   )

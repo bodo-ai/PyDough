@@ -1,7 +1,7 @@
 WITH _t1_2 AS (
   SELECT
     COUNT() AS agg_0,
-    merchant_id AS merchant_id
+    merchant_id
   FROM main.coupons
   GROUP BY
     merchant_id

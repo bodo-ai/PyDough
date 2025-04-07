@@ -1,5 +1,5 @@
 SELECT
-  device_type AS device_type,
+  device_type,
   AVG(
     (
       (

@@ -18,15 +18,15 @@ WITH _t0 AS (
   LIMIT 30
 )
 SELECT
-  x AS x,
-  y1 AS y1,
-  y AS y,
-  years_diff AS years_diff,
-  months_diff AS months_diff,
-  days_diff AS days_diff,
-  hours_diff AS hours_diff,
-  minutes_diff AS minutes_diff,
-  seconds_diff AS seconds_diff
+  x,
+  y1,
+  y,
+  years_diff,
+  months_diff,
+  days_diff,
+  hours_diff,
+  minutes_diff,
+  seconds_diff
 FROM _t0
 ORDER BY
   ordering_0

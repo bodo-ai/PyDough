@@ -24,9 +24,9 @@ WITH _t1_2 AS (
     lineitem.l_shipmode
 )
 SELECT
-  _t1.ship_mode AS L_SHIPMODE,
-  COALESCE(_t1.agg_0, 0) AS HIGH_LINE_COUNT,
-  COALESCE(_t1.agg_1, 0) AS LOW_LINE_COUNT
-FROM _t1_2 AS _t1
+  ship_mode AS L_SHIPMODE,
+  COALESCE(agg_0, 0) AS HIGH_LINE_COUNT,
+  COALESCE(agg_1, 0) AS LOW_LINE_COUNT
+FROM _t1_2
 ORDER BY
-  _t1.ship_mode
+  ship_mode

@@ -1,7 +1,7 @@
 WITH _t3_2 AS (
   SELECT
     COUNT() AS agg_0,
-    coupons.merchant_id AS merchant_id
+    coupons.merchant_id
   FROM main.coupons AS coupons
   LEFT JOIN main.merchants AS merchants
     ON coupons.merchant_id = merchants.mid
@@ -27,9 +27,9 @@ WITH _t3_2 AS (
   LIMIT 1
 )
 SELECT
-  _t0.merchant_id_6 AS merchant_id,
-  _t0.merchant_name AS merchant_name,
-  _t0.coupons_per_merchant AS coupons_per_merchant
-FROM _t0_2 AS _t0
+  merchant_id_6 AS merchant_id,
+  merchant_name,
+  coupons_per_merchant
+FROM _t0_2
 ORDER BY
-  _t0.ordering_1 DESC
+  ordering_1 DESC

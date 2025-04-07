@@ -1,5 +1,5 @@
 SELECT
-  a AS a
+  a
 FROM table
 ORDER BY
   ABS(a)

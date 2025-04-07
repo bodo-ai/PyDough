@@ -58,5 +58,5 @@ WITH _t0_2 AS (
     AND lineitem.l_shipmode IN ('AIR', 'AIR REG')
 )
 SELECT
-  COALESCE(_t0.agg_0, 0) AS REVENUE
-FROM _t0_2 AS _t0
+  COALESCE(agg_0, 0) AS REVENUE
+FROM _t0_2

@@ -21,8 +21,8 @@ WITH _t1 AS (
   LIMIT 2
 )
 SELECT
-  _t0.symbol AS symbol,
-  _t0.tx_count AS tx_count
-FROM _t0_2 AS _t0
+  symbol,
+  tx_count
+FROM _t0_2
 ORDER BY
-  _t0.ordering_1 DESC
+  ordering_1 DESC

@@ -1,7 +1,7 @@
 WITH _t1_2 AS (
   SELECT
     SUM(amount) AS agg_0,
-    coupon_id AS coupon_id
+    coupon_id
   FROM main.wallet_transactions_daily
   GROUP BY
     coupon_id

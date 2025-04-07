@@ -1,20 +1,20 @@
 WITH _t0 AS (
   SELECT
-    s_suppkey AS key,
-    s_name AS name,
-    s_nationkey AS nation_key
-  FROM tpch.supplier
+    supplier.s_suppkey AS key,
+    supplier.s_name AS name,
+    supplier.s_nationkey AS nation_key
+  FROM tpch.supplier AS supplier
 ), _t3 AS (
   SELECT
-    n_name AS name,
-    n_nationkey AS key
-  FROM tpch.nation
+    nation.n_name AS name,
+    nation.n_nationkey AS key
+  FROM tpch.nation AS nation
   WHERE
-    n_name = 'SAUDI ARABIA'
+    nation.n_name = 'SAUDI ARABIA'
 ), _t1 AS (
   SELECT
-    key AS key
-  FROM _t3
+    _t3.key AS key
+  FROM _t3 AS _t3
 ), _t8 AS (
   SELECT
     _t0.key AS key,
@@ -24,30 +24,30 @@ WITH _t0 AS (
     ON _t0.nation_key = _t1.key
 ), _t5 AS (
   SELECT
-    l_commitdate AS commit_date,
-    l_orderkey AS order_key,
-    l_receiptdate AS receipt_date,
-    l_suppkey AS supplier_key
-  FROM tpch.lineitem
+    lineitem.l_commitdate AS commit_date,
+    lineitem.l_orderkey AS order_key,
+    lineitem.l_receiptdate AS receipt_date,
+    lineitem.l_suppkey AS supplier_key
+  FROM tpch.lineitem AS lineitem
   WHERE
-    l_commitdate < l_receiptdate
+    lineitem.l_commitdate < lineitem.l_receiptdate
 ), _t4 AS (
   SELECT
-    supplier_key AS original_key,
-    order_key AS order_key,
-    supplier_key AS supplier_key
-  FROM _t5
+    _t5.supplier_key AS original_key,
+    _t5.order_key AS order_key,
+    _t5.supplier_key AS supplier_key
+  FROM _t5 AS _t5
 ), _t6 AS (
   SELECT
-    o_orderkey AS key,
-    o_orderstatus AS order_status
-  FROM tpch.orders
+    orders.o_orderkey AS key,
+    orders.o_orderstatus AS order_status
+  FROM tpch.orders AS orders
   WHERE
-    o_orderstatus = 'F'
+    orders.o_orderstatus = 'F'
 ), _t5_2 AS (
   SELECT
-    key AS key
-  FROM _t6
+    _t6.key AS key
+  FROM _t6 AS _t6
 ), _t3_2 AS (
   SELECT
     _t5.key AS key,
@@ -58,15 +58,15 @@ WITH _t0 AS (
     ON _t4.order_key = _t5.key
 ), _t7 AS (
   SELECT
-    l_orderkey AS order_key,
-    l_suppkey AS supplier_key
-  FROM tpch.lineitem
+    lineitem.l_orderkey AS order_key,
+    lineitem.l_suppkey AS supplier_key
+  FROM tpch.lineitem AS lineitem
 ), _t6_2 AS (
   SELECT
-    order_key AS order_key
-  FROM _t7
+    _t7.order_key AS order_key
+  FROM _t7 AS _t7
   WHERE
-    original_key <> supplier_key
+    _t3.original_key <> _t7.supplier_key
 ), _t2 AS (
   SELECT
     _t3.key AS key,
@@ -89,8 +89,8 @@ WITH _t0 AS (
     _t2.original_key <> _t8.supplier_key
 ), _t4_2 AS (
   SELECT
-    supplier_key AS supplier_key
-  FROM _t2
+    _t2.supplier_key AS supplier_key
+  FROM _t2 AS _t2
   WHERE
     NOT EXISTS(
       SELECT

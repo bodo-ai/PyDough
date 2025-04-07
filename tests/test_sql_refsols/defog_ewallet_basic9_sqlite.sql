@@ -2,7 +2,7 @@ WITH _t2 AS (
   SELECT
     COUNT(DISTINCT wallet_transactions_daily.sender_id) AS agg_1,
     SUM(wallet_transactions_daily.amount) AS agg_0,
-    users.country AS country
+    users.country
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
   JOIN main.users AS users
     ON users.uid = wallet_transactions_daily.sender_id
@@ -12,7 +12,7 @@ WITH _t2 AS (
     users.country
 ), _t0_2 AS (
   SELECT
-    country AS country,
+    country,
     COALESCE(agg_0, 0) AS ordering_2,
     COALESCE(agg_0, 0) AS total_amount,
     agg_1 AS user_count
@@ -22,9 +22,9 @@ WITH _t2 AS (
   LIMIT 5
 )
 SELECT
-  _t0.country AS country,
-  _t0.user_count AS user_count,
-  _t0.total_amount AS total_amount
-FROM _t0_2 AS _t0
+  country,
+  user_count,
+  total_amount
+FROM _t0_2
 ORDER BY
-  _t0.ordering_2 DESC
+  ordering_2 DESC

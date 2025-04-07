@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     COUNT() AS agg_1,
     SUM(amount) AS agg_0,
-    receiver_id AS receiver_id
+    receiver_id
   FROM main.wallet_transactions_daily
   WHERE
     created_at >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -150, 'DAY'))
@@ -23,9 +23,9 @@ WITH _t1 AS (
   LIMIT 2
 )
 SELECT
-  _t0.merchant_name AS merchant_name,
-  _t0.total_transactions AS total_transactions,
-  _t0.total_amount AS total_amount
-FROM _t0_2 AS _t0
+  merchant_name,
+  total_transactions,
+  total_amount
+FROM _t0_2
 ORDER BY
-  _t0.ordering_2 DESC
+  ordering_2 DESC

@@ -1,24 +1,24 @@
 WITH _t1 AS (
   SELECT
-    sbcustemail AS email,
-    sbcustid AS _id
-  FROM main.sbcustomer
+    sbcustomer.sbcustemail AS email,
+    sbcustomer.sbcustid AS _id
+  FROM main.sbcustomer AS sbcustomer
   WHERE
-    sbcustemail LIKE '%.com'
+    sbcustomer.sbcustemail LIKE '%.com'
 ), _t2 AS (
   SELECT
-    _id AS _id
-  FROM _t1
+    _t1._id AS _id
+  FROM _t1 AS _t1
 ), _t0 AS (
   SELECT
-    sbtxcustid AS customer_id,
-    sbtxtickerid AS ticker_id
-  FROM main.sbtransaction
+    sbtransaction.sbtxcustid AS customer_id,
+    sbtransaction.sbtxtickerid AS ticker_id
+  FROM main.sbtransaction AS sbtransaction
 ), _t1_2 AS (
   SELECT
-    sbtickerid AS _id,
-    sbtickersymbol AS symbol
-  FROM main.sbticker
+    sbticker.sbtickerid AS _id,
+    sbticker.sbtickersymbol AS symbol
+  FROM main.sbticker AS sbticker
 ), _t2_2 AS (
   SELECT
     _t0.customer_id AS customer_id,
@@ -35,14 +35,14 @@ WITH _t1 AS (
 ), _t0_2 AS (
   SELECT
     1 AS _
-  FROM _t2
+  FROM _t2 AS _t2
   WHERE
     EXISTS(
       SELECT
         1 AS "1"
-      FROM _t3
+      FROM _t3 AS _t3
       WHERE
-        _id = customer_id
+        _t2._id = _t3.customer_id
     )
 )
 SELECT

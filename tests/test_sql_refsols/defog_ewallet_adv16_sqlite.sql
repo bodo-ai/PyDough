@@ -1,7 +1,7 @@
 WITH _t1_2 AS (
   SELECT
     COUNT() AS agg_0,
-    user_id AS user_id
+    user_id
   FROM main.notifications
   WHERE
     status = 'unread' AND type = 'promotion'
@@ -9,7 +9,7 @@ WITH _t1_2 AS (
     user_id
 )
 SELECT
-  users.username AS username,
+  users.username,
   COALESCE(_t1.agg_0, 0) AS total_unread_notifs
 FROM main.users AS users
 JOIN _t1_2 AS _t1

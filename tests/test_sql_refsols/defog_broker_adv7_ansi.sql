@@ -64,7 +64,7 @@ WITH _t2_2 AS (
     )
 )
 SELECT
-  _t2.month AS month,
+  _t2.month,
   COALESCE(_t2.agg_1, 0) AS customer_signups,
   _t3.agg_0 AS avg_tx_amount
 FROM _t2_2 AS _t2

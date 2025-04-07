@@ -13,7 +13,7 @@ WITH _t7 AS (
     SUM(extended_price * (
       1 - discount
     )) AS agg_0,
-    supplier_key AS supplier_key
+    supplier_key
   FROM _t7
   GROUP BY
     supplier_key
@@ -25,13 +25,13 @@ WITH _t7 AS (
     ON _t1.supplier_key = supplier.s_suppkey
 ), _t5_2 AS (
   SELECT
-    SUM(_t10.extended_price * (
-      1 - _t10.discount
+    SUM(extended_price * (
+      1 - discount
     )) AS agg_1,
-    _t10.supplier_key AS supplier_key
-  FROM _t7 AS _t10
+    supplier_key
+  FROM _t7
   GROUP BY
-    _t10.supplier_key
+    supplier_key
 )
 SELECT
   supplier.s_suppkey AS S_SUPPKEY,

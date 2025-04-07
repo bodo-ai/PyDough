@@ -20,5 +20,5 @@ WITH _t1 AS (
     part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
 )
 SELECT
-  CAST(COALESCE(_t0.agg_0, 0) AS REAL) / 7.0 AS AVG_YEARLY
-FROM _t0_2 AS _t0
+  CAST(COALESCE(agg_0, 0) AS REAL) / 7.0 AS AVG_YEARLY
+FROM _t0_2

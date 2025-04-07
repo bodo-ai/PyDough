@@ -1,26 +1,26 @@
 WITH _t1 AS (
   SELECT
-    merchant_id AS merchant_id,
-    start_date AS start_date
+    merchant_id,
+    start_date
   FROM main.coupons
 ), _t1_2 AS (
   SELECT
     MIN(start_date) AS agg_0,
-    merchant_id AS merchant_id
+    merchant_id
   FROM _t1
   GROUP BY
     merchant_id
 ), _t3 AS (
   SELECT
-    MIN(_t4.start_date) AS agg_0,
-    _t4.merchant_id AS merchant_id
-  FROM _t1 AS _t4
+    MIN(start_date) AS agg_0,
+    merchant_id
+  FROM _t1
   GROUP BY
-    _t4.merchant_id
+    merchant_id
 ), _t7 AS (
   SELECT
     MAX(coupons.cid) AS agg_1,
-    merchants.mid AS mid
+    merchants.mid
   FROM main.merchants AS merchants
   LEFT JOIN _t3 AS _t3
     ON _t3.merchant_id = merchants.mid

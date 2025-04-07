@@ -7,7 +7,7 @@ WITH _t2 AS (
     sbcustcountry
 ), _t0 AS (
   SELECT
-    country AS country,
+    country,
     COALESCE(agg_0, 0) AS num_customers,
     COALESCE(agg_0, 0) AS ordering_1
   FROM _t2
@@ -16,8 +16,8 @@ WITH _t2 AS (
   LIMIT 5
 )
 SELECT
-  country AS country,
-  num_customers AS num_customers
+  country,
+  num_customers
 FROM _t0
 ORDER BY
   ordering_1 DESC

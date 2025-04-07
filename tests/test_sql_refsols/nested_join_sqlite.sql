@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    a AS a
+    a
   FROM table
 )
 SELECT

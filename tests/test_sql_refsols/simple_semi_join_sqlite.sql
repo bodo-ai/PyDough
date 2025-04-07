@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    a AS a
-  FROM table
+    table.a AS a
+  FROM table AS table
 )
 SELECT
   _t0.a AS a
@@ -10,7 +10,7 @@ WHERE
   EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1
+    FROM _t1 AS _t1
     WHERE
-      a = a
+      _t0.a = _t1.a
   )

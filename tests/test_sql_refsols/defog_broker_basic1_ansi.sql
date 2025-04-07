@@ -15,7 +15,7 @@ WITH _t2 AS (
     sbcustomer.sbcustcountry
 )
 SELECT
-  _t2.country AS country,
+  _t2.country,
   COALESCE(_t3.agg_0, 0) AS num_transactions,
   COALESCE(_t3.agg_1, 0) AS total_amount
 FROM _t2 AS _t2

@@ -1,3 +1,3 @@
 SELECT
-  b AS b
+  b
 FROM table

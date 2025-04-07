@@ -29,9 +29,9 @@ WITH _t0 AS (
     SUBSTRING(customer.c_phone, 1, 2)
 )
 SELECT
-  _t1.cntry_code AS CNTRY_CODE,
-  COALESCE(_t1.agg_1, 0) AS NUM_CUSTS,
-  COALESCE(_t1.agg_2, 0) AS TOTACCTBAL
-FROM _t1_2 AS _t1
+  cntry_code AS CNTRY_CODE,
+  COALESCE(agg_1, 0) AS NUM_CUSTS,
+  COALESCE(agg_2, 0) AS TOTACCTBAL
+FROM _t1_2
 ORDER BY
-  _t1.cntry_code
+  cntry_code

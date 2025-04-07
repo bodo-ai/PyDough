@@ -43,12 +43,12 @@ WITH _t1 AS (
     _t1.name
 )
 SELECT
-  _t1.supp_nation AS SUPP_NATION,
-  _t1.cust_nation AS CUST_NATION,
-  _t1.l_year AS L_YEAR,
-  COALESCE(_t1.agg_0, 0) AS REVENUE
-FROM _t1_2 AS _t1
+  supp_nation AS SUPP_NATION,
+  cust_nation AS CUST_NATION,
+  l_year AS L_YEAR,
+  COALESCE(agg_0, 0) AS REVENUE
+FROM _t1_2
 ORDER BY
-  _t1.supp_nation,
-  _t1.cust_nation,
-  _t1.l_year
+  supp_nation,
+  cust_nation,
+  l_year

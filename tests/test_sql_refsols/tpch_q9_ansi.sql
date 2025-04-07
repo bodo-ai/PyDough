@@ -24,22 +24,22 @@ WITH _t2_2 AS (
     EXTRACT(YEAR FROM orders.o_orderdate)
 ), _t0_2 AS (
   SELECT
-    COALESCE(_t2.agg_0, 0) AS amount,
-    _t2.nation_name AS nation,
-    _t2.o_year AS o_year,
-    _t2.nation_name AS ordering_1,
-    _t2.o_year AS ordering_2
-  FROM _t2_2 AS _t2
+    COALESCE(agg_0, 0) AS amount,
+    nation_name AS nation,
+    o_year,
+    nation_name AS ordering_1,
+    o_year AS ordering_2
+  FROM _t2_2
   ORDER BY
     ordering_1,
     ordering_2 DESC
   LIMIT 10
 )
 SELECT
-  _t0.nation AS NATION,
-  _t0.o_year AS O_YEAR,
-  _t0.amount AS AMOUNT
-FROM _t0_2 AS _t0
+  nation AS NATION,
+  o_year AS O_YEAR,
+  amount AS AMOUNT
+FROM _t0_2
 ORDER BY
-  _t0.ordering_1,
-  _t0.ordering_2 DESC
+  ordering_1,
+  ordering_2 DESC

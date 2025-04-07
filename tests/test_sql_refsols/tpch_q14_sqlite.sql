@@ -20,6 +20,6 @@ WITH _t0_2 AS (
 )
 SELECT
   CAST((
-    100.0 * COALESCE(_t0.agg_0, 0)
-  ) AS REAL) / COALESCE(_t0.agg_1, 0) AS PROMO_REVENUE
-FROM _t0_2 AS _t0
+    100.0 * COALESCE(agg_0, 0)
+  ) AS REAL) / COALESCE(agg_1, 0) AS PROMO_REVENUE
+FROM _t0_2

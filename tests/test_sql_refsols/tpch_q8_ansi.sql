@@ -37,6 +37,6 @@ WITH _t0_2 AS (
     EXTRACT(YEAR FROM orders.o_orderdate)
 )
 SELECT
-  _t0.o_year AS O_YEAR,
-  COALESCE(_t0.agg_0, 0) / COALESCE(_t0.agg_1, 0) AS MKT_SHARE
-FROM _t0_2 AS _t0
+  o_year AS O_YEAR,
+  COALESCE(agg_0, 0) / COALESCE(agg_1, 0) AS MKT_SHARE
+FROM _t0_2

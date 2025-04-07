@@ -24,8 +24,8 @@ WITH _t5_2 AS (
     partsupp.ps_suppkey
 ), _t0_2 AS (
   SELECT
-    supplier.s_address AS s_address,
-    supplier.s_name AS s_name,
+    supplier.s_address,
+    supplier.s_name,
     supplier.s_name AS ordering_1
   FROM tpch.supplier AS supplier
   LEFT JOIN tpch.nation AS nation
@@ -41,8 +41,8 @@ WITH _t5_2 AS (
   LIMIT 10
 )
 SELECT
-  _t0.s_name AS S_NAME,
-  _t0.s_address AS S_ADDRESS
-FROM _t0_2 AS _t0
+  s_name AS S_NAME,
+  s_address AS S_ADDRESS
+FROM _t0_2
 ORDER BY
-  _t0.ordering_1
+  ordering_1

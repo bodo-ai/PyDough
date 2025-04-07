@@ -47,15 +47,15 @@ WITH _t2_2 AS (
     ON customer.c_nationkey = nation.n_nationkey
 ), _t3_2 AS (
   SELECT
-    AVG(_t2.expr_6) AS agg_0,
-    AVG(_t2.expr_7) AS agg_1,
-    AVG(_t2.expr_8) AS agg_2,
-    COUNT(_t2.negative_acctbal) AS agg_4,
-    COUNT(_t2.non_negative_acctbal) AS agg_3,
-    _t2.region_key AS region_key
-  FROM _t2_2 AS _t2
+    AVG(expr_6) AS agg_0,
+    AVG(expr_7) AS agg_1,
+    AVG(expr_8) AS agg_2,
+    COUNT(negative_acctbal) AS agg_4,
+    COUNT(non_negative_acctbal) AS agg_3,
+    region_key
+  FROM _t2_2
   GROUP BY
-    _t2.region_key
+    region_key
 )
 SELECT
   region.r_name AS region_name,
