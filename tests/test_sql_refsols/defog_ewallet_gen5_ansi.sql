@@ -1,43 +1,46 @@
-SELECT
-  username,
-  email,
-  created_at
-FROM (
+WITH _t0 AS (
   SELECT
-    created_at,
-    email,
-    uid,
-    username
-  FROM main.users
-)
-ANTI JOIN (
+    notifications.created_at AS created_at,
+    notifications.user_id AS user_id
+  FROM main.notifications AS notifications
+), _t1 AS (
   SELECT
-    user_id
-  FROM (
-    SELECT
-      _table_alias_0.created_at AS created_at,
-      _table_alias_1.created_at AS created_at_1,
-      user_id
-    FROM (
-      SELECT
-        created_at,
-        user_id
-      FROM main.notifications
-    ) AS _table_alias_0
-    LEFT JOIN (
-      SELECT
-        created_at,
-        uid
-      FROM main.users
-    ) AS _table_alias_1
-      ON user_id = uid
-  )
+    users.created_at AS created_at,
+    users.uid AS uid
+  FROM main.users AS users
+), _t0_2 AS (
+  SELECT
+    _t0.created_at AS created_at,
+    _t1.created_at AS created_at_1,
+    _t0.user_id AS user_id
+  FROM _t0 AS _t0
+  LEFT JOIN _t1 AS _t1
+    ON _t0.user_id = _t1.uid
   WHERE
-    (
-      DATE_ADD(CAST(created_at_1 AS TIMESTAMP), 1, 'YEAR') >= created_at
-    )
-    AND (
-      created_at >= created_at_1
-    )
+    _t0.created_at <= DATE_ADD(CAST(_t1.created_at AS TIMESTAMP), 1, 'YEAR')
+    AND _t0.created_at >= _t1.created_at
+), _t3 AS (
+  SELECT
+    _t0.user_id AS user_id
+  FROM _t0_2 AS _t0
+), _t2 AS (
+  SELECT
+    users.created_at AS created_at,
+    users.email AS email,
+    users.uid AS uid,
+    users.username AS username
+  FROM main.users AS users
 )
-  ON uid = user_id
+SELECT
+  _t2.username AS username,
+  _t2.email AS email,
+  _t2.created_at AS created_at
+FROM _t2 AS _t2
+WHERE
+  NOT EXISTS(
+    SELECT
+      1 AS "1"
+    FROM _t3 AS _t3
+    WHERE
+      _t2.uid = _t3.user_id
+  )

@@ -1,32 +1,23 @@
-SELECT
-  device_type,
-  count
-FROM (
+WITH _t2 AS (
   SELECT
-    count,
+    COUNT() AS agg_0,
+    device_type
+  FROM main.user_sessions
+  GROUP BY
+    device_type
+), _t0 AS (
+  SELECT
+    COALESCE(agg_0, 0) AS count,
     device_type,
-    ordering_1
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS count,
-      COALESCE(agg_0, 0) AS ordering_1,
-      device_type
-    FROM (
-      SELECT
-        COUNT() AS agg_0,
-        device_type
-      FROM (
-        SELECT
-          device_type
-        FROM main.user_sessions
-      )
-      GROUP BY
-        device_type
-    )
-  )
+    COALESCE(agg_0, 0) AS ordering_1
+  FROM _t2
   ORDER BY
     ordering_1 DESC
   LIMIT 2
 )
+SELECT
+  device_type,
+  count
+FROM _t0
 ORDER BY
   ordering_1 DESC

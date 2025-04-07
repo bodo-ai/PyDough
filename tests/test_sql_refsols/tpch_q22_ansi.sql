@@ -1,112 +1,37 @@
-SELECT
-  CNTRY_CODE,
-  NUM_CUSTS,
-  TOTACCTBAL
-FROM (
+WITH _t0 AS (
   SELECT
-    COALESCE(agg_1, 0) AS NUM_CUSTS,
-    COALESCE(agg_2, 0) AS TOTACCTBAL,
-    cntry_code AS CNTRY_CODE,
-    cntry_code AS ordering_3
-  FROM (
-    SELECT
-      COUNT() AS agg_1,
-      SUM(acctbal) AS agg_2,
-      cntry_code
-    FROM (
-      SELECT
-        acctbal,
-        cntry_code
-      FROM (
-        SELECT
-          acctbal,
-          agg_0,
-          cntry_code
-        FROM (
-          SELECT
-            acctbal,
-            cntry_code,
-            key
-          FROM (
-            SELECT
-              SUBSTRING(phone, 1, 2) AS cntry_code,
-              acctbal,
-              key
-            FROM (
-              SELECT
-                acctbal,
-                key,
-                phone
-              FROM (
-                SELECT
-                  acctbal,
-                  global_avg_balance,
-                  key,
-                  phone
-                FROM (
-                  SELECT
-                    AVG(acctbal) AS global_avg_balance
-                  FROM (
-                    SELECT
-                      acctbal
-                    FROM (
-                      SELECT
-                        SUBSTRING(phone, 1, 2) AS cntry_code,
-                        acctbal
-                      FROM (
-                        SELECT
-                          acctbal,
-                          phone
-                        FROM (
-                          SELECT
-                            c_acctbal AS acctbal,
-                            c_phone AS phone
-                          FROM tpch.CUSTOMER
-                        )
-                        WHERE
-                          acctbal > 0.0
-                      )
-                    )
-                    WHERE
-                      cntry_code IN ('13', '31', '23', '29', '30', '18', '17')
-                  )
-                )
-                INNER JOIN (
-                  SELECT
-                    c_acctbal AS acctbal,
-                    c_custkey AS key,
-                    c_phone AS phone
-                  FROM tpch.CUSTOMER
-                )
-                  ON TRUE
-              )
-              WHERE
-                acctbal > global_avg_balance
-            )
-          )
-          WHERE
-            cntry_code IN ('13', '31', '23', '29', '30', '18', '17')
-        )
-        LEFT JOIN (
-          SELECT
-            COUNT() AS agg_0,
-            customer_key
-          FROM (
-            SELECT
-              o_custkey AS customer_key
-            FROM tpch.ORDERS
-          )
-          GROUP BY
-            customer_key
-        )
-          ON key = customer_key
-      )
-      WHERE
-        COALESCE(agg_0, 0) = 0
-    )
-    GROUP BY
-      cntry_code
-  )
+    AVG(c_acctbal) AS global_avg_balance
+  FROM tpch.customer
+  WHERE
+    SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+    AND c_acctbal > 0.0
+), _t3 AS (
+  SELECT
+    COUNT() AS agg_0,
+    o_custkey AS customer_key
+  FROM tpch.orders
+  GROUP BY
+    o_custkey
+), _t1_2 AS (
+  SELECT
+    COUNT() AS agg_1,
+    SUM(customer.c_acctbal) AS agg_2,
+    SUBSTRING(customer.c_phone, 1, 2) AS cntry_code
+  FROM _t0 AS _t0
+  JOIN tpch.customer AS customer
+    ON SUBSTRING(customer.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+    AND _t0.global_avg_balance < customer.c_acctbal
+  LEFT JOIN _t3 AS _t3
+    ON _t3.customer_key = customer.c_custkey
+  WHERE
+    _t3.agg_0 = 0 OR _t3.agg_0 IS NULL
+  GROUP BY
+    SUBSTRING(customer.c_phone, 1, 2)
 )
+SELECT
+  cntry_code AS CNTRY_CODE,
+  COALESCE(agg_1, 0) AS NUM_CUSTS,
+  COALESCE(agg_2, 0) AS TOTACCTBAL
+FROM _t1_2
 ORDER BY
-  ordering_3
+  cntry_code
