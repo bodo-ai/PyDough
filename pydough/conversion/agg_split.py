@@ -120,6 +120,18 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
                     agg_side: int = (
                         0 if agg_input_name == join.default_input_aliases[0] else 1
                     )
+                    side_keys: list[ColumnReference] = (lhs_keys, rhs_keys)[agg_side]
+                    # Prune columns from join from that side, except for
+                    # the agg keys.
+                    join_columns_to_prune: set[str] = set()
+                    for name, col in join.columns.items():
+                        if (
+                            isinstance(col, ColumnReference)
+                            and (col.input_name == agg_input_name)
+                            and (name not in node.keys)
+                            and (col not in side_keys)
+                        ):
+                            join_columns_to_prune.add(name)
                     if agg_side == 0 or join.join_types[0] == JoinType.INNER:
                         agg_input: RelationalNode = join.inputs[agg_side]
                         # Calculate the aggregate terms to go above vs below
@@ -141,17 +153,20 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
                                     for arg in agg.inputs
                                 ],
                             )
-                            if name in join.columns:
+                            if (
+                                name in join.columns
+                                and name not in join_columns_to_prune
+                            ):
                                 raise NotImplementedError
+                            join_columns_to_prune.discard(name)
                             join.columns[name] = ColumnReference(
                                 name, agg.data_type, agg_input_name
                             )
+                        for name in join_columns_to_prune:
+                            join.columns.pop(name)
                         # Derive which columns are used as aggregate keys by
                         # the input.
                         input_keys: dict[str, ColumnReference] = {}
-                        side_keys: list[ColumnReference] = (lhs_keys, rhs_keys)[
-                            agg_side
-                        ]
                         for ref in side_keys:
                             transposed_ref = transpose_expression(ref, join.columns)
                             assert isinstance(transposed_ref, ColumnReference)
@@ -166,7 +181,6 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
                                 input_keys[transposed_agg_key.name] = (
                                     transposed_agg_key.with_input(None)
                                 )
-                        # TODO: prune columns from join
 
                         # Push the bottom-aggregate beneath the join
                         join.inputs[agg_side] = Aggregate(
