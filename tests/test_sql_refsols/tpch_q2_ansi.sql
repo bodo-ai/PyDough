@@ -1,29 +1,45 @@
-WITH "_t1" AS (
+WITH "_t2" AS (
   SELECT
     "region"."r_name" AS "name",
     "region"."r_regionkey" AS "key"
   FROM "tpch"."region" AS "region"
   WHERE
     "region"."r_name" = 'EUROPE'
-), "_t5" AS (
+), "_t3_2" AS (
   SELECT
     "partsupp"."ps_partkey" AS "part_key",
     "partsupp"."ps_suppkey" AS "supplier_key",
     "partsupp"."ps_supplycost" AS "supplycost"
   FROM "tpch"."partsupp" AS "partsupp"
-), "_t16" AS (
+), "_t5" AS (
   SELECT
-    MIN("_t5"."supplycost") AS "best_cost",
-    "part"."p_partkey" AS "key_9"
+    MIN("_t3"."supplycost") AS "agg_0",
+    "_t3"."part_key" AS "part_key",
+    "_t3"."supplier_key" AS "supplier_key"
+  FROM "_t3_2" AS "_t3"
+  GROUP BY
+    "_t3"."part_key",
+    "_t3"."supplier_key"
+), "_t6" AS (
+  SELECT
+    MIN("_t5"."agg_0") AS "agg_0",
+    "_t5"."part_key" AS "part_key"
   FROM "tpch"."nation" AS "nation"
-  JOIN "_t1" AS "_t1"
-    ON "_t1"."key" = "nation"."n_regionkey"
+  JOIN "_t2" AS "_t2"
+    ON "_t2"."key" = "nation"."n_regionkey"
   JOIN "tpch"."supplier" AS "supplier"
     ON "nation"."n_nationkey" = "supplier"."s_nationkey"
   JOIN "_t5" AS "_t5"
     ON "_t5"."supplier_key" = "supplier"."s_suppkey"
+  GROUP BY
+    "_t5"."part_key"
+), "_t16" AS (
+  SELECT
+    MIN("_t6"."agg_0") AS "best_cost",
+    "part"."p_partkey" AS "key_9"
+  FROM "_t6" AS "_t6"
   JOIN "tpch"."part" AS "part"
-    ON "_t5"."part_key" = "part"."p_partkey"
+    ON "_t6"."part_key" = "part"."p_partkey"
     AND "part"."p_size" = 15
     AND "part"."p_type" LIKE '%BRASS'
   GROUP BY
@@ -41,11 +57,11 @@ WITH "_t1" AS (
     "part"."p_partkey" AS "key_19",
     "_t13"."supplycost" AS "supplycost"
   FROM "tpch"."nation" AS "nation"
-  JOIN "_t1" AS "_t3"
-    ON "_t3"."key" = "nation"."n_regionkey"
+  JOIN "_t2" AS "_t5"
+    ON "_t5"."key" = "nation"."n_regionkey"
   JOIN "tpch"."supplier" AS "supplier"
     ON "nation"."n_nationkey" = "supplier"."s_nationkey"
-  JOIN "_t5" AS "_t13"
+  JOIN "_t3_2" AS "_t13"
     ON "_t13"."supplier_key" = "supplier"."s_suppkey"
   JOIN "tpch"."part" AS "part"
     ON "_t13"."part_key" = "part"."p_partkey"

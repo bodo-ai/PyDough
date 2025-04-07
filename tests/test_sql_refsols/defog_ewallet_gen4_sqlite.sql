@@ -17,16 +17,24 @@ WITH "_t0_2" AS (
   FROM "_t0_2" AS "_t2"
   GROUP BY
     "_t2"."merchant_id"
-), "_t7" AS (
+), "_t5" AS (
   SELECT
     MAX("coupons"."cid") AS "agg_1",
+    "coupons"."merchant_id" AS "merchant_id",
+    "coupons"."start_date" AS "start_date"
+  FROM "main"."coupons" AS "coupons"
+  GROUP BY
+    "coupons"."merchant_id",
+    "coupons"."start_date"
+), "_t7" AS (
+  SELECT
+    MAX("_t5"."agg_1") AS "agg_1",
     "merchants"."mid" AS "mid"
   FROM "main"."merchants" AS "merchants"
   LEFT JOIN "_t3" AS "_t3"
     ON "_t3"."merchant_id" = "merchants"."mid"
-  JOIN "main"."coupons" AS "coupons"
-    ON "_t3"."agg_0" = "coupons"."start_date"
-    AND "coupons"."merchant_id" = "merchants"."mid"
+  JOIN "_t5" AS "_t5"
+    ON "_t3"."agg_0" = "_t5"."start_date" AND "_t5"."merchant_id" = "merchants"."mid"
   GROUP BY
     "merchants"."mid"
 )

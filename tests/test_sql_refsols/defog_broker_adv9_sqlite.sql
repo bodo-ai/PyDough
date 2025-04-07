@@ -1,4 +1,4 @@
-WITH "_t0_2" AS (
+WITH "_t0" AS (
   SELECT
     COUNT() AS "agg_0",
     SUM(
@@ -8,6 +8,7 @@ WITH "_t0_2" AS (
         ) % 7
       ) IN (5, 6)
     ) AS "agg_1",
+    "sbtransaction"."sbtxtickerid" AS "ticker_id",
     DATE(
       "sbtransaction"."sbtxdatetime",
       '-' || CAST((
@@ -16,9 +17,6 @@ WITH "_t0_2" AS (
       'start of day'
     ) AS "week"
   FROM "main"."sbtransaction" AS "sbtransaction"
-  JOIN "main"."sbticker" AS "sbticker"
-    ON "sbticker"."sbtickerid" = "sbtransaction"."sbtxtickerid"
-    AND "sbticker"."sbtickertype" = 'stock'
   WHERE
     "sbtransaction"."sbtxdatetime" < DATE(
       'now',
@@ -36,6 +34,7 @@ WITH "_t0_2" AS (
       '-56 day'
     )
   GROUP BY
+    "sbtransaction"."sbtxtickerid",
     DATE(
       "sbtransaction"."sbtxdatetime",
       '-' || CAST((
@@ -43,6 +42,17 @@ WITH "_t0_2" AS (
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
+), "_t0_2" AS (
+  SELECT
+    SUM("_t0"."agg_0") AS "agg_0",
+    SUM("_t0"."agg_1") AS "agg_1",
+    "_t0"."week" AS "week"
+  FROM "_t0" AS "_t0"
+  JOIN "main"."sbticker" AS "sbticker"
+    ON "_t0"."ticker_id" = "sbticker"."sbtickerid"
+    AND "sbticker"."sbtickertype" = 'stock'
+  GROUP BY
+    "_t0"."week"
 )
 SELECT
   "_t0"."week" AS "week",

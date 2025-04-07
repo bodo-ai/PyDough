@@ -1,4 +1,4 @@
-WITH "_t2" AS (
+WITH "_t3" AS (
   SELECT
     "sbtransaction"."sbtxamount" AS "amount",
     "sbtransaction"."sbtxcustid" AS "customer_id",
@@ -7,12 +7,20 @@ WITH "_t2" AS (
   WHERE
     "sbtransaction"."sbtxdatetime" < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
     AND "sbtransaction"."sbtxdatetime" >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
+), "_t2" AS (
+  SELECT
+    "_t3"."amount" AS "amount",
+    "_t3"."customer_id" AS "customer_id"
+  FROM "_t3" AS "_t3"
 ), "_t0" AS (
   SELECT
-    "_t2"."amount" AS "amount",
+    COUNT() AS "agg_0",
+    SUM("_t2"."amount") AS "agg_1",
     "_t2"."customer_id" AS "customer_id"
   FROM "_t2" AS "_t2"
-), "_t3" AS (
+  GROUP BY
+    "_t2"."customer_id"
+), "_t4" AS (
   SELECT
     "sbcustomer"."sbcustcountry" AS "country",
     "sbcustomer"."sbcustid" AS "_id"
@@ -21,11 +29,12 @@ WITH "_t2" AS (
     LOWER("sbcustomer"."sbcustcountry") = 'usa'
 ), "_t1" AS (
   SELECT
-    "_t3"."_id" AS "_id"
-  FROM "_t3" AS "_t3"
+    "_t4"."_id" AS "_id"
+  FROM "_t4" AS "_t4"
 ), "_t1_2" AS (
   SELECT
-    "_t0"."amount" AS "amount"
+    "_t0"."agg_0" AS "agg_0",
+    "_t0"."agg_1" AS "agg_1"
   FROM "_t0" AS "_t0"
   WHERE
     EXISTS(
@@ -37,8 +46,8 @@ WITH "_t2" AS (
     )
 ), "_t0_2" AS (
   SELECT
-    COUNT() AS "agg_0",
-    SUM("_t1"."amount") AS "agg_1"
+    SUM("_t1"."agg_0") AS "agg_0",
+    SUM("_t1"."agg_1") AS "agg_1"
   FROM "_t1_2" AS "_t1"
 )
 SELECT

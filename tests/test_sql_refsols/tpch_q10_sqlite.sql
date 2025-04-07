@@ -1,13 +1,21 @@
-WITH "_t3_2" AS (
+WITH "_t1" AS (
   SELECT
     SUM("lineitem"."l_extendedprice" * (
       1 - "lineitem"."l_discount"
     )) AS "agg_0",
+    "lineitem"."l_orderkey" AS "order_key"
+  FROM "tpch"."lineitem" AS "lineitem"
+  WHERE
+    "lineitem"."l_returnflag" = 'R'
+  GROUP BY
+    "lineitem"."l_orderkey"
+), "_t3_2" AS (
+  SELECT
+    SUM("_t1"."agg_0") AS "agg_0",
     "orders"."o_custkey" AS "customer_key"
   FROM "tpch"."orders" AS "orders"
-  JOIN "tpch"."lineitem" AS "lineitem"
-    ON "lineitem"."l_orderkey" = "orders"."o_orderkey"
-    AND "lineitem"."l_returnflag" = 'R'
+  JOIN "_t1" AS "_t1"
+    ON "_t1"."order_key" = "orders"."o_orderkey"
   WHERE
     "orders"."o_orderdate" < '1994-01-01' AND "orders"."o_orderdate" >= '1993-10-01'
   GROUP BY

@@ -156,17 +156,16 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
                             transposed_ref = transpose_expression(ref, join.columns)
                             assert isinstance(transposed_ref, ColumnReference)
                             input_keys[transposed_ref.name] = transposed_ref
-                        for agg_key in input_keys.values():
+                        for agg_key in node.keys.values():
                             # TODO: if not, then use equijoin key
-                            if agg_key.input_name == agg_input_name:
-                                transposed_agg_key = transpose_expression(
-                                    agg_key, join.columns
+                            transposed_agg_key = transpose_expression(
+                                agg_key, join.columns, keep_input_names=True
+                            )
+                            assert isinstance(transposed_agg_key, ColumnReference)
+                            if transposed_agg_key.input_name == agg_input_name:
+                                input_keys[transposed_agg_key.name] = (
+                                    transposed_agg_key.with_input(None)
                                 )
-                                assert isinstance(transposed_agg_key, ColumnReference)
-                                input_keys[transposed_agg_key.name] = transposed_agg_key
-                            else:
-                                raise NotImplementedError
-
                         # TODO: prune columns from join
 
                         # Push the bottom-aggregate beneath the join
@@ -176,6 +175,7 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
                         # Replace the aggregation above the join with the top
                         # side of the aggregations
                         node._aggregations = top_aggs
+                        node._columns = {**node.columns, **top_aggs}
 
     # Recursively invoke the procedure on all inputs to the node.
     return node.copy(inputs=[split_partial_aggregates(input) for input in node.inputs])

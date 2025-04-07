@@ -2,15 +2,24 @@ WITH "_t2" AS (
   SELECT DISTINCT
     "sbcustomer"."sbcustcountry" AS "country"
   FROM "main"."sbcustomer" AS "sbcustomer"
-), "_t3_2" AS (
+), "_t1_2" AS (
   SELECT
     COUNT() AS "agg_0",
     SUM("sbtransaction"."sbtxamount") AS "agg_1",
+    "sbtransaction"."sbtxcustid" AS "customer_id"
+  FROM "main"."sbtransaction" AS "sbtransaction"
+  WHERE
+    "sbtransaction"."sbtxdatetime" >= DATE(DATETIME('now', '-30 day'), 'start of day')
+  GROUP BY
+    "sbtransaction"."sbtxcustid"
+), "_t3_2" AS (
+  SELECT
+    SUM("_t1"."agg_0") AS "agg_0",
+    SUM("_t1"."agg_1") AS "agg_1",
     "sbcustomer"."sbcustcountry" AS "country"
   FROM "main"."sbcustomer" AS "sbcustomer"
-  JOIN "main"."sbtransaction" AS "sbtransaction"
-    ON "sbcustomer"."sbcustid" = "sbtransaction"."sbtxcustid"
-    AND "sbtransaction"."sbtxdatetime" >= DATE(DATETIME('now', '-30 day'), 'start of day')
+  JOIN "_t1_2" AS "_t1"
+    ON "_t1"."customer_id" = "sbcustomer"."sbcustid"
   GROUP BY
     "sbcustomer"."sbcustcountry"
 )
