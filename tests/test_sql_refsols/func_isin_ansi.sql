@@ -1,5 +1,5 @@
 SELECT
-  "table"."b" AS "b"
-FROM "table" AS "table"
+  b
+FROM table
 WHERE
-  "table"."b" IN (1, 2, 3)
+  b IN (1, 2, 3)

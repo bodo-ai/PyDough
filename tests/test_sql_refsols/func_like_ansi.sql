@@ -1,5 +1,5 @@
 SELECT
-  "table"."b" AS "b"
-FROM "table" AS "table"
+  b
+FROM table
 WHERE
-  "table"."b" LIKE '%abc%efg%'
+  b LIKE '%abc%efg%'

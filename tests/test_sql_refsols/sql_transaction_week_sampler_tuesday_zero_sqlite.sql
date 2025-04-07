@@ -1,32 +1,32 @@
 SELECT
-  "sbtransaction"."sbtxdatetime" AS "date_time",
+  sbtxdatetime AS date_time,
   DATE(
-    "sbtransaction"."sbtxdatetime",
+    sbtxdatetime,
     '-' || CAST((
-      CAST(STRFTIME('%w', DATETIME("sbtransaction"."sbtxdatetime")) AS INTEGER) + 5
+      CAST(STRFTIME('%w', DATETIME(sbtxdatetime)) AS INTEGER) + 5
     ) % 7 AS TEXT) || ' days',
     'start of day'
-  ) AS "sow",
+  ) AS sow,
   CASE
-    WHEN CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) = 0
+    WHEN CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) = 0
     THEN 'Sunday'
-    WHEN CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) = 1
+    WHEN CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) = 1
     THEN 'Monday'
-    WHEN CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) = 2
+    WHEN CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) = 2
     THEN 'Tuesday'
-    WHEN CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) = 3
+    WHEN CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) = 3
     THEN 'Wednesday'
-    WHEN CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) = 4
+    WHEN CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) = 4
     THEN 'Thursday'
-    WHEN CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) = 5
+    WHEN CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) = 5
     THEN 'Friday'
-    WHEN CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) = 6
+    WHEN CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) = 6
     THEN 'Saturday'
-  END AS "dayname",
+  END AS dayname,
   (
-    CAST(STRFTIME('%w', "sbtransaction"."sbtxdatetime") AS INTEGER) + 5
-  ) % 7 AS "dayofweek"
-FROM "main"."sbtransaction" AS "sbtransaction"
+    CAST(STRFTIME('%w', sbtxdatetime) AS INTEGER) + 5
+  ) % 7 AS dayofweek
+FROM main.sbtransaction
 WHERE
-  CAST(STRFTIME('%Y', "sbtransaction"."sbtxdatetime") AS INTEGER) < 2025
-  AND CAST(STRFTIME('%d', "sbtransaction"."sbtxdatetime") AS INTEGER) > 1
+  CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER) < 2025
+  AND CAST(STRFTIME('%d', sbtxdatetime) AS INTEGER) > 1

@@ -1,5 +1,5 @@
 SELECT
-  "table"."b" AS "b"
-FROM "table" AS "table"
+  b
+FROM table
 ORDER BY
-  "table"."a" + 1
+  a + 1

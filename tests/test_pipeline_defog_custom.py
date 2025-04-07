@@ -1479,5 +1479,4 @@ def test_pipeline_e2e_defog_transaction_week(
             "dayofweek": expected_dayofweeks,
         }
     )
-    # breakpoint()
     pd.testing.assert_frame_equal(result, expected_df)

@@ -1,15 +1,15 @@
-WITH "_t1" AS (
+WITH _t1 AS (
   SELECT
-    COUNT() AS "agg_0",
-    "sbtransaction"."sbtxstatus" AS "status"
-  FROM "main"."sbtransaction" AS "sbtransaction"
+    COUNT() AS agg_0,
+    sbtxstatus AS status
+  FROM main.sbtransaction
   GROUP BY
-    "sbtransaction"."sbtxstatus"
+    sbtxstatus
 )
 SELECT
-  "_t1"."status" AS "status",
-  COALESCE("_t1"."agg_0", 0) AS "num_transactions"
-FROM "_t1" AS "_t1"
+  status,
+  COALESCE(agg_0, 0) AS num_transactions
+FROM _t1
 ORDER BY
-  "num_transactions" DESC
+  num_transactions DESC
 LIMIT 3
