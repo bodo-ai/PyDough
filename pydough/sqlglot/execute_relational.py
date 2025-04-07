@@ -152,7 +152,7 @@ def apply_sqlglot_optimizer(
     fix_column_case(glot_expr, relational.ordered_columns)
 
     # Remove table aliases if there is only one Table source in the FROM clause.
-    remove_table_aliases_conditional(glot_expr)
+    # remove_table_aliases_conditional(glot_expr)
 
     return glot_expr
 
@@ -162,7 +162,8 @@ def fix_column_case(
     ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
 ) -> None:
     """
-    Fixes the column names in the SQLGlot expression to match the case in the original RelationalRoot.
+    Fixes the column names in the SQLGlot expression to match the case
+    of the column names in the original RelationalRoot.
 
     Args:
         glot_expr: The SQLGlot expression to fix
@@ -193,20 +194,22 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
     Returns:
         None (The AST is modified in place.)
     """
+    # Only remove aliases if there are no joins.
     if isinstance(expr, Select) and (
         expr.args.get("joins") is None or len(expr.args.get("joins")) == 0
     ):
         from_clause = expr.args.get("from")
-        if from_clause is not None:
-            if not isinstance(from_clause.this, Table):
-                return
+        # Only remove aliases if there is a table in the FROM clause as opposed
+        # to a subquery.
+        if from_clause is not None and isinstance(from_clause.this, Table):
             # Table(this=Identifier(this=..),..)
             table = from_clause.this
-            actual_table_name = table.name
+            # actual_table_name = table.name
             # Table(this=..,alias=TableAlias(this=Identifier(this=..)))
             alias = table.alias
-            if str(actual_table_name) == str(alias):
-                # Remove cases like `..FROM t1 as t1..`
+            if len(alias) != 0:  # alias exists for the table
+                # Remove cases like `..FROM t1 as t1..` or `..FROM t1 as t2..`
+                # to get `..FROM t1..`.
                 table.args.pop("alias")
 
                 # "Scope" represents the current context of a Select statement.
@@ -220,6 +223,17 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
                 for column in find_all_in_scope(expr, Column):
                     for part in column.parts[:-1]:
                         part.pop()
+
+    # Remove aliases from the SELECT expressions if the alias is the same
+    # as the column name.
+    if isinstance(expr, Select) and expr.args.get("expressions") is not None:
+        for i in range(len(expr.expressions)):
+            cur_expr = expr.expressions[i]
+            if isinstance(cur_expr, Alias) and isinstance(
+                cur_expr.args.get("this"), Column
+            ):
+                if cur_expr.alias == cur_expr.this.name:
+                    expr.expressions[i] = cur_expr.this
 
     # Recursively visit the AST.
     for arg in expr.args.values():
