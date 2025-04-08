@@ -1,27 +1,14 @@
-SELECT
-  uid,
-  marketing_opt_in
-FROM (
-  SELECT
-    uid
-  FROM main.users
-)
-INNER JOIN (
+WITH _t0_2 AS (
   SELECT
     marketing_opt_in,
     user_id
-  FROM (
-    SELECT
-      *
-    FROM (
-      SELECT
-        created_at,
-        marketing_opt_in,
-        user_id
-      FROM main.user_setting_snapshot
-    )
-    QUALIFY
-      ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC NULLS FIRST) = 1
-  )
+  FROM main.user_setting_snapshot
+  QUALIFY
+    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC NULLS FIRST) = 1
 )
-  ON uid = user_id
+SELECT
+  users.uid,
+  _t0.marketing_opt_in
+FROM main.users AS users
+JOIN _t0_2 AS _t0
+  ON _t0.user_id = users.uid

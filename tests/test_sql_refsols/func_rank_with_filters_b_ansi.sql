@@ -1,26 +1,14 @@
+WITH _t1 AS (
+  SELECT
+    RANK() OVER (ORDER BY a) AS r,
+    a,
+    b
+  FROM table
+)
 SELECT
   a,
   b,
   r
-FROM (
-  SELECT
-    a,
-    b,
-    r
-  FROM (
-    SELECT
-      RANK() OVER (ORDER BY a) AS r,
-      a,
-      b
-    FROM (
-      SELECT
-        a,
-        b
-      FROM table
-    )
-  )
-  WHERE
-    r >= 3
-)
+FROM _t1
 WHERE
-  b = 0
+  b = 0 AND r >= 3

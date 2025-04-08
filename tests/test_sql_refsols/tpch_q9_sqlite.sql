@@ -1,142 +1,45 @@
-SELECT
-  NATION,
-  O_YEAR,
-  AMOUNT
-FROM (
+WITH _t2_2 AS (
   SELECT
-    AMOUNT,
-    NATION,
-    O_YEAR,
-    ordering_1,
-    ordering_2
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS AMOUNT,
-      nation_name AS NATION,
-      nation_name AS ordering_1,
-      o_year AS O_YEAR,
-      o_year AS ordering_2
-    FROM (
-      SELECT
-        SUM(value) AS agg_0,
-        nation_name,
-        o_year
-      FROM (
-        SELECT
-          CAST(STRFTIME('%Y', order_date) AS INTEGER) AS o_year,
-          (
-            extended_price * (
-              1 - discount
-            )
-          ) - (
-            supplycost * quantity
-          ) AS value,
-          nation_name
-        FROM (
-          SELECT
-            discount,
-            extended_price,
-            nation_name,
-            order_date,
-            quantity,
-            supplycost
-          FROM (
-            SELECT
-              discount,
-              extended_price,
-              nation_name,
-              order_key,
-              quantity,
-              supplycost
-            FROM (
-              SELECT
-                nation_name,
-                part_key,
-                supplier_key,
-                supplycost
-              FROM (
-                SELECT
-                  nation_name,
-                  part_key,
-                  supplier_key,
-                  supplycost
-                FROM (
-                  SELECT
-                    _table_alias_1.key AS key_2,
-                    nation_name
-                  FROM (
-                    SELECT
-                      n_name AS nation_name,
-                      n_nationkey AS key
-                    FROM tpch.NATION
-                  ) AS _table_alias_0
-                  INNER JOIN (
-                    SELECT
-                      s_suppkey AS key,
-                      s_nationkey AS nation_key
-                    FROM tpch.SUPPLIER
-                  ) AS _table_alias_1
-                    ON _table_alias_0.key = nation_key
-                )
-                INNER JOIN (
-                  SELECT
-                    ps_partkey AS part_key,
-                    ps_suppkey AS supplier_key,
-                    ps_supplycost AS supplycost
-                  FROM tpch.PARTSUPP
-                )
-                  ON key_2 = supplier_key
-              )
-              INNER JOIN (
-                SELECT
-                  key
-                FROM (
-                  SELECT
-                    p_name AS name,
-                    p_partkey AS key
-                  FROM tpch.PART
-                )
-                WHERE
-                  name LIKE '%green%'
-              )
-                ON part_key = key
-            ) AS _table_alias_2
-            INNER JOIN (
-              SELECT
-                l_discount AS discount,
-                l_extendedprice AS extended_price,
-                l_orderkey AS order_key,
-                l_partkey AS part_key,
-                l_quantity AS quantity,
-                l_suppkey AS supplier_key
-              FROM tpch.LINEITEM
-            ) AS _table_alias_3
-              ON (
-                _table_alias_2.part_key = _table_alias_3.part_key
-              )
-              AND (
-                _table_alias_2.supplier_key = _table_alias_3.supplier_key
-              )
-          )
-          LEFT JOIN (
-            SELECT
-              o_orderkey AS key,
-              o_orderdate AS order_date
-            FROM tpch.ORDERS
-          )
-            ON order_key = key
-        )
-      )
-      GROUP BY
-        nation_name,
-        o_year
-    )
-  )
+    SUM(
+      lineitem.l_extendedprice * (
+        1 - lineitem.l_discount
+      ) - partsupp.ps_supplycost * lineitem.l_quantity
+    ) AS agg_0,
+    nation.n_name AS nation_name,
+    CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) AS o_year
+  FROM tpch.nation AS nation
+  JOIN tpch.supplier AS supplier
+    ON nation.n_nationkey = supplier.s_nationkey
+  JOIN tpch.partsupp AS partsupp
+    ON partsupp.ps_suppkey = supplier.s_suppkey
+  JOIN tpch.part AS part
+    ON part.p_name LIKE '%green%' AND part.p_partkey = partsupp.ps_partkey
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_partkey = partsupp.ps_partkey
+    AND lineitem.l_suppkey = partsupp.ps_suppkey
+  LEFT JOIN tpch.orders AS orders
+    ON lineitem.l_orderkey = orders.o_orderkey
+  GROUP BY
+    nation.n_name,
+    CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER)
+), _t0_2 AS (
+  SELECT
+    COALESCE(agg_0, 0) AS amount,
+    nation_name AS nation,
+    o_year,
+    nation_name AS ordering_1,
+    o_year AS ordering_2
+  FROM _t2_2
   ORDER BY
     ordering_1,
     ordering_2 DESC
   LIMIT 10
 )
+SELECT
+  nation AS NATION,
+  o_year AS O_YEAR,
+  amount AS AMOUNT
+FROM _t0_2
 ORDER BY
   ordering_1,
   ordering_2 DESC

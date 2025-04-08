@@ -5,6 +5,7 @@ Utilities used for PyDough type checking.
 __all__ = [
     "AllowAny",
     "RequireArgRange",
+    "RequireCollection",
     "RequireMinArgs",
     "RequireNumArgs",
     "TypeVerifier",
@@ -141,8 +142,36 @@ class RequireArgRange(TypeVerifier):
         if not (self.low_range <= len(args) <= self.high_range):
             if error_on_fail:
                 raise PyDoughQDAGException(
-                    f"Expected between {self.low_range} and {self.high_range} arguments inclusive,"
+                    f"Expected between {self.low_range} and {self.high_range} arguments inclusive, "
                     f"received {len(args)}."
                 )
             return False
+        return True
+
+
+class RequireCollection(TypeVerifier):
+    """
+    Type verifier implementation class that requires a single argument to be a
+    collection.
+    """
+
+    def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
+        from pydough.qdag.collections import PyDoughCollectionQDAG
+        from pydough.qdag.errors import PyDoughQDAGException
+
+        if len(args) != 1:
+            if error_on_fail:
+                raise PyDoughQDAGException(
+                    f"Expected 1 collection argument, received {len(args)}."
+                )
+            else:
+                return False
+
+        if not isinstance(args[0], PyDoughCollectionQDAG):
+            if error_on_fail:
+                raise PyDoughQDAGException(
+                    "Expected a collection as an argument, received an expression"
+                )
+            else:
+                return False
         return True

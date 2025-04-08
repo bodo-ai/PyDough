@@ -182,80 +182,46 @@ def test_execute_df_logging(
     captured_output = output_capture.getvalue()
     required_op = """
 [INFO] pydough.sqlglot.execute_relational: SQL query:
- SELECT
-  L_RETURNFLAG,
-  L_LINESTATUS,
-  SUM_QTY,
-  SUM_BASE_PRICE,
-  SUM_DISC_PRICE,
-  SUM_CHARGE,
-  CAST(SUM_QTY AS REAL) / COUNT_ORDER AS AVG_QTY,
-  CAST(SUM_BASE_PRICE AS REAL) / COUNT_ORDER AS AVG_PRICE,
-  CAST(SUM_DISCOUNT AS REAL) / COUNT_ORDER AS AVG_DISC,
-  COUNT_ORDER
-FROM (
+ WITH _t0 AS (
   SELECT
-    COUNT() AS COUNT_ORDER,
-    SUM(L_DISCOUNT) AS SUM_DISCOUNT,
-    SUM(L_EXTENDEDPRICE) AS SUM_BASE_PRICE,
-    SUM(L_QUANTITY) AS SUM_QTY,
-    SUM(TEMP_COL0) AS SUM_DISC_PRICE,
-    SUM(TEMP_COL1) AS SUM_CHARGE,
-    L_LINESTATUS,
-    L_RETURNFLAG
-  FROM (
-    SELECT
-      TEMP_COL0 * (
-        1 + L_TAX
-      ) AS TEMP_COL1,
-      L_DISCOUNT,
-      L_EXTENDEDPRICE,
-      L_LINESTATUS,
-      L_QUANTITY,
-      L_RETURNFLAG,
-      TEMP_COL0
-    FROM (
-      SELECT
-        L_EXTENDEDPRICE * (
-          1 - L_DISCOUNT
-        ) AS TEMP_COL0,
-        L_DISCOUNT,
-        L_EXTENDEDPRICE,
-        L_LINESTATUS,
-        L_QUANTITY,
-        L_RETURNFLAG,
-        L_TAX
-      FROM (
-        SELECT
-          L_DISCOUNT,
-          L_EXTENDEDPRICE,
-          L_LINESTATUS,
-          L_QUANTITY,
-          L_RETURNFLAG,
-          L_TAX
-        FROM (
-          SELECT
-            L_DISCOUNT,
-            L_EXTENDEDPRICE,
-            L_LINESTATUS,
-            L_QUANTITY,
-            L_RETURNFLAG,
-            L_SHIPDATE,
-            L_TAX
-          FROM LINEITEM
-        )
-        WHERE
-          L_SHIPDATE <= '1998-12-01'
+    COUNT() AS count_order,
+    SUM(l_discount) AS sum_discount,
+    SUM(l_extendedprice) AS sum_base_price,
+    SUM(l_quantity) AS sum_qty,
+    SUM((
+      l_extendedprice * (
+        1 - l_discount
       )
-    )
-  )
+    )) AS sum_disc_price,
+    SUM(l_extendedprice * (
+      1 - l_discount
+    ) * (
+      1 + l_tax
+    )) AS sum_charge,
+    l_linestatus,
+    l_returnflag
+  FROM lineitem
+  WHERE
+    l_shipdate <= '1998-12-01'
   GROUP BY
-    L_LINESTATUS,
-    L_RETURNFLAG
+    l_linestatus,
+    l_returnflag
 )
+SELECT
+  l_returnflag AS L_RETURNFLAG,
+  l_linestatus AS L_LINESTATUS,
+  sum_qty AS SUM_QTY,
+  sum_base_price AS SUM_BASE_PRICE,
+  sum_disc_price AS SUM_DISC_PRICE,
+  sum_charge AS SUM_CHARGE,
+  CAST(sum_qty AS REAL) / count_order AS AVG_QTY,
+  CAST(sum_base_price AS REAL) / count_order AS AVG_PRICE,
+  CAST(sum_discount AS REAL) / count_order AS AVG_DISC,
+  count_order AS COUNT_ORDER
+FROM _t0
 ORDER BY
-  L_RETURNFLAG,
-  L_LINESTATUS
+  l_returnflag,
+  l_linestatus
 """
     assert required_op.strip() in captured_output.strip(), (
         f"'{required_op.strip()}' not found in captured output: {captured_output.strip()}"
