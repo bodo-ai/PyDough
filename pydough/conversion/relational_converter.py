@@ -595,10 +595,15 @@ class RelTranslation:
         )
         uniqueness: set[frozenset[str]] = set()
         for unique_set in node.collection.collection.unique_properties:
-            if isinstance(unique_set, str):
-                uniqueness.add(frozenset([unique_set]))
-            else:
-                uniqueness.add(frozenset(unique_set))
+            names: list[str] = (
+                [unique_set] if isinstance(unique_set, str) else unique_set
+            )
+            real_names: set[str] = set()
+            for name in names:
+                expr = scan_columns[name]
+                assert isinstance(expr, ColumnReference)
+                real_names.add(expr.name)
+            uniqueness.add(frozenset(real_names))
         answer = Scan(node.collection.collection.table_path, scan_columns, uniqueness)
         return TranslationOutput(answer, out_columns)
 
