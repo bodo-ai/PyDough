@@ -1,111 +1,44 @@
-SELECT
-  merchants_id,
-  merchant_registration_date,
-  earliest_coupon_start_date,
-  earliest_coupon_id
-FROM (
+WITH _t1 AS (
   SELECT
-    earliest_coupon_id,
-    earliest_coupon_start_date,
-    merchant_registration_date,
-    merchants_id,
+    merchant_id,
     start_date
-  FROM (
-    SELECT
-      _table_alias_0.mid AS mid,
-      agg_1 AS earliest_coupon_id,
-      earliest_coupon_start_date,
-      merchant_registration_date,
-      merchants_id
-    FROM (
-      SELECT
-        agg_0 AS earliest_coupon_start_date,
-        created_at AS merchant_registration_date,
-        mid AS merchants_id,
-        mid
-      FROM (
-        SELECT
-          created_at,
-          mid
-        FROM main.merchants
-      )
-      LEFT JOIN (
-        SELECT
-          MIN(start_date) AS agg_0,
-          merchant_id
-        FROM (
-          SELECT
-            merchant_id,
-            start_date
-          FROM main.coupons
-        )
-        GROUP BY
-          merchant_id
-      )
-        ON mid = merchant_id
-    ) AS _table_alias_0
-    LEFT JOIN (
-      SELECT
-        MAX(cid) AS agg_1,
-        mid
-      FROM (
-        SELECT
-          cid,
-          mid
-        FROM (
-          SELECT
-            cid,
-            earliest_coupon_start_date,
-            mid,
-            start_date
-          FROM (
-            SELECT
-              agg_0 AS earliest_coupon_start_date,
-              mid
-            FROM (
-              SELECT
-                mid
-              FROM main.merchants
-            )
-            LEFT JOIN (
-              SELECT
-                MIN(start_date) AS agg_0,
-                merchant_id
-              FROM (
-                SELECT
-                  merchant_id,
-                  start_date
-                FROM main.coupons
-              )
-              GROUP BY
-                merchant_id
-            )
-              ON mid = merchant_id
-          )
-          INNER JOIN (
-            SELECT
-              cid,
-              merchant_id,
-              start_date
-            FROM main.coupons
-          )
-            ON mid = merchant_id
-        )
-        WHERE
-          earliest_coupon_start_date = start_date
-      )
-      GROUP BY
-        mid
-    ) AS _table_alias_1
-      ON _table_alias_0.mid = _table_alias_1.mid
-  )
-  INNER JOIN (
-    SELECT
-      merchant_id,
-      start_date
-    FROM main.coupons
-  )
-    ON mid = merchant_id
+  FROM main.coupons
+), _t1_2 AS (
+  SELECT
+    MIN(start_date) AS agg_0,
+    merchant_id
+  FROM _t1
+  GROUP BY
+    merchant_id
+), _t3 AS (
+  SELECT
+    MIN(start_date) AS agg_0,
+    merchant_id
+  FROM _t1
+  GROUP BY
+    merchant_id
+), _t7 AS (
+  SELECT
+    MAX(coupons.cid) AS agg_1,
+    merchants.mid
+  FROM main.merchants AS merchants
+  LEFT JOIN _t3 AS _t3
+    ON _t3.merchant_id = merchants.mid
+  JOIN main.coupons AS coupons
+    ON _t3.agg_0 = coupons.start_date AND coupons.merchant_id = merchants.mid
+  GROUP BY
+    merchants.mid
 )
-WHERE
-  start_date <= DATETIME(merchant_registration_date, '1 year')
+SELECT
+  merchants.mid AS merchants_id,
+  merchants.created_at AS merchant_registration_date,
+  _t1.agg_0 AS earliest_coupon_start_date,
+  _t7.agg_1 AS earliest_coupon_id
+FROM main.merchants AS merchants
+LEFT JOIN _t1_2 AS _t1
+  ON _t1.merchant_id = merchants.mid
+LEFT JOIN _t7 AS _t7
+  ON _t7.mid = merchants.mid
+JOIN _t1 AS _t9
+  ON _t9.merchant_id = merchants.mid
+  AND _t9.start_date <= DATETIME(merchants.created_at, '1 year')

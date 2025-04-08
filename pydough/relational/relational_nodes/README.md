@@ -69,6 +69,10 @@ The relational_nodes module provides functionality to define and manage various 
 
 - `TreeStringVisitor`: Implementation of a visitor that converts relational nodes into a tree string.
 
+### [join_type_relational_visitor.py](join_type_relational_visitor.py)
+
+- `JoinTypeRelationalVisitor`: Implementation of a visitor that collects join types from a relational tree.
+
 ## Usage
 
 To use the relational_nodes module, you can import the necessary classes and call them with the appropriate arguments. For example:

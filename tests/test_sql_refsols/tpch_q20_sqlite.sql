@@ -1,129 +1,48 @@
-SELECT
-  S_NAME,
-  S_ADDRESS
-FROM (
+WITH _t5_2 AS (
   SELECT
-    S_ADDRESS,
-    S_NAME,
-    ordering_1
-  FROM (
-    SELECT
-      S_NAME AS ordering_1,
-      S_ADDRESS,
-      S_NAME
-    FROM (
-      SELECT
-        S_ADDRESS,
-        S_NAME,
-        agg_0,
-        name_3
-      FROM (
-        SELECT
-          _table_alias_0.key AS key,
-          name AS name_3,
-          S_ADDRESS,
-          S_NAME
-        FROM (
-          SELECT
-            s_address AS S_ADDRESS,
-            s_name AS S_NAME,
-            s_nationkey AS nation_key,
-            s_suppkey AS key
-          FROM tpch.SUPPLIER
-        ) AS _table_alias_0
-        LEFT JOIN (
-          SELECT
-            n_nationkey AS key,
-            n_name AS name
-          FROM tpch.NATION
-        ) AS _table_alias_1
-          ON nation_key = _table_alias_1.key
-      )
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
-          supplier_key
-        FROM (
-          SELECT
-            supplier_key
-          FROM (
-            SELECT
-              agg_0,
-              availqty,
-              supplier_key
-            FROM (
-              SELECT
-                availqty,
-                key,
-                supplier_key
-              FROM (
-                SELECT
-                  ps_availqty AS availqty,
-                  ps_partkey AS part_key,
-                  ps_suppkey AS supplier_key
-                FROM tpch.PARTSUPP
-              )
-              INNER JOIN (
-                SELECT
-                  key
-                FROM (
-                  SELECT
-                    p_name AS name,
-                    p_partkey AS key
-                  FROM tpch.PART
-                )
-                WHERE
-                  name LIKE 'forest%'
-              )
-                ON part_key = key
-            )
-            LEFT JOIN (
-              SELECT
-                SUM(quantity) AS agg_0,
-                part_key
-              FROM (
-                SELECT
-                  part_key,
-                  quantity
-                FROM (
-                  SELECT
-                    l_partkey AS part_key,
-                    l_quantity AS quantity,
-                    l_shipdate AS ship_date
-                  FROM tpch.LINEITEM
-                )
-                WHERE
-                  (
-                    ship_date < '1995-01-01'
-                  ) AND (
-                    ship_date >= '1994-01-01'
-                  )
-              )
-              GROUP BY
-                part_key
-            )
-              ON key = part_key
-          )
-          WHERE
-            availqty > (
-              COALESCE(agg_0, 0) * 0.5
-            )
-        )
-        GROUP BY
-          supplier_key
-      )
-        ON key = supplier_key
+    SUM(l_quantity) AS agg_0,
+    l_partkey AS part_key
+  FROM tpch.lineitem
+  WHERE
+    l_shipdate < '1995-01-01' AND l_shipdate >= '1994-01-01'
+  GROUP BY
+    l_partkey
+), _t7_2 AS (
+  SELECT
+    COUNT() AS agg_0,
+    partsupp.ps_suppkey AS supplier_key
+  FROM tpch.partsupp AS partsupp
+  JOIN tpch.part AS part
+    ON part.p_name LIKE 'forest%' AND part.p_partkey = partsupp.ps_partkey
+  LEFT JOIN _t5_2 AS _t5
+    ON _t5.part_key = part.p_partkey
+  WHERE
+    partsupp.ps_availqty > (
+      COALESCE(_t5.agg_0, 0) * 0.5
     )
-    WHERE
-      (
-        (
-          name_3 = 'CANADA'
-        ) AND COALESCE(agg_0, 0)
-      ) > 0
-  )
+  GROUP BY
+    partsupp.ps_suppkey
+), _t0_2 AS (
+  SELECT
+    supplier.s_address,
+    supplier.s_name,
+    supplier.s_name AS ordering_1
+  FROM tpch.supplier AS supplier
+  LEFT JOIN tpch.nation AS nation
+    ON nation.n_nationkey = supplier.s_nationkey
+  LEFT JOIN _t7_2 AS _t7
+    ON _t7.supplier_key = supplier.s_suppkey
+  WHERE
+    (
+      COALESCE(_t7.agg_0, 0) AND nation.n_name = 'CANADA'
+    ) > 0
   ORDER BY
     ordering_1
   LIMIT 10
 )
+SELECT
+  s_name AS S_NAME,
+  s_address AS S_ADDRESS
+FROM _t0_2
 ORDER BY
   ordering_1

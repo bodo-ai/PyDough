@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow on custom queries using the defog.ai
 schemas.
 """
 
+import re
 from collections.abc import Callable
 
 import pandas as pd
@@ -1316,8 +1317,7 @@ def test_pipeline_e2e_defog_custom(
         pytest.param(
             bad_round2,
             "Broker",
-            r"Invalid operator invocation 'ROUND\(high, -0.5, 2\)':"
-            " Expected between 1 and 2 arguments inclusive,received 3.",
+            "Invalid operator invocation 'ROUND(high, -0.5, 2)': Expected between 1 and 2 arguments inclusive, received 3.",
             id="bad_round2",
         ),
     ],
@@ -1334,7 +1334,7 @@ def test_defog_e2e_errors(
     a certain error is raised for defog database.
     """
     graph: GraphMetadata = defog_graphs(graph_name)
-    with pytest.raises(Exception, match=error_msg):
+    with pytest.raises(Exception, match=re.escape(error_msg)):
         root: UnqualifiedNode = init_pydough_context(graph)(impl)()
         to_sql(root, metadata=graph, database=sqlite_defog_connection)
 
@@ -1436,6 +1436,13 @@ def test_pipeline_e2e_defog_transaction_week(
         config=week_handling_config,
     )
 
+    to_sql(
+        root,
+        metadata=graph,
+        database=sqlite_defog_connection,
+        config=week_handling_config,
+    )
+
     # Generate expected DataFrame based on week_handling_config
     start_of_week = week_handling_config.start_of_week
     start_week_as_zero = week_handling_config.start_week_as_zero
@@ -1472,5 +1479,4 @@ def test_pipeline_e2e_defog_transaction_week(
             "dayofweek": expected_dayofweeks,
         }
     )
-
     pd.testing.assert_frame_equal(result, expected_df)

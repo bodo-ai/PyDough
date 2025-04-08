@@ -90,6 +90,34 @@ from pydough.qdag import AstNodeBuilder
             id="child_expr_dne",
         ),
         pytest.param(
+            TableCollectionInfo("Customers")
+            ** WhereInfo(
+                [SubCollectionInfo("orders")],
+                FunctionInfo(
+                    "HAS",
+                    [
+                        ChildReferenceExpressionInfo("order_date", 0),
+                    ],
+                ),
+            ),
+            "Invalid operator invocation 'HAS(orders.order_date)': Expected a collection as an argument, received an expression",
+            id="has_on_expression",
+        ),
+        pytest.param(
+            TableCollectionInfo("Customers")
+            ** WhereInfo(
+                [SubCollectionInfo("orders")],
+                FunctionInfo(
+                    "HASNOT",
+                    [
+                        ChildReferenceExpressionInfo("order_date", 0),
+                    ],
+                ),
+            ),
+            "Invalid operator invocation 'HASNOT(orders.order_date)': Expected a collection as an argument, received an expression",
+            id="hasnot_on_expression",
+        ),
+        pytest.param(
             TableCollectionInfo("Regions")
             ** CalculateInfo(
                 [SubCollectionInfo("nations")],
