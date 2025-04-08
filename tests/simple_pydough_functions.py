@@ -45,6 +45,20 @@ def order_info_per_priority():
     )
 
 
+def dumb_aggregation():
+    return Nations.TOP_K(2, by=name.ASC()).CALCULATE(
+        nation_name=name,
+        a1=MIN(region.name),
+        a2=MAX(region.name),
+        a3=SUM(region.key),
+        a4=COUNT(region.key),
+        a5=COUNT(region),
+        a6=AVG(region.key),
+        a7=ANYTHING(region.name),
+        a8=MEDIAN(region.key),
+    )
+
+
 def simple_collation():
     return (
         Suppliers.CALCULATE(

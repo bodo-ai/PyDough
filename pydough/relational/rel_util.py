@@ -4,9 +4,11 @@ A mixture of utility functions for relational nodes and expressions.
 
 __all__ = [
     "add_expr_uses",
+    "bubble_uniqueness",
     "build_filter",
     "contains_window",
     "false_when_null_columns",
+    "fetch_or_insert",
     "get_conjunctions",
     "only_references_columns",
     "partition_expressions",
@@ -415,3 +417,36 @@ def fetch_or_insert(
         new_name = f"expr_{idx}"
     dictionary[new_name] = value
     return new_name
+
+
+def bubble_uniqueness(
+    uniqueness: set[frozenset[str]], columns: dict[str, RelationalExpression]
+) -> set[frozenset[str]]:
+    """
+    Helper function that bubbles up the uniqueness information from the input
+    node to the output node.
+
+    Args:
+        `uniqueness`: the uniqueness information from the input node.
+        `columns`: the columns of the output node.
+
+    Returns:
+        The bubbled up uniqueness information.
+    """
+    output_uniqueness: set[frozenset[str]] = set()
+    reverse_mapping: dict[str, str] = {}
+    for name, col in columns.items():
+        if isinstance(col, ColumnReference):
+            reverse_mapping[col.name] = name
+    for unique_set in uniqueness:
+        can_add: bool = True
+        new_uniqueness_set: set[str] = set()
+        for col_name in unique_set:
+            if col_name in reverse_mapping:
+                new_uniqueness_set.add(reverse_mapping[col_name])
+            else:
+                can_add = False
+                break
+        if can_add:
+            output_uniqueness.add(frozenset(new_uniqueness_set))
+    return output_uniqueness

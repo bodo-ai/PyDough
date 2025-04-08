@@ -31,6 +31,7 @@ from simple_pydough_functions import (
     datetime_current,
     datetime_relative,
     double_partition,
+    dumb_aggregation,
     first_order_in_year,
     first_order_per_customer,
     function_sampler,
@@ -1276,6 +1277,27 @@ from pydough.unqualified import (
                 ),
             ),
             id="global_acctbal_breakdown",
+        ),
+        pytest.param(
+            (
+                dumb_aggregation,
+                None,
+                "dumb_aggregation",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["ALGERIA", "ARGENTINA"],
+                        "a1": ["AFRICA", "AMERICA"],
+                        "a2": ["AFRICA", "AMERICA"],
+                        "a3": [0, 1],
+                        "a4": [1, 1],
+                        "a5": [1, 1],
+                        "a6": [0.0, 1.0],
+                        "a7": ["AFRICA", "AMERICA"],
+                        "a8": [0.0, 1.0],
+                    }
+                ),
+            ),
+            id="dumb_aggregation",
         ),
     ],
 )
