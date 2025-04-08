@@ -1,4 +1,4 @@
-WITH _t1_2 AS (
+WITH _t1 AS (
   SELECT
     SUM(
       lineitem.l_extendedprice * (
@@ -27,7 +27,7 @@ SELECT
   nation_name AS NATION,
   o_year AS O_YEAR,
   COALESCE(agg_0, 0) AS AMOUNT
-FROM _t1_2
+FROM _t1
 ORDER BY
   nation,
   o_year DESC

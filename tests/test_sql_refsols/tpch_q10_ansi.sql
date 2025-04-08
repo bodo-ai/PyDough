@@ -1,4 +1,4 @@
-WITH _t3_2 AS (
+WITH _s3 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
@@ -16,15 +16,15 @@ WITH _t3_2 AS (
 SELECT
   customer.c_custkey AS C_CUSTKEY,
   customer.c_name AS C_NAME,
-  COALESCE(_t3.agg_0, 0) AS REVENUE,
+  COALESCE(_s3.agg_0, 0) AS REVENUE,
   customer.c_acctbal AS C_ACCTBAL,
   nation.n_name AS N_NAME,
   customer.c_address AS C_ADDRESS,
   customer.c_phone AS C_PHONE,
   customer.c_comment AS C_COMMENT
 FROM tpch.customer AS customer
-LEFT JOIN _t3_2 AS _t3
-  ON _t3.customer_key = customer.c_custkey
+LEFT JOIN _s3 AS _s3
+  ON _s3.customer_key = customer.c_custkey
 LEFT JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY

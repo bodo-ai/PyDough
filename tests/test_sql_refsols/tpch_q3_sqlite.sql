@@ -1,4 +1,4 @@
-WITH _t1_2 AS (
+WITH _t1 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
@@ -23,7 +23,7 @@ SELECT
   COALESCE(agg_0, 0) AS REVENUE,
   order_date AS O_ORDERDATE,
   ship_priority AS O_SHIPPRIORITY
-FROM _t1_2
+FROM _t1
 ORDER BY
   revenue DESC,
   o_orderdate,

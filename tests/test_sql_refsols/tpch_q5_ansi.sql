@@ -1,4 +1,4 @@
-WITH _t1_2 AS (
+WITH _t1 AS (
   SELECT
     ANY_VALUE(nation.n_name) AS agg_3,
     SUM(lineitem.l_extendedprice * (
@@ -27,6 +27,6 @@ WITH _t1_2 AS (
 SELECT
   agg_3 AS N_NAME,
   COALESCE(agg_0, 0) AS REVENUE
-FROM _t1_2
+FROM _t1
 ORDER BY
   revenue DESC

@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     COUNT(DISTINCT partsupp.ps_suppkey) AS supplier_count,
     part.p_brand,
@@ -24,7 +24,7 @@ SELECT
   p_type AS P_TYPE,
   p_size AS P_SIZE,
   supplier_count AS SUPPLIER_COUNT
-FROM _t0_2
+FROM _t0
 ORDER BY
   supplier_count DESC,
   p_brand,

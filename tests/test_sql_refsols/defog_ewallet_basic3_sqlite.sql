@@ -5,24 +5,24 @@ WITH _t0 AS (
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
   WHERE
     wallet_transactions_daily.receiver_type = 1
-), _t1 AS (
+), _s1 AS (
   SELECT
     _t0.receiver_id AS receiver_id
   FROM _t0 AS _t0
-), _t0_2 AS (
+), _s0 AS (
   SELECT
     merchants.mid AS merchant,
     merchants.mid AS mid
   FROM main.merchants AS merchants
 )
 SELECT
-  _t0.merchant AS merchant
-FROM _t0_2 AS _t0
+  _s0.merchant AS merchant
+FROM _s0 AS _s0
 WHERE
   EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1 AS _t1
+    FROM _s1 AS _s1
     WHERE
-      _t0.mid = _t1.receiver_id
+      _s0.mid = _s1.receiver_id
   )

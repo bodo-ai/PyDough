@@ -16,7 +16,7 @@ WITH _t5 AS (
   FROM _t5
   GROUP BY
     supplier_key
-), _t2_2 AS (
+), _s2 AS (
   SELECT
     MAX(COALESCE(_t2.agg_0, 0)) AS max_revenue
   FROM tpch.supplier AS supplier
@@ -38,10 +38,10 @@ SELECT
   supplier.s_address AS S_ADDRESS,
   supplier.s_phone AS S_PHONE,
   COALESCE(_t6.agg_1, 0) AS TOTAL_REVENUE
-FROM _t2_2 AS _t2
+FROM _s2 AS _s2
 CROSS JOIN tpch.supplier AS supplier
 JOIN _t6 AS _t6
-  ON _t2.max_revenue = COALESCE(_t6.agg_1, 0)
+  ON _s2.max_revenue = COALESCE(_t6.agg_1, 0)
   AND _t6.supplier_key = supplier.s_suppkey
 ORDER BY
   s_suppkey

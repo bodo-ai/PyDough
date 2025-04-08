@@ -1,4 +1,4 @@
-WITH _t3_2 AS (
+WITH _s3 AS (
   SELECT
     COUNT() AS agg_0,
     sbcustomer.sbcustid AS _id
@@ -13,10 +13,10 @@ WITH _t3_2 AS (
 SELECT
   sbcustomer.sbcustid AS _id,
   sbcustomer.sbcustname AS name,
-  COALESCE(_t3.agg_0, 0) AS num_transactions
+  COALESCE(_s3.agg_0, 0) AS num_transactions
 FROM main.sbcustomer AS sbcustomer
-LEFT JOIN _t3_2 AS _t3
-  ON _t3._id = sbcustomer.sbcustid
+LEFT JOIN _s3 AS _s3
+  ON _s3._id = sbcustomer.sbcustid
 ORDER BY
   num_transactions DESC
 LIMIT 1

@@ -1,4 +1,4 @@
-WITH _t1_2 AS (
+WITH _t1 AS (
   SELECT
     SUM(
       (
@@ -27,6 +27,6 @@ SELECT
   ship_mode AS L_SHIPMODE,
   COALESCE(agg_0, 0) AS HIGH_LINE_COUNT,
   COALESCE(agg_1, 0) AS LOW_LINE_COUNT
-FROM _t1_2
+FROM _t1
 ORDER BY
   l_shipmode

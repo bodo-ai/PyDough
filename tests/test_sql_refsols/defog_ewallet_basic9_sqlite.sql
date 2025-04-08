@@ -1,4 +1,4 @@
-WITH _t1_2 AS (
+WITH _t1 AS (
   SELECT
     COUNT(DISTINCT wallet_transactions_daily.sender_id) AS agg_1,
     SUM(wallet_transactions_daily.amount) AS agg_0,
@@ -15,7 +15,7 @@ SELECT
   country,
   agg_1 AS user_count,
   COALESCE(agg_0, 0) AS total_amount
-FROM _t1_2
+FROM _t1
 ORDER BY
   total_amount DESC
 LIMIT 5

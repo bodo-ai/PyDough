@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     SUM(
       (
@@ -20,7 +20,7 @@ SELECT
   users.uid,
   COALESCE(_t0.agg_0, 0) AS total_duration
 FROM main.users AS users
-JOIN _t0_2 AS _t0
+JOIN _t0 AS _t0
   ON _t0.user_id = users.uid
 ORDER BY
   total_duration DESC

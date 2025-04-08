@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     COUNT(DISTINCT coupon_id) AS agg_0,
     COUNT(DISTINCT txid) AS agg_1,
@@ -15,5 +15,5 @@ SELECT
     _t0.agg_0 * 1.0
   ) / _t0.agg_1 AS CPUR
 FROM main.merchants AS merchants
-JOIN _t0_2 AS _t0
+JOIN _t0 AS _t0
   ON _t0.receiver_id = merchants.mid
