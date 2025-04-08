@@ -1190,14 +1190,17 @@ def optimize_relational_tree(
     # happens underneath the join.
     root = confirm_root(split_partial_aggregates(root, configs))
 
-    # Step 4: delete aggregations that are inferred to be redundant due to
+    # Step 4: re-run projection merging.
+    root = confirm_root(merge_projects(root))
+
+    # Step 5: delete aggregations that are inferred to be redundant due to
     # operating on already unique data.
     root = remove_redundant_aggs(root)
 
-    # Step 5: re-run projection merging.
+    # Step 6: re-run projection merging.
     root = confirm_root(merge_projects(root))
 
-    # Step 6: prune unused columns
+    # Step 7: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
 
     return root

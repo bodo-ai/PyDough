@@ -7,6 +7,7 @@ __all__ = [
     "bubble_uniqueness",
     "build_filter",
     "contains_window",
+    "extract_equijoin_keys",
     "false_when_null_columns",
     "fetch_or_insert",
     "get_conjunctions",
@@ -392,6 +393,52 @@ def add_expr_uses(
             add_expr_uses(order_arg.expr, n_uses, False)
 
 
+def extract_equijoin_keys(
+    join: Join,
+) -> tuple[list[ColumnReference], list[ColumnReference]]:
+    """
+    Extracts the equi-join keys from a join condition with two inputs.
+
+    Args:
+        `join`: the Join node whose condition is being parsed.
+
+    Returns:
+        A tuple where the first element are the equi-join keys from the LHS,
+        and the second is a list of the the corresponding RHS keys.
+    """
+    assert len(join.inputs) == 2
+    lhs_keys: list[ColumnReference] = []
+    rhs_keys: list[ColumnReference] = []
+    stack: list[RelationalExpression] = [*join.conditions]
+    lhs_name: str | None = join.default_input_aliases[0]
+    rhs_name: str | None = join.default_input_aliases[1]
+    while stack:
+        condition: RelationalExpression = stack.pop()
+        if isinstance(condition, CallExpression):
+            if condition.op == pydop.BAN:
+                stack.extend(condition.inputs)
+            elif condition.op == pydop.EQU and len(condition.inputs) == 2:
+                lhs_input: RelationalExpression = condition.inputs[0]
+                rhs_input: RelationalExpression = condition.inputs[1]
+                if isinstance(lhs_input, ColumnReference) and isinstance(
+                    rhs_input, ColumnReference
+                ):
+                    if (
+                        lhs_input.input_name == lhs_name
+                        and rhs_input.input_name == rhs_name
+                    ):
+                        lhs_keys.append(lhs_input)
+                        rhs_keys.append(rhs_input)
+                    elif (
+                        lhs_input.input_name == rhs_name
+                        and rhs_input.input_name == lhs_name
+                    ):
+                        lhs_keys.append(rhs_input)
+                        rhs_keys.append(lhs_input)
+
+    return lhs_keys, rhs_keys
+
+
 def fetch_or_insert(
     dictionary: dict[str, RelationalExpression], value: RelationalExpression
 ) -> str:
@@ -420,7 +467,9 @@ def fetch_or_insert(
 
 
 def bubble_uniqueness(
-    uniqueness: set[frozenset[str]], columns: dict[str, RelationalExpression]
+    uniqueness: set[frozenset[str]],
+    columns: dict[str, RelationalExpression],
+    input_name: str | None,
 ) -> set[frozenset[str]]:
     """
     Helper function that bubbles up the uniqueness information from the input
@@ -429,6 +478,7 @@ def bubble_uniqueness(
     Args:
         `uniqueness`: the uniqueness information from the input node.
         `columns`: the columns of the output node.
+        `input_name`: the name of the input node to bubble from.
 
     Returns:
         The bubbled up uniqueness information.
@@ -436,7 +486,7 @@ def bubble_uniqueness(
     output_uniqueness: set[frozenset[str]] = set()
     reverse_mapping: dict[str, str] = {}
     for name, col in columns.items():
-        if isinstance(col, ColumnReference):
+        if isinstance(col, ColumnReference) and col.input_name == input_name:
             reverse_mapping[col.name] = name
     for unique_set in uniqueness:
         can_add: bool = True

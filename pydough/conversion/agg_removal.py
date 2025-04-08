@@ -13,6 +13,7 @@ from pydough.relational import (
     EmptySingleton,
     Filter,
     Join,
+    JoinType,
     Limit,
     LiteralExpression,
     Project,
@@ -23,6 +24,7 @@ from pydough.relational import (
 )
 from pydough.relational.rel_util import (
     bubble_uniqueness,
+    extract_equijoin_keys,
 )
 from pydough.types import BooleanType, Int64Type
 
@@ -73,6 +75,146 @@ def delete_aggregation(agg: Aggregate) -> RelationalNode:
     return Project(agg.input, projection_cols)
 
 
+def deduce_join_uniqueness(
+    join: Join, input_unique_sets: list[set[frozenset[str]]]
+) -> set[frozenset[str]]:
+    """
+    Infers the unique column sets of a join based on its join condition and the
+    uniqueness sets of its inputs.
+    """
+    # Reject unless doing a join on two inputs.
+    if len(join.inputs) != 2:
+        return set()
+
+    lhs_unique, rhs_unique = input_unique_sets
+
+    join.conditions[0]
+
+    # If doing a semi/anti join, just use the LHS uniqueness.
+    if join.join_types[0] in (JoinType.SEMI, JoinType.ANTI):
+        return bubble_uniqueness(
+            lhs_unique, join.columns, join.default_input_aliases[0]
+        )
+
+    lhs_pairs: set[frozenset[tuple[bool, str]]] = {
+        frozenset({(True, k) for k in unique_set}) for unique_set in lhs_unique
+    }
+    rhs_pairs: set[frozenset[tuple[bool, str]]] = {
+        frozenset({(False, k) for k in unique_set}) for unique_set in rhs_unique
+    }
+
+    result_pairs: set[frozenset[tuple[bool, str]]] = set()
+    for lhs_set in lhs_pairs:
+        for rhs_set in rhs_pairs:
+            result_pairs.add(lhs_set | rhs_set)
+
+    remappings: dict[tuple[bool, str], set[tuple[bool, str]]] = {}
+    lhs_keys, rhs_keys = extract_equijoin_keys(join)
+    for lhs_key, rhs_key in zip(lhs_keys, rhs_keys):
+        remappings[(True, lhs_key.name)] = remappings.get((True, lhs_key.name), set())
+        remappings[(True, lhs_key.name)].add((False, rhs_key.name))
+        remappings[(False, rhs_key.name)] = remappings.get((False, rhs_key.name), set())
+        remappings[(False, rhs_key.name)].add((True, lhs_key.name))
+
+    new_result_pairs: set[frozenset[tuple[bool, str]]]
+    for remapping_key in remappings:
+        new_result_pairs = set(result_pairs)
+        for pair_set in result_pairs:
+            if remapping_key in pair_set:
+                for alternate in remappings[remapping_key]:
+                    new_result_pairs.add(
+                        pair_set.difference({remapping_key}).union({alternate})
+                    )
+        # print("$$$", result_pairs, new_result_pairs)
+        result_pairs = new_result_pairs
+
+    new_result_pairs = set(result_pairs)
+    for pair_set in result_pairs:
+        if all(is_lhs for is_lhs, _ in pair_set):
+            for lhs_pair_set in lhs_pairs:
+                if pair_set.issuperset(lhs_pair_set):
+                    new_result_pairs.discard(pair_set)
+                    new_result_pairs.add(lhs_pair_set)
+        if all(not is_lhs for is_lhs, _ in pair_set):
+            for rhs_pair_set in rhs_pairs:
+                if pair_set.issuperset(rhs_pair_set):
+                    new_result_pairs.discard(pair_set)
+                    new_result_pairs.add(rhs_pair_set)
+
+    # print("@@@", result_pairs, new_result_pairs)
+    result_pairs = new_result_pairs
+
+    result: set[frozenset[str]] = set()
+    for unique_set in result_pairs:
+        if len(unique_set) == 0:
+            result.add(frozenset())
+        lhs_elem_names: set[str] = {k for is_lhs, k in unique_set if is_lhs}
+        rhs_elem_names: set[str] = {k for is_lhs, k in unique_set if not is_lhs}
+        new_lhs_elems: set[frozenset[str]]
+
+        if len(lhs_elem_names) > 0:
+            new_lhs_elems = bubble_uniqueness(
+                {frozenset(lhs_elem_names)}, join.columns, join.default_input_aliases[0]
+            )
+            if len(new_lhs_elems) == 0:
+                continue
+        else:
+            new_lhs_elems = set()
+        if len(rhs_elem_names) > 0:
+            new_rhs_elems = bubble_uniqueness(
+                {frozenset(rhs_elem_names)}, join.columns, join.default_input_aliases[1]
+            )
+            if len(new_rhs_elems) == 0:
+                continue
+        else:
+            new_rhs_elems = set()
+        # print(">>>", new_lhs_elems, new_rhs_elems, len(lhs_elem_names), len(rhs_elem_names))
+        if len(new_lhs_elems) == len(lhs_elem_names) and len(new_rhs_elems) == len(
+            rhs_elem_names
+        ):
+            assert len(new_lhs_elems) <= 1 and len(new_rhs_elems) <= 1
+            new_set: frozenset[str] = frozenset()
+            if len(new_lhs_elems) > 0:
+                new_set = new_set.union(new_lhs_elems.pop())
+            if len(new_rhs_elems) > 0:
+                new_set = new_set.union(new_rhs_elems.pop())
+            result.add(new_set)
+
+    # print()
+    # print(condition.to_string(compact=True))
+    # print(lhs_unique, rhs_unique)
+    # print(result_pairs)
+    # print(result)
+    # print(remappings)
+    # print()
+
+    return result
+
+
+def include_isomorphisms(
+    unique_sets: set[frozenset[str]],
+    isomorphisms: dict[str, set[str]],
+) -> set[frozenset[str]]:
+    """
+    TODO: ADD COMMENTS
+    """
+    combined: set[str] = set()
+    for unique_set in unique_sets:
+        combined.update(unique_set)
+    if len(unique_sets) > 0 and len(isomorphisms) > 0:
+        for name, aliases in isomorphisms.items():
+            if name in combined:
+                new_unique_sets: set[frozenset[str]] = set(unique_sets)
+                for unique_set in unique_sets:
+                    if name in unique_set:
+                        for alias in aliases:
+                            new_unique_sets.add(
+                                unique_set.difference({name}).union({alias})
+                            )
+                unique_sets = new_unique_sets
+    return unique_sets
+
+
 def aggregation_uniqueness_helper(
     node: RelationalNode,
 ) -> tuple[RelationalNode, set[frozenset[str]]]:
@@ -93,10 +235,24 @@ def aggregation_uniqueness_helper(
     # TODO: ADD COMMENTS
     match node:
         case Scan():
-            return node, bubble_uniqueness(node.unique_sets, node.columns)
+            return node, bubble_uniqueness(node.unique_sets, node.columns, None)
         case Filter() | Project() | Limit() | RelationalRoot():
             node._input, input_uniqueness = aggregation_uniqueness_helper(node.input)
-            return node, bubble_uniqueness(input_uniqueness, node.columns)
+            input_uniqueness = bubble_uniqueness(input_uniqueness, node.columns, None)
+            if isinstance(node, Project) and not node.is_identity():
+                isomorphisms: dict[str, set[str]] = {}
+                for name1, col1 in node.columns.items():
+                    for name2, col2 in node.columns.items():
+                        if name1 != name2 and col1 == col2:
+                            isomorphisms[name1] = isomorphisms.get(name1, set()).union(
+                                {name2}
+                            )
+                            isomorphisms[name2] = isomorphisms.get(name2, set()).union(
+                                {name1}
+                            )
+                input_uniqueness = include_isomorphisms(input_uniqueness, isomorphisms)
+            # print("<---", input_uniqueness)
+            return node, input_uniqueness
         case Aggregate():
             node._input, input_uniqueness = aggregation_uniqueness_helper(node.input)
             agg_keys: frozenset[str] = frozenset(node.keys)
@@ -106,9 +262,13 @@ def aggregation_uniqueness_helper(
                     break
             return node, {agg_keys}
         case Join():
+            unique_sets: list[set[frozenset[str]]] = []
             for idx, input_node in enumerate(node.inputs):
-                node.inputs[idx], _ = aggregation_uniqueness_helper(input_node)
-            return node, set()
+                node.inputs[idx], input_uniqueness = aggregation_uniqueness_helper(
+                    input_node
+                )
+                unique_sets.append(input_uniqueness)
+            return node, deduce_join_uniqueness(node, unique_sets)
         case EmptySingleton():
             return node, set()
         case _:
