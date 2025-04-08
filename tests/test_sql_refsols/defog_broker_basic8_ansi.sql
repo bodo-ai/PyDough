@@ -1,15 +1,15 @@
-WITH "_t1" AS (
+WITH _t1 AS (
   SELECT
-    COUNT() AS "agg_0",
-    "sbcustomer"."sbcustcountry" AS "country"
-  FROM "main"."sbcustomer" AS "sbcustomer"
+    COUNT() AS agg_0,
+    sbcustcountry AS country
+  FROM main.sbcustomer
   GROUP BY
-    "sbcustomer"."sbcustcountry"
+    sbcustcountry
 )
 SELECT
-  "_t1"."country" AS "country",
-  COALESCE("_t1"."agg_0", 0) AS "num_customers"
-FROM "_t1" AS "_t1"
+  country,
+  COALESCE(agg_0, 0) AS num_customers
+FROM _t1
 ORDER BY
-  "num_customers" DESC
+  num_customers DESC
 LIMIT 5

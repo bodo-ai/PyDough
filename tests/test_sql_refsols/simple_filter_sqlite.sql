@@ -1,7 +1,7 @@
 SELECT
-  "orders"."o_orderdate" AS "order_date",
-  "orders"."o_orderkey" AS "o_orderkey",
-  "orders"."o_totalprice" AS "o_totalprice"
-FROM "tpch"."orders" AS "orders"
+  o_orderdate AS order_date,
+  o_orderkey,
+  o_totalprice
+FROM tpch.orders
 WHERE
-  "orders"."o_totalprice" < 1000.0
+  o_totalprice < 1000.0

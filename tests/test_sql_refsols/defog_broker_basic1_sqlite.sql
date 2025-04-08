@@ -1,32 +1,32 @@
-WITH "_t2" AS (
+WITH _s2 AS (
   SELECT DISTINCT
-    "sbcustomer"."sbcustcountry" AS "country"
-  FROM "main"."sbcustomer" AS "sbcustomer"
-), "_t1_2" AS (
+    sbcustcountry AS country
+  FROM main.sbcustomer
+), _s1 AS (
   SELECT
-    COUNT() AS "agg_0",
-    SUM("sbtransaction"."sbtxamount") AS "agg_1",
-    "sbtransaction"."sbtxcustid" AS "customer_id"
-  FROM "main"."sbtransaction" AS "sbtransaction"
+    COUNT() AS agg_0,
+    SUM(sbtxamount) AS agg_1,
+    sbtxcustid AS customer_id
+  FROM main.sbtransaction
   WHERE
-    "sbtransaction"."sbtxdatetime" >= DATE(DATETIME('now', '-30 day'), 'start of day')
+    sbtxdatetime >= DATE(DATETIME('now', '-30 day'), 'start of day')
   GROUP BY
-    "sbtransaction"."sbtxcustid"
-), "_t3_2" AS (
+    sbtxcustid
+), _s3 AS (
   SELECT
-    SUM("_t1"."agg_0") AS "agg_0",
-    SUM("_t1"."agg_1") AS "agg_1",
-    "sbcustomer"."sbcustcountry" AS "country"
-  FROM "main"."sbcustomer" AS "sbcustomer"
-  JOIN "_t1_2" AS "_t1"
-    ON "_t1"."customer_id" = "sbcustomer"."sbcustid"
+    SUM(_s1.agg_0) AS agg_0,
+    SUM(_s1.agg_1) AS agg_1,
+    sbcustomer.sbcustcountry AS country
+  FROM main.sbcustomer AS sbcustomer
+  JOIN _s1 AS _s1
+    ON _s1.customer_id = sbcustomer.sbcustid
   GROUP BY
-    "sbcustomer"."sbcustcountry"
+    sbcustomer.sbcustcountry
 )
 SELECT
-  "_t2"."country" AS "country",
-  COALESCE("_t3"."agg_0", 0) AS "num_transactions",
-  COALESCE("_t3"."agg_1", 0) AS "total_amount"
-FROM "_t2" AS "_t2"
-LEFT JOIN "_t3_2" AS "_t3"
-  ON "_t2"."country" = "_t3"."country"
+  _s2.country,
+  COALESCE(_s3.agg_0, 0) AS num_transactions,
+  COALESCE(_s3.agg_1, 0) AS total_amount
+FROM _s2 AS _s2
+LEFT JOIN _s3 AS _s3
+  ON _s2.country = _s3.country

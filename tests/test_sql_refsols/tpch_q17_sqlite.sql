@@ -1,24 +1,24 @@
-WITH "_t1" AS (
+WITH _s1 AS (
   SELECT
-    AVG("lineitem"."l_quantity") AS "agg_0",
-    "lineitem"."l_partkey" AS "part_key"
-  FROM "tpch"."lineitem" AS "lineitem"
+    AVG(l_quantity) AS agg_0,
+    l_partkey AS part_key
+  FROM tpch.lineitem
   GROUP BY
-    "lineitem"."l_partkey"
-), "_t0_2" AS (
+    l_partkey
+), _t0 AS (
   SELECT
-    SUM("lineitem"."l_extendedprice") AS "agg_0"
-  FROM "tpch"."part" AS "part"
-  LEFT JOIN "_t1" AS "_t1"
-    ON "_t1"."part_key" = "part"."p_partkey"
-  JOIN "tpch"."lineitem" AS "lineitem"
-    ON "lineitem"."l_partkey" = "part"."p_partkey"
-    AND "lineitem"."l_quantity" < (
-      0.2 * "_t1"."agg_0"
+    SUM(lineitem.l_extendedprice) AS agg_0
+  FROM tpch.part AS part
+  LEFT JOIN _s1 AS _s1
+    ON _s1.part_key = part.p_partkey
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_partkey = part.p_partkey
+    AND lineitem.l_quantity < (
+      0.2 * _s1.agg_0
     )
   WHERE
-    "part"."p_brand" = 'Brand#23' AND "part"."p_container" = 'MED BOX'
+    part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
 )
 SELECT
-  CAST(COALESCE("_t0"."agg_0", 0) AS REAL) / 7.0 AS "AVG_YEARLY"
-FROM "_t0_2" AS "_t0"
+  CAST(COALESCE(agg_0, 0) AS REAL) / 7.0 AS AVG_YEARLY
+FROM _t0

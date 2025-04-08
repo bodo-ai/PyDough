@@ -1,12 +1,12 @@
 SELECT
-  DATE("sbtransaction"."sbtxdatetime", 'start of month') AS "month",
-  AVG("sbtransaction"."sbtxprice") AS "avg_price"
-FROM "main"."sbtransaction" AS "sbtransaction"
+  DATE(sbtxdatetime, 'start of month') AS month,
+  AVG(sbtxprice) AS avg_price
+FROM main.sbtransaction
 WHERE
-  "sbtransaction"."sbtxdatetime" <= '2023-03-31'
-  AND "sbtransaction"."sbtxdatetime" >= '2023-01-01'
-  AND "sbtransaction"."sbtxstatus" = 'success'
+  sbtxdatetime <= '2023-03-31'
+  AND sbtxdatetime >= '2023-01-01'
+  AND sbtxstatus = 'success'
 GROUP BY
-  DATE("sbtransaction"."sbtxdatetime", 'start of month')
+  DATE(sbtxdatetime, 'start of month')
 ORDER BY
-  "month"
+  month

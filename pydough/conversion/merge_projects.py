@@ -42,7 +42,15 @@ def merging_doesnt_create_convolution(
 
 def project_join_transpose(project: Project) -> RelationalNode:
     """
-    TODO ADD DOCSTRING
+    Pushes a projection down into the inputs of a join if possible.
+
+    Args:
+        `project`: The project to be pushed down, which must be on top of a
+        join.
+
+    Returns:
+        The modified join with the pushed down project, or the original project
+        if it cannot be pushed down.
     """
     if any(contains_window(expr) for expr in project.columns.values()):
         # If the project contains window functions, do not push it down
@@ -103,41 +111,59 @@ def project_join_transpose(project: Project) -> RelationalNode:
             input_ref.name, input_ref.data_type
         )
 
+    # The new columns of the join.
     new_columns: dict[str, RelationalExpression] = {}
 
-    # TODO: ADD COMMENTS
+    # For each join input, place all of the columns used from that input into
+    # a join.
     for idx, join_input in enumerate(join.inputs):
         input_name: str | None = join.default_input_aliases[idx]
         new_input_cols: dict[str, RelationalExpression] = new_input_col_sets[idx]
         for name, expr in pushable_columns[idx]:
             input_expr_name: str = name
             counter: int = 0
-            # TODO: ADD COMMENTS
+            # If the name already exists, create a new name for the column
+            # expression in the new projection that will be part of the input.
             while input_expr_name in new_input_cols:
                 if expr == new_input_cols[name]:
                     break
                 input_expr_name += f"_{counter}"
                 counter += 1
-            # TODO: ADD COMMENTS
+            # Add the expression to the projection for the referenced input,
+            # and a reference to the new column in the join's columns.
             new_input_cols[input_expr_name] = transpose_expression(expr, join.columns)
             new_columns[name] = ColumnReference(
                 input_expr_name, expr.data_type, input_name=input_name
             )
-        # TODO: ADD COMMENTS
+        # Create the projection on top of the join's input, unless the
+        # projection would be a no-op
         if new_input_cols != join_input.columns:
             join.inputs[idx] = Project(join_input, new_input_cols)
 
+    # Replace the original columns with the new columns.
     join._columns = new_columns
     return join
 
 
 def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
     """
-    TODO ADD DOCSTRING
+    Attempts to merge the projection input of a root/projection node into it,
+    repeatedly if possible, or returns the original node if not possible. At
+    the end, if the node is a project on top of a scan that only does
+    column pruning/renaming, it is pushed into the scan.
+
+    Args:
+        `node`: The current node of the relational tree, which must be a root
+        or projection.
+
+    Returns:
+        The transformed version of `node` with the projection input merged into
+        it, or the original node if the merging is not possible.
     """
     expr: RelationalExpression
     new_expr: RelationalExpression
-    # TODO: ADD COMMENTS
+    # Repeatedly attempt the merging protocol until the input of the node is
+    # no longer a projection.
     while isinstance(node.input, Project):
         child_project: Project = node.input
         if isinstance(node, RelationalRoot):

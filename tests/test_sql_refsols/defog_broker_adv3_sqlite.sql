@@ -1,21 +1,21 @@
-WITH "_t1" AS (
+WITH _s1 AS (
   SELECT
-    COUNT() AS "agg_0",
-    SUM("sbtransaction"."sbtxstatus" = 'success') AS "agg_1",
-    "sbtransaction"."sbtxcustid" AS "customer_id"
-  FROM "main"."sbtransaction" AS "sbtransaction"
+    COUNT() AS agg_0,
+    SUM(sbtxstatus = 'success') AS agg_1,
+    sbtxcustid AS customer_id
+  FROM main.sbtransaction
   GROUP BY
-    "sbtransaction"."sbtxcustid"
+    sbtxcustid
 )
 SELECT
-  "sbcustomer"."sbcustname" AS "name",
+  sbcustomer.sbcustname AS name,
   CAST((
-    100.0 * COALESCE("_t1"."agg_1", 0)
-  ) AS REAL) / COALESCE("_t1"."agg_0", 0) AS "success_rate"
-FROM "main"."sbcustomer" AS "sbcustomer"
-LEFT JOIN "_t1" AS "_t1"
-  ON "_t1"."customer_id" = "sbcustomer"."sbcustid"
+    100.0 * COALESCE(_s1.agg_1, 0)
+  ) AS REAL) / COALESCE(_s1.agg_0, 0) AS success_rate
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.customer_id = sbcustomer.sbcustid
 WHERE
-  "_t1"."agg_0" >= 5 AND NOT "_t1"."agg_0" IS NULL
+  NOT _s1.agg_0 IS NULL AND _s1.agg_0 >= 5
 ORDER BY
-  "success_rate"
+  success_rate

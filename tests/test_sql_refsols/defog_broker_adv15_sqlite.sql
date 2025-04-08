@@ -1,16 +1,15 @@
-WITH "_t0" AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS "agg_1",
-    SUM("sbcustomer"."sbcuststatus" = 'active') AS "agg_0",
-    "sbcustomer"."sbcustcountry" AS "country"
-  FROM "main"."sbcustomer" AS "sbcustomer"
+    COUNT() AS agg_1,
+    SUM(sbcuststatus = 'active') AS agg_0,
+    sbcustcountry AS country
+  FROM main.sbcustomer
   WHERE
-    "sbcustomer"."sbcustjoindate" <= '2022-12-31'
-    AND "sbcustomer"."sbcustjoindate" >= '2022-01-01'
+    sbcustjoindate <= '2022-12-31' AND sbcustjoindate >= '2022-01-01'
   GROUP BY
-    "sbcustomer"."sbcustcountry"
+    sbcustcountry
 )
 SELECT
-  "_t0"."country" AS "country",
-  100 * COALESCE(CAST(COALESCE("_t0"."agg_0", 0) AS REAL) / COALESCE("_t0"."agg_1", 0), 0.0) AS "ar"
-FROM "_t0" AS "_t0"
+  country,
+  100 * COALESCE(CAST(COALESCE(agg_0, 0) AS REAL) / COALESCE(agg_1, 0), 0.0) AS ar
+FROM _t0

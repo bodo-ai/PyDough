@@ -1,22 +1,22 @@
-WITH "_t1" AS (
+WITH _s1 AS (
   SELECT
-    "sbdailyprice"."sbdptickerid" AS "ticker_id"
-  FROM "main"."sbdailyprice" AS "sbdailyprice"
-), "_t0" AS (
+    sbdailyprice.sbdptickerid AS ticker_id
+  FROM main.sbdailyprice AS sbdailyprice
+), _s0 AS (
   SELECT
-    "sbticker"."sbtickerid" AS "_id",
-    "sbticker"."sbtickersymbol" AS "symbol"
-  FROM "main"."sbticker" AS "sbticker"
+    sbticker.sbtickerid AS _id,
+    sbticker.sbtickersymbol AS symbol
+  FROM main.sbticker AS sbticker
 )
 SELECT
-  "_t0"."_id" AS "_id",
-  "_t0"."symbol" AS "symbol"
-FROM "_t0" AS "_t0"
+  _s0._id AS _id,
+  _s0.symbol AS symbol
+FROM _s0 AS _s0
 WHERE
   NOT EXISTS(
     SELECT
       1 AS "1"
-    FROM "_t1" AS "_t1"
+    FROM _s1 AS _s1
     WHERE
-      "_t0"."_id" = "_t1"."ticker_id"
+      _s0._id = _s1.ticker_id
   )

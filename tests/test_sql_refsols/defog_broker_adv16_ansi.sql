@@ -1,30 +1,29 @@
-WITH "_t1" AS (
+WITH _s1 AS (
   SELECT
-    SUM("sbtransaction"."sbtxamount") AS "agg_0",
-    SUM("sbtransaction"."sbtxtax" + "sbtransaction"."sbtxcommission") AS "agg_1",
-    "sbtransaction"."sbtxtickerid" AS "ticker_id"
-  FROM "main"."sbtransaction" AS "sbtransaction"
+    SUM(sbtxamount) AS agg_0,
+    SUM(sbtxtax + sbtxcommission) AS agg_1,
+    sbtxtickerid AS ticker_id
+  FROM main.sbtransaction
   WHERE
-    "sbtransaction"."sbtxdatetime" >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH')
-    AND "sbtransaction"."sbtxtype" = 'sell'
+    sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH') AND sbtxtype = 'sell'
   GROUP BY
-    "sbtransaction"."sbtxtickerid"
+    sbtxtickerid
 )
 SELECT
-  "sbticker"."sbtickersymbol" AS "symbol",
+  sbticker.sbtickersymbol AS symbol,
   (
     100.0 * (
-      COALESCE("_t1"."agg_0", 0) - COALESCE("_t1"."agg_1", 0)
+      COALESCE(_s1.agg_0, 0) - COALESCE(_s1.agg_1, 0)
     )
-  ) / COALESCE("_t1"."agg_0", 0) AS "SPM"
-FROM "main"."sbticker" AS "sbticker"
-LEFT JOIN "_t1" AS "_t1"
-  ON "_t1"."ticker_id" = "sbticker"."sbtickerid"
+  ) / COALESCE(_s1.agg_0, 0) AS SPM
+FROM main.sbticker AS sbticker
+LEFT JOIN _s1 AS _s1
+  ON _s1.ticker_id = sbticker.sbtickerid
 WHERE
   NOT (
     100.0 * (
-      COALESCE("_t1"."agg_0", 0) - COALESCE("_t1"."agg_1", 0)
+      COALESCE(_s1.agg_0, 0) - COALESCE(_s1.agg_1, 0)
     )
-  ) / COALESCE("_t1"."agg_0", 0) IS NULL
+  ) / COALESCE(_s1.agg_0, 0) IS NULL
 ORDER BY
-  "symbol"
+  symbol
