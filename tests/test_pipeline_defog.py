@@ -809,4 +809,9 @@ def test_defog_e2e(
     if defog_test_data.order_insensitive:
         result = result.sort_values(by=list(refsol.columns)).reset_index(drop=True)
         refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
+    print(
+        to_sql(
+            root, metadata=graph, database=sqlite_defog_connection, config=defog_config
+        )
+    )
     pd.testing.assert_frame_equal(result, refsol)

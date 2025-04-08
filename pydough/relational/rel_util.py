@@ -388,3 +388,30 @@ def add_expr_uses(
             add_expr_uses(partition_arg, n_uses, False)
         for order_arg in expr.order_inputs:
             add_expr_uses(order_arg.expr, n_uses, False)
+
+
+def fetch_or_insert(
+    dictionary: dict[str, RelationalExpression], value: RelationalExpression
+) -> str:
+    """
+    Inserts a value into a dictionary with a new name, returning that new name,
+    unless the value is already in the dictionary, in which case it returns the
+    existing name.
+
+    Args:
+        `dictionary`: The dictionary to insert the value into / lookup from.
+        `value`: The value to insert / lookup the name for.
+
+    Returns:
+        The name of the key that will map to `value` in the dictionary.
+    """
+    for name, col in dictionary.items():
+        if col == value:
+            return name
+    idx: int = 0
+    new_name: str = f"expr_{idx}"
+    while new_name in dictionary:
+        idx += 1
+        new_name = f"expr_{idx}"
+    dictionary[new_name] = value
+    return new_name

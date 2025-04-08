@@ -7,6 +7,7 @@ __all__ = ["split_partial_aggregates"]
 
 
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -14,12 +15,16 @@ from pydough.relational import (
     ColumnReferenceFinder,
     Join,
     JoinType,
+    LiteralExpression,
+    Project,
     RelationalExpression,
     RelationalNode,
 )
 from pydough.relational.rel_util import (
+    fetch_or_insert,
     transpose_expression,
 )
+from pydough.types import Int64Type
 
 partial_aggregates: dict[
     pydop.PyDoughExpressionOperator,
@@ -35,6 +40,97 @@ The aggregation functions that are possible to split into partial aggregations.
 The key is the original aggregation function, and the value is a tuple of
 (top_partial_agg_function, bottom_partial_agg_function).
 """
+
+decomposable_aggfuncs: set[pydop.PyDoughExpressionOperator] = {pydop.AVG}
+"""
+The aggregation functions that are decomposable into multiple calls to partial
+aggregations.
+"""
+
+
+def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> RelationalNode:
+    """
+    Splits up an aggregate node into an aggregate followed by a projection when
+    the aggregate contains 1+ calls to functions that can be split into 1+
+    calls to partial aggregates, e.g. how AVG(X) = SUM(X)/COUNT(X).
+
+    Args:
+        `node`: the aggregate node to be decomposed.
+        `config`: the current configuration settings.
+
+    Returns:
+        The projection node on top of the new aggregate, overall containing the
+        equivalent to the original aggregations.
+    """
+    decomposable: dict[str, CallExpression] = {}
+    new_aggregations: dict[str, RelationalExpression] = {}
+    final_agg_columns: dict[str, RelationalExpression] = {}
+    # First, separate the aggregations that should be decomposed from those
+    # that should not. Place the ones that should in the decomposable dict
+    # to deal with later, and place the rest in the new output dictionaries.
+    for name, agg in node.aggregations.items():
+        if agg.op in decomposable_aggfuncs:
+            decomposable[name] = agg
+        else:
+            new_aggregations[name] = agg
+            final_agg_columns[name] = ColumnReference(name, agg.data_type)
+
+    # For each decomposable agg call, invoke the procedure to split it into
+    # multiple aggregation calls that are placed in `new_aggregations` (without
+    # adding any new duplicates), then the logic to combine them with scalar
+    # computations in `final_agg_columns`.
+    for name, agg in decomposable.items():
+        # Decompose the aggregate into its components.
+        agg_input: RelationalExpression = agg.inputs[0]
+        if agg.op == pydop.AVG:
+            # AVG is decomposed into SUM and COUNT, and then the division
+            # is done in the projection.
+            sum_call: CallExpression = CallExpression(
+                pydop.SUM,
+                agg.data_type,
+                [agg_input],
+            )
+            count_call: CallExpression = CallExpression(
+                pydop.COUNT,
+                Int64Type(),
+                [agg_input],
+            )
+            sum_name: str = fetch_or_insert(new_aggregations, sum_call)
+            count_name: str = fetch_or_insert(new_aggregations, count_call)
+            avg_call: CallExpression = CallExpression(
+                pydop.DIV,
+                agg.data_type,
+                [
+                    ColumnReference(sum_name, sum_call.data_type),
+                    ColumnReference(count_name, count_call.data_type),
+                ],
+            )
+            # If the config specifies that the default value for AVG should be
+            # zero, wrap the division in a DEFAULT_TO call.
+            if config.avg_default_zero:
+                avg_call = CallExpression(
+                    pydop.DEFAULT_TO,
+                    agg.data_type,
+                    [avg_call, LiteralExpression(0, Int64Type())],
+                )
+            final_agg_columns[name] = avg_call
+        else:
+            raise NotImplementedError(f"Unsupported aggregate function: {agg.op}")
+
+    # Build the new aggregate with the new projection on top of it to derive
+    # any aggregation calls by combining aggfunc values.
+    aggs: dict[str, CallExpression] = {}
+    for name, agg_expr in new_aggregations.items():
+        assert isinstance(agg_expr, CallExpression)
+        aggs[name] = agg_expr
+    new_aggregate: Aggregate = Aggregate(node.input, node.keys, aggs)
+    project_columns: dict[str, RelationalExpression] = {}
+    for name, expr in node.keys.items():
+        project_columns[name] = expr
+    project_columns.update(
+        {name: final_agg_columns[name] for name in node.aggregations}
+    )
+    return Project(new_aggregate, project_columns)
 
 
 def extract_equijoin_keys(
@@ -88,11 +184,14 @@ def transpose_aggregate_join(
     join: Join,
     agg_side: int,
     side_keys: list[ColumnReference],
-) -> None:
+    config: PyDoughConfigs,
+) -> RelationalNode:
     """
     Transposes the aggregate node above the join into two aggregate nodes,
     one above the join and one below the join. Does the transformation
-    in-place.
+    in-place, and either returns the node or a post-processing aggregation
+    on top of it, then recursively transforms the inputs by passing back to
+    split_partial_aggregates.
 
     Args:
         `node`: the aggregate node to be split.
@@ -101,8 +200,16 @@ def transpose_aggregate_join(
         being pushed into.
         `side_keys`: the list of equi-join keys from the side of the join
         that the aggregate is being pushed into.
+        `config`: the current configuration settings.
+
+    Returns:
+        The transformed node. The transformation is also done-in-place.
     """
     agg_input_name: str | None = join.default_input_aliases[agg_side]
+    # Keep a dictionary for the projection columns that will be used to post-process
+    # the output of the aggregates, if needed.
+    need_projection: bool = False
+    projection_columns: dict[str, RelationalExpression] = {**node.keys}
     # Mark columns from the pushdown side of the join to be pruned, except for
     # the agg/join keys.
     join_columns_to_prune: set[str] = set()
@@ -135,6 +242,23 @@ def transpose_aggregate_join(
             agg.data_type,
             [ColumnReference(bottom_name, agg.data_type)],
         )
+        # Insert the column reference for the top-aggfunc into the projection,
+        # and if needed wrap it in a DEFAULT_TO call for COUNT. This is
+        # required for left joins, or no-groupby aggregates.
+        if agg.op == pydop.COUNT and (
+            join.join_types[0] != JoinType.INNER or len(node.keys) == 0
+        ):
+            projection_columns[name] = CallExpression(
+                pydop.DEFAULT_TO,
+                agg.data_type,
+                [
+                    ColumnReference(name, agg.data_type),
+                    LiteralExpression(0, Int64Type()),
+                ],
+            )
+            need_projection = True
+        else:
+            projection_columns[name] = ColumnReference(name, agg.data_type)
         input_aggs[bottom_name] = CallExpression(
             bottom_aggfunc,
             agg.data_type,
@@ -169,9 +293,19 @@ def transpose_aggregate_join(
     # side of the aggregations
     node._aggregations = top_aggs
     node._columns = {**node.columns, **top_aggs}
+    # Recursively transform the subtrees.
+    result: RelationalNode = node.copy(
+        inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+    )
+    # If needed, add a projection on top to post-process any aggfuncs.
+    if need_projection:
+        result = Project(node, projection_columns)
+    return result
 
 
-def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
+def split_partial_aggregates(
+    node: RelationalNode, config: PyDoughConfigs
+) -> RelationalNode:
     """
     Splits partial aggregates above joins into two aggregates, one above the
     join and one below the join, from the entire relational plan rooted at the
@@ -179,6 +313,7 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
 
     Args:
         `node`: the root node of the relational plan to be transformed.
+        `config`: the current configuration settings.
 
     Returns:
         The transformed node. The transformation is also done-in-place.
@@ -189,9 +324,11 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
         and len(node.input.inputs) == 2
     ):
         join: Join = node.input
-        # TODO: deal with AVG if the others are valid.
         # Verify all of the aggfuncs are from the functions that can be split.
-        if all(call.op in partial_aggregates for call in node.aggregations.values()):
+        if all(
+            call.op in partial_aggregates or call.op in decomposable_aggfuncs
+            for call in node.aggregations.values()
+        ):
             # Parse the join condition to identify the lists of equi-join keys
             # from the LHS and RHS, and verify that all of the columns used by
             # the condition are in those lists.
@@ -209,8 +346,6 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
                 agg_input_names: set[str | None] = {
                     ref.input_name for ref in finder.get_column_references()
                 }
-                # TODO: make sure all agg keys either come from the same side,
-                # as the aggregations, or are equi-join keys.
                 if len(agg_input_names) == 1:
                     agg_input_name: str | None = agg_input_names.pop()
                     agg_side: int = (
@@ -218,7 +353,22 @@ def split_partial_aggregates(node: RelationalNode) -> RelationalNode:
                     )
                     side_keys: list[ColumnReference] = (lhs_keys, rhs_keys)[agg_side]
                     if agg_side == 0 or join.join_types[0] == JoinType.INNER:
-                        transpose_aggregate_join(node, join, agg_side, side_keys)
+                        # If there are any AVG calls, rewrite the aggregate into
+                        # a call with SUM and COUNT derived, with a projection
+                        # dividing the two, then repeat the process.
+                        if any(
+                            call.op in decomposable_aggfuncs
+                            for call in node.aggregations.values()
+                        ):
+                            return split_partial_aggregates(
+                                decompose_aggregations(node, config), config
+                            )
+                        # Otherwise, invoke the transposition procedure.
+                        return transpose_aggregate_join(
+                            node, join, agg_side, side_keys, config
+                        )
 
     # Recursively invoke the procedure on all inputs to the node.
-    return node.copy(inputs=[split_partial_aggregates(input) for input in node.inputs])
+    return node.copy(
+        inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+    )

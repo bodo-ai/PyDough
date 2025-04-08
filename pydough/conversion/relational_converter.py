@@ -1153,13 +1153,16 @@ def confirm_root(node: RelationalNode) -> RelationalRoot:
     return node
 
 
-def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
+def optimize_relational_tree(
+    root: RelationalRoot, configs: PyDoughConfigs
+) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
     pruning columns.
 
     Args:
         `root`: the relational root to optimize.
+        `configs`: the configuration settings to use during optimization.
 
     Returns:
         The optimized relational root.
@@ -1173,7 +1176,7 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
 
     # Step 3: split aggregations on top of joins so part of the aggregate
     # happens underneath the join.
-    root = confirm_root(split_partial_aggregates(root))
+    root = confirm_root(split_partial_aggregates(root, configs))
 
     # Step 4: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
@@ -1234,6 +1237,6 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    optimized_result: RelationalRoot = optimize_relational_tree(raw_result)
+    optimized_result: RelationalRoot = optimize_relational_tree(raw_result, configs)
 
     return optimized_result
