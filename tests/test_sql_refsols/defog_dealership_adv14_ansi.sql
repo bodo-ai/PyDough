@@ -1,5 +1,5 @@
 SELECT
-  COUNT(_id) AS TSC
+  COUNT() AS TSC
 FROM (
   SELECT
     _id

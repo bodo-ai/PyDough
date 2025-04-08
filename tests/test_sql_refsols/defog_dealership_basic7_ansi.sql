@@ -16,12 +16,11 @@ FROM (
       payment_method
     FROM (
       SELECT
-        COUNT(_id) AS agg_1,
+        COUNT() AS agg_1,
         SUM(payment_amount) AS agg_0,
         payment_method
       FROM (
         SELECT
-          _id,
           payment_amount,
           payment_method
         FROM main.payments_received

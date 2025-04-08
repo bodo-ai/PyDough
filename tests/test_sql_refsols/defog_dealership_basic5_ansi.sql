@@ -47,7 +47,7 @@ FROM (
             FROM main.sales
           )
           WHERE
-            sale_date >= DATE_ADD(CURRENT_TIMESTAMP(), -30, 'DAY')
+            DATEDIFF(CURRENT_TIMESTAMP(), sale_date, DAY) <= 30
         )
         GROUP BY
           salesperson_id

@@ -41,10 +41,10 @@ FROM (
       )
       QUALIFY
         (
-          is_in_inventory = 0
+          ROW_NUMBER() OVER (PARTITION BY _id ORDER BY snapshot_date DESC NULLS FIRST) = 1
         )
         AND (
-          ROW_NUMBER() OVER (PARTITION BY _id ORDER BY snapshot_date DESC NULLS FIRST) = 1
+          NOT is_in_inventory
         )
     )
   )

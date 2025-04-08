@@ -17,21 +17,8 @@ FROM (
     AND (
       (
         (
-          (
-            (
-              CAST(STRFTIME('%w', payment_date) AS INTEGER) + 6
-            ) % 7
-          )
-        ) = 5
+          CAST(STRFTIME('%w', payment_date) AS INTEGER) + 6
+        ) % 7
       )
-      OR (
-        (
-          (
-            (
-              CAST(STRFTIME('%w', payment_date) AS INTEGER) + 6
-            ) % 7
-          )
-        ) = 6
-      )
-    )
+    ) IN (5, 6)
 )

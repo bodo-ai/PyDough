@@ -1,28 +1,22 @@
 SELECT
-  _id,
+  _id AS _id,
   make,
   model,
   year
 FROM (
   SELECT
-    _id,
-    last_snapshot_date,
-    make,
-    model,
-    snapshot_date,
-    year
+    car_id
   FROM (
     SELECT
-      _id,
-      last_snapshot_date,
-      make,
-      model,
-      year
+      *
     FROM (
       SELECT
-        MAX(snapshot_date) AS last_snapshot_date
+        *,
+        RANK() OVER (ORDER BY snapshot_date DESC) AS _w
       FROM (
         SELECT
+          car_id,
+          is_in_inventory,
           snapshot_date
         FROM main.inventory_snapshots
         WHERE
@@ -32,32 +26,19 @@ FROM (
             snapshot_date >= '2023-03-01'
           )
       )
-    )
-    INNER JOIN (
-      SELECT
-        _id,
-        make,
-        model,
-        year
-      FROM main.cars
-    )
-      ON TRUE
-  )
-  INNER JOIN (
-    SELECT
-      car_id,
-      snapshot_date
-    FROM (
-      SELECT
-        car_id,
-        is_in_inventory,
-        snapshot_date
-      FROM main.inventory_snapshots
-    )
+    ) AS _t
     WHERE
-      is_in_inventory = 1
+      (
+        _w = 1
+      ) AND is_in_inventory
   )
-    ON _id = car_id
 )
-WHERE
-  snapshot_date = last_snapshot_date
+INNER JOIN (
+  SELECT
+    _id,
+    make,
+    model,
+    year
+  FROM main.cars
+)
+  ON car_id = _id

@@ -47,7 +47,7 @@ FROM (
             FROM main.sales
           )
           WHERE
-            sale_date >= DATETIME('now', '-30 day')
+            CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sale_date, 'start of day'))) AS INTEGER) <= 30
         )
         GROUP BY
           salesperson_id

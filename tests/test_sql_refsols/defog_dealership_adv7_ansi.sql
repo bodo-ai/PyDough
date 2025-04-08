@@ -16,7 +16,7 @@ FROM (
   FROM main.cars
   WHERE
     (
-      LOWER(make) LIKE '%ford%'
+      LOWER(make) LIKE '%fordS%'
     ) OR (
       LOWER(model) LIKE '%mustang%'
     )

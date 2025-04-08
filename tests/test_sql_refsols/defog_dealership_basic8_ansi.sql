@@ -32,12 +32,11 @@ FROM (
       )
       LEFT JOIN (
         SELECT
-          COUNT(_id) AS agg_1,
+          COUNT() AS agg_1,
           SUM(sale_price) AS agg_0,
           car_id
         FROM (
           SELECT
-            _id,
             car_id,
             sale_price
           FROM main.sales

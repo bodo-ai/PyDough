@@ -16,7 +16,7 @@ FROM (
     SELECT
       COALESCE(agg_0, 0) AS num_sales,
       COALESCE(agg_1, 0) AS total_sales,
-      ROW_NUMBER() OVER (ORDER BY COALESCE(agg_1, 0) DESC) AS sales_rank,
+      RANK() OVER (ORDER BY COALESCE(agg_1, 0) DESC) AS sales_rank,
       agg_1,
       first_name,
       last_name
@@ -35,12 +35,11 @@ FROM (
       )
       INNER JOIN (
         SELECT
-          COUNT(_id) AS agg_0,
+          COUNT() AS agg_0,
           SUM(sale_price) AS agg_1,
           salesperson_id
         FROM (
           SELECT
-            _id,
             sale_price,
             salesperson_id
           FROM main.sales

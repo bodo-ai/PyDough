@@ -14,7 +14,7 @@ SEMI JOIN (
       salesperson_id
     FROM main.sales
   )
-  SEMI JOIN (
+  INNER JOIN (
     SELECT
       sale_id
     FROM (

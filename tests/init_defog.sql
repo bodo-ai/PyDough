@@ -606,3 +606,4 @@ INSERT INTO payments_made (_id, vendor_name, payment_date, payment_amount, payme
  (15, 'Ford Supplier Co', DATE('now', '-2 days'), 22000.00, 'bank_transfer', 'INV-015', DATE('now', '-7 days'), DATE('now', '+23 days')),
  (16, 'Tesla Parts Inc', DATE('now', '-1 day'), 15000.00, 'credit_card', 'INV-016', DATE('now', '-6 days'), DATE('now', '+24 days')),
  (17, 'Chevrolet Auto', DATE('now'), 20000.00, 'bank_transfer', 'INV-017', DATE('now', '-5 days'), DATE('now', '+25 days'));
+ 

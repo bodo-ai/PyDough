@@ -18,25 +18,19 @@ WHERE
           salesperson_id
         FROM main.sales
       )
-      WHERE
-        EXISTS(
+      INNER JOIN (
+        SELECT
+          sale_id
+        FROM (
           SELECT
-            1
-          FROM (
-            SELECT
-              sale_id
-            FROM (
-              SELECT
-                payment_method,
-                sale_id
-              FROM main.payments_received
-            )
-            WHERE
-              payment_method = 'cash'
-          )
-          WHERE
-            _id = sale_id
+            payment_method,
+            sale_id
+          FROM main.payments_received
         )
+        WHERE
+          payment_method = 'cash'
+      )
+        ON _id = sale_id
     )
     WHERE
       _id = salesperson_id

@@ -17,21 +17,8 @@ FROM (
     AND (
       (
         (
-          (
-            (
-              DAY_OF_WEEK(payment_date) + 6
-            ) % 7
-          )
-        ) = 5
+          DAY_OF_WEEK(payment_date) + 6
+        ) % 7
       )
-      OR (
-        (
-          (
-            (
-              DAY_OF_WEEK(payment_date) + 6
-            ) % 7
-          )
-        ) = 6
-      )
-    )
+    ) IN (5, 6)
 )

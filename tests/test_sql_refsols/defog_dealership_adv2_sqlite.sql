@@ -25,15 +25,13 @@ FROM (
     )
     INNER JOIN (
       SELECT
-        COUNT(_id) AS agg_0,
+        COUNT() AS agg_0,
         salesperson_id
       FROM (
         SELECT
-          _id,
           salesperson_id
         FROM (
           SELECT
-            _id,
             sale_date,
             salesperson_id
           FROM main.sales

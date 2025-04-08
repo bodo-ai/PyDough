@@ -32,17 +32,15 @@ FROM (
       )
       LEFT JOIN (
         SELECT
-          COUNT(_id) AS agg_1,
+          COUNT() AS agg_1,
           SUM(sale_price) AS agg_0,
           salesperson_id
         FROM (
           SELECT
-            _id,
             sale_price,
             salesperson_id
           FROM (
             SELECT
-              _id,
               sale_date,
               sale_price,
               salesperson_id

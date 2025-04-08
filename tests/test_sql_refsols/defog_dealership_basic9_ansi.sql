@@ -13,11 +13,10 @@ FROM (
       state
     FROM (
       SELECT
-        COUNT(_id) AS agg_0,
+        COUNT() AS agg_0,
         state
       FROM (
         SELECT
-          _id,
           state
         FROM main.customers
       )

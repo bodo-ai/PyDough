@@ -46,9 +46,9 @@ FROM (
       ) AS _t
       WHERE
         (
-          is_in_inventory = 0
-        ) AND (
           _w = 1
+        ) AND (
+          NOT is_in_inventory
         )
     )
   )
