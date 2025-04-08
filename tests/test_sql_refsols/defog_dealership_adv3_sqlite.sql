@@ -1,39 +1,17 @@
-SELECT
-  make,
-  model,
-  COALESCE(agg_0, 0) AS num_sales
-FROM (
+WITH _t1_2 AS (
   SELECT
-    agg_0,
-    make,
-    model
-  FROM (
-    SELECT
-      _id,
-      make,
-      model
-    FROM (
-      SELECT
-        _id,
-        make,
-        model,
-        vin_number
-      FROM main.cars
-    )
-    WHERE
-      vin_number LIKE '%m5%'
-  )
-  LEFT JOIN (
-    SELECT
-      COUNT() AS agg_0,
-      car_id
-    FROM (
-      SELECT
-        car_id
-      FROM main.sales
-    )
-    GROUP BY
-      car_id
-  )
-    ON _id = car_id
+    COUNT() AS agg_0,
+    car_id
+  FROM main.sales
+  GROUP BY
+    car_id
 )
+SELECT
+  cars.make,
+  cars.model,
+  COALESCE(_t1.agg_0, 0) AS num_sales
+FROM main.cars AS cars
+LEFT JOIN _t1_2 AS _t1
+  ON _t1.car_id = cars._id
+WHERE
+  cars.vin_number LIKE '%m5%'

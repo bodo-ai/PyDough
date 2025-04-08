@@ -1,71 +1,29 @@
-SELECT
-  make,
-  model,
-  highest_sale_price
-FROM (
+WITH _t AS (
   SELECT
-    agg_0 AS highest_sale_price,
-    agg_0 AS ordering_1,
-    make,
-    model
-  FROM (
-    SELECT
-      _id,
-      make,
-      model
-    FROM (
-      SELECT
-        *
-      FROM (
-        SELECT
-          *,
-          ROW_NUMBER() OVER (PARTITION BY _id ORDER BY snapshot_date DESC) AS _w
-        FROM (
-          SELECT
-            _id,
-            is_in_inventory,
-            make,
-            model,
-            snapshot_date
-          FROM (
-            SELECT
-              _id,
-              make,
-              model
-            FROM main.cars
-          )
-          INNER JOIN (
-            SELECT
-              car_id,
-              is_in_inventory,
-              snapshot_date
-            FROM main.inventory_snapshots
-          )
-            ON _id = car_id
-        )
-      ) AS _t
-      WHERE
-        (
-          _w = 1
-        ) AND (
-          NOT is_in_inventory
-        )
-    )
-  )
-  LEFT JOIN (
-    SELECT
-      MAX(sale_price) AS agg_0,
-      car_id
-    FROM (
-      SELECT
-        car_id,
-        sale_price
-      FROM main.sales
-    )
-    GROUP BY
-      car_id
-  )
-    ON _id = car_id
+    cars._id,
+    inventory_snapshots.is_in_inventory,
+    cars.make,
+    cars.model,
+    ROW_NUMBER() OVER (PARTITION BY cars._id ORDER BY inventory_snapshots.snapshot_date DESC) AS _w
+  FROM main.cars AS cars
+  JOIN main.inventory_snapshots AS inventory_snapshots
+    ON cars._id = inventory_snapshots.car_id
+), _t3_2 AS (
+  SELECT
+    MAX(sale_price) AS agg_0,
+    car_id
+  FROM main.sales
+  GROUP BY
+    car_id
 )
+SELECT
+  _t.make,
+  _t.model,
+  _t3.agg_0 AS highest_sale_price
+FROM _t AS _t
+LEFT JOIN _t3_2 AS _t3
+  ON _t._id = _t3.car_id
+WHERE
+  NOT _t.is_in_inventory AND _t._w = 1
 ORDER BY
-  ordering_1 DESC
+  _t3.agg_0 DESC

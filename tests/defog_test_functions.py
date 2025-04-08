@@ -643,7 +643,7 @@ def impl_defog_dealership_adv1():
         & (sale_record.sale_price > 30000)
     ).CALCULATE(_id, payment_week=DATETIME(payment_date, "start of week"))
 
-    is_weekend = ISIN(DAYOFWEEK(p.payment_date), (0, 6))
+    is_weekend = ISIN(DAYOFWEEK(p.payment_date), (5, 6))
 
     return PARTITION(payment_weeks, name="p", by=payment_week).CALCULATE(
         payment_week, total_payments=COUNT(p), weekend_payments=SUM(is_weekend)

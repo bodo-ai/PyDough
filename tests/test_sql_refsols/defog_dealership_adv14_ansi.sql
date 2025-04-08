@@ -1,14 +1,5 @@
 SELECT
   COUNT() AS TSC
-FROM (
-  SELECT
-    _id
-  FROM (
-    SELECT
-      _id,
-      sale_date
-    FROM main.sales
-  )
-  WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), sale_date, DAY) <= 7
-)
+FROM main.sales
+WHERE
+  DATEDIFF(CURRENT_TIMESTAMP(), sale_date, DAY) <= 7

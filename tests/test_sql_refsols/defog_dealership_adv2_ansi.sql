@@ -1,49 +1,20 @@
-SELECT
-  _id,
-  first_name,
-  last_name,
-  num_sales
-FROM (
+WITH _t1 AS (
   SELECT
-    COALESCE(agg_0, 0) AS num_sales,
-    COALESCE(agg_0, 0) AS ordering_1,
-    _id,
-    first_name,
-    last_name
-  FROM (
-    SELECT
-      _id,
-      agg_0,
-      first_name,
-      last_name
-    FROM (
-      SELECT
-        _id,
-        first_name,
-        last_name
-      FROM main.salespersons
-    )
-    INNER JOIN (
-      SELECT
-        COUNT() AS agg_0,
-        salesperson_id
-      FROM (
-        SELECT
-          salesperson_id
-        FROM (
-          SELECT
-            sale_date,
-            salesperson_id
-          FROM main.sales
-        )
-        WHERE
-          DATEDIFF(CURRENT_TIMESTAMP(), sale_date, DAY) <= 30
-      )
-      GROUP BY
-        salesperson_id
-    )
-      ON _id = salesperson_id
-  )
+    COUNT() AS agg_0,
+    salesperson_id
+  FROM main.sales
+  WHERE
+    DATEDIFF(CURRENT_TIMESTAMP(), sale_date, DAY) <= 30
+  GROUP BY
+    salesperson_id
 )
+SELECT
+  salespersons._id,
+  salespersons.first_name,
+  salespersons.last_name,
+  COALESCE(_t1.agg_0, 0) AS num_sales
+FROM main.salespersons AS salespersons
+JOIN _t1 AS _t1
+  ON _t1.salesperson_id = salespersons._id
 ORDER BY
-  ordering_1 DESC
+  COALESCE(_t1.agg_0, 0) DESC

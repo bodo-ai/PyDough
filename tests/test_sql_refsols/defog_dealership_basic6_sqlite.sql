@@ -1,50 +1,28 @@
-SELECT
-  state,
-  unique_customers,
-  total_revenue
-FROM (
+WITH _t2 AS (
   SELECT
-    ordering_2,
+    COUNT(DISTINCT sales.customer_id) AS agg_1,
+    SUM(sales.sale_price) AS agg_0,
+    customers.state
+  FROM main.customers AS customers
+  JOIN main.sales AS sales
+    ON customers._id = sales.customer_id
+  GROUP BY
+    customers.state
+), _t0_2 AS (
+  SELECT
+    COALESCE(agg_0, 0) AS ordering_2,
     state,
-    total_revenue,
-    unique_customers
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS ordering_2,
-      COALESCE(agg_0, 0) AS total_revenue,
-      agg_1 AS unique_customers,
-      state
-    FROM (
-      SELECT
-        COUNT(DISTINCT customer_id) AS agg_1,
-        SUM(sale_price) AS agg_0,
-        state
-      FROM (
-        SELECT
-          customer_id,
-          sale_price,
-          state
-        FROM (
-          SELECT
-            _id,
-            state
-          FROM main.customers
-        )
-        INNER JOIN (
-          SELECT
-            customer_id,
-            sale_price
-          FROM main.sales
-        )
-          ON _id = customer_id
-      )
-      GROUP BY
-        state
-    )
-  )
+    COALESCE(agg_0, 0) AS total_revenue,
+    agg_1 AS unique_customers
+  FROM _t2
   ORDER BY
     ordering_2 DESC
   LIMIT 5
 )
+SELECT
+  state,
+  unique_customers,
+  total_revenue
+FROM _t0_2
 ORDER BY
   ordering_2 DESC
