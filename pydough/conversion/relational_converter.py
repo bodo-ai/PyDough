@@ -1145,6 +1145,14 @@ def postprocess_root(
     )
 
 
+def confirm_root(node: RelationalNode) -> RelationalRoot:
+    """
+    Verify that the node is a RelationalRoot so it can be typed as such.
+    """
+    assert isinstance(node, RelationalRoot)
+    return node
+
+
 def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
@@ -1157,21 +1165,15 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
         The optimized relational root.
     """
 
-    temp_root: RelationalNode
-
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
     # Step 2: merge adjacent projections, when clearcut
-    temp_root = merge_projects(root)
-    assert isinstance(temp_root, RelationalRoot)
-    root = temp_root
+    root = confirm_root(merge_projects(root))
 
     # Step 3: split aggregations on top of joins so part of the aggregate
     # happens underneath the join.
-    temp_root = split_partial_aggregates(root)
-    assert isinstance(temp_root, RelationalRoot)
-    root = temp_root
+    root = confirm_root(split_partial_aggregates(root))
 
     # Step 4: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
