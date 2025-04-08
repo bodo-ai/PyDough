@@ -1,31 +1,12 @@
 SELECT
-  ticker_type,
-  AVG(close) AS ACP
-FROM (
-  SELECT
-    close,
-    ticker_type
-  FROM (
-    SELECT
-      close,
-      ticker_id
-    FROM (
-      SELECT
-        sbDpClose AS close,
-        sbDpDate AS date,
-        sbDpTickerId AS ticker_id
-      FROM main.sbDailyPrice
-    )
-    WHERE
-      CAST((JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(date, 'start of day'))) AS INTEGER) <= 7
-  )
-  LEFT JOIN (
-    SELECT
-      sbTickerId AS _id,
-      sbTickerType AS ticker_type
-    FROM main.sbTicker
-  )
-    ON ticker_id = _id
-)
+  sbticker.sbtickertype AS ticker_type,
+  AVG(sbdailyprice.sbdpclose) AS ACP
+FROM main.sbdailyprice AS sbdailyprice
+LEFT JOIN main.sbticker AS sbticker
+  ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
+WHERE
+  CAST((
+    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sbdailyprice.sbdpdate, 'start of day'))
+  ) AS INTEGER) <= 7
 GROUP BY
-  ticker_type
+  sbticker.sbtickertype

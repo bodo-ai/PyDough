@@ -1,57 +1,28 @@
-SELECT
-  symbol,
-  tx_count
-FROM (
+WITH _t1 AS (
   SELECT
-    ordering_1,
-    symbol,
-    tx_count
-  FROM (
-    SELECT
-      COALESCE(agg_0, 0) AS ordering_1,
-      COALESCE(agg_0, 0) AS tx_count,
-      symbol
-    FROM (
-      SELECT
-        agg_0,
-        symbol
-      FROM (
-        SELECT
-          sbTickerId AS _id,
-          sbTickerSymbol AS symbol
-        FROM main.sbTicker
-      )
-      LEFT JOIN (
-        SELECT
-          COUNT() AS agg_0,
-          ticker_id
-        FROM (
-          SELECT
-            ticker_id
-          FROM (
-            SELECT
-              sbTxDateTime AS date_time,
-              sbTxTickerId AS ticker_id,
-              sbTxType AS transaction_type
-            FROM main.sbTransaction
-          )
-          WHERE
-            (
-              transaction_type = 'buy'
-            )
-            AND (
-              date_time >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -10, 'DAY'))
-            )
-        )
-        GROUP BY
-          ticker_id
-      )
-        ON _id = ticker_id
-    )
-  )
+    COUNT() AS agg_0,
+    sbtxtickerid AS ticker_id
+  FROM main.sbtransaction
+  WHERE
+    sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -10, 'DAY'))
+    AND sbtxtype = 'buy'
+  GROUP BY
+    sbtxtickerid
+), _t0_2 AS (
+  SELECT
+    COALESCE(_t1.agg_0, 0) AS ordering_1,
+    sbticker.sbtickersymbol AS symbol,
+    COALESCE(_t1.agg_0, 0) AS tx_count
+  FROM main.sbticker AS sbticker
+  LEFT JOIN _t1 AS _t1
+    ON _t1.ticker_id = sbticker.sbtickerid
   ORDER BY
     ordering_1 DESC
   LIMIT 2
 )
+SELECT
+  symbol,
+  tx_count
+FROM _t0_2
 ORDER BY
   ordering_1 DESC

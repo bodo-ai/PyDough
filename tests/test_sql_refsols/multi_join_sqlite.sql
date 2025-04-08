@@ -1,22 +1,12 @@
+WITH _t0 AS (
+  SELECT
+    a
+  FROM table
+)
 SELECT
-  _table_alias_0.a AS a
-FROM (
-  SELECT
-    a,
-    b
-  FROM table
-) AS _table_alias_0
-INNER JOIN (
-  SELECT
-    a,
-    b
-  FROM table
-) AS _table_alias_1
-  ON _table_alias_0.a = _table_alias_1.a
-INNER JOIN (
-  SELECT
-    a,
-    b
-  FROM table
-) AS _table_alias_2
-  ON _table_alias_0.a = _table_alias_2.a
+  _t0.a
+FROM _t0 AS _t0
+JOIN _t0 AS _t1
+  ON _t0.a = _t1.a
+JOIN _t0 AS _t2
+  ON _t0.a = _t2.a
