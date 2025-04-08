@@ -1244,6 +1244,8 @@ Addresses.CALCULATE(
 
 PyDough supports identifying a specific record from a sub-collection that is optimal with regards to some metric, per-record of the current collection. This is done by using `BEST` instead of directly accessing the sub-collection. The first argument to `BEST` is the sub-collection to be accessed, and the second is a `by` argument used to find the optimal record of the sub-collection. The rules for the `by` argument are the same as `PREV`, `NEXT`, `TOP_K`, etc.: it must be either a single collation term, or an iterable of 1+ collation terms.
 
+The sub-collection that the best record is being found for can be a direct sub-collection of the current collection, or can go further with other operations/sub-collection accesses (e.g. `a.b.BEST(x.y.z, ...)` finds the optimal value of `x.y.z` for each record of `a.b`).
+
 A call to `BEST` can either be done with `.` syntax, to step from a parent collection to a child collection, or can be a freestanding accessor used inside of a collection operator. For example, both `Parent.BEST(child, by=...)` and `Parent(x=BEST(child, by=...).y)` are allowed.
 
 The original ancestry of the sub-collection is intact, so any down-streaming is preserved.
@@ -1337,6 +1339,23 @@ Addresses.CALCULATE(address_id).most_recent_package.CALCULATE(
     package_id=package_id,
     order_date=order_date,
 )
+```
+
+**Good Example #8**: Find all addresses where the most recently purchased package by any current occupant of the address was sent to the same address.
+
+```py
+%%pydough
+most_recent_package = BEST(current_occupants.packages, by=order_date.DESC())
+Addresses.WHERE(most_recent_package.shipping_address.address_id == address_id)
+```
+
+**Good Example #9**: Find each person whose most recently purchased package was shipped to their current address.
+
+```py
+%%pydough
+most_recent_package = BEST(packages, by=order_date.DESC())
+people_info = Addresses.CALCULATE(home_id=address_id).current_occupants
+people_info.WHERE(most_recent_package.shipping_address.address_id == home_id)
 ```
 
 **Bad Example #1**: For each person find their best email. This is invalid because `email` is not a sub-collection of `People` (it is a scalar attribute, so there is only 1 `email` per-person).

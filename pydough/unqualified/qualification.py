@@ -802,7 +802,6 @@ class Qualifier:
         qualified_child = self.builder.build_where(
             qualified_child, children
         ).with_condition(qualified_cond)
-        # breakpoint()
 
         # Build the final expanded window-based filter, with `SINGULAR` added
         # if-applicable (not allowing ties, not keeping multiple bests, not in
