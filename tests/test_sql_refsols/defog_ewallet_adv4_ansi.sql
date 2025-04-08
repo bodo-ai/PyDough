@@ -8,7 +8,7 @@ WITH _s0 AS (
     DATEDIFF(CURRENT_TIMESTAMP(), created_at, DAY) <= 7
   GROUP BY
     sender_id
-), _t1 AS (
+), _t0 AS (
   SELECT
     SUM(_s0.agg_0) AS agg_0,
     SUM(_s0.agg_1) AS agg_1
@@ -25,4 +25,4 @@ SELECT
     THEN COALESCE(agg_1, 0)
     ELSE NULL
   END AS total_amount
-FROM _t1
+FROM _t0

@@ -44,9 +44,9 @@ WITH _t2 AS (
     part.p_partkey
 ), _s17 AS (
   SELECT
-    part.p_partkey,
-    part.p_mfgr,
     nation.n_name,
+    part.p_mfgr,
+    part.p_partkey,
     supplier.s_acctbal,
     supplier.s_address,
     supplier.s_comment,

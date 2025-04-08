@@ -1178,7 +1178,10 @@ def optimize_relational_tree(
     # happens underneath the join.
     root = confirm_root(split_partial_aggregates(root, configs))
 
-    # Step 4: prune unused columns
+    # Step 4: re-run projection merging.
+    root = confirm_root(merge_projects(root))
+
+    # Step 5: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
 
     return root

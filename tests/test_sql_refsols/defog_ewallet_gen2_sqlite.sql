@@ -16,7 +16,7 @@ WITH _s0 AS (
     CAST(STRFTIME('%Y', snapshot_date) AS INTEGER) = 2023
   GROUP BY
     snapshot_date
-), _t1 AS (
+), _t0 AS (
   SELECT
     SUM(_s1.expr_0) AS expr_0,
     SUM(_s1.expr_1) AS expr_1,
@@ -29,4 +29,4 @@ WITH _s0 AS (
 SELECT
   CAST(expr_0 AS REAL) / COALESCE(expr_1, 0) AS avg_daily_limit,
   CAST(expr_2 AS REAL) / COALESCE(expr_3, 0) AS avg_monthly_limit
-FROM _t1
+FROM _t0

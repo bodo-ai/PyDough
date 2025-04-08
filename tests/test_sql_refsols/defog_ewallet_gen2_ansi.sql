@@ -16,7 +16,7 @@ WITH _s0 AS (
     EXTRACT(YEAR FROM snapshot_date) = 2023
   GROUP BY
     snapshot_date
-), _t1 AS (
+), _t0 AS (
   SELECT
     SUM(_s1.expr_0) AS expr_0,
     SUM(_s1.expr_1) AS expr_1,
@@ -29,4 +29,4 @@ WITH _s0 AS (
 SELECT
   expr_0 / COALESCE(expr_1, 0) AS avg_daily_limit,
   expr_2 / COALESCE(expr_3, 0) AS avg_monthly_limit
-FROM _t1
+FROM _t0
