@@ -764,7 +764,7 @@ def impl_defog_dealership_adv7():
     matches using LIKE with wildcards.
     """
     return Cars.WHERE(
-        CONTAINS(LOWER(make), "fordS") | CONTAINS(LOWER(model), "mustang")
+        CONTAINS(LOWER(make), "fords") | CONTAINS(LOWER(model), "mustang")
     ).CALCULATE(
         make,
         model,

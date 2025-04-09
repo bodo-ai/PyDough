@@ -17,4 +17,4 @@ FROM main.cars AS cars
 LEFT JOIN _s1 AS _s1
   ON _s1.car_id = cars._id
 WHERE
-  LOWER(cars.make) LIKE '%fordS%' OR LOWER(cars.model) LIKE '%mustang%'
+  LOWER(cars.make) LIKE '%fords%' OR LOWER(cars.model) LIKE '%mustang%'
