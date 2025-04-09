@@ -386,6 +386,57 @@ class UnqualifiedNode(ABC):
         """
         return UnqualifiedSingular(self)
 
+    def BEST(
+        self,
+        node: "UnqualifiedNode",
+        by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+        allow_ties: bool = False,
+        n_best: int = 1,
+    ) -> "UnqualifiedNode":
+        """
+        Method used to create the BEST logic, where x.BEST(y, by=z) is later
+        expanded into `x.y.WHERE(RANKING(by=z) == 1, levels=...).SINGULAR()`,
+        where the levels is the height of y. There are also the following
+        variations:
+        - If `allow_ties` is True: `x.y.WHERE(RANKING(by=z, allow_ties=True) == 1, levels=...)`
+        - If `n_best` > 1 : `x.y.WHERE(RANKING(by=z) <= n_best, levels=...)`
+
+        Args:
+            `node`: the data to find the best entry of with regards to the
+            current node.
+            `by`: the collation terms to order by in the `RANKING` call.
+            `allow_ties`: whether to allow ties in the ranking. If True, it
+            means that if there are multiple entries with the same rank, they
+            will all be considered as "best" candidates. This cannot be used
+            with `n_best > 1`.
+            `n_best`: the number of best entries to consider. If greater than
+            1, it will find all entries with a rank less than or equal to
+            `n_best`. This cannot be used when `allow_ties` is True.
+
+        Returns:
+            The unqualified node for the relevant expression.
+        """
+        # Verify the n_best & allow_ties arguments are well formed
+        if n_best < 1:
+            raise PyDoughUnqualifiedException(f"Invalid n_best value: {n_best}")
+        if n_best > 1 and allow_ties:
+            raise PyDoughUnqualifiedException(
+                "Cannot allow ties when multiple best values are requested"
+            )
+
+        # Identify how many levels to use so that the ranking is derived per
+        # record of `self`.
+        height: int | None = get_node_height(node)
+        if height is None or height == 0:
+            raise PyDoughUnqualifiedException(
+                f"Invalid data argument to `BEST`: {node}"
+            )
+
+        if isinstance(by, UnqualifiedNode):
+            by = [by]
+
+        return UnqualifiedBest(self, node, by, height, allow_ties, n_best)
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -692,6 +743,25 @@ class UnqualifiedSingular(UnqualifiedNode):
         self._parcel: tuple[UnqualifiedNode] = (predecessor,)
 
 
+class UnqualifiedBest(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a BEST clause.
+    """
+
+    def __init__(
+        self,
+        ancestor: UnqualifiedNode,
+        data: UnqualifiedNode,
+        by: Iterable[UnqualifiedNode],
+        data_height: int,
+        allow_ties: bool,
+        n_best: int,
+    ):
+        self._parcel: tuple[
+            UnqualifiedNode, UnqualifiedNode, Iterable[UnqualifiedNode], int, bool, int
+        ] = (ancestor, data, by, data_height, allow_ties, n_best)
+
+
 def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     Prints an unqualified node in a human-readable manner that shows its
@@ -705,6 +775,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     term_strings: list[str] = []
     operands_str: str
+    result: str
     match unqualified:
         case UnqualifiedRoot():
             return unqualified._parcel[0].name
@@ -775,7 +846,61 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
         case UnqualifiedSingular():
             return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
+        case UnqualifiedBest():
+            result = f"{'' if isinstance(unqualified._parcel[0], UnqualifiedRoot) else f'{display_raw(unqualified._parcel[0])}.'}BEST("
+            result += f"{display_raw(unqualified._parcel[1])}"
+            result += f", by=({', '.join(display_raw(node) for node in unqualified._parcel[2])})"
+            if unqualified._parcel[4]:
+                result += ", allow_ties=True"
+            if unqualified._parcel[5] > 1:
+                result += f", n_best={unqualified._parcel[5]}"
+            return result + ")"
         case _:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node: {unqualified.__class__.__name__}"
+            )
+
+
+def get_node_height(node: UnqualifiedNode) -> int | None:
+    """
+    Identifies the number of levels in an unqualified node when it is converted
+    to QDAG. For example, `?.customers.WHERE(...).orders` has a height of 2.
+
+    Args:
+        `node`: the node to find the height of, e.g. how many depth-changing
+        operations occur before finding the root level.
+
+    Returns:
+        The number of levels, or None if malformed.
+    """
+    match node:
+        case UnqualifiedRoot():
+            return 0
+        case UnqualifiedBest():
+            height_a: int | None = get_node_height(node._parcel[0])
+            height_b: int | None = get_node_height(node._parcel[1])
+            if height_a is None or height_b is None:
+                return None
+            return height_a + height_b
+        case (
+            UnqualifiedSingular()
+            | UnqualifiedCalculate()
+            | UnqualifiedWhere()
+            | UnqualifiedOrderBy()
+            | UnqualifiedTopK()
+        ):
+            return get_node_height(node._parcel[0])
+        case UnqualifiedAccess() | UnqualifiedPartition():
+            result: int | None = get_node_height(node._parcel[0])
+            return 1 + result if result is not None else result
+        case (
+            UnqualifiedWindow()
+            | UnqualifiedBinaryOperation()
+            | UnqualifiedOperation()
+            | UnqualifiedCollation()
+        ):
+            return None
+        case _:
+            raise PyDoughUnqualifiedException(
+                f"Unsupported unqualified node: {node.__class__.__name__}"
             )

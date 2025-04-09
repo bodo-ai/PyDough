@@ -127,6 +127,67 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     return root.Lineitems.CALCULATE(value=root.extended_price * root.tax)
 
 
+def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    best_customer = nations.BEST(customer, by=acctbal.DESC())
+    Regions.CALCULATE(n=best_customer.name)
+    ```
+    The problem: The cardinality is off since even though the `BEST` ensures
+    the customers are singular with regards to the nation, the nations are
+    still plural with regards to the region.
+    """
+    best_customer = root.nations.BEST(root.customers, by=root.acctbal.DESC())
+    return root.Regions.CALCULATE(n=best_customer.name)
+
+
+def bad_pydough_impl_10(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    best_customer = BEST(nations.customers, by=acctbal.DESC(), allow_ties=True)
+    Regions.CALCULATE(n=best_customer.name)
+    ```
+    The problem: the presence of `allow_ties=True` means that the `BEST`
+    operator does not guarantee `nations.customers` is plural with regards to
+    `Regions`.
+    """
+    best_customer = root.BEST(
+        root.nations.customers, by=root.acctbal.DESC(), allow_ties=True
+    )
+    return root.Regions.CALCULATE(n=best_customer.name)
+
+
+def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    best_customer = BEST(nations.customers, by=acctbal.DESC(), n_best=3)
+    Regions.CALCULATE(n=best_customer.name)
+    ```
+    The problem: the presence of `n_best=3` means that the `BEST` operator
+    does not guarantee `nations.customers` is plural with regards to `Regions`.
+    """
+    best_customer = root.BEST(
+        root.nations.customers, by=root.acctbal.DESC(), allow_ties=True
+    )
+    return root.Regions.CALCULATE(n=best_customer.name)
+
+
+def bad_pydough_impl_12(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    Regions.BEST(nations.customers, by=acctbal.DESC(), n_best=3, allow_ties=True)
+    ```
+    The problem: cannot simultaneously use `n_best=3` and `allow_ties=True`.
+    """
+    return root.Regions.BEST(
+        root.nations.customers, by=root.acctbal.DESC(), n_best=3, allow_ties=True
+    )
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -169,6 +230,26 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_pydough_impl_08,
             "PyDough objects do not yet support writing properties to them.",
             id="08",
+        ),
+        pytest.param(
+            bad_pydough_impl_09,
+            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=1, allow_ties=False) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=1, allow_ties=False) == 1).name",
+            id="09",
+        ),
+        pytest.param(
+            bad_pydough_impl_10,
+            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name",
+            id="10",
+        ),
+        pytest.param(
+            bad_pydough_impl_11,
+            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name",
+            id="11",
+        ),
+        pytest.param(
+            bad_pydough_impl_12,
+            "Cannot allow ties when multiple best values are requested",
+            id="12",
         ),
     ],
 )
