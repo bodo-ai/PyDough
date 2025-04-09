@@ -92,10 +92,7 @@ def deduce_join_uniqueness(
     # Reject unless doing a join on two inputs.
     if len(join.inputs) != 2:
         return set()
-
     lhs_unique, rhs_unique = input_unique_sets
-
-    join.conditions[0]
 
     # If doing a semi/anti join, just use the LHS uniqueness.
     if join.join_types[0] in (JoinType.SEMI, JoinType.ANTI):
@@ -103,18 +100,24 @@ def deduce_join_uniqueness(
             lhs_unique, join.columns, join.default_input_aliases[0]
         )
 
+    # Convert the uniqueness sets from sets of column names to sets of tuples
+    # in the form (is_lhs, column_name) to distinguish the lhs columns from the
+    # rhs columns. Then, create the `result_pairs` set from the cartesian
+    # product of all lhs/rhs uniqueness sets.
+    result_pairs: set[frozenset[tuple[bool, str]]] = set()
     lhs_pairs: set[frozenset[tuple[bool, str]]] = {
         frozenset({(True, k) for k in unique_set}) for unique_set in lhs_unique
     }
     rhs_pairs: set[frozenset[tuple[bool, str]]] = {
         frozenset({(False, k) for k in unique_set}) for unique_set in rhs_unique
     }
-
-    result_pairs: set[frozenset[tuple[bool, str]]] = set()
     for lhs_set in lhs_pairs:
         for rhs_set in rhs_pairs:
             result_pairs.add(lhs_set | rhs_set)
 
+    # Using the equi-join keys, build remappings from columns in the lhs
+    # uniqueness sets to corresponding columns in the rhs uniqueness sets, and
+    # vice versa.
     remappings: dict[tuple[bool, str], set[tuple[bool, str]]] = {}
     lhs_keys, rhs_keys = extract_equijoin_keys(join)
     for lhs_key, rhs_key in zip(lhs_keys, rhs_keys):
@@ -123,56 +126,83 @@ def deduce_join_uniqueness(
         remappings[(False, rhs_key.name)] = remappings.get((False, rhs_key.name), set())
         remappings[(False, rhs_key.name)].add((True, lhs_key.name))
 
-    new_result_pairs: set[frozenset[tuple[bool, str]]]
+    # Using this mapping, update the uniqueness set by adding each variant of
+    # a uniqueness set where a column from one side is replaced by a column
+    # from the other side that it is inferred to e equal to based on the join
+    # condition.
+    new_pairs: set[frozenset[tuple[bool, str]]]
     for remapping_key in remappings:
-        new_result_pairs = set(result_pairs)
+        new_pairs = set()
         for pair_set in result_pairs:
             if remapping_key in pair_set:
                 for alternate in remappings[remapping_key]:
-                    new_result_pairs.add(
+                    new_pairs.add(
                         pair_set.difference({remapping_key}).union({alternate})
                     )
-        result_pairs = new_result_pairs
+        result_pairs.update(new_pairs)
 
-    new_result_pairs = set(result_pairs)
+    # If any of the uniqueness sets are entirely in one side, and are a
+    # strict superset of the uniqueness keys of that side, add the
+    # corresponding uniqueness sets from that side (this occurs if the ioin
+    # did not alter the cardinality of that side).
+    new_pairs = set()
     for pair_set in result_pairs:
         if all(is_lhs for is_lhs, _ in pair_set):
             for lhs_pair_set in lhs_pairs:
-                if pair_set.issuperset(lhs_pair_set):
-                    new_result_pairs.discard(pair_set)
-                    new_result_pairs.add(lhs_pair_set)
+                if pair_set > lhs_pair_set:
+                    new_pairs.update(lhs_pairs)
+                    break
         if all(not is_lhs for is_lhs, _ in pair_set):
             for rhs_pair_set in rhs_pairs:
-                if pair_set.issuperset(rhs_pair_set):
-                    new_result_pairs.discard(pair_set)
-                    new_result_pairs.add(rhs_pair_set)
+                if pair_set > rhs_pair_set:
+                    new_pairs.update(rhs_pairs)
+                    break
+    result_pairs.update(new_pairs)
 
-    result_pairs = new_result_pairs
+    # Remove any uniqueness sets that are strict supersets of other uniqueness
+    # sets.
+    redundant_uniqueness_sets: list[frozenset[tuple[bool, str]]] = [
+        set_a for set_a in result_pairs for set_b in result_pairs if set_a > set_b
+    ]
+    for redundant_set in redundant_uniqueness_sets:
+        result_pairs.discard(redundant_set)
 
+    # Finally, convert from the tuple form back to just uniqueness sets of
+    # column names using the output column names of the join. Any uniqueness
+    # sets that contain columns not present in the outut are discarded.
     result: set[frozenset[str]] = set()
     for unique_set in result_pairs:
         if len(unique_set) == 0:
             result.add(frozenset())
+            continue
+        # Split the uniqueness set into its columns from the lhs vs rhs, and
+        # drop the boolean tuple.
         lhs_elem_names: set[str] = {k for is_lhs, k in unique_set if is_lhs}
         rhs_elem_names: set[str] = {k for is_lhs, k in unique_set if not is_lhs}
+        # Propagate the columns from the lhs through the join output columns.
+        # If this is possible, `new_lhs_elems` will be a singleton set whose
+        # element is all of the lhs columns bubbled through. If not, it will be
+        # an empty set.
         new_lhs_elems: set[frozenset[str]]
-
         if len(lhs_elem_names) > 0:
             new_lhs_elems = bubble_uniqueness(
                 {frozenset(lhs_elem_names)}, join.columns, join.default_input_aliases[0]
             )
-            if len(new_lhs_elems) == 0:
-                continue
         else:
             new_lhs_elems = set()
+        # Repeat the same idea for the rhs.
+        new_rhs_elems: set[frozenset[str]]
         if len(rhs_elem_names) > 0:
             new_rhs_elems = bubble_uniqueness(
                 {frozenset(rhs_elem_names)}, join.columns, join.default_input_aliases[1]
             )
-            if len(new_rhs_elems) == 0:
-                continue
         else:
             new_rhs_elems = set()
+        # If both sides were able to have their columns bubbled through (or did
+        # not have columns from that side to begin with), then create the new
+        # output uniqueness set by combining their output columns from their
+        # singleton uniqueness sets (or ignoring them if there were no columns
+        # from that side to begin with)
         if len(new_lhs_elems) == len(lhs_elem_names) and len(new_rhs_elems) == len(
             rhs_elem_names
         ):
