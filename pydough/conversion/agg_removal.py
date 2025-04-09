@@ -44,8 +44,9 @@ def delete_aggregation(agg: Aggregate) -> RelationalNode:
     for name, col in agg.keys.items():
         projection_cols[name] = col
     for name, agg_call in agg.aggregations.items():
-        # TODO: ADD COMMENTS
         match agg_call.op:
+            # For these operators, when called on a single row, just return
+            # that row unmodified.
             case (
                 pydop.SUM
                 | pydop.MIN
@@ -55,9 +56,12 @@ def delete_aggregation(agg: Aggregate) -> RelationalNode:
                 | pydop.MEDIAN
             ):
                 projection_cols[name] = agg_call.inputs[0]
+            # If COUNT is called with no arguments, always return 1. If it is
+            # called with 1 argument, return 1 if the row is non-null,
+            # otherwise 0.
             case pydop.COUNT:
                 if len(agg_call.inputs) == 0:
-                    projection_cols[name] = LiteralExpression(0, Int64Type())
+                    projection_cols[name] = LiteralExpression(1, Int64Type())
                 else:
                     projection_cols[name] = CallExpression(
                         pydop.IFF,
@@ -70,6 +74,9 @@ def delete_aggregation(agg: Aggregate) -> RelationalNode:
                             LiteralExpression(0, Int64Type()),
                         ],
                     )
+            # If any other aggregations are present besides the supported
+            # operators, skip the deletion operation and just return the
+            # original aggregation.
             case _:
                 return agg
     return Project(agg.input, projection_cols)
@@ -125,7 +132,6 @@ def deduce_join_uniqueness(
                     new_result_pairs.add(
                         pair_set.difference({remapping_key}).union({alternate})
                     )
-        # print("$$$", result_pairs, new_result_pairs)
         result_pairs = new_result_pairs
 
     new_result_pairs = set(result_pairs)
@@ -141,7 +147,6 @@ def deduce_join_uniqueness(
                     new_result_pairs.discard(pair_set)
                     new_result_pairs.add(rhs_pair_set)
 
-    # print("@@@", result_pairs, new_result_pairs)
     result_pairs = new_result_pairs
 
     result: set[frozenset[str]] = set()
@@ -168,7 +173,6 @@ def deduce_join_uniqueness(
                 continue
         else:
             new_rhs_elems = set()
-        # print(">>>", new_lhs_elems, new_rhs_elems, len(lhs_elem_names), len(rhs_elem_names))
         if len(new_lhs_elems) == len(lhs_elem_names) and len(new_rhs_elems) == len(
             rhs_elem_names
         ):
@@ -180,39 +184,7 @@ def deduce_join_uniqueness(
                 new_set = new_set.union(new_rhs_elems.pop())
             result.add(new_set)
 
-    # print()
-    # print(condition.to_string(compact=True))
-    # print(lhs_unique, rhs_unique)
-    # print(result_pairs)
-    # print(result)
-    # print(remappings)
-    # print()
-
     return result
-
-
-def include_isomorphisms(
-    unique_sets: set[frozenset[str]],
-    isomorphisms: dict[str, set[str]],
-) -> set[frozenset[str]]:
-    """
-    TODO: ADD COMMENTS
-    """
-    combined: set[str] = set()
-    for unique_set in unique_sets:
-        combined.update(unique_set)
-    if len(unique_sets) > 0 and len(isomorphisms) > 0:
-        for name, aliases in isomorphisms.items():
-            if name in combined:
-                new_unique_sets: set[frozenset[str]] = set(unique_sets)
-                for unique_set in unique_sets:
-                    if name in unique_set:
-                        for alias in aliases:
-                            new_unique_sets.add(
-                                unique_set.difference({name}).union({alias})
-                            )
-                unique_sets = new_unique_sets
-    return unique_sets
 
 
 def aggregation_uniqueness_helper(
@@ -232,35 +204,37 @@ def aggregation_uniqueness_helper(
         be used to uniquely identify the rows of the returned node.
     """
     input_uniqueness: set[frozenset[str]]
-    # TODO: ADD COMMENTS
     match node:
+        # Scans are unchanged, and their uniqueness is based on the unique sets
+        # of the underlying table.
         case Scan():
             return node, bubble_uniqueness(node.unique_sets, node.columns, None)
+        # For filters, projections, limits and roots, the node is unchanged,
+        # and the uniqueness should be propagated upward through the selected
+        # columns.
         case Filter() | Project() | Limit() | RelationalRoot():
             node._input, input_uniqueness = aggregation_uniqueness_helper(node.input)
             input_uniqueness = bubble_uniqueness(input_uniqueness, node.columns, None)
-            if isinstance(node, Project) and not node.is_identity():
-                isomorphisms: dict[str, set[str]] = {}
-                for name1, col1 in node.columns.items():
-                    for name2, col2 in node.columns.items():
-                        if name1 != name2 and col1 == col2:
-                            isomorphisms[name1] = isomorphisms.get(name1, set()).union(
-                                {name2}
-                            )
-                            isomorphisms[name2] = isomorphisms.get(name2, set()).union(
-                                {name1}
-                            )
-                input_uniqueness = include_isomorphisms(input_uniqueness, isomorphisms)
-            # print("<---", input_uniqueness)
             return node, input_uniqueness
+        # For aggregations, the output uniqueness is the aggregation keys.
+        # However, if this is a superset of any of the unique sets of the input
+        # then the aggregation should be deleted since it is redundant.
         case Aggregate():
             node._input, input_uniqueness = aggregation_uniqueness_helper(node.input)
             agg_keys: frozenset[str] = frozenset(node.keys)
+            output_uniqueness: set[frozenset[str]] = {agg_keys}
             for unique_set in input_uniqueness:
                 if agg_keys.issuperset(unique_set):
                     node = delete_aggregation(node)
+                    # If deleting the aggregation, then the uniqueness of the
+                    # input is propagated through the new projection.
+                    output_uniqueness = bubble_uniqueness(
+                        input_uniqueness, node.columns, None
+                    )
                     break
-            return node, {agg_keys}
+            return node, output_uniqueness
+        # For joins, gather the uniqueness information from each input, then
+        # infer the combined uniqueness information after joining.
         case Join():
             unique_sets: list[set[frozenset[str]]] = []
             for idx, input_node in enumerate(node.inputs):
@@ -268,7 +242,11 @@ def aggregation_uniqueness_helper(
                     input_node
                 )
                 unique_sets.append(input_uniqueness)
-            return node, deduce_join_uniqueness(node, unique_sets)
+            final_uniqueness: set[frozenset[str]] = deduce_join_uniqueness(
+                node, unique_sets
+            )
+            return node, final_uniqueness
+        # Empty singletons don't have uniqueness information.
         case EmptySingleton():
             return node, set()
         case _:

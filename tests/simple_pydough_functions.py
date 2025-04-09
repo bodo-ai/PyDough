@@ -51,7 +51,7 @@ def dumb_aggregation():
         a1=MIN(region.name),
         a2=MAX(region.name),
         a3=SUM(region.key),
-        a4=COUNT(region.key),
+        a4=COUNT(KEEP_IF(region.key, region.name != "AMERICA")),
         a5=COUNT(region),
         a6=AVG(region.key),
         a7=ANYTHING(region.name),

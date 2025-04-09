@@ -13,7 +13,7 @@ ROOT(columns=[('year', year), ('customer_nation', customer_nation), ('supplier_n
            SCAN(table=tpch.CUSTOMER, columns={'key_2': c_custkey, 'nation_key': c_nationkey})
           PROJECT(columns={'customer_key': customer_key, 'key_5': key, 'year': YEAR(order_date)})
            SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
-         PROJECT(columns={'agg_0': 0:int64, 'agg_1': value, 'order_key': order_key, 'part_key': part_key, 'supplier_key': supplier_key})
+         PROJECT(columns={'agg_0': 1:int64, 'agg_1': value, 'order_key': order_key, 'part_key': part_key, 'supplier_key': supplier_key})
           SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey, 'value': l_extendedprice})
        SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey, 'supplier_key_9': ps_suppkey})
      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key_14': s_nationkey})
