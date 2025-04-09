@@ -851,11 +851,15 @@ def impl_defog_dealership_adv11():
     What is the GPM for all car sales in 2023? GPM (gross profit margin) =
     (total revenue - total cost) / total cost * 100
     """
-    sales_2023 = Sales.WHERE(YEAR(sale_date) == 2023).CALCULATE(car_cost=car.cost)
+    sales_2023 = (
+        Sales.WHERE(YEAR(sale_date) == 2023)
+        .WHERE(HAS(car))
+        .CALCULATE(car_cost=car.cost)
+    )
 
     return Dealership.CALCULATE(
         GPM=(
-            (SUM(sales_2023.sale_price) - SUM(sales_2023.car.cost))
+            (SUM(sales_2023.sale_price) - SUM(sales_2023.car_cost))
             / SUM(sales_2023.car_cost)
         )
         * 100
