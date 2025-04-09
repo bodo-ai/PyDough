@@ -871,9 +871,4 @@ def test_pipeline_e2e_correlated(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
-    from pydough import to_sql
-
-    print(
-        to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
-    )
     pd.testing.assert_frame_equal(result, answer_impl())
