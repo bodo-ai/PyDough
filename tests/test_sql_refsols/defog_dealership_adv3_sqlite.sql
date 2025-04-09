@@ -14,4 +14,4 @@ FROM main.cars AS cars
 LEFT JOIN _t1_2 AS _t1
   ON _t1.car_id = cars._id
 WHERE
-  cars.vin_number LIKE '%m5%'
+  LOWER(cars.vin_number) LIKE '%m5%'

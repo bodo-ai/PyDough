@@ -641,7 +641,7 @@ def impl_defog_dealership_adv1():
     payment_weeks = PaymentsReceived.WHERE(
         MONOTONIC(1, DATEDIFF("weeks", payment_date, "now"), 8)
         & (sale_record.sale_price > 30000)
-    ).CALCULATE(_id, payment_week=DATETIME(payment_date, "start of week"))
+    ).CALCULATE(payment_week=DATETIME(payment_date, "start of week"))
 
     is_weekend = ISIN(DAYOFWEEK(p.payment_date), (5, 6))
 
@@ -681,7 +681,7 @@ def impl_defog_dealership_adv3():
     partial matches using LIKE with wildcards.
     """
     return Cars.CALCULATE(make, model, num_sales=COUNT(sale_records)).WHERE(
-        LIKE(vin_number, "%m5%")
+        CONTAINS(LOWER(vin_number), "m5")
     )
 
 
