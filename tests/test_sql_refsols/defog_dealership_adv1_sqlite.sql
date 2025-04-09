@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     COUNT() AS agg_0,
     SUM(
@@ -82,4 +82,4 @@ SELECT
   payment_week,
   COALESCE(agg_0, 0) AS total_payments,
   COALESCE(agg_1, 0) AS weekend_payments
-FROM _t0_2
+FROM _t0
