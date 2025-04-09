@@ -1,0 +1,5 @@
+SELECT
+  COUNT() AS TSC
+FROM main.sales
+WHERE
+  DATEDIFF(CURRENT_TIMESTAMP(), sale_date, DAY) <= 7
