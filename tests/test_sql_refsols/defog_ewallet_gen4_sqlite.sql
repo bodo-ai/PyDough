@@ -1,4 +1,4 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     merchant_id,
     start_date
@@ -7,34 +7,25 @@ WITH _t0 AS (
   SELECT
     MIN(start_date) AS agg_0,
     merchant_id
-  FROM _t0
+  FROM _t1
   GROUP BY
     merchant_id
 ), _s3 AS (
   SELECT
     MIN(start_date) AS agg_0,
     merchant_id
-  FROM _t0
+  FROM _t1
   GROUP BY
     merchant_id
-), _s5 AS (
-  SELECT
-    MAX(cid) AS agg_1,
-    merchant_id,
-    start_date
-  FROM main.coupons
-  GROUP BY
-    merchant_id,
-    start_date
 ), _s7 AS (
   SELECT
-    MAX(_s5.agg_1) AS agg_1,
+    MAX(coupons.cid) AS agg_1,
     merchants.mid
   FROM main.merchants AS merchants
   LEFT JOIN _s3 AS _s3
     ON _s3.merchant_id = merchants.mid
-  JOIN _s5 AS _s5
-    ON _s3.agg_0 = _s5.start_date AND _s5.merchant_id = merchants.mid
+  JOIN main.coupons AS coupons
+    ON _s3.agg_0 = coupons.start_date AND coupons.merchant_id = merchants.mid
   GROUP BY
     merchants.mid
 )
@@ -48,6 +39,6 @@ LEFT JOIN _s1 AS _s1
   ON _s1.merchant_id = merchants.mid
 LEFT JOIN _s7 AS _s7
   ON _s7.mid = merchants.mid
-JOIN _t0 AS _s9
+JOIN _t1 AS _s9
   ON _s9.merchant_id = merchants.mid
   AND _s9.start_date <= DATETIME(merchants.created_at, '1 year')
