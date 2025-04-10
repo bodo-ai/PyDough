@@ -25,26 +25,17 @@ WITH _s2 AS (
     ON _s0.key = _s2.supplier_key
   JOIN _t6 AS _t6
     ON _s0.nation_key = _t6.key
-), _s6 AS (
-  SELECT
-    SUM(ps_supplycost * ps_availqty) AS agg_1,
-    ps_partkey AS part_key,
-    ps_suppkey AS supplier_key
-  FROM tpch.partsupp
-  GROUP BY
-    ps_partkey,
-    ps_suppkey
 ), _s9 AS (
   SELECT
-    SUM(_s6.agg_1) AS agg_1,
-    _s6.part_key
-  FROM _s6 AS _s6
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS agg_1,
+    partsupp.ps_partkey AS part_key
+  FROM tpch.partsupp AS partsupp
   JOIN _s0 AS _s4
-    ON _s4.key = _s6.supplier_key
-  JOIN _t6 AS _t10
-    ON _s4.nation_key = _t10.key
+    ON _s4.key = partsupp.ps_suppkey
+  JOIN _t6 AS _t9
+    ON _s4.nation_key = _t9.key
   GROUP BY
-    _s6.part_key
+    partsupp.ps_partkey
 )
 SELECT
   _s9.part_key AS PS_PARTKEY,

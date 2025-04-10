@@ -21,15 +21,29 @@ class Scan(RelationalNode):
     """
 
     def __init__(
-        self, table_name: str, columns: dict[str, RelationalExpression]
+        self,
+        table_name: str,
+        columns: dict[str, RelationalExpression],
+        unique_sets: set[frozenset[str]] | None = None,
     ) -> None:
         super().__init__(columns)
         self.table_name: str = table_name
+        self._unique_sets: set[frozenset[str]] = (
+            set() if unique_sets is None else unique_sets
+        )
 
     @property
     def inputs(self) -> list[RelationalNode]:
         # A scan is required to be the leaf node of the relational tree.
         return []
+
+    @property
+    def unique_sets(self) -> set[frozenset[str]]:
+        """
+        Returns a set of all sets of data columns of the scan that define
+        a unique row, in terms of the original table columns.
+        """
+        return self._unique_sets
 
     def node_equals(self, other: RelationalNode) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
@@ -46,4 +60,4 @@ class Scan(RelationalNode):
         inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert not inputs, "Scan node should have 0 inputs"
-        return Scan(self.table_name, columns)
+        return Scan(self.table_name, columns, self._unique_sets)

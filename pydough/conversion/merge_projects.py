@@ -226,9 +226,8 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
         and isinstance(node.input, Scan)
         and all(isinstance(expr, ColumnReference) for expr in node.columns.values())
     ):
-        return Scan(
-            node.input.table_name,
-            {
+        return node.input.copy(
+            columns={
                 name: transpose_expression(expr, node.input.columns)
                 for name, expr in node.columns.items()
             },
