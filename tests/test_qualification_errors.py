@@ -127,6 +127,53 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
     return root.Lineitems.CALCULATE(value=root.extended_price * root.tax)
 
 
+def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Non-existent per name
+    return root.Customers.orders.CALCULATE(root.RANKING(by=root.key.ASC(), per="custs"))
+
+
+def bad_pydough_impl_10(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Bad index of valid per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:2")
+    )
+
+
+def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Ambiguous per name
+    return root.Customers.orders.customer.orders.lines.CALCULATE(
+        root.RANKING(by=root.extended_price.DESC(), per="orders")
+    )
+
+
+def bad_pydough_impl_12(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:k")
+    )
+
+
+def bad_pydough_impl_13(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:1:2")
+    )
+
+
+def bad_pydough_impl_14(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:")
+    )
+
+
+def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:0")
+    )
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -169,6 +216,41 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_pydough_impl_08,
             "PyDough objects do not yet support writing properties to them.",
             id="08",
+        ),
+        pytest.param(
+            bad_pydough_impl_09,
+            "Per string refers to unrecognized ancestor 'custs' of TPCH.Customers.orders",
+            id="09",
+        ),
+        pytest.param(
+            bad_pydough_impl_10,
+            "Per string 'Customers:2' invalid as there are not 2 ancestors of the current context with name 'Customers'.",
+            id="10",
+        ),
+        pytest.param(
+            bad_pydough_impl_11,
+            "Per string 'orders' is ambiguous for TPCH.Customers.orders.customer.orders.lines. Use the form 'orders:index' to disambiguate, where 'orders:1' refers to the most recent ancestor.",
+            id="11",
+        ),
+        pytest.param(
+            bad_pydough_impl_12,
+            "Malformed per string: 'Customers:k' (expected the index after ':' to be a positive integer)",
+            id="12",
+        ),
+        pytest.param(
+            bad_pydough_impl_13,
+            "Malformed per string: 'Customers:1:2' (expected 0 or 1 ':', found 2)",
+            id="13",
+        ),
+        pytest.param(
+            bad_pydough_impl_14,
+            "Malformed per string: 'Customers:' (expected the index after ':' to be a positive integer)",
+            id="14",
+        ),
+        pytest.param(
+            bad_pydough_impl_15,
+            "Malformed per string: 'Customers:0' (expected the index after ':' to be a positive integer)",
+            id="15",
         ),
     ],
 )

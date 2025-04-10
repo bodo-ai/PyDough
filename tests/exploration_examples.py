@@ -100,18 +100,18 @@ def top_k_impl() -> UnqualifiedNode:
 
 
 def partition_impl() -> UnqualifiedNode:
-    return PARTITION(Parts, name="p", by=part_type)
+    return Parts.PARTITION(name="part_types", by=part_type)
 
 
 def partition_child_impl() -> UnqualifiedNode:
     return (
-        PARTITION(Parts, name="p", by=part_type)
+        Parts.PARTITION(name="part_types", by=part_type)
         .CALCULATE(
             part_type,
-            avg_price=AVG(p.retail_price),
+            avg_price=AVG(Parts.retail_price),
         )
         .WHERE(avg_price >= 27.5)
-        .p
+        .Parts
     )
 
 
@@ -164,13 +164,13 @@ def region_n_suppliers_in_red_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
 
 
 def parts_avg_price_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return PARTITION(Parts, name="p", by=part_type), AVG(p.retail_price)
+    return Parts.PARTITION(name="part_types", by=part_type), AVG(Parts.retail_price)
 
 
 def parts_avg_price_child_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:
-    return PARTITION(Parts, name="p", by=part_type).WHERE(
-        AVG(p.retail_price) >= 27.5
-    ), p
+    return Parts.PARTITION(name="part_types", by=part_type).WHERE(
+        AVG(Parts.retail_price) >= 27.5
+    ), Parts
 
 
 def nations_lowercase_name_impl() -> tuple[UnqualifiedNode, UnqualifiedNode]:

@@ -7,7 +7,7 @@ __all__ = ["PyDoughCollectionQDAG"]
 
 from abc import abstractmethod
 from collections.abc import Iterable
-from functools import cached_property
+from functools import cache, cached_property
 from typing import Union
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
@@ -26,6 +26,24 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
     def __repr__(self):
         return self.to_string()
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """
+        The name of the collection.
+        """
+
+    @cache
+    def get_ancestral_names(self) -> list[str]:
+        """
+        The names of all ancestors of the collection, starting from the top.
+        """
+        if self.ancestor_context is None:
+            return []
+        return self.ancestor_context.get_ancestral_names() + [
+            self.ancestor_context.name
+        ]
 
     @property
     def ancestor_context(self) -> Union["PyDoughCollectionQDAG", None]:

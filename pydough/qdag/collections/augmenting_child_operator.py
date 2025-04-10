@@ -33,6 +33,10 @@ class AugmentingChildOperator(ChildOperator):
         self._children: MutableSequence[PyDoughCollectionQDAG] = children
 
     @property
+    def name(self) -> str:
+        return self.preceding_context.name
+
+    @property
     def ancestor_context(self) -> PyDoughCollectionQDAG | None:
         return self._preceding_context.ancestor_context
 

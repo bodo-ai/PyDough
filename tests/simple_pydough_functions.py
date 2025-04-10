@@ -35,11 +35,11 @@ def order_info_per_priority():
     # Find information about the highest total price order for each priority
     # type in 1992. Specifically, for each order priority, the key & total
     # price of the order. Order the results by priority.
-    priorities = PARTITION(
-        Orders.WHERE(YEAR(order_date) == 1992), name="orders", by=order_priority
+    prios = Orders.WHERE(YEAR(order_date) == 1992).PARTITION(
+        name="priorities", by=order_priority
     )
     return (
-        priorities.orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+        prios.Orders.WHERE(RANKING(by=total_price.DESC(), per="priorities") == 1)
         .CALCULATE(order_priority, order_key=key, order_total_price=total_price)
         .ORDER_BY(order_priority.ASC())
     )
@@ -97,6 +97,54 @@ def simple_collation():
     )
 
 
+def absurd_window_per():
+    return (
+        Regions.nations.customers.orders.lines.supplier.nation.suppliers.nation.customers.nation.region.CALCULATE(
+            w1=RELSIZE(per="Regions"),
+            w2=RELSIZE(per="nations:1"),
+        )
+        .CALCULATE(
+            w3=RELSIZE(per="customers:2"),
+            w4=RELSIZE(per="orders:1"),
+        )
+        .CALCULATE(
+            w5=RELSIZE(per="lines"),
+            w6=RELSIZE(per="supplier:1"),
+        )
+        .CALCULATE(
+            w7=RELSIZE(per="nation:3"),
+            w8=RELSIZE(per="suppliers:1"),
+        )
+        .CALCULATE(
+            w9=RELSIZE(per="nation:2"),
+            w10=RELSIZE(per="customers:1"),
+        )
+        .CALCULATE(
+            w11=RELSIZE(per="nation:1"),
+            w12=RELSIZE(),
+        )
+    )
+
+
+def absurd_partition_window_per():
+    return (
+        Lineitems.PARTITION(
+            name="groups", by=(ship_mode, ship_date, status, return_flag, part_key)
+        )
+        .PARTITION(name="groups", by=(ship_mode, ship_date, status, return_flag))
+        .PARTITION(name="groups", by=(ship_mode, ship_date, status))
+        .PARTITION(name="groups", by=(ship_mode, ship_date))
+        .PARTITION(name="groups", by=(ship_mode))
+        .groups.groups.groups.groups.Lineitems.order.CALCULATE(
+            w1=RELSIZE(per="groups:1"),
+            w2=RELSIZE(per="groups:2"),
+            w3=RELSIZE(per="groups:3"),
+            w4=RELSIZE(per="groups:4"),
+            w5=RELSIZE(per="groups:5"),
+        )
+    )
+
+
 def year_month_nation_orders():
     # Finds the 5 largest instances of numbers of orders made in a month of a
     # year by customers in a nation, only looking at nations from Asia and
@@ -111,11 +159,11 @@ def year_month_nation_orders():
             order_month=MONTH(order_date),
         )
     )
-    groups = PARTITION(
-        urgent_orders, name="u", by=(nation_name, order_year, order_month)
+    groups = urgent_orders.PARTITION(
+        name="groups", by=(nation_name, order_year, order_month)
     )
     return groups.CALCULATE(
-        nation_name, order_year, order_month, n_orders=COUNT(u)
+        nation_name, order_year, order_month, n_orders=COUNT(orders)
     ).TOP_K(5, by=n_orders.DESC())
 
 
@@ -153,7 +201,7 @@ def rank_nations_by_region():
 
 def rank_nations_per_region_by_customers():
     return Regions.nations.CALCULATE(
-        name, rank=RANKING(by=COUNT(customers).DESC(), levels=1)
+        name, rank=RANKING(by=COUNT(customers).DESC(), per="Regions")
     ).TOP_K(5, by=rank.ASC())
 
 
@@ -165,7 +213,7 @@ def rank_parts_per_supplier_region_by_size():
             region=region_name,
             rank=RANKING(
                 by=(size.DESC(), container.DESC(), part_type.DESC()),
-                levels=4,
+                per="Regions",
                 allow_ties=True,
                 dense=True,
             ),
@@ -192,10 +240,10 @@ def rank_with_filters_b():
 
 def rank_with_filters_c():
     return (
-        PARTITION(Parts, name="p", by=size)
+        Parts.PARTITION(name="sizes", by=size)
         .TOP_K(5, by=size.DESC())
-        .p.CALCULATE(size, name)
-        .WHERE(RANKING(by=retail_price.DESC(), levels=1) == 1)
+        .Parts.CALCULATE(size, name)
+        .WHERE(RANKING(by=retail_price.DESC(), per="sizes") == 1)
     )
 
 
@@ -206,7 +254,7 @@ def first_order_per_customer():
     # with the lowest key. Only consider customers with at least $9k in their
     # account. Only look at customers with at least one order.
     first_order = orders.WHERE(
-        RANKING(by=(order_date.ASC(), key.ASC()), levels=1) == 1
+        RANKING(by=(order_date.ASC(), key.ASC()), per="Customers") == 1
     ).SINGULAR()
     return (
         Customers.WHERE(acctbal >= 9000.0)
@@ -233,7 +281,10 @@ def percentile_customers_per_region():
     # name of the customers
     return (
         Regions.nations.customers.CALCULATE(name)
-        .WHERE((PERCENTILE(by=(acctbal.ASC()), levels=2) == 95) & ENDSWITH(phone, "00"))
+        .WHERE(
+            (PERCENTILE(by=(acctbal.ASC()), per="Regions") == 95)
+            & ENDSWITH(phone, "00")
+        )
         .ORDER_BY(name.ASC())
     )
 
@@ -242,7 +293,7 @@ def regional_suppliers_percentile():
     # For each region, find the suppliers in the top 0.1% by number of parts
     # they supply, breaking ties by name, only keeping the suppliers in the top
     pct = PERCENTILE(
-        by=(COUNT(supply_records).ASC(), name.ASC()), levels=2, n_buckets=1000
+        by=(COUNT(supply_records).ASC(), name.ASC()), per="Regions", n_buckets=1000
     )
     return Regions.nations.suppliers.CALCULATE(name).WHERE(
         HAS(supply_records) & (pct == 1000)
@@ -264,7 +315,7 @@ def prev_next_regions():
 def avg_order_diff_per_customer():
     # Finds the 5 customers with the highest average difference in days between
     # orders made.
-    prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), levels=1)
+    prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), per="Customers")
     order_info = orders.CALCULATE(
         day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
@@ -277,11 +328,9 @@ def avg_order_diff_per_customer():
 def yoy_change_in_num_orders():
     # For every year, counts the number of orders made in that year and the
     # percentage change from the previous year.
-    years = PARTITION(
-        Orders.CALCULATE(year=YEAR(order_date)), name="orders_in_year", by=year
-    )
-    current_year_orders = COUNT(orders_in_year)
-    prev_year_orders = PREV(COUNT(orders_in_year), by=year.ASC())
+    years = Orders.CALCULATE(year=YEAR(order_date)).PARTITION(name="years", by=year)
+    current_year_orders = COUNT(Orders)
+    prev_year_orders = PREV(COUNT(Orders), by=year.ASC())
     return years.CALCULATE(
         year,
         current_year_orders=current_year_orders,
@@ -310,10 +359,9 @@ def customer_largest_order_deltas():
     # largest such difference. Only consider customers with orders.
     line_revenue = extended_price * (1 - discount)
     order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
-    previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), levels=1)
+    previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), per="Customers")
     orders_info = orders.WHERE(PRESENT(previous_order_revenue)).CALCULATE(
-        revenue_delta=order_revenue
-        - PREV(order_revenue, by=order_date.ASC(), levels=1),
+        revenue_delta=order_revenue - previous_order_revenue
     )
     return (
         Customers.CALCULATE(
@@ -338,7 +386,7 @@ def suppliers_bal_diffs():
             name,
             region_name,
             acctbal_delta=account_balance
-            - PREV(account_balance, by=account_balance.ASC(), levels=2),
+            - PREV(account_balance, by=account_balance.ASC(), per="Regions"),
         )
         .TOP_K(5, by=acctbal_delta.DESC())
     )
@@ -348,13 +396,16 @@ def month_year_sliding_windows():
     # Finds all months where the total amount spent by customers on orders in
     # that month was more than the preceding/following month, and the amount
     # spent in that year was more than the following year.
-    ym_groups = PARTITION(
-        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)),
-        name="orders",
-        by=(year, month),
-    ).CALCULATE(month_total_spent=SUM(orders.total_price))
+    ym_groups = (
+        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
+        .PARTITION(
+            name="months",
+            by=(year, month),
+        )
+        .CALCULATE(month_total_spent=SUM(Orders.total_price))
+    )
     y_groups = (
-        PARTITION(ym_groups, name="months", by=year)
+        ym_groups.PARTITION(name="years", by=year)
         .CALCULATE(
             curr_year_total_spent=SUM(months.month_total_spent),
             next_year_total_spent=NEXT(
@@ -383,10 +434,10 @@ def avg_gap_prev_urgent_same_clerk():
     # Finds the average gap in days between each urgent order and the previous
     # urgent order handled by the same clerk
     urgent_orders = Orders.WHERE(order_priority == "1-URGENT")
-    clerks = PARTITION(urgent_orders, name="orders", by=clerk)
-    order_info = clerks.orders.CALCULATE(
+    clerk_groups = urgent_orders.PARTITION(name="clerks", by=clerk)
+    order_info = clerk_groups.Orders.CALCULATE(
         delta=DATEDIFF(
-            "days", PREV(order_date, by=order_date.ASC(), levels=1), order_date
+            "days", PREV(order_date, by=order_date.ASC(), per="clerks"), order_date
         )
     )
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
@@ -409,16 +460,18 @@ def nation_window_aggs():
 
 
 def region_nation_window_aggs():
-    # Calculating multiple global windowed aggregations for each nation, only
-    # per-region, considering nations whose names do not start with a vowel.
+    # Calculating multiple windowed aggregations for each nation, per-region,
+    # only considering nations whose names do not start with a vowel.
     return (
         Regions.nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
         .CALCULATE(
             nation_name=name,
-            key_sum=RELSUM(key, levels=1),
-            key_avg=RELAVG(key, levels=1),
-            n_short_comment=RELCOUNT(KEEP_IF(comment, LENGTH(comment) < 75), levels=1),
-            n_nations=RELSIZE(levels=1),
+            key_sum=RELSUM(key, per="Regions"),
+            key_avg=RELAVG(key, per="Regions"),
+            n_short_comment=RELCOUNT(
+                KEEP_IF(comment, LENGTH(comment) < 75), per="Regions"
+            ),
+            n_nations=RELSIZE(per="Regions"),
         )
         .ORDER_BY(region_key.ASC(), nation_name.ASC())
     )
@@ -430,7 +483,7 @@ def supplier_pct_national_qty():
     # meeting certain criteria. Include for each such supplier their name,
     # nation name, the quantity, and the percentage. The criteria are that the
     # shipments were done in 1998, they were shipped by ship, the part shipped
-    # had  had "tomato" in the name and was a large container. Also, when
+    # had "tomato" in the name and was a large container. Also, when
     # finding the sum for each naiton and the best suppliers, ignore all
     # suppliers with a negative account balance and whose comments do not
     # contain the word "careful".
@@ -449,7 +502,7 @@ def supplier_pct_national_qty():
             supplier_name=name,
             nation_name=name,
             supplier_quantity=supp_qty,
-            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, levels=1),
+            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="Nations"),
         )
         .TOP_K(5, by=national_qty_pct.DESC())
     )
@@ -460,17 +513,17 @@ def highest_priority_per_year():
     # made in that year with that priority, listing the year, priority, and
     # percentage. Sort the results by year.
     order_info = Orders.CALCULATE(order_year=YEAR(order_date))
-    year_priorities = PARTITION(
-        order_info, name="orders", by=(order_priority, order_year)
-    ).CALCULATE(n_orders=COUNT(orders))
-    years = PARTITION(year_priorities, name="priorities", by=order_year)
+    yp_groups = order_info.PARTITION(
+        name="years_priorities", by=(order_priority, order_year)
+    ).CALCULATE(n_orders=COUNT(Orders))
+    year_groups = yp_groups.PARTITION(name="years", by=order_year)
     return (
-        years.priorities.CALCULATE(
+        year_groups.years_priorities.CALCULATE(
             order_year,
             highest_priority=order_priority,
-            priority_pct=100.0 * n_orders / RELSUM(n_orders, levels=1),
+            priority_pct=100.0 * n_orders / RELSUM(n_orders, per="years"),
         )
-        .WHERE(RANKING(by=priority_pct.DESC(), levels=1) == 1)
+        .WHERE(RANKING(by=priority_pct.DESC(), per="years") == 1)
         .ORDER_BY(order_year.ASC())
     )
 
@@ -486,10 +539,10 @@ def nation_best_order():
         .orders.WHERE(YEAR(order_date) == 1998)
         .CALCULATE(
             order_value=total_price,
-            value_percentage=100.0 * total_price / RELSUM(total_price, levels=2),
+            value_percentage=100.0 * total_price / RELSUM(total_price, per="Nations"),
             order_key=key,
         )
-        .WHERE(RANKING(by=order_value.DESC(), levels=2) == 1)
+        .WHERE(RANKING(by=order_value.DESC(), per="Nations") == 1)
         .SINGULAR()
     )
     return (
@@ -965,17 +1018,19 @@ def generator_comp_terms():
 def partition_as_child():
     # Count how many part sizes have an above-average number of parts of that
     # size.
-    sizes = PARTITION(Parts, name="p", by=size).CALCULATE(n_parts=COUNT(p))
-    return TPCH.CALCULATE(avg_n_parts=AVG(sizes.n_parts)).CALCULATE(
-        n_parts=COUNT(sizes.WHERE(n_parts > avg_n_parts))
+    size_groups = Parts.PARTITION(name="sizes", by=size).CALCULATE(n_parts=COUNT(Parts))
+    return TPCH.CALCULATE(avg_n_parts=AVG(size_groups.n_parts)).CALCULATE(
+        n_parts=COUNT(size_groups.WHERE(n_parts > avg_n_parts))
     )
 
 
 def agg_partition():
     # Doing a global aggregation on the output of a partition aggregation
-    yearly_data = PARTITION(
-        Orders.CALCULATE(year=YEAR(order_date)), name="orders", by=year
-    ).CALCULATE(n_orders=COUNT(orders))
+    yearly_data = (
+        Orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="years", by=year)
+        .CALCULATE(n_orders=COUNT(Orders))
+    )
     return TPCH.CALCULATE(best_year=MAX(yearly_data.n_orders))
 
 
@@ -983,29 +1038,28 @@ def multi_partition_access_1():
     # A use of multiple PARTITION and stepping into partition children that is
     # a no-op.
     data = Tickers.CALCULATE(symbol).TOP_K(5, by=symbol.ASC())
-    grps_a = PARTITION(data, name="child_3", by=(currency, exchange, ticker_type))
-    grps_b = PARTITION(grps_a, name="child_2", by=(currency, exchange))
-    grps_c = PARTITION(grps_b, name="child_1", by=exchange)
-    return grps_c.child_1.child_2.child_3
+    grps_a = data.PARTITION(name="cet", by=(currency, exchange, ticker_type))
+    grps_b = grps_a.PARTITION(name="ce", by=(currency, exchange))
+    grps_c = grps_b.PARTITION(name="e", by=exchange)
+    return grps_c.ce.cet.Tickers
 
 
 def multi_partition_access_2():
     # Identify transactions that are below the average number of shares for
     # transactions of the same combinations of (customer, stock, type), or
     # the same combination of (customer, stock), or the same customer.
-    cust_tick_typ_groups = PARTITION(
-        Transactions,
-        name="original_data",
+    cust_tick_typ_groups = Transactions.PARTITION(
+        name="ctt_groups",
         by=(customer_id, ticker_id, transaction_type),
-    ).CALCULATE(cus_tick_typ_avg_shares=AVG(original_data.shares))
-    cust_tick_groups = PARTITION(
-        cust_tick_typ_groups, name="typs", by=(customer_id, ticker_id)
-    ).CALCULATE(cust_tick_avg_shares=AVG(typs.original_data.shares))
-    cus_groups = PARTITION(cust_tick_groups, name="ticks", by=customer_id).CALCULATE(
-        cust_avg_shares=AVG(ticks.typs.original_data.shares)
+    ).CALCULATE(cus_tick_typ_avg_shares=AVG(Transactions.shares))
+    cust_tick_groups = cust_tick_typ_groups.PARTITION(
+        name="ct_groups", by=(customer_id, ticker_id)
+    ).CALCULATE(cust_tick_avg_shares=AVG(ctt_groups.Transactions.shares))
+    cus_groups = cust_tick_groups.PARTITION(name="c_groups", by=customer_id).CALCULATE(
+        cust_avg_shares=AVG(ct_groups.ctt_groups.Transactions.shares)
     )
     return (
-        cus_groups.ticks.typs.original_data.WHERE(
+        cus_groups.ct_groups.ctt_groups.Transactions.WHERE(
             (shares < cus_tick_typ_avg_shares)
             & (shares < cust_tick_avg_shares)
             & (shares < cust_avg_shares)
@@ -1027,14 +1081,14 @@ def multi_partition_access_3():
     # Find all daily price updates whose closing price was the high mark for
     # that ticker, but not for tickers of that type.
     data = Tickers.CALCULATE(symbol, ticker_type).historical_prices
-    ticker_groups = PARTITION(data, name="ticker_data", by=ticker_id).CALCULATE(
-        ticker_high_price=MAX(ticker_data.close)
+    ticker_groups = data.PARTITION(name="tickers", by=ticker_id).CALCULATE(
+        ticker_high_price=MAX(historical_prices.close)
     )
-    type_groups = PARTITION(
-        ticker_groups.ticker_data, name="type_data", by=ticker_type
-    ).CALCULATE(type_high_price=MAX(type_data.close))
+    type_groups = ticker_groups.historical_prices.PARTITION(
+        name="types", by=ticker_type
+    ).CALCULATE(type_high_price=MAX(historical_prices.close))
     return (
-        type_groups.type_data.WHERE(
+        type_groups.historical_prices.WHERE(
             (close == ticker_high_price) & (close < type_high_price)
         )
         .CALCULATE(symbol, close)
@@ -1045,14 +1099,14 @@ def multi_partition_access_3():
 def multi_partition_access_4():
     # Find all transactions that were the largest for a customer of that ticker
     # (by number of shares) but not the largest for that customer overall.
-    cust_ticker_groups = PARTITION(
-        Transactions, name="data", by=(customer_id, ticker_id)
-    ).CALCULATE(cust_ticker_max_shares=MAX(data.shares))
-    cust_groups = PARTITION(
-        cust_ticker_groups, name="ticker_groups", by=customer_id
-    ).CALCULATE(cust_max_shares=MAX(ticker_groups.cust_ticker_max_shares))
+    cust_ticker_groups = Transactions.PARTITION(
+        name="groups", by=(customer_id, ticker_id)
+    ).CALCULATE(cust_ticker_max_shares=MAX(Transactions.shares))
+    cust_groups = cust_ticker_groups.PARTITION(
+        name="cust_groups", by=customer_id
+    ).CALCULATE(cust_max_shares=MAX(groups.cust_ticker_max_shares))
     return (
-        cust_groups.ticker_groups.data.WHERE(
+        cust_groups.groups.Transactions.WHERE(
             (shares >= cust_ticker_max_shares) & (shares < cust_max_shares)
         )
         .CALCULATE(transaction_id)
@@ -1066,17 +1120,17 @@ def multi_partition_access_5():
     # that type were from that ticker. List the transaction ID, the number of
     # transactions of that ticker/type, ticker, and type. Sort by the number of
     # transactions of that ticker/type, breaking ties by transaction ID.
-    ticker_type_groups = PARTITION(
-        Transactions, name="data", by=(ticker_id, transaction_type)
-    ).CALCULATE(n_ticker_type_trans=COUNT(data))
-    ticker_groups = PARTITION(
-        ticker_type_groups, name="sub_trans", by=ticker_id
-    ).CALCULATE(n_ticker_trans=SUM(sub_trans.n_ticker_type_trans))
-    type_groups = PARTITION(
-        ticker_groups.sub_trans, name="sub_trans", by=transaction_type
-    ).CALCULATE(n_type_trans=SUM(sub_trans.n_ticker_type_trans))
+    ticker_type_groups = Transactions.PARTITION(
+        name="groups", by=(ticker_id, transaction_type)
+    ).CALCULATE(n_ticker_type_trans=COUNT(Transactions))
+    ticker_groups = ticker_type_groups.PARTITION(
+        name="tickers", by=ticker_id
+    ).CALCULATE(n_ticker_trans=SUM(groups.n_ticker_type_trans))
+    type_groups = ticker_groups.groups.PARTITION(
+        name="types", by=transaction_type
+    ).CALCULATE(n_type_trans=SUM(groups.n_ticker_type_trans))
     return (
-        type_groups.sub_trans.data.CALCULATE(
+        type_groups.groups.Transactions.CALCULATE(
             transaction_id,
             n_ticker_type_trans,
             n_ticker_trans,
@@ -1095,23 +1149,24 @@ def multi_partition_access_6():
     # that ticker, or the only transaction of that type for that customer,
     # but not the only transaction for that customer, type, or ticker. List
     # the transaction IDs in ascending order.
-    ticker_type_groups = PARTITION(
-        Transactions, name="data", by=(ticker_id, transaction_type)
-    ).CALCULATE(n_ticker_type_trans=COUNT(data))
-    ticker_groups = PARTITION(
-        ticker_type_groups, name="sub_trans", by=ticker_id
-    ).CALCULATE(n_ticker_trans=SUM(sub_trans.n_ticker_type_trans))
-    type_groups = PARTITION(
-        ticker_groups.sub_trans, name="sub_trans", by=transaction_type
-    ).CALCULATE(n_type_trans=SUM(sub_trans.n_ticker_type_trans))
-    cust_type_groups = PARTITION(
-        type_groups.sub_trans.data, name="data", by=(customer_id, transaction_type)
-    ).CALCULATE(n_cust_type_trans=COUNT(data))
-    cust_groups = PARTITION(
-        cust_type_groups, name="sub_trans", by=customer_id
-    ).CALCULATE(n_cust_trans=SUM(sub_trans.n_cust_type_trans))
+    ticker_type_groups = Transactions.PARTITION(
+        name="groups", by=(ticker_id, transaction_type)
+    ).CALCULATE(n_ticker_type_trans=COUNT(Transactions))
+    ticker_groups = ticker_type_groups.PARTITION(name="groups", by=ticker_id).CALCULATE(
+        n_ticker_trans=SUM(groups.n_ticker_type_trans)
+    )
+    type_groups = ticker_groups.groups.PARTITION(
+        name="groups", by=transaction_type
+    ).CALCULATE(n_type_trans=SUM(groups.n_ticker_type_trans))
+    cust_type_groups = type_groups.groups.Transactions.PARTITION(
+        name="groups",
+        by=(customer_id, transaction_type),
+    ).CALCULATE(n_cust_type_trans=COUNT(Transactions))
+    cust_groups = cust_type_groups.PARTITION(name="groups", by=customer_id).CALCULATE(
+        n_cust_trans=SUM(groups.n_cust_type_trans)
+    )
     return (
-        cust_groups.sub_trans.data.CALCULATE(transaction_id)
+        cust_groups.groups.Transactions.CALCULATE(transaction_id)
         .WHERE(
             ((n_ticker_type_trans == 1) | (n_cust_type_trans == 1))
             & (n_cust_trans > 1)
@@ -1124,14 +1179,16 @@ def multi_partition_access_6():
 
 def double_partition():
     # Doing a partition aggregation on the output of a partition aggregation
-    year_month_data = PARTITION(
-        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)),
-        name="orders",
-        by=(year, month),
-    ).CALCULATE(n_orders=COUNT(orders))
-    return PARTITION(
-        year_month_data,
-        name="months",
+    year_month_data = (
+        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
+        .PARTITION(
+            name="months",
+            by=(year, month),
+        )
+        .CALCULATE(n_orders=COUNT(Orders))
+    )
+    return year_month_data.PARTITION(
+        name="years",
         by=year,
     ).CALCULATE(year, best_month=MAX(months.n_orders))
 
@@ -1151,21 +1208,18 @@ def triple_partition():
         .order.WHERE(YEAR(order_date) == 1992)
         .CALCULATE(cust_region=customer.nation.region.name)
     )
-    rrt_combos = PARTITION(
-        line_info, name="lines", by=(supp_region, cust_region, part_type)
-    ).CALCULATE(n_instances=COUNT(lines))
-    rr_combos = PARTITION(
-        rrt_combos, name="part_types", by=(supp_region, cust_region)
-    ).CALCULATE(
-        percentage=100.0 * MAX(part_types.n_instances) / SUM(part_types.n_instances)
-    )
+    rrt_combos = line_info.PARTITION(
+        name="combos", by=(supp_region, cust_region, part_type)
+    ).CALCULATE(n_instances=COUNT(order))
+    rr_combos = rrt_combos.PARTITION(
+        name="region_pairs", by=(supp_region, cust_region)
+    ).CALCULATE(percentage=100.0 * MAX(combos.n_instances) / SUM(combos.n_instances))
     return (
-        PARTITION(
-            rr_combos,
-            name="cust_regions",
+        rr_combos.PARTITION(
+            name="supplier_regions",
             by=supp_region,
         )
-        .CALCULATE(supp_region, avg_percentage=AVG(cust_regions.percentage))
+        .CALCULATE(supp_region, avg_percentage=AVG(region_pairs.percentage))
         .ORDER_BY(supp_region.ASC())
     )
 
@@ -1551,7 +1605,7 @@ def singular3():
         Customers.TOP_K(5, by=name.ASC())
         .CALCULATE(name)
         .ORDER_BY(
-            orders.WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+            orders.WHERE(RANKING(by=total_price.DESC(), per="Customers") == 1)
             .SINGULAR()
             .order_date.ASC(na_pos="last")
         )
@@ -1567,7 +1621,7 @@ def singular4():
         .TOP_K(
             5,
             by=orders.WHERE(order_priority == "1-URGENT")
-            .WHERE(RANKING(by=total_price.DESC(), levels=1) == 1)
+            .WHERE(RANKING(by=total_price.DESC(), per="Customers") == 1)
             .SINGULAR()
             .order_date.ASC(na_pos="last"),
         )
@@ -1581,14 +1635,15 @@ def singular5():
     # Find the 5 containers with the earliest such date, breaking ties
     # alphabetically. For the purpose of this question, only shipments made by
     # rail and for parts from Brand#13.
-    top_containers = PARTITION(
-        Parts.WHERE(brand == "Brand#13"),
-        name="parts",
+    top_containers = Parts.WHERE(brand == "Brand#13").PARTITION(
+        name="containers",
         by=container,
     )
     highest_price_line = (
-        parts.lines.WHERE(ship_mode == "RAIL")
-        .WHERE(RANKING(by=(extended_price.DESC(), ship_date.ASC()), levels=2) == 1)
+        Parts.lines.WHERE(ship_mode == "RAIL")
+        .WHERE(
+            RANKING(by=(extended_price.DESC(), ship_date.ASC()), per="containers") == 1
+        )
         .SINGULAR()
     )
     return (
@@ -1611,7 +1666,7 @@ def singular6():
     lq = (
         orders.WHERE(clerk == "Clerk#000000017")
         .lines.CALCULATE(receipt_date)
-        .WHERE(RANKING(by=(receipt_date.ASC(), revenue.DESC()), levels=2) == 1)
+        .WHERE(RANKING(by=(receipt_date.ASC(), revenue.DESC()), per="Customers") == 1)
         .SINGULAR()
         .supplier.nation.CALCULATE(nation_name=name)
     )
@@ -1632,7 +1687,7 @@ def singular7():
             n_orders=COUNT(lines.WHERE(YEAR(ship_date) == 1994)),
             part_name=part.name,
         )
-        .WHERE(RANKING(by=(n_orders.DESC(), part_name.ASC()), levels=1) == 1)
+        .WHERE(RANKING(by=(n_orders.DESC(), part_name.ASC()), per="Suppliers") == 1)
         .SINGULAR()
     )
     return (

@@ -4,7 +4,7 @@ WITH _t1 AS (
     SUM(wallet_transactions_daily.amount) AS agg_0,
     users.country
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
-  JOIN main.users AS users
+  LEFT JOIN main.users AS users
     ON users.uid = wallet_transactions_daily.sender_id
   WHERE
     wallet_transactions_daily.sender_type = 0
