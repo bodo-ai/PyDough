@@ -97,6 +97,54 @@ def simple_collation():
     )
 
 
+def absurd_window_per():
+    return (
+        Regions.nations.customers.orders.lines.supplier.nation.suppliers.nation.customers.nation.region.CALCULATE(
+            w1=RELSIZE(per="Regions"),
+            w2=RELSIZE(per="nations:1"),
+        )
+        .CALCULATE(
+            w3=RELSIZE(per="customers:2"),
+            w4=RELSIZE(per="orders:1"),
+        )
+        .CALCULATE(
+            w5=RELSIZE(per="lines"),
+            w6=RELSIZE(per="supplier:1"),
+        )
+        .CALCULATE(
+            w7=RELSIZE(per="nation:3"),
+            w8=RELSIZE(per="suppliers:1"),
+        )
+        .CALCULATE(
+            w9=RELSIZE(per="nation:2"),
+            w10=RELSIZE(per="customers:1"),
+        )
+        .CALCULATE(
+            w11=RELSIZE(per="nation:1"),
+            w12=RELSIZE(),
+        )
+    )
+
+
+def absurd_partition_window_per():
+    return (
+        Lineitems.PARTITION(
+            name="groups", by=(ship_mode, ship_date, status, return_flag, part_key)
+        )
+        .PARTITION(name="groups", by=(ship_mode, ship_date, status, return_flag))
+        .PARTITION(name="groups", by=(ship_mode, ship_date, status))
+        .PARTITION(name="groups", by=(ship_mode, ship_date))
+        .PARTITION(name="groups", by=(ship_mode))
+        .groups.groups.groups.groups.Lineitems.order.CALCULATE(
+            w1=RELSIZE(per="groups:1"),
+            w2=RELSIZE(per="groups:2"),
+            w3=RELSIZE(per="groups:3"),
+            w4=RELSIZE(per="groups:4"),
+            w5=RELSIZE(per="groups:5"),
+        )
+    )
+
+
 def year_month_nation_orders():
     # Finds the 5 largest instances of numbers of orders made in a month of a
     # year by customers in a nation, only looking at nations from Asia and

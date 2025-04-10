@@ -146,6 +146,34 @@ def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
+def bad_pydough_impl_12(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:k")
+    )
+
+
+def bad_pydough_impl_13(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:1:2")
+    )
+
+
+def bad_pydough_impl_14(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:")
+    )
+
+
+def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Malformed per name
+    return root.Customers.orders.CALCULATE(
+        root.RANKING(by=root.key.ASC(), per="Customers:0")
+    )
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -203,6 +231,26 @@ def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_pydough_impl_11,
             "Per string 'orders' is ambiguous for TPCH.Customers.orders.customer.orders.lines. Use the form 'orders:index' to disambiguate, where 'orders:1' refers to the most recent ancestor.",
             id="11",
+        ),
+        pytest.param(
+            bad_pydough_impl_12,
+            "Malformed per string: 'Customers:k' (expected the index after ':' to be a positive integer)",
+            id="12",
+        ),
+        pytest.param(
+            bad_pydough_impl_13,
+            "Malformed per string: 'Customers:1:2' (expected 0 or 1 ':', found 2)",
+            id="13",
+        ),
+        pytest.param(
+            bad_pydough_impl_14,
+            "Malformed per string: 'Customers:' (expected the index after ':' to be a positive integer)",
+            id="14",
+        ),
+        pytest.param(
+            bad_pydough_impl_15,
+            "Malformed per string: 'Customers:0' (expected the index after ':' to be a positive integer)",
+            id="15",
         ),
     ],
 )

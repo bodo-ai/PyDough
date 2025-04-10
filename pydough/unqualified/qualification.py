@@ -270,12 +270,18 @@ class Qualifier:
             elif len(components) == 2:
                 ancestor_name = components[0]
                 if not components[1].isdigit():
-                    raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+                    raise PyDoughUnqualifiedException(
+                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
+                    )
                 ancestor_idx = int(components[1])
                 if ancestor_idx <= 0:
-                    raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+                    raise PyDoughUnqualifiedException(
+                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
+                    )
             else:
-                raise PyDoughUnqualifiedException(f"Malformed per string: {per!r}")
+                raise PyDoughUnqualifiedException(
+                    f"Malformed per string: {per!r} (expected 0 or 1 ':', found {len(components) - 1})"
+                )
             # Verify that `name` corresponds to one of the ancestors of the
             # current context.
             if ancestor_name not in ancestral_names:
@@ -286,6 +292,7 @@ class Qualifier:
             # ancestors of the current context, unless an index was provided.
             if ancestor_idx is None:
                 if ancestral_names.count(ancestor_name) > 1:
+                    # TODO: potentially add a default value of 1?
                     raise PyDoughUnqualifiedException(
                         f"Per string {per!r} is ambiguous for {context!r}. Use the form '{per}:index' to disambiguate, where '{per}:1' refers to the most recent ancestor."
                     )
@@ -302,7 +309,7 @@ class Qualifier:
             levels = 1
             for i in range(len(ancestral_names) - 1, -1, -1):
                 if ancestral_names[i] == ancestor_name:
-                    if ancestor_idx is None or ancestor_idx == 10:
+                    if ancestor_idx is None or ancestor_idx == 1:
                         break
                     ancestor_idx -= 1
                 levels += 1
@@ -651,8 +658,25 @@ class Qualifier:
         self, node: UnqualifiedNode, partition_ancestor: str | None = None
     ) -> tuple[UnqualifiedNode, UnqualifiedNode, list[str]]:
         """
-        TODO
+        Divide the ancestry of the given node into two parts, returning a tuple
+        of an ancestor node and a child node whose ancestry points to a ROOT
+        node at the cutoff where it previously pointed to the ancestor, as well
+        as a list of the ancestor names of the child node.
+
+        Args:
+            `node`: the node whose ancestry is to be split.
+            `partition_ancestor`: the name of the ancestor to split at (
+            only supports None, which means the split should occur just
+            below the top-level ancestor).
+
+        Returns:
+            A tuple where the first element is the ancestor of all the data
+            being partitioned, the second is the data being partitioned which
+            now points to an root instead of hte original ancestor, and the
+            third is a list of the ancestor names.
         """
+
+        # Base case: have reached the top of the ancestry tree.
         if isinstance(node, UnqualifiedRoot):
             return node, UnqualifiedRoot(self.graph), []
 
@@ -660,6 +684,7 @@ class Qualifier:
         new_child: UnqualifiedNode
         ancestry_names: list[str]
 
+        # First, recursively handle the preceding node.
         match node:
             case (
                 UnqualifiedAccess()
@@ -675,10 +700,13 @@ class Qualifier:
                     parent, partition_ancestor
                 )
             case _:
+                # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
-                    f"Unsupported collection node: {node.__class__.__name__}"
+                    f"Unsupported collection node for `split_partition_ancestry`: {node.__class__.__name__}"
                 )
 
+        # Identify whether the current node vs the previous node is the
+        # splitting point for the partitioned data vs its ancestry.
         if (
             isinstance(new_child, UnqualifiedRoot)
             and (
@@ -699,9 +727,6 @@ class Qualifier:
                     UnqualifiedRoot(self.graph), *node._parcel[1:]
                 )
             ancestry_names.append(node._parcel[1])
-            # print("***")
-            # print(new_ancestry)
-            # print(new_child)
             return new_ancestry, new_child, ancestry_names
 
         appending_to_ancestor: bool = isinstance(new_child, UnqualifiedRoot)
@@ -710,13 +735,8 @@ class Qualifier:
             new_ancestry if appending_to_ancestor else new_child
         ]
 
-        # print()
-        # print(new_ancestry)
-        # print(new_child)
-        # print("->", node)
-        # print(appending_to_ancestor, type(new_child))
-        # print()
-
+        # Append the current node either to the ancestry (if above the split
+        # point) or the child node (if below the split point).
         match node:
             case UnqualifiedAccess():
                 ancestry_names.append(node._parcel[1])
@@ -735,8 +755,9 @@ class Qualifier:
             case UnqualifiedSingular():
                 build_node[0] = UnqualifiedSingular(build_node[0], *node._parcel[1:])
             case _:
+                # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
-                    f"Unsupported collection node: {node.__class__.__name__}"
+                    f"Unsupported collection node `split_partition_ancestry`: {node.__class__.__name__}"
                 )
 
         if appending_to_ancestor:

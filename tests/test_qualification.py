@@ -7,6 +7,8 @@ from collections.abc import Callable
 
 import pytest
 from simple_pydough_functions import (
+    absurd_partition_window_per,
+    absurd_window_per,
     partition_as_child,
     simple_collation,
     singular1,
@@ -591,6 +593,56 @@ from pydough.unqualified import (
   └─── Calculate[name=name]        
         """,
             id="singular4",
+        ),
+        pytest.param(
+            absurd_window_per,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ SubCollection[nations]
+      └─┬─ SubCollection[customers]
+        └─┬─ SubCollection[orders]
+          └─┬─ SubCollection[lines]
+            └─┬─ SubCollection[supplier]
+              └─┬─ SubCollection[nation]
+                └─┬─ SubCollection[suppliers]
+                  └─┬─ SubCollection[nation]
+                    └─┬─ SubCollection[customers]
+                      └─┬─ SubCollection[nation]
+                        ├─── SubCollection[region]
+                        ├─── Calculate[w1=RELSIZE(by=(), levels=11), w2=RELSIZE(by=(), levels=10)]
+                        ├─── Calculate[w3=RELSIZE(by=(), levels=9), w4=RELSIZE(by=(), levels=8)]
+                        ├─── Calculate[w5=RELSIZE(by=(), levels=7), w6=RELSIZE(by=(), levels=6)]
+                        ├─── Calculate[w7=RELSIZE(by=(), levels=5), w8=RELSIZE(by=(), levels=4)]
+                        ├─── Calculate[w9=RELSIZE(by=(), levels=3), w10=RELSIZE(by=(), levels=2)]
+                        └─── Calculate[w11=RELSIZE(by=(), levels=1), w12=RELSIZE(by=())]
+""",
+            id="absurd_window_per",
+        ),
+        pytest.param(
+            absurd_partition_window_per,
+            """
+──┬─ TPCH
+  └─┬─ Partition[name='groups', by=ship_mode]
+    ├─┬─ AccessChild
+    │ └─┬─ Partition[name='groups', by=(ship_mode, ship_date)]
+    │   └─┬─ AccessChild
+    │     └─┬─ Partition[name='groups', by=(ship_mode, ship_date, status)]
+    │       └─┬─ AccessChild
+    │         └─┬─ Partition[name='groups', by=(ship_mode, ship_date, status, return_flag)]
+    │           └─┬─ AccessChild
+    │             └─┬─ Partition[name='groups', by=(ship_mode, ship_date, status, return_flag, part_key)]
+    │               └─┬─ AccessChild
+    │                 └─── TableCollection[Lineitems]
+    └─┬─ PartitionChild[groups]
+      └─┬─ PartitionChild[groups]
+        └─┬─ PartitionChild[groups]
+          └─┬─ PartitionChild[groups]
+            └─┬─ PartitionChild[Lineitems]
+              ├─── SubCollection[order]
+              └─── Calculate[w1=RELSIZE(by=(), levels=2), w2=RELSIZE(by=(), levels=3), w3=RELSIZE(by=(), levels=4), w4=RELSIZE(by=(), levels=5), w5=RELSIZE(by=(), levels=6)]
+""",
+            id="absurd_partition_window_per",
         ),
     ],
 )

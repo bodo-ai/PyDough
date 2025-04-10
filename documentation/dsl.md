@@ -463,7 +463,8 @@ Customers.CALCULATE(
 
 # Invoking window functions on singular data with partitioning with regards
 # to an ancestor collection.
-PARTITION(Addresses, name="states", by=state).Addresses.packages_shipped_to(
+state_groups = Addresses.PARTITION(name="states", by=state)
+state_groups.Addresses.packages_shipped_to(
     rank_per_shipping_addr=RANKING(by=package_cost.DESC(), per="Addresses"),
     rank_per_shipping_state=RANKING(by=package_cost.DESC(), per="states"),
 )
@@ -1054,7 +1055,9 @@ month_info = pack_info.PARTITION(name="months", by=order_month).CALCULATE(
 )
 GRAPH.CALCULATE(
     avg_packages_per_month=AVG(month_info.n_packages)
-).PARTITION(pack_info, name="months", by=order_month).CALCULATE(
+).Packages.CALCULATE(
+    order_month=MONTH(order_date)
+).PARTITION(name="months", by=order_month).CALCULATE(
     month,
 ).WHERE(COUNT(Packages) > avg_packages_per_month)
 ```
@@ -1158,7 +1161,7 @@ Addresses.PARTITION(by=state)
 
 ```py
 %%pydough
-People.PARTITION(,name="groups")
+People.PARTITION(name="groups")
 ```
 
 **Bad Example #4**: Count how many packages were ordered in each year. Invalid because `YEAR(order_date)` is not allowed to be used as a partition term (it must be placed in a `CALCULATE` so it is accessible as a named reference).
