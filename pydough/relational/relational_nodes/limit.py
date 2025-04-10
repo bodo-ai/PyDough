@@ -4,8 +4,6 @@ This is the relational representation of top-n selection and typically depends
 on explicit ordering of the input relation.
 """
 
-from collections.abc import MutableSequence
-
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     RelationalExpression,
@@ -29,7 +27,7 @@ class Limit(SingleRelational):
         input: RelationalNode,
         limit: RelationalExpression,
         columns: dict[str, RelationalExpression],
-        orderings: MutableSequence[ExpressionSortInfo] | None = None,
+        orderings: list[ExpressionSortInfo] | None = None,
     ) -> None:
         super().__init__(input, columns)
         # Note: The limit is a relational expression because it should be a constant
@@ -39,7 +37,7 @@ class Limit(SingleRelational):
             "Limit must be an integer type."
         )
         self._limit: RelationalExpression = limit
-        self._orderings: MutableSequence[ExpressionSortInfo] = (
+        self._orderings: list[ExpressionSortInfo] = (
             [] if orderings is None else orderings
         )
 
@@ -51,7 +49,7 @@ class Limit(SingleRelational):
         return self._limit
 
     @property
-    def orderings(self) -> MutableSequence[ExpressionSortInfo]:
+    def orderings(self) -> list[ExpressionSortInfo]:
         """
         The orderings that are used to determine the top-n rows.
         """

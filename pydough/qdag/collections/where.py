@@ -6,7 +6,6 @@ by certain expression criteria.
 __all__ = ["Where"]
 
 
-from collections.abc import MutableSequence
 from functools import cache
 
 from pydough.qdag.errors import PyDoughQDAGException
@@ -25,7 +24,7 @@ class Where(AugmentingChildOperator):
     def __init__(
         self,
         predecessor: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ):
         super().__init__(predecessor, children)
         self._condition: PyDoughExpressionQDAG | None = None

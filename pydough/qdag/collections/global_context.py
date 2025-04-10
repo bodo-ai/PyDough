@@ -7,8 +7,6 @@ graph.
 __all__ = ["TableCollection"]
 
 
-from collections.abc import MutableMapping
-
 from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
@@ -30,7 +28,7 @@ class GlobalContext(PyDoughCollectionQDAG):
 
     def __init__(self, graph: GraphMetadata):
         self._graph = graph
-        self._collections: MutableMapping[str, PyDoughCollectionQDAG] = {}
+        self._collections: dict[str, PyDoughCollectionQDAG] = {}
         for collection_name in graph.get_collection_names():
             meta = graph.get_collection(collection_name)
             assert isinstance(meta, CollectionMetadata)
@@ -44,11 +42,15 @@ class GlobalContext(PyDoughCollectionQDAG):
         return self._graph
 
     @property
-    def collections(self) -> MutableMapping[str, PyDoughCollectionQDAG]:
+    def collections(self) -> dict[str, PyDoughCollectionQDAG]:
         """
         The collections that the context has access to.
         """
         return self._collections
+
+    @property
+    def name(self) -> str:
+        return self.graph.name
 
     @property
     def key(self) -> str:

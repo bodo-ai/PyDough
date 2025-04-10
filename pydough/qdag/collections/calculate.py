@@ -6,7 +6,7 @@ all singular with regards to it.
 
 __all__ = ["Calculate"]
 
-from collections.abc import MutableMapping, MutableSequence
+
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
@@ -30,21 +30,19 @@ class Calculate(AugmentingChildOperator):
     def __init__(
         self,
         predecessor: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ):
         super().__init__(predecessor, children)
         # Not initialized until with_terms is called
         self._calc_term_indices: dict[str, int] | None = None
-        self._calc_term_values: MutableMapping[str, PyDoughExpressionQDAG] | None = None
+        self._calc_term_values: dict[str, PyDoughExpressionQDAG] | None = None
         self._all_term_names: set[str] = set()
         self._ancestral_mapping: dict[str, int] = dict(
             predecessor.ancestral_mapping.items()
         )
         self._calc_terms: set[str] = set()
 
-    def with_terms(
-        self, terms: MutableSequence[tuple[str, PyDoughExpressionQDAG]]
-    ) -> "Calculate":
+    def with_terms(self, terms: list[tuple[str, PyDoughExpressionQDAG]]) -> "Calculate":
         """
         Specifies the terms that are calculated inside of a CALCULATE node,
         returning the mutated CALCULATE node afterwards. This is called after
@@ -116,7 +114,7 @@ class Calculate(AugmentingChildOperator):
     @property
     def calc_term_values(
         self,
-    ) -> MutableMapping[str, PyDoughExpressionQDAG]:
+    ) -> dict[str, PyDoughExpressionQDAG]:
         """
         Mapping of each named expression of the CALCULATE to the QDAG node for
         that expression.
