@@ -183,7 +183,6 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 # Replace all column references in the root's columns with
                 # the expressions from the child projection..
                 for idx, (name, expr) in enumerate(node.ordered_columns):
-                    assert isinstance(expr, ColumnReference)
                     new_expr = transpose_expression(expr, child_project.columns)
                     node.columns[name] = new_expr
                     node.ordered_columns[idx] = (name, new_expr)

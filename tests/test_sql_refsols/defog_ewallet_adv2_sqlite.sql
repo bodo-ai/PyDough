@@ -1,30 +1,29 @@
-WITH _t0 AS (
+WITH _s1 AS (
   SELECT
     COUNT() AS agg_0,
-    SUM(
+    SUM((
       (
-        (
-          CAST(STRFTIME('%w', notifications.created_at) AS INTEGER) + 6
-        ) % 7
-      ) IN (5, 6)
-    ) AS agg_1,
+        CAST(STRFTIME('%w', created_at) AS INTEGER) + 6
+      ) % 7
+    ) IN (5, 6)) AS agg_1,
+    user_id,
     DATE(
-      notifications.created_at,
+      created_at,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(notifications.created_at)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(created_at)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     ) AS week
-  FROM main.users AS users
-  JOIN main.notifications AS notifications
-    ON notifications.created_at < DATE(
+  FROM main.notifications
+  WHERE
+    created_at < DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
-    AND notifications.created_at >= DATE(
+    AND created_at >= DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
@@ -32,17 +31,27 @@ WITH _t0 AS (
       'start of day',
       '-21 day'
     )
-    AND notifications.user_id = users.uid
-  WHERE
-    users.country IN ('US', 'CA')
   GROUP BY
+    user_id,
     DATE(
-      notifications.created_at,
+      created_at,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(notifications.created_at)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(created_at)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
+), _t0 AS (
+  SELECT
+    SUM(_s1.agg_0) AS agg_0,
+    SUM(_s1.agg_1) AS agg_1,
+    _s1.week
+  FROM main.users AS users
+  JOIN _s1 AS _s1
+    ON _s1.user_id = users.uid
+  WHERE
+    users.country IN ('US', 'CA')
+  GROUP BY
+    _s1.week
 )
 SELECT
   week,

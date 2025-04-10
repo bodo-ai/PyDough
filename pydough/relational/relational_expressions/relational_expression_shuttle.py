@@ -37,12 +37,14 @@ class RelationalExpressionShuttle(ABC):
         from .expression_sort_info import ExpressionSortInfo
         from .window_call_expression import WindowCallExpression
 
-        args = [arg.accept(self) for arg in window_expression.inputs]
+        args = [arg.accept_shuttle(self) for arg in window_expression.inputs]
         partition_args = [
-            arg.accept(self) for arg in window_expression.partition_inputs
+            arg.accept_shuttle(self) for arg in window_expression.partition_inputs
         ]
         order_args = [
-            ExpressionSortInfo(arg.expr.accept(self), arg.ascending, arg.nulls_first)
+            ExpressionSortInfo(
+                arg.expr.accept_shuttle(self), arg.ascending, arg.nulls_first
+            )
             for arg in window_expression.order_inputs
         ]
         return WindowCallExpression(

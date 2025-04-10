@@ -1,29 +1,45 @@
-WITH _t3 AS (
+WITH _t4 AS (
   SELECT
     r_name AS name,
     r_regionkey AS key
   FROM tpch.region
   WHERE
     r_name = 'EUROPE'
-), _s5 AS (
+), _t5 AS (
   SELECT
     ps_partkey AS part_key,
     ps_suppkey AS supplier_key,
     ps_supplycost AS supplycost
   FROM tpch.partsupp
-), _s16 AS (
+), _s5 AS (
   SELECT
-    MIN(_s5.supplycost) AS best_cost,
-    part.p_partkey AS key_9
+    MIN(supplycost) AS agg_0,
+    part_key,
+    supplier_key
+  FROM _t5
+  GROUP BY
+    part_key,
+    supplier_key
+), _s6 AS (
+  SELECT
+    MIN(_s5.agg_0) AS agg_0,
+    _s5.part_key
   FROM tpch.nation AS nation
-  JOIN _t3 AS _t3
-    ON _t3.key = nation.n_regionkey
+  JOIN _t4 AS _t4
+    ON _t4.key = nation.n_regionkey
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
   JOIN _s5 AS _s5
     ON _s5.supplier_key = supplier.s_suppkey
+  GROUP BY
+    _s5.part_key
+), _s16 AS (
+  SELECT
+    MIN(_s6.agg_0) AS best_cost,
+    part.p_partkey AS key_9
+  FROM _s6 AS _s6
   JOIN tpch.part AS part
-    ON _s5.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
+    ON _s6.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
   GROUP BY
     part.p_partkey
 ), _s17 AS (
@@ -38,11 +54,11 @@ WITH _t3 AS (
     supplier.s_phone,
     _s13.supplycost
   FROM tpch.nation AS nation
-  JOIN _t3 AS _t5
-    ON _t5.key = nation.n_regionkey
+  JOIN _t4 AS _t7
+    ON _t7.key = nation.n_regionkey
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
-  JOIN _s5 AS _s13
+  JOIN _t5 AS _s13
     ON _s13.supplier_key = supplier.s_suppkey
   JOIN tpch.part AS part
     ON _s13.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
