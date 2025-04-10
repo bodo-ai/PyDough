@@ -936,8 +936,8 @@ class PyDoughSQLComparisonTest:
     The name of the unit test
     """
 
-    order_insensitive: bool = False
+    order_sensitive: bool = False
     """
-    If True, the resulting data frames will be sorted so the order
+    If False, the resulting data frames will be sorted so the order
     of the results is not taken into account
     """
