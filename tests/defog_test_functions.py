@@ -643,12 +643,17 @@ def impl_defog_dealership_adv1():
     payment_weeks = PaymentsReceived.WHERE(
         MONOTONIC(1, DATEDIFF("weeks", payment_date, "now"), 8)
         & (sale_record.sale_price > 30000)
-    ).CALCULATE(payment_week=DATETIME(payment_date, "start of week"))
+    ).CALCULATE(
+        payment_week=DATETIME(payment_date, "start of week"),
+        is_weekend=ISIN(DAYOFWEEK(payment_date), (5, 6)),
+    )
 
-    is_weekend = ISIN(DAYOFWEEK(p.payment_date), (5, 6))
+    is_weekend = ISIN(DAYOFWEEK(PaymentsReceived.payment_date), (5, 6))
 
-    return PARTITION(payment_weeks, name="p", by=payment_week).CALCULATE(
-        payment_week, total_payments=COUNT(p), weekend_payments=SUM(is_weekend)
+    return payment_weeks.PARTITION(name="weeks", by=payment_week).CALCULATE(
+        payment_week,
+        total_payments=COUNT(PaymentsReceived),
+        weekend_payments=SUM(PaymentsReceived.is_weekend),
     )
 
 
@@ -802,8 +807,8 @@ def impl_defog_dealership_adv8():
         )
     ).CALCULATE(sale_price, sale_month=DATETIME(sale_date, "start of month"))
 
-    sales_metrics = PARTITION(filtered_sales, name="s", by=sale_month).CALCULATE(
-        sale_month, PMSPS=COUNT(s._id), PMSR=SUM(s.sale_price)
+    sales_metrics = filtered_sales.PARTITION(name="months", by=sale_month).CALCULATE(
+        sale_month, PMSPS=COUNT(Sales), PMSR=SUM(Sales.sale_price)
     )
 
     return sales_metrics.ORDER_BY(sale_month.ASC())
