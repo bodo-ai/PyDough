@@ -27,7 +27,7 @@ from typing import Any, Union
 
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
-from pydough.metadata.errors import is_bool, is_integer, is_positive_int
+from pydough.metadata.errors import is_bool, is_integer, is_positive_int, is_string
 from pydough.types import (
     ArrayType,
     BinaryType,
@@ -368,7 +368,6 @@ class UnqualifiedNode(ABC):
 
     def PARTITION(
         self,
-        data: "UnqualifiedNode",
         name: str,
         by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
     ) -> "UnqualifiedPartition":
@@ -376,9 +375,9 @@ class UnqualifiedNode(ABC):
         Method used to create a PARTITION node.
         """
         if isinstance(by, UnqualifiedNode):
-            return UnqualifiedPartition(self, data, name, [by])
+            return UnqualifiedPartition(self, name, [by])
         else:
-            return UnqualifiedPartition(self, data, name, list(by))
+            return UnqualifiedPartition(self, name, list(by))
 
     def SINGULAR(self) -> "UnqualifiedSingular":
         """
@@ -489,7 +488,7 @@ class UnqualifiedOperator(UnqualifiedNode):
         self._parcel: tuple[str] = (name,)
 
     def __call__(self, *args, **kwargs):
-        levels: int | None = None
+        per: str | None = None
         window_operator: pydop.ExpressionWindowOperator
         is_window: bool = True
         operands: MutableSequence[UnqualifiedNode] = []
@@ -528,15 +527,15 @@ class UnqualifiedOperator(UnqualifiedNode):
                     )
         if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
-            if "levels" in kwargs:
-                levels_arg = kwargs.pop("levels")
-                is_positive_int.verify(levels_arg, "`levels` argument")
-                levels = levels_arg
+            if "per" in kwargs:
+                per_arg = kwargs.pop("per")
+                is_string.verify(per_arg, "`per` argument")
+                per = per_arg
             return UnqualifiedWindow(
                 window_operator,
                 operands,
                 by,
-                levels,
+                per,
                 kwargs,
             )
         return UnqualifiedOperation(self._parcel[0], operands)
@@ -565,16 +564,16 @@ class UnqualifiedWindow(UnqualifiedNode):
         operator: pydop.ExpressionWindowOperator,
         arguments: Iterable[UnqualifiedNode],
         by: Iterable[UnqualifiedNode],
-        levels: int | None,
+        per: str | None,
         kwargs: dict[str, object],
     ):
         self._parcel: tuple[
             pydop.ExpressionWindowOperator,
             Iterable[UnqualifiedNode],
             Iterable[UnqualifiedNode],
-            int | None,
+            str | None,
             dict[str, object],
-        ] = (operator, arguments, by, levels, kwargs)
+        ] = (operator, arguments, by, per, kwargs)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -669,15 +668,11 @@ class UnqualifiedPartition(UnqualifiedNode):
     def __init__(
         self,
         parent: UnqualifiedNode,
-        data: UnqualifiedNode,
         name: str,
         keys: MutableSequence[UnqualifiedNode],
     ):
-        self._parcel: tuple[
-            UnqualifiedNode, UnqualifiedNode, str, MutableSequence[UnqualifiedNode]
-        ] = (
+        self._parcel: tuple[UnqualifiedNode, str, MutableSequence[UnqualifiedNode]] = (
             parent,
-            data,
             name,
             keys,
         )
@@ -704,6 +699,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         The string representation of the unqualified node.
     """
     term_strings: list[str] = []
+    result: str
     operands_str: str
     match unqualified:
         case UnqualifiedRoot():
@@ -737,7 +733,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 operands_str += f"{display_raw(operand)}, "
             operands_str += f"by=({', '.join([display_raw(operand) for operand in unqualified._parcel[2]])}"
             if unqualified._parcel[3] is not None:
-                operands_str += ", levels=" + str(unqualified._parcel[3])
+                operands_str += f", per={unqualified._parcel[3]!r}"
             for kwarg, val in unqualified._parcel[4].items():
                 operands_str += f", {kwarg}={val!r}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"
@@ -768,11 +764,12 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 term_strings.append(display_raw(node))
             return f"{display_raw(unqualified._parcel[0])}.ORDER_BY({', '.join(term_strings)})"
         case UnqualifiedPartition():
-            for node in unqualified._parcel[3]:
+            for node in unqualified._parcel[2]:
                 term_strings.append(display_raw(node))
-            if isinstance(unqualified._parcel[0], UnqualifiedRoot):
-                return f"PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
-            return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
+            result = f"PARTITION(name={unqualified._parcel[1]!r}, by=({', '.join(term_strings)}))"
+            if not isinstance(unqualified._parcel[0], UnqualifiedRoot):
+                result = f"{display_raw(unqualified._parcel[0])}.{result}"
+            return result
         case UnqualifiedSingular():
             return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
         case _:

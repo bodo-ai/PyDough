@@ -650,11 +650,11 @@ from pydough.types import (
             (
                 PartitionInfo(
                     TableCollectionInfo("Parts"),
-                    "p",
+                    "types",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
                 ** CalculateInfo(
-                    [SubCollectionInfo("p")],
+                    [SubCollectionInfo("Parts")],
                     part_type=ReferenceInfo("part_type"),
                     num_parts=FunctionInfo("COUNT", [ChildReferenceCollectionInfo(0)]),
                     avg_price=FunctionInfo(
@@ -674,14 +674,14 @@ from pydough.types import (
                         year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
                         month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
                     ),
-                    "o",
+                    "months",
                     [
                         ChildReferenceExpressionInfo("year", 0),
                         ChildReferenceExpressionInfo("month", 0),
                     ],
                 )
                 ** CalculateInfo(
-                    [SubCollectionInfo("o")],
+                    [SubCollectionInfo("Orders")],
                     year=ReferenceInfo("year"),
                     month=ReferenceInfo("month"),
                     total_orders=FunctionInfo(
@@ -701,7 +701,7 @@ from pydough.types import (
                         year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
                         month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
                     ),
-                    "o",
+                    "months",
                     [
                         ChildReferenceExpressionInfo("year", 0),
                         ChildReferenceExpressionInfo("month", 0),
@@ -709,8 +709,8 @@ from pydough.types import (
                 )
                 ** CalculateInfo(
                     [
-                        SubCollectionInfo("o"),
-                        SubCollectionInfo("o")
+                        SubCollectionInfo("Orders"),
+                        SubCollectionInfo("Orders")
                         ** WhereInfo(
                             [
                                 SubCollectionInfo("customer")
@@ -748,7 +748,7 @@ from pydough.types import (
                         year=FunctionInfo("YEAR", [ReferenceInfo("order_date")]),
                         month=FunctionInfo("MONTH", [ReferenceInfo("order_date")]),
                     ),
-                    "o",
+                    "months",
                     [
                         ChildReferenceExpressionInfo("year", 0),
                         ChildReferenceExpressionInfo("month", 0),
@@ -756,7 +756,7 @@ from pydough.types import (
                 )
                 ** CalculateInfo(
                     [
-                        SubCollectionInfo("o")
+                        SubCollectionInfo("Orders")
                         ** WhereInfo(
                             [
                                 SubCollectionInfo("customer")
@@ -809,7 +809,7 @@ from pydough.types import (
                     ],
                 )
                 ** CalculateInfo(
-                    [SubCollectionInfo("combos")],
+                    [SubCollectionInfo("nation")],
                     year=ReferenceInfo("year"),
                     customer_nation=ReferenceInfo("customer_nation"),
                     supplier_nation=ReferenceInfo("supplier_nation"),
@@ -837,11 +837,11 @@ from pydough.types import (
                 )
                 ** PartitionInfo(
                     TableCollectionInfo("Parts"),
-                    "p",
+                    "types",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
                 ** CalculateInfo(
-                    [SubCollectionInfo("p")],
+                    [SubCollectionInfo("Parts")],
                     part_type=ReferenceInfo("part_type"),
                     percentage_of_parts=FunctionInfo(
                         "DIV",
@@ -872,11 +872,11 @@ from pydough.types import (
             (
                 PartitionInfo(
                     TableCollectionInfo("Parts"),
-                    "p",
+                    "types",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
                 ** WhereInfo(
-                    [SubCollectionInfo("p")],
+                    [SubCollectionInfo("Parts")],
                     FunctionInfo(
                         "GRT",
                         [
@@ -887,7 +887,7 @@ from pydough.types import (
                         ],
                     ),
                 )
-                ** SubCollectionInfo("p")
+                ** SubCollectionInfo("Parts")
                 ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),
@@ -902,16 +902,16 @@ from pydough.types import (
             (
                 PartitionInfo(
                     TableCollectionInfo("Parts"),
-                    "p",
+                    "types",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
                 ** CalculateInfo(
-                    [SubCollectionInfo("p")],
+                    [SubCollectionInfo("Parts")],
                     avg_price=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
                 )
-                ** SubCollectionInfo("p")
+                ** SubCollectionInfo("Parts")
                 ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),
@@ -932,16 +932,16 @@ from pydough.types import (
             (
                 PartitionInfo(
                     TableCollectionInfo("Parts"),
-                    "p",
+                    "types",
                     [ChildReferenceExpressionInfo("part_type", 0)],
                 )
                 ** CalculateInfo(
-                    [SubCollectionInfo("p")],
+                    [SubCollectionInfo("Parts")],
                     avg_price=FunctionInfo(
                         "AVG", [ChildReferenceExpressionInfo("retail_price", 0)]
                     ),
                 )
-                ** SubCollectionInfo("p")
+                ** SubCollectionInfo("Parts")
                 ** CalculateInfo(
                     [],
                     part_name=ReferenceInfo("name"),

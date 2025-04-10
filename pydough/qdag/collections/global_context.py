@@ -51,6 +51,10 @@ class GlobalContext(PyDoughCollectionQDAG):
         return self._collections
 
     @property
+    def name(self) -> str:
+        return self.graph.name
+
+    @property
     def key(self) -> str:
         return f"{self.graph.name}"
 
