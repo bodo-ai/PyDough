@@ -749,7 +749,7 @@ def impl_defog_dealership_adv6():
     inventory_snapshots table
     """
     latest_snapshot = inventory_snapshots.WHERE(
-        RANKING(by=snapshot_date.DESC(), levels=1) == 1
+        RANKING(by=snapshot_date.DESC(), per="Cars") == 1
     ).SINGULAR()
 
     return (
@@ -914,14 +914,14 @@ def impl_defog_dealership_adv13():
         month=DATETIME(payment_date, "start of month"),
     )
 
-    monthly_totals = PARTITION(filtered_payments, name="p", by=month).CALCULATE(
-        total_payments=SUM(p.payment_amount)
+    monthly_totals = filtered_payments.PARTITIOn(name="months", by=month).CALCULATE(
+        total_payments=SUM(PaymentsReceived.payment_amount)
     )
 
     return monthly_totals.CALCULATE(
         month,
         total_payments,
-        MoM_change=total_payments - PREV(total_payments, by=month.ASC(), levels=1),
+        MoM_change=total_payments - PREV(total_payments, by=month.ASC()),
     ).ORDER_BY(month.ASC())
 
 
@@ -1042,11 +1042,11 @@ def impl_defog_dealership_basic6():
     customers and total revenue (based on sale price) for each state.
     """
     purchase_info = Customers.CALCULATE(state).car_purchases
-    states = PARTITION(purchase_info, name="purchases", by=state)
+    states = purchase_info.PARTITION(name="states", by=state)
     return states.CALCULATE(
         state,
-        unique_customers=NDISTINCT(purchases.customer_id),
-        total_revenue=SUM(purchases.sale_price),
+        unique_customers=NDISTINCT(car_purchases.customer_id),
+        total_revenue=SUM(car_purchases.sale_price),
     ).TOP_K(5, by=total_revenue.DESC())
 
 
@@ -1058,11 +1058,11 @@ def impl_defog_dealership_basic7():
     the payment method, total number of payments and total amount.
     """
     return (
-        PARTITION(PaymentsReceived, name="p", by=payment_method)
+        PaymentsReceived.PARTITION(name="payment_methods", by=payment_method)
         .CALCULATE(
             payment_method,
-            total_payments=COUNT(p),
-            total_amount=SUM(p.payment_amount),
+            total_payments=COUNT(PaymentsReceived),
+            total_amount=SUM(PaymentsReceived.payment_amount),
         )
         .TOP_K(3, by=total_amount.DESC())
     )
@@ -1091,8 +1091,8 @@ def impl_defog_dealership_basic9():
     the state and total signups, starting from the top.
     """
     return (
-        PARTITION(Customers, name="grouped", by=state)
-        .CALCULATE(state, total_signups=COUNT(grouped))
+        Customers.PARTITION(name="grouped", by=state)
+        .CALCULATE(state, total_signups=COUNT(Customers))
         .TOP_K(2, by=total_signups.DESC())
     )
 
@@ -1166,8 +1166,12 @@ def impl_defog_dealership_gen3():
     payments = PaymentsReceived.WHERE((DATEDIFF("week", payment_date, "now") == 1))
 
     return (
-        PARTITION(payments, name="p", by=(payment_date, payment_method))
-        .CALCULATE(payment_date, payment_method, total_amount=SUM(p.payment_amount))
+        payments.PARTITION(name="groups", by=(payment_date, payment_method))
+        .CALCULATE(
+            payment_date,
+            payment_method,
+            total_amount=SUM(PaymentsReceived.payment_amount),
+        )
         .ORDER_BY(payment_date.DESC(), payment_method.ASC())
     )
 
@@ -1194,8 +1198,8 @@ def impl_defog_dealership_gen4():
     )
 
     return (
-        PARTITION(filtered_sales, name="s", by=(quarter, customer_state))
-        .CALCULATE(quarter, customer_state, total_sales=SUM(s.sale_price))
+        filtered_sales.PARTITION(name="groups", by=(quarter, customer_state))
+        .CALCULATE(quarter, customer_state, total_sales=SUM(Sales.sale_price))
         .WHERE(total_sales > 0)
         .ORDER_BY(quarter.ASC(), customer_state.ASC())
     )
