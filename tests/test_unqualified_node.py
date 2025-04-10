@@ -565,7 +565,7 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_2,
-            "The `by` argument to `PERCENTILE` must be a single expression or a non-empty iterable of expressions."
+            "The `by` argument to `PERCENTILE` must be a single expression or a non-empty list/tuple of expressions. "
             "Please refer to the config documentation for more information.",
             id="bad_window_2",
         ),

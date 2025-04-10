@@ -6,7 +6,6 @@ __all__ = ["parse_json_metadata_from_file"]
 
 import json
 from collections import deque
-from collections.abc import MutableMapping, MutableSequence, MutableSet
 from dataclasses import dataclass
 
 from .collections import CollectionMetadata
@@ -69,7 +68,7 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
     return parse_graph(graph_name, graph_json)
 
 
-def parse_graph(graph_name: str, graph_json: MutableMapping) -> GraphMetadata:
+def parse_graph(graph_name: str, graph_json: dict) -> GraphMetadata:
     """
     Parses a JSON object to obtain the metadata for a PyDough graph.
 
@@ -93,7 +92,7 @@ def parse_graph(graph_name: str, graph_json: MutableMapping) -> GraphMetadata:
     # before it is defined and added to its collection, so all of the properties
     # can be sorted based on their dependencies. The list stores the properties
     # as tuples in the form (collection_name, property_name, property_json)
-    raw_properties: MutableSequence[RawProperty] = []
+    raw_properties: list[RawProperty] = []
 
     # Iterate through all the key-value pairs in the graph to set up the
     # corresponding collections as empty metadata that will later be filled
@@ -108,9 +107,7 @@ def parse_graph(graph_name: str, graph_json: MutableMapping) -> GraphMetadata:
         # Add the unprocessed properties of each collection to the properties
         # list (the parsing of the collection verified that the 'properties' key
         # exists). Also, verify that the JSON is well formed.
-        properties_json: MutableMapping[str, dict] = graph_json[collection_name][
-            "properties"
-        ]
+        properties_json: dict[str, dict] = graph_json[collection_name]["properties"]
         for property_name in properties_json:
             property_json: dict = properties_json[property_name]
             PropertyMetadata.verify_json_metadata(
@@ -151,8 +148,8 @@ def parse_graph(graph_name: str, graph_json: MutableMapping) -> GraphMetadata:
 
 
 def topologically_sort_properties(
-    raw_properties: MutableSequence[RawProperty],
-) -> MutableSequence[RawProperty]:
+    raw_properties: list[RawProperty],
+) -> list[RawProperty]:
     """
     Computes the ordered that each property should be defined in so that
     all dependencies of the property have been defined first.
@@ -174,7 +171,7 @@ def topologically_sort_properties(
     # identifying `(collection_name, property_name)` tuple (hereafter
     # referred to as the `property`) and the values are a tuple of the
     # property's JSON and its index in the original raw_properties list.
-    reformatted_properties: MutableMapping[PropertyKey, tuple[dict, int]] = {
+    reformatted_properties: dict[PropertyKey, tuple[dict, int]] = {
         PropertyKey(property.collection_name, property.property_name): (
             property.property_json,
             i,
@@ -183,20 +180,18 @@ def topologically_sort_properties(
     }
 
     # Compute the dependencies of each property.
-    dependencies: MutableSequence[MutableSet[int]] = get_property_dependencies(
-        reformatted_properties
-    )
+    dependencies: list[set[int]] = get_property_dependencies(reformatted_properties)
 
     # Use the dependencies to calculate the topological ordering of the
     # properties.
-    finish_times: MutableSequence[int] = topological_ordering(dependencies)
-    ordered_keys: MutableSequence[PropertyKey] = sorted(
+    finish_times: list[int] = topological_ordering(dependencies)
+    ordered_keys: list[PropertyKey] = sorted(
         reformatted_properties, key=lambda k: finish_times[reformatted_properties[k][1]]
     )
 
     # Use the topological ordering to re-construct the same format as the
     # `raw_properties` list, but in the desired order.
-    ordered_properties: MutableSequence[RawProperty] = [
+    ordered_properties: list[RawProperty] = [
         RawProperty(k.collection_name, k.property_name, reformatted_properties[k][0])
         for k in ordered_keys
     ]
@@ -204,8 +199,8 @@ def topologically_sort_properties(
 
 
 def get_property_dependencies(
-    reformatted_properties: MutableMapping[PropertyKey, tuple[dict, int]],
-) -> MutableSequence[MutableSet[int]]:
+    reformatted_properties: dict[PropertyKey, tuple[dict, int]],
+) -> list[set[int]]:
     """
     Infers the set of dependencies for each property.
 
@@ -233,7 +228,7 @@ def get_property_dependencies(
     valid_range = range(n_properties)
 
     # The list that will store the final dependencies.
-    dependencies: MutableSequence[MutableSet[int]] = [set() for _ in valid_range]
+    dependencies: list[set[int]] = [set() for _ in valid_range]
 
     # A set of all properties (as dictionary keys) that have been
     # fully defined by the dependency-searching algorithm.
@@ -241,15 +236,15 @@ def get_property_dependencies(
 
     # A dictionary mapping each property to its known reverse
     # property, if one exists.
-    reverses: MutableMapping[PropertyKey, PropertyKey] = {}
+    reverses: dict[PropertyKey, PropertyKey] = {}
 
     # A dictionary mapping each property to the name of the collection
     # it maps to, if one exists.
-    collections_mapped_to: MutableMapping[PropertyKey, str] = {}
+    collections_mapped_to: dict[PropertyKey, str] = {}
 
     # A dictionary mapping each property to the set of all inherited property
     # names that are associated with it.
-    compound_inherited_aliases: MutableMapping[PropertyKey, set[str]] = {}
+    compound_inherited_aliases: dict[PropertyKey, set[str]] = {}
 
     def get_true_property(property: PropertyKey) -> PropertyKey | None:
         """
@@ -310,16 +305,16 @@ def get_property_dependencies(
         dependencies[property_idx].add(dependency_idx)
 
     # The set of all properties that are table columns
-    table_columns: MutableSet[PropertyKey] = set()
+    table_columns: set[PropertyKey] = set()
 
     # The set of all properties that are cartesian products
-    cartesian_products: MutableSet[PropertyKey] = set()
+    cartesian_products: set[PropertyKey] = set()
 
     # The set of all properties that are simple joins
-    simple_joins: MutableSet[PropertyKey] = set()
+    simple_joins: set[PropertyKey] = set()
 
     # The set of all properties that are compound relationships
-    compounds: MutableSet[PropertyKey] = set()
+    compounds: set[PropertyKey] = set()
 
     # The "stack" uses to process compound relationship properties. A
     # double-ended queue is used because the algorithm for processing compounds
@@ -400,7 +395,7 @@ def get_property_dependencies(
         property_json, _ = reformatted_properties[property]
         collection: str = property.collection_name
         other_collection: str = property_json["other_collection_name"]
-        keys: MutableMapping[str, MutableSequence[str]] = property_json["keys"]
+        keys: dict[str, list[str]] = property_json["keys"]
         for key_property_name in keys:
             key_property: PropertyKey = PropertyKey(collection, key_property_name)
             add_dependency(property, key_property)
@@ -506,8 +501,8 @@ def get_property_dependencies(
         # property of the middle collection or if it is a known inherited
         # property alias of the primary/secondary property.
         inherited_properties: dict[str, str] = property_json["inherited_properties"]
-        inherited_dependencies: MutableSequence[PropertyKey] = []
-        undefined_inherited_dependencies: MutableSequence[PropertyKey] = []
+        inherited_dependencies: list[PropertyKey] = []
+        undefined_inherited_dependencies: list[PropertyKey] = []
         has_unknown_inherited: bool = False
         for inherited_property_name in inherited_properties.values():
             inherited_property: PropertyKey = PropertyKey(
@@ -610,7 +605,7 @@ def get_property_dependencies(
     # column properties were defined in the metadata.
     prev_no_dependency_idx: int = -1
     for idx in range(len(dependencies)):
-        dependency_set: MutableSet[int] = dependencies[idx]
+        dependency_set: set[int] = dependencies[idx]
         if len(dependencies[idx]) == 0:
             if prev_no_dependency_idx >= 0:
                 dependency_set.add(prev_no_dependency_idx)
@@ -620,8 +615,8 @@ def get_property_dependencies(
 
 
 def topological_ordering(
-    dependencies: MutableSequence[MutableSet[int]],
-) -> MutableSequence[int]:
+    dependencies: list[set[int]],
+) -> list[int]:
     """
     Computes a topological ordering of a list of objects with dependencies,
     assuming that the dependencies correspond to a directed acyclic graph.

@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 from abc import ABC
-from collections.abc import Iterable, MutableSequence, Sequence
+from collections.abc import Iterable
 from datetime import date
 from typing import Any, Union
 
@@ -120,7 +120,7 @@ class UnqualifiedNode(ABC):
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            args: MutableSequence[UnqualifiedNode] = [self]
+            args: list[UnqualifiedNode] = [self]
             for arg in (key.start, key.stop, key.step):
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
                 if not isinstance(coerced_elem, UnqualifiedLiteral):
@@ -334,7 +334,7 @@ class UnqualifiedNode(ABC):
         return UnqualifiedWhere(self, cond_unqualified)
 
     def ORDER_BY(self, *keys) -> "UnqualifiedOrderBy":
-        keys_unqualified: MutableSequence[UnqualifiedNode] = [
+        keys_unqualified: list[UnqualifiedNode] = [
             self.coerce_to_unqualified(key) for key in keys
         ]
         return UnqualifiedOrderBy(self, keys_unqualified)
@@ -345,7 +345,7 @@ class UnqualifiedNode(ABC):
         if by is None:
             return UnqualifiedTopK(self, k, None)
         else:
-            keys_unqualified: MutableSequence[UnqualifiedNode]
+            keys_unqualified: list[UnqualifiedNode]
             if isinstance(by, Iterable):
                 keys_unqualified = [self.coerce_to_unqualified(key) for key in by]
             else:
@@ -433,7 +433,7 @@ class UnqualifiedCollation(UnqualifiedNode):
 def get_by_arg(
     kwargs: dict[str, object],
     window_operator: pydop.ExpressionWindowOperator,
-) -> Sequence[UnqualifiedNode]:
+) -> list[UnqualifiedNode]:
     """
     Extracts the `by` argument from the keyword arguments to a window function,
     verifying that it exists, removing it from the kwargs, and converting it to
@@ -463,16 +463,15 @@ def get_by_arg(
             f"The `{window_operator.function_name}` function does not allow a `by` argument"
         )
     by = kwargs.pop("by")
-    by_allowed_type = UnqualifiedNode
-    if isinstance(by, by_allowed_type):
+    if isinstance(by, UnqualifiedNode):
         by = [by]
     elif not (
-        isinstance(by, Sequence)
-        and all(isinstance(arg, by_allowed_type) for arg in by)
+        isinstance(by, (tuple, list))
+        and all(isinstance(arg, UnqualifiedNode) for arg in by)
         and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{window_operator.function_name}` must be a single expression or a non-empty iterable of expressions."
+            f"The `by` argument to `{window_operator.function_name}` must be a single expression or a non-empty list/tuple of expressions. "
             "Please refer to the config documentation for more information."
         )
     return list(by)
@@ -491,7 +490,7 @@ class UnqualifiedOperator(UnqualifiedNode):
         per: str | None = None
         window_operator: pydop.ExpressionWindowOperator
         is_window: bool = True
-        operands: MutableSequence[UnqualifiedNode] = []
+        operands: list[UnqualifiedNode] = []
         for arg in args:
             operands.append(self.coerce_to_unqualified(arg))
         match self._parcel[0]:
@@ -547,8 +546,8 @@ class UnqualifiedOperation(UnqualifiedNode):
     1+ expressions/collections.
     """
 
-    def __init__(self, operation_name: str, operands: MutableSequence[UnqualifiedNode]):
-        self._parcel: tuple[str, MutableSequence[UnqualifiedNode]] = (
+    def __init__(self, operation_name: str, operands: list[UnqualifiedNode]):
+        self._parcel: tuple[str, list[UnqualifiedNode]] = (
             operation_name,
             operands,
         )
@@ -630,10 +629,8 @@ class UnqualifiedOrderBy(UnqualifiedNode):
     done onto another UnqualifiedNode.
     """
 
-    def __init__(
-        self, predecessor: UnqualifiedNode, keys: MutableSequence[UnqualifiedNode]
-    ):
-        self._parcel: tuple[UnqualifiedNode, MutableSequence[UnqualifiedNode]] = (
+    def __init__(self, predecessor: UnqualifiedNode, keys: list[UnqualifiedNode]):
+        self._parcel: tuple[UnqualifiedNode, list[UnqualifiedNode]] = (
             predecessor,
             keys,
         )
@@ -649,11 +646,9 @@ class UnqualifiedTopK(UnqualifiedNode):
         self,
         predecessor: UnqualifiedNode,
         k: int,
-        keys: MutableSequence[UnqualifiedNode] | None = None,
+        keys: list[UnqualifiedNode] | None = None,
     ):
-        self._parcel: tuple[
-            UnqualifiedNode, int, MutableSequence[UnqualifiedNode] | None
-        ] = (
+        self._parcel: tuple[UnqualifiedNode, int, list[UnqualifiedNode] | None] = (
             predecessor,
             k,
             keys,
@@ -669,9 +664,9 @@ class UnqualifiedPartition(UnqualifiedNode):
         self,
         parent: UnqualifiedNode,
         name: str,
-        keys: MutableSequence[UnqualifiedNode],
+        keys: list[UnqualifiedNode],
     ):
-        self._parcel: tuple[UnqualifiedNode, str, MutableSequence[UnqualifiedNode]] = (
+        self._parcel: tuple[UnqualifiedNode, str, list[UnqualifiedNode]] = (
             parent,
             name,
             keys,
