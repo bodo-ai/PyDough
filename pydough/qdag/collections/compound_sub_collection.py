@@ -6,7 +6,6 @@ current context where the subcollection is a compound relationship.
 __all__ = ["CompoundSubCollection"]
 
 
-from collections.abc import MutableSequence
 from functools import cache
 
 from pydough.metadata import CompoundRelationshipMetadata
@@ -34,7 +33,7 @@ class CompoundSubCollection(SubCollection):
         ancestor: PyDoughCollectionQDAG,
     ):
         super().__init__(compound, ancestor)
-        self._subcollection_chain: MutableSequence[SubCollection] = []
+        self._subcollection_chain: list[SubCollection] = []
         self._inheritance_source_idx: dict[str, int] = {}
         self._inheritance_source_name: dict[str, str] = {}
 
@@ -144,7 +143,7 @@ class CompoundSubCollection(SubCollection):
         return source
 
     @property
-    def subcollection_chain(self) -> MutableSequence[SubCollection]:
+    def subcollection_chain(self) -> list[SubCollection]:
         """
         The list of subcollection accesses used to define the compound
         relationship.

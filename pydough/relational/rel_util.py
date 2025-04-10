@@ -345,7 +345,8 @@ def add_expr_uses(
 ) -> None:
     """
     Count the number of times nontrivial expressions are used in an expression
-    and add them to a mapping of such counts.
+    and add them to a mapping of such counts. In this case, an expression is
+    deemed nontrivial if it is a function call or a window function call.
 
     Args:
         `expr`: The expression to count the nontrivial expressions of.

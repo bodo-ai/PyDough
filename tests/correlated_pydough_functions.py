@@ -167,10 +167,10 @@ def correl_11():
     # Which part brands have at least 1 part that more than 40% above the
     # average retail price for all parts from that brand.
     # (This is a correlated SEMI-join)
-    brands = PARTITION(Parts, name="p", by=brand).CALCULATE(
-        avg_price=AVG(p.retail_price)
+    brands = Parts.PARTITION(name="brands", by=brand).CALCULATE(
+        avg_price=AVG(Parts.retail_price)
     )
-    outlier_parts = p.WHERE(retail_price > 1.4 * avg_price)
+    outlier_parts = Parts.WHERE(retail_price > 1.4 * avg_price)
     selected_brands = brands.WHERE(HAS(outlier_parts))
     return selected_brands.CALCULATE(brand).ORDER_BY(brand.ASC())
 
@@ -182,10 +182,10 @@ def correl_12():
     # parts, and has a size below 3.
     # (This is a correlated SEMI-join)
     global_info = TPCH.CALCULATE(global_avg_price=AVG(Parts.retail_price))
-    brands = global_info.PARTITION(Parts, name="p", by=brand).CALCULATE(
-        brand_avg_price=AVG(p.retail_price)
+    brands = global_info.Parts.PARTITION(name="brands", by=brand).CALCULATE(
+        brand_avg_price=AVG(Parts.retail_price)
     )
-    selected_parts = p.WHERE(
+    selected_parts = Parts.WHERE(
         (retail_price > brand_avg_price)
         & (retail_price < global_avg_price)
         & (size < 3)
@@ -295,16 +295,15 @@ def correl_18():
     # ordered multiple orders in on that day. Only considers orders made in
     # 1993.
     # (This is a correlated aggregation access)
-    cust_date_groups = PARTITION(
-        Orders.WHERE(YEAR(order_date) == 1993),
-        name="o",
+    cust_date_groups = Orders.WHERE(YEAR(order_date) == 1993).PARTITION(
+        name="groups",
         by=(customer_key, order_date),
     )
-    above_average_orders = o.WHERE(total_price >= 0.5 * total_price_sum)
+    above_average_orders = Orders.WHERE(total_price >= 0.5 * total_price_sum)
     selected_groups = (
-        cust_date_groups.WHERE(COUNT(o) > 1)
+        cust_date_groups.WHERE(COUNT(Orders) > 1)
         .CALCULATE(
-            total_price_sum=SUM(o.total_price),
+            total_price_sum=SUM(Orders.total_price),
         )
         .WHERE(HAS(above_average_orders))
         .CALCULATE(n_above_avg=COUNT(above_average_orders))
@@ -348,7 +347,7 @@ def correl_21():
     # Count how many part sizes have an above-average number of parts
     # of that size.
     # (This is a correlated aggregation access)
-    sizes = PARTITION(Parts, name="p", by=size).CALCULATE(n_parts=COUNT(p))
+    sizes = Parts.PARTITION(name="sizes", by=size).CALCULATE(n_parts=COUNT(Parts))
     return TPCH.CALCULATE(avg_n_parts=AVG(sizes.n_parts)).CALCULATE(
         n_sizes=COUNT(sizes.WHERE(n_parts > avg_n_parts))
     )
@@ -360,17 +359,16 @@ def correl_22():
     # where the average retail price of parts of that container type
     # & part type is above the global average retail price.
     # (This is a correlated aggregation access)
-    ct_combos = PARTITION(Parts, name="p", by=(container, part_type)).CALCULATE(
-        avg_price=AVG(p.retail_price)
-    )
     return (
         TPCH.CALCULATE(global_avg_price=AVG(Parts.retail_price))
+        .Parts.PARTITION(name="groups", by=(container, part_type))
+        .CALCULATE(avg_price=AVG(Parts.retail_price))
+        .WHERE(avg_price > global_avg_price)
         .PARTITION(
-            ct_combos.WHERE(avg_price > global_avg_price),
-            name="ct",
+            name="containers",
             by=container,
         )
-        .CALCULATE(container, n_types=COUNT(ct))
+        .CALCULATE(container, n_types=COUNT(groups))
         .TOP_K(5, (n_types.DESC(), container.ASC()))
     )
 
@@ -380,10 +378,12 @@ def correl_23():
     # Counts how many part sizes have an above-average number of combinations
     # of part types/containers.
     # (This is a correlated aggregation access)
-    combos = PARTITION(Parts, name="p", by=(size, part_type, container))
-    sizes = PARTITION(combos, name="c", by=size).CALCULATE(n_combos=COUNT(c))
-    return TPCH.CALCULATE(avg_n_combo=AVG(sizes.n_combos)).CALCULATE(
-        n_sizes=COUNT(sizes.WHERE(n_combos > avg_n_combo)),
+    combo_groups = Parts.PARTITION(name="groups", by=(size, part_type, container))
+    size_groups = combo_groups.PARTITION(name="sizes", by=size).CALCULATE(
+        n_combos=COUNT(groups)
+    )
+    return TPCH.CALCULATE(avg_n_combo=AVG(size_groups.n_combos)).CALCULATE(
+        n_sizes=COUNT(size_groups.WHERE(n_combos > avg_n_combo)),
     )
 
 
@@ -395,13 +395,13 @@ def correl_24():
     order_info = Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)).WHERE(
         year < 1994
     )
-    month_info = PARTITION(order_info, name="orders", by=(year, month)).CALCULATE(
-        curr_month_avg_price=AVG(orders.total_price),
+    month_info = order_info.PARTITION(name="months", by=(year, month)).CALCULATE(
+        curr_month_avg_price=AVG(Orders.total_price),
         prev_month_avg_price=PREV(
-            AVG(orders.total_price), by=(year.ASC(), month.ASC())
+            AVG(Orders.total_price), by=(year.ASC(), month.ASC())
         ),
     )
-    chosen_orders_from_month = orders.WHERE(
+    chosen_orders_from_month = Orders.WHERE(
         MONOTONIC(prev_month_avg_price, total_price, curr_month_avg_price)
         | MONOTONIC(curr_month_avg_price, total_price, prev_month_avg_price)
     )

@@ -6,7 +6,6 @@ ordering and other properties of the relational expression.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping
 from typing import Any
 
 from pydough.relational.relational_expressions import RelationalExpression
@@ -90,9 +89,7 @@ class RelationalNode(ABC):
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, RelationalNode) and self.equals(other)
 
-    def make_column_string(
-        self, columns: MutableMapping[str, Any], compact: bool
-    ) -> str:
+    def make_column_string(self, columns: dict[str, Any], compact: bool) -> str:
         """
         Converts the columns of the relational node to a deterministically
         ordered string (alphabetically).
