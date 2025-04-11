@@ -156,9 +156,16 @@ For an example of how `levels` works, when doing `Regions.nations.customers.CALC
 
 - If `levels=None` or `levels=3`, `r` is the ranking across all `customers`.
 - If `levels=1`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).
+- If `levels=1`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).
 - If `levels=2`, `r` is the ranking of customers per-region (meaning the ranking resets to 1 within each region).
 
-Note: this feature is still experimental, and the `levels` argument may be renamed. 
+Note: this feature is still experimental, and the `levels` argument may be renamed.
+
+#### Casting Functions
+
+- `STRING`: casts the first argument to the second argument. If a second argument is provided, it is used as the datetime format string that gets passed to the underlying database.
+- `INTEGER`: casts the argument to an integer.
+- `FLOAT`: casts the argument to a float.
 
 ## Interaction with Type Inference
 

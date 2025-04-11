@@ -63,7 +63,6 @@ def convert_relation_to_sql(
 
     # Apply the SQLGlot optimizer to the AST.
     glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
-
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
 
