@@ -800,16 +800,16 @@ class PartitionInfo(ChildOperatorInfo):
     def __init__(
         self,
         child: CollectionTestInfo,
-        child_name: str,
+        name: str,
         keys: list[AstNodeTestInfo],
     ):
         super().__init__([child])
-        self.child_name: str = child_name
+        self.name: str = name
         self.keys: list[AstNodeTestInfo] = keys
 
     def local_string(self) -> str:
         key_strings_tup: tuple = tuple([key.to_string() for key in self.keys])
-        return f"PartitionBy[{self.child_strings()}name={self.child_name!r}, by={key_strings_tup}]"
+        return f"PartitionBy[{self.child_strings()}name={self.name!r}, by={key_strings_tup}]"
 
     def local_build(
         self,
@@ -824,7 +824,7 @@ class PartitionInfo(ChildOperatorInfo):
         )
         assert len(children) == 1
         raw_partition: PartitionBy = builder.build_partition(
-            context, children[0], self.child_name
+            context, children[0], self.name
         )
         keys: list[ChildReferenceExpression] = []
         for info in self.keys:
@@ -936,8 +936,8 @@ class PyDoughSQLComparisonTest:
     The name of the unit test
     """
 
-    order_insensitive: bool = False
+    order_sensitive: bool = False
     """
-    If True, the resulting data frames will be sorted so the order
+    If False, the resulting data frames will be sorted so the order
     of the results is not taken into account
     """

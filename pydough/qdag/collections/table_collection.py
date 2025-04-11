@@ -21,6 +21,10 @@ class TableCollection(CollectionAccess):
     def __init__(self, collection: CollectionMetadata, ancestor: PyDoughCollectionQDAG):
         super().__init__(collection, ancestor)
 
+    @property
+    def name(self) -> str:
+        return self.collection.name
+
     def clone_with_parent(
         self, new_ancestor: PyDoughCollectionQDAG
     ) -> CollectionAccess:

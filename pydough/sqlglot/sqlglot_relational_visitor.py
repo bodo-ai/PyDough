@@ -10,10 +10,11 @@ from collections.abc import MutableMapping, MutableSequence
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier, Select, Subquery, values
+from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
+from sqlglot.transforms import eliminate_semi_and_anti_joins
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
@@ -82,7 +83,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         Returns:
             str: A unique table alias.
         """
-        alias = f"_table_alias_{self._alias_counter}"
+        alias = f"_t{self._alias_counter}"
         self._alias_counter += 1
         return alias
 
@@ -312,7 +313,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if len(column_exprs) == 0:
             column_exprs = [sqlglot_convert((None,))]
         return (
-            Select().select(*column_exprs).from_(Subquery(this=input_expr, alias=alias))
+            Select()
+            .select(*column_exprs)
+            .from_(Subquery(this=input_expr, alias=TableAlias(this=alias)))
         )
 
     def contains_window(self, exp: RelationalExpression) -> bool:
@@ -369,9 +372,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
             input_name = join.default_input_aliases[i]
-            if input_name not in alias_map and kept_names.intersection(
-                join.inputs[i].columns.keys()
-            ):
+            if input_name not in alias_map:
                 alias_map[input_name] = self._generate_table_alias()
         self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
@@ -391,7 +392,10 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
         for i in range(1, len(inputs)):
             subquery: Subquery = Subquery(
-                this=inputs[i], alias=alias_map.get(join.default_input_aliases[i], None)
+                this=inputs[i],
+                alias=TableAlias(
+                    this=alias_map.get(join.default_input_aliases[i], None)
+                ),
             )
             cond: RelationalExpression = (
                 join.conditions[i - 1]
@@ -405,6 +409,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             joins.append((subquery, cond_expr, join_type))
         for subquery, cond_expr, join_type in joins:
             query = query.join(subquery, on=cond_expr, join_type=join_type)
+            query = eliminate_semi_and_anti_joins(query)
         self._stack.append(query)
 
     def visit_project(self, project: Project) -> None:

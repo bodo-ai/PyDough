@@ -1,42 +1,19 @@
-SELECT
-  name,
-  CAST((
-    agg_0 * 1.0
-  ) AS REAL) / agg_1 AS CPUR
-FROM (
+WITH _t1_2 AS (
   SELECT
-    agg_0,
-    agg_1,
-    name
-  FROM (
-    SELECT
-      mid,
-      name
-    FROM main.merchants
-  )
-  INNER JOIN (
-    SELECT
-      COUNT(DISTINCT coupon_id) AS agg_0,
-      COUNT(DISTINCT txid) AS agg_1,
-      receiver_id
-    FROM (
-      SELECT
-        coupon_id,
-        receiver_id,
-        txid
-      FROM (
-        SELECT
-          coupon_id,
-          receiver_id,
-          status,
-          txid
-        FROM main.wallet_transactions_daily
-      )
-      WHERE
-        status = 'success'
-    )
-    GROUP BY
-      receiver_id
-  )
-    ON mid = receiver_id
+    COUNT(DISTINCT coupon_id) AS agg_0,
+    COUNT(DISTINCT txid) AS agg_1,
+    receiver_id
+  FROM main.wallet_transactions_daily
+  WHERE
+    status = 'success'
+  GROUP BY
+    receiver_id
 )
+SELECT
+  merchants.name,
+  CAST((
+    _t1.agg_0 * 1.0
+  ) AS REAL) / _t1.agg_1 AS CPUR
+FROM main.merchants AS merchants
+JOIN _t1_2 AS _t1
+  ON _t1.receiver_id = merchants.mid
