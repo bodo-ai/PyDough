@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _s0 AS (
   SELECT
     COUNT() AS agg_0,
     SUM(amount) AS agg_1,
@@ -8,14 +8,6 @@ WITH _t2 AS (
     CAST((
       JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(created_at, 'start of day'))
     ) AS INTEGER) <= 7
-  GROUP BY
-    sender_id
-), _s0 AS (
-  SELECT
-    SUM(agg_0) AS agg_0,
-    SUM(agg_1) AS agg_1,
-    sender_id
-  FROM _t2
   GROUP BY
     sender_id
 ), _t0 AS (
