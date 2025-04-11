@@ -338,6 +338,7 @@ def attempt_join_aggregate_transpose(
     condition_cols: set[ColumnReference] = finder.get_column_references()
     if not all(col in lhs_keys or col in rhs_keys for col in condition_cols):
         return node, True
+
     # Identify which side of the join the aggfuncs refer to, and
     # make sure it is an INNER (+ there is only one side).
     finder.reset()
@@ -348,12 +349,14 @@ def attempt_join_aggregate_transpose(
     }
     if len(agg_input_names) != 1:
         return node, True
+
     agg_input_name: str | None = agg_input_names.pop()
     agg_side: int = 0 if agg_input_name == join.default_input_aliases[0] else 1
     side_keys: list[ColumnReference] = (lhs_keys, rhs_keys)[agg_side]
     # Make sure the aggregate is being pushed into an INNER side.
     if agg_side == 1 and join.join_types[0] != JoinType.INNER:
         return node, True
+
     # If there are any AVG calls, rewrite the aggregate into
     # a call with SUM and COUNT derived, with a projection
     # dividing the two, then repeat the process.
@@ -361,6 +364,7 @@ def attempt_join_aggregate_transpose(
         return split_partial_aggregates(
             decompose_aggregations(node, config), config
         ), False
+
     # Otherwise, invoke the transposition procedure.
     return transpose_aggregate_join(node, join, agg_side, side_keys, config), True
 
