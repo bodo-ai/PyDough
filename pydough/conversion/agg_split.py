@@ -293,14 +293,62 @@ def transpose_aggregate_join(
     # side of the aggregations
     node._aggregations = top_aggs
     node._columns = {**node.columns, **top_aggs}
-    # Recursively transform the subtrees.
-    result: RelationalNode = node.copy(
-        inputs=[split_partial_aggregates(input, config) for input in node.inputs]
-    )
-    # If needed, add a projection on top to post-process any aggfuncs.
     if need_projection:
-        result = Project(node, projection_columns)
-    return result
+        return Project(node, projection_columns)
+    else:
+        return node
+
+
+def attempt_join_aggregate_transpose(
+    node: Aggregate, join: Join, config: PyDoughConfigs
+) -> tuple[RelationalNode, bool]:
+    """
+    TODO
+    """
+    # Verify there are exactly two inputs to the join
+    if len(join.inputs) != 2:
+        return node, True
+    # Verify all of the aggfuncs are from the functions that can be split.
+    if not all(
+        call.op in partial_aggregates or call.op in decomposable_aggfuncs
+        for call in node.aggregations.values()
+    ):
+        return node, True
+    # Parse the join condition to identify the lists of equi-join keys
+    # from the LHS and RHS, and verify that all of the columns used by
+    # the condition are in those lists.
+    lhs_keys, rhs_keys = extract_equijoin_keys(join)
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    for cond in join.conditions:
+        cond.accept(finder)
+    condition_cols: set[ColumnReference] = finder.get_column_references()
+    if not all(col in lhs_keys or col in rhs_keys for col in condition_cols):
+        return node, True
+    # Identify which side of the join the aggfuncs refer to, and
+    # make sure it is an INNER (+ there is only one side).
+    finder.reset()
+    for agg_call in node.aggregations.values():
+        transpose_expression(agg_call, join.columns, True).accept(finder)
+    agg_input_names: set[str | None] = {
+        ref.input_name for ref in finder.get_column_references()
+    }
+    if len(agg_input_names) != 1:
+        return node, True
+    agg_input_name: str | None = agg_input_names.pop()
+    agg_side: int = 0 if agg_input_name == join.default_input_aliases[0] else 1
+    side_keys: list[ColumnReference] = (lhs_keys, rhs_keys)[agg_side]
+    # Make sure the aggregate is being pushed into an INNER side.
+    if agg_side == 1 and join.join_types[0] != JoinType.INNER:
+        return node, True
+    # If there are any AVG calls, rewrite the aggregate into
+    # a call with SUM and COUNT derived, with a projection
+    # dividing the two, then repeat the process.
+    if any(call.op in decomposable_aggfuncs for call in node.aggregations.values()):
+        return split_partial_aggregates(
+            decompose_aggregations(node, config), config
+        ), False
+    # Otherwise, invoke the transposition procedure.
+    return transpose_aggregate_join(node, join, agg_side, side_keys, config), True
 
 
 def split_partial_aggregates(
@@ -318,57 +366,14 @@ def split_partial_aggregates(
     Returns:
         The transformed node. The transformation is also done-in-place.
     """
-    if (
-        isinstance(node, Aggregate)
-        and isinstance(node.input, Join)
-        and len(node.input.inputs) == 2
-    ):
-        join: Join = node.input
-        # Verify all of the aggfuncs are from the functions that can be split.
-        if all(
-            call.op in partial_aggregates or call.op in decomposable_aggfuncs
-            for call in node.aggregations.values()
-        ):
-            # Parse the join condition to identify the lists of equi-join keys
-            # from the LHS and RHS, and verify that all of the columns used by
-            # the condition are in those lists.
-            lhs_keys, rhs_keys = extract_equijoin_keys(join)
-            finder: ColumnReferenceFinder = ColumnReferenceFinder()
-            for cond in join.conditions:
-                cond.accept(finder)
-            condition_cols: set[ColumnReference] = finder.get_column_references()
-            if all(col in lhs_keys or col in rhs_keys for col in condition_cols):
-                # Identify which side of the join the aggfuncs refer to, and
-                # make sure it is an INNER (+ there is only one side).
-                finder.reset()
-                for agg_call in node.aggregations.values():
-                    transpose_expression(agg_call, join.columns, True).accept(finder)
-                agg_input_names: set[str | None] = {
-                    ref.input_name for ref in finder.get_column_references()
-                }
-                if len(agg_input_names) == 1:
-                    agg_input_name: str | None = agg_input_names.pop()
-                    agg_side: int = (
-                        0 if agg_input_name == join.default_input_aliases[0] else 1
-                    )
-                    side_keys: list[ColumnReference] = (lhs_keys, rhs_keys)[agg_side]
-                    if agg_side == 0 or join.join_types[0] == JoinType.INNER:
-                        # If there are any AVG calls, rewrite the aggregate into
-                        # a call with SUM and COUNT derived, with a projection
-                        # dividing the two, then repeat the process.
-                        if any(
-                            call.op in decomposable_aggfuncs
-                            for call in node.aggregations.values()
-                        ):
-                            return split_partial_aggregates(
-                                decompose_aggregations(node, config), config
-                            )
-                        # Otherwise, invoke the transposition procedure.
-                        return transpose_aggregate_join(
-                            node, join, agg_side, side_keys, config
-                        )
+    # If the aggregate+join pattern is detected, attempt to do the transpose.
+    handle_inputs: bool = True
+    if isinstance(node, Aggregate) and isinstance(node.input, Join):
+        node, handle_inputs = attempt_join_aggregate_transpose(node, node.input, config)
 
-    # Recursively invoke the procedure on all inputs to the node.
-    return node.copy(
-        inputs=[split_partial_aggregates(input, config) for input in node.inputs]
-    )
+    # If needed, recursively invoke the procedure on all inputs to the node.
+    if handle_inputs:
+        node = node.copy(
+            inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+        )
+    return node
