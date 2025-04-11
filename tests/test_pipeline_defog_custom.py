@@ -1436,6 +1436,13 @@ def test_pipeline_e2e_defog_transaction_week(
         config=week_handling_config,
     )
 
+    to_sql(
+        root,
+        metadata=graph,
+        database=sqlite_defog_connection,
+        config=week_handling_config,
+    )
+
     # Generate expected DataFrame based on week_handling_config
     start_of_week = week_handling_config.start_of_week
     start_week_as_zero = week_handling_config.start_week_as_zero
@@ -1472,5 +1479,4 @@ def test_pipeline_e2e_defog_transaction_week(
             "dayofweek": expected_dayofweeks,
         }
     )
-
     pd.testing.assert_frame_equal(result, expected_df)

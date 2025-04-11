@@ -1,15 +1,10 @@
+WITH _t0 AS (
+  SELECT
+    a
+  FROM table
+)
 SELECT
-  _table_alias_0.a AS a
-FROM (
-  SELECT
-    a,
-    b
-  FROM table
-) AS _table_alias_0
-RIGHT JOIN (
-  SELECT
-    a,
-    b
-  FROM table
-) AS _table_alias_1
-  ON _table_alias_0.a = _table_alias_1.a
+  _t0.a
+FROM _t0 AS _t0
+RIGHT JOIN _t0 AS _t1
+  ON _t0.a = _t1.a

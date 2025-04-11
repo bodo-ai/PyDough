@@ -592,9 +592,11 @@ class BaseTransformBindings:
                             [
                                 # Check if the length (stop - start) is negative or zero
                                 sqlglot_expressions.LTE(
-                                    this=sqlglot_expressions.Sub(
-                                        this=stop_idx_adjusted_glot,
-                                        expression=start_idx_adjusted_glot,
+                                    this=apply_parens(
+                                        sqlglot_expressions.Sub(
+                                            this=stop_idx_adjusted_glot,
+                                            expression=start_idx_adjusted_glot,
+                                        )
                                     ),
                                     expression=sql_zero,
                                 ),
@@ -632,9 +634,11 @@ class BaseTransformBindings:
                                 self.convert_iff_case(
                                     [  # Second check: Is the length negative?
                                         sqlglot_expressions.LTE(
-                                            this=sqlglot_expressions.Sub(
-                                                this=stop_idx_adjusted_glot,
-                                                expression=start_idx_adjusted_glot,
+                                            this=apply_parens(
+                                                sqlglot_expressions.Sub(
+                                                    this=stop_idx_adjusted_glot,
+                                                    expression=start_idx_adjusted_glot,
+                                                )
                                             ),
                                             expression=sql_zero,
                                         ),
