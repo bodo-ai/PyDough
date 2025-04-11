@@ -62,6 +62,22 @@ SELECT
     AND CAST('2023-01-01 00:00:00' AS TIMESTAMP) <= CAST('2024-01-01 00:00:00' AS TIMESTAMP)
     THEN CAST('2023-01-01 00:00:00' AS TIMESTAMP)
   END AS s8,
+  CASE
+    WHEN '' <= 'alphabet soup' AND '' <= 'Hello World'
+    THEN ''
+    WHEN 'alphabet soup' <= '' AND 'alphabet soup' <= 'Hello World'
+    THEN 'alphabet soup'
+    WHEN 'Hello World' <= '' AND 'Hello World' <= 'alphabet soup'
+    THEN 'Hello World'
+  END AS s9,
+  CASE
+    WHEN NULL <= 'alphabet soup' AND NULL <= 'Hello World'
+    THEN NULL
+    WHEN 'alphabet soup' <= NULL AND 'alphabet soup' <= 'Hello World'
+    THEN 'alphabet soup'
+    WHEN 'Hello World' <= NULL AND 'Hello World' <= 'alphabet soup'
+    THEN 'Hello World'
+  END AS s10,
   10 AS l1,
   CASE WHEN 20 >= 10 THEN 20 WHEN 10 >= 20 THEN 10 END AS l2,
   CASE WHEN 20 >= 20 THEN 20 WHEN 20 >= 20 THEN 20 END AS l3,
@@ -169,7 +185,23 @@ SELECT
     WHEN CAST('2023-01-01 00:00:00' AS TIMESTAMP) >= CAST('2025-01-01 00:00:00' AS TIMESTAMP)
     AND CAST('2023-01-01 00:00:00' AS TIMESTAMP) >= CAST('2024-01-01 00:00:00' AS TIMESTAMP)
     THEN CAST('2023-01-01 00:00:00' AS TIMESTAMP)
-  END AS l8
+  END AS l8,
+  CASE
+    WHEN '' >= 'alphabet soup' AND '' >= 'Hello World'
+    THEN ''
+    WHEN 'alphabet soup' >= '' AND 'alphabet soup' >= 'Hello World'
+    THEN 'alphabet soup'
+    WHEN 'Hello World' >= '' AND 'Hello World' >= 'alphabet soup'
+    THEN 'Hello World'
+  END AS l9,
+  CASE
+    WHEN NULL >= 'alphabet soup' AND NULL >= 'Hello World'
+    THEN NULL
+    WHEN 'alphabet soup' >= NULL AND 'alphabet soup' >= 'Hello World'
+    THEN 'alphabet soup'
+    WHEN 'Hello World' >= NULL AND 'Hello World' >= 'alphabet soup'
+    THEN 'Hello World'
+  END AS l10
 FROM (
   SELECT
     *

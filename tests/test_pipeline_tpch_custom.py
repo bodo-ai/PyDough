@@ -1295,6 +1295,8 @@ from pydough.unqualified import (
                         "s6": [None],
                         "s7": [-0.34],
                         "s8": ["2023-01-01 00:00:00"],
+                        "s9": [""],
+                        "s10": [None],
                         "l1": [10],
                         "l2": [20],
                         "l3": [20],
@@ -1303,6 +1305,8 @@ from pydough.unqualified import (
                         "l6": [None],
                         "l7": [100.22],
                         "l8": ["2025-01-01 00:00:00"],
+                        "l9": ["alphabet soup"],
+                        "l10": [None],
                     }
                 ),
             ),
@@ -1432,6 +1436,7 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

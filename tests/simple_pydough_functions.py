@@ -1660,6 +1660,8 @@ def simple_smallest_or_largest():
             datetime.datetime(2024, 1, 1),
             datetime.datetime(2023, 1, 1),
         ),
+        s9=SMALLEST("", "alphabet soup", "Hello World"),
+        s10=SMALLEST(None, "alphabet soup", "Hello World"),
         l1=LARGEST(10),
         l2=LARGEST(20, 10),
         l3=LARGEST(20, 20),
@@ -1672,6 +1674,8 @@ def simple_smallest_or_largest():
             datetime.datetime(2024, 1, 1),
             datetime.datetime(2023, 1, 1),
         ),
+        l9=LARGEST("", "alphabet soup", "Hello World"),
+        l10=LARGEST(None, "alphabet soup", "Hello World"),
     )
 
 
