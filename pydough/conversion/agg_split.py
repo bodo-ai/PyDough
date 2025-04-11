@@ -303,17 +303,31 @@ def attempt_join_aggregate_transpose(
     node: Aggregate, join: Join, config: PyDoughConfigs
 ) -> tuple[RelationalNode, bool]:
     """
-    TODO
+    Determine whether the aggregate join transpose operation can occur, and if
+    so invoke it, otherwise return the top node un-modified.
+
+    Args:
+        `node`: the aggregate node to be transformed.
+        `join`: the join node that the aggregate is above.
+        `config`: the current configuration settings.
+
+    Returns:
+        A tuple where the first element is the transformed node, and the second
+        is a boolean indicating whether the output needs to have its inputs
+        recursively transformed (if False, it means they have already been
+        recursively transformed).
     """
     # Verify there are exactly two inputs to the join
     if len(join.inputs) != 2:
         return node, True
+
     # Verify all of the aggfuncs are from the functions that can be split.
     if not all(
         call.op in partial_aggregates or call.op in decomposable_aggfuncs
         for call in node.aggregations.values()
     ):
         return node, True
+
     # Parse the join condition to identify the lists of equi-join keys
     # from the LHS and RHS, and verify that all of the columns used by
     # the condition are in those lists.
