@@ -1,8 +1,8 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
     sales.car_id AS car_id
   FROM main.sales AS sales
-), _t0 AS (
+), _s0 AS (
   SELECT
     cars._id AS _id,
     cars.make AS make,
@@ -11,16 +11,16 @@ WITH _t1 AS (
   FROM main.cars AS cars
 )
 SELECT
-  _t0._id AS _id,
-  _t0.make AS make,
-  _t0.model AS model,
-  _t0.year AS year
-FROM _t0 AS _t0
+  _s0._id AS _id,
+  _s0.make AS make,
+  _s0.model AS model,
+  _s0.year AS year
+FROM _s0 AS _s0
 WHERE
   NOT EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1 AS _t1
+    FROM _s1 AS _s1
     WHERE
-      _t0._id = _t1.car_id
+      _s0._id = _s1.car_id
   )

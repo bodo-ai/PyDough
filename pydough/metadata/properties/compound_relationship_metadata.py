@@ -5,7 +5,6 @@ combining two other subcollection properties that share a middle collection.
 
 __all__ = ["CompoundRelationshipMetadata"]
 
-from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
@@ -54,7 +53,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         no_collisions: bool,
         primary_property: ReversiblePropertyMetadata,
         secondary_property: ReversiblePropertyMetadata,
-        inherited_properties: MutableMapping[str, PropertyMetadata],
+        inherited_properties: dict[str, PropertyMetadata],
     ):
         from .inherited_property_metadata import InheritedPropertyMetadata
 
@@ -71,7 +70,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         self._secondary_property: ReversiblePropertyMetadata = secondary_property
 
         # Properties that are passed in as inherited properties via the metadata
-        self._inherited_properties: MutableMapping[str, PropertyMetadata] = {}
+        self._inherited_properties: dict[str, PropertyMetadata] = {}
         for alias, property in inherited_properties.items():
             self._inherited_properties[alias] = InheritedPropertyMetadata(
                 alias, other_collection, self, property
@@ -92,7 +91,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         return self._secondary_property
 
     @property
-    def inherited_properties(self) -> MutableMapping[str, PropertyMetadata]:
+    def inherited_properties(self) -> dict[str, PropertyMetadata]:
         """
         The properties inherited by using this compound relationship,
         represented as a mapping of an alias name to the actual property.
@@ -220,7 +219,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         # property of the middle collection. Assumes that all the inherited
         # properties have already been defined added to the middle collection's
         # properties.
-        inherited_properties: MutableMapping[str, PropertyMetadata] = {}
+        inherited_properties: dict[str, PropertyMetadata] = {}
         for alias_name, inherited_property_name in inherited_properties_mapping.items():
             has_property: bool = HasPropertyWith(
                 inherited_property_name, HasType(PropertyMetadata)
@@ -246,7 +245,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
                 # property. In this case, all candidate inherited properties must be
                 # searched to verify that one of them comes from the primary or secondary
                 # property, and there are not multiple successful candidates.
-                candidates: MutableSequence[InheritedPropertyMetadata] = (
+                candidates: list[InheritedPropertyMetadata] = (
                     secondary_collection.inherited_properties[inherited_property_name]
                 )
                 primary_candidate = None
@@ -318,7 +317,7 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
         from .inherited_property_metadata import InheritedPropertyMetadata
 
         # Flip the sources of the inherited properties that are also inherited properties
-        new_properties_to_inherit: MutableMapping[str, PropertyMetadata] = {}
+        new_properties_to_inherit: dict[str, PropertyMetadata] = {}
         for alias, property in self._inherited_properties.items():
             assert isinstance(property, InheritedPropertyMetadata)
             if isinstance(property.property_to_inherit, InheritedPropertyMetadata):

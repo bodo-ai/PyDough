@@ -5,7 +5,6 @@ joining them on certain key columns.
 
 __all__ = ["SimpleJoinMetadata"]
 
-from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
@@ -46,16 +45,14 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         other_collection: CollectionMetadata,
         singular: bool,
         no_collisions: bool,
-        keys: MutableMapping[str, MutableSequence[str]],
+        keys: dict[str, list[str]],
     ):
         super().__init__(
             name, reverse_name, collection, other_collection, singular, no_collisions
         )
         simple_join_keys_predicate.verify(keys, self.error_name)
-        self._keys: MutableMapping[str, MutableSequence[str]] = keys
-        self._join_pairs: MutableSequence[
-            tuple[PropertyMetadata, PropertyMetadata]
-        ] = []
+        self._keys: dict[str, list[str]] = keys
+        self._join_pairs: list[tuple[PropertyMetadata, PropertyMetadata]] = []
         # Build the join pairs list by transforming the dictionary of property
         # names from keys into the actual properties of the source/target
         # collection.
@@ -78,7 +75,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
                 self._join_pairs.append((source_property, target_property))
 
     @property
-    def keys(self) -> MutableMapping[str, MutableSequence[str]]:
+    def keys(self) -> dict[str, list[str]]:
         """
         A dictionary mapping the names of properties in the current collection
         to the names of properties in the other collection that they must be
@@ -87,7 +84,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         return self._keys
 
     @property
-    def join_pairs(self) -> MutableSequence[tuple[PropertyMetadata, PropertyMetadata]]:
+    def join_pairs(self) -> list[tuple[PropertyMetadata, PropertyMetadata]]:
         """
         A list of pairs of properties from the current collection and other
         collection that must be equal to in order to identify matches.
@@ -199,7 +196,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         # Invert the keys dictionary, mapping each string that was in any of
         # the lists of self.keys to all of the keys of self.keys that mapped
         # to those lists.
-        reverse_keys: MutableMapping[str, MutableSequence[str]] = {}
+        reverse_keys: dict[str, list[str]] = {}
         for key in self.keys:
             for other_key in self.keys[key]:
                 if other_key not in reverse_keys:

@@ -1,10 +1,10 @@
-WITH _t0 AS (
+WITH _s0 AS (
   SELECT
     a
   FROM table
 )
 SELECT
-  _t0.a
-FROM _t0 AS _t0
-FULL JOIN _t0 AS _t1
-  ON _t0.a = _t1.a
+  _s0.a
+FROM _s0 AS _s0
+FULL JOIN _s0 AS _s1
+  ON _s0.a = _s1.a

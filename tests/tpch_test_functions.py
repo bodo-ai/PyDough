@@ -376,9 +376,14 @@ def impl_tpch_q15():
     total = SUM(selected_lines.extended_price * (1 - selected_lines.discount))
     return (
         TPCH.CALCULATE(
-            max_revenue=MAX(Suppliers.CALCULATE(total_revenue=total).total_revenue)
+            max_revenue=MAX(
+                Suppliers.WHERE(HAS(selected_lines))
+                .CALCULATE(total_revenue=total)
+                .total_revenue
+            )
         )
-        .Suppliers.CALCULATE(
+        .Suppliers.WHERE(HAS(selected_lines))
+        .CALCULATE(
             S_SUPPKEY=key,
             S_NAME=name,
             S_ADDRESS=address,

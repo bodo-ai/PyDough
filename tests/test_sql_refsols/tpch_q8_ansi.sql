@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     SUM(
       CASE
@@ -39,4 +39,4 @@ WITH _t0_2 AS (
 SELECT
   o_year AS O_YEAR,
   COALESCE(agg_0, 0) / COALESCE(agg_1, 0) AS MKT_SHARE
-FROM _t0_2
+FROM _t0

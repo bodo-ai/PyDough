@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     user_setting_snapshot.marketing_opt_in,
     users.uid
@@ -11,4 +11,4 @@ WITH _t0_2 AS (
 SELECT
   uid,
   marketing_opt_in
-FROM _t0_2
+FROM _t0

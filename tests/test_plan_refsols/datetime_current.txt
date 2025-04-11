@@ -1,3 +1,2 @@
-ROOT(columns=[('d1', d1), ('d2', d2), ('d3', d3)], orderings=[])
- PROJECT(columns={'d1': DATETIME('now':string, 'start of year':string, '5 months':string, '-1 DAY':string), 'd2': DATETIME('current_date':string, 'start  of mm':string, '+24 hours':string), 'd3': DATETIME(' Current Timestamp ':string, 'start of day':string, '+12 hours':string, '-150 minutes':string, '+2 s':string)})
-  EMPTYSINGLETON()
+ROOT(columns=[('d1', DATETIME('now':string, 'start of year':string, '5 months':string, '-1 DAY':string)), ('d2', DATETIME('current_date':string, 'start  of mm':string, '+24 hours':string)), ('d3', DATETIME(' Current Timestamp ':string, 'start of day':string, '+12 hours':string, '-150 minutes':string, '+2 s':string))], orderings=[])
+ EMPTYSINGLETON()

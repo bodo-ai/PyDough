@@ -8,7 +8,7 @@ WITH _t AS (
   FROM main.cars AS cars
   JOIN main.inventory_snapshots AS inventory_snapshots
     ON cars._id = inventory_snapshots.car_id
-), _t3_2 AS (
+), _s3 AS (
   SELECT
     MAX(sale_price) AS agg_0,
     car_id
@@ -19,11 +19,11 @@ WITH _t AS (
 SELECT
   _t.make,
   _t.model,
-  _t3.agg_0 AS highest_sale_price
+  _s3.agg_0 AS highest_sale_price
 FROM _t AS _t
-LEFT JOIN _t3_2 AS _t3
-  ON _t._id = _t3.car_id
+LEFT JOIN _s3 AS _s3
+  ON _s3.car_id = _t._id
 WHERE
   NOT _t.is_in_inventory AND _t._w = 1
 ORDER BY
-  _t3.agg_0 DESC
+  _s3.agg_0 DESC

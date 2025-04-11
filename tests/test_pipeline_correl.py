@@ -40,6 +40,7 @@ from correlated_pydough_functions import (
     correl_30,
     correl_31,
     correl_32,
+    correl_33,
 )
 from test_utils import (
     graph_fetcher,
@@ -772,6 +773,15 @@ from pydough.unqualified import (
                 ),
             ),
             id="correl_32",
+        ),
+        pytest.param(
+            (
+                correl_33,
+                None,
+                "correl_33",
+                lambda: pd.DataFrame({"n": [19330]}),
+            ),
+            id="correl_33",
         ),
     ],
 )

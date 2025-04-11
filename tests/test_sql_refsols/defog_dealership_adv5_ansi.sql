@@ -1,4 +1,4 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
     COUNT() AS agg_0,
     SUM(sale_price) AS agg_1,
@@ -10,11 +10,11 @@ WITH _t1 AS (
 SELECT
   salespersons.first_name,
   salespersons.last_name,
-  COALESCE(_t1.agg_1, 0) AS total_sales,
-  COALESCE(_t1.agg_0, 0) AS num_sales,
-  RANK() OVER (ORDER BY COALESCE(_t1.agg_1, 0) DESC NULLS FIRST) AS sales_rank
+  COALESCE(_s1.agg_1, 0) AS total_sales,
+  COALESCE(_s1.agg_0, 0) AS num_sales,
+  RANK() OVER (ORDER BY COALESCE(_s1.agg_1, 0) DESC NULLS FIRST) AS sales_rank
 FROM main.salespersons AS salespersons
-JOIN _t1 AS _t1
-  ON _t1.salesperson_id = salespersons._id
+JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  COALESCE(_t1.agg_1, 0) DESC
+  COALESCE(_s1.agg_1, 0) DESC

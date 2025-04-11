@@ -1,4 +1,4 @@
-WITH _t2_2 AS (
+WITH _t1 AS (
   SELECT
     COUNT() AS agg_0,
     sbcustomer.sbcuststate AS state,
@@ -11,21 +11,12 @@ WITH _t2_2 AS (
   GROUP BY
     sbcustomer.sbcuststate,
     sbticker.sbtickertype
-), _t0_2 AS (
-  SELECT
-    COALESCE(agg_0, 0) AS num_transactions,
-    COALESCE(agg_0, 0) AS ordering_1,
-    state,
-    ticker_type
-  FROM _t2_2
-  ORDER BY
-    ordering_1 DESC
-  LIMIT 5
 )
 SELECT
   state,
   ticker_type,
-  num_transactions
-FROM _t0_2
+  COALESCE(agg_0, 0) AS num_transactions
+FROM _t1
 ORDER BY
-  ordering_1 DESC
+  num_transactions DESC
+LIMIT 5

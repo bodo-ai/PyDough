@@ -5,7 +5,6 @@ collections that are referenced instead of stepped into.
 
 __all__ = ["ChildOperator"]
 
-from collections.abc import MutableSequence
 
 from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
@@ -19,12 +18,12 @@ class ChildOperator(PyDoughCollectionQDAG):
 
     def __init__(
         self,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ):
-        self._children: MutableSequence[PyDoughCollectionQDAG] = children
+        self._children: list[PyDoughCollectionQDAG] = children
 
     @property
-    def children(self) -> MutableSequence[PyDoughCollectionQDAG]:
+    def children(self) -> list[PyDoughCollectionQDAG]:
         """
         The child collections accessible from the operator used to derive
         expressions in terms of a subcollection.

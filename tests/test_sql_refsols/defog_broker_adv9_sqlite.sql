@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     COUNT() AS agg_0,
     SUM(
@@ -48,4 +48,4 @@ SELECT
   week,
   COALESCE(agg_0, 0) AS num_transactions,
   COALESCE(agg_1, 0) AS weekend_transactions
-FROM _t0_2
+FROM _t0

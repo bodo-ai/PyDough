@@ -1,4 +1,4 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
     SUM(
       (
@@ -18,9 +18,9 @@ WITH _t1 AS (
 )
 SELECT
   users.uid,
-  COALESCE(_t1.agg_0, 0) AS total_duration
+  COALESCE(_t0.agg_0, 0) AS total_duration
 FROM main.users AS users
-JOIN _t1 AS _t1
-  ON _t1.user_id = users.uid
+JOIN _t0 AS _t0
+  ON _t0.user_id = users.uid
 ORDER BY
-  COALESCE(_t1.agg_0, 0) DESC
+  total_duration DESC

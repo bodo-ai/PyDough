@@ -1,4 +1,4 @@
-WITH _t1_2 AS (
+WITH _t1 AS (
   SELECT
     wallet_merchant_balance_daily.balance
   FROM main.merchants AS merchants
@@ -12,4 +12,4 @@ WITH _t1_2 AS (
 )
 SELECT
   MEDIAN(balance) AS _expr0
-FROM _t1_2
+FROM _t1

@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     SUM(
       CASE
@@ -23,4 +23,4 @@ SELECT
   (
     100.0 * COALESCE(agg_0, 0)
   ) / COALESCE(agg_1, 0) AS PROMO_REVENUE
-FROM _t0_2
+FROM _t0

@@ -4,7 +4,6 @@ Base definition of PyDough metadaata for collections.
 
 from abc import abstractmethod
 from collections import defaultdict
-from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.errors import (
@@ -45,10 +44,10 @@ class CollectionMetadata(AbstractMetadata):
 
         self._graph: GraphMetadata = graph
         self._name: str = name
-        self._properties: MutableMapping[str, PropertyMetadata] = {}
-        self._inherited_properties: MutableMapping[
-            str, MutableSequence[InheritedPropertyMetadata]
-        ] = defaultdict(list)
+        self._properties: dict[str, PropertyMetadata] = {}
+        self._inherited_properties: dict[str, list[InheritedPropertyMetadata]] = (
+            defaultdict(list)
+        )
         self._definition_order: dict[str, int] = {}
 
     @property
@@ -275,10 +274,8 @@ class CollectionMetadata(AbstractMetadata):
         self.verify_allows_property(property, True)
         self.inherited_properties[property.name].append(property)
 
-    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
-        nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = defaultdict(
-            list
-        )
+    def get_nouns(self) -> dict[str, list[AbstractMetadata]]:
+        nouns: dict[str, list[AbstractMetadata]] = defaultdict(list)
         for property in self.properties.values():
             for noun_name, values in property.get_nouns().items():
                 nouns[noun_name].extend(values)
@@ -288,7 +285,7 @@ class CollectionMetadata(AbstractMetadata):
                     nouns[noun_name].extend(values)
         return nouns
 
-    def get_property_names(self) -> MutableSequence[str]:
+    def get_property_names(self) -> list[str]:
         """
         Retrieves the names of all properties of the collection, excluding
         inherited properties.

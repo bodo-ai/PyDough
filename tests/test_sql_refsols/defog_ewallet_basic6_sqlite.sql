@@ -1,23 +1,15 @@
-WITH _t2 AS (
+WITH _t1 AS (
   SELECT
     COUNT() AS agg_0,
     device_type
   FROM main.user_sessions
   GROUP BY
     device_type
-), _t0 AS (
-  SELECT
-    COALESCE(agg_0, 0) AS count,
-    device_type,
-    COALESCE(agg_0, 0) AS ordering_1
-  FROM _t2
-  ORDER BY
-    ordering_1 DESC
-  LIMIT 2
 )
 SELECT
   device_type,
-  count
-FROM _t0
+  COALESCE(agg_0, 0) AS count
+FROM _t1
 ORDER BY
-  ordering_1 DESC
+  count DESC
+LIMIT 2

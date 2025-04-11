@@ -2,8 +2,6 @@
 Unit tests for the PyDough expression type inference utilities.
 """
 
-from collections.abc import MutableSequence
-
 import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
 
@@ -43,7 +41,7 @@ from pydough.types import Int64Type, PyDoughType, StringType
 )
 def test_returned_type(
     deducer: pydop.ExpressionTypeDeducer,
-    args_info: MutableSequence[AstNodeTestInfo],
+    args_info: list[AstNodeTestInfo],
     expected_type: PyDoughType,
     tpch_node_builder: AstNodeBuilder,
 ) -> None:

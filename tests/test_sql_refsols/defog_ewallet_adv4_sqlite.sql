@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     COUNT() AS agg_0,
     SUM(wallet_transactions_daily.amount) AS agg_1
@@ -13,4 +13,4 @@ WITH _t0_2 AS (
 SELECT
   agg_0 AS num_transactions,
   CASE WHEN agg_0 > 0 THEN COALESCE(agg_1, 0) ELSE NULL END AS total_amount
-FROM _t0_2
+FROM _t0

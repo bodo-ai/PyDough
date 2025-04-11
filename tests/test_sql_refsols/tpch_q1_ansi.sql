@@ -36,5 +36,5 @@ SELECT
   COALESCE(agg_3, 0) AS COUNT_ORDER
 FROM _t1
 ORDER BY
-  return_flag,
-  status
+  l_returnflag,
+  l_linestatus

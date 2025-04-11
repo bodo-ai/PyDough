@@ -4,7 +4,6 @@ The representation of a column function call for use in a relational tree.
 
 __all__ = ["WindowCallExpression"]
 
-from collections.abc import MutableSequence
 
 from pydough.pydough_operators import ExpressionWindowOperator
 from pydough.types import PyDoughType
@@ -25,16 +24,16 @@ class WindowCallExpression(RelationalExpression):
         self,
         op: ExpressionWindowOperator,
         return_type: PyDoughType,
-        inputs: MutableSequence[RelationalExpression],
-        partition_inputs: MutableSequence[RelationalExpression],
-        order_inputs: MutableSequence[ExpressionSortInfo],
+        inputs: list[RelationalExpression],
+        partition_inputs: list[RelationalExpression],
+        order_inputs: list[ExpressionSortInfo],
         kwargs: dict[str, object],
     ) -> None:
         super().__init__(return_type)
         self._op: ExpressionWindowOperator = op
-        self._inputs: MutableSequence[RelationalExpression] = inputs
-        self._partition_inputs: MutableSequence[RelationalExpression] = partition_inputs
-        self._order_inputs: MutableSequence[ExpressionSortInfo] = order_inputs
+        self._inputs: list[RelationalExpression] = inputs
+        self._partition_inputs: list[RelationalExpression] = partition_inputs
+        self._order_inputs: list[ExpressionSortInfo] = order_inputs
         self._kwargs: dict[str, object] = kwargs
 
     @property
@@ -49,21 +48,21 @@ class WindowCallExpression(RelationalExpression):
         return self.op.is_aggregation
 
     @property
-    def inputs(self) -> MutableSequence[RelationalExpression]:
+    def inputs(self) -> list[RelationalExpression]:
         """
         The inputs to the operation.
         """
         return self._inputs
 
     @property
-    def partition_inputs(self) -> MutableSequence[RelationalExpression]:
+    def partition_inputs(self) -> list[RelationalExpression]:
         """
         The inputs used to partition the operation.
         """
         return self._partition_inputs
 
     @property
-    def order_inputs(self) -> MutableSequence[ExpressionSortInfo]:
+    def order_inputs(self) -> list[ExpressionSortInfo]:
         """
         The inputs to order the operation.
         """

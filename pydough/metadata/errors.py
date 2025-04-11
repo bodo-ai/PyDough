@@ -27,7 +27,6 @@ __all__ = [
 
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableSequence
 
 
 class PyDoughMetadataException(Exception):
@@ -273,8 +272,8 @@ class OrCondition(PyDoughPredicate):
     match one of several properties.
     """
 
-    def __init__(self, predicates: MutableSequence[PyDoughPredicate]):
-        self.predicates: MutableSequence[PyDoughPredicate] = predicates
+    def __init__(self, predicates: list[PyDoughPredicate]):
+        self.predicates: list[PyDoughPredicate] = predicates
 
     def accept(self, obj: object) -> bool:
         return any(predicate.accept(obj) for predicate in self.predicates)

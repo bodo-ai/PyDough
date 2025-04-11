@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
@@ -59,4 +59,4 @@ WITH _t0_2 AS (
 )
 SELECT
   COALESCE(agg_0, 0) AS REVENUE
-FROM _t0_2
+FROM _t0

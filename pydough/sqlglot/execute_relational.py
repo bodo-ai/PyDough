@@ -4,8 +4,6 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
-from collections.abc import MutableSequence
-
 import pandas as pd
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
@@ -164,7 +162,7 @@ def apply_sqlglot_optimizer(
 
 def fix_column_case(
     glot_expr: SQLGlotExpression,
-    ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
+    ordered_columns: list[tuple[str, RelationalExpression]],
 ) -> None:
     """
     Fixes the column names in the SQLGlot expression to match the case

@@ -5,7 +5,6 @@ The definition of the base class for all PyDough metadata.
 __all__ = ["AbstractMetadata"]
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping, MutableSequence
 
 
 class AbstractMetadata(ABC):
@@ -36,7 +35,7 @@ class AbstractMetadata(ABC):
         """
 
     @abstractmethod
-    def get_nouns(self) -> MutableMapping[str, MutableSequence["AbstractMetadata"]]:
+    def get_nouns(self) -> dict[str, list["AbstractMetadata"]]:
         """
         Fetches all of the names of nouns accessible from the metadata for
         a PyDough graph, collection, or property.

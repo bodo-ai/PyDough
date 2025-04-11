@@ -2,8 +2,6 @@
 Unit tests the PyDough type verifiers.
 """
 
-from collections.abc import MutableSequence
-
 import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
 
@@ -31,7 +29,7 @@ from pydough.types import Int64Type
 )
 def test_verification(
     verifier: pydop.TypeVerifier,
-    args_info: MutableSequence[AstNodeTestInfo],
+    args_info: list[AstNodeTestInfo],
     tpch_node_builder: AstNodeBuilder,
 ) -> None:
     """

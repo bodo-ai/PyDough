@@ -3,7 +3,6 @@ Unit tests for the PyDough metadata module.
 """
 
 from collections import defaultdict
-from collections.abc import MutableMapping, MutableSequence
 
 import pytest
 from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
@@ -82,7 +81,7 @@ def test_get_collection_names(
     fetches the names of all collections in the metadata for a graph.
     """
     graph: GraphMetadata = get_sample_graph(graph_name)
-    collection_names: MutableSequence[str] = graph.get_collection_names()
+    collection_names: list[str] = graph.get_collection_names()
     assert sorted(collection_names) == sorted(answer), (
         f"Mismatch between names of collections in {graph!r} versus expected values"
     )
@@ -143,7 +142,7 @@ def test_get_collection_names(
 def test_get_property_names(
     graph_name: str,
     collection_name: str,
-    answer: MutableSequence[str],
+    answer: list[str],
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
@@ -153,7 +152,7 @@ def test_get_property_names(
     graph: GraphMetadata = get_sample_graph(graph_name)
     collection = graph.get_collection(collection_name)
     assert isinstance(collection, CollectionMetadata)
-    property_names: MutableSequence[str] = collection.get_property_names()
+    property_names: list[str] = collection.get_property_names()
     assert sorted(property_names) == sorted(answer), (
         f"Mismatch between names of properties in {collection!r} versus expected values"
     )
@@ -169,12 +168,12 @@ def test_get_sample_graph_nouns(
     identifies each noun in the graph and all of its meanings.
     """
     graph: GraphMetadata = get_sample_graph(sample_graph_names)
-    nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = graph.get_nouns()
+    nouns: dict[str, list[AbstractMetadata]] = graph.get_nouns()
     # Transform the nouns from metadata objects into path strings
-    processed_nouns: MutableMapping[str, set[str]] = map_over_dict_values(
+    processed_nouns: dict[str, set[str]] = map_over_dict_values(
         nouns, lambda noun_values: {noun.path for noun in noun_values}
     )
-    answer: MutableMapping[str, set[str]] = get_sample_graph_nouns(sample_graph_names)
+    answer: dict[str, set[str]] = get_sample_graph_nouns(sample_graph_names)
     assert processed_nouns == answer, (
         f"Mismatch between names of nouns in {graph!r} versus expected values"
     )
@@ -224,7 +223,7 @@ def test_simple_table_info(
     graph_name: str,
     collection_name: str,
     table_path: str,
-    unique_properties: MutableSequence[str | MutableSequence[str]],
+    unique_properties: list[str | list[str]],
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
@@ -362,7 +361,7 @@ def test_simple_join_info(
     reverse_name: str,
     singular: bool,
     no_collisions: bool,
-    keys: MutableMapping[str, MutableSequence[str]],
+    keys: dict[str, list[str]],
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
