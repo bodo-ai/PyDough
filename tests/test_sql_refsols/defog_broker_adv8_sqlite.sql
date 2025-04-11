@@ -1,4 +1,4 @@
-WITH _t4 AS (
+WITH _t5 AS (
   SELECT
     sbtransaction.sbtxamount AS amount,
     sbtransaction.sbtxcustid AS customer_id,
@@ -20,20 +20,28 @@ WITH _t4 AS (
       'start of day',
       '-7 day'
     )
+), _t4 AS (
+  SELECT
+    _t5.amount AS amount,
+    _t5.customer_id AS customer_id
+  FROM _t5 AS _t5
 ), _t3 AS (
   SELECT
-    _t4.amount AS amount,
+    COUNT() AS agg_0,
+    SUM(_t4.amount) AS agg_1,
     _t4.customer_id AS customer_id
   FROM _t4 AS _t4
+  GROUP BY
+    _t4.customer_id
 ), _s0 AS (
   SELECT
-    COUNT() AS agg_0,
-    SUM(_t3.amount) AS agg_1,
+    SUM(_t3.agg_0) AS agg_0,
+    SUM(_t3.agg_1) AS agg_1,
     _t3.customer_id AS customer_id
   FROM _t3 AS _t3
   GROUP BY
     _t3.customer_id
-), _t5 AS (
+), _t6 AS (
   SELECT
     sbcustomer.sbcustcountry AS country,
     sbcustomer.sbcustid AS _id
@@ -42,8 +50,8 @@ WITH _t4 AS (
     LOWER(sbcustomer.sbcustcountry) = 'usa'
 ), _s1 AS (
   SELECT
-    _t5._id AS _id
-  FROM _t5 AS _t5
+    _t6._id AS _id
+  FROM _t6 AS _t6
 ), _t2 AS (
   SELECT
     _s0.agg_0 AS agg_0,
