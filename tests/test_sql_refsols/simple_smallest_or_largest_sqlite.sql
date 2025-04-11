@@ -19,9 +19,5 @@ SELECT
   MAX('2025-01-01 00:00:00', '2024-01-01 00:00:00', '2023-01-01 00:00:00') AS l8,
   MAX('', 'alphabet soup', 'Hello World') AS l9,
   MAX(NULL, 'alphabet soup', 'Hello World') AS l10
-FROM (
-  SELECT
-    *
-  FROM (VALUES
-    (NULL))
-)
+FROM (VALUES
+  (NULL)) AS _q_0
