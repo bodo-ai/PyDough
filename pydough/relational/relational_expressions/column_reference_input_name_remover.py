@@ -5,6 +5,7 @@ any column reference that doesn't fall within a given set.
 
 from .abstract_expression import RelationalExpression
 from .column_reference import ColumnReference
+from .correlated_reference import CorrelatedReference
 from .literal_expression import LiteralExpression
 from .relational_expression_shuttle import RelationalExpressionShuttle
 
@@ -28,7 +29,9 @@ class ColumnReferenceInputNameRemover(RelationalExpressionShuttle):
     ) -> RelationalExpression:
         return literal_expression
 
-    def visit_column_reference(self, column_reference) -> RelationalExpression:
+    def visit_column_reference(
+        self, column_reference: ColumnReference
+    ) -> RelationalExpression:
         if column_reference.name in self._kept_names:
             return column_reference
         else:
@@ -38,5 +41,7 @@ class ColumnReferenceInputNameRemover(RelationalExpressionShuttle):
                 None,
             )
 
-    def visit_correlated_reference(self, correlated_reference) -> RelationalExpression:
+    def visit_correlated_reference(
+        self, correlated_reference: CorrelatedReference
+    ) -> RelationalExpression:
         return correlated_reference

@@ -12,7 +12,6 @@ from pydough.relational.relational_expressions import (
 )
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 
 
 class Scan(RelationalNode):
@@ -36,7 +35,7 @@ class Scan(RelationalNode):
     def node_equals(self, other: RelationalNode) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_scan(self)
 
     def to_string(self, compact=False) -> str:

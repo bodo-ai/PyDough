@@ -10,6 +10,15 @@ TODO: (gh #172) Fix type annotations. Disabled due to circular imports.
 
 from abc import ABC, abstractmethod
 
+from .aggregate import Aggregate
+from .empty_singleton import EmptySingleton
+from .filter import Filter
+from .join import Join
+from .limit import Limit
+from .project import Project
+from .relational_root import RelationalRoot
+from .scan import Scan
+
 __all__ = ["RelationalVisitor"]
 
 
@@ -41,7 +50,7 @@ class RelationalVisitor(ABC):
             child.accept(self)
 
     @abstractmethod
-    def visit_scan(self, scan) -> None:
+    def visit_scan(self, scan: Scan) -> None:
         """
         Visit a Scan node.
 
@@ -50,7 +59,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_join(self, join) -> None:
+    def visit_join(self, join: Join) -> None:
         """
         Visit a Join node.
 
@@ -59,7 +68,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_project(self, project) -> None:
+    def visit_project(self, project: Project) -> None:
         """
         Visit a Project node.
 
@@ -68,7 +77,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_filter(self, filter) -> None:
+    def visit_filter(self, filter: Filter) -> None:
         """
         Visit a filter node.
 
@@ -77,7 +86,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_aggregate(self, aggregate) -> None:
+    def visit_aggregate(self, aggregate: Aggregate) -> None:
         """
         Visit an Aggregate node.
 
@@ -86,7 +95,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_limit(self, limit) -> None:
+    def visit_limit(self, limit: Limit) -> None:
         """
         Visit a Limit node.
 
@@ -95,7 +104,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_empty_singleton(self, singleton) -> None:
+    def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
         """
         Visit an EmptySingleton node.
 
@@ -104,7 +113,7 @@ class RelationalVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_root(self, root) -> None:
+    def visit_root(self, root: RelationalRoot) -> None:
         """
         Visit a root node.
 

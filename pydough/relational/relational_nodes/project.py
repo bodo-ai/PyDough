@@ -14,7 +14,6 @@ from pydough.relational.relational_expressions import (
 )
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -38,7 +37,7 @@ class Project(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"PROJECT(columns={self.make_column_string(self.columns, compact)})"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         return visitor.visit_project(self)
 
     def is_identity(self) -> bool:

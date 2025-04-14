@@ -10,7 +10,6 @@ from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 
 
 class JoinType(Enum):
@@ -125,7 +124,7 @@ class Join(RelationalNode):
         )
         return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_join(self)
 
     def node_copy(

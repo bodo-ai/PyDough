@@ -11,8 +11,6 @@ from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
 from .expression_sort_info import ExpressionSortInfo
-from .relational_expression_shuttle import RelationalExpressionShuttle
-from .relational_expression_visitor import RelationalExpressionVisitor
 
 
 class WindowCallExpression(RelationalExpression):
@@ -104,10 +102,11 @@ class WindowCallExpression(RelationalExpression):
             and super().equals(other)
         )
 
-    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+    def accept(self, visitor: "RelationalExpressionVisitor") -> None:  # type: ignore # noqa
         visitor.visit_window_expression(self)
 
     def accept_shuttle(
-        self, shuttle: RelationalExpressionShuttle
+        self,
+        shuttle: "RelationalExpressionShuttle",  # type: ignore # noqa
     ) -> RelationalExpression:
         return shuttle.visit_window_expression(self)
