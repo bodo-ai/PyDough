@@ -454,7 +454,7 @@
           "other_collection_name": "seasons",
           "singular": true,
           "no_collisions": false,
-          "condition": "MONTH(self.date_time) == other.first_month OR MONTH(self.date_time) == other.second_month OR MONTH(self.date_time) == other.third_month",
+          "condition": "(MONTH(self.date_time) == other.first_month) | (MONTH(self.date_time) == other.second_month) | (MONTH(self.date_time) == other.third_month)",
           "reverse_relationship_name": "events"
         },
         "time_of_day": {
