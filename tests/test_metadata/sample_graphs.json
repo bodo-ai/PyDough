@@ -408,5 +408,72 @@
         }
       }
   },
-  "Empty": {}
+  "Empty": {},
+  "Epoch": {
+    "seasons": {
+      "type": "simple_table",
+      "table_path": "SEASONS",
+      "unique_properties": ["name", "first_month", "second_month", "third_month"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "s_name", "data_type": "string"},
+        "first_month": {"type": "table_column", "column_name": "s_month1", "data_type": "int64"},
+        "second_month": {"type": "table_column", "column_name": "s_month2", "data_type": "int64"},
+        "third_month": {"type": "table_column", "column_name": "s_month3", "data_type": "int64"}
+      }
+    },
+    "times_of_day": {
+      "type": "simple_table",
+      "table_path": "TIMES",
+      "unique_properties": ["name", "start_hour", "end_hour"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "t_name", "data_type": "string"},
+        "start_hour": {"type": "table_column", "column_name": "t_start_hour", "data_type": "int64"},
+        "end_hour": {"type": "table_column", "column_name": "t_end_hour", "data_type": "int64"}
+      }
+    },
+    "eras": {
+      "type": "simple_table",
+      "table_path": "ERAS",
+      "unique_properties": ["name", "start_year", "end_year"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "er_name", "data_type": "string"},
+        "start_year": {"type": "table_column", "column_name": "er_start_year", "data_type": "int64"},
+        "end_year": {"type": "table_column", "column_name": "er_end_year", "data_type": "int64"}
+      }
+    },
+    "events": {
+      "type": "simple_table",
+      "table_path": "EVENTS",
+      "unique_properties": ["name"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "ev_name", "data_type": "string"},
+        "date_time": {"type": "table_column", "column_name": "ev_dt", "data_type": "timestamp[9]"},
+        "event_type": {"type": "table_column", "column_name": "ev_typ", "data_type": "string"},
+        "season": {
+          "type": "general_join",
+          "other_collection_name": "seasons",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "MONTH(self.date_time) == other.first_month OR MONTH(self.date_time) == other.second_month OR MONTH(self.date_time) == other.third_month",
+          "reverse_relationship_name": "events"
+        },
+        "time_of_day": {
+          "type": "general_join",
+          "other_collection_name": "times_of_day",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(other.start_hour <= HOUR(self.date_time)) & (HOUR(self.date_time) < other.end_hour)",
+          "reverse_relationship_name": "events"
+        },
+        "era": {
+          "type": "general_join",
+          "other_collection_name": "eras",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(other.start_year <= YEAR(self.date_time)) & (YEAR(self.date_time) < other.end_year)",
+          "reverse_relationship_name": "events"
+        }
+      }
+    }
+  } 
 }

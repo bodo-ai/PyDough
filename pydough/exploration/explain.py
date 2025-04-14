@@ -14,6 +14,7 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.properties import (
     CartesianProductMetadata,
     CompoundRelationshipMetadata,
+    GeneralJoinMetadata,
     PropertyMetadata,
     ReversiblePropertyMetadata,
     ScalarAttributeMetadata,
@@ -119,6 +120,8 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
                         lines.append(
                             f"Note: this is a cartesian-product relationship, meaning that every record of {collection_name} matches onto every record of {child_name}."
                         )
+                    case GeneralJoinMetadata():
+                        raise NotImplementedError()
                     case SimpleJoinMetadata():
                         conditions: list[str] = []
                         for lhs_key_name, rhs_key_names in property.keys.items():

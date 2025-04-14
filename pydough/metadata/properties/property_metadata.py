@@ -128,6 +128,7 @@ class PropertyMetadata(AbstractMetadata):
         from pydough.metadata.properties import (
             CartesianProductMetadata,
             CompoundRelationshipMetadata,
+            GeneralJoinMetadata,
             SimpleJoinMetadata,
             TableColumnMetadata,
         )
@@ -137,6 +138,8 @@ class PropertyMetadata(AbstractMetadata):
                 return TableColumnMetadata
             case "simple_join":
                 return SimpleJoinMetadata
+            case "general_join":
+                return GeneralJoinMetadata
             case "cartesian_product":
                 return CartesianProductMetadata
             case "compound":
