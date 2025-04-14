@@ -36,6 +36,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
     CartesianProductMetadata,
+    GeneralJoinMetadata,
     SimpleJoinMetadata,
     SubcollectionRelationshipMetadata,
 )
@@ -230,7 +231,7 @@ class HybridBackRefExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr | None:
+    def shift_back(self, levels: int) -> HybridExpr:
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
 
@@ -393,6 +394,41 @@ def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
     return len(exprs) == len(renamed_exprs) and all(
         expr is renamed_expr for expr, renamed_expr in zip(exprs, renamed_exprs)
     )
+
+
+def shift_join_condition(expr: HybridExpr) -> HybridExpr:
+    """
+    Shifts an expression used as a general join condition back 1 level, where
+    expressions inside of function calls are also shifted, but expressions
+    inside correlated references are left alone since they refer tot he parent.
+    """
+    match expr:
+        case HybridRefExpr() | HybridBackRefExpr():
+            return expr.shift_back(1)
+        case HybridFunctionExpr():
+            return HybridFunctionExpr(
+                expr.operator,
+                [shift_join_condition(arg) for arg in expr.args],
+                expr.typ,
+            )
+        case HybridWindowExpr():
+            return HybridWindowExpr(
+                expr.window_func,
+                [shift_join_condition(arg) for arg in expr.args],
+                [shift_join_condition(arg) for arg in expr.partition_args],
+                [
+                    HybridCollation(
+                        shift_join_condition(order_arg.expr),
+                        order_arg.asc,
+                        order_arg.na_first,
+                    )
+                    for order_arg in expr.order_args
+                ],
+                expr.typ,
+                expr.kwargs,
+            )
+        case _:
+            return expr
 
 
 class HybridOperation:
@@ -1082,6 +1118,7 @@ class HybridTree:
         self._is_connection_root: bool = is_connection_root
         self._agg_keys: list[HybridExpr] | None = None
         self._join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
+        self._general_join_condition: HybridExpr | None = None
         self._correlated_children: set[int] = set()
         if isinstance(root_operation, HybridPartition):
             self._join_keys = []
@@ -1100,6 +1137,8 @@ class HybridTree:
                 lines.append(f"{prefix}  aggs: {child.aggs}:")
             if child.subtree.join_keys is not None:
                 lines.append(f"{prefix}  join: {child.subtree.join_keys}")
+            if child.subtree.general_join_condition is not None:
+                lines.append(f"{prefix}  join: {child.subtree.general_join_condition}")
             for line in repr(child.subtree).splitlines():
                 lines.append(f"{prefix} {line}")
         return "\n".join(lines)
@@ -1199,6 +1238,21 @@ class HybridTree:
         """
         self._join_keys = join_keys
 
+    @property
+    def general_join_condition(self) -> HybridExpr | None:
+        """
+        A hybrid expression used as a general join condition joining this
+        HybridTree to its ancestor, if it is the base of a HybridConnection.
+        """
+        return self._general_join_condition
+
+    @general_join_condition.setter
+    def general_join_condition(self, condition: HybridExpr) -> None:
+        """
+        Assigns the general join condition to a hybrid tree.
+        """
+        self._general_join_condition = condition
+
     def add_child(
         self,
         child: "HybridTree",
@@ -1257,14 +1311,18 @@ class HybridTree:
                 shifted_expr = key.shift_back(1)
                 assert shifted_expr is not None
                 successor_agg_keys.append(shifted_expr)
-            successor._agg_keys = successor_agg_keys
+            successor.agg_keys = successor_agg_keys
         if self.join_keys is not None:
             successor_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
             for lhs_key, rhs_key in self.join_keys:
                 shifted_expr = rhs_key.shift_back(1)
                 assert shifted_expr is not None
                 successor_join_keys.append((lhs_key, shifted_expr))
-            successor._join_keys = successor_join_keys
+            successor.join_keys = successor_join_keys
+        if self.general_join_condition is not None:
+            successor.general_join_condition = shift_join_condition(
+                self.general_join_condition
+            )
 
 
 class HybridTranslator:
@@ -2351,6 +2409,7 @@ class HybridTranslator:
         child_ref_mapping: dict[int, int] = {}
         key_exprs: list[HybridExpr] = []
         join_key_exprs: list[tuple[HybridExpr, HybridExpr]] = []
+        general_join_cond: HybridExpr | None = None
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot(), node.ancestral_mapping)
@@ -2456,11 +2515,22 @@ class HybridTranslator:
                             node.ancestral_mapping,
                         )
                         if isinstance(node.child_access, SubCollection):
-                            join_key_exprs = HybridTranslator.get_join_keys(
-                                parent,
-                                node.child_access.subcollection_property,
-                                successor_hybrid.pipeline[-1],
+                            sub_property: SubcollectionRelationshipMetadata = (
+                                node.child_access.subcollection_property
                             )
+                            if isinstance(sub_property, SimpleJoinMetadata):
+                                join_key_exprs = HybridTranslator.get_join_keys(
+                                    parent,
+                                    node.child_access.subcollection_property,
+                                    successor_hybrid.pipeline[-1],
+                                )
+                            elif isinstance(sub_property, GeneralJoinMetadata):
+                                general_join_cond = None
+                                raise NotImplementedError()
+                            else:
+                                raise NotImplementedError(
+                                    f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"
+                                )
                     case PartitionChild():
                         source: HybridTree = parent
                         if isinstance(source.pipeline[0], HybridPartitionChild):
@@ -2469,8 +2539,6 @@ class HybridTranslator:
                             HybridPartitionChild(source.children[0].subtree),
                             node.ancestral_mapping,
                         )
-                        # successor_hybrid = copy.deepcopy(source.children[0].subtree)
-                        # successor_hybrid._ancestral_mapping = node.ancestral_mapping
                         partition_by = (
                             node.child_access.ancestor_context.starting_predecessor
                         )
@@ -2511,8 +2579,14 @@ class HybridTranslator:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
                         )
-                successor_hybrid.agg_keys = [rhs_key for _, rhs_key in join_key_exprs]
-                successor_hybrid.join_keys = join_key_exprs
+                if general_join_cond is None:
+                    successor_hybrid.agg_keys = [
+                        rhs_key for _, rhs_key in join_key_exprs
+                    ]
+                    successor_hybrid.join_keys = join_key_exprs
+                else:
+                    successor_hybrid.agg_keys = None  # TODO
+                    successor_hybrid.general_join_condition = general_join_cond
                 return successor_hybrid
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")

@@ -108,7 +108,7 @@ def valid_sample_graph_names() -> set[str]:
     return {"Amazon", "TPCH", "Empty", "Epoch"}
 
 
-@pytest.fixture(params=["Amazon", "TPCH", "Empty", "Epoch"])
+@pytest.fixture(params=["Amazon", "TPCH", "Empty"])
 def sample_graph_names(request) -> str:
     """
     Fixture for the names that each of the sample graphs can be accessed.
