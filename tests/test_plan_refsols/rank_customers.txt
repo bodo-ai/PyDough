@@ -1,3 +1,2 @@
-ROOT(columns=[('name', name), ('cust_rank', cust_rank)], orderings=[])
- PROJECT(columns={'cust_rank': RANKING(args=[], partition=[], order=[(acctbal):desc_first]), 'name': name})
-  SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})
+ROOT(columns=[('name', name), ('cust_rank', RANKING(args=[], partition=[], order=[(acctbal):desc_first]))], orderings=[])
+ SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name})

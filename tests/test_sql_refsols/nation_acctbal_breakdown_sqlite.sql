@@ -12,7 +12,7 @@ WITH _t3 AS (
       ) < 1.0
       THEN c_acctbal
       ELSE NULL
-    END AS expr_7,
+    END AS expr_6,
     CASE
       WHEN ABS(
         (
@@ -25,7 +25,7 @@ WITH _t3 AS (
       ) < 1.0
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
-    END AS expr_8,
+    END AS expr_7,
     CASE
       WHEN ABS(
         (
@@ -38,16 +38,16 @@ WITH _t3 AS (
       ) < 1.0
       THEN CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
-    END AS expr_6,
+    END AS expr_5,
     c_nationkey AS nation_key,
     CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END AS negative_acctbal,
     CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END AS non_negative_acctbal
   FROM tpch.customer
-), _t3_2 AS (
+), _s3 AS (
   SELECT
-    AVG(expr_6) AS agg_0,
-    AVG(expr_7) AS agg_1,
-    AVG(expr_8) AS agg_2,
+    AVG(expr_5) AS agg_0,
+    AVG(expr_6) AS agg_1,
+    AVG(expr_7) AS agg_2,
     COUNT(negative_acctbal) AS agg_4,
     COUNT(non_negative_acctbal) AS agg_3,
     nation_key
@@ -57,15 +57,15 @@ WITH _t3 AS (
 )
 SELECT
   nation.n_name AS nation_name,
-  COALESCE(_t3.agg_4, 0) AS n_red_acctbal,
-  COALESCE(_t3.agg_3, 0) AS n_black_acctbal,
-  _t3.agg_2 AS median_red_acctbal,
-  _t3.agg_0 AS median_black_acctbal,
-  _t3.agg_1 AS median_overall_acctbal
+  COALESCE(_s3.agg_4, 0) AS n_red_acctbal,
+  COALESCE(_s3.agg_3, 0) AS n_black_acctbal,
+  _s3.agg_2 AS median_red_acctbal,
+  _s3.agg_0 AS median_black_acctbal,
+  _s3.agg_1 AS median_overall_acctbal
 FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
-LEFT JOIN _t3_2 AS _t3
-  ON _t3.nation_key = nation.n_nationkey
+LEFT JOIN _s3 AS _s3
+  ON _s3.nation_key = nation.n_nationkey
 ORDER BY
-  nation.n_name
+  nation_name

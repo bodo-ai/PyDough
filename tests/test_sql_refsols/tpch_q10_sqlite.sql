@@ -1,4 +1,4 @@
-WITH _t3_2 AS (
+WITH _s3 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
@@ -11,38 +11,22 @@ WITH _t3_2 AS (
     orders.o_orderdate < '1994-01-01' AND orders.o_orderdate >= '1993-10-01'
   GROUP BY
     orders.o_custkey
-), _t0_2 AS (
-  SELECT
-    customer.c_acctbal,
-    customer.c_address,
-    customer.c_comment,
-    customer.c_custkey,
-    customer.c_name,
-    customer.c_phone,
-    nation.n_name,
-    COALESCE(_t3.agg_0, 0) AS revenue,
-    COALESCE(_t3.agg_0, 0) AS ordering_1,
-    customer.c_custkey AS ordering_2
-  FROM tpch.customer AS customer
-  LEFT JOIN _t3_2 AS _t3
-    ON _t3.customer_key = customer.c_custkey
-  LEFT JOIN tpch.nation AS nation
-    ON customer.c_nationkey = nation.n_nationkey
-  ORDER BY
-    ordering_1 DESC,
-    ordering_2
-  LIMIT 20
 )
 SELECT
-  c_custkey AS C_CUSTKEY,
-  c_name AS C_NAME,
-  revenue AS REVENUE,
-  c_acctbal AS C_ACCTBAL,
-  n_name AS N_NAME,
-  c_address AS C_ADDRESS,
-  c_phone AS C_PHONE,
-  c_comment AS C_COMMENT
-FROM _t0_2
+  customer.c_custkey AS C_CUSTKEY,
+  customer.c_name AS C_NAME,
+  COALESCE(_s3.agg_0, 0) AS REVENUE,
+  customer.c_acctbal AS C_ACCTBAL,
+  nation.n_name AS N_NAME,
+  customer.c_address AS C_ADDRESS,
+  customer.c_phone AS C_PHONE,
+  customer.c_comment AS C_COMMENT
+FROM tpch.customer AS customer
+LEFT JOIN _s3 AS _s3
+  ON _s3.customer_key = customer.c_custkey
+LEFT JOIN tpch.nation AS nation
+  ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
-  ordering_1 DESC,
-  ordering_2
+  revenue DESC,
+  c_custkey
+LIMIT 20

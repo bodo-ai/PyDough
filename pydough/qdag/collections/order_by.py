@@ -6,7 +6,6 @@ by certain collation keys.
 __all__ = ["OrderBy"]
 
 
-from collections.abc import MutableSequence
 from functools import cache
 
 from pydough.qdag.errors import PyDoughQDAGException
@@ -25,7 +24,7 @@ class OrderBy(AugmentingChildOperator):
     def __init__(
         self,
         predecessor: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ):
         super().__init__(predecessor, children)
         self._collation: list[CollationExpression] | None = None

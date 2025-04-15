@@ -3,7 +3,6 @@ Definition of PyDough metadata for a graph.
 """
 
 from collections import defaultdict
-from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.errors import HasType, PyDoughMetadataException, is_valid_name
@@ -18,7 +17,7 @@ class GraphMetadata(AbstractMetadata):
     def __init__(self, name: str):
         is_valid_name.verify(name, "graph name")
         self._name: str = name
-        self._collections: MutableMapping[str, AbstractMetadata] = {}
+        self._collections: dict[str, AbstractMetadata] = {}
 
     @property
     def name(self) -> str:
@@ -28,7 +27,7 @@ class GraphMetadata(AbstractMetadata):
         return self._name
 
     @property
-    def collections(self) -> MutableMapping[str, AbstractMetadata]:
+    def collections(self) -> dict[str, AbstractMetadata]:
         """
         The collections contained within the graph.
         """
@@ -76,7 +75,7 @@ class GraphMetadata(AbstractMetadata):
             )
         self.collections[collection.name] = collection
 
-    def get_collection_names(self) -> MutableSequence[str]:
+    def get_collection_names(self) -> list[str]:
         """
         Fetches all of the names of collections in the graph.
         """
@@ -95,10 +94,8 @@ class GraphMetadata(AbstractMetadata):
     def __getitem__(self, key: str):
         return self.get_collection(key)
 
-    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
-        nouns: MutableMapping[str, MutableSequence[AbstractMetadata]] = defaultdict(
-            list
-        )
+    def get_nouns(self) -> dict[str, list[AbstractMetadata]]:
+        nouns: dict[str, list[AbstractMetadata]] = defaultdict(list)
         nouns[self.name].append(self)
         for collection in self.collections.values():
             for name, values in collection.get_nouns().items():

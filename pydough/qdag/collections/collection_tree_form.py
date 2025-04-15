@@ -6,7 +6,6 @@ in a tree-like form so they can be converted into tree-like strings.
 __all__ = ["CollectionTreeForm"]
 
 
-from collections.abc import MutableSequence
 from typing import Union
 
 
@@ -23,7 +22,7 @@ class CollectionTreeForm:
         has_successor: bool = False,
         has_children: bool = False,
         predecessor: Union["CollectionTreeForm", None] = None,
-        nested_trees: MutableSequence["CollectionTreeForm"] | None = None,
+        nested_trees: list["CollectionTreeForm"] | None = None,
     ):
         self.item_str: str = item_str
         self.depth: int = depth
@@ -31,7 +30,7 @@ class CollectionTreeForm:
         self.has_successor: bool = has_successor
         self.has_children: bool = has_children
         self.predecessor: CollectionTreeForm | None = predecessor
-        self.nested_trees: MutableSequence[CollectionTreeForm] = (
+        self.nested_trees: list[CollectionTreeForm] = (
             [] if nested_trees is None else nested_trees
         )
 
@@ -57,7 +56,7 @@ class CollectionTreeForm:
         else:
             self.predecessor.mark_ancestor_has_successor(ancestor)
 
-    def to_string_rows(self) -> MutableSequence[str]:
+    def to_string_rows(self) -> list[str]:
         """
         Converts the tree form into the string representation in the format
         specified by `PyDoughCollectionQDAG.to_string`, but as a list where each
@@ -66,7 +65,7 @@ class CollectionTreeForm:
         Returns:
             The tree-like string representation of `self`.
         """
-        answer: MutableSequence[str]
+        answer: list[str]
         prefix: str = self.PREDECESSOR_SPACER * self.depth
         condition_tuple: tuple[bool, bool] = (
             self.has_children or len(self.nested_trees) > 0,

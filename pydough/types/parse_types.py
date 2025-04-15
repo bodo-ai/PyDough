@@ -4,7 +4,6 @@ Logic for converting JSON strings to PyDough types.
 
 __all__ = ["parse_type_from_string"]
 
-from collections.abc import MutableSequence
 
 from .array_type import ArrayType
 from .binary_type import BinaryType
@@ -38,7 +37,7 @@ def parse_type_from_string(type_string: str) -> PyDoughType:
         `PyDoughTypeException` if the string does not correspond to any
         PyDough type.
     """
-    type_classes: MutableSequence[type[PyDoughType]] = [
+    type_classes: list[type[PyDoughType]] = [
         BinaryType,
         BooleanType,
         DecimalType,
