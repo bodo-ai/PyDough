@@ -49,12 +49,15 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         self_name: str,
         other_name: str,
     ):
+        from pydough.unqualified import UnqualifiedNode
+
         super().__init__(
             name, reverse_name, collection, other_collection, singular, no_collisions
         )
         self._condition: str = condition
         self._self_name: str = self_name
         self._other_name: str = other_name
+        self._unqualified_condition: UnqualifiedNode | None = None
 
     @property
     def condition(self) -> str:
@@ -65,6 +68,14 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         with `other_name`.
         """
         return self._condition
+
+    @property
+    def unqualified_condition(self) -> object:
+        """
+        The UnqualifiedNode version of the condition, if it has been defined
+        yet. The value should either be an unqualified node or None.
+        """
+        return self._unqualified_condition
 
     @property
     def self_name(self) -> str:
@@ -80,7 +91,7 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         The name used to refer to columns from the child collection in the
         condition string.
         """
-        return self._self_name
+        return self._other_name
 
     @property
     def components(self) -> list:
