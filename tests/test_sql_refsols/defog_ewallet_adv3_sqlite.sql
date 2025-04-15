@@ -1,6 +1,6 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS total_coupons,
     merchant_id
   FROM main.coupons
   GROUP BY
@@ -8,9 +8,9 @@ WITH _t1 AS (
 )
 SELECT
   merchants.name AS merchant_name,
-  COALESCE(_t1.agg_0, 0) AS total_coupons
+  _s1.total_coupons
 FROM main.merchants AS merchants
-JOIN _t1 AS _t1
-  ON _t1.merchant_id = merchants.mid
+JOIN _s1 AS _s1
+  ON _s1.merchant_id = merchants.mid
 WHERE
   LOWER(merchants.category) LIKE '%%retail%%' AND merchants.status = 'active'

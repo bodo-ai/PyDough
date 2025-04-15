@@ -1756,7 +1756,10 @@ class HybridTranslator:
         )
         # The null-adding join is not done if this is the root level, since
         # that just means all the aggregations are no-groupby aggregations.
-        joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
+        joins_can_nullify: bool = not (
+            isinstance(hybrid.pipeline[0], HybridRoot)
+            or child_connection.connection_type.is_semi
+        )
         return self.postprocess_agg_output(count_call, result_ref, joins_can_nullify)
 
     def handle_has_hasnot(
@@ -1893,7 +1896,10 @@ class HybridTranslator:
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
         )
-        joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
+        joins_can_nullify: bool = not (
+            isinstance(hybrid.pipeline[0], HybridRoot)
+            or child_connection.connection_type.is_semi
+        )
         return self.postprocess_agg_output(hybrid_call, result_ref, joins_can_nullify)
 
     def rewrite_median_call(
