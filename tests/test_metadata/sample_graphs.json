@@ -474,6 +474,61 @@
           "reverse_relationship_name": "events"
         }
       }
+    },
+    "users": {
+      "type": "simple_table",
+      "table_path": "USERS",
+      "unique_properties": ["user_id", "name"],
+      "properties": {
+        "user_id": {"type": "table_column", "column_name": "user_id", "data_type": "int64"},
+        "name": {"type": "table_column", "column_name": "user_name", "data_type": "string"},
+        "region": {"type": "table_column", "column_name": "user_region", "data_type": "string"},
+        "searches": {
+          "type": "simple_join",
+          "other_collection_name": "searches",
+          "singular": false,
+          "no_collisions": true,
+          "keys": {"user_id": ["user_id"]},
+          "reverse_relationship_name": "searches"
+        }
+      }
+    },
+    "searches": {
+      "type": "simple_table",
+      "table_path": "SEARCHES",
+      "unique_properties": ["search_id"],
+      "properties": {
+        "search_id": {"type": "table_column", "column_name": "search_id", "data_type": "int64"},
+        "user_id": {"type": "table_column", "column_name": "search_user_id", "data_type": "int64"},
+        "search_engine": {"type": "table_column", "column_name": "search_engine", "data_type": "string"},
+        "search_string": {"type": "table_column", "column_name": "search_string", "data_type": "string"},
+        "ts": {"type": "table_column", "column_name": "search_ts", "data_type": "timestamp[9]"},
+        "n_results": {"type": "table_column", "column_name": "search_num_results", "data_type": "int64"},
+        "events": {
+          "type": "general_join",
+          "other_collection_name": "events",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "CONTAINS(LOWER(self.search_string), LOWER(other.name))",
+          "reverse_relationship_name": "searches"
+        },
+        "season": {
+          "type": "general_join",
+          "other_collection_name": "seasons",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(MONTH(self.ts) == other.first_month) | (MONTH(self.ts) == other.second_month) | (MONTH(self.ts) == other.third_month)",
+          "reverse_relationship_name": "searches"
+        },
+        "time_of_day": {
+          "type": "general_join",
+          "other_collection_name": "times_of_day",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(other.start_hour <= HOUR(self.ts)) & (HOUR(self.ts) < other.end_hour)",
+          "reverse_relationship_name": "searches"
+        }
+      }
     }
   } 
 }

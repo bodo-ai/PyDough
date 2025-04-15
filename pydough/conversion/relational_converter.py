@@ -1335,11 +1335,7 @@ def convert_ast_to_relational(
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)
-    print()
-    print(hybrid)
     run_hybrid_decorrelation(hybrid)
-    print()
-    print(hybrid)
     hybrid_translator.run_rewrites(hybrid)
 
     # Then, invoke relational conversion procedure. The first element in the

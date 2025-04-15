@@ -13,7 +13,9 @@ from epoch_pydough_functions import (
     events_per_season,
     first_event_per_era,
     num_predawn_cold_war,
+    pct_searches_per_tod,
     summer_events_per_type,
+    users_most_cold_war_searches,
 )
 from test_utils import graph_fetcher
 
@@ -172,6 +174,48 @@ from pydough.unqualified import (
                 ),
             ),
             id="event_gap_per_era",
+        ),
+        pytest.param(
+            (
+                pct_searches_per_tod,
+                "pct_searches_per_tod",
+                lambda: pd.DataFrame(
+                    {
+                        "tod": [
+                            "Pre-Dawn",
+                            "Morning",
+                            "Afternoon",
+                            "Evening",
+                            "Night",
+                        ],
+                        "pct_searches": [
+                            13.22,
+                            34.71,
+                            31.40,
+                            11.57,
+                            9.10,
+                        ],
+                    }
+                ),
+            ),
+            id="pct_searches_per_tod",
+        ),
+        pytest.param(
+            (
+                users_most_cold_war_searches,
+                "users_most_cold_war_searches",
+                lambda: pd.DataFrame(
+                    {
+                        "user_name": [
+                            "Trixie Mattel",
+                            "Jinkx Monsoon",
+                            "Lady Camden",
+                        ],
+                        "n_cold_war_searches": [4, 3, 3],
+                    }
+                ),
+            ),
+            id="users_most_cold_war_searches",
         ),
     ],
 )

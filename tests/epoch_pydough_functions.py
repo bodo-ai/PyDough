@@ -77,3 +77,24 @@ def event_gap_per_era():
         .CALCULATE(era_name=name, avg_event_gap=AVG(event_info.day_gap))
         .ORDER_BY(start_year.ASC())
     )
+
+
+def pct_searches_per_tod():
+    # Returns the percentage of searches belonging to each time of day,
+    # ordered by the time of day.
+    percentage_of_searches = ROUND(
+        (100.0 * COUNT(searches)) / RELSUM(COUNT(searches)), 2
+    )
+    return times_of_day.CALCULATE(
+        tod=name, pct_searches=percentage_of_searches
+    ).ORDER_BY(start_hour.ASC())
+
+
+def users_most_cold_war_searches():
+    # Returns the 3 users with the most searches of cold war events.
+    cold_war_searches = searches.WHERE(HAS(events.WHERE(era.name == "Cold War")))
+    return (
+        users.WHERE(HAS(cold_war_searches))
+        .CALCULATE(user_name=name, n_cold_war_searches=COUNT(cold_war_searches))
+        .TOP_K(3, by=(n_cold_war_searches.DESC(), user_name.ASC()))
+    )

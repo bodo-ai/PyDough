@@ -27,6 +27,21 @@ CREATE TABLE EVENTS(
   ev_typ varchar(10)
 );
 
+CREATE TABLE USERS(
+  user_id INTEGER,
+  user_name varchar (20) NOT NULL,
+  user_region varchar (20) NOT NULL
+);
+
+CREATE TABLE SEARCHES(
+  search_id INTEGER,
+  search_user_id INTEGER,
+  search_engine varchar (20) NOT NULL,
+  search_string varchar (100) NOT NULL,
+  search_ts datetime TIMESTAMP,
+  search_num_results INTEGER
+);
+
 INSERT INTO SEASONS (s_name, s_month1, s_month2, s_month3) VALUES
 ('Summer', 6, 7, 8),
 ('Fall', 9, 10, 11),
@@ -228,5 +243,171 @@ INSERT INTO EVENTS(ev_key, ev_name, ev_dt, ev_typ) VALUES
 (177, 'ChatGPT Released by OpenAI', '2022-11-30 09:00:00', 'technology'),
 (178, 'First Image of a Black Hole Captured', '2019-04-10 13:00:00', 'science'),
 (179, 'COVID-19 Vaccines Begin Distribution', '2020-12-14 08:00:00', 'health'),
-(180, 'Elon Musk Acquires Twitter', '2022-10-27 14:00:00', 'economy');
+(180, 'Elon Musk Acquires Twitter', '2022-10-27 14:00:00', 'economy')
 ;
+
+
+INSERT INTO USERS(user_id, user_name, user_region) VALUES 
+  (1, "Trixie Mattel", "US-Midwest"),
+  (2, "Jinkx Monsoon", "US-West"),
+  (3, "Alyssa Edwards", "US-South"),
+  (4, "Bianca Del Rio", "US-West"),
+  (5, "Sasha Velour", "US-East"),
+  (6, "Raja Gemini", "US-West"),
+  (7, "Roxxxie Andrews", "US-South"),
+  (8, "Plasma", "US-East"),
+  (9, "Priyanka", "Canada"),
+  (10, "Jimbo", "Canada"),
+  (11, "The Vivienne", "UK"),
+  (12, "Lemon", "Canada"),
+  (13, "Gigi Goode", "US-West"),
+  (14, "Elektra Fence", "US-South"),
+  (15, "Kylie Sonique Love", "US-South"),
+  (16, "Jorgeous", "US-West"),
+  (17, "Kandy Muse", "US-East"),
+  (18, "Angeria Paris VanMichaels", "US-South"),
+  (19, "Willow Pill", "US-West"),
+  (20, "Lady Camden", "UK")
+;
+
+INSERT INTO SEARCHES(search_id, search_user_id, search_engine, search_string, search_ts, search_num_results) VALUES 
+  (1, 1, "Google", "When did covid-19 vaccines begin distribution?", "2024-12-31 23:00:13", 142),
+  (2, 5, "Bing", "When was the start of the COLD WAR!?!?", "2018-01-01 10:35:00", 186),
+  (3, 2, "Google", "When was the first test-tube baby born?", "2019-01-10 23:45:00", 192),
+  (4, 20, "Duck Duck Go", "THE FIRST TEST-TUBE BABY BORN", "2020-06-01 00:00:00", 3),
+  (5, 16, "Google", "When was the first test-tube baby born in Canada", "2021-01-05 05:51:56", 200),
+  (6, 1, "Yahoo!", "On what day of the year was the first test-tube baby born?", "2018-03-25 06:00:00", 13),
+  (7, 1, 'Google', 'Searching for The First Voyage of Columbus', '2018-06-12 14:23:45', 4523),
+  (8, 2, 'Bing', 'Details about First Crusade and Godfrey of Bouillon', '2020-11-04 09:14:12', 7381),
+  (9, 3, 'DuckDuckGo', 'Fall of Constantinople and its consequences', '2017-02-27 20:10:33', 104),
+  (10, 1, 'Google', 'Looking into the y2k bug scare causes', '2022-09-19 16:47:01', 9900),
+  (11, 2, 'Yahoo', 'What year did The Beatles perform on The Ed Sullivan Show?', '2015-01-08 08:00:00', 8457),
+  (12, 7, 'Bing', 'impact of bitcoin created on the Edward Snowden NSA leak sand the Indian Ocean tsunami', '2016-08-29 22:45:30', 8744),
+  (13, 9, 'DuckDuckGo', 'columbus first voyage details and legacy', '2019-12-04 13:33:09', 2203),
+  (14, 10, 'Yahoo', 'summary of why pluto reclassified as a planet', '2023-01-20 06:59:55', 5460),
+  (15, 6, 'Google', 'why did the first crusade happen?', '2015-07-11 17:17:48', 9281),
+  (16, 11, 'Bing', 'explore the events surrounding the casablanca conference', '2021-04-08 08:41:03', 7895),
+  (17, 14, 'DuckDuckGo', 'lessons from the great fire of london', '2018-10-23 11:19:27', 643),
+  (18, 5, 'Yahoo', 'when did the Black Lives Matter protests begin and how long did they last', '2017-09-01 20:00:00', 8742),
+  (19, 18, 'Google', 'War in Iraq begins vs ARAB SPRING begins', '2022-12-12 14:02:21', 9900),
+  (20, 13, 'Bing', 'analyzing the Chernobyl nuclear disaster', '2016-04-30 09:18:39', 4628),
+  (21, 3, 'Ecosia', 'who caused the cuban missile crisis and who averted it?', '2020-11-02 15:12:34', 1289),
+  (22, 8, 'Google', 'black death mortality rate and spread in europe', '2019-05-09 12:45:00', 2745),
+  (23, 1, 'Brave', 'timeline of Disneyland opens and its impact on Florida', '2023-07-01 07:22:49', 883),
+  (24, 17, 'DuckDuckGo', 'causes of the haitian revolution', '2022-09-19 19:05:14', 2297),
+  (25, 6, 'Bing', 'historical analysis of the y2k bug scare in America', '2016-01-11 16:17:59', 6213),
+  (26, 2, 'Qwant', 'short term effects of civil rights act signed and the stonewall riots', '2021-03-30 20:08:25', 1921),
+  (27, 20, 'Yahoo', 'storming of the bastille vs boston tea party', '2024-02-18 14:44:39', 4021),
+  (28, 13, 'Google', 'legacy of the brexit referendum', '2017-06-15 23:05:12', 1754),
+  (29, 10, 'Ecosia', 'who was at the death of princess diana?', '2018-12-27 05:17:46', 1010),
+  (30, 7, 'Google', 'importance of the edict of milan to early christianity', '2015-10-10 10:10:10', 234),
+  (31, 5, 'Brave', 'napoleon at the battle of waterloo and tactical errors', '2023-04-22 17:38:29', 6915),
+  (32, 12, 'DuckDuckGo', 'why did the taiping rebellion fail?', '2020-08-14 09:00:45', 1783),
+  (33, 19, 'Google', 'timeline of the meiji restoration', '2019-02-03 13:11:12', 2989),
+  (34, 14, 'Yahoo', 'causes and consequences of the boxer rebellion', '2021-05-06 18:22:56', 2180),
+  (35, 1, 'Qwant', 'how did the formation of the united nations affect european trade?', '2017-01-01 08:33:00', 3427),
+  (36, 9, 'Bing', 'major between when the War in Afghanistan begins and the War in Iraq begins', '2018-07-19 20:40:14', 901),
+  (37, 4, 'Google', 'significance of the magna carta in english history', '2022-06-13 11:26:32', 5609),
+  (38, 16, 'DuckDuckGo', 'differences between the french and russian revolutions', '2023-03-25 21:00:00', 792),
+  (39, 18, 'Ecosia', 'background to the signing of the camp david accords', '2020-10-02 04:45:01', 258),
+  (40, 15, 'Brave', 'alexander the great and the battle of gaugamela', '2024-01-08 16:50:22', 3820),
+  (41, 6, 'Google', 'why was the treaty of versailles controversial', '2019-11-17 12:45:33', 2450),
+  (42, 2, 'DuckDuckGo', 'origin story behind the trojan war', '2018-04-23 06:12:14', 992),
+  (43, 10, 'Ecosia', 'battle tactics at cannae by hannibal', '2021-02-11 19:55:21', 1540),
+  (44, 13, 'Bing', 'how the industrial revolution changed child labor laws', '2020-01-30 15:10:45', 3647),
+  (45, 7, 'Qwant', 'who was present at the signing of the magna carta', '2017-07-05 08:32:10', 173),
+  (46, 12, 'Google', 'why did the y2k bug scare not cause an economic collapse', '2022-05-28 20:13:39', 2044),
+  (47, 4, 'Mojeek', 'the sacking of rome by the visigoths', '2023-01-10 17:07:07', 320),
+  (48, 5, 'Yahoo', 'timeline of events leading to pearl harbor', '2016-06-16 10:00:00', 5891),
+  (49, 14, 'Brave', 'casualties during the siege of leningrad', '2021-09-03 23:19:05', 2705),
+  (50, 19, 'Google', 'reforms implemented in the meiji era', '2018-03-09 14:01:50', 1341),
+  (51, 1, 'Yandex', 'reasons napoleon lost waterloo', '2017-10-21 12:55:43', 4012),
+  (52, 15, 'DuckDuckGo', 'impact of Hurricane Katrina on ecosystems in Louisiana', '2020-08-08 08:08:08', 299),
+  (53, 3, 'Ecosia', 'When was the James Webb Space Telescope Launched?', '2019-02-28 17:03:12', 583),
+  (54, 1, 'Swisscows', 'economic aftermath of the Challenger disaster', '2023-06-14 11:22:56', 712),
+  (55, 8, 'Google', 'partition of india effects on migration', '2024-03-10 16:17:00', 5017),
+  (56, 20, 'Yahoo', 'Was the first heart transplant performed before or after the woodstock music festival', '2021-12-12 09:09:09', 1478),
+  (57, 16, 'Bing', 'Leonardo DiCaprio wins first oscar', '2022-02-02 18:30:30', 2521),
+  (58, 17, 'Google', 'what caused the dust bowl in the 1930s', '2020-10-15 06:43:22', 980),
+  (59, 9, 'Qwant', 'fall of constantinople byzantine defenses', '2019-08-20 13:50:40', 1222),
+  (60, 18, 'DuckDuckGo', 'vikings and the raid on lindisfarne', '2016-11-01 04:04:04', 2334),
+  (61, 2, 'Brave', 'legacy of the french revolution on democracy', '2017-04-14 21:17:35', 1899),
+  (62, 10, 'Ecosia', 'unification of germany under bismarck', '2023-09-26 07:45:11', 3266),
+  (63, 6, 'Google', 'factors in the y2k bug scare', '2022-01-01 12:00:00', 541),
+  (64, 13, 'Mojeek', 'invention of the printing press by gutenberg', '2021-04-03 14:04:14', 1123),
+  (65, 19, 'Bing', 'enlightenment ideas that inspired revolutions', '2018-12-05 16:19:59', 2738),
+  (66, 14, 'Google', 'what happened during the great fire of london', '2020-07-07 05:20:35', 778),
+  (67, 7, 'DuckDuckGo', 'salem witch trials hysteria explained', '2015-09-18 19:13:10', 332),
+  (68, 12, 'Yahoo', 'when did julius caesar cross the rubicon', '2024-04-01 01:01:01', 1190),
+  (69, 3, 'Google', 'economic impact of the berlin wall', '2016-02-26 11:11:11', 2311),
+  (70, 4, 'Brave', 'cultural importance of the renaissance in italy', '2017-06-30 10:25:45', 3478),
+  (71, 11, 'Qwant', 'Did the Mars Rover Spirit lands on Mars or Jupiter?', '2019-10-10 22:22:22', 209),
+  (72, 5, 'Yandex', 'armenian genocide recognition worldwide', '2021-03-15 12:40:20', 189),
+  (73, 15, 'Google', 'europe after the thirty years war', '2020-01-05 07:33:33', 894),
+  (74, 8, 'Swisscows', 'key figures in ensuring Osama Bin Laden killed', '2023-08-08 18:18:18', 1987),
+  (75, 1, 'DuckDuckGo', 'how the columbian exchange changed the world', '2022-11-11 11:11:11', 304),
+  (76, 17, 'Ecosia', 'long-term effects of the battle of hastings', '2015-05-05 05:05:05', 602),
+  (77, 20, 'Google', 'timeline of the iranian revolution', '2019-01-09 16:00:00', 4069),
+  (78, 18, 'Yahoo', 'was was the economic impact of when ChatGPT released by OpenAI', '2021-08-21 09:45:00', 1480),
+  (79, 16, 'Mojeek', 'causes of the tulsa massacre', '2020-09-10 14:15:00', 273),
+  (80, 9, 'Google', 'when is VE day', '2023-02-02 02:02:02', 6445),
+  (81, 19, 'Qwant', 'Why did the assassination of archduke ferdinand cause WWI', '2024-02-24 12:12:12', 382),
+  (82, 3, 'Bing', 'What is VJ day and why is it celebrated', '2018-06-06 08:00:00', 1777),
+  (83, 6, 'Google', 'why did the treaty of versailles lead to the invasion of poland and the attack on pearl harbor', '2022-07-14 11:30:30', 1215),
+  (84, 13, 'DuckDuckGo', 'how many died in the Haiti earthquake', '2020-03-03 03:03:03', 487),
+  (85, 10, 'Ecosia', 'civil rights movement and the march on washington', '2017-08-28 14:00:00', 3128),
+  (86, 12, 'Brave', 'what caused the fall of the berlin wall?', '2019-12-12 23:23:23', 821),
+  (87, 7, 'Swisscows', 'agricultural changes from the neolithic revolution', '2023-05-05 09:09:09', 247),
+  (88, 4, 'Google', 'how soon after black thursday wall street crash was the onset of the great depression globally', '2016-03-19 04:40:40', 6881),
+  (89, 5, 'Yahoo', 'how did the abolition of slavery happen in britain', '2018-10-01 10:10:10', 930),
+  (90, 14, 'DuckDuckGo', 'origin and result of the boxer rebellion', '2021-10-10 20:20:20', 1794),
+  (91, 11, 'Qwant', 'why did the brexit referendum happen', '2020-06-06 12:12:12', 633),
+  (92, 16, 'Ecosia', 'history of the george floyd murder and protests', '2017-03-20 06:45:00', 2039),
+  (93, 8, 'Google', 'role of women during how Hawaii becomes a U.S. state', '2019-09-09 15:15:15', 5177),
+  (94, 15, 'Mojeek', 'cultural significance of the olympic games in greece', '2022-04-04 04:04:04', 371),
+  (95, 2, 'Brave', 'who built the great wall of china and why', '2015-01-01 01:01:01', 2766),
+  (96, 9, 'Yandex', 'cold war tensions during the cuban missile crisis', '2016-08-08 17:00:00', 4867),
+  (97, 18, 'Google', 'when was the end of apartheid in south africa', '2023-12-12 06:06:06', 2444),
+  (98, 1, 'DuckDuckGo', 'causes and aftermath of the russo-japanese war', '2021-01-15 15:45:45', 939),
+  (99, 20, 'Google', 'philosophy in ancient athens', '2022-02-20 10:10:10', 148),
+  (100, 17, 'Yahoo', 'how the reformation changed europe forever', '2020-05-01 08:08:08', 1888),
+  (101, 5, 'Google', 'best medieval recipes using barley', '2021-06-15 08:00:00', 841),
+  (102, 8, 'DuckDuckGo', 'astronomy discoveries of the 1600s', '2023-04-02 21:33:12', 163),
+  (103, 13, 'Ecosia', 'when was youtube founded', '2018-12-20 11:20:00', 394),
+  (104, 7, 'Bing', 'understanding feudal contracts', '2020-11-09 17:17:17', 227),
+  (105, 10, 'Swisscows', 'MANHATTAN PROJECT BEGINS', '2022-03-21 13:45:00', 612),
+  (106, 2, 'Qwant', 'strange facts about the time when Twitter launched', '2019-07-08 14:22:45', 79),
+  (107, 16, 'Brave', 'why did elon musk acquires Twitter?', '2023-08-01 16:00:00', 503),
+  (108, 14, 'Yahoo', 'biography of an unknown monk from 1200s', '2017-02-10 10:10:10', 42),
+  (109, 3, 'Google', 'styles of greek pottery', '2016-10-23 03:30:00', 395),
+  (110, 11, 'Mojeek', 'forgotten queens of the pre-columbian americas', '2020-01-01 05:00:00', 177),
+  (111, 1, 'Google', 'Hawaii Becomes a U.S. State and the siege of leningrad compared', '2018-09-14 07:47:11', 1044),
+  (112, 6, 'DuckDuckGo', 'trojan war and the fall of troy in literature', '2021-12-25 13:45:30', 198),
+  (113, 9, 'Yandex', 'is the way the vietnam war ends in the X-Men movies real?', '2019-05-05 22:22:22', 830),
+  (114, 4, 'Ecosia', 'battle of hastings and the magna carta legacy', '2022-06-19 18:00:00', 633),
+  (115, 15, 'Brave', 'when was the first email sent and who sent it', '2020-03-03 15:10:30', 742),
+  (116, 18, 'Google', 'connection between the fall of rome and the renaissance', '2023-10-10 10:10:10', 1692),
+  (117, 20, 'Yahoo', 'berlin wall and the cold war breakdown', '2021-07-30 20:45:00', 905),
+  (118, 12, 'DuckDuckGo', 'from the french revolution to the napoleonic wars', '2017-08-08 09:09:09', 1221),
+  (119, 17, 'Qwant', 'timeline between Alaska Becomes a U.S. State and Hawaii Becomes a U.S. State', '2019-01-01 00:00:00', 2101),
+  (120, 19, 'Google', 'queen elizabeth II dies and protestant reformation linked', '2024-02-02 11:11:11', 514),
+  (121, 4, 'Google', 'was the fall of constantinople inevitable?', '2020-03-15 10:05:12', 3912)
+;
+
+-- SELECT USERS.user_name, COUNT(DISTINCT SEARCHES.search_id)
+-- FROM USERS, SEARCHES, EVENTS, ERAS
+-- WHERE USERS.user_id = SEARCHES.search_user_id
+-- AND LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+-- AND CAST(STRFTIME('%Y', EVENTS.ev_dt) AS INTEGER) >= ERAS.er_start_year
+-- AND CAST(STRFTIME('%Y', EVENTS.ev_dt) AS INTEGER) < ERAS.er_end_year
+-- AND ERAS.er_name = 'Cold War'
+-- GROUP BY 1
+-- ORDER BY 2 DESC
+-- ;
+
+-- SELECT t_name AS tod, (100.0 * COUNT(*)) / 121.0 AS n_searches
+-- FROM SEARCHES, TIMES
+-- WHERE CAST(STRFTIME('%H', search_ts) AS INTEGER) >= t_start_hour
+-- AND CAST(STRFTIME('%H', search_ts) AS INTEGER) < t_end_hour
+-- GROUP BY 1
+-- ;
