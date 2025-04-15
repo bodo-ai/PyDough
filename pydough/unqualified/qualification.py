@@ -5,7 +5,7 @@ QDAG nodes.
 
 __all__ = ["qualify_node"]
 
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Iterable
 
 import pydough
 from pydough.configs import PyDoughConfigs
@@ -112,7 +112,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedOperation,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedOperation` into a PyDoughExpressionQDAG node.
@@ -133,7 +133,7 @@ class Qualifier:
             qualified or is not recognized.
         """
         operation: str = unqualified._parcel[0]
-        unqualified_operands: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
+        unqualified_operands: list[UnqualifiedNode] = unqualified._parcel[1]
         qualified_operands: list[PyDoughQDAG] = []
         # Iterate across every operand to generate its qualified variant.
         # First, attempt to qualify it as an expression (the common case), but
@@ -170,7 +170,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedBinaryOperation,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedBinaryOperation` into a PyDoughExpressionQDAG node.
@@ -215,7 +215,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedWindow,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedWindow` into a PyDoughExpressionQDAG node.
@@ -326,7 +326,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedCollation,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedCollation` into a PyDoughExpressionQDAG node.
@@ -414,9 +414,7 @@ class Qualifier:
                 )
             case UnqualifiedOperation():
                 operation = condition._parcel[0]
-                unqualified_operands: MutableSequence[UnqualifiedNode] = (
-                    condition._parcel[1]
-                )
+                unqualified_operands: list[UnqualifiedNode] = condition._parcel[1]
                 qualified_operands: list[PyDoughQDAG] = []
                 for node in unqualified_operands:
                     qualified_operands.append(
@@ -465,7 +463,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedAccess,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         is_child: bool,
     ) -> PyDoughQDAG:
         """
@@ -586,16 +584,14 @@ class Qualifier:
             qualified or is not recognized.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        unqualified_terms: MutableSequence[tuple[str, UnqualifiedNode]] = (
-            unqualified._parcel[1]
-        )
+        unqualified_terms: list[tuple[str, UnqualifiedNode]] = unqualified._parcel[1]
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
         # Qualify all of the CALCULATE terms, storing the children built along
         # the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
-        qualified_terms: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
+        children: list[PyDoughCollectionQDAG] = []
+        qualified_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
         for name, term in unqualified_terms:
             qualified_term = self.qualify_expression(term, qualified_parent, children)
             qualified_terms.append((name, qualified_term))
@@ -635,7 +631,7 @@ class Qualifier:
         )
         # Qualify the condition of the WHERE clause, storing the children
         # built along the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         qualified_cond = self.qualify_expression(
             unqualified_cond, qualified_parent, children
         )
@@ -644,8 +640,8 @@ class Qualifier:
         return where.with_condition(qualified_cond)
 
     def _expressions_to_collations(
-        self, terms: Iterable[UnqualifiedNode] | MutableSequence[UnqualifiedNode]
-    ) -> MutableSequence[UnqualifiedNode]:
+        self, terms: Iterable[UnqualifiedNode] | list[UnqualifiedNode]
+    ) -> list[UnqualifiedNode]:
         """
         Coerces nodes to be collation terms if they are not already. For nodes
         that are not collation terms, uses configuration settings to determine
@@ -703,7 +699,7 @@ class Qualifier:
             qualified or is not recognized.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
+        unqualified_terms: list[UnqualifiedNode] = unqualified._parcel[1]
         unqualified_terms = self._expressions_to_collations(unqualified_terms)
 
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
@@ -711,7 +707,7 @@ class Qualifier:
         )
         # Qualify all of the collation terms, storing the children built along
         # the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         qualified_collations: list[CollationExpression] = []
         for term in unqualified_terms:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
@@ -759,14 +755,14 @@ class Qualifier:
         assert unqualified._parcel[2] is not None, (
             "TopK does not currently support an implied 'by' clause."
         )
-        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[2]
+        unqualified_terms: list[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_terms = self._expressions_to_collations(unqualified_terms)
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
         # Qualify all of the collation terms, storing the children built along
         # the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         qualified_collations: list[CollationExpression] = []
         for term in unqualified_terms:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
@@ -924,7 +920,7 @@ class Qualifier:
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         child_name: str = unqualified._parcel[1]
-        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[2]
+        unqualified_terms: list[UnqualifiedNode] = unqualified._parcel[2]
         # Split the ancestor tree of unqualified nodes into the ancestor vs
         # child of the PARTITION, qualifying the former then the latter with
         # the former as its context.
@@ -941,7 +937,7 @@ class Qualifier:
         # references to expressions in the child), storing the children built
         # along the way (which should just be the child input).
         child_references: list[ChildReferenceExpression] = []
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         for term in unqualified_terms:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
                 term, qualified_child, children
@@ -1000,7 +996,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedNode,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedNode` into a PyDoughExpressionQDAG node.
@@ -1056,7 +1052,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedNode,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         is_child: bool,
     ) -> PyDoughQDAG:
         """

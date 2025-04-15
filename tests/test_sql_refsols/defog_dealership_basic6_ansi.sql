@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _t1 AS (
   SELECT
     COUNT(DISTINCT sales.customer_id) AS agg_1,
     SUM(sales.sale_price) AS agg_0,
@@ -8,21 +8,12 @@ WITH _t2 AS (
     ON customers._id = sales.customer_id
   GROUP BY
     customers.state
-), _t0_2 AS (
-  SELECT
-    COALESCE(agg_0, 0) AS ordering_2,
-    state,
-    COALESCE(agg_0, 0) AS total_revenue,
-    COALESCE(agg_1, 0) AS unique_customers
-  FROM _t2
-  ORDER BY
-    ordering_2 DESC
-  LIMIT 5
 )
 SELECT
   state,
-  unique_customers,
-  total_revenue
-FROM _t0_2
+  COALESCE(agg_1, 0) AS unique_customers,
+  COALESCE(agg_0, 0) AS total_revenue
+FROM _t1
 ORDER BY
-  ordering_2 DESC
+  total_revenue DESC
+LIMIT 5

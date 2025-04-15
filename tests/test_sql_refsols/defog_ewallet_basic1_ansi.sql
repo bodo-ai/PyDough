@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     COUNT(DISTINCT wallet_transactions_daily.sender_id) AS agg_0,
     DATE_TRUNC('MONTH', CAST(wallet_transactions_daily.created_at AS TIMESTAMP)) AS month
@@ -15,4 +15,4 @@ WITH _t0_2 AS (
 SELECT
   month,
   COALESCE(agg_0, 0) AS active_users
-FROM _t0_2
+FROM _t0

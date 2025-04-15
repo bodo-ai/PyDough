@@ -1,4 +1,4 @@
-WITH _t2_2 AS (
+WITH _t1 AS (
   SELECT
     COUNT(DISTINCT partsupp.ps_suppkey) AS agg_0,
     part.p_brand,
@@ -18,32 +18,16 @@ WITH _t2_2 AS (
     part.p_brand,
     part.p_size,
     part.p_type
-), _t0_2 AS (
-  SELECT
-    p_brand,
-    p_size,
-    p_type,
-    COALESCE(agg_0, 0) AS supplier_count,
-    COALESCE(agg_0, 0) AS ordering_1,
-    p_brand AS ordering_2,
-    p_type AS ordering_3,
-    p_size AS ordering_4
-  FROM _t2_2
-  ORDER BY
-    ordering_1 DESC,
-    ordering_2,
-    ordering_3,
-    ordering_4
-  LIMIT 10
 )
 SELECT
   p_brand AS P_BRAND,
   p_type AS P_TYPE,
   p_size AS P_SIZE,
-  supplier_count AS SUPPLIER_COUNT
-FROM _t0_2
+  COALESCE(agg_0, 0) AS SUPPLIER_COUNT
+FROM _t1
 ORDER BY
-  ordering_1 DESC,
-  ordering_2,
-  ordering_3,
-  ordering_4
+  supplier_count DESC,
+  p_brand,
+  p_type,
+  p_size
+LIMIT 10

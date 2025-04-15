@@ -9,4 +9,4 @@ LEFT JOIN main.sbticker AS sbticker
 WHERE
   sbticker.sbtickersymbol IN ('AAPL', 'GOOGL', 'NFLX')
 ORDER BY
-  sbtransaction.sbtxid
+  transaction_id

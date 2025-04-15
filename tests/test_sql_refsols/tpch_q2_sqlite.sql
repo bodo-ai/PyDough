@@ -1,32 +1,24 @@
-WITH _t4 AS (
+WITH _t3 AS (
   SELECT
     r_name AS name,
     r_regionkey AS key
   FROM tpch.region
   WHERE
     r_name = 'EUROPE'
-), _t5 AS (
+), _s6 AS (
   SELECT
-    ps_partkey AS part_key,
-    ps_suppkey AS supplier_key,
-    ps_supplycost AS supplycost
-  FROM tpch.partsupp
-), _t16 AS (
-  SELECT
-    MIN(_t5.supplycost) AS best_cost,
-    part.p_partkey AS key_9
+    MIN(partsupp.ps_supplycost) AS best_cost,
+    partsupp.ps_partkey AS part_key
   FROM tpch.nation AS nation
-  JOIN _t4 AS _t4
-    ON _t4.key = nation.n_regionkey
+  JOIN _t3 AS _t3
+    ON _t3.key = nation.n_regionkey
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
-  JOIN _t5 AS _t5
-    ON _t5.supplier_key = supplier.s_suppkey
-  JOIN tpch.part AS part
-    ON _t5.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
+  JOIN tpch.partsupp AS partsupp
+    ON partsupp.ps_suppkey = supplier.s_suppkey
   GROUP BY
-    part.p_partkey
-), _t17 AS (
+    partsupp.ps_partkey
+), _s17 AS (
   SELECT
     part.p_partkey AS key_19,
     part.p_mfgr AS manufacturer,
@@ -36,52 +28,36 @@ WITH _t4 AS (
     supplier.s_comment,
     supplier.s_name,
     supplier.s_phone,
-    _t13.supplycost
+    partsupp.ps_supplycost AS supplycost
   FROM tpch.nation AS nation
-  JOIN _t4 AS _t6
-    ON _t6.key = nation.n_regionkey
+  JOIN _t3 AS _t5
+    ON _t5.key = nation.n_regionkey
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
-  JOIN _t5 AS _t13
-    ON _t13.supplier_key = supplier.s_suppkey
+  JOIN tpch.partsupp AS partsupp
+    ON partsupp.ps_suppkey = supplier.s_suppkey
   JOIN tpch.part AS part
-    ON _t13.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
-), _t0_2 AS (
-  SELECT
-    _t17.n_name,
-    _t17.manufacturer AS p_mfgr,
-    _t17.key_19 AS p_partkey,
-    _t17.s_acctbal,
-    _t17.s_address,
-    _t17.s_comment,
-    _t17.s_name,
-    _t17.s_phone,
-    _t17.s_acctbal AS ordering_1,
-    _t17.n_name AS ordering_2,
-    _t17.s_name AS ordering_3,
-    _t17.key_19 AS ordering_4
-  FROM _t16 AS _t16
-  JOIN _t17 AS _t17
-    ON _t16.best_cost = _t17.supplycost AND _t16.key_9 = _t17.key_19
-  ORDER BY
-    ordering_1 DESC,
-    ordering_2,
-    ordering_3,
-    ordering_4
-  LIMIT 10
+    ON part.p_partkey = partsupp.ps_partkey
+    AND part.p_size = 15
+    AND part.p_type LIKE '%BRASS'
 )
 SELECT
-  s_acctbal AS S_ACCTBAL,
-  s_name AS S_NAME,
-  n_name AS N_NAME,
-  p_partkey AS P_PARTKEY,
-  p_mfgr AS P_MFGR,
-  s_address AS S_ADDRESS,
-  s_phone AS S_PHONE,
-  s_comment AS S_COMMENT
-FROM _t0_2
+  _s17.s_acctbal AS S_ACCTBAL,
+  _s17.s_name AS S_NAME,
+  _s17.n_name AS N_NAME,
+  _s17.key_19 AS P_PARTKEY,
+  _s17.manufacturer AS P_MFGR,
+  _s17.s_address AS S_ADDRESS,
+  _s17.s_phone AS S_PHONE,
+  _s17.s_comment AS S_COMMENT
+FROM _s6 AS _s6
+JOIN tpch.part AS part
+  ON _s6.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
+JOIN _s17 AS _s17
+  ON _s17.key_19 = part.p_partkey AND _s17.supplycost = _s6.best_cost
 ORDER BY
-  ordering_1 DESC,
-  ordering_2,
-  ordering_3,
-  ordering_4
+  s_acctbal DESC,
+  n_name,
+  s_name,
+  p_partkey
+LIMIT 10

@@ -5,7 +5,6 @@ Definition of the base class for PyDough metadata for a properties.
 __all__ = ["PropertyMetadata"]
 
 from abc import abstractmethod
-from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata
@@ -216,5 +215,5 @@ class PropertyMetadata(AbstractMetadata):
         )
         property_class.parse_from_json(collection, property_name, property_json)
 
-    def get_nouns(self) -> MutableMapping[str, MutableSequence[AbstractMetadata]]:
+    def get_nouns(self) -> dict[str, list[AbstractMetadata]]:
         return {self.name: [self]}

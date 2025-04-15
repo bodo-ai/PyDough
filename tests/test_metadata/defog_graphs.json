@@ -1647,7 +1647,7 @@
     "UserBalances": {
       "type": "simple_table",
       "table_path": "main.wallet_user_balance_daily",
-      "unique_properties": ["user_id","updated_at"],
+      "unique_properties": [["user_id","updated_at"]],
       "properties": {
         "user_id": {
           "type": "table_column",
@@ -1669,7 +1669,7 @@
     "MerchantBalances": {
       "type": "simple_table",
       "table_path": "main.wallet_merchant_balance_daily",
-      "unique_properties": ["merchant_id","updated_at"],
+      "unique_properties": [["merchant_id","updated_at"]],
       "properties": {
         "merchant_id": {
           "type": "table_column",
@@ -1748,7 +1748,7 @@
     "UserSessions": {
       "type": "simple_table",
       "table_path": "main.user_sessions",
-      "unique_properties": ["user_id", "session_start_ts", "session_end_ts"],
+      "unique_properties": [["user_id", "session_start_ts", "session_end_ts"]],
       "properties": {
         "user_id": {
           "type": "table_column",
@@ -1780,7 +1780,7 @@
     "UserSettingSnapshots": {
       "type": "simple_table",
       "table_path": "main.user_setting_snapshot",
-      "unique_properties": ["user_id","snapshot_date"],
+      "unique_properties": [["user_id", "snapshot_date"]],
       "properties": {
         "user_id": {
           "type": "table_column",

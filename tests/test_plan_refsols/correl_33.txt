@@ -1,0 +1,8 @@
+ROOT(columns=[('n', agg_1)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'agg_1': COUNT()})
+  FILTER(condition=MONTH(order_date) == MONTH(first_order_date) & YEAR(order_date) == YEAR(first_order_date), columns={})
+   JOIN(conditions=[True:bool], types=['inner'], columns={'first_order_date': t0.first_order_date, 'order_date': t1.order_date})
+    PROJECT(columns={'first_order_date': agg_0})
+     AGGREGATE(keys={}, aggregations={'agg_0': MIN(order_date)})
+      SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
+    SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
