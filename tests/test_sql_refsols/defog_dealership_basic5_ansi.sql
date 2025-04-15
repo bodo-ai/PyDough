@@ -12,7 +12,7 @@ WITH _t0 AS (
 SELECT
   salespersons.first_name,
   salespersons.last_name,
-  COALESCE(_t0.agg_1, 0) AS total_sales,
+  _t0.agg_1 AS total_sales,
   COALESCE(_t0.agg_0, 0) AS total_revenue
 FROM main.salespersons AS salespersons
 JOIN _t0 AS _t0

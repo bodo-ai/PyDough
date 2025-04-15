@@ -1171,7 +1171,8 @@ def optimize_relational_tree(
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
-    # Step 2: merge adjacent projections, when clearcut
+    # Step 2: merge adjacent projections, unless it would result in excessive
+    # duplicate subexpression computations.
     root = confirm_root(merge_projects(root))
 
     # Step 3: split aggregations on top of joins so part of the aggregate

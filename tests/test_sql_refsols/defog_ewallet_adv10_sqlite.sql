@@ -1,6 +1,6 @@
-WITH _t0 AS (
+WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS total_transactions,
     sender_id
   FROM main.wallet_transactions_daily
   WHERE
@@ -10,7 +10,7 @@ WITH _t0 AS (
 )
 SELECT
   users.uid AS user_id,
-  COALESCE(_t0.agg_0, 0) AS total_transactions
+  _s1.total_transactions
 FROM main.users AS users
-JOIN _t0 AS _t0
-  ON _t0.sender_id = users.uid
+JOIN _s1 AS _s1
+  ON _s1.sender_id = users.uid
