@@ -258,11 +258,14 @@ def build_filter(
         condition = filters.pop()
     else:
         condition = CallExpression(pydop.BAN, BooleanType(), sorted(filters, key=repr))
+
     return Filter(node, condition, passthrough_column_mapping(node))
 
 
 def transpose_expression(
-    expr: RelationalExpression, columns: Mapping[str, RelationalExpression]
+    expr: RelationalExpression,
+    columns: Mapping[str, RelationalExpression],
+    keep_input_names: bool = False,
 ) -> RelationalExpression:
     """
     Rewrites an expression by replacing its column references based on a given
@@ -275,6 +278,8 @@ def transpose_expression(
         `expr`: The expression to transposed.
         `columns`: The mapping of column names to their corresponding
         expressions.
+        `keep_input_names`: If True, keeps the input names in the column
+        references.
 
     Returns:
         The transposed expression with updated column references.
@@ -288,6 +293,7 @@ def transpose_expression(
             if (
                 isinstance(new_column, ColumnReference)
                 and new_column.input_name is not None
+                and not keep_input_names
             ):
                 new_column = new_column.with_input(None)
             return new_column
@@ -295,14 +301,23 @@ def transpose_expression(
             return CallExpression(
                 expr.op,
                 expr.data_type,
-                [transpose_expression(arg, columns) for arg in expr.inputs],
+                [
+                    transpose_expression(arg, columns, keep_input_names)
+                    for arg in expr.inputs
+                ],
             )
         case WindowCallExpression():
             return WindowCallExpression(
                 expr.op,
                 expr.data_type,
-                [transpose_expression(arg, columns) for arg in expr.inputs],
-                [transpose_expression(arg, columns) for arg in expr.partition_inputs],
+                [
+                    transpose_expression(arg, columns, keep_input_names)
+                    for arg in expr.inputs
+                ],
+                [
+                    transpose_expression(arg, columns, keep_input_names)
+                    for arg in expr.partition_inputs
+                ],
                 [
                     ExpressionSortInfo(
                         transpose_expression(order_arg.expr, columns),
@@ -351,3 +366,30 @@ def add_expr_uses(
             add_expr_uses(partition_arg, n_uses, False)
         for order_arg in expr.order_inputs:
             add_expr_uses(order_arg.expr, n_uses, False)
+
+
+def fetch_or_insert(
+    dictionary: dict[str, RelationalExpression], value: RelationalExpression
+) -> str:
+    """
+    Inserts a value into a dictionary with a new name, returning that new name,
+    unless the value is already in the dictionary, in which case it returns the
+    existing name.
+
+    Args:
+        `dictionary`: The dictionary to insert the value into / lookup from.
+        `value`: The value to insert / lookup the name for.
+
+    Returns:
+        The name of the key that will map to `value` in the dictionary.
+    """
+    for name, col in dictionary.items():
+        if col == value:
+            return name
+    idx: int = 0
+    new_name: str = f"expr_{idx}"
+    while new_name in dictionary:
+        idx += 1
+        new_name = f"expr_{idx}"
+    dictionary[new_name] = value
+    return new_name

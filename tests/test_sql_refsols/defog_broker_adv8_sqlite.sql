@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _t5 AS (
   SELECT
     sbtransaction.sbtxamount AS amount,
     sbtransaction.sbtxcustid AS customer_id,
@@ -20,12 +20,28 @@ WITH _t2 AS (
       'start of day',
       '-7 day'
     )
+), _t4 AS (
+  SELECT
+    _t5.amount AS amount,
+    _t5.customer_id AS customer_id
+  FROM _t5 AS _t5
+), _t3 AS (
+  SELECT
+    COUNT() AS agg_0,
+    SUM(_t4.amount) AS agg_1,
+    _t4.customer_id AS customer_id
+  FROM _t4 AS _t4
+  GROUP BY
+    _t4.customer_id
 ), _s0 AS (
   SELECT
-    _t2.amount AS amount,
-    _t2.customer_id AS customer_id
-  FROM _t2 AS _t2
-), _t3 AS (
+    SUM(_t3.agg_0) AS agg_0,
+    SUM(_t3.agg_1) AS agg_1,
+    _t3.customer_id AS customer_id
+  FROM _t3 AS _t3
+  GROUP BY
+    _t3.customer_id
+), _t6 AS (
   SELECT
     sbcustomer.sbcustcountry AS country,
     sbcustomer.sbcustid AS _id
@@ -34,11 +50,12 @@ WITH _t2 AS (
     LOWER(sbcustomer.sbcustcountry) = 'usa'
 ), _s1 AS (
   SELECT
-    _t3._id AS _id
-  FROM _t3 AS _t3
-), _t1 AS (
+    _t6._id AS _id
+  FROM _t6 AS _t6
+), _t2 AS (
   SELECT
-    _s0.amount AS amount
+    _s0.agg_0 AS agg_0,
+    _s0.agg_1 AS agg_1
   FROM _s0 AS _s0
   WHERE
     EXISTS(
@@ -48,10 +65,15 @@ WITH _t2 AS (
       WHERE
         _s0.customer_id = _s1._id
     )
+), _t1 AS (
+  SELECT
+    SUM(_t2.agg_0) AS agg_0,
+    SUM(_t2.agg_1) AS agg_1
+  FROM _t2 AS _t2
 ), _t0 AS (
   SELECT
-    COUNT() AS agg_0,
-    SUM(_t1.amount) AS agg_1
+    COALESCE(_t1.agg_0, 0) AS agg_0,
+    _t1.agg_1 AS agg_1
   FROM _t1 AS _t1
 )
 SELECT

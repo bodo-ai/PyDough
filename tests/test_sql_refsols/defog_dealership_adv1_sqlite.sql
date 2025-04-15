@@ -1,23 +1,20 @@
-WITH _t0 AS (
+WITH _s0 AS (
   SELECT
     COUNT() AS agg_0,
-    SUM(
+    SUM((
       (
-        (
-          CAST(STRFTIME('%w', payments_received.payment_date) AS INTEGER) + 6
-        ) % 7
-      ) IN (5, 6)
-    ) AS agg_1,
+        CAST(STRFTIME('%w', payment_date) AS INTEGER) + 6
+      ) % 7
+    ) IN (5, 6)) AS agg_1,
     DATE(
-      payments_received.payment_date,
+      payment_date,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(payment_date)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
-    ) AS payment_week
-  FROM main.payments_received AS payments_received
-  JOIN main.sales AS sales
-    ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
+    ) AS payment_week,
+    sale_id
+  FROM main.payments_received
   WHERE
     CAST(CAST(CAST((
       JULIANDAY(
@@ -34,9 +31,9 @@ WITH _t0 AS (
       ) - JULIANDAY(
         DATE(
           DATE(
-            payments_received.payment_date,
+            payment_date,
             '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+              CAST(STRFTIME('%w', DATETIME(payment_date)) AS INTEGER) + 6
             ) % 7 AS TEXT) || ' days',
             'start of day'
           ),
@@ -59,9 +56,9 @@ WITH _t0 AS (
       ) - JULIANDAY(
         DATE(
           DATE(
-            payments_received.payment_date,
+            payment_date,
             '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+              CAST(STRFTIME('%w', DATETIME(payment_date)) AS INTEGER) + 6
             ) % 7 AS TEXT) || ' days',
             'start of day'
           ),
@@ -71,12 +68,23 @@ WITH _t0 AS (
     ) AS INTEGER) AS REAL) / 7 AS INTEGER) >= 1
   GROUP BY
     DATE(
-      payments_received.payment_date,
+      payment_date,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(payment_date)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
-    )
+    ),
+    sale_id
+), _t0 AS (
+  SELECT
+    SUM(_s0.agg_0) AS agg_0,
+    SUM(_s0.agg_1) AS agg_1,
+    _s0.payment_week
+  FROM _s0 AS _s0
+  JOIN main.sales AS sales
+    ON _s0.sale_id = sales._id AND sales.sale_price > 30000
+  GROUP BY
+    _s0.payment_week
 )
 SELECT
   payment_week,

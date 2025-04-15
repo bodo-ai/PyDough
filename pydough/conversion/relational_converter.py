@@ -46,6 +46,7 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
+from .agg_split import split_partial_aggregates
 from .filter_pushdown import push_filters
 from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
@@ -1144,13 +1145,24 @@ def postprocess_root(
     )
 
 
-def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
+def confirm_root(node: RelationalNode) -> RelationalRoot:
+    """
+    Verify that the node is a RelationalRoot so it can be typed as such.
+    """
+    assert isinstance(node, RelationalRoot)
+    return node
+
+
+def optimize_relational_tree(
+    root: RelationalRoot, configs: PyDoughConfigs
+) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
     pruning columns.
 
     Args:
         `root`: the relational root to optimize.
+        `configs`: the configuration settings to use during optimization.
 
     Returns:
         The optimized relational root.
@@ -1159,7 +1171,18 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
-    # Step 2: prune unused columns
+    # Step 2: merge adjacent projections, unless it would result in excessive
+    # duplicate subexpression computations.
+    root = confirm_root(merge_projects(root))
+
+    # Step 3: split aggregations on top of joins so part of the aggregate
+    # happens underneath the join.
+    root = confirm_root(split_partial_aggregates(root, configs))
+
+    # Step 4: re-run projection merging.
+    root = confirm_root(merge_projects(root))
+
+    # Step 5: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
 
     # Step 3: merge adjacent projections, unless it would result in excessive
@@ -1224,6 +1247,6 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    optimized_result: RelationalRoot = optimize_relational_tree(raw_result)
+    optimized_result: RelationalRoot = optimize_relational_tree(raw_result, configs)
 
     return optimized_result
