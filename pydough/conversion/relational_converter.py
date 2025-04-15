@@ -46,6 +46,7 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
+from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .filter_pushdown import push_filters
 from .hybrid_decorrelater import run_hybrid_decorrelation
@@ -592,7 +593,18 @@ class RelTranslation:
         assert isinstance(node.collection.collection, SimpleTableMetadata), (
             f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.collection.__class__.__name__}"
         )
-        answer = Scan(node.collection.collection.table_path, scan_columns)
+        uniqueness: set[frozenset[str]] = set()
+        for unique_set in node.collection.collection.unique_properties:
+            names: list[str] = (
+                [unique_set] if isinstance(unique_set, str) else unique_set
+            )
+            real_names: set[str] = set()
+            for name in names:
+                expr = scan_columns[name]
+                assert isinstance(expr, ColumnReference)
+                real_names.add(expr.name)
+            uniqueness.add(frozenset(real_names))
+        answer = Scan(node.collection.collection.table_path, scan_columns, uniqueness)
         return TranslationOutput(answer, out_columns)
 
     def translate_sub_collection(
@@ -1182,7 +1194,14 @@ def optimize_relational_tree(
     # Step 4: re-run projection merging.
     root = confirm_root(merge_projects(root))
 
-    # Step 5: prune unused columns
+    # Step 5: delete aggregations that are inferred to be redundant due to
+    # operating on already unique data.
+    root = remove_redundant_aggs(root)
+
+    # Step 6: re-run projection merging.
+    root = confirm_root(merge_projects(root))
+
+    # Step 7: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
 
     # Step 3: merge adjacent projections, unless it would result in excessive

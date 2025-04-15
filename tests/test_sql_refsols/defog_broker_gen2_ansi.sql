@@ -1,17 +1,10 @@
-WITH _t2 AS (
+WITH _s0 AS (
   SELECT
     COUNT(sbtxcustid) AS agg_0,
     sbtxcustid AS customer_id
   FROM main.sbtransaction
   GROUP BY
     sbtxcustid
-), _s0 AS (
-  SELECT
-    SUM(agg_0) AS agg_0,
-    customer_id
-  FROM _t2
-  GROUP BY
-    customer_id
 ), _t0 AS (
   SELECT
     SUM(_s0.agg_0) AS agg_0

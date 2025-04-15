@@ -21,6 +21,7 @@ from pydough.relational import (
     RelationalNode,
 )
 from pydough.relational.rel_util import (
+    extract_equijoin_keys,
     fetch_or_insert,
     transpose_expression,
 )
@@ -131,52 +132,6 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
         {name: final_agg_columns[name] for name in node.aggregations}
     )
     return Project(new_aggregate, project_columns)
-
-
-def extract_equijoin_keys(
-    join: Join,
-) -> tuple[list[ColumnReference], list[ColumnReference]]:
-    """
-    Extracts the equi-join keys from a join condition with two inputs.
-
-    Args:
-        `join`: the Join node whose condition is being parsed.
-
-    Returns:
-        A tuple where the first element are the equi-join keys from the LHS,
-        and the second is a list of the the corresponding RHS keys.
-    """
-    assert len(join.inputs) == 2
-    lhs_keys: list[ColumnReference] = []
-    rhs_keys: list[ColumnReference] = []
-    stack: list[RelationalExpression] = [*join.conditions]
-    lhs_name: str | None = join.default_input_aliases[0]
-    rhs_name: str | None = join.default_input_aliases[1]
-    while stack:
-        condition: RelationalExpression = stack.pop()
-        if isinstance(condition, CallExpression):
-            if condition.op == pydop.BAN:
-                stack.extend(condition.inputs)
-            elif condition.op == pydop.EQU and len(condition.inputs) == 2:
-                lhs_input: RelationalExpression = condition.inputs[0]
-                rhs_input: RelationalExpression = condition.inputs[1]
-                if isinstance(lhs_input, ColumnReference) and isinstance(
-                    rhs_input, ColumnReference
-                ):
-                    if (
-                        lhs_input.input_name == lhs_name
-                        and rhs_input.input_name == rhs_name
-                    ):
-                        lhs_keys.append(lhs_input)
-                        rhs_keys.append(rhs_input)
-                    elif (
-                        lhs_input.input_name == rhs_name
-                        and rhs_input.input_name == lhs_name
-                    ):
-                        lhs_keys.append(rhs_input)
-                        rhs_keys.append(lhs_input)
-
-    return lhs_keys, rhs_keys
 
 
 def transpose_aggregate_join(
