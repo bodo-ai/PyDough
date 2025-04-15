@@ -1,7 +1,7 @@
 ROOT(columns=[('name', name), ('num_10parts', num_10parts), ('avg_price_of_10parts', avg_price_of_10parts), ('sum_price_of_10parts', sum_price_of_10parts)], orderings=[])
  JOIN(conditions=[t0.key == t1.supplier_key], types=['inner'], columns={'avg_price_of_10parts': t1.avg_price_of_10parts, 'name': t0.name, 'num_10parts': t1.num_10parts, 'sum_price_of_10parts': t1.sum_price_of_10parts})
   SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
-  PROJECT(columns={'avg_price_of_10parts': agg_0, 'num_10parts': DEFAULT_TO(agg_1, 0:int64), 'sum_price_of_10parts': DEFAULT_TO(agg_2, 0:int64), 'supplier_key': supplier_key})
+  PROJECT(columns={'avg_price_of_10parts': agg_0, 'num_10parts': agg_1, 'sum_price_of_10parts': DEFAULT_TO(agg_2, 0:int64), 'supplier_key': supplier_key})
    AGGREGATE(keys={'supplier_key': supplier_key}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT(), 'agg_2': SUM(retail_price)})
     JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'retail_price': t1.retail_price, 'supplier_key': t0.supplier_key})
      SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})
