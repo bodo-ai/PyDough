@@ -7,7 +7,7 @@ WITH _t3 AS (
     r_name = 'EUROPE'
 ), _s6 AS (
   SELECT
-    MIN(partsupp.ps_supplycost) AS agg_0,
+    MIN(partsupp.ps_supplycost) AS best_cost,
     partsupp.ps_partkey AS part_key
   FROM tpch.nation AS nation
   JOIN _t3 AS _t3
@@ -54,7 +54,7 @@ FROM _s6 AS _s6
 JOIN tpch.part AS part
   ON _s6.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
 JOIN _s17 AS _s17
-  ON _s17.key_19 = part.p_partkey AND _s17.supplycost = _s6.agg_0
+  ON _s17.key_19 = part.p_partkey AND _s17.supplycost = _s6.best_cost
 ORDER BY
   s_acctbal DESC,
   n_name,
