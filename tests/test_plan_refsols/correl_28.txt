@@ -1,6 +1,6 @@
 ROOT(columns=[('nation_name', nation_name), ('n_selected_purchases', n_selected_purchases)], orderings=[(ordering_1):asc_first])
  PROJECT(columns={'n_selected_purchases': n_selected_purchases, 'nation_name': nation_name, 'ordering_1': nation_name})
-  PROJECT(columns={'n_selected_purchases': DEFAULT_TO(agg_0, 0:int64), 'nation_name': agg_4})
+  PROJECT(columns={'n_selected_purchases': agg_0, 'nation_name': agg_4})
    JOIN(conditions=[t0.agg_5 == t1.key], types=['inner'], columns={'agg_0': t0.agg_0, 'agg_4': t0.agg_4})
     AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT(), 'agg_4': ANYTHING(nation_name), 'agg_5': ANYTHING(region_key)})
      FILTER(condition=name_9 == nation_name, columns={'key': key, 'nation_name': nation_name, 'region_key': region_key})

@@ -1,6 +1,6 @@
 ROOT(columns=[('name', name_9)], orderings=[])
  PROJECT(columns={'name_9': name_8})
-  FILTER(condition=PERCENTILE(args=[], partition=[key], order=[(DEFAULT_TO(agg_0, 0:int64)):asc_last, (name_8):asc_last], n_buckets=1000) == 1000:int64, columns={'name_8': name_8})
+  FILTER(condition=PERCENTILE(args=[], partition=[key], order=[(agg_0):asc_last, (name_8):asc_last], n_buckets=1000) == 1000:int64, columns={'name_8': name_8})
    JOIN(conditions=[t0.key_5 == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'key': t0.key, 'name_8': t0.name_8})
     PROJECT(columns={'key': key, 'key_5': key_5, 'name_8': name_6})
      JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'name_6': t1.name})

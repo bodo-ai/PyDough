@@ -15,7 +15,7 @@ WITH _t2 AS (
     country,
     COALESCE(agg_0, 0) AS ordering_2,
     COALESCE(agg_0, 0) AS total_amount,
-    agg_1 AS user_count
+    COALESCE(agg_1, 0) AS user_count
   FROM _t2
   ORDER BY
     ordering_2 DESC

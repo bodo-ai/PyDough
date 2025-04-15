@@ -489,7 +489,7 @@
           "singular": false,
           "no_collisions": true,
           "keys": {"user_id": ["user_id"]},
-          "reverse_relationship_name": "searches"
+          "reverse_relationship_name": "user"
         }
       }
     },

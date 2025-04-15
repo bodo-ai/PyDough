@@ -8,7 +8,7 @@ WITH _t1_2 AS (
 )
 SELECT
   merchants.name AS merchant_name,
-  COALESCE(_t1.agg_0, 0) AS total_coupons
+  _t1.agg_0 AS total_coupons
 FROM main.merchants AS merchants
 JOIN _t1_2 AS _t1
   ON _t1.merchant_id = merchants.mid

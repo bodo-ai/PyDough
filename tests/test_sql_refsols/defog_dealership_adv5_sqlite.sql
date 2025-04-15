@@ -11,7 +11,7 @@ SELECT
   salespersons.first_name,
   salespersons.last_name,
   COALESCE(_t1.agg_1, 0) AS total_sales,
-  COALESCE(_t1.agg_0, 0) AS num_sales,
+  _t1.agg_0 AS num_sales,
   RANK() OVER (ORDER BY COALESCE(_t1.agg_1, 0) DESC) AS sales_rank
 FROM main.salespersons AS salespersons
 JOIN _t1 AS _t1

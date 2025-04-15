@@ -419,8 +419,6 @@ class RelTranslation:
         out_columns: dict[HybridExpr, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
 
-        if (join_keys is not None) and (join_cond is not None):
-            breakpoint()
         assert (join_keys is None) != (join_cond is None)
 
         # Special case: if the lhs is an EmptySingleton, just return the RHS,

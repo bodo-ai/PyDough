@@ -9,7 +9,7 @@ WITH _t1_2 AS (
 )
 SELECT
   sbcustomer.sbcustname AS name,
-  COALESCE(_t1.agg_1, 0) AS num_tx,
+  _t1.agg_1 AS num_tx,
   COALESCE(_t1.agg_0, 0) AS total_amount,
   RANK() OVER (ORDER BY COALESCE(_t1.agg_0, 0) DESC) AS cust_rank
 FROM main.sbcustomer AS sbcustomer

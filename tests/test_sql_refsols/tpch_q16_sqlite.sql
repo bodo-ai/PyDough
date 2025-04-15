@@ -1,13 +1,9 @@
-WITH _t1_2 AS (
+WITH _t2_2 AS (
   SELECT
-    COUNT(DISTINCT partsupp.ps_suppkey) AS supplier_count,
-    COUNT(DISTINCT partsupp.ps_suppkey) AS ordering_1,
+    COUNT(DISTINCT partsupp.ps_suppkey) AS agg_0,
     part.p_brand,
-    part.p_brand AS ordering_2,
     part.p_size,
-    part.p_size AS ordering_4,
-    part.p_type,
-    part.p_type AS ordering_3
+    part.p_type
   FROM tpch.part AS part
   JOIN tpch.partsupp AS partsupp
     ON part.p_partkey = partsupp.ps_partkey
@@ -27,12 +23,12 @@ WITH _t1_2 AS (
     p_brand,
     p_size,
     p_type,
-    supplier_count,
-    ordering_1,
-    ordering_2,
-    ordering_3,
-    ordering_4
-  FROM _t1_2
+    COALESCE(agg_0, 0) AS supplier_count,
+    COALESCE(agg_0, 0) AS ordering_1,
+    p_brand AS ordering_2,
+    p_type AS ordering_3,
+    p_size AS ordering_4
+  FROM _t2_2
   ORDER BY
     ordering_1 DESC,
     ordering_2,

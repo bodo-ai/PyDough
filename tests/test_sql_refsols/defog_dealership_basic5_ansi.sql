@@ -12,9 +12,9 @@ WITH _t1 AS (
   SELECT
     salespersons.first_name,
     salespersons.last_name,
-    COALESCE(_t1.agg_1, 0) AS ordering_2,
+    _t1.agg_1 AS ordering_2,
     COALESCE(_t1.agg_0, 0) AS total_revenue,
-    COALESCE(_t1.agg_1, 0) AS total_sales
+    _t1.agg_1 AS total_sales
   FROM main.salespersons AS salespersons
   JOIN _t1 AS _t1
     ON _t1.salesperson_id = salespersons._id

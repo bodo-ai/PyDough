@@ -13,7 +13,7 @@ WITH _t2 AS (
     COALESCE(agg_0, 0) AS ordering_2,
     state,
     COALESCE(agg_0, 0) AS total_revenue,
-    agg_1 AS unique_customers
+    COALESCE(agg_1, 0) AS unique_customers
   FROM _t2
   ORDER BY
     ordering_2 DESC

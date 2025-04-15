@@ -10,7 +10,7 @@ WITH _t1_2 AS (
 )
 SELECT
   users.username,
-  COALESCE(_t1.agg_0, 0) AS total_unread_notifs
+  _t1.agg_0 AS total_unread_notifs
 FROM main.users AS users
 JOIN _t1_2 AS _t1
   ON _t1.user_id = users.uid

@@ -1,7 +1,16 @@
 __all__ = [
+    "culture_events_info",
+    "event_gap_per_era",
     "events_per_season",
     "first_event_per_era",
+    "intra_season_searches",
+    "most_popular_search_engine_per_tod",
+    "most_popular_topic_per_region",
+    "num_predawn_cold_war",
+    "pct_searches_per_tod",
     "summer_events_per_type",
+    "unique_users_per_engine",
+    "users_most_cold_war_searches",
 ]
 
 # ruff: noqa
@@ -97,4 +106,76 @@ def users_most_cold_war_searches():
         users.WHERE(HAS(cold_war_searches))
         .CALCULATE(user_name=name, n_cold_war_searches=COUNT(cold_war_searches))
         .TOP_K(3, by=(n_cold_war_searches.DESC(), user_name.ASC()))
+    )
+
+
+def intra_season_searches():
+    # For each season, what percentage of all searches made in that season are
+    # of events in that season, and what percentage of all searches for events
+    # in that season are made in that season.
+    search_info = searches.CALCULATE(
+        is_intra_season=HAS(events.WHERE(season.name == season_name))
+    )
+    event_search_info = events.searches.CALCULATE(
+        is_intra_season=season.name == season_name
+    )
+    return (
+        seasons.CALCULATE(season_name=name)
+        .CALCULATE(
+            season_name=name,
+            pct_season_searches=ROUND(
+                (100.0 * SUM(search_info.is_intra_season))
+                / COUNT(search_info.is_intra_season),
+                2,
+            ),
+            pct_event_searches=ROUND(
+                (100.0 * SUM(event_search_info.is_intra_season))
+                / COUNT(event_search_info.is_intra_season),
+                2,
+            ),
+        )
+        .ORDER_BY(season_name.ASC())
+    )
+
+
+def most_popular_topic_per_region():
+    # For each user region, identifies which event type was most frequently
+    # searched about by users from that region, and how many searches were
+    # made for events of that topic. Break ties alphabetically by event type.
+    return (
+        events.CALCULATE(event_type)
+        .searches.CALCULATE(region=user.region)
+        .PARTITION(name="region_event_types", by=(region, event_type))
+        .CALCULATE(region, event_type, n_searches=NDISTINCT(searches.search_id))
+        .PARTITION(name="regions", by=(region))
+        .region_event_types.WHERE(RANKING(by=n_searches.DESC(), per="regions") == 1)
+    )
+
+
+def most_popular_search_engine_per_tod():
+    # For each time of day, what search engine is used most often?
+    # Break ties alphabetically by search engine.
+    return (
+        times_of_day.CALCULATE(tod=name)
+        .searches.PARTITION(name="tod_search_engines", by=(tod, search_engine))
+        .CALCULATE(tod, search_engine, n_searches=COUNT(searches))
+        .PARTITION(name="tod", by=tod)
+        .tod_search_engines.WHERE(
+            RANKING(by=(n_searches.DESC(), search_engine.ASC()), per="tod") == 1
+        )
+        .ORDER_BY(tod.ASC())
+    )
+
+
+def unique_users_per_engine():
+    # For each search engine, how many unique users used it the 2010s?
+    return (
+        searches.PARTITION(name="search_engines", by=search_engine)
+        .CALCULATE(
+            search_engine,
+            n_users=NDISTINCT(
+                searches.WHERE(MONOTONIC(2010, YEAR(ts), 2019)).user.user_id
+            ),
+        )
+        .ORDER_BY(search_engine.ASC())
     )

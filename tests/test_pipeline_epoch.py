@@ -12,9 +12,13 @@ from epoch_pydough_functions import (
     event_gap_per_era,
     events_per_season,
     first_event_per_era,
+    intra_season_searches,
+    most_popular_search_engine_per_tod,
+    most_popular_topic_per_region,
     num_predawn_cold_war,
     pct_searches_per_tod,
     summer_events_per_type,
+    unique_users_per_engine,
     users_most_cold_war_searches,
 )
 from test_utils import graph_fetcher
@@ -216,6 +220,92 @@ from pydough.unqualified import (
                 ),
             ),
             id="users_most_cold_war_searches",
+        ),
+        pytest.param(
+            (
+                intra_season_searches,
+                "intra_season_searches",
+                lambda: pd.DataFrame(
+                    {
+                        "season_name": [
+                            "Fall",
+                            "Spring",
+                            "Summer",
+                            "Winter",
+                        ],
+                        "pct_season_searches": [12.5, 25.0, 36.84, 45.83],
+                        "pct_event_searches": [9.09, 27.27, 33.33, 55.00],
+                    }
+                ),
+            ),
+            id="intra_season_searches",
+        ),
+        pytest.param(
+            (
+                most_popular_topic_per_region,
+                "most_popular_topic_per_region",
+                lambda: pd.DataFrame(
+                    {
+                        "region": [
+                            "Canada",
+                            "UK",
+                            "US-East",
+                            "US-Midwest",
+                            "US-South",
+                            "US-West",
+                        ],
+                        "event_type": ["war"] + ["politics"] * 4 + ["technology"],
+                        "n_searches": [3, 3, 4, 2, 3, 4],
+                    }
+                ),
+            ),
+            id="most_popular_topic_per_region",
+        ),
+        pytest.param(
+            (
+                most_popular_search_engine_per_tod,
+                "most_popular_search_engine_per_tod",
+                lambda: pd.DataFrame(
+                    {
+                        "tod": ["Afternoon", "Evening", "Morning", "Night", "Pre-Dawn"],
+                        "search_engine": [
+                            "Google",
+                            "DuckDuckGo",
+                            "Google",
+                            "Brave",
+                            "Google",
+                        ],
+                        "n_searches": [12, 4, 13, 3, 5],
+                    }
+                ),
+            ),
+            id="most_popular_search_engine_per_tod",
+        ),
+        pytest.param(
+            (
+                unique_users_per_engine,
+                "unique_users_per_engine",
+                lambda: pd.DataFrame(
+                    {
+                        "search_engine": [
+                            "Bing",
+                            "Brave",
+                            "Duck Duck Go",
+                            "DuckDuckGo",
+                            "Ecosia",
+                            "Google",
+                            "Mojeek",
+                            "Qwant",
+                            "Swisscows",
+                            "Yahoo",
+                            "Yahoo!",
+                            "Yandex",
+                        ],
+                        "n_users": [7, 3, 0, 7, 5, 10, 0, 6, 0, 3, 1, 2],
+                    }
+                ),
+            ),
+            id="unique_users_per_engine",
         ),
     ],
 )

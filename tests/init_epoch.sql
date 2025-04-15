@@ -411,3 +411,46 @@ INSERT INTO SEARCHES(search_id, search_user_id, search_engine, search_string, se
 -- AND CAST(STRFTIME('%H', search_ts) AS INTEGER) < t_end_hour
 -- GROUP BY 1
 -- ;
+
+-- SELECT s_name AS season_name, (100.0 * SUM(CASE WHEN CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN 1 END)) / COUNT(*) as search_pct
+-- FROM SEASONS, SEARCHES, EVENTS
+-- WHERE CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+-- AND LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+-- GROUP BY 1
+-- ORDER BY 1
+-- ;
+
+-- SELECT s_name AS season_name, (100.0 * SUM(CASE WHEN CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN 1 END)) / COUNT(*) as search_pct
+-- FROM SEASONS, SEARCHES, EVENTS
+-- WHERE CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+-- AND LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+-- GROUP BY 1
+-- ORDER BY 1
+-- ;
+
+-- SELECT user_region, ev_typ, n_searches
+-- FROM (
+--   select user_region, EVENTS.ev_typ, COUNT(DISTINCT searches.search_id) AS n_searches,
+--   ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY COUNT(DISTINCT searches.search_id) DESC, ev_typ ASC) AS rn
+--   FROM USERS, SEARCHES, EVENTS
+--   WHERE LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+--   AND USERS.user_id = SEARCHES.search_user_id
+--   GROUP BY 1, 2
+-- )
+-- WHERE rn = 1
+-- ORDER BY 1
+-- ;
+
+
+-- SELECT t_name, search_engine, n_searches
+-- FROM (
+--   select TIMES.t_name, SEARCHES.search_engine, COUNT(*) AS n_searches,
+--   ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY COUNT(*) DESC, search_engine ASC) AS rn
+--   FROM TIMES, SEARCHES
+--   WHERE CAST(STRFTIME('%H', search_ts) AS INTEGER) >= t_start_hour
+--   AND CAST(STRFTIME('%H', search_ts) AS INTEGER) < t_end_hour
+--   GROUP BY 1, 2
+-- )
+-- WHERE rn = 1
+-- ORDER BY 1
+-- ;
