@@ -1185,6 +1185,12 @@ def optimize_relational_tree(
     # Step 5: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
 
+    # Step 3: merge adjacent projections, unless it would result in excessive
+    # duplicate subexpression computations.
+    merged_root = merge_projects(root)
+    assert isinstance(merged_root, RelationalRoot)
+    root = merged_root
+
     return root
 
 
