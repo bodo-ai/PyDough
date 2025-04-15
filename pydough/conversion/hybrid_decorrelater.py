@@ -285,6 +285,7 @@ class Decorrelater:
             current_level = current_level.parent
             additional_levels += 1
         child.subtree.join_keys = new_join_keys
+        child.subtree.general_join_condition = None
         # If aggregating, update the aggregation keys accordingly.
         if child.connection_type.is_aggregation:
             child.subtree.agg_keys = new_agg_keys

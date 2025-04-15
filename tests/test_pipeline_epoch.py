@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from epoch_pydough_functions import (
     culture_events_info,
+    event_gap_per_era,
     events_per_season,
     first_event_per_era,
     num_predawn_cold_war,
@@ -76,16 +77,16 @@ from pydough.unqualified import (
                 "summer_events_per_type",
                 lambda: pd.DataFrame(
                     {
-                        "era_name": [
+                        "event_type": [
                             "culture",
                             "death",
-                            "natural disaster",
+                            "natural_disaster",
                             "politics",
                             "science",
                             "technology",
                             "war",
                         ],
-                        "event_name": [6, 3, 1, 14, 6, 1, 17],
+                        "n_events": [6, 3, 1, 14, 6, 1, 17],
                     }
                 ),
             ),
@@ -125,7 +126,7 @@ from pydough.unqualified import (
                             "WWII",
                             "Cold War",
                         ],
-                        "year": [1915, 1917, 1927, 1942, 1942, 1955],
+                        "event_year": [1915, 1917, 1927, 1942, 1942, 1955],
                         "season_name": [
                             "Spring",
                             "Summer",
@@ -146,6 +147,31 @@ from pydough.unqualified import (
                 ),
             ),
             id="culture_events_info",
+        ),
+        pytest.param(
+            (
+                event_gap_per_era,
+                "event_gap_per_era",
+                lambda: pd.DataFrame(
+                    {
+                        "era_name": [
+                            "WWI",
+                            "Interwar",
+                            "WWII",
+                            "Cold War",
+                            "Modern Era",
+                        ],
+                        "avg_event_gap": [
+                            59.354839,
+                            304.928571,
+                            75.733333,
+                            350.065217,
+                            221.509804,
+                        ],
+                    }
+                ),
+            ),
+            id="event_gap_per_era",
         ),
     ],
 )

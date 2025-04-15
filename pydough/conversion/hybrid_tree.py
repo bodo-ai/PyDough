@@ -61,6 +61,7 @@ from pydough.qdag import (
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     Reference,
+    SidedReference,
     Singular,
     SubCollection,
     TableCollection,
@@ -165,7 +166,7 @@ class HybridColumnExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr | None:
+    def shift_back(self, levels: int) -> HybridExpr:
         return HybridBackRefExpr(self.column.column_property.name, levels, self.typ)
 
 
@@ -210,7 +211,7 @@ class HybridChildRefExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr | None:
+    def shift_back(self, levels: int) -> None:
         return None
 
 
@@ -235,6 +236,25 @@ class HybridBackRefExpr(HybridExpr):
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
 
+class HybridSidedRefExpr(HybridExpr):
+    """
+    TODO
+    """
+
+    def __init__(self, name: str, typ: PyDoughType):
+        super().__init__(typ)
+        self.name: str = name
+
+    def __repr__(self):
+        return f"PARENT.{self.name}"
+
+    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
+        return self
+
+    def shift_back(self, levels: int) -> HybridExpr:
+        return self
+
+
 class HybridCorrelExpr(HybridExpr):
     """
     Class for HybridExpr terms that are expressions from a parent hybrid tree
@@ -252,7 +272,7 @@ class HybridCorrelExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr | None:
+    def shift_back(self, levels: int) -> HybridExpr:
         return self
 
 
@@ -271,8 +291,8 @@ class HybridLiteralExpr(HybridExpr):
     def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
         return self
 
-    def shift_back(self, levels: int) -> HybridExpr | None:
-        return None
+    def shift_back(self, levels: int) -> HybridExpr:
+        return self
 
 
 class HybridFunctionExpr(HybridExpr):
@@ -310,7 +330,13 @@ class HybridFunctionExpr(HybridExpr):
         return HybridFunctionExpr(self.operator, renamed_args, self.typ)
 
     def shift_back(self, levels: int) -> HybridExpr | None:
-        return None
+        shifted_args: list[HybridExpr] = []
+        for arg in self.args:
+            shifted_arg: HybridExpr | None = arg.shift_back(levels)
+            if shifted_arg is None:
+                return None
+            shifted_args.append(shifted_arg)
+        return HybridFunctionExpr(self.operator, shifted_args, self.typ)
 
 
 class HybridWindowExpr(HybridExpr):
@@ -383,7 +409,35 @@ class HybridWindowExpr(HybridExpr):
         )
 
     def shift_back(self, levels: int) -> HybridExpr | None:
-        return None
+        shifted_args: list[HybridExpr] = []
+        shifted_partition_args: list[HybridExpr] = []
+        shifted_order_args: list[HybridCollation] = []
+        shifted_arg: HybridExpr | None
+        for arg in self.args:
+            shifted_arg = arg.shift_back(levels)
+            if shifted_arg is None:
+                return None
+            shifted_args.append(shifted_arg)
+        for arg in self.partition_args:
+            shifted_arg = arg.shift_back(levels)
+            if shifted_arg is None:
+                return None
+            shifted_partition_args.append(shifted_arg)
+        for order_arg in self.order_args:
+            shifted_arg = order_arg.expr.shift_back(levels)
+            if shifted_arg is None:
+                return None
+            shifted_order_args.append(
+                HybridCollation(shifted_arg, order_arg.asc, order_arg.na_first)
+            )
+        return HybridWindowExpr(
+            self.window_func,
+            shifted_args,
+            shifted_partition_args,
+            shifted_order_args,
+            self.typ,
+            self.kwargs,
+        )
 
 
 def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
@@ -494,6 +548,7 @@ class HybridCollectionAccess(HybridOperation):
         for name in sorted(collection.unique_terms, key=str):
             expr: PyDoughExpressionQDAG = collection.get_expr(name)
             unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
+        self.general_condition: HybridExpr | None = None
         super().__init__(terms, {}, [], unique_exprs)
 
     def __repr__(self):
@@ -1320,9 +1375,11 @@ class HybridTree:
                 successor_join_keys.append((lhs_key, shifted_expr))
             successor.join_keys = successor_join_keys
         if self.general_join_condition is not None:
-            successor.general_join_condition = shift_join_condition(
-                self.general_join_condition
+            shifted_join_condition: HybridExpr | None = (
+                self.general_join_condition.shift_back(1)
             )
+            assert shifted_join_condition is not None
+            successor.general_join_condition = shifted_join_condition
 
 
 class HybridTranslator:
@@ -2221,6 +2278,11 @@ class HybridTranslator:
                 return HybridChildRefExpr(
                     expr_name, hybrid_child_index, expr.pydough_type
                 )
+            case SidedReference():
+                if expr.is_parent:
+                    return HybridSidedRefExpr(expr.term_name, expr.pydough_type)
+                else:
+                    return HybridRefExpr(expr.term_name, expr.pydough_type)
             case BackReferenceExpression():
                 # A reference to an expression from an ancestor becomes a
                 # reference to one of the terms of a parent level of the hybrid
@@ -2410,15 +2472,25 @@ class HybridTranslator:
         key_exprs: list[HybridExpr] = []
         join_key_exprs: list[tuple[HybridExpr, HybridExpr]] = []
         general_join_cond: HybridExpr | None = None
+        collection_access: HybridCollectionAccess
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot(), node.ancestral_mapping)
             case CompoundSubCollection():
                 raise NotImplementedError(f"{node.__class__.__name__}")
             case TableCollection() | SubCollection():
-                successor_hybrid = HybridTree(
-                    HybridCollectionAccess(node), node.ancestral_mapping
-                )
+                collection_access = HybridCollectionAccess(node)
+                successor_hybrid = HybridTree(collection_access, node.ancestral_mapping)
+                if isinstance(node, SubCollection) and isinstance(
+                    node.subcollection_property, GeneralJoinMetadata
+                ):
+                    assert node.general_condition is not None
+                    collection_access.general_condition = self.make_hybrid_expr(
+                        successor_hybrid,
+                        node.general_condition,
+                        {},
+                        False,
+                    )
                 hybrid = self.make_hybrid_tree(node.ancestor_context, parent)
                 hybrid.add_successor(successor_hybrid)
                 return successor_hybrid
@@ -2510,8 +2582,9 @@ class HybridTranslator:
                     case TableCollection() | SubCollection() if not isinstance(
                         node.child_access, CompoundSubCollection
                     ):
+                        collection_access = HybridCollectionAccess(node.child_access)
                         successor_hybrid = HybridTree(
-                            HybridCollectionAccess(node.child_access),
+                            collection_access,
                             node.ancestral_mapping,
                         )
                         if isinstance(node.child_access, SubCollection):
@@ -2525,8 +2598,15 @@ class HybridTranslator:
                                     successor_hybrid.pipeline[-1],
                                 )
                             elif isinstance(sub_property, GeneralJoinMetadata):
-                                general_join_cond = None
-                                raise NotImplementedError()
+                                assert node.child_access.general_condition is not None
+                                collection_access.general_condition = (
+                                    general_join_cond
+                                ) = self.make_hybrid_expr(
+                                    successor_hybrid,
+                                    node.child_access.general_condition,
+                                    {},
+                                    False,
+                                )
                             else:
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"

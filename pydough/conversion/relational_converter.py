@@ -72,6 +72,7 @@ from .hybrid_tree import (
     HybridPartitionChild,
     HybridRefExpr,
     HybridRoot,
+    HybridSidedRefExpr,
     HybridTranslator,
     HybridTree,
     HybridWindowExpr,
@@ -286,8 +287,10 @@ class RelTranslation:
         partition_inputs: list[RelationalExpression]
         order_inputs: list[ExpressionSortInfo]
         match condition:
-            case HybridCorrelExpr():
-                result = self.translate_expression(condition.expr, lhs_result)
+            case HybridSidedRefExpr():
+                result = self.translate_expression(
+                    HybridRefExpr(condition.name, condition.typ), lhs_result
+                )
                 return self.rename_inputs(result, lhs_alias)
             case HybridFunctionExpr():
                 inputs = [
@@ -416,6 +419,8 @@ class RelTranslation:
         out_columns: dict[HybridExpr, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
 
+        if (join_keys is not None) and (join_cond is not None):
+            breakpoint()
         assert (join_keys is None) != (join_cond is None)
 
         # Special case: if the lhs is an EmptySingleton, just return the RHS,
@@ -753,8 +758,8 @@ class RelTranslation:
                     node,
                 )
             case GeneralJoinMetadata():
-                join_cond = None
-                raise NotImplementedError()
+                assert node.general_condition is not None
+                join_cond = node.general_condition
 
         return self.join_outputs(
             context,
@@ -1330,7 +1335,11 @@ def convert_ast_to_relational(
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)
+    print()
+    print(hybrid)
     run_hybrid_decorrelation(hybrid)
+    print()
+    print(hybrid)
     hybrid_translator.run_rewrites(hybrid)
 
     # Then, invoke relational conversion procedure. The first element in the

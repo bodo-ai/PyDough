@@ -29,6 +29,7 @@ from pydough.qdag import (
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Reference,
+    SidedReference,
     SubCollection,
     TopK,
     Where,
@@ -390,9 +391,9 @@ class Qualifier:
         """
         TODO
         """
-        print(condition, self_name, other_name)
         operation: str | None = None
         term: PyDoughExpressionQDAG
+        term_name: str
         match condition:
             case UnqualifiedLiteral():
                 return self.qualify_literal(condition)
@@ -432,14 +433,22 @@ class Qualifier:
                             term = access.ancestor_context.get_expr(
                                 condition._parcel[1]
                             )
-                            print(term, type(term))
                             assert isinstance(term, (Reference, ColumnProperty))
-                            return term
+                            term_name = (
+                                term.term_name
+                                if isinstance(term, Reference)
+                                else term.column_property.name
+                            )
+                            return SidedReference(term_name, access, True)
                         if predecessor._parcel[1] == other_name:
                             term = access.get_expr(condition._parcel[1])
-                            print(term, type(term))
                             assert isinstance(term, (Reference, ColumnProperty))
-                            return term
+                            term_name = (
+                                term.term_name
+                                if isinstance(term, Reference)
+                                else term.column_property.name
+                            )
+                            return SidedReference(term_name, access, False)
                 raise PyDoughUnqualifiedException(
                     "Accessing sub-collection terms is currently unsupported in PyDough general join conditions"
                 )
@@ -514,19 +523,15 @@ class Qualifier:
                 ):
                     self_name: str = answer.subcollection_property.self_name
                     other_name: str = answer.subcollection_property.other_name
-                    if answer.subcollection_property.unqualified_condition is None:
-                        answer.subcollection_property._unqualified_condition = (
-                            self.parse_general_condition(
-                                answer.subcollection_property.condition,
-                                self_name,
-                                other_name,
-                            )
+                    unqualified_condition: UnqualifiedNode = (
+                        self.parse_general_condition(
+                            answer.subcollection_property.condition,
+                            self_name,
+                            other_name,
                         )
-                    assert (
-                        answer.subcollection_property._unqualified_condition is not None
                     )
                     answer.general_condition = self.qualify_join_condition(
-                        answer.subcollection_property._unqualified_condition,
+                        unqualified_condition,
                         answer,
                         self_name,
                         other_name,

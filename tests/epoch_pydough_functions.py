@@ -13,16 +13,13 @@ def first_event_per_era():
     # Returns the first event per era, with the event name, sorted
     # based on the chronological order of the eras.
     first_event = events.WHERE(RANKING(by=date_time.ASC(), per="eras") == 1).SINGULAR()
-    return eras.CALCULATE(
-        era_name=name,
-        event_name=first_event.name,
-    ).ORDER_BY(start_year.ASC())
-
-
-def events_per_season():
-    # Returns the total number of events per season.
-    return seasons.CALCULATE(season_name=name, n_events=COUNT(events)).ORDER_BY(
-        n_events.DESC(), season_name.ASC()
+    return (
+        eras.WHERE(HAS(first_event))
+        .CALCULATE(
+            era_name=name,
+            event_name=first_event.name,
+        )
+        .ORDER_BY(start_year.ASC())
     )
 
 
@@ -52,15 +49,6 @@ def num_predawn_cold_war():
     return Epoch.CALCULATE(n_events=COUNT(selected_events))
 
 
-def num_predawn_cold_war():
-    # Counts how many events happened in the in the pre-dawn hours of the
-    # cold war.
-    selected_events = events.WHERE(HAS(time_of_day.WHERE(name == "Pre-Dawn"))).WHERE(
-        HAS(era.WHERE(name == "Cold War"))
-    )
-    return Epoch.CALCULATE(n_events=COUNT(selected_events))
-
-
 def culture_events_info():
     # Finds the first 6 cultural events and lists their name, era, year,
     # season, and time of day, ordered chronologically by event.
@@ -77,15 +65,15 @@ def culture_events_info():
     )
 
 
-"""
-SELECT ev_name, STRFTIME('%Y', ev_dt), er_name, t_name, s_name
-FROM ERAS, EVENTS, TIMES, SEASONS
-WHERE CAST(STRFTIME('%Y', ev_dt) AS INTEGER) >= er_start_year
-AND CAST(STRFTIME('%Y', ev_dt) AS INTEGER) < er_end_year
-AND CAST(STRFTIME('%H', ev_dt) AS INTEGER) >= t_start_hour
-AND CAST(STRFTIME('%H', ev_dt) AS INTEGER) < t_end_hour
-AND CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (s_first_month, s_second_month, s_third_month)
-AND ev_typ = 'culture'
-ORDER BY ev_dt ASC
-LIMIT 6;
-"""
+def event_gap_per_era():
+    # Returns the average gap between events in each era, in days.
+    event_info = events.CALCULATE(
+        day_gap=DATEDIFF(
+            "days", PREV(date_time, by=date_time.ASC(), per="eras"), date_time
+        )
+    )
+    return (
+        eras.WHERE(HAS(event_info))
+        .CALCULATE(era_name=name, avg_event_gap=AVG(event_info.day_gap))
+        .ORDER_BY(start_year.ASC())
+    )
