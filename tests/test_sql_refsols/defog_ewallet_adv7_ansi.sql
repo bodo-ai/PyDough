@@ -1,4 +1,4 @@
-WITH _t0_2 AS (
+WITH _t0 AS (
   SELECT
     marketing_opt_in,
     user_id
@@ -10,5 +10,5 @@ SELECT
   users.uid,
   _t0.marketing_opt_in
 FROM main.users AS users
-JOIN _t0_2 AS _t0
+JOIN _t0 AS _t0
   ON _t0.user_id = users.uid

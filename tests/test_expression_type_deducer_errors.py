@@ -3,7 +3,6 @@ Error-handling unit tests for the PyDough expression type inference utilities.
 """
 
 import re
-from collections.abc import MutableSequence
 
 import pytest
 from test_utils import AstNodeTestInfo, LiteralInfo
@@ -42,7 +41,7 @@ from pydough.types import StringType
 )
 def test_invalid_deduction(
     deducer: pydop.ExpressionTypeDeducer,
-    args_info: MutableSequence[AstNodeTestInfo],
+    args_info: list[AstNodeTestInfo],
     error_message: str,
     tpch_node_builder: AstNodeBuilder,
 ) -> None:

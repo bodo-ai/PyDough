@@ -1,4 +1,2 @@
-ROOT(columns=[('a', a), ('b', b), ('c', c), ('d', d)], orderings=[])
- PROJECT(columns={'a': a, 'b': b, 'c': 3.14:float64, 'd': True:bool})
-  PROJECT(columns={'a': 0:int64, 'b': 'X':string})
-   EMPTYSINGLETON()
+ROOT(columns=[('a', 0:int64), ('b', 'X':string), ('c', 3.14:float64), ('d', True:bool)], orderings=[])
+ EMPTYSINGLETON()

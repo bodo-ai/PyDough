@@ -21,13 +21,13 @@ __all__ = [
 ]
 
 from abc import ABC
-from collections.abc import Iterable, MutableSequence, Sequence
+from collections.abc import Iterable
 from datetime import date
 from typing import Any, Union
 
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
-from pydough.metadata.errors import is_bool, is_integer, is_positive_int
+from pydough.metadata.errors import is_bool, is_integer, is_positive_int, is_string
 from pydough.types import (
     ArrayType,
     BinaryType,
@@ -120,7 +120,7 @@ class UnqualifiedNode(ABC):
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            args: MutableSequence[UnqualifiedNode] = [self]
+            args: list[UnqualifiedNode] = [self]
             for arg in (key.start, key.stop, key.step):
                 coerced_elem = UnqualifiedNode.coerce_to_unqualified(arg)
                 if not isinstance(coerced_elem, UnqualifiedLiteral):
@@ -334,7 +334,7 @@ class UnqualifiedNode(ABC):
         return UnqualifiedWhere(self, cond_unqualified)
 
     def ORDER_BY(self, *keys) -> "UnqualifiedOrderBy":
-        keys_unqualified: MutableSequence[UnqualifiedNode] = [
+        keys_unqualified: list[UnqualifiedNode] = [
             self.coerce_to_unqualified(key) for key in keys
         ]
         return UnqualifiedOrderBy(self, keys_unqualified)
@@ -345,7 +345,7 @@ class UnqualifiedNode(ABC):
         if by is None:
             return UnqualifiedTopK(self, k, None)
         else:
-            keys_unqualified: MutableSequence[UnqualifiedNode]
+            keys_unqualified: list[UnqualifiedNode]
             if isinstance(by, Iterable):
                 keys_unqualified = [self.coerce_to_unqualified(key) for key in by]
             else:
@@ -368,7 +368,6 @@ class UnqualifiedNode(ABC):
 
     def PARTITION(
         self,
-        data: "UnqualifiedNode",
         name: str,
         by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
     ) -> "UnqualifiedPartition":
@@ -376,9 +375,9 @@ class UnqualifiedNode(ABC):
         Method used to create a PARTITION node.
         """
         if isinstance(by, UnqualifiedNode):
-            return UnqualifiedPartition(self, data, name, [by])
+            return UnqualifiedPartition(self, name, [by])
         else:
-            return UnqualifiedPartition(self, data, name, list(by))
+            return UnqualifiedPartition(self, name, list(by))
 
     def SINGULAR(self) -> "UnqualifiedSingular":
         """
@@ -485,7 +484,7 @@ class UnqualifiedCollation(UnqualifiedNode):
 def get_by_arg(
     kwargs: dict[str, object],
     window_operator: pydop.ExpressionWindowOperator,
-) -> Sequence[UnqualifiedNode]:
+) -> list[UnqualifiedNode]:
     """
     Extracts the `by` argument from the keyword arguments to a window function,
     verifying that it exists, removing it from the kwargs, and converting it to
@@ -515,16 +514,15 @@ def get_by_arg(
             f"The `{window_operator.function_name}` function does not allow a `by` argument"
         )
     by = kwargs.pop("by")
-    by_allowed_type = UnqualifiedNode
-    if isinstance(by, by_allowed_type):
+    if isinstance(by, UnqualifiedNode):
         by = [by]
     elif not (
-        isinstance(by, Sequence)
-        and all(isinstance(arg, by_allowed_type) for arg in by)
+        isinstance(by, (tuple, list))
+        and all(isinstance(arg, UnqualifiedNode) for arg in by)
         and len(by) > 0
     ):
         raise PyDoughUnqualifiedException(
-            f"The `by` argument to `{window_operator.function_name}` must be a single expression or a non-empty iterable of expressions."
+            f"The `by` argument to `{window_operator.function_name}` must be a single expression or a non-empty list/tuple of expressions. "
             "Please refer to the config documentation for more information."
         )
     return list(by)
@@ -540,10 +538,10 @@ class UnqualifiedOperator(UnqualifiedNode):
         self._parcel: tuple[str] = (name,)
 
     def __call__(self, *args, **kwargs):
-        levels: int | None = None
+        per: str | None = None
         window_operator: pydop.ExpressionWindowOperator
         is_window: bool = True
-        operands: MutableSequence[UnqualifiedNode] = []
+        operands: list[UnqualifiedNode] = []
         for arg in args:
             operands.append(self.coerce_to_unqualified(arg))
         match self._parcel[0]:
@@ -579,15 +577,15 @@ class UnqualifiedOperator(UnqualifiedNode):
                     )
         if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
-            if "levels" in kwargs:
-                levels_arg = kwargs.pop("levels")
-                is_positive_int.verify(levels_arg, "`levels` argument")
-                levels = levels_arg
+            if "per" in kwargs:
+                per_arg = kwargs.pop("per")
+                is_string.verify(per_arg, "`per` argument")
+                per = per_arg
             return UnqualifiedWindow(
                 window_operator,
                 operands,
                 by,
-                levels,
+                per,
                 kwargs,
             )
         return UnqualifiedOperation(self._parcel[0], operands)
@@ -599,8 +597,8 @@ class UnqualifiedOperation(UnqualifiedNode):
     1+ expressions/collections.
     """
 
-    def __init__(self, operation_name: str, operands: MutableSequence[UnqualifiedNode]):
-        self._parcel: tuple[str, MutableSequence[UnqualifiedNode]] = (
+    def __init__(self, operation_name: str, operands: list[UnqualifiedNode]):
+        self._parcel: tuple[str, list[UnqualifiedNode]] = (
             operation_name,
             operands,
         )
@@ -616,16 +614,16 @@ class UnqualifiedWindow(UnqualifiedNode):
         operator: pydop.ExpressionWindowOperator,
         arguments: Iterable[UnqualifiedNode],
         by: Iterable[UnqualifiedNode],
-        levels: int | None,
+        per: str | None,
         kwargs: dict[str, object],
     ):
         self._parcel: tuple[
             pydop.ExpressionWindowOperator,
             Iterable[UnqualifiedNode],
             Iterable[UnqualifiedNode],
-            int | None,
+            str | None,
             dict[str, object],
-        ] = (operator, arguments, by, levels, kwargs)
+        ] = (operator, arguments, by, per, kwargs)
 
 
 class UnqualifiedBinaryOperation(UnqualifiedNode):
@@ -682,10 +680,8 @@ class UnqualifiedOrderBy(UnqualifiedNode):
     done onto another UnqualifiedNode.
     """
 
-    def __init__(
-        self, predecessor: UnqualifiedNode, keys: MutableSequence[UnqualifiedNode]
-    ):
-        self._parcel: tuple[UnqualifiedNode, MutableSequence[UnqualifiedNode]] = (
+    def __init__(self, predecessor: UnqualifiedNode, keys: list[UnqualifiedNode]):
+        self._parcel: tuple[UnqualifiedNode, list[UnqualifiedNode]] = (
             predecessor,
             keys,
         )
@@ -701,11 +697,9 @@ class UnqualifiedTopK(UnqualifiedNode):
         self,
         predecessor: UnqualifiedNode,
         k: int,
-        keys: MutableSequence[UnqualifiedNode] | None = None,
+        keys: list[UnqualifiedNode] | None = None,
     ):
-        self._parcel: tuple[
-            UnqualifiedNode, int, MutableSequence[UnqualifiedNode] | None
-        ] = (
+        self._parcel: tuple[UnqualifiedNode, int, list[UnqualifiedNode] | None] = (
             predecessor,
             k,
             keys,
@@ -720,15 +714,11 @@ class UnqualifiedPartition(UnqualifiedNode):
     def __init__(
         self,
         parent: UnqualifiedNode,
-        data: UnqualifiedNode,
         name: str,
-        keys: MutableSequence[UnqualifiedNode],
+        keys: list[UnqualifiedNode],
     ):
-        self._parcel: tuple[
-            UnqualifiedNode, UnqualifiedNode, str, MutableSequence[UnqualifiedNode]
-        ] = (
+        self._parcel: tuple[UnqualifiedNode, str, list[UnqualifiedNode]] = (
             parent,
-            data,
             name,
             keys,
         )
@@ -774,8 +764,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         The string representation of the unqualified node.
     """
     term_strings: list[str] = []
-    operands_str: str
     result: str
+    operands_str: str
     match unqualified:
         case UnqualifiedRoot():
             return unqualified._parcel[0].name
@@ -808,7 +798,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 operands_str += f"{display_raw(operand)}, "
             operands_str += f"by=({', '.join([display_raw(operand) for operand in unqualified._parcel[2]])}"
             if unqualified._parcel[3] is not None:
-                operands_str += ", levels=" + str(unqualified._parcel[3])
+                operands_str += f", per={unqualified._parcel[3]!r}"
             for kwarg, val in unqualified._parcel[4].items():
                 operands_str += f", {kwarg}={val!r}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"
@@ -839,11 +829,12 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 term_strings.append(display_raw(node))
             return f"{display_raw(unqualified._parcel[0])}.ORDER_BY({', '.join(term_strings)})"
         case UnqualifiedPartition():
-            for node in unqualified._parcel[3]:
+            for node in unqualified._parcel[2]:
                 term_strings.append(display_raw(node))
-            if isinstance(unqualified._parcel[0], UnqualifiedRoot):
-                return f"PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
-            return f"{display_raw(unqualified._parcel[0])}.PARTITION({display_raw(unqualified._parcel[1])}, name={unqualified._parcel[2]!r}, by=({', '.join(term_strings)}))"
+            result = f"PARTITION(name={unqualified._parcel[1]!r}, by=({', '.join(term_strings)}))"
+            if not isinstance(unqualified._parcel[0], UnqualifiedRoot):
+                result = f"{display_raw(unqualified._parcel[0])}.{result}"
+            return result
         case UnqualifiedSingular():
             return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
         case UnqualifiedBest():

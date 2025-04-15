@@ -46,6 +46,8 @@ from pydough.relational import (
 )
 from pydough.types import BooleanType, Int64Type, UnknownType
 
+from .agg_removal import remove_redundant_aggs
+from .agg_split import split_partial_aggregates
 from .filter_pushdown import push_filters
 from .hybrid_decorrelater import run_hybrid_decorrelation
 from .hybrid_tree import (
@@ -74,6 +76,7 @@ from .hybrid_tree import (
     HybridTree,
     HybridWindowExpr,
 )
+from .merge_projects import merge_projects
 
 
 @dataclass
@@ -590,7 +593,18 @@ class RelTranslation:
         assert isinstance(node.collection.collection, SimpleTableMetadata), (
             f"Expected table collection to correspond to an instance of simple table metadata, found: {node.collection.collection.__class__.__name__}"
         )
-        answer = Scan(node.collection.collection.table_path, scan_columns)
+        uniqueness: set[frozenset[str]] = set()
+        for unique_set in node.collection.collection.unique_properties:
+            names: list[str] = (
+                [unique_set] if isinstance(unique_set, str) else unique_set
+            )
+            real_names: set[str] = set()
+            for name in names:
+                expr = scan_columns[name]
+                assert isinstance(expr, ColumnReference)
+                real_names.add(expr.name)
+            uniqueness.add(frozenset(real_names))
+        answer = Scan(node.collection.collection.table_path, scan_columns, uniqueness)
         return TranslationOutput(answer, out_columns)
 
     def translate_sub_collection(
@@ -1143,13 +1157,24 @@ def postprocess_root(
     )
 
 
-def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
+def confirm_root(node: RelationalNode) -> RelationalRoot:
+    """
+    Verify that the node is a RelationalRoot so it can be typed as such.
+    """
+    assert isinstance(node, RelationalRoot)
+    return node
+
+
+def optimize_relational_tree(
+    root: RelationalRoot, configs: PyDoughConfigs
+) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
     pruning columns.
 
     Args:
         `root`: the relational root to optimize.
+        `configs`: the configuration settings to use during optimization.
 
     Returns:
         The optimized relational root.
@@ -1158,8 +1183,32 @@ def optimize_relational_tree(root: RelationalRoot) -> RelationalRoot:
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
-    # Step 2: prune unused columns
+    # Step 2: merge adjacent projections, unless it would result in excessive
+    # duplicate subexpression computations.
+    root = confirm_root(merge_projects(root))
+
+    # Step 3: split aggregations on top of joins so part of the aggregate
+    # happens underneath the join.
+    root = confirm_root(split_partial_aggregates(root, configs))
+
+    # Step 4: re-run projection merging.
+    root = confirm_root(merge_projects(root))
+
+    # Step 5: delete aggregations that are inferred to be redundant due to
+    # operating on already unique data.
+    root = remove_redundant_aggs(root)
+
+    # Step 6: re-run projection merging.
+    root = confirm_root(merge_projects(root))
+
+    # Step 7: prune unused columns
     root = ColumnPruner().prune_unused_columns(root)
+
+    # Step 3: merge adjacent projections, unless it would result in excessive
+    # duplicate subexpression computations.
+    merged_root = merge_projects(root)
+    assert isinstance(merged_root, RelationalRoot)
+    root = merged_root
 
     return root
 
@@ -1217,6 +1266,6 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    optimized_result: RelationalRoot = optimize_relational_tree(raw_result)
+    optimized_result: RelationalRoot = optimize_relational_tree(raw_result, configs)
 
     return optimized_result

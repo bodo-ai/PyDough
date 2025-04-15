@@ -6,7 +6,7 @@ WHERE.
 
 __all__ = ["AugmentingChildOperator"]
 
-from collections.abc import MutableSequence
+
 from functools import cache
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
@@ -27,10 +27,14 @@ class AugmentingChildOperator(ChildOperator):
     def __init__(
         self,
         predecessor: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ):
         self._preceding_context: PyDoughCollectionQDAG = predecessor
-        self._children: MutableSequence[PyDoughCollectionQDAG] = children
+        self._children: list[PyDoughCollectionQDAG] = children
+
+    @property
+    def name(self) -> str:
+        return self.preceding_context.name
 
     @property
     def ancestor_context(self) -> PyDoughCollectionQDAG | None:

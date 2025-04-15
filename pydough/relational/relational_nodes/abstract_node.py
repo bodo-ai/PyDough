@@ -6,7 +6,6 @@ ordering and other properties of the relational expression.
 """
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping, MutableSequence
 from typing import Any
 
 from pydough.relational.relational_expressions import RelationalExpression
@@ -20,17 +19,17 @@ class RelationalNode(ABC):
     structure of all relational nodes in the PyDough system.
     """
 
-    def __init__(self, columns: MutableMapping[str, RelationalExpression]) -> None:
-        self._columns: MutableMapping[str, RelationalExpression] = columns
+    def __init__(self, columns: dict[str, RelationalExpression]) -> None:
+        self._columns: dict[str, RelationalExpression] = columns
 
     @property
     @abstractmethod
-    def inputs(self) -> MutableSequence["RelationalNode"]:
+    def inputs(self) -> list["RelationalNode"]:
         """
         Returns any inputs to the current relational expression.
 
         Returns:
-            MutableSequence["Relational"]: The list of inputs, each of which must
+            list["RelationalNode"]: The list of inputs, each of which must
             be a relational expression.
         """
 
@@ -49,12 +48,12 @@ class RelationalNode(ABC):
         return [None for i in range(len(self.inputs))]
 
     @property
-    def columns(self) -> MutableMapping[str, RelationalExpression]:
+    def columns(self) -> dict[str, RelationalExpression]:
         """
         Returns the columns of the relational expression.
 
         Returns:
-            MutableMapping[str, RelationalExpression]: The columns of the relational expression.
+            dict[str, RelationalExpression]: The columns of the relational expression.
                 This does not have a defined ordering.
         """
         return self._columns
@@ -90,9 +89,7 @@ class RelationalNode(ABC):
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, RelationalNode) and self.equals(other)
 
-    def make_column_string(
-        self, columns: MutableMapping[str, Any], compact: bool
-    ) -> str:
+    def make_column_string(self, columns: dict[str, Any], compact: bool) -> str:
         """
         Converts the columns of the relational node to a deterministically
         ordered string (alphabetically).
@@ -148,8 +145,8 @@ class RelationalNode(ABC):
     @abstractmethod
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence["RelationalNode"],
+        columns: dict[str, RelationalExpression],
+        inputs: list["RelationalNode"],
     ) -> "RelationalNode":
         """
         Copy the given relational node with the provided columns and/or
@@ -158,9 +155,9 @@ class RelationalNode(ABC):
         this directly.
 
         Args:
-            columns (MutableMapping[str, RelationalExpression]): The columns
+            columns (dict[str, RelationalExpression]): The columns
                 to copy.
-            inputs (MutableSequence[Relational]): The inputs to copy.
+            inputs (list[RelationalNode]): The inputs to copy.
 
         Returns:
             Relational: The copied relational node.
@@ -168,8 +165,8 @@ class RelationalNode(ABC):
 
     def copy(
         self,
-        columns: MutableMapping[str, RelationalExpression] | None = None,
-        inputs: MutableSequence["RelationalNode"] | None = None,
+        columns: dict[str, RelationalExpression] | None = None,
+        inputs: list["RelationalNode"] | None = None,
     ) -> "RelationalNode":
         """
         Copy the given relational node with the provided columns and/or
@@ -178,9 +175,9 @@ class RelationalNode(ABC):
         will grab those fields from the current node.
 
         Args:
-            columns (MutableMapping[str, RelationalExpression] | None): The
+            columns (dict[str, RelationalExpression] | None): The
                 columns to copy.
-            inputs (MutableSequence[Relational] | None): The inputs to copy.
+            inputs (list[RelationalNode] | None): The inputs to copy.
 
         Returns:
             Relational: The copied relational node.

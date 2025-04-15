@@ -7,6 +7,8 @@ from collections.abc import Callable
 
 import pytest
 from simple_pydough_functions import (
+    absurd_partition_window_per,
+    absurd_window_per,
     customer_most_recent_orders,
     n_orders_first_day,
     orders_versus_first_orders,
@@ -69,20 +71,20 @@ from pydough.unqualified import (
 ┌─── TPCH
 ├─┬─ Calculate[avg_n_parts=AVG($1.n_parts)]
 │ └─┬─ AccessChild
-│   ├─┬─ Partition[name='p', by=size]
+│   ├─┬─ Partition[name='sizes', by=size]
 │   │ └─┬─ AccessChild
 │   │   └─── TableCollection[Parts]
 │   └─┬─ Calculate[n_parts=COUNT($1)]
 │     └─┬─ AccessChild
-│       └─── PartitionChild[p]
+│       └─── PartitionChild[Parts]
 └─┬─ Calculate[n_parts=COUNT($1)]
   └─┬─ AccessChild
-    ├─┬─ Partition[name='p', by=size]
+    ├─┬─ Partition[name='sizes', by=size]
     │ └─┬─ AccessChild
     │   └─── TableCollection[Parts]
     ├─┬─ Calculate[n_parts=COUNT($1)]
     │ └─┬─ AccessChild
-    │   └─── PartitionChild[p]
+    │   └─── PartitionChild[Parts]
     └─── Where[n_parts > avg_n_parts]
 """,
             id="partition_as_child",
@@ -91,13 +93,13 @@ from pydough.unqualified import (
             impl_tpch_q1,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=(return_flag, status)]
+  ├─┬─ Partition[name='groups', by=(return_flag, status)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   └─── Where[ship_date <= datetime.date(1998, 12, 1)]
   ├─┬─ Calculate[L_RETURNFLAG=return_flag, L_LINESTATUS=status, SUM_QTY=SUM($1.quantity), SUM_BASE_PRICE=SUM($1.extended_price), SUM_DISC_PRICE=SUM($1.extended_price * (1 - $1.discount)), SUM_CHARGE=SUM(($1.extended_price * (1 - $1.discount)) * (1 + $1.tax)), AVG_QTY=AVG($1.quantity), AVG_PRICE=AVG($1.extended_price), AVG_DISC=AVG($1.discount), COUNT_ORDER=COUNT($1)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[l]
+  │   └─── PartitionChild[Lineitems]
   └─── OrderBy[L_RETURNFLAG.ASC(na_pos='first'), L_LINESTATUS.ASC(na_pos='first')]
 """,
             id="tpch_q1",
@@ -106,7 +108,7 @@ from pydough.unqualified import (
             impl_tpch_q2,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='p', by=key]
+  ├─┬─ Partition[name='groups', by=key]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Nations]
   │   ├─── Calculate[n_name=name]
@@ -121,8 +123,8 @@ from pydough.unqualified import (
   │         └─── Where[ENDSWITH(part_type, 'BRASS') & (size == 15)]
   └─┬─ Calculate[best_cost=MIN($1.supplycost)]
     ├─┬─ AccessChild
-    │ └─── PartitionChild[p]
-    ├─── PartitionChild[p]
+    │ └─── PartitionChild[part]
+    ├─── PartitionChild[part]
     ├─── Where[(supplycost == best_cost) & ENDSWITH(part_type, 'BRASS') & (size == 15)]
     ├─── Calculate[S_ACCTBAL=s_acctbal, S_NAME=s_name, N_NAME=n_name, P_PARTKEY=key, P_MFGR=manufacturer, S_ADDRESS=s_address, S_PHONE=s_phone, S_COMMENT=s_comment]
     └─── TopK[10, S_ACCTBAL.DESC(na_pos='last'), N_NAME.ASC(na_pos='first'), S_NAME.ASC(na_pos='first'), P_PARTKEY.ASC(na_pos='first')]
@@ -133,7 +135,7 @@ from pydough.unqualified import (
             impl_tpch_q3,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=(order_key, order_date, ship_priority)]
+  ├─┬─ Partition[name='groups', by=(order_key, order_date, ship_priority)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Orders]
   │   ├─── Calculate[order_date=order_date, ship_priority=ship_priority]
@@ -144,7 +146,7 @@ from pydough.unqualified import (
   │     └─── Where[ship_date > datetime.date(1995, 3, 15)]
   ├─┬─ Calculate[L_ORDERKEY=order_key, REVENUE=SUM($1.extended_price * (1 - $1.discount)), O_ORDERDATE=order_date, O_SHIPPRIORITY=ship_priority]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[l]
+  │   └─── PartitionChild[lines]
   └─── TopK[10, REVENUE.DESC(na_pos='last'), O_ORDERDATE.ASC(na_pos='first'), L_ORDERKEY.ASC(na_pos='first')]
 """,
             id="tpch_q3",
@@ -153,7 +155,7 @@ from pydough.unqualified import (
             impl_tpch_q4,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='o', by=order_priority]
+  ├─┬─ Partition[name='priorities', by=order_priority]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Orders]
   │   └─┬─ Where[(order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1)) & HAS($1)]
@@ -162,7 +164,7 @@ from pydough.unqualified import (
   │       └─── Where[commit_date < receipt_date]
   ├─┬─ Calculate[O_ORDERPRIORITY=order_priority, ORDER_COUNT=COUNT($1)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[o]
+  │   └─── PartitionChild[Orders]
   └─── OrderBy[O_ORDERPRIORITY.ASC(na_pos='first')]
 """,
             id="tpch_q4",
@@ -218,7 +220,7 @@ from pydough.unqualified import (
             impl_tpch_q7,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=(supp_nation, cust_nation, l_year)]
+  ├─┬─ Partition[name='groups', by=(supp_nation, cust_nation, l_year)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   ├─┬─ Calculate[supp_nation=$1.name, cust_nation=$2.name, l_year=YEAR(ship_date), volume=extended_price * (1 - discount)]
@@ -232,7 +234,7 @@ from pydough.unqualified import (
   │   └─── Where[(ship_date >= datetime.date(1995, 1, 1)) & (ship_date <= datetime.date(1996, 12, 31)) & (((supp_nation == 'FRANCE') & (cust_nation == 'GERMANY')) | ((supp_nation == 'GERMANY') & (cust_nation == 'FRANCE')))]
   ├─┬─ Calculate[SUPP_NATION=supp_nation, CUST_NATION=cust_nation, L_YEAR=l_year, REVENUE=SUM($1.volume)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[l]
+  │   └─── PartitionChild[Lineitems]
   └─── OrderBy[SUPP_NATION.ASC(na_pos='first'), CUST_NATION.ASC(na_pos='first'), L_YEAR.ASC(na_pos='first')]
 """,
             id="tpch_q7",
@@ -241,7 +243,7 @@ from pydough.unqualified import (
             impl_tpch_q8,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='v', by=o_year]
+  ├─┬─ Partition[name='years', by=o_year]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Nations]
   │   └─┬─ Calculate[nation_name=name]
@@ -261,7 +263,7 @@ from pydough.unqualified import (
   │                   └─── SubCollection[region]
   └─┬─ Calculate[O_YEAR=o_year, MKT_SHARE=SUM($1.brazil_volume) / SUM($1.volume)]
     └─┬─ AccessChild
-      └─── PartitionChild[v]
+      └─── PartitionChild[order]
 """,
             id="tpch_q8",
         ),
@@ -269,7 +271,7 @@ from pydough.unqualified import (
             impl_tpch_q9,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=(nation_name, o_year)]
+  ├─┬─ Partition[name='groups', by=(nation_name, o_year)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Nations]
   │   └─┬─ Calculate[nation_name=name]
@@ -285,7 +287,7 @@ from pydough.unqualified import (
   │             └─── SubCollection[order]
   ├─┬─ Calculate[NATION=nation_name, O_YEAR=o_year, AMOUNT=SUM($1.value)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[l]
+  │   └─── PartitionChild[lines]
   └─── TopK[10, NATION.ASC(na_pos='first'), O_YEAR.DESC(na_pos='last')]
 """,
             id="tpch_q9",
@@ -320,17 +322,16 @@ from pydough.unqualified import (
   │ │   └─┬─ SubCollection[supplier]
   │ │     └─── SubCollection[nation]
   │ └─── Calculate[metric=supplycost * availqty]
-  ├─┬─ Partition[name='ps', by=part_key]
+  ├─┬─ Partition[name='parts', by=part_key]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[PartSupp]
-  │   ├─┬─ Where[$1.name == 'GERMANY']
-  │   │ └─┬─ AccessChild
-  │   │   └─┬─ SubCollection[supplier]
-  │   │     └─── SubCollection[nation]
-  │   └─── Calculate[metric=supplycost * availqty]
-  ├─┬─ Calculate[PS_PARTKEY=part_key, VALUE=SUM($1.metric)]
+  │   └─┬─ Where[$1.name == 'GERMANY']
+  │     └─┬─ AccessChild
+  │       └─┬─ SubCollection[supplier]
+  │         └─── SubCollection[nation]
+  ├─┬─ Calculate[PS_PARTKEY=part_key, VALUE=SUM($1.supplycost * $1.availqty)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[ps]
+  │   └─── PartitionChild[PartSupp]
   ├─── Where[VALUE > min_market_share]
   └─── TopK[10, VALUE.DESC(na_pos='last')]
 """,
@@ -340,7 +341,7 @@ from pydough.unqualified import (
             impl_tpch_q12,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='l', by=ship_mode]
+  ├─┬─ Partition[name='modes', by=ship_mode]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Lineitems]
   │   ├─── Where[((ship_mode == 'MAIL') | (ship_mode == 'SHIP')) & (ship_date < commit_date) & (commit_date < receipt_date) & (receipt_date >= datetime.date(1994, 1, 1)) & (receipt_date < datetime.date(1995, 1, 1))]
@@ -349,7 +350,7 @@ from pydough.unqualified import (
   │       └─── SubCollection[order]
   ├─┬─ Calculate[L_SHIPMODE=ship_mode, HIGH_LINE_COUNT=SUM($1.is_high_priority), LOW_LINE_COUNT=SUM(NOT($1.is_high_priority))]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[l]
+  │   └─── PartitionChild[Lineitems]
   └─── OrderBy[L_SHIPMODE.ASC(na_pos='first')]
 """,
             id="tpch_q12",
@@ -358,7 +359,7 @@ from pydough.unqualified import (
             impl_tpch_q13,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='custs', by=num_non_special_orders]
+  ├─┬─ Partition[name='num_order_groups', by=num_non_special_orders]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Customers]
   │   └─┬─ Calculate[num_non_special_orders=COUNT($1)]
@@ -367,7 +368,7 @@ from pydough.unqualified import (
   │       └─── Where[NOT(LIKE(comment, '%special%requests%'))]
   ├─┬─ Calculate[C_COUNT=num_non_special_orders, CUSTDIST=COUNT($1)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[custs]
+  │   └─── PartitionChild[Customers]
   └─── TopK[10, CUSTDIST.DESC(na_pos='last'), C_COUNT.DESC(na_pos='last')]
 """,
             id="tpch_q13",
@@ -393,11 +394,19 @@ from pydough.unqualified import (
 └─┬─ Calculate[max_revenue=MAX($1.total_revenue)]
   ├─┬─ AccessChild
   │ ├─── TableCollection[Suppliers]
+  │ ├─┬─ Where[HAS($1)]
+  │ │ └─┬─ AccessChild
+  │ │   ├─── SubCollection[lines]
+  │ │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
   │ └─┬─ Calculate[total_revenue=SUM($1.extended_price * (1 - $1.discount))]
   │   └─┬─ AccessChild
   │     ├─── SubCollection[lines]
   │     └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
   ├─── TableCollection[Suppliers]
+  ├─┬─ Where[HAS($1)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[lines]
+  │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
   ├─┬─ Calculate[S_SUPPKEY=key, S_NAME=name, S_ADDRESS=address, S_PHONE=phone, TOTAL_REVENUE=SUM($1.extended_price * (1 - $1.discount))]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[lines]
@@ -411,7 +420,7 @@ from pydough.unqualified import (
             impl_tpch_q16,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='ps', by=(p_brand, p_type, p_size)]
+  ├─┬─ Partition[name='groups', by=(p_brand, p_type, p_size)]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Parts]
   │   ├─── Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])]
@@ -422,7 +431,7 @@ from pydough.unqualified import (
   │         └─── SubCollection[supplier]
   ├─┬─ Calculate[P_BRAND=p_brand, P_TYPE=p_type, P_SIZE=p_size, SUPPLIER_COUNT=NDISTINCT($1.supplier_key)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[ps]
+  │   └─── PartitionChild[supply_records]
   └─── TopK[10, SUPPLIER_COUNT.DESC(na_pos='last'), P_BRAND.ASC(na_pos='first'), P_TYPE.ASC(na_pos='first'), P_SIZE.ASC(na_pos='first')]
 """,
             id="tpch_q16",
@@ -527,17 +536,16 @@ from pydough.unqualified import (
   │ ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
   │ ├─── Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17'])]
   │ └─── Where[acctbal > 0.0]
-  ├─┬─ Partition[name='custs', by=cntry_code]
+  ├─┬─ Partition[name='countries', by=cntry_code]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[Customers]
   │   ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
-  │   ├─── Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17'])]
-  │   └─┬─ Where[(acctbal > global_avg_balance) & (COUNT($1) == 0)]
+  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (acctbal > global_avg_balance) & (COUNT($1) == 0)]
   │     └─┬─ AccessChild
   │       └─── SubCollection[orders]
   ├─┬─ Calculate[CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT($1), TOTACCTBAL=SUM($1.acctbal)]
   │ └─┬─ AccessChild
-  │   └─── PartitionChild[custs]
+  │   └─── PartitionChild[Customers]
   └─── OrderBy[CNTRY_CODE.ASC(na_pos='first')]
 """,
             id="tpch_q22",
@@ -749,6 +757,56 @@ from pydough.unqualified import (
   └─── TopK[5, days_since_first_order.DESC(na_pos='last'), customer_name.ASC(na_pos='first')]
         """,
             id="orders_versus_first_orders",
+        ),
+        pytest.param(
+            absurd_window_per,
+            """
+──┬─ TPCH
+  └─┬─ TableCollection[Regions]
+    └─┬─ SubCollection[nations]
+      └─┬─ SubCollection[customers]
+        └─┬─ SubCollection[orders]
+          └─┬─ SubCollection[lines]
+            └─┬─ SubCollection[supplier]
+              └─┬─ SubCollection[nation]
+                └─┬─ SubCollection[suppliers]
+                  └─┬─ SubCollection[nation]
+                    └─┬─ SubCollection[customers]
+                      └─┬─ SubCollection[nation]
+                        ├─── SubCollection[region]
+                        ├─── Calculate[w1=RELSIZE(by=(), levels=11), w2=RELSIZE(by=(), levels=10)]
+                        ├─── Calculate[w3=RELSIZE(by=(), levels=9), w4=RELSIZE(by=(), levels=8)]
+                        ├─── Calculate[w5=RELSIZE(by=(), levels=7), w6=RELSIZE(by=(), levels=6)]
+                        ├─── Calculate[w7=RELSIZE(by=(), levels=5), w8=RELSIZE(by=(), levels=4)]
+                        ├─── Calculate[w9=RELSIZE(by=(), levels=3), w10=RELSIZE(by=(), levels=2)]
+                        └─── Calculate[w11=RELSIZE(by=(), levels=1), w12=RELSIZE(by=())]
+""",
+            id="absurd_window_per",
+        ),
+        pytest.param(
+            absurd_partition_window_per,
+            """
+──┬─ TPCH
+  └─┬─ Partition[name='groups', by=ship_mode]
+    ├─┬─ AccessChild
+    │ └─┬─ Partition[name='groups', by=(ship_mode, ship_date)]
+    │   └─┬─ AccessChild
+    │     └─┬─ Partition[name='groups', by=(ship_mode, ship_date, status)]
+    │       └─┬─ AccessChild
+    │         └─┬─ Partition[name='groups', by=(ship_mode, ship_date, status, return_flag)]
+    │           └─┬─ AccessChild
+    │             └─┬─ Partition[name='groups', by=(ship_mode, ship_date, status, return_flag, part_key)]
+    │               └─┬─ AccessChild
+    │                 └─── TableCollection[Lineitems]
+    └─┬─ PartitionChild[groups]
+      └─┬─ PartitionChild[groups]
+        └─┬─ PartitionChild[groups]
+          └─┬─ PartitionChild[groups]
+            └─┬─ PartitionChild[Lineitems]
+              ├─── SubCollection[order]
+              └─── Calculate[w1=RELSIZE(by=(), levels=2), w2=RELSIZE(by=(), levels=3), w3=RELSIZE(by=(), levels=4), w4=RELSIZE(by=(), levels=5), w5=RELSIZE(by=(), levels=6)]
+""",
+            id="absurd_partition_window_per",
         ),
     ],
 )

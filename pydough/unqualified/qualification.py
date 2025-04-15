@@ -5,7 +5,7 @@ QDAG nodes.
 
 __all__ = ["qualify_node"]
 
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Iterable
 
 import pydough
 from pydough.configs import PyDoughConfigs
@@ -110,7 +110,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedOperation,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedOperation` into a PyDoughExpressionQDAG node.
@@ -131,7 +131,7 @@ class Qualifier:
             qualified or is not recognized.
         """
         operation: str = unqualified._parcel[0]
-        unqualified_operands: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
+        unqualified_operands: list[UnqualifiedNode] = unqualified._parcel[1]
         qualified_operands: list[PyDoughQDAG] = []
         # Iterate across every operand to generate its qualified variant.
         # First, attempt to qualify it as an expression (the common case), but
@@ -168,7 +168,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedBinaryOperation,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedBinaryOperation` into a PyDoughExpressionQDAG node.
@@ -213,7 +213,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedWindow,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedWindow` into a PyDoughExpressionQDAG node.
@@ -237,7 +237,7 @@ class Qualifier:
         unqualified_args: Iterable[UnqualifiedNode] = unqualified._parcel[1]
         unqualified_by: Iterable[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_by = self._expressions_to_collations(unqualified_by)
-        levels: int | None = unqualified._parcel[3]
+        per: str | None = unqualified._parcel[3]
         kwargs: dict[str, object] = unqualified._parcel[4]
         # Qualify all of the function args, storing the children built along
         # the way.
@@ -253,6 +253,68 @@ class Qualifier:
             )
             assert isinstance(qualified_term, CollationExpression)
             qualified_collations.append(qualified_term)
+        levels: int | None = None
+        # If the per argument exists, parse it to identify which ancestor
+        # of the current context the window funciton is being done with
+        # regards to, and converting it to a `levels` integer (indicating
+        # the number of ancestor levels to go up to).
+        if per is not None:
+            ancestral_names: list[str] = context.get_ancestral_names()
+            ancestor_name: str
+            ancestor_idx: int | None
+            # Break down the per string into its components, which is either
+            # `[name]`, or `[name, index]`, where `index` must be a positive
+            # integer.
+            components: list[str] = per.split(":")
+            if len(components) == 1:
+                ancestor_name = components[0]
+                ancestor_idx = None
+            elif len(components) == 2:
+                ancestor_name = components[0]
+                if not components[1].isdigit():
+                    raise PyDoughUnqualifiedException(
+                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
+                    )
+                ancestor_idx = int(components[1])
+                if ancestor_idx <= 0:
+                    raise PyDoughUnqualifiedException(
+                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
+                    )
+            else:
+                raise PyDoughUnqualifiedException(
+                    f"Malformed per string: {per!r} (expected 0 or 1 ':', found {len(components) - 1})"
+                )
+            # Verify that `name` corresponds to one of the ancestors of the
+            # current context.
+            if ancestor_name not in ancestral_names:
+                raise PyDoughUnqualifiedException(
+                    f"Per string refers to unrecognized ancestor {ancestor_name!r} of {context!r}"
+                )
+            # Verify that `name` is only present exactly one time in the
+            # ancestors of the current context, unless an index was provided.
+            if ancestor_idx is None:
+                if ancestral_names.count(ancestor_name) > 1:
+                    # TODO: potentially add a default value of 1?
+                    raise PyDoughUnqualifiedException(
+                        f"Per string {per!r} is ambiguous for {context!r}. Use the form '{per}:index' to disambiguate, where '{per}:1' refers to the most recent ancestor."
+                    )
+            elif ancestral_names.count(ancestor_name) < ancestor_idx:
+                # If an index was provided, ensure that there are that many
+                # ancestors with that name.
+                raise PyDoughUnqualifiedException(
+                    f"Per string {per!r} invalid as there are not {ancestor_idx} ancestors of the current context with name {ancestor_name!r}."
+                )
+
+            # Find how many levels upward need to be traversed to find the
+            # targeted ancestor by finding the nth ancestor matching the
+            # name, at the end of the ancestral_names.
+            levels = 1
+            for i in range(len(ancestral_names) - 1, -1, -1):
+                if ancestral_names[i] == ancestor_name:
+                    if ancestor_idx is None or ancestor_idx == 1:
+                        break
+                    ancestor_idx -= 1
+                levels += 1
         # Use the qualified children & collation to create a new ORDER BY node.
         return self.builder.build_window_call(
             window_operator, qualified_args, qualified_collations, levels, kwargs
@@ -262,7 +324,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedCollation,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedCollation` into a PyDoughExpressionQDAG node.
@@ -295,7 +357,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedAccess,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         is_child: bool,
     ) -> PyDoughQDAG:
         """
@@ -396,16 +458,14 @@ class Qualifier:
             qualified or is not recognized.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        unqualified_terms: MutableSequence[tuple[str, UnqualifiedNode]] = (
-            unqualified._parcel[1]
-        )
+        unqualified_terms: list[tuple[str, UnqualifiedNode]] = unqualified._parcel[1]
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
         # Qualify all of the CALCULATE terms, storing the children built along
         # the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
-        qualified_terms: MutableSequence[tuple[str, PyDoughExpressionQDAG]] = []
+        children: list[PyDoughCollectionQDAG] = []
+        qualified_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
         for name, term in unqualified_terms:
             qualified_term = self.qualify_expression(term, qualified_parent, children)
             qualified_terms.append((name, qualified_term))
@@ -445,7 +505,7 @@ class Qualifier:
         )
         # Qualify the condition of the WHERE clause, storing the children
         # built along the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         qualified_cond = self.qualify_expression(
             unqualified_cond, qualified_parent, children
         )
@@ -454,8 +514,8 @@ class Qualifier:
         return where.with_condition(qualified_cond)
 
     def _expressions_to_collations(
-        self, terms: Iterable[UnqualifiedNode] | MutableSequence[UnqualifiedNode]
-    ) -> MutableSequence[UnqualifiedNode]:
+        self, terms: Iterable[UnqualifiedNode] | list[UnqualifiedNode]
+    ) -> list[UnqualifiedNode]:
         """
         Coerces nodes to be collation terms if they are not already. For nodes
         that are not collation terms, uses configuration settings to determine
@@ -513,7 +573,7 @@ class Qualifier:
             qualified or is not recognized.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[1]
+        unqualified_terms: list[UnqualifiedNode] = unqualified._parcel[1]
         unqualified_terms = self._expressions_to_collations(unqualified_terms)
 
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
@@ -521,7 +581,7 @@ class Qualifier:
         )
         # Qualify all of the collation terms, storing the children built along
         # the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         qualified_collations: list[CollationExpression] = []
         for term in unqualified_terms:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
@@ -569,14 +629,14 @@ class Qualifier:
         assert unqualified._parcel[2] is not None, (
             "TopK does not currently support an implied 'by' clause."
         )
-        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[2]
+        unqualified_terms: list[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_terms = self._expressions_to_collations(unqualified_terms)
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
         # Qualify all of the collation terms, storing the children built along
         # the way.
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         qualified_collations: list[CollationExpression] = []
         for term in unqualified_terms:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
@@ -593,6 +653,119 @@ class Qualifier:
             qualified_parent, children, records_to_keep
         )
         return topk.with_collation(qualified_collations)
+
+    def split_partition_ancestry(
+        self, node: UnqualifiedNode, partition_ancestor: str | None = None
+    ) -> tuple[UnqualifiedNode, UnqualifiedNode, list[str]]:
+        """
+        Divide the ancestry of the given node into two parts, returning a tuple
+        of an ancestor node and a child node whose ancestry points to a ROOT
+        node at the cutoff where it previously pointed to the ancestor, as well
+        as a list of the ancestor names of the child node.
+
+        Args:
+            `node`: the node whose ancestry is to be split.
+            `partition_ancestor`: the name of the ancestor to split at (
+            only supports None, which means the split should occur just
+            below the top-level ancestor).
+
+        Returns:
+            A tuple where the first element is the ancestor of all the data
+            being partitioned, the second is the data being partitioned which
+            now points to an root instead of hte original ancestor, and the
+            third is a list of the ancestor names.
+        """
+
+        # Base case: have reached the top of the ancestry tree.
+        if isinstance(node, UnqualifiedRoot):
+            return node, UnqualifiedRoot(self.graph), []
+
+        new_ancestry: UnqualifiedNode
+        new_child: UnqualifiedNode
+        ancestry_names: list[str]
+
+        # First, recursively handle the preceding node.
+        match node:
+            case (
+                UnqualifiedAccess()
+                | UnqualifiedCalculate()
+                | UnqualifiedWhere()
+                | UnqualifiedTopK()
+                | UnqualifiedOrderBy()
+                | UnqualifiedSingular()
+                | UnqualifiedPartition()
+            ):
+                parent: UnqualifiedNode = node._parcel[0]
+                new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
+                    parent, partition_ancestor
+                )
+            case _:
+                # Any other unqualified node would mean something is malformed.
+                raise PyDoughUnqualifiedException(
+                    f"Unsupported collection node for `split_partition_ancestry`: {node.__class__.__name__}"
+                )
+
+        # Identify whether the current node vs the previous node is the
+        # splitting point for the partitioned data vs its ancestry.
+        if (
+            isinstance(new_child, UnqualifiedRoot)
+            and (
+                isinstance(node, UnqualifiedPartition)
+                or (
+                    isinstance(node, UnqualifiedAccess)
+                    and node._parcel[1] != self.graph.name
+                )
+            )
+            and ((partition_ancestor is None) or (partition_ancestor in ancestry_names))
+        ):
+            if isinstance(node, UnqualifiedAccess):
+                new_child = UnqualifiedAccess(
+                    UnqualifiedRoot(self.graph), *node._parcel[1:]
+                )
+            else:
+                new_child = UnqualifiedPartition(
+                    UnqualifiedRoot(self.graph), *node._parcel[1:]
+                )
+            ancestry_names.append(node._parcel[1])
+            return new_ancestry, new_child, ancestry_names
+
+        appending_to_ancestor: bool = isinstance(new_child, UnqualifiedRoot)
+
+        build_node: list[UnqualifiedNode] = [
+            new_ancestry if appending_to_ancestor else new_child
+        ]
+
+        # Append the current node either to the ancestry (if above the split
+        # point) or the child node (if below the split point).
+        match node:
+            case UnqualifiedAccess():
+                ancestry_names.append(node._parcel[1])
+                build_node[0] = UnqualifiedAccess(build_node[0], *node._parcel[1:])
+            case UnqualifiedPartition():
+                ancestry_names.append(node._parcel[1])
+                build_node[0] = UnqualifiedPartition(build_node[0], *node._parcel[1:])
+            case UnqualifiedWhere():
+                build_node[0] = UnqualifiedWhere(build_node[0], *node._parcel[1:])
+            case UnqualifiedCalculate():
+                build_node[0] = UnqualifiedCalculate(build_node[0], *node._parcel[1:])
+            case UnqualifiedTopK():
+                build_node[0] = UnqualifiedTopK(build_node[0], *node._parcel[1:])
+            case UnqualifiedOrderBy():
+                build_node[0] = UnqualifiedOrderBy(build_node[0], *node._parcel[1:])
+            case UnqualifiedSingular():
+                build_node[0] = UnqualifiedSingular(build_node[0], *node._parcel[1:])
+            case _:
+                # Any other unqualified node would mean something is malformed.
+                raise PyDoughUnqualifiedException(
+                    f"Unsupported collection node `split_partition_ancestry`: {node.__class__.__name__}"
+                )
+
+        if appending_to_ancestor:
+            new_ancestry = build_node[0]
+        else:
+            new_child = build_node[0]
+
+        return new_ancestry, new_child, ancestry_names
 
     def qualify_partition(
         self,
@@ -620,14 +793,16 @@ class Qualifier:
             qualified or is not recognized.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        unqualified_child: UnqualifiedNode = unqualified._parcel[1]
-        child_name: str = unqualified._parcel[2]
-        unqualified_terms: MutableSequence[UnqualifiedNode] = unqualified._parcel[3]
-        # Qualify all both the parent collection and the child that is being
-        # partitioned, using the qualified parent as the context for the
-        # child.
+        child_name: str = unqualified._parcel[1]
+        unqualified_terms: list[UnqualifiedNode] = unqualified._parcel[2]
+        # Split the ancestor tree of unqualified nodes into the ancestor vs
+        # child of the PARTITION, qualifying the former then the latter with
+        # the former as its context.
+        unqualified_parent, unqualified_child, _ = self.split_partition_ancestry(
+            unqualified_parent, None
+        )
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child
+            unqualified_parent, context, True
         )
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child, qualified_parent, True
@@ -636,7 +811,7 @@ class Qualifier:
         # references to expressions in the child), storing the children built
         # along the way (which should just be the child input).
         child_references: list[ChildReferenceExpression] = []
-        children: MutableSequence[PyDoughCollectionQDAG] = []
+        children: list[PyDoughCollectionQDAG] = []
         for term in unqualified_terms:
             qualified_term: PyDoughExpressionQDAG = self.qualify_expression(
                 term, qualified_child, children
@@ -695,7 +870,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedNode,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> PyDoughExpressionQDAG:
         """
         Transforms an `UnqualifiedNode` into a PyDoughExpressionQDAG node.
@@ -818,7 +993,7 @@ class Qualifier:
         self,
         unqualified: UnqualifiedNode,
         context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         is_child: bool,
     ) -> PyDoughQDAG:
         """
