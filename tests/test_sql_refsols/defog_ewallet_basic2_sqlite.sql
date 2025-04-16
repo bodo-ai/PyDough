@@ -1,22 +1,23 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
     coupons.merchant_id AS merchant_id
   FROM main.coupons AS coupons
-), _t0 AS (
+), _s0 AS (
   SELECT
-    merchants.mid AS mid,
-    merchants.name AS name
+    merchants.mid AS merchant_id,
+    merchants.name AS merchant_name,
+    merchants.mid AS mid
   FROM main.merchants AS merchants
 )
 SELECT
-  _t0.mid AS merchant_id,
-  _t0.name AS merchant_name
-FROM _t0 AS _t0
+  _s0.merchant_id AS merchant_id,
+  _s0.merchant_name AS merchant_name
+FROM _s0 AS _s0
 WHERE
   NOT EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1 AS _t1
+    FROM _s1 AS _s1
     WHERE
-      _t0.mid = _t1.merchant_id
+      _s0.mid = _s1.merchant_id
   )

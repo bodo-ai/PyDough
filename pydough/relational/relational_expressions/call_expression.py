@@ -4,7 +4,6 @@ The representation of a column function call for use in a relational tree.
 
 __all__ = ["CallExpression"]
 
-from collections.abc import MutableSequence
 
 from pydough.pydough_operators import PyDoughExpressionOperator
 from pydough.types import PyDoughType
@@ -24,11 +23,11 @@ class CallExpression(RelationalExpression):
         self,
         op: PyDoughExpressionOperator,
         return_type: PyDoughType,
-        inputs: MutableSequence[RelationalExpression],
+        inputs: list[RelationalExpression],
     ) -> None:
         super().__init__(return_type)
         self._op: PyDoughExpressionOperator = op
-        self._inputs: MutableSequence[RelationalExpression] = inputs
+        self._inputs: list[RelationalExpression] = inputs
 
     @property
     def op(self) -> PyDoughExpressionOperator:
@@ -42,7 +41,7 @@ class CallExpression(RelationalExpression):
         return self.op.is_aggregation
 
     @property
-    def inputs(self) -> MutableSequence[RelationalExpression]:
+    def inputs(self) -> list[RelationalExpression]:
         """
         The inputs to the operation.
         """

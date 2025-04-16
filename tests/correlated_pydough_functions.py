@@ -608,3 +608,15 @@ def correl_32():
         )
         .TOP_K(5, by=delta.ASC())
     )
+
+
+def correl_33():
+    # Counts how many orders were made in the first month of orders being made.
+    return TPCH.CALCULATE(first_order_date=MIN(Orders.order_date)).CALCULATE(
+        n=COUNT(
+            Orders.WHERE(
+                (YEAR(order_date) == YEAR(first_order_date))
+                & (MONTH(order_date) == MONTH(first_order_date))
+            )
+        )
+    )

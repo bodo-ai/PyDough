@@ -13,7 +13,6 @@ __all__ = [
 ]
 
 import re
-from collections.abc import Sequence
 from enum import Enum
 from typing import Union
 
@@ -232,7 +231,7 @@ def positive_index(
 
 def pad_helper(
     pad_func: str,
-    args: Sequence[SQLGlotExpression],
+    args: list[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
     Helper function for LPAD and RPAD.

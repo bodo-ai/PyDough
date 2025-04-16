@@ -394,7 +394,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q15,
-            "TPCH.CALCULATE(max_revenue=MAX(Suppliers.CALCULATE(total_revenue=SUM((lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).discount)))).total_revenue)).Suppliers.CALCULATE(S_SUPPKEY=key, S_NAME=name, S_ADDRESS=address, S_PHONE=phone, TOTAL_REVENUE=SUM((lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).discount)))).WHERE((TOTAL_REVENUE == max_revenue)).ORDER_BY(S_SUPPKEY.ASC(na_pos='first'))",
+            "TPCH.CALCULATE(max_revenue=MAX(Suppliers.WHERE(HAS(lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))))).CALCULATE(total_revenue=SUM((lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).discount)))).total_revenue)).Suppliers.WHERE(HAS(lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))))).CALCULATE(S_SUPPKEY=key, S_NAME=name, S_ADDRESS=address, S_PHONE=phone, TOTAL_REVENUE=SUM((lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).extended_price * (1 - lines.WHERE(((ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1)))).discount)))).WHERE((TOTAL_REVENUE == max_revenue)).ORDER_BY(S_SUPPKEY.ASC(na_pos='first'))",
             id="tpch_q15",
         ),
         pytest.param(
@@ -565,7 +565,7 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_2,
-            "The `by` argument to `PERCENTILE` must be a single expression or a non-empty iterable of expressions."
+            "The `by` argument to `PERCENTILE` must be a single expression or a non-empty list/tuple of expressions. "
             "Please refer to the config documentation for more information.",
             id="bad_window_2",
         ),

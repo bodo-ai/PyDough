@@ -1,4 +1,4 @@
-WITH _t1_2 AS (
+WITH _s1 AS (
   SELECT
     COUNT() AS agg_0,
     car_id
@@ -9,9 +9,9 @@ WITH _t1_2 AS (
 SELECT
   cars.make,
   cars.model,
-  COALESCE(_t1.agg_0, 0) AS num_sales
+  COALESCE(_s1.agg_0, 0) AS num_sales
 FROM main.cars AS cars
-LEFT JOIN _t1_2 AS _t1
-  ON _t1.car_id = cars._id
+LEFT JOIN _s1 AS _s1
+  ON _s1.car_id = cars._id
 WHERE
   LOWER(cars.vin_number) LIKE '%m5%'

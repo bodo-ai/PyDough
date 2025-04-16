@@ -7,7 +7,6 @@ ordering.
 __all__ = ["TopK"]
 
 
-from collections.abc import MutableSequence
 from functools import cache
 
 from .collection_qdag import PyDoughCollectionQDAG
@@ -22,7 +21,7 @@ class TopK(OrderBy):
     def __init__(
         self,
         predecessor: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         records_to_keep: int,
     ):
         super().__init__(predecessor, children)

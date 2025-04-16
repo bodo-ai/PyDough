@@ -648,8 +648,6 @@ def impl_defog_dealership_adv1():
         is_weekend=ISIN(DAYOFWEEK(payment_date), (5, 6)),
     )
 
-    is_weekend = ISIN(DAYOFWEEK(PaymentsReceived.payment_date), (5, 6))
-
     return payment_weeks.PARTITION(name="weeks", by=payment_week).CALCULATE(
         payment_week,
         total_payments=COUNT(PaymentsReceived),
@@ -771,7 +769,7 @@ def impl_defog_dealership_adv7():
     matches using LIKE with wildcards.
     """
     return Cars.WHERE(
-        CONTAINS(LOWER(make), "fordS") | CONTAINS(LOWER(model), "mustang")
+        CONTAINS(LOWER(make), "fords") | CONTAINS(LOWER(model), "mustang")
     ).CALCULATE(
         make,
         model,
@@ -858,11 +856,15 @@ def impl_defog_dealership_adv11():
     What is the GPM for all car sales in 2023? GPM (gross profit margin) =
     (total revenue - total cost) / total cost * 100
     """
-    sales_2023 = Sales.WHERE(YEAR(sale_date) == 2023).CALCULATE(car_cost=car.cost)
+    sales_2023 = (
+        Sales.WHERE(YEAR(sale_date) == 2023)
+        .WHERE(HAS(car))
+        .CALCULATE(car_cost=car.cost)
+    )
 
     return Dealership.CALCULATE(
         GPM=(
-            (SUM(sales_2023.sale_price) - SUM(sales_2023.car.cost))
+            (SUM(sales_2023.sale_price) - SUM(sales_2023.car_cost))
             / SUM(sales_2023.car_cost)
         )
         * 100

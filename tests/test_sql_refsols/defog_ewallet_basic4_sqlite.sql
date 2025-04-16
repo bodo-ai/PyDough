@@ -5,23 +5,24 @@ WITH _t0 AS (
   FROM main.notifications AS notifications
   WHERE
     notifications.type = 'transaction'
-), _t1 AS (
+), _s1 AS (
   SELECT
     _t0.user_id AS user_id
   FROM _t0 AS _t0
-), _t0_2 AS (
+), _s0 AS (
   SELECT
-    users.uid AS uid
+    users.uid AS uid,
+    users.uid AS user_id
   FROM main.users AS users
 )
 SELECT
-  _t0.uid AS user_id
-FROM _t0_2 AS _t0
+  _s0.user_id AS user_id
+FROM _s0 AS _s0
 WHERE
   EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1 AS _t1
+    FROM _s1 AS _s1
     WHERE
-      _t0.uid = _t1.user_id
+      _s0.uid = _s1.user_id
   )
