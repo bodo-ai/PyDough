@@ -62,7 +62,9 @@ def culture_events_info():
     # Finds the first 6 cultural events and lists their name, era, year,
     # season, and time of day, ordered chronologically by event.
     return (
-        events.WHERE(event_type == "culture")
+        events.WHERE(
+            (event_type == "culture") & HAS(era) & HAS(season) & HAS(time_of_day)
+        )
         .CALCULATE(
             event_name=name,
             era_name=era.name,
