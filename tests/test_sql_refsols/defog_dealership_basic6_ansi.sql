@@ -11,7 +11,7 @@ WITH _t1 AS (
 )
 SELECT
   state,
-  agg_1 AS unique_customers,
+  COALESCE(agg_1, 0) AS unique_customers,
   COALESCE(agg_0, 0) AS total_revenue
 FROM _t1
 ORDER BY
