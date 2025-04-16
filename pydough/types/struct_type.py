@@ -5,7 +5,6 @@ Definition of the PyDough type for struct types.
 __all__ = ["StructType"]
 
 import re
-from collections.abc import MutableSequence
 
 from .errors import PyDoughTypeException
 from .pydough_type import PyDoughType
@@ -16,7 +15,7 @@ class StructType(PyDoughType):
     The PyDough type representing a collection of named fields.
     """
 
-    def __init__(self, fields: MutableSequence[tuple[str, PyDoughType]]):
+    def __init__(self, fields: list[tuple[str, PyDoughType]]):
         if not (
             isinstance(fields, list)
             and len(fields) > 0
@@ -31,10 +30,10 @@ class StructType(PyDoughType):
             raise PyDoughTypeException(
                 f"Invalid fields type for StructType: {fields!r}"
             )
-        self._fields: MutableSequence[tuple[str, PyDoughType]] = fields
+        self._fields: list[tuple[str, PyDoughType]] = fields
 
     @property
-    def fields(self) -> MutableSequence[tuple[str, PyDoughType]]:
+    def fields(self) -> list[tuple[str, PyDoughType]]:
         """
         The list of fields of the struct in the form (field_name, field_type).
         """
@@ -62,8 +61,8 @@ class StructType(PyDoughType):
 
         # Extract the list of fields from the body string. If the attempt fails,
         # then the parsing fails.
-        fields: MutableSequence[tuple[str, PyDoughType]] | None = (
-            StructType.parse_struct_body(str(match.groups(0)[0]))
+        fields: list[tuple[str, PyDoughType]] | None = StructType.parse_struct_body(
+            str(match.groups(0)[0])
         )
         if fields is None or len(fields) == 0:
             return None
@@ -72,7 +71,7 @@ class StructType(PyDoughType):
     @staticmethod
     def parse_struct_body(
         struct_body_string: str,
-    ) -> MutableSequence[tuple[str, PyDoughType]] | None:
+    ) -> list[tuple[str, PyDoughType]] | None:
         """
         Attempts to parse and extract a list of (field_name, field_type) tuples
         from a string which can contain 1 or more fields in the form
@@ -83,7 +82,7 @@ class StructType(PyDoughType):
         from pydough.types import parse_type_from_string
 
         # Keep track of all fields extracted so far.
-        fields: MutableSequence[tuple[str, PyDoughType]] = []
+        fields: list[tuple[str, PyDoughType]] = []
 
         # Iterate across the string to identify all colons that are candidate
         # splitting locations, where the left hand side is the name of a field
@@ -101,7 +100,7 @@ class StructType(PyDoughType):
                 # PyDough type, then the parsing has succeed in finding a
                 # single (field_name, field_type) pair from the entire string.
                 field_type: PyDoughType | None = None
-                suffix_fields: MutableSequence[tuple[str, PyDoughType]] | None = None
+                suffix_fields: list[tuple[str, PyDoughType]] | None = None
                 try:
                     field_type = parse_type_from_string(struct_body_string[i + 1 :])
                     fields.append((field_name, field_type))

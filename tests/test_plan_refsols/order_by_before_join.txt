@@ -1,5 +1,4 @@
 ROOT(columns=[('key', key_6), ('name', name_7), ('region_key', region_key), ('comment', comment_5)], orderings=[])
- PROJECT(columns={'comment_5': comment_1, 'key_6': key_2, 'name_7': name_3, 'region_key': region_key})
-  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
-   SCAN(table=tpch.REGION, columns={'key': r_regionkey})
-   SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+ JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_5': t1.comment_5, 'key_6': t1.key_6, 'name_7': t1.name_7, 'region_key': t1.region_key})
+  SCAN(table=tpch.REGION, columns={'key': r_regionkey})
+  SCAN(table=tpch.NATION, columns={'comment_5': n_comment, 'key_6': n_nationkey, 'name_7': n_name, 'region_key': n_regionkey})

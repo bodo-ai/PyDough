@@ -1,4 +1,4 @@
-WITH _t2_2 AS (
+WITH _t1 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
@@ -18,29 +18,15 @@ WITH _t2_2 AS (
     orders.o_orderdate,
     lineitem.l_orderkey,
     orders.o_shippriority
-), _t0_2 AS (
-  SELECT
-    order_key AS l_orderkey,
-    order_date AS o_orderdate,
-    ship_priority AS o_shippriority,
-    COALESCE(agg_0, 0) AS revenue,
-    COALESCE(agg_0, 0) AS ordering_1,
-    order_date AS ordering_2,
-    order_key AS ordering_3
-  FROM _t2_2
-  ORDER BY
-    ordering_1 DESC,
-    ordering_2,
-    ordering_3
-  LIMIT 10
 )
 SELECT
-  l_orderkey AS L_ORDERKEY,
-  revenue AS REVENUE,
-  o_orderdate AS O_ORDERDATE,
-  o_shippriority AS O_SHIPPRIORITY
-FROM _t0_2
+  order_key AS L_ORDERKEY,
+  COALESCE(agg_0, 0) AS REVENUE,
+  order_date AS O_ORDERDATE,
+  ship_priority AS O_SHIPPRIORITY
+FROM _t1
 ORDER BY
-  ordering_1 DESC,
-  ordering_2,
-  ordering_3
+  revenue DESC,
+  o_orderdate,
+  l_orderkey
+LIMIT 10

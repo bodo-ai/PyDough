@@ -1756,7 +1756,10 @@ class HybridTranslator:
         )
         # The null-adding join is not done if this is the root level, since
         # that just means all the aggregations are no-groupby aggregations.
-        joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
+        joins_can_nullify: bool = not (
+            isinstance(hybrid.pipeline[0], HybridRoot)
+            or child_connection.connection_type.is_semi
+        )
         return self.postprocess_agg_output(count_call, result_ref, joins_can_nullify)
 
     def handle_has_hasnot(
@@ -1893,7 +1896,10 @@ class HybridTranslator:
         result_ref: HybridExpr = HybridChildRefExpr(
             agg_name, child_idx, expr.pydough_type
         )
-        joins_can_nullify: bool = not isinstance(hybrid.pipeline[0], HybridRoot)
+        joins_can_nullify: bool = not (
+            isinstance(hybrid.pipeline[0], HybridRoot)
+            or child_connection.connection_type.is_semi
+        )
         return self.postprocess_agg_output(hybrid_call, result_ref, joins_can_nullify)
 
     def rewrite_median_call(
@@ -2316,12 +2322,17 @@ class HybridTranslator:
         """
         new_expressions: dict[str, HybridExpr] = {}
         hybrid_orderings: list[HybridCollation] = []
+        name: str
+        expr: HybridExpr
         for collation in collations:
-            name = self.get_ordering_name(hybrid)
-            expr = self.make_hybrid_expr(
-                hybrid, collation.expr, child_ref_mapping, False
-            )
-            new_expressions[name] = expr
+            if type(collation.expr) is Reference:
+                name = collation.expr.term_name
+            else:
+                name = self.get_ordering_name(hybrid)
+                expr = self.make_hybrid_expr(
+                    hybrid, collation.expr, child_ref_mapping, False
+                )
+                new_expressions[name] = expr
             new_collation: HybridCollation = HybridCollation(
                 HybridRefExpr(name, collation.expr.pydough_type),
                 collation.asc,

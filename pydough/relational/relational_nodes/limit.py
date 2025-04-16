@@ -4,8 +4,6 @@ This is the relational representation of top-n selection and typically depends
 on explicit ordering of the input relation.
 """
 
-from collections.abc import MutableMapping, MutableSequence
-
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     RelationalExpression,
@@ -27,8 +25,8 @@ class Limit(SingleRelational):
         self,
         input: RelationalNode,
         limit: RelationalExpression,
-        columns: MutableMapping[str, RelationalExpression],
-        orderings: MutableSequence[ExpressionSortInfo] | None = None,
+        columns: dict[str, RelationalExpression],
+        orderings: list[ExpressionSortInfo] | None = None,
     ) -> None:
         super().__init__(input, columns)
         # Note: The limit is a relational expression because it should be a constant
@@ -38,7 +36,7 @@ class Limit(SingleRelational):
             "Limit must be an integer type."
         )
         self._limit: RelationalExpression = limit
-        self._orderings: MutableSequence[ExpressionSortInfo] = (
+        self._orderings: list[ExpressionSortInfo] = (
             [] if orderings is None else orderings
         )
 
@@ -50,7 +48,7 @@ class Limit(SingleRelational):
         return self._limit
 
     @property
-    def orderings(self) -> MutableSequence[ExpressionSortInfo]:
+    def orderings(self) -> list[ExpressionSortInfo]:
         """
         The orderings that are used to determine the top-n rows.
         """
@@ -75,8 +73,8 @@ class Limit(SingleRelational):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Limit node should have exactly one input"
         return Limit(inputs[0], self.limit, columns, self.orderings)

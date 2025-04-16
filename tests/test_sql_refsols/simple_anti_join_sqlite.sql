@@ -1,16 +1,16 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
     table.a AS a
   FROM table AS table
 )
 SELECT
-  _t0.a AS a
-FROM _t1 AS _t0
+  _s0.a AS a
+FROM _s1 AS _s0
 WHERE
   NOT EXISTS(
     SELECT
       1 AS "1"
-    FROM _t1 AS _t1
+    FROM _s1 AS _s1
     WHERE
-      _t0.a = _t1.a
+      _s0.a = _s1.a
   )

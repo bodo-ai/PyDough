@@ -1,0 +1,7 @@
+ROOT(columns=[('avg_gap', agg_0)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'agg_0': AVG(day_gap)})
+  PROJECT(columns={'day_gap': DATEDIFF('days':string, order_date, SMALLEST(commit_date, receipt_date))})
+   JOIN(conditions=[t0.order_key == t1.key], types=['inner'], columns={'commit_date': t0.commit_date, 'order_date': t1.order_date, 'receipt_date': t0.receipt_date})
+    FILTER(condition=ship_mode == 'RAIL':string, columns={'commit_date': commit_date, 'order_key': order_key, 'receipt_date': receipt_date})
+     SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate, 'ship_mode': l_shipmode})
+    SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_date': o_orderdate})

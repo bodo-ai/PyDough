@@ -4,8 +4,6 @@ This node is responsible for enforcing the final orderings and columns as well
 as any other traits that impact the shape/display of the final output.
 """
 
-from collections.abc import MutableMapping, MutableSequence
-
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     RelationalExpression,
@@ -25,30 +23,28 @@ class RelationalRoot(SingleRelational):
     def __init__(
         self,
         input: RelationalNode,
-        ordered_columns: MutableSequence[tuple[str, RelationalExpression]],
-        orderings: MutableSequence[ExpressionSortInfo] | None = None,
+        ordered_columns: list[tuple[str, RelationalExpression]],
+        orderings: list[ExpressionSortInfo] | None = None,
     ) -> None:
         columns = dict(ordered_columns)
         assert len(columns) == len(ordered_columns), (
             "Duplicate column names found in root."
         )
         super().__init__(input, columns)
-        self._ordered_columns: MutableSequence[tuple[str, RelationalExpression]] = (
-            ordered_columns
-        )
-        self._orderings: MutableSequence[ExpressionSortInfo] = (
+        self._ordered_columns: list[tuple[str, RelationalExpression]] = ordered_columns
+        self._orderings: list[ExpressionSortInfo] = (
             [] if orderings is None else orderings
         )
 
     @property
-    def ordered_columns(self) -> MutableSequence[tuple[str, RelationalExpression]]:
+    def ordered_columns(self) -> list[tuple[str, RelationalExpression]]:
         """
         The columns in the final order that the output should be in.
         """
         return self._ordered_columns
 
     @property
-    def orderings(self) -> MutableSequence[ExpressionSortInfo]:
+    def orderings(self) -> list[ExpressionSortInfo]:
         """
         The orderings that are used to determine the final output order if
         any.
@@ -80,8 +76,8 @@ class RelationalRoot(SingleRelational):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Root node should have exactly one input"
         assert columns == self.columns, "Root columns should not be modified"

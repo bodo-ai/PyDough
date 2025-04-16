@@ -115,6 +115,8 @@ These functions must be called on singular data as a function.
 - `POWER`: exponentiates the first argument to the power of second argument.
 - `SQRT`: returns the square root of the input. 
 - `SIGN`: returns the sign of the input. It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+- `SMALLEST`: returns the smallest value from the set of values it is called on.
+- `LARGEST`: returns the largest value from the set of values it is called on.
 
 #### Aggregation Functions
 
