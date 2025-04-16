@@ -1777,9 +1777,9 @@ class HybridTranslator:
         """
         # If doing a SUM or AVG, and the configs are set to default those
         # functions to zero when there are no values, decorate the result
-        # with `DEFAULT_TO(x, 0)`. Also, always does this step with COUNT for
-        # left joins since the semantics of that function never allow returning
-        # NULL.
+        # with `DEFAULT_TO(x, 0)`. Also, always does this step with
+        # COUNT/NDISTINCT for left joins since the semantics of those functions
+        # never allow returning NULL.
         if (
             (agg_call.operator == pydop.SUM and self.configs.sum_default_zero)
             or (agg_call.operator == pydop.AVG and self.configs.avg_default_zero)
