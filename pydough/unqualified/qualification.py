@@ -20,6 +20,7 @@ from pydough.qdag import (
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
+    ExpressionFunctionCall,
     GlobalContext,
     Literal,
     OrderBy,
@@ -30,6 +31,7 @@ from pydough.qdag import (
     Reference,
     TopK,
     Where,
+    WindowCall,
 )
 from pydough.types import PyDoughType
 
@@ -974,17 +976,27 @@ class Qualifier:
         qualified_child: PyDoughCollectionQDAG = self.builder.build_where(
             qualified_parent, children
         ).with_condition(qualified_cond)
-        # levels: int | None = None
+
+        # Extract the `levels` argument from the condition
+        assert isinstance(qualified_cond, ExpressionFunctionCall)
+        rank_call = qualified_cond.args[0]
+        assert isinstance(rank_call, WindowCall)
+        levels: int | None = rank_call.levels
 
         # Add `SINGULAR` if applicable (there is a levels argument and that
         # ancestor either is the context or is singular withr egards to it).
         # if-applicable (not allowing ties, not keeping multiple bests, not in
         # the form `x.BEST(y)` unless as a child & the x is already singular).
-        # if n_best == 1 and not allow_ties and is_child:
-        #     base: PyDoughCollectionQDAG = qualified_parent.starting_predecessor
-        #     relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
-        #     if base is relative_ancestor or base.is_singular(relative_ancestor):
-        #         qualified_child = self.builder.build_singular(qualified_child)
+        if n_best == 1 and not allow_ties and is_child:
+            base: PyDoughCollectionQDAG = qualified_parent
+            if levels is not None:
+                for _ in range(levels):
+                    assert base.ancestor_context is not None
+                    base = base.ancestor_context
+                base = base.starting_predecessor
+                relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
+                if base == relative_ancestor or base.is_singular(relative_ancestor):
+                    qualified_child = self.builder.build_singular(qualified_child)
 
         return qualified_child
 

@@ -138,7 +138,7 @@ def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
     the customers are singular with regards to the nation, the nations are
     still plural with regards to the region.
     """
-    best_customer = root.nations.customers.BEST(per="Regions", by=root.acctbal.DESC())
+    best_customer = root.nations.customers.BEST(per="nations", by=root.acctbal.DESC())
     return root.Regions.CALCULATE(n=best_customer.name)
 
 

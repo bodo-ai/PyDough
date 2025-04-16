@@ -6,7 +6,7 @@ ROOT(columns=[('supplier_name', supplier_name), ('part_name', part_name), ('tota
     FILTER(condition=name == 'FRANCE':string, columns={'key': key})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
    PROJECT(columns={'n_shipments': n_shipments, 'part_name': part_name, 'supplier_key': supplier_key, 'total_quantity': quantity})
-    FILTER(condition=RANKING(args=[], partition=[], order=[(quantity):desc_first], levels=1, allow_ties=False) == 1:int64, columns={'n_shipments': n_shipments, 'part_name': part_name, 'quantity': quantity, 'supplier_key': supplier_key})
+    FILTER(condition=RANKING(args=[], partition=[supplier_key], order=[(quantity):desc_first], allow_ties=False) == 1:int64, columns={'n_shipments': n_shipments, 'part_name': part_name, 'quantity': quantity, 'supplier_key': supplier_key})
      PROJECT(columns={'n_shipments': agg_0, 'part_name': name, 'quantity': DEFAULT_TO(agg_1, 0:int64), 'supplier_key': supplier_key})
       JOIN(conditions=[t0.part_key == t1.key], types=['left'], columns={'agg_0': t0.agg_0, 'agg_1': t0.agg_1, 'name': t1.name, 'supplier_key': t0.supplier_key})
        JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['inner'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'part_key': t0.part_key, 'supplier_key': t0.supplier_key})
