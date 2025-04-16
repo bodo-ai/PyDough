@@ -12,6 +12,7 @@ from .abstract_expression import RelationalExpression
 from .call_expression import CallExpression
 from .column_reference import ColumnReference
 from .correlated_reference import CorrelatedReference
+from .expression_sort_info import ExpressionSortInfo
 from .literal_expression import LiteralExpression
 from .window_call_expression import WindowCallExpression
 
@@ -45,8 +46,6 @@ class RelationalExpressionShuttle(ABC):
     def visit_window_expression(
         self, window_expression: WindowCallExpression
     ) -> RelationalExpression:
-        from .expression_sort_info import ExpressionSortInfo
-
         args = [arg.accept_shuttle(self) for arg in window_expression.inputs]
         partition_args = [
             arg.accept_shuttle(self) for arg in window_expression.partition_inputs
