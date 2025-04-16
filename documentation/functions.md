@@ -729,7 +729,7 @@ Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
 
 ### SMALLEST
 
-The `SMALLEST` function returns the smallest value from the set of values it is called on. It can take in a variable number of arguments, but at least one argument is required. If any of the arguments are `NULL`, the function will return `NULL`.
+The `SMALLEST` function returns the smallest value from the set of values it is called on. It can take in a variable number of arguments, but at least two arguments are required. If any of the arguments are `NULL`, the function will return `NULL`.
 
 ```py
 TPCH.CALCULATE(
@@ -751,7 +751,7 @@ return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))
 
 ### LARGEST
 
-The `LARGEST` function returns the largest value from the set of values it is called on. It can take in a variable number of arguments, but at least one argument is required. If any of the arguments are NULL, the function will return NULL.
+The `LARGEST` function returns the largest value from the set of values it is called on. It can take in a variable number of arguments, but at least two arguments are required. If any of the arguments are `NULL`, the function will return `NULL`.
 
 ```py
 TPCH.CALCULATE(
