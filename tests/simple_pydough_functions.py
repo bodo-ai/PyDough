@@ -1783,6 +1783,10 @@ def string_format_specifiers_sqlite():
         d22=STRING(static_date, "%Y"),
         # month-day-year
         d23=STRING(static_date, "%m-%d-%Y"),
+        # am
+        d24=STRING("2023-07-15 2:30:45 am", "%p"),
+        # pm
+        d25=STRING("2023-07-15 2:30:45 pm", "%p"),
     )
 
 

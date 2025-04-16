@@ -78,7 +78,7 @@ from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -1469,6 +1469,8 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
+    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

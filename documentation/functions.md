@@ -1055,11 +1055,12 @@ The `RELSIZE` function returns the number of total records, either globally or t
 
 
 ```py
-# Divides each customer's account balance by the number of total customers.
+# Divides each customer's account balance by
+# the number of total customers.
 Customers.CALCULATE(ratio = acctbal / RELSIZE())
 
-# Divides each customer's account balance by the number of total customers in
-# that nation.
+# Divides each customer's account balance by the
+# number of total customers in that nation.
 Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
 ```
 
@@ -1068,6 +1069,7 @@ Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
 
 ## Casting Functions
 
+<!-- TOC --><a name="string"></a>
 ### STRING
 
 The `STRING` function casts the first argument to a string data type. The first argument can be of any data type. This function also supports formatting of dates. This is possible by placing a date-time format string in the second argument. **Please refer to your underlying database's documentation for the format strings it supports.**
@@ -1075,10 +1077,12 @@ The `STRING` function casts the first argument to a string data type. The first 
 
 ```py
 Orders.CALCULATE(
-   # casts the key column(numeric type) to a string.
+   # Casts the key column (numeric type) to a string.
    key_string=STRING(key),
-   # casts the order_date column(date type) to a string with the format YYYY-MM-DD.
-   # Please refer to your underlying database's documentation for the format strings it supports.
+   # Casts the order_date column (date type) to a string
+   # with the format YYYY-MM-DD.
+   # Please refer to your underlying database's documentation
+   # for the format strings it supports.
    # In this case, the database used is SQLite.
    order_date_string=STRING(order_date, "%Y-%m-%d"),
 )
@@ -1088,21 +1092,22 @@ Here is a list of reference links for the format strings of different databases:
 
 - [SQLite](https://www.sqlite.org/lang_datefunc.html)
 
-
+<!-- TOC --><a name="integer"></a>
 
 ### INTEGER
 
 The `INTEGER` function casts the argument to an integer.
 
 ```py
-# casts the key column(numeric type) to an integer.
 Orders.CALCULATE(
-   # casts the total_price column(decimal type) to an integer.
+   # Casts the total_price column (decimal type) to an integer.
    total_price_int=INTEGER(total_price),
-   # casts the string "2" to an integer.
+   # Casts the string "2" to an integer.
    discount = INTEGER("2")
 )
 ```
+
+<!-- TOC --><a name="float"></a>
 
 ### FLOAT
 
@@ -1110,9 +1115,9 @@ The `FLOAT` function casts the argument to a float.
 
 ```py
 Orders.CALCULATE(
-   # casts the ship_priority column(integer type) to a float.
+   # Casts the ship_priority column (integer type) to a float.
    ship_priority_float=FLOAT(ship_priority),
-   # casts the string "2" to a float.
+   # Casts the string "2" to a float.
    discount = FLOAT("2")
 )
 ```
