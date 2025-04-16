@@ -422,7 +422,6 @@ class SQLiteTransformBindings(BaseTransformBindings):
                     ],
                     [StringType()] * 3,
                 )
-                # breakpoint()
                 if isinstance(month_trunc, sqlglot_expressions.Date):
                     month_trunc.this.append(offset_expr_qtr)
                     return month_trunc
