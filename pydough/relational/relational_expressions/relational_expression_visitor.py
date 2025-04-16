@@ -4,8 +4,6 @@ expression components of a Relational tree. The primary motivation of
 this module is to allow associating lowering the Relational expressions
 into a specific backend in a single class, but this can also be
 used for any other tree based operations (e.g. string generation).
-
-TODO: (gh #172) Fix type annotations. Disabled due to circular imports.
 """
 
 from abc import ABC, abstractmethod
