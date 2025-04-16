@@ -5,88 +5,88 @@ Below is the list of every function/operator currently supported in PyDough as a
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
 - [Binary Operators](#binary-operators)
-  * [Arithmetic](#arithmetic)
-  * [Comparisons](#comparisons)
-  * [Logical](#logical)
+   * [Arithmetic](#arithmetic)
+   * [Comparisons](#comparisons)
+   * [Logical](#logical)
 - [Unary Operators](#unary-operators)
-  * [Negation](#negation)
+   * [Negation](#negation)
 - [Other Operators](#other-operators)
-  * [Slicing](#slicing)
+   * [Slicing](#slicing)
 - [String Functions](#string-functions)
-  * [LOWER](#lower)
-  * [UPPER](#upper)
-  * [LENGTH](#length)
-  * [STARTSWITH](#startswith)
-  * [ENDSWITH](#endswith)
-  * [CONTAINS](#contains)
-  * [LIKE](#like)
-  * [JOIN_STRINGS](#join_strings)
-  * [LPAD](#lpad)
-  * [RPAD](#rpad)
-  * [FIND](#find)
-  * [STRIP](#strip)
+   * [LOWER](#lower)
+   * [UPPER](#upper)
+   * [LENGTH](#length)
+   * [STARTSWITH](#startswith)
+   * [ENDSWITH](#endswith)
+   * [CONTAINS](#contains)
+   * [LIKE](#like)
+   * [JOIN_STRINGS](#join_strings)
+   * [LPAD](#lpad)
+   * [RPAD](#rpad)
+   * [FIND](#find)
+   * [STRIP](#strip)
 - [Datetime Functions](#datetime-functions)
-  * [DATETIME](#datetime)
-  * [YEAR](#year)
-  * [QUARTER](#quarter)
-  * [MONTH](#month)
-  * [DAY](#day)
-  * [HOUR](#hour)
-  * [MINUTE](#minute)
-  * [SECOND](#second)
-  * [DATEDIFF](#datediff)
-  * [DAYOFWEEK](#dayofweek)
-  * [DAYNAME](#dayname)
+   * [DATETIME](#datetime)
+   * [YEAR](#year)
+   * [QUARTER](#quarter)
+   * [MONTH](#month)
+   * [DAY](#day)
+   * [HOUR](#hour)
+   * [MINUTE](#minute)
+   * [SECOND](#second)
+   * [DATEDIFF](#datediff)
+   * [DAYOFWEEK](#dayofweek)
+   * [DAYNAME](#dayname)
 - [Conditional Functions](#conditional-functions)
-  * [IFF](#iff)
-  * [ISIN](#isin)
-  * [DEFAULT_TO](#default_to)
-  * [PRESENT](#present)
-  * [ABSENT](#absent)
-  * [KEEP_IF](#keep_if)
-  * [MONOTONIC](#monotonic)
+   * [IFF](#iff)
+   * [ISIN](#isin)
+   * [DEFAULT_TO](#default_to)
+   * [PRESENT](#present)
+   * [ABSENT](#absent)
+   * [KEEP_IF](#keep_if)
+   * [MONOTONIC](#monotonic)
 - [Numerical Functions](#numerical-functions)
-  * [ABS](#abs)
-  * [ROUND](#round)
-  * [POWER](#power)
-  * [SQRT](#sqrt)
-  * [SIGN](#sign)
-  * [SMALLEST](#smallest)
-  * [LARGEST](#largest)
+   * [ABS](#abs)
+   * [ROUND](#round)
+   * [POWER](#power)
+   * [SQRT](#sqrt)
+   * [SIGN](#sign)
+   * [SMALLEST](#smallest)
+   * [LARGEST](#largest)
 - [Aggregation Functions](#aggregation-functions)
-  * [SUM](#sum)
-  * [AVG](#avg)
-  * [MEDIAN](#median)
-  * [MIN](#min)
-  * [MAX](#max)
-  * [ANYTHING](#anything)
-  * [COUNT](#count)
-  * [NDISTINCT](#ndistinct)
-  * [HAS](#has)
-  * [HASNOT](#hasnot)
+   * [SUM](#sum)
+   * [AVG](#avg)
+   * [MEDIAN](#median)
+   * [MIN](#min)
+   * [MAX](#max)
+   * [ANYTHING](#anything)
+   * [COUNT](#count)
+   * [NDISTINCT](#ndistinct)
+   * [HAS](#has)
+   * [HASNOT](#hasnot)
 - [Window Functions](#window-functions)
-  * [RANKING](#ranking)
-  * [PERCENTILE](#percentile)
-  * [PREV](#prev)
-  * [NEXT](#next)
-  * [RELSUM](#relsum)
-  * [RELAVG](#relavg)
-  * [RELCOUNT](#relcount)
-  * [RELSIZE](#relsize)
+   * [RANKING](#ranking)
+   * [PERCENTILE](#percentile)
+   * [PREV](#prev)
+   * [NEXT](#next)
+   * [RELSUM](#relsum)
+   * [RELAVG](#relavg)
+   * [RELCOUNT](#relcount)
+   * [RELSIZE](#relsize)
 - [Banned Python Logic](#banned-python-logic)
-  * [\_\_bool\_\_](#__bool__)
-  * [\_\_call\_\_](#call_banned)
-  * [\_\_floor\_\_](#floor_banned)
-  * [\_\_ceil\_\_](#ceil_banned)
-  * [\_\_trunc\_\_](#trunc_banned)
-  * [\_\_reversed\_\_](#reversed_banned)
-  * [\_\_int\_\_](#int_banned)
-  * [\_\_float\_\_](#float_banned)
-  * [\_\_complex\_\_](#complex_banned)
-  * [\_\_index\_\_](#index_banned)
-  * [\_\_len\_\_](#len_banned)
-  * [\_\_contains\_\_](#contains_banned)
-  * [\_\_setitem\_\_](#setitem_banned)
+   * [\_\_bool\_\_](#__bool__)
+   * [\_\_call\_\_](#call_banned)
+   * [\_\_floor\_\_](#floor_banned)
+   * [\_\_ceil\_\_](#ceil_banned)
+   * [\_\_trunc\_\_](#trunc_banned)
+   * [\_\_reversed\_\_](#reversed_banned)
+   * [\_\_int\_\_](#int_banned)
+   * [\_\_float\_\_](#float_banned)
+   * [\_\_complex\_\_](#complex_banned)
+   * [\_\_index\_\_](#index_banned)
+   * [\_\_len\_\_](#len_banned)
+   * [\_\_contains\_\_](#contains_banned)
+   * [\_\_setitem\_\_](#setitem_banned)
 
 <!-- TOC end -->
 
@@ -289,7 +289,6 @@ Regions.CALCULATE(
 For instance, `JOIN_STRINGS("; ", "Alpha", "Beta", "Gamma)` returns `"Alpha; Beta; Gamma"`.
 
 <!-- TOC --><a name="lpad"></a>
-
 ### LPAD
 
 The `LPAD` function pads an expression on the left side with a specified padding character until it is the desired length. It takes three arguments:
@@ -300,7 +299,7 @@ The `LPAD` function pads an expression on the left side with a specified padding
 
 The function behaves as follows:
 
-- If the input expression is shorter than the desired length, it adds padding characters on the left until reaching the desired length.
+- If the input expression is shorter than the desired length, it adds padding characters on the left until reaching the desired length. 
 - If the input expression is longer than the desired length, it truncates the expression by removing characters from the right side until it matches the desired length.
 - If the desired length is 0, it returns an empty string.
 - If the desired length is negative, it raises an error.
@@ -320,7 +319,6 @@ Here are examples on how it pads on string literals:
 | `LPAD("123", 0, "0")` | `""` |
 
 <!-- TOC --><a name="rpad"></a>
-
 ### RPAD
 
 The `RPAD` function pads an expression on the right side with a specified padding character until it is the desired length. It takes three arguments:
@@ -384,12 +382,12 @@ Customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trail
 Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
 ```
 
-| **Input String (X)**  | **STRIP(X, Y)**                       | **Result**      |
-| --------------------- | ------------------------------------- | --------------- |
-| `'abcXYZcba'`         | `STRIP('abcXYZcba','abc')`            | `'XYZ'`         |
-| `'$$Hello$$'`         | `STRIP('$$Hello$$','$$')`             | `'Hello'`       |
-| `'---Test-String---'` | `STRIP('---Test-String---','-')`      | `'Test-String'` |
-| `'123456Hello654321'` | `STRIP('123456Hello654321','123456')` | `'Hello'`       |
+| **Input String (X)**       | **STRIP(X, Y)**                    | **Result**          |
+|-----------------------------|---------------------------------------|---------------------|
+| `'abcXYZcba'`              | `STRIP('abcXYZcba','abc')`        | `'XYZ'`            |
+| `'$$Hello$$'`              | `STRIP('$$Hello$$','$$')`          | `'Hello'`          |
+| `'---Test-String---'`      | `STRIP('---Test-String---','-')`  | `'Test-String'`    |
+| `'123456Hello654321'`      | `STRIP('123456Hello654321','123456')` | `'Hello'`         |
 
 <!-- TOC --><a name="datetime-functions"></a>
 
@@ -398,7 +396,6 @@ Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading 
 Below is each function currently supported in PyDough that operates on date/time/timestamp values.
 
 <!-- TOC --><a name="datetime"></a>
-
 ### DATETIME
 
 The `DATETIME` function is used to build/augment date/timestamp values. The first argument is the base date/timestamp, and it can optionally take in a variable number of modifier arguments.
@@ -414,7 +411,6 @@ The base argument can be one of the following:
 > Other datetime functions ([DATEDIFF](#datediff), [YEAR](#year), [QUARTER](#quarter), [MONTH](#month), [DAY](#day), [HOUR](#hour), [MINUTE](#minute) or [SECOND](#second)) also allow any of the base arguments above as datetime values. For example, you can call `YEAR("now")`, `DATEDIFF("months", dt, pd.Timestamp("2024-03-14")))`, `MONTH("1999-06-13")`, or `DATEDIFF("days", datetime.date(2025, 1, 1), "now")`.
 
 The modifier arguments can be the following (all of the options are case-insensitive and ignore leading/trailing/extra whitespace):
-
 - A string literal in the format `start of <UNIT>` indicating to truncate the datetime value to a certain unit, which can be the following:
   - **Years**: Supported aliases are `"years"`, `"year"`, and `"y"`.
   - **Quarters**: Supported aliases are `"quarters"`, `"quarter"`, and `"q"`.
@@ -538,7 +534,7 @@ Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`
   # If x is "2025-03-18" (Tuesday) and y is "2025-03-31" (Monday)
   DATEDIFF("weeks", x, y) returns 2
   ```
-  Please see the [Session Configs](./usage.md#session-configs) documentation for more details and in-depth examples.
+ Please see the [Session Configs](./usage.md#session-configs) documentation for more details and in-depth examples.
 - `DATEDIFF("days", x, y)`: Returns the **number of full days since x that y occurred**. For example, if **x** is 11:59 PM on one day, and **y** is 12:01 AM the next day, it counts as **1 day apart**, even though they are only 2 minutes apart.
 - `DATEDIFF("hours", x, y)`: Returns the **number of full hours since x that y occurred**. For example, if **x** is 6:59 PM and **y** is 7:01 PM on the same day, it counts as **1 hour apart**, even though the difference is only 2 minutes.
 - `DATEDIFF("minutes", x, y)`: Returns the **number of full minutes since x that y occurred**. For example, if **x** is 7:00 PM and **y** is 7:01 PM, it counts as **1 minute apart**, even though the difference is exactly 60 seconds.
@@ -547,7 +543,7 @@ Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`
 ```py
 # Calculates, for each order, the number of days since January 1st 1992
 # that the order was placed:
-Orders.CALCULATE(
+Orders.CALCULATE( 
    days_since=DATEDIFF("days",datetime.date(1992, 1, 1), order_date)
 )
 ```
@@ -569,15 +565,16 @@ Orders.CALCULATE(day_of_week = DAYOFWEEK(order_date))
 
 The following table shows the day of the week for a given date/timestamp, where the first day of the give date/timestamp is decided by the `start_of_week` config and if the week starts at 0 or 1 decided by the `start_week_as_zero` config.
 
-| Day of Week | Start is Sunday, Start at 0 | Start is Sunday, Start at 1 | Start is Monday, Start at 0 | Start is Monday, Start at 1 |
-| ----------- | --------------------------- | --------------------------- | --------------------------- | --------------------------- |
-| Sunday      | 0                           | 1                           | 6                           | 7                           |
-| Monday      | 1                           | 2                           | 0                           | 1                           |
-| Tuesday     | 2                           | 3                           | 1                           | 2                           |
-| Wednesday   | 3                           | 4                           | 2                           | 3                           |
-| Thursday    | 4                           | 5                           | 3                           | 4                           |
-| Friday      | 5                           | 6                           | 4                           | 5                           |
-| Saturday    | 6                           | 7                           | 5                           | 6                           |
+| Day of Week  | Start is Sunday, Start at 0 | Start is Sunday, Start at 1 | Start is Monday, Start at 0 | Start is Monday, Start at 1 |
+|--------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| Sunday       | 0                           | 1                           | 6                           | 7                           |
+| Monday       | 1                           | 2                           | 0                           | 1                           |
+| Tuesday      | 2                           | 3                           | 1                           | 2                           |
+| Wednesday    | 3                           | 4                           | 2                           | 3                           |
+| Thursday     | 4                           | 5                           | 3                           | 4                           |
+| Friday       | 5                           | 6                           | 4                           | 5                           |
+| Saturday     | 6                           | 7                           | 5                           | 6                           |
+
 
 <!-- TOC --><a name="dayname"></a>
 
@@ -691,7 +688,7 @@ Customers.CALCULATE(acct_magnitude = abs(acctbal))
 
 ### ROUND
 
-The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places. The Python builtin `round()` function can also be used to accomplish the same thing.
+The `ROUND` function rounds its first argument to the precision of its second argument. The rounding rules used depend on the database's round function. The second argument is optional, and if not provided, the first argument is rounded to 0 decimal places. The Python builtin `round()` function can also be used to accomplish the same thing. 
 
 ```py
 Parts.CALCULATE(rounded_price = ROUND(retail_price, 1))
@@ -1040,6 +1037,7 @@ The `NEXT` function returns the value of an expression from a following record i
 - `by`: 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
 
+
 <!-- TOC --><a name="relsum"></a>
 
 ### RELSUM
@@ -1061,6 +1059,7 @@ Customers.CALCULATE(ratio=acctbal / RELSUM(acctbal))
 Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, per="Nations"))
 ```
 
+
 <!-- TOC --><a name="relavg"></a>
 
 ### RELAVG
@@ -1080,6 +1079,7 @@ Customers.WHERE(acctbal > RELAVG(acctbal))
 Nations.customers.WHERE(acctbal > RELAVG(acctbal, per="Nations"))
 ```
 
+
 <!-- TOC --><a name="relcount"></a>
 
 ### RELCOUNT
@@ -1088,6 +1088,7 @@ The `RELCOUNT` function returns the number of non-null records in multiple rows 
 
 - `expression`: the singular expression to count the number of non-null entries across multiple rows.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
+
 
 ```py
 # Divides each customer's account balance by the total number of positive
@@ -1099,6 +1100,7 @@ Customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
 Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), per="Nations"))
 ```
 
+
 <!-- TOC --><a name="relsize"></a>
 
 ### RELSIZE
@@ -1106,6 +1108,7 @@ Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal 
 The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection rows per some ancestor collection. The arguments:
 
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
+
 
 ```py
 # Divides each customer's account balance by the number of total customers.
@@ -1115,6 +1118,7 @@ Customers.CALCULATE(ratio = acctbal / RELSIZE())
 # that nation.
 Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
 ```
+
 
 ## Banned Python Logic
 
@@ -1136,7 +1140,7 @@ Customers.WHERE((acctbal > 0) and (nation.name == "GERMANY"))
 # Customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
 
 Orders.WHERE((discount > 0.05) or (tax > 0.08))
-# Use `|` instead of `or`
+# Use `|` instead of `or` 
 # Orders.WHERE((discount > 0.05) | (tax > 0.08))
 
 Parts.WHERE(not(retail_price > 1000))
