@@ -180,3 +180,47 @@ def unique_users_per_engine():
         )
         .ORDER_BY(engine.ASC())
     )
+
+
+def overlapping_event_search_other_users_per_user():
+    # For each user, count how many different users searched for the same event
+    # as them. Find the 7 users with the most overlap, breaking ties
+    # alphabetically.
+    search_overlap_customers = searches.events.searches.user.WHERE(
+        name != original_user_name
+    )
+    return (
+        users.CALCULATE(original_user_name=name)
+        .WHERE(HAS(search_overlap_customers))
+        .CALCULATE(
+            user_name=original_user_name,
+            n_other_users=NDISTINCT(search_overlap_customers.user_id),
+        )
+        .TOP_K(7, by=(n_other_users.DESC(), original_user_name.ASC()))
+    )
+
+
+def overlapping_event_searches_per_user():
+    # For each user, count how many of their searches were for an event that
+    # was searched for by at least one other user. Find the 4 users with the
+    # most such searches, breaking ties alphabetically.
+    same_event_other_user = events.searches.user.WHERE(name != original_user_name)
+    selected_searches = searches.WHERE(
+        (COUNT(same_event_other_user) > 0) & HAS(same_event_other_user)
+    )
+    return (
+        users.CALCULATE(original_user_name=name)
+        .WHERE(HAS(selected_searches))
+        .CALCULATE(user_name=original_user_name, n_searches=COUNT(selected_searches))
+        .TOP_K(4, by=(n_searches.DESC(), original_user_name.ASC()))
+    )
+
+
+def search_results_by_tod():
+    # For each time of day, count the percentage of all searches made during
+    # that time of day and the average number of search results returned.
+    return times_of_day.CALCULATE(
+        tod=name,
+        pct_searches=ROUND((100.0 * COUNT(searches)) / RELSUM(COUNT(searches)), 2),
+        avg_results=ROUND(AVG(searches.n_results), 2),
+    ).ORDER_BY(start_hour.ASC())

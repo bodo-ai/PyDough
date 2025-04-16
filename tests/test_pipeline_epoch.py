@@ -16,7 +16,10 @@ from epoch_pydough_functions import (
     most_popular_search_engine_per_tod,
     most_popular_topic_per_region,
     num_predawn_cold_war,
+    overlapping_event_search_other_users_per_user,
+    overlapping_event_searches_per_user,
     pct_searches_per_tod,
+    search_results_by_tod,
     summer_events_per_type,
     unique_users_per_engine,
     users_most_cold_war_searches,
@@ -306,6 +309,59 @@ from pydough.unqualified import (
                 ),
             ),
             id="unique_users_per_engine",
+        ),
+        pytest.param(
+            (
+                overlapping_event_search_other_users_per_user,
+                "overlapping_event_search_other_users_per_user",
+                lambda: pd.DataFrame(
+                    {
+                        "user_name": [
+                            "Trixie Mattel",
+                            "Jinkx Monsoon",
+                            "Jorgeous",
+                            "Lady Camden",
+                            "Kandy Muse",
+                            "Lemon",
+                            "Plasma",
+                        ],
+                        "n_other_users": [7, 3, 3, 3, 2, 2, 2],
+                    }
+                ),
+            ),
+            id="overlapping_event_search_other_users_per_user",
+        ),
+        pytest.param(
+            (
+                overlapping_event_searches_per_user,
+                "overlapping_event_searches_per_user",
+                lambda: pd.DataFrame(
+                    {
+                        "user_name": [
+                            "Trixie Mattel",
+                            "Priyanka",
+                            "Raja Gemini",
+                            "Alyssa Edwards",
+                        ],
+                        "n_searches": [3, 2, 2, 1],
+                    }
+                ),
+            ),
+            id="overlapping_event_searches_per_user",
+        ),
+        pytest.param(
+            (
+                search_results_by_tod,
+                "search_results_by_tod",
+                lambda: pd.DataFrame(
+                    {
+                        "tod": ["Pre-Dawn", "Morning", "Afternoon", "Evening", "Night"],
+                        "pct_searches": [13.22, 34.71, 31.40, 11.57, 9.09],
+                        "avg_results": [1624.88, 2123.93, 2863.45, 1992.93, 1659.18],
+                    }
+                ),
+            ),
+            id="search_results_by_tod",
         ),
     ],
 )
