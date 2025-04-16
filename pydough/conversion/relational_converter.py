@@ -407,7 +407,7 @@ class RelTranslation:
             represent the equi-join keys used for the join from either side.
             This can be None if the `join_cond` is provided instead.
             `join_cond`: a generic join condition that can be used to join the
-            lhs and rhs, where correlated references refer tot erms from the
+            lhs and rhs, where correlated references refer to terms from the
             lhs. This can be None if the `join_keys` is provided instead.
             `child_idx`: if None, means that the join is being used to step
             down from a parent into its child. If non-none, it means the join

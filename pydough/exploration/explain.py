@@ -81,7 +81,7 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
     Displays information about a PyDough metadata property, including:
     - The name of the property
     - For scalar properties, its type & the data it corresponds to
-    - For subcollection properties, the collection it connncts to and any
+    - For subcollection properties, the collection it connects to and any
       additional information about how they are connected.
 
     Args:
@@ -121,7 +121,13 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
                             f"Note: this is a cartesian-product relationship, meaning that every record of {collection_name} matches onto every record of {child_name}."
                         )
                     case GeneralJoinMetadata():
-                        raise NotImplementedError()
+                        lines.append(
+                            "The subcollection relationship is defined by a following general join condition."
+                        )
+                        lines.append(f"The condition is: {property.condition!r}")
+                        lines.append(
+                            f"The parent & child collections are referred to as {property.self_name!r} and {property.other_name!r}, respectively"
+                        )
                     case SimpleJoinMetadata():
                         conditions: list[str] = []
                         for lhs_key_name, rhs_key_names in property.keys.items():
@@ -285,7 +291,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     - The structure of the collection, once qualified.
     - What operation the most recent operation of the collection is doing.
     - Any child collections that are derived by the collection.
-    - The subcollections & expressions that are accessible from the collection.
+    - The sub-collections & expressions that are accessible from the collection.
     - The expressions that would be included if the collection was executed.
 
     Args:

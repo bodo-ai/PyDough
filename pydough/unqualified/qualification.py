@@ -257,7 +257,7 @@ class Qualifier:
             qualified_collations.append(qualified_term)
         levels: int | None = None
         # If the per argument exists, parse it to identify which ancestor
-        # of the current context the window funciton is being done with
+        # of the current context the window function is being done with
         # regards to, and converting it to a `levels` integer (indicating
         # the number of ancestor levels to go up to).
         if per is not None:

@@ -278,7 +278,7 @@ People.CALCULATE(
 Addresses.CALCULATE(is_c_state=state.startswith("c"))
 ```
 
-**Bad Example #6**: For each address, find the state bird of the state it is in. This is invalid because the `state` property of each record of `Addresses` is a scalar expression, not a subcolleciton, so it does not have any properties that can be accessed with `.` syntax.
+**Bad Example #6**: For each address, find the state bird of the state it is in. This is invalid because the `state` property of each record of `Addresses` is a scalar expression, not a sub-collection, so it does not have any properties that can be accessed with `.` syntax.
 
 ```py
 %%pydough
@@ -961,7 +961,7 @@ If the partitioned data is accessed, its original ancestry is replaced with the 
 
 - The original data has a hierarchy of collections where `GRAPH.CALCULATE(x=42)` is the parent of `People.CALCULATE(name)`, which is the parent of `current_address`.
 After the `.PARTITION(by=country, name="countries")`, we now have a new collection `countries` that is a child of `GRAPH.CALCULATE(x=42)` (and can therefore access `x`), and has `current_address` (which contains the data from `People.CALCULATE(name).current_address`) as a child. The child is called `current_address` because that was the name at the bottom of the hierarchy when it was partitioned.
-- The `countries` collection has three terms: `x` (down-streamed from its ancestor), `current_addreses` (pointing to the child data), and `country` (the partitioning key). The clause `.CALCULATE(n_addr=COUNT(current_address))` adds a fourth term `n_addr` that counts how many addresses exist in each country by aggregating the `current_address`.
+- The `countries` collection has three terms: `x` (down-streamed from its ancestor), `current_addresses` (pointing to the child data), and `country` (the partitioning key). The clause `.CALCULATE(n_addr=COUNT(current_address))` adds a fourth term `n_addr` that counts how many addresses exist in each country by aggregating the `current_address`.
 - When `.current_address` is invoked at the end, we step into the original data, but now with an altered ancestry. It now has all of the original terms of `GRAPH.CALCULATE(x=42).People.CALCULATE(name).current_address` (the `Addresses` collection, as well as the `name` term that was down-streamed from `People` and the `x` term down-streamed from the `GRAPH` calculate), but it also has access to the `n_addr` term that was down-streamed from its `countries` ancestor.
 - The ancestry of `current_address` is now `GRAPH` -> `countries` ->  `current_address`.
 
@@ -1006,7 +1006,7 @@ yahoo_people.PARTITION(name="years", by=birth_year).CALCULATE(
 ).TOP_K(5, by=n_people.DESC())
 ```
 
-**Good Example #4**: For every year/month, find all packages that were below the average cost of all packages ordered in that year/month. Notice how the verison of `Packages` that is the sub-collection of the `months` can access `avg_package_cost`, which was defined by its ancestor (at the `PARTITION` level).
+**Good Example #4**: For every year/month, find all packages that were below the average cost of all packages ordered in that year/month. Notice how the version of `Packages` that is the sub-collection of the `months` can access `avg_package_cost`, which was defined by its ancestor (at the `PARTITION` level).
 
 ```py
 %%pydough
@@ -1515,7 +1515,7 @@ result = states.TOP_K(5, by=average_occupants.DESC())
 west_coast_states = ("CA", "OR", "WA", "AK")
 from_west_coast = ISIN(customer.current_address.state, west_coast_states)
 
-# Contextless expression: identifies if a pcakge is shipped to the east coast
+# Contextless expression: identifies if a package is shipped to the east coast
 east_coast_states = ("FL", "GA", "SC", "NC", "VA", "MD", "DE", "NJ", "NY", "CT", "RI", "MA", "NH", "MA")
 to_east_coast = ISIN(shipping_address.state, east_coast_states)
 

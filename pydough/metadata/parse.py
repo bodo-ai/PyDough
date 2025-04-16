@@ -135,7 +135,7 @@ def parse_graph(graph_name: str, graph_json: dict) -> GraphMetadata:
             incomplete_collection, property.property_name, property.property_json
         )
 
-    # Finally, after every property has been parseed, run an additional round
+    # Finally, after every property has been parsed, run an additional round
     # of completeness checks on each collection to verify any predicates about
     # the metadata being well/ill-formatted that are impossible to determine
     # until every property has been defined.
@@ -282,7 +282,7 @@ def get_property_dependencies(
 
         Raises:
             `PyDoughMetadataException` if the property or the dependency
-            is not a valid cannonical representative property.
+            is not a valid canonical representative property.
         """
         true_property: PropertyKey | None = get_true_property(property)
         true_dependency: PropertyKey | None = get_true_property(dependency)

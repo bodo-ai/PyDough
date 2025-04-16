@@ -292,6 +292,8 @@ class Decorrelater:
         # If the child is such that we don't need to keep rows from the parent
         # without a match, replace the parent & its ancestors with a
         # HybridPullUp node (and replace any other deleted nodes with no-ops).
+        # This is done in-place, but only if the child is the first child of
+        # the parent.
         if child.connection_type.is_semi and child_idx == min(
             old_parent.correlated_children
         ):
