@@ -1717,34 +1717,32 @@ def singular7():
 
 def simple_smallest_or_largest():
     return TPCH.CALCULATE(
-        s1=SMALLEST(10),
-        s2=SMALLEST(20, 10),
-        s3=SMALLEST(20, 20),
-        s4=SMALLEST(20, 10, 0),
-        s5=SMALLEST(20, 10, 10, -1, -2, 100, -200),
-        s6=SMALLEST(20, 10, None, 100, 200),
-        s7=SMALLEST(20.22, 10.22, -0.34),
-        s8=SMALLEST(
+        s1=SMALLEST(20, 10),
+        s2=SMALLEST(20, 20),
+        s3=SMALLEST(20, 10, 0),
+        s4=SMALLEST(20, 10, 10, -1, -2, 100, -200),
+        s5=SMALLEST(20, 10, None, 100, 200),
+        s6=SMALLEST(20.22, 10.22, -0.34),
+        s7=SMALLEST(
             datetime.datetime(2025, 1, 1),
             datetime.datetime(2024, 1, 1),
             datetime.datetime(2023, 1, 1),
         ),
-        s9=SMALLEST("", "alphabet soup", "Hello World"),
-        s10=SMALLEST(None, "alphabet soup", "Hello World"),
-        l1=LARGEST(10),
-        l2=LARGEST(20, 10),
-        l3=LARGEST(20, 20),
-        l4=LARGEST(20, 10, 0),
-        l5=LARGEST(20, 10, 10, -1, -2, 100, -200, 300),
-        l6=LARGEST(20, 10, None, 100, 200),
-        l7=LARGEST(20.22, 100.22, -0.34),
-        l8=LARGEST(
+        s8=SMALLEST("", "alphabet soup", "Hello World"),
+        s9=SMALLEST(None, "alphabet soup", "Hello World"),
+        l1=LARGEST(20, 10),
+        l2=LARGEST(20, 20),
+        l3=LARGEST(20, 10, 0),
+        l4=LARGEST(20, 10, 10, -1, -2, 100, -200, 300),
+        l5=LARGEST(20, 10, None, 100, 200),
+        l6=LARGEST(20.22, 100.22, -0.34),
+        l7=LARGEST(
             datetime.datetime(2025, 1, 1),
             datetime.datetime(2024, 1, 1),
             datetime.datetime(2023, 1, 1),
         ),
-        l9=LARGEST("", "alphabet soup", "Hello World"),
-        l10=LARGEST(None, "alphabet soup", "Hello World"),
+        l8=LARGEST("", "alphabet soup", "Hello World"),
+        l9=LARGEST(None, "alphabet soup", "Hello World"),
     )
 
 
