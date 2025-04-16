@@ -25,6 +25,7 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
     customer_largest_order_deltas,
@@ -41,6 +42,7 @@ from simple_pydough_functions import (
     nation_acctbal_breakdown,
     nation_best_order,
     nation_window_aggs,
+    odate_and_rdate_avggap,
     order_info_per_priority,
     order_quarter_test,
     parts_quantity_increase_95_96,
@@ -60,6 +62,7 @@ from simple_pydough_functions import (
     simple_filter_top_five,
     simple_scan,
     simple_scan_top_five,
+    simple_smallest_or_largest,
     singular1,
     singular2,
     singular3,
@@ -1279,6 +1282,71 @@ from pydough.unqualified import (
                 ),
             ),
             id="global_acctbal_breakdown",
+        ),
+        pytest.param(
+            (
+                simple_smallest_or_largest,
+                None,
+                "simple_smallest_or_largest",
+                lambda: pd.DataFrame(
+                    {
+                        "s1": [10],
+                        "s2": [20],
+                        "s3": [0],
+                        "s4": [-200],
+                        "s5": [None],
+                        "s6": [-0.34],
+                        "s7": ["2023-01-01 00:00:00"],
+                        "s8": [""],
+                        "s9": [None],
+                        "l1": [20],
+                        "l2": [20],
+                        "l3": [20],
+                        "l4": [300],
+                        "l5": [None],
+                        "l6": [100.22],
+                        "l7": ["2025-01-01 00:00:00"],
+                        "l8": ["alphabet soup"],
+                        "l9": [None],
+                    }
+                ),
+            ),
+            id="simple_smallest_or_largest",
+        ),
+        pytest.param(
+            (
+                avg_acctbal_wo_debt,
+                None,
+                "avg_acctbal_wo_debt",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "avg_bal_without_debt_erasure": [
+                            4547.554121,
+                            4536.852848,
+                            4548.741422,
+                            4539.072249,
+                            4533.254352,
+                        ],
+                    },
+                ),
+            ),
+            id="avg_acctbal_wo_debt",
+        ),
+        pytest.param(
+            (
+                odate_and_rdate_avggap,
+                None,
+                "odate_and_rdate_avggap",
+                lambda: pd.DataFrame({"avg_gap": [50.41427]}),
+            ),
+            id="odate_and_rdate_avggap",
         ),
         pytest.param(
             (

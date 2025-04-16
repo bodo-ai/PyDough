@@ -500,3 +500,11 @@ class SQLiteTransformBindings(BaseTransformBindings):
 
     def coerce_to_timestamp(self, base: SQLGlotExpression) -> SQLGlotExpression:
         return sqlglot_expressions.Datetime(this=[base])
+
+    def convert_smallest_or_largest(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
+    ) -> SQLGlotExpression:
+        if largest:
+            return sqlglot_expressions.Max(this=args[0], expressions=args[1:])
+        else:
+            return sqlglot_expressions.Min(this=args[0], expressions=args[1:])

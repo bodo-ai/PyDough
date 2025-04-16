@@ -5,86 +5,88 @@ Below is the list of every function/operator currently supported in PyDough as a
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
 - [Binary Operators](#binary-operators)
-  - [Arithmetic](#arithmetic)
-  - [Comparisons](#comparisons)
-  - [Logical](#logical)
+  * [Arithmetic](#arithmetic)
+  * [Comparisons](#comparisons)
+  * [Logical](#logical)
 - [Unary Operators](#unary-operators)
-  - [Negation](#negation)
+  * [Negation](#negation)
 - [Other Operators](#other-operators)
-  - [Slicing](#slicing)
+  * [Slicing](#slicing)
 - [String Functions](#string-functions)
-  - [LOWER](#lower)
-  - [UPPER](#upper)
-  - [LENGTH](#length)
-  - [STARTSWITH](#startswith)
-  - [ENDSWITH](#endswith)
-  - [CONTAINS](#contains)
-  - [LIKE](#like)
-  - [JOIN_STRINGS](#join_strings)
-  - [LPAD](#lpad)
-  - [RPAD](#rpad)
-  - [FIND](#find)
-  - [STRIP](#strip)
+  * [LOWER](#lower)
+  * [UPPER](#upper)
+  * [LENGTH](#length)
+  * [STARTSWITH](#startswith)
+  * [ENDSWITH](#endswith)
+  * [CONTAINS](#contains)
+  * [LIKE](#like)
+  * [JOIN_STRINGS](#join_strings)
+  * [LPAD](#lpad)
+  * [RPAD](#rpad)
+  * [FIND](#find)
+  * [STRIP](#strip)
 - [Datetime Functions](#datetime-functions)
-  - [DATETIME](#datetime)
-  - [YEAR](#year)
-  - [QUARTER](#quarter)
-  - [MONTH](#month)
-  - [DAY](#day)
-  - [HOUR](#hour)
-  - [MINUTE](#minute)
-  - [SECOND](#second)
-  - [DATEDIFF](#datediff)
-  - [DAYOFWEEK](#dayofweek)
-  - [DAYNAME](#dayname)
+  * [DATETIME](#datetime)
+  * [YEAR](#year)
+  * [QUARTER](#quarter)
+  * [MONTH](#month)
+  * [DAY](#day)
+  * [HOUR](#hour)
+  * [MINUTE](#minute)
+  * [SECOND](#second)
+  * [DATEDIFF](#datediff)
+  * [DAYOFWEEK](#dayofweek)
+  * [DAYNAME](#dayname)
 - [Conditional Functions](#conditional-functions)
-  - [IFF](#iff)
-  - [ISIN](#isin)
-  - [DEFAULT_TO](#default_to)
-  - [PRESENT](#present)
-  - [ABSENT](#absent)
-  - [KEEP_IF](#keep_if)
-  - [MONOTONIC](#monotonic)
+  * [IFF](#iff)
+  * [ISIN](#isin)
+  * [DEFAULT_TO](#default_to)
+  * [PRESENT](#present)
+  * [ABSENT](#absent)
+  * [KEEP_IF](#keep_if)
+  * [MONOTONIC](#monotonic)
 - [Numerical Functions](#numerical-functions)
-  - [ABS](#abs)
-  - [ROUND](#round)
-  - [POWER](#power)
-  - [SQRT](#sqrt)
-  - [SIGN](#sign)
+  * [ABS](#abs)
+  * [ROUND](#round)
+  * [POWER](#power)
+  * [SQRT](#sqrt)
+  * [SIGN](#sign)
+  * [SMALLEST](#smallest)
+  * [LARGEST](#largest)
 - [Aggregation Functions](#aggregation-functions)
-  - [SUM](#sum)
-  - [AVG](#avg)
-  - [MEDIAN](#median)
-  - [MIN](#min)
-  - [MAX](#max)
-  - [ANYTHING](#anything)
-  - [COUNT](#count)
-  - [NDISTINCT](#ndistinct)
-  - [HAS](#has)
-  - [HASNOT](#hasnot)
+  * [SUM](#sum)
+  * [AVG](#avg)
+  * [MEDIAN](#median)
+  * [MIN](#min)
+  * [MAX](#max)
+  * [ANYTHING](#anything)
+  * [COUNT](#count)
+  * [NDISTINCT](#ndistinct)
+  * [HAS](#has)
+  * [HASNOT](#hasnot)
 - [Window Functions](#window-functions)
-  - [RANKING](#ranking)
-  - [PERCENTILE](#percentile)
-  - [PREV](#prev)
-  - [NEXT](#next)
-  - [RELSUM](#relsum)
-  - [RELAVG](#relavg)
-  - [RELCOUNT](#relcount)
-  - [RELSIZE](#relsize)
+  * [RANKING](#ranking)
+  * [PERCENTILE](#percentile)
+  * [PREV](#prev)
+  * [NEXT](#next)
+  * [RELSUM](#relsum)
+  * [RELAVG](#relavg)
+  * [RELCOUNT](#relcount)
+  * [RELSIZE](#relsize)
 - [Banned Python Logic](#banned-python-logic)
-  - [\_\_bool\_\_](#__bool__)
-  - [\_\_call\_\_](#call_banned)
-  - [\_\_floor\_\_](#floor_banned)
-  - [\_\_ceil\_\_](#ceil_banned)
-  - [\_\_trunc\_\_](#trunc_banned)
-  - [\_\_reversed\_\_](#reversed_banned)
-  - [\_\_int\_\_](#int_banned)
-  - [\_\_float\_\_](#float_banned)
-  - [\_\_complex\_\_](#complex_banned)
-  - [\_\_index\_\_](#index_banned)
-  - [\_\_len\_\_](#len_banned)
-  - [\_\_contains\_\_](#contains_banned)
-  - [\_\_setitem\_\_](#setitem_banned)
+  * [\_\_bool\_\_](#__bool__)
+  * [\_\_call\_\_](#call_banned)
+  * [\_\_floor\_\_](#floor_banned)
+  * [\_\_ceil\_\_](#ceil_banned)
+  * [\_\_trunc\_\_](#trunc_banned)
+  * [\_\_reversed\_\_](#reversed_banned)
+  * [\_\_int\_\_](#int_banned)
+  * [\_\_float\_\_](#float_banned)
+  * [\_\_complex\_\_](#complex_banned)
+  * [\_\_index\_\_](#index_banned)
+  * [\_\_len\_\_](#len_banned)
+  * [\_\_contains\_\_](#contains_banned)
+  * [\_\_setitem\_\_](#setitem_banned)
 
 <!-- TOC end -->
 
@@ -739,6 +741,49 @@ The `SIGN` function returns the sign of its input. It returns 1 if the input is 
 
 ```py
 Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
+```
+
+<!-- TOC --><a name="smallest"></a>
+
+### SMALLEST
+
+The `SMALLEST` function returns the smallest value from the set of values it is called on. It can take in a variable number of arguments, but at least two arguments are required. If any of the arguments are `NULL`, the function will return `NULL`.
+
+```py
+TPCH.CALCULATE(
+    s1=SMALLEST(20,10,10,-1,-2,100,-200), # Returns -200
+    s2=SMALLEST(-0.001,-0.01,-0.0001), # Returns -0.0001
+    s3=SMALLEST(datetime.datetime(2025,1,1),datetime.datetime(2024,1,1)), # Returns 2024-01-01
+    s4=SMALLEST(1,None,3,4), # Returns NULL
+)
+# Average gap, in days, for shipments between when they were ordered
+# versus when they were expected to arrive (or when they actually arrived,
+# if they were early), for shipments done via rail.
+delay_info = Lineitems.WHERE(HAS(order) & (ship_mode == "RAIL")).CALCULATE(
+   day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
+)
+return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))
+```
+
+<!-- TOC --><a name="largest"></a>
+
+### LARGEST
+
+The `LARGEST` function returns the largest value from the set of values it is called on. It can take in a variable number of arguments, but at least two arguments are required. If any of the arguments are `NULL`, the function will return `NULL`.
+
+```py
+TPCH.CALCULATE(
+    l1=LARGEST(20,10,10,-1,-2,100,-200), # Returns 100
+    l2=LARGEST(-0.001,-0.01,-0.0001), # Returns -0.01
+    l3=LARGEST(datetime.datetime(2025,1,1),datetime.datetime(2024,1,1)), # Returns 2025-01-01
+    l4=LARGEST(1,None,3,4), # Returns NULL
+)
+# For each region, what is the average account balance of all
+# customers in a hypothetical scenario where all debt was erased
+Regions.CALCULATE(
+   region_name=name,
+   avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.acctbal, 0)),
+)
 ```
 
 <!-- TOC --><a name="aggregation-functions"></a>

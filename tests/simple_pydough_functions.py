@@ -1813,3 +1813,53 @@ def order_quarter_test():
             same_quarter_next_year=DATETIME(order_date, "+4 quarters"),
         )
     )
+
+
+def simple_smallest_or_largest():
+    return TPCH.CALCULATE(
+        s1=SMALLEST(20, 10),
+        s2=SMALLEST(20, 20),
+        s3=SMALLEST(20, 10, 0),
+        s4=SMALLEST(20, 10, 10, -1, -2, 100, -200),
+        s5=SMALLEST(20, 10, None, 100, 200),
+        s6=SMALLEST(20.22, 10.22, -0.34),
+        s7=SMALLEST(
+            datetime.datetime(2025, 1, 1),
+            datetime.datetime(2024, 1, 1),
+            datetime.datetime(2023, 1, 1),
+        ),
+        s8=SMALLEST("", "alphabet soup", "Hello World"),
+        s9=SMALLEST(None, "alphabet soup", "Hello World"),
+        l1=LARGEST(20, 10),
+        l2=LARGEST(20, 20),
+        l3=LARGEST(20, 10, 0),
+        l4=LARGEST(20, 10, 10, -1, -2, 100, -200, 300),
+        l5=LARGEST(20, 10, None, 100, 200),
+        l6=LARGEST(20.22, 100.22, -0.34),
+        l7=LARGEST(
+            datetime.datetime(2025, 1, 1),
+            datetime.datetime(2024, 1, 1),
+            datetime.datetime(2023, 1, 1),
+        ),
+        l8=LARGEST("", "alphabet soup", "Hello World"),
+        l9=LARGEST(None, "alphabet soup", "Hello World"),
+    )
+
+
+def avg_acctbal_wo_debt():
+    # For each region, what is the average account balance of all
+    # customers in a hypothetical scenario where all debt was erased
+    return Regions.CALCULATE(
+        region_name=name,
+        avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.acctbal, 0)),
+    )
+
+
+def odate_and_rdate_avggap():
+    # Average gap, in days, for shipments between when they were ordered
+    # versus when they were expected to arrive (or when they actually arrived,
+    # if they were early), for shipments done via rail
+    delay_info = Lineitems.WHERE(HAS(order) & (ship_mode == "RAIL")).CALCULATE(
+        day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
+    )
+    return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))

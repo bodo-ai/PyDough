@@ -226,6 +226,10 @@ class BaseTransformBindings:
                 return self.convert_dayofweek(args, types)
             case pydop.DAYNAME:
                 return self.convert_dayname(args, types)
+            case pydop.SMALLEST:
+                return self.convert_smallest_or_largest(args, types, False)
+            case pydop.LARGEST:
+                return self.convert_smallest_or_largest(args, types, True)
             case _:
                 raise NotImplementedError(
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
@@ -1384,4 +1388,50 @@ class BaseTransformBindings:
                 sqlglot_expressions.Literal.string(dayname),
             )
         answer = apply_parens(answer)
+        return answer
+
+    def convert_smallest_or_largest(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for the PyDough `SMALLEST` or `LARGEST`
+        function. Returns the largest value if `largest` is True, otherwise the
+        smallest. For a single argument, returns that argument directly. For
+        multiple arguments, builds a CASE statement where each WHEN clause
+        compares one argument against all others using AND conditions to find
+        the extreme value.
+
+        Args:
+            `args`: The operands to `SMALLEST` or `LARGEST`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `SMALLEST` or `LARGEST`.
+            `largest`: A boolean indicating whether to return the largest
+            or smallest value.
+
+        Returns:
+            The SQLGlot expression to calculate the smallest or largest value.
+        """
+        sqlglot_expr_func = (
+            sqlglot_expressions.GTE if largest else sqlglot_expressions.LTE
+        )
+        if len(args) == 1:
+            return args[0]
+
+        def build_chained_and(
+            args: list[SQLGlotExpression], idx: int
+        ) -> SQLGlotExpression:
+            conditions = []
+            for i in range(len(args)):
+                if i == idx:
+                    continue
+                conditions.append(sqlglot_expr_func(this=args[idx], expression=args[i]))
+            ans = conditions[0]
+            for i in range(1, len(conditions)):
+                ans = sqlglot_expressions.And(this=ans, expression=conditions[i])
+            return ans
+
+        answer: SQLGlotExpression = sqlglot_expressions.Case()
+        for i in range(len(args)):
+            conditions = build_chained_and(args, i)
+            answer = answer.when(conditions, args[i])
         return answer
