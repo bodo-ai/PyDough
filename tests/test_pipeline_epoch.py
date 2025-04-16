@@ -26,10 +26,10 @@ from epoch_pydough_functions import (
 )
 from test_utils import graph_fetcher
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -420,6 +420,44 @@ def test_pipeline_until_relational_epoch(
             expected_relational_string: str = f.read()
         assert relational.to_tree_string() == expected_relational_string.strip(), (
             "Mismatch between tree string representation of relational node and expected Relational tree string"
+        )
+
+
+def test_pipeline_until_relational_sql(
+    pydough_pipeline_test_data_epoch: tuple[
+        Callable[[], UnqualifiedNode],
+        str,
+        Callable[[], pd.DataFrame],
+    ],
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    defog_config: PyDoughConfigs,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+):
+    """
+    Tests the conversion of the PyDough queries on the custom epoch dataset
+    into SQL text.
+    """
+    unqualified_impl, test_name, _ = pydough_pipeline_test_data_epoch
+    file_name: str = f"epoch_{test_name}"
+    file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
+    graph: GraphMetadata = get_sample_graph("Epoch")
+    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
+    sql_text: str = to_sql(
+        unqualified,
+        metadata=graph,
+        database=empty_context_database,
+        config=defog_config,
+    )
+    if update_tests:
+        with open(file_path, "w") as f:
+            f.write(sql_text + "\n")
+    else:
+        with open(file_path) as f:
+            expected_sql_text: str = f.read()
+        assert sql_text == expected_sql_text.strip(), (
+            "Mismatch between SQL text produced expected SQL text"
         )
 
 
