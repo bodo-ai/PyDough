@@ -423,7 +423,7 @@ def test_pipeline_until_relational_epoch(
         )
 
 
-def test_pipeline_until_relational_sql(
+def test_pipeline_until_sql_epoch(
     pydough_pipeline_test_data_epoch: tuple[
         Callable[[], UnqualifiedNode],
         str,

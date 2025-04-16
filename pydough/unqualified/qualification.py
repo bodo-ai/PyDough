@@ -355,15 +355,29 @@ class Qualifier:
         )
         return CollationExpression(qualified_expr, asc, na_last)
 
-    def parse_general_condition(
-        self, condition: str, self_name: str, other_name: str
-    ) -> UnqualifiedNode:
+    def parse_general_condition(self, access: SubCollection) -> None:
         """
-        TODO
+        Parses a general join condition of a sub-collection access from a
+        PyDough string into an unqualified node and then into a QDAG node
+        containing sided references. Stores the answer inside the
+        sub-collection access.
+
+        Args:
+            `access`: the sub-collection access containing the join condition
+            that is being parsed.
         """
+        assert isinstance(access.subcollection_property, GeneralJoinMetadata)
+        property: GeneralJoinMetadata = access.subcollection_property
+        self_name: str = property.self_name
+        other_name: str = property.other_name
+        # Create Python code for deriving the join condition and storing it in
+        # a variable called '_answer'.
         condition_statement = transform_cell(
-            f"_answer = {condition}", self.graph.name, {self_name, other_name}
+            f"_answer = {property.condition}", self.graph.name, {self_name, other_name}
         )
+        # Execute the Python code in an environment containing the graph, as
+        # well as having the prefixes `self` and `other` already defined as
+        # unqualified access nodes.
         self_expr: UnqualifiedNode = UnqualifiedAccess(
             UnqualifiedRoot(self.graph), self_name
         )
@@ -376,10 +390,14 @@ class Qualifier:
             other_name: other_expr,
         }
         exec(condition_statement, {}, local_env)
+        # Extract the answer from the local environment as an unqualified node.
         assert "_answer" in local_env
         value = local_env.get("_answer")
         assert isinstance(value, UnqualifiedNode)
-        return value
+        # Qualify the join condition and store it in the access.
+        access.general_condition = self.qualify_join_condition(
+            value, access, self_name, other_name
+        )
 
     def qualify_join_condition(
         self,
@@ -389,15 +407,39 @@ class Qualifier:
         other_name: str,
     ) -> PyDoughExpressionQDAG:
         """
-        TODO
+        Variant of `qualify_expression` specifically for qualifying the
+        contents of a general join condition. These expressions can contain
+        sided-references parent vs child collection, but cannot contain window
+        functions or any collections/sub-collections, therefore the
+        qualification path is slightly different and streamlined.
+
+        Args:
+            `condition`: the unqualified node to be qualified as part of a
+            general join condition.
+            `access`: the sub-collection access that the join condition
+            corresponds to.
+            `self_name`: the name used to reference the parent collection
+            within the join.
+            `other_name`: the name used to reference the child collection
+            within the join.
+
+        Returns:
+            The PyDough QDAG object for the qualified expression node for
+            `condition`.
         """
         operation: str | None = None
+        raw_term: PyDoughQDAG
         term: PyDoughExpressionQDAG
         term_name: str
         match condition:
             case UnqualifiedLiteral():
+                # Handle literals normally
                 return self.qualify_literal(condition)
             case UnqualifiedBinaryOperation():
+                # For binary operators, invoke the same logic as for normal
+                # qualification of binary operators except with using
+                # `qualify_join_condition` on the inputs instead of
+                # `qualify_expression`.
                 operator = condition._parcel[0]
                 for _, op in BinOp.__members__.items():
                     if operator == op.value:
@@ -413,6 +455,10 @@ class Qualifier:
                     operation, [qualified_lhs, qualified_rhs]
                 )
             case UnqualifiedOperation():
+                # For function calls, invoke the same logic as for normal
+                # qualification of function calls except with using
+                # `qualify_join_condition` on the inputs instead of
+                # `qualify_expression`.
                 operation = condition._parcel[0]
                 unqualified_operands: list[UnqualifiedNode] = condition._parcel[1]
                 qualified_operands: list[PyDoughQDAG] = []
@@ -424,13 +470,24 @@ class Qualifier:
                     operation, qualified_operands
                 )
             case UnqualifiedAccess():
+                # For accesses, verify that the access is in the form of
+                # `root.xxx.expr_name` where `xxx` is either the "self name" or
+                # the "other name" of the general join condition, and generate
+                # an appropriate sided reference indicating whether the term
+                # comes from the parent side or the child side. Also verify
+                # that the term is an expression.
                 if isinstance(condition._parcel[0], UnqualifiedAccess):
                     predecessor: UnqualifiedAccess = condition._parcel[0]
                     if isinstance(predecessor._parcel[0], UnqualifiedRoot):
                         if predecessor._parcel[1] == self_name:
-                            term = access.ancestor_context.get_expr(
+                            raw_term = access.ancestor_context.get_term(
                                 condition._parcel[1]
                             )
+                            if not isinstance(raw_term, PyDoughExpressionQDAG):
+                                raise PyDoughUnqualifiedException(
+                                    "Accessing sub-collection terms is currently unsupported in PyDough general join conditions"
+                                )
+                            term = raw_term
                             assert isinstance(term, (Reference, ColumnProperty))
                             term_name = (
                                 term.term_name
@@ -439,7 +496,12 @@ class Qualifier:
                             )
                             return SidedReference(term_name, access, True)
                         if predecessor._parcel[1] == other_name:
-                            term = access.get_expr(condition._parcel[1])
+                            raw_term = access.get_term(condition._parcel[1])
+                            if not isinstance(raw_term, PyDoughExpressionQDAG):
+                                raise PyDoughUnqualifiedException(
+                                    "Accessing sub-collection terms is currently unsupported in PyDough general join conditions"
+                                )
+                            term = raw_term
                             assert isinstance(term, (Reference, ColumnProperty))
                             term_name = (
                                 term.term_name
@@ -453,6 +515,15 @@ class Qualifier:
             case UnqualifiedWindow():
                 raise PyDoughUnqualifiedException(
                     "Window functions are currently unsupported in PyDough general join conditions"
+                )
+            case (
+                UnqualifiedCalculate()
+                | UnqualifiedWhere()
+                | UnqualifiedOrderBy()
+                | UnqualifiedTopK()
+            ):
+                raise PyDoughUnqualifiedException(
+                    "Collection accesses are currently unsupported in PyDough general join conditions"
                 )
             case _:
                 raise PyDoughUnqualifiedException(
@@ -519,21 +590,7 @@ class Qualifier:
                 if isinstance(answer, SubCollection) and isinstance(
                     answer.subcollection_property, GeneralJoinMetadata
                 ):
-                    self_name: str = answer.subcollection_property.self_name
-                    other_name: str = answer.subcollection_property.other_name
-                    unqualified_condition: UnqualifiedNode = (
-                        self.parse_general_condition(
-                            answer.subcollection_property.condition,
-                            self_name,
-                            other_name,
-                        )
-                    )
-                    answer.general_condition = self.qualify_join_condition(
-                        unqualified_condition,
-                        answer,
-                        self_name,
-                        other_name,
-                    )
+                    self.parse_general_condition(answer)
                 if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
                     answer = ChildOperatorChildAccess(answer)
                 return answer

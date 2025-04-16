@@ -387,7 +387,7 @@ def sqlite_epoch_connection() -> DatabaseContext:
     """
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    # Setup the defog database.
+    # Setup the epoch database.
     subprocess.run(
         "cd tests; rm -fv epoch.db; sqlite3 epoch.db < init_epoch.sql", shell=True
     )

@@ -18,7 +18,8 @@ class SidedReference(PyDoughExpressionQDAG):
     """
     The QDAG node implementation class representing a reference to a term from
     one of two sides of connection between a parent collection and a child
-    connection.
+    connection. This type of expression node is only allowed to exist inside of
+    a general join condition.
     """
 
     def __init__(
