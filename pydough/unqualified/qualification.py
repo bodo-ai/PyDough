@@ -945,47 +945,46 @@ class Qualifier:
         """
 
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
-        unqualified_child: UnqualifiedNode = unqualified._parcel[1]
-        by: Iterable[UnqualifiedNode] = unqualified._parcel[2]
-        levels: int = unqualified._parcel[3]
-        allow_ties: bool = unqualified._parcel[4]
-        n_best: int = unqualified._parcel[5]
+        by: Iterable[UnqualifiedNode] = unqualified._parcel[1]
+        per: str | None = unqualified._parcel[2]
+        allow_ties: bool = unqualified._parcel[3]
+        n_best: int = unqualified._parcel[4]
 
         # Qualify the parent context, then qualify the child data with regards
         # to the parent.
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child
         )
-        qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_child,
-            qualified_parent,
-            is_child and isinstance(unqualified_parent, UnqualifiedRoot),
-        )
 
         # Generate the ranking/comparison call to append an appropriate WHERE
         # clause to the end of the result.
-        rank: UnqualifiedNode = UnqualifiedOperator("RANKING")(
-            by=by, levels=levels, allow_ties=allow_ties
-        )
+        kwargs: dict[str, object] = {"by": by, "allow_ties": allow_ties}
+        if per:
+            kwargs["per"] = per
+        rank: UnqualifiedNode = UnqualifiedOperator("RANKING")(**kwargs)
         unqualified_cond: UnqualifiedNode = (
             (rank == n_best) if n_best == 1 else (rank <= n_best)
         )
         children: list[PyDoughCollectionQDAG] = []
         qualified_cond: PyDoughExpressionQDAG = self.qualify_expression(
-            unqualified_cond, qualified_child, children
+            unqualified_cond, qualified_parent, children
         )
-        qualified_child = self.builder.build_where(
-            qualified_child, children
-        ).with_condition(qualified_cond)
 
-        # Build the final expanded window-based filter, with `SINGULAR` added
+        # Build the final expanded window-based filter
+        qualified_child: PyDoughCollectionQDAG = self.builder.build_where(
+            qualified_parent, children
+        ).with_condition(qualified_cond)
+        # levels: int | None = None
+
+        # Add `SINGULAR` if applicable (there is a levels argument and that
+        # ancestor either is the context or is singular withr egards to it).
         # if-applicable (not allowing ties, not keeping multiple bests, not in
         # the form `x.BEST(y)` unless as a child & the x is already singular).
-        if n_best == 1 and not allow_ties and is_child:
-            base: PyDoughCollectionQDAG = qualified_parent.starting_predecessor
-            relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
-            if base is relative_ancestor or base.is_singular(relative_ancestor):
-                qualified_child = self.builder.build_singular(qualified_child)
+        # if n_best == 1 and not allow_ties and is_child:
+        #     base: PyDoughCollectionQDAG = qualified_parent.starting_predecessor
+        #     relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
+        #     if base is relative_ancestor or base.is_singular(relative_ancestor):
+        #         qualified_child = self.builder.build_singular(qualified_child)
 
         return qualified_child
 

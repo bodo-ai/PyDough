@@ -646,7 +646,7 @@ from pydough.unqualified import (
             """
 ──┬─ TPCH
   ├─── TableCollection[Suppliers]
-  ├─── Where[RANKING(by=(account_balance.DESC(na_pos='last'), name.ASC(na_pos='first')), levels=1, allow_ties=False) == 1]
+  ├─── Where[RANKING(by=(account_balance.DESC(na_pos='last'), name.ASC(na_pos='first')), allow_ties=False) == 1]
   └─── Calculate[name=name, account_balance=account_balance] 
         """,
             id="wealthiest_supplier",
@@ -658,7 +658,7 @@ from pydough.unqualified import (
 └─┬─ Calculate[n_orders=COUNT($1)]
   └─┬─ AccessChild
     ├─── TableCollection[Orders]
-    └─── Where[RANKING(by=(order_date.ASC(na_pos='first')), levels=1, allow_ties=True) == 1]   
+    └─── Where[RANKING(by=(order_date.ASC(na_pos='first')), allow_ties=True) == 1]   
         """,
             id="n_orders_first_day",
         ),

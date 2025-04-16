@@ -131,14 +131,14 @@ def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    best_customer = nations.BEST(customer, by=acctbal.DESC())
+    best_customer = nations.customers.BEST(per='nations', by=acctbal.DESC())
     Regions.CALCULATE(n=best_customer.name)
     ```
     The problem: The cardinality is off since even though the `BEST` ensures
     the customers are singular with regards to the nation, the nations are
     still plural with regards to the region.
     """
-    best_customer = root.nations.BEST(root.customers, by=root.acctbal.DESC())
+    best_customer = root.nations.customers.BEST(per="Regions", by=root.acctbal.DESC())
     return root.Regions.CALCULATE(n=best_customer.name)
 
 
@@ -146,15 +146,15 @@ def bad_pydough_impl_10(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    best_customer = BEST(nations.customers, by=acctbal.DESC(), allow_ties=True)
+    best_customer = nations.customers.BEST(per='Regions', by=acctbal.DESC(), allow_ties=True)
     Regions.CALCULATE(n=best_customer.name)
     ```
     The problem: the presence of `allow_ties=True` means that the `BEST`
     operator does not guarantee `nations.customers` is plural with regards to
     `Regions`.
     """
-    best_customer = root.BEST(
-        root.nations.customers, by=root.acctbal.DESC(), allow_ties=True
+    best_customer = root.nations.customers.BEST(
+        per="Regions", by=root.acctbal.DESC(), allow_ties=True
     )
     return root.Regions.CALCULATE(n=best_customer.name)
 
@@ -163,14 +163,14 @@ def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    best_customer = BEST(nations.customers, by=acctbal.DESC(), n_best=3)
+    best_customer = nations.customers.BEST(per='Regions', by=acctbal.DESC(), n_best=3)
     Regions.CALCULATE(n=best_customer.name)
     ```
     The problem: the presence of `n_best=3` means that the `BEST` operator
     does not guarantee `nations.customers` is plural with regards to `Regions`.
     """
-    best_customer = root.BEST(
-        root.nations.customers, by=root.acctbal.DESC(), allow_ties=True
+    best_customer = root.nations.customers.BEST(
+        per="Regions", by=root.acctbal.DESC(), allow_ties=True
     )
     return root.Regions.CALCULATE(n=best_customer.name)
 
@@ -179,12 +179,12 @@ def bad_pydough_impl_12(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    Regions.BEST(nations.customers, by=acctbal.DESC(), n_best=3, allow_ties=True)
+    Regions.nations.customers.BEST(per='regions', by=acctbal.DESC(), n_best=3, allow_ties=True)
     ```
     The problem: cannot simultaneously use `n_best=3` and `allow_ties=True`.
     """
-    return root.Regions.BEST(
-        root.nations.customers, by=root.acctbal.DESC(), n_best=3, allow_ties=True
+    return root.Regions.nations.customers.BEST(
+        per="Regions", by=root.acctbal.DESC(), n_best=3, allow_ties=True
     )
 
 

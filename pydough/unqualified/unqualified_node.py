@@ -387,14 +387,14 @@ class UnqualifiedNode(ABC):
 
     def BEST(
         self,
-        node: "UnqualifiedNode",
         by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+        per: str | None = None,
         allow_ties: bool = False,
         n_best: int = 1,
     ) -> "UnqualifiedNode":
         """
-        Method used to create the BEST logic, where x.BEST(y, by=z) is later
-        expanded into `x.y.WHERE(RANKING(by=z) == 1, levels=...).SINGULAR()`,
+        Method used to create the BEST logic, where x.y.BEST(by=z, per="x") is later
+        expanded into `x.y.WHERE(RANKING(by=z) == 1, per="x").SINGULAR()`,
         where the levels is the height of y. There are also the following
         variations:
         - If `allow_ties` is True: `x.y.WHERE(RANKING(by=z, allow_ties=True) == 1, levels=...)`
@@ -404,6 +404,8 @@ class UnqualifiedNode(ABC):
             `node`: the data to find the best entry of with regards to the
             current node.
             `by`: the collation terms to order by in the `RANKING` call.
+            `per`: the ancestor that the `BEST` computation is happening with
+            regards to, or None if it is a global optimum being sought.
             `allow_ties`: whether to allow ties in the ranking. If True, it
             means that if there are multiple entries with the same rank, they
             will all be considered as "best" candidates. This cannot be used
@@ -423,18 +425,10 @@ class UnqualifiedNode(ABC):
                 "Cannot allow ties when multiple best values are requested"
             )
 
-        # Identify how many levels to use so that the ranking is derived per
-        # record of `self`.
-        height: int | None = get_node_height(node)
-        if height is None or height == 0:
-            raise PyDoughUnqualifiedException(
-                f"Invalid data argument to `BEST`: {node}"
-            )
-
         if isinstance(by, UnqualifiedNode):
             by = [by]
 
-        return UnqualifiedBest(self, node, by, height, allow_ties, n_best)
+        return UnqualifiedBest(self, by, per, allow_ties, n_best)
 
 
 class UnqualifiedRoot(UnqualifiedNode):
@@ -740,16 +734,15 @@ class UnqualifiedBest(UnqualifiedNode):
 
     def __init__(
         self,
-        ancestor: UnqualifiedNode,
         data: UnqualifiedNode,
         by: Iterable[UnqualifiedNode],
-        data_height: int,
+        per: str | None,
         allow_ties: bool,
         n_best: int,
     ):
         self._parcel: tuple[
-            UnqualifiedNode, UnqualifiedNode, Iterable[UnqualifiedNode], int, bool, int
-        ] = (ancestor, data, by, data_height, allow_ties, n_best)
+            UnqualifiedNode, Iterable[UnqualifiedNode], str | None, bool, int
+        ] = (data, by, per, allow_ties, n_best)
 
 
 def display_raw(unqualified: UnqualifiedNode) -> str:
@@ -838,60 +831,16 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
         case UnqualifiedSingular():
             return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
         case UnqualifiedBest():
-            result = f"{'' if isinstance(unqualified._parcel[0], UnqualifiedRoot) else f'{display_raw(unqualified._parcel[0])}.'}BEST("
-            result += f"{display_raw(unqualified._parcel[1])}"
-            result += f", by=({', '.join(display_raw(node) for node in unqualified._parcel[2])})"
-            if unqualified._parcel[4]:
+            result = f"{display_raw(unqualified._parcel[0])}.BEST("
+            result += f"by=({', '.join(display_raw(node) for node in unqualified._parcel[1])})"
+            if unqualified._parcel[2]:
+                result += f", per={unqualified._parcel[3]!r}"
+            if unqualified._parcel[3]:
                 result += ", allow_ties=True"
-            if unqualified._parcel[5] > 1:
-                result += f", n_best={unqualified._parcel[5]}"
+            if unqualified._parcel[4] > 1:
+                result += f", n_best={unqualified._parcel[4]}"
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node: {unqualified.__class__.__name__}"
-            )
-
-
-def get_node_height(node: UnqualifiedNode) -> int | None:
-    """
-    Identifies the number of levels in an unqualified node when it is converted
-    to QDAG. For example, `?.customers.WHERE(...).orders` has a height of 2.
-
-    Args:
-        `node`: the node to find the height of, e.g. how many depth-changing
-        operations occur before finding the root level.
-
-    Returns:
-        The number of levels, or None if malformed.
-    """
-    match node:
-        case UnqualifiedRoot():
-            return 0
-        case UnqualifiedBest():
-            height_a: int | None = get_node_height(node._parcel[0])
-            height_b: int | None = get_node_height(node._parcel[1])
-            if height_a is None or height_b is None:
-                return None
-            return height_a + height_b
-        case (
-            UnqualifiedSingular()
-            | UnqualifiedCalculate()
-            | UnqualifiedWhere()
-            | UnqualifiedOrderBy()
-            | UnqualifiedTopK()
-        ):
-            return get_node_height(node._parcel[0])
-        case UnqualifiedAccess() | UnqualifiedPartition():
-            result: int | None = get_node_height(node._parcel[0])
-            return 1 + result if result is not None else result
-        case (
-            UnqualifiedWindow()
-            | UnqualifiedBinaryOperation()
-            | UnqualifiedOperation()
-            | UnqualifiedCollation()
-        ):
-            return None
-        case _:
-            raise PyDoughUnqualifiedException(
-                f"Unsupported unqualified node: {node.__class__.__name__}"
             )
