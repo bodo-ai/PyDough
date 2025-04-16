@@ -28,6 +28,7 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Datetime Functions](#datetime-functions)
   - [DATETIME](#datetime)
   - [YEAR](#year)
+  - [QUARTER](#quarter)
   - [MONTH](#month)
   - [DAY](#day)
   - [HOUR](#hour)
@@ -408,12 +409,13 @@ The base argument can be one of the following:
 - A column of datetime data.
 
 > [!NOTE]
-> Other datetime functions ([DATEDIFF](#datediff), [YEAR](#year), [MONTH](#month), [DAY](#day), [HOUR](#hour), [MINUTE](#minute) or [SECOND](#second)) also allow any of the base arguments above as datetime values. For example, you can call `YEAR("now")`, `DATEDIFF("months", dt, pd.Timestamp("2024-03-14")))`, `MONTH("1999-06-13")`, or `DATEDIFF("days", datetime.date(2025, 1, 1), "now")`.
+> Other datetime functions ([DATEDIFF](#datediff), [YEAR](#year), [QUARTER](#quarter), [MONTH](#month), [DAY](#day), [HOUR](#hour), [MINUTE](#minute) or [SECOND](#second)) also allow any of the base arguments above as datetime values. For example, you can call `YEAR("now")`, `DATEDIFF("months", dt, pd.Timestamp("2024-03-14")))`, `MONTH("1999-06-13")`, or `DATEDIFF("days", datetime.date(2025, 1, 1), "now")`.
 
 The modifier arguments can be the following (all of the options are case-insensitive and ignore leading/trailing/extra whitespace):
 
 - A string literal in the format `start of <UNIT>` indicating to truncate the datetime value to a certain unit, which can be the following:
   - **Years**: Supported aliases are `"years"`, `"year"`, and `"y"`.
+  - **Quarters**: Supported aliases are `"quarters"`, `"quarter"`, and `"q"`.
   - **Months**: Supported aliases are `"months"`, `"month"`, and `"mm"`.
   - **Days**: Supported aliases are `"days"`, `"day"`, and `"d"`.
   - **Weeks**: Supported aliases are `"weeks"`, `"week"`, and `"w"`.
@@ -433,12 +435,14 @@ If there are multiple modifiers, they operate left-to-right.
 # 3. Exactly 12 hours from now
 # 4. The last day of the previous year
 # 5. The current day, at midnight
+# 6. The first day after the start of the current quarter
 TPCH.CALCULATE(
    ts_1=DATETIME('now'),
    ts_2=DATETIME('NoW', 'start of month'),
    ts_3=DATETIME(' CURRENT_DATE ', '12 hours'),
    ts_4=DATETIME('Current Timestamp', 'start of y', '- 1 D'),
    ts_5=DATETIME('NOW', '  Start  of  Day  '),
+   ts_6=DATETIME('now', 'start of quarter', '1 d'),
 )
 
 # For each order, truncates the order date to the first day of the year
@@ -453,6 +457,16 @@ Calling `YEAR` on a date/timestamp extracts the year it belongs to:
 
 ```py
 Orders.WHERE(YEAR(order_date) == 1995)
+```
+
+<!-- TOC --><a name="quarter"></a>
+
+### QUARTER
+
+Calling `QUARTER` on a date/timestamp extracts the quarter of the year it belongs to. The range of output is from 1-4. Months 1-3 are part of quarter 1, months 4-6 are part of quarter 2, months 7-9 are part of quarter 3, and months 10-12 are part of quarter 4.
+
+```py
+Orders.WHERE(QUARTER(order_date) == 1)
 ```
 
 <!-- TOC --><a name="month"></a>
@@ -512,9 +526,10 @@ Orders.CALCULATE(is_lt_30_seconds = SECOND(order_date) < 30)
 
 ### DATEDIFF
 
-Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`, `months`,`days`,`hours`,`minutes` or`seconds`.
+Calling `DATEDIFF` between 2 timestamps returns the difference in one of `years`, `quarters`, `months`, `weeks`, `days`, `hours`, `minutes` or `seconds`.
 
 - `DATEDIFF("years", x, y)`: Returns the **number of full years since x that y occurred**. For example, if **x** is December 31, 2009, and **y** is January 1, 2010, it counts as **1 year apart**, even though they are only 1 day apart.
+- `DATEDIFF("quarters", x, y)`: Returns the **number of full quarters since x that y occurred**. For example, if **x** is March 31, 2014, and **y** is April 1, 2014, it counts as **1 quarter apart**, even though they are only 1 day apart.
 - `DATEDIFF("months", x, y)`: Returns the **number of full months since x that y occurred**. For example, if **x** is January 31, 2014, and **y** is February 1, 2014, it counts as **1 month apart**, even though they are only 1 day apart.
 - `DATEDIFF("weeks", x, y)`: Returns the **number of full weeks since x that y occurred**. The dates x and y are first truncated to the start of week (as specified by the `start_of_week` config), then the difference in number of full weeks is calculated (a week is defined as 7 days). For example, if `start_of_week` is set to Saturday:
   ```python
