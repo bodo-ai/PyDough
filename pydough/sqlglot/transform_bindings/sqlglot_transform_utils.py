@@ -71,6 +71,11 @@ year_units = ("years", "year", "y")
 The valid string representations of the year unit.
 """
 
+quarter_units = ("quarters", "quarter", "q")
+"""
+The valid string representations of the quarter unit.
+"""
+
 month_units = ("months", "month", "mm")
 """
 The valid string representations of the month unit.
@@ -108,6 +113,7 @@ class DateTimeUnit(Enum):
     """
 
     YEAR = "year"
+    QUARTER = "quarter"
     MONTH = "month"
     WEEK = "week"
     DAY = "day"
@@ -133,6 +139,8 @@ class DateTimeUnit(Enum):
         unit = unit.lower()
         if unit in year_units:
             return DateTimeUnit.YEAR
+        elif unit in quarter_units:
+            return DateTimeUnit.QUARTER
         elif unit in month_units:
             return DateTimeUnit.MONTH
         elif unit in week_units:
@@ -156,8 +164,12 @@ class DateTimeUnit(Enum):
         match self:
             case DateTimeUnit.YEAR:
                 return "'%Y-01-01 00:00:00'"
+            case DateTimeUnit.QUARTER:
+                raise ValueError("Quarter unit does not have a truncation string.")
             case DateTimeUnit.MONTH:
                 return "'%Y-%m-01 00:00:00'"
+            case DateTimeUnit.WEEK:
+                raise ValueError("Week unit does not have a truncation string.")
             case DateTimeUnit.DAY:
                 return "'%Y-%m-%d 00:00:00'"
             case DateTimeUnit.HOUR:
@@ -166,8 +178,6 @@ class DateTimeUnit(Enum):
                 return "'%Y-%m-%d %H:%M:00'"
             case DateTimeUnit.SECOND:
                 return "'%Y-%m-%d %H:%M:%S'"
-            case DateTimeUnit.WEEK:
-                raise ValueError("Week unit does not have a truncation string.")
 
     @property
     def extraction_string(self) -> str:
@@ -177,6 +187,8 @@ class DateTimeUnit(Enum):
         match self:
             case DateTimeUnit.YEAR:
                 return "'%Y'"
+            case DateTimeUnit.QUARTER:
+                raise ValueError("Quarter unit does not have an extraction string.")
             case DateTimeUnit.MONTH:
                 return "'%m'"
             case DateTimeUnit.WEEK:

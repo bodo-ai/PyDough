@@ -208,6 +208,8 @@ class BaseTransformBindings:
                 return self.convert_extract_datetime(args, types, DateTimeUnit.YEAR)
             case pydop.MONTH:
                 return self.convert_extract_datetime(args, types, DateTimeUnit.MONTH)
+            case pydop.QUARTER:
+                return self.convert_extract_datetime(args, types, DateTimeUnit.QUARTER)
             case pydop.DAY:
                 return self.convert_extract_datetime(args, types, DateTimeUnit.DAY)
             case pydop.HOUR:

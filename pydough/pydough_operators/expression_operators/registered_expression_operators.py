@@ -55,6 +55,7 @@ __all__ = [
     "POWER",
     "PRESENT",
     "PREV",
+    "QUARTER",
     "RANKING",
     "RELAVG",
     "RELCOUNT",
@@ -169,6 +170,9 @@ DATETIME = ExpressionFunctionOperator(
 )
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+QUARTER = ExpressionFunctionOperator(
+    "QUARTER", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
 MONTH = ExpressionFunctionOperator(
     "MONTH", False, RequireNumArgs(1), ConstantType(Int64Type())
