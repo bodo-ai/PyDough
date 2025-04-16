@@ -8,7 +8,7 @@ WITH _t AS (
     ON merchants.mid = wallet_merchant_balance_daily.merchant_id
   WHERE
     LOWER(merchants.category) LIKE '%retail%' AND merchants.status = 'active'
-), _t0_2 AS (
+), _t0 AS (
   SELECT
     CASE
       WHEN ABS(
@@ -29,4 +29,4 @@ WITH _t AS (
 )
 SELECT
   AVG(expr_1) AS _expr0
-FROM _t0_2
+FROM _t0

@@ -4,7 +4,6 @@ Definitions of utilities used to build PyDough QDAG nodes.
 
 __all__ = ["AstNodeBuilder"]
 
-from collections.abc import MutableMapping, MutableSequence
 
 from pydough.metadata import (
     CollectionMetadata,
@@ -55,9 +54,7 @@ class AstNodeBuilder:
 
     def __init__(self, graph: GraphMetadata):
         self._graph: GraphMetadata = graph
-        self._operators: MutableMapping[str, PyDoughOperator] = (
-            builtin_registered_operators()
-        )
+        self._operators: dict[str, PyDoughOperator] = builtin_registered_operators()
 
     @property
     def graph(self) -> GraphMetadata:
@@ -67,7 +64,7 @@ class AstNodeBuilder:
         return self._graph
 
     @property
-    def operators(self) -> MutableMapping[str, PyDoughOperator]:
+    def operators(self) -> dict[str, PyDoughOperator]:
         """
         The operators that the builder has access to.
         """
@@ -189,7 +186,7 @@ class AstNodeBuilder:
 
     def build_child_reference_expression(
         self,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         child_idx: int,
         name: str,
     ) -> Reference:
@@ -271,7 +268,7 @@ class AstNodeBuilder:
     def build_calculate(
         self,
         preceding_context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> Calculate:
         """
         Creates a CALCULATE instance, but `with_terms` still needs to be called on
@@ -289,7 +286,7 @@ class AstNodeBuilder:
     def build_where(
         self,
         preceding_context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> Where:
         """
         Creates a WHERE instance, but `with_condition` still needs to be called on
@@ -307,7 +304,7 @@ class AstNodeBuilder:
     def build_order(
         self,
         preceding_context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
     ) -> OrderBy:
         """
         Creates a ORDERBY instance, but `with_collation` still needs to be called on
@@ -325,7 +322,7 @@ class AstNodeBuilder:
     def build_top_k(
         self,
         preceding_context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         records_to_keep: int,
     ) -> TopK:
         """
@@ -346,7 +343,7 @@ class AstNodeBuilder:
         self,
         preceding_context: PyDoughCollectionQDAG,
         child: PyDoughCollectionQDAG,
-        child_name: str,
+        name: str,
     ) -> PartitionBy:
         """
         Creates a PARTITION BY instance, but `with_keys` still needs to be called on
@@ -355,17 +352,17 @@ class AstNodeBuilder:
         Args:
             `preceding_context`: the preceding collection.
             `child`: the child that is the input to the PARTITION BY term.
-            `child_name`: the name that is used to access `child`.
+            `name`: the name that is used to refer to the partitioned data.
 
         Returns:
             The newly created PyDough PARTITION BY instance.
         """
-        return PartitionBy(preceding_context, child, child_name)
+        return PartitionBy(preceding_context, child, name)
 
     def build_child_reference_collection(
         self,
         preceding_context: PyDoughCollectionQDAG,
-        children: MutableSequence[PyDoughCollectionQDAG],
+        children: list[PyDoughCollectionQDAG],
         child_idx: int,
     ) -> ChildReferenceCollection:
         """

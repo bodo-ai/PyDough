@@ -30,6 +30,37 @@ __all__ = [
     "impl_defog_broker_gen3",
     "impl_defog_broker_gen4",
     "impl_defog_broker_gen5",
+    "impl_defog_dealership_adv1",
+    "impl_defog_dealership_adv10",
+    "impl_defog_dealership_adv11",
+    "impl_defog_dealership_adv12",
+    "impl_defog_dealership_adv13",
+    "impl_defog_dealership_adv14",
+    "impl_defog_dealership_adv15",
+    "impl_defog_dealership_adv16",
+    "impl_defog_dealership_adv2",
+    "impl_defog_dealership_adv3",
+    "impl_defog_dealership_adv4",
+    "impl_defog_dealership_adv5",
+    "impl_defog_dealership_adv6",
+    "impl_defog_dealership_adv7",
+    "impl_defog_dealership_adv8",
+    "impl_defog_dealership_adv9",
+    "impl_defog_dealership_basic1",
+    "impl_defog_dealership_basic10",
+    "impl_defog_dealership_basic2",
+    "impl_defog_dealership_basic3",
+    "impl_defog_dealership_basic4",
+    "impl_defog_dealership_basic5",
+    "impl_defog_dealership_basic6",
+    "impl_defog_dealership_basic7",
+    "impl_defog_dealership_basic8",
+    "impl_defog_dealership_basic9",
+    "impl_defog_dealership_gen1",
+    "impl_defog_dealership_gen2",
+    "impl_defog_dealership_gen3",
+    "impl_defog_dealership_gen4",
+    "impl_defog_dealership_gen5",
     "impl_defog_ewallet_adv1",
     "impl_defog_ewallet_adv10",
     "impl_defog_ewallet_adv11",
@@ -145,14 +176,14 @@ def impl_defog_broker_adv5():
         month=JOIN_STRINGS("-", YEAR(date), LPAD(MONTH(date), 2, "0")),
         symbol=ticker.symbol,
     )
-    ticker_months = PARTITION(price_info, name="updates", by=(symbol, month))
-    months = PARTITION(ticker_months, name="months", by=symbol).months
+    ticker_months = price_info.PARTITION(name="months", by=(symbol, month))
+    months = ticker_months.PARTITION(name="symbol", by=symbol).months
     month_stats = months.CALCULATE(
-        avg_close=AVG(updates.close),
-        max_high=MAX(updates.high),
-        min_low=MIN(updates.low),
+        avg_close=AVG(DailyPrices.close),
+        max_high=MAX(DailyPrices.high),
+        min_low=MIN(DailyPrices.low),
     )
-    prev_month_avg_close = PREV(avg_close, by=month.ASC(), levels=1)
+    prev_month_avg_close = PREV(avg_close, by=month.ASC(), per="symbol")
     return month_stats.CALCULATE(
         symbol,
         month,
@@ -196,13 +227,13 @@ def impl_defog_broker_adv7():
         join_month=MONTH(join_date),
         month=JOIN_STRINGS("-", YEAR(join_date), LPAD(MONTH(join_date), 2, "0")),
     )
-    months = PARTITION(selected_customers, name="custs", by=month)
-    selected_txns = custs.transactions_made.WHERE(
+    month_groups = selected_customers.PARTITION(name="months", by=month)
+    selected_txns = Customers.transactions_made.WHERE(
         (YEAR(date_time) == join_year) & (MONTH(date_time) == join_month)
     )
-    return months.CALCULATE(
+    return month_groups.CALCULATE(
         month,
-        customer_signups=COUNT(custs),
+        customer_signups=COUNT(Customers),
         avg_tx_amount=AVG(selected_txns.amount),
     )
 
@@ -244,11 +275,11 @@ def impl_defog_broker_adv9():
         week=DATETIME(date_time, "start of week"),
         is_weekend=ISIN(DAYOFWEEK(date_time), (5, 6)),
     )
-    weeks = PARTITION(selected_transactions, name="txns", by=week)
+    weeks = selected_transactions.PARTITION(name="weeks", by=week)
     return weeks.CALCULATE(
         week,
-        num_transactions=COUNT(txns),
-        weekend_transactions=SUM(txns.is_weekend),
+        num_transactions=COUNT(Transactions),
+        weekend_transactions=SUM(Transactions.is_weekend),
     )
 
 
@@ -308,8 +339,8 @@ def impl_defog_broker_adv13():
     Customers who joined on or after January 1, 2023.
     """
     selected_customers = Customers.WHERE(join_date >= datetime.date(2023, 1, 1))
-    countries = PARTITION(selected_customers, name="custs", by=country)
-    return countries.CALCULATE(cust_country=country, TAC=COUNT(custs))
+    countries = selected_customers.PARTITION(name="countries", by=country)
+    return countries.CALCULATE(cust_country=country, TAC=COUNT(Customers))
 
 
 def impl_defog_broker_adv14():
@@ -325,9 +356,9 @@ def impl_defog_broker_adv14():
         ticker_type=ticker.ticker_type
     )
 
-    ticker_types = PARTITION(selected_updates, name="updates", by=ticker_type)
+    ticker_types = selected_updates.PARTITION(name="ticker_types", by=ticker_type)
 
-    return ticker_types.CALCULATE(ticker_type, ACP=AVG(updates.close))
+    return ticker_types.CALCULATE(ticker_type, ACP=AVG(DailyPrices.close))
 
 
 def impl_defog_broker_adv15():
@@ -341,9 +372,9 @@ def impl_defog_broker_adv15():
     selected_customers = Customers.WHERE(
         (join_date >= "2022-01-01") & (join_date <= "2022-12-31")
     )
-    countries = PARTITION(selected_customers, name="custs", by=country)
-    n_active = SUM(custs.status == "active")
-    n_custs = COUNT(custs)
+    countries = selected_customers.PARTITION(name="countries", by=country)
+    n_active = SUM(Customers.status == "active")
+    n_custs = COUNT(Customers)
     return countries.CALCULATE(
         country,
         ar=100 * DEFAULT_TO(n_active / n_custs, 0.0),
@@ -381,8 +412,8 @@ def impl_defog_broker_basic1():
     days, inclusive of 30 days ago? Return the country name, number of
     transactions and total transaction amount.
     """
-    countries = PARTITION(Customers, name="custs", by=country)
-    selected_txns = custs.transactions_made.WHERE(
+    countries = Customers.PARTITION(name="countries", by=country)
+    selected_txns = Customers.transactions_made.WHERE(
         date_time >= DATETIME("now", "-30 days", "start of day")
     )
     return countries.CALCULATE(
@@ -405,11 +436,11 @@ def impl_defog_broker_basic2():
         (date_time >= datetime.date(2023, 1, 1))
         & (date_time <= datetime.date(2023, 3, 31))
     )
-    txn_types = PARTITION(selected_txns, name="txns", by=transaction_type)
+    txn_types = selected_txns.PARTITION(name="transaction_types", by=transaction_type)
     return txn_types.CALCULATE(
         transaction_type,
-        num_customers=NDISTINCT(txns.customer_id),
-        avg_shares=AVG(txns.shares),
+        num_customers=NDISTINCT(Transactions.customer_id),
+        avg_shares=AVG(Transactions.shares),
     ).TOP_K(3, by=num_customers.DESC())
 
 
@@ -435,13 +466,15 @@ def impl_defog_broker_basic4():
     number of transactions? Return the customer state, ticker type and number
     of transactions.
     """
-    data = Customers.CALCULATE(state=state).transactions_made.ticker
+    data = Customers.CALCULATE(state=state).transactions_made.CALCULATE(
+        ticker_type=ticker.ticker_type
+    )
     return (
-        PARTITION(data, name="combo", by=(state, ticker_type))
+        data.PARTITION(name="combinations", by=(state, ticker_type))
         .CALCULATE(
             state,
             ticker_type,
-            num_transactions=COUNT(combo),
+            num_transactions=COUNT(transactions_made),
         )
         .TOP_K(5, by=num_transactions.DESC())
     )
@@ -477,8 +510,8 @@ def impl_defog_broker_basic7():
     the status and number of transactions.
     """
     return (
-        PARTITION(Transactions, name="status_group", by=status)
-        .CALCULATE(status, num_transactions=COUNT(status_group))
+        Transactions.PARTITION(name="statuses", by=status)
+        .CALCULATE(status, num_transactions=COUNT(Transactions))
         .TOP_K(3, by=num_transactions.DESC())
     )
 
@@ -491,8 +524,8 @@ def impl_defog_broker_basic8():
     name and number of customers.
     """
     return (
-        PARTITION(Customers, name="custs", by=country)
-        .CALCULATE(country, num_customers=COUNT(custs))
+        Customers.PARTITION(name="countries", by=country)
+        .CALCULATE(country, num_customers=COUNT(Customers))
         .TOP_K(5, by=num_customers.DESC())
     )
 
@@ -591,9 +624,605 @@ def impl_defog_broker_gen5():
     ).CALCULATE(month=DATETIME(date_time, "start of month"))
 
     return (
-        PARTITION(selected_transactions, name="m", by=(month))
-        .CALCULATE(month=month, avg_price=AVG(m.price))
+        selected_transactions.PARTITION(name="months", by=month)
+        .CALCULATE(month=month, avg_price=AVG(Transactions.price))
         .ORDER_BY(month.ASC())
+    )
+
+
+def impl_defog_dealership_adv1():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    For sales with sale price over $30,000, how many payments were received in
+    total and on weekends in each of the last 8 calendar weeks (excluding the
+    current week)? Return the week (as a date), total payments received, and
+    weekend payments received in ascending order.
+    """
+    payment_weeks = PaymentsReceived.WHERE(
+        MONOTONIC(1, DATEDIFF("weeks", payment_date, "now"), 8)
+        & (sale_record.sale_price > 30000)
+    ).CALCULATE(
+        payment_week=DATETIME(payment_date, "start of week"),
+        is_weekend=ISIN(DAYOFWEEK(payment_date), (5, 6)),
+    )
+
+    return payment_weeks.PARTITION(name="weeks", by=payment_week).CALCULATE(
+        payment_week,
+        total_payments=COUNT(PaymentsReceived),
+        weekend_payments=SUM(PaymentsReceived.is_weekend),
+    )
+
+
+def impl_defog_dealership_adv2():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    How many sales did each salesperson make in the past 30 days, inclusive of
+    today's date? Return their ID, first name, last name and number of sales
+    made, ordered from most to least sales.
+    """
+    selected_sales = sales_made.WHERE(DATEDIFF("days", sale_date, "now") <= 30)
+
+    return (
+        Salespersons.WHERE(
+            HAS(sales_made.WHERE(DATEDIFF("days", sale_date, "now") <= 30))
+        )
+        .CALCULATE(_id, first_name, last_name, num_sales=COUNT(selected_sales))
+        .ORDER_BY(num_sales.DESC())
+    )
+
+
+def impl_defog_dealership_adv3():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    How many sales were made for each car model that has 'M5' in its VIN
+    number? Return the make, model and number of sales. When using car makes,
+    model names, engine_type and vin_number, match case-insensitively and allow
+    partial matches using LIKE with wildcards.
+    """
+    return Cars.CALCULATE(make, model, num_sales=COUNT(sale_records)).WHERE(
+        CONTAINS(LOWER(vin_number), "m5")
+    )
+
+
+def impl_defog_dealership_adv4():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    How many Toyota cars were sold in the last 30 days inclusive of today?
+    Return the number of sales and total revenue.
+    """
+    date_threshold = DATETIME("now", "-30 days")
+
+    selected_sales = sale_records.WHERE(sale_date >= date_threshold)
+
+    return Cars.WHERE(CONTAINS(LOWER(make), "toyota")).CALCULATE(
+        num_sales=COUNT(selected_sales),
+        total_revenue=KEEP_IF(
+            SUM(selected_sales.sale_price), COUNT(selected_sales) > 0
+        ),
+    )
+
+
+def impl_defog_dealership_adv5():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the first name, last name, total sales amount, number of sales, and
+    SR for each salesperson. SR = sales rank of each salesperson ordered by
+    their total sales amount descending
+    """
+    total_sales = SUM(sales_made.sale_price)
+
+    return (
+        Salespersons.WHERE(HAS(sales_made))
+        .CALCULATE(
+            first_name,
+            last_name,
+            total_sales=total_sales,
+            num_sales=COUNT(sales_made),
+            sales_rank=RANKING(by=total_sales.DESC(), allow_ties=True),
+        )
+        .ORDER_BY(total_sales.DESC())
+    )
+
+
+def impl_defog_dealership_adv6():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the highest sale price for each make and model of cars that have
+    been sold and are no longer in inventory, ordered by the sale price from
+    highest to lowest. Use the most recent date in the inventory_snapshots
+    table to determine that car's inventory status. When getting a car's
+    inventory status, always take the latest status from the
+    inventory_snapshots table
+    """
+    latest_snapshot = inventory_snapshots.WHERE(
+        RANKING(by=snapshot_date.DESC(), per="Cars") == 1
+    ).SINGULAR()
+
+    return (
+        Cars.WHERE(HAS(latest_snapshot) & (~latest_snapshot.is_in_inventory))
+        .CALCULATE(make, model, highest_sale_price=MAX(sale_records.sale_price))
+        .ORDER_BY(highest_sale_price.DESC())
+    )
+
+
+def impl_defog_dealership_adv7():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    What are the details and average sale price for cars that have 'Ford' in
+    their make name or 'Mustang' in the model name? Return make, model, year,
+    color, vin_number and avg_sale_price. When using car makes, model names,
+    engine_type and vin_number, match case-insensitively and allow partial
+    matches using LIKE with wildcards.
+    """
+    return Cars.WHERE(
+        CONTAINS(LOWER(make), "fords") | CONTAINS(LOWER(model), "mustang")
+    ).CALCULATE(
+        make,
+        model,
+        year,
+        color,
+        vin_number,
+        avg_sale_price=AVG(sale_records.sale_price),
+    )
+
+
+def impl_defog_dealership_adv8():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    What are the PMSPS and PMSR in the last 6 months excluding the current
+    month, for salespersons hired between 2022 and 2023 (both inclusive)?
+    Return all months in your answer, including those where metrics are 0.
+    Order by month ascending. PMSPS = per month salesperson sales count. PMSR =
+    per month sales revenue in dollars. Truncate date to month for aggregation.
+    """
+    eligible_salespersons = Salespersons.WHERE(
+        (YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023)
+    )
+
+    filtered_sales = Sales.WHERE(
+        (DATEDIFF("months", sale_date, DATETIME("now", "start of month")) >= 1)
+        & (DATEDIFF("months", sale_date, DATETIME("now", "start of month")) <= 6)
+        & (
+            HAS(
+                salesperson.WHERE((YEAR(hire_date) >= 2022) & (YEAR(hire_date) <= 2023))
+            )
+        )
+    ).CALCULATE(sale_price, sale_month=DATETIME(sale_date, "start of month"))
+
+    sales_metrics = filtered_sales.PARTITION(name="months", by=sale_month).CALCULATE(
+        sale_month, PMSPS=COUNT(Sales), PMSR=SUM(Sales.sale_price)
+    )
+
+    return sales_metrics.ORDER_BY(sale_month.ASC())
+
+
+def impl_defog_dealership_adv9():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What is the ASP for sales made in the first quarter of 2023? ASP = Average
+    Sale Price in the first quarter of 2023.
+    """
+    return Dealership.CALCULATE(
+        ASP=AVG(
+            Sales.WHERE(
+                (sale_date >= "2023-01-01") & (sale_date <= "2023-03-31")
+            ).sale_price
+        )
+    )
+
+
+def impl_defog_dealership_adv10():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    What is the average number of days between the sale date and payment
+    received date, rounded to 2 decimal places?
+    """
+    payment_info = Sales.CALCULATE(
+        sale_pay_diff=DATEDIFF(
+            "days",
+            sale_date,
+            MAX(payment.payment_date),
+        )
+    )
+    return Dealership.CALCULATE(
+        avg_days_to_payment=ROUND(AVG(payment_info.sale_pay_diff), 2)
+    )
+
+
+def impl_defog_dealership_adv11():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    What is the GPM for all car sales in 2023? GPM (gross profit margin) =
+    (total revenue - total cost) / total cost * 100
+    """
+    sales_2023 = (
+        Sales.WHERE(YEAR(sale_date) == 2023)
+        .WHERE(HAS(car))
+        .CALCULATE(car_cost=car.cost)
+    )
+
+    return Dealership.CALCULATE(
+        GPM=(
+            (SUM(sales_2023.sale_price) - SUM(sales_2023.car_cost))
+            / SUM(sales_2023.car_cost)
+        )
+        * 100
+    )
+
+
+def impl_defog_dealership_adv12():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    What is the make, model and sale price of the car with the highest sale
+    price that was sold on the same day it went out of inventory?
+    """
+    same_date_sold_car = (
+        car.inventory_snapshots.WHERE(
+            (snapshot_date == sale_date) & (is_in_inventory == 0)
+        )
+        .SINGULAR()
+        .car
+    )
+
+    return (
+        Sales.CALCULATE(sale_date=sale_date)
+        .WHERE(HAS(same_date_sold_car))
+        .CALCULATE(
+            make=same_date_sold_car.make,
+            model=same_date_sold_car.model,
+            sale_price=sale_price,
+        )
+        .TOP_K(1, by=sale_price.DESC())
+    )
+
+
+def impl_defog_dealership_adv13():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    What is the total payments received per month? Also calculate the MoM
+    change for each month. MoM change = (current month value - prev month
+    value). Return all months in your answer, including those where there were
+    no payments.
+    """
+    # TODO (gh #162): add user created collections support to PyDough
+
+    filtered_payments = PaymentsReceived.CALCULATE(
+        payment_amount,
+        month=DATETIME(payment_date, "start of month"),
+    )
+
+    monthly_totals = filtered_payments.PARTITIOn(name="months", by=month).CALCULATE(
+        total_payments=SUM(PaymentsReceived.payment_amount)
+    )
+
+    return monthly_totals.CALCULATE(
+        month,
+        total_payments,
+        MoM_change=total_payments - PREV(total_payments, by=month.ASC()),
+    ).ORDER_BY(month.ASC())
+
+
+def impl_defog_dealership_adv14():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    What is the TSC in the past 7 days, inclusive of today? TSC = Total Sales
+    Count.
+    """
+    return Dealership.CALCULATE(
+        TSC=COUNT(Sales.WHERE(DATEDIFF("DAYS", sale_date, "now") <= 7))
+    )
+
+
+def impl_defog_dealership_adv15():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Who are the top 3 salespersons by ASP? Return their first name, last name
+    and ASP. ASP (average selling price) = total sales amount / number of sales
+    """
+    return Salespersons.CALCULATE(
+        first_name, last_name, ASP=AVG(sales_made.sale_price)
+    ).TOP_K(3, by=ASP.DESC())
+
+
+def impl_defog_dealership_adv16():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Who are the top 5 salespersons by total sales amount? Return their ID,
+    first name, last name and total sales amount.
+    """
+    return Salespersons.CALCULATE(
+        _id, first_name, last_name, total=SUM(sales_made.sale_price)
+    ).TOP_K(5, by=total.DESC())
+
+
+def impl_defog_dealership_basic1():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the car ID, make, model and year for cars that have no sales
+    records, by doing a left join from the cars to sales table.
+    """
+    return Cars.WHERE(HASNOT(sale_records)).CALCULATE(_id, make, model, year)
+
+
+def impl_defog_dealership_basic2():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the distinct list of customer IDs that have made a purchase, based
+    on joining the customers and sales tables.
+    """
+    return Customers.WHERE(HAS(car_purchases)).CALCULATE(_id)
+
+
+def impl_defog_dealership_basic3():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the distinct list of salesperson IDs that have received a cash
+    payment, based on joining the salespersons, sales and payments_received
+    tables.
+    """
+    return Salespersons.WHERE(
+        HAS(sales_made.payment.WHERE(payment_method == "cash"))
+    ).CALCULATE(salesperson_id=_id)
+
+
+def impl_defog_dealership_basic4():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the salesperson ID, first name and last name for salespersons that
+    have no sales records, by doing a left join from the salespersons to sales
+    table.
+    """
+    return Salespersons.WHERE(HASNOT(sales_made)).CALCULATE(_id, first_name, last_name)
+
+
+def impl_defog_dealership_basic5():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the top 5 salespersons by number of sales in the past 30 days?
+    Return their first and last name, total sales count and total revenue
+    amount.
+    """
+    latest_sales = sales_made.WHERE(DATEDIFF("days", sale_date, "now") <= 30)
+
+    sales_person_last_month = Salespersons.WHERE(HAS(latest_sales))
+
+    return sales_person_last_month.CALCULATE(
+        first_name,
+        last_name,
+        total_sales=COUNT(latest_sales),
+        total_revenue=SUM(latest_sales.sale_price),
+    ).TOP_K(5, by=total_sales.DESC())
+
+
+def impl_defog_dealership_basic6():
+    """
+    PyDough implementation of the following question for the Car Dealership
+    graph:
+
+    Return the top 5 states by total revenue, showing the number of unique
+    customers and total revenue (based on sale price) for each state.
+    """
+    purchase_info = Customers.CALCULATE(state).car_purchases
+    states = purchase_info.PARTITION(name="states", by=state)
+    return states.CALCULATE(
+        state,
+        unique_customers=NDISTINCT(car_purchases.customer_id),
+        total_revenue=SUM(car_purchases.sale_price),
+    ).TOP_K(5, by=total_revenue.DESC())
+
+
+def impl_defog_dealership_basic7():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the top 3 payment methods by total payment amount received? Return
+    the payment method, total number of payments and total amount.
+    """
+    return (
+        PaymentsReceived.PARTITION(name="payment_methods", by=payment_method)
+        .CALCULATE(
+            payment_method,
+            total_payments=COUNT(PaymentsReceived),
+            total_amount=SUM(PaymentsReceived.payment_amount),
+        )
+        .TOP_K(3, by=total_amount.DESC())
+    )
+
+
+def impl_defog_dealership_basic8():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the top 5 best selling car models by total revenue? Return the
+    make, model, total number of sales and total revenue.
+    """
+    return Cars.CALCULATE(
+        make,
+        model,
+        total_sales=COUNT(sale_records),
+        total_revenue=SUM(sale_records.sale_price),
+    ).TOP_K(5, by=total_revenue.DESC())
+
+
+def impl_defog_dealership_basic9():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What are the total number of customer signups for the top 2 states? Return
+    the state and total signups, starting from the top.
+    """
+    return (
+        Customers.PARTITION(name="grouped", by=state)
+        .CALCULATE(state, total_signups=COUNT(Customers))
+        .TOP_K(2, by=total_signups.DESC())
+    )
+
+
+def impl_defog_dealership_basic10():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Who were the top 3 sales representatives by total revenue in the past 3
+    months, inclusive of today's date? Return their first name, last name,
+    total number of sales and total revenue. Note that revenue refers to the
+    sum of sale_price in the sales table.
+    """
+    date_threshold = DATETIME("now", "-3 months")
+
+    return Salespersons.CALCULATE(
+        first_name,
+        last_name,
+        total_sales=COUNT(sales_made.WHERE(sale_date >= date_threshold)),
+        total_revenue=SUM(sales_made.WHERE(sale_date >= date_threshold).sale_price),
+    ).TOP_K(3, by=total_revenue.DESC())
+
+
+def impl_defog_dealership_gen1():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the name and phone number of the salesperson with the shortest time
+    from being hired to getting fired. Return the number of days he/she was
+    employed for.
+
+    NOTE: Code adjusted by multiplying by 1.0 to match result type
+    """
+    return (
+        Salespersons.WHERE(PRESENT(termination_date))
+        .CALCULATE(
+            first_name,
+            last_name,
+            phone,
+            days_employed=DATEDIFF("days", hire_date, termination_date) * 1.0,
+        )
+        .TOP_K(1, days_employed.ASC())
+    )
+
+
+def impl_defog_dealership_gen2():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Return the number of payments made on weekends to the vendor named 'Utility
+    Company'
+    """
+    return Dealership.CALCULATE(
+        weekend_payments=COUNT(
+            PaymentsMade.WHERE(
+                (vendor_name == "Utility Company")
+                & (ISIN(DAYOFWEEK(payment_date), (5, 6)))
+            )
+        )
+    )
+
+
+def impl_defog_dealership_gen3():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Show me the daily total amount of payments received in the whole of the
+    previous ISO week not including the current week, split by the
+    payment_method.
+    """
+    payments = PaymentsReceived.WHERE((DATEDIFF("week", payment_date, "now") == 1))
+
+    return (
+        payments.PARTITION(name="groups", by=(payment_date, payment_method))
+        .CALCULATE(
+            payment_date,
+            payment_method,
+            total_amount=SUM(PaymentsReceived.payment_amount),
+        )
+        .ORDER_BY(payment_date.DESC(), payment_method.ASC())
+    )
+
+
+def impl_defog_dealership_gen4():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    What were the total quarterly sales in 2023 grouped by customer's state?
+    Represent each quarter as the first date in the quarter.
+    """
+    filtered_sales = Sales.WHERE(YEAR(sale_date) == 2023).CALCULATE(
+        sale_price,
+        quarter=IFF(
+            MONTH(sale_date) <= 3,
+            "2023-01-01",
+            IFF(
+                MONTH(sale_date) <= 6,
+                "2023-04-01",
+                IFF(MONTH(sale_date) <= 9, "2023-07-01", "2023-10-01"),
+            ),
+        ),
+        customer_state=customer.state,
+    )
+
+    return (
+        filtered_sales.PARTITION(name="groups", by=(quarter, customer_state))
+        .CALCULATE(quarter, customer_state, total_sales=SUM(Sales.sale_price))
+        .WHERE(total_sales > 0)
+        .ORDER_BY(quarter.ASC(), customer_state.ASC())
+    )
+
+
+def impl_defog_dealership_gen5():
+    """
+    PyDough implementation of the following question for the Car Dealership graph:
+
+    Which cars were in inventory in the latest snapshot for march 2023? Return
+    the car id, make, model, and year. Cars are considered to be in inventory"
+    if is_in_inventory is True."
+    """
+    return (
+        InventorySnapshots.WHERE(
+            (snapshot_date >= "2023-03-01") & (snapshot_date <= "2023-03-31")
+        )
+        .WHERE(
+            (RANKING(by=snapshot_date.DESC(), allow_ties=True) == 1) & is_in_inventory
+        )
+        .car.CALCULATE(_id, make, model, year)
     )
 
 
@@ -637,11 +1266,11 @@ def impl_defog_ewallet_adv2():
             is_weekend=ISIN(DAYOFWEEK(created_at), (5, 6)),
         )
     )
-    weeks = PARTITION(past_notifs, name="notifs", by=week)
+    weeks = past_notifs.PARTITION(name="weeks", by=week)
     return weeks.CALCULATE(
         week,
-        num_notifs=COUNT(notifs),
-        weekend_notifs=SUM(notifs.is_weekend),
+        num_notifs=COUNT(notifications),
+        weekend_notifs=SUM(notifications.is_weekend),
     )
 
 
@@ -703,7 +1332,7 @@ def impl_defog_ewallet_adv6():
     recent balance for each user
     """
     latest_balance_record = balances.WHERE(
-        RANKING(by=updated_at.DESC(), levels=1) == 1
+        RANKING(by=updated_at.DESC(), per="Users") == 1
     ).SINGULAR()
 
     return Users.WHERE(HAS(balances)).CALCULATE(
@@ -720,7 +1349,7 @@ def impl_defog_ewallet_adv7():
     latest snapshot of user_setting_snapshot for each user.
     """
     latest_snapshot = setting_snapshots.WHERE(
-        RANKING(by=created_at.DESC(), levels=1) == 1
+        RANKING(by=created_at.DESC(), per="Users") == 1
     ).SINGULAR()
 
     return Users.WHERE(HAS(latest_snapshot)).CALCULATE(
@@ -746,7 +1375,7 @@ def impl_defog_ewallet_adv8():
         merchants_name=name,
         category=category,
         total_revenue=transaction_SUM,
-        mrr=RANKING(by=transaction_SUM.DESC(), levels=1),
+        mrr=RANKING(by=transaction_SUM.DESC()),
     )
 
 
@@ -772,8 +1401,8 @@ def impl_defog_ewallet_adv9():
     ).CALCULATE(year_month=DATETIME(created_at, "start of month"))
 
     # Group transactions by month and calculate the number of distinct active users
-    return PARTITION(successful_transactions, name="transc", by=year_month).CALCULATE(
-        year_month=year_month, active_users=NDISTINCT(transc.sender_id)
+    return successful_transactions.PARTITION(name="months", by=year_month).CALCULATE(
+        year_month=year_month, active_users=NDISTINCT(Transactions.sender_id)
     )
 
 
@@ -912,8 +1541,8 @@ def impl_defog_ewallet_basic1():
         & (sender_type == 0)
     ).CALCULATE(month=DATETIME(created_at, "start of month"))
 
-    return PARTITION(selected_transactions, name="t", by=month).CALCULATE(
-        month, active_users=NDISTINCT(t.sender_id)
+    return selected_transactions.PARTITION(name="months", by=month).CALCULATE(
+        month, active_users=NDISTINCT(Transactions.sender_id)
     )
 
 
@@ -990,9 +1619,9 @@ def impl_defog_ewallet_basic6():
     What are the top 2 most frequently used device types for user sessions
     and their respective counts?
     """
-    selected_sessions = PARTITION(
-        UserSessions, name="usession", by=device_type
-    ).CALCULATE(device_type=device_type, count=COUNT(usession))
+    selected_sessions = UserSessions.PARTITION(
+        name="device_types", by=device_type
+    ).CALCULATE(device_type=device_type, count=COUNT(UserSessions))
 
     return selected_sessions.TOP_K(2, count.DESC())
 
@@ -1005,8 +1634,8 @@ def impl_defog_ewallet_basic7():
     counts?
     """
     return (
-        PARTITION(Transactions, name="t", by=status)
-        .CALCULATE(status=status, count=COUNT(t))
+        Transactions.PARTITION(name="statuses", by=status)
+        .CALCULATE(status=status, count=COUNT(Transactions))
         .TOP_K(3, count.DESC())
     )
 
@@ -1033,18 +1662,16 @@ def impl_defog_ewallet_basic9():
     sender_type = 0? Return the country, number of distinct users who sent,
     and total transaction amount.
     """
-    transactions_by_sending_users = (
-        Transactions.WHERE(sender_type == 0)
-        .CALCULATE(sender_id=sender_id, amount=amount)
-        .sending_user
+    transactions_by_sending_users = Transactions.WHERE(sender_type == 0).CALCULATE(
+        country=sending_user.country
     )
 
     return (
-        PARTITION(transactions_by_sending_users, name="t", by=country)
+        transactions_by_sending_users.PARTITION(name="countries", by=country)
         .CALCULATE(
             country=country,
-            user_count=NDISTINCT(t.sender_id),
-            total_amount=SUM(t.amount),
+            user_count=NDISTINCT(Transactions.sender_id),
+            total_amount=SUM(Transactions.amount),
         )
         .TOP_K(5, total_amount.DESC())
     )
@@ -1063,7 +1690,7 @@ def impl_defog_ewallet_gen1():
 
     latest_balance_today = active_merchants.balances.WHERE(
         (DATETIME(updated_at, "start of day") == DATETIME("now", "start of day"))
-        & (RANKING(by=updated_at.DESC(), levels=1) == 1)
+        & (RANKING(by=updated_at.DESC(), per="Merchants") == 1)
     )
 
     return Ewallet.CALCULATE(MEDIAN(latest_balance_today.balance))
@@ -1094,12 +1721,12 @@ def impl_defog_ewallet_gen3():
 
     what was the average user session duration in seconds split by device_type?
     """
-    selected_user_sessions = UserSessions
-
-    return PARTITION(selected_user_sessions, name="usession", by=device_type).CALCULATE(
+    return UserSessions.PARTITION(name="device_types", by=device_type).CALCULATE(
         device_type=device_type,
         avg_session_duration_seconds=AVG(
-            DATEDIFF("seconds", usession.session_start_ts, usession.session_end_ts)
+            DATEDIFF(
+                "seconds", UserSessions.session_start_ts, UserSessions.session_end_ts
+            )
         ),
     )
 
