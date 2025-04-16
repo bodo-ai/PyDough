@@ -70,8 +70,8 @@ from pydough.unqualified import (
                 "events_per_season",
                 lambda: pd.DataFrame(
                     {
-                        "era_name": ["Summer", "Winter", "Fall", "Spring"],
-                        "event_name": [48, 48, 45, 36],
+                        "season_name": ["Summer", "Winter", "Spring", "Fall"],
+                        "n_events": [48, 48, 45, 36],
                     }
                 ),
             ),
@@ -197,7 +197,7 @@ from pydough.unqualified import (
                             34.71,
                             31.40,
                             11.57,
-                            9.10,
+                            9.09,
                         ],
                     }
                 ),
@@ -233,7 +233,7 @@ from pydough.unqualified import (
                             "Summer",
                             "Winter",
                         ],
-                        "pct_season_searches": [12.5, 25.0, 36.84, 45.83],
+                        "pct_season_searches": [4.00, 10.71, 24.14, 28.21],
                         "pct_event_searches": [9.09, 27.27, 33.33, 55.00],
                     }
                 ),
@@ -287,7 +287,7 @@ from pydough.unqualified import (
                 "unique_users_per_engine",
                 lambda: pd.DataFrame(
                     {
-                        "search_engine": [
+                        "engine": [
                             "Bing",
                             "Brave",
                             "Duck Duck Go",

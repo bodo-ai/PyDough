@@ -412,12 +412,53 @@ INSERT INTO SEARCHES(search_id, search_user_id, search_engine, search_string, se
 -- GROUP BY 1
 -- ;
 
--- SELECT s_name AS season_name, (100.0 * SUM(CASE WHEN CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN 1 END)) / COUNT(*) as search_pct
+-- SELECT s_name AS season_name, (100.0 * COUNT(DISTINCT search_id)) / COUNT(*) as search_pct
+-- FROM SEASONS, (
+--   SELECT search_ts, ev_dt, CASE WHEN CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN search_id END AS search_id
+--   FROM SEASONS, SEARCHES, EVENTS
+--   WHERE CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+--   AND LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+-- )
+-- WHERE CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+-- GROUP BY 1
+-- ORDER BY 1
+-- ;
+
+-- SELECT s_name AS season_name, (100.0 * SUM(n_intra_season_matches > 0)) / COUNT(*) as search_pct
+-- FROM SEASONS 
+-- LEFT JOIN (
+--   SELECT search_id, search_ts, COALESCE(SUM(CASE WHEN CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN 1 END), 0) AS n_intra_season_matches
+--   FROM SEASONS
+--   INNER JOIN SEARCHES
+--   ON  CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+--   LEFT JOIN EVENTS
+--   ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+--   GROUP BY 1, 2
+-- )
+-- ON CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+-- GROUP BY 1
+-- ORDER BY 1
+-- ;
+
+-- SELECT s_name, COALESCE(SUM(CASE WHEN CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN 1 END), 0) AS n_intra_season_matches
 -- FROM SEASONS, SEARCHES, EVENTS
 -- WHERE CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
 -- AND LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
 -- GROUP BY 1
+-- ;
+
+-- SELECT s_name AS season_name, COUNT(*) as search_pct
+-- FROM SEASONS, SEARCHES
+-- WHERE CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+-- GROUP BY 1
 -- ORDER BY 1
+-- ;
+
+-- SELECT search_ts, SUM(CASE WHEN CAST(STRFTIME('%m', ev_dt) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN 1 END) AS search_id
+-- FROM SEASONS, SEARCHES, EVENTS
+-- WHERE CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3)
+-- AND LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+-- GROUP BY 1
 -- ;
 
 -- SELECT s_name AS season_name, (100.0 * SUM(CASE WHEN CAST(STRFTIME('%m', search_ts) AS INTEGER) IN (SEASONS.s_month1, SEASONS.s_month2, SEASONS.s_month3) THEN 1 END)) / COUNT(*) as search_pct

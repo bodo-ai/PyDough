@@ -124,13 +124,12 @@ def intra_season_searches():
         .CALCULATE(
             season_name=name,
             pct_season_searches=ROUND(
-                (100.0 * SUM(search_info.is_intra_season))
-                / COUNT(search_info.is_intra_season),
+                (100.0 * SUM(search_info.is_intra_season)) / COUNT(search_info),
                 2,
             ),
             pct_event_searches=ROUND(
                 (100.0 * SUM(event_search_info.is_intra_season))
-                / COUNT(event_search_info.is_intra_season),
+                / COUNT(event_search_info),
                 2,
             ),
         )
@@ -172,10 +171,10 @@ def unique_users_per_engine():
     return (
         searches.PARTITION(name="search_engines", by=search_engine)
         .CALCULATE(
-            search_engine,
+            engine=search_engine,
             n_users=NDISTINCT(
                 searches.WHERE(MONOTONIC(2010, YEAR(ts), 2019)).user.user_id
             ),
         )
-        .ORDER_BY(search_engine.ASC())
+        .ORDER_BY(engine.ASC())
     )

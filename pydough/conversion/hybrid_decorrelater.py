@@ -292,7 +292,9 @@ class Decorrelater:
         # If the child is such that we don't need to keep rows from the parent
         # without a match, replace the parent & its ancestors with a
         # HybridPullUp node (and replace any other deleted nodes with no-ops).
-        if child.connection_type.is_semi:
+        if child.connection_type.is_semi and child_idx == min(
+            old_parent.correlated_children
+        ):
             old_parent._parent = None
             old_parent.pipeline[0] = HybridChildPullUp(
                 old_parent, child_idx, child_height
@@ -437,18 +439,18 @@ class Decorrelater:
         if hybrid.parent is not None:
             hybrid._parent = self.decorrelate_hybrid_tree(hybrid.parent)
             hybrid._parent._successor = hybrid
-        # Iterate across all the children and recursively decorrelate them.
-        for child in hybrid.children:
-            child.subtree = self.decorrelate_hybrid_tree(child.subtree)
         # Iterate across all the children, identify any that are correlated,
         # and transform any of the correlated ones that require decorrelation
         # due to the type of connection.
-        child_idx: int = 0
-        while child_idx < len(hybrid.children):
-            if child_idx not in hybrid.correlated_children:
-                child_idx += 1
-                continue
+        child_idx: int = len(hybrid.children) - 1
+        original_parent: HybridTree
+        if len(hybrid.correlated_children) > 0:
+            original_parent = copy.deepcopy(hybrid)
+        while child_idx >= 0:
             child = hybrid.children[child_idx]
+            if child_idx not in hybrid.correlated_children:
+                child_idx -= 1
+                continue
             match child.connection_type:
                 case (
                     ConnectionType.SINGULAR
@@ -457,7 +459,9 @@ class Decorrelater:
                     | ConnectionType.AGGREGATION_ONLY_MATCH
                 ):
                     new_parent, skipped_levels = self.make_decorrelate_parent(
-                        hybrid, child_idx, hybrid.children[child_idx].required_steps
+                        original_parent,
+                        child_idx,
+                        hybrid.children[child_idx].required_steps,
                     )
                     child_idx = self.decorrelate_child(
                         hybrid,
@@ -479,7 +483,10 @@ class Decorrelater:
                     # These patterns do not require decorrelation since they
                     # are supported via correlated SEMI/ANTI joins.
                     pass
-            child_idx += 1
+            child_idx -= 1
+        # Iterate across all the children and recursively decorrelate them.
+        for child in hybrid.children:
+            child.subtree = self.decorrelate_hybrid_tree(child.subtree)
         return hybrid
 
 
