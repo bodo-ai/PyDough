@@ -283,7 +283,21 @@ class RelTranslation:
         rhs_alias: str | None,
     ) -> RelationalExpression:
         """
-        TODO
+        Converts a the condition for a non-equijoin from a hybrid expression
+        into a relational expression. The columns from the RHS are assumed to
+        be ordinary references/back-references within the condition expr, while
+        columns from the LHS are assumed to be `HybridSidedRefExpr`, denoting
+        that they come from the parent.
+
+        Args:
+            `condition`: the condition to be converted.
+            `lhs_result`: the TranslationOutput for the LHS of the join.
+            `rhs_result`: the TranslationOutput for the RHS of the join.
+            `lhs_alias`: the alias used to refer to the LHS of the join.
+            `rhs_alias`: the alias used to refer to the RHS of the join.
+
+        Returns:
+            The converted relational expression for the join condition.
         """
         result: RelationalExpression
         inputs: list[RelationalExpression]
