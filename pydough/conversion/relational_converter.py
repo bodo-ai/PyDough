@@ -305,11 +305,15 @@ class RelTranslation:
         order_inputs: list[ExpressionSortInfo]
         match condition:
             case HybridSidedRefExpr():
+                # For sided references, access the referenced expression from
+                # the lhs output.
                 result = self.translate_expression(
                     HybridRefExpr(condition.name, condition.typ), lhs_result
                 )
                 return self.rename_inputs(result, lhs_alias)
             case HybridFunctionExpr():
+                # For function calls, recursively convert the arguments, then
+                # build a relational function call expression.
                 inputs = [
                     self.build_general_join_condition(
                         arg, lhs_result, rhs_result, lhs_alias, rhs_alias
@@ -318,6 +322,8 @@ class RelTranslation:
                 ]
                 return CallExpression(condition.operator, condition.typ, inputs)
             case HybridWindowExpr():
+                # For window function calls, do the same as regular funcitons
+                # but also convert the partition/order inputs.
                 inputs = [
                     self.build_general_join_condition(
                         arg, lhs_result, rhs_result, lhs_alias, rhs_alias
@@ -349,6 +355,8 @@ class RelTranslation:
                     condition.kwargs,
                 )
             case _:
+                # For all other expressions, convert regularly using the RHS
+                # as the context to pull columns from.
                 result = self.translate_expression(condition, rhs_result)
                 return self.rename_inputs(result, rhs_alias)
 
@@ -356,7 +364,16 @@ class RelTranslation:
         self, expr: RelationalExpression, alias: str | None
     ) -> RelationalExpression:
         """
-        TODO
+        Recursively transforms a relational expression and any of its contents
+        so that all column references have an input alias added to them.
+
+        Args:
+            `expr`: the expression to be transformed.
+            `alias`: the alias to be added to the column references.
+
+        Returns:
+            The transformed expression with the input alias added to all
+            column references.
         """
         inputs: list[RelationalExpression]
         partition_inputs: list[RelationalExpression]
