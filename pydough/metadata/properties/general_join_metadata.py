@@ -187,7 +187,7 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
 
     def build_reverse_relationship(self) -> None:
         # Construct the reverse relationship by flipping the self & other
-        # names
+        # names.
         reverse = GeneralJoinMetadata(
             self.reverse_name,
             self.name,
