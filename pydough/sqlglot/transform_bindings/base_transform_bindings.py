@@ -204,6 +204,14 @@ class BaseTransformBindings:
                 return self.convert_monotonic(args, types)
             case pydop.SQRT:
                 return self.convert_sqrt(args, types)
+            case pydop.POPULATION_VARIANCE:
+                return self.convert_variance(args, types, "population")
+            case pydop.SAMPLE_VARIANCE:
+                return self.convert_variance(args, types, "sample")
+            case pydop.POPULATION_STD:
+                return self.convert_std(args, types, "population")
+            case pydop.SAMPLE_STD:
+                return self.convert_std(args, types, "sample")
             case pydop.YEAR:
                 return self.convert_extract_datetime(args, types, DateTimeUnit.YEAR)
             case pydop.MONTH:
@@ -1433,3 +1441,69 @@ class BaseTransformBindings:
             conditions = build_chained_and(args, i)
             answer = answer.when(conditions, args[i])
         return answer
+
+    def convert_variance(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+    ) -> SQLGlotExpression:
+        """
+        Converts a population variance calculation to an equivalent
+        SQLGlot expression.
+
+        Args:
+            `args`: The arguments to the population variance function.
+            `types`: The types of the arguments.
+            `type`: The type of variance to calculate.
+
+        Returns:
+            The SQLGlot expression to calculate the population variance
+            of the argument.
+        """
+        # VAR_POP = SUM((x - AVG(x))^2) / COUNT(x)
+        # VAR_SAMP = SUM((x - AVG(x))^2) / (COUNT(x) - 1)
+        arg = args[0]
+        avg_expr = sqlglot_expressions.Avg(this=arg)
+        diff_expr = sqlglot_expressions.Sub(this=arg, expression=avg_expr)
+        square_expr = sqlglot_expressions.Pow(
+            this=apply_parens(diff_expr),
+            expression=sqlglot_expressions.Literal.number(2),
+        )
+        sum_expr = sqlglot_expressions.Sum(this=square_expr)
+        count_expr = sqlglot_expressions.Count(this=arg)
+        if type == "population":
+            return apply_parens(
+                sqlglot_expressions.Div(
+                    this=sum_expr, expression=apply_parens(count_expr)
+                )
+            )
+        elif type == "sample":
+            denominator = sqlglot_expressions.Sub(
+                this=count_expr, expression=sqlglot_expressions.Literal.number(1)
+            )
+            return apply_parens(
+                sqlglot_expressions.Div(
+                    this=sum_expr, expression=apply_parens(denominator)
+                )
+            )
+        else:
+            raise ValueError(f"Unsupported type: {type}")
+
+    def convert_std(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+    ) -> SQLGlotExpression:
+        """
+        Converts a standard deviation calculation to an equivalent
+        SQLGlot expression.
+
+        Args:
+            `args`: The arguments to the standard deviation function.
+            `types`: The types of the arguments.
+            `type`: The type of standard deviation to calculate.
+
+        Returns:
+            The SQLGlot expression to calculate the standard deviation
+            of the argument.
+        """
+        variance = self.convert_variance(args, types, type)
+        return sqlglot_expressions.Pow(
+            this=variance, expression=sqlglot_expressions.Literal.number(0.5)
+        )

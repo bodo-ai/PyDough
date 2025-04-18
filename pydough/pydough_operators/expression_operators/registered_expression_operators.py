@@ -52,6 +52,8 @@ __all__ = [
     "NEXT",
     "NOT",
     "PERCENTILE",
+    "POPULATION_STD",
+    "POPULATION_VARIANCE",
     "POW",
     "POWER",
     "PRESENT",
@@ -63,16 +65,20 @@ __all__ = [
     "RELSUM",
     "ROUND",
     "RPAD",
+    "SAMPLE_STD",
+    "SAMPLE_VARIANCE",
     "SECOND",
     "SIGN",
     "SLICE",
     "SMALLEST",
     "SQRT",
     "STARTSWITH",
+    "STD",
     "STRIP",
     "SUB",
     "SUM",
     "UPPER",
+    "VAR",
     "YEAR",
 ]
 
@@ -90,6 +96,7 @@ from pydough.types import BooleanType, DateType, Float64Type, Int64Type, StringT
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
 from .expression_window_operators import ExpressionWindowOperator
+from .keyword_branching_operators import KeywordBranchingExpressionFunctionOperator
 
 # TODO: replace with full argument verifiers & deducers
 ADD = BinaryOperator(BinOp.ADD, RequireNumArgs(2), SelectArgumentType(0))
@@ -239,6 +246,29 @@ JOIN_STRINGS = ExpressionFunctionOperator(
     "JOIN_STRINGS", False, RequireMinArgs(1), ConstantType(StringType())
 )
 ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))
+
+# Define VAR with keyword branching for "type"
+VAR = KeywordBranchingExpressionFunctionOperator(
+    "VAR",
+    True,
+    RequireNumArgs(1),
+    ConstantType(Float64Type()),
+    kwarg_defaults={"type": "population"},
+)
+POPULATION_VARIANCE = VAR.with_kwarg({"type": "population"})
+SAMPLE_VARIANCE = VAR.with_kwarg({"type": "sample"})
+
+# Define STD with keyword branching for "type"
+STD = KeywordBranchingExpressionFunctionOperator(
+    "STD",
+    True,
+    RequireNumArgs(1),
+    ConstantType(Float64Type()),
+    kwarg_defaults={"type": "population"},
+)
+POPULATION_STD = STD.with_kwarg({"type": "population"})
+SAMPLE_STD = STD.with_kwarg({"type": "sample"})
+
 RANKING = ExpressionWindowOperator(
     "RANKING", RequireNumArgs(0), ConstantType(Int64Type())
 )

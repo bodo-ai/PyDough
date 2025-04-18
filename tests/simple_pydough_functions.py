@@ -1763,3 +1763,10 @@ def odate_and_rdate_avggap():
         day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
     )
     return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))
+
+
+def simple_var_std():
+    return Regions.CALCULATE(
+        var=VAR(nations.customers.acctbal),
+        std=STD(nations.customers.acctbal),
+    )

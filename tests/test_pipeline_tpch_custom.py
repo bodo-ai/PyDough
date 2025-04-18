@@ -61,6 +61,7 @@ from simple_pydough_functions import (
     simple_scan,
     simple_scan_top_five,
     simple_smallest_or_largest,
+    simple_var_std,
     singular1,
     singular2,
     singular3,
@@ -1366,6 +1367,15 @@ from pydough.unqualified import (
                 ),
             ),
             id="dumb_aggregation",
+        ),
+        pytest.param(
+            (
+                simple_var_std,
+                None,
+                "simple_var_std",
+                lambda: pd.DataFrame({"var": [1], "std": [1]}),
+            ),
+            id="simple_var_std",
         ),
     ],
 )

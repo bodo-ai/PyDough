@@ -491,9 +491,10 @@ class UnqualifiedOperator(UnqualifiedNode):
         window_operator: pydop.ExpressionWindowOperator
         is_window: bool = True
         operands: list[UnqualifiedNode] = []
+        func_str: str = self._parcel[0]
         for arg in args:
             operands.append(self.coerce_to_unqualified(arg))
-        match self._parcel[0]:
+        match func_str:
             case "PERCENTILE":
                 window_operator = pydop.PERCENTILE
                 is_positive_int.verify(
@@ -504,9 +505,7 @@ class UnqualifiedOperator(UnqualifiedNode):
                 is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
                 is_bool.verify(kwargs.get("dense", False), "`dense` argument")
             case "PREV" | "NEXT":
-                window_operator = (
-                    pydop.PREV if self._parcel[0] == "PREV" else pydop.NEXT
-                )
+                window_operator = pydop.PREV if func_str == "PREV" else pydop.NEXT
                 is_integer.verify(kwargs.get("n", 1), "`n` argument")
                 if len(args) > 1:
                     is_integer.verify(args[1], "`n` argument")
@@ -520,10 +519,38 @@ class UnqualifiedOperator(UnqualifiedNode):
                 window_operator = pydop.RELSIZE
             case func:
                 is_window = False
-                if len(kwargs) > 0:
-                    raise PyDoughUnqualifiedException(
-                        f"PyDough function call {func} does not support keyword arguments at this time"
-                    )
+                # Get all registered operators
+                all_operators = pydop.builtin_registered_operators()
+                operator = all_operators.get(func)
+
+                if operator is not None:
+                    # Check if this is a keyword branching operator
+                    if isinstance(
+                        operator, pydop.KeywordBranchingExpressionFunctionOperator
+                    ):
+                        # Find the matching implementation based on kwargs
+                        impl = operator.find_matching_implementation(kwargs)
+                        if impl is None:
+                            kwarg_str = ", ".join(
+                                f"{k}={v!r}" for k, v in kwargs.items()
+                            )
+                            raise PyDoughUnqualifiedException(
+                                f"No matching implementation found for {func}({kwarg_str})"
+                            )
+                        is_operator_found = False
+                        for op_str, op in all_operators.items():
+                            if op == impl:
+                                func_str = op_str
+                                is_operator_found = True
+                                break
+                        if not is_operator_found:
+                            raise PyDoughUnqualifiedException(
+                                f"No matching implementation found for {func}({kwarg_str})"
+                            )
+                    elif len(kwargs) > 0:
+                        raise PyDoughUnqualifiedException(
+                            f"PyDough function call {func} does not support keyword arguments at this time"
+                        )
         if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
             if "per" in kwargs:
@@ -537,7 +564,7 @@ class UnqualifiedOperator(UnqualifiedNode):
                 per,
                 kwargs,
             )
-        return UnqualifiedOperation(self._parcel[0], operands)
+        return UnqualifiedOperation(func_str, operands)
 
 
 class UnqualifiedOperation(UnqualifiedNode):
