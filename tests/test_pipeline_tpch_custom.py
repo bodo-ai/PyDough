@@ -1374,7 +1374,7 @@ from pydough.unqualified import (
                             "06-07-1997",
                         ],
                         "date_md": ["11/01", "11/02", "11/07", "08/06", "07/06"],
-                        "am_pm": ["AM", "AM", "AM", "AM", "AM"],
+                        "am_pm": ["00:00AM"] * 5,
                     }
                 ),
             ),
@@ -1470,7 +1470,6 @@ def test_pipeline_e2e_tpch_custom(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
     to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
-    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

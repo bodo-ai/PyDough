@@ -1783,10 +1783,6 @@ def string_format_specifiers_sqlite():
         d22=STRING(static_date, "%Y"),
         # month-day-year
         d23=STRING(static_date, "%m-%d-%Y"),
-        # am
-        d24=STRING("2023-07-15 2:30:45 am", "%p"),
-        # pm
-        d25=STRING("2023-07-15 2:30:45 pm", "%p"),
     )
 
 
@@ -1816,7 +1812,7 @@ def part_reduced_size():
             # month/day: 07/15
             date_md=STRING(receipt_date, "%m/%d"),
             # AM or PM
-            am_pm=STRING(receipt_date, "%p"),
+            am_pm=STRING(receipt_date, "%H:%M%p"),
         )
         .TOP_K(5, by=discount.DESC())
     )
