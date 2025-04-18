@@ -8,9 +8,6 @@ relational tree to build the final SQL query.
 from abc import ABC, abstractmethod
 from typing import Any
 
-from .relational_expression_shuttle import RelationalExpressionShuttle
-from .relational_expression_visitor import RelationalExpressionVisitor
-
 __all__ = ["RelationalExpression"]
 
 import pydough.pydough_operators as pydop
@@ -85,7 +82,7 @@ class RelationalExpression(ABC):
         return hash(self.to_string())
 
     @abstractmethod
-    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+    def accept(self, visitor: "RelationalExpressionVisitor") -> None:  # type: ignore # noqa
         """
         Visit this relational expression with the provided visitor.
 
@@ -96,7 +93,8 @@ class RelationalExpression(ABC):
 
     @abstractmethod
     def accept_shuttle(
-        self, shuttle: RelationalExpressionShuttle
+        self,
+        shuttle: "RelationalExpressionShuttle",  # type: ignore # noqa
     ) -> "RelationalExpression":
         """
         Visit this relational expression with the provided shuttle and

@@ -4,11 +4,15 @@ expression components of a Relational tree. The primary motivation of
 this module is to allow associating lowering the Relational expressions
 into a specific backend in a single class, but this can also be
 used for any other tree based operations (e.g. string generation).
-
-TODO: (gh #172) Fix type annotations. Disabled due to circular imports.
 """
 
 from abc import ABC, abstractmethod
+
+from .call_expression import CallExpression
+from .column_reference import ColumnReference
+from .correlated_reference import CorrelatedReference
+from .literal_expression import LiteralExpression
+from .window_call_expression import WindowCallExpression
 
 __all__ = ["RelationalExpressionVisitor"]
 
@@ -26,7 +30,7 @@ class RelationalExpressionVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_call_expression(self, call_expression) -> None:
+    def visit_call_expression(self, call_expression: CallExpression) -> None:
         """
         Visit a CallExpression node.
 
@@ -35,7 +39,7 @@ class RelationalExpressionVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_window_expression(self, window_expression) -> None:
+    def visit_window_expression(self, window_expression: WindowCallExpression) -> None:
         """
         Visit a WindowCallExpression node.
 
@@ -45,7 +49,7 @@ class RelationalExpressionVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_literal_expression(self, literal_expression) -> None:
+    def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         """
         Visit a LiteralExpression node.
 
@@ -54,7 +58,7 @@ class RelationalExpressionVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_column_reference(self, column_reference) -> None:
+    def visit_column_reference(self, column_reference: ColumnReference) -> None:
         """
         Visit a ColumnReference node.
 
@@ -63,7 +67,9 @@ class RelationalExpressionVisitor(ABC):
         """
 
     @abstractmethod
-    def visit_correlated_reference(self, correlated_reference) -> None:
+    def visit_correlated_reference(
+        self, correlated_reference: CorrelatedReference
+    ) -> None:
         """
         Visit a CorrelatedReference node.
 
