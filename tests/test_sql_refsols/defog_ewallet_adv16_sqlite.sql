@@ -1,6 +1,6 @@
-WITH _t1_2 AS (
+WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS total_unread_notifs,
     user_id
   FROM main.notifications
   WHERE
@@ -10,9 +10,9 @@ WITH _t1_2 AS (
 )
 SELECT
   users.username,
-  COALESCE(_t1.agg_0, 0) AS total_unread_notifs
+  _s1.total_unread_notifs
 FROM main.users AS users
-JOIN _t1_2 AS _t1
-  ON _t1.user_id = users.uid
+JOIN _s1 AS _s1
+  ON _s1.user_id = users.uid
 WHERE
   LOWER(users.country) = 'us'

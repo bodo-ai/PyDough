@@ -4,8 +4,6 @@ relational representation for any grouping operation that optionally involves
 keys and aggregate functions.
 """
 
-from collections.abc import MutableMapping, MutableSequence
-
 from pydough.relational.relational_expressions import (
     CallExpression,
     ColumnReference,
@@ -13,7 +11,6 @@ from pydough.relational.relational_expressions import (
 )
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -27,29 +24,29 @@ class Aggregate(SingleRelational):
     def __init__(
         self,
         input: RelationalNode,
-        keys: MutableMapping[str, ColumnReference],
-        aggregations: MutableMapping[str, CallExpression],
+        keys: dict[str, ColumnReference],
+        aggregations: dict[str, CallExpression],
     ) -> None:
-        total_cols: MutableMapping[str, RelationalExpression] = {**keys, **aggregations}
+        total_cols: dict[str, RelationalExpression] = {**keys, **aggregations}
         assert len(total_cols) == len(keys) + len(aggregations), (
             "Keys and aggregations must have unique names"
         )
         super().__init__(input, total_cols)
-        self._keys: MutableMapping[str, ColumnReference] = keys
-        self._aggregations: MutableMapping[str, CallExpression] = aggregations
+        self._keys: dict[str, ColumnReference] = keys
+        self._aggregations: dict[str, CallExpression] = aggregations
         assert all(agg.is_aggregation for agg in aggregations.values()), (
             "All functions used in aggregations must be aggregation functions"
         )
 
     @property
-    def keys(self) -> MutableMapping[str, ColumnReference]:
+    def keys(self) -> dict[str, ColumnReference]:
         """
         The keys for the aggregation operation.
         """
         return self._keys
 
     @property
-    def aggregations(self) -> MutableMapping[str, CallExpression]:
+    def aggregations(self) -> dict[str, CallExpression]:
         """
         The aggregation functions for the aggregation operation.
         """
@@ -66,13 +63,13 @@ class Aggregate(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"AGGREGATE(keys={self.make_column_string(self.keys, compact)}, aggregations={self.make_column_string(self.aggregations, compact)})"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_aggregate(self)
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Aggregate node should have exactly one input"
         # Aggregate nodes don't cleanly map to the existing columns API.

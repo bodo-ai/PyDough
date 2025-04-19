@@ -1,6 +1,6 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS num_sales,
     salesperson_id
   FROM main.sales
   WHERE
@@ -14,9 +14,9 @@ SELECT
   salespersons._id,
   salespersons.first_name,
   salespersons.last_name,
-  COALESCE(_t1.agg_0, 0) AS num_sales
+  _s1.num_sales
 FROM main.salespersons AS salespersons
-JOIN _t1 AS _t1
-  ON _t1.salesperson_id = salespersons._id
+JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  COALESCE(_t1.agg_0, 0) DESC
+  num_sales DESC

@@ -3,14 +3,12 @@ Representation of the a join node in a relational tree.
 This node is responsible for holding all types of joins.
 """
 
-from collections.abc import MutableMapping, MutableSequence
 from enum import Enum
 
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 
 
 class JoinType(Enum):
@@ -45,10 +43,10 @@ class Join(RelationalNode):
 
     def __init__(
         self,
-        inputs: MutableSequence[RelationalNode],
+        inputs: list[RelationalNode],
         conditions: list[RelationalExpression],
         join_types: list[JoinType],
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
         correl_name: str | None = None,
     ) -> None:
         super().__init__(columns)
@@ -91,7 +89,7 @@ class Join(RelationalNode):
         return self._join_types
 
     @property
-    def inputs(self) -> MutableSequence[RelationalNode]:
+    def inputs(self) -> list[RelationalNode]:
         return self._inputs
 
     @property
@@ -125,12 +123,12 @@ class Join(RelationalNode):
         )
         return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_join(self)
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         return Join(inputs, self.conditions, self.join_types, columns, self.correl_name)

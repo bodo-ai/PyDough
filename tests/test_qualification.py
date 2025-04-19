@@ -386,11 +386,19 @@ from pydough.unqualified import (
 └─┬─ Calculate[max_revenue=MAX($1.total_revenue)]
   ├─┬─ AccessChild
   │ ├─── TableCollection[Suppliers]
+  │ ├─┬─ Where[HAS($1)]
+  │ │ └─┬─ AccessChild
+  │ │   ├─── SubCollection[lines]
+  │ │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
   │ └─┬─ Calculate[total_revenue=SUM($1.extended_price * (1 - $1.discount))]
   │   └─┬─ AccessChild
   │     ├─── SubCollection[lines]
   │     └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
   ├─── TableCollection[Suppliers]
+  ├─┬─ Where[HAS($1)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[lines]
+  │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
   ├─┬─ Calculate[S_SUPPKEY=key, S_NAME=name, S_ADDRESS=address, S_PHONE=phone, TOTAL_REVENUE=SUM($1.extended_price * (1 - $1.discount))]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[lines]

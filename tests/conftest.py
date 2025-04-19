@@ -6,7 +6,8 @@ available.
 import json
 import os
 import sqlite3
-from collections.abc import Callable, MutableMapping
+import subprocess
+from collections.abc import Callable
 from functools import cache
 
 import pytest
@@ -146,10 +147,10 @@ def get_sample_graph_nouns(
     PyDough graph.
     """
 
-    def impl(name: str) -> MutableMapping[str, set[str]]:
+    def impl(name: str) -> dict[str, set[str]]:
         if name not in valid_sample_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
-        nouns: MutableMapping[str, set[str]]
+        nouns: dict[str, set[str]]
         with open(sample_graph_nouns_path) as f:
             nouns = json.load(f)[name]
         # Convert the noun values for each name from a list to a set
@@ -365,13 +366,15 @@ def defog_graphs() -> graph_fetcher:
     return impl
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sqlite_defog_connection() -> DatabaseContext:
     """
     Returns the SQLITE database connection for the defog database.
     """
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    # Setup the defog database.
+    subprocess.run("cd tests; bash setup_defog.sh", shell=True)
     path: str = os.path.join(base_dir, "tests/defog.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)

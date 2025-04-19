@@ -4,13 +4,10 @@ relational representation statements that map to where, having, or qualify
 in SQL.
 """
 
-from collections.abc import MutableMapping, MutableSequence
-
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -24,7 +21,7 @@ class Filter(SingleRelational):
         self,
         input: RelationalNode,
         condition: RelationalExpression,
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
     ) -> None:
         super().__init__(input, columns)
         assert isinstance(condition.data_type, BooleanType), (
@@ -49,13 +46,13 @@ class Filter(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"FILTER(condition={self.condition.to_string(compact)}, columns={self.make_column_string(self.columns, compact)})"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_filter(self)
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Filter node should have exactly one input"
         return Filter(inputs[0], self.condition, columns)

@@ -4,14 +4,11 @@ The representation of a column function call for use in a relational tree.
 
 __all__ = ["CallExpression"]
 
-from collections.abc import MutableSequence
 
 from pydough.pydough_operators import PyDoughExpressionOperator
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
-from .relational_expression_shuttle import RelationalExpressionShuttle
-from .relational_expression_visitor import RelationalExpressionVisitor
 
 
 class CallExpression(RelationalExpression):
@@ -24,11 +21,11 @@ class CallExpression(RelationalExpression):
         self,
         op: PyDoughExpressionOperator,
         return_type: PyDoughType,
-        inputs: MutableSequence[RelationalExpression],
+        inputs: list[RelationalExpression],
     ) -> None:
         super().__init__(return_type)
         self._op: PyDoughExpressionOperator = op
-        self._inputs: MutableSequence[RelationalExpression] = inputs
+        self._inputs: list[RelationalExpression] = inputs
 
     @property
     def op(self) -> PyDoughExpressionOperator:
@@ -42,7 +39,7 @@ class CallExpression(RelationalExpression):
         return self.op.is_aggregation
 
     @property
-    def inputs(self) -> MutableSequence[RelationalExpression]:
+    def inputs(self) -> list[RelationalExpression]:
         """
         The inputs to the operation.
         """
@@ -63,10 +60,11 @@ class CallExpression(RelationalExpression):
             and super().equals(other)
         )
 
-    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+    def accept(self, visitor: "RelationalExpressionVisitor") -> None:  # type: ignore # noqa
         visitor.visit_call_expression(self)
 
     def accept_shuttle(
-        self, shuttle: RelationalExpressionShuttle
+        self,
+        shuttle: "RelationalExpressionShuttle",  # type: ignore # noqa
     ) -> RelationalExpression:
         return shuttle.visit_call_expression(self)

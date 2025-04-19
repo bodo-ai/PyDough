@@ -6,15 +6,12 @@ avoid introducing extra nodes just to reorder or prune columns, so ideally their
 should be sparse.
 """
 
-from collections.abc import MutableMapping, MutableSequence
-
 from pydough.relational.relational_expressions import (
     ColumnReference,
     RelationalExpression,
 )
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -28,7 +25,7 @@ class Project(SingleRelational):
     def __init__(
         self,
         input: RelationalNode,
-        columns: MutableMapping[str, RelationalExpression],
+        columns: dict[str, RelationalExpression],
     ) -> None:
         super().__init__(input, columns)
 
@@ -38,7 +35,7 @@ class Project(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"PROJECT(columns={self.make_column_string(self.columns, compact)})"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         return visitor.visit_project(self)
 
     def is_identity(self) -> bool:
@@ -55,8 +52,8 @@ class Project(SingleRelational):
 
     def node_copy(
         self,
-        columns: MutableMapping[str, RelationalExpression],
-        inputs: MutableSequence[RelationalNode],
+        columns: dict[str, RelationalExpression],
+        inputs: list[RelationalNode],
     ) -> RelationalNode:
         assert len(inputs) == 1, "Project node should have exactly one input"
         return Project(inputs[0], columns)

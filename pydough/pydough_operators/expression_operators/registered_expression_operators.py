@@ -34,6 +34,7 @@ __all__ = [
     "ISIN",
     "JOIN_STRINGS",
     "KEEP_IF",
+    "LARGEST",
     "LENGTH",
     "LEQ",
     "LET",
@@ -67,6 +68,7 @@ __all__ = [
     "SECOND",
     "SIGN",
     "SLICE",
+    "SMALLEST",
     "SQRT",
     "STARTSWITH",
     "STRING",
@@ -166,6 +168,12 @@ ANYTHING = ExpressionFunctionOperator(
 )
 MIN = ExpressionFunctionOperator("MIN", True, RequireNumArgs(1), SelectArgumentType(0))
 MAX = ExpressionFunctionOperator("MAX", True, RequireNumArgs(1), SelectArgumentType(0))
+SMALLEST = ExpressionFunctionOperator(
+    "SMALLEST", False, RequireMinArgs(2), SelectArgumentType(0)
+)
+LARGEST = ExpressionFunctionOperator(
+    "LARGEST", False, RequireMinArgs(2), SelectArgumentType(0)
+)
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
 DATETIME = ExpressionFunctionOperator(
     "DATETIME", False, AllowAny(), ConstantType(DateType())

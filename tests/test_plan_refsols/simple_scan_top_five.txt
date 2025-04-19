@@ -1,4 +1,3 @@
-ROOT(columns=[('key', key)], orderings=[(ordering_0):asc_first])
- LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key, 'ordering_0': ordering_0}, orderings=[(ordering_0):asc_first])
-  PROJECT(columns={'key': key, 'ordering_0': key})
-   SCAN(table=tpch.ORDERS, columns={'key': o_orderkey})
+ROOT(columns=[('key', key)], orderings=[(key):asc_first])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key}, orderings=[(key):asc_first])
+  SCAN(table=tpch.ORDERS, columns={'key': o_orderkey})
