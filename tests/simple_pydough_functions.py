@@ -1766,7 +1766,12 @@ def odate_and_rdate_avggap():
 
 
 def simple_var_std():
-    return Regions.CALCULATE(
-        var=VAR(nations.customers.acctbal),
-        std=STD(nations.customers.acctbal),
+    return Nations.WHERE(ISIN(name, ("ALGERIA", "ARGENTINA"))).CALCULATE(
+        name,
+        var=VAR(suppliers.account_balance),
+        std=STD(suppliers.account_balance),
+        sample_var=VAR(suppliers.account_balance, type="sample"),
+        sample_std=STD(suppliers.account_balance, type="sample"),
+        pop_var=VAR(suppliers.account_balance, type="population"),
+        pop_std=STD(suppliers.account_balance, type="population"),
     )

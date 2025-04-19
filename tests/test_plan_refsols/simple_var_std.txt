@@ -1,0 +1,6 @@
+ROOT(columns=[('name', name), ('var', agg_1), ('std', agg_0), ('sample_var', agg_3), ('sample_std', agg_2), ('pop_var', agg_1), ('pop_std', agg_0)], orderings=[])
+ JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'name': t0.name})
+  FILTER(condition=ISIN(name, ['ALGERIA', 'ARGENTINA']:array[unknown]), columns={'key': key, 'name': name})
+   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
+  AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': STD_TYPE_POPULATION(account_balance), 'agg_1': VAR_TYPE_POPULATION(account_balance), 'agg_2': STD_TYPE_SAMPLE(account_balance), 'agg_3': VAR_TYPE_SAMPLE(account_balance)})
+   SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})

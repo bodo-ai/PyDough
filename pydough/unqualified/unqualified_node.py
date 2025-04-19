@@ -535,8 +535,10 @@ class UnqualifiedOperator(UnqualifiedNode):
                                 f"{k}={v!r}" for k, v in kwargs.items()
                             )
                             raise PyDoughUnqualifiedException(
-                                f"No matching implementation found for {func}({kwarg_str})"
+                                f"No matching implementation found for "
+                                f"{func}({kwarg_str})."
                             )
+                        # Get the operator name from the operator
                         is_operator_found = False
                         for op_str, op in all_operators.items():
                             if op == impl:
@@ -545,11 +547,13 @@ class UnqualifiedOperator(UnqualifiedNode):
                                 break
                         if not is_operator_found:
                             raise PyDoughUnqualifiedException(
-                                f"No matching implementation found for {func}({kwarg_str})"
+                                f"No matching implementation found for "
+                                f"{func}({kwarg_str})."
                             )
                     elif len(kwargs) > 0:
                         raise PyDoughUnqualifiedException(
-                            f"PyDough function call {func} does not support keyword arguments at this time"
+                            f"PyDough function call {func} does not support "
+                            "keyword arguments at this time."
                         )
         if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)

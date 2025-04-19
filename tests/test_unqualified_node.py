@@ -5,6 +5,7 @@ Python code into them.
 
 import ast
 import datetime
+import re
 from collections.abc import Callable
 
 import pytest
@@ -25,6 +26,9 @@ from bad_pydough_functions import (
     bad_reversed,
     bad_setitem,
     bad_trunc,
+    bad_unsupported_kwarg1,
+    bad_unsupported_kwarg2,
+    bad_unsupported_kwarg3,
     bad_window_1,
     bad_window_2,
     bad_window_3,
@@ -643,6 +647,24 @@ def test_init_pydough_context(
             bad_iter,
             "Cannot index into PyDough object Customers with 0",
             id="bad_iter",
+        ),
+        pytest.param(
+            bad_unsupported_kwarg1,
+            re.escape("No matching implementation found for VAR(type='wrong_type')."),
+            id="bad_unsupported_kwarg1",
+        ),
+        pytest.param(
+            bad_unsupported_kwarg2,
+            re.escape("No matching implementation found for VAR(wrong_type='sample')."),
+            id="bad_unsupported_kwarg2",
+        ),
+        pytest.param(
+            bad_unsupported_kwarg3,
+            re.escape(
+                "PyDough function call SUM does not support "
+                "keyword arguments at this time."
+            ),
+            id="bad_unsupported_kwarg3",
         ),
     ],
 )

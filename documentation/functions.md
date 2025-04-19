@@ -63,6 +63,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [NDISTINCT](#ndistinct)
    * [HAS](#has)
    * [HASNOT](#hasnot)
+   * [VAR](#var)
+   * [STD](#std)
 - [Window Functions](#window-functions)
    * [RANKING](#ranking)
    * [PERCENTILE](#percentile)
@@ -884,6 +886,44 @@ The `HASNOT` function is called on a sub-collection and returns `True` if no rec
 
 ```py
 Customers.WHERE(HASNOT(orders))
+```
+
+<!-- TOC --><a name="var"></a>
+
+### VAR
+
+The `VAR` function returns the variance of the set of numerical values it is called on. This operation supports the `type` keyword argument, which can be used to specify the type of variance to compute. The following variances are supported:
+
+- `"population"`: The population variance.
+- `"sample"`: The sample variance.
+
+By default, the `VAR` function computes the population variance.
+
+```py
+# Compute the population variance
+Parts.CALCULATE(variance = VAR(supply_records.supply_cost))
+
+# Compute the sample variance
+Parts.CALCULATE(variance = VAR(supply_records.supply_cost, type="sample"))
+```
+
+<!-- TOC --><a name="std"></a>
+
+### STD
+
+The `STD` function returns the standard deviation of the set of numerical values it is called on. This operation supports the `type` keyword argument, which can be used to specify the type of standard deviation to compute. The following standard deviations are supported:
+
+- `"population"`: The population standard deviation.
+- `"sample"`: The sample standard deviation.
+
+By default, the `STD` function computes the population standard deviation.
+
+```py
+# Compute the population standard deviation
+Parts.CALCULATE(std = STD(supply_records.supply_cost))
+
+# Compute the sample standard deviation
+Parts.CALCULATE(std = STD(supply_records.supply_cost, type="sample"))
 ```
 
 <!-- TOC --><a name="window-functions"></a>

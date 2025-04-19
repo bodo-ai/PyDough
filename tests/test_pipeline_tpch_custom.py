@@ -1373,7 +1373,17 @@ from pydough.unqualified import (
                 simple_var_std,
                 None,
                 "simple_var_std",
-                lambda: pd.DataFrame({"var": [1], "std": [1]}),
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["ALGERIA", "ARGENTINA"],
+                        "var": [9.268000e06, 1.003823e07],
+                        "std": [3044.339064, 3168.316441],
+                        "sample_var": [9.290120e06, 1.006259e07],
+                        "sample_std": [3047.969762, 3172.159155],
+                        "pop_var": [9.268000e06, 1.003823e07],
+                        "pop_std": [3044.339064, 3168.316441],
+                    }
+                ),
             ),
             id="simple_var_std",
         ),

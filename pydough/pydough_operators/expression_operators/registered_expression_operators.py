@@ -247,7 +247,7 @@ JOIN_STRINGS = ExpressionFunctionOperator(
 )
 ABS = ExpressionFunctionOperator("ABS", False, RequireNumArgs(1), SelectArgumentType(0))
 
-# Define VAR with keyword branching for "type"
+# Define VAR with keyword branching
 VAR = KeywordBranchingExpressionFunctionOperator(
     "VAR",
     True,
@@ -255,10 +255,11 @@ VAR = KeywordBranchingExpressionFunctionOperator(
     ConstantType(Float64Type()),
     kwarg_defaults={"type": "population"},
 )
+# Define VAR with keyword branching for "type" which is represented internally.
 POPULATION_VARIANCE = VAR.with_kwarg({"type": "population"})
 SAMPLE_VARIANCE = VAR.with_kwarg({"type": "sample"})
 
-# Define STD with keyword branching for "type"
+# Define STD with keyword branching
 STD = KeywordBranchingExpressionFunctionOperator(
     "STD",
     True,
@@ -266,6 +267,7 @@ STD = KeywordBranchingExpressionFunctionOperator(
     ConstantType(Float64Type()),
     kwarg_defaults={"type": "population"},
 )
+# Define STD with keyword branching for "type" which is represented internally.
 POPULATION_STD = STD.with_kwarg({"type": "population"})
 SAMPLE_STD = STD.with_kwarg({"type": "sample"})
 

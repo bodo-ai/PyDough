@@ -18,6 +18,7 @@ from simple_pydough_functions import (
     simple_filter,
     simple_scan,
     simple_smallest_or_largest,
+    simple_var_std,
     transaction_week_sampler,
     week_offset,
 )
@@ -96,6 +97,12 @@ from pydough.unqualified import (
             None,
             "simple_smallest_or_largest",
             id="simple_smallest_or_largest",
+        ),
+        pytest.param(
+            simple_var_std,
+            None,
+            "simple_var_std",
+            id="simple_var_std",
         ),
     ],
 )
