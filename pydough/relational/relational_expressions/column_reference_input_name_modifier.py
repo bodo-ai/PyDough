@@ -5,6 +5,7 @@ input name to a new input name based on a dictionary.
 
 from .abstract_expression import RelationalExpression
 from .column_reference import ColumnReference
+from .correlated_reference import CorrelatedReference
 from .literal_expression import LiteralExpression
 from .relational_expression_shuttle import RelationalExpressionShuttle
 
@@ -30,7 +31,9 @@ class ColumnReferenceInputNameModifier(RelationalExpressionShuttle):
     ) -> RelationalExpression:
         return literal_expression
 
-    def visit_column_reference(self, column_reference) -> RelationalExpression:
+    def visit_column_reference(
+        self, column_reference: ColumnReference
+    ) -> RelationalExpression:
         if column_reference.input_name is None:
             # We ignore remapping any references without input names.
             # This is useful for handling unique names.
@@ -46,5 +49,7 @@ class ColumnReferenceInputNameModifier(RelationalExpressionShuttle):
                 f"Input name {column_reference.input_name} not found in the input name map."
             )
 
-    def visit_correlated_reference(self, correlated_reference) -> RelationalExpression:
+    def visit_correlated_reference(
+        self, correlated_reference: CorrelatedReference
+    ) -> RelationalExpression:
         return correlated_reference
