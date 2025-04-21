@@ -44,6 +44,7 @@ flowchart TD
     Node)
     B -->|Qualification| C[QDAG
     Node]
+    B'[Metadata] -->C
     C -->|"Hybrid
     Conversion"| D[Hybrid Tree]
     D <--> D'{{Hybrid
@@ -66,6 +67,52 @@ flowchart TD
 ## Unqualified Nodes
 
 TODO
+
+Below is an example of the structure of unqualified nodes for the following PyDough expression:
+```py
+nation_info = nations.calculate(
+  region_name=region.name,
+  nation_name=name,
+  n_customers_in_debt=COUNT(customers.WHERE(acctbal < 0)))
+.ORDER_BY(nation_name.ASC())
+```
+
+```mermaid
+flowchart RL
+    A[OrderBy] --> B[Calculate]
+    B --> C[Access:
+    'nations']
+    C --> D[ROOT]
+    B -.-> B1A[Access:
+    'name']
+    B1A --> B1B[Access:
+    'region']
+    B1B --> B1C[ROOT]
+    B -.-> B2A[Access:
+    'name']
+    B2A --> B2B[ROOT]
+    B -.-> B3A[Call:
+    'COUNT']
+    B3A --> B3B[Where]
+    B3B --> B3C[Access:
+    'customers']
+    B3C --> B3D[ROOT]
+    B3B -.-> P1[Call:
+    '<']
+    P1 --> P2[Access:
+    'acctbal']
+    P2 --> P3[ROOT]
+    P1 --> P4[Literal:
+    0]
+    A -.-> A1[Collation:
+    Ascending]
+    A1 --> A2[Access:
+    'nation_name'
+    ]
+    A2 --> A3[ROOT]
+```
+
+In the example above, `nation_info` refers to the `OrderBy` node on the right side of the diagram.
 
 <!-- TOC --><a name="unqualified-transform"></a>
 ### Unqualified Transform
