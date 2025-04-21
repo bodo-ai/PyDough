@@ -35,9 +35,9 @@ The overarching pipeline for converting PyDough Python text into SQL text is as 
 8. The SQLGlot AST is [simplified & optimized](#sqlglot-optimization) less so to improve the performance of the SQL when executed, and moreso to improve the visual quality when it is converted into text.
 9. A simple method call on the final SQLGlot AST converts it into SQL text of the desired dialect, which can then be executed via a database connector API.
 
-To recap, the overall pipeline is as follows (if viewing with VSCode preview, must install the mermaid markdown extension):
+To recap, the overall pipeline is as follows (if viewing with VSCode preview, you must install the mermaid markdown extension):
 ```mermaid
-flowchart LR
+flowchart TD
     A[Python
     Text] -->|"Unqualified
     Transform"| B(Unqualified
