@@ -370,34 +370,45 @@ class Qualifier:
         property: GeneralJoinMetadata = access.subcollection_property
         self_name: str = property.self_name
         other_name: str = property.other_name
-        # Create Python code for deriving the join condition and storing it in
-        # a variable called '_answer'.
-        condition_statement = transform_cell(
-            f"_answer = {property.condition}", self.graph.name, {self_name, other_name}
-        )
-        # Execute the Python code in an environment containing the graph, as
-        # well as having the prefixes `self` and `other` already defined as
-        # unqualified access nodes.
-        self_expr: UnqualifiedNode = UnqualifiedAccess(
-            UnqualifiedRoot(self.graph), self_name
-        )
-        other_expr: UnqualifiedNode = UnqualifiedAccess(
-            UnqualifiedRoot(self.graph), other_name
-        )
-        local_env: dict[str, object] = {
-            self.graph.name: self.graph,
-            self_name: self_expr,
-            other_name: other_expr,
-        }
-        exec(condition_statement, {}, local_env)
-        # Extract the answer from the local environment as an unqualified node.
-        assert "_answer" in local_env
-        value = local_env.get("_answer")
-        assert isinstance(value, UnqualifiedNode)
-        # Qualify the join condition and store it in the access.
-        access.general_condition = self.qualify_join_condition(
-            value, access, self_name, other_name
-        )
+        # Wrap the rest of the logic in a try-except to better format the
+        # error messages in case the join condition string is malformed.
+        try:
+            # Create Python code for deriving the join condition and storing it in
+            # a variable called '_answer'.
+            condition_statement = transform_cell(
+                f"_answer = ({property.condition})",
+                self.graph.name,
+                {self_name, other_name},
+            )
+            # Execute the Python code in an environment containing the graph, as
+            # well as having the prefixes `self` and `other` already defined as
+            # unqualified access nodes.
+            self_expr: UnqualifiedNode = UnqualifiedAccess(
+                UnqualifiedRoot(self.graph), self_name
+            )
+            other_expr: UnqualifiedNode = UnqualifiedAccess(
+                UnqualifiedRoot(self.graph), other_name
+            )
+            local_env: dict[str, object] = {
+                self.graph.name: self.graph,
+                self_name: self_expr,
+                other_name: other_expr,
+            }
+            exec(condition_statement, {}, local_env)
+            # Extract the answer from the local environment as an unqualified node.
+            assert "_answer" in local_env
+            value = local_env.get("_answer")
+            assert isinstance(value, UnqualifiedNode), (
+                "Expected the join condition to be a valid PyDough expression"
+            )
+            # Qualify the join condition and store it in the access.
+            access.general_condition = self.qualify_join_condition(
+                value, access, self_name, other_name
+            )
+        except Exception as e:
+            raise PyDoughUnqualifiedException(
+                f"Malformed general join condition: {property.condition!r} ({e})"
+            ) from e
 
     def qualify_join_condition(
         self,
