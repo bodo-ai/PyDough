@@ -181,7 +181,7 @@ flowchart TD
   end
   subgraph L2["(H2)"]
   direction LR
-    B[Sub-Collection:
+    B[Collection:
     nations]
     C["Calculate
     region_name: $0.name
@@ -201,7 +201,7 @@ flowchart TD
   acctbal < 0]
   R --> S
   end
-  T["Info:
+  T["Child Info:
   join_keys: [(key, nation_key)]
   agg_keys: [nation_key]
   aggs: {'agg_0': COUNT()}
@@ -212,7 +212,7 @@ flowchart TD
   Q[Sub-Colection:
   region]
   end
-  U["Info:
+  U["Child Info:
   join_keys: [(region_key, key)]
   "]
   end
@@ -252,29 +252,62 @@ flowchart TD
   subgraph L1["(H1)"]
   direction LR
     A["Root"]
+    A'["Calculate:
+    avg_price=$0.agg_0"]
+    A --> A'
   end
 
   subgraph C1["($0)"]
     subgraph L3["(H3)"]
     direction LR
-      B["orders"]
+      B["Collection:
+      orders"]
     end
+    data0["Child Info:
+    join_keys: []
+    agg_keys: []
+    aggs: {'agg_0': AVG(total_price)}"]
   end
+    L1 -..->|Aggregation| C1
 
   subgraph L2["(H2)"]
   direction LR
+    E["Collection:
+    nations"]
+    F["Calculate
+    name: name
+    n_expensive_orders: DEFAULT_TO($0.agg_0, 0)"]
+    G["Limit (5)
+    n_expensive_orders (descending)"]
+    E --> F --> G
   end
 
   subgraph C2["($0)"]
     subgraph L4["(H4)"]
     direction LR
-      C["customers"]
+      C["Sub-Collection:
+      customers"]
+      H["Where
+      mktsgment == 'Building'"]
+      C --> H
     end
     subgraph L5["(H5)"]
     direction LR
-      D["orders"]
+      D["Sub-Collection:
+      orders"]
+      D'["Where:
+      total_price >= 2.0 * CORREL(avg_price)"]
+      D --> D'
     end
+    data1["Child Info:
+    join_keys: [(key, BACK(1).nation_key)]
+    agg_keys: [BACK(1).nation_key]
+    aggs: {'agg_0': COUNT()}"]
   end
+
+    L1 --> L2
+    L2 -.->|Aggregation| C2
+    L4 --> L5
 ```
 
 <!-- TOC --><a name="hybrid-decorrelation"></a>
