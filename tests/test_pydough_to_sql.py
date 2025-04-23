@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 import pytest
 from simple_pydough_functions import (
+    cumulative_stock_analysis,
     datediff,
     datetime_sampler,
     global_acctbal_breakdown,
@@ -149,6 +150,12 @@ def test_pydough_to_sql_tpch(
             "week_offset",
             "Broker",
             id="week_offset",
+        ),
+        pytest.param(
+            cumulative_stock_analysis,
+            "cumulative_stock_analysis",
+            "Broker",
+            id="cumulative_stock_analysis",
         ),
     ],
 )
