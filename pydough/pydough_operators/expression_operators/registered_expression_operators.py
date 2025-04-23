@@ -23,12 +23,14 @@ __all__ = [
     "ENDSWITH",
     "EQU",
     "FIND",
+    "FLOAT",
     "GEQ",
     "GRT",
     "HAS",
     "HASNOT",
     "HOUR",
     "IFF",
+    "INTEGER",
     "ISIN",
     "JOIN_STRINGS",
     "KEEP_IF",
@@ -70,6 +72,7 @@ __all__ = [
     "SMALLEST",
     "SQRT",
     "STARTSWITH",
+    "STRING",
     "STRIP",
     "SUB",
     "SUM",
@@ -262,4 +265,13 @@ RELCOUNT = ExpressionWindowOperator(
 )
 RELSIZE = ExpressionWindowOperator(
     "RELSIZE", RequireNumArgs(0), ConstantType(Int64Type()), False, False
+)
+INTEGER = ExpressionFunctionOperator(
+    "INTEGER", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+FLOAT = ExpressionFunctionOperator(
+    "FLOAT", False, RequireNumArgs(1), ConstantType(Float64Type())
+)
+STRING = ExpressionFunctionOperator(
+    "STRING", False, RequireArgRange(1, 2), ConstantType(StringType())
 )

@@ -8,7 +8,6 @@ from pydough.relational.relational_expressions import (
 )
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 
 
 class EmptySingleton(RelationalNode):
@@ -30,7 +29,7 @@ class EmptySingleton(RelationalNode):
     def to_string(self, compact: bool = False) -> str:
         return "EMPTYSINGLETON()"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         return visitor.visit_empty_singleton(self)
 
     def node_copy(
