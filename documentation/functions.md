@@ -1163,7 +1163,7 @@ Orders.CALCULATE(
    # Casts the ship_priority column (integer type) to a float.
    ship_priority_float=FLOAT(ship_priority),
    # Casts the string "2" to a float.
-   discount = FLOAT("2")
+   discount = FLOAT("-2.71")
 )
 ```
 
