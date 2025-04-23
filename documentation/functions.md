@@ -440,7 +440,7 @@ TPCH.CALCULATE(
    ts_3=DATETIME(' CURRENT_DATE ', '12 hours'),
    ts_4=DATETIME('Current Timestamp', 'start of y', '- 1 D'),
    ts_5=DATETIME('NOW', '  Start  of  Day  '),
-   ts_6=DATETIME('now', 'start of quarter', '1 d'),
+   ts_6=DATETIME('now', 'start of quarter', '+1 d'),
 )
 
 # For each order, truncates the order date to the first day of the year

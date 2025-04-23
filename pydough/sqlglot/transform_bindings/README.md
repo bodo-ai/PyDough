@@ -80,8 +80,20 @@ class PostgreSQLTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         # Implement PostgreSQL-specific conversions
         match operator:
-            case pydop.YOUR_OPERATOR:
-                return self.convert_your_operator(args, types)
+            case pydop.STARTSWITH:
+                return self.convert_startswith(args, types)
         # Fall back to base implementation
         return super().convert_call_to_sqlglot(operator, args, types)
+
+    def convert_startswith(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        Override the default STARTSWITH implementation for PostgreSQL.
+        Uses the more efficient native LIKE 'pattern%' syntax instead of POSITION.
+        """
+        # PostgreSQL-specific implementation here
+        pass
 ```
