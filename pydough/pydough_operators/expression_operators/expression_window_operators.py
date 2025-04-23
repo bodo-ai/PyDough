@@ -27,8 +27,9 @@ class ExpressionWindowOperator(PyDoughExpressionOperator):
         deducer: ExpressionTypeDeducer,
         allows_order: bool = True,
         requires_order: bool = True,
+        public: bool = True,
     ):
-        super().__init__(verifier, deducer)
+        super().__init__(verifier, deducer, public)
         self._function_name: str = function_name
         self._allows_order: bool = allows_order
         self._requires_order: bool = requires_order

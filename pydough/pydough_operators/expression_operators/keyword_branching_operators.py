@@ -55,26 +55,26 @@ class KeywordBranchingExpressionFunctionOperator(ExpressionFunctionOperator):
         """
         return self._implementations
 
-    def with_kwarg(self, kwargs: dict[str, Any]) -> ExpressionFunctionOperator:
+    def with_kwarg(
+        self, func_str: str, kwargs: dict[str, Any]
+    ) -> ExpressionFunctionOperator:
         """
         Creates a new implementing operator with specific keyword values
         and registers it with this branching operator.
 
         Args:
+            `func_str`: The name of the function to implement
             `kwargs`: The keyword argument values that identify this implementation
 
         Returns:
             A new operator that is registered with this branching operator
         """
-        # Create a new operator with same properties but different name
-        impl_name: str = (
-            f"{self.function_name}_{self._get_suffix_from_kwargs(kwargs)}".upper()
-        )
         impl: ExpressionFunctionOperator = ExpressionFunctionOperator(
-            impl_name,
+            func_str,
             self.is_aggregation,
             self.verifier,
             self.deducer,
+            public=False,  # This operator is not public
         )
         # Store the kwargs that identify this implementation
         final_kwargs: dict[str, Any] = self.kwarg_defaults.copy()

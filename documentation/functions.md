@@ -894,10 +894,8 @@ Customers.WHERE(HASNOT(orders))
 
 The `VAR` function returns the variance of the set of numerical values it is called on. This operation supports the `type` keyword argument, which can be used to specify the type of variance to compute. The following variances are supported:
 
-- `"population"`: The population variance.
+- `"population"` (default value): The population variance.
 - `"sample"`: The sample variance.
-
-By default, the `VAR` function computes the population variance.
 
 ```py
 # Compute the population variance
@@ -913,10 +911,8 @@ Parts.CALCULATE(variance = VAR(supply_records.supply_cost, type="sample"))
 
 The `STD` function returns the standard deviation of the set of numerical values it is called on. This operation supports the `type` keyword argument, which can be used to specify the type of standard deviation to compute. The following standard deviations are supported:
 
-- `"population"`: The population standard deviation.
+- `"population"` (default value): The population standard deviation.
 - `"sample"`: The sample standard deviation.
-
-By default, the `STD` function computes the population standard deviation.
 
 ```py
 # Compute the population standard deviation

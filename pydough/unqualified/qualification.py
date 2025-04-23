@@ -10,8 +10,10 @@ from collections.abc import Iterable
 import pydough
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import GraphMetadata
+from pydough.pydough_operators import get_operator_by_name
 from pydough.pydough_operators.expression_operators import (
     BinOp,
+    ExpressionFunctionOperator,
     ExpressionWindowOperator,
 )
 from pydough.qdag import (
@@ -128,7 +130,7 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        operation: str = unqualified._parcel[0]
+        operation: ExpressionFunctionOperator = unqualified._parcel[0]
         unqualified_operands: list[UnqualifiedNode] = unqualified._parcel[1]
         qualified_operands: list[PyDoughQDAG] = []
         # Iterate across every operand to generate its qualified variant.
@@ -186,14 +188,15 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        operator: str = unqualified._parcel[0]
+        operator_str: str = unqualified._parcel[0]
         # Iterate across all the values of the BinOp enum to figure out which
         # one correctly matches the BinOp specified by the operator.
         operation: str | None = None
         for _, op in BinOp.__members__.items():
-            if operator == op.value:
+            if operator_str == op.value:
                 operation = op.name
-        assert operation is not None, f"Unknown binary operation {operator!r}"
+                operator = get_operator_by_name(operation)
+        assert operation is not None, f"Unknown binary operation {operator_str!r}"
         # Independently qualify the LHS and RHS arguments
         unqualified_lhs: UnqualifiedNode = unqualified._parcel[1]
         unqualified_rhs: UnqualifiedNode = unqualified._parcel[2]
@@ -204,7 +207,7 @@ class Qualifier:
             unqualified_rhs, context, children
         )
         return self.builder.build_expression_function_call(
-            operation, [qualified_lhs, qualified_rhs]
+            operator, [qualified_lhs, qualified_rhs]
         )
 
     def qualify_window(

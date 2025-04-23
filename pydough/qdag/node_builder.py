@@ -114,28 +114,18 @@ class AstNodeBuilder:
         return ColumnProperty(property)
 
     def build_expression_function_call(
-        self, function_name: str, args: list[PyDoughQDAG]
+        self, operator: PyDoughExpressionOperator, args: list[PyDoughQDAG]
     ) -> ExpressionFunctionCall:
         """
-        Creates a new expression function call by accessing a builtin
-        expression function operator by name and calling it on the passed-in
-        arguments.
+        Creates a new expression function call.
 
         Args:
-            `value`: the literal value to be stored.
-            `data_type`: the PyDough type of the literal.
+            `operator`: the operator to be called.
+            `args`: the arguments to the operator.
 
         Returns:
-            The newly created PyDough literal.
-
-        Raises:
-            `PyDoughQDAGException`: if the operator does not exist or cannot be
-            called on the arguments.
+            The newly created PyDough expression function call.
         """
-        if function_name not in self.operators:
-            raise PyDoughQDAGException(f"Unrecognized operator name {function_name!r}")
-        operator = self.operators[function_name]
-        assert isinstance(operator, PyDoughExpressionOperator)
         return ExpressionFunctionCall(operator, args)
 
     def build_window_call(

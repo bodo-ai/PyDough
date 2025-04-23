@@ -174,6 +174,38 @@ def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
+def bad_pydough_impl_16(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Internal function name
+    return root.Nations.CALCULATE(
+        name=root.name,
+        var=root.SAMPLE_VAR(root.suppliers.account_balance),
+    )
+
+
+def bad_pydough_impl_17(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Internal function name
+    return root.Nations.CALCULATE(
+        name=root.name,
+        var=root.SAMPLE_VARIANCE(root.suppliers.account_balance),
+    )
+
+
+def bad_pydough_impl_18(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Internal function name
+    return root.Nations.CALCULATE(
+        name=root.name,
+        var=root.SAMPLE_STD(root.suppliers.account_balance),
+    )
+
+
+def bad_pydough_impl_19(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Internal function name
+    return root.Nations.CALCULATE(
+        name=root.name,
+        std=root.POPULATION_STD(root.suppliers.account_balance),
+    )
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -251,6 +283,26 @@ def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_pydough_impl_15,
             "Malformed per string: 'Customers:0' (expected the index after ':' to be a positive integer)",
             id="15",
+        ),
+        pytest.param(
+            bad_pydough_impl_16,
+            "PyDough nodes SAMPLE_VAR is not callable. Did you mean to use a function?",
+            id="16",
+        ),
+        pytest.param(
+            bad_pydough_impl_17,
+            "PyDough nodes SAMPLE_VARIANCE is not callable. Did you mean to use a function?",
+            id="17",
+        ),
+        pytest.param(
+            bad_pydough_impl_18,
+            "PyDough nodes SAMPLE_STD is not callable. Did you mean to use a function?",
+            id="18",
+        ),
+        pytest.param(
+            bad_pydough_impl_19,
+            "PyDough nodes POPULATION_STD is not callable. Did you mean to use a function?",
+            id="19",
         ),
     ],
 )

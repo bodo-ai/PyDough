@@ -17,10 +17,6 @@ def test_function_list():
     special_names = {
         "NOT",
         "SLICE",
-        "POPULATION_STD",
-        "POPULATION_VARIANCE",
-        "SAMPLE_STD",
-        "SAMPLE_VARIANCE",
     }
     function_names: set[str] = set()
     for function_name, operator in pydop.builtin_registered_operators().items():

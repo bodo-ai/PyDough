@@ -98,6 +98,7 @@ __all__ = [
     "VAR",
     "YEAR",
     "builtin_registered_operators",
+    "get_operator_by_name",
 ]
 
 from .base_operator import PyDoughOperator
@@ -185,7 +186,7 @@ from .expression_operators import (
     KeywordBranchingExpressionFunctionOperator,
     PyDoughExpressionOperator,
 )
-from .operator_registry import builtin_registered_operators
+from .operator_registry import builtin_registered_operators, get_operator_by_name
 from .type_inference import (
     AllowAny,
     ConstantType,

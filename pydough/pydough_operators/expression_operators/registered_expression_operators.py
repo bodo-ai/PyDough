@@ -256,8 +256,8 @@ VAR = KeywordBranchingExpressionFunctionOperator(
     kwarg_defaults={"type": "population"},
 )
 # Define VAR with keyword branching for "type" which is represented internally.
-POPULATION_VARIANCE = VAR.with_kwarg({"type": "population"})
-SAMPLE_VARIANCE = VAR.with_kwarg({"type": "sample"})
+POPULATION_VARIANCE = VAR.with_kwarg("POPULATION_VARIANCE", {"type": "population"})
+SAMPLE_VARIANCE = VAR.with_kwarg("SAMPLE_VARIANCE", {"type": "sample"})
 
 # Define STD with keyword branching
 STD = KeywordBranchingExpressionFunctionOperator(
@@ -268,8 +268,8 @@ STD = KeywordBranchingExpressionFunctionOperator(
     kwarg_defaults={"type": "population"},
 )
 # Define STD with keyword branching for "type" which is represented internally.
-POPULATION_STD = STD.with_kwarg({"type": "population"})
-SAMPLE_STD = STD.with_kwarg({"type": "sample"})
+POPULATION_STD = STD.with_kwarg("POPULATION_STD", {"type": "population"})
+SAMPLE_STD = STD.with_kwarg("SAMPLE_STD", {"type": "sample"})
 
 RANKING = ExpressionWindowOperator(
     "RANKING", RequireNumArgs(0), ConstantType(Int64Type())

@@ -28,6 +28,7 @@ from typing import Any, Union
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
 from pydough.metadata.errors import is_bool, is_integer, is_positive_int, is_string
+from pydough.pydough_operators import get_operator_by_name
 from pydough.types import (
     ArrayType,
     BinaryType,
@@ -128,7 +129,8 @@ class UnqualifiedNode(ABC):
                         "PyDough objects are currently not supported to be used as indices in Python slices."
                     )
                 args.append(coerced_elem)
-            return UnqualifiedOperation("SLICE", args)
+            operator = get_operator_by_name("SLICE")
+            return UnqualifiedOperation(operator, args)
         else:
             raise PyDoughUnqualifiedException(
                 f"Cannot index into PyDough object {self} with {key!r}"
@@ -247,7 +249,8 @@ class UnqualifiedNode(ABC):
         return 0 - self
 
     def __invert__(self):
-        return UnqualifiedOperation("NOT", [self])
+        operator = get_operator_by_name("NOT")
+        return UnqualifiedOperation(operator, [self])
 
     def CALCULATE(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
@@ -269,13 +272,15 @@ class UnqualifiedNode(ABC):
         return UnqualifiedCalculate(self, calc_args)
 
     def __abs__(self):
-        return UnqualifiedOperation("ABS", [self])
+        operator = get_operator_by_name("ABS")
+        return UnqualifiedOperation(operator, [self])
 
     def __round__(self, n=None):
         if n is None:
             n = 0
         n_unqualified = self.coerce_to_unqualified(n)
-        return UnqualifiedOperation("ROUND", [self, n_unqualified])
+        operator = get_operator_by_name("ROUND")
+        return UnqualifiedOperation(operator, [self, n_unqualified])
 
     def __floor__(self):
         raise PyDoughUnqualifiedException(
@@ -517,44 +522,9 @@ class UnqualifiedOperator(UnqualifiedNode):
                 window_operator = pydop.RELCOUNT
             case "RELSIZE":
                 window_operator = pydop.RELSIZE
-            case func:
+            case func_str:
                 is_window = False
-                # Get all registered operators
-                all_operators = pydop.builtin_registered_operators()
-                operator = all_operators.get(func)
-
-                if operator is not None:
-                    # Check if this is a keyword branching operator
-                    if isinstance(
-                        operator, pydop.KeywordBranchingExpressionFunctionOperator
-                    ):
-                        # Find the matching implementation based on kwargs
-                        impl = operator.find_matching_implementation(kwargs)
-                        if impl is None:
-                            kwarg_str = ", ".join(
-                                f"{k}={v!r}" for k, v in kwargs.items()
-                            )
-                            raise PyDoughUnqualifiedException(
-                                f"No matching implementation found for "
-                                f"{func}({kwarg_str})."
-                            )
-                        # Get the operator name from the operator
-                        is_operator_found = False
-                        for op_str, op in all_operators.items():
-                            if op == impl:
-                                func_str = op_str
-                                is_operator_found = True
-                                break
-                        if not is_operator_found:
-                            raise PyDoughUnqualifiedException(
-                                f"No matching implementation found for "
-                                f"{func}({kwarg_str})."
-                            )
-                    elif len(kwargs) > 0:
-                        raise PyDoughUnqualifiedException(
-                            f"PyDough function call {func} does not support "
-                            "keyword arguments at this time."
-                        )
+                operator = get_operator_by_name(func_str, **kwargs)
         if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
             if "per" in kwargs:
@@ -568,7 +538,7 @@ class UnqualifiedOperator(UnqualifiedNode):
                 per,
                 kwargs,
             )
-        return UnqualifiedOperation(func_str, operands)
+        return UnqualifiedOperation(operator, operands)
 
 
 class UnqualifiedOperation(UnqualifiedNode):
@@ -577,9 +547,13 @@ class UnqualifiedOperation(UnqualifiedNode):
     1+ expressions/collections.
     """
 
-    def __init__(self, operation_name: str, operands: list[UnqualifiedNode]):
-        self._parcel: tuple[str, list[UnqualifiedNode]] = (
-            operation_name,
+    def __init__(
+        self,
+        operation: pydop.ExpressionFunctionOperator,
+        operands: list[UnqualifiedNode],
+    ):
+        self._parcel: tuple[pydop.ExpressionFunctionOperator, list[UnqualifiedNode]] = (
+            operation,
             operands,
         )
 
@@ -611,9 +585,9 @@ class UnqualifiedBinaryOperation(UnqualifiedNode):
     Variant of UnqualifiedOperation specifically for builtin Python binops.
     """
 
-    def __init__(self, operation_name: str, lhs: UnqualifiedNode, rhs: UnqualifiedNode):
+    def __init__(self, operator: str, lhs: UnqualifiedNode, rhs: UnqualifiedNode):
         self._parcel: tuple[str, UnqualifiedNode, UnqualifiedNode] = (
-            operation_name,
+            operator,
             lhs,
             rhs,
         )
@@ -752,7 +726,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             operands_str = ", ".join(
                 [display_raw(operand) for operand in unqualified._parcel[1]]
             )
-            return f"{unqualified._parcel[0]}({operands_str})"
+            return f"{unqualified._parcel[0].function_name}({operands_str})"
         case UnqualifiedWindow():
             operands_str = ""
             for operand in unqualified._parcel[1]:

@@ -22,9 +22,15 @@ class PyDoughExpressionOperator(PyDoughOperator):
     of the returned expression.
     """
 
-    def __init__(self, verifier: TypeVerifier, deducer: ExpressionTypeDeducer):
+    def __init__(
+        self,
+        verifier: TypeVerifier,
+        deducer: ExpressionTypeDeducer,
+        public: bool = True,
+    ):
         super().__init__(verifier)
         self._deducer: ExpressionTypeDeducer = deducer
+        self._public: bool = public
 
     @property
     def deducer(self) -> ExpressionTypeDeducer:
@@ -32,6 +38,13 @@ class PyDoughExpressionOperator(PyDoughOperator):
         The return type inferrence function used by the operator
         """
         return self._deducer
+
+    @property
+    def public(self) -> bool:
+        """
+        Whether the operator is public.
+        """
+        return self._public
 
     @property
     @abstractmethod
