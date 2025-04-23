@@ -25,8 +25,8 @@ FROM main.sbtransaction AS sbtransaction
 LEFT JOIN main.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
 WHERE
-  CAST(STRFTIME('%m', sbtransaction.sbtxdatetime = 4) AS INTEGER)
-  AND CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER) = 2023
+  CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER) = 2023
+  AND CAST(STRFTIME('%m', sbtransaction.sbtxdatetime) AS INTEGER) = 4
   AND sbtransaction.sbtxstatus = 'success'
 ORDER BY
   date_time

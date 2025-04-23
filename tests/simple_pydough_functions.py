@@ -502,7 +502,7 @@ def cumulative_stock_analysis():
     # - What is the number of buy transactions made within the day so far.
     return (
         Transactions.WHERE(
-            (YEAR(date_time) == 2023) & MONTH(date_time == 4) & (status == "success")
+            (YEAR(date_time) == 2023) & (MONTH(date_time) == 4) & (status == "success")
         )
         .CALCULATE(txn_day=DATETIME(date_time, "start of day"))
         .PARTITION(name="days", by=txn_day)

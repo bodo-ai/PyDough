@@ -83,7 +83,6 @@ def apply_sqlglot_optimizer(
     # Convert the SQLGlot AST to a SQL string and back to an AST hoping that
     # SQLGlot will "clean" up the AST to make it more compatible with the
     # optimizer.
-    breakpoint()
     glot_expr = parse_one(glot_expr.sql(dialect), dialect=dialect)
 
     # Apply each rule explicitly with appropriate kwargs
