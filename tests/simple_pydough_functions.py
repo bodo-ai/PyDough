@@ -540,49 +540,25 @@ def cumulative_stock_analysis():
     )
 
 
-"""
-SELECT
-    sbTxDateTime
-    , COUNT(*) OVER (partition by strftime('%d', sbTxDateTime) order by sbTxDateTime rows between unbounded preceding and current row)
-    , COUNT(CASE WHEN sbTxType = 'buy' THEN 1 END) OVER (partition by strftime('%d', sbTxDateTime) order by sbTxDateTime rows between unbounded preceding and current row)
-    , ROUND((100.0 * SUM(sbTickerSymbol IN ('AAPL', 'AMZN')) OVER (order by sbTxDateTime rows between unbounded preceding and current row)) / (COUNT(*) OVER (order by sbTxDateTime rows between unbounded preceding and current row)), 2)
-    , SUM(CASE WHEN sbTxType = 'buy' THEN sbTxShares ELSE -sbTxShares END) OVER (order by sbTxDateTime rows between unbounded preceding and current row)
-    , ROUND(AVG(sbTxAmount) OVER (order by sbTxDateTime rows between unbounded preceding and current row), 2)
-FROM sbTransaction
-JOIN sbTicker ON sbTicker.sbTickerId = sbTransaction.sbTxTickerId
-WHERE (sbTxStatus = 'success') AND (sbTxDateTime LIKE '2023-04%')
-ORDER BY 1
-;
-
-2023-04-01 09:30:00|1|1|100.0|100|15000.0
-2023-04-01 10:15:00|2|1|50.0|50|14500.0
-2023-04-01 11:00:00|3|2|66.67|60|20333.33
-2023-04-01 11:45:00|4|2|50.0|35|16375.0
-2023-04-01 12:30:00|5|3|40.0|40|15600.0
-2023-04-01 13:15:00|6|3|33.33|-35|15500.0
-2023-04-01 14:00:00|7|4|28.57|-34|70428.57
-2023-04-01 14:45:00|8|4|25.0|-134|63250.0
-2023-04-01 15:30:00|9|5|22.22|-84|57444.44
-2023-04-01 16:15:00|10|5|20.0|-164|52820.0
-2023-04-02 09:30:00|1|0|27.27|-214|48706.82
-2023-04-02 11:00:00|2|0|33.33|-219|45986.25
-2023-04-02 11:45:00|3|1|30.77|-204|42661.73
-2023-04-02 12:30:00|4|1|28.57|-206|39973.32
-2023-04-02 13:15:00|5|2|26.67|-156|37985.1
-2023-04-02 14:00:00|6|2|25.0|-157|60704.78
-2023-04-02 14:45:00|7|3|23.53|-82|57712.96
-2023-04-02 15:30:00|8|3|22.22|-107|54814.32
-2023-04-02 16:15:00|9|4|21.05|-47|52376.99
-2023-04-03 10:15:00|1|0|20.0|-87|50324.14
-2023-04-03 11:00:00|2|1|23.81|-79|49157.08
-2023-04-03 11:45:00|3|1|22.73|-99|47091.99
-2023-04-03 12:30:00|4|2|21.74|-96|45373.47
-2023-04-03 13:15:00|5|2|20.83|-156|43996.66
-2023-04-03 14:00:00|6|3|20.0|-155|58336.79
-2023-04-03 14:45:00|7|3|19.23|-245|56552.59
-2023-04-03 15:30:00|8|4|18.52|-205|54787.31
-2023-04-03 16:15:00|9|4|17.86|-275|53186.87
-"""
+def time_threshold_reached():
+    # For every day in 2023, find the time of the first transaction made that
+    # represents at least 50% of all shares bought/sold that day so far
+    # having been completed.
+    return (
+        Transactions.WHERE((YEAR(date_time) == 2023))
+        .CALCULATE(txn_day=DATETIME(date_time, "start of day"))
+        .PARTITION(name="days", by=txn_day)
+        .Transactions.CALCULATE(
+            pct_of_day=(
+                100.0 * RELSUM(shares, by=date_time.ASC(), cumulative=True, per="days")
+            )
+            / RELSUM(shares, per="days"),
+        )
+        .WHERE(pct_of_day >= 50.0)
+        .WHERE(RANKING(by=pct_of_day.ASC(), per="days") == 1)
+        .CALCULATE(date_time)
+        .ORDER_BY(date_time)
+    )
 
 
 def supplier_pct_national_qty():

@@ -25,7 +25,7 @@ class ExpressionWindowOperator(PyDoughExpressionOperator):
         function_name: str,
         verifier: TypeVerifier,
         deducer: ExpressionTypeDeducer,
-        allows_frame: bool = True,
+        allows_frame: bool = False,
         requires_order: bool = True,
     ):
         super().__init__(verifier, deducer)

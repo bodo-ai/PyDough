@@ -465,9 +465,9 @@ def get_by_arg(
     elif window_operator.allows_frame:
         if not kwargs.get("cumulative", False):
             raise PyDoughUnqualifiedException(
-                f"The `by` argument to `{window_operator.function_name}` must be provided when the `cumulative` argument is True"
+                f"The `cumulative` argument to `{window_operator.function_name}` must be True when the `by` argument is provided"
             )
-    else:
+    elif not window_operator.requires_order:
         raise PyDoughUnqualifiedException(
             f"The `{window_operator.function_name}` function does not allow a `by` argument"
         )
