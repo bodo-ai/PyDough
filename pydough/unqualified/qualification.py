@@ -984,7 +984,7 @@ class Qualifier:
         levels: int | None = rank_call.levels
 
         # Add `SINGULAR` if applicable (there is a levels argument and that
-        # ancestor either is the context or is singular withr egards to it).
+        # ancestor either is the context or is singular withr regards to it).
         # if-applicable (not allowing ties, not keeping multiple bests, not in
         # the form `x.BEST(y)` unless as a child & the x is already singular).
         if n_best == 1 and not allow_ties and is_child:
