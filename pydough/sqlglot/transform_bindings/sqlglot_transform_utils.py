@@ -1,5 +1,6 @@
 """
-Helper utilities used by SQLGlot function transforms.
+Helper utilities used by SQLGlot function transforms. These are not
+necessarily specific to any particular SQL dialect.
 """
 
 __all__ = [
