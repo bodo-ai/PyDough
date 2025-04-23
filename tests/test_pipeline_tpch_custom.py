@@ -44,6 +44,7 @@ from simple_pydough_functions import (
     nation_window_aggs,
     odate_and_rdate_avggap,
     order_info_per_priority,
+    part_reduced_size,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -58,6 +59,7 @@ from simple_pydough_functions import (
     region_nation_window_aggs,
     regional_suppliers_percentile,
     simple_filter_top_five,
+    simple_int_float_string_cast,
     simple_scan,
     simple_scan_top_five,
     simple_smallest_or_largest,
@@ -68,6 +70,7 @@ from simple_pydough_functions import (
     singular5,
     singular6,
     singular7,
+    string_format_specifiers_sqlite,
     supplier_pct_national_qty,
     suppliers_bal_diffs,
     top_customers_by_orders,
@@ -79,7 +82,7 @@ from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -1283,6 +1286,106 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
+                simple_int_float_string_cast,
+                None,
+                "simple_int_float_string_cast",
+                lambda: pd.DataFrame(
+                    {
+                        "i1": [1],
+                        "i2": [2],
+                        "i3": [3],
+                        "i4": [4],
+                        "i5": [-5],
+                        "i6": [-6],
+                        "f1": [1.0],
+                        "f2": [2.2],
+                        "f3": [3.0],
+                        "f4": [4.3],
+                        "f5": [-5.888],
+                        "f6": [-6.0],
+                        "f7": [0.0],
+                        "s1": ["1"],
+                        "s2": ["2.2"],
+                        "s3": ["3"],
+                        "s4": ["4.3"],
+                        "s5": ["-5.888"],
+                        "s6": ["-6.0"],
+                        "s7": ["0.0"],
+                        "s8": ["0.0"],
+                        "s9": ["abc def"],
+                    }
+                ),
+            ),
+            id="simple_int_float_string_cast",
+        ),
+        pytest.param(
+            (
+                string_format_specifiers_sqlite,
+                None,
+                "string_format_specifiers_sqlite",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": ["15"],
+                        "d2": ["15"],
+                        "d3": ["45.000"],
+                        "d4": ["2023-07-15"],
+                        "d5": ["14"],
+                        "d6": ["02"],
+                        "d7": ["196"],
+                        "d8": ["2460141.1046875"],
+                        "d9": ["14"],
+                        "d10": [" 2"],
+                        "d11": ["07"],
+                        "d12": ["30"],
+                        "d13": ["PM"],
+                        "d14": ["pm"],
+                        "d15": ["14:30"],
+                        "d16": ["1689431445"],
+                        "d17": ["45"],
+                        "d18": ["14:30:45"],
+                        "d19": ["6"],
+                        "d20": ["6"],
+                        "d21": ["28"],
+                        "d22": ["2023"],
+                        "d23": ["07-15-2023"],
+                    }
+                ),
+            ),
+            id="string_format_specifiers_sqlite",
+        ),
+        pytest.param(
+            (
+                part_reduced_size,
+                None,
+                "part_reduced_size",
+                lambda: pd.DataFrame(
+                    {
+                        "reduced_size": [2.8, 2.8, 4.0, 4.0, 2.8],
+                        "retail_price_int": [901, 901, 901, 901, 901],
+                        "message": [
+                            "old size: 7",
+                            "old size: 7",
+                            "old size: 10",
+                            "old size: 10",
+                            "old size: 7",
+                        ],
+                        "discount": [0.1, 0.1, 0.1, 0.1, 0.09],
+                        "date_dmy": [
+                            "01-11-1995",
+                            "02-11-1992",
+                            "07-11-1997",
+                            "06-08-1996",
+                            "06-07-1997",
+                        ],
+                        "date_md": ["11/01", "11/02", "11/07", "08/06", "07/06"],
+                        "am_pm": ["00:00AM"] * 5,
+                    }
+                ),
+            ),
+            id="part_reduced_size",
+        ),
+        pytest.param(
+            (
                 simple_smallest_or_largest,
                 None,
                 "simple_smallest_or_largest",
@@ -1456,6 +1559,7 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
     pd.testing.assert_frame_equal(result, answer_impl())
 
 
