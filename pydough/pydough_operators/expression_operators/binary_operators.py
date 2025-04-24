@@ -35,6 +35,16 @@ class BinOp(Enum):
     BOR = "|"
     BXR = "^"
 
+    @staticmethod
+    def from_string(s: str) -> "BinOp":
+        """
+        Returns the binary operation enum corresponding to the given string.
+        """
+        for op in BinOp.__members__.values():
+            if s == op.value:
+                return op
+        raise ValueError(f"Unrecognized operation: {s!r}")
+
 
 BinOp.__members__.items()
 

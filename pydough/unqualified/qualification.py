@@ -194,14 +194,9 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        operator: str = unqualified._parcel[0]
         # Iterate across all the values of the BinOp enum to figure out which
         # one correctly matches the BinOp specified by the operator.
-        operation: str | None = None
-        for _, op in BinOp.__members__.items():
-            if operator == op.value:
-                operation = op.name
-        assert operation is not None, f"Unknown binary operation {operator!r}"
+        operation: str = BinOp.from_string(unqualified._parcel[0]).name
         # Independently qualify the LHS and RHS arguments
         unqualified_lhs: UnqualifiedNode = unqualified._parcel[1]
         unqualified_rhs: UnqualifiedNode = unqualified._parcel[2]
@@ -455,11 +450,7 @@ class Qualifier:
                 # qualification of binary operators except with using
                 # `qualify_join_condition` on the inputs instead of
                 # `qualify_expression`.
-                operator = condition._parcel[0]
-                for _, op in BinOp.__members__.items():
-                    if operator == op.value:
-                        operation = op.name
-                assert operation is not None, f"Unknown binary operation {operator!r}"
+                operation = BinOp.from_string(condition._parcel[0]).name
                 qualified_lhs: PyDoughExpressionQDAG = self.qualify_join_condition(
                     condition._parcel[1], access, self_name, other_name
                 )
@@ -494,10 +485,12 @@ class Qualifier:
                 if isinstance(condition._parcel[0], UnqualifiedAccess):
                     predecessor: UnqualifiedAccess = condition._parcel[0]
                     if isinstance(predecessor._parcel[0], UnqualifiedRoot):
-                        if predecessor._parcel[1] == self_name:
-                            raw_term = access.ancestor_context.get_term(
-                                condition._parcel[1]
+                        if predecessor._parcel[1] in (self_name, other_name):
+                            is_self = predecessor._parcel[1] == self_name
+                            source: PyDoughCollectionQDAG = (
+                                access.ancestor_context if is_self else access
                             )
+                            raw_term = source.get_term(condition._parcel[1])
                             if not isinstance(raw_term, PyDoughExpressionQDAG):
                                 raise PyDoughUnqualifiedException(
                                     "Accessing sub-collection terms is currently unsupported in PyDough general join conditions"
@@ -509,21 +502,7 @@ class Qualifier:
                                 if isinstance(term, Reference)
                                 else term.column_property.name
                             )
-                            return SidedReference(term_name, access, True)
-                        if predecessor._parcel[1] == other_name:
-                            raw_term = access.get_term(condition._parcel[1])
-                            if not isinstance(raw_term, PyDoughExpressionQDAG):
-                                raise PyDoughUnqualifiedException(
-                                    "Accessing sub-collection terms is currently unsupported in PyDough general join conditions"
-                                )
-                            term = raw_term
-                            assert isinstance(term, (Reference, ColumnProperty))
-                            term_name = (
-                                term.term_name
-                                if isinstance(term, Reference)
-                                else term.column_property.name
-                            )
-                            return SidedReference(term_name, access, False)
+                            return SidedReference(term_name, access, is_self)
                 raise PyDoughUnqualifiedException(
                     "Accessing sub-collection terms is currently unsupported in PyDough general join conditions"
                 )

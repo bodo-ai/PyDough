@@ -2779,9 +2779,6 @@ class HybridTranslator:
                             )
                         )
                         for key_name, expr in lhs_unique_keys.items():
-                            key_name = successor_hybrid.pipeline[-1].renamings.get(
-                                key_name, key_name
-                            )
                             key_exprs.append(HybridRefExpr(key_name, expr.typ))
                         # Mark the parent's connection to this child as
                         # correlated, and set the agg keys.
