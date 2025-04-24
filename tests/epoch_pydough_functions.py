@@ -21,7 +21,7 @@ __all__ = [
 def first_event_per_era():
     # Returns the first event per era, with the event name, sorted
     # based on the chronological order of the eras.
-    first_event = events.WHERE(RANKING(by=date_time.ASC(), per="eras") == 1).SINGULAR()
+    first_event = events.BEST(by=date_time.ASC(), per="eras")
     return (
         eras.WHERE(HAS(first_event))
         .CALCULATE(
@@ -148,8 +148,8 @@ def most_popular_topic_per_region():
         .searches.CALCULATE(region=user.region)
         .PARTITION(name="region_event_types", by=(region, event_type))
         .CALCULATE(region, event_type, n_searches=NDISTINCT(searches.search_id))
-        .PARTITION(name="regions", by=(region))
-        .region_event_types.WHERE(RANKING(by=n_searches.DESC(), per="regions") == 1)
+        .PARTITION(name="regions", by=region)
+        .region_event_types.BEST(by=n_searches.DESC(), per="regions")
     )
 
 
@@ -161,9 +161,7 @@ def most_popular_search_engine_per_tod():
         .searches.PARTITION(name="tod_search_engines", by=(tod, search_engine))
         .CALCULATE(tod, search_engine, n_searches=COUNT(searches))
         .PARTITION(name="tod", by=tod)
-        .tod_search_engines.WHERE(
-            RANKING(by=(n_searches.DESC(), search_engine.ASC()), per="tod") == 1
-        )
+        .tod_search_engines.BEST(by=(n_searches.DESC(), search_engine.ASC()), per="tod")
         .ORDER_BY(tod.ASC())
     )
 
