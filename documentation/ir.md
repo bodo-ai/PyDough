@@ -560,7 +560,7 @@ flowchart TD
     L1' --> R1'
     R1' --> L2'
     L2' -->L4
-    L2 -.->|Aggregation| C2
+    L2 -.->|AggregationOnlyMatch| C2
     L4 --> L5
     L5 --> L6
     L6 -.->|Singular| C4
