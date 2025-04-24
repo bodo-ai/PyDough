@@ -1,0 +1,8 @@
+ROOT(columns=[('reduced_size', reduced_size), ('retail_price_int', retail_price_int), ('message', message), ('discount', discount), ('date_dmy', date_dmy), ('date_md', date_md), ('am_pm', am_pm)], orderings=[(discount):desc_last])
+ LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'am_pm': am_pm, 'date_dmy': date_dmy, 'date_md': date_md, 'discount': discount, 'message': message, 'reduced_size': reduced_size, 'retail_price_int': retail_price_int}, orderings=[(discount):desc_last])
+  JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'am_pm': t1.am_pm, 'date_dmy': t1.date_dmy, 'date_md': t1.date_md, 'discount': t1.discount, 'message': t0.message, 'reduced_size': t0.reduced_size, 'retail_price_int': t0.retail_price_int})
+   LIMIT(limit=Literal(value=2, type=Int64Type()), columns={'key': key, 'message': message, 'reduced_size': reduced_size, 'retail_price_int': retail_price_int}, orderings=[(retail_price_int):asc_first])
+    PROJECT(columns={'key': key, 'message': JOIN_STRINGS('':string, 'old size: ':string, STRING(size)), 'reduced_size': FLOAT(size / 2.5:float64), 'retail_price_int': INTEGER(retail_price)})
+     SCAN(table=tpch.PART, columns={'key': p_partkey, 'retail_price': p_retailprice, 'size': p_size})
+   PROJECT(columns={'am_pm': STRING(receipt_date, '%H:%M%p':string), 'date_dmy': STRING(receipt_date, '%d-%m-%Y':string), 'date_md': STRING(receipt_date, '%m/%d':string), 'discount': discount, 'part_key': part_key})
+    SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'part_key': l_partkey, 'receipt_date': l_receiptdate})

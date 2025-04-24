@@ -457,6 +457,78 @@ def avg_gap_prev_urgent_same_clerk():
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
 
 
+def customer_most_recent_orders():
+    # Finds the 3 customers with the highest total value from their 5 most
+    # recent urgent orders, breaking ties in favor of the lower order key.
+    most_recent_orders = orders.BEST(
+        per="Customers", by=(order_date.DESC(), key.ASC()), n_best=5
+    )
+    return (
+        Customers.WHERE(HAS(most_recent_orders))
+        .CALCULATE(name, total_recent_value=SUM(most_recent_orders.total_price))
+        .TOP_K(3, by=total_recent_value.DESC())
+    )
+
+
+def richest_customer_per_region():
+    # Identifies the name of the customer with the largest account balance in
+    # every region, breaking ties by the customer's name alphabetically, and
+    # including the name of the customer's nation.
+    return (
+        Regions.CALCULATE(region_name=name)
+        .nations.CALCULATE(nation_name=name)
+        .customers.BEST(
+            per="Regions",
+            by=(acctbal.DESC(), name.ASC()),
+        )
+        .CALCULATE(region_name, nation_name, customer_name=name, balance=acctbal)
+    )
+
+
+def n_orders_first_day():
+    # Counts how many orders were made on the first recorded day of orders.
+    first_day_orders = Orders.BEST(by=order_date.ASC(), allow_ties=True)
+    return TPCH.CALCULATE(n_orders=COUNT(first_day_orders))
+
+
+def wealthiest_supplier():
+    # Identifies the richest supplier globally, breaking ties alphabetically.
+    return Suppliers.BEST(by=(account_balance.DESC(), name.ASC())).CALCULATE(
+        name, account_balance
+    )
+
+
+def supplier_best_part():
+    # For each French supplier, identifies the part that the supplier shipped
+    # the largest quantity of in 1994, ignoring shipments that were taxed. List
+    # out the supplier name, part name, quantity and number of such shipments
+    # for the 3 suppliers with the highest such quantities, breaking ties alphabetically.
+    selected_suppliers = Suppliers.WHERE(nation.name == "FRANCE")
+    selected_lines = lines.WHERE((YEAR(ship_date) == 1994) & (tax == 0))
+    best_part_supplied = (
+        supply_records.WHERE(HAS(selected_lines))
+        .CALCULATE(
+            part_name=part.name,
+            quantity=SUM(selected_lines.quantity),
+            n_shipments=COUNT(selected_lines),
+        )
+        .BEST(
+            per="Suppliers",
+            by=quantity.DESC(),
+        )
+    )
+    return (
+        selected_suppliers.WHERE(HAS(best_part_supplied))
+        .CALCULATE(
+            supplier_name=name,
+            part_name=best_part_supplied.part_name,
+            total_quantity=best_part_supplied.quantity,
+            n_shipments=best_part_supplied.n_shipments,
+        )
+        .TOP_K(3, by=(total_quantity.DESC(), supplier_name.ASC()))
+    )
+
+
 def nation_window_aggs():
     # Calculating multiple global windowed aggregations for each nation, only
     # considering nations whose names do not start with a vowel.
@@ -471,6 +543,52 @@ def nation_window_aggs():
         )
         .ORDER_BY(region_key.ASC(), nation_name.ASC())
     )
+
+
+def region_orders_from_nations_richest():
+    # Find the orders from the wealthiest customer in each nation, breaking
+    # ties alphabetically by customer name.
+    nations_richest_customers = nations.customers.BEST(
+        per="nations", by=(acctbal.DESC(), name.ASC())
+    ).orders
+    return Regions.CALCULATE(
+        region_name=name, n_orders=COUNT(nations_richest_customers)
+    ).ORDER_BY(region_name.ASC())
+
+
+def regional_first_order_best_line_part():
+    # For each region, identify the first order made by a customer in that region,
+    # (breaking ties by order key), and the name of the part from that order
+    # with the largest quantity shipped, breaking ties by line number within
+    # the order.
+    first_order = nations.customers.orders.BEST(
+        per="Regions", by=(order_date.ASC(), key.ASC())
+    )
+    largest_quantity_line = first_order.lines.BEST(
+        per="Regions", by=(quantity.DESC(), line_number.ASC())
+    )
+    return Regions.CALCULATE(
+        region_name=name, part_name=largest_quantity_line.part.name
+    ).ORDER_BY(region_name.ASC())
+
+
+def orders_versus_first_orders():
+    # Identify the 5 biggest day gaps between an order and the customer's first
+    # order. Include the customer name, the day gap, and the key or the order.
+    # Break ties alphabetically by customer name. Only consider customers from
+    # Vietnam.
+    first_order_from_cust = (
+        customer.WHERE(nation.name == "VIETNAM")
+        .CALCULATE(customer_name=name)
+        .orders.BEST(per="customer", by=(order_date.ASC(), key.ASC()))
+    )
+    return Orders.CALCULATE(
+        customer_name=first_order_from_cust.customer_name,
+        order_key=key,
+        days_since_first_order=DATEDIFF(
+            "days", first_order_from_cust.order_date, order_date
+        ),
+    ).TOP_K(5, by=(days_since_first_order.DESC(), customer_name.ASC()))
 
 
 def region_nation_window_aggs():
@@ -626,8 +744,7 @@ def nation_best_order():
             value_percentage=100.0 * total_price / RELSUM(total_price, per="Nations"),
             order_key=key,
         )
-        .WHERE(RANKING(by=order_value.DESC(), per="Nations") == 1)
-        .SINGULAR()
+        .BEST(by=order_value.DESC(), per="Nations")
     )
     return (
         selected_nations.WHERE(HAS(best_order))
@@ -1782,6 +1899,123 @@ def singular7():
             n_orders=best_part.n_orders,
         )
         .TOP_K(5, by=(n_orders.DESC(), supplier_name.ASC()))
+    )
+
+
+def simple_int_float_string_cast():
+    # String format specifiers for date/time with a static datetime
+    # Using a specific date: 2023-07-15 14:30:45
+    # static_date = DATETIME("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        i1=INTEGER(1),
+        i2=INTEGER(2.2),
+        i3=INTEGER("3"),
+        i4=INTEGER("4.3"),
+        i5=INTEGER("-5.888"),
+        i6=INTEGER(-6.0),
+        f1=FLOAT(1.0),
+        f2=FLOAT(2.2),
+        f3=FLOAT("3"),
+        f4=FLOAT("4.3"),
+        f5=FLOAT("-5.888"),
+        f6=FLOAT(-6.0),
+        f7=FLOAT(0.0),
+        s1=STRING(1),
+        s2=STRING(2.2),
+        s3=STRING("3"),
+        s4=STRING("4.3"),
+        s5=STRING("-5.888"),
+        s6=STRING(-6.0),
+        s7=STRING(0.0),
+        s8=STRING("0.0"),
+        s9=STRING("abc def"),
+    )
+
+
+def string_format_specifiers_sqlite():
+    # String format specifiers for date/time with a static datetime
+    # Works for SQLite versions >= v3.43.2
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # day of month: 01-31
+        d1=STRING(static_date, "%d"),
+        # day of month without leading zero: 1-31
+        d2=STRING("2023-07-15 14:30:45", "%e"),
+        # fractional seconds: SS.SSS
+        d3=STRING("2023-07-15 14:30:45", "%f"),
+        # ISO 8601 date: YYYY-MM-DD
+        d4=STRING("2023-07-15 14:30:45", "%F"),
+        # hour: 00-24
+        d5=STRING(static_date, "%H"),
+        # hour for 12-hour clock: 01-12
+        d6=STRING(static_date, "%I"),
+        # day of year: 001-366
+        d7=STRING(static_date, "%j"),
+        # Julian day number (fractional)
+        d8=STRING(static_date, "%J"),
+        # hour without leading zero: 0-24
+        d9=STRING(static_date, "%k"),
+        # %I without leading zero: 1-12
+        d10=STRING(static_date, "%l"),
+        # month: 01-12
+        d11=STRING(static_date, "%m"),
+        # minute: 00-59
+        d12=STRING(static_date, "%M"),
+        # "AM" or "PM" depending on the hour
+        d13=STRING(static_date, "%p"),
+        # "am" or "pm" depending on the hour
+        d14=STRING(static_date, "%P"),
+        # ISO 8601 time: HH:MM
+        d15=STRING(static_date, "%R"),
+        # seconds since 1970-01-01
+        d16=STRING(static_date, "%s"),
+        # seconds: 00-59
+        d17=STRING(static_date, "%S"),
+        # ISO 8601 time: HH:MM:SS
+        d18=STRING(static_date, "%T"),
+        # day of week 1-7 with Monday==1
+        d19=STRING(static_date, "%u"),
+        # day of week 0-6 with Sunday==0
+        d20=STRING(static_date, "%w"),
+        # week of year (00-53)
+        d21=STRING(static_date, "%W"),
+        # year: 0000-9999
+        d22=STRING(static_date, "%Y"),
+        # month-day-year
+        d23=STRING(static_date, "%m-%d-%Y"),
+    )
+
+
+def part_reduced_size():
+    # What are the top 5 line items with the highest discounts
+    # on parts with the lowest retail prices casted to integers?
+    # Include the part name, the reduced size, the retail price, the discount,
+    # and the date in day-month-year, month/day, and AM/PM format.
+    return (
+        Parts.CALCULATE(
+            reduced_size=FLOAT(size / 2.5),
+            retail_price_int=INTEGER(retail_price),
+            message=JOIN_STRINGS(
+                "",
+                "old size: ",
+                STRING(size),
+            ),
+        )
+        .TOP_K(2, by=retail_price_int.ASC())
+        .lines.CALCULATE(
+            reduced_size,
+            retail_price_int,
+            message,
+            discount,
+            # day-month-year: 15-07-2023
+            date_dmy=STRING(receipt_date, "%d-%m-%Y"),
+            # month/day: 07/15
+            date_md=STRING(receipt_date, "%m/%d"),
+            # AM or PM
+            am_pm=STRING(receipt_date, "%H:%M%p"),
+        )
+        .TOP_K(5, by=discount.DESC())
     )
 
 

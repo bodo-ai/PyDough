@@ -385,6 +385,50 @@ class UnqualifiedNode(ABC):
         """
         return UnqualifiedSingular(self)
 
+    def BEST(
+        self,
+        by: Union[Iterable["UnqualifiedNode"], "UnqualifiedNode"],
+        per: str | None = None,
+        allow_ties: bool = False,
+        n_best: int = 1,
+    ) -> "UnqualifiedNode":
+        """
+        Method used to create the BEST logic, where x.y.BEST(by=z, per="x") is later
+        expanded into `x.y.WHERE(RANKING(by=z) == 1, per="x").SINGULAR()`,
+        with the following variations:
+        - If `allow_ties` is True: `x.y.WHERE(RANKING(by=z, per="x", allow_ties=True) == 1)`
+        - If `n_best` > 1 : `x.y.WHERE(RANKING(by=z, per="x") <= n_best)`
+
+        Args:
+            `node`: the data to find the best entry of with regards to the
+            current node.
+            `by`: the collation terms to order by in the `RANKING` call.
+            `per`: the ancestor that the `BEST` computation is happening with
+            regards to, or None if it is a global optimum being sought.
+            `allow_ties`: whether to allow ties in the ranking. If True, it
+            means that if there are multiple entries with the same rank, they
+            will all be considered as "best" candidates. This cannot be used
+            with `n_best > 1`.
+            `n_best`: the number of best entries to consider. If greater than
+            1, it will find all entries with a rank less than or equal to
+            `n_best`. This cannot be used when `allow_ties` is True.
+
+        Returns:
+            The unqualified node for the relevant expression.
+        """
+        # Verify the n_best & allow_ties arguments are well formed
+        if n_best < 1:
+            raise PyDoughUnqualifiedException(f"Invalid n_best value: {n_best}")
+        if n_best > 1 and allow_ties:
+            raise PyDoughUnqualifiedException(
+                "Cannot allow ties when multiple best values are requested"
+            )
+
+        if isinstance(by, UnqualifiedNode):
+            by = [by]
+
+        return UnqualifiedBest(self, by, per, allow_ties, n_best)
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -691,6 +735,24 @@ class UnqualifiedSingular(UnqualifiedNode):
         self._parcel: tuple[UnqualifiedNode] = (predecessor,)
 
 
+class UnqualifiedBest(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a BEST clause.
+    """
+
+    def __init__(
+        self,
+        data: UnqualifiedNode,
+        by: Iterable[UnqualifiedNode],
+        per: str | None,
+        allow_ties: bool,
+        n_best: int,
+    ):
+        self._parcel: tuple[
+            UnqualifiedNode, Iterable[UnqualifiedNode], str | None, bool, int
+        ] = (data, by, per, allow_ties, n_best)
+
+
 def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     Prints an unqualified node in a human-readable manner that shows its
@@ -776,6 +838,16 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             return result
         case UnqualifiedSingular():
             return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
+        case UnqualifiedBest():
+            result = f"{display_raw(unqualified._parcel[0])}.BEST("
+            result += f"by=({', '.join(display_raw(node) for node in unqualified._parcel[1])})"
+            if unqualified._parcel[2]:
+                result += f", per={unqualified._parcel[3]!r}"
+            if unqualified._parcel[3]:
+                result += ", allow_ties=True"
+            if unqualified._parcel[4] > 1:
+                result += f", n_best={unqualified._parcel[4]}"
+            return result + ")"
         case _:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node: {unqualified.__class__.__name__}"
