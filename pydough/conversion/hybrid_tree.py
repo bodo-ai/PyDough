@@ -2102,13 +2102,28 @@ class HybridTranslator:
             self.add_unique_terms(
                 prev_hybrid, levels_remaining - 1, 0, correl_args, child_idx
             )
+            join_remapping: dict[HybridExpr, HybridExpr] = dict(
+                hybrid.join_keys if hybrid.join_keys is not None else []
+            )
             for arg in correl_args:
-                if not isinstance(arg, HybridCorrelExpr):
-                    if child_idx is not None:
-                        prev_hybrid.correlated_children.add(child_idx)
-                    else:
-                        prev_hybrid.correlated_children.add(len(prev_hybrid.children))
-                partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
+                if arg in join_remapping:
+                    # Special case: if the uniqueness key is also a join key
+                    # from the LHS, use the equivalent key from the RHS.
+                    equivalent_key: HybridExpr | None = join_remapping[arg].shift_back(
+                        levels_so_far
+                    )
+                    assert equivalent_key is not None
+                    partition_args.append(equivalent_key)
+                else:
+                    # Otherwise, create a correlated reference to the term.
+                    if not isinstance(arg, HybridCorrelExpr):
+                        if child_idx is not None:
+                            prev_hybrid.correlated_children.add(child_idx)
+                        else:
+                            prev_hybrid.correlated_children.add(
+                                len(prev_hybrid.children)
+                            )
+                    partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
             self.stack.append(prev_hybrid)
         else:
             # Otherwise, we have to step back further, so we recursively
