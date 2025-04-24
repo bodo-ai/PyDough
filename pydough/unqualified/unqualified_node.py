@@ -395,10 +395,9 @@ class UnqualifiedNode(ABC):
         """
         Method used to create the BEST logic, where x.y.BEST(by=z, per="x") is later
         expanded into `x.y.WHERE(RANKING(by=z) == 1, per="x").SINGULAR()`,
-        where the levels is the height of y. There are also the following
-        variations:
-        - If `allow_ties` is True: `x.y.WHERE(RANKING(by=z, allow_ties=True) == 1, levels=...)`
-        - If `n_best` > 1 : `x.y.WHERE(RANKING(by=z) <= n_best, levels=...)`
+        with the following variations:
+        - If `allow_ties` is True: `x.y.WHERE(RANKING(by=z, per="x", allow_ties=True) == 1)`
+        - If `n_best` > 1 : `x.y.WHERE(RANKING(by=z, per="x") <= n_best)`
 
         Args:
             `node`: the data to find the best entry of with regards to the

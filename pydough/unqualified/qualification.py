@@ -984,9 +984,7 @@ class Qualifier:
         levels: int | None = rank_call.levels
 
         # Add `SINGULAR` if applicable (there is a levels argument and that
-        # ancestor either is the context or is singular withr regards to it).
-        # if-applicable (not allowing ties, not keeping multiple bests, not in
-        # the form `x.BEST(y)` unless as a child & the x is already singular).
+        # ancestor either is the context or is singular with regards to it).
         if n_best == 1 and not allow_ties and is_child:
             base: PyDoughCollectionQDAG = qualified_parent
             if levels is not None:
@@ -995,7 +993,11 @@ class Qualifier:
                     base = base.ancestor_context
                 base = base.starting_predecessor
                 relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
-                if base == relative_ancestor or base.is_singular(relative_ancestor):
+                if (
+                    base == relative_ancestor
+                    or base.is_singular(relative_ancestor)
+                    or relative_ancestor.is_singular(base)
+                ):
                     qualified_child = self.builder.build_singular(qualified_child)
 
         return qualified_child
