@@ -105,7 +105,7 @@ def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.
     """
-    return {"Amazon", "TPCH", "Empty"}
+    return {"Amazon", "TPCH", "Empty", "Epoch"}
 
 
 @pytest.fixture(params=["Amazon", "TPCH", "Empty"])
@@ -376,5 +376,21 @@ def sqlite_defog_connection() -> DatabaseContext:
     # Setup the defog database.
     subprocess.run("cd tests; bash setup_defog.sh", shell=True)
     path: str = os.path.join(base_dir, "tests/defog.db")
+    connection: sqlite3.Connection = sqlite3.connect(path)
+    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture(scope="session")
+def sqlite_epoch_connection() -> DatabaseContext:
+    """
+    Returns the SQLITE database connection for the epoch database.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    # Setup the epoch database.
+    subprocess.run(
+        "cd tests; rm -fv epoch.db; sqlite3 epoch.db < init_epoch.sql", shell=True
+    )
+    path: str = os.path.join(base_dir, "tests/epoch.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)

@@ -13,6 +13,8 @@ import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
+    GeneralJoinMetadata,
+    SimpleJoinMetadata,
     SimpleTableMetadata,
 )
 from pydough.qdag import (
@@ -72,6 +74,7 @@ from .hybrid_tree import (
     HybridPartitionChild,
     HybridRefExpr,
     HybridRoot,
+    HybridSidedRefExpr,
     HybridTranslator,
     HybridTree,
     HybridWindowExpr,
@@ -271,12 +274,154 @@ class RelTranslation:
                     f"TODO: support relational conversion on {expr.__class__.__name__}"
                 )
 
+    def build_general_join_condition(
+        self,
+        condition: HybridExpr,
+        lhs_result: TranslationOutput,
+        rhs_result: TranslationOutput,
+        lhs_alias: str | None,
+        rhs_alias: str | None,
+    ) -> RelationalExpression:
+        """
+        Converts the condition for a non-equijoin from a hybrid expression
+        into a relational expression. The columns from the RHS are assumed to
+        be ordinary references/back-references within the condition expr, while
+        columns from the LHS are assumed to be `HybridSidedRefExpr`, denoting
+        that they come from the parent.
+
+        Args:
+            `condition`: the condition to be converted.
+            `lhs_result`: the TranslationOutput for the LHS of the join.
+            `rhs_result`: the TranslationOutput for the RHS of the join.
+            `lhs_alias`: the alias used to refer to the LHS of the join.
+            `rhs_alias`: the alias used to refer to the RHS of the join.
+
+        Returns:
+            The converted relational expression for the join condition.
+        """
+        result: RelationalExpression
+        inputs: list[RelationalExpression]
+        partition_inputs: list[RelationalExpression]
+        order_inputs: list[ExpressionSortInfo]
+        match condition:
+            case HybridSidedRefExpr():
+                # For sided references, access the referenced expression from
+                # the lhs output.
+                result = self.translate_expression(
+                    HybridRefExpr(condition.name, condition.typ), lhs_result
+                )
+                return self.rename_inputs(result, lhs_alias)
+            case HybridFunctionExpr():
+                # For function calls, recursively convert the arguments, then
+                # build a relational function call expression.
+                inputs = [
+                    self.build_general_join_condition(
+                        arg, lhs_result, rhs_result, lhs_alias, rhs_alias
+                    )
+                    for arg in condition.args
+                ]
+                return CallExpression(condition.operator, condition.typ, inputs)
+            case HybridWindowExpr():
+                # For window function calls, do the same as regular funcitons
+                # but also convert the partition/order inputs.
+                inputs = [
+                    self.build_general_join_condition(
+                        arg, lhs_result, rhs_result, lhs_alias, rhs_alias
+                    )
+                    for arg in condition.args
+                ]
+                partition_inputs = [
+                    self.build_general_join_condition(
+                        arg, lhs_result, rhs_result, lhs_alias, rhs_alias
+                    )
+                    for arg in condition.partition_args
+                ]
+                order_inputs = [
+                    ExpressionSortInfo(
+                        self.build_general_join_condition(
+                            order_arg.expr, lhs_result, rhs_result, lhs_alias, rhs_alias
+                        ),
+                        order_arg.asc,
+                        order_arg.na_first,
+                    )
+                    for order_arg in condition.order_args
+                ]
+                return WindowCallExpression(
+                    condition.window_func,
+                    condition.typ,
+                    inputs,
+                    partition_inputs,
+                    order_inputs,
+                    condition.kwargs,
+                )
+            case _:
+                # For all other expressions, convert regularly using the RHS
+                # as the context to pull columns from.
+                result = self.translate_expression(condition, rhs_result)
+                return self.rename_inputs(result, rhs_alias)
+
+    def rename_inputs(
+        self, expr: RelationalExpression, alias: str | None
+    ) -> RelationalExpression:
+        """
+        Recursively transforms a relational expression and any of its contents
+        so that all column references have an input alias added to them.
+
+        Args:
+            `expr`: the expression to be transformed.
+            `alias`: the alias to be added to the column references.
+
+        Returns:
+            The transformed expression with the input alias added to all
+            column references.
+        """
+        inputs: list[RelationalExpression]
+        partition_inputs: list[RelationalExpression]
+        order_inputs: list[ExpressionSortInfo]
+        match expr:
+            case WindowCallExpression():
+                inputs = [self.rename_inputs(arg, alias) for arg in expr.inputs]
+                partition_inputs = [
+                    self.rename_inputs(arg, alias) for arg in expr.partition_inputs
+                ]
+                order_inputs = [
+                    ExpressionSortInfo(
+                        self.rename_inputs(order_arg.expr, alias),
+                        order_arg.ascending,
+                        order_arg.nulls_first,
+                    )
+                    for order_arg in expr.order_inputs
+                ]
+                return WindowCallExpression(
+                    expr.op,
+                    expr.data_type,
+                    inputs,
+                    partition_inputs,
+                    order_inputs,
+                    expr.kwargs,
+                )
+            case CallExpression():
+                return CallExpression(
+                    expr.op,
+                    expr.data_type,
+                    [self.rename_inputs(arg, alias) for arg in expr.inputs],
+                )
+            case ColumnReference():
+                return ColumnReference(expr.name, expr.data_type, alias)
+            case LiteralExpression() | CorrelatedReference():
+                return expr
+            case _:
+                raise NotImplementedError(
+                    f"Unrecognized expression type: {expr.__class__.__name__}"
+                )
+
     def join_outputs(
         self,
         lhs_result: TranslationOutput,
         rhs_result: TranslationOutput,
         join_type: JoinType,
-        join_keys: list[tuple[HybridExpr, HybridExpr]],
+        join_keys: list[tuple[HybridExpr, HybridExpr]] | None,
+        join_cond: HybridExpr | None,
         child_idx: int | None,
     ) -> TranslationOutput:
         """
@@ -291,6 +436,10 @@ class RelTranslation:
             onto `rhs_result`.
             `join_keys`: a list of tuples in the form `(lhs_key, rhs_key)` that
             represent the equi-join keys used for the join from either side.
+            This can be None if the `join_cond` is provided instead.
+            `join_cond`: a generic join condition that can be used to join the
+            lhs and rhs, where correlated references refer to terms from the
+            lhs. This can be None if the `join_keys` is provided instead.
             `child_idx`: if None, means that the join is being used to step
             down from a parent into its child. If non-none, it means the join
             is being used to bring a child's elements into the same context as
@@ -303,6 +452,8 @@ class RelTranslation:
         """
         out_columns: dict[HybridExpr, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
+
+        assert (join_keys is None) != (join_cond is None)
 
         # Special case: if the lhs is an EmptySingleton, just return the RHS,
         # decorated if needed.
@@ -332,18 +483,24 @@ class RelTranslation:
 
         # Build the corresponding (lhs_key == rhs_key) conditions
         cond_terms: list[RelationalExpression] = []
-        for lhs_key, rhs_key in join_keys:
-            lhs_key_column: ColumnReference = lhs_result.expressions[
-                lhs_key
-            ].with_input(input_aliases[0])
-            rhs_key_column: ColumnReference = rhs_result.expressions[
-                rhs_key
-            ].with_input(input_aliases[1])
-            cond: RelationalExpression = CallExpression(
-                pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
+        if join_keys is not None:
+            for lhs_key, rhs_key in join_keys:
+                lhs_key_column: ColumnReference = lhs_result.expressions[
+                    lhs_key
+                ].with_input(input_aliases[0])
+                rhs_key_column: ColumnReference = rhs_result.expressions[
+                    rhs_key
+                ].with_input(input_aliases[1])
+                cond: RelationalExpression = CallExpression(
+                    pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
+                )
+                cond_terms.append(cond)
+            out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
+        else:
+            assert join_cond is not None
+            out_rel.conditions[0] = self.build_general_join_condition(
+                join_cond, lhs_result, rhs_result, input_aliases[0], input_aliases[1]
             )
-            cond_terms.append(cond)
-        out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
@@ -488,13 +645,6 @@ class RelTranslation:
                     child.subtree, len(child.subtree.pipeline) - 1
                 )
                 self.stack.pop()
-                assert child.subtree.join_keys is not None
-                join_keys: list[tuple[HybridExpr, HybridExpr]] = child.subtree.join_keys
-                agg_keys: list[HybridExpr]
-                if child.subtree.agg_keys is None:
-                    agg_keys = [rhs_key for _, rhs_key in join_keys]
-                else:
-                    agg_keys = child.subtree.agg_keys
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
@@ -506,14 +656,16 @@ class RelTranslation:
                         | ConnectionType.ANTI
                     ):
                         if child.connection_type.is_aggregation:
+                            assert child.subtree.agg_keys is not None
                             child_output = self.apply_aggregations(
-                                child, child_output, agg_keys
+                                child, child_output, child.subtree.agg_keys
                             )
                         context = self.join_outputs(
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            join_keys,
+                            child.subtree.join_keys,
+                            child.subtree.general_join_condition,
                             child_idx,
                         )
                     case (
@@ -525,7 +677,8 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            join_keys,
+                            child.subtree.join_keys,
+                            child.subtree.general_join_condition,
                             child_idx,
                         )
                         # Map every child_idx reference from child_output to null
@@ -638,19 +791,25 @@ class RelTranslation:
         )
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
-        join_keys: list[tuple[HybridExpr, HybridExpr]] = (
-            HybridTranslator.get_subcollection_join_keys(
-                collection_access.subcollection_property,
-                parent.pipeline[-1],
-                node,
-            )
-        )
+        join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
+        join_cond: HybridExpr | None = None
+        match collection_access.subcollection_property:
+            case SimpleJoinMetadata():
+                join_keys = HybridTranslator.get_subcollection_join_keys(
+                    collection_access.subcollection_property,
+                    parent.pipeline[-1],
+                    node,
+                )
+            case GeneralJoinMetadata():
+                assert node.general_condition is not None
+                join_cond = node.general_condition
 
         return self.join_outputs(
             context,
             rhs_output,
             JoinType.INNER,
             join_keys,
+            join_cond,
             None,
         )
 
@@ -885,6 +1044,7 @@ class RelTranslation:
             JoinType.INNER,
             join_keys,
             None,
+            None,
         )
         return result
 
@@ -1014,6 +1174,7 @@ class RelTranslation:
                             result,
                             JoinType.INNER,
                             join_keys,
+                            None,
                             None,
                         )
                 else:

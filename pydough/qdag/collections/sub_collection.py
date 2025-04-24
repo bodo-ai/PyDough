@@ -8,7 +8,10 @@ __all__ = ["SubCollection"]
 
 from functools import cache
 
-from pydough.metadata.properties import SubcollectionRelationshipMetadata
+from pydough.metadata.properties import (
+    SubcollectionRelationshipMetadata,
+)
+from pydough.qdag.expressions import PyDoughExpressionQDAG
 
 from .collection_access import CollectionAccess
 from .collection_qdag import PyDoughCollectionQDAG
@@ -27,8 +30,10 @@ class SubCollection(CollectionAccess):
         ancestor: PyDoughCollectionQDAG,
     ):
         super().__init__(subcollection_property.other_collection, ancestor)
-        self._subcollection_property: SubcollectionRelationshipMetadata
-        self._subcollection_property = subcollection_property
+        self._subcollection_property: SubcollectionRelationshipMetadata = (
+            subcollection_property
+        )
+        self._general_condition: PyDoughExpressionQDAG | None = None
 
     @property
     def name(self) -> str:
@@ -45,6 +50,21 @@ class SubCollection(CollectionAccess):
         The subcollection property referenced by the collection node.
         """
         return self._subcollection_property
+
+    @property
+    def general_condition(self) -> PyDoughExpressionQDAG | None:
+        """
+        The general condition used to join the parent collection to the child
+        collection, if one exists.
+        """
+        return self._general_condition
+
+    @general_condition.setter
+    def general_condition(self, condition: PyDoughExpressionQDAG) -> None:
+        """
+        Setter for the general_condition property.
+        """
+        self._general_condition = condition
 
     @cache
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:

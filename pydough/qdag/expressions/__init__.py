@@ -13,6 +13,7 @@ __all__ = [
     "PartitionKey",
     "PyDoughExpressionQDAG",
     "Reference",
+    "SidedReference",
     "WindowCall",
 ]
 
@@ -25,4 +26,5 @@ from .expression_qdag import PyDoughExpressionQDAG
 from .literal import Literal
 from .partition_key import PartitionKey
 from .reference import Reference
+from .sided_reference import SidedReference
 from .window_call import WindowCall
